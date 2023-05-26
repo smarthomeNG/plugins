@@ -596,35 +596,35 @@ item_structs:
             db_addon_fct: verbrauch_heute
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_woche:
             name: Verbrauch seit Wochenbeginn
             db_addon_fct: verbrauch_woche
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_monat:
             name: Verbrauch seit Monatsbeginn
             db_addon_fct: verbrauch_monat
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_jahr:
             name: Verbrauch seit Jahresbeginn
             db_addon_fct: verbrauch_jahr
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_rolling_12m:
             name: Verbrauch innerhalb der letzten 12 Monate ausgehend von gestern
             db_addon_fct: verbrauch_rolling_12m_heute_minus1
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_gestern:
             name: Verbrauch gestern
@@ -632,7 +632,7 @@ item_structs:
             db_addon_startup: yes
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_gestern_minus1:
             name: Verbrauch vorgestern
@@ -640,7 +640,7 @@ item_structs:
             db_addon_startup: yes
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_gestern_minus2:
             name: Verbrauch vor 3 Tagen
@@ -648,7 +648,7 @@ item_structs:
             db_addon_startup: yes
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_vorwoche:
             name: Verbrauch in der Vorwoche
@@ -656,7 +656,7 @@ item_structs:
             db_addon_startup: yes
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_vorwoche_minus1:
             name: Verbrauch vor 2 Wochen
@@ -664,7 +664,7 @@ item_structs:
             db_addon_startup: yes
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_vormonat:
             name: Verbrauch im Vormonat
@@ -672,7 +672,7 @@ item_structs:
             db_addon_startup: yes
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_vormonat_minus12:
             name: Verbrauch vor 12 Monaten
@@ -680,7 +680,7 @@ item_structs:
             db_addon_startup: yes
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_vorjahreszeitraum:
             name: Verbrauch im Jahreszeitraum 1.1. bis jetzt vor einem Jahr
@@ -688,7 +688,7 @@ item_structs:
             db_addon_startup: yes
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
     verbrauch_2:
         name: Struct für Verbrauchsauswertung bei Zählern mit stetig ansteigendem Zählerstand (Teil 2)
@@ -697,70 +697,70 @@ item_structs:
             db_addon_fct: verbrauch_heute_minus3
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_gestern_minus4:
             name: Verbrauch vor 4 Tagen
             db_addon_fct: verbrauch_heute_minus4
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_gestern_minus5:
             name: Verbrauch vor 5 Tagen
             db_addon_fct: verbrauch_heute_minus5
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_gestern_minus6:
             name: Verbrauch vor 6 Tagen
             db_addon_fct: verbrauch_heute_minus6
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_gestern_minus7:
             name: Verbrauch vor 7 Tagen
             db_addon_fct: verbrauch_heute_minus7
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_vorwoche_minus2:
             name: Verbrauch vor 3 Wochen
             db_addon_fct: verbrauch_woche_minus3
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_vorwoche_minus3:
             name: Verbrauch vor 4 Wochen
             db_addon_fct: verbrauch_woche_minus4
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_vormonat_minus1:
             name: Verbrauch vor 2 Monaten
             db_addon_fct: verbrauch_monat_minus2
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_vormonat_minus2:
             name: Verbrauch vor 3 Monaten
             db_addon_fct: verbrauch_monat_minus3
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         verbrauch_vormonat_minus3:
             name: Verbrauch vor 4 Monaten
             db_addon_fct: verbrauch_monat_minus4
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
     zaehlerstand_1:
         name: Struct für die Erfassung von Zählerständen zu bestimmten Zeitpunkten bei Zählern mit stetig ansteigendem Zählerstand
@@ -769,7 +769,7 @@ item_structs:
             db_addon_fct: zaehlerstand_heute_minus1
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         zaehlerstand_vorwoche:
             name: Zählerstand zum Ende der vorigen Woche
@@ -777,7 +777,7 @@ item_structs:
             db_addon_startup: yes
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         zaehlerstand_vormonat:
             name: Zählerstand zum Ende des Vormonates
@@ -785,7 +785,7 @@ item_structs:
             db_addon_startup: yes
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         zaehlerstand_vormonat_minus1:
             name: Zählerstand zum Monatsende vor 2 Monaten
@@ -793,7 +793,7 @@ item_structs:
             db_addon_startup: yes
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         zaehlerstand_vormonat_minus2:
             name: Zählerstand zum Monatsende vor 3 Monaten
@@ -801,7 +801,7 @@ item_structs:
             db_addon_startup: yes
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
         zaehlerstand_vorjahr:
             name: Zählerstand am Ende des vorigen Jahres
@@ -809,7 +809,7 @@ item_structs:
             db_addon_startup: yes
             type: num
             visu_acl: ro
-            # cache: yes
+            cache: yes
 
     minmax_1:
         name: Struct für Auswertung der Wertehistorie bei schwankenden Werten wie bspw. Temperatur oder Leistung (Teil 1)
@@ -819,138 +819,138 @@ item_structs:
             db_addon_fct: minmax_heute_min
             db_addon_ignore_value: 0
             type: num
-            # cache: yes
+            cache: yes
 
         heute_max:
             name: Maximaler Wert seit Tagesbeginn
             db_addon_fct: minmax_heute_max
             type: num
-            # cache: yes
+            cache: yes
 
         last24h_min:
             name: Minimaler Wert in den letzten 24h (gleitend)
             db_addon_fct: minmax_last_24h_min
             type: num
-            # cache: yes
+            cache: yes
 
         last24h_max:
             name: Maximaler Wert in den letzten 24h (gleitend)
             db_addon_fct: minmax_last_24h_max
             type: num
-            # cache: yes
+            cache: yes
 
         woche_min:
             name: Minimaler Wert seit Wochenbeginn
             db_addon_fct: minmax_woche_min
             type: num
-            # cache: yes
+            cache: yes
 
         woche_max:
             name: Maximaler Wert seit Wochenbeginn
             db_addon_fct: minmax_woche_max
             type: num
-            # cache: yes
+            cache: yes
 
         monat_min:
             name: Minimaler Wert seit Monatsbeginn
             db_addon_fct: minmax_monat_min
             type: num
-            # cache: yes
+            cache: yes
 
         monat_max:
             name: Maximaler Wert seit Monatsbeginn
             db_addon_fct: minmax_monat_max
             type: num
-            # cache: yes
+            cache: yes
 
         jahr_min:
             name: Minimaler Wert seit Jahresbeginn
             db_addon_fct: minmax_jahr_min
             type: num
-            # cache: yes
+            cache: yes
 
         jahr_max:
             name: Maximaler Wert seit Jahresbeginn
             db_addon_fct: minmax_jahr_max
             type: num
-            # cache: yes
+            cache: yes
 
         gestern_min:
             name: Minimaler Wert gestern
             db_addon_fct: minmax_heute_minus1_min
             db_addon_startup: yes
             type: num
-            # cache: yes
+            cache: yes
 
         gestern_max:
             name: Maximaler Wert gestern
             db_addon_fct: minmax_heute_minus1_max
             db_addon_startup: yes
             type: num
-            # cache: yes
+            cache: yes
 
         gestern_avg:
             name: Durchschnittlicher Wert gestern
             db_addon_fct: minmax_heute_minus1_avg
             db_addon_startup: yes
             type: num
-            # cache: yes
+            cache: yes
 
         vorwoche_min:
             name: Minimaler Wert in der Vorwoche
             db_addon_fct: minmax_woche_minus1_min
             db_addon_startup: yes
             type: num
-            # cache: yes
+            cache: yes
 
         vorwoche_max:
             name: Maximaler Wert in der Vorwoche
             db_addon_fct: minmax_woche_minus1_max
             db_addon_startup: yes
             type: num
-            # cache: yes
+            cache: yes
 
         vorwoche_avg:
             name: Durchschnittlicher Wert in der Vorwoche
             db_addon_fct: minmax_woche_minus1_avg
             db_addon_startup: yes
             type: num
-            # cache: yes
+            cache: yes
 
         vormonat_min:
             name: Minimaler Wert im Vormonat
             db_addon_fct: minmax_monat_minus1_min
             db_addon_startup: yes
             type: num
-            # cache: yes
+            cache: yes
 
         vormonat_max:
             name: Maximaler Wert im Vormonat
             db_addon_fct: minmax_monat_minus1_max
             db_addon_startup: yes
             type: num
-            # cache: yes
+            cache: yes
 
         vormonat_avg:
             name: Durchschnittlicher Wert im Vormonat
             db_addon_fct: minmax_monat_minus1_avg
             db_addon_startup: yes
             type: num
-            # cache: yes
+            cache: yes
 
         vorjahr_min:
             name: Minimaler Wert im Vorjahr
             db_addon_fct: minmax_jahr_minus1_min
             db_addon_startup: yes
             type: num
-            # cache: yes
+            cache: yes
 
         vorjahr_max:
             name: Maximaler Wert im Vorjahr
             db_addon_fct: minmax_jahr_minus1_max
             db_addon_startup: yes
             type: num
-            # cache: yes
+            cache: yes
 
     minmax_2:
         name: Struct für Auswertung der Wertehistorie bei schwankenden Werten wie bspw. Temperatur oder Leistung (Teil 2)
@@ -959,73 +959,73 @@ item_structs:
             name: Minimaler Wert vorgestern
             db_addon_fct: minmax_heute_minus2_min
             type: num
-            # cache: yes
+            cache: yes
 
         gestern_minus1_max:
             name: Maximaler Wert vorgestern
             db_addon_fct: minmax_heute_minus2_max
             type: num
-            # cache: yes
+            cache: yes
 
         gestern_minus1_avg:
             name: Durchschnittlicher Wert vorgestern
             db_addon_fct: minmax_heute_minus2_avg
             type: num
-            # cache: yes
+            cache: yes
 
         gestern_minus2_min:
             name: Minimaler Wert vor 3 Tagen
             db_addon_fct: minmax_heute_minus3_min
             type: num
-            # cache: yes
+            cache: yes
 
         gestern_minus2_max:
             name: Maximaler Wert vor 3 Tagen
             db_addon_fct: minmax_heute_minus3_max
             type: num
-            # cache: yes
+            cache: yes
 
         gestern_minus2_avg:
             name: Durchschnittlicher Wert vor 3 Tagen
             db_addon_fct: minmax_heute_minus3_avg
             type: num
-            # cache: yes
+            cache: yes
 
         vorwoche_minus1_min:
             name: Minimaler Wert in der Woche vor 2 Wochen
             db_addon_fct: minmax_woche_minus2_min
             type: num
-            # cache: yes
+            cache: yes
 
         vorwoche_minus1_max:
             name: Maximaler Wert in der Woche vor 2 Wochen
             db_addon_fct: minmax_woche_minus2_max
             type: num
-            # cache: yes
+            cache: yes
 
         vorwoche_minus1_avg:
             name: Durchschnittlicher Wert in der Woche vor 2 Wochen
             db_addon_fct: minmax_woche_minus2_avg
             type: num
-            # cache: yes
+            cache: yes
 
         vormonat_minus1_min:
             name: Minimaler Wert im Monat vor 2 Monaten
             db_addon_fct: minmax_monat_minus2_min
             type: num
-            # cache: yes
+            cache: yes
 
         vormonat_minus1_max:
             name: Maximaler Wert im Monat vor 2 Monaten
             db_addon_fct: minmax_monat_minus2_max
             type: num
-            # cache: yes
+            cache: yes
 
         vormonat_minus1_avg:
             name: Durchschnittlicher Wert im Monat vor 2 Monaten
             db_addon_fct: minmax_monat_minus2_avg
             type: num
-            # cache: yes
+            cache: yes
 
 item_attribute_prefixes: NONE
 
