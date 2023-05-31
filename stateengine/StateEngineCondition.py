@@ -486,8 +486,9 @@ class SeCondition(StateEngineTools.SeItemChild):
                     return True
 
             elif self.__value.is_empty() and cond_min_max:
-                self._log_warning("Neither value nor min/max given. This might result in unexpected"
-                                  " evalutions. Min {}, max {}, value {}",
+                self._log_warning("Condition {}: Neither value nor min/max given."
+                                  " This might result in unexpected"
+                                  " evalutions. Min {}, max {}, value {}", self.__name,
                                   self.__min.get(), self.__max.get(), self.__value.get())
                 self._log_increase_indent()
                 return True
