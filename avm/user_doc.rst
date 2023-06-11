@@ -243,6 +243,61 @@ Beispiel einer Logik, die die Host von 3 verbundenen Geräten in eine Liste zusa
     string += '</ul>'
     sh.avm.devices.device_list(string)
 
+get_hosts_list
+~~~~~~~~~~~~~~
+
+Ermittelt ein Array mit (gefilterten) Informationen der verbundenen Hosts. Dabei wird die die Abfrage der "Host List Contents" verwendet.
+Der Vorteil gegenüber "get_hosts" liegt in der deutlich schnelleren Abfrage.
+
+In Abfrage der Hosts liefert folgenden Werte:
+
+  - 'Index'
+  - 'IPAddress'
+  - 'MACAddress'
+  - 'Active'
+  - 'HostName'
+  - 'InterfaceType'
+  - 'Port'
+  - 'Speed'
+  - 'UpdateAvailable'
+  - 'UpdateSuccessful'
+  - 'InfoURL'
+  - 'MACAddressList'
+  - 'Model'
+  - 'URL'
+  - 'Guest'
+  - 'RequestClient'
+  - 'VPN'
+  - 'WANAccess'
+  - 'Disallow'
+  - 'IsMeshable'
+  - 'Priority'
+  - 'FriendlyName'
+  - 'FriendlyNameIsWriteable'
+
+Auf all diese Werte kann mit dem Parameter "filter_dict" gefiltert werden. Dabei können auch mehrere Filter gesetzt werden.
+
+Das folgende Beispiel liefert alle Informationen zu den aktiven Hosts zurück:
+
+.. code-block:: python
+
+    hosts = sh.fritzbox_7490.get_hosts_list(filter_dict={'Active': True})
+
+Das folgende Beispiel liefer alle Informationen zu den aktiven Hosts zurück, bei den ein Update vorliegt:
+
+.. code-block:: python
+
+    hosts = sh.fritzbox_7490.get_hosts_list(filter_dict={'Active': True, 'UpdateAvailable': True})
+
+Des Weiteren können über den Parameter "identifier_list" die Identifier des Hosts festgelegt werden, die zurückgegeben werden sollen.
+Möglich sind: 'index', 'ipaddress', 'macaddress', 'hostname', 'friendlyname'
+
+Das folgende Beispiel liefer 'IPAddress' und 'MACAddress' zu den aktiven Hosts zurück, bei den ein Update vorliegt:
+
+.. code-block:: python
+
+    hosts = sh.fritzbox_7490.get_hosts_list(identifier_list=['ipaddress', 'macaddress'], filter_dict={'Active': True, 'UpdateAvailable': True})
+
 get_phone_name
 ~~~~~~~~~~~~~~
 Gibt den Namen eines Telefons an einem Index zurück. Der zurückgegebene Wert kann in 'set_call_origin' verwendet werden.
