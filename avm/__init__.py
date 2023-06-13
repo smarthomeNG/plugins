@@ -106,7 +106,7 @@ class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = '2.0.4'
+    PLUGIN_VERSION = '2.0.5'
 
     # ToDo: FritzHome.handle_updated_item: implement 'saturation'
     # ToDo: FritzHome.handle_updated_item: implement 'unmapped_hue'
@@ -406,8 +406,12 @@ class AVM(SmartPlugin):
         return self.fritz_device.get_hosts(only_active)
 
     @NoAttributeError
-    def get_hosts_dict(self):
-        return self.fritz_device.get_hosts_dict()
+    def get_hosts_dict(self, only_active: bool = False):
+        return self.fritz_device.get_hosts_dict(only_active)
+
+    @NoAttributeError
+    def get_hosts_list(self, identifier_list: list = None, filter_dict: dict = None) -> Union[list, None]:
+        return self.fritz_device.get_hosts_list(identifier_list, filter_dict)
 
     @NoAttributeError
     def get_mesh_topology(self):
@@ -990,7 +994,7 @@ class FritzDevice:
             'mesh_topology': ('get_mesh_topology', None)
         }
 
-        # turn data to True of string is as listed
+        # turn data to True if string is as listed
         str_to_bool = {
             'wan_is_connected': 'Connected',
             'wan_link': 'Up',
@@ -1617,7 +1621,7 @@ class FritzDevice:
         :return: True or False, depending if the host is active on the FritzDevice
         """
         # is_active = self.client.LANDevice.Hosts.GetSpecificHostEntry(NewMACAddress=mac_address)['NewActive']
-        return bool(self._poll_fritz_device('is_host_active', mac_address, enforce_read=True))
+        return bool(to_int(self._poll_fritz_device('is_host_active', mac_address, enforce_read=True)))
 
     def get_hosts(self, only_active: bool = False) -> list:
         """
@@ -1626,7 +1630,7 @@ class FritzDevice:
         Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
 
         :param only_active: bool, if only active hosts shall be returned
-        :return: Array host dicts (see get_host_details)
+        :return: Array of host dicts (see get_host_details)
         """
         # number_of_hosts = int(self.client.LANDevice.Hosts.GetHostNumberOfEntries()['NewHostNumberOfEntries'])
         number_of_hosts = to_int(self._poll_fritz_device('number_of_hosts', enforce_read=True))
@@ -1664,13 +1668,20 @@ class FritzDevice:
                 'ip_address': host_info.get('NewIPAddress'),
                 'address_source': host_info.get('NewAddressSource'),
                 'mac_address': host_info.get('NewMACAddress'),
-                'is_active': bool(host_info.get('NewActive')),
+                'is_active': bool(to_int(host_info.get('NewActive'))),
                 'lease_time_remaining': to_int(host_info.get('NewLeaseTimeRemaining'))
             }
             return host
 
-    def get_hosts_dict(self) -> Union[dict, None]:
-        """Get all Hosts connected to AVM device as dict"""
+    def get_hosts_dict(self, only_active: bool = False) -> Union[dict, None]:
+        """Get all Hosts connected to AVM device as dict
+
+        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
+
+        :param only_active: bool, if only active hosts shall be returned
+        :return: dict host dicts
+        """
+
         # hosts_url = self.client.LANDevice.Hosts.X_AVM_DE_GetHostListPath()['NewX_AVM_DE_HostListPath']
         hosts_url = self._poll_fritz_device('hosts_url', enforce_read=True)
 
@@ -1687,25 +1698,94 @@ class FritzDevice:
             index = None
             for attr in item:
                 if attr.tag == 'Index':
-                    index = int(attr.text)
+                    index = to_int(attr.text)
+
                 key = str(attr.tag)
-                value = str(attr.text)
                 if key.startswith('X_AVM-DE_'):
                     key = key[9:]
+
+                value = str(attr.text)
                 if value.isdigit():
                     value = int(value)
+                elif value == 'None':
+                    value = None
+
                 if key in ['Active', 'Guest', 'Disallow', 'UpdateAvailable', 'VPN']:
                     value = bool(value)
+
                 host_dict[key] = value
-            if index:
+
+            if index and (not only_active or host_dict['Active']):
                 hosts_dict[index] = host_dict
 
         return hosts_dict
 
-    def get_hosts_count(self) -> int:
-        """Returns count of hosts"""
+    def get_hosts_list(self, identifier_list: list = None, filter_dict: dict = None) -> Union[list, None]:
+        """
+        Get information about (filtered) hosts as array / list
+
+        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
+
+        :param identifier_list: list of identifiers of host, which will be returned (valid: 'Index', 'IPAddress', 'MACAddress', 'HostName', 'FriendyName')
+        :param filter_dict: dict of filters, for which hosts (identifiers) will be returned (e.g. filter={'Active': False} will return all non-active hosts)
+        :return: Array of (filtered) hosts information
+        """
+
+        identifiers = ['index', 'ipaddress', 'macaddress', 'hostname', 'friendlyname']
+        hosts = []
+
+        if filter_dict is None:
+            filter_dict = {}
+        else:
+            filter_dict = {k.lower(): v for k, v in filter_dict.items()}
+
+        if identifier_list is None:
+            identifier_list = []
+        elif isinstance(identifier_list, str):
+            identifier_list = list(identifier_list)
+
+        # get host dict to evaluate result from
+        hosts_dict = self.get_hosts_dict()
+        if not hosts_dict:
+            return
+
+        # extract filtered hosts
+        for idx in hosts_dict:
+            host_lower = {k.lower(): v for k, v in hosts_dict[idx].items()}
+            if filter_dict.items() <= host_lower.items():
+                hosts.append(hosts_dict[idx])
+
+        # process identifier list
+        identifier_list_checked = []
+        for identifier in identifier_list:
+          if identifier.lower() in identifiers:
+            identifier_list_checked.append(identifier.lower())
+
+        if not identifier_list_checked:
+            return hosts
+
+        # eval identifier from filtered hosts
+        hosts_ids = []
+        for host in hosts:
+            host_lower = {k.lower(): v for k, v in host.items()}
+            host_ids = {}
+            for identifier in identifier_list_checked:
+                host_id = host_lower.get(identifier)
+                if host_id:
+                    host_ids.update({identifier: host_id})
+            if host_ids:
+                hosts_ids.append(host_ids)
+        return hosts_ids
+
+    def get_hosts_count(self, only_active: bool = False) -> int:
+        """Returns count of hosts
+
+        :param only_active: bool, if only number of active hosts shall be returned
+        :return: number of hosts
+        """
+
         try:
-            return len(self.get_hosts_dict())
+            return len(self.get_hosts_dict(only_active))
         except TypeError:
             return 0
 
