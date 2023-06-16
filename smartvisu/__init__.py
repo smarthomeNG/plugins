@@ -45,7 +45,8 @@ from .svinstallwidgets import SmartVisuInstallWidgets
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.8.10"
+
+    PLUGIN_VERSION="1.8.11"
     ALLOW_MULTIINSTANCE = True
 
     visu_definition = None
@@ -421,7 +422,7 @@ class SmartVisu(SmartPlugin):
             dirname = self.read_from_sv_configini('pages')
             result = (dirname != '')
         else:
-            self.logger.warning("Could not determine version of smartVISU in configured directory {self.smartvisu_dir}")
+            self.logger.warning(f"Could not determine version of smartVISU in configured directory {self.smartvisu_dir}")
             result = False
 
         return result
