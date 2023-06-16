@@ -51,7 +51,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.9'
+    PLUGIN_VERSION = '1.6.10'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -251,7 +251,7 @@ class Database(SmartPlugin):
                     except Exception as e:
                         self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
                 else:
-                    self.logger.warning("Cache not available in database for item {}".format(item.id() ))
+                    self.logger.notice(f"No cached value available in database for item {item.id()}")
                 cur.close()
                 self._db.release()
             elif self.get_iattr_value(item.conf, 'database').lower() == 'init':
