@@ -351,7 +351,7 @@ class DatabaseAddOn(SmartPlugin):
                 return
 
             # create standard items config
-            item_config_data_dict = {'db_addon': 'function', 'db_addon_fct': db_addon_fct, 'database_item': database_item, 'ignore_value_list': db_addon_ignore_value_list}
+            item_config_data_dict = {'db_addon': 'function', 'db_addon_fct': db_addon_fct, 'database_item': database_item, 'ignore_value_list': db_addon_ignore_value_list, 'query_params': query_params}
             if isinstance(database_item, str):
                 item_config_data_dict.update({'database_item_path': True})
             else:
@@ -835,7 +835,7 @@ class DatabaseAddOn(SmartPlugin):
                 # get _recent_value; if not already cached, create cache
                 _recent_value = _cache_dict[_database_item].get(_func)
                 if _recent_value is None:
-                    _query_params = {'func': _func, 'item': _database_item, 'timeframe': _timeframe, 'start': 0, 'end': 0, 'ignore_value_list': _ignore_value_list}
+                    _query_params = {'func': _func, 'item': _database_item, 'timeframe': _timeframe, 'start': 0, 'end': 0, 'ignore_value_list': _ignore_value_list, 'use_oldest_entry': True}
                     _db_value = self._query_item(**_query_params)[0][1]
 
                     if self.onchange_debug:
@@ -855,7 +855,7 @@ class DatabaseAddOn(SmartPlugin):
                 if value is None:
                     _new_value = _recent_value
                     if self.onchange_debug:
-                        self.logger.debug(f"handle_onchange: initial value for item will be set with value {_new_value}")
+                        self.logger.debug(f"handle_onchange: initial {_func} value for item {item.path()} will be set to {_new_value}")
 
                 # check value for update of cache dict
                 else:
@@ -887,23 +887,24 @@ class DatabaseAddOn(SmartPlugin):
             # handle verbrauch on-change items ending with heute, woche, monat, jahr
             elif len(_var) == 2 and _var[0] == 'verbrauch' and _var[1] in ['heute', 'woche', 'monat', 'jahr']:
                 _timeframe = convert_timeframe(_var[1])
-                _cache_dict = self.previous_values[_timeframe]
                 if _timeframe is None:
                     continue
 
-                # make sure, that database item is in cache dict
+                _cache_dict = self.previous_values[_timeframe]
+
+                # get _cached_value for value at end of last period; if not already cached, create cache
                 _cached_value = _cache_dict.get(_database_item)
                 if _cached_value is None:
-                    _query_params = {'func': 'max', 'item': _database_item, 'timeframe': _timeframe, 'start': 1, 'end': 1, 'ignore_value_list': _ignore_value_list}
+                    _query_params = {'func': 'max', 'item': _database_item, 'timeframe': _timeframe, 'start': 1, 'end': 1, 'ignore_value_list': _ignore_value_list, 'use_oldest_entry': True}
                     _db_value = self._query_item(**_query_params)[0][1]
 
                     if _db_value is not None:
                         _cache_dict[_database_item] = _db_value
                         _cached_value = _db_value
                         if self.onchange_debug:
-                            self.logger.debug(f"handle_onchange: Item={updated_item.path()} with {_timeframe=} not in cache dict. Value={_cached_value} has been added.")
+                            self.logger.debug(f"handle_onchange: Value for Item={updated_item.path()} at end of last {_timeframe} not in cache dict. Value={_cached_value} has been added.")
                     else:
-                        self.logger.info(f"Value for end of last {_timeframe} not available. No item value will be set.")
+                        self.logger.info(f"Value for end of last {_timeframe} not available from database. Request skipped.")
                         continue
 
                 # calculate value, set item value, put data into plugin_item_dict
@@ -1203,7 +1204,7 @@ class DatabaseAddOn(SmartPlugin):
             start = to_int(_var[4][:-1])
             end = 0
             group = convert_timeframe(_var[4][len(_var[4]) - 1])
-            log_text = 'serie_min/max/avg'
+            log_text = 'serie_minmax'
             if timeframe is None or start is None or group is None:
                 return
         else:
@@ -1252,7 +1253,7 @@ class DatabaseAddOn(SmartPlugin):
             start = to_int(_var[3][:-1])
             end = 0
             group = convert_timeframe(_var[3][len(_var[3]) - 1])
-            log_text = 'serie_min/max/avg'
+            log_text = 'serie_zaehlerstand'
             if timeframe is None or start is None or group is None:
                 return
         else:
@@ -1355,7 +1356,7 @@ class DatabaseAddOn(SmartPlugin):
             if self.execute_debug:
                 self.logger.debug(f"_handle_verbrauch: '{func}' function detected. {window=}, {timeframe=}, {timedelta=}")
 
-            if window_dur in ['day', 'week', 'month', 'year']:
+            if window_dur in ALLOWED_QUERY_TIMEFRAMES:
                 starttime = convert_duration(timeframe, window_dur) * window_inc
                 return consumption_calc(c_start=starttime, c_end=endtime)
 
@@ -2168,7 +2169,7 @@ class DatabaseAddOn(SmartPlugin):
             item_id = None
         return item_id
 
-    def _query_item(self, func: str, item: Item, timeframe: str, start: int = None, end: int = 0, group: str = None, group2: str = None, ignore_value_list=None) -> list:
+    def _query_item(self, func: str, item: Item, timeframe: str, start: int = None, end: int = 0, group: str = None, group2: str = None, ignore_value_list=None, use_oldest_entry: bool = False) -> list:
         """
         Do diverse checks of input, and prepare query of log by getting item_id, start / end in timestamp etc.
 
@@ -2180,6 +2181,7 @@ class DatabaseAddOn(SmartPlugin):
         :param group: first grouping parameter (default = None, possible values: day, week, month, year)
         :param group2: second grouping parameter (default = None, possible values: day, week, month, year)
         :param ignore_value_list: list of comparison operators for val_num, which will be applied during query
+        :param use_oldest_entry: if start is prior to oldest entry, oldest entry will be used
 
         :return: query response / list for value pairs [[None, None]] for errors, [[0,0]] for
         """
@@ -2255,12 +2257,12 @@ class DatabaseAddOn(SmartPlugin):
             return result
 
         if ts_start < oldest_log:
-            if not self.use_oldest_entry:
-                self.logger.info(f"_query_item: Requested start time timestamp={ts_start} / {timestamp_to_timestring(ts_start)} of query for Item='{item.path()}' is prior to oldest entry with timestamp={oldest_log} / {timestamp_to_timestring(oldest_log)}. Query cancelled.")
-                return result
-            else:
+            if self.use_oldest_entry or use_oldest_entry:
                 self.logger.info(f"_query_item: Requested start time timestamp={ts_start} / {timestamp_to_timestring(ts_start)} of query for Item='{item.path()}' is prior to oldest entry with timestamp={oldest_log} / {timestamp_to_timestring(oldest_log)}. Oldest available entry will be used.")
                 ts_start = oldest_log
+            else:
+                self.logger.info(f"_query_item: Requested start time timestamp={ts_start} / {timestamp_to_timestring(ts_start)} of query for Item='{item.path()}' is prior to oldest entry with timestamp={oldest_log} / {timestamp_to_timestring(oldest_log)}. Query cancelled.")
+                return result
 
         query_params = {'func': func, 'item_id': item_id, 'ts_start': ts_start, 'ts_end': ts_end, 'group': group, 'group2': group2, 'ignore_value_list': ignore_value_list}
         result = _handle_query_result(self._query_log_timestamp(**query_params))
@@ -2702,13 +2704,10 @@ def convert_timeframe(timeframe: str) -> str:
 
     return convertion.get(timeframe)
 
-
 def convert_duration(timeframe: str, window_dur: str) -> int:
-    """
-    Convert duration
+    """Convert duration"""
 
-    """
-
+    _h_in_d = 24
     _d_in_y = 365
     _d_in_w = 7
     _m_in_y = 12
@@ -2717,22 +2716,32 @@ def convert_duration(timeframe: str, window_dur: str) -> int:
     _d_in_m = _d_in_y / _m_in_y
 
     conversion = {
-        'day': {'day': 1,
+        'hour': {'hour': 1,
+                 'day': _h_in_d,
+                 'week': _h_in_d * _d_in_w,
+                 'month': _h_in_d * _d_in_m,
+                 'year': _h_in_d * _d_in_y,
+                },
+        'day': {'hour': 1 / _h_in_d,
+                'day': 1,
                 'week': _d_in_w,
                 'month': _d_in_m,
                 'year': _d_in_y,
                 },
-        'week': {'day': 1 / _d_in_w,
+        'week': {'hour': 1 / (_h_in_d * _d_in_w),
+                 'day': 1 / _d_in_w,
                  'week': 1,
                  'month': _w_in_m,
                  'year': _w_in_y
                  },
-        'month': {'day': 1 / _d_in_m,
+        'month': {'hour': 1 / (_h_in_d * _d_in_m),
+                  'day': 1 / _d_in_m,
                   'week': 1 / _w_in_m,
                   'month': 1,
                   'year': _m_in_y
                   },
-        'year': {'day': 1 / _d_in_y,
+        'year': {'hour': 1 / (_h_in_d * _d_in_y),
+                 'day': 1 / _d_in_y,
                  'week': 1 / _w_in_y,
                  'month': 1 / _m_in_y,
                  'year': 1
