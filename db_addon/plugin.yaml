@@ -11,7 +11,7 @@ plugin:
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1848494-support-thread-databaseaddon-plugin
-    version: 1.1.2                  # Plugin version (must match the version specified in __init__.py)
+    version: 1.1.3                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.9.3.5          # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.8              # minimum Python version to use for this plugin
@@ -594,6 +594,7 @@ item_structs:
         verbrauch_heute:
             name: Verbrauch heute
             db_addon_fct: verbrauch_heute
+            db_addon_startup: yes
             type: num
             visu_acl: ro
             cache: yes
@@ -601,6 +602,7 @@ item_structs:
         verbrauch_woche:
             name: Verbrauch seit Wochenbeginn
             db_addon_fct: verbrauch_woche
+            db_addon_startup: yes
             type: num
             visu_acl: ro
             cache: yes
@@ -608,6 +610,7 @@ item_structs:
         verbrauch_monat:
             name: Verbrauch seit Monatsbeginn
             db_addon_fct: verbrauch_monat
+            db_addon_startup: yes
             type: num
             visu_acl: ro
             cache: yes
@@ -615,6 +618,7 @@ item_structs:
         verbrauch_jahr:
             name: Verbrauch seit Jahresbeginn
             db_addon_fct: verbrauch_jahr
+            db_addon_startup: yes
             type: num
             visu_acl: ro
             cache: yes
@@ -622,6 +626,7 @@ item_structs:
         verbrauch_rolling_12m:
             name: Verbrauch innerhalb der letzten 12 Monate ausgehend von gestern
             db_addon_fct: verbrauch_rolling_12m_heute_minus1
+            db_addon_startup: yes
             type: num
             visu_acl: ro
             cache: yes
@@ -818,60 +823,70 @@ item_structs:
             name: Minimaler Wert seit Tagesbeginn
             db_addon_fct: minmax_heute_min
             db_addon_ignore_value: 0
+            db_addon_startup: yes
             type: num
             cache: yes
 
         heute_max:
             name: Maximaler Wert seit Tagesbeginn
             db_addon_fct: minmax_heute_max
+            db_addon_startup: yes
             type: num
             cache: yes
 
         last24h_min:
             name: Minimaler Wert in den letzten 24h (gleitend)
             db_addon_fct: minmax_last_24h_min
+            db_addon_startup: yes
             type: num
             cache: yes
 
         last24h_max:
             name: Maximaler Wert in den letzten 24h (gleitend)
             db_addon_fct: minmax_last_24h_max
+            db_addon_startup: yes
             type: num
             cache: yes
 
         woche_min:
             name: Minimaler Wert seit Wochenbeginn
             db_addon_fct: minmax_woche_min
+            db_addon_startup: yes
             type: num
             cache: yes
 
         woche_max:
             name: Maximaler Wert seit Wochenbeginn
             db_addon_fct: minmax_woche_max
+            db_addon_startup: yes
             type: num
             cache: yes
 
         monat_min:
             name: Minimaler Wert seit Monatsbeginn
             db_addon_fct: minmax_monat_min
+            db_addon_startup: yes
             type: num
             cache: yes
 
         monat_max:
             name: Maximaler Wert seit Monatsbeginn
             db_addon_fct: minmax_monat_max
+            db_addon_startup: yes
             type: num
             cache: yes
 
         jahr_min:
             name: Minimaler Wert seit Jahresbeginn
             db_addon_fct: minmax_jahr_min
+            db_addon_startup: yes
             type: num
             cache: yes
 
         jahr_max:
             name: Maximaler Wert seit Jahresbeginn
             db_addon_fct: minmax_jahr_max
+            db_addon_startup: yes
             type: num
             cache: yes
 

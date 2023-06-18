@@ -54,7 +54,7 @@ class DatabaseAddOn(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.2'
+    PLUGIN_VERSION = '1.1.3'
     # ToDo: cache temperatureseries raw data
 
     def __init__(self, sh):
@@ -447,10 +447,8 @@ class DatabaseAddOn(SmartPlugin):
             if self.parse_debug:
                 self.logger.debug(f"Item '{item.path()}' added to be run {item_config_data_dict['cycle']}.")
 
-            # create item config for item to be run on startup (onchange_items shall not be run at startup, but at first noticed change of item value; therefore remove for list of items to be run at startup)
-            if (db_addon_startup and db_addon_fct not in ALL_ONCHANGE_ATTRIBUTES) or db_addon_fct in ALL_GEN_ATTRIBUTES:
-                if self.parse_debug:
-                    self.logger.debug(f"Item '{item.path()}' added to be run on startup")
+            # create item config for item to be run on startup
+            if db_addon_startup or db_addon_fct in ALL_GEN_ATTRIBUTES:
                 item_config_data_dict.update({'startup': True})
             else:
                 item_config_data_dict.update({'startup': False})
@@ -535,12 +533,25 @@ class DatabaseAddOn(SmartPlugin):
         if self.execute_debug:
             self.logger.debug("execute_startup_items called")
 
-        if not self.suspended:
-            self.logger.info(f"{len(self._startup_items())} items will be calculated at startup.")
-            [self.item_queue.put(i) for i in self._startup_items()]
-            self.startup_finished = True
-        else:
+        if self.suspended:
             self.logger.info(f"Plugin is suspended. No items will be calculated.")
+            return
+
+        relevant_item_list = self._startup_items()
+        self.logger.info(f"{len(relevant_item_list)} items will be calculated at startup.")
+
+        for item in relevant_item_list:
+            item_config = self.get_item_config(item)
+            db_addon_fct = item_config['db_addon_fct']
+
+            # handle on-change items
+            if db_addon_fct in ALL_ONCHANGE_ATTRIBUTES:
+                self.item_queue.put((item, None))
+            # handle on-demand items
+            else:
+                self.item_queue.put(item)
+
+        self.startup_finished = True
 
     def execute_static_items(self) -> None:
         """
@@ -780,7 +791,7 @@ class DatabaseAddOn(SmartPlugin):
         item_config.update({'value': result})
         item(result, self.get_shortname())
 
-    def handle_onchange(self, updated_item: Item, value: float) -> None:
+    def handle_onchange(self, updated_item: Item, value: float = None) -> None:
         """
         Get item and item value for which an update has been detected, fill cache dicts and set item value.
 
@@ -791,7 +802,8 @@ class DatabaseAddOn(SmartPlugin):
         if self.onchange_debug:
             self.logger.debug(f"handle_onchange called with updated_item={updated_item.path()} and value={value}.")
 
-        relevant_item_list = self.get_item_list('database_item', updated_item)
+        relevant_item_list = set(self.get_item_list('database_item', updated_item)) & set(self.get_item_list('cycle', 'on-change'))
+
         if self.onchange_debug:
             self.logger.debug(f"Following items where identified for update: {relevant_item_list}.")
 
@@ -808,48 +820,62 @@ class DatabaseAddOn(SmartPlugin):
                 _func = _var[2]
                 _cache_dict = self.current_values[_timeframe]
                 if not _timeframe:
-                    return
+                    continue
 
                 if self.onchange_debug:
                     self.logger.debug(f"handle_onchange: 'minmax' item {updated_item.path()} with {_func=} detected. Check for update of _cache_dicts and item value.")
 
-                _initial_value = False
+                init = False
                 _new_value = None
 
                 # make sure, that database item is in cache dict
                 if _database_item not in _cache_dict:
                     _cache_dict[_database_item] = {}
-                if _cache_dict[_database_item].get(_func) is None:
-                    _query_params = {'func': _func, 'item': _database_item, 'timeframe': _timeframe, 'start': 0, 'end': 0, 'ignore_value_list': _ignore_value_list}
-                    _cached_value = self._query_item(**_query_params)[0][1]
-                    _initial_value = True
-                    if self.onchange_debug:
-                        self.logger.debug(f"handle_onchange: Item={updated_item.path()} with _func={_func} and _timeframe={_timeframe} not in cache dict. recent value={_cached_value}.")
-                else:
-                    _cached_value = _cache_dict[_database_item][_func]
 
-                if _cached_value:
-                    # check value for update of cache dict
-                    if _func == 'min' and value < _cached_value:
-                        _new_value = value
-                        if self.onchange_debug:
-                            self.logger.debug(f"handle_onchange: new value={_new_value} lower then current min_value={_cached_value}. _cache_dict will be updated")
-                    elif _func == 'max' and value > _cached_value:
-                        _new_value = value
-                        if self.onchange_debug:
-                            self.logger.debug(f"handle_onchange: new value={_new_value} higher then current max_value={_cached_value}. _cache_dict will be updated")
+                # get _recent_value; if not already cached, create cache
+                _recent_value = _cache_dict[_database_item].get(_func)
+                if _recent_value is None:
+                    _query_params = {'func': _func, 'item': _database_item, 'timeframe': _timeframe, 'start': 0, 'end': 0, 'ignore_value_list': _ignore_value_list}
+                    _db_value = self._query_item(**_query_params)[0][1]
+
+                    if self.onchange_debug:
+                        self.logger.debug(f"handle_onchange: Item={updated_item.path()} with _func={_func} and _timeframe={_timeframe} not in cache dict. recent value={_db_value}.")
+
+                    if _db_value is not None:
+                        _recent_value = _db_value
+                        init = True
+                    elif value is not None:
+                        _recent_value = value
                     else:
                         if self.onchange_debug:
-                            self.logger.debug(f"handle_onchange: new value={_new_value} will not change max/min for period.")
-                else:
-                    _cached_value = value
+                            self.logger.debug(f"handle_onchange: continue due to {_db_value=}, {value}.")
+                        continue
 
-                if _initial_value and not _new_value:
-                    _new_value = _cached_value
+                # if value not given -> read at startup
+                if value is None:
+                    _new_value = _recent_value
                     if self.onchange_debug:
                         self.logger.debug(f"handle_onchange: initial value for item will be set with value {_new_value}")
 
-                if _new_value:
+                # check value for update of cache dict
+                else:
+                    if _func == 'min' and value < _recent_value:
+                        _new_value = value
+                        if self.onchange_debug:
+                            self.logger.debug(f"handle_onchange: new value={_new_value} lower then current min_value={_recent_value}. _cache_dict will be updated")
+                    elif _func == 'max' and value > _recent_value:
+                        _new_value = value
+                        if self.onchange_debug:
+                            self.logger.debug(f"handle_onchange: new value={_new_value} higher then current max_value={_recent_value}. _cache_dict will be updated")
+                    elif init:
+                        _new_value = _recent_value
+                        if self.onchange_debug:
+                            self.logger.debug(f"handle_onchange: initial value for item will be set with value {_new_value}")
+                    else:
+                        if self.onchange_debug:
+                            self.logger.debug(f"handle_onchange: new value={value} will not change max/min for period={_timeframe}.")
+
+                if _new_value is not None:
                     _cache_dict[_database_item][_func] = _new_value
                     self.logger.info(f"Item value for '{item.path()}' with func={_func} will be set to {_new_value}")
                     item_config = self.get_item_config(item)
@@ -861,29 +887,34 @@ class DatabaseAddOn(SmartPlugin):
             # handle verbrauch on-change items ending with heute, woche, monat, jahr
             elif len(_var) == 2 and _var[0] == 'verbrauch' and _var[1] in ['heute', 'woche', 'monat', 'jahr']:
                 _timeframe = convert_timeframe(_var[1])
+                _cache_dict = self.previous_values[_timeframe]
                 if _timeframe is None:
-                    return
+                    continue
 
                 # make sure, that database item is in cache dict
-                _cache_dict = self.previous_values[_timeframe]
-                if _database_item not in _cache_dict:
+                _cached_value = _cache_dict.get(_database_item)
+                if _cached_value is None:
                     _query_params = {'func': 'max', 'item': _database_item, 'timeframe': _timeframe, 'start': 1, 'end': 1, 'ignore_value_list': _ignore_value_list}
-                    _cached_value = self._query_item(**_query_params)[0][1]
-                    _cache_dict[_database_item] = _cached_value
-                    if self.onchange_debug:
-                        self.logger.debug(f"handle_onchange: Item={updated_item.path()} with {_timeframe=} not in cache dict. Value {_cached_value} has been added.")
-                else:
-                    _cached_value = _cache_dict[_database_item]
+                    _db_value = self._query_item(**_query_params)[0][1]
+
+                    if _db_value is not None:
+                        _cache_dict[_database_item] = _db_value
+                        _cached_value = _db_value
+                        if self.onchange_debug:
+                            self.logger.debug(f"handle_onchange: Item={updated_item.path()} with {_timeframe=} not in cache dict. Value={_cached_value} has been added.")
+                    else:
+                        self.logger.info(f"Value for end of last {_timeframe} not available. No item value will be set.")
+                        continue
 
                 # calculate value, set item value, put data into plugin_item_dict
-                if _cached_value is not None:
-                    _new_value = round(value - _cached_value, 1)
-                    self.logger.info(f"Item value for '{item.path()}' will be set to {_new_value}")
-                    item_config = self.get_item_config(item)
-                    item_config.update({'value': _new_value})
-                    item(_new_value, self.get_shortname())
-                else:
-                    self.logger.info(f"Value for end of last {_timeframe} not available. No item value will be set.")
+                _new_value = round(value - _cached_value, 1)
+                self.logger.info(f"Item value for '{item.path()}' will be set to {_new_value}")
+                item_config = self.get_item_config(item)
+                item_config.update({'value': _new_value})
+                item(_new_value, self.get_shortname())
+
+            else:
+                self.logger.warning(f"{_db_addon_fct} given at item {item.path()} not defined in plugin. Skipped.")
 
     def _update_database_items(self):
         for item in self._database_item_path_items():
