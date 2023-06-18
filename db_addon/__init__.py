@@ -351,7 +351,7 @@ class DatabaseAddOn(SmartPlugin):
                 return
 
             # create standard items config
-            item_config_data_dict = {'db_addon': 'function', 'db_addon_fct': db_addon_fct, 'database_item': database_item, 'ignore_value_list': db_addon_ignore_value_list, 'query_params': query_params}
+            item_config_data_dict = {'db_addon': 'function', 'db_addon_fct': db_addon_fct, 'database_item': database_item, 'ignore_value_list': db_addon_ignore_value_list}
             if isinstance(database_item, str):
                 item_config_data_dict.update({'database_item_path': True})
             else:
