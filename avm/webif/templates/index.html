@@ -280,13 +280,13 @@
     <tbody>
         {% if tr064_items %}
             {% for item in tr064_items %}
-                {% set item_config = p.fritz_device.items[item] %}
+                {% set item_config = p.get_item_config(item) %}
                 <tr>
                     <td></td>
                     <td class="py-1">{{ item.id() }}</td>
                     <td class="py-1">{{ item.property.type }}</td>
-                    <td class="py-1">{{ item_config[0] }}</td>
-                    <td class="py-1" style="text-align: right">{{ item_config[2] }}</td>
+                    <td class="py-1">{{ item_config['avm_data_type'] }}</td>
+                    <td class="py-1" style="text-align: right">{{ item_config['avm_data_cycle'] }}</td>
                     <td class="py-1" id="{{ item.id() }}_tr064_value">{{ item.property.value }}</td>
                     <td class="py-1" id="{{ item.id() }}_tr064_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     <td class="py-1" id="{{ item.id() }}_tr064_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
@@ -315,13 +315,13 @@
     <tbody>
         {% if aha_items %}
             {% for item in aha_items %}
-                {% set item_config = p.fritz_home.items[item] %}
+                {% set item_config = p.get_item_config(item) %}
                 <tr>
                     <td></td>
                     <td class="py-1">{{ item.id() }}</td>
                     <td class="py-1">{{ item.property.type }}</td>
-                    <td class="py-1">{{ item_config[0] }}</td>
-                    <td class="py-1" style="text-align: right">{{ item_config[2] }}</td>
+                    <td class="py-1">{{ item_config['avm_data_type'] }}</td>
+                    <td class="py-1" style="text-align: right">{{ item_config['avm_data_cycle'] }}</td>
                     <td class="py-1" id="{{ item.id() }}_aha_value">{{ item.property.value }}</td>
                     <td class="py-1" id="{{ item.id() }}_aha_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     <td class="py-1" id="{{ item.id() }}_aha_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
@@ -482,19 +482,19 @@
                 <tr>
                     <td></td>
                     <td class="py-1">{{ "01 TR064 Items @ Fritz_Device" }}</td>
-                    <td class="py-1">{{ p.fritz_device.items }}</td>
+                    <td class="py-1">{{ p.fritz_device.item_list() }}</td>
                 </tr>
                 <tr>
                     <td></td>
                     <td class="py-1">{{ "02 TR064 Blacklisted Items @ Fritz_Device " }}</td>
-                    <td class="py-1" id="tr064_blacklisted">{{ p.fritz_device.get_tr064_items_blacklisted() }}</td>
+                    <td class="py-1" id="tr064_blacklisted">{{ p.get_tr064_items_blacklisted() }}</td>
                 </tr>
                 {% endif %}
                 {% if p.fritz_home %}
                 <tr>
                     <td></td>
                     <td class="py-1">{{ "03 AHA Items @ Fritz_Home" }}</td>
-                    <td class="py-1">{{ p.fritz_home.items }}</td>
+                    <td class="py-1">{{ p.fritz_home.item_list() }}</td>
                 </tr>
                 <tr>
                     <td></td>
