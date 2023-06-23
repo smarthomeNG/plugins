@@ -69,7 +69,7 @@
                     value.substring(0, length - 3) + " ..." :
                     value;
 
-                shngInsertText(item+'_value', new_value, 'maintable', 5);
+                shngInsertText(item+'_value', round(new_value, 2), 'maintable', 5);
                 shngInsertText(item+'_last_update', objResponse['items'][item]['last_update'], 'maintable');
                 shngInsertText(item+'_last_change', objResponse['items'][item]['last_change'], 'maintable');
             }
@@ -283,7 +283,7 @@
                 <td class="py-1">{{ p.get_item_config(item._path)['db_addon_fct'] }}</td>
                 <td class="py-1" style="text-align: center">{{ _(p.get_item_config(item)['cycle']|string) }}</td>
                 <td class="py-1" style="text-align: center">{% if p.get_item_config(item)['startup'] %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
-                <td class="py-1" id="{{ item._path }}_value" style="text-align: right">{{ item._value | float }}</td>
+                <td class="py-1" id="{{ item._path }}_value" style="text-align: right">{{ item._value | float | round(2) }}</td>
                 <td class="py-1" id="{{ item._path }}_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 <td class="py-1" id="{{ item._path }}_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
             </tr>
@@ -376,10 +376,6 @@
         <tr><td></td>
             <td class="py-1">{{ _('get_item_list') }}</td>
             <td class="py-1">{{ p.get_item_list('database_addon', True) }}</td>
-        </tr>
-        <tr><td></td>
-            <td class="py-1">{{ _('_plg_item_dict') }}</td>
-            <td class="py-1">{{ p._plg_item_dict }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('work_item_queue_thread') }}</td>

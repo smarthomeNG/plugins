@@ -40,6 +40,7 @@ from lib.item.item import Item
 from lib.shtime import Shtime
 from lib.plugin import Plugins
 from .webif import WebInterface
+from .item_attributes import *
 import lib.db
 
 DAY = 'day'
@@ -53,7 +54,7 @@ class DatabaseAddOn(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.1'
+    PLUGIN_VERSION = '1.1.3'
     # ToDo: cache temperatureseries raw data
 
     def __init__(self, sh):
@@ -446,10 +447,8 @@ class DatabaseAddOn(SmartPlugin):
             if self.parse_debug:
                 self.logger.debug(f"Item '{item.path()}' added to be run {item_config_data_dict['cycle']}.")
 
-            # create item config for item to be run on startup (onchange_items shall not be run at startup, but at first noticed change of item value; therefore remove for list of items to be run at startup)
-            if (db_addon_startup and db_addon_fct not in ALL_ONCHANGE_ATTRIBUTES) or db_addon_fct in ALL_GEN_ATTRIBUTES:
-                if self.parse_debug:
-                    self.logger.debug(f"Item '{item.path()}' added to be run on startup")
+            # create item config for item to be run on startup
+            if db_addon_startup or db_addon_fct in ALL_GEN_ATTRIBUTES:
                 item_config_data_dict.update({'startup': True})
             else:
                 item_config_data_dict.update({'startup': False})
@@ -534,12 +533,25 @@ class DatabaseAddOn(SmartPlugin):
         if self.execute_debug:
             self.logger.debug("execute_startup_items called")
 
-        if not self.suspended:
-            self.logger.info(f"{len(self._startup_items())} items will be calculated at startup.")
-            [self.item_queue.put(i) for i in self._startup_items()]
-            self.startup_finished = True
-        else:
+        if self.suspended:
             self.logger.info(f"Plugin is suspended. No items will be calculated.")
+            return
+
+        relevant_item_list = self._startup_items()
+        self.logger.info(f"{len(relevant_item_list)} items will be calculated at startup.")
+
+        for item in relevant_item_list:
+            item_config = self.get_item_config(item)
+            db_addon_fct = item_config['db_addon_fct']
+
+            # handle on-change items
+            if db_addon_fct in ALL_ONCHANGE_ATTRIBUTES:
+                self.item_queue.put((item, None))
+            # handle on-demand items
+            else:
+                self.item_queue.put(item)
+
+        self.startup_finished = True
 
     def execute_static_items(self) -> None:
         """
@@ -779,7 +791,7 @@ class DatabaseAddOn(SmartPlugin):
         item_config.update({'value': result})
         item(result, self.get_shortname())
 
-    def handle_onchange(self, updated_item: Item, value: float) -> None:
+    def handle_onchange(self, updated_item: Item, value: float = None) -> None:
         """
         Get item and item value for which an update has been detected, fill cache dicts and set item value.
 
@@ -790,7 +802,8 @@ class DatabaseAddOn(SmartPlugin):
         if self.onchange_debug:
             self.logger.debug(f"handle_onchange called with updated_item={updated_item.path()} and value={value}.")
 
-        relevant_item_list = self.get_item_list('database_item', updated_item)
+        relevant_item_list = set(self.get_item_list('database_item', updated_item)) & set(self.get_item_list('cycle', 'on-change'))
+
         if self.onchange_debug:
             self.logger.debug(f"Following items where identified for update: {relevant_item_list}.")
 
@@ -807,48 +820,62 @@ class DatabaseAddOn(SmartPlugin):
                 _func = _var[2]
                 _cache_dict = self.current_values[_timeframe]
                 if not _timeframe:
-                    return
+                    continue
 
                 if self.onchange_debug:
                     self.logger.debug(f"handle_onchange: 'minmax' item {updated_item.path()} with {_func=} detected. Check for update of _cache_dicts and item value.")
 
-                _initial_value = False
+                init = False
                 _new_value = None
 
                 # make sure, that database item is in cache dict
                 if _database_item not in _cache_dict:
                     _cache_dict[_database_item] = {}
-                if _cache_dict[_database_item].get(_func) is None:
-                    _query_params = {'func': _func, 'item': _database_item, 'timeframe': _timeframe, 'start': 0, 'end': 0, 'ignore_value_list': _ignore_value_list}
-                    _cached_value = self._query_item(**_query_params)[0][1]
-                    _initial_value = True
-                    if self.onchange_debug:
-                        self.logger.debug(f"handle_onchange: Item={updated_item.path()} with _func={_func} and _timeframe={_timeframe} not in cache dict. recent value={_cached_value}.")
-                else:
-                    _cached_value = _cache_dict[_database_item][_func]
 
-                if _cached_value:
-                    # check value for update of cache dict
-                    if _func == 'min' and value < _cached_value:
-                        _new_value = value
-                        if self.onchange_debug:
-                            self.logger.debug(f"handle_onchange: new value={_new_value} lower then current min_value={_cached_value}. _cache_dict will be updated")
-                    elif _func == 'max' and value > _cached_value:
-                        _new_value = value
-                        if self.onchange_debug:
-                            self.logger.debug(f"handle_onchange: new value={_new_value} higher then current max_value={_cached_value}. _cache_dict will be updated")
+                # get _recent_value; if not already cached, create cache
+                _recent_value = _cache_dict[_database_item].get(_func)
+                if _recent_value is None:
+                    _query_params = {'func': _func, 'item': _database_item, 'timeframe': _timeframe, 'start': 0, 'end': 0, 'ignore_value_list': _ignore_value_list, 'use_oldest_entry': True}
+                    _db_value = self._query_item(**_query_params)[0][1]
+
+                    if self.onchange_debug:
+                        self.logger.debug(f"handle_onchange: Item={updated_item.path()} with _func={_func} and _timeframe={_timeframe} not in cache dict. recent value={_db_value}.")
+
+                    if _db_value is not None:
+                        _recent_value = _db_value
+                        init = True
+                    elif value is not None:
+                        _recent_value = value
                     else:
                         if self.onchange_debug:
-                            self.logger.debug(f"handle_onchange: new value={_new_value} will not change max/min for period.")
-                else:
-                    _cached_value = value
+                            self.logger.debug(f"handle_onchange: continue due to {_db_value=}, {value}.")
+                        continue
 
-                if _initial_value and not _new_value:
-                    _new_value = _cached_value
+                # if value not given -> read at startup
+                if value is None:
+                    _new_value = _recent_value
                     if self.onchange_debug:
-                        self.logger.debug(f"handle_onchange: initial value for item will be set with value {_new_value}")
+                        self.logger.debug(f"handle_onchange: initial {_func} value for item {item.path()} will be set to {_new_value}")
 
-                if _new_value:
+                # check value for update of cache dict
+                else:
+                    if _func == 'min' and value < _recent_value:
+                        _new_value = value
+                        if self.onchange_debug:
+                            self.logger.debug(f"handle_onchange: new value={_new_value} lower then current min_value={_recent_value}. _cache_dict will be updated")
+                    elif _func == 'max' and value > _recent_value:
+                        _new_value = value
+                        if self.onchange_debug:
+                            self.logger.debug(f"handle_onchange: new value={_new_value} higher then current max_value={_recent_value}. _cache_dict will be updated")
+                    elif init:
+                        _new_value = _recent_value
+                        if self.onchange_debug:
+                            self.logger.debug(f"handle_onchange: initial value for item will be set with value {_new_value}")
+                    else:
+                        if self.onchange_debug:
+                            self.logger.debug(f"handle_onchange: new value={value} will not change max/min for period={_timeframe}.")
+
+                if _new_value is not None:
                     _cache_dict[_database_item][_func] = _new_value
                     self.logger.info(f"Item value for '{item.path()}' with func={_func} will be set to {_new_value}")
                     item_config = self.get_item_config(item)
@@ -861,28 +888,34 @@ class DatabaseAddOn(SmartPlugin):
             elif len(_var) == 2 and _var[0] == 'verbrauch' and _var[1] in ['heute', 'woche', 'monat', 'jahr']:
                 _timeframe = convert_timeframe(_var[1])
                 if _timeframe is None:
-                    return
+                    continue
 
-                # make sure, that database item is in cache dict
                 _cache_dict = self.previous_values[_timeframe]
-                if _database_item not in _cache_dict:
-                    _query_params = {'func': 'max', 'item': _database_item, 'timeframe': _timeframe, 'start': 1, 'end': 1, 'ignore_value_list': _ignore_value_list}
-                    _cached_value = self._query_item(**_query_params)[0][1]
-                    _cache_dict[_database_item] = _cached_value
-                    if self.onchange_debug:
-                        self.logger.debug(f"handle_onchange: Item={updated_item.path()} with {_timeframe=} not in cache dict. Value {_cached_value} has been added.")
-                else:
-                    _cached_value = _cache_dict[_database_item]
+
+                # get _cached_value for value at end of last period; if not already cached, create cache
+                _cached_value = _cache_dict.get(_database_item)
+                if _cached_value is None:
+                    _query_params = {'func': 'max', 'item': _database_item, 'timeframe': _timeframe, 'start': 1, 'end': 1, 'ignore_value_list': _ignore_value_list, 'use_oldest_entry': True}
+                    _db_value = self._query_item(**_query_params)[0][1]
+
+                    if _db_value is not None:
+                        _cache_dict[_database_item] = _db_value
+                        _cached_value = _db_value
+                        if self.onchange_debug:
+                            self.logger.debug(f"handle_onchange: Value for Item={updated_item.path()} at end of last {_timeframe} not in cache dict. Value={_cached_value} has been added.")
+                    else:
+                        self.logger.info(f"Value for end of last {_timeframe} not available from database. Request skipped.")
+                        continue
 
                 # calculate value, set item value, put data into plugin_item_dict
-                if _cached_value is not None:
-                    _new_value = round(value - _cached_value, 1)
-                    self.logger.info(f"Item value for '{item.path()}' will be set to {_new_value}")
-                    item_config = self.get_item_config(item)
-                    item_config.update({'value': _new_value})
-                    item(_new_value, self.get_shortname())
-                else:
-                    self.logger.info(f"Value for end of last {_timeframe} not available. No item value will be set.")
+                _new_value = round(value - _cached_value, 1)
+                self.logger.info(f"Item value for '{item.path()}' will be set to {_new_value}")
+                item_config = self.get_item_config(item)
+                item_config.update({'value': _new_value})
+                item(_new_value, self.get_shortname())
+
+            else:
+                self.logger.warning(f"{_db_addon_fct} given at item {item.path()} not defined in plugin. Skipped.")
 
     def _update_database_items(self):
         for item in self._database_item_path_items():
@@ -1171,7 +1204,7 @@ class DatabaseAddOn(SmartPlugin):
             start = to_int(_var[4][:-1])
             end = 0
             group = convert_timeframe(_var[4][len(_var[4]) - 1])
-            log_text = 'serie_min/max/avg'
+            log_text = 'serie_minmax'
             if timeframe is None or start is None or group is None:
                 return
         else:
@@ -1220,7 +1253,7 @@ class DatabaseAddOn(SmartPlugin):
             start = to_int(_var[3][:-1])
             end = 0
             group = convert_timeframe(_var[3][len(_var[3]) - 1])
-            log_text = 'serie_min/max/avg'
+            log_text = 'serie_zaehlerstand'
             if timeframe is None or start is None or group is None:
                 return
         else:
@@ -1323,7 +1356,7 @@ class DatabaseAddOn(SmartPlugin):
             if self.execute_debug:
                 self.logger.debug(f"_handle_verbrauch: '{func}' function detected. {window=}, {timeframe=}, {timedelta=}")
 
-            if window_dur in ['day', 'week', 'month', 'year']:
+            if window_dur in ALLOWED_QUERY_TIMEFRAMES:
                 starttime = convert_duration(timeframe, window_dur) * window_inc
                 return consumption_calc(c_start=starttime, c_end=endtime)
 
@@ -2136,7 +2169,7 @@ class DatabaseAddOn(SmartPlugin):
             item_id = None
         return item_id
 
-    def _query_item(self, func: str, item: Item, timeframe: str, start: int = None, end: int = 0, group: str = None, group2: str = None, ignore_value_list=None) -> list:
+    def _query_item(self, func: str, item: Item, timeframe: str, start: int = None, end: int = 0, group: str = None, group2: str = None, ignore_value_list=None, use_oldest_entry: bool = False) -> list:
         """
         Do diverse checks of input, and prepare query of log by getting item_id, start / end in timestamp etc.
 
@@ -2148,6 +2181,7 @@ class DatabaseAddOn(SmartPlugin):
         :param group: first grouping parameter (default = None, possible values: day, week, month, year)
         :param group2: second grouping parameter (default = None, possible values: day, week, month, year)
         :param ignore_value_list: list of comparison operators for val_num, which will be applied during query
+        :param use_oldest_entry: if start is prior to oldest entry, oldest entry will be used
 
         :return: query response / list for value pairs [[None, None]] for errors, [[0,0]] for
         """
@@ -2223,12 +2257,12 @@ class DatabaseAddOn(SmartPlugin):
             return result
 
         if ts_start < oldest_log:
-            if not self.use_oldest_entry:
-                self.logger.info(f"_query_item: Requested start time timestamp={ts_start} / {timestamp_to_timestring(ts_start)} of query for Item='{item.path()}' is prior to oldest entry with timestamp={oldest_log} / {timestamp_to_timestring(oldest_log)}. Query cancelled.")
-                return result
-            else:
+            if self.use_oldest_entry or use_oldest_entry:
                 self.logger.info(f"_query_item: Requested start time timestamp={ts_start} / {timestamp_to_timestring(ts_start)} of query for Item='{item.path()}' is prior to oldest entry with timestamp={oldest_log} / {timestamp_to_timestring(oldest_log)}. Oldest available entry will be used.")
                 ts_start = oldest_log
+            else:
+                self.logger.info(f"_query_item: Requested start time timestamp={ts_start} / {timestamp_to_timestring(ts_start)} of query for Item='{item.path()}' is prior to oldest entry with timestamp={oldest_log} / {timestamp_to_timestring(oldest_log)}. Query cancelled.")
+                return result
 
         query_params = {'func': func, 'item_id': item_id, 'ts_start': ts_start, 'ts_end': ts_end, 'group': group, 'group2': group2, 'ignore_value_list': ignore_value_list}
         result = _handle_query_result(self._query_log_timestamp(**query_params))
@@ -2670,13 +2704,10 @@ def convert_timeframe(timeframe: str) -> str:
 
     return convertion.get(timeframe)
 
-
 def convert_duration(timeframe: str, window_dur: str) -> int:
-    """
-    Convert duration
+    """Convert duration"""
 
-    """
-
+    _h_in_d = 24
     _d_in_y = 365
     _d_in_w = 7
     _m_in_y = 12
@@ -2685,22 +2716,32 @@ def convert_duration(timeframe: str, window_dur: str) -> int:
     _d_in_m = _d_in_y / _m_in_y
 
     conversion = {
-        'day': {'day': 1,
+        'hour': {'hour': 1,
+                 'day': _h_in_d,
+                 'week': _h_in_d * _d_in_w,
+                 'month': _h_in_d * _d_in_m,
+                 'year': _h_in_d * _d_in_y,
+                },
+        'day': {'hour': 1 / _h_in_d,
+                'day': 1,
                 'week': _d_in_w,
                 'month': _d_in_m,
                 'year': _d_in_y,
                 },
-        'week': {'day': 1 / _d_in_w,
+        'week': {'hour': 1 / (_h_in_d * _d_in_w),
+                 'day': 1 / _d_in_w,
                  'week': 1,
                  'month': _w_in_m,
                  'year': _w_in_y
                  },
-        'month': {'day': 1 / _d_in_m,
+        'month': {'hour': 1 / (_h_in_d * _d_in_m),
+                  'day': 1 / _d_in_m,
                   'week': 1 / _w_in_m,
                   'month': 1,
                   'year': _m_in_y
                   },
-        'year': {'day': 1 / _d_in_y,
+        'year': {'hour': 1 / (_h_in_d * _d_in_y),
+                 'day': 1 / _d_in_y,
                  'week': 1 / _w_in_y,
                  'month': 1 / _m_in_y,
                  'year': 1
@@ -2875,19 +2916,6 @@ def to_int_float(arg):
 
 ALLOWED_QUERY_TIMEFRAMES = ['year', 'month', 'week', 'day', 'hour']
 ALLOWED_MINMAX_FUNCS = ['min', 'max', 'avg']
-ALL_ONCHANGE_ATTRIBUTES = ['verbrauch_heute', 'verbrauch_woche', 'verbrauch_monat', 'verbrauch_jahr', 'minmax_heute_min', 'minmax_heute_max', 'minmax_woche_min', 'minmax_woche_max', 'minmax_monat_min', 'minmax_monat_max', 'minmax_jahr_min', 'minmax_jahr_max', 'tagesmitteltemperatur_heute']
-ALL_DAILY_ATTRIBUTES = ['verbrauch_heute_minus1', 'verbrauch_heute_minus2', 'verbrauch_heute_minus3', 'verbrauch_heute_minus4', 'verbrauch_heute_minus5', 'verbrauch_heute_minus6', 'verbrauch_heute_minus7', 'verbrauch_rolling_12m_heute_minus1', 'verbrauch_jahreszeitraum_minus1', 'verbrauch_jahreszeitraum_minus2', 'verbrauch_jahreszeitraum_minus3', 'zaehlerstand_heute_minus1', 'zaehlerstand_heute_minus2', 'zaehlerstand_heute_minus3', 'minmax_last_24h_min', 'minmax_last_24h_max', 'minmax_last_24h_avg', 'minmax_last_7d_min', 'minmax_last_7d_max', 'minmax_last_7d_avg', 'minmax_heute_minus1_min', 'minmax_heute_minus1_max', 'minmax_heute_minus1_avg', 'minmax_heute_minus2_min', 'minmax_heute_minus2_max', 'minmax_heute_minus2_avg', 'minmax_heute_minus3_min', 'minmax_heute_minus3_max', 'minmax_heute_minus3_avg', 'tagesmitteltemperatur_heute_minus1', 'tagesmitteltemperatur_heute_minus2', 'tagesmitteltemperatur_heute_minus3', 'serie_minmax_tag_min_30d', 'serie_minmax_tag_max_30d', 'serie_minmax_tag_avg_30d', 'serie_verbrauch_tag_30d', 'serie_zaehlerstand_tag_30d', 'serie_tagesmittelwert_stunde_0d', 'serie_tagesmittelwert_tag_stunde_30d', 'kaeltesumme', 'waermesumme', 'gruenlandtempsumme', 'tagesmitteltemperatur', 'wachstumsgradtage']
-ALL_WEEKLY_ATTRIBUTES = ['verbrauch_woche_minus1', 'verbrauch_woche_minus2', 'verbrauch_woche_minus3', 'verbrauch_woche_minus4', 'verbrauch_rolling_12m_woche_minus1', 'zaehlerstand_woche_minus1', 'zaehlerstand_woche_minus2', 'zaehlerstand_woche_minus3', 'minmax_woche_minus1_min', 'minmax_woche_minus1_max', 'minmax_woche_minus1_avg', 'minmax_woche_minus2_min', 'minmax_woche_minus2_max', 'minmax_woche_minus2_avg', 'serie_minmax_woche_min_30w', 'serie_minmax_woche_max_30w', 'serie_minmax_woche_avg_30w', 'serie_verbrauch_woche_30w', 'serie_zaehlerstand_woche_30w']
-ALL_MONTHLY_ATTRIBUTES = ['verbrauch_monat_minus1', 'verbrauch_monat_minus2', 'verbrauch_monat_minus3', 'verbrauch_monat_minus4', 'verbrauch_monat_minus12', 'verbrauch_rolling_12m_monat_minus1', 'zaehlerstand_monat_minus1', 'zaehlerstand_monat_minus2', 'zaehlerstand_monat_minus3', 'minmax_monat_minus1_min', 'minmax_monat_minus1_max', 'minmax_monat_minus1_avg', 'minmax_monat_minus2_min', 'minmax_monat_minus2_max', 'minmax_monat_minus2_avg', 'serie_minmax_monat_min_15m', 'serie_minmax_monat_max_15m', 'serie_minmax_monat_avg_15m', 'serie_verbrauch_monat_18m', 'serie_zaehlerstand_monat_18m', 'serie_waermesumme_monat_24m', 'serie_kaeltesumme_monat_24m']
-ALL_YEARLY_ATTRIBUTES = ['verbrauch_jahr_minus1', 'verbrauch_jahr_minus2', 'verbrauch_rolling_12m_jahr_minus1', 'zaehlerstand_jahr_minus1', 'zaehlerstand_jahr_minus2', 'zaehlerstand_jahr_minus3', 'minmax_jahr_minus1_min', 'minmax_jahr_minus1_max', 'minmax_jahr_minus1_avg']
-ALL_NEED_PARAMS_ATTRIBUTES = ['kaeltesumme', 'waermesumme', 'gruenlandtempsumme', 'tagesmitteltemperatur', 'wachstumsgradtage', 'db_request']
-ALL_VERBRAUCH_ATTRIBUTES = ['verbrauch_heute', 'verbrauch_woche', 'verbrauch_monat', 'verbrauch_jahr', 'verbrauch_heute_minus1', 'verbrauch_heute_minus2', 'verbrauch_heute_minus3', 'verbrauch_heute_minus4', 'verbrauch_heute_minus5', 'verbrauch_heute_minus6', 'verbrauch_heute_minus7', 'verbrauch_woche_minus1', 'verbrauch_woche_minus2', 'verbrauch_woche_minus3', 'verbrauch_woche_minus4', 'verbrauch_monat_minus1', 'verbrauch_monat_minus2', 'verbrauch_monat_minus3', 'verbrauch_monat_minus4', 'verbrauch_monat_minus12', 'verbrauch_jahr_minus1', 'verbrauch_jahr_minus2', 'verbrauch_rolling_12m_heute_minus1', 'verbrauch_rolling_12m_woche_minus1', 'verbrauch_rolling_12m_monat_minus1', 'verbrauch_rolling_12m_jahr_minus1', 'verbrauch_jahreszeitraum_minus1', 'verbrauch_jahreszeitraum_minus2', 'verbrauch_jahreszeitraum_minus3']
-ALL_ZAEHLERSTAND_ATTRIBUTES = ['zaehlerstand_heute_minus1', 'zaehlerstand_heute_minus2', 'zaehlerstand_heute_minus3', 'zaehlerstand_woche_minus1', 'zaehlerstand_woche_minus2', 'zaehlerstand_woche_minus3', 'zaehlerstand_monat_minus1', 'zaehlerstand_monat_minus2', 'zaehlerstand_monat_minus3', 'zaehlerstand_jahr_minus1', 'zaehlerstand_jahr_minus2', 'zaehlerstand_jahr_minus3']
-ALL_HISTORIE_ATTRIBUTES = ['minmax_last_24h_min', 'minmax_last_24h_max', 'minmax_last_24h_avg', 'minmax_last_7d_min', 'minmax_last_7d_max', 'minmax_last_7d_avg', 'minmax_heute_min', 'minmax_heute_max', 'minmax_heute_minus1_min', 'minmax_heute_minus1_max', 'minmax_heute_minus1_avg', 'minmax_heute_minus2_min', 'minmax_heute_minus2_max', 'minmax_heute_minus2_avg', 'minmax_heute_minus3_min', 'minmax_heute_minus3_max', 'minmax_heute_minus3_avg', 'minmax_woche_min', 'minmax_woche_max', 'minmax_woche_minus1_min', 'minmax_woche_minus1_max', 'minmax_woche_minus1_avg', 'minmax_woche_minus2_min', 'minmax_woche_minus2_max', 'minmax_woche_minus2_avg', 'minmax_monat_min', 'minmax_monat_max', 'minmax_monat_minus1_min', 'minmax_monat_minus1_max', 'minmax_monat_minus1_avg', 'minmax_monat_minus2_min', 'minmax_monat_minus2_max', 'minmax_monat_minus2_avg', 'minmax_jahr_min', 'minmax_jahr_max', 'minmax_jahr_minus1_min', 'minmax_jahr_minus1_max', 'minmax_jahr_minus1_avg']
-ALL_TAGESMITTEL_ATTRIBUTES = ['tagesmitteltemperatur_heute', 'tagesmitteltemperatur_heute_minus1', 'tagesmitteltemperatur_heute_minus2', 'tagesmitteltemperatur_heute_minus3']
-ALL_SERIE_ATTRIBUTES = ['serie_minmax_monat_min_15m', 'serie_minmax_monat_max_15m', 'serie_minmax_monat_avg_15m', 'serie_minmax_woche_min_30w', 'serie_minmax_woche_max_30w', 'serie_minmax_woche_avg_30w', 'serie_minmax_tag_min_30d', 'serie_minmax_tag_max_30d', 'serie_minmax_tag_avg_30d', 'serie_verbrauch_tag_30d', 'serie_verbrauch_woche_30w', 'serie_verbrauch_monat_18m', 'serie_zaehlerstand_tag_30d', 'serie_zaehlerstand_woche_30w', 'serie_zaehlerstand_monat_18m', 'serie_waermesumme_monat_24m', 'serie_kaeltesumme_monat_24m', 'serie_tagesmittelwert_stunde_0d', 'serie_tagesmittelwert_tag_stunde_30d']
-ALL_GEN_ATTRIBUTES = ['general_oldest_value', 'general_oldest_log']
-ALL_COMPLEX_ATTRIBUTES = ['kaeltesumme', 'waermesumme', 'gruenlandtempsumme', 'tagesmitteltemperatur', 'wachstumsgradtage', 'db_request']
 
 
 """
