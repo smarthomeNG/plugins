@@ -11,7 +11,7 @@ plugin:
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1848494-support-thread-databaseaddon-plugin
-    version: 1.1.3                  # Plugin version (must match the version specified in __init__.py)
+    version: 1.1.4                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.9.3.5          # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.8              # minimum Python version to use for this plugin
@@ -170,7 +170,9 @@ item_attributes:
             - serie_zaehlerstand_monat_18m
             - serie_waermesumme_monat_24m
             - serie_kaeltesumme_monat_24m
+            - serie_tagesmittelwert_0d
             - serie_tagesmittelwert_stunde_0d
+            - serie_tagesmittelwert_stunde_30_0d
             - serie_tagesmittelwert_tag_stunde_30d
             - general_oldest_value
             - general_oldest_log
@@ -180,6 +182,10 @@ item_attributes:
             - tagesmitteltemperatur
             - wachstumsgradtage
             - db_request
+            - minmax
+            - minmax_last
+            - verbrauch
+            - zaehlerstand
         valid_list_description:
         # NOTE: valid_list_description is automatically created by using item_attributes_master.py
             - Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages)
@@ -282,6 +288,8 @@ item_attributes:
             - Zählerstand am Monatsende der letzten 18 Monate
             - monatliche Wärmesumme der letzten 24 Monate
             - monatliche Kältesumme der letzten 24 Monate
+            - Tagesmittelwert für den aktuellen Tag
+            - Stundenmittelwert für den aktuellen Tag
             - Stundenmittelwert für den aktuellen Tag
             - Stundenmittelwert pro Tag der letzten 30 Tage (bspw. zur Berechnung der Tagesmitteltemperatur basierend auf den Mittelwert der Temperatur pro Stunde
             - Ausgabe des ältesten Wertes des entsprechenden "Parent-Items" mit database Attribut
@@ -292,6 +300,10 @@ item_attributes:
             - Berechnet die Tagesmitteltemperatur auf Basis der stündlichen Durchschnittswerte eines Tages für die angegebene Anzahl von Tagen (timeframe=day, count=integer)
             - Berechnet die Wachstumsgradtage auf Basis der stündlichen Durchschnittswerte eines Tages für das laufende Jahr mit an Angabe des Temperaturschwellenwertes (threshold=Schwellentemperatur)
             - 'Abfrage der DB: db_addon_params: (func=mandatory, item=mandatory, timespan=mandatory, start=optional, end=optional, count=optional, group=optional, group2=optional)'
+            - 'Berechnet einen min/max/avg Wert für einen bestimmen Zeitraum:  db_addon_params: (func=mandatory, timeframe=mandatory, start=mandatory)'
+            - 'Berechnet einen min/max/avg Wert für ein bestimmtes Zeitfenster von jetzt zurück:  db_addon_params: (func=mandatory, timeframe=mandatory, start=mandatory, end=mandatory)'
+            - 'Berechnet einen Verbrauchswert für einen bestimmen Zeitraum:  db_addon_params: (timeframe=mandatory, start=mandatory end=mandatory)'
+            - 'Berechnet einen Zählerstand für einen bestimmen Zeitpunkt:  db_addon_params: (timeframe=mandatory, start=mandatory)'
         valid_list_item_type:
         # NOTE: valid_list_item_type is automatically created by using item_attributes_master.py
             - num
@@ -396,14 +408,20 @@ item_attributes:
             - list
             - list
             - list
+            - list
+            - list
+            - num
+            - list
+            - num
+            - num
+            - num
+            - list
             - num
             - list
             - num
             - num
             - num
-            - list
             - num
-            - list
         valid_list_calculation:
         # NOTE: valid_list_calculation is automatically created by using item_attributes_master.py
             - onchange
@@ -508,6 +526,8 @@ item_attributes:
             - monthly
             - daily
             - daily
+            - daily
+            - daily
             - no
             - no
             - daily
@@ -516,6 +536,10 @@ item_attributes:
             - daily
             - daily
             - group
+            - timeframe
+            - timeframe
+            - timeframe
+            - timeframe
     db_addon_info:
         type: str
         description:
