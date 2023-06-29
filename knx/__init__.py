@@ -157,6 +157,11 @@ class KNX(SmartPlugin):
                     self.logger.warning(self.translate("could not create directory {}").format(self.projectpath.parent))
 
     def _send(self, data):
+        if not self.alive:
+            # do not send anything while plugin is not really running
+            self.logger.warning(self.translate('send called while self.alive is False, will NOT send anything to KNX'))
+            return
+ 
         if len(data) < 2 or len(data) > 0xffff:
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(self.translate('Illegal data size: {}').format(repr(data)))
@@ -257,6 +262,8 @@ class KNX(SmartPlugin):
         :param client: the calling client for adaption purposes
         :type client: TCP_client
         """
+        if not self.alive:
+            self.logger.warning(self.translate('handle_connect called while self.alive is False'))
 
         # let the knxd use its group address cache
         enable_cache = bytearray([0, KNXD.CACHE_ENABLE])
