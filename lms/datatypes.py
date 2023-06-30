@@ -2,12 +2,19 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 
 import lib.model.sdp.datatypes as DT
+import re
 
 
 # handle feedback if rescan is running or not
 class DT_LMSRescan(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
         return True if data in ["1", "done"] else False
+
+
+class DT_LMSPlaylists(DT.Datatype):
+    def get_shng_data(self, data, type=None, **kwargs):
+        _playlists = list(filter(None,re.split(r'id:|\sid:|\splaylist:', data)))
+        return dict(zip(*[iter(_playlists)]*2))
 
 
 class DT_LMSConnection(DT.Datatype):

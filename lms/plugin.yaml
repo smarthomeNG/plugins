@@ -15,6 +15,14 @@ plugin:
 
 parameters:
 
+    standby_item_path:
+        type: str
+        default: ''
+
+        description:
+            de: Item-Pfad für das Standby-Item
+            en: item path for standby switch item
+
     host:
         type: str
         mandatory: true
@@ -253,7 +261,7 @@ item_structs:
                 -   database
                 -   database.rescan
                 sqb_read_initial: true
-                sqb_read_cycle: '60'
+                sqb_read_cycle: '120'
                 sqb_custom1: ''
 
             progress:
@@ -585,6 +593,12 @@ item_structs:
                 enforce_updates: true
                 sqb_read_group_trigger: player.playlist
 
+            rename:
+                type: str
+                sqb_command: player.playlist.rename
+                sqb_read: false
+                sqb_write: false
+
             repeat:
                 type: str
                 sqb_command: player.playlist.repeat
@@ -778,6 +792,35 @@ item_structs:
                 type: bool
                 enforce_updates: true
                 sqb_read_group_trigger: player.info
+
+            playlists:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    sqb_read_group_trigger: player.info.playlists
+
+                count:
+                    type: num
+                    sqb_command: player.info.playlists.count
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   player
+                    -   player.info
+                    -   player.info.playlists
+                    sqb_read_initial: true
+
+                names:
+                    type: dict
+                    sqb_command: player.info.playlists.names
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   player
+                    -   player.info
+                    -   player.info.playlists
+                    sqb_read_initial: true
 
             status:
                 type: str
@@ -978,7 +1021,7 @@ item_structs:
                     -   ALL.database
                     -   ALL.database.rescan
                     sqb_read_initial: true
-                    sqb_read_cycle: '60'
+                    sqb_read_cycle: '120'
                     sqb_custom1: ''
 
                 progress:
@@ -1325,6 +1368,12 @@ item_structs:
                     enforce_updates: true
                     sqb_read_group_trigger: ALL.player.playlist
 
+                rename:
+                    type: str
+                    sqb_command: player.playlist.rename
+                    sqb_read: false
+                    sqb_write: false
+
                 repeat:
                     type: str
                     sqb_command: player.playlist.repeat
@@ -1524,6 +1573,37 @@ item_structs:
                     type: bool
                     enforce_updates: true
                     sqb_read_group_trigger: ALL.player.info
+
+                playlists:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        sqb_read_group_trigger: ALL.player.info.playlists
+
+                    count:
+                        type: num
+                        sqb_command: player.info.playlists.count
+                        sqb_read: true
+                        sqb_write: false
+                        sqb_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.info
+                        -   ALL.player.info.playlists
+                        sqb_read_initial: true
+
+                    names:
+                        type: dict
+                        sqb_command: player.info.playlists.names
+                        sqb_read: true
+                        sqb_write: false
+                        sqb_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.info
+                        -   ALL.player.info.playlists
+                        sqb_read_initial: true
 
                 status:
                     type: str

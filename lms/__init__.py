@@ -82,6 +82,13 @@ class lms(SmartDevicePlugin):
         if not custom:
             return
 
+        if command == 'player.info.playlists.names':
+            self.logger.debug(f"Got command playlist names {command} data {data} value {value} custom {custom} by {by}")
+            trigger_read('player.playlist.id')
+            trigger_read('player.playlist.name')
+
+        if command == 'playlist.rename':
+            trigger_read('info.playlists.names')
         # set alarm
         if command == 'player.control.alarms':
             # This does not really work currently. The created string is somehow correct.
