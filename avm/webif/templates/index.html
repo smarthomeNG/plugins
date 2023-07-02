@@ -287,7 +287,15 @@
                     <td class="py-1">{{ item.property.type }}</td>
                     <td class="py-1">{{ item_config['avm_data_type'] }}</td>
                     <td class="py-1" style="text-align: right">{{ item_config['avm_data_cycle'] }}</td>
-                    <td class="py-1" id="{{ item.id() }}_tr064_value">{{ item.property.value }}</td>
+                    <td class="py-1" id="{{ item.id() }}_tr064_value">
+                        {% if item.property.value == True or item.property.value == False %}
+                            {{ item.property.value|lower }}
+                        {% elif item.property.value|int != 0 %}
+                            {{ item.property.value|int }}
+                        {% else %}
+                            {{ item.property.value }}
+                        {% endif %}
+                        </td>
                     <td class="py-1" id="{{ item.id() }}_tr064_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     <td class="py-1" id="{{ item.id() }}_tr064_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 </tr>
@@ -322,7 +330,15 @@
                     <td class="py-1">{{ item.property.type }}</td>
                     <td class="py-1">{{ item_config['avm_data_type'] }}</td>
                     <td class="py-1" style="text-align: right">{{ item_config['avm_data_cycle'] }}</td>
-                    <td class="py-1" id="{{ item.id() }}_aha_value">{{ item.property.value }}</td>
+                    <td class="py-1" id="{{ item.id() }}_aha_value">
+                        {% if item.property.value == True or item.property.value == False %}
+                            {{ item.property.value|lower }}
+                        {% elif item.property.value|int != 0 %}
+                            {{ item.property.value|int }}
+                        {% else %}
+                            {{ item.property.value }}
+                        {% endif %}
+                    </td>
                     <td class="py-1" id="{{ item.id() }}_aha_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     <td class="py-1" id="{{ item.id() }}_aha_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 </tr>
@@ -388,7 +404,15 @@
                     <td class="py-1">{{ item_id }}</td>
                     <td class="py-1">{{ item.property.type }}</td>
                     <td class="py-1">{{ item.conf[instance_key]}}</td>
-                    <td class="py-1" id="{{ item_id }}_call_value">{{ item.property.value }}</td>
+                    <td class="py-1" id="{{ item_id }}_call_value">
+                        {% if item.property.value == True or item.property.value == False %}
+                            {{ item.property.value|lower }}
+                        {% elif item.property.value|int != 0 %}
+                            {{ item.property.value|int }}
+                        {% else %}
+                            {{ item.property.value }}
+                        {% endif %}
+                    </td>
                     <td class="py-1" id="{{ item_id }}_call_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     <td class="py-1" id="{{ item_id }}_call_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 </tr>

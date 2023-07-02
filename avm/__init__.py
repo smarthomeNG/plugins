@@ -87,19 +87,8 @@ def to_float(arg) -> float:
         return 0
 
 
-def to_int_to_bool(arg) -> bool:
-    arg = to_int(arg)
-    try:
-        return bool(arg)
-    except (ValueError, TypeError):
-        return False
-
-
 def clamp(n, min_n, max_n):
-    try:
-        return max(min(max_n, n), min_n)
-    except (ValueError, TypeError):
-        return 0
+    return max(min(max_n, n), min_n)
 
 
 def walk_nodes(root, nodes: list):
@@ -124,7 +113,7 @@ class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = '2.0.7'
+    PLUGIN_VERSION = '2.0.8'
 
     # ToDo: FritzHome.handle_updated_item: implement 'saturation'
     # ToDo: FritzHome.handle_updated_item: implement 'unmapped_hue'
@@ -162,30 +151,30 @@ class AVM(SmartPlugin):
         # init FritzDevice
         try:
             self.fritz_device = FritzDevice(_host, _port, ssl, _verify, _username, _passwort, _call_monitor_incoming_filter, _use_tr064_backlist, _log_entry_count, self)
-        except IOError as e:
+        except FritzAuthorizationError as e:
             self.logger.warning(f"{e} occurred during establishing connection to FritzDevice via TR064-Interface. Not connected.")
             self.fritz_device = None
         else:
-            self.logger.debug("Connection to FritzDevice via TR064-Interface established.")
+            self.logger.info("Connection to FritzDevice via TR064-Interface established.")
 
         # init FritzHome
         try:
             self.fritz_home = FritzHome(_host, ssl, _verify, _username, _passwort, _log_entry_count, self)
-        except IOError as e:
+        except FritzAuthorizationError as e:
             self.logger.warning(f"{e} occurred during establishing connection to FritzDevice via AHA-HTTP-Interface. Not connected.")
             self.fritz_home = None
         else:
-            self.logger.debug("Connection to FritzDevice via AHA-HTTP-Interface established.")
+            self.logger.info("Connection to FritzDevice via AHA-HTTP-Interface established.")
 
         # init Call Monitor
         if self._call_monitor and self.fritz_device and self.fritz_device.connected:
             try:
                 self.monitoring_service = Callmonitor(_host, 1012, self.fritz_device.get_contact_name_by_phone_number, _call_monitor_incoming_filter, self)
-            except IOError as e:
+            except FritzAuthorizationError as e:
                 self.logger.warning(f"{e} occurred during establishing connection to FritzDevice CallMonitor. Not connected.")
                 self.monitoring_service = None
             else:
-                self.logger.debug("Connection to FritzDevice CallMonitor established.")
+                self.logger.info("Connection to FritzDevice CallMonitor established.")
         else:
             self.monitoring_service = None
 
@@ -782,7 +771,7 @@ class FritzDevice:
             # check connection:
             conn_test_result = self.model_name()
             if isinstance(conn_test_result, int):
-                raise IOError(f"Error {conn_test_result}-'{self.ERROR_CODES.get(conn_test_result, 'unknown')}'")
+                raise FritzAuthorizationError(f"Error {conn_test_result}-'{self.ERROR_CODES.get(conn_test_result, 'unknown')}'")
 
             self.connected = True
             if self.is_fritzbox():
@@ -805,11 +794,12 @@ class FritzDevice:
         # to be set value
         to_be_set_value = item()
 
-        # define command per avm_data_type
-        _dispatcher = {'wlanconfig':        ('set_wlan',       {'NewEnable': int(to_be_set_value)},                                index),
-                       'wps_active':        ('set_wps',        {'NewX_AVM_DE_WPSEnable': int(to_be_set_value)},                    index),
-                       'tam':               ('set_tam',        {'NewIndex': int(index), 'NewEnable': int(to_be_set_value)},        None),
-                       'deflection_enable': ('set_deflection', {'NewDeflectionId': int(index), 'NewEnable': int(to_be_set_value)}, None),
+        # define command per avm_data_type // all avm_data_type of TR064_RW_ATTRIBUTES must be defined here
+        _dispatcher = {'wlanconfig':        ('set_wlan',       {'NewEnable': int(to_be_set_value)},                                     index),
+                       'wps_active':        ('set_wps',        {'NewX_AVM_DE_WPSEnable': int(to_be_set_value)},                         index),
+                       'tam':               ('set_tam',        {'NewIndex': int(index), 'NewEnable': int(to_be_set_value)},             None),
+                       'deflection_enable': ('set_deflection', {'NewDeflectionId': int(index), 'NewEnable': int(to_be_set_value)},      None),
+                       'aha_device':        ('set_aha_device', {'NewAIN': index, 'NewSwitchState': 'ON' if to_be_set_value else 'OFF'}, None)
                        }
 
         # do logging
@@ -923,9 +913,13 @@ class FritzDevice:
     def cyclic_item_update(self, read_all: bool = False):
         """Updates Item Values"""
 
+        if not self._plugin_instance.alive:
+            return
+
         current_time = int(time.time())
 
         # iterate over items and get data
+        item_count = 0
         for item in self.item_list():
 
             if not self.connected:
@@ -963,6 +957,7 @@ class FritzDevice:
             self.logger.debug(f"Item={item.path()} with avm_data_type={avm_data_type} and index={index} will be updated")
 
             # get data and set item value
+            item_count += 1
             if not self._update_item_value(item, avm_data_type, index) and self.use_tr064_blacklist:
                 error_count += 1
                 self.logger.debug(f"{item.path()} caused error. New error_count: {error_count}. Item will be blacklisted after more than 2 errors.")
@@ -973,6 +968,8 @@ class FritzDevice:
 
         # clear data cache dict after update cycle
         self._clear_data_cache()
+
+        self.logger.debug(f"Update of {item_count} TR064-Items took {int(time.time()) - current_time}s")
 
     def _update_item_value(self, item, avm_data_type: str, index: str) -> bool:
         """ Polls data and set item value; Return True if action was successful, else False"""
@@ -2108,6 +2105,10 @@ class FritzHome:
     def _request(self, url: str, params: dict = None):
         """
         Send a get request with parameters and return response as tuple with (content_type, response)
+        Raises FritzHttpTimeoutError on timeout
+        Raises a FritzHttpRequestError if the device does not support the command or arguments.
+        Raises FritzHttpInterfaceError on missing rights.
+        Raises a FritzAuthorizationError if server error occurred.
 
         :param url:          URL to be requested
         :param params:       params for request
@@ -2135,9 +2136,7 @@ class FritzHome:
                 else:
                     msg = "HTTP request timed out."
                 self.logger.info(msg)
-                raise IOError(msg)
-            except requests.exceptions.ConnectionError:
-                raise IOError("ConnectionError during HTTP request.")
+                raise FritzHttpTimeoutError(msg)
 
             if response.status_code == 200:
                 content_type = response.headers.get('content-type')
@@ -2148,17 +2147,17 @@ class FritzHome:
             elif response.status_code == 403:
                 msg = f"{response.status_code!r} Forbidden: 'Session-ID ungültig oder Benutzer nicht autorisiert'"
                 self.logger.info(msg)
-                raise IOError(msg)
+                raise FritzHttpInterfaceError(msg)
 
             elif response.status_code == 400:
                 msg = f"{response.status_code!r} HTTP Request fehlerhaft, Parameter sind ungültig, nicht vorhanden oder Wertebereich überschritten"
                 self.logger.info(f"Error {msg}, params: {params}")
-                raise IOError(msg)
+                raise FritzHttpRequestError(msg)
 
             else:
                 msg = f"Error {response.status_code!r} Internal Server Error: 'Interner Fehler'"
                 self.logger.info(f"{msg}, params: {params}")
-                raise IOError(msg)
+                raise FritzAuthorizationError(msg)
 
     def aha_request(self, cmd: str, ain: str = None, param: dict = None, result_type: str = None):
         """Send an AHA request.
@@ -2178,7 +2177,7 @@ class FritzHome:
 
         try:
             header, content = self._request(url=url, params=params)
-        except IOError as e:
+        except (FritzAuthorizationError, FritzHttpTimeoutError, FritzHttpInterfaceError, FritzHttpRequestError) as e:
             self.logger.warning(f"Error '{e}' occurred during requesting AHA Interface")
             return None
 
@@ -2195,7 +2194,7 @@ class FritzHome:
                 return None
 
             if result_type == 'bool':
-                return to_int_to_bool(content)
+                return bool(to_int(content))
             elif result_type == 'int':
                 return to_int(content)
             elif result_type == 'float':
@@ -2255,7 +2254,7 @@ class FritzHome:
 
             if sid2 == "0000000000000000":
                 self.logger.warning(f"Login failed for user '{self.user}'")
-                raise IOError(f"Error 'AHA Login failed for user '{self.user}''")
+                raise FritzAuthorizationError(f"Error 'AHA Login failed for user '{self.user}''")
 
             self._sid = sid2
 
@@ -2951,7 +2950,7 @@ class FritzHome:
         # get data
         try:
             header, content = self._request(url=url, params={})
-        except IOError as e:
+        except (FritzAuthorizationError, FritzHttpTimeoutError, FritzHttpInterfaceError, FritzHttpRequestError) as e:
             self.logger.warning(f"Error '{e}' occurred during requesting AHA Interface")
             return None
 
@@ -2986,7 +2985,7 @@ class FritzHome:
         # get data
         try:
             header, content = self._request(url=url, params={})
-        except IOError as e:
+        except (FritzAuthorizationError, FritzHttpTimeoutError, FritzHttpInterfaceError, FritzHttpRequestError) as e:
             self.logger.warning(f"Error '{e}' occurred during requesting AHA Interface")
             return None
 
@@ -3285,7 +3284,6 @@ class FritzHome:
             if not self.connected:
                 return
 
-        @property
         def has_light(self):
             """Check if the device has LightBulb function."""
             return self._has_feature(FritzHome.FritzhomeDeviceFeatures.LIGHT)
@@ -3303,10 +3301,9 @@ class FritzHome:
             if not self.connected:
                 return
 
-            if self.has_powermeter:
+            if self.has_powermeter():
                 self._update_powermeter_from_node(node)
 
-        @property
         def has_powermeter(self):
             """Check if the device has powermeter function."""
             return self._has_feature(FritzHome.FritzhomeDeviceFeatures.POWER_METER)
@@ -3618,10 +3615,9 @@ class FritzHome:
                 self.levelpercentage = 0
                 return
 
-            if self.has_level:
+            if self.has_level():
                 self._update_level_from_node(node)
 
-        @property
         def has_level(self):
             """Check if the device has dimmer function."""
             return self._has_feature(FritzHome.FritzhomeDeviceFeatures.LEVEL)
@@ -3663,10 +3659,9 @@ class FritzHome:
             if self.connected is False:
                 return
 
-            if self.has_color:
+            if self.has_color():
                 self._update_color_from_node(node)
 
-        @property
         def has_color(self):
             """Check if the device has LightBulb function."""
             return self._has_feature(FritzHome.FritzhomeDeviceFeatures.COLOR)
@@ -3732,31 +3727,31 @@ class FritzHome:
 
         def get_colors(self):
             """Get the supported colors."""
-            if self.has_color:
+            if self.has_color():
                 return self._fritz.get_colors(self.ain)
             else:
                 return {}
 
         def set_color(self, hsv, duration=0):
             """Set HSV color."""
-            if self.has_color:
+            if self.has_color():
                 self._fritz.set_color(self.ain, hsv, duration, True)
 
         def set_unmapped_color(self, hsv, duration=0):
             """Set unmapped HSV color (Free color selection)."""
-            if self.has_color:
+            if self.has_color():
                 self._fritz.set_color(self.ain, hsv, duration, False)
 
         def get_color_temps(self):
             """Get the supported color temperatures energy."""
-            if self.has_color:
+            if self.has_color():
                 return self._fritz.get_color_temps(self.ain)
             else:
                 return []
 
         def set_color_temp(self, temperature, duration=0):
             """Set white color temperature."""
-            if self.has_color:
+            if self.has_color():
                 self._fritz.set_color_temp(self.ain, temperature, duration)
 
     class FritzhomeDeviceHumidity(FritzhomeDeviceBase):
@@ -3860,7 +3855,7 @@ class Callmonitor:
         # connect
         self.connect()
         if not self.conn:
-            raise IOError("Connection Error")
+            raise FritzAuthorizationError("Callmonitor Connection Error")
 
     def connect(self):
         """
@@ -4110,7 +4105,8 @@ class Callmonitor:
                     self._duration_counter_thread_incoming.join(1)
                 elif direction == 'outgoing':
                     self._duration_counter_thread_outgoing.join(1)
-            except Exception:
+            except Exception as e:
+                self.logger.warning(f"Error {e!r} occurred during stopping counter of Callmonitor")
                 pass
 
     def _count_duration_incoming(self):
@@ -4342,9 +4338,34 @@ class Callmonitor:
                 self._call_incoming_cid = None
 
 
+class FritzHttpInterfaceError(Exception):
+    """
+    Exception raised on calling the aha-interface and getting a response with a status-code other than 200.
+    """
+
+
+class FritzHttpRequestError(Exception):
+    """
+    Exception raised on calling the aha-interface with non-valid parameters
+    """
+
+
+class FritzHttpTimeoutError(Exception):
+    """
+    Exception raised on calling the aha-interface and getting a timeout
+    """
+
+
+class FritzAuthorizationError(Exception):
+    """
+    Authentication error. Not allowed to access the box at all.
+    """
+
+
 #
 # static XML helpers
 #
+
 
 def get_node_value(elem, node):
     return elem.findtext(node)
