@@ -13,7 +13,7 @@ commands = {
     'database': {
         'rescan': {
             'start': {'read': False, 'write': True, 'write_cmd': 'rescan {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'cmd_settings': {'valid_list': ['playlists', 'onlinelibrary', 'external', 'full']}, 'item_attrs': {'attributes': {'remark': 'playlists|onlinelibrary|external|full|full file://some/path'}, 'custom1': ''}},
-            'running': {'read': True, 'write': False, 'read_cmd': 'rescan ?', 'item_type': 'bool', 'dev_datatype': 'LMSRescan', 'reply_pattern': 'rescan (.*)', 'item_attrs': {'cycle': '60', 'initial': True, 'custom1': ''}},
+            'running': {'read': True, 'write': False, 'read_cmd': 'rescan ?', 'item_type': 'bool', 'dev_datatype': 'LMSRescan', 'reply_pattern': 'rescan (.*)', 'item_attrs': {'cycle': '120', 'initial': True, 'custom1': ''}},
             'progress': {'read': True, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'scanner notify progress:(.*)', 'item_attrs': {'custom1': ''}},
             'runningtime': {'read': True, 'read_cmd': 'rescanprogress totaltime', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'rescanprogress totaltime .* rescan:([0-9]{2}:[0-9]{2}:[0-9]{2})', 'item_attrs': {'custom1': ''}},
             'fail': {'read': True, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'rescanprogress totaltime rescan:0 lastscanfailed:(.*)', 'item_attrs': {'custom1': ''}},
@@ -53,6 +53,7 @@ commands = {
             'sleep': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} sleep ?', 'write_cmd': '{CUSTOM_ATTR1} sleep {VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} sleep (.*[^?])', 'item_attrs': {'initial': True}}
         },
         'playlist': {
+            'rename': {'read': False, 'write': False, 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'{CUSTOM_PATTERN1} playlists rename\s+(.*)'},
             'repeat': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist repeat ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist repeat {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'{CUSTOM_PATTERN1} playlist repeat {LOOKUP}', '{CUSTOM_PATTERN1} status(?:.*)playlist repeat:{LOOKUP}'], 'lookup': 'REPEAT', 'item_attrs': {'attributes': {'remark': '0 = Off, 1 = Song, 2 = Playlist'}, 'lookup_item': True}},
             'shuffle': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist shuffle ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist shuffle {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'{CUSTOM_PATTERN1} playlist shuffle {LOOKUP}', '{CUSTOM_PATTERN1} status(?:.*)playlist shuffle:{LOOKUP}'], 'lookup': 'SHUFFLE', 'item_attrs': {'attributes': {'remark': '0 = Off, 1 = Song, 2 = Album'}, 'lookup_item': True}},
             'index': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist index ?', 'write_cmd': '{CUSTOM_ATTR1} playlist index {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'{CUSTOM_PATTERN1} playlist (?:index|newsong .*) (\d+)$', '{CUSTOM_PATTERN1} status(?:.*)playlist index:(\d*[^\s]+)', '{CUSTOM_PATTERN1} prefset server currentSong (\d+)$', '{CUSTOM_PATTERN1} playlist jump (\d*)', '{CUSTOM_PATTERN1} play (\d*)'], 'item_attrs': {'initial': True}},
@@ -78,6 +79,11 @@ commands = {
             'customskip': {'read': False, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} customskip setfilter filter{VALUE}.cs.xml', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'cache': True}}}
         },
         'info': {
+            'playlists': {
+                'count': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} playlists', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': r'{CUSTOM_PATTERN1} playlists\s+count:(\d+)', 'item_attrs': {'initial': True}},
+                'names': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} playlists name', 'item_type': 'dict', 'dev_datatype': 'LMSPlaylists', 'reply_pattern': r'{CUSTOM_PATTERN1} playlists name\s+(.*)\s+count:(?:\d+)', 'item_attrs': {'initial': True}},
+
+            },
             'status': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} status', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'{CUSTOM_PATTERN1} status\s+(.*)', 'item_attrs': {'initial': True}},
             'connected': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} connected ?', 'item_type': 'bool', 'dev_datatype': 'LMSConnection', 'reply_pattern': [r'{CUSTOM_PATTERN1} (?:connected|client) (\d|disconnect|reconnect)', '{CUSTOM_PATTERN1} status(?:.*)player_connected:([^\s]+)']},
             'ip': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} ip ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': ['{CUSTOM_PATTERN1} ip (.*)', '{CUSTOM_PATTERN1} status(?:.*)player_ip:([^:\s]+)']},

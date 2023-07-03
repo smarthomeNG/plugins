@@ -26,6 +26,7 @@ import os
 import sys
 
 if __name__ == '__main__':
+    builtins.SDP_standalone = True
 
     class SmartPlugin():
         pass
@@ -36,6 +37,8 @@ if __name__ == '__main__':
     BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
     sys.path.insert(0, BASE)
 
+else:
+    builtins.SDP_standalone = False
 
 from lib.model.sdp.globals import (CUSTOM_SEP, PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_RECURSIVE, PLUGIN_ATTR_CONN_TERMINATOR)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
@@ -79,6 +82,13 @@ class lms(SmartDevicePlugin):
         if not custom:
             return
 
+        if command == 'player.info.playlists.names':
+            self.logger.debug(f"Got command playlist names {command} data {data} value {value} custom {custom} by {by}")
+            trigger_read('player.playlist.id')
+            trigger_read('player.playlist.name')
+
+        if command == 'playlist.rename':
+            trigger_read('info.playlists.names')
         # set alarm
         if command == 'player.control.alarms':
             # This does not really work currently. The created string is somehow correct.
