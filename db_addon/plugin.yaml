@@ -588,6 +588,12 @@ item_attributes:
             de: Parameter für eine Auswertefunktion des DB-Addon Plugins im Format 'kwargs' enclosed in quotes like 'keyword=argument, keyword=argument'
             en: Parameters of a DB-Addon Plugin evaluation function. Need to have format of 'kwargs' enclosed in quotes like 'keyword=argument, keyword=argument'
 
+    db_addon_params_dict:
+        type: dict
+        description:
+            de: Parameter für eine Auswertefunktion des DB-Addon Plugins im Format eines Dictionary
+            en: Parameters of a DB-Addon Plugin evaluation function. Need to have format of a dictionary
+
     db_addon_startup:
         type: bool
         description:

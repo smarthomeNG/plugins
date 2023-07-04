@@ -92,10 +92,10 @@ class DatabaseAddOn(SmartPlugin):
         # define debug logs
         self.parse_debug = True                      # Enable / Disable debug logging for method 'parse item'
         self.execute_debug = True                    # Enable / Disable debug logging for method 'execute items'
-        self.sql_debug = True                        # Enable / Disable debug logging for sql stuff
+        self.sql_debug = False                       # Enable / Disable debug logging for sql stuff
         self.ondemand_debug = True                   # Enable / Disable debug logging for method 'handle_ondemand'
         self.onchange_debug = True                   # Enable / Disable debug logging for method 'handle_onchange'
-        self.prepare_debug = True                    # Enable / Disable debug logging for query preparation
+        self.prepare_debug = False                   # Enable / Disable debug logging for query preparation
 
         # define default mysql settings
         self.default_connect_timeout = 60
@@ -374,6 +374,10 @@ class DatabaseAddOn(SmartPlugin):
             """get query parameters from item attribute db_addon_params"""
 
             db_addon_params = params_to_dict(self.get_iattr_value(item.conf, 'db_addon_params'))
+
+            if not db_addon_params:
+                db_addon_params = self.get_iattr_value(item.conf, 'db_addon_params_dict')
+
             new_db_addon_params = {}
             possible_params = required_params = []
 
@@ -836,6 +840,10 @@ class DatabaseAddOn(SmartPlugin):
             if result and result < 0:
                 self.logger.warning(f"Result of item {item.path()} with {db_addon_fct=} was negative. Something seems to be wrong.")
 
+        # handle item starting with 'zaehlerstand_'
+        elif db_addon_fct in ALL_ZAEHLERSTAND_ATTRIBUTES:
+            result = self._handle_zaehlerstand(params)
+
         # handle 'serie_tagesmittelwert_stunde_30_0d' and 'serie_tagesmittelwert_tag_stunde_30d'
         elif db_addon_fct in SERIE_ATTRIBUTES_MITTEL_H1 + SERIE_ATTRIBUTES_MITTEL_D_H:
             result = self._prepare_temperature_list(**params)
@@ -1295,8 +1303,21 @@ class DatabaseAddOn(SmartPlugin):
     #   Calculation methods / Using Item Object
     ##############################################
 
-    def _handle_verbrauch(self, query_params: dict):
-        """Handle execution of verbrauch calculation"""
+    def _handle_verbrauch(self, query_params: dict) -> Union[None, float]:
+        """
+        Ermittlung des Verbrauches innerhalb eines Zeitraumes
+
+        Die Vorgehensweise ist:
+            - Endwert: Abfrage des letzten Eintrages im Zeitraum
+                - Ergibt diese Abfrage einen Wert, gab eines einen Eintrag im Zeitraum in der DB, es wurde also etwas verbraucht, dann entspricht dieser dem Endzählerstand
+                - Ergibt diese Abfrage keinen Wert, gab eines keinen Eintrag im Zeitraum in der DB, es wurde also nichts verbraucht -> Rückgabe von 0
+            - Startwert: Abfrage des letzten Eintrages im Zeitraum vor dem Abfragezeitraum
+                - Ergibt diese Abfrage einen Wert, entspricht dieser dem Zählerstand am Ende des Zeitraumes vor dem Abfragezeitraum
+                - Ergibt diese Abfrage keinen Wert, wurde in Zeitraum, vor dem Abfragezeitraum nichts verbraucht, der Anfangszählerstand kann so nicht ermittelt werden.
+                    - Abfrage des nächsten Wertes vor dem Zeitraum
+                    - Ergibt diese Abfrage einen Wert, entspricht dieser dem Anfangszählerstand
+                    - Ergibt diese Abfrage keinen Wert, Anfangszählerstand = 0
+        """
 
         # define start, end for verbrauch_jahreszeitraum_timedelta
         if 'timedelta' in query_params:
@@ -1315,40 +1336,87 @@ class DatabaseAddOn(SmartPlugin):
         if self.prepare_debug:
             self.logger.debug(f"called with {query_params=}")
 
-        _result = None
-
         # get value for end and check it;
-        query_params.update({'func': 'max', 'start': end, 'end': end})
+        query_params.update({'func': 'last', 'start': end, 'end': end})
         value_end = self._query_item(**query_params)[0][1]
 
         if self.prepare_debug:
             self.logger.debug(f"{value_end=}")
 
-        if value_end is None:  # if None (Error) return
-            return
-        elif value_end == 0:  # wenn die Query "None" ergab, was wiederum bedeutet, dass zum Abfragezeitpunkt keine Daten vorhanden sind, ist der value hier gleich 0 → damit der Verbrauch für die Abfrage auch Null
-            return 0
+        if value_end is None or value_end == 0:
+            return value_end
 
         # get value for start and check it;
-        query_params.update({'func': 'min'})
+        query_params.update({'func': 'last', 'start': end+1, 'end': end+1})
         value_start = self._query_item(**query_params)[0][1]
         if self.prepare_debug:
             self.logger.debug(f"{value_start=}")
 
-        if value_start is None:  # if None (Error) return
+        if value_start is None:
+            if self.prepare_debug:
+                self.logger.debug(f"Error occurred during query. Return.")
             return
 
-        if value_start == 0:  # wenn der Wert zum Startzeitpunkt 0 ist, gab es dort keinen Eintrag (also keinen Verbrauch), dann frage den nächsten Eintrag in der DB ab.
+        if value_start == 0:
             self.logger.info(f"No DB Entry found for requested start date. Looking for next DB entry.")
-            query_params.update({'func': 'next', 'start': start})
+            query_params.update({'func': 'next', 'start': start+1})
             value_start = self._query_item(**query_params)[0][1]
             if self.prepare_debug:
                 self.logger.debug(f"next available value is {value_start=}")
 
-        # calculate result
-        if value_start is not None:
-            _new_value = value_end - value_start
-            return _new_value if isinstance(_new_value, int) else round(_new_value, 1)
+        if not value_start:
+            value_start = 0
+            if self.prepare_debug:
+                self.logger.debug(f"No start value available. Will be set to 0 as default")
+
+        # calculate consumption
+        consumption = value_end - value_start
+        if self.prepare_debug:
+            self.logger.debug(f"{consumption=}")
+
+        if isinstance(consumption, float):
+            if consumption.is_integer():
+                consumption = int(consumption)
+            else:
+                consumption = round(consumption, 1)
+
+        return consumption
+
+    def _handle_zaehlerstand(self, query_params: dict) -> Union[float, None]:
+        """
+        Ermittlung des Zählerstandes zum Ende eines Zeitraumes
+
+        Die Vorgehensweise ist:
+            - Abfrage des letzten Eintrages im Zeitraum
+            - Ergibt diese Abfrage einen Wert, entspricht dieser dem Zählerstand
+            - Ergibt diese Abfrage keinen Wert, dann
+                - Abfrage des nächsten Wertes vor dem Zeitraum
+                - Ergibt diese Abfrage einen Wert, entspricht dieser dem Zählerstand
+                - Ergibt diese Abfrage keinen Wert, dann Rückgabe von None
+        """
+
+        if self.prepare_debug:
+            self.logger.debug(f"called with {query_params=}")
+
+        start = query_params['start']
+        end = query_params['end']
+
+        # get last value of timeframe
+        query_params.update({'func': 'last', 'start': start, 'end': end})
+        last_value = self._query_item(**query_params)[0][1]
+
+        if last_value == 0:
+            # get last value (next) before timeframe
+            query_params.update({'func': 'next'})
+            last_value = self._query_item(**query_params)[0][1]
+
+        if isinstance(last_value, float):
+            if last_value.is_integer():
+                last_value = int(last_value)
+            else:
+                last_value = round(last_value, 1)
+
+        return last_value
 
     def _handle_kaeltesumme(self, database_item: Item, year: Union[int, str] = None, month: Union[int, str] = None) -> Union[int, None]:
         """
@@ -2243,29 +2311,50 @@ class DatabaseAddOn(SmartPlugin):
             'sum_min_neg': 'time, SUM(value) as value FROM (SELECT time, IF(min(val_num) < 0, ROUND(MIN(val_num), 1), 0) as value ',
             'diff_max':    'time, value1 - LAG(value1) OVER (ORDER BY time) AS value FROM (SELECT time, ROUND(MAX(val_num), 1) as value1 ',
             'next':        'time, val_num as value ',
-            'raw':         'time, val_num as value '
+            'raw':         'time, val_num as value ',
+            'first':       'time, val_num as value ',
+            'last':        'time, val_num as value ',
         }
 
         _table_alias = {
-            'avg': '',
-            'avg1': ') AS table1 ',
-            'min': '',
-            'max': '',
-            'max1': ') AS table1 ',
-            'sum': '',
-            'on': '',
-            'integrate': '',
-            'sum_max': ') AS table1 ',
-            'sum_avg': ') AS table1 ',
+            'avg':         '',
+            'avg1':        ') AS table1 ',
+            'min':         '',
+            'max':         '',
+            'max1':        ') AS table1 ',
+            'sum':         '',
+            'on':          '',
+            'integrate':   '',
+            'sum_max':     ') AS table1 ',
+            'sum_avg':     ') AS table1 ',
             'sum_min_neg': ') AS table1 ',
-            'diff_max': ') AS table1 ',
-            'next': '',
-            'raw': '',
+            'diff_max':    ') AS table1 ',
+            'next':        '',
+            'raw':         '',
+            'first':       '',
+            'last':        '',
         }
 
-        _order = "time DESC LIMIT 1 " if func == "next" else "time ASC "
+        _order = {
+            'avg':         'time ASC ',
+            'avg1':        'time ASC ',
+            'min':         'time ASC ',
+            'max':         'time ASC ',
+            'max1':        'time ASC ',
+            'sum':         'time ASC ',
+            'on':          'time ASC ',
+            'integrate':   'time ASC ',
+            'sum_max':     'time ASC ',
+            'sum_avg':     'time ASC ',
+            'sum_min_neg': 'time ASC ',
+            'diff_max':    'time ASC ',
+            'next':        'time DESC LIMIT 1 ',
+            'raw':         'time ASC ',
+            'first':       'time ASC LIMIT 1 ',
+            'last':        'time DESC LIMIT 1 ',
+        }
 
-        _where = "item_id = :item_id AND time < :ts_start" if func == "next" else "item_id = :item_id AND time BETWEEN :ts_start AND :ts_end "
+        _where = "item_id = :item_id AND time < :ts_start " if func == "next" else "item_id = :item_id AND time BETWEEN :ts_start AND :ts_end "
 
         _db_table = 'log '
 
@@ -2275,7 +2364,7 @@ class DatabaseAddOn(SmartPlugin):
             "week":  "GROUP BY YEARWEEK(FROM_UNIXTIME(time/1000), 5) ",
             "day":   "GROUP BY DATE(FROM_UNIXTIME(time/1000)) ",
             "hour":  "GROUP BY FROM_UNIXTIME((time/1000),'%Y%m%d%H') ",
-            None: ''
+            None:    "",
         }
 
         _group_by_sqlite = {
@@ -2284,7 +2373,7 @@ class DatabaseAddOn(SmartPlugin):
             "week":  "GROUP BY strftime('%Y%W', date((time/1000),'unixepoch')) ",
             "day":   "GROUP BY date((time/1000),'unixepoch') ",
             "hour":  "GROUP BY strftime('%Y%m%d%H', datetime((time/1000),'unixepoch')) ",
-            None: ''
+            None:    "",
         }
 
         # select query parts depending in db driver
@@ -2322,7 +2411,7 @@ class DatabaseAddOn(SmartPlugin):
             params.update({'ts_end': ts_end})
 
         # assemble query
-        query = f"SELECT {_select[func]}FROM {_db_table}WHERE {_where}{_group_by[group]}ORDER BY {_order}{_table_alias[func]}{_group_by[group2]}".strip()
+        query = f"SELECT {_select[func]}FROM {_db_table}WHERE {_where}{_group_by[group]}ORDER BY {_order[func]}{_table_alias[func]}{_group_by[group2]}".strip()
 
         if self.db_driver.lower() == 'sqlite3':
             query = query.replace('IF', 'IIF')
@@ -2584,7 +2673,7 @@ def convert_duration(timeframe: str, window_dur: str) -> int:
                  'week': _h_in_d * _d_in_w,
                  'month': _h_in_d * _d_in_m,
                  'year': _h_in_d * _d_in_y,
-                },
+                 },
         'day': {'hour': 1 / _h_in_d,
                 'day': 1,
                 'week': _d_in_w,
