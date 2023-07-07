@@ -37,6 +37,7 @@ from pymodbus.payload import BinaryPayloadBuilder
 
 # pymodbus library from https://github.com/riptideio/pymodbus
 from pymodbus.version import version
+
 pymodbus_baseversion = int(version.short().split('.')[0])
 
 if pymodbus_baseversion > 2:
@@ -54,6 +55,7 @@ AttrWordOrder = 'modBusWordOrder'
 AttrSlaveUnit = 'modBusUnit'
 AttrObjectType = 'modBusObjectType'
 AttrDirection = 'modBusDirection'
+
 
 class modbus_tcp(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
@@ -87,14 +89,13 @@ class modbus_tcp(SmartPlugin):
 
         self.init_webinterface(WebInterface)
 
-
         return
 
     def run(self):
         """
         Run method for the plugin
         """
-        self._sh.scheduler.add('modbusTCP_poll_device', self.poll_device, cycle=self._cycle)
+        self.scheduler_add('poll_device_' + self._host, self.poll_device, cycle=self._cycle, prio=5)
         self.alive = True
 
     def stop(self):
@@ -103,7 +104,7 @@ class modbus_tcp(SmartPlugin):
         """
         self.alive = False
         self.logger.debug("stop modbus_tcp plugin")
-        self.scheduler_remove('modbusTCP_poll_device')
+        self.scheduler_remove('poll_device_' + self._host)
         self._Mclient.close()
         self.connected = False
 
@@ -137,7 +138,7 @@ class modbus_tcp(SmartPlugin):
             if self.has_iattr(item.conf, AttrObjectType):
                 objectType = self.get_iattr_value(item.conf, AttrObjectType)
 
-            reg = str(objectType)   # dictionary key: objectType.regAddr.slaveUnit // HoldingRegister.528.1
+            reg = str(objectType)  # dictionary key: objectType.regAddr.slaveUnit // HoldingRegister.528.1
             reg += '.'
             reg += str(regAddr)
             reg += '.'
@@ -151,14 +152,14 @@ class modbus_tcp(SmartPlugin):
                 byteOrder = self.get_iattr_value(item.conf, AttrByteOrder)
             if self.has_iattr(item.conf, AttrWordOrder):
                 wordOrder = self.get_iattr_value(item.conf, AttrWordOrder)
-            if byteOrder == 'Endian.Big':   # Von String in Endian-Konstante "umwandeln"
+            if byteOrder == 'Endian.Big':  # Von String in Endian-Konstante "umwandeln"
                 byteOrder = Endian.Big
             elif byteOrder == 'Endian.Little':
                 byteOrder = Endian.Little
             else:
                 byteOrder = Endian.Big
                 self.logger.warning("Invalid byte order -> default(Endian.Big) is used")
-            if wordOrder == 'Endian.Big':   # Von String in Endian-Konstante "umwandeln"
+            if wordOrder == 'Endian.Big':  # Von String in Endian-Konstante "umwandeln"
                 wordOrder = Endian.Big
             elif wordOrder == 'Endian.Little':
                 wordOrder = Endian.Little
@@ -166,8 +167,10 @@ class modbus_tcp(SmartPlugin):
                 wordOrder = Endian.Big
                 self.logger.warning("Invalid byte order -> default(Endian.Big) is used")
 
-            regPara = {'regAddr': regAddr, 'slaveUnit': slaveUnit, 'dataType': dataType, 'factor': factor, 'byteOrder': byteOrder,
-                       'wordOrder': wordOrder, 'item': item, 'value': value, 'objectType': objectType, 'dataDir': dataDirection }
+            regPara = {'regAddr': regAddr, 'slaveUnit': slaveUnit, 'dataType': dataType, 'factor': factor,
+                       'byteOrder': byteOrder,
+                       'wordOrder': wordOrder, 'item': item, 'value': value, 'objectType': objectType,
+                       'dataDir': dataDirection}
             if dataDirection == 'read':
                 self._regToRead.update({reg: regPara})
                 self.logger.info("parse item: {0} Attributes {1}".format(item, regPara))
@@ -177,8 +180,8 @@ class modbus_tcp(SmartPlugin):
                 self.logger.info("parse item: {0} Attributes {1}".format(item, regPara))
                 return self.update_item
             else:
-                 self.logger.warning("Invalid data direction -> default(read) is used")
-                 self._regToRead.update({reg: regPara})
+                self.logger.warning("Invalid data direction -> default(read) is used")
+                self._regToRead.update({reg: regPara})
 
     def poll_device(self):
         """
@@ -204,7 +207,6 @@ class modbus_tcp(SmartPlugin):
                 self.connected = False
                 return
 
-
         startTime = datetime.now()
         regCount = 0
         try:
@@ -212,14 +214,14 @@ class modbus_tcp(SmartPlugin):
                 with self.lock:
                     regAddr = regPara['regAddr']
                     value = self.__read_Registers(regPara)
-                    #self.logger.debug("value readed: {0} type: {1}".format(value, type(value)))
+                    # self.logger.debug("value readed: {0} type: {1}".format(value, type(value)))
                     if value is not None:
                         item = regPara['item']
                         if regPara['factor'] != 1:
                             value = value * regPara['factor']
-                            #self.logger.debug("value {0} multiply by: {1}".format(value, regPara['factor']))
+                            # self.logger.debug("value {0} multiply by: {1}".format(value, regPara['factor']))
                         item(value, self.get_fullname())
-                        regCount+=1
+                        regCount += 1
 
                         if 'read_dt' in regPara:
                             regPara['last_read_dt'] = regPara['read_dt']
@@ -232,13 +234,13 @@ class modbus_tcp(SmartPlugin):
             endTime = datetime.now()
             duration = endTime - startTime
             if regCount > 0:
-                self._pollStatus['last_dt']=datetime.now()
-                self._pollStatus['regCount']=regCount
+                self._pollStatus['last_dt'] = datetime.now()
+                self._pollStatus['regCount'] = regCount
             self.logger.debug("poll_device: {0} register readed requed-time: {1}".format(regCount, duration))
         except Exception as e:
             self.logger.error("something went wrong in the poll_device function: {0}".format(e))
 
-     # called each time an item changes.
+    # called each time an item changes.
     def update_item(self, item, caller=None, source=None, dest=None):
         """
         Item has been updated
@@ -256,17 +258,17 @@ class modbus_tcp(SmartPlugin):
         slaveUnit = self._slaveUnit
         dataDirection = 'read'
 
-
         if caller == self.get_fullname():
-            #self.logger.debug('item was changed by the plugin itself - caller:{0} source:{1} dest:{2} '.format(caller, source, dest))
+            # self.logger.debug('item was changed by the plugin itself - caller:{0} source:{1} dest:{2} '.format(caller, source, dest))
             return
 
         if self.has_iattr(item.conf, AttrDirection):
             dataDirection = self.get_iattr_value(item.conf, AttrDirection)
             if not dataDirection == 'read_write':
-                self.logger.debug('update_item:{0} Writing is not allowed - selected dataDirection:{1}'.format(item, dataDirection))
+                self.logger.debug(
+                    'update_item:{0} Writing is not allowed - selected dataDirection:{1}'.format(item, dataDirection))
                 return
-            #else:
+            # else:
             #    self.logger.debug('update_item:{0} dataDirection:{1}'.format(item, dataDirection))
             if self.has_iattr(item.conf, AttrAddress):
                 regAddr = int(self.get_iattr_value(item.conf, AttrAddress))
@@ -282,7 +284,7 @@ class modbus_tcp(SmartPlugin):
             else:
                 return
 
-            reg = str(objectType)   # Dict-key: HoldingRegister.528.1 *** objectType.regAddr.slaveUnit ***
+            reg = str(objectType)  # Dict-key: HoldingRegister.528.1 *** objectType.regAddr.slaveUnit ***
             reg += '.'
             reg += str(regAddr)
             reg += '.'
@@ -319,8 +321,8 @@ class modbus_tcp(SmartPlugin):
         bo = regPara['byteOrder']
         wo = regPara['wordOrder']
         dataTypeStr = regPara['dataType']
-        dataType = ''.join(filter(str.isalpha, dataTypeStr))    # vom dataType die Ziffen entfernen z.B. uint16 = uint
-        registerCount = 0   # Anzahl der zu schreibenden Register (Words)
+        dataType = ''.join(filter(str.isalpha, dataTypeStr))  # vom dataType die Ziffen entfernen z.B. uint16 = uint
+        registerCount = 0  # Anzahl der zu schreibenden Register (Words)
 
         try:
             bits = int(''.join(filter(str.isdigit, dataTypeStr)))  # bit-Zahl aus aus dataType z.B. uint16 = 16
@@ -328,15 +330,17 @@ class modbus_tcp(SmartPlugin):
             bits = 16
 
         if dataType.lower() == 'string':
-            registerCount = int(bits/2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 registerCount
+            registerCount = int(bits / 2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 registerCount
         else:
-            registerCount = int(bits/16)
+            registerCount = int(bits / 16)
 
         if regPara['factor'] != 1:
-            #self.logger.debug("value {0} divided by: {1}".format(value, regPara['factor']))
-            value = value * (1/regPara['factor'])
+            # self.logger.debug("value {0} divided by: {1}".format(value, regPara['factor']))
+            value = value * (1 / regPara['factor'])
 
-        self.logger.debug("write {0} to {1}.{2}.{3} (address.slaveUnit) dataType:{4}".format(value, objectType, address, slaveUnit, dataTypeStr))
+        self.logger.debug(
+            "write {0} to {1}.{2}.{3} (address.slaveUnit) dataType:{4}".format(value, objectType, address, slaveUnit,
+                                                                               dataTypeStr))
         builder = BinaryPayloadBuilder(byteorder=bo, wordorder=wo)
 
         if dataType.lower() == 'uint':
@@ -359,20 +363,20 @@ class modbus_tcp(SmartPlugin):
                 self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
         elif dataType.lower() == 'float':
             if bits == 32:
-                 builder.add_32bit_float(value)
-            if bits == 64:
-                 builder.add_64bit_float(value)
+                builder.add_32bit_float(value)
+            elif bits == 64:
+                builder.add_64bit_float(value)
             else:
                 self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
         elif dataType.lower() == 'string':
             builder.add_string(value)
         elif dataType.lower() == 'bit':
             if objectType == 'Coil' or objectType == 'DiscreteInput':
-                if not type(value) == type(True):   # test is boolean
+                if not isinstance(value, bool):  # test is boolean
                     self.logger.error("Value is not boolean: {0}".format(value))
                     return
             else:
-                if set(value).issubset({'0', '1'}) and bool(value):   # test is bit-string '00110101'
+                if set(value).issubset({'0', '1'}) and bool(value):  # test is bit-string '00110101'
                     builder.add_bits(value)
                 else:
                     self.logger.error("Value is not a bitstring: {0}".format(value))
@@ -386,15 +390,18 @@ class modbus_tcp(SmartPlugin):
             registers = builder.to_registers()
             result = self._Mclient.write_registers(address, registers, unit=slaveUnit)
         elif objectType == 'DiscreteInput':
-            self.logger.warning("this object type cannot be written {0}:{1} slaveUnit:{2}".format(objectType, address, slaveUnit))
+            self.logger.warning(
+                "this object type cannot be written {0}:{1} slaveUnit:{2}".format(objectType, address, slaveUnit))
             return
         elif objectType == 'InputRegister':
-            self.logger.warning("this object type cannot be written {0}:{1} slaveUnit:{2}".format(objectType, address, slaveUnit))
+            self.logger.warning(
+                "this object type cannot be written {0}:{1} slaveUnit:{2}".format(objectType, address, slaveUnit))
             return
         else:
             return
         if result.isError():
-            self.logger.error("write error: {0} {1}.{2}.{3} (address.slaveUnit)".format(result, objectType, address, slaveUnit))
+            self.logger.error(
+                "write error: {0} {1}.{2}.{3} (address.slaveUnit)".format(result, objectType, address, slaveUnit))
             return None
 
         if 'write_dt' in regPara:
@@ -409,9 +416,8 @@ class modbus_tcp(SmartPlugin):
         else:
             regPara.update({'write_value': value})
 
-        #regPara['write_dt'] = datetime.now()
-        #regPara['write_value'] = value
-
+        # regPara['write_dt'] = datetime.now()
+        # regPara['write_value'] = value
 
     def __read_Registers(self, regPara):
         objectType = regPara['objectType']
@@ -430,15 +436,15 @@ class modbus_tcp(SmartPlugin):
             bits = 16
 
         if dataType.lower() == 'string':
-            registerCount = int(bits/2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 registerCount
+            registerCount = int(bits / 2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 registerCount
         else:
-            registerCount = int(bits/16)
+            registerCount = int(bits / 16)
 
         if self.connected == False:
             self.logger.error(" not connect {0}:{1}".format(self._host, self._port))
             return None
 
-        #self.logger.debug("read {0}.{1}.{2} (address.slaveUnit) regCount:{3}".format(objectType, address, slaveUnit, registerCount))
+        # self.logger.debug("read {0}.{1}.{2} (address.slaveUnit) regCount:{3}".format(objectType, address, slaveUnit, registerCount))
         if objectType == 'Coil':
             if pymodbus_baseversion > 2:
                 result = self._Mclient.read_coils(address, registerCount, slave=slaveUnit)
@@ -464,7 +470,9 @@ class modbus_tcp(SmartPlugin):
             return None
 
         if result.isError():
-            self.logger.error("read error: {0} {1}.{2}.{3} (address.slaveUnit) regCount:{4}".format(result, objectType, address, slaveUnit, registerCount))
+            self.logger.error(
+                "read error: {0} {1}.{2}.{3} (address.slaveUnit) regCount:{4}".format(result, objectType, address,
+                                                                                      slaveUnit, registerCount))
             return None
 
         if objectType == 'Coil':
@@ -472,11 +480,13 @@ class modbus_tcp(SmartPlugin):
         elif objectType == 'DiscreteInput':
             value = result.bits[0]
         elif objectType == 'InputRegister':
-            decoder = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo,wordorder=wo)
+            decoder = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo, wordorder=wo)
         else:
-            decoder = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo,wordorder=wo)
+            decoder = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo, wordorder=wo)
 
-        self.logger.debug("read {0}.{1}.{2} (address.slaveUnit) regCount:{3} result:{4}".format(objectType, address, slaveUnit, registerCount, result))
+        self.logger.debug(
+            "read {0}.{1}.{2} (address.slaveUnit) regCount:{3} result:{4}".format(objectType, address, slaveUnit,
+                                                                                  registerCount, result))
 
         if dataType.lower() == 'uint':
             if bits == 16:
@@ -499,17 +509,17 @@ class modbus_tcp(SmartPlugin):
         elif dataType.lower() == 'float':
             if bits == 32:
                 return decoder.decode_32bit_float()
-            if bits == 64:
+            elif bits == 64:
                 return decoder.decode_64bit_float()
             else:
                 self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
         elif dataType.lower() == 'string':
             # bei string: bits = bytes !! string16 -> 16Byte
             ret = decoder.decode_string(bits)
-            return str( ret, 'ASCII')
+            return str(ret, 'ASCII')
         elif dataType.lower() == 'bit':
             if objectType == 'Coil' or objectType == 'DiscreteInput':
-                #self.logger.debug("readed bit value: {0}".format(value))
+                # self.logger.debug("readed bit value: {0}".format(value))
                 return value
             else:
                 self.logger.debug("readed bits values: {0}".format(value.decode_bits()))
