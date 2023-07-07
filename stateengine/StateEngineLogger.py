@@ -102,7 +102,8 @@ class SeLogger:
     # Constructor
     # item: item for which the detailed log is (used as part of file name)
     def __init__(self, item):
-        self.logger = StateEngineDefaults.se_logger
+        #self.logger = StateEngineDefaults.se_logger
+        self.logger = logging.getLogger('stateengine.{}'.format(item.property.path))
         self.__section = item.property.path.replace(".", "_").replace("/", "")
         self.__indentlevel = 0
         self.__loglevel = StateEngineDefaults.log_level
