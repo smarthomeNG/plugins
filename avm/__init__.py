@@ -158,13 +158,16 @@ class AVM(SmartPlugin):
             self.logger.info("Connection to FritzDevice via TR064-Interface established.")
 
         # init FritzHome
-        try:
-            self.fritz_home = FritzHome(_host, ssl, _verify, _username, _passwort, _log_entry_count, self)
-        except FritzAuthorizationError as e:
-            self.logger.warning(f"{e} occurred during establishing connection to FritzDevice via AHA-HTTP-Interface. Not connected.")
-            self.fritz_home = None
+        if self._aha_http_interface:
+            try:
+                self.fritz_home = FritzHome(_host, ssl, _verify, _username, _passwort, _log_entry_count, self)
+            except FritzAuthorizationError as e:
+                self.logger.warning(f"{e} occurred during establishing connection to FritzDevice via AHA-HTTP-Interface. Not connected.")
+                self.fritz_home = None
+            else:
+                self.logger.info("Connection to FritzDevice via AHA-HTTP-Interface established.")
         else:
-            self.logger.info("Connection to FritzDevice via AHA-HTTP-Interface established.")
+            self.fritz_home = None
 
         # init Call Monitor
         if self._call_monitor and self.fritz_device and self.fritz_device.connected:
@@ -1500,8 +1503,10 @@ class FritzDevice:
                 l_text = text[18:]
                 l_cat = '-'
                 l_type = '-'
-                l_ts = int(datetime.datetime.timestamp(datetime.datetime.strptime(text[:17], '%d.%m.%y %H:%M:%S')))
-                log_list.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
+                # l_ts = int(datetime.datetime.timestamp(datetime.datetime.strptime(text[:17], '%d.%m.%y %H:%M:%S')))
+                # log_list.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
+                dt = datetime.datetime.strptime(f"{l_date} {l_time}", '%d.%m.%y %H:%M:%S').strftime('%d.%m.%Y %H:%M:%S')
+                log_list.append([dt, l_text, l_type, l_cat])
 
             return log_list
 
