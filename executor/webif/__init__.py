@@ -315,6 +315,6 @@ class WebInterface(SmartPluginWebIf):
         myItems = _sh.return_items()
         itemList = []
         for item in myItems:
-          itemList.append("sh."+str(item.id())+"()")
+          itemList.append("sh."+str(item.property.path)+"()")
         retValue = {'items':itemList,'plugins':plugin_list}
         return (json.dumps(retValue))
