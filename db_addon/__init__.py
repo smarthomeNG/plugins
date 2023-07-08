@@ -90,12 +90,12 @@ class DatabaseAddOn(SmartPlugin):
         self.active_queue_item: str = '-'            # String holding item path of currently executed item
 
         # define debug logs
-        self.parse_debug = True                      # Enable / Disable debug logging for method 'parse item'
-        self.execute_debug = True                    # Enable / Disable debug logging for method 'execute items'
+        self.parse_debug = False                      # Enable / Disable debug logging for method 'parse item'
+        self.execute_debug = False                    # Enable / Disable debug logging for method 'execute items'
         self.sql_debug = False                       # Enable / Disable debug logging for sql stuff
-        self.ondemand_debug = True                   # Enable / Disable debug logging for method 'handle_ondemand'
-        self.onchange_debug = True                   # Enable / Disable debug logging for method 'handle_onchange'
-        self.prepare_debug = False                   # Enable / Disable debug logging for query preparation
+        self.ondemand_debug = False                   # Enable / Disable debug logging for method 'handle_ondemand'
+        self.onchange_debug = False                  # Enable / Disable debug logging for method 'handle_onchange'
+        self.prepare_debug = True                   # Enable / Disable debug logging for query preparation
 
         # define default mysql settings
         self.default_connect_timeout = 60
@@ -511,7 +511,8 @@ class DatabaseAddOn(SmartPlugin):
                         db_addon_ignore_value_list_formatted.append(f"{op} {value}")
                         max_values[op].append(value)
 
-            self.logger.info(f"Summarized 'ignore_value_list' for item {item.path()}: {db_addon_ignore_value_list_formatted}")
+            if self.parse_debug:
+                self.logger.debug(f"Summarized 'ignore_value_list' for item {item.path()}: {db_addon_ignore_value_list_formatted}")
 
             if not db_addon_ignore_value_list_formatted:
                 return
@@ -519,7 +520,9 @@ class DatabaseAddOn(SmartPlugin):
             if not optimize:
                 return db_addon_ignore_value_list_formatted
 
-            self.logger.info(f"Optimizing 'ignore_value_list' for item {item.path()} active.")
+            if self.parse_debug:
+                self.logger.debug(f"Optimizing 'ignore_value_list' for item {item.path()} active.")
+
             # find low
             lower_value_list = max_values['<'] + max_values['<=']
             if lower_value_list:
@@ -548,7 +551,9 @@ class DatabaseAddOn(SmartPlugin):
                     if (not lower_end[0] or (lower_end[0] and v >= lower_end[1])) or (not upper_end[0] or (upper_end[0] and v <= upper_end[1])):
                         db_addon_ignore_value_list_optimized.append(f'!= {v}')
 
-            self.logger.info(f"Optimized 'ignore_value_list' for item {item.path()}: {db_addon_ignore_value_list_optimized}")
+            if self.parse_debug:
+                self.logger.debug(f"Optimized 'ignore_value_list' for item {item.path()}: {db_addon_ignore_value_list_optimized}")
+
             return db_addon_ignore_value_list_optimized
 
         # handle all items with db_addon_fct
@@ -2805,7 +2810,7 @@ def week_beginning(delta: int = 0) -> datetime:
 def week_end(delta: int = 0) -> datetime:
     """provides datetime of end of week minus x weeks"""
 
-    return week_beginning(delta) + relativedelta(days=6)
+    return week_beginning(delta) + relativedelta(days=7)
 
 
 def day_beginning(delta: int = 0) -> datetime:
