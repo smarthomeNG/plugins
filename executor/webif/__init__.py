@@ -48,7 +48,7 @@ import cherrypy
 import csv
 from jinja2 import Environment, FileSystemLoader
 
-import sys    
+import sys
 
 class PrintCapture:
     """this class overwrites stdout and stderr temporarily to capture output"""
@@ -197,7 +197,7 @@ class WebInterface(SmartPluginWebIf):
     def exec_code(self, eline, reload=None):
         """
         evaluate a whole python block in eline
-                              
+
         :return: result of the evaluation
         """
         result = ""
@@ -284,7 +284,7 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     def get_filelist(self):
         """returns all filenames from the defined script path with suffix ``.py``"""
-        
+
         if self.plugin.executor_scripts is not None:
             subdir = self.plugin.executor_scripts
             self.logger.debug(f"list files in {subdir}")
@@ -296,7 +296,7 @@ class WebInterface(SmartPluginWebIf):
             return files
 
         return ''
-    
+
     @cherrypy.expose
     def get_autocomplete(self):
         _sh = self.plugin.get_sh()
@@ -310,11 +310,11 @@ class WebInterface(SmartPluginWebIf):
               if api is not None:
                 for function in api:
                   plugin_list.append("sh."+plugin_config_name + "." + function)
-        
+
 
         myItems = _sh.return_items()
         itemList = []
         for item in myItems:
-          itemList.append("sh."+str(item)+"()")
+          itemList.append("sh."+str(item.id())+"()")
         retValue = {'items':itemList,'plugins':plugin_list}
         return (json.dumps(retValue))
