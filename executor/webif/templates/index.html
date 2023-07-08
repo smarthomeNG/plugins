@@ -104,40 +104,83 @@ function deletefile() {
 };
 
 function get_Dict(cmPython) {
-    $.ajax({
-        url: "get_autocomplete",
-        method: "GET",
-        dataType: "json",
-        success: function(myDict) {
-            console.log("got Autocomplete")
-            myAutocomplete = [];
-            for (i = 0; i < myDict.items.length; i++) {
-                if (myDict.items[i] != "." && myDict.items != "..") {
-                    myAutocomplete.push({
-                        text: myDict.items[i],
-                        displayText: myDict.items[i] + " | Item"
-                    });
-                }
-            }
-            for (i = 0; i < myDict.plugins.length; i++) {
-                if (myDict.plugins[i] != "." && myDict.plugins != "..") {
-                    myAutocomplete.push({
-                        text: myDict.plugins[i],
-                        displayText: myDict.plugins[i] + " | Plugin"
-                    });
-                }
-            }
-            registerAutocompleteHelper('autocompleteHint', myAutocomplete);
-            console.log('Stored entries to Autocomplete dict')
-            CodeMirror.commands.autocomplete_items = function(cmPython) {
-                CodeMirror.showHint(cmPython, CodeMirror.hint.autocompleteHint);
-            }
-        },
-        error: function(result) {
-            console.log("Error while receiving Autocomplete")
+  return new window.Promise(function (resolve, reject) {
+    function successCallback(response) {
+        resolve(response);
+    }
 
-        }
-    });
+    function errorCallback(response) {
+        reject(response);
+    }
+
+    function fetch_autocomplete() {
+      CodeMirror.commands.autocomplete_items = function() {
+      };
+      $.ajax({
+          url: "get_autocomplete",
+          method: "GET",
+          async: true,
+          dataType: "json",
+          success: function(myDict) {
+            console.log("Initializing Autocomplete");
+            let worker = new Worker(
+                `data:text/javascript,
+                function createAutocomplete(myDict){
+                  myAutocomplete = [];
+                  for (i = 0; i < myDict.items.length; i++) {
+                      if (myDict.items[i] != "." && myDict.items != "..") {
+                          myAutocomplete.push({
+                              text: myDict.items[i],
+                              displayText: myDict.items[i] + " | Item"
+                          });
+                      }
+                  }
+                  for (i = 0; i < myDict.plugins.length; i++) {
+                      if (myDict.plugins[i] != "." && myDict.plugins != "..") {
+                          myAutocomplete.push({
+                              text: myDict.plugins[i],
+                              displayText: myDict.plugins[i] + " | Plugin"
+                          });
+                      }
+                  }
+                  return myAutocomplete;
+                }
+                onmessage = function(event){
+                    let myDict = event.data;
+                    let result = createAutocomplete(myDict);
+                    postMessage(result);
+                };
+                `
+            );
+
+            worker.onmessage = function(event){
+              myAutocomplete = event.data;
+              registerAutocompleteHelper('autocompleteHint', myAutocomplete);
+              console.log('Stored ' + myAutocomplete.length + ' entries to Autocomplete dict.');
+              CodeMirror.commands.autocomplete_items = function(cmPython) {
+                  CodeMirror.showHint(cmPython, CodeMirror.hint.autocompleteHint);
+              }
+            };
+
+            worker.postMessage(myDict);
+
+          },
+          error: function(result) {
+              console.log("Error while receiving Autocomplete")
+
+          }
+      }).done(successCallback).fail(errorCallback);
+    }
+    fetch_autocomplete();
+  });
+}
+
+function autocompleteSuccess(response) {
+    console.log("Filling autocomplete dict... This might take some time!");
+}
+
+function autocompleteError(error) {
+    console.warn(error);
 }
 
 
@@ -260,7 +303,8 @@ $(document).ready(function(){
 	 };
 
     });
-    get_Dict(cmPython);
+
+    get_Dict(cmPython).then(autocompleteSuccess).catch(autocompleteError);
 
     cmPython.refresh();
 
