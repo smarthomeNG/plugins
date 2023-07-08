@@ -3,12 +3,6 @@
 {% set logo_frame = false %}
 
 {% block pluginscripts %}
-<!-- scripts here -->
-{% endblock pluginscripts %}
-
-
-{% block content -%}
-
 <script>
 var te_python;
 var cmPython;
@@ -37,12 +31,19 @@ function getexecution() {
     console.log('Execution of code is done');
 };
 
-function get_filelist() {
-    console.log("getting list of files ...");
+function get_filelist(order) {
+    console.log("getting list of files with order " + order);
     $.get('get_filelist', {}, function(data){
 		$('#filelist').empty();
 		var lines;
-		lines = data.split(/\r\n|\n\r|\n|\r/);
+    if (order == 'alpha-asc')
+		  lines = data.split(/\r\n|\n\r|\n|\r/).sort();
+    else if (order == 'alpha-desc')
+		  lines = data.split(/\r\n|\n\r|\n|\r/).sort().reverse();
+    else if (order == 'time-desc')
+		  lines = data.split(/\r\n|\n\r|\n|\r/).reverse();
+    else
+      lines = data.split(/\r\n|\n\r|\n|\r/);
 		for (line in lines) {
 			$('#filelist').append(new Option(lines[line], lines[line]));
 		};
@@ -87,7 +88,7 @@ function savetofile() {
 	console.log('save to file'+filenametosave);
 	$.get('save_code', { filename: filenametosave, code: cmPython.doc.getValue()}, function(result) {
 		console.log('Result:'+result);
-        get_filelist();
+        get_filelist(getCookie('sort_order'));
 	});
 
 };
@@ -97,7 +98,7 @@ function deletefile() {
 	console.log('file to delete'+filenametodelete);
 	$.get('delete_file', { filename: filenametodelete}, function(result) {
 		console.log('Result:'+result);
-        get_filelist();
+        get_filelist(getCookie('sort_order'));
 	});
 
 };
@@ -193,6 +194,36 @@ function registerAutocompleteHelper(name, curDict) {
 $(document).ready(function(){
     te_python = document.getElementById('pycodetext');
     te_resulttext = document.getElementById('resulttext');
+    alpha_asc = document.getElementById('alpha-asc');
+    alpha_desc = document.getElementById('alpha-desc');
+    time_asc = document.getElementById('time-asc');
+    time_desc = document.getElementById('time-desc');
+    alpha_asc.addEventListener('click', function() {
+        alpha_desc.classList.remove('active');
+        time_asc.classList.remove('active');
+        time_desc.classList.remove('active');
+        this.classList.add('active');});
+    alpha_desc.addEventListener('click', function() {
+        alpha_asc.classList.remove('active');
+        time_asc.classList.remove('active');
+        time_desc.classList.remove('active');
+        this.classList.add('active');});
+    time_asc.addEventListener('click', function() {
+        alpha_desc.classList.remove('active');
+        alpha_asc.classList.remove('active');
+        time_desc.classList.remove('active');
+        this.classList.add('active');});
+    time_desc.addEventListener('click', function() {
+        alpha_desc.classList.remove('active');
+        alpha_asc.classList.remove('active');
+        time_asc.classList.remove('active');
+        this.classList.add('active');});
+    order = getCookie('sort_order');
+    if (order == '')
+      order = 'time-desc';
+    console.log("Sort Order on Load: " + order);
+    button = document.getElementById(order);
+    button.click();
     cmPython = CodeMirror(te_python, {
         mode: "python",
         lineNumbers: true,
@@ -238,9 +269,10 @@ $(document).ready(function(){
     });
 	cmResult.refresh();
 
-	get_filelist();
 });
 </script>
+{% endblock pluginscripts %}
+{% block pluginstyles %}
 <style>
 body {
 	margin: 0!important;
@@ -323,7 +355,21 @@ button#loadfilename {
     display: block;
     width: 100%;
 }
+input.sort {
+  width: 20px;
+  height: 20px;
+  border: none;
+  padding: 0;
+  margin-left: 20px;
+  margin-bottom: -5px;
+}
+.active {
+  border: none;
+  filter: invert(8%) sepia(100%) saturate(6481%) hue-rotate(246deg) brightness(102%) contrast(143%);
+}
 </style>
+{% endblock pluginstyles %}
+{% block content -%}
 
 <div id="app">
 	<header>
@@ -358,12 +404,13 @@ button#loadfilename {
 					{% endif %}
 					<h6>{{ _('Plugin') }} &nbsp; &nbsp; : <span id="webif_plugin_state">{% if p.alive %}{{ _('Aktiv') }}{% else %}{{ _('Gestoppt') }}{% endif %}</span></h6>
 				</div>
-				<div class="col-sm">
+				<div class="col-sm"><div>
 				<label for="filelist">{{ _('Gespeicherte Skripte') }}</label>
+        <input type= "image" id="alpha-asc" class="sort" onclick="setCookie('sort_order', 'alpha-asc', 36500, window.pluginname);get_filelist('alpha-asc')" src="/gstatic/img/sort-alpha-asc.svg" />
+        <input type= "image" id="alpha-desc" class="sort" onclick="setCookie('sort_order', 'alpha-desc', 36500, window.pluginname);get_filelist('alpha-desc')" src="/gstatic/img/sort-alpha-desc.svg" />
+        <input type= "image" id="time-asc" class="sort" onclick="setCookie('sort_order', 'time-asc', 36500, window.pluginname);get_filelist('time-asc')" src="/gstatic/img/sort-time-asc.svg" />
+        <input type= "image" id="time-desc" class="sort" onclick="setCookie('sort_order', 'time-desc', 36500, window.pluginname);get_filelist('time-desc')" src="/gstatic/img/sort-time-desc.svg" /></div>
 					<select style="width: 100%" id="filelist" size=10 onchange="selectFile(this)" ondblclick="doubleclickFile(this)">
-					<option value="Test 1">Test 1</option>
-					<option value="Test 2">Test 2</option>
-					<option value="Test 3">Test 3</option>
 					</select>
 					<button onclick="btnloadfromfile(this)" id="loadfilename" type="button">{{ _('aus Datei laden') }}</button>
 				</div>
@@ -381,13 +428,13 @@ button#loadfilename {
 	</header>
 	<main>
 		<div class="container-fluid m-3">
-			<label for="pycodetext">{{ _('Python Code') }}</label><br>
+			<label>{{ _('Python Code') }}</label><br>
 			<div id="pycodetext"></div>
 		</div>
 	</main>
 	<footer>
 		<div class="container-fluid m-3">
-			<label for="resulttext">{{ _('Ergebnis') }}</label><br>
+			<label>{{ _('Ergebnis') }}</label><br>
 			<div id="resulttext" placeholder="Ergebnisse erscheinen hier"></div>
 		</div>
 	</footer>
