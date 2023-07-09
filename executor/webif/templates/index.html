@@ -235,12 +235,17 @@ function registerAutocompleteHelper(name, curDict) {
 
 
 $(document).ready(function(){
-    te_python = document.getElementById('pycodetext');
-    te_resulttext = document.getElementById('resulttext');
-    alpha_asc = document.getElementById('alpha-asc');
-    alpha_desc = document.getElementById('alpha-desc');
-    time_asc = document.getElementById('time-asc');
-    time_desc = document.getElementById('time-desc');
+    const te_python = document.getElementById('pycodetext');
+    const te_resulttext = document.getElementById('resulttext');
+    const alpha_asc = document.getElementById('alpha-asc');
+    const alpha_desc = document.getElementById('alpha-desc');
+    const time_asc = document.getElementById('time-asc');
+    const time_desc = document.getElementById('time-desc');
+    try {
+      const tooltipList = ['Sort by alphabet ascending', 'Sort by alphabet descending', 'Sort by creationtime ascending', 'Sort by creationtime descending'];
+      createTooltips(tooltipList);
+    }
+    catch (e) {}
     alpha_asc.addEventListener('click', function() {
         alpha_desc.classList.remove('active');
         time_asc.classList.remove('active');
@@ -450,10 +455,10 @@ input.sort {
 				</div>
 				<div class="col-sm"><div>
 				<label for="filelist">{{ _('Gespeicherte Skripte') }}</label>
-        <input type= "image" id="alpha-asc" class="sort" onclick="setCookie('sort_order', 'alpha-asc', 36500, window.pluginname);get_filelist('alpha-asc')" src="/gstatic/img/sort-alpha-asc.svg" />
-        <input type= "image" id="alpha-desc" class="sort" onclick="setCookie('sort_order', 'alpha-desc', 36500, window.pluginname);get_filelist('alpha-desc')" src="/gstatic/img/sort-alpha-desc.svg" />
-        <input type= "image" id="time-asc" class="sort" onclick="setCookie('sort_order', 'time-asc', 36500, window.pluginname);get_filelist('time-asc')" src="/gstatic/img/sort-time-asc.svg" />
-        <input type= "image" id="time-desc" class="sort" onclick="setCookie('sort_order', 'time-desc', 36500, window.pluginname);get_filelist('time-desc')" src="/gstatic/img/sort-time-desc.svg" /></div>
+        <input type= "image" id="alpha-asc" class="sort button-tooltip" onclick="setCookie('sort_order', 'alpha-asc', 36500, window.pluginname);get_filelist('alpha-asc')" src="/gstatic/img/sort-alpha-asc.svg" />
+        <input type= "image" id="alpha-desc" class="sort button-tooltip" onclick="setCookie('sort_order', 'alpha-desc', 36500, window.pluginname);get_filelist('alpha-desc')" src="/gstatic/img/sort-alpha-desc.svg" />
+        <input type= "image" id="time-asc" class="sort button-tooltip" onclick="setCookie('sort_order', 'time-asc', 36500, window.pluginname);get_filelist('time-asc')" src="/gstatic/img/sort-time-asc.svg" />
+        <input type= "image" id="time-desc" class="sort button-tooltip" onclick="setCookie('sort_order', 'time-desc', 36500, window.pluginname);get_filelist('time-desc')" src="/gstatic/img/sort-time-desc.svg" /></div>
 					<select style="width: 100%" id="filelist" size=10 onchange="selectFile(this)" ondblclick="doubleclickFile(this)">
 					</select>
 					<button onclick="btnloadfromfile(this)" id="loadfilename" type="button">{{ _('aus Datei laden') }}</button>
