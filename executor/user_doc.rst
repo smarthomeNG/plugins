@@ -16,7 +16,7 @@ executor
 Einführung
 ~~~~~~~~~~
 
-Das executor Plugin kann genutzt werden, um **Python Code** (z.B. für **Logiken**) und **eval Ausdrücke** zu testen.
+Das executor Plugin kann genutzt werden, um **Python Code** (z.B. für **Logiken**) zu testen.
 
 .. important::
 
