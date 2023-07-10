@@ -233,15 +233,19 @@ class WebInterface(SmartPluginWebIf):
         """loads and returns the given filename from the defined script path"""
         self.logger.debug(f"get_code called with {filename=}")
         try:
-            if self.plugin.executor_scripts is not None and filename != '':
-                filepath = os.path.join(self.plugin.executor_scripts,filename)
-                self.logger.debug(f"{filepath=}")
+            if (self.plugin.executor_scripts is not None and filename != '') or filename.startswith('examples/'):
+                if filename.startswith('examples/'):
+                    filepath = os.path.join(self.plugin.get_plugin_dir(),filename)
+                    self.logger.debug(f"Getting file from example path {filepath=}")
+                else:
+                    filepath = os.path.join(self.plugin.executor_scripts,filename)
+                    self.logger.debug(f"Getting file from script path {filepath=}")
                 code_file = open(filepath)
                 data = code_file.read()
                 code_file.close()
                 return data
-        except:
-            self.logger.error(f"{filepath} could not be read")
+        except Exception as e:
+            self.logger.error(f"{filepath} could not be read: {e}")
         return f"### {filename} could not be read ###"
 
     @cherrypy.expose
@@ -283,19 +287,28 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     def get_filelist(self):
-        """returns all filenames from the defined script path with suffix ``.py``"""
-
+        """returns all filenames from the defined script path with suffix ``.py``, newest first"""
+        files = []
+        files2 = []
+        subdir = "{}/examples".format(self.plugin.get_plugin_dir())
+        self.logger.debug(f"list files in plugin examples {subdir}")
+        mtime = lambda f: os.stat(os.path.join(subdir, f)).st_mtime
+        files = list(reversed(sorted(os.listdir(subdir), key=mtime)))
+        files = [f for f in files if os.path.isfile(os.path.join(subdir,f))]
+        files = ["examples/{}".format(f) for f in files if f.endswith(".py")]
+        #files = '\n'.join(f for f in files)
+        self.logger.debug(f"Examples Scripts {files}")
         if self.plugin.executor_scripts is not None:
             subdir = self.plugin.executor_scripts
             self.logger.debug(f"list files in {subdir}")
-            files = os.listdir(subdir)
-            files = [f for f in files if os.path.isfile(os.path.join(subdir,f))]
-            files = [f for f in files if f.endswith(".py")]
-            files = '\n'.join(f for f in files)
-            self.logger.debug(f"{files=}\n\n")
-            return files
+            files2 = list(reversed(sorted(os.listdir(subdir), key=mtime)))
+            files2 = [f for f in files2 if os.path.isfile(os.path.join(subdir,f))]
+            files2 = [f for f in files2 if f.endswith(".py")]
+            #files = '\n'.join(f for f in files)
+            self.logger.debug(f"User scripts {files2}")
 
-        return ''
+        return json.dumps(files + files2)
+
 
     @cherrypy.expose
     def get_autocomplete(self):

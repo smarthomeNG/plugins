@@ -34,26 +34,31 @@ function getexecution() {
 function get_filelist(order) {
     console.log("getting list of files with order " + order);
     $.get('get_filelist', {}, function(data){
-		$('#filelist').empty();
-		var lines;
-    if (order == 'alpha-asc')
-		  lines = data.split(/\r\n|\n\r|\n|\r/).sort();
-    else if (order == 'alpha-desc')
-		  lines = data.split(/\r\n|\n\r|\n|\r/).sort().reverse();
-    else if (order == 'time-desc')
-		  lines = data.split(/\r\n|\n\r|\n|\r/).reverse();
-    else
-      lines = data.split(/\r\n|\n\r|\n|\r/);
-		for (line in lines) {
-			$('#filelist').append(new Option(lines[line], lines[line]));
-		};
-		var size;
-		if (max_script_entries == 0) { size = 0; }
-		else if (lines.length > max_script_entries) { size = max_script_entries; }
-		else { size = lines.length; };
-		console.log("Size: ",size);
-		$('#filelist').attr('size',size);
-        console.log('Data:'+data);
+  		$('#filelist').empty();
+  		var lines;
+      data = JSON.parse(data);
+      if (order == 'alpha-asc')
+  		  lines = data.sort();
+      else if (order == 'alpha-desc')
+  		  lines = data.sort().reverse();
+      else if (order == 'time-desc')
+  		  lines = data.reverse();
+      else
+        lines = data;
+      for (line in lines) {
+        $('#filelist').append(new Option(lines[line], lines[line]));
+      };
+      $('#filelist > option').each(function(){
+          if ($(this).attr('value').indexOf('examples/') == 0)
+            $(this).addClass('example_file');
+      });
+  		var size;
+  		if (max_script_entries == 0) { size = 0; }
+  		else if (lines.length > max_script_entries) { size = max_script_entries; }
+  		else { size = lines.length; };
+      console.log("Size: " + size);
+      console.log('Data: ' + data);
+      $('#filelist').attr('size',size);
     });
 };
 
@@ -415,6 +420,10 @@ input.sort {
 .active {
   border: none;
   filter: invert(8%) sepia(100%) saturate(6481%) hue-rotate(246deg) brightness(102%) contrast(143%);
+}
+.example_file {
+  font-style: italic;
+  color: grey;
 }
 </style>
 {% endblock pluginstyles %}
