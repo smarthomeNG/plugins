@@ -307,7 +307,7 @@ class WebInterface(SmartPluginWebIf):
             #files = '\n'.join(f for f in files)
             self.logger.debug(f"User scripts {files2}")
 
-        return json.dumps(files + files2)
+        return json.dumps(files2 + files)
 
 
     @cherrypy.expose
