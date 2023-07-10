@@ -201,7 +201,7 @@ class WebInterface(SmartPluginWebIf):
         :return: result of the evaluation
         """
         result = ""
-        stub_logger = Stub(warning=print, info=print, debug=print, error=print)
+        stub_logger = Stub(warning=print, info=print, debug=print, error=print, criticl=print, notice=print, dbghigh=print, dbgmed=print, dbglow=print)
 
         g = {}
         l = { 'sh': self.plugin.get_sh(),
