@@ -977,7 +977,7 @@ class DatabaseAddOn(SmartPlugin):
 
                 cache_dict[database_item] = cached_value
                 if self.onchange_debug:
-                    self.logger.debug(f"Value for Item={updated_item.path()} at end of last {timeframe} not in cache dict. Value={db_value} has been added.")
+                    self.logger.debug(f"Value for Item={updated_item.path()} at end of last {timeframe} not in cache dict. Value={cached_value} has been added.")
 
             # calculate value, set item value, put data into plugin_item_dict
             _new_value = value - cached_value
@@ -2146,6 +2146,8 @@ class DatabaseAddOn(SmartPlugin):
         if self.prepare_debug:
             self.logger.debug(f"called with {func=}, item={database_item.path()}, {timeframe=}, {start=}, {end=}, {group=}, {group2=}, {ignore_value_list=}")
 
+        # called with func='min', item=env.host_rpi.temperature, timeframe='day', start=0, end=0, group=None, group2=None, ignore_value_list=['!= 0']
+
         # set default result
         default_result = [[None, None]]
 
@@ -2756,7 +2758,7 @@ def get_start_end_as_timestamp(timeframe: str, start: Union[int, str, None], end
     def _year_end(delta: int = end) -> datetime:
         """provides datetime of end of year of today minus x years"""
 
-        return year_beginning(delta) + relativedelta(years=1)
+        return _year_beginning(delta) + relativedelta(years=1)
 
     def _month_beginning(delta: int = start) -> datetime:
         """provides datetime of beginning of month minus x month"""
@@ -2767,7 +2769,7 @@ def get_start_end_as_timestamp(timeframe: str, start: Union[int, str, None], end
     def _month_end(delta: int = end) -> datetime:
         """provides datetime of end of month minus x month"""
 
-        return month_beginning(delta) + relativedelta(months=1)
+        return _month_beginning(delta) + relativedelta(months=1)
 
     def _week_beginning(delta: int = start) -> datetime:
         """provides datetime of beginning of week minus x weeks"""
@@ -2778,7 +2780,7 @@ def get_start_end_as_timestamp(timeframe: str, start: Union[int, str, None], end
     def _week_end(delta: int = end) -> datetime:
         """provides datetime of end of week minus x weeks"""
 
-        return week_beginning(delta) + relativedelta(days=7)
+        return _week_beginning(delta) + relativedelta(days=7)
 
     def _day_beginning(delta: int = start) -> datetime:
         """provides datetime of beginning of today minus x days"""
@@ -2788,7 +2790,7 @@ def get_start_end_as_timestamp(timeframe: str, start: Union[int, str, None], end
     def _day_end(delta: int = end) -> datetime:
         """provides datetime of end of today minus x days"""
 
-        return day_beginning(delta) + relativedelta(days=1)
+        return _day_beginning(delta) + relativedelta(days=1)
 
     if isinstance(start, str) and start.isdigit():
         start = int(start)
@@ -2805,6 +2807,7 @@ def get_start_end_as_timestamp(timeframe: str, start: Union[int, str, None], end
         ts_end = None
 
     return ts_start, ts_end
+
 
 def datetime_to_timestamp(dt: datetime) -> int:
     """Provides timestamp from given datetime"""
