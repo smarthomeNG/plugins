@@ -65,6 +65,14 @@ function get_filelist(order) {
 function selectFile(selectObject) {
 	var value = selectObject.value;
 	$('#savefilename').val(value);
+  const del_button = document.querySelector('#deletefile');
+  const load_button = document.querySelector('#loadfilename');
+  load_button.removeAttribute("disabled");
+  if (value.startsWith("examples/"))
+    del_button.setAttribute("disabled", "disabled");
+  else
+    del_button.removeAttribute("disabled");
+
 	console.log("selected ",value);
 };
 
@@ -240,6 +248,10 @@ function registerAutocompleteHelper(name, curDict) {
 
 
 $(document).ready(function(){
+    const load_button = document.querySelector('#loadfilename');
+    const del_button = document.querySelector('#deletefile');
+    load_button.setAttribute("disabled", "disabled");
+    del_button.setAttribute("disabled", "disabled");
     const te_python = document.getElementById('pycodetext');
     const te_resulttext = document.getElementById('resulttext');
     const alpha_asc = document.getElementById('alpha-asc');
