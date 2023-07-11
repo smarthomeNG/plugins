@@ -54,7 +54,7 @@ class DatabaseAddOn(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.2.0'
+    PLUGIN_VERSION = '1.2.1'
 
     def __init__(self, sh):
         """
@@ -194,8 +194,9 @@ class DatabaseAddOn(SmartPlugin):
                 # handle functions 'minmax on-change' in format 'minmax_timeframe_func' items like 'minmax_heute_max', 'minmax_heute_min', 'minmax_woche_max', 'minmax_woche_min'
                 timeframe = convert_timeframe(db_addon_fct_vars[1])
                 func = db_addon_fct_vars[2] if db_addon_fct_vars[2] in ALLOWED_MINMAX_FUNCS else None
+                start = end = 0
                 log_text = 'minmax_timeframe_func'
-                required_params = [func, timeframe]
+                required_params = [func, timeframe, start, end]
 
             elif db_addon_fct in HISTORIE_ATTRIBUTES_LAST:
                 # handle functions 'minmax_last' in format 'minmax_last_timedelta|timeframe_function' like 'minmax_last_24h_max'
@@ -213,23 +214,23 @@ class DatabaseAddOn(SmartPlugin):
                 start = to_int(db_addon_fct_vars[2][-1])  # 1, 2, 3, ...
                 end = start
                 log_text = 'minmax_timeframe_timedelta_func'
-                required_params = [func, timeframe, start]
+                required_params = [func, timeframe, start, end]
 
             elif db_addon_fct in ZAEHLERSTAND_ATTRIBUTES_TIMEFRAME:
                 # handle functions 'zaehlerstand' in format 'zaehlerstand_timeframe_timedelta' like 'zaehlerstand_heute_minus1'
-                func = 'max'
+                # func = 'max'
                 timeframe = convert_timeframe(db_addon_fct_vars[1])
                 start = to_int(db_addon_fct_vars[2][-1])
                 end = start
                 log_text = 'zaehlerstand_timeframe_timedelta'
-                required_params = [timeframe, start]
+                required_params = [timeframe, start, end]
 
             elif db_addon_fct in VERBRAUCH_ATTRIBUTES_ONCHANGE:
                 # handle functions 'verbrauch on-change' items in format 'verbrauch_timeframe' like 'verbrauch_heute', 'verbrauch_woche', 'verbrauch_monat', 'verbrauch_jahr'
                 timeframe = convert_timeframe(db_addon_fct_vars[1])
-                func = 'max'
+                start = end = 0
                 log_text = 'verbrauch_timeframe'
-                required_params = [timeframe]
+                required_params = [timeframe, start, end]
 
             elif db_addon_fct in VERBRAUCH_ATTRIBUTES_TIMEFRAME:
                 # handle functions 'verbrauch on-demand' in format 'verbrauch_timeframe_timedelta' like 'verbrauch_heute_minus2'
@@ -262,8 +263,9 @@ class DatabaseAddOn(SmartPlugin):
                 # handle functions 'tagesmitteltemperatur on-change' items in format 'tagesmitteltemperatur_timeframe' like 'tagesmitteltemperatur_heute', 'tagesmitteltemperatur_woche', 'tagesmitteltemperatur_monat', 'tagesmitteltemperatur_jahr'
                 timeframe = convert_timeframe(db_addon_fct_vars[1])
                 func = 'max'
+                start = end = 0
                 log_text = 'tagesmitteltemperatur_timeframe'
-                required_params = [timeframe]
+                required_params = [timeframe, start, end]
 
             elif db_addon_fct in TAGESMITTEL_ATTRIBUTES_TIMEFRAME:
                 # handle 'tagesmitteltemperatur_timeframe_timedelta' like 'tagesmitteltemperatur_heute_minus1'
@@ -282,7 +284,7 @@ class DatabaseAddOn(SmartPlugin):
                 end = 0
                 group = convert_timeframe(db_addon_fct_vars[4][len(db_addon_fct_vars[4]) - 1])
                 log_text = 'serie_minmax_timeframe_func_start|group'
-                required_params = [func, timeframe, start, group]
+                required_params = [func, timeframe, start, end, group]
 
             elif db_addon_fct in SERIE_ATTRIBUTES_ZAEHLERSTAND:
                 # handle functions 'serie_zaehlerstand' in format 'serie_zaehlerstand_timeframe_start|group' like 'serie_zaehlerstand_tag_30d'
@@ -311,7 +313,7 @@ class DatabaseAddOn(SmartPlugin):
                 group = 'day',
                 group2 = 'month'
                 log_text = 'serie_xxsumme_timeframe_count|group'
-                required_params = [start]
+                required_params = [func, timeframe, start, end, group, group2]
 
             elif db_addon_fct in SERIE_ATTRIBUTES_MITTEL_D:
                 # handle 'serie_tagesmittelwert_count|group' like 'serie_tagesmittelwert_0d' => Tagesmittelwert der letzten 0 Tage (also heute)
@@ -737,15 +739,7 @@ class DatabaseAddOn(SmartPlugin):
         self.logger.info(f"{len(relevant_item_list)} items will be calculated at startup.")
 
         for item in relevant_item_list:
-            item_config = self.get_item_config(item)
-            db_addon_fct = item_config['db_addon_fct']
-
-            # handle on-change items
-            if db_addon_fct in ALL_ONCHANGE_ATTRIBUTES:
-                self.item_queue.put((item_config['database_item'], None))
-            # handle on-demand items
-            else:
-                self.item_queue.put(item)
+            self.item_queue.put(item)
 
         self.startup_finished = True
 
@@ -832,12 +826,6 @@ class DatabaseAddOn(SmartPlugin):
         if self.ondemand_debug:
             self.logger.debug(f"{db_addon_fct=} will _query_item with {params=}.")
 
-        # handle all on_change functions
-        if db_addon_fct in ALL_ONCHANGE_ATTRIBUTES:
-            if self.ondemand_debug:
-                self.logger.debug(f"on-change function detected; will be calculated by next change of database item")
-            return
-
         # handle item starting with 'verbrauch_'
         if db_addon_fct in ALL_VERBRAUCH_ATTRIBUTES:
             result = self._handle_verbrauch(params)
@@ -848,6 +836,14 @@ class DatabaseAddOn(SmartPlugin):
         # handle item starting with 'zaehlerstand_'
         elif db_addon_fct in ALL_ZAEHLERSTAND_ATTRIBUTES:
             result = self._handle_zaehlerstand(params)
+
+        # handle 'serie_zaehlerstand'
+        elif db_addon_fct in SERIE_ATTRIBUTES_ZAEHLERSTAND:
+            result = self._handle_zaehlerstand_serie(params)
+
+        # handle 'serie_verbrauch'
+        elif db_addon_fct in SERIE_ATTRIBUTES_VERBRAUCH:
+            result = self._handle_verbrauch_serie(params)
 
         # handle 'serie_tagesmittelwert_stunde_30_0d' and 'serie_tagesmittelwert_tag_stunde_30d'
         elif db_addon_fct in SERIE_ATTRIBUTES_MITTEL_H1 + SERIE_ATTRIBUTES_MITTEL_D_H:
@@ -898,7 +894,7 @@ class DatabaseAddOn(SmartPlugin):
         item_config.update({'value': result})
         item(result, self.get_shortname())
 
-    def handle_onchange(self, updated_item: Item, value: float = None) -> None:
+    def handle_onchange(self, updated_item: Item, value: float) -> None:
         """
         Get item and item value for which an update has been detected, fill cache dicts and set item value.
 
@@ -924,20 +920,17 @@ class DatabaseAddOn(SmartPlugin):
                     self.logger.debug(f"Item={updated_item.path()} with {func=} and {timeframe=} not in cache dict. Query database.")
 
                 query_params = {'func': func, 'database_item': database_item, 'timeframe': timeframe, 'start': 0, 'end': 0, 'ignore_value_list': ignore_value_list, 'use_oldest_entry': True}
-                db_value = self._query_item(**query_params)[0][1]
+                cached_value = self._query_item(**query_params)[0][1]
 
-                if db_value is not None:                # Wenn Werte aus DB vorliegt, nutze den
-                    cached_value = db_value
-                    init = True
-                elif value is not None:                 # Wenn kein Wert aus DB vorliegt, aber ein aktueller Wert, nutze den (ggf. bei ganz neuen Items, bei denen noch kein Eintrag in der DB ist)
-                    cached_value = value
-                else:                                   # Wenn gar kein Wert verfügbar ist, Abbruch
+                if cached_value is None:
                     if self.onchange_debug:
-                        self.logger.debug(f"no values available:{db_value=}, {value}. Abort...")
+                        self.logger.debug(f"no values available:{cached_value=}, {value}. Abort...")
                     return
 
-            # if value not given -> read at startup
-            if value is None or init:
+                init = True
+
+            # if value not given -> read
+            if init:
                 if self.onchange_debug:
                     self.logger.debug(f"initial {func} value for {timeframe=} of Item={item.path()} with will be set to {cached_value}")
                 cache_dict[database_item][func] = cached_value
@@ -964,7 +957,6 @@ class DatabaseAddOn(SmartPlugin):
 
         def handle_verbrauch():
             cache_dict = self.previous_values[timeframe]
-            _value = value
 
             if self.onchange_debug:
                 self.logger.debug(f"'verbrauch' item {updated_item.path()} with {func=} and {value=} detected. Check for update of cache_dicts {cache_dict=} and item value.")
@@ -973,40 +965,22 @@ class DatabaseAddOn(SmartPlugin):
             cached_value = cache_dict.get(database_item)
             if cached_value is None:
                 if self.onchange_debug:
-                    self.logger.debug(f"Item={updated_item.path()} with _func={func} and timeframe={timeframe} not in cache dict. recent value={cached_value}.")
+                    self.logger.debug(f"Item={updated_item.path()} with _func={func} and timeframe={timeframe} not in cache dict.")
 
-                # try to get max value of last timeframe, assuming that this is the value at end of timeframe
-                query_params = {'func': 'max', 'database_item': database_item, 'timeframe': timeframe, 'start': 1, 'end': 1, 'ignore_value_list': ignore_value_list, 'use_oldest_entry': True}
-                db_value = self._query_item(**query_params)[0][1]
+                # try to get most recent value of last timeframe, assuming that this is the value at end of last timeframe
+                query_params = {'database_item': database_item, 'timeframe': timeframe, 'start': 1, 'end': 1, 'ignore_value_list': ignore_value_list, 'use_oldest_entry': True}
+                cached_value = self._handle_zaehlerstand(query_params)
 
-                if db_value is None:
-                    self.logger.info(f"Value max value for last {timeframe} available from database. Try to get min value of current {timeframe}.")
-
-                # try to get min value of current timeframe, assuming that this is the value at end of timeframe
-                query_params = {'func': 'min', 'database_item': database_item, 'timeframe': timeframe, 'start': 0, 'end': 0, 'ignore_value_list': ignore_value_list, 'use_oldest_entry': True}
-                db_value = self._query_item(**query_params)[0][1]
-
-                if db_value is None:
-                    self.logger.info(f"min value for current {timeframe} not available from database. Abort calculation.")
+                if cached_value is None:
+                    self.logger.info(f"Most recent value for last {timeframe} not available in database. Abort calculation.")
                     return
 
-                cache_dict[database_item] = db_value
-                cached_value = db_value
+                cache_dict[database_item] = cached_value
                 if self.onchange_debug:
-                    self.logger.debug(f"Value for Item={updated_item.path()} at end of last {timeframe} not in cache dict. Value={cached_value} has been added.")
-
-            # get last value from db, if now updated value is given (init)
-            if _value is None:
-                # try to get max value of current timeframe
-                query_params = {'func': 'max', 'database_item': database_item, 'timeframe': timeframe, 'start': 0, 'end': 0, 'ignore_value_list': ignore_value_list, 'use_oldest_entry': True}
-                _value = self._query_item(**query_params)[0][1]
-
-            if _value is None:
-                self.logger.info(f"max value for current {timeframe} not available from database. Abort calculation.")
-                return
+                    self.logger.debug(f"Value for Item={updated_item.path()} at end of last {timeframe} not in cache dict. Value={db_value} has been added.")
 
             # calculate value, set item value, put data into plugin_item_dict
-            _new_value = _value - cached_value
+            _new_value = value - cached_value
             return _new_value if isinstance(_new_value, int) else round(_new_value, 1)
 
         def handle_tagesmitteltemp():
@@ -1015,7 +989,7 @@ class DatabaseAddOn(SmartPlugin):
             return
 
         if self.onchange_debug:
-            self.logger.debug(f"handle_onchange called with updated_item={updated_item.path()} and value={value}.")
+            self.logger.debug(f"called with updated_item={updated_item.path()} and value={value}.")
 
         relevant_item_list = set(self.get_item_list('database_item', updated_item)) & set(self.get_item_list('cycle', 'on-change'))
 
@@ -1028,7 +1002,7 @@ class DatabaseAddOn(SmartPlugin):
             db_addon_fct = item_config['db_addon_fct']
             database_item = item_config['database_item']
             timeframe = item_config['query_params']['timeframe']
-            func = item_config['query_params']['func']
+            func = item_config['query_params'].get('func')
             ignore_value_list = item_config['query_params'].get('ignore_value_list')
             new_value = None
 
@@ -1352,7 +1326,7 @@ class DatabaseAddOn(SmartPlugin):
             return value_end
 
         # get value for start and check it;
-        query_params.update({'func': 'last', 'start': end+1, 'end': end+1})
+        query_params.update({'func': 'last', 'start': start, 'end': start})
         value_start = self._query_item(**query_params)[0][1]
         if self.prepare_debug:
             self.logger.debug(f"{value_start=}")
@@ -1362,12 +1336,12 @@ class DatabaseAddOn(SmartPlugin):
                 self.logger.debug(f"Error occurred during query. Return.")
             return
 
-        if value_start == 0:
-            self.logger.info(f"No DB Entry found for requested start date. Looking for next DB entry.")
-            query_params.update({'func': 'next', 'start': start+1})
+        if not value_start:
+            self.logger.info(f"No DB Entry found for requested start date. Looking for next recent DB entry.")
+            query_params.update({'func': 'next'})
             value_start = self._query_item(**query_params)[0][1]
             if self.prepare_debug:
-                self.logger.debug(f"next available value is {value_start=}")
+                self.logger.debug(f"next recent value is {value_start=}")
 
         if not value_start:
             value_start = 0
@@ -1387,7 +1361,22 @@ class DatabaseAddOn(SmartPlugin):
 
         return consumption
 
-    def _handle_zaehlerstand(self, query_params: dict) -> Union[float, None]:
+    def _handle_verbrauch_serie(self, query_params: dict) -> list:
+        """Ermittlung einer Serie von Verbräuchen in einem Zeitraumes für x Zeiträume"""
+
+        series = []
+        database_item = query_params['database_item']
+        timeframe = query_params['timeframe']
+        start = query_params['start']
+
+        for i in range(1, start):
+            value = self._handle_verbrauch({'database_item': database_item, 'timeframe': timeframe, 'start': i + 1, 'end': i})
+            ts_start, ts_end = get_start_end_as_timestamp(timeframe, i, i + 1)
+            series.append([ts_end, value])
+
+        return series
+
+    def _handle_zaehlerstand(self, query_params: dict) -> Union[float, int, None]:
         """
         Ermittlung des Zählerstandes zum Ende eines Zeitraumes
 
@@ -1403,17 +1392,24 @@ class DatabaseAddOn(SmartPlugin):
         if self.prepare_debug:
             self.logger.debug(f"called with {query_params=}")
 
-        start = query_params['start']
-        end = query_params['end']
-
         # get last value of timeframe
-        query_params.update({'func': 'last', 'start': start, 'end': end})
+        query_params.update({'func': 'last'})
         last_value = self._query_item(**query_params)[0][1]
+        if self.prepare_debug:
+            self.logger.debug(f"{last_value=}")
 
-        if last_value == 0:
+        if last_value is None:
+            if self.prepare_debug:
+                self.logger.debug(f"Error occurred during query. Return.")
+            return
+
+        if not last_value:
             # get last value (next) before timeframe
+            self.logger.info(f"No DB Entry found for requested start date. Looking for next recent DB entry.")
             query_params.update({'func': 'next'})
             last_value = self._query_item(**query_params)[0][1]
+            if self.prepare_debug:
+                self.logger.debug(f"next recent value is {last_value=}")
 
         if isinstance(last_value, float):
             if last_value.is_integer():
@@ -1422,6 +1418,21 @@ class DatabaseAddOn(SmartPlugin):
                 last_value = round(last_value, 1)
 
         return last_value
+
+    def _handle_zaehlerstand_serie(self, query_params: dict) -> list:
+        """Ermittlung einer Serie von Zählerständen zum Ende eines Zeitraumes für x Zeiträume"""
+
+        series = []
+        database_item = query_params['database_item']
+        timeframe = query_params['timeframe']
+        start = query_params['start']
+
+        for i in range(1, start):
+            value = self._handle_zaehlerstand({'database_item': database_item, 'timeframe': timeframe, 'start': i, 'end': i})
+            ts_start = get_start_end_as_timestamp(timeframe, i, i)[0]
+            series.append([ts_start, value])
+
+        return series
 
     def _handle_kaeltesumme(self, database_item: Item, year: Union[int, str] = None, month: Union[int, str] = None) -> Union[int, None]:
         """
@@ -1478,7 +1489,7 @@ class DatabaseAddOn(SmartPlugin):
 
         # get raw data as list
         if self.prepare_debug:
-            self.logger.debug("Try to get raw data")
+            self.logger.debug("try to get raw data")
         raw_data = self._prepare_temperature_list(database_item=database_item, timeframe='day', start=start, end=end, method='raw')
         if self.execute_debug:
             self.logger.debug(f"raw_value_list={raw_data=}")
@@ -2129,70 +2140,38 @@ class DatabaseAddOn(SmartPlugin):
         :param ignore_value_list: list of comparison operators for val_num, which will be applied during query
         :param use_oldest_entry: if start is prior to oldest entry, oldest entry will be used
 
-        :return: query response / list for value pairs [[None, None]] for errors, [[0,0]] for
+        :return: query response / list for value pairs [[None, None]] for errors, [[0,0]] for no-data in DB
         """
-
-        def _handle_query_result(query_result) -> list:
-            """
-            Handle query result containing list
-            """
-
-            # if query delivers None, abort
-            if query_result is None:
-                # if query delivers None, abort
-                self.logger.error(f"Error occurred during _query_item. Aborting...")
-                _result = [[None, None]]
-            elif len(query_result) == 0:
-                _result = [[0, 0]]
-                self.logger.info(f" No values for item in requested timeframe in database found.")
-            else:
-                _result = []
-                for element in query_result:
-                    timestamp = element[0]
-                    value = element[1]
-                    if timestamp and value is not None:
-                        _result.append([timestamp, round(value, 1)])
-                if not _result:
-                    _result = [[None, None]]
-
-            return _result
 
         if self.prepare_debug:
             self.logger.debug(f"called with {func=}, item={database_item.path()}, {timeframe=}, {start=}, {end=}, {group=}, {group2=}, {ignore_value_list=}")
 
         # set default result
-        result = [[None, None]]
+        default_result = [[None, None]]
 
         # check correctness of timeframe
         if timeframe not in ALLOWED_QUERY_TIMEFRAMES:
             self.logger.error(f"Requested {timeframe=} for item={database_item.path()} not defined; Need to be 'year' or 'month' or 'week' or 'day' or 'hour''. Query cancelled.")
-            return result
-
-        # check start / end for being int
-        if isinstance(start, str) and start.isdigit():
-            start = int(start)
-        if isinstance(end, str) and end.isdigit():
-            end = int(end)
-        if not isinstance(start, int) and not isinstance(end, int):
-            return result
-
-        # check correctness of start / end
-        if start < end:
-            self.logger.warning(f"Requested {start=} for item={database_item.path()} is not valid since {start=} < {end=}. Query cancelled.")
-            return result
-
-        # define item_id
-        item_id = self._get_itemid(database_item)
-        if not item_id:
-            self.logger.error(f"ItemId for item={database_item.path()} not found. Query cancelled.")
-            return result
+            return default_result
 
         # define start and end of query as timestamp in microseconds
         ts_start, ts_end = get_start_end_as_timestamp(timeframe, start, end)
         oldest_log = int(self._get_oldest_log(database_item))
 
-        if start is None:
+        # check correctness of ts_start / ts_end
+        if ts_start is None:
             ts_start = oldest_log
+        if ts_end is None or ts_start > ts_end:
+            if self.prepare_debug:
+                self.logger.debug(f"{ts_start=}, {ts_end=}")
+            self.logger.warning(f"Requested {start=} for item={database_item.path()} is not valid since {start=} < {end=} or end not given. Query cancelled.")
+            return default_result
+
+        # define item_id
+        item_id = self._get_itemid(database_item)
+        if not item_id:
+            self.logger.error(f"ItemId for item={database_item.path()} not found. Query cancelled.")
+            return default_result
 
         if self.prepare_debug:
             self.logger.debug(f"Requested {timeframe=} with {start=} and {end=} resulted in start being timestamp={ts_start} / {timestamp_to_timestring(ts_start)} and end being timestamp={ts_end} / {timestamp_to_timestring(ts_end)}")
@@ -2200,7 +2179,7 @@ class DatabaseAddOn(SmartPlugin):
         # check if values for end time and start time are in database
         if ts_end < oldest_log:  # (Abfrage abbrechen, wenn Endzeitpunkt in UNIX-timestamp der Abfrage kleiner (und damit jünger) ist, als der UNIX-timestamp des ältesten Eintrages)
             self.logger.info(f"Requested end time timestamp={ts_end} / {timestamp_to_timestring(ts_end)} of query for Item='{database_item.path()}' is prior to oldest entry with timestamp={oldest_log} / {timestamp_to_timestring(oldest_log)}. Query cancelled.")
-            return result
+            return default_result
 
         if ts_start < oldest_log:
             if self.use_oldest_entry or use_oldest_entry:
@@ -2208,13 +2187,35 @@ class DatabaseAddOn(SmartPlugin):
                 ts_start = oldest_log
             else:
                 self.logger.info(f"Requested start time timestamp={ts_start} / {timestamp_to_timestring(ts_start)} of query for Item='{database_item.path()}' is prior to oldest entry with timestamp={oldest_log} / {timestamp_to_timestring(oldest_log)}. Query cancelled.")
-                return result
+                return default_result
 
+        # prepare and do query
         query_params = {'func': func, 'item_id': item_id, 'ts_start': ts_start, 'ts_end': ts_end, 'group': group, 'group2': group2, 'ignore_value_list': ignore_value_list}
-        result = _handle_query_result(self._query_log_timestamp(**query_params))
+        query_result = self._query_log_timestamp(**query_params)
+
+        # post process query_result
+        if query_result is None:
+            self.logger.error(f"Error occurred during _query_item. Aborting...")
+            return default_result
+
+        if len(query_result) == 0:
+            self.logger.info(f"No values for item in requested timeframe in database found.")
+            return [[0, 0]]
+
+        result = []
+        for element in query_result:
+            timestamp, value = element
+            if timestamp and value is not None:
+                if isinstance(value, float):
+                    value = round(value, 1)
+                result.append([timestamp, value])
 
         if self.prepare_debug:
             self.logger.debug(f"value for item={database_item.path()} with {query_params=}: {result}")
+
+        if not result:
+            self.logger.info(f"No values for item in requested timeframe in database found.")
+            return default_result
 
         return result
 
@@ -2643,7 +2644,7 @@ def timestamp_to_timestring(timestamp: int) -> str:
 def convert_timeframe(timeframe: str) -> str:
     """Convert timeframe"""
 
-    convertion = {
+    lookup = {
         'tag': 'day',
         'heute': 'day',
         'woche': 'week',
@@ -2658,7 +2659,7 @@ def convert_timeframe(timeframe: str) -> str:
         'y': 'year'
     }
 
-    return convertion.get(timeframe)
+    return lookup.get(timeframe)
 
 
 def convert_duration(timeframe: str, window_dur: str) -> int:
@@ -2672,7 +2673,7 @@ def convert_duration(timeframe: str, window_dur: str) -> int:
     _w_in_m = _w_in_y / _m_in_y
     _d_in_m = _d_in_y / _m_in_y
 
-    conversion = {
+    lookup = {
         'hour': {'hour': 1,
                  'day': _h_in_d,
                  'week': _h_in_d * _d_in_w,
@@ -2705,7 +2706,7 @@ def convert_duration(timeframe: str, window_dur: str) -> int:
                  }
     }
 
-    return round(int(conversion[timeframe][window_dur]), 0)
+    return to_int(lookup[timeframe][window_dur])
 
 
 def count_to_start(count: int = 0, end: int = 0):
@@ -2714,7 +2715,7 @@ def count_to_start(count: int = 0, end: int = 0):
     return end + count, end
 
 
-def get_start_end_as_timestamp(timeframe: str, start: int, end: int) -> tuple:
+def get_start_end_as_timestamp(timeframe: str, start: Union[int, str, None], end: Union[int, str, None]) -> tuple:
     """
     Provides start and end as timestamp in microseconds from timeframe with start and end
 
@@ -2726,104 +2727,84 @@ def get_start_end_as_timestamp(timeframe: str, start: int, end: int) -> tuple:
 
     """
 
-    return datetime_to_timestamp(get_start(timeframe, start)) * 1000, datetime_to_timestamp(get_end(timeframe, end)) * 1000
+    def get_start() -> datetime:
+        if timeframe == 'week':
+            return _week_beginning()
+        elif timeframe == 'month':
+            return _month_beginning()
+        elif timeframe == 'year':
+            return _year_beginning()
+        else:
+            return _day_beginning()
 
+    def get_end() -> datetime:
+        if timeframe == 'week':
+            return _week_end()
+        elif timeframe == 'month':
+            return _month_end()
+        elif timeframe == 'year':
+            return _year_end()
+        else:
+            return _day_end()
 
-def get_start(timeframe: str, start: int) -> datetime:
-    """
-    Provides start as datetime
+    def _year_beginning(delta: int = start) -> datetime:
+        """provides datetime of beginning of year of today minus x years"""
 
-    :param timeframe: timeframe as week, month, year
-    :param start: beginning timeframe in x timeframes from now
+        _dt = datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time())
+        return _dt.replace(month=1, day=1) - relativedelta(years=delta)
 
-    """
+    def _year_end(delta: int = end) -> datetime:
+        """provides datetime of end of year of today minus x years"""
 
-    if start is None:
-        start = 0
+        return year_beginning(delta) + relativedelta(years=1)
 
-    if timeframe == 'week':
-        _dt_start = week_beginning(start)
-    elif timeframe == 'month':
-        _dt_start = month_beginning(start)
-    elif timeframe == 'year':
-        _dt_start = year_beginning(start)
+    def _month_beginning(delta: int = start) -> datetime:
+        """provides datetime of beginning of month minus x month"""
+
+        _dt = datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time())
+        return _dt.replace(day=1) - relativedelta(months=delta)
+
+    def _month_end(delta: int = end) -> datetime:
+        """provides datetime of end of month minus x month"""
+
+        return month_beginning(delta) + relativedelta(months=1)
+
+    def _week_beginning(delta: int = start) -> datetime:
+        """provides datetime of beginning of week minus x weeks"""
+
+        _dt = datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time())
+        return _dt - relativedelta(days=(datetime.date.today().weekday() + (delta * 7)))
+
+    def _week_end(delta: int = end) -> datetime:
+        """provides datetime of end of week minus x weeks"""
+
+        return week_beginning(delta) + relativedelta(days=7)
+
+    def _day_beginning(delta: int = start) -> datetime:
+        """provides datetime of beginning of today minus x days"""
+
+        return datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time()) - relativedelta(days=delta)
+
+    def _day_end(delta: int = end) -> datetime:
+        """provides datetime of end of today minus x days"""
+
+        return day_beginning(delta) + relativedelta(days=1)
+
+    if isinstance(start, str) and start.isdigit():
+        start = int(start)
+    if isinstance(start, int):
+        ts_start = datetime_to_timestamp(get_start()) * 1000
     else:
-        _dt_start = day_beginning(start)
+        ts_start = None
 
-    return _dt_start
-
-
-def get_end(timeframe: str, end: int) -> datetime:
-    """
-    Provides end as datetime
-
-    :param timeframe: timeframe as week, month, year
-    :param end: end of timeframe in x timeframes from now
-
-    """
-
-    if timeframe == 'week':
-        _dt_end = week_end(end)
-    elif timeframe == 'month':
-        _dt_end = month_end(end)
-    elif timeframe == 'year':
-        _dt_end = year_end(end)
+    if isinstance(end, str) and end.isdigit():
+        end = int(end)
+    if isinstance(end, int):
+        ts_end = datetime_to_timestamp(get_end()) * 1000
     else:
-        _dt_end = day_end(end)
+        ts_end = None
 
-    return _dt_end
-
-
-def year_beginning(delta: int = 0) -> datetime:
-    """provides datetime of beginning of year of today minus x years"""
-
-    _dt = datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time())
-    return _dt.replace(month=1, day=1) - relativedelta(years=delta)
-
-
-def year_end(delta: int = 0) -> datetime:
-    """provides datetime of end of year of today minus x years"""
-
-    return year_beginning(delta) + relativedelta(years=1)
-
-
-def month_beginning(delta: int = 0) -> datetime:
-    """provides datetime of beginning of month minus x month"""
-
-    _dt = datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time())
-    return _dt.replace(day=1) - relativedelta(months=delta)
-
-
-def month_end(delta: int = 0) -> datetime:
-    """provides datetime of end of month minus x month"""
-
-    return month_beginning(delta) + relativedelta(months=1)
-
-
-def week_beginning(delta: int = 0) -> datetime:
-    """provides datetime of beginning of week minus x weeks"""
-
-    _dt = datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time())
-    return _dt - relativedelta(days=(datetime.date.today().weekday() + (delta * 7)))
-
-
-def week_end(delta: int = 0) -> datetime:
-    """provides datetime of end of week minus x weeks"""
-
-    return week_beginning(delta) + relativedelta(days=7)
-
-
-def day_beginning(delta: int = 0) -> datetime:
-    """provides datetime of beginning of today minus x days"""
-
-    return datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time()) - relativedelta(days=delta)
-
-
-def day_end(delta: int = 0) -> datetime:
-    """provides datetime of end of today minus x days"""
-
-    return day_beginning(delta) + relativedelta(days=1)
-
+    return ts_start, ts_end
 
 def datetime_to_timestamp(dt: datetime) -> int:
     """Provides timestamp from given datetime"""

@@ -55,7 +55,6 @@ Bsp:
         db_addon_fct: heute_minus1_avg
         db_addon_database_item: 'temperatur'
 
-|
 
 Anforderungen
 =============
@@ -68,7 +67,7 @@ Die Konfiguration des DatabaseAddon-Plugin erfolgt automatisch bei Start.
 Hinweis: Das Plugin selbst ist aktuell nicht multi-instance fähig. Das bedeutet, dass das Plugin aktuell nur eine Instanz
 des Database-Plugin abgebunden werden kann.
 
-|
+
 
 Konfiguration
 =============
@@ -93,7 +92,7 @@ Dazu folgenden Block am Ende der Datei */etc/mysql/my.cnf* einfügen bzw den exi
     wait_timeout = 28800
     interactive_timeout = 28800
 
-|
+
 
 Hinweise
 ========
@@ -139,8 +138,8 @@ Verbrauch
 
 Soll bspw. der Verbrauch von Wasser ausgewertet werden, so ist dies wie folgt möglich:
 
-.. code-block:: yaml
 
+.. code-block:: yaml
     wasserzaehler:
         zaehlerstand:
             type: num
@@ -162,7 +161,6 @@ minmax
 Soll bspw. die minimalen und maximalen Temperaturen ausgewertet werden, kann dies so umgesetzt werden:
 
 .. code-block:: yaml
-
     temperature:
         aussen:
             nord:
