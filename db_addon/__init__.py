@@ -214,8 +214,8 @@ class DatabaseAddOn(SmartPlugin):
                 # handle functions 'min/max/avg' in format 'minmax_timeframe_timedelta_func' like 'minmax_heute_minus2_max'
                 func = db_addon_fct_vars[3]  # min, max, avg
                 timeframe = convert_timeframe(db_addon_fct_vars[1])  # day, week, month, year
-                start = to_int(db_addon_fct_vars[2][-1])  # 1, 2, 3, ...
-                end = start
+                end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
+                start = end
                 log_text = 'minmax_timeframe_timedelta_func'
                 required_params = [func, timeframe, start, end]
 
@@ -223,23 +223,25 @@ class DatabaseAddOn(SmartPlugin):
                 # handle functions 'zaehlerstand' in format 'zaehlerstand_timeframe_timedelta' like 'zaehlerstand_heute_minus1'
                 # func = 'max'
                 timeframe = convert_timeframe(db_addon_fct_vars[1])
-                start = to_int(db_addon_fct_vars[2][-1])
-                end = start
+                end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
+                start = end
                 log_text = 'zaehlerstand_timeframe_timedelta'
                 required_params = [timeframe, start, end]
 
             elif db_addon_fct in VERBRAUCH_ATTRIBUTES_ONCHANGE:
                 # handle functions 'verbrauch on-change' items in format 'verbrauch_timeframe' like 'verbrauch_heute', 'verbrauch_woche', 'verbrauch_monat', 'verbrauch_jahr'
                 timeframe = convert_timeframe(db_addon_fct_vars[1])
-                start = end = 0
+                end = 0
+                start = 1
                 log_text = 'verbrauch_timeframe'
                 required_params = [timeframe, start, end]
 
             elif db_addon_fct in VERBRAUCH_ATTRIBUTES_TIMEFRAME:
                 # handle functions 'verbrauch on-demand' in format 'verbrauch_timeframe_timedelta' like 'verbrauch_heute_minus2'
                 timeframe = convert_timeframe(db_addon_fct_vars[1])
-                start = to_int(db_addon_fct_vars[2][-1]) + 1
-                end = to_int(db_addon_fct_vars[2][-1])
+                # end = to_int(db_addon_fct_vars[2][-1])
+                end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
+                start = end + 1
                 log_text = 'verbrauch_timeframe_timedelta'
                 required_params = [timeframe, start, end]
 
@@ -258,7 +260,7 @@ class DatabaseAddOn(SmartPlugin):
             elif db_addon_fct in VERBRAUCH_ATTRIBUTES_JAHRESZEITRAUM:
                 # handle functions of format 'verbrauch_jahreszeitraum_timedelta' like 'verbrauch_jahreszeitraum_minus1'
                 timeframe = convert_timeframe(db_addon_fct_vars[1])  # day, week, month, year
-                timedelta = to_int(db_addon_fct_vars[2][-1])  # 1 oder 2 oder 3
+                timedelta = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
                 log_text = 'verbrauch_jahreszeitraum_timedelta'
                 required_params = [timeframe, timedelta]
 
@@ -274,8 +276,8 @@ class DatabaseAddOn(SmartPlugin):
                 # handle 'tagesmitteltemperatur_timeframe_timedelta' like 'tagesmitteltemperatur_heute_minus1'
                 func = 'max'
                 timeframe = convert_timeframe(db_addon_fct_vars[1])
-                start = to_int(db_addon_fct_vars[2][-1])
-                end = start
+                end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
+                start = end
                 log_text = 'tagesmitteltemperatur_timeframe_timedelta'
                 required_params = [func, timeframe, start, end]
 
@@ -836,6 +838,10 @@ class DatabaseAddOn(SmartPlugin):
             if result and result < 0:
                 self.logger.warning(f"Result of item {item.path()} with {db_addon_fct=} was negative. Something seems to be wrong.")
 
+        # handle 'serie_verbrauch'
+        elif db_addon_fct in SERIE_ATTRIBUTES_VERBRAUCH:
+            result = self._handle_verbrauch_serie(params)
+
         # handle item starting with 'zaehlerstand_'
         elif db_addon_fct in ALL_ZAEHLERSTAND_ATTRIBUTES:
             result = self._handle_zaehlerstand(params)
@@ -843,10 +849,6 @@ class DatabaseAddOn(SmartPlugin):
         # handle 'serie_zaehlerstand'
         elif db_addon_fct in SERIE_ATTRIBUTES_ZAEHLERSTAND:
             result = self._handle_zaehlerstand_serie(params)
-
-        # handle 'serie_verbrauch'
-        elif db_addon_fct in SERIE_ATTRIBUTES_VERBRAUCH:
-            result = self._handle_verbrauch_serie(params)
 
         # handle 'serie_tagesmittelwert_stunde_30_0d' and 'serie_tagesmittelwert_tag_stunde_30d'
         elif db_addon_fct in SERIE_ATTRIBUTES_MITTEL_H1 + SERIE_ATTRIBUTES_MITTEL_D_H:
@@ -1365,7 +1367,7 @@ class DatabaseAddOn(SmartPlugin):
         return consumption
 
     def _handle_verbrauch_serie(self, query_params: dict) -> list:
-        """Ermittlung einer Serie von Verbräuchen in einem Zeitraumes für x Zeiträume"""
+        """Ermittlung einer Serie von Verbräuchen in einem Zeitraum für x Zeiträume"""
 
         series = []
         database_item = query_params['database_item']
@@ -2257,9 +2259,7 @@ class DatabaseAddOn(SmartPlugin):
         self.item_queue.queue.clear()
 
     def _work_item_queue_thread_startup(self):
-        """
-        Start a thread to work item queue
-        """
+        """Start a thread to work item queue"""
 
         try:
             _name = 'plugins.' + self.get_fullname() + '.work_item_queue'
@@ -2272,9 +2272,7 @@ class DatabaseAddOn(SmartPlugin):
             self.work_item_queue_thread = None
 
     def _work_item_queue_thread_shutdown(self):
-        """
-        Shut down the thread to work item queue
-        """
+        """Shut down the thread to work item queue"""
 
         if self.work_item_queue_thread:
             self.work_item_queue_thread.join()
@@ -2840,7 +2838,7 @@ def to_int_float(arg):
         return to_float(arg)
 
 
-def timeframe_to_updatecyle(timeframe):
+def timeframe_to_updatecyle(timeframe) -> str:
 
     lookup = {'day': 'daily',
               'week': 'weekly',
@@ -2849,6 +2847,9 @@ def timeframe_to_updatecyle(timeframe):
 
     return lookup.get(timeframe)
 
+
+def split_sting_letters_numbers(string) -> tuple:
+    return re.findall('(\d+|[A-Za-z]+)', string)
 
 ALLOWED_QUERY_TIMEFRAMES = ['year', 'month', 'week', 'day', 'hour']
 ALLOWED_MINMAX_FUNCS = ['min', 'max', 'avg']
