@@ -28,26 +28,16 @@ import string
 import re
 import codecs
 from lib.model.smartplugin import SmartPlugin
-from bin.smarthome import VERSION
+import serial
 
-try:
-    import serial
-    REQUIRED_PACKAGE_IMPORTED = True
-except Exception:
-    REQUIRED_PACKAGE_IMPORTED = False
 
 class DuW(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.3"
+    PLUGIN_VERSION = "1.5.4"
 
     def __init__(self, smarthome):
-        self._name = self.get_fullname()
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
-        if not REQUIRED_PACKAGE_IMPORTED:
-            self.logger.error("Unable to import Python package 'serial'")
-            self._init_complete = False
-            return
+        super().__init__()
+
         try:
             self._LU_ID = self.get_parameter_value('LU_ID')
             self._WP_ID = self.get_parameter_value('WP_ID')
@@ -301,7 +291,7 @@ class DuW(SmartPlugin):
                         self.logger.debug("Init PANEL register failed: {}".format(register))
                 except Exception as e:
                     self.logger.error("Init PANEL register not possible: {}".format(register))
-                    
+
         # poll DuW interface
         dw_id = 0
         dw_register = 0
