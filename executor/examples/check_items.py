@@ -63,8 +63,9 @@ def get_item_type(sh, path):
 
 
 def check_item(sh, path):
+    global get_item_type
 
-    return isinstance(path, Item)
+    return get_item_type(sh, path) == "<class 'lib.item.item.Item'>"
 
 
 # to get access to the object instance:
@@ -74,14 +75,13 @@ items = Items.get_instance()
 # allitems = items.return_items()
 problems_found = 0
 problems_fixed = 0
-itemClass = Item
 
 for one in items.return_items(ordered=True):
     # get the items full path
     path = one.property.path
     try:
-        if not isinstance(one, itemclass):
-            logger.error(f"Error: item {path} has type but should be an Item Object")
+        if not check_item(sh, path):
+            logger.error(f"Error: item {path} has type {get_item_type(sh, path)} but should be an Item Object")
             problems_found += 1
             if repair_item(sh, one):
                 if check_item(sh, path):
