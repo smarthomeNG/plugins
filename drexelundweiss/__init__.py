@@ -260,12 +260,15 @@ class DuW(SmartPlugin):
             divisor = int(reginfo[4])
             komma = int(reginfo[5])
             for item in self.LUregl[register]['items']:
-                (data, done) = self._read_register(
-                    reginfo[7], register, int(reginfo[4]), int(reginfo[5]))
-                if done:
-                    item(data, 'DuW', 'init process')
-                else:
-                    self.logger.debug("Init LU register failed: {}".format(register))
+                try:
+                    (data, done) = self._read_register(
+                        reginfo[7], register, int(reginfo[4]), int(reginfo[5]))
+                    if done:
+                        item(data, 'DuW', 'init process')
+                    else:
+                        self.logger.debug("Init LU register failed: {}".format(register))
+                except Exception as e:
+                    self.logger.error("Init LU register not possible: {}".format(register))
 
         # WP register init
         for register in self.WPregl:
@@ -273,12 +276,15 @@ class DuW(SmartPlugin):
             divisor = int(reginfo[4])
             komma = int(reginfo[5])
             for item in self.WPregl[register]['items']:
-                (data, done) = self._read_register(
-                    reginfo[7], register, int(reginfo[4]), int(reginfo[5]))
-                if done:
-                    item(data, 'DuW', 'init process')
-                else:
-                    self.logger.debug("Init WP register failed: {}".format(register))
+                try:
+                    (data, done) = self._read_register(
+                        reginfo[7], register, int(reginfo[4]), int(reginfo[5]))
+                    if done:
+                        item(data, 'DuW', 'init process')
+                    else:
+                        self.logger.debug("Init WP register failed: {}".format(register))
+                except Exception as e:
+                    self.logger.error("Init WP register not possible: {}".format(register))
 
         # PANEL register init
         for register in self.PANELregl:
@@ -286,13 +292,16 @@ class DuW(SmartPlugin):
             divisor = int(reginfo[4])
             komma = int(reginfo[5])
             for item in self.PANELregl[register]['items']:
-                (data, done) = self._read_register(
-                    reginfo[7], register, int(reginfo[4]), int(reginfo[5]))
-                if done:
-                    item(data, 'DuW', 'init process')
-                else:
-                    self.logger.debug("Init PANEL register failed: {}".format(register))
-
+                try:
+                    (data, done) = self._read_register(
+                        reginfo[7], register, int(reginfo[4]), int(reginfo[5]))
+                    if done:
+                        item(data, 'DuW', 'init process')
+                    else:
+                        self.logger.debug("Init PANEL register failed: {}".format(register))
+                except Exception as e:
+                    self.logger.error("Init PANEL register not possible: {}".format(register))
+                    
         # poll DuW interface
         dw_id = 0
         dw_register = 0
