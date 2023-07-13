@@ -82,7 +82,7 @@ commands = {
         'left': {'read': True, 'write': True, 'write_cmd': '#NLT', 'item_type': 'bool', 'dev_datatype': 'ok', 'reply_pattern': ['@NLT (.*)'], 'item_attrs': {'enforce': True}},
         'right': {'read': True, 'write': True, 'write_cmd': '#NRT', 'item_type': 'bool', 'dev_datatype': 'ok', 'reply_pattern': ['@NRT (.*)'], 'item_attrs': {'enforce': True}},
         'select': {'read': True, 'write': True, 'write_cmd': '#SEL', 'item_type': 'bool', 'dev_datatype': 'ok', 'reply_pattern': ['@SEL (.*)'], 'item_attrs': {'enforce': True}},
-        'return': {'read': True, 'write': True, 'write_cmd': '#RET', 'item_type': 'bool', 'dev_datatype': 'ok', 'reply_pattern': ['@RET (.*)'], 'item_attrs': {'enforce': True}},
+        'back': {'read': True, 'write': True, 'write_cmd': '#RET', 'item_type': 'bool', 'dev_datatype': 'ok', 'reply_pattern': ['@RET (.*)'], 'item_attrs': {'enforce': True}},
         'red': {'read': True, 'write': True, 'write_cmd': '#RED', 'item_type': 'bool', 'dev_datatype': 'ok', 'reply_pattern': ['@RED (.*)'], 'item_attrs': {'enforce': True}},
         'green': {'read': True, 'write': True, 'write_cmd': '#GRN', 'item_type': 'bool', 'dev_datatype': 'ok', 'reply_pattern': ['@GRN (.*)'], 'item_attrs': {'enforce': True}},
         'blue': {'read': True, 'write': True, 'write_cmd': '#BLU', 'item_type': 'bool', 'dev_datatype': 'ok', 'reply_pattern': ['@BLU (.*)'], 'item_attrs': {'enforce': True}},

@@ -657,9 +657,9 @@ item_structs:
             oppo_write: true
             enforce_updates: true
 
-        return:
+        back:
             type: bool
-            oppo_command: menu.return
+            oppo_command: menu.back
             oppo_read: true
             oppo_write: true
             enforce_updates: true
@@ -1176,9 +1176,9 @@ item_structs:
                 oppo_write: true
                 enforce_updates: true
 
-            return:
+            back:
                 type: bool
-                oppo_command: menu.return
+                oppo_command: menu.back
                 oppo_read: true
                 oppo_write: true
                 enforce_updates: true
@@ -1695,9 +1695,9 @@ item_structs:
                 oppo_write: true
                 enforce_updates: true
 
-            return:
+            back:
                 type: bool
-                oppo_command: menu.return
+                oppo_command: menu.back
                 oppo_read: true
                 oppo_write: true
                 enforce_updates: true
