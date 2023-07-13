@@ -226,20 +226,23 @@ class AppleTV(SmartPlugin):
         """
         Discovers Apple TV's on local mdns domain
         """
-        self.logger.debug("Discovering Apple TV's in your network for {} seconds...".format(
-            int(self._atv_scan_timeout)))
-        self._atvs = await pyatv.scan(self._loop, timeout=self._atv_scan_timeout)
+        try:
+            self.logger.debug("Discovering Apple TV's in your network for {} seconds...".format(
+                int(self._atv_scan_timeout)))
+            self._atvs = await pyatv.scan(self._loop, timeout=self._atv_scan_timeout)
 
-        if not self._atvs:
-            self.logger.warning("No Apple TV found")
-        else:
-            self.logger.info("Found {} Apple TV's:".format(len(self._atvs)))
-            for _atv in self._atvs:
-                _markup = '-'
-                if str(_atv.address) == str(self._ip):
-                    _markup = '*'
-                    self._atv = _atv
-                self.logger.info(" {} {}, IP: {}".format(_markup, _atv.name, _atv.address))
+            if not self._atvs:
+                self.logger.warning("No Apple TV found")
+            else:
+                self.logger.info("Found {} Apple TV's:".format(len(self._atvs)))
+                for _atv in self._atvs:
+                    _markup = '-'
+                    if str(_atv.address) == str(self._ip):
+                        _markup = '*'
+                        self._atv = _atv
+                    self.logger.info(" {} {}, IP: {}".format(_markup, _atv.name, _atv.address))
+        except Exception as e:
+            self.logger.warning("Issue while searching for Apple TV: {}".format(e))
 
     async def connect(self):
         """
@@ -325,9 +328,8 @@ class AppleTV(SmartPlugin):
             self._update_items('playing_position_percent', 0)
 
     def handle_async_exception(self, loop, context):
-        self.logger.error('*** ASYNC EXCEPTION ***')
-        self.logger.error('Context: {}'.format(context))
-        raise
+        self.logger.error('ASYNC EXCEPTION. Context: {}'.format(context))
+        #raise Exception()
 
     def _push_listener_thread_worker(self):
         """
