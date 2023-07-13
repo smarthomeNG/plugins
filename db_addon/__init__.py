@@ -157,7 +157,10 @@ class DatabaseAddOn(SmartPlugin):
         self.alive = True
 
         # start the queue consumer thread
-        self._work_item_queue_thread_startup()
+        # self._work_item_queue_thread_startup()
+
+        # work queue
+        self.work_item_queue()
 
     def stop(self):
         """
@@ -167,7 +170,7 @@ class DatabaseAddOn(SmartPlugin):
         self.logger.debug("Stop method called")
         self.alive = False
         self.scheduler_remove('cyclic')
-        self._work_item_queue_thread_shutdown()
+        # self._work_item_queue_thread_shutdown()
 
     def parse_item(self, item: Item):
         """
@@ -2146,8 +2149,6 @@ class DatabaseAddOn(SmartPlugin):
         if self.prepare_debug:
             self.logger.debug(f"called with {func=}, item={database_item.path()}, {timeframe=}, {start=}, {end=}, {group=}, {group2=}, {ignore_value_list=}")
 
-        # called with func='min', item=env.host_rpi.temperature, timeframe='day', start=0, end=0, group=None, group2=None, ignore_value_list=['!= 0']
-
         # set default result
         default_result = [[None, None]]
 
@@ -2195,6 +2196,9 @@ class DatabaseAddOn(SmartPlugin):
         query_params = {'func': func, 'item_id': item_id, 'ts_start': ts_start, 'ts_end': ts_end, 'group': group, 'group2': group2, 'ignore_value_list': ignore_value_list}
         query_result = self._query_log_timestamp(**query_params)
 
+        if self.prepare_debug:
+            self.logger.debug(f"result of '_query_log_timestamp' {query_result=}")
+
         # post process query_result
         if query_result is None:
             self.logger.error(f"Error occurred during _query_item. Aborting...")
@@ -2207,7 +2211,7 @@ class DatabaseAddOn(SmartPlugin):
         result = []
         for element in query_result:
             timestamp, value = element
-            if timestamp and value is not None:
+            if timestamp is not None and value is not None:
                 if isinstance(value, float):
                     value = round(value, 1)
                 result.append([timestamp, value])
@@ -2573,14 +2577,14 @@ class DatabaseAddOn(SmartPlugin):
             tuples = fetch(query, params, cur=cur)
         except Exception as e:
             self.logger.error(f"Error for query '{query_readable}': {e}")
-        else:
-            if self.sql_debug:
-                self.logger.debug(f"Result of '{query_readable}': {tuples}")
-            return tuples
+            raise e
         finally:
             if cur is None:
                 self._db.release()
 
+        if self.sql_debug:
+            self.logger.debug(f"Result of '{query_readable}': {tuples}")
+        return tuples
 
 #######################
 #   Helper functions
