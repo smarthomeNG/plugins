@@ -22,9 +22,26 @@
 #########################################################################
 
 import builtins
+import os
+import sys
+
+if __name__ == '__main__':
+    builtins.SDP_standalone = True
+
+    class SmartPlugin():
+        pass
+
+    class SmartPluginWebIf():
+        pass
+
+    BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
+    sys.path.insert(0, BASE)
+
+else:
+    builtins.SDP_standalone = False
 
 from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, CONN_NULL, CONN_NET_TCP_CLI, CONN_SER_ASYNC)
-from lib.model.smartdeviceplugin import SmartDevicePlugin
+from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 
 # from .webif import WebInterface
 
@@ -126,3 +143,6 @@ class denon(SmartDevicePlugin):
             src = tmp[0][5:]
             name = tmp[1]
             self._custom_inputnames[src] = name
+
+if __name__ == '__main__':
+    s = Standalone(lms, sys.argv[0])
