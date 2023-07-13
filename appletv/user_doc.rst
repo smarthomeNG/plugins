@@ -37,135 +37,18 @@ plugin.yaml
 Items
 =====
 
-name (String)
--------------
-Enthält den Namen des Geräts, wird beim Starten des Plugins durch die automatische Erkennung gefüllt
+.. important::
 
-artwork_url (String)
---------------------
-Enthält eine URL zum Artwork der aktuell abgespielten Mediendatei (falls vorhanden).
+      Detaillierte Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/appletv` zu finden.
 
-play_state (Ganzzahl)
----------------------
-Der aktuelle Abspielstatus als Integer. Derzeit unterstützte Abspielzustände:
 
-* 0: Gerät befindet sich im Leerlaufzustand
-* 1: Kein Medium wird gerade ausgewählt/abgespielt
-* 2: Medium wird geladen/gepuffert
-* 3: Medium ist pausiert
-* 4: Medium wird abgespielt
-* 5: Medien werden vorgespult
-* 6: Medien werden zurückgespult
+.. code-block:: yaml
 
-play_state_text (String)
-----------------------------
-Der aktuelle Status der Wiedergabe als Text.
-
-playing (bool)
---------------
-`True` wenn play_state 4 ist (Medium wird abgespielt), `False` für alle anderen play_states.
-
-media_type (Ganzzahl)
------------------------
-Der aktuelle Abspielstatus als Integer. Derzeit unterstützte Abspielzustände:
-
-* 1: Medientyp ist unbekannt
-* 2: Medientyp ist Video
-* 3: Medientyp ist Musik
-* 4: Medientyp ist TV
-
-media_type_text (String)
-----------------------------
-Der aktuelle Medientyp als Text.
-
-album (String)
---------------
-Der Name des Albums. Nur relevant, wenn der Inhalt Musik ist.
-
-artist (String)
----------------
-Der Name des Interpreten. Nur relevant, wenn der Inhalt Musik ist.
-
-genre (String)
---------------
-Das Genre der Musik. Nur relevant, wenn der Inhalt Musik ist.
-
-title (String)
---------------
-Der Titel des aktuellen Mediums.
-
-position (Ganzzahl)
--------------------
-Die aktuelle Position innerhalb des abspielenden Mediums in Sekunden.
-
-total_time (Ganzzahl)
------------------------
-Die tatsächliche Abspielzeit des Mediums in Sekunden.
-
-position_percent (Ganzzahl)
------------------------------
-Die aktuelle Position innerhalb des abspielenden Mediums in %.
-
-repeat (Ganzzahl)
--------------------
-Der aktuelle Status des ausgewählten Wiederholungsmodus. Derzeit unterstützte Wiederholungsmodi:
-
-* 0: Keine Wiederholung
-* 1: Wiederholung des aktuellen Titels
-* 2: Alle Spuren wiederholen
-
-repeat_text (String)
-----------------------
-Der aktuell gewählte Typ des Wiederholungsmodus als String.
-
-shuffle (bool)
---------------
-`True` wenn shuffle aktiviert ist, `False` wenn nicht.
-
-rc_top_menu (bool)
-------------------
-Setzt diesen Punkt auf `True`, um zum Home-Menü zurückzukehren.
-Das Plugin setzt diesen Eintrag nach der Befehlsausführung auf `False` zurück.
-
-rc_menu (bool)
---------------
-Setzt diesen Punkt auf `True`, um zum Menü zurückzukehren.
-Das Plugin setzt dieses Element nach der Ausführung des Befehls auf `False` zurück.
-
-rc_select (bool)
-----------------
-Setzt diesen Punkt auf `True` um die 'select' Taste zu drücken.
-Das Plugin setzt diesen Punkt nach der Ausführung des Befehls auf `False` zurück.
-
-rc_left, rc_up, rc_right, rc_down (bools)
------------------------------------------
-Setzt eines dieser Elemente auf `True`, um den Cursor in die entsprechende Richtung zu bewegen.
-Das Plugin setzt diese Werte nach der Befehlsausführung auf `False` zurück.
-
-rc_previous (bool)
-------------------
-Setzen Sie dieses Element auf `True`, um die 'previous'-Taste zu drücken.
-Das Plugin setzt diesen Punkt nach der Befehlsausführung auf `False` zurück.
-
-rc_play (bool)
---------------
-Setzt dieses Element auf `True`, um die 'play'-Taste zu drücken.
-Das Plugin setzt dieses Element nach der Ausführung des Befehls auf `False` zurück.
-
-rc_pause (bool)
----------------
-Setzt dieses Element auf `True`, um die 'Pause'-Taste zu drücken.
-Das Plugin setzt dieses Element nach der Ausführung des Befehls auf `False` zurück.
-
-rc_stop (bool)
---------------
-Setzt dieses Element auf `True`, um die 'stop'-Taste zu drücken.
-Das Plugin setzt dieses Element nach der Ausführung des Befehls auf `False` zurück.
-
-rc_next (bool)
---------------
-Setze dieses Element auf `True`, um die 'next'-Taste zu drücken.
-Das Plugin setzt dieses Element nach der Ausführung des Befehls auf `False` zurück.
+    # etc/plugin.yaml
+    appletv:
+        plugin_name: appletv
+        #ip: 0.0.0.0
+        #scan_timeout: 5
 
 
 Struct Vorlagen
@@ -177,29 +60,6 @@ Ab smarthomeNG 1.6 können Vorlagen aus dem Plugin einfach eingebunden werden. D
 - playing: Informationen zum aktuell gespielten Titel wie Artist, Album, etc. sowie Ansteuern des Abspielmodus und mehr
 - control: verschiedene Fernbedienungsfunktionen wie Menü, Play/Pause, etc.
 
-
-Funktionen
-==========
-
-is_playing()
-------------
-Gibt `true` oder `false` zurück und zeigt an, ob das Apple TV gerade Medien abspielt.
-Beispiel: `playing = sh.appletv.is_playing()`
-
-play()
-------
-Sendet einen Abspielbefehl an das Gerät.
-Beispiel: `sh.appletv.play()`
-
-pause()
--------
-Sendet einen Pausenbefehl an das Gerät.
-Beispiel: `sh.appletv.pause()`
-
-play_url(url)
--------------
-Spielt ein Medium unter Verwendung der angegebenen URL ab. Das Medium muss natürlich mit dem Apple TV Gerät kompatibel sein. Damit dies funktioniert, muss SHNG zuerst beim Gerät authentifiziert werden. Dies geschieht über die Schaltfläche "Authentifizieren" in der Weboberfläche. Anschließend muss ein PIN-Code, der auf dem Fernsehbildschirm angezeigt wird, in die Weboberfläche eingegeben werden. Dieser sollte nur einmal benötigt werden und für immer gültig sein.
-Beispiel: `sh.appletv.play_url('http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_60fps_normal.mp4')`
 
 SmartVISU
 =========
