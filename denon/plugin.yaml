@@ -15,6 +15,13 @@ plugin:
 
 parameters:
 
+    standby_item_path:
+        type: str
+        default: ''
+        description:
+            de: 'Item-Pfad für das Standby-Item'
+            en: 'item path for standby switch item'
+            
     model:
         type: str
         mandatory: false
