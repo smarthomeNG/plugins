@@ -111,7 +111,11 @@ function deletefile() {
 	console.log('file to delete'+filenametodelete);
 	$.get('delete_file', { filename: filenametodelete}, function(result) {
 		console.log('Result:'+result);
-        get_filelist(getCookie('sort_order'));
+    const save_input = document.querySelector('#savefilename');
+    const del_button = document.querySelector('#deletefile');
+    del_button.setAttribute("disabled", "disabled");
+    save_input.value="";
+    get_filelist(getCookie('sort_order'));
 	});
 
 };
