@@ -204,8 +204,9 @@ class DatabaseAddOn(SmartPlugin):
             elif db_addon_fct in HISTORIE_ATTRIBUTES_LAST:
                 # handle functions 'minmax_last' in format 'minmax_last_timedelta|timeframe_function' like 'minmax_last_24h_max'
                 func = db_addon_fct_vars[3]
-                timeframe = convert_timeframe(db_addon_fct_vars[2][-1:])
-                start = to_int(db_addon_fct_vars[2][:-1])
+                start, timeframe = split_sting_letters_numbers(db_addon_fct_vars[2])
+                start = to_int(start)
+                timeframe = convert_timeframe(timeframe)
                 end = 0
                 log_text = 'minmax_last_timedelta|timeframe_function'
                 required_params = [func, timeframe, start, end]
@@ -248,12 +249,13 @@ class DatabaseAddOn(SmartPlugin):
             elif db_addon_fct in VERBRAUCH_ATTRIBUTES_ROLLING:
                 # handle functions 'verbrauch_on-demand' in format 'verbrauch_rolling_window_timeframe_timedelta' like 'verbrauch_rolling_12m_woche_minus1'
                 func = db_addon_fct_vars[1]
-                window_inc = to_int(db_addon_fct_vars[2][:-1])  # 12
-                window_dur = convert_timeframe(db_addon_fct_vars[2][-1])  # day, week, month, year
+                window_inc, window_dur = split_sting_letters_numbers(db_addon_fct_vars[2])
+                window_inc = to_int(window_inc)  # 12
+                window_dur = convert_timeframe(window_dur)  # day, week, month, year
                 timeframe = convert_timeframe(db_addon_fct_vars[3])  # day, week, month, year
-                if window_dur in ALLOWED_QUERY_TIMEFRAMES and window_inc and timeframe:
-                    start = convert_duration(timeframe, window_dur) * window_inc
-                end = to_int(db_addon_fct_vars[4][-1])  # 1
+                end = to_int(split_sting_letters_numbers(db_addon_fct_vars[4])[1])
+                if window_dur in ALLOWED_QUERY_TIMEFRAMES and window_inc and timeframe and end:
+                    start = to_int(convert_duration(timeframe, window_dur) * window_inc) + end
                 log_text = 'verbrauch_rolling_window_timeframe_timedelta'
                 required_params = [func, timeframe, start, end]
 
@@ -285,9 +287,10 @@ class DatabaseAddOn(SmartPlugin):
                 # handle functions 'serie_minmax' in format 'serie_minmax_timeframe_func_start|group' like 'serie_minmax_monat_min_15m'
                 func = db_addon_fct_vars[3]
                 timeframe = convert_timeframe(db_addon_fct_vars[2])
-                start = to_int(db_addon_fct_vars[4][:-1])
+                start, group = split_sting_letters_numbers(db_addon_fct_vars[4])
+                start = to_int(start)
+                group = convert_timeframe(group)
                 end = 0
-                group = convert_timeframe(db_addon_fct_vars[4][len(db_addon_fct_vars[4]) - 1])
                 log_text = 'serie_minmax_timeframe_func_start|group'
                 required_params = [func, timeframe, start, end, group]
 
@@ -295,8 +298,9 @@ class DatabaseAddOn(SmartPlugin):
                 # handle functions 'serie_zaehlerstand' in format 'serie_zaehlerstand_timeframe_start|group' like 'serie_zaehlerstand_tag_30d'
                 func = 'max'
                 timeframe = convert_timeframe(db_addon_fct_vars[2])
-                start = to_int(db_addon_fct_vars[3][:-1])
-                group = convert_timeframe(db_addon_fct_vars[3][len(db_addon_fct_vars[3]) - 1])
+                start, group = split_sting_letters_numbers(db_addon_fct_vars[3])
+                start = to_int(start)
+                group = convert_timeframe(group)
                 log_text = 'serie_zaehlerstand_timeframe_start|group'
                 required_params = [timeframe, start, group]
 
@@ -304,16 +308,18 @@ class DatabaseAddOn(SmartPlugin):
                 # handle all functions of format 'serie_verbrauch_timeframe_start|group' like 'serie_verbrauch_tag_30d'
                 func = 'diff_max'
                 timeframe = convert_timeframe(db_addon_fct_vars[2])
-                start = to_int(db_addon_fct_vars[3][:-1])
-                group = convert_timeframe(db_addon_fct_vars[3][len(db_addon_fct_vars[3]) - 1])
+                start, group = split_sting_letters_numbers(db_addon_fct_vars[3])
+                start = to_int(start)
+                group = convert_timeframe(group)
                 log_text = 'serie_verbrauch_timeframe_start|group'
                 required_params = [timeframe, start, group]
 
             elif db_addon_fct in SERIE_ATTRIBUTES_SUMME:
                 # handle all summe in format 'serie_xxsumme_timeframe_count|group' like serie_waermesumme_monat_24m
                 func = 'sum_max'
-                timeframe = 'month'
-                start = to_int(db_addon_fct_vars[3][:-1])
+                start, timeframe = split_sting_letters_numbers(db_addon_fct_vars[3])
+                start = to_int(start)
+                timeframe = convert_timeframe(timeframe)
                 end = 0
                 group = 'day',
                 group2 = 'month'
@@ -324,9 +330,10 @@ class DatabaseAddOn(SmartPlugin):
                 # handle 'serie_tagesmittelwert_count|group' like 'serie_tagesmittelwert_0d' => Tagesmittelwert der letzten 0 Tage (also heute)
                 func = 'max'
                 timeframe = 'year'
-                start = to_int(db_addon_fct_vars[2][:-1])
+                start, group = split_sting_letters_numbers(db_addon_fct_vars[2])
+                start = to_int(start)
+                group = convert_timeframe(group)
                 end = 0
-                group = convert_timeframe(db_addon_fct_vars[2][len(db_addon_fct_vars[2]) - 1])
                 log_text = 'serie_tagesmittelwert_count|group'
                 required_params = [func, timeframe, start, end, group]
 
@@ -334,28 +341,31 @@ class DatabaseAddOn(SmartPlugin):
                 # handle 'serie_tagesmittelwert_group2_count|group' like 'serie_tagesmittelwert_stunde_0d' => Stundenmittelwerte der letzten 0 Tage (also heute)
                 func = 'avg1'
                 timeframe = 'day'
-                start = to_int(db_addon_fct_vars[3][:-1])
                 end = 0
                 group = 'hour'
-                group2 = convert_timeframe(db_addon_fct_vars[3][len(db_addon_fct_vars[3]) - 1])
+                start, group2 = split_sting_letters_numbers(db_addon_fct_vars[3])
+                start = to_int(start)
+                group2 = convert_timeframe(group2)
                 log_text = 'serie_tagesmittelwert_group2_count|group'
                 required_params = [func, timeframe, start, end, group, group2]
 
             elif db_addon_fct in SERIE_ATTRIBUTES_MITTEL_H1:
                 # handle 'serie_tagesmittelwert_stunde_start_end|group' like 'serie_tagesmittelwert_stunde_30_0d' => Stundenmittelwerte von vor 30 Tage bis vor 0 Tagen (also heute)
-                timeframe = 'day'
                 method = 'raw'
                 start = to_int(db_addon_fct_vars[3])
-                end = to_int(db_addon_fct_vars[4][:-1])
+                end, timeframe = split_sting_letters_numbers(db_addon_fct_vars[4])
+                end = to_int(end)
+                timeframe = convert_timeframe(timeframe)
                 log_text = 'serie_tagesmittelwert_stunde_start_end|group'
                 required_params = [timeframe, method, start, end]
 
             elif db_addon_fct in SERIE_ATTRIBUTES_MITTEL_D_H:
                 # handle 'serie_tagesmittelwert_tag_stunde_end|group' like 'serie_tagesmittelwert_tag_stunde_30d' => Tagesmittelwert auf Basis des Mittelwerts pro Stunden für die letzten 30 Tage
-                timeframe = 'day'
                 method = 'raw'
-                start = to_int(db_addon_fct_vars[4][:-1])
                 end = 0
+                start, timeframe = split_sting_letters_numbers(db_addon_fct_vars[4])
+                start = to_int(start)
+                timeframe = convert_timeframe(timeframe)
                 log_text = 'serie_tagesmittelwert_tag_stunde_end|group'
                 required_params = [timeframe, method, start, end]
 
@@ -1307,9 +1317,8 @@ class DatabaseAddOn(SmartPlugin):
         if 'timedelta' in query_params:
             timedelta = query_params.pop('timedelta')
             today = datetime.date.today()
-            year = today.year - timedelta
-            start_date = datetime.date(year, 1, 1) - relativedelta(days=1)  # Start ist Tag vor dem 1.1., damit Abfrage den Maximalwert von 31.12. 00:00:00 bis 1.1. 00:00:00 ergibt
-            end_date = today - relativedelta(timedelta)
+            start_date = datetime.date(today.year, 1, 1) - relativedelta(years=timedelta)
+            end_date = today - relativedelta(years=timedelta)
             start = (today - start_date).days
             end = (today - end_date).days
         else:
@@ -2710,7 +2719,7 @@ def convert_duration(timeframe: str, window_dur: str) -> int:
                  }
     }
 
-    return to_int(lookup[timeframe][window_dur])
+    return lookup[timeframe][window_dur]
 
 
 def count_to_start(count: int = 0, end: int = 0):
