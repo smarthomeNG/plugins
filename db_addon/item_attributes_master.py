@@ -76,6 +76,7 @@ ITEM_ATTRIBUTES = {
         'minmax_last_7d_avg':                      {'cat': 'wertehistorie', 'sub_cat': 'last',       'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'durchschnittlicher Wert der letzten 7 Tage'},
         'minmax_heute_min':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Minimalwert seit Tagesbeginn'},
         'minmax_heute_max':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Maximalwert seit Tagesbeginn'},
+        'minmax_heute_avg':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Durschnittswert seit Tagesbeginn'},
         'minmax_heute_minus1_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Minimalwert gestern (heute -1 Tag)'},
         'minmax_heute_minus1_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Maximalwert gestern (heute -1 Tag)'},
         'minmax_heute_minus1_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Durchschnittswert gestern (heute -1 Tag)'},

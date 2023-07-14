@@ -864,6 +864,17 @@ class DatabaseAddOn(SmartPlugin):
         elif db_addon_fct in SERIE_ATTRIBUTES_MITTEL_H1 + SERIE_ATTRIBUTES_MITTEL_D_H:
             result = self._prepare_temperature_list(**params)
 
+        # handle TAGESMITTEL_ATTRIBUTES_TIMEFRAME like tagesmitteltemperatur_heute_minus1
+        elif db_addon_fct in TAGESMITTEL_ATTRIBUTES_TIMEFRAME:
+
+            params.update({'method': 'raw'})
+            _result = self._prepare_temperature_list(**params)
+
+            if isinstance(_result, list):
+                result = _result[0][1]
+            else:
+                result = None
+
         # handle info functions
         elif db_addon_fct == 'info_db_version':
             result = self._get_db_version()
@@ -999,9 +1010,10 @@ class DatabaseAddOn(SmartPlugin):
             return _new_value if isinstance(_new_value, int) else round(_new_value, 1)
 
         def handle_tagesmitteltemp():
-            self.logger.info(f"Onchange handling of 'tagesmitteltemperatur' not implemented, yet.")
-            # ToDo: Implement tagesmitteltemperatur onchange
-            return
+            result = self._prepare_temperature_list(database_item=database_item, timeframe='day', start=0, end=0, ignore_value_list=ignore_value_list, method='raw')
+
+            if isinstance(result, list):
+                return result[0][1]
 
         if self.onchange_debug:
             self.logger.debug(f"called with updated_item={updated_item.path()} and value={value}.")
@@ -1027,17 +1039,17 @@ class DatabaseAddOn(SmartPlugin):
                     self.logger.debug(f"non on-change function detected. Skip update.")
                 continue
 
+            # handle minmax on-change items tagesmitteltemperatur_heute, minmax_heute_avg
+            if db_addon_fct in ['tagesmitteltemperatur_heute', 'minmax_heute_avg']:
+                new_value = handle_tagesmitteltemp()
+
             # handle minmax on-change items like minmax_heute_max, minmax_heute_min, minmax_woche_max, minmax_woche_min.....
-            if db_addon_fct.startswith('minmax'):
+            elif db_addon_fct.startswith('minmax'):
                 new_value = handle_minmax()
 
             # handle verbrauch on-change items ending with heute, woche, monat, jahr
             elif db_addon_fct.startswith('verbrauch'):
                 new_value = handle_verbrauch()
-
-            # handle tagesmitteltemperatur on-change items ending with heute, woche, monat, jahr
-            elif db_addon_fct.startswith('tagesmitteltemperatur'):
-                new_value = handle_tagesmitteltemp()
 
             if new_value is None:
                 continue
@@ -1854,7 +1866,7 @@ class DatabaseAddOn(SmartPlugin):
 
         # temp_list = [[timestamp1, avg-value1], [timestamp2, avg-value2], [timestamp3, avg-value3], ...]  Tagesmitteltemperatur pro Stunde wird in der Datenbank per avg ermittelt
         if method == 'hour':
-            raw_data = self._query_item(func='avg', database_item=database_item, timeframe=timeframe, start=start, end=end, group='hour', ignore_value_list=ignore_value_list)
+            raw_data = self._query_item(func='avg', database_item=database_item, timeframe=timeframe, start=start, end=end, group=method, ignore_value_list=ignore_value_list)
             if self.prepare_debug:
                 self.logger.debug(f"{raw_data=}")
 
@@ -2857,8 +2869,9 @@ def timeframe_to_updatecyle(timeframe) -> str:
     return lookup.get(timeframe)
 
 
-def split_sting_letters_numbers(string) -> tuple:
-    return re.findall('(\d+|[A-Za-z]+)', string)
+def split_sting_letters_numbers(string) -> list:
+    return re.findall(r'(\d+|[A-Za-z]+)', string)
+
 
 ALLOWED_QUERY_TIMEFRAMES = ['year', 'month', 'week', 'day', 'hour']
 ALLOWED_MINMAX_FUNCS = ['min', 'max', 'avg']
