@@ -325,11 +325,15 @@
     <tbody>
         <tr><td></td>
             <td class="py-1">{{ _('00_items') }}</td>
-            <td class="py-1">{{ p.get_item_path_list('database_addon', True) }}</td>
+            <td class="py-1">{{ p._all_items() }}</td>
+        </tr>
+        <tr><td></td>
+            <td class="py-1">{{ _('01_ondemand_items') }}</td>
+            <td class="py-1">{{ p._ondemand_items() }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('02_admin_items') }}</td>
-            <td class="py-1">{{ p.get_item_path_list('database_addon', 'admin') }}</td>
+            <td class="py-1">{{ p._admin_items() }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('10_daily_items') }}</td>
@@ -398,10 +402,6 @@
         <tr><td></td>
             <td class="py-1">{{ _('27_vorjahresendwert_dict') }}</td>
             <td class="py-1">{{ p.previous_values['year'] }}</td>
-        </tr>
-        <tr><td></td>
-            <td class="py-1">{{ _('get_item_list') }}</td>
-            <td class="py-1">{{ p.get_item_list('database_addon', True) }}</td>
         </tr>
     </tbody>
 </table>
