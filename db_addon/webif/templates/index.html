@@ -377,10 +377,6 @@
             <td class="py-1">{{ _('get_item_list') }}</td>
             <td class="py-1">{{ p.get_item_list('database_addon', True) }}</td>
         </tr>
-        <tr><td></td>
-            <td class="py-1">{{ _('work_item_queue_thread') }}</td>
-            <td class="py-1">{% if p.work_item_queue_thread != None %}{{ p.work_item_queue_thread.is_alive() }}{% endif %}</td>
-        </tr>
     </tbody>
 </table>
 {% endblock bodytab2 %}

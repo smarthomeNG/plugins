@@ -11,7 +11,7 @@ plugin:
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1848494-support-thread-databaseaddon-plugin
-    version: 1.2.1                  # Plugin version (must match the version specified in __init__.py)
+    version: 1.2.2                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.9.3.5          # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.8              # minimum Python version to use for this plugin
@@ -724,6 +724,14 @@ item_structs:
         verbrauch_vorjahreszeitraum:
             name: Verbrauch im Jahreszeitraum 1.1. bis jetzt vor einem Jahr
             db_addon_fct: verbrauch_jahreszeitraum_minus1
+            db_addon_startup: yes
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_verbrauch_rolling_12m_woche_minus1:
+            name: Verbrauch innerhalb der letzten 12 Monate ausgehend vom Ende letzter Woche
+            db_addon_fct: verbrauch_rolling_12m_woche_minus1
             db_addon_startup: yes
             type: num
             visu_acl: ro
