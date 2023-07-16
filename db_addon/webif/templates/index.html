@@ -69,14 +69,14 @@
                     value.substring(0, length - 3) + " ..." :
                     value;
 
-                shngInsertText(item+'_value', round(new_value, 2), 'maintable', 5);
+                shngInsertText(item+'_value', Math.round(new_value, 2), 'maintable', 5);
                 shngInsertText(item+'_last_update', objResponse['items'][item]['last_update'], 'maintable');
                 shngInsertText(item+'_last_change', objResponse['items'][item]['last_change'], 'maintable');
             }
-            $('#maintable').DataTable().draw(false);
+
             item_count = String(objResponse['queue_length']) + ' Items';
-            shngInsertText('queue_length', item_count, null, 2);
-            shngInsertText('active_queue_item', objResponse['active_queue_item'], null, 2);
+            shngInsertText('queue_length', item_count);
+            shngInsertText('active_queue_item', objResponse['active_queue_item']);
 
       if (objResponse['plugin_suspended'] === false) {
 				document.getElementById('play').classList = 'btn btn-success btn-sm';
@@ -136,7 +136,7 @@
             targets: [5], "className": "init"
           },
           {
-            title: '{{ _('Wert') }}', 
+            title: '{{ _('Wert') }}',
             targets: [6], "className": "truncate value"
           },
           {

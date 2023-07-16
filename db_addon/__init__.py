@@ -161,8 +161,10 @@ class DatabaseAddOn(SmartPlugin):
         except Exception as e:
             self.logger.warning(f"During working item queue Exception '{e}' occurred.")
             self.logger.debug(e, exc_info=True)
-            self.logger.error("Thread for working item queue died. De-init plugin.")
-            self.deinit()
+            # self.logger.error("Thread for working item queue died. De-init plugin.")
+            # self.deinit()
+            self.logger.error("Suspend Plugin and clear Item-Queue.")
+            self.suspend(True)
 
     def stop(self):
         """
@@ -1119,7 +1121,8 @@ class DatabaseAddOn(SmartPlugin):
         return self._daily_items() + self._weekly_items() + self._monthly_items() + self._yearly_items() + self._static_items()
 
     def _all_items(self) -> list:
-        return self._ondemand_items() + self._ondemand_items() + self._static_items() + self._admin_items() + self._info_items()
+        # return self._ondemand_items() + self._onchange_items() + self._static_items() + self._admin_items() + self._info_items()
+        return self.get_item_list('db_addon', 'function')
 
     #########################################
     #   Public functions / Using item_path
