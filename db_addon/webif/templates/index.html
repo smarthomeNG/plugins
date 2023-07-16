@@ -45,6 +45,11 @@
   table th.content {
     width: 500px;
   }
+  table td.active_item {
+    max-width: 250px;
+    width: 200px;
+    min-width:150px!important;
+  }
   .shng_effect_highlight {
     background-color: #FFFFE0;
   }
@@ -75,6 +80,11 @@
             }
 
             item_count = String(objResponse['queue_length']) + ' Items';
+            if (objResponse['queue_length'] == 0)
+              recalc_button(false);
+            else {
+              recalc_button(true);
+            }
             shngInsertText('queue_length', item_count);
             shngInsertText('active_queue_item', objResponse['active_queue_item']);
 
@@ -196,12 +206,28 @@
       }
   }
 </script>
+<script>
+  function recalc_button(onoff)
+  {
+    const recalc_button = document.querySelector('#recalc_icon');
+    if (onoff == true) {
+      //recalc_button.setAttribute("disabled", "disabled");
+      recalc_button.classList.add('fa-1x');
+      recalc_button.classList.add('fa-spin');
+    }
+    else {
+      //recalc_button.removeAttribute("disabled");
+      recalc_button.classList.remove('fa-1x');
+      recalc_button.classList.remove('fa-spin');
+    }
+  }
+</script>
 {% endblock pluginscripts %}
 
 
 {% block headtable %}
 
-<table class="table table-striped table-hover">
+<table class="table table-striped table-hover" style="min-width:600px;">
 	<tbody>
 		<tr>
 			<td class="py-1" width="150px"><strong>{{ _('Verbunden') }}</strong></td>
@@ -230,7 +256,7 @@
         {% endfor %}
         <tr>
             <td class="py-1" width="150px"><strong>{{ _('Item in Berechnung') }}</strong></td>
-            <td class="py-1" id="active_queue_item">{{ p.active_queue_item }}</td>
+            <td class="py-1 active_item truncate" id="active_queue_item">{{ p.active_queue_item }}</td>
             <td class="py-1" width="150px"><strong>{{ _('Arbeitsvorrat') }}</strong></td>
             <td class="py-1" id="queue_length" colspan="3">{{ p.queue_backlog }} {{ _('Items') }} </td>
         </tr>
@@ -242,7 +268,7 @@
 <!-- Additional buttons for the web interface (if any are needed) - displayed below the headtable-section -->
 {% block buttons %}
 	<div>
-        <button id="recalc" type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Neuberechnung aller Items auslösen?') }}')) { jQuery.get('recalc_all'); }" title="Ausführen einer Neuberechnung aller Items"><i class="fas fa-redo"></i></button>
+        <button id="recalc" type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Neuberechnung aller Items auslösen?') }}')) { jQuery.get('recalc_all');recalc_button(true); }" title="Ausführen einer Neuberechnung aller Items"><i class="fas fa-redo" id="recalc_icon"></i></button>
         <button id="clear_queue" type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Berechnungslauf abbrechen?') }}')) { jQuery.get('clear_queue'); }" title="Abbrechen des aktuellen Berechnungslaufes"><i class="fas fa-times"></i></button>
 		<button id="clear_cache" type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Leeren aller cache_dicts auslösen?') }}')) { jQuery.get('clean_cache_dicts'); }" title="Löschen alle Cache-Daten des Plugins"><i class="fas fa-trash"></i></button>
         <div class="btn-group btn-group-toggle">
