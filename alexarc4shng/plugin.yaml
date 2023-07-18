@@ -8,7 +8,7 @@ plugin:
     maintainer: AndreK
     tester: henfri, juergen, psilo
     #documentation: https://www.smarthomeng.de/user/plugins/alexarc4shng/user_doc.html       # url of documentation
-    version: 1.0.3                              # Plugin version
+    version: 1.0.4                              # Plugin version
     sh_minversion: 1.5.2                        # minimum shNG version to use this plugin
     multi_instance: False                       # plugin supports multi instance
     classname: AlexaRc4shNG                     # class containing the plugin
