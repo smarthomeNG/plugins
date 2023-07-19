@@ -18,7 +18,7 @@ commands = {
             'runningtime': {'read': True, 'read_cmd': 'rescanprogress totaltime', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'rescanprogress totaltime .* rescan:([0-9]{2}:[0-9]{2}:[0-9]{2})', 'item_attrs': {'custom1': ''}},
             'fail': {'read': True, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'rescanprogress totaltime rescan:0 lastscanfailed:(.*)', 'item_attrs': {'custom1': ''}},
             'abortscan': {'read': True, 'write': True, 'write_cmd': 'abortscan', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': 'abortscan', 'item_attrs': {'custom1': ''}},
-            'wipecache': {'read': True, 'write': True, 'write_cmd': 'wipecache', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': 'wipecache', 'item_attrs': {'custom1': ''}}
+            'wipecache': {'read': True, 'write': True, 'write_cmd': 'wipecache', 'item_type': 'bool', 'dev_datatype': 'LMSWipecache', 'reply_pattern': 'wipecache', 'item_attrs': {'custom1': ''}}
         },
         'totalgenres': {'read': True, 'write': False, 'read_cmd': 'info total genres ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'info total genres (\d+)', 'item_attrs': {'initial': True, 'custom1': ''}},
         'totalduration': {'read': True, 'write': False, 'read_cmd': 'info total duration ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'info total duration ([0-9.]*)', 'item_attrs': {'item_template': 'duration', 'initial': True, 'custom1': ''}},
