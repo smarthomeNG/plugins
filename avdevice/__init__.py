@@ -1201,7 +1201,7 @@ class AVDevice(SmartPlugin):
                                 expectedvalue = eval(expectedvalue.lstrip('0'))
                             except Exception:
                                 pass
-                            if type(dependvalue) == type(expectedvalue):
+                            if type(dependvalue) == type(expectedvalue) or (isinstance(dependvalue, (int,float)) and isinstance(expectedvalue, (int,float))):
                                 groupcount[group] += 1 if (dependvalue == expectedvalue and compare == '==') or \
                                                           (dependvalue >= expectedvalue and compare == '>=') or \
                                                           (dependvalue <= expectedvalue and compare == '<=') or \
