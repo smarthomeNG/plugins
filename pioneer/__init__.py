@@ -71,5 +71,18 @@ class pioneer(SmartDevicePlugin):
             data['payload'] = f'{data.get("payload", "")}{data["limit_response"].decode("unicode-escape")}'
         return data
 
+    def _process_additional_data(self, command, data, value, custom, by):
+
+        if command == 'zone1.control.power' and value:
+            self.logger.debug(f"Zone 1 is turned on. Requesting settings.")
+            self.send_command('general.settings.language')
+            self.send_command('general.settings.speakersystem')
+            self.send_command('general.settings.xcurve')
+            self.send_command('general.settings.hdmi.control')
+            self.send_command('general.settings.hdmi.controlmode')
+            self.send_command('general.settings.hdmi.arc')
+            self.send_command('general.settings.hdmi.standbythrough')
+
+
 if __name__ == '__main__':
     s = Standalone(pioneer, sys.argv[0])
