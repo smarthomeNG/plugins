@@ -49,7 +49,7 @@ import urllib.parse
 class lms(SmartDevicePlugin):
     """ Device class for Logitech Mediaserver/Squeezebox function. """
 
-    PLUGIN_VERSION = '1.5.1'
+    PLUGIN_VERSION = '1.5.2'
 
     def _set_device_defaults(self):
         self.custom_commands = 1
