@@ -49,7 +49,7 @@ import urllib.parse
 class lms(SmartDevicePlugin):
     """ Device class for Logitech Mediaserver/Squeezebox function. """
 
-    PLUGIN_VERSION = '1.5.1'
+    PLUGIN_VERSION = '1.5.2'
 
     def _set_device_defaults(self):
         self.custom_commands = 1
@@ -59,6 +59,18 @@ class lms(SmartDevicePlugin):
         self._use_callbacks = True
         self._parameters[PLUGIN_ATTR_RECURSIVE] = 1
         self._parameters['web_port'] = self.get_parameter_value('web_port')
+        if self.get_parameter_value('web_host') == '':
+            host = self._parameters.get(PLUGIN_ATTR_NET_HOST)
+            if host.startswith('http'):
+                self._parameters['web_host'] = host
+            else:
+                self._parameters['web_host'] = f'http://{host}'
+        else:
+            host = self.get_parameter_value('web_host')
+            if host.startswith('http'):
+                self._parameters['web_host'] = host
+            else:
+                self._parameters['web_host'] = f'http://{host}'
 
     def on_connect(self, by=None):
         self.logger.debug("Activating listen mode after connection.")
@@ -108,9 +120,13 @@ class lms(SmartDevicePlugin):
         # set album art URL
         if command == 'player.info.album':
             self.logger.debug(f"Got command album {command} data {data} value {value} custom {custom} by {by}")
-            host = self._parameters.get(PLUGIN_ATTR_NET_HOST)
-            port = self._parameters.get('web_port')
-            url = f'http://{host}:{port}/music/current/cover.jpg?player={custom}'
+            host = self._parameters['web_host']
+            port = self._parameters['web_port']
+            if port == 0:
+                url = f'{host}/music/current/cover.jpg?player={custom}'
+            else:
+                url = f'{host}:{port}/music/current/cover.jpg?player={custom}'
+            self.logger.debug(f"Setting albumarturl to {url}")
             self._dispatch_callback('player.info.albumarturl' + CUSTOM_SEP + custom, url, by)
 
         # set playlist ID
