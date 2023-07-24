@@ -1256,7 +1256,7 @@ class AVDevice(SmartPlugin):
                                     self.logger.log(VERBOSE2,
                                                     "Checking Dependency {}: Expectedvalue after Translation {}. Dependitem: {}, expected {}".format(
                                                         self._name, expectedvalue, dependitem, expectedvalue))
-                                    if type(dependvalue) == type(expectedvalue):
+                                    if type(dependvalue) == type(expectedvalue) or (isinstance(dependvalue, (int,float)) and isinstance(expectedvalue, (int,float))):
                                         groupcount[group] += 1 if (dependvalue == expectedvalue and compare == '==') or \
                                                                   (dependvalue >= expectedvalue and compare == '>=') or \
                                                                   (dependvalue <= expectedvalue and compare == '<=') or \
