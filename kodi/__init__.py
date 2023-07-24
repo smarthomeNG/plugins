@@ -81,7 +81,7 @@ class kodi(SmartDevicePlugin):
           another place, in ``commands.py`` and/or the item configuration.
     """
 
-    PLUGIN_VERSION = '1.7.0'
+    PLUGIN_VERSION = '1.7.1'
 
     def _set_device_defaults(self):
         self._use_callbacks = True
@@ -111,6 +111,10 @@ class kodi(SmartDevicePlugin):
         :param data: received data in 'raw' connection format
         :type command: str
         """
+        if self.standby:
+            self.logger.debug(f'received data for command {command} on standby, discarding data.')
+            return
+
         if command is not None:
             self.logger.debug(f'received data "{data}" for command {command}')
         else:
@@ -321,45 +325,26 @@ class kodi(SmartDevicePlugin):
         self.logger.debug(f'received data "{data}" for command {command} converted to value {value}')
         self._dispatch_callback(command, value, by)
 
-    def send_command(self, command, value=None, **kwargs):
+    def _do_before_send(self, command, value, kwargs):
         """
-        Checks for special commands and handles them, otherwise call the
-        base class' method
-
-        :param command: the command to send
-        :param value: the data to send, if applicable
-        :type command: str
-        :return: True if send was successful, False otherwise
-        :rtype: bool
+        Checks for special commands and handles them
         """
-        if not self.alive:
-            self.logger.warning(f'trying to send command {command} with value {value}, but device is not active.')
-            return False
-
-        if not self._connection:
-            self.logger.warning(f'trying to send command {command} with value {value}, but connection is None. This shouldn\'t happen...')
-            return False
-
-        if not self._connection.connected:
-            self._connection.open()
-            if not self._connection.connected:
-                self.logger.warning(f'trying to send command {command} with value {value}, but connection could not be established.')
-                return False
-
         if command in self._special_commands['read' if value is None else 'write']:
             if command == 'status.update':
                 if value:
                     self._update_status()
-                return True
+                return (False, True)
             elif value is None:
                 self.logger.debug(f'Special command {command} called for reading, which is not intended. Ignoring request')
-                return True
+                return (False, True)
             else:
                 # this shouldn't happen
                 self.logger.warning(f'Special command {command} found, no action set for processing. Please inform developers. Ignoring request')
-                return True
-        else:
-            return super().send_command(command, value, playerid=self._playerid, **kwargs)
+                return (False, True)
+
+        # add playerid to kwargs for further processing
+        kwargs['playerid'] = self._playerid
+        return (True, True)
 
     def is_valid_command(self, command, read=None):
         """
@@ -395,6 +380,10 @@ class kodi(SmartDevicePlugin):
         :param image: an optional image to be displayed alongside the message
         :param display_time: how long the message is displayed in milli seconds
         """
+        if self.standby:
+            self.logger.info(f'trying to send notification {title}, but plugin is in standby mode. Discarding notification.')
+            return
+
         params = {'title': title, 'message': message, 'displaytime': display_time}
         if image is not None:
             params['image'] = image
