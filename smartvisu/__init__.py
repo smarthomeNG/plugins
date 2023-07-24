@@ -46,7 +46,7 @@ from .svinstallwidgets import SmartVisuInstallWidgets
 
 class SmartVisu(SmartPlugin):
 
-    PLUGIN_VERSION="1.8.11"
+    PLUGIN_VERSION="1.8.12"
     ALLOW_MULTIINSTANCE = True
 
     visu_definition = None
@@ -125,7 +125,8 @@ class SmartVisu(SmartPlugin):
 
     def run(self):
         self.alive = True
-        if self.smartvisu_dir != '':
+        # skip directory handling if generate pages and handle_widgets are disabled
+        if self.smartvisu_dir != '' and (self._generate_pages or self._handle_widgets):
             if not os.path.isdir(os.path.join(self.smartvisu_dir, 'pages')):
                 self.logger.error("Could not find valid smartVISU directory: {}".format(self.smartvisu_dir))
             else:
