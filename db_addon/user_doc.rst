@@ -55,7 +55,6 @@ Bsp:
         db_addon_fct: heute_minus1_avg
         db_addon_database_item: 'temperatur'
 
-|
 
 Anforderungen
 =============
@@ -68,7 +67,7 @@ Die Konfiguration des DatabaseAddon-Plugin erfolgt automatisch bei Start.
 Hinweis: Das Plugin selbst ist aktuell nicht multi-instance fähig. Das bedeutet, dass das Plugin aktuell nur eine Instanz
 des Database-Plugin abgebunden werden kann.
 
-|
+
 
 Konfiguration
 =============
@@ -93,23 +92,43 @@ Dazu folgenden Block am Ende der Datei */etc/mysql/my.cnf* einfügen bzw den exi
     wait_timeout = 28800
     interactive_timeout = 28800
 
-|
+
 
 Hinweise
 ========
 
- - Das Plugin startet die Berechnungen der Werte nach einer gewissen (konfigurierbaren) Zeit (Attribut `startup_run_delay`) nach dem Start von shNG, um den Startvorgang nicht zu beeinflussen.
- - Bei Start werden automatisch nur die Items berechnet, für das das Attribute `db_addon_startup` gesetzt wurde. Alle anderen Items werden erst zu konfigurierten Zeit berechnet. Über das WebIF kann die Berechnung aller definierten Items ausgelöst werden.
- - Für sogenannte `on_change` Items, also Items, deren Berechnung bis zum Jetzt (bspw. verbrauch-heute) gehen, wird die Berechnung immer bei eintreffen eines neuen Wertes gestartet. Zu Reduktion der Belastung auf die Datenbank werden die Werte für das Ende der letzten Periode gecached.
- - Berechnungen werden nur ausgeführt, wenn für den kompletten abgefragten Zeitraum Werte in der Datenbank vorliegen. Wird bspw. der Verbrauch des letzten Monats abgefragt wobei erst Werte ab dem 3. des Monats in der Datenbank sind, wird die Berechnung abgebrochen.
-   Mit dem Attribut `use_oldest_entry` kann dieses Verhalten verändert werden. Ist das Attribut gesetzt, wird, wenn für den Beginn der Abfragezeitraums keinen Werte vorliegen, der älteste Eintrag der Datenbank genutzt.
- - Für die Auswertung kann es nützlich sein, bestimmte Werte aus der Datenbank bei der Berechnung auszublenden. Hierfür stehen 2 Möglichkeiten zur Verfügung:
-    - Plugin-Attribut `ignore_0`: (list of strings) Bei Items, bei denen ein String aus der Liste im Pfadnamen vorkommt, werden 0-Werte (val_num = 0) bei Datenbankauswertungen ignoriert. Hat also das Attribut den Wert ['temp'] werden bei allen Items mit 'temp' im Pfadnamen die 0-Werte bei der Auswertung ignoriert.
-    - Item-Attribut `db_addon_ignore_value`: (num) Dieser Wert wird bei der Abfrage bzw. Auswertung der Datenbank für diese Item ignoriert.
- - Das Plugin enthält sehr ausführliche Logginginformation. Bei unerwartetem Verhalten, den LogLevel entsprechend anpassen, um mehr information zu erhalten.
- - Berechnungen des Plugins können im WebIF unterbrochen werden. Auch das gesamte Plugin kann pausiert werden. Dies kann be starker Systembelastung nützlich sein.
+ - Das Plugin startet die Berechnungen der Werte nach einer gewissen (konfigurierbaren) Zeit (Attribut `startup_run_delay`)
+   nach dem Start von shNG, um den Startvorgang nicht zu beeinflussen.
 
-|
+ - Bei Start werden automatisch nur die Items berechnet, für das das Attribute `db_addon_startup` gesetzt wurde. Alle anderen
+   Items werden erst zur konfigurierten Zeit berechnet. Das Attribute `db_addon_startup` kann auch direkt am `Database-Item`
+   gesetzt werden. Dabei wird das Attribut auf alle darunter liegenden `db_addon-Items` (bspw. bei Verwendung von structs) vererbt.
+   Über das WebIF kann die Berechnung aller definierten Items ausgelöst werden.
+
+ - Für sogenannte `on_change` Items, also Items, deren Berechnung bis zum Jetzt (bspw. verbrauch-heute) gehen, wird die Berechnung
+   immer bei eintreffen eines neuen Wertes gestartet. Zu Reduktion der Belastung auf die Datenbank werden die Werte für das Ende der
+   letzten Periode gecached.
+
+ - Berechnungen werden nur ausgeführt, wenn für den kompletten abgefragten Zeitraum Werte in der Datenbank vorliegen. Wird bspw.
+   der Verbrauch des letzten Monats abgefragt wobei erst Werte ab dem 3. des Monats in der Datenbank sind, wird die Berechnung abgebrochen.
+
+ - Mit dem Attribut `use_oldest_entry` kann dieses Verhalten verändert werden. Ist das Attribut gesetzt, wird, wenn für den
+   Beginn der Abfragezeitraums keinen Werte vorliegen, der älteste Eintrag der Datenbank genutzt.
+
+ - Für die Auswertung kann es nützlich sein, bestimmte Werte aus der Datenbank bei der Berechnung auszublenden. Hierfür stehen
+   2 Möglichkeiten zur Verfügung:
+    - Plugin-Attribut `ignore_0`: (list of strings) Bei Items, bei denen ein String aus der Liste im Pfadnamen vorkommt,
+      werden 0-Werte (val_num = 0) bei Datenbankauswertungen ignoriert. Hat also das Attribut den Wert ['temp'] werden bei allen Items mit
+      'temp' im Pfadnamen die 0-Werte bei der Auswertung ignoriert.
+    - Item-Attribut `db_addon_ignore_value`: (num) Dieser Wert wird bei der Abfrage bzw. Auswertung der Datenbank für diese
+      Item ignoriert.
+
+ - Das Plugin enthält sehr ausführliche Logginginformation. Bei unerwartetem Verhalten, den LogLevel entsprechend anpassen,
+   um mehr information zu erhalten.
+
+ - Berechnungen des Plugins können im WebIF unterbrochen werden. Auch das gesamte Plugin kann pausiert werden. Dies kann bei
+   starker Systembelastung nützlich sein.
+
 
 Beispiele
 =========
@@ -119,8 +138,8 @@ Verbrauch
 
 Soll bspw. der Verbrauch von Wasser ausgewertet werden, so ist dies wie folgt möglich:
 
-.. code-block:: yaml
 
+.. code-block:: yaml
     wasserzaehler:
         zaehlerstand:
             type: num
@@ -142,7 +161,6 @@ minmax
 Soll bspw. die minimalen und maximalen Temperaturen ausgewertet werden, kann dies so umgesetzt werden:
 
 .. code-block:: yaml
-
     temperature:
         aussen:
             nord:
@@ -207,6 +225,7 @@ Bei einer Wärmesumme von 200 Grad ist eine Düngung angesagt.
 siehe: https://de.wikipedia.org/wiki/Gr%C3%BCnlandtemperatursumme
 
 Folgende Parameter sind möglich / notwendig:
+
 
 .. code-block:: yaml
     db_addon_params: "year=current"
@@ -275,3 +294,20 @@ Tagesmitteltemperatur
 
 Die Tagesmitteltemperatur wird auf Basis der stündlichen Durchschnittswerte eines Tages (aller in der DB enthaltenen Datensätze)
 für die angegebene Anzahl von Tagen (days=optional) berechnet.
+
+
+
+Vorgehen bei Funktionserweiterung des Plugins bzw. Ergänzung weiterer Werte für Item-Attribute
+----------------------------------------------------------------------------------------------
+
+Augrund der Vielzahl der möglichen Werte der Itemattribute, insbesondere des Itemattributes`db_addon_fct`, wurde die Erstellung/Update
+der entsprechenden Teile der `plugin.yam` sowie die Erstellung der Datei `item_attributes.py`, die vom Plugin verwendet wird, automatisiert.
+
+Die Masterinformationen für alle Itemattributs sowie die Skripte zum Erstellen/Update der beiden Dateien sind in der
+Datei `item_attributes_master.py` enthalten.
+
+.. important::
+
+    Korrekturen, Erweiterungen etc. der Itemattribute sollten nur in der Datei `item_attributes_master.py`
+    im Dict der Variable `ITEM_ATTRIBUTS` vorgenommen werden. Das Ausführen der Datei `item_attributes_master.py` (main)
+    erstellt die `item_attributes.py` und aktualisiert die `plugin.yaml` entsprechend.

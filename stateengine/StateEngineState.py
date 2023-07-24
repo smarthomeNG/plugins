@@ -116,6 +116,8 @@ class SeState(StateEngineTools.SeItemChild):
         self._log_info("State {0}:", self.id)
         self._log_increase_indent()
         self.update_name(self.__item)
+        self._abitem.set_variable("current.state_name", self.name)
+        self._abitem.set_variable("current.state_id", self.id)
         self.__text.write_to_logger()
         self._log_info("Updating Web Interface...")
         self._log_increase_indent()
@@ -165,7 +167,8 @@ class SeState(StateEngineTools.SeItemChild):
             self.__actions_leave.write_to_logger()
             self._log_decrease_indent()
             self._abitem.update_webif([self.id, 'actions_leave'], self.__actions_leave.dict_actions)
-
+        self._abitem.set_variable("current.state_name", "")
+        self._abitem.set_variable("current.state_id", "")
         self._log_decrease_indent()
 
     # run actions when entering the state
@@ -267,8 +270,7 @@ class SeState(StateEngineTools.SeItemChild):
     # Read configuration from item and populate data in class
     # item_state: item to read from
     # recursion_depth: current recursion_depth (recursion is canceled after five levels)
-    # item_stateengine: StateEngine-Item defining items for conditions
-    # abitem_object: Related SeItem instance for later determination of current age and current delay
+    # se_use: If se_use Attribute is used or not
     def __fill(self, item_state, recursion_depth, se_use=None):
         if recursion_depth > 5:
             self._log_error("{0}/{1}: too many levels of 'use'", self.id, item_state.property.path)

@@ -40,27 +40,16 @@ if __name__ == '__main__':
 else:
     builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import (CUSTOM_SEP, PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_NET_PORT, PLUGIN_ATTR_RECURSIVE, PLUGIN_ATTR_CONN_TERMINATOR)
+from lib.model.sdp.globals import (CUSTOM_SEP, PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_RECURSIVE, PLUGIN_ATTR_CONN_TERMINATOR)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
-
-if not SDP_standalone:
-    #from .webif import WebInterface
-    pass
 
 import urllib.parse
 
 
 class lms(SmartDevicePlugin):
-    """ Device class for Logitech Mediaserver/Squeezebox function.
+    """ Device class for Logitech Mediaserver/Squeezebox function. """
 
-    Most of the work is done by the base class, so we only set default parameters
-    for the connection (to be overwritten by device attributes from the plugin
-    configuration) and add a fixed terminator byte to outgoing datagrams.
-
-    The know-how is in the commands.py (and some DT_ classes...)
-    """
-
-    PLUGIN_VERSION = '1.5.0'
+    PLUGIN_VERSION = '1.5.2'
 
     def _set_device_defaults(self):
         self.custom_commands = 1
@@ -70,18 +59,27 @@ class lms(SmartDevicePlugin):
         self._use_callbacks = True
         self._parameters[PLUGIN_ATTR_RECURSIVE] = 1
         self._parameters['web_port'] = self.get_parameter_value('web_port')
+        if self.get_parameter_value('web_host') == '':
+            host = self._parameters.get(PLUGIN_ATTR_NET_HOST)
+            if host.startswith('http'):
+                self._parameters['web_host'] = host
+            else:
+                self._parameters['web_host'] = f'http://{host}'
+        else:
+            host = self.get_parameter_value('web_host')
+            if host.startswith('http'):
+                self._parameters['web_host'] = host
+            else:
+                self._parameters['web_host'] = f'http://{host}'
 
     def on_connect(self, by=None):
         self.logger.debug("Activating listen mode after connection.")
         self.send_command('server.listenmode', True)
 
     def _transform_send_data(self, data=None, **kwargs):
-        if data:
-            try:
-                data['limit_response'] = self._parameters.get(PLUGIN_ATTR_CONN_TERMINATOR, "\r")
-                data['payload'] = f'{data.get("payload")}{data.get("limit_response")}'
-            except Exception as e:
-                self.logger.error(f'ERROR transforming send data: {e}')
+        if isinstance(data, dict):
+            data['limit_response'] = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR]
+            data['payload'] = f'{data.get("payload")}{data["limit_response"]}'
         return data
 
     def _transform_received_data(self, data):
@@ -90,23 +88,19 @@ class lms(SmartDevicePlugin):
 
     def _process_additional_data(self, command, data, value, custom, by):
 
-        def _dispatch(command, value, custom=None, send=False):
-            if custom:
-                command = command + CUSTOM_SEP + custom
-            if send:
-                self.send_command(command, value)
-            else:
-                self._dispatch_callback(command, value, by)
-
-        def _trigger_read(command, custom=None):
-            if custom:
-                command = command + CUSTOM_SEP + custom
-            self.logger.debug(f"Sending read command for {command}")
-            self.send_command(command)
+        def trigger_read(command):
+            self.send_command(command + CUSTOM_SEP + custom)
 
         if not custom:
             return
 
+        if command == 'player.info.playlists.names':
+            self.logger.debug(f"Got command playlist names {command} data {data} value {value} custom {custom} by {by}")
+            trigger_read('player.playlist.id')
+            trigger_read('player.playlist.name')
+
+        if command == 'playlist.rename':
+            trigger_read('info.playlists.names')
         # set alarm
         if command == 'player.control.alarms':
             # This does not really work currently. The created string is somehow correct.
@@ -119,73 +113,82 @@ class lms(SmartDevicePlugin):
                         alarm += f"{k}:{v} "
                     alarm = f"alarm add {alarm.strip()}"
                     self.logger.debug(f"Set alarm: {alarm}")
-                    _dispatch('player.control.set_alarm', alarm, custom, True)
+                    self.send_command('player.control.set_alarm' + CUSTOM_SEP + custom, alarm)
             except Exception as e:
                 self.logger.error(f"Error setting alarm: {e}")
 
         # set album art URL
         if command == 'player.info.album':
             self.logger.debug(f"Got command album {command} data {data} value {value} custom {custom} by {by}")
-            host = self._parameters.get(PLUGIN_ATTR_NET_HOST)
-            port = self._parameters.get('web_port')
-            url = f'http://{host}:{port}/music/current/cover.jpg?player={custom}'
-            _dispatch('player.info.albumarturl', url, custom)
+            host = self._parameters['web_host']
+            port = self._parameters['web_port']
+            if port == 0:
+                url = f'{host}/music/current/cover.jpg?player={custom}'
+            else:
+                url = f'{host}:{port}/music/current/cover.jpg?player={custom}'
+            self.logger.debug(f"Setting albumarturl to {url}")
+            self._dispatch_callback('player.info.albumarturl' + CUSTOM_SEP + custom, url, by)
 
         # set playlist ID
         if command == 'player.playlist.load':
             self.logger.debug(f"Got command load {command} data {data} value {value} custom {custom} by {by}")
-            _trigger_read('player.playlist.id', custom)
-            _trigger_read('player.playlist.name', custom)
-            _trigger_read('player.control.playmode', custom)
+            trigger_read('player.playlist.id')
+            trigger_read('player.control.playmode')
+
+        if command == 'player.playlist.id':
+            self.logger.debug(f"Got command id {command} data {data} value {value} custom {custom} by {by}")
+            trigger_read('player.playlist.name')
 
         # update on new song
         if command == 'player.info.title':
-            #_trigger_read('player.control.playmode', custom)
-            #_trigger_read('player.playlist.index', custom)
-            _trigger_read('player.info.duration', custom)
-            _trigger_read('player.info.album', custom)
-            _trigger_read('player.info.artist', custom)
-            _trigger_read('player.info.genre', custom)
-            _trigger_read('player.info.path', custom)
+            # trigger_read('player.control.playmode')
+            # trigger_read('player.playlist.index')
+            trigger_read('player.info.duration')
+            trigger_read('player.info.album')
+            trigger_read('player.info.artist')
+            trigger_read('player.info.genre')
+            trigger_read('player.info.path')
 
         # update on new song
-        if command == 'player.control.playpause' and value == True:
-            _trigger_read('player.control.playmode', custom)
-            _trigger_read('player.info.duration', custom)
-            _trigger_read('player.info.album', custom)
-            _trigger_read('player.info.artist', custom)
-            _trigger_read('player.info.genre', custom)
-            _trigger_read('player.info.path', custom)
+        if command == 'player.control.playpause' and value:
+            trigger_read('player.control.playmode')
+            trigger_read('player.info.duration')
+            trigger_read('player.info.album')
+            trigger_read('player.info.artist')
+            trigger_read('player.info.genre')
+            trigger_read('player.info.path')
 
         # update on new song
         if command == 'player.playlist.index':
             self.logger.debug(f"Got command index {command} data {data} value {value} custom {custom} by {by}")
-            _trigger_read('player.control.playmode', custom)
-            _trigger_read('player.info.duration', custom)
-            _trigger_read('player.info.album', custom)
-            _trigger_read('player.info.artist', custom)
-            _trigger_read('player.info.genre', custom)
-            _trigger_read('player.info.path', custom)
-            _trigger_read('player.info.title', custom)
+            trigger_read('player.control.playmode')
+            trigger_read('player.info.duration')
+            trigger_read('player.info.album')
+            trigger_read('player.info.artist')
+            trigger_read('player.info.genre')
+            trigger_read('player.info.path')
+            trigger_read('player.info.title')
 
         # update current time info
         if command in ['player.control.forward', 'player.control.rewind']:
             self.logger.debug(f"Got command forward/rewind {command} data {data} value {value} custom {custom} by {by}")
-            _trigger_read('player.control.time', custom)
+            trigger_read('player.control.time')
 
         # update play and stop items based on playmode
         if command == 'player.control.playmode':
             self.logger.debug(f"Got command playmode {command} data {data} value {value} custom {custom} by {by}")
             mode = data.split("mode")[-1].strip()
             mode = mode.split("playlist")[-1].strip()
-            _dispatch('player.control.playpause', True if mode in ["play", "pause 0"] else False, custom)
-            _dispatch('player.control.stop', True if mode == "stop" else False, custom)
-            _trigger_read('player.control.time', custom)
+            self._dispatch_callback('player.control.playpause' + CUSTOM_SEP + custom,
+                                    True if mode in ["play", "pause 0"] else False, by)
+            self._dispatch_callback('player.control.stop' + CUSTOM_SEP + custom,
+                                    True if mode == "stop" else False, by)
+            trigger_read('player.control.time')
 
         # update play and stop items based on playmode
-        if command == 'player.control.stop' or (command == 'player.control.playpause' and value == False):
+        if command == 'player.control.stop' or (command == 'player.control.playpause' and not value):
             self.logger.debug(f"Got command stop or pause {command} data {data} value {value} custom {custom} by {by}")
-            _trigger_read('player.control.playmode', custom)
+            trigger_read('player.control.playmode')
 
 
 if __name__ == '__main__':

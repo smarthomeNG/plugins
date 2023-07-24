@@ -13,7 +13,7 @@ plugin:
     #documentation: http://smarthomeng.de/user/plugins/webservices/user_doc.html
     support: https://knx-user-forum.de/node/1163886
 
-    version: 1.6.3                 # Plugin version
+    version: 1.6.4                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance

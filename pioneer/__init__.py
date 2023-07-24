@@ -26,7 +26,6 @@ import os
 import sys
 
 if __name__ == '__main__':
-    builtins.SDP_standalone = True
 
     class SmartPlugin():
         pass
@@ -37,28 +36,20 @@ if __name__ == '__main__':
     BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
     sys.path.insert(0, BASE)
 
-else:
-    builtins.SDP_standalone = False
-
-from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, CONN_NET_TCP_CLI, CONN_SER_ASYNC)
+from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION,
+                                   PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR,
+                                   CONN_NET_TCP_CLI, CONN_SER_ASYNC, CONN_NULL)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 
-if not SDP_standalone:
-    #from .webif import WebInterface
-    pass
+# from .webif import WebInterface
+
+builtins.SDP_standalone = False
 
 
 class pioneer(SmartDevicePlugin):
-    """ Device class for Pioneer AV function.
+    """ Device class for Pioneer AV function. """
 
-    Most of the work is done by the base class, so we only set default parameters
-    for the connection (to be overwritten by device attributes from the plugin
-    configuration) and add a fixed terminator byte to outgoing datagrams.
-
-    The know-how is in the commands.py (and some DT_ classes...)
-    """
-
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '1.0.2'
 
     def _set_device_defaults(self):
         # set our own preferences concerning connections
@@ -66,20 +57,19 @@ class pioneer(SmartDevicePlugin):
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_NET_TCP_CLI
         elif PLUGIN_ATTR_SERIAL_PORT in self._parameters and self._parameters[PLUGIN_ATTR_SERIAL_PORT]:
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_SER_ASYNC
-        if PLUGIN_ATTR_CONN_TERMINATOR in self._parameters:
-            b = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR].encode()
-            b = b.decode('unicode-escape').encode()
-            self._parameters[PLUGIN_ATTR_CONN_TERMINATOR] = b
+        else:
+            self.logger.error('Neither host nor serialport set, connection not possible. Using dummy connection, plugin will not work')
+            self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_NULL
+
+        b = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR].encode()
+        b = b.decode('unicode-escape').encode()
+        self._parameters[PLUGIN_ATTR_CONN_TERMINATOR] = b
 
     def _transform_send_data(self, data=None, **kwargs):
-        if data:
-            try:
-                data['limit_response'] = self._parameters.get(PLUGIN_ATTR_CONN_TERMINATOR, "\r")
-                data['payload'] = f'{data.get("payload")}{data.get("limit_response").decode("unicode-escape")}'
-            except Exception as e:
-                self.logger.error(f'ERROR transforming send data: {e}')
+        if isinstance(data, dict):
+            data['limit_response'] = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR]
+            data['payload'] = f'{data.get("payload", "")}{data["limit_response"].decode("unicode-escape")}'
         return data
-
 
 if __name__ == '__main__':
     s = Standalone(pioneer, sys.argv[0])

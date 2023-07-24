@@ -43,12 +43,13 @@ und Kennwort umgestellt werden" und es sollte ein eigener User für das AVM Plug
 
 
 Konfiguration des Plugins
----------------------------
+-------------------------
 
 Diese Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
 unter :doc:`/plugins_doc/config/avm` beschrieben.
 
-.. note:: Kürzere Updatezyklen können abhängig vom Fritzdevice aufgrund hoher CPU Auslastung zu Problemen (u.a.
+
+.. note:: Kürzere Updatezyklen können abhängig vom FritzDevice aufgrund hoher CPU Auslastung zu Problemen (u.a.
 zu Nichterreichbarkeit des Webservice) führen. Wird ein kürzerer Updatezyklus benötigt, sollte das shNG Log beobachtet
 werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
 
@@ -242,6 +243,61 @@ Beispiel einer Logik, die die Host von 3 verbundenen Geräten in eine Liste zusa
     string += '</ul>'
     sh.avm.devices.device_list(string)
 
+get_hosts_list
+~~~~~~~~~~~~~~
+
+Ermittelt ein Array mit (gefilterten) Informationen der verbundenen Hosts. Dabei wird die die Abfrage der "Host List Contents" verwendet.
+Der Vorteil gegenüber "get_hosts" liegt in der deutlich schnelleren Abfrage.
+
+In Abfrage der Hosts liefert folgenden Werte:
+
+  - 'Index'
+  - 'IPAddress'
+  - 'MACAddress'
+  - 'Active'
+  - 'HostName'
+  - 'InterfaceType'
+  - 'Port'
+  - 'Speed'
+  - 'UpdateAvailable'
+  - 'UpdateSuccessful'
+  - 'InfoURL'
+  - 'MACAddressList'
+  - 'Model'
+  - 'URL'
+  - 'Guest'
+  - 'RequestClient'
+  - 'VPN'
+  - 'WANAccess'
+  - 'Disallow'
+  - 'IsMeshable'
+  - 'Priority'
+  - 'FriendlyName'
+  - 'FriendlyNameIsWriteable'
+
+Auf all diese Werte kann mit dem Parameter "filter_dict" gefiltert werden. Dabei können auch mehrere Filter gesetzt werden.
+
+Das folgende Beispiel liefert alle Informationen zu den aktiven Hosts zurück:
+
+.. code-block:: python
+
+    hosts = sh.fritzbox_7490.get_hosts_list(filter_dict={'Active': True})
+
+Das folgende Beispiel liefer alle Informationen zu den aktiven Hosts zurück, bei den ein Update vorliegt:
+
+.. code-block:: python
+
+    hosts = sh.fritzbox_7490.get_hosts_list(filter_dict={'Active': True, 'UpdateAvailable': True})
+
+Des Weiteren können über den Parameter "identifier_list" die Identifier des Hosts festgelegt werden, die zurückgegeben werden sollen.
+Möglich sind: 'index', 'ipaddress', 'macaddress', 'hostname', 'friendlyname'
+
+Das folgende Beispiel liefer 'IPAddress' und 'MACAddress' zu den aktiven Hosts zurück, bei den ein Update vorliegt:
+
+.. code-block:: python
+
+    hosts = sh.fritzbox_7490.get_hosts_list(identifier_list=['ipaddress', 'macaddress'], filter_dict={'Active': True, 'UpdateAvailable': True})
+
 get_phone_name
 ~~~~~~~~~~~~~~
 Gibt den Namen eines Telefons an einem Index zurück. Der zurückgegebene Wert kann in 'set_call_origin' verwendet werden.
@@ -377,7 +433,7 @@ Auflistung der mit der Fritzbox verbundenen AVM HomeAutomation Geräte
    :class: screenshot
 
 AVM Call Monitor Items
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 Tabellarische Auflistung des Anrufmonitors (nur wenn dieser konfiguriert ist)
 
@@ -385,7 +441,7 @@ Tabellarische Auflistung des Anrufmonitors (nur wenn dieser konfiguriert ist)
    :class: screenshot
 
 AVM Log-Einträge
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 Listung der Logeinträge der Fritzbox
 
@@ -393,9 +449,25 @@ Listung der Logeinträge der Fritzbox
    :class: screenshot
 
 AVM Plugin-API
-~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 Beschreibung der Plugin-API
 
 .. image:: user_doc/assets/webif_tab6.jpg
    :class: screenshot
+
+
+Vorgehen bei Funktionserweiterung des Plugins bzw. Ergänzung weiterer Werte für Itemattribut `avm_data_type`
+------------------------------------------------------------------------------------------------------------
+
+Augrund der Vielzahl der möglichen Werte des Itemattribut `avm_data_type` wurde die Erstellung/Update des entsprechenden Teils der
+`plugin.yam` sowie die Erstellung der Datei `item_attributes.py`, die vom Plugin verwendet wird, automatisiert.
+
+Die Masterinformationen Itemattribut `avm_data_type` sowie die Skipte zum Erstellen/Update der beiden Dateien sind in der
+Datei `item_attributes_master.py` enthalten.
+
+.. important::
+
+    Korrekturen, Erweiterungen etc. des Itemattributs `avm_data_type` sollten nur in der Datei `item_attributes_master.py`
+    in Dict der Variable `AVM_DATA_TYPES` vorgenommen werden. Das Ausführen der Datei `item_attributes_master.py` (main) erstellt die `item_attributes.py` und aktualisiert
+    `valid_list` und `valid_list_description` von `avm_data_type` in `plugin.yaml`.

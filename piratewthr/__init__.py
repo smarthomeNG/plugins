@@ -37,11 +37,39 @@ from .webif import WebInterface
 class PirateWeather(SmartPlugin):
 
 
-    PLUGIN_VERSION = "1.1.2"
+    PLUGIN_VERSION = "1.2.0"
 
     # https://api.pirateweather.net/forecast/[apikey]/[latitude],[longitude]
     _base_url = 'https://api.pirateweather.net/forecast/'
-    _base_forecast_url = _base_url + '%s/%s,%s'
+
+    _http_response = {
+        500: 'Internal Server Error',
+        501: 'Not Implemented',
+        502: 'Bad Gateway',
+        503: 'Service Unavailable',
+        504: 'Internal Server Error',
+    }
+
+
+    def get_http_response(self, code):
+
+        description = self._http_response.get(code, None)
+        if description is None:
+            if code >= 100 and code < 200:
+                description = 'Informational'
+            elif code < 300:
+                description = 'Success'
+            elif code < 400:
+                description = 'Redirection'
+            elif code < 500:
+                description = 'Client Error'
+            elif code < 600:
+                description = 'Server Error'
+            else:
+                description = 'Unknown Response'
+        description += ' (' + str(code) + ')'
+        return description
+
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -170,11 +198,13 @@ class PirateWeather(SmartPlugin):
 
         return
 
+
     def get_forecast(self):
         """
         Requests the forecast information at pirateweather.net
         """
         self.logger.info(f"get_forecast: url={self._build_url()}")
+        json_obj = None
         try:
             response = self._session.get(self._build_url())
         except Exception as e:
@@ -186,19 +216,28 @@ class PirateWeather(SmartPlugin):
             self.logger.warning(f"get_forecast: Response '{response}' is no valid json format: {e}")
             return
         self.logger.info(f"get_forecast: json response={json_obj}")
-        daily_data = OrderedDict()
-        if not json_obj.get('daily', False):
-            self.logger.warning(f"get_forecast: Response '{response}' has no info for daily values. Ignoring response.")
-            return
-        if not json_obj.get('hourly', False):
-            self.logger.warning(f"get_forecast: Response '{response}' has no info for hourly values. Ignoring response.")
+
+        if response.status_code >= 500:
+            self.logger.warning(f"api.pirateweather.net: {self.get_http_response(response.status_code)} - Ignoring response.")
             return
 
-        # add icon_visu, date and day to daily and currently
-        json_obj['daily'].update({'icon_visu': self.map_icon(json_obj['daily']['icon'])})
-        json_obj['hourly'].update({'icon_visu': self.map_icon(json_obj['hourly']['icon'])})
+        daily_data = OrderedDict()
+        if not json_obj.get('daily', False):
+            self.logger.warning(f"api.pirateweather.net: {self.get_http_response(response.status_code)} - No info for daily values.")
+            #return
+        else:
+            # add icon_visu to daily
+            json_obj['daily'].update({'icon_visu': self.map_icon(json_obj['daily']['icon'])})
+
+        if not json_obj.get('hourly', False):
+            self.logger.warning(f"api.pirateweather.net: {self.get_http_response(response.status_code)} - No info for hourly values.")
+            #return
+        else:
+            # add icon_visu to hourly
+            json_obj['hourly'].update({'icon_visu': self.map_icon(json_obj['hourly']['icon'])})
+
         if not json_obj.get('currently'):
-            self.logger.warning(f"get_forecast: Response {response} has no info for current values. Skipping update for currently values.")
+            self.logger.warning(f"api.pirateweather.net: {self.get_http_response(response.status_code)} - No info for current values. Skipping update for 'currently' values.")
         else:
             date_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%d.%m.%Y')
             day_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%A')
@@ -207,56 +246,60 @@ class PirateWeather(SmartPlugin):
                                           'hour': hour_entry, 'icon_visu':
                                           self.map_icon(json_obj['currently']['icon'])})
 
-        # add icon_visu, date and day to each day
-        for day in json_obj['daily'].get('data'):
-            date_entry = datetime.datetime.fromtimestamp(day['time']).strftime('%d.%m.%Y')
-            day_entry = datetime.datetime.fromtimestamp(day['time']).strftime('%A')
-            day.update({'date': date_entry, 'weekday': day_entry, 'icon_visu': self.map_icon(day['icon'])})
-            daily_data.update({datetime.datetime.fromtimestamp(day['time']).date(): day})
-        json_obj['daily'].update(daily_data)
-        json_obj['daily'].pop('data')
+        if json_obj.get('daily', False):
+            # add icon_visu, date and day to each day
+            for day in json_obj['daily'].get('data'):
+                date_entry = datetime.datetime.fromtimestamp(day['time']).strftime('%d.%m.%Y')
+                day_entry = datetime.datetime.fromtimestamp(day['time']).strftime('%A')
+                day.update({'date': date_entry, 'weekday': day_entry, 'icon_visu': self.map_icon(day['icon'])})
+                daily_data.update({datetime.datetime.fromtimestamp(day['time']).date(): day})
+            json_obj['daily'].update(daily_data)
+            json_obj['daily'].pop('data')
 
-        # add icon_visu, date and day to each hour. Add the hours to the corresponding day as well as map to hour0, hour1, etc.
-        for number, hour in enumerate(json_obj['hourly'].get('data')):
-            date_entry = datetime.datetime.fromtimestamp(hour['time']).strftime('%d.%m.%Y')
-            day_entry = datetime.datetime.fromtimestamp(hour['time']).strftime('%A')
-            hour_entry = datetime.datetime.fromtimestamp(hour['time']).hour
-            date_key = datetime.datetime.fromtimestamp(hour['time']).date()
-            hour.update({'date': date_entry, 'weekday': day_entry, 'hour': hour_entry, 'icon_visu': self.map_icon(hour['icon'])})
-            if json_obj['daily'].get(date_key) is None:
-                json_obj['daily'].update({date_key: {}})
-            if json_obj['daily'][date_key].get('hours') is None:
-                json_obj['daily'][date_key].update({'hours': {}})
-            json_obj['daily'][date_key]['hours'].update(OrderedDict({hour_entry: hour}))
-            json_obj['hourly'].update(OrderedDict({'hour{}'.format(number): hour}))
-            if json_obj['daily'][date_key].get('precipProbability_mean') is None:
-                json_obj['daily'][date_key].update({'precipProbability_mean': []})
-            if json_obj['daily'][date_key].get('precipIntensity_mean') is None:
-                json_obj['daily'][date_key].update({'precipIntensity_mean': []})
-            if json_obj['daily'][date_key].get('temperature_mean') is None:
-                json_obj['daily'][date_key].update({'temperature_mean': []})
-            json_obj['daily'][date_key]['precipProbability_mean'].append(hour.get('precipProbability'))
-            json_obj['daily'][date_key]['precipIntensity_mean'].append(hour.get('precipIntensity'))
-            json_obj['daily'][date_key]['temperature_mean'].append(hour.get('temperature'))
-        json_obj['hourly'].pop('data')
+        if json_obj.get('hourly', False):
+            # add icon_visu, date and day to each hour. Add the hours to the corresponding day as well as map to hour0, hour1, etc.
+            for number, hour in enumerate(json_obj['hourly'].get('data')):
+                date_entry = datetime.datetime.fromtimestamp(hour['time']).strftime('%d.%m.%Y')
+                day_entry = datetime.datetime.fromtimestamp(hour['time']).strftime('%A')
+                hour_entry = datetime.datetime.fromtimestamp(hour['time']).hour
+                date_key = datetime.datetime.fromtimestamp(hour['time']).date()
+                hour.update({'date': date_entry, 'weekday': day_entry, 'hour': hour_entry, 'icon_visu': self.map_icon(hour['icon'])})
+                if json_obj['daily'].get(date_key) is None:
+                    json_obj['daily'].update({date_key: {}})
+                if json_obj['daily'][date_key].get('hours') is None:
+                    json_obj['daily'][date_key].update({'hours': {}})
+                json_obj['daily'][date_key]['hours'].update(OrderedDict({hour_entry: hour}))
+                json_obj['hourly'].update(OrderedDict({'hour{}'.format(number): hour}))
+                if json_obj['daily'][date_key].get('precipProbability_mean') is None:
+                    json_obj['daily'][date_key].update({'precipProbability_mean': []})
+                if json_obj['daily'][date_key].get('precipIntensity_mean') is None:
+                    json_obj['daily'][date_key].update({'precipIntensity_mean': []})
+                if json_obj['daily'][date_key].get('temperature_mean') is None:
+                    json_obj['daily'][date_key].update({'temperature_mean': []})
+                json_obj['daily'][date_key]['precipProbability_mean'].append(hour.get('precipProbability'))
+                json_obj['daily'][date_key]['precipIntensity_mean'].append(hour.get('precipIntensity'))
+                json_obj['daily'][date_key]['temperature_mean'].append(hour.get('temperature'))
+            json_obj['hourly'].pop('data')
 
-        # add mean values to each day and replace datetime object by day0, day1, day2, etc.
-        i = 0
-        # for entry in json_obj['daily']:
-        json_keys = list(json_obj['daily'].keys())
-        for entry in json_keys:
-            if isinstance(entry, datetime.date):
-                try:
-                    precip_probability = json_obj['daily'][entry]['precipProbability_mean']
-                    json_obj['daily'][entry]['precipProbability_mean'] = round(sum(precip_probability)/len(precip_probability), 2)
-                    precip_intensity = json_obj['daily'][entry]['precipIntensity_mean']
-                    json_obj['daily'][entry]['precipIntensity_mean'] = round(sum(precip_intensity)/len(precip_intensity), 2)
-                    temperature = json_obj['daily'][entry]['temperature_mean']
-                    json_obj['daily'][entry]['temperature_mean'] = round(sum(temperature)/len(temperature), 2)
-                except Exception:
-                    pass
-                json_obj['daily']['day{}'.format(i)] = json_obj['daily'].pop(entry)
-                i += 1
+        if json_obj.get('daily', False):
+            # add mean values to each day and replace datetime object by day0, day1, day2, etc.
+            i = 0
+            # for entry in json_obj['daily']:
+            json_keys = list(json_obj['daily'].keys())
+            for entry in json_keys:
+                if isinstance(entry, datetime.date):
+                    try:
+                        precip_probability = json_obj['daily'][entry]['precipProbability_mean']
+                        json_obj['daily'][entry]['precipProbability_mean'] = round(sum(precip_probability)/len(precip_probability), 2)
+                        precip_intensity = json_obj['daily'][entry]['precipIntensity_mean']
+                        json_obj['daily'][entry]['precipIntensity_mean'] = round(sum(precip_intensity)/len(precip_intensity), 2)
+                        temperature = json_obj['daily'][entry]['temperature_mean']
+                        json_obj['daily'][entry]['temperature_mean'] = round(sum(temperature)/len(temperature), 2)
+                    except Exception:
+                        pass
+                    json_obj['daily']['day{}'.format(i)] = json_obj['daily'].pop(entry)
+                    i += 1
+
         return json_obj
 
     def map_icon(self, icon):
@@ -321,12 +364,63 @@ class PirateWeather(SmartPlugin):
         """
         url = ''
         if url_type == 'forecast':
-            url = self._base_forecast_url % (self._key, self._lat, self._lon)
-            parameters = "?lang=%s" % self._lang
+            #url = self._base_forecast_url % (self._key, self._lat, self._lon)
+            url = self._base_url + f"{self._key}/{self._lat},{self._lon}"
+            parameters = f"?lang={self._lang}"
             if self._units is not None:
-                parameters = "%s&units=%s" % (parameters, self._units)
-            url = '%s%s' % (url, parameters)
+                parameters += f"&units={self._units}"
+            url += parameters
         else:
-            self.logger.error('_build_url: Wrong url type specified: %s' %url_type)
+            self.logger.error(f"_build_url: Wrong url type specified: {url_type}")
         return url
 
+
+    def get_wind_direction8(self, deg):
+
+        direction_array = ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW', 'N']
+
+        index = int( (deg % 360 + 22.5) / 45)
+        return direction_array[index]
+
+
+    def get_wind_direction16(self, deg):
+
+        direction_array = ['N', 'NNO', 'NO', 'ONO', 'O', 'OSO', 'SO', 'SSO', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N']
+
+        index = int( (deg % 360 + 11.25) / 22.5)
+        return direction_array[index]
+
+
+    def get_location_name(self, lat=None, lon=None):
+
+        if lat is None:
+            lat = self._lat
+        if lon is None:
+            lon = self._lon
+
+        if lat == 0 or lon == 0:
+            self.logger.debug(f"lat or lon are zero, not sending request: {lat=}, {lon=}")
+            return
+
+        # api documentation: https://nominatim.org/release-docs/develop/api/Reverse/
+        request_str = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=jsonv2"
+
+        try:
+            response = requests.get(request_str)
+        except Exception as e:
+            self.logger.warning(f"get_location_name: Exception when sending GET request: {e}")
+            return
+
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.warning(f"get_location_name: Response '{response}' is no valid json format: {e}")
+            return ''
+
+        if response.status_code >= 500:
+            self.logger.warning(f"get_location_name: {self.get_location_name(response.status_code)}")
+            return ''
+
+        #self.logger.notice(f"{json_obj['display_name']}")
+        #self.logger.notice(f"{json_obj['address']}")
+        return json_obj['address']['suburb']

@@ -1,1 +1,7 @@
-pyatv==0.7.0
+pyatv==0.7.0;python_version<'3.9'
+pyatv==0.10.3;python_version>='3.9'
+
+# miniaudio is used by pyatv, for the actual version of miniaudio (1.58) requested my pyatv 0.10.5, the wheel
+# cannot be built on Python 3.11, so the following requirement was added:
+miniaudio<=1.55;python_version>='3.11'
+

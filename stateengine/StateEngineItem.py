@@ -289,6 +289,7 @@ class SeItem:
         startup_delay = 1 if self.__startup_delay.is_empty() or _startup_delay_param == 0 else _startup_delay_param
         if startup_delay > 0:
             first_run = self.__shtime.now() + datetime.timedelta(seconds=startup_delay)
+            self.__logger.info("Will start stateengine evaluation at {}", first_run)
             scheduler_name = self.__id + "-Startup Delay"
             value = {"item": self.__item, "caller": "Init"}
             self.__se_plugin.scheduler_add(scheduler_name, self.__startup_delay_callback, value=value, next=first_run)
@@ -776,7 +777,7 @@ class SeItem:
             return state.can_enter()
         except Exception as ex:
             self.__logger.warning("Problem with currentstate {0}. Error: {1}", state.id, ex)
-        finally:
+            # The variables where originally reset in a finally: statement. No idea why... ;)
             self.__variables["current.state_id"] = ""
             self.__variables["current.state_name"] = ""
             self.__variables["current.conditionset_id"] = ""
@@ -1075,9 +1076,9 @@ class SeItem:
         _previousstate_conditionset_id = self.return_item_by_attribute("se_previousstate_conditionset_item_id")
         _previousstate_conditionset_name = self.return_item_by_attribute("se_previousstate_conditionset_item_name")
         if _previousstate_conditionset_id is not None:
-            self.__logger.info("Item 'Previouscondition Id': {0}", _previousstate_conditionset_id.property.path)
+            self.__logger.info("Item 'Previousstate condition Id': {0}", _previousstate_conditionset_id.property.path)
         if _previousstate_conditionset_name is not None:
-            self.__logger.info("Item 'Previouscondition Name': {0}", _previousstate_conditionset_name.property.path)
+            self.__logger.info("Item 'Previousstate condition Name': {0}", _previousstate_conditionset_name.property.path)
 
         # log states
         for state in self.__states:

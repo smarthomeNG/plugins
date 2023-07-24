@@ -40,27 +40,20 @@ if __name__ == '__main__':
 else:
     builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, CONN_NET_TCP_CLI, CONN_SER_ASYNC)
+from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, CONN_NULL, CONN_NET_TCP_CLI, CONN_SER_ASYNC)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 
-if not SDP_standalone:
-    #from .webif import WebInterface
-    pass
+# from .webif import WebInterface
+
+builtins.SDP_standalone = False
 
 CUSTOM_INPUT_NAME_COMMAND = 'custom_inputnames'
 
 
 class denon(SmartDevicePlugin):
-    """ Device class for Denon AV.
+    """ Device class for Denon AV. """
 
-    Most of the work is done by the base class, so we only set default parameters
-    for the connection (to be overwritten by device attributes from the plugin
-    configuration) and add a fixed terminator byte to outgoing datagrams.
-
-    The know-how is in the commands.py (and some DT_ classes...)
-    """
-
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '1.0.1'
 
     def on_connect(self, by=None):
         self.logger.debug("Checking for custom input names.")
@@ -75,25 +68,25 @@ class denon(SmartDevicePlugin):
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_NET_TCP_CLI
         elif PLUGIN_ATTR_SERIAL_PORT in self._parameters and self._parameters[PLUGIN_ATTR_SERIAL_PORT]:
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_SER_ASYNC
-        if PLUGIN_ATTR_CONN_TERMINATOR in self._parameters:
-            b = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR].encode()
-            b = b.decode('unicode-escape').encode()
-            self._parameters[PLUGIN_ATTR_CONN_TERMINATOR] = b
+        else:
+            self.logger.error('Neither host nor serialport set, connection not possible. Using dummy connection, plugin will not work')
+            self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_NULL
+
+        b = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR].encode()
+        b = b.decode('unicode-escape').encode()
+        self._parameters[PLUGIN_ATTR_CONN_TERMINATOR] = b
 
     # we need to receive data via callback, as the "reply" can be unrelated to
     # the sent command. Getting it as return value would assign it to the wrong
-    # command and discard it... so break the "return result"-chain
+    # command and discard it... so break the "return result"-chain and don't
+    # return anything
     def _send(self, data_dict):
         self._connection.send(data_dict)
-        return None
 
     def _transform_send_data(self, data=None, **kwargs):
-        if data:
-            try:
-                data['limit_response'] = self._parameters.get(PLUGIN_ATTR_CONN_TERMINATOR, b'\r')
-                data['payload'] = f'{data.get("payload")}\r'
-            except Exception as e:
-                self.logger.error(f'ERROR {e}')
+        if isinstance(data, dict):
+            data['limit_response'] = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR]
+            data['payload'] = f'{data.get("payload", "")}{data["limit_response"].decode("unicode-escape")}'
         return data
 
     def on_data_received(self, by, data, command=None):
@@ -151,6 +144,5 @@ class denon(SmartDevicePlugin):
             name = tmp[1]
             self._custom_inputnames[src] = name
 
-
 if __name__ == '__main__':
-    s = Standalone(denon, sys.argv[0])
+    s = Standalone(lms, sys.argv[0])

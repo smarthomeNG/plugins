@@ -5,8 +5,7 @@
 #########################################################################
 #  This file is part of SmartHomeNG.
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
-#  upwards.
+#  AppleTV plugin
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -28,15 +27,14 @@ import cherrypy
 from lib.module import Modules
 from lib.model.smartplugin import *
 from lib.item import Items
+from .webif import WebInterface
 
 import asyncio
 import datetime
 import os
 import threading
 import base64
-import json
-from random import randint
-from time import sleep
+
 import pyatv
 from pyatv.const import Protocol
 
@@ -50,7 +48,7 @@ class AppleTV(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.6.2'
 
     def __init__(self, sh):
         """
@@ -89,7 +87,7 @@ class AppleTV(SmartPlugin):
         self._atv_pwc = None
 
 
-        self.init_webinterface()
+        self.init_webinterface(WebInterface)
         return
 
     def run(self):
@@ -107,11 +105,14 @@ class AppleTV(SmartPlugin):
         """
         self.logger.debug(
             "Plugin '{}': stop method called".format(self.get_fullname()))
-        self._loop.stop()
-        while self._loop.is_running():
-            pass
-        self._loop.run_until_complete(self.disconnect())
-        self._loop.close()
+        try:
+            self._loop.stop()
+            while self._loop.is_running():
+                pass
+            self._loop.run_until_complete(self.disconnect())
+            self._loop.close()
+        except Exception as e:
+            self.logger.warning(f"Issues stopping AppleTV plugin: {e}")
         self.alive = False
 
     def parse_item(self, item):
@@ -223,26 +224,29 @@ class AppleTV(SmartPlugin):
 
     async def discover(self):
         """
-        Discovers Apple TV's on local mdns domain       
+        Discovers Apple TV's on local mdns domain
         """
-        self.logger.debug("Discovering Apple TV's in your network for {} seconds...".format(
-            int(self._atv_scan_timeout)))
-        self._atvs = await pyatv.scan(self._loop, timeout=self._atv_scan_timeout)
+        try:
+            self.logger.debug("Discovering Apple TV's in your network for {} seconds...".format(
+                int(self._atv_scan_timeout)))
+            self._atvs = await pyatv.scan(self._loop, timeout=self._atv_scan_timeout)
 
-        if not self._atvs:
-            self.logger.warning("No Apple TV found")
-        else:
-            self.logger.info("Found {} Apple TV's:".format(len(self._atvs)))
-            for _atv in self._atvs:
-                _markup = '-'
-                if str(_atv.address) == str(self._ip):
-                    _markup = '*'
-                    self._atv = _atv
-                self.logger.info(" {} {}, IP: {}".format(_markup, _atv.name, _atv.address))
+            if not self._atvs:
+                self.logger.warning("No Apple TV found")
+            else:
+                self.logger.info("Found {} Apple TV's:".format(len(self._atvs)))
+                for _atv in self._atvs:
+                    _markup = '-'
+                    if str(_atv.address) == str(self._ip):
+                        _markup = '*'
+                        self._atv = _atv
+                    self.logger.info(" {} {}, IP: {}".format(_markup, _atv.name, _atv.address))
+        except Exception as e:
+            self.logger.warning("Issue while searching for Apple TV: {}".format(e))
 
     async def connect(self):
         """
-        Connects to this instance's Apple TV     
+        Connects to this instance's Apple TV
         """
         if not self._atv:
             if len(self._atvs) > 0:
@@ -259,7 +263,7 @@ class AppleTV(SmartPlugin):
             self._update_items('mac', self._atv.device_info.mac)
         if self._atv.device_info.model:
             self._update_items('model', str(self._atv.device_info.model).replace('DeviceModel.',''))
-        if self._atv.device_info.operating_system.TvOS:
+        if self._atv.device_info.operating_system.TvOS and self._atv.device_info.version is not None:
             self._update_items('os', 'TvOS ' + self._atv.device_info.version)
         else:
             self._update_items('os', self._atv.device_info.version)
@@ -268,10 +272,13 @@ class AppleTV(SmartPlugin):
         self._device = await pyatv.connect(self._atv, self._loop)
         self._atv_rc = self._device.remote_control
         self._atv_pwc = self._device.power
-        if self._atv_pwc.power_state == pyatv.const.PowerState.On:
-            self._update_items('power', True)
-        else:
-            self._update_items('power', False)
+        try:
+            if self._atv_pwc.power_state == pyatv.const.PowerState.On:
+                self._update_items('power', True)
+            else:
+                self._update_items('power', False)
+        except Exception as e:
+            self.logger.error(f"Could not query power state. Error: {e}")
         self._push_listener_thread = threading.Thread(
             target=self._push_listener_thread_worker, name='ATV listener')
         self._push_listener_thread.start()
@@ -279,11 +286,14 @@ class AppleTV(SmartPlugin):
 
     async def disconnect(self):
         """
-        Stop listening to push updates and logout of this istances Apple TV     
+        Stop listening to push updates and logout of this istances Apple TV
         """
         self.logger.info("Disconnecting from '{0}'".format(self._atv.name))
-        self._device.push_updater.stop()
-        self._device.close()
+        try:
+            self._device.push_updater.stop()
+            self._device.close()
+        except Exception as e:
+            self.logger.info(f"Could not disconnect from AppleTV. Error: {e}")
 
     async def update_artwork(self):
         try:
@@ -312,22 +322,24 @@ class AppleTV(SmartPlugin):
             self._position = new_position
             self._position_timestamp = datetime.datetime.now()
         self._update_items('playing_position', new_position)
-        if new_position > 0 and self._state['playing_total_time'] > 0:   
+        if new_position > 0 and self._state['playing_total_time'] > 0:
             self._update_items('playing_position_percent', int(round(new_position / self._state['playing_total_time'] * 100)))
         else:
             self._update_items('playing_position_percent', 0)
 
     def handle_async_exception(self, loop, context):
-        self.logger.error('*** ASYNC EXCEPTIONM ***')
-        self.logger.error('Context: {}'.format(context))
-        raise
+        self.logger.error('ASYNC EXCEPTION. Context: {}'.format(context))
+        #raise Exception()
 
     def _push_listener_thread_worker(self):
         """
         Thread to run asyncio loop. This avoids blocking the main plugin thread
         """
         asyncio.set_event_loop(self._loop)
-        self._loop.set_exception_handler(self.handle_async_exception)
+        try:
+            self._loop.set_exception_handler(self.handle_async_exception)
+        except Exception as e:
+            self.logger.error(f"Issue with exception handler: {e}")
         self._device.push_updater.listener = self
         self._device.push_updater.start()
         self._device.power.listener = self
@@ -366,6 +378,7 @@ class AppleTV(SmartPlugin):
             self._update_items('playing_app_identifier', _app.identifier if _app.identifier else '---')
         except:
             pass
+
         self._update_items('playing_state', playstatus.device_state.value)
         self._update_items('playing_state_text', pyatv.convert.device_state_str(playstatus.device_state))
         self._update_items('playing_fingerprint', playstatus.hash)
@@ -381,10 +394,13 @@ class AppleTV(SmartPlugin):
             self._update_items('playing_position_percent', round(playstatus.position / playstatus.total_time * 100))
         else:
             self._update_items('playing_position_percent', 0)
-        self._update_items('playing_repeat', playstatus.repeat.value)
-        self._update_items('playing_repeat_text', pyatv.convert.repeat_str(playstatus.repeat))
-        self._update_items('playing_shuffle', playstatus.shuffle.value)
-        self._update_items('playing_shuffle_text', pyatv.convert.shuffle_str(playstatus.shuffle))
+        try:
+            self._update_items('playing_repeat', playstatus.repeat.value)
+            self._update_items('playing_repeat_text', pyatv.convert.repeat_str(playstatus.repeat))
+            self._update_items('playing_shuffle', playstatus.shuffle.value)
+            self._update_items('playing_shuffle_text', pyatv.convert.shuffle_str(playstatus.shuffle))
+        except Exception as e:
+            self.logger.warning(f"Could not query repeat and/or shuffle state. Error: {e}")
 
     def playstatus_error(self, updater, exception):
         """
@@ -426,155 +442,3 @@ class AppleTV(SmartPlugin):
     def play(self):
         self.logger.warning('Playing, sending command !!')
         self._loop.create_task(self.execute_rc('rc_play'))
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            # try/except to handle running in a core version that does not support modules
-            self.mod_http = Modules.get_instance().get_module('http')
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error(
-                "Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning(
-                "Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.items = Items.get_instance()
-        self.tplenv = self.init_template_environment()
-        self.pinentry = False
-
-    @cherrypy.expose
-    def index(self, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered 
-        """
-        # get list of items with the attribute knx_dpt
-        plgitems = []
-        _instance = self.plugin.get_instance_name()
-        if _instance:
-            _keyword = 'appletv@{}'.format(_instance)
-        else:
-            _keyword = 'appletv'
-        for item in self.items.return_items():
-            if _keyword in item.conf:
-                plgitems.append(item)
-        tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(p=self.plugin, items=sorted(plgitems, key=lambda k: str.lower(k['_path'])), pinentry=self.pinentry)
-
-    @cherrypy.expose
-    def get_data_html(self, dataSet=None):
-        """
-        Return data to update the webpage
-
-        For the standard update mechanism of the web interface, the dataSet to return the data for is None
-
-        :param dataSet: Dataset for which the data should be returned (standard: None)
-        :return: dict with the data needed to update the web page.
-        """
-        if dataSet is None:
-            data = {}
-            data['state'] = self.plugin._state
-            # return it as json the the web page
-            try:
-                return json.dumps(data)
-            except Exception as e:
-                self.logger.error("get_data_html exception: {}".format(e))
-                #self.logger.debug(data)
-        return {}
-
-    @cherrypy.expose
-    def button_pressed(self, button=None, pin=None):
-        if button == "discover":
-            self.logger.debug('Discover button pressed')
-            self.plugin._loop.create_task(self.plugin.discover())
-        elif button == "start_authorization":
-            self.logger.debug('Start authentication')
-            self.pinentry = True
-
-            _protocol = self.plugin._atv.main_service().protocol
-            _task = self.plugin._loop.create_task(
-                pyatv.pair(self.plugin._atv, _protocol, self.plugin._loop)
-            )
-            while not _task.done():
-                sleep(0.1)
-            self._pairing = _task.result()
-            if self._pairing.device_provides_pin:
-                self._pin = None
-                self.logger.info('Device provides pin')
-            else:
-                self._pin = randint(1111,9999)
-                self.logger.info('SHNG must provide pin: {}'.format(self._pin))
-                
-            self.plugin._loop.create_task(self._pairing.begin())
-
-        elif button == "finish_authorization":
-            self.logger.debug('Finish authentication')
-            self.pinentry = False
-            self._pairing.pin(pin)
-            _task = self.plugin._loop.create_task(self._pairing.finish())
-            while not _task.done():
-                sleep(0.1)
-            if self._pairing.has_paired:
-                self.logger.info('Pairing successfull !')
-                self.plugin._credentials = self._pairing.service.credentials
-                self.plugin.save_credentials()
-            else:
-                self.logger.error('Unable to pair, wrong Pin ?')
-            self.plugin._loop.create_task(self._pairing.close())
-        else:
-            self.logger.warning(
-                "Unknown button pressed in webif: {}".format(button))
-        raise cherrypy.HTTPRedirect('index')

@@ -39,7 +39,7 @@ logging.addLevelName(StateEngineDefaults.VERBOSE, 'DEVELOP')
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.9.5'
+    PLUGIN_VERSION = '1.9.6'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor

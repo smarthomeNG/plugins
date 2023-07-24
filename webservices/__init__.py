@@ -34,7 +34,7 @@ from lib.module import Modules
 
 
 class WebServices(SmartPlugin):
-    PLUGIN_VERSION = '1.6.3'
+    PLUGIN_VERSION = '1.6.4'
     ALLOWED_FOO_PATHS = ['env.location.moonrise', 'env.location.moonset', 'env.location.sunrise', 'env.location.sunset']
 
     def __init__(self, sh, *args, **kwargs):
@@ -263,7 +263,8 @@ class WebServiceInterface:
                                  'eval_trigger': str(item._eval_trigger),
                                  'cycle': str(cycle),
                                  'crontab': str(crontab),
-                                 'autotimer': str(item._autotimer),
+                                 'autotimer_value': str(item._autotimer_value),
+                                 'autotimer_time': str(item._autotimer_time),
                                  'threshold': str(item._threshold),
                                  'config': item_conf_sorted,
                                  'logics': logics,
@@ -316,7 +317,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
     @cherrypy.tools.json_out()
     def items(self, item_path=None, value=None, mode=None):
         """
-        Simpole WS functions for item
+        Simple WS functions for item
         """
         if item_path is None:
             self.logger.debug(cherrypy.request.method)
