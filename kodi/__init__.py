@@ -81,7 +81,7 @@ class kodi(SmartDevicePlugin):
           another place, in ``commands.py`` and/or the item configuration.
     """
 
-    PLUGIN_VERSION = '1.7.1'
+    PLUGIN_VERSION = '1.7.2'
 
     def _set_device_defaults(self):
         self._use_callbacks = True
