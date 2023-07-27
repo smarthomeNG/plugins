@@ -24,6 +24,7 @@
 import builtins
 import os
 import sys
+import time
 
 if __name__ == '__main__':
 
@@ -38,7 +39,7 @@ if __name__ == '__main__':
 
 from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION,
                                    PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR,
-                                   CONN_NET_TCP_CLI, CONN_SER_ASYNC, CONN_NULL)
+                                   PLUGIN_ATTR_MODEL, CONN_NET_TCP_CLI, CONN_SER_ASYNC, CONN_NULL)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 
 # from .webif import WebInterface
@@ -72,16 +73,23 @@ class pioneer(SmartDevicePlugin):
         return data
 
     def _process_additional_data(self, command, data, value, custom, by):
-
-        if command == 'zone1.control.power' and value:
-            self.logger.debug(f"Zone 1 is turned on. Requesting settings.")
-            self.send_command('general.settings.language')
-            self.send_command('general.settings.speakersystem')
-            self.send_command('general.settings.xcurve')
-            self.send_command('general.settings.hdmi.control')
-            self.send_command('general.settings.hdmi.controlmode')
-            self.send_command('general.settings.hdmi.arc')
-            self.send_command('general.settings.hdmi.standbythrough')
+        cond1 = command == 'zone1.control.power' or command == 'zone2.control.power' or command == 'zone3.control.power'
+        if cond1 and value:
+            self.logger.debug(f"Device is turned on by command {command}. Requesting settings.")
+            time.sleep(1)
+            if self._parameters[PLUGIN_ATTR_MODEL] == '':
+                self.read_all_commands('ALL.general.settings')
+            else:
+                self.read_all_commands(f'{self._parameters[PLUGIN_ATTR_MODEL]}.general.settings')
+            #self.send_command('general.settings.language')
+            #self.send_command('general.settings.speakersystem')
+            #self.send_command('general.settings.surroundposition')
+            #self.send_command('general.settings.xover')
+            #self.send_command('general.settings.xcurve')
+            #self.send_command('general.settings.hdmi.control')
+            #self.send_command('general.settings.hdmi.controlmode')
+            #self.send_command('general.settings.hdmi.arc')
+            #self.send_command('general.settings.hdmi.standbythrough')
 
 
 if __name__ == '__main__':
