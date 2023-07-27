@@ -36,6 +36,9 @@
   table th.last {
     width: 150px;
   }
+    table th.aktion {
+    width: 100px;
+  }
   table th.dict {
     width: 150px;
   }
@@ -101,6 +104,13 @@
                 document.getElementById('pause').disabled = true;
 			}
 		}
+
+      { document.getElementById('debug_parse').checked = objResponse['debug_log']['parse']; }
+      { document.getElementById('debug_execute').checked = objResponse['debug_log']['execute']; }
+      { document.getElementById('debug_ondemand').checked = objResponse['debug_log']['ondemand']; }
+      { document.getElementById('debug_onchange').checked = objResponse['debug_log']['onchange']; }
+      { document.getElementById('debug_prepare').checked = objResponse['debug_log']['prepare']; }
+      { document.getElementById('debug_sql').checked = objResponse['debug_log']['sql']; }
 	}
 </script>
 
@@ -156,8 +166,13 @@
           {
             title: '{{ _('Letzter Change') }}',
             targets: [8], "className": "last"
+          },
+          {
+            title: '{{ _('Aktionen') }}',
+            targets: [9], "className": "aktion"
           }].concat($.fn.dataTable.defaults.columnDefs),
           pageResize: resize});
+
         {% if maintenance %}
           mtable2 = $('#mtable2').DataTable( {
             columnDefs: [
@@ -180,6 +195,8 @@
       catch (e) {
         console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
       }
+
+      // Handler für Suspend (Play/Pause) Button
       if ({{ suspended }} == false) {
         document.getElementById('play').classList = 'btn btn-success btn-sm';
         document.getElementById('play').disabled = true;
@@ -192,6 +209,31 @@
         document.getElementById('pause').classList = 'btn btn-danger btn-sm';
         document.getElementById('pause').disabled = true;
       }
+
+      // Handler für Formular - das "submit"-Element (Senden) wird abgefangen
+      $("#button_pressed").submit(function(e) {
+
+        // keine HTML-Aktion ausführen (z.B. Formular senden)
+        e.preventDefault();
+
+        console.log('submit')
+
+        // die Kennung des gedrückten Buttons per AJAX senden
+        $.post('submit', {button: $("#button").val()}, function(data) {
+
+          console.log(data)
+
+          // Zeile ermitteln
+          // var row = $("#button").val()
+          // var id = row + "_value"
+
+          // nur die betroffene Zeile ändern. Der dritte Parameter muss mit der Tabellen-ID identisch sein.
+          // shngInserText(id, data.wert, 'maintable')
+
+        });
+        return false ;
+      });
+      
     });
 </script>
 
@@ -206,6 +248,7 @@
       }
   }
 </script>
+
 <script>
   function recalc_button(onoff)
   {
@@ -222,6 +265,14 @@
     }
   }
 </script>
+
+<script>
+  function checkbox(log, value)
+  {
+    console.log('debug_log_option_'+log+'_'+value)
+    jQuery.get('debug_log_option_'+log+'_'+value)
+  }
+</script>
 {% endblock pluginscripts %}
 
 
@@ -231,7 +282,7 @@
 	<tbody>
 		<tr>
 			<td class="py-1" width="150px"><strong>{{ _('Verbunden') }}</strong></td>
-			<td class="py-1">{% if p._db._connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1" width="500px">{% if p._db._connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
 			<td class="py-1" width="150px"><strong>{{ _('Treiber') }}</strong></td>
 			<td class="py-1">{{ p.db_driver }}</td>
 			<td class="py-1" width="150px"><strong>{{ _('Startup Delay') }}</strong></td>
@@ -255,10 +306,35 @@
 			{% endif %}
         {% endfor %}
         <tr>
-            <td class="py-1" width="150px"><strong>{{ _('Item in Berechnung') }}</strong></td>
+            <td class="py-1"><strong>{{ _('Item in Berechnung') }}</strong></td>
             <td class="py-1 active_item truncate" id="active_queue_item">{{ p.active_queue_item }}</td>
-            <td class="py-1" width="150px"><strong>{{ _('Arbeitsvorrat') }}</strong></td>
-            <td class="py-1" id="queue_length" colspan="3">{{ p.queue_backlog }} {{ _('Items') }} </td>
+            <td class="py-1"><strong>{{ _('Arbeitsvorrat') }}</strong></td>
+            <td class="py-1" id="queue_length">{{ p.queue_backlog }} {{ _('Items') }} </td>
+            <td class="py-1"><strong>{{ _('LogLevel') }}</strong></td>
+            <td class="py-1">
+                {{ p.log_level }}
+                {% if p.log_level == 10 %}
+                    {{ ('  ||  ') }}
+	                <div class="form-check form-check-inline">
+                        <input type="checkbox" id="debug_parse" name="debug_parse" value="parse" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für parse_item">
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input type="checkbox" id="debug_execute" name="debug_execute" value="execute" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für execute_items">
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input type="checkbox" id="debug_ondemand" name="debug_ondemand" value="ondemand" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für on_demand">
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input type="checkbox" id="debug_onchange" name="debug_onchange" value="parse" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für on_change">
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input type="checkbox" id="debug_prepare" name="debug_prepare" value="execute" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für prepare">
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input type="checkbox" id="debug_sql" name="debug_sql" value="sql" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für sql">
+                    </div>
+                {% endif %}
+            </td>
         </tr>
 	</tbody>
 </table>
@@ -282,11 +358,7 @@
 {% set tabcount = 3 %}
 
 {% set tab1title = "<strong>" ~ plugin_shortname ~ " Items</strong> (" ~ item_count ~ ")" %}
-{% if maintenance %}
-    {% set tab2title = "<strong>" ~ plugin_shortname ~ " Maintenance</strong>" %}
-{% else %}
-    {% set tab2title = "hidden" %}
-{% endif %}
+{% set tab2title = "<strong>" ~ plugin_shortname ~ " Maintenance</strong>" %}
 {% set tab3title = "<strong>" ~ plugin_shortname ~ " API/Doku</strong>" %}
 
 <!-- Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3) -->
@@ -312,10 +384,31 @@
                 <td class="py-1" id="{{ item._path }}_value" style="text-align: right">{{ item._value | float | round(2) }}</td>
                 <td class="py-1" id="{{ item._path }}_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 <td class="py-1" id="{{ item._path }}_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                <td>
+                    <button class="btn-shng btn-sm" type="button" title="{{ _('Neuberechnung') }}" onclick="location.href='?action=recalc_item&item_path={{ item.property.path }}';"><i class="fas fa-redo"></i></button>
+                    <button class="btn-outline-danger btn-sm" type="button" title="{{ _('Wertecache löschen') }}" onclick="location.href='?action=clean_item_cache&item_path={{ item.property.path }}';"><i class="fas fa-trash"></i></button>
+                    {% if p.get_item_config(item._path)['active'] %}
+                        <button class="btn-sm btn-success" type="button" title="{{ _('Berechnung pausieren') }}" onclick="location.href='?action=_activate_item_calculation&active=0&item_path={{ item.property.path }}';"><i class="fas fa-play"></i></button>
+                    {% else %}
+                        <button class="btn-sm btn-outline-dark" type="button" title="{{ _('Berechnung aktivieren') }}" onclick="location.href='?action=_activate_item_calculation&active=1&item_path={{ item.property.path }}';"><i class="fas fa-pause"></i></button>
+                    {% endif %}
+
+                    <button
+                      class="btn-sm btn-secondary"
+                      type="button"
+                      title="{{ 'TestButton' }}"
+                      onclick="$('#button').val('{{ item.property.path }}');$('#button_pressed').submit();"
+                    >
+                        T
+                    </button>
+                </td>
             </tr>
          {% endfor %}
     </tbody>
 </table>
+<form id="button_pressed" action="" method="post">
+  <input type="hidden" id="button" name="button" value="" />
+</form>
 {% endblock bodytab1 %}
 
 
