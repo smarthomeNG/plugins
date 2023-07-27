@@ -52,10 +52,10 @@ commands = {
     },
     'control': {
         'power': {'read': True, 'write': True, 'read_cmd': '#QPW', 'write_cmd': '#P{VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': ['@POFF OK (OFF)', '@PON OK (ON)', '@QPW OK (ON|OFF)', '@UPW (0|1)'], 'item_attrs': {'initial': True}},
-        'pureaudio': {'read': True, 'write': True, 'write_cmd': '#PUR', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': '@PUR OK (ON|OFF)', 'item_attrs': {'initial': True}},
+        'pureaudio': {'read': True, 'write': True, 'write_cmd': '#PUR', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': '@PUR OK (ON|OFF)'},
         'playpause': {'read': True, 'write': True, 'read_cmd': '#QPL', 'write_cmd': '{VALUE}', 'item_type': 'bool', 'dev_datatype': 'playpause', 'reply_pattern': ['@PLA OK {LOOKUP}$', '@PAU OK {LOOKUP}$'], 'lookup': 'PLAY'},
         'stop': {'read': True, 'write': True, 'read_cmd': '#QPL', 'write_cmd': '#STP', 'item_type': 'bool', 'dev_datatype': 'raw', 'reply_pattern': ['@STP OK (?:(FULL\s)?){LOOKUP}$'], 'lookup': 'STOP'},
-        'eject': {'read': True, 'write': True, 'write_cmd': '#EJT', 'item_type': 'bool', 'dev_datatype': 'openclose', 'reply_pattern': ['@UPL (OPEN|CLOS)', '@EJT OK (OPEN|CLOSE)'], 'item_attrs': {'initial': True, 'enforce': True}},
+        'eject': {'read': True, 'write': True, 'write_cmd': '#EJT', 'item_type': 'bool', 'dev_datatype': 'openclose', 'reply_pattern': ['@UPL (OPEN|CLOS)', '@EJT OK (OPEN|CLOSE)'], 'item_attrs': {'enforce': True}},
         'chapter': {'read': True, 'write': True, 'read_cmd': '#QCH', 'write_cmd': '#SRH C{RAW_VALUE:03}', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': ['@SRH (OK|ER INVALID)', r'@QCH OK (\d{2})/(?:\d{2})']},
         'title': {'read': True, 'write': True, 'read_cmd': '#QTK', 'write_cmd': '#SRH T{RAW_VALUE:03}', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': [r'@QTK OK (\d{2})/(?:\d{2})', '@SRH (OK|ER INVALID)', r'@UAT (?:[A-Z]{2}) (\d{2})/(?:\d{2}) (?:[A-Z]{3}) (?:[0-7.]{3})']},
         'next': {'read': True, 'write': True, 'write_cmd': '#NXT', 'item_type': 'bool', 'dev_datatype': 'ok', 'reply_pattern': ['@NXT (.*)'], 'item_attrs': {'enforce': True}},

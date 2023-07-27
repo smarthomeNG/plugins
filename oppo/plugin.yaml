@@ -456,7 +456,6 @@ item_structs:
             oppo_command: control.pureaudio
             oppo_read: true
             oppo_write: true
-            oppo_read_initial: true
 
         playpause:
             type: bool
@@ -480,7 +479,6 @@ item_structs:
             oppo_read: true
             oppo_write: true
             enforce_updates: true
-            oppo_read_initial: true
 
         chapter:
             type: num
@@ -971,7 +969,6 @@ item_structs:
                 oppo_command: control.pureaudio
                 oppo_read: true
                 oppo_write: true
-                oppo_read_initial: true
 
             playpause:
                 type: bool
@@ -997,7 +994,6 @@ item_structs:
                 oppo_read: true
                 oppo_write: true
                 enforce_updates: true
-                oppo_read_initial: true
 
             chapter:
                 type: num
@@ -1490,7 +1486,6 @@ item_structs:
                 oppo_command: control.pureaudio
                 oppo_read: true
                 oppo_write: true
-                oppo_read_initial: true
 
             playpause:
                 type: bool
@@ -1516,7 +1511,6 @@ item_structs:
                 oppo_read: true
                 oppo_write: true
                 enforce_updates: true
-                oppo_read_initial: true
 
             chapter:
                 type: num
