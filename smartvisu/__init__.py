@@ -125,8 +125,8 @@ class SmartVisu(SmartPlugin):
 
     def run(self):
         self.alive = True
-        # skip directory handling if generate pages and handle_widgets are disabled
-        if self.smartvisu_dir != '' and (self._generate_pages or self._handle_widgets):
+        # skip directory handling if all relevant handling options are disabled
+        if self.smartvisu_dir != '' and (self._generate_pages or self._handle_widgets or self._create_masteritem_file):
             if not os.path.isdir(os.path.join(self.smartvisu_dir, 'pages')):
                 self.logger.error("Could not find valid smartVISU directory: {}".format(self.smartvisu_dir))
             else:
