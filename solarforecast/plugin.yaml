@@ -23,13 +23,15 @@ plugin:
 parameters:
     latitude:
         type: num
-        mandatory: True
+        mandatory: False
+        default: ''
         description:
             de: 'Breitengrad der Solaranlage in dezimalen Grad'
             en: 'Latitude of solar system in decimal degree'
     longitude:
         type: num
-        mandatory: True
+        mandatory: False
+        default: ''
         description:
             de: 'Laengengrad der Solaranlage in dezimalen Grad'
             en: 'Longitude of solar system in decimal degree'
