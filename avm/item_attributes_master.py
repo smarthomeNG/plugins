@@ -233,7 +233,7 @@ def export_item_attributs_py():
     ATTRS['AHA_WO_ATTRIBUTES'] = get_attrs(['aha'], {'access': 'wo'})
     ATTRS['AHA_RW_ATTRIBUTES'] = get_attrs(['aha'], {'access': 'rw'})
     ATTRS['TR064_ATTRIBUTES'] = get_attrs(['tr064'])
-    ATTRS['AVM_RW_ATTRIBUTES'] = get_attrs(['tr064'], {'access': 'rw'})
+    ATTRS['TR064_RW_ATTRIBUTES'] = get_attrs(['tr064'], {'access': 'rw'})
     ATTRS['CALL_MONITOR_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'call_monitor'})
     ATTRS['CALL_MONITOR_ATTRIBUTES_TRIGGER'] = get_attrs(['tr064'], {'group': 'call_monitor', 'sub_group': 'trigger'})
     ATTRS['CALL_MONITOR_ATTRIBUTES_GEN'] = get_attrs(['tr064'], {'group': 'call_monitor', 'sub_group': 'generic'})

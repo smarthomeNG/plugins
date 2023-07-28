@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/avm/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
-    version: 2.0.4                  # Plugin version (must match the version specified in __init__.py)
+    version: 2.0.7                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.8              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -1210,7 +1210,28 @@ plugin_functions:
             de: Liefert Informationen aller Hosts als Dictionary
             en: Lists information of all hosts as dict
         parameters:
-      # This function has no parameters
+            only_active:
+                type: bool
+                description:
+                    de: True, wenn nur aktuell aktive Hosts zurückgegeben werden sollen.
+                    en: True, if only active hosts shall be returned.
+
+    get_hosts_list:
+        type: list(dict)
+        description:
+            de: Liefert Informationen gefilterte Information zu den verbundenen Hosts als Array
+            en: Lists information of filtered hosts as array
+        parameters:
+            identifier_list:
+                type: list
+                description:
+                    de: "Liste von Identifiers des Hosts, die zurückgegeben werden sollen; (möglich: 'Index', 'IPAddress', 'MACAddress', 'HostName', 'FriendyName')"
+                    en: "list of identifiers of host, which will be returned; (valid: 'Index', 'IPAddress', 'MACAddress', 'HostName', 'FriendyName')"
+            filter_dict:
+                type: dict
+                description:
+                    de: "Dict von Filtern, für welche die Host-Identifier zurückgegeben werden sollen (bspw: filter={'Active': False} gibt alle nicht-aktiven Host zurück)"
+                    en: "dict of filters, for which hosts (identifiers) will be returned (e.g. filter={'Active': False} will return all non-active hosts)"
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)

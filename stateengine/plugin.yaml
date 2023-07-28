@@ -819,7 +819,7 @@ item_structs:
 
         settings:
             remark: Use these settings for your condition values
-            type: foo
+            type: bool
             eval: sh..suspendduration(sh..suspendduration(), "Init", "Start")
             crontab: init = True
 
@@ -828,26 +828,26 @@ item_structs:
                 type: num
                 visu_acl: rw
                 cache: True
+                enforce_updates: True
                 initial_value: 60
-                on_change: .seconds = value * 60 if not sh..self.property.last_change_by == "On_Change:{}".format(sh..seconds.property.path) else None
+                on_change: .seconds = value * 60 if not sh..self.property.last_change_by in ["On_Change:{}".format(sh..seconds.property.path), "On_Change:{}".format(sh..duration_format.property.path)] else None
                 on_update: .seconds = value * 60 if "Init" in sh..self.property.last_update_by else None
 
                 duration_format:
-                    remark: Can be used for the clock.countdown widget
+                    remark: Can be used for the clock.countdown widget and smartvisu
                     type: str
                     cache: True
-                    visu_acl: ro
-                    eval: "'{}d {}h {}i {}s'.format(int(sh...seconds()//86400), int((sh...seconds()%86400)//3600), int((sh...seconds()%3600)//60), round((sh...seconds()%3600)%60))"
-                    eval_trigger:
-                      - ..seconds
-                      - ..
+                    visu_acl: rw
+                    on_change: ..seconds = sum([a*b for a,b in zip([216000,3600,60,1], map(int,value.replace('d','').replace('h','').replace('i','').replace('s','').split(' ')))]) if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh...seconds.property.path), "On_Update:{}".format(sh...seconds.property.path)] else None
 
                 seconds:
                     remark: duration of suspend mode in seconds (gets converted automatically)
                     type: num
                     visu_acl: rw
                     cache: True
-                    on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+                    on_change:
+                      - .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+                      - ..duration_format = '{}d {}h {}i {}s'.format(int(value//86400), int((value%86400)//3600), int((value%3600)//60), round((value%3600)%60)) if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh...duration_format.property.path), "On_Update:{}".format(sh...duration_format.property.path)] else None
 
             suspend_active:
                 remark: Use this to (de)activate suspend mode in general
@@ -1009,7 +1009,7 @@ item_structs:
 
         settings:
             remark: Use these settings for your condition values
-            type: foo
+            type: bool
             eval: (sh..suspendduration(sh..suspendduration(), "Init", "Start"), sh..suspendvariant.suspendduration0(sh..suspendduration(), "Init", "Start"), sh..suspendvariant.suspendduration1(sh..suspendvariant.suspendduration1(), "Init", "Start"), sh..suspendvariant.suspendduration2(sh..suspendvariant.suspendduration2(), "Init", "Start"))
             crontab: init = True
 
@@ -1021,83 +1021,82 @@ item_structs:
                 initial_value: 0
 
                 suspendduration0:
-                    remark: gets automatically updated from settings.suspendduration as this is the default item for the suspendduration
+                    remark: duration of suspend mode in minutes (gets converted automatically)
                     type: num
                     visu_acl: rw
                     cache: True
-                    on_change: .seconds = value * 60 if not sh..self.property.last_change_by == "On_Change:{}".format(sh..seconds.property.path) else None
+                    enforce_updates: True
+                    initial_value: 60
+                    on_change: .seconds = value * 60 if not sh..self.property.last_change_by in ["On_Change:{}".format(sh..seconds.property.path), "On_Change:{}".format(sh..duration_format.property.path)] else None
                     on_update: .seconds = value * 60 if "Init" in sh..self.property.last_update_by else None
-                    eval: sh....suspendduration()
-                    eval_trigger: ...suspendduration
 
                     duration_format:
-                        remark: Can be used for the clock.countdown widget
+                        remark: Can be used for the clock.countdown widget and smartvisu
                         type: str
                         cache: True
-                        visu_acl: ro
-                        eval: "'{}d {}h {}i {}s'.format(int(sh...seconds()//86400), int((sh...seconds()%86400)//3600), int((sh...seconds()%3600)//60), round((sh...seconds()%3600)%60))"
-                        eval_trigger:
-                          - ..seconds
-                          - ..
+                        visu_acl: rw
+                        on_change: ..seconds = sum([a*b for a,b in zip([216000,3600,60,1], map(int,value.replace('d','').replace('h','').replace('i','').replace('s','').split(' ')))]) if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh...seconds.property.path), "On_Update:{}".format(sh...seconds.property.path)] else None
 
                     seconds:
                         remark: duration of suspend mode in seconds (gets converted automatically)
                         type: num
                         visu_acl: rw
                         cache: True
-                        on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+                        on_change:
+                          - .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+                          - ..duration_format = '{}d {}h {}i {}s'.format(int(value//86400), int((value%86400)//3600), int((value%3600)//60), round((value%3600)%60)) if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh...duration_format.property.path), "On_Update:{}".format(sh...duration_format.property.path)] else None
 
                 suspendduration1:
                     remark: duration of suspend mode in minutes (gets converted automatically)
                     type: num
                     visu_acl: rw
                     cache: True
+                    enforce_updates: True
                     initial_value: 60
-                    on_change: .seconds = value * 60 if not sh..self.property.last_change_by == "On_Change:{}".format(sh..seconds.property.path) else None
+                    on_change: .seconds = value * 60 if not sh..self.property.last_change_by in ["On_Change:{}".format(sh..seconds.property.path), "On_Change:{}".format(sh..duration_format.property.path)] else None
                     on_update: .seconds = value * 60 if "Init" in sh..self.property.last_update_by else None
 
                     duration_format:
-                        remark: Can be used for the clock.countdown widget
+                        remark: Can be used for the clock.countdown widget and smartvisu
                         type: str
                         cache: True
-                        visu_acl: ro
-                        eval: "'{}d {}h {}i {}s'.format(int(sh...seconds()//86400), int((sh...seconds()%86400)//3600), int((sh...seconds()%3600)//60), round((sh...seconds()%3600)%60))"
-                        eval_trigger:
-                          - ..seconds
-                          - ..
+                        visu_acl: rw
+                        on_change: ..seconds = sum([a*b for a,b in zip([216000,3600,60,1], map(int,value.replace('d','').replace('h','').replace('i','').replace('s','').split(' ')))]) if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh...seconds.property.path), "On_Update:{}".format(sh...seconds.property.path)] else None
 
                     seconds:
                         remark: duration of suspend mode in seconds (gets converted automatically)
                         type: num
                         visu_acl: rw
                         cache: True
-                        on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+                        on_change:
+                          - .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+                          - ..duration_format = '{}d {}h {}i {}s'.format(int(value//86400), int((value%86400)//3600), int((value%3600)//60), round((value%3600)%60)) if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh...duration_format.property.path), "On_Update:{}".format(sh...duration_format.property.path)] else None
 
                 suspendduration2:
                     remark: duration of suspend mode in minutes (gets converted automatically)
                     type: num
                     visu_acl: rw
                     cache: True
+                    enforce_updates: True
                     initial_value: 60
-                    on_change: .seconds = value * 60 if not sh..self.property.last_change_by == "On_Change:{}".format(sh..seconds.property.path) else None
+                    on_change: .seconds = value * 60 if not sh..self.property.last_change_by in ["On_Change:{}".format(sh..seconds.property.path), "On_Change:{}".format(sh..duration_format.property.path)] else None
                     on_update: .seconds = value * 60 if "Init" in sh..self.property.last_update_by else None
 
                     duration_format:
-                        remark: Can be used for the clock.countdown widget
+                        remark: Can be used for the clock.countdown widget and smartvisu
                         type: str
                         cache: True
-                        visu_acl: ro
-                        eval: "'{}d {}h {}i {}s'.format(int(sh...seconds()//86400), int((sh...seconds()%86400)//3600), int((sh...seconds()%3600)//60), round((sh...seconds()%3600)%60))"
-                        eval_trigger:
-                          - ..seconds
-                          - ..
+                        visu_acl: rw
+                        on_change: ..seconds = sum([a*b for a,b in zip([216000,3600,60,1], map(int,value.replace('d','').replace('h','').replace('i','').replace('s','').split(' ')))]) if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh...seconds.property.path), "On_Update:{}".format(sh...seconds.property.path)] else None
 
                     seconds:
                         remark: duration of suspend mode in seconds (gets converted automatically)
                         type: num
                         visu_acl: rw
                         cache: True
-                        on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+                        on_change:
+                          - .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+                          - ..duration_format = '{}d {}h {}i {}s'.format(int(value//86400), int((value%86400)//3600), int((value%3600)//60), round((value%3600)%60)) if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh...duration_format.property.path), "On_Update:{}".format(sh...duration_format.property.path)] else None
 
                 additionaluse0:
                     remark: set this value to a struct or (relative) state that should be added to the condition sets if suspendvariant is 0
@@ -1125,26 +1124,26 @@ item_structs:
                 type: num
                 visu_acl: rw
                 cache: True
+                enforce_updates: True
                 initial_value: 60
-                on_change: .seconds = value * 60 if not sh..self.property.last_change_by == "On_Change:{}".format(sh..seconds.property.path) else None
+                on_change: .seconds = value * 60 if not sh..self.property.last_change_by in ["On_Change:{}".format(sh..seconds.property.path), "On_Change:{}".format(sh..duration_format.property.path)] else None
                 on_update: .seconds = value * 60 if "Init" in sh..self.property.last_update_by else None
 
                 duration_format:
-                    remark: Can be used for the clock.countdown widget
+                    remark: Can be used for the clock.countdown widget and smartvisu
                     type: str
                     cache: True
-                    visu_acl: ro
-                    eval: "'{}d {}h {}i {}s'.format(int(sh...seconds()//86400), int((sh...seconds()%86400)//3600), int((sh...seconds()%3600)//60), round((sh...seconds()%3600)%60))"
-                    eval_trigger:
-                      - ..seconds
-                      - ..
+                    visu_acl: rw
+                    on_change: ..seconds = sum([a*b for a,b in zip([216000,3600,60,1], map(int,value.replace('d','').replace('h','').replace('i','').replace('s','').split(' ')))]) if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh...seconds.property.path), "On_Update:{}".format(sh...seconds.property.path)] else None
 
                 seconds:
                     remark: duration of suspend mode in seconds (gets converted automatically)
                     type: num
                     visu_acl: rw
                     cache: True
-                    on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+                    on_change:
+                      - .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+                      - ..duration_format = '{}d {}h {}i {}s'.format(int(value//86400), int((value%86400)//3600), int((value%3600)//60), round((value%3600)%60)) if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh...duration_format.property.path), "On_Update:{}".format(sh...duration_format.property.path)] else None
 
             suspend_active:
                 remark: Use this to (de)activate suspend mode in general

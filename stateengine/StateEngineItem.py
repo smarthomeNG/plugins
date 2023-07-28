@@ -289,6 +289,7 @@ class SeItem:
         startup_delay = 1 if self.__startup_delay.is_empty() or _startup_delay_param == 0 else _startup_delay_param
         if startup_delay > 0:
             first_run = self.__shtime.now() + datetime.timedelta(seconds=startup_delay)
+            self.__logger.info("Will start stateengine evaluation at {}", first_run)
             scheduler_name = self.__id + "-Startup Delay"
             value = {"item": self.__item, "caller": "Init"}
             self.__se_plugin.scheduler_add(scheduler_name, self.__startup_delay_callback, value=value, next=first_run)

@@ -368,7 +368,7 @@ class PirateWeather(SmartPlugin):
             url = self._base_url + f"{self._key}/{self._lat},{self._lon}"
             parameters = f"?lang={self._lang}"
             if self._units is not None:
-                parameters += "&units={self._units}"
+                parameters += f"&units={self._units}"
             url += parameters
         else:
             self.logger.error(f"_build_url: Wrong url type specified: {url_type}")
