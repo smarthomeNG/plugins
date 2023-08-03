@@ -149,6 +149,9 @@ class SeActionBase(StateEngineTools.SeItemChild):
     # state: state item that triggered the action
     def execute(self, is_repeat: bool, allow_item_repeat: bool, state):
         self._state = state
+        self._log_decrease_indent(50)
+        self._log_increase_indent()
+        self._log_info("Action '{0}': Preparing", self._name)
         if not self._can_execute():
             return
         conditions_met = 0
@@ -219,8 +222,6 @@ class SeActionBase(StateEngineTools.SeItemChild):
         if conditions_met < condition_necessary:
             self._log_info("Action '{0}': Skipping because not all conditions are met.", self._name)
             return
-        else:
-            self._log_info("Action '{0}': Running.", self._name)
 
         if is_repeat:
             _key1 = ['{}'.format(state.id), 'actions_stay', '{}'.format(self._name), 'repeat']
@@ -250,13 +251,15 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 return
         else:
             repeat_text = ""
-
+        self._log_increase_indent()
         try:
             self._getitem_fromeval()
+            self._log_decrease_indent()
             _validitem = True
         except Exception as ex:
             _validitem = False
             self._log_error("Action '{0}': Ignored because {1}", self._name, ex)
+            self._log_decrease_indent()
         if _validitem:
             plan_next = self._se_plugin.scheduler_return_next(self._scheduler_name)
             if plan_next is not None and plan_next > self.shtime.now():
@@ -272,10 +275,14 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 delay, self._scheduler_name)
             _delay_info = 0
             if delay is None:
+                self._log_increase_indent()
                 self._log_warning("Action '{0}': Ignored because of errors while determining the delay!", self._name)
+                self._log_decrease_indent()
                 _delay_info = -1
             elif delay < 0:
+                self._log_increase_indent()
                 self._log_warning("Action '{0}': Ignored because delay is negative!", self._name)
+                self._log_decrease_indent()
                 _delay_info = -1
             else:
                 self._waitforexecute(actionname, self._name, repeat_text, delay, current_condition_met, previous_condition_met, previousstate_condition_met)
@@ -325,7 +332,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._log_decrease_indent(50)
         self._log_increase_indent()
         if delay == 0:
-            self._log_info("Running action '{}'.", namevar)
+            self._log_info("Action '{}': Running.", namevar)
             self.real_execute(actionname, namevar, repeat_text, None, False, current_condition, previous_condition, previousstate_condition)
         else:
             instanteval = None if self.__instanteval is None else self.__instanteval.get()
@@ -484,11 +491,15 @@ class SeActionSetItem(SeActionBase):
     # Check if execution is possible
     def _can_execute(self):
         if self.__item is None:
-            self._log_info("Action '{0}': No item defined. Ignoring.", self._name)
+            self._log_increase_indent()
+            self._log_warning("Action '{0}': No item defined. Ignoring.", self._name)
+            self._log_decrease_indent()
             return False
 
         if self.__value.is_empty():
-            self._log_info("Action '{0}': No value defined. Ignoring.", self._name)
+            self._log_increase_indent()
+            self._log_warning("Action '{0}': No value for item {1} defined. Ignoring.", self._name, self.__item)
+            self._log_decrease_indent()
             return False
 
         return True
@@ -843,11 +854,15 @@ class SeActionForceItem(SeActionBase):
     # Check if execution is possible
     def _can_execute(self):
         if self.__item is None:
-            self._log_info("Action '{0}': No item defined. Ignoring.", self._name)
+            self._log_increase_indent()
+            self._log_warning("Action '{0}': No item defined. Ignoring.", self._name)
+            self._log_decrease_indent()
             return False
 
         if self.__value.is_empty():
-            self._log_info("Action '{0}': No value defined. Ignoring.", self._name)
+            self._log_increase_indent()
+            self._log_warning("Action '{0}': No value defined for item {1}. Ignoring.", self._name, self.__item)
+            self._log_decrease_indent()
             return False
 
         return True
