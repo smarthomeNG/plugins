@@ -104,6 +104,27 @@ Bei sämtlichen Bedingungen ist es möglich, Werte als Liste anzugeben. Es ist a
 nicht möglich, Templates als Listen zu definieren.
 
 
+Bedingungen mittels eval-Ausdrücken
+-----------------------------------
+
+``se_eval_<Name>`` kann neben der dynamischen Definition von Items auch für einen
+herkömmlichen eval-Ausdruck herhalten, der dann in einem Bedingungsset geprüft wird.
+
+.. code-block:: yaml
+
+    #items/item.yaml
+    raffstore1:
+        automatik:
+            struct: stateengine.general
+            rules:
+                se_eval_berechnung: sh.test.property.value + 1
+
+                Zustand_Eins:
+                    name: sueden
+                    enter:
+                        se_value_berechnung: 3
+
+
 Bedingungslisten
 ----------------
 

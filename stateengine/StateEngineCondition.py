@@ -22,6 +22,7 @@ from . import StateEngineTools
 from . import StateEngineCurrent
 from . import StateEngineValue
 from . import StateEngineEval
+from lib.item.item import Item
 import re
 from collections import OrderedDict
 
@@ -54,6 +55,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__updatedbynegate = None
         self.__agenegate = None
         self.__error = None
+        self.__itemClass = Item
 
     def __repr__(self):
         return "SeCondition 'item': {}, 'status': {}, 'eval': {}, 'value': {}".format(self.__item, self.__status, self.__eval, self.__value)
@@ -674,7 +676,13 @@ class SeCondition(StateEngineTools.SeItemChild):
                     # noinspection PyUnusedLocal
                     stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
                 try:
-                    value = eval(self.__eval).property.value if eval_type == 'value' else eval(self.__eval).property.last_change_age
+                    if isinstance(eval(self.__eval), self.__itemClass):
+                        value = eval(self.__eval).property.last_change_age if eval_type == 'age' else \
+                                eval(self.__eval).property.last_change_by if eval_type == 'changedby' else \
+                                eval(self.__eval).property.last_update_by if eval_type == 'updatedby' else \
+                                eval(self.__eval).property.value
+                    else:
+                        value = eval(self.__eval)
                 except Exception as ex:
                     text = "Condition {}: problem evaluating {}: {}"
                     raise ValueError(text.format(self.__name, self.__eval, ex))
