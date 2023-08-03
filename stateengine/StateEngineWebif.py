@@ -66,6 +66,8 @@ class WebInterface(StateEngineTools.SeItemChild):
             for action in self.__states[state].get(label_type):
                 _repeat = self.__states[state][label_type][action].get('repeat')
                 _delay = self.__states[state][label_type][action].get('delay') or 0
+                _delta = self.__states[state][label_type][action].get('delta') or 0
+                _mindelta = self.__states[state][label_type][action].get('mindelta') or 0
                 condition_necessary = 0
                 condition_met = True
                 condition_count = 0
@@ -112,8 +114,9 @@ class WebInterface(StateEngineTools.SeItemChild):
                     condition_met = False
                 cond1 = conditionset in ['', self.__active_conditionset] and state == self.__active_state
                 cond2 = self.__states[state]['conditionsets'].get(conditionset) is not None
-                fontcolor = "white" if cond1 and cond2 and (not condition_met or (_repeat is False and originaltype == 'actions_stay'))\
-                            else "#5c5646" if _delay > 0 else "darkred" if _delay < 0 else "black"
+                cond_delta = float(_delta) < float(_mindelta)
+                fontcolor = "white" if cond1 and cond2 and (cond_delta or (not condition_met or (_repeat is False and originaltype == 'actions_stay')))\
+                            else "#5c5646" if _delay > 0 else "darkred" if _delay < 0 else "#303030" if not condition_met else "black"
                 condition_info = condition_to_meet if condition1 is False\
                                  else previouscondition_to_meet if condition2 is False\
                                  else previousstate_condition_to_meet if condition3 is False\
@@ -121,12 +124,17 @@ class WebInterface(StateEngineTools.SeItemChild):
                 additionaltext = " ({} not met)".format(condition_info) if not condition_met\
                                  else " (no repeat)" if _repeat is False and originaltype == 'actions_stay'\
                                  else " (delay: {})".format(_delay) if _delay > 0\
-                                 else " (wrong delay!)" if _delay < 0 else ""
+                                 else " (wrong delay!)" if _delay < 0\
+                                 else " (delta {} &#60; {})".format(_delta, _mindelta) if cond_delta and cond1 and cond2\
+                                 else ""
                 action1 = self.__states[state][label_type][action].get('function')
                 if action1 == 'set':
                     action2 = self.__states[state][label_type][action].get('item')
                     value_check = self.__states[state][label_type][action].get('value')
                     value_check = '""' if value_check == "" else value_check
+                    is_number = value_check.lstrip('-').replace('.','',1).isdigit()
+                    if is_number and "." in value_check:
+                        value_check = round(float(value_check), 2)
                     action3 = 'to {}'.format(value_check)
                 elif action1 == 'special':
                     action2 = self.__states[state][label_type][action].get('special')

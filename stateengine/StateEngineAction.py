@@ -370,6 +370,7 @@ class SeActionSetItem(SeActionBase):
         super().__init__(abitem, name)
         self.__item = None
         self.__status = None
+        self.__delta = 0
         self.__value = StateEngineValue.SeValue(self._abitem, "value")
         self.__mindelta = StateEngineValue.SeValue(self._abitem, "mindelta")
         self.__function = "set"
@@ -504,9 +505,11 @@ class SeActionSetItem(SeActionBase):
             else:
                 delta = float(abs(self.__item() - value))
                 additionaltext = ""
+
+            self.__delta = delta
             if delta < mindelta:
-                text = "{0}: Not setting '{1}' to '{2}' because delta '{3:.2}' is lower than mindelta '{4}'"
-                self._log_debug(text, actionname, self.__item.property.path, value, delta, mindelta)
+                text = "{0}: Not setting '{1}' to '{2}' because delta {3}'{4:.2}' is lower than mindelta '{5}'"
+                self._log_debug(text, actionname, self.__item.property.path, value, additionaltext, delta, mindelta)
                 return
 
         self._execute_set_add_remove(actionname, namevar, repeat_text, self.__item, value, current_condition, previous_condition, previousstate_condition)
@@ -520,13 +523,21 @@ class SeActionSetItem(SeActionBase):
 
     def get(self):
         try:
-            item = str(self.__item.property.path)
+            _item = str(self.__item.property.path)
         except Exception:
-            item = str(self.__item)
-        return {'function': str(self.__function), 'item': item,
-                'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get()),
-                'previousconditionset': str(self.previousconditionset.get()),
-                'previousstate_conditionset': str(self.previousstate_conditionset.get())}
+            _item = str(self.__item)
+        _mindelta = self.__mindelta.get()
+        if _mindelta is None:
+            return {'function': str(self.__function), 'item': _item,
+                    'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get()),
+                    'previousconditionset': str(self.previousconditionset.get()),
+                    'previousstate_conditionset': str(self.previousstate_conditionset.get())}
+        else:
+            return {'function': str(self.__function), 'item': _item,
+                    'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get()),
+                    'previousconditionset': str(self.previousconditionset.get()),
+                    'previousstate_conditionset': str(self.previousstate_conditionset.get()),
+                    'delta': str(self.__delta), 'mindelta': str(_mindelta)}
 
 
 # Class representing a single "se_setbyattr" action
