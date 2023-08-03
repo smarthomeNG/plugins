@@ -139,7 +139,6 @@ class SeValue(StateEngineTools.SeItemChild):
     # value: string indicating value or source of value
     # name: name of object ("time" is being handled differently)
     def set(self, value, name="", reset=True, item=None):
-        value = copy.deepcopy(value)
         if reset:
             self.__resetvalue()
         if isinstance(value, list):
@@ -218,8 +217,8 @@ class SeValue(StateEngineTools.SeItemChild):
                     self.__listorder = [i for i in self.__listorder if i != value]
                     source, field_value, value = None, None, None
             try:
-                cond1 = sources.lstrip('-').replace('.','',1).isdigit()
-                cond2 = field_values.lstrip('-').replace('.','',1).isdigit()
+                cond1 = source.lstrip('-').replace('.','',1).isdigit()
+                cond2 = field_value.lstrip('-').replace('.','',1).isdigit()
             except Exception:
                 cond1 = False
                 cond2 = False
