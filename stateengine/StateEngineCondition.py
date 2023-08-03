@@ -334,6 +334,9 @@ class SeCondition(StateEngineTools.SeItemChild):
 
     def __change_update_value(self, value, valuetype):
         def __convert(convert_value, convert_current):
+            if convert_value is None:
+                self._log_develop("Ignoring value None for conversion")
+                return convert_value, convert_current
             _oldvalue = convert_value
             try:
                 if isinstance(convert_value, re._pattern_type):
@@ -342,14 +345,19 @@ class SeCondition(StateEngineTools.SeItemChild):
                 if isinstance(convert_value, re.Pattern):
                     return convert_value, convert_current
             if isinstance(convert_current, bool):
+                self.__value.set_cast(StateEngineTools.cast_bool)
                 convert_value = StateEngineTools.cast_bool(convert_value)
             elif isinstance(convert_current, int):
+                self.__value.set_cast(StateEngineTools.cast_num)
                 convert_value = int(StateEngineTools.cast_num(convert_value))
             elif isinstance(convert_current, float):
+                self.__value.set_cast(StateEngineTools.cast_num)
                 convert_value = StateEngineTools.cast_num(convert_value) * 1.0
             elif isinstance(convert_current, list):
+                self.__value.set_cast(StateEngineTools.cast_list)
                 convert_value = StateEngineTools.cast_list(convert_value)
             else:
+                self.__value = str(convert_value)
                 convert_value = str(convert_value)
                 convert_current = str(convert_current)
             if not type(_oldvalue) == type(convert_value):
@@ -470,7 +478,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                 for i, _ in enumerate(min_value):
                     min = None if min_value[i] == 'novalue' else min_value[i]
                     max = None if max_value[i] == 'novalue' else max_value[i]
-                    self._log_debug("Checking minvalue {} and maxvalue {}", min, max)
+                    self._log_debug("Checking minvalue {} ({}) and maxvalue {}({}) against current {}({})", min, type(min), max, type(max), current, type(current))
                     if min is not None and max is not None and min > max:
                         min, max = max, min
                         self._log_warning("Condition {}: min must not be greater than max! "

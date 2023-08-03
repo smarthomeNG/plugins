@@ -52,7 +52,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                                        fontname='Helvetica', fontsize='10')
         self.__nodes = {}
         self.__scalefactor = 0.1
-        self.__textlimit = 145
+        self.__textlimit = 105
         self.__conditionset_count = 0
 
     def __repr__(self):

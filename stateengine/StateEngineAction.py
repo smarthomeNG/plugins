@@ -295,7 +295,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
             try:
                 state.update_name(state.state_item)
                 _key_name = ['{}'.format(state.id), 'name']
-                self.update_webif(_key_name, state.name)
+                self._abitem.update_webif(_key_name, state.name)
                 _key = ['{}'.format(state.id), 'actions_leave', '{}'.format(self._name), 'delay']
                 self._abitem.update_webif(_key, _delay_info)
             except Exception:

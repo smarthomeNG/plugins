@@ -390,7 +390,7 @@ class SeActions(StateEngineTools.SeItemChild):
     # item_allow_repeat: Is repeating actions generally allowed for the item?
     # state: state item triggering the action
     # additional_actions: SeActions-Instance containing actions which should be executed, too
-    def execute(self, is_repeat: bool, allow_item_repeat: bool, state: str, additional_actions=None):
+    def execute(self, is_repeat: bool, allow_item_repeat: bool, state, additional_actions=None):
         actions = []
         for name in self.__actions:
             actions.append((self.__actions[name].get_order(), self.__actions[name]))

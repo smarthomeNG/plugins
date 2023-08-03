@@ -259,8 +259,8 @@ class SeValue(StateEngineTools.SeItemChild):
                                                       self.__template)
                                     s = None
                     try:
-                        cond1 = s.isdigit()
-                        cond2 = field_value[i].isdigit()
+                        cond1 = s.lstrip('-').replace('.','',1).isdigit()
+                        cond2 = field_value[i].lstrip('-').replace('.','',1).isdigit()
                     except Exception:
                         cond1 = False
                         cond2 = False
@@ -381,9 +381,9 @@ class SeValue(StateEngineTools.SeItemChild):
             if isinstance(self.__value, list):
                 for i in self.__value:
                     if i is not None:
-                        self._log_debug("{0}: {1}", self.__name, i)
+                        self._log_debug("{0}: {1} ({2})", self.__name, i, type(i))
             else:
-                self._log_debug("{0}: {1}", self.__name, self.__value)
+                self._log_debug("{0}: {1} ({2})", self.__name, self.__value, type(self.__value))
         if self.__regex is not None:
             if isinstance(self.__regex, list):
                 for i in self.__regex:
@@ -619,7 +619,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = _newvalue
                 values = _newvalue
                 self._log_decrease_indent()
-                self._log_debug("Eval result: {0}.", values)
+                self._log_debug("Eval result: {0} ({1}).", values, type(values))
                 self._log_increase_indent()
             except Exception as ex:
                 self._log_decrease_indent()
