@@ -35,19 +35,8 @@ $("a").click(function() {
 <script>
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
-    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-    if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-      resize = true;
-      webif_pagelength = -1;
-    }
-    else {
-      resize = false;
-    }
-    console.log("Using page length from http module/plugin " + webif_pagelength + ", pageResize: " + resize);
-
 		try {
       table = $('#maintable').DataTable( {
-        pageLength: webif_pagelength,
         order: [[1, 'asc']],
         columnDefs: [
         { responsivePriority: 1, targets: 1 },
@@ -61,8 +50,7 @@ $("a").click(function() {
         { className: "visu", targets: 4 },
         { className: "loglevel", targets: 5 },
         { className: "states", targets: 6 }
-        ].concat($.fn.dataTable.defaults.columnDefs),
-        pageResize: resize});
+        ].concat($.fn.dataTable.defaults.columnDefs)});
 		}
 		catch (e) {
 			console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
