@@ -218,8 +218,8 @@ class SeValue(StateEngineTools.SeItemChild):
                     self.__listorder = [i for i in self.__listorder if i != value]
                     source, field_value, value = None, None, None
             try:
-                cond1 = source.isdigit()
-                cond2 = field_value.isdigit()
+                cond1 = sources.lstrip('-').replace('.','',1).isdigit()
+                cond2 = field_values.lstrip('-').replace('.','',1).isdigit()
             except Exception:
                 cond1 = False
                 cond2 = False

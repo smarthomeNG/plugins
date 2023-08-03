@@ -25,6 +25,7 @@ from . import StateEngineEval
 from . import StateEngineDefaults
 
 from lib.item.item import Item
+import datetime
 import re
 from collections import OrderedDict
 
@@ -360,10 +361,13 @@ class SeCondition(StateEngineTools.SeItemChild):
             elif isinstance(convert_current, list):
                 self.__value.set_cast(StateEngineTools.cast_list)
                 convert_value = StateEngineTools.cast_list(convert_value)
+            elif isinstance(convert_current, datetime.time):
+                self.__value.set_cast(StateEngineTools.cast_time)
+                convert_value = StateEngineTools.cast_time(convert_value)
             else:
-                self.__value = str(convert_value)
-                convert_value = str(convert_value)
-                convert_current = str(convert_current)
+                self.__value.set_cast(StateEngineTools.cast_str)
+                convert_value = StateEngineTools.cast_str(convert_value)
+                convert_current = StateEngineTools.cast_str(convert_value)
             if not type(_oldvalue) == type(convert_value):
                 self._log_debug("Value {} was type {} and therefore not the same"
                                 " type as item value {}. It got converted to {}.",
