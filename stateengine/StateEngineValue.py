@@ -270,6 +270,13 @@ class SeValue(StateEngineTools.SeItemChild):
                     elif field_value[i] == "":
                         field_value[i] = s
                         s = "value"
+                    cond3 = isinstance(field_value[i], str) and field_value[i].lstrip('-').replace('.','',1).isdigit()
+                    if cond3:
+                        field_value[i] = ast.literal_eval(field_value[i])
+                    elif isinstance(field_value[i], str) and field_value[i].lower() in ['true', 'yes']:
+                        field_value[i] = True
+                    elif isinstance(field_value[i], str) and field_value[i].lower() in ['false', 'no']:
+                        field_value[i] = False
                     self.__value = [] if self.__value is None else [self.__value] if not isinstance(self.__value, list) else self.__value
                     self.__value.append(None if s != "value" else self.__do_cast(field_value[i]))
                 self.__item = [] if self.__item is None else [self.__item] if not isinstance(self.__item, list) else self.__item
@@ -305,6 +312,13 @@ class SeValue(StateEngineTools.SeItemChild):
                 if isinstance(field_value, list) and not self.__allow_value_list:
                     raise ValueError("{0}: value_in is not allowed, problem with {1}. Allowed = {2}".format(
                                      self.__name, field_value, self.__allow_value_list))
+                cond3 = isinstance(field_value, str) and field_value.lstrip('-').replace('.','',1).isdigit()
+                if cond3:
+                    field_value = ast.literal_eval(field_value)
+                elif isinstance(field_value, str) and field_value.lower() in ['true', 'yes']:
+                    field_value = True
+                elif isinstance(field_value, str) and field_value.lower() in ['false', 'no']:
+                    field_value = False
                 self.__value = self.__do_cast(field_value)
             else:
                 self.__value = None
