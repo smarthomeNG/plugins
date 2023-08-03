@@ -1246,9 +1246,8 @@ class SeItem:
         if item_id is None:
             return None
         if not isinstance(item_id, str):
-            self.__logger.info("'{0}' should be defined as string. Check your item config! "
-                               "Everything might run smoothly, nevertheless.".format(item_id))
-            return item_id
+            self.__logger.info("'{0}' should be defined as string. Check your item config!".format(item_id))
+            return None
         item_id = item_id.strip()
         if item_id.startswith("struct:"):
             item = None
