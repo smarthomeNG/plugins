@@ -463,6 +463,8 @@ class SeActionSetItem(SeActionBase):
             self._log_debug("item from eval: {0}", self.__item)
         elif self.__item is not None:
             self._log_debug("item: {0}", self.__item.property.path)
+        if self.__status is not None:
+            self._log_debug("status: {0}", self.__status.property.path)
         self.__mindelta.write_to_logger()
         self.__value.write_to_logger()
 
