@@ -20,6 +20,8 @@
 #########################################################################
 from . import StateEngineCondition
 from . import StateEngineTools
+from . import StateEngineDefaults
+
 import collections.abc
 from collections import OrderedDict
 
@@ -125,11 +127,11 @@ class SeConditionSet(StateEngineTools.SeItemChild):
             del self.conditions[name]
 
     # Write the whole condition set to the logger
-    def write_to_logger(self):
+    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
         for name in self.__conditions:
             self._log_info("Condition '{0}':", name)
             self._log_increase_indent()
-            self.__conditions[name].write_to_logger()
+            self.__conditions[name].write_to_logger(log_level)
             self._log_decrease_indent()
 
     def __currentconditionset_set(self, conditionsetid, name):

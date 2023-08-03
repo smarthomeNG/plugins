@@ -20,6 +20,8 @@
 #########################################################################
 from . import StateEngineConditionSet
 from . import StateEngineTools
+from . import StateEngineDefaults
+
 from collections import OrderedDict
 
 
@@ -70,11 +72,11 @@ class SeConditionSets(StateEngineTools.SeItemChild):
             self.__condition_sets[name].complete(item_state)
 
     # Write all condition sets to logger
-    def write_to_logger(self):
+    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
         for name in self.__condition_sets:
             self._log_info("Condition Set '{0}':", name)
             self._log_increase_indent()
-            self.__condition_sets[name].write_to_logger()
+            self.__condition_sets[name].write_to_logger(log_level)
             self._log_decrease_indent()
 
     # check if one of the conditions sets in the list is matching.

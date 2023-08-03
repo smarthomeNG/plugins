@@ -22,6 +22,8 @@ from . import StateEngineTools
 from . import StateEngineCurrent
 from . import StateEngineValue
 from . import StateEngineEval
+from . import StateEngineDefaults
+
 from lib.item.item import Item
 import re
 from collections import OrderedDict
@@ -278,7 +280,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         return True
 
     # Write condition to logger
-    def write_to_logger(self):
+    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
         if self.__error is not None:
             self._log_warning("error: {0}", self.__error)
         if self.__item is not None:
@@ -299,21 +301,21 @@ class SeCondition(StateEngineTools.SeItemChild):
                     self._log_info("eval: {0}", StateEngineTools.get_eval_name(e))
             else:
                 self._log_info("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
-        self.__value.write_to_logger()
-        self.__min.write_to_logger()
-        self.__max.write_to_logger()
+        self.__value.write_to_logger(log_level)
+        self.__min.write_to_logger(log_level)
+        self.__max.write_to_logger(log_level)
         if self.__negate is not None:
-            self._log_debug("negate: {0}", self.__negate)
-        self.__agemin.write_to_logger()
-        self.__agemax.write_to_logger()
+            self._log_info("negate: {0}", self.__negate)
+        self.__agemin.write_to_logger(log_level)
+        self.__agemax.write_to_logger(log_level)
         if self.__agenegate is not None:
-            self._log_debug("age negate: {0}", self.__agenegate)
-        self.__changedby.write_to_logger()
+            self._log_info("age negate: {0}", self.__agenegate)
+        self.__changedby.write_to_logger(log_level)
         if self.__changedbynegate is not None and not self.__changedby.is_empty():
-            self._log_debug("changedby negate: {0}", self.__changedbynegate)
-        self.__updatedby.write_to_logger()
+            self._log_info("changedby negate: {0}", self.__changedbynegate)
+        self.__updatedby.write_to_logger(log_level)
         if self.__updatedbynegate is not None and not self.__updatedby.is_empty():
-            self._log_debug("updatedby negate: {0}", self.__updatedbynegate)
+            self._log_info("updatedby negate: {0}", self.__updatedbynegate)
 
     # Cast 'value', 'min' and 'max' using given cast function
     # cast_func: cast function to use

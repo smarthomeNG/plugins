@@ -109,22 +109,25 @@ class SeActionBase(StateEngineTools.SeItemChild):
         return self.__order.get(1)
 
     # Write action to logger
-    def write_to_logger(self):
-        self._log_debug("name: {}", self._name)
-        self.__delay.write_to_logger()
+    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+        if log_level == -1:
+            self._log_info("name: {}", self._name)
+        else:
+            self._log_debug("name: {}", self._name)
+        self.__delay.write_to_logger(log_level)
         if self.__repeat is not None:
-            self.__repeat.write_to_logger()
+            self.__repeat.write_to_logger(log_level)
         if self.__instanteval is not None:
-            self.__instanteval.write_to_logger()
+            self.__instanteval.write_to_logger(log_level)
         if self.conditionset is not None:
-            self.conditionset.write_to_logger()
+            self.conditionset.write_to_logger(log_level)
         if self.previousconditionset is not None:
-            self.previousconditionset.write_to_logger()
+            self.previousconditionset.write_to_logger(log_level)
         if self.previousstate_conditionset is not None:
-            self.previousstate_conditionset.write_to_logger()
+            self.previousstate_conditionset.write_to_logger(log_level)
         if self.__mode is not None:
-            self.__mode.write_to_logger()
-        self.__order.write_to_logger()
+            self.__mode.write_to_logger(log_level)
+        self.__order.write_to_logger(log_level)
 
     def set_source(self, current_condition, previous_condition, previousstate_condition):
         source = []
@@ -458,16 +461,25 @@ class SeActionSetItem(SeActionBase):
                     self._caller += '_self'
 
     # Write action to logger
-    def write_to_logger(self):
-        SeActionBase.write_to_logger(self)
+    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+        SeActionBase.write_to_logger(self, log_level)
         if isinstance(self.__item, str):
-            self._log_debug("item from eval: {0}", self.__item)
+            if log_level == -1:
+                self._log_info("item from eval: {0}", self.__item)
+            else:
+                self._log_debug("item from eval: {0}", self.__item)
         elif self.__item is not None:
-            self._log_debug("item: {0}", self.__item.property.path)
+            if log_level == -1:
+                self._log_info("item: {0}", self.__item.property.path)
+            else:
+                self._log_debug("item: {0}", self.__item.property.path)
         if self.__status is not None:
-            self._log_debug("status: {0}", self.__status.property.path)
-        self.__mindelta.write_to_logger()
-        self.__value.write_to_logger()
+            if log_level == -1:
+                self._log_info("status: {0}", self.__status.property.path)
+            else:
+                self._log_debug("status: {0}", self.__status.property.path)
+        self.__mindelta.write_to_logger(log_level)
+        self.__value.write_to_logger(log_level)
 
     # Check if execution is possible
     def _can_execute(self):
@@ -564,11 +576,17 @@ class SeActionSetByattr(SeActionBase):
         self._scheduler_name = "{}-SeByAttrDelayTimer".format(self.__byattr)
 
     # Write action to logger
-    def write_to_logger(self):
-        self._log_debug("function: {}", self.__function)
-        SeActionBase.write_to_logger(self)
+    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+        if log_level == -1:
+            self._log_info("function: {}", self.__function)
+        else:
+            self._log_debug("function: {}", self.__function)
+        SeActionBase.write_to_logger(self, log_level)
         if self.__byattr is not None:
-            self._log_debug("set by attribute: {0}", self.__byattr)
+            if log_level == -1:
+                self._log_info("set by attribute: {0}", self.__byattr)
+            else:
+                self._log_debug("set by attribute: {0}", self.__byattr)
 
     # Really execute the action
     def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None):
@@ -615,13 +633,22 @@ class SeActionTrigger(SeActionBase):
         self._scheduler_name = "{}-SeLogicDelayTimer".format(self.__logic)
 
     # Write action to logger
-    def write_to_logger(self):
-        self._log_debug("function: {}", self.__function)
-        SeActionBase.write_to_logger(self)
+    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+        if log_level == -1:
+            self._log_info("function: {}", self.__function)
+        else:
+            self._log_debug("function: {}", self.__function)
+        SeActionBase.write_to_logger(self, log_level)
         if self.__logic is not None:
-            self._log_debug("trigger logic: {0}", self.__logic)
+            if log_level == -1:
+                self._log_info("trigger logic: {0}", self.__logic)
+            else:
+                self._log_debug("trigger logic: {0}", self.__logic)
         if self.__value is not None:
-            self._log_debug("value: {0}", self.__value)
+            if log_level == -1:
+                self._log_info("value: {0}", self.__value)
+            else:
+                self._log_debug("value: {0}", self.__value)
 
     # Really execute the action
     def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None):
@@ -675,11 +702,17 @@ class SeActionRun(SeActionBase):
         self._scheduler_name = "{}-SeRunDelayTimer".format(StateEngineTools.get_eval_name(self.__eval))
 
     # Write action to logger
-    def write_to_logger(self):
-        self._log_debug("function: {}", self.__function)
-        SeActionBase.write_to_logger(self)
+    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+        if log_level == -1:
+            self._log_info("function: {}", self.__function)
+        else:
+            self._log_debug("function: {}", self.__function)
+        SeActionBase.write_to_logger(self, log_level)
         if self.__eval is not None:
-            self._log_debug("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
+            if log_level == -1:
+                self._log_info("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
+            else:
+                self._log_debug("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
 
     # Really execute the action
     def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None):
@@ -777,19 +810,35 @@ class SeActionForceItem(SeActionBase):
             self._scheduler_name = "{}-SeItemDelayTimer".format(self.__item.property.path)
 
     # Write action to logger
-    def write_to_logger(self):
-        self._log_debug("function: {}", self.__function)
-        self._log_debug("value: {}", self.__value)
-        SeActionBase.write_to_logger(self)
+    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+        if log_level == -1:
+            self._log_info("function: {}", self.__function)
+            self._log_info("value: {}", self.__value)
+        else:
+            self._log_debug("function: {}", self.__function)
+            self._log_debug("value: {}", self.__value)
+        SeActionBase.write_to_logger(self, log_level)
         if isinstance(self.__item, str):
-            self._log_debug("item from eval: {0}", self.__item)
+            if log_level == -1:
+                self._log_info("item from eval: {0}", self.__item)
+            else:
+                self._log_debug("item from eval: {0}", self.__item)
         elif self.__item is not None:
-            self._log_debug("item: {0}", self.__item.property.path)
+            if log_level == -1:
+                self._log_info("item: {0}", self.__item.property.path)
+            else:
+                self._log_debug("item: {0}", self.__item.property.path)
         if self.__status is not None:
-            self._log_debug("status: {0}", self.__status.property.path)
-        self.__mindelta.write_to_logger()
-        self.__value.write_to_logger()
-        self._log_debug("force update: yes")
+            if log_level == -1:
+                self._log_info("status: {0}", self.__status.property.path)
+            else:
+                self._log_debug("status: {0}", self.__status.property.path)
+        self.__mindelta.write_to_logger(log_level)
+        self.__value.write_to_logger(log_level)
+        if log_level == -1:
+            self._log_info("force update: yes")
+        else:
+            self._log_debug("force update: yes")
 
     # Check if execution is possible
     def _can_execute(self):
@@ -925,14 +974,26 @@ class SeActionSpecial(SeActionBase):
         self._scheduler_name = "{}_{}-SeSpecialDelayTimer".format(self.__special, item)
 
     # Write action to logger
-    def write_to_logger(self):
-        self._log_debug("function: {}", self.__function)
-        SeActionBase.write_to_logger(self)
-        self._log_debug("Special Action: {0}", self.__special)
-        if isinstance(self.__value, list):
-            self._log_debug("value: {0}", self.__value)
+    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+        if log_level == -1:
+            self._log_info("function: {}", self.__function)
         else:
-            self._log_debug("Retrigger item: {0}", self.__value.property.path)
+            self._log_debug("function: {}", self.__function)
+        SeActionBase.write_to_logger(self, log_level)
+        if log_level == -1:
+            self._log_info("Special Action: {0}", self.__special)
+        else:
+            self._log_debug("Special Action: {0}", self.__special)
+        if isinstance(self.__value, list):
+            if log_level == -1:
+                self._log_info("value: {0}", self.__value)
+            else:
+                self._log_debug("value: {0}", self.__value)
+        else:
+            if log_level == -1:
+                self._log_info("Retrigger item: {0}", self.__value.property.path)
+            else:
+                self._log_debug("Retrigger item: {0}", self.__value.property.path)
 
     # Really execute the action
     def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None):
@@ -1037,10 +1098,13 @@ class SeActionAddItem(SeActionSetItem):
     def __repr__(self):
         return "SeAction Add {}".format(self._name)
 
-    def write_to_logger(self):
-        self._log_debug("function: {}", self.__function)
-        SeActionSetItem.write_to_logger(self)
-        SeActionBase.write_to_logger(self)
+    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+        if log_level == 1:
+            self._log_info("function: {}", self.__function)
+        else:
+            self._log_debug("function: {}", self.__function)
+        SeActionSetItem.write_to_logger(self, log_level)
+        SeActionBase.write_to_logger(self, log_level)
 
     def _execute_set_add_remove(self, actionname, namevar, repeat_text, item, value, current_condition=None, previous_condition=None, previousstate_condition=None):
         value = value if isinstance(value, list) else [value]
@@ -1073,10 +1137,13 @@ class SeActionRemoveFirstItem(SeActionSetItem):
     def __repr__(self):
         return "SeAction RemoveFirst {}".format(self._name)
 
-    def write_to_logger(self):
-        self._log_debug("function: {}", self.__function)
-        SeActionSetItem.write_to_logger(self)
-        SeActionBase.write_to_logger(self)
+    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+        if log_level == -1:
+            self._log_info("function: {}", self.__function)
+        else:
+            self._log_debug("function: {}", self.__function)
+        SeActionSetItem.write_to_logger(self, log_level)
+        SeActionBase.write_to_logger(self, log_level)
 
     def _execute_set_add_remove(self, actionname, namevar, repeat_text, item, value, current_condition=None, previous_condition=None, previousstate_condition=None):
         currentvalue = item.property.value
@@ -1115,10 +1182,13 @@ class SeActionRemoveLastItem(SeActionSetItem):
     def __repr__(self):
         return "SeAction RemoveLast {}".format(self._name)
 
-    def write_to_logger(self):
-        self._log_debug("function: {}", self.__function)
-        SeActionSetItem.write_to_logger(self)
-        SeActionBase.write_to_logger(self)
+    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+        if log_level == -1:
+            self._log_info("function: {}", self.__function)
+        else:
+            self._log_debug("function: {}", self.__function)
+        SeActionSetItem.write_to_logger(self, log_level)
+        SeActionBase.write_to_logger(self, log_level)
 
     def _execute_set_add_remove(self, actionname, namevar, repeat_text, item, value, current_condition=None, previous_condition=None, previousstate_condition=None):
         currentvalue = item.property.value
@@ -1159,10 +1229,13 @@ class SeActionRemoveAllItem(SeActionSetItem):
     def __repr__(self):
         return "SeAction RemoveAll {}".format(self._name)
 
-    def write_to_logger(self):
-        self._log_debug("function: {}", self.__function)
-        SeActionSetItem.write_to_logger(self)
-        SeActionBase.write_to_logger(self)
+    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+        if log_level == -1:
+            self._log_info("function: {}", self.__function)
+        else:
+            self._log_debug("function: {}", self.__function)
+        SeActionSetItem.write_to_logger(self, log_level)
+        SeActionBase.write_to_logger(self, log_level)
 
     def _execute_set_add_remove(self, actionname, namevar, repeat_text, item, value, current_condition=None, previous_condition=None, previousstate_condition=None):
         currentvalue = item.property.value

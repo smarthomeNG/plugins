@@ -1084,7 +1084,7 @@ class SeItem:
         for state in self.__states:
             # Update Releasedby Dict
             self.update_releasedby(state)
-            state.write_to_log()
+            state.write_to_log(log_level=-1)
             self._initstate = None
 
     # endregion
