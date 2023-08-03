@@ -1359,6 +1359,12 @@ item_attribute_prefixes:
             de: 'Definiert das Item, das in einem konkreten Zustand evaluiert oder geändert werden soll'
             en: 'Definition of an item that should be evaluated or changed in a specific state'
 
+    se_status_:
+        type: foo
+        description:
+            de: 'Definiert das Item, das in einem konkreten Zustand evaluiert werden soll'
+            en: 'Definition of an item that should be evaluated in a specific state'
+
     se_eval_:
         type: foo
         description:

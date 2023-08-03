@@ -40,6 +40,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         super().__init__(abitem)
         self.__name = name
         self.__item = None
+        self.__status = None
         self.__eval = None
         self.__value = StateEngineValue.SeValue(self._abitem, "value", True)
         self.__min = StateEngineValue.SeValue(self._abitem, "min")
@@ -55,7 +56,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__error = None
 
     def __repr__(self):
-        return "SeCondition 'item': {}, 'eval': {}, 'value': {}".format(self.__item, self.__eval, self.__value)
+        return "SeCondition 'item': {}, 'status': {}, 'eval': {}, 'value': {}".format(self.__item, self.__status, self.__eval, self.__value)
 
     # set a certain function to a given value
     # func: Function to set ('item', 'eval', 'value', 'min', 'max', 'negate', 'changedby', 'updatedby',
@@ -68,6 +69,12 @@ class SeCondition(StateEngineTools.SeItemChild):
                                   "item without item: at the beginning!", value)
                 _, _, value = value.partition(":")
             self.__item = self._abitem.return_item(value)
+        elif func == "se_status":
+            if ":" in value:
+                self._log_warning("Your status configuration '{0}' is wrong! Define a plain (relative) "
+                                  "item without item: at the beginning!", value)
+                _, _, value = value.partition(":")
+            self.__status = self._abitem.return_item(value)
         elif func == "se_eval":
             if ":" in value:
                 self._log_warning("Your eval configuration '{0}' is wrong! Define a plain eval "
@@ -96,21 +103,25 @@ class SeCondition(StateEngineTools.SeItemChild):
             self.__negate = value
         elif func == "se_agenegate":
             self.__agenegate = value
-        elif func != "se_item" and func != "se_eval":
+        elif func != "se_item" and func != "se_eval" and func != "se_status":
             self._log_warning("Function '{0}' is no valid function! Please check item attribute.", func)
 
     def get(self):
-        eval_result = str(self.__eval)
-        if 'SeItem' in eval_result:
-            eval_result = eval_result.split('SeItem.')[1].split(' ')[0]
-        if 'SeCurrent' in eval_result:
-            eval_result = eval_result.split('SeCurrent.')[1].split(' ')[0]
+        _eval_result = str(self.__eval)
+        if 'SeItem' in _eval_result:
+            _eval_result = _eval_result.split('SeItem.')[1].split(' ')[0]
+        if 'SeCurrent' in _eval_result:
+            _eval_result = _eval_result.split('SeCurrent.')[1].split(' ')[0]
         _value_result = str(self.__value.get_for_webif())
         try:
             _item = self.__item.property.path
         except Exception:
             _item = self.__item
-        result = {'item': _item, 'eval': eval_result, 'value': _value_result,
+        try:
+            _status = self.__status.property.path
+        except Exception:
+            _status = self.__status
+        result = {'item': _item, 'status': _status, 'eval': _eval_result, 'value': _value_result,
                   'min': str(self.__min),
                   'max': str(self.__max), 'agemin': str(self.__agemin), 'agemax': str(self.__agemax),
                   'negate': str(self.__negate), 'agenegate': str(self.__agenegate),
@@ -130,7 +141,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             return False
 
         # set 'eval' for some known conditions if item and eval are not set, yet
-        if self.__item is None and self.__eval is None:
+        if self.__item is None and self.__status is None and self.__eval is None:
             if self.__name == "weekday":
                 self.__eval = StateEngineCurrent.values.get_weekday
             elif self.__name == "sun_azimut":
@@ -188,6 +199,12 @@ class SeCondition(StateEngineTools.SeItemChild):
             if result is not None:
                 self.__item = self._abitem.return_item(result)
 
+        # missing status in condition: Try to find it
+        if self.__status is None:
+            result = StateEngineTools.find_attribute(self._sh, item_state, "se_status_" + self.__name)
+            if result is not None:
+                self.__status = self._abitem.return_item(result)
+
         # missing eval in condition: Try to find it
         if self.__eval is None:
             result = StateEngineTools.find_attribute(self._sh, item_state, "se_eval_" + self.__name)
@@ -195,13 +212,13 @@ class SeCondition(StateEngineTools.SeItemChild):
                 self.__eval = result
 
         # now we should have either 'item' or 'eval' set. If not, raise ValueError
-        if self.__item is None and self.__eval is None:
-            raise ValueError("Condition {}: Neither 'item' nor 'eval' given!".format(self.__name))
+        if self.__item is None and self.__status is None and self.__eval is None:
+            raise ValueError("Condition {}: Neither 'item' nor 'status' nor 'eval' given!".format(self.__name))
 
-        if (self.__item is not None or self.__eval is not None)\
+        if (self.__item is not None or self.__status is not None or self.__eval is not None)\
            and not self.__changedby.is_empty() and self.__changedbynegate is None:
             self.__changedbynegate = False
-        if (self.__item is not None or self.__eval is not None)\
+        if (self.__item is not None or self.__status is not None or self.__eval is not None)\
            and not self.__updatedby.is_empty() and self.__updatedbynegate is None:
             self.__updatedbynegate = False
 
@@ -209,6 +226,8 @@ class SeCondition(StateEngineTools.SeItemChild):
         try:
             if self.__item is not None:
                 self.__cast_all(self.__item.cast)
+            elif self.__status is not None:
+                self.__cast_all(self.__status.cast)
             elif self.__name in ("weekday", "sun_azimut", "sun_altitude", "age", "delay", "random", "month"):
                 self.__cast_all(StateEngineTools.cast_num)
             elif self.__name in (
@@ -229,15 +248,15 @@ class SeCondition(StateEngineTools.SeItemChild):
             cond_evalitem = self.__eval and ("get_relative_item(" in self.__eval or "return_item(" in self.__eval)
         except Exception:
             cond_evalitem = False
-        if self.__item is None and not cond_min_max and not cond_evalitem:
+        if self.__item is None and self.__status is None and not cond_min_max and not cond_evalitem:
             raise ValueError("Condition {}: 'agemin'/'agemax' can not be used for eval!".format(self.__name))
         return True
 
     # Check if condition is matching
     def check(self):
         # Ignore if no current value can be determined (should not happen as we check this earlier, but to be sure ...)
-        if self.__item is None and self.__eval is None:
-            self._log_info("Condition '{0}': No item or eval found! Considering condition as matching!", self.__name)
+        if self.__item is None and self.__status is None and self.__eval is None:
+            self._log_info("Condition '{0}': No item, status or eval found! Considering condition as matching!", self.__name)
             return True
         self._log_debug("Condition '{0}': Checking all relevant stuff", self.__name)
         self._log_increase_indent()
@@ -266,6 +285,12 @@ class SeCondition(StateEngineTools.SeItemChild):
                     self._log_info("item: {0} ({1})", self.__name, i.property.path)
             else:
                 self._log_info("item: {0} ({1})", self.__name, self.__item.property.path)
+        if self.__status is not None:
+            if isinstance(self.__status, list):
+                for i in self.__status:
+                    self._log_info("status item: {0} ({1})", self.__name, i.property.path)
+            else:
+                self._log_info("status item: {0} ({1})", self.__name, self.__status.property.path)
         if self.__eval is not None:
             if isinstance(self.__item, list):
                 for e in self.__item:
@@ -541,7 +566,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             return True
 
         # Ignore if no current value can be determined
-        if self.__item is None and self.__eval is None:
+        if self.__item is None and self.__status is None and self.__eval is None:
             self._log_warning("Age of '{0}': No item/eval found! Considering condition as matching!", self.__name)
             return True
 
@@ -616,7 +641,16 @@ class SeCondition(StateEngineTools.SeItemChild):
 
     # Current value of condition (based on item or eval)
     def __get_current(self, eval_type='value'):
-        if self.__item is not None:
+        if self.__status is not None:
+            # noinspection PyUnusedLocal
+            self._log_debug("Trying to get {} of status item {}", eval_type, self.__status)
+            return self.__status.property.last_change_age if eval_type == 'age' else\
+                   self.__status.property.last_change_by if eval_type == 'changedby' else\
+                   self.__status.property.last_update_by if eval_type == 'updatedby' else\
+                   self.__status.property.value
+        elif self.__item is not None:
+            # noinspection PyUnusedLocal
+            self._log_debug("Trying to get {} of item {}", eval_type, self.__item)
             return self.__item.property.last_change_age if eval_type == 'age' else\
                    self.__item.property.last_change_by if eval_type == 'changedby' else\
                    self.__item.property.last_update_by if eval_type == 'updatedby' else\

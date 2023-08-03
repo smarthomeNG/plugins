@@ -369,6 +369,7 @@ class SeActionSetItem(SeActionBase):
     def __init__(self, abitem, name: str):
         super().__init__(abitem, name)
         self.__item = None
+        self.__status = None
         self.__value = StateEngineValue.SeValue(self._abitem, "value")
         self.__mindelta = StateEngineValue.SeValue(self._abitem, "mindelta")
         self.__function = "set"
@@ -427,19 +428,33 @@ class SeActionSetItem(SeActionBase):
                 item = StateEngineTools.find_attribute(self._sh, item_state, "se_eval_" + self._name)
                 self.__item = str(item)
 
+        # missing status in action: Try to find it.
+        if self.__status is None:
+            status = StateEngineTools.find_attribute(self._sh, item_state, "se_status_" + self._name)
+
+            if status is not None:
+                self.__status = self._abitem.return_item(status)
+
         if self.__mindelta.is_empty():
             mindelta = StateEngineTools.find_attribute(self._sh, item_state, "se_mindelta_" + self._name)
             if mindelta is not None:
                 self.__mindelta.set(mindelta)
 
-        if isinstance(self.__item, str):
-            pass
-        elif self.__item is not None:
-            self.__value.set_cast(self.__item.cast)
-            self.__mindelta.set_cast(self.__item.cast)
-            self._scheduler_name = "{}-SeItemDelayTimer".format(self.__item.property.path)
-            if self._abitem.id == self.__item.property.path:
+        if self.__status is not None:
+            self.__value.set_cast(self.__status.cast)
+            self.__mindelta.set_cast(self.__status.cast)
+            self._scheduler_name = "{}-SeItemDelayTimer".format(self.__status.property.path)
+            if self._abitem.id == self.__status.property.path:
                 self._caller += '_self'
+        elif self.__status is None:
+            if isinstance(self.__item, str):
+                pass
+            elif self.__item is not None:
+                self.__value.set_cast(self.__item.cast)
+                self.__mindelta.set_cast(self.__item.cast)
+                self._scheduler_name = "{}-SeItemDelayTimer".format(self.__item.property.path)
+                if self._abitem.id == self.__item.property.path:
+                    self._caller += '_self'
 
     # Write action to logger
     def write_to_logger(self):
@@ -480,8 +495,13 @@ class SeActionSetItem(SeActionBase):
 
         if not self.__mindelta.is_empty():
             mindelta = self.__mindelta.get()
-            # noinspection PyCallingNonCallable
-            delta = float(abs(self.__item() - value))
+            if self.__status is not None:
+                # noinspection PyCallingNonCallable
+                delta = float(abs(self.__status() - value))
+                additionaltext = "of statusitem "
+            else:
+                delta = float(abs(self.__item() - value))
+                additionaltext = ""
             if delta < mindelta:
                 text = "{0}: Not setting '{1}' to '{2}' because delta '{3:.2}' is lower than mindelta '{4}'"
                 self._log_debug(text, actionname, self.__item.property.path, value, delta, mindelta)
@@ -752,6 +772,8 @@ class SeActionForceItem(SeActionBase):
             self._log_debug("item from eval: {0}", self.__item)
         elif self.__item is not None:
             self._log_debug("item: {0}", self.__item.property.path)
+        if self.__status is not None:
+            self._log_debug("status: {0}", self.__status.property.path)
         self.__mindelta.write_to_logger()
         self.__value.write_to_logger()
         self._log_debug("force update: yes")

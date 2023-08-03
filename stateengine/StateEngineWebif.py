@@ -154,7 +154,9 @@ class WebInterface(StateEngineTools.SeItemChild):
 
         for k, condition in enumerate(self.__states[state]['conditionsets'].get(conditionset)):
             condition_dict = self.__states[state]['conditionsets'][conditionset].get(condition)
-            item_none = condition_dict.get('item') == 'None'
+
+            item_none = str(condition_dict.get('item')) == 'None'
+            status_none = str(condition_dict.get('status')) == 'None'
             eval_none = condition_dict.get('eval') == 'None'
             value_none = condition_dict.get('value') == 'None'
             min_none = condition_dict.get('min') == 'None'
@@ -172,23 +174,37 @@ class WebInterface(StateEngineTools.SeItemChild):
                 cond5 = not compare == 'agenegate'
                 cond6 = not compare == 'changedbynegate'
                 cond7 = not compare == 'updatedbynegate'
-                if cond1 and cond2 and cond3 and cond4 and cond5 and cond6 and cond7:
-                    conditionlist += '<tr><td align="center"><b>'
-                    textlength = len(str(condition_dict.get('item')))
-                    condition_tooltip += '{}&#13;&#10;&#13;&#10;'.format(condition_dict.get('item')) \
-                        if textlength > self.__textlimit else ''
-                    info_item = str(condition_dict.get('item'))[:self.__textlimit] + '.. &nbsp;' * (textlength > self.__textlimit)
-                    info_eval = str(condition_dict.get('eval'))[:self.__textlimit] + '.. &nbsp;' * (textlength > self.__textlimit)
+                cond8 = not compare == 'status'
+                if cond1 and cond2 and cond3 and cond4 and cond5 and cond6 and cond7 and cond8:
+                    conditionlist += '<tr><td align="center"><b>'.format(compare, condition_dict.get(compare))
+                    if not status_none:
+                        textlength = len(str(condition_dict.get('status')))
+                        condition_tooltip += '{}&#13;&#10;&#13;&#10;'.format(condition_dict.get('status')) \
+                            if textlength > self.__textlimit else ''
+                    elif not item_none:
+                        textlength = len(str(condition_dict.get('item')))
+                        condition_tooltip += '{}&#13;&#10;&#13;&#10;'.format(condition_dict.get('item')) \
+                            if textlength > self.__textlimit else ''
+                    elif not eval_none:
+                        textlength = len(str(condition_dict.get('eval')))
+                        condition_tooltip += '{}&#13;&#10;&#13;&#10;'.format(condition_dict.get('eval')) \
+                            if textlength > self.__textlimit else ''
+                    else:
+                        textlength = 0
+                    info_item = str(condition_dict.get('item'))[:self.__textlimit] + '.. &nbsp;' * int(textlength > self.__textlimit)
+                    info_status = str(condition_dict.get('status'))[:self.__textlimit] + '.. &nbsp;' * int(textlength > self.__textlimit)
+                    info_eval = str(condition_dict.get('eval'))[:self.__textlimit] + '.. &nbsp;' * int(textlength > self.__textlimit)
                     info_value = str(condition_dict.get(compare))[:self.__textlimit] + '.. &nbsp;' * \
-                        (len(str(condition_dict.get(compare))) > self.__textlimit)
-                    info = info_eval if info_item == "None" and info_eval != "None" else info_item
-                    conditionlist += '{}'.format(info) if not item_none else ''
-                    textlength = len(str(condition_dict.get('eval')))
-                    condition_tooltip += '{}&#13;&#10;&#13;&#10;'.format(condition_dict.get('eval')) \
-                        if textlength > self.__textlimit else ''
-                    info = info_value if info_item == "None" and info_eval != "None" else info_eval
-                    conditionlist += '{}'.format(info) if not eval_none and item_none else ''
-                    conditionlist += '</b></td>'
+                        int(len(str(condition_dict.get(compare))) > self.__textlimit)
+                    if not status_none:
+                        info = info_status
+                    elif not item_none:
+                        info = info_item
+                    elif not eval_none:
+                        info = info_eval
+                    else:
+                        info = ""
+                    conditionlist += '{}</b></td>'.format(info)
                     comparison = "&#62;=" if not min_none and compare == "min"\
                                  else "&#60;=" if not max_none and compare == "max"\
                                  else "older" if not agemin_none and compare == "agemin"\
@@ -203,13 +219,14 @@ class WebInterface(StateEngineTools.SeItemChild):
                                                and condition_dict.get('negate') == 'True')\
                                  else "=="
                     conditionlist += '<td align="center" width="5">{}</td><td align="center">'.format(comparison)
-                    conditionlist += '"{}"'.format(info) if not item_none and not eval_none else ''
+                    conditionlist += '"{}"'.format(info) if not item_none and not status_none and not eval_none else ''
                     textlength = len(str(condition_dict.get(compare)))
                     condition_tooltip += '{}&#13;&#10;&#13;&#10;'.format(condition_dict.get(compare)) \
                         if textlength > self.__textlimit else ''
                     info = info_value
                     conditionlist += '{}'.format(info) if not condition_dict.get(compare) == 'None' and (
-                                     (eval_none and not item_none) or (not eval_none and item_none)) else ''
+                                     (eval_none and not item_none) or (eval_none and not status_none) or \
+                                     (not eval_none and item_none) or (not eval_none and status_none)) else ''
                     conditionlist += ' (negate)' if condition_dict.get('negate') == 'True' and "age" \
                                      not in compare and not compare == "value" else ''
                     conditionlist += ' (negate)' if condition_dict.get('agenegate') == 'True' and "age" in compare else ''

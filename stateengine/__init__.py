@@ -96,6 +96,10 @@ class StateEngine(SmartPlugin):
             item.expand_relativepathes('se_item_*', '', '')
         except Exception:
             pass
+        try:
+            item.expand_relativepathes('se_status_*', '', '')
+        except Exception:
+            pass
         if self.has_iattr(item.conf, "se_manual_include") or self.has_iattr(item.conf, "se_manual_exclude"):
             item._eval = "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.id() + "', caller, source)"
         elif self.has_iattr(item.conf, "se_manual_invert"):

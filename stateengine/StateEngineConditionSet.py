@@ -96,7 +96,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                 continue
             # update item/eval in this condition
 
-            if func == "se_item" or func == "se_eval":
+            if func == "se_item" or func == "se_eval" or func == "se_status":
                 if name not in self.__conditions:
                     self.__conditions[name] = StateEngineCondition.SeCondition(self._abitem, name)
                 try:

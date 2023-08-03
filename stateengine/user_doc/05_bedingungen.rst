@@ -10,7 +10,7 @@ Beispiel
 --------
 
 Im folgenden Beispiel wird der Zustand "Daemmerung" eingenommen, sobald
-die Helligkeit (über se_item_brightness definiert) über 500 Lux liegt.
+die Helligkeit (über se_item_brightness oder se_status_brightness definiert) über 500 Lux liegt.
 
 .. code-block:: yaml
 
@@ -19,7 +19,7 @@ die Helligkeit (über se_item_brightness definiert) über 500 Lux liegt.
        automatik:
            struct: stateengine.general
                rules:
-                   se_item_brightness: beispiel.wetterstation.helligkeit
+                   se_status_brightness: beispiel.wetterstation.helligkeit
                    Daemmerung:
                        name: Dämmerung
                        remark: <Aktionen>
@@ -62,7 +62,7 @@ Der zu vergleichende Wert einer Bedingung kann auf folgende Arten definiert werd
 - statischer Wert (also z.B. 500 Lux). Wird angegegeben mit ``value:500``, wobei das value: auch weggelassen werden kann.
 - Item (beispielsweise ein Item namens settings.helligkeitsschwellwert). Wird angegeben mit ``item:settings.helligkeitsschwellwert``
 - Eval-Funktion (siehe auch `eval Ausdrücke <https://www.smarthomeng.de/user/referenz/items/standard_attribute/eval.html>`_). Wird angegeben mit ``eval:1*2*se_eval.get_relative_itemvalue('..bla')``
-- Regular Expression (siehe auch ` RegEx Howto <https://docs.python.org/3.7/howto/regex.html#regex-howto>`_) - Vergleich mittels re.fullmatch, wobei Groß/Kleinschreibung ignoriert wird. Wird angegeben mit ``regex:StateEngine Plugin:(.*)``
+- Regular Expression (siehe auch ` RegEx Howto <https://docs.python.org/3/howto/regex.html>`_) - Vergleich mittels re.fullmatch, wobei Groß/Kleinschreibung ignoriert wird. Wird angegeben mit ``regex:StateEngine Plugin:(.*)``
 - Template: eine Vorlage, z.B. eine eval Funktion, die immer wieder innerhalb
   des StateEngine Items eingesetzt werden kann. Angegeben durch ``template:<Name des Templates>``
 
@@ -75,7 +75,8 @@ die jeweils mit einem Unterstrich "_" getrennt werden:
 
 - ``se_``: eindeutiger Prefix, um dem Plugin zugeordnet zu werden
 - ``<Vergleichsfunktion>``: siehe unten. Beispiel: min = der Wert des <Bedingungsitems> muss mindestens dem beim Attribut angegebenen Wert entsprechen.
-- ``<Vergleichsitem/Bedingungsname>``: Hier wird entweder das im Regelwerk-Item mittels ``se_item_<Name>`` deklarierte Item oder eine besondere Bedingung (siehe unten) referenziert.
+- ``<Vergleichsitem/Bedingungsname>``: Hier wird entweder das im Regelwerk-Item mittels ``se_item_<Name>``
+oder ``se_status_<Name>`` deklarierte Item oder eine besondere Bedingung (siehe unten) referenziert.
 
 
 Templates für Bedingungsabfragen
@@ -83,7 +84,7 @@ Templates für Bedingungsabfragen
 
 Setzt man für mehrere Bedingungsabfragen (z.B. Helligkeit, Temperatur, etc.) immer die
 gleichen Ausdrücke ein (z.B. eine eval-Funktion), so kann Letzteres als Template
-definiert und referenziert werden. Dadurch wird die  Handhabung
+definiert und referenziert werden. Dadurch wird die Handhabung
 komplexerer Abfragen deutlich vereinfacht. Diese Templates müssen wie se_item/se_eval
 auf höchster Ebene des StateEngine Items (also z.B. rules) deklariert werden.
 
