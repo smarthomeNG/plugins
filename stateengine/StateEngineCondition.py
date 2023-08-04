@@ -54,8 +54,10 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__agemax = StateEngineValue.SeValue(self._abitem, "agemax")
         self.__changedby = StateEngineValue.SeValue(self._abitem, "changedby", True)
         self.__updatedby = StateEngineValue.SeValue(self._abitem, "updatedby", True)
+        self.__triggeredby = StateEngineValue.SeValue(self._abitem, "triggeredby", True)
         self.__changedbynegate = None
         self.__updatedbynegate = None
+        self.__triggeredbynegate = None
         self.__agenegate = None
         self.__error = None
         self.__itemClass = Item
@@ -65,7 +67,7 @@ class SeCondition(StateEngineTools.SeItemChild):
 
     # set a certain function to a given value
     # func: Function to set ('item', 'eval', 'value', 'min', 'max', 'negate', 'changedby', 'updatedby',
-    # 'changedbynegate', 'updatedbynegate', 'agemin', 'agemax' or 'agenegate')
+    # 'triggeredby','changedbynegate', 'updatedbynegate', 'triggeredbynegate','agemin', 'agemax' or 'agenegate')
     # value: Value for function
     def set(self, func, value):
         if func == "se_item":
@@ -100,10 +102,14 @@ class SeCondition(StateEngineTools.SeItemChild):
             self.__changedby.set(value, self.__name)
         elif func == "se_updatedby":
             self.__updatedby.set(value, self.__name)
+        elif func == "se_triggeredby":
+            self.__triggeredby.set(value, self.__name)
         elif func == "se_changedbynegate":
             self.__changedbynegate = value
         elif func == "se_updatedbynegate":
             self.__updatedbynegate = value
+        elif func == "se_triggeredbynegate":
+            self.__triggeredbynegate = value
         elif func == "se_negate":
             self.__negate = value
         elif func == "se_agenegate":
@@ -131,6 +137,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                   'max': str(self.__max), 'agemin': str(self.__agemin), 'agemax': str(self.__agemax),
                   'negate': str(self.__negate), 'agenegate': str(self.__agenegate),
                   'changedby': str(self.__changedby), 'updatedby': str(self.__updatedby),
+                  'triggeredby': str(self.__triggeredby), 'triggeredbynegate': str(self.__triggeredbynegate),
                   'changedbynegate': str(self.__changedbynegate),
                   'updatedbynegate': str(self.__updatedbynegate)}
         return result
@@ -142,7 +149,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         # check if it is possible to complete this condition
         if self.__min.is_empty() and self.__max.is_empty() and self.__value.is_empty() \
                 and self.__agemin.is_empty() and self.__agemax.is_empty() \
-                and self.__changedby.is_empty() and self.__updatedby.is_empty():
+                and self.__changedby.is_empty() and self.__updatedby.is_empty() and self.__triggeredby.is_empty():
             return False
 
         # set 'eval' for some known conditions if item and eval are not set, yet
@@ -226,6 +233,9 @@ class SeCondition(StateEngineTools.SeItemChild):
         if (self.__item is not None or self.__status is not None or self.__eval is not None)\
            and not self.__updatedby.is_empty() and self.__updatedbynegate is None:
             self.__updatedbynegate = False
+        if (self.__item is not None or self.__status is not None or self.__eval is not None)\
+           and not self.__triggeredby.is_empty() and self.__triggeredbynegate is None:
+            self.__triggeredbynegate = False
 
         # cast stuff
         try:
@@ -269,6 +279,9 @@ class SeCondition(StateEngineTools.SeItemChild):
             self._log_decrease_indent()
             return False
         if not self.__check_updatedby():
+            self._log_decrease_indent()
+            return False
+        if not self.__check_triggeredby():
             self._log_decrease_indent()
             return False
         if not self.__check_changedby():
@@ -317,6 +330,9 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__updatedby.write_to_logger(log_level)
         if self.__updatedbynegate is not None and not self.__updatedby.is_empty():
             self._log_info("updatedby negate: {0}", self.__updatedbynegate)
+        self.__triggeredby.write_to_logger(log_level)
+        if self.__updatedbynegate is not None and not self.__triggeredby.is_empty():
+            self._log_info("triggeredby negate: {0}", self.__triggeredbynegate)
 
     # Cast 'value', 'min' and 'max' using given cast function
     # cast_func: cast function to use
@@ -334,6 +350,9 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__updatedby.set_cast(StateEngineTools.cast_str)
         if self.__updatedbynegate is not None:
             self.__updatedbynegate = StateEngineTools.cast_bool(self.__updatedbynegate)
+        self.__triggeredby.set_cast(StateEngineTools.cast_str)
+        if self.__triggeredbynegate is not None:
+            self.__triggeredbynegate = StateEngineTools.cast_bool(self.__triggeredbynegate)
         if self.__agenegate is not None:
             self.__agenegate = StateEngineTools.cast_bool(self.__agenegate)
 
@@ -376,9 +395,11 @@ class SeCondition(StateEngineTools.SeItemChild):
 
         current = self.__get_current(eval_type='changedby') if valuetype == "changedby" else\
             self.__get_current(eval_type='updatedby') if valuetype == "updatedby" else\
+            self.__get_current(eval_type='triggeredby') if valuetype == "triggeredby" else\
             self.__get_current(eval_type='value')
         negate = self.__changedbynegate if valuetype == "changedby" else\
             self.__updatedbynegate if valuetype == "updatedby" else\
+            self.__triggeredbynegate if valuetype == "triggeredby" else\
             self.__negate
 
         if isinstance(value, list):
@@ -557,6 +578,23 @@ class SeCondition(StateEngineTools.SeItemChild):
         finally:
             self._log_decrease_indent()
 
+    # Check if triggeredby conditions match
+    def __check_triggeredby(self):
+        try:
+            if not self.__triggeredby.is_empty():
+                # 'updatedby' is given.
+                triggeredby = self.__triggeredby.get()
+                triggeredby = StateEngineTools.flatten_list(triggeredby)
+                return self.__change_update_value(triggeredby, "triggeredby")
+            else:
+                self._log_increase_indent()
+                return True
+
+        except Exception as ex:
+            self._log_warning("Problem checking triggeredby {}", ex)
+        finally:
+            self._log_decrease_indent()
+
     # Check if updatedby conditions match
     def __check_updatedby(self):
         try:
@@ -663,6 +701,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             return self.__status.property.last_change_age if eval_type == 'age' else\
                    self.__status.property.last_change_by if eval_type == 'changedby' else\
                    self.__status.property.last_update_by if eval_type == 'updatedby' else\
+                   self.__status.property.last_trigger_by if eval_type == 'triggeredby' else\
                    self.__status.property.value
         elif self.__item is not None:
             # noinspection PyUnusedLocal
@@ -670,6 +709,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             return self.__item.property.last_change_age if eval_type == 'age' else\
                    self.__item.property.last_change_by if eval_type == 'changedby' else\
                    self.__item.property.last_update_by if eval_type == 'updatedby' else\
+                   self.__item.property.last_trigger_by if eval_type == 'triggeredby' else\
                    self.__item.property.value
         if self.__eval is not None:
             # noinspection PyUnusedLocal
@@ -686,6 +726,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                         value = eval(self.__eval).property.last_change_age if eval_type == 'age' else \
                                 eval(self.__eval).property.last_change_by if eval_type == 'changedby' else \
                                 eval(self.__eval).property.last_update_by if eval_type == 'updatedby' else \
+                                eval(self.__eval).property.last_trigger_by if eval_type == 'triggeredby' else \
                                 eval(self.__eval).property.value
                     else:
                         value = eval(self.__eval)

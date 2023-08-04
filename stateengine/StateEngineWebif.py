@@ -173,6 +173,7 @@ class WebInterface(StateEngineTools.SeItemChild):
             agemax_none = condition_dict.get('agemax') == 'None'
             changedby_none = condition_dict.get('changedby') == 'None'
             updatedby_none = condition_dict.get('updatedby') == 'None'
+            triggeredby_none = condition_dict.get('triggeredby') == 'None'
 
             for compare in condition_dict:
                 cond1 = not condition_dict.get(compare) == 'None'
@@ -182,8 +183,9 @@ class WebInterface(StateEngineTools.SeItemChild):
                 cond5 = not compare == 'agenegate'
                 cond6 = not compare == 'changedbynegate'
                 cond7 = not compare == 'updatedbynegate'
-                cond8 = not compare == 'status'
-                if cond1 and cond2 and cond3 and cond4 and cond5 and cond6 and cond7 and cond8:
+                cond8 = not compare == 'triggeredbynegate'
+                cond9 = not compare == 'status'
+                if cond1 and cond2 and cond3 and cond4 and cond5 and cond6 and cond7 and cond8 and cond9:
                     conditionlist += '<tr><td align="center"><b>'.format(compare, condition_dict.get(compare))
                     if not status_none:
                         textlength = len(str(condition_dict.get('status')))
@@ -223,6 +225,9 @@ class WebInterface(StateEngineTools.SeItemChild):
                                  else "not updated by" if (not updatedby_none and compare == "updatedby"
                                                            and condition_dict.get('updatedbynegate') == 'True')\
                                  else "updated by" if not updatedby_none and compare == "updatedby"\
+                                 else "not triggered by" if (not triggeredby_none and compare == "triggeredby"
+                                                           and condition_dict.get('triggeredbynegate') == 'True')\
+                                 else "triggered by" if not triggeredby_none and compare == "triggeredby"\
                                  else "!=" if (not value_none and compare == "value"
                                                and condition_dict.get('negate') == 'True')\
                                  else "=="

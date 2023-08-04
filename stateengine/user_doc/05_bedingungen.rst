@@ -255,6 +255,28 @@ Die Werte(liste) kann auch durch ``se_changedbynegate_<Bedingungsname>`` negiert
 
        se_changedbynegate_<Bedingungsname>: True|False
 
+**Triggerung des Items durch**
+
+.. code-block:: yaml
+
+      se_triggeredby_<Bedingungsname>: [Wert]
+
+Die Bedingung ist erfüllt, wenn das Item durch den angegebenen Wert bzw.
+einen der angegebenen Werte getriggert wurde. Dies kann relevant werden,
+um herauszufinden, wodurch ein Item mit einem eval-Attribut getriggert wurde,
+unabhängig davon, ob sich daraus eine Wertänderung ergibt oder nicht.
+Hier bietet es sich an, den Wert als Regular Expression mittels
+``se_triggeredby_<Bedingungsname>: regex:StateEngine Plugin`` zu definieren.
+Die Werte(liste) kann auch durch ``se_triggeredbynegate_<Bedingungsname>`` negiert werden.
+
+.. code-block:: yaml
+
+      se_triggeredby_<Bedingungsname>:
+         - [Wert1]
+         - [Wert2]
+         - regex:[WertN]
+
+      se_triggeredbynegate_<Bedingungsname>: True|False
 
 **Mindestalter**
 
