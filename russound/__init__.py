@@ -205,6 +205,14 @@ class Russound(SmartPlugin):
             # and only, if the item has not been changed by this this plugin:
             self.logger.info("Update item: {}, item has been changed outside this plugin (caller={}, source={}, dest={})".format(item.id(), caller, source, dest))
 
+            if item.path() == self._suspend_item_path:
+                if self._suspend_item is not None:
+                    if item():
+                        self.suspend(f'suspend item {item.path()}')
+                    else:
+                        self.resume(f'suspend item {item.path()}')
+                return
+
             if self.has_iattr(item.conf, 'rus_path'):
                 path = self.get_iattr_value(item.conf, 'rus_path')
                 p = self.params[path]
