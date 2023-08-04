@@ -111,8 +111,8 @@ class kodi(SmartDevicePlugin):
         :param data: received data in 'raw' connection format
         :type command: str
         """
-        if self.standby:
-            self.logger.debug(f'received data for command {command} on standby, discarding data.')
+        if self.suspended:
+            self.logger.debug(f'received data for command {command} suspended, discarding data.')
             return
 
         if command is not None:
@@ -380,8 +380,8 @@ class kodi(SmartDevicePlugin):
         :param image: an optional image to be displayed alongside the message
         :param display_time: how long the message is displayed in milli seconds
         """
-        if self.standby:
-            self.logger.info(f'trying to send notification {title}, but plugin is in standby mode. Discarding notification.')
+        if self.suspended:
+            self.logger.info(f'trying to send notification {title}, but plugin is suspended. Discarding notification.')
             return
 
         params = {'title': title, 'message': message, 'displaytime': display_time}
