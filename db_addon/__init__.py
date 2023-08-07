@@ -57,7 +57,8 @@ class DatabaseAddOn(SmartPlugin):
     """
 
     PLUGIN_VERSION = '1.2.3'
-    REVISION = 'C'
+    # ToDo: remove revision
+    REVISION = 'D'
 
     def __init__(self, sh):
         """
@@ -88,8 +89,6 @@ class DatabaseAddOn(SmartPlugin):
         self.db_instance = None                      # instance of the used database
         self.item_attribute_search_str = 'database'  # attribute, on which an item configured for database can be identified
         self.last_connect_time = 0                   # mechanism for limiting db connection requests
-        # ToDo: Check if still needed
-        self.last_commit_time = 0
         self.alive = None                            # Is plugin alive?
         self.startup_finished = False                # Startup of Plugin finished
         self.suspended = False                       # Is plugin activity suspended
@@ -107,8 +106,6 @@ class DatabaseAddOn(SmartPlugin):
         self.optimize_value_filter = self.get_parameter_value('optimize_value_filter')
         self.use_oldest_entry = self.get_parameter_value('use_oldest_entry')
         self.lock_db_for_query = self.get_parameter_value('lock_db_for_query')
-        # ToDo: Check if still needed
-        self.refresh_cycle = self.get_parameter_value('refresh_cycle')
 
         # get debug log options
         self.debug_log = DebugLogOptions(self.log_level)
@@ -265,7 +262,6 @@ class DatabaseAddOn(SmartPlugin):
                 required_params = [timeframe, start, end]
 
             elif db_addon_fct in VERBRAUCH_ATTRIBUTES_ROLLING:
-                # ToDo: check if rolling window correct; muss start und ende dynamisch berechnet werden?
                 # handle functions 'verbrauch_on-demand' in format 'verbrauch_rolling_window_timeframe_timedelta' like 'verbrauch_rolling_12m_woche_minus1'
                 func = db_addon_fct_vars[1]
                 window_inc, window_dur = split_sting_letters_numbers(db_addon_fct_vars[2])
@@ -2339,7 +2335,8 @@ class DatabaseAddOn(SmartPlugin):
         else:
             return False
 
-    def _valid_month(self, month: Union[int, str]) -> bool:
+    @staticmethod
+    def _valid_month(month: Union[int, str]) -> bool:
         """Check if given month is digit and within allowed range"""
 
         if (isinstance(month, int) or (isinstance(month, str) and month.isdigit())) and (1 <= int(month) <= 12):
@@ -2618,7 +2615,9 @@ class DatabaseAddOn(SmartPlugin):
         return None if tuples is None else list(tuples)
 
     # ToDo: Check if still needed.
-    def _query_geht(self, fetch, query: str, params: dict = None, cur=None) -> Union[None, list]:
+    def _query(self, fetch, query: str, params: dict = None, cur=None) -> Union[None, list]:
+        """query using commit to get latest data from db"""
+
         if params is None:
             params = {}
 
@@ -2629,22 +2628,19 @@ class DatabaseAddOn(SmartPlugin):
             return None
 
         if cur is None:
-            if self._db.verify(5) == 0:
-                self.logger.error("Connection to database not recovered.")
+            verify_conn = self._db.verify(retry=5)
+            if verify_conn == 0:
+                self.logger.error("Connection to database NOT recovered.")
                 return None
 
-            if self.lock_db_for_query and not self._db.lock(300):
-                self.logger.error("Can't query database due to fail to acquire lock.")
-                return None
+        if self.lock_db_for_query and not self._db.lock(300):
+            self.logger.error("Can't query database due to fail to acquire lock.")
+            return None
 
         query_readable = re.sub(r':([a-z_]+)', r'{\1}', query).format(**params)
 
-        # do periodic commit to get latest data during fetch
-        time_since_last_commit = time.time() - self.last_commit_time
-        if time_since_last_commit > self.refresh_cycle:
-            self.last_commit_time = time.time()
-            self.logger.debug(f"Commit to database for getting updated data. time_since_last_commit={int(time_since_last_commit)}")
-            self._db.commit()
+        # do commit to get latest data during fetch
+        self._db.commit()
 
         # fetch data
         try:
@@ -2653,16 +2649,19 @@ class DatabaseAddOn(SmartPlugin):
             self.logger.error(f"Error '{e}' for query={query_readable} occurred.")
             tuples = None
             pass
-        finally:
-            if cur is None and self.lock_db_for_query:
-                self._db.release()
+
+        if cur is None and self.lock_db_for_query:
+            self._db.release()
 
         if self.debug_log.sql:
             self.logger.debug(f"Result of query={query_readable}: {tuples}")
 
         return tuples
 
-    def _query(self, fetch, query: str, params: dict = None, cur=None) -> Union[None, list]:
+    # ToDo: Check if still needed.
+    def _query_geht_gut(self, fetch, query: str, params: dict = None, cur=None) -> Union[None, list]:
+        """query open and close connection for each query to get latest data from db"""
+
         if params is None:
             params = {}
 

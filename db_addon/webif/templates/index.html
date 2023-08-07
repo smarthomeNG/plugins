@@ -210,29 +210,47 @@
         document.getElementById('pause').disabled = true;
       }
 
-      // Handler für Formular - das "submit"-Element (Senden) wird abgefangen
-      $("#button_pressed").submit(function(e) {
+        // Handler für einfachen Button - das "click"-Element wird abgefangen
+        $("#clear").click(function(e) {
 
-        // keine HTML-Aktion ausführen (z.B. Formular senden)
-        e.preventDefault();
+            // keine HTML-Aktion ausführen (z.B. Formular senden)
+            e.preventDefault();
 
-        console.log('submit')
+            // festen Wert per AJAX senden
+            $.post('submit', {clear: "true"}, function(data) {
 
-        // die Kennung des gedrückten Buttons per AJAX senden
-        $.post('submit', {button: $("#button").val()}, function(data) {
-
-          console.log(data)
-
-          // Zeile ermitteln
-          // var row = $("#button").val()
-          // var id = row + "_value"
-
-          // nur die betroffene Zeile ändern. Der dritte Parameter muss mit der Tabellen-ID identisch sein.
-          // shngInserText(id, data.wert, 'maintable')
-
+                // Ergebnis in Feld #fromip schreiben. Der dritte Parameter muss mit der Tabellen-ID identisch sein.
+                shngInsertText('fromip', data.ip, 'maintable')
+            });
+            return false ;
         });
-        return false ;
-      });
+
+        // Handler für Formular - das "submit"-Element (Senden) wird abgefangen
+        $("#button_pressed").submit(function(e) {
+
+            // keine HTML-Aktion ausführen (z.B. Formular senden)
+            e.preventDefault();
+
+            // die Kennung des gedrückten Buttons per AJAX senden
+            $.post('submit', {button: $("#button").val()}, function(data) {
+
+                // Zeile ermitteln
+                var row = $("#button").val()
+                var id = row + "_value"
+                
+                console.log(row)
+
+                // nur die betroffene Zeile ändern. Der dritte Parameter muss mit der Tabellen-ID identisch sein.
+                shngInserText(id, data.wert, 'maintable')
+
+                // alternativ kann auch ein ganzes Feld übertragen werden...
+                for (var row in data) {
+                        shngInsertText(row + "_value", data.row.wert, 'maintable')
+                }
+            });
+            return false ;
+        });
+
       
     });
 </script>
@@ -277,7 +295,6 @@
 
 
 {% block headtable %}
-
 <table class="table table-striped table-hover" style="min-width:600px;">
 	<tbody>
 		<tr>
@@ -397,7 +414,7 @@
                       class="btn-sm btn-secondary"
                       type="button"
                       title="{{ 'TestButton' }}"
-                      onclick="$('#button').val('{{ item.property.path }}');$('#button_pressed').submit();"
+                      onclick="$('#button').val('{{ item }}');$('#button_pressed').submit();"
                     >
                         T
                     </button>

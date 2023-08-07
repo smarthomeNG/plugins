@@ -69,14 +69,6 @@ parameters:
             de: 'Sperren der Datenbank während der Abfrage'
             en: 'Lock the database during queries'
 
-    refresh_cycle:
-        type: int
-        default: 60
-        description:
-            de: 'Zyklus, in dem die Datenbank neu gelesen wird'
-            en: 'Cycle to update database'
-
-
 item_attributes:
     db_addon_fct:
         type: str

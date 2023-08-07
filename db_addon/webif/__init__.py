@@ -130,9 +130,23 @@ class WebInterface(SmartPluginWebIf):
                 self.logger.error(f"get_data_html exception: {e}")
 
     @cherrypy.expose
-    def submit(self, cmd=None, param1=None, param2=None):
-        """Submit handler für Ajax"""
-        self.logger.warning(f"submit: {cmd=}, {param1=}, {param2=}")
+    def submit(self, param1=None):
+        '''
+        Submit handler für Ajax
+        '''
+        result = None
+
+        self.logger.warning(f'{param1}')
+
+        if param1 is not None:
+
+            # verarbeite die Daten
+            self.logger.warning(f'{param1}')
+
+        if result_dict is not None:
+            # JSON zurücksenden
+            cherrypy.response.headers['Content-Type'] = 'application/json'
+            return json.dumps(result_dict).encode('utf-8')
 
     @cherrypy.expose
     def recalc_all(self):
