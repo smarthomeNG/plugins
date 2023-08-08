@@ -49,7 +49,7 @@ if not SDP_standalone:
     from .webif import WebInterface
 
 
-class sdp_viessmann(SmartDevicePlugin):
+class viessmann(SmartDevicePlugin):
     """ Device class for Viessmann heating systems.
 
     Standalone mode is automatic device type discovery
