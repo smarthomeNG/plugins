@@ -17,4 +17,4 @@ qhue
 # 2023-05-19  11:50:15 WARNING  lib.smarthome          -Thread: zeroconf-ServiceBrowser-_hue._tcp-29871, still alive
 # 2023-05-19  11:50:15 WARNING  lib.smarthome          -Thread: zeroconf-ServiceBrowser-_hue._tcp-29916, still alive
 
-zeroconf>=0.39,<0.52.0
+zeroconf<=0.52.0

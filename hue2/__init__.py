@@ -48,7 +48,7 @@ class Hue2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.3.0'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '2.3.1'    # (must match the version specified in plugin.yaml)
 
     hue_group_action_values          = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'bri_inc', 'colormode', 'alert', 'effect']
     hue_light_action_writable_values = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'bri_inc']
@@ -322,8 +322,9 @@ class Hue2(SmartPlugin):
                 msg = f"qhue exception {e.message}"
             else:
                 msg = f"{e}"
-            msg = f"update_light_from_item: item {plugin_item['item'].id()} - function={plugin_item['function']} - '{msg}'"
-            if msg.find(' 201 ') >= 0 or msg.find(' 201,201 ') >= 0:
+            msg = f"update_light_from_item: item {plugin_item['item'].id()} - function={plugin_item['function']} - PROBLEM: '{msg}'"
+            msg += f" - last_change_by={plugin_item['item'].property.last_change_by}"
+            if msg.find(' 201 ') >= 0 or msg.find(' 201,201 ') >= 0 or str(e).endswith('is not modifiable. Device is set to off.'):
                 self.logger.info(msg)
             else:
                 self.logger.error(msg)
