@@ -106,7 +106,11 @@ class DT_H(DT_V):
         return super().get_send_data(data, **kwargs)
 
     def get_shng_data(self, data, type=None, **kwargs):
-        return data.hex()
+        try:
+            return data.hex().upper()
+        except AttributeError:
+            return
+
         # return ' '.join([hexstr[i:i + 2] for i in range(0, len(hexstr), 2)])
 
 

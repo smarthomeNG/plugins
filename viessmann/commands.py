@@ -13,7 +13,7 @@
 
 commands = {
     'ALL': {
-        'Anlagentyp': {'read': True, 'write': False, 'opcode': '00f8', 'reply_pattern': '*', 'item_type': 'num', 'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 2}, 'lookup': 'devicetypes', 'item_attrs': {'no_read_groups': True, 'attributes': {'md_read_initial': True}}},     # getAnlTyp -- Information - Allgemein: Anlagentyp (204D)
+        'Anlagentyp': {'read': True, 'write': False, 'opcode': '00f8', 'reply_pattern': '*', 'item_type': 'str', 'dev_datatype': 'H', 'params': {'value': 'VAL', 'len': 2}, 'lookup': 'devicetypes', 'item_attrs': {'no_read_groups': True, 'attributes': {'md_read_initial': True}}},     # getAnlTyp -- Information - Allgemein: Anlagentyp (204D)
     },
     'V200KO1B': {
         'Allgemein': {

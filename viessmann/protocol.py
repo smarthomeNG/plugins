@@ -68,6 +68,10 @@ class SDPProtocolViessmann(SDPProtocol):
         self._is_initialized = False
         self._data_received_callback = data_received_callback
 
+        # try to assure no concurrent sending is done
+        self._send_lock = threading.Lock()
+        self.use_send_lock = True
+
         self._controlsets = {
             'P300': {
                 'baudrate': 4800,
@@ -158,7 +162,10 @@ class SDPProtocolViessmann(SDPProtocol):
         :return: Returns True, if communication was established successfully, False otherwise
         :rtype: bool
         """
-        if self._viess_proto == 'P300' and not self._is_initialized:
+        if self._viess_proto == 'P300':
+
+            if self._is_initialized:
+                return True
 
             # init procedure is
             # interface: 0x04 (reset)
@@ -174,34 +181,44 @@ class SDPProtocolViessmann(SDPProtocol):
             ERR = self._int2bytes(self._controlset['init_error'], 1)
 
             self.logger.debug('init communication....')
-            syncsent = False
+            self.__syncsent = False
+            empty_replies = 0
 
             self.logger.debug(f'send_bytes: send reset command {RESET}')
             self._send_bytes(RESET)
 
-            readbyte = self._read_bytes(1)
-            self.logger.debug(f'read_bytes: read {readbyte}')
-
             for i in range(10):
-                if syncsent and readbyte == ACK:
+                readbyte = self._read_bytes(1)
+                self.logger.debug(f'read_bytes: read {readbyte}')
+
+                if self.__syncsent and readbyte == ACK:
                     self.logger.debug('device acknowledged initialization')
                     self._is_initialized = True
                     break
                 elif readbyte == NOTINIT:
                     self.logger.debug(f'send_bytes: send sync command {SYNC}')
                     self._send_bytes(SYNC)
-                    syncsent = True
+                    self.__syncsent = True
+                    empty_replies = 0
                 elif readbyte == ERR:
                     self.logger.error(f'interface reported an error, loop increment {i}')
                     self.logger.debug(f'send_bytes: send reset command {RESET}')
                     self._send_bytes(RESET)
-                    syncsent = False
-                else:   # elif readbyte != b'':
-                    self.logger.debug(f'send_bytes: send reset command {RESET}')
+                    self.__syncsent = False
+                    empty_replies = 0
+                elif readbyte == b'':
+                    # allow for some (5) empty replies due to timing issues without breaking sync
+                    empty_replies += 1
+                    if empty_replies > 5:
+                        self.logger.debug(f'send_bytes: too many empty replies, send reset command {RESET}')
+                        self._send_bytes(RESET)
+                        self.__syncsent = False
+                        empty_replies = 0
+                else:
+                    self.logger.debug(f'RESET send_bytes: send reset command {RESET}')
                     self._send_bytes(RESET)
-                    syncsent = False
-                readbyte = self._read_bytes(1)
-                self.logger.debug(f'read_bytes: read {readbyte}')
+                    self.__syncsent = False
+                    empty_replies = 0
 
             self.logger.debug(f'communication initialized: {self._is_initialized}')
             return self._is_initialized
@@ -392,7 +409,7 @@ class SDPProtocolViessmann(SDPProtocol):
 
         # build payload
         if write:
-            payloadlength = int(self._controlset.get('command_bytes_write', 0)) + int(valuebytes)
+            payloadlength = int(self._controlset.get('command_bytes_write', 0)) + cmdlen  # int(valuebytes)
             self.logger.debug(f'Payload length is: {payloadlength} bytes')
 
         packet = bytearray()
