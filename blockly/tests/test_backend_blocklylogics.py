@@ -93,8 +93,11 @@ class TestCherryPyApp(BaseCherryPyTestCase):
 
 class MockBackendServer():
     import os
-    #cwd = os.getcwd()
+    cwd = os.getcwd()
+    print(f"cwd={cwd}")
     os.chdir('..')
+    cwd = os.getcwd()
+    print(f"new cwd={cwd}")
 
     _sh = MockSmartHome()
 
