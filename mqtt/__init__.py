@@ -131,6 +131,9 @@ class Mqtt2(MqttPlugin):
         if self.has_iattr(item.conf, 'mqtt_topic_in') or self.has_iattr(item.conf, 'mqtt_topic_out'):
             self.logger.debug("parsing item: {0}".format(item.id()))
 
+            if item.property.type == 'foo':
+                self.logger.warning(f"item {item.path()} has item type foo, which will not be processed by the MQTT system")
+
             # check if mqtt module has been initialized successfully
             if not self.mod_mqtt:
                 self.logger.warning("MQTT module is not initialized, not parsing item '{}'".format(item.path()))
