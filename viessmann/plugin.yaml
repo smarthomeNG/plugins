@@ -5,11 +5,11 @@ plugin:
     type: gateway
 
     description:
-        de: Vde
-        en: Ven
+        de: 'Lesen und Schreiben von Werten einer Viessmann Heizung'
+        en: 'Read and write data from/to a Viessmann heating system'
     maintainer: Morg
     state: develop
-    keywords: iot device
+    keywords: iot device sdp
     version: 1.3.0
     sh_minversion: 1.9.3.1
     py_minversion: 3.6
@@ -44,6 +44,7 @@ parameters:
             de: 'Item-Pfad für das Suspend-Item'
             en: 'item path for suspend switch item'
 
+    # die folgenden Attribute nicht ändern
     command_class:
         type: str
         default: SDPCommandViessmann
@@ -103,7 +104,7 @@ item_attributes:
         type: str
 
         description:
-            de: Wenn diesem Item ein beliebiger Wert zugewiesen wird, werden alle zum Lesen konfigurierten Items der angegebenen Gruppe neu vom Gerät gelesen, bei Gruppe 0 werden alle zum Lesen konfigurierten Items neu gelesen. Das Item kann nicht gleichzeitig mit md_command belegt werden.
+            de: Wenn diesem Item ein beliebiger Wert zugewiesen wird, werden alle zum Lesen konfigurierten Items der angegebenen Gruppe neu vom Gerät gelesen, bei Gruppe 0 werden alle zum Lesen konfigurierten Items neu gelesen. Das Item kann nicht gleichzeitig mit viess_command belegt werden.
             en: When set to any value, all items configured for reading for the given group will update their value from the device, if group is 0, all items configured for reading will update. The item cannot be used with md_command in parallel.
 
     viess_lookup:
