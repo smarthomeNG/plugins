@@ -1,0 +1,299 @@
+# Metadata for the classic-plugin
+plugin:
+    # Global plugin attributes
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Anbindung von Kodi (ehemals XBMC)'
+        en: 'Connecting Kodi (formerly XBMC)'
+    requirements:
+        de: 'Es ist eine Kodi Installation v12 oder höher notwendig, bei der in den Einstellungen "Allow programs on other systems to control Kodi" aktiviert ist.'
+        en: 'You need one or more Kodi (12 a.k.a. Frodo or above) with system-settings-service "Allow programs on other systems to control Kodi" enabled.'
+    maintainer: Morg, onkelandy
+    tester: psilo
+    state: ready
+    keywords: mediacenter kodi xmbc
+    documentation: http://smarthomeng.de/user/plugins/kodi/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1364598-supportthread-für-kodi-plugin
+
+# Following entries are for Smart-Plugins:
+    version: 1.6.1                 # Plugin version
+    sh_minversion: 1.4            # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True
+    classname: Kodi                # class containing the plugin
+    restartable: True
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    host:
+        type: ip
+        mandatory: True
+        description:
+            de: 'Hostname oder IP-Adresse des Kodi-Systems'
+            en: 'Hostname or IP address of the Kodi system'
+
+    port:
+        type: int
+        valid_min: 1
+        valid_max: 65535
+        default: 9090
+        description:
+            de: 'Netzwerkport für die Steuerung des Kodi-Systems'
+            en: 'Network port for remote controlling the Kodi system'
+
+    autoreconnect:
+        type: bool
+        default: False
+        description:
+            de: 'Erneute Verbindungsversuche bei Verlust der Verbindung alle 30 Sekunden'
+            en: 'Try to reconnect after connection loss every 30 seconds.'
+
+    connect_retries:
+        type: int
+        default: 10
+        description:
+            de: 'Anzahl der Verbindungsversuche'
+            en: 'Amount of connection retries'
+
+    connect_cycle:
+        type: int
+        default: 5
+        description:
+            de: 'Pause zwischen Verbindungsversuchen'
+            en: 'Pause between connection retries'
+
+    command_timeout:
+        type: int
+        default: 5
+        description:
+            de: 'Zeit, nach der ein unbeantworteter Befehl erneut gesendet wird'
+            en: 'Time to resend command which were not answered'
+
+    command_repeat:
+        type: int
+        default: 2
+        description:
+            de: 'Anzahl der Wiederholversuche für unbeantwortete Befehle'
+            en: 'Repeat count for resending commands which were not answered'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+
+    kodi_item:
+        type: str
+        valid_list: ['quit', 'mute', 'volume', 'action', 'seek', 'audio', 'speed', 'subtitle', 'playpause', 'stop', 'goto', 'power', 'subtitles', 'streams', 'media', 'title', 'player', 'state', 'update', 'macro', 'get_favourites']
+        description:
+            de: 'Der Attributwert hängt von der gewünschten Funktion ab. Siehe Dokumentation für Details.'
+            en: 'The attribute value is dependant on the wanted function. Look at the documentation for details.'
+
+item_structs:
+    info:
+        name: Vorlage-Struktur für Kodi Infos, die nicht aktiv verändert werden können.
+
+        state:
+            kodi_item@instance: state
+            type: str
+            visu_acl: ro
+
+        media:
+            kodi_item@instance: media
+            type: str
+            visu_acl: ro
+
+        title:
+            kodi_item@instance: title
+            type: str
+            visu_acl: ro
+
+        audiostreams:
+            kodi_item@instance: streams
+            type: list
+            visu_acl: ro
+
+        subtitles:
+            kodi_item@instance: subtitles
+            type: list
+            visu_acl: ro
+
+        player:
+            kodi_item@instance: player
+            type: num
+            visu_acl: ro
+
+    control:
+        name: Vorlage-Struktur für Kodi Befehle zum Steuern
+
+        update:
+            kodi_item@instance: update
+            type: bool
+            visu_acl: rw
+            enforce_updates: true
+            autotimer: 1 = false = latest
+
+        play:
+            type: bool
+            eval: sh...playpause() and not sh...stop()
+            enforce_updates: true
+            eval_trigger:
+                - ..stop
+                - ..playpause
+
+            play_cmd:
+                type: bool
+                enforce_updates: true
+                eval: sh....input('play') if not (sh...property.last_update_by.lower()[:4] in ('kodi', 'init', 'eval')) else None
+                eval_trigger: ..
+
+        pause:
+            type: bool
+            eval: not sh...playpause() and not sh...stop()
+            enforce_updates: true
+            eval_trigger:
+                - ..stop
+                - ..playpause
+
+            pause_cmd:
+                type: bool
+                enforce_updates: true
+                eval: sh....input('pause') if not (sh...property.last_update_by.lower()[:4] in ('kodi', 'init', 'eval')) else None
+                eval_trigger: ..
+
+        stop:
+            kodi_item@instance: stop
+            type: bool
+            visu_acl: rw
+            enforce_updates: true
+
+        playpause:
+            kodi_item@instance: playpause
+            type: bool
+            visu_acl: rw
+            enforce_updates: true
+
+        previous:
+            type: bool
+            eval: sh...input('skipprevious')
+            enforce_updates: true
+
+        next:
+            type: bool
+            eval: sh...input('skipnext')
+            enforce_updates: true
+
+        seek:
+            kodi_item@instance: seek
+            type: num
+            visu_acl: rw
+            enforce_updates: true
+
+        speed:
+            kodi_item@instance: speed
+            type: num
+            visu_acl: rw
+            enforce_updates: true
+
+        volume:
+            kodi_item@instance: volume
+            type: num
+            visu_acl: rw
+            enforce_updates: true
+
+        mute:
+            kodi_item@instance: mute
+            type: bool
+            visu_acl: rw
+            enforce_updates: true
+
+        macro:
+            kodi_item@instance: macro
+            type: str
+            visu_acl: rw
+            enforce_updates: true
+
+        on_off:
+            kodi_item@instance: power
+            enforce_updates: true
+            type: bool
+            visu_acl: rw
+
+        input:
+            kodi_item@instance: action
+            type: str
+            visu_acl: rw
+            enforce_updates: true
+
+        favourites:
+            kodi_item@instance: get_favourites
+            type: dict
+            visu_acl: rw
+            enforce_updates: true
+
+        audiostream:
+            kodi_item@instance: audio
+            type: foo
+            visu_acl: rw
+            enforce_updates: true
+
+        subtitle:
+            kodi_item@instance: subtitle
+            type: foo
+            visu_acl: rw
+            enforce_updates: true
+
+    examples:
+        name: Vorlage-Struktur mit weiteren Beispielen
+
+        select:
+            type: bool
+            eval: sh...input('select')
+            enforce_updates: True
+
+        contextmenu:
+            type: str
+            eval: sh...input('contextmenu')
+            enforce_updates: True
+
+        home:
+            type: bool
+            eval: sh...input('home')
+            enforce_updates: true
+
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    notify:
+        type: str
+        description:
+            de: "Diese Funktion ermöglicht es, Mitteilungen an Kodi zu schicken. Beispiel: sh.kodi.notify('Door', 'Ding Dong'). 'kodi' ist dabei der Name der jeweiligen Plugin-Instanz und kein Item-Name."
+            en: "This function provies the functionallity to send notification messages to Kodi. Example: sh.kodi.notify('Door', 'Ding Dong'). 'kodi' is the name of the respective plugin instance, not an item name."
+
+        parameters:
+            title:
+                type: str
+                description:
+                    de: 'Überschrift der Mitteilung'
+                    en: 'Message header'
+
+            message:
+                type: str
+                description:
+                    de: 'Text der Mitteilung'
+                    en: 'Message body'
+
+            image:
+                type: str
+                default: None*
+                description:
+                    de: 'URL des anzuzeigenden Bildes (z.B.: "http://smarthome.local/img/phone.png")'
+                    en: 'URL of the image to display (e.g. "http://smarthome.local/img/phone.png")'
+
+            display_time:
+                type: int
+                default: 10000
+                description:
+                    de: 'Dauer der Anzeige in msec'
+                    en: 'Duration of image display in msec'
