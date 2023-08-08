@@ -94,12 +94,13 @@ class TestCherryPyApp(BaseCherryPyTestCase):
 class MockBackendServer():
     import os
     cwd = os.getcwd()
-    print(f"cwd={cwd}")
+    print(f"blockly cwd={cwd}")
     os.chdir('..')
     cwd = os.getcwd()
-    print(f"new cwd={cwd}")
+    print(f"blockly new cwd={cwd}")
 
     _sh = MockSmartHome()
+    print(f"blockly etc_dir = {_sh.get_etcdir()}")
 
     def __init__(self):
         self._sh.with_items_from(common.BASE + "/tests/resources/blockly_items.conf")
