@@ -11,22 +11,28 @@
 {% block pluginscripts %}
 <script>
 	function handleUpdatedData(response, dataSet=null) {
-		console.log('handleUpdatedData', dataSet);
+		// console.log('handleUpdatedData', dataSet);
 		if (dataSet === 'devices_info' || dataSet === null) {
 			var objResponse = JSON.parse(response);
 			myProto = document.getElementById(dataSet);
 			for (var device in objResponse['beodevice_info']) {
-				shngInsertText (device+'_source', objResponse['beodevice_info'][device]['source']);
-				shngInsertText (device+'_audiomode', objResponse['beodevice_info'][device]['audiomode'][0]);
-				shngInsertText (device+'_stand', objResponse['beodevice_info'][device]['stand'][0]);
-				shngInsertText (device+'_powerstate', objResponse['beodevice_info'][device]['powerstate']);
-				console.log(device, objResponse['beodevice_info'][device]['powerstate'], objResponse['beodevice_info'][device]['source']);
+				// console.warn(device, objResponse['beodevice_info'][device])
+				shngInsertText (device+'_source', objResponse['beodevice_info'][device]['source']['source']);
+				shngInsertText (device+'_audiomode', objResponse['beodevice_info'][device]['device']['audiomode'][0]);
+				shngInsertText (device+'_stand', objResponse['beodevice_info'][device]['device']['stand'][0]);
+				shngInsertText (device+'_powerstate', objResponse['beodevice_info'][device]['device']['powerstate']);
+
+				shngInsertText (device+'_state', objResponse['beodevice_info'][device]['content']['state']);
+				shngInsertText (device+'_channel_name', objResponse['beodevice_info'][device]['content']['channel_name']);
+				shngInsertText (device+'_volume', objResponse['beodevice_info'][device]['volume']['level']);
+				shngInsertText (device+'_nuted', objResponse['beodevice_info'][device]['volume']['muted']);
+				// console.log(device, objResponse['beodevice_info'][device]['device']['powerstate'], objResponse['beodevice_info'][device]['source']['source']);
 			}
 			for (var item in objResponse['item_values']) {
 				shngInsertText (item+'_value', objResponse['item_values'][item]['value']);
 				shngInsertText (item+'_last_update', objResponse['item_values'][item]['last_update']);
 				shngInsertText (item+'_last_change', objResponse['item_values'][item]['last_change']);
-				console.log(item, objResponse['item_values'][item]['value']);
+				// console.log(item, objResponse['item_values'][item]['value']);
 			}
 		}
 	}
@@ -54,11 +60,11 @@
 			<td></td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>Prompt 3</strong></td>
-			<td class="py-1">{% if 1 == 2 %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1"><strong>Poll Cycle</strong></td>
+			<td class="py-1">{{ p._cycle }} Sek.</td>
 			<td></td>
 			<td class="py-1"><strong>Prompt 6</strong></td>
-			<td class="py-1">-</td>
+			<td class="py-1">{% if 1 == 2 %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
 			<td></td>
 		</tr>
 	</tbody>
@@ -79,14 +85,14 @@
 <!--
 	Define the number of tabs for the body of the web interface (1 - 3)
 -->
-{% set tabcount = 2 %}
+{% set tabcount = 3 %}
 
 
 <!--
 	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
 -->
 {% if item_count==0 %}
-	{% set start_tab = 2 %}
+	{% set start_tab = 3 %}
 {% endif %}
 
 
@@ -129,8 +135,54 @@
 <!--
 	Content block for the second tab of the Webinterface
 -->
-{% set tab2title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong> (" ~ device_count ~ ")" %}
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " Geräte Details/Status</strong> (" ~ device_count ~ ")" %}
 {% block bodytab2 %}
+<table class="table table-striped table-hover pluginList">
+	<thead>
+	<tr>
+		<th class="py-1">{{ _('B&O Gerät') }}</th>
+		<th class="py-1">{{ _('Name') }}</th>
+		<th class="py-1">{{ _('IP Adresse') }}</th>
+		<th class="py-1">{{ _('Einschalt-Status') }}</th>
+		<th class="py-1">{{ _('Quelle') }}</th>
+		<th class="py-1">{{ _('Status') }}</th>
+		<th class="py-1">{{ _('Kanal') }}</th>
+		<th class="py-1">{{ _('Audiomode') }}</th>
+		<th class="py-1">{{ _('Volume') }}</th>
+		<th class="py-1">{{ _('Muted') }}</th>
+		<th class="py-1" width="100px"></th>
+	</tr>
+	</thead>
+	{% for beokey in p.beodevices.beo_keys %}
+		{% if p.beodevices.beodeviceinfo[beokey]['device']['serialNumber'] %}
+			<tr>
+				<td class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['device']['serialNumber'] }}</td>
+				<td class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['device']['FriendlyName'] }}</td>
+				<td class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['device']['ip'] }}</td>
+				<td id="{{ beokey }}_powerstate" class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['device']['powerstate'] }}</td>
+				<td id="{{ beokey }}_source"     class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['source']['source'] }}</td>
+				<td id="{{ beokey }}_state"      class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['content']['state'] }}</td>
+				<td id="{{ beokey }}_channel_name" class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['content']['channel_name'] }}</td>
+				<td id="{{ beokey }}_audiomode"    class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['device']['audiomode'][0] }}</td>
+				<td id="{{ beokey }}_volume"       class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['volume']['level'] }}</td>
+				<td id="{{ beokey }}_muted"        class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['volume']['muted'] }}</td>
+				<td class="py-1"></td>
+			</tr>
+		{% endif %}
+	{% endfor %}
+</table>
+{% endblock bodytab2 %}
+
+
+<!--
+	Content block for the third tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{% set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
+
+	It has to be defined before (and outside) the block bodytab3
+-->
+{% set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong> (" ~ device_count ~ ")" %}
+{% block bodytab3 %}
 <table class="table table-striped table-hover pluginList">
 	<thead>
 	<tr>
@@ -147,37 +199,26 @@
 	</tr>
 	</thead>
 	{% for beokey in p.beodevices.beo_keys %}
-		{% if p.beodevices.beodeviceinfo[beokey]['serialNumber'] %}
+		{% if p.beodevices.beodeviceinfo[beokey]['device']['serialNumber'] %}
 			<tr>
-				<td class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['serialNumber'] }}</td>
-				<td class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['FriendlyName'] }}</td>
-				<td class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['ip'] }}</td>
-				<td class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['productType'] }}</td>
-				<td class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['swVersion'] }}</td>
-				<td id="{{ beokey }}_powerstate" class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['powerstate'] }}</td>
-				<td id="{{ beokey }}_source"     class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['source'] }}</td>
-				{% if p.beodevices.beodeviceinfo[beokey]['serialNumber'] %}
+				<td class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['device']['serialNumber'] }}</td>
+				<td class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['device']['FriendlyName'] }}</td>
+				<td class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['device']['ip'] }}</td>
+				<td class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['device']['productType'] }}</td>
+				<td class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['device']['swVersion'] }}</td>
+				<td id="{{ beokey }}_powerstate" class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['device']['powerstate'] }}</td>
+				<td id="{{ beokey }}_source"     class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['source']['source'] }}</td>
+				{% if p.beodevices.beodeviceinfo[beokey]['stand'] %}
 					<td id="{{ beokey }}_stand"  class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['stand'][0] }}</td>
 				{% else %}
 					<td id="{{ beokey }}_stand"  class="py-1">-</td>
 				{% endif %}
-				<td id="{{ beokey }}_audiomode"  class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['audiomode'][0] }}</td>
+				<td id="{{ beokey }}_audiomode"  class="py-1">{{ p.beodevices.beodeviceinfo[beokey]['device']['audiomode'][0] }}</td>
 				<td class="py-1"></td>
 			</tr>
 		{% endif %}
 	{% endfor %}
 </table>
-{% endblock bodytab2 %}
-
-
-<!--
-	Content block for the third tab of the Webinterface
-	If wanted, a title for the tab can be defined as:
-		{% set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
-
-	It has to be defined before (and outside) the block bodytab3
--->
-{% block bodytab3 %}
 {% endblock bodytab3 %}
 
 
