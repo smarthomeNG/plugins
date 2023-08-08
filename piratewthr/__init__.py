@@ -37,7 +37,7 @@ from .webif import WebInterface
 class PirateWeather(SmartPlugin):
 
 
-    PLUGIN_VERSION = "1.2.0"
+    PLUGIN_VERSION = "1.2.1"
 
     # https://api.pirateweather.net/forecast/[apikey]/[latitude],[longitude]
     _base_url = 'https://api.pirateweather.net/forecast/'
@@ -94,8 +94,8 @@ class PirateWeather(SmartPlugin):
             self._lon = self.get_parameter_value('longitude')
         else:
             self.logger.debug("__init__: latitude and longitude not provided, using shng system values instead.")
-            self._lat = self.get_sh()._lat
-            self._lon = self.get_sh()._lon
+            self._lat = self.get_sh().lat
+            self._lon = self.get_sh().lon
         self._lang = self.get_parameter_value('lang')
         self._units = self.get_parameter_value('units')
         self._jsonData = {}
@@ -374,53 +374,3 @@ class PirateWeather(SmartPlugin):
             self.logger.error(f"_build_url: Wrong url type specified: {url_type}")
         return url
 
-
-    def get_wind_direction8(self, deg):
-
-        direction_array = ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW', 'N']
-
-        index = int( (deg % 360 + 22.5) / 45)
-        return direction_array[index]
-
-
-    def get_wind_direction16(self, deg):
-
-        direction_array = ['N', 'NNO', 'NO', 'ONO', 'O', 'OSO', 'SO', 'SSO', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N']
-
-        index = int( (deg % 360 + 11.25) / 22.5)
-        return direction_array[index]
-
-
-    def get_location_name(self, lat=None, lon=None):
-
-        if lat is None:
-            lat = self._lat
-        if lon is None:
-            lon = self._lon
-
-        if lat == 0 or lon == 0:
-            self.logger.debug(f"lat or lon are zero, not sending request: {lat=}, {lon=}")
-            return
-
-        # api documentation: https://nominatim.org/release-docs/develop/api/Reverse/
-        request_str = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=jsonv2"
-
-        try:
-            response = requests.get(request_str)
-        except Exception as e:
-            self.logger.warning(f"get_location_name: Exception when sending GET request: {e}")
-            return
-
-        try:
-            json_obj = response.json()
-        except Exception as e:
-            self.logger.warning(f"get_location_name: Response '{response}' is no valid json format: {e}")
-            return ''
-
-        if response.status_code >= 500:
-            self.logger.warning(f"get_location_name: {self.get_location_name(response.status_code)}")
-            return ''
-
-        #self.logger.notice(f"{json_obj['display_name']}")
-        #self.logger.notice(f"{json_obj['address']}")
-        return json_obj['address']['suburb']
