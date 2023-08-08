@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
-print(sys.path)
+print(f"sys.path={sys.path}")
 
 from tests import common
 import cherrypy
