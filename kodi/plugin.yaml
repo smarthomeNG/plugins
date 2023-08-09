@@ -25,7 +25,7 @@ parameters:
             de: Netzwerkziel/-host
             en: network host
 
-    suspend_item_path:
+    suspend_item:
         type: str
         default: ''
 
