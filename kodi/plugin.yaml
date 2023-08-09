@@ -1,3 +1,5 @@
+%YAML 1.1
+---
 
 plugin:
     type: interface
@@ -23,13 +25,13 @@ parameters:
             de: Netzwerkziel/-host
             en: network host
 
-    standby_item_path:
+    suspend_item:
         type: str
         default: ''
 
         description:
-            de: 'Item-Pfad für das Standby-Item'
-            en: 'item path for standby switch item'
+            de: 'Item-Pfad für das Suspend-Item'
+            en: 'item path for suspend switch item'
 
     timeout:
         type: num
@@ -79,13 +81,13 @@ parameters:
             de: 'Pause zwischen Durchgängen von Verbindungsversuchen'
             en: 'wait time between connect retry rounds'
 
-    retry_standby:
+    retry_suspend:
         type: num
         default: 0
 
         description:
-            de: 'Anzahl von Durchgängen vor Verbindungsabbruch oder Standby-Modus'
-            en: 'number of connect rounds before giving up / entering standby mode'
+            de: 'Anzahl von Durchgängen vor Verbindungsabbruch oder Suspend-Modus'
+            en: 'number of connect rounds before giving up / entering suspend mode'
 
     message_timeout:
         type: num
