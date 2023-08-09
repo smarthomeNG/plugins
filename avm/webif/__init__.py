@@ -70,12 +70,12 @@ class WebInterface(SmartPluginWebIf):
         if self.plugin.fritz_home:
             aha_items = self.plugin.get_aha_items()
             aha_item_count = len(aha_items)
-            logentries = self.plugin.get_device_log_from_lua_separated()
+            logentries = self.plugin.fritz_home.get_device_log_from_lua_separated()
         else:
             aha_items = None
             aha_item_count = None
             if self.plugin.fritz_device:
-                logentries = self.plugin.get_device_log_from_tr064_separated()
+                logentries = self.plugin.fritz_device.get_device_log_from_tr064_separated()
             else:
                 logentries = None
 

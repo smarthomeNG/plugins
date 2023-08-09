@@ -461,6 +461,19 @@ item_structs:
             name: (where available) Wind gust. Units default metre/sec, metric metre/sec, imperial miles/hour.
             type: num
             owm_matchstring@instance: current/wind_gust
+
+            beaufort_nr:
+                name: wind gusts as beaufort number
+                type: num
+                eval: sh.plugins.get('openweathermap').get_beaufort_number(sh....wind_gust())
+                eval_trigger: ...wind_gust
+
+            beaufort_string:
+                name: wind gusts as beaufort string
+                type: str
+                eval: sh.plugins.get('openweathermap').get_beaufort_description( sh...beaufort_nr() )
+                eval_trigger: ..beaufort_nr
+
         wind_deg:
             name: Wind direction, degrees (meteorological)
             type: num
@@ -614,11 +627,33 @@ item_structs:
             type: num
             owm_match_prefix@instance: ..:.
             owm_matchstring@instance: /wind_speed
+            beaufort_nr:
+                name: wind speed as beaufort number
+                type: num
+                eval: sh.plugins.get('openweathermap').get_beaufort_number(sh...())
+                eval_trigger: ..
+            beaufort_string:
+                name: wind speed as beaufort string
+                type: str
+                eval: sh.plugins.get('openweathermap').get_beaufort_description( sh...beaufort_nr() )
+                eval_trigger: ..beaufort_nr
+
         wind_gust:
             name: (where available) Wind gust. Units default metre/sec, metric metre/sec, imperial miles/hour.
             type: num
             owm_match_prefix@instance: ..:.
             owm_matchstring@instance: /wind_gust
+            beaufort_nr:
+                name: wind gusts as beaufort number
+                type: num
+                eval: sh.plugins.get('openweathermap').get_beaufort_number(sh...())
+                eval_trigger: ..
+            beaufort_string:
+                name: wind gusts as beaufort string
+                type: str
+                eval: sh.plugins.get('openweathermap').get_beaufort_description( sh...beaufort_nr() )
+                eval_trigger: ..beaufort_nr
+
         wind_deg:
             name: Wind direction, degrees (meteorological)
             type: num

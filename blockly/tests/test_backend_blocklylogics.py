@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
-print(sys.path)
+print(f"sys.path={sys.path}")
 
 from tests import common
 import cherrypy
@@ -92,7 +92,15 @@ class TestCherryPyApp(BaseCherryPyTestCase):
 
 
 class MockBackendServer():
+    import os
+    cwd = os.getcwd()
+    print(f"blockly cwd={cwd}")
+    os.chdir('..')
+    cwd = os.getcwd()
+    print(f"blockly new cwd={cwd}")
+
     _sh = MockSmartHome()
+    print(f"blockly etc_dir = {_sh.get_etcdir()}")
 
     def __init__(self):
         self._sh.with_items_from(common.BASE + "/tests/resources/blockly_items.conf")
