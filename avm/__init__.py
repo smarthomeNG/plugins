@@ -113,7 +113,7 @@ class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = '2.0.8'
+    PLUGIN_VERSION = '2.0.9'
 
     # ToDo: FritzHome.handle_updated_item: implement 'saturation'
     # ToDo: FritzHome.handle_updated_item: implement 'unmapped_hue'
@@ -2132,37 +2132,38 @@ class FritzHome:
         for sid in get_sid():
             params['sid'] = sid
 
-            try:
-                response = self._session.get(url=url, params=params, verify=self.verify)
-            except requests.exceptions.Timeout:
-                if self._timeout < 31:
-                    self._timeout += 5
-                    msg = f"HTTP request timed out. Timeout extended by 5s to {self._timeout}"
-                else:
-                    msg = "HTTP request timed out."
-                self.logger.info(msg)
-                raise FritzHttpTimeoutError(msg)
+            with self._session as session:
+                try:
+                    response = session.get(url=url, params=params, verify=self.verify)
+                except requests.exceptions.Timeout:
+                    if self._timeout < 31:
+                        self._timeout += 5
+                        msg = f"HTTP request timed out. Timeout extended by 5s to {self._timeout}"
+                    else:
+                        msg = "HTTP request timed out."
+                    self.logger.info(msg)
+                    raise FritzHttpTimeoutError(msg)
 
-            if response.status_code == 200:
-                content_type = response.headers.get('content-type')
-                if 'json' in content_type:
-                    return content_type, response.json()
-                return content_type, response.text
+                if response.status_code == 200:
+                    content_type = response.headers.get('content-type')
+                    if 'json' in content_type:
+                        return content_type, response.json()
+                    return content_type, response.text
 
-            elif response.status_code == 403:
-                msg = f"{response.status_code!r} Forbidden: 'Session-ID ungültig oder Benutzer nicht autorisiert'"
-                self.logger.info(msg)
-                raise FritzHttpInterfaceError(msg)
+        if response.status_code == 403:
+            msg = f"{response.status_code!r} Forbidden: 'Session-ID ungültig oder Benutzer nicht autorisiert'"
+            self.logger.info(msg)
+            raise FritzHttpInterfaceError(msg)
 
-            elif response.status_code == 400:
-                msg = f"{response.status_code!r} HTTP Request fehlerhaft, Parameter sind ungültig, nicht vorhanden oder Wertebereich überschritten"
-                self.logger.info(f"Error {msg}, params: {params}")
-                raise FritzHttpRequestError(msg)
+        elif response.status_code == 400:
+            msg = f"{response.status_code!r} HTTP Request fehlerhaft, Parameter sind ungültig, nicht vorhanden oder Wertebereich überschritten"
+            self.logger.info(f"Error {msg}, params: {params}")
+            raise FritzHttpRequestError(msg)
 
-            else:
-                msg = f"Error {response.status_code!r} Internal Server Error: 'Interner Fehler'"
-                self.logger.info(f"{msg}, params: {params}")
-                raise FritzAuthorizationError(msg)
+        else:
+            msg = f"Error {response.status_code!r} Internal Server Error: 'Interner Fehler'"
+            self.logger.info(f"{msg}, params: {params}")
+            raise FritzAuthorizationError(msg)
 
     def aha_request(self, cmd: str, ain: str = None, param: dict = None, result_type: str = None):
         """Send an AHA request.
@@ -3892,15 +3893,19 @@ class Callmonitor:
         self._stop_counter('incoming')
         self._stop_counter('outgoing')
 
-        try:
-            self._listen_thread.join(1)
-        except Exception:
-            pass
+        if self._listen_thread:
+            try:
+                self._listen_thread.join(1)
+            except Exception as e:   # AttributeError
+                self.logger.debug(f"Error {e!r} occurred during disconnecting of Callmonitor.")
+                pass
 
-        try:
-            self.conn.shutdown(2)
-        except Exception:
-            pass
+        if self.conn:
+            try:
+                self.conn.shutdown(2)
+            except Exception as e:
+                self.logger.debug(f"Error {e!r} occurred during shutdown of Callmonitor.")
+                pass
 
     def reconnect(self):
         """
@@ -4071,12 +4076,13 @@ class Callmonitor:
         buffer = ""
         while self._listen_active:
             data = self.conn.recv(recv_buffer)
-            if data == "":
-                self.logger.error("CallMonitor connection not open anymore.")
+            if data.decode('utf-8') == "" and self._listen_active:
+                self.logger.warning("CallMonitor connection not open anymore. Try to reconnect")
+                self.reconnect()
             else:
                 if self.debug_log:
-                    self.logger.debug(f"Data Received from CallMonitor: {data.decode('utf-8').strip()}")
-            buffer += data.decode("utf-8")
+                    self.logger.debug(f"Data Received from CallMonitor: '{data.decode('utf-8')}'")
+            buffer += data.decode('utf-8')
             while buffer.find("\n") != -1:
                 line, buffer = buffer.split("\n", 1)
                 if line:
