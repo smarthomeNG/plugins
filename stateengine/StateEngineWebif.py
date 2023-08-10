@@ -166,7 +166,7 @@ class WebInterface(StateEngineTools.SeItemChild):
         actionlabel = '' if actionlabel == '{}{}'.format(actionstart, actionend)\
                       or actionlabel == '<>' else actionlabel
         #self._log_debug('actionlabel: {}', actionlabel)
-        return actionlabel, action_tooltip
+        return actionlabel, action_tooltip, tooltip_count
 
     def _conditionlabel(self, state, conditionset):
         condition_tooltip = ''
@@ -399,20 +399,20 @@ class WebInterface(StateEngineTools.SeItemChild):
                 new_x = 0.9
                 for j, conditionset in enumerate(self.__states[state]['conditionsets']):
                     if len(self.__states[state].get('actions_enter')) > 0 or len(self.__states[state].get('actions_enter_or_stay')) > 0:
-                        actionlist_enter, action_tooltip = self._actionlabel(state, 'actions_enter', conditionset, previousconditionset, previousstate_conditionset)
+                        actionlist_enter, action_tooltip_enter, action_tooltip_count_enter = self._actionlabel(state, 'actions_enter', conditionset, previousconditionset, previousstate_conditionset)
 
                     if len(self.__states[state].get('actions_stay')) > 0 or len(self.__states[state].get('actions_enter_or_stay')) > 0:
-                        actionlist_stay, action_tooltip = self._actionlabel(state, 'actions_stay', conditionset, previousconditionset, previousstate_conditionset)
+                        actionlist_stay, action_tooltip_stay, action_tooltip_count_stay = self._actionlabel(state, 'actions_stay', conditionset, previousconditionset, previousstate_conditionset)
 
                     if len(self.__states[state].get('actions_leave')) > 0:
-                        actionlist_leave, action_tooltip = self._actionlabel(state, 'actions_leave', conditionset, previousconditionset, previousstate_conditionset)
+                        actionlist_leave, action_tooltip_leave, action_tooltip_count_leave = self._actionlabel(state, 'actions_leave', conditionset, previousconditionset, previousstate_conditionset)
 
                     new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
                     position = '{},{}!'.format(0.5, new_y)
                     conditionset_positions.append(new_y)
                     #self._log_debug('conditionset: {} {}, previous {}', conditionset, position, previous_conditionset)
 
-                    conditionlist, condition_tooltip, tooltip_count = self._conditionlabel(state, conditionset)
+                    conditionlist, condition_tooltip, condition_tooltip_count = self._conditionlabel(state, conditionset)
                     cond3 = conditionset == ''
                     try:
                         cond1 = i >= list(self.__states.keys()).index(self.__active_state)
@@ -439,9 +439,9 @@ class WebInterface(StateEngineTools.SeItemChild):
                         label=label, pos=position)
                     #self._log_debug('Node {} {} drawn', state, conditionset)
                     position = '{},{}!'.format(0.2, new_y)
-                    xlabel = '1 tooltip' if tooltip_count == 1\
-                             else '{} tooltips'.format(tooltip_count)\
-                             if tooltip_count > 1 else ''
+                    xlabel = '1 tooltip' if condition_tooltip_count == 1\
+                             else '{} tooltips'.format(condition_tooltip_count)\
+                             if condition_tooltip_count > 1 else ''
                     if not conditionlist == '':
                         self.__nodes['{}_{}_conditions'.format(state, conditionset)] = pydotplus.Node(
                             '{}_{}_conditions'.format(state, conditionset), style="filled", fillcolor=color,
@@ -452,20 +452,28 @@ class WebInterface(StateEngineTools.SeItemChild):
                     new_x = 0.9
                     if not actionlist_enter == '':
                         position = '{},{}!'.format(new_x, new_y)
+                        xlabel = '1 tooltip' if action_tooltip_count_enter == 1\
+                                 else '{} tooltips'.format(action_tooltip_count_enter)\
+                                 if action_tooltip_count_enter > 1 else ''
                         #self._log_debug('action enter: {}', position)
                         self.__nodes['{}_{}_actions_enter'.format(state, conditionset)] = pydotplus.Node(
                             '{}_{}_actions_enter'.format(state, conditionset), style="filled", fillcolor=color,
-                            shape="rectangle", label=actionlist_enter, pos=position, tooltip=action_tooltip)
+                            shape="rectangle", label=actionlist_enter, pos=position, tooltip=action_tooltip_enter,
+                            xlabel=xlabel)
                         self.__graph.add_node(self.__nodes['{}_{}_actions_enter'.format(state, conditionset)])
                         self._add_actioncondition(state, conditionset, 'actions_enter', new_y, cond1, cond2)
 
                     if not actionlist_stay == '':
                         new_y -= 0.05 if not actionlist_enter == '' else 0
                         position = '{},{}!'.format(new_x, new_y)
+                        xlabel = '1 tooltip' if action_tooltip_count_stay == 1\
+                                 else '{} tooltips'.format(action_tooltip_count_stay)\
+                                 if action_tooltip_count_stay > 1 else ''
                         #self._log_debug('action stay: {}', position)
                         self.__nodes['{}_{}_actions_stay'.format(state, conditionset)] = pydotplus.Node(
                             '{}_{}_actions_stay'.format(state, conditionset), style="filled", fillcolor=color,
-                            shape="rectangle", label=actionlist_stay, pos=position, tooltip=action_tooltip)
+                            shape="rectangle", label=actionlist_stay, pos=position, tooltip=action_tooltip_stay,
+                            xlabel=xlabel)
                         self.__graph.add_node(self.__nodes['{}_{}_actions_stay'.format(state, conditionset)])
                         self._add_actioncondition(state, conditionset, 'actions_stay', new_y, cond1, cond2)
 
@@ -518,12 +526,16 @@ class WebInterface(StateEngineTools.SeItemChild):
                                                          style='bold', color='black', tooltip='check leave'))
 
                     position = '{},{}!'.format(new_x, new_y)
+                    xlabel = '1 tooltip' if action_tooltip_count_leave == 1\
+                             else '{} tooltips'.format(action_tooltip_count_leave)\
+                             if action_tooltip_count_leave > 1 else ''
                     #self._log_debug('action leave: {}', position)
                     self.__nodes['{}_actions_leave'.format(state)] = pydotplus.Node('{}_actions_leave'.format(state),
                                                                                     style="filled", fillcolor=color,
                                                                                     shape="rectangle", label=actionlist_leave,
                                                                                     pos=position, align="center",
-                                                                                    tooltip=action_tooltip)
+                                                                                    tooltip=action_tooltip_leave,
+                                                                                    xlabel=xlabel)
                     self.__graph.add_node(self.__nodes['{}_actions_leave'.format(state)])
                     self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_leave'.format(state)],
                                                          self.__nodes['{}_actions_leave'.format(state)], style='bold',
