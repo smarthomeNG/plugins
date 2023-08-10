@@ -189,8 +189,10 @@ class SeState(StateEngineTools.SeItemChild):
         self._log_increase_indent()
         self._log_debug("Update web interface enter {}", self.id)
         self._log_increase_indent()
-        self._abitem.update_webif([self.id, 'actions_enter_or_stay'], self.__actions_enter_or_stay.dict_actions('actions_enter_or_stay', self.id))
-        self._abitem.update_webif([self.id, 'actions_enter'], self.__actions_enter.dict_actions('actions_enter', self.id))
+        if self.__actions_enter_or_stay.count() > 0:
+            self._abitem.update_webif([self.id, 'actions_enter_or_stay'], self.__actions_enter_or_stay.dict_actions('actions_enter_or_stay', self.id))
+        if self.__actions_enter.count() > 0:
+            self._abitem.update_webif([self.id, 'actions_enter'], self.__actions_enter.dict_actions('actions_enter', self.id))
         self._log_decrease_indent()
         self._log_decrease_indent()
 
@@ -209,8 +211,10 @@ class SeState(StateEngineTools.SeItemChild):
         self._log_increase_indent()
         self._log_debug("Update web interface stay {}", self.id)
         self._log_increase_indent()
-        self._abitem.update_webif([self.id, 'actions_enter_or_stay'], self.__actions_enter_or_stay.dict_actions('actions_enter_or_stay', self.id))
-        self._abitem.update_webif([self.id, 'actions_stay'], self.__actions_stay.dict_actions('actions_stay', self.id))
+        if self.__actions_enter_or_stay.count() > 0:
+            self._abitem.update_webif([self.id, 'actions_enter_or_stay'], self.__actions_enter_or_stay.dict_actions('actions_enter_or_stay', self.id))
+        if self.__actions_stay.count() > 0:
+            self._abitem.update_webif([self.id, 'actions_stay'], self.__actions_stay.dict_actions('actions_stay', self.id))
         self._log_decrease_indent()
         self._log_decrease_indent()
 
@@ -227,7 +231,8 @@ class SeState(StateEngineTools.SeItemChild):
         self._log_increase_indent()
         self._log_debug("Update web interface leave {}", self.id)
         self._log_increase_indent()
-        self._abitem.update_webif([self.id, 'actions_leave'], self.__actions_leave.dict_actions('actions_leave', self.id))
+        if self.__actions_leave.count() > 0:
+            self._abitem.update_webif([self.id, 'actions_leave'], self.__actions_leave.dict_actions('actions_leave', self.id))
         self._log_decrease_indent()
         self._log_decrease_indent()
 

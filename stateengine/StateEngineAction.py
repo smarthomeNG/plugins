@@ -109,34 +109,38 @@ class SeActionBase(StateEngineTools.SeItemChild):
 
     def update_webif_actionstatus(self, state, name, success, issue=None):
         try:
-            _key = ['{}'.format(state.id), 'actions_stay', '{}'.format(name), 'actionstatus', 'success']
-            self._abitem.update_webif(_key, success)
-            _key = ['{}'.format(state.id), 'actions_stay', '{}'.format(name), 'actionstatus', 'issue']
-            self._abitem.update_webif(_key, issue)
+            if self._abitem.webif_infos[state.id].get('actions_stay'):
+                _key = ['{}'.format(state.id), 'actions_stay', '{}'.format(name), 'actionstatus', 'success']
+                self._abitem.update_webif(_key, success)
+                _key = ['{}'.format(state.id), 'actions_stay', '{}'.format(name), 'actionstatus', 'issue']
+                self._abitem.update_webif(_key, issue)
         except Exception:
             pass
         try:
-            _key = ['{}'.format(state.id), 'actions_enter', '{}'.format(name), 'actionstatus', 'success']
-            self._abitem.update_webif(_key, success)
-            _key = ['{}'.format(state.id), 'actions_enter', '{}'.format(name), 'actionstatus', 'issue']
-            self._abitem.update_webif(_key, issue)
+            if self._abitem.webif_infos[state.id].get('actions_enter'):
+                _key = ['{}'.format(state.id), 'actions_enter', '{}'.format(name), 'actionstatus', 'success']
+                self._abitem.update_webif(_key, success)
+                _key = ['{}'.format(state.id), 'actions_enter', '{}'.format(name), 'actionstatus', 'issue']
+                self._abitem.update_webif(_key, issue)
         except Exception:
             pass
         try:
-            _key = ['{}'.format(state.id), 'actions_enter_or_stay', '{}'.format(name), 'actionstatus', 'success']
-            self._abitem.update_webif(_key, success)
-            _key = ['{}'.format(state.id), 'actions_enter_or_stay', '{}'.format(name), 'actionstatus', 'issue']
-            self._abitem.update_webif(_key, issue)
+            if self._abitem.webif_infos[state.id].get('actions_enter_or_stay'):
+                _key = ['{}'.format(state.id), 'actions_enter_or_stay', '{}'.format(name), 'actionstatus', 'success']
+                self._abitem.update_webif(_key, success)
+                _key = ['{}'.format(state.id), 'actions_enter_or_stay', '{}'.format(name), 'actionstatus', 'issue']
+                self._abitem.update_webif(_key, issue)
         except Exception:
             pass
         try:
             state.update_name(state.state_item)
             _key_name = ['{}'.format(state.id), 'name']
             self._abitem.update_webif(_key_name, state.name)
-            _key = ['{}'.format(state.id), 'actions_leave', '{}'.format(name), 'actionstatus', 'success']
-            self._abitem.update_webif(_key, success)
-            _key = ['{}'.format(state.id), 'actions_leave', '{}'.format(name), 'actionstatus', 'issue']
-            self._abitem.update_webif(_key, issue)
+            if self._abitem.webif_infos[state.id].get('actions_leave'):
+                _key = ['{}'.format(state.id), 'actions_leave', '{}'.format(name), 'actionstatus', 'success']
+                self._abitem.update_webif(_key, success)
+                _key = ['{}'.format(state.id), 'actions_leave', '{}'.format(name), 'actionstatus', 'issue']
+                self._abitem.update_webif(_key, issue)
         except Exception:
             pass
 
