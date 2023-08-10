@@ -37,7 +37,7 @@ from .webif import WebInterface
 
 
 class TankerKoenig(SmartPlugin):
-    PLUGIN_VERSION = "2.0.3"
+    PLUGIN_VERSION = "2.0.4"
 
     _base_url = 'https://creativecommons.tankerkoenig.de/json'
     _detail_url_suffix = 'detail.php'
@@ -462,7 +462,7 @@ class TankerKoenig(SmartPlugin):
         try:
             response = self._session.get(url)
         except Exception as e:
-            self.logger.error(f"Plugin '{self.get_fullname()}': Exception when sending GET request for get_petrol_station_detail: {e}")
+            self.logger.error(f"Plugin '{self.get_fullname()}': Exception when sending GET request for get_petrol_station_detail: {e}, response was {response}")
             return
 
         try:
