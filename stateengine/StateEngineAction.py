@@ -139,7 +139,6 @@ class SeActionBase(StateEngineTools.SeItemChild):
             self._abitem.update_webif(_key, issue)
         except Exception:
             pass
-        self._log_error("Webif action info {}", self._abitem.webif_infos)
 
     # Write action to logger
     def write_to_logger(self, log_level=StateEngineDefaults.log_level):
@@ -184,8 +183,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
         # check if any conditiontype is met or not
         # condition: type of condition 'conditionset'/'previousconditionset'/'previousstate_conditionset'
         def _check_condition(condition: str):
-            _conditions_met = 0
-            _conditions_necessary = 0
+            _conditions_met_count = 0
+            _conditions_necessary_count = 0
             if condition == 'conditionset':
                 _condition_to_meet = None if self.conditionset.is_empty() else self.conditionset.get()
                 _current_condition = self._abitem.get_lastconditionset_id()
@@ -196,14 +195,13 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 _updated__current_condition = self._abitem.get_previousstate_id() if _current_condition == '' else _current_condition
             elif condition == 'previousstate_conditionset':
                 _condition_to_meet = None if self.previousstate_conditionset.is_empty() else self.previousstate_conditionset.get()
-                condition_to_check = self._abitem.get_previousstate_conditionset_id()
                 _current_condition = self._abitem.get_previousstate_conditionset_id()
                 _updated__current_condition = self._abitem.get_previousstate_id() if _current_condition == '' else _current_condition
             _condition_to_meet = _condition_to_meet if isinstance(_condition_to_meet, list) else [_condition_to_meet]
             _condition_met = []
             for cond in _condition_to_meet:
                 if cond is not None:
-                    _conditions_necessary += 1
+                    _conditions_necessary_count += 1
                     try:
                         _orig_cond = cond
                         cond = re.compile(cond)
@@ -211,13 +209,13 @@ class SeActionBase(StateEngineTools.SeItemChild):
                         if _matching:
                             self._log_debug("Given {} {} matches current one: {}", condition, _orig_cond, _updated__current_condition)
                             _condition_met.append(_updated__current_condition)
-                            _conditions_met +=1
+                            _conditions_met_count +=1
                         else:
                             self._log_debug("Given {} {} not matching current one: {}", condition, _orig_cond, _updated__current_condition)
                     except Exception as ex:
                         if cond is not None:
                             self._log_warning("Given {} {} is not a valid regex: {}", condition, _orig_cond, ex)
-            return _conditions_met, _conditions_necessary
+            return _condition_met, _conditions_met_count, _conditions_necessary_count
 
         # update web interface with delay info
         # action_type: 'actions_enter', etc.
@@ -243,13 +241,13 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._log_info("Action '{0}': Preparing", self._name)
         if not self._can_execute(state):
             return
-        conditions_met, condition_necessary = _check_condition('conditionset')
+        current_condition_met, conditions_met, condition_necessary = _check_condition('conditionset')
         conditions_met += conditions_met
         condition_necessary += condition_necessary
-        conditions_met, condition_necessary = _check_condition('previousconditionset')
+        previous_condition_met, conditions_met, condition_necessary = _check_condition('previousconditionset')
         conditions_met += conditions_met
         condition_necessary += condition_necessary
-        conditions_met, condition_necessary = _check_condition('previousstate_conditionset')
+        previousstate_condition_met, conditions_met, condition_necessary = _check_condition('previousstate_conditionset')
         conditions_met += conditions_met
         condition_necessary += condition_necessary
         if conditions_met < condition_necessary:
