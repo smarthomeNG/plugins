@@ -86,7 +86,7 @@ class Vacations(SmartPlugin):
 
     def get_vacation(self, date_str=None, province=None):
         if province is None:
-            if self.shtime.config.get('location', None).get('country') not in ['DE', 'de', 'Germany']:
+            if self.shtime.config.get('location', None).get('country').lower() not in ['de', 'germany']:
                 self.logger.error('The SmartHomeNG country "%s" not supported by vacations plugin' % self.shtime.config.get('location', None).get('country'))
                 return
             else:
