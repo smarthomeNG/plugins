@@ -144,7 +144,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
 
     # Check all conditions in the condition set. Return
     # returns: True = all conditions in set are matching, False = at least one condition is not matching
-    def all_conditions_matching(self):
+    def all_conditions_matching(self, state):
         try:
             self._log_info("Check condition set '{0}'", self.__name)
             self._log_increase_indent()
@@ -152,7 +152,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
             self.__currentconditionset_set(self.__id.property.path, self.__name)
 
             for name in self.__conditions:
-                if not self.__conditions[name].check():
+                if not self.__conditions[name].check(state):
                     self.__currentconditionset_set('', '')
                     return False
             #self._abitem.previousconditionset_set(self._abitem.get_variable('previous.conditionset_id'), self._abitem.get_variable('previous.conditionset_name'))

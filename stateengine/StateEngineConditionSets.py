@@ -81,12 +81,12 @@ class SeConditionSets(StateEngineTools.SeItemChild):
 
     # check if one of the conditions sets in the list is matching.
     # returns: True = one condition set is matching or no condition sets are defined, False: no condition set matching
-    def one_conditionset_matching(self):
+    def one_conditionset_matching(self, state):
         if self.count() == 0:
             self._log_debug("No condition sets defined -> matching")
             return True
         for name in self.__condition_sets:
-            if self.__condition_sets[name].all_conditions_matching():
+            if self.__condition_sets[name].all_conditions_matching(state):
                 return True
 
         return False

@@ -29,14 +29,6 @@ import queue
 
 # Class representing a list of actions
 class SeActions(StateEngineTools.SeItemChild):
-    @property
-    def dict_actions(self):
-        result = {}
-        for name in self.__actions:
-            self._abitem._initactionname = name
-            result.update({name: self.__actions[name].get()})
-            self._abitem._initactionname = None
-        return result
 
     # Initialize the set of actions
     # abitem: parent SeItem instance
@@ -57,6 +49,18 @@ class SeActions(StateEngineTools.SeItemChild):
 
     def __repr__(self):
         return "SeActions, count {}".format(self.count())
+
+    def dict_actions(self, type, state):
+        result = {}
+        for name in self.__actions:
+            self._abitem._initactionname = name
+            result.update({name: self.__actions[name].get()})
+            try:
+                result[name].update({'actionstatus': self._abitem.webif_infos[state][type][name].get('actionstatus')})
+            except Exception:
+                pass
+            self._abitem._initactionname = None
+        return result
 
     # Return number of actions in list
     def count(self):
