@@ -166,7 +166,7 @@ SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
 
 class EnOcean(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.9"
+    PLUGIN_VERSION = "1.3.10"
 
     
     def __init__(self, sh, *args, **kwargs):
@@ -190,7 +190,7 @@ class EnOcean(SmartPlugin):
             self.logger.info(f"Stick TX ID configured via plugin.conf to: {tx_id}")
         self._log_unknown_msg = self.get_parameter_value("log_unknown_messages")
         try:
-            self._tcm = serial.Serial(self.port, 57600, timeout=1.5)
+            self._tcm = serial.serial_for_url(self.port, 57600, timeout=1.5)
         except Exception as e:
             self._tcm = None
             self._init_complete = False
@@ -713,11 +713,32 @@ class EnOcean(SmartPlugin):
         self.logger.info("Sending packet with len = {} / data = [{}]!".format(len(packet), ', '.join(['0x%02x' % b for b in packet])))
         
         # Send out serial data:
+        if not (self._tcm and self._tcm.is_open):
+            self.logger.debug("Trying serial reinit")
+            try:
+                self._tcm = serial.serial_for_url(self.port, 57600, timeout=1.5)
+            except Exception as e:
+                self._tcm = None
+                self.logger.error(f"Exception occurred during serial reinit: {e}")
+            else:
+                self.logger.debug("Serial reinit successful")
         if self._tcm:
             try:
                 self._tcm.write(packet)
             except Exception as e:
                 self.logger.error(f"Exception during tcm write occurred: {e}")
+                self.logger.debug("Trying serial reinit after failed write")
+                try:
+                    self._tcm = serial.serial_for_url(self.port, 57600, timeout=1.5)
+                except Exception as e:
+                    self._tcm = None
+                    self.logger.error(f"Exception occurred during serial reinit after failed write: {e}")
+                else:
+                    self.logger.debug("Serial reinit successful after failed write")
+                    try:
+                        self._tcm.write(packet)
+                    except Exception as e:
+                        self.logger.error(f"Exception occurred during tcm write after successful serial reinit: {e}")
 
     def _send_smart_ack_command(self, _code, data=[]):
         #self.logger.debug("enocean: call function << _send_smart_ack_command >>")
