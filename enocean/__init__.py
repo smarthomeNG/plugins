@@ -166,7 +166,7 @@ SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
 
 class EnOcean(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.10"
+    PLUGIN_VERSION = "1.3.11"
 
     
     def __init__(self, sh, *args, **kwargs):
@@ -519,6 +519,12 @@ class EnOcean(SmartPlugin):
     def get_tx_id_as_hex(self):
         hexstring = "{:08X}".format(self.tx_id)
         return hexstring
+
+    def get_serial_status_as_string(self):
+        if (self._tcm and self._tcm.is_open):
+            return "open"
+        else:
+            return "not connected"
 
     def get_log_unknown_msg(self):
         return self._log_unknown_msg
