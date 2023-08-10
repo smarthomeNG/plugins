@@ -41,6 +41,20 @@ Hierzu folgendes in der Linux Konsole ausführen:
 Aktoren, Schalter oder Stellglieder, die vom Enocean plugin gesteuert werden sollen, müssen vorher einmalig angelert werden. Der Anlernvorgang wird unten im Kaptiel Webinterface beschrieben.
 Für das Auslesen von Statusinfromationen von Enocean Sensoren ist kein Anlernvorgang nötig.
 
+Verwendung via IP
+-------------
+
+Alternativ kann eines der oben erwähnten Serial-Geräte auch über das Netzwerk freigegeben werden und per RFC2217 eingebunden werden. Die Freigabe erfolgt auf dem Host mithilfe von `ser2net <https://linux.die.net/man/8/ser2net>`. Eine beispielhafte Konfiguration (ser2net.yaml) könnte so aussehen:
+
+.. code-block:: yaml
+
+    connection: &tS4telnet
+        accepter: telnet(rfc2217),tcp,<PORT>
+        connector: serialdev,
+                   <DEVICE>,
+                   57600n81,local
+
+Für <PORT> und <DEVICE> sind die entsprechenden Werte einzufügen.
 
 Konfiguration
 =============
@@ -54,6 +68,8 @@ plugin.yaml
 
 Hier wird der `serialport` zum Enocean Hardwareadapter angegeben werden.
 Unter Linux wird empfohlen, das entsprechende Linux Uart device über eine Udev-Regel auf einen Link zu mappen und diesen Link dann als `serialport` anzugeben.
+
+Soll ein Gerät über das Netzwerk angebunden werden, wird hier anstatt des Unix-Handles eine URL in folgender Form angegeben: ``rfc2217://<HOST>:<PORT>``.
 
 **tx_id**
 
