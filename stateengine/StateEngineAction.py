@@ -73,7 +73,6 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._scheduler_name = None
         self.__function = None
         self.__template = None
-        self._state = None
         self.__queue = abitem.queue
 
     def update_delay(self, value):
@@ -148,106 +147,96 @@ class SeActionBase(StateEngineTools.SeItemChild):
     # item_allow_repeat: Is repeating actions generally allowed for the item?
     # state: state item that triggered the action
     def execute(self, is_repeat: bool, allow_item_repeat: bool, state):
-        self._state = state
+        # check if any conditiontype is met or not
+        # condition: type of condition 'conditionset'/'previousconditionset'/'previousstate_conditionset'
+        def _check_condition(condition: str):
+            _conditions_met = 0
+            _conditions_necessary = 0
+            if condition == 'conditionset':
+                _condition_to_meet = None if self.conditionset.is_empty() else self.conditionset.get()
+                _current_condition = self._abitem.get_lastconditionset_id()
+                _updated__current_condition = self._abitem.get_laststate_id() if _current_condition == '' else _current_condition
+            elif condition == 'previousconditionset':
+                _condition_to_meet = None if self.previousconditionset.is_empty() else self.previousconditionset.get()
+                _current_condition = self._abitem.get_previousconditionset_id()
+                _updated__current_condition = self._abitem.get_previousstate_id() if _current_condition == '' else _current_condition
+            elif condition == 'previousstate_conditionset':
+                _condition_to_meet = None if self.previousstate_conditionset.is_empty() else self.previousstate_conditionset.get()
+                condition_to_check = self._abitem.get_previousstate_conditionset_id()
+                _current_condition = self._abitem.get_previousstate_conditionset_id()
+                _updated__current_condition = self._abitem.get_previousstate_id() if _current_condition == '' else _current_condition
+            _condition_to_meet = _condition_to_meet if isinstance(_condition_to_meet, list) else [_condition_to_meet]
+            _condition_met = []
+            for cond in _condition_to_meet:
+                if cond is not None:
+                    _conditions_necessary += 1
+                    try:
+                        _orig_cond = cond
+                        cond = re.compile(cond)
+                        _matching = cond.fullmatch(_updated__current_condition)
+                        if _matching:
+                            self._log_debug("Given {} {} matches current one: {}", condition, _orig_cond, _updated__current_condition)
+                            _condition_met.append(_updated__current_condition)
+                            _conditions_met +=1
+                        else:
+                            self._log_debug("Given {} {} not matching current one: {}", condition, _orig_cond, _updated__current_condition)
+                    except Exception as ex:
+                        if cond is not None:
+                            self._log_warning("Given {} {} is not a valid regex: {}", condition, _orig_cond, ex)
+            return _conditions_met, _conditions_necessary
+
+        # update web interface with delay info
+        # action_type: 'actions_enter', etc.
+        # delay_info: delay information
+        def _update_delay_webif(action_type: str, delay_info: str):
+            try:
+                _key = ['{}'.format(state.id), '{}'.format(action_type), '{}'.format(self._name), 'delay']
+                self._abitem.update_webif(_key, delay_info)
+            except Exception:
+                pass
+
+        # update web interface with repeat info
+        # value: bool type True or False for repeat value
+        def _update_repeat_webif(value: bool):
+            _key1 = ['{}'.format(state.id), 'actions_stay', '{}'.format(self._name), 'repeat']
+            _key2 = ['{}'.format(state.id), 'actions_enter_or_stay', '{}'.format(self._name), 'repeat']
+            result = self._abitem.update_webif(_key1, value)
+            if result is False:
+                self._abitem.update_webif(_key2, value)
+
         self._log_decrease_indent(50)
         self._log_increase_indent()
         self._log_info("Action '{0}': Preparing", self._name)
         if not self._can_execute():
             return
-        conditions_met = 0
-        condition_necessary = 0
-        condition_to_meet = None if self.conditionset.is_empty() else self.conditionset.get()
-        condition_to_meet = condition_to_meet if isinstance(condition_to_meet, list) else [condition_to_meet]
-        current_condition = self._abitem.get_lastconditionset_id()
-        updated_current_condition = self._abitem.get_laststate_id() if current_condition == '' else current_condition
-        current_condition_met = []
-        for cond in condition_to_meet:
-            if cond is not None:
-                condition_necessary += 1
-                try:
-                    orig_cond = cond
-                    cond = re.compile(cond)
-                    matching = cond.fullmatch(updated_current_condition)
-                    if matching:
-                        self._log_debug("Given conditionset {} matches current one: {}", orig_cond, updated_current_condition)
-                        current_condition_met.append(updated_current_condition)
-                        conditions_met +=1
-                    else:
-                        self._log_debug("Given conditionset {} not matching current one: {}", orig_cond, updated_current_condition)
-                except Exception as ex:
-                    if cond is not None:
-                        self._log_warning("Given conditionset {} is not a valid regex: {}", orig_cond, ex)
-        previouscondition_to_meet = None if self.previousconditionset.is_empty() else self.previousconditionset.get()
-        previouscondition_to_meet = previouscondition_to_meet if isinstance(previouscondition_to_meet, list) else [previouscondition_to_meet]
-        previous_condition = self._abitem.get_previousconditionset_id()
-        updated_previous_condition = self._abitem.get_previousstate_id() if previous_condition == '' else previous_condition
-        previous_condition_met = []
-        for cond in previouscondition_to_meet:
-            if cond is not None:
-                condition_necessary += 1
-                try:
-                    orig_cond = cond
-                    cond = re.compile(cond)
-                    matching = cond.fullmatch(updated_previous_condition)
-                    if matching:
-                        self._log_debug("Given previousconditionset {} matches previous one: {}", orig_cond, updated_previous_condition)
-                        previous_condition_met.append(updated_previous_condition)
-                        conditions_met +=1
-                    else:
-                        self._log_debug("Given previousconditionset {} not matching previous one: {}", orig_cond, updated_previous_condition)
-                except Exception as ex:
-                    if cond is not None:
-                        self._log_warning("Given previousconditionset {} is not a valid regex: {}", orig_cond, ex)
-        previousstate_condition_to_meet = None if self.previousstate_conditionset.is_empty() else self.previousstate_conditionset.get()
-        previousstate_condition_to_meet = previousstate_condition_to_meet if isinstance(previousstate_condition_to_meet, list) else [previousstate_condition_to_meet]
-        previousstate_condition = self._abitem.get_previousstate_conditionset_id()
-        updated_previousstate_condition = self._abitem.get_previousstate_id() if previousstate_condition == '' else previousstate_condition
-        previousstate_condition_met = []
-        for cond in previousstate_condition_to_meet:
-            if cond is not None:
-                condition_necessary += 1
-                try:
-                    orig_cond = cond
-                    cond = re.compile(cond)
-                    matching = cond.fullmatch(updated_previousstate_condition)
-                    if matching:
-                        self._log_debug("Given previousstate_conditionset {} matches previous state's conditionset: {}", orig_cond, updated_previousstate_condition)
-                        previousstate_condition_met.append(updated_previousstate_condition)
-                        conditions_met +=1
-                    else:
-                        self._log_debug("Given previousstate_conditionset {} not matching previous state's conditionset: {}", orig_cond, updated_previousstate_condition)
-                except Exception as ex:
-                    if cond is not None:
-                        self._log_warning("Given previousstate_conditionset {} is not a valid regex: {}", orig_cond, ex)
+        conditions_met, condition_necessary = _check_condition('conditionset')
+        conditions_met += conditions_met
+        condition_necessary += condition_necessary
+        conditions_met, condition_necessary = _check_condition('previousconditionset')
+        conditions_met += conditions_met
+        condition_necessary += condition_necessary
+        conditions_met, condition_necessary = _check_condition('previousstate_conditionset')
+        conditions_met += conditions_met
+        condition_necessary += condition_necessary
         if conditions_met < condition_necessary:
             self._log_info("Action '{0}': Skipping because not all conditions are met.", self._name)
             return
 
         if is_repeat:
-            _key1 = ['{}'.format(state.id), 'actions_stay', '{}'.format(self._name), 'repeat']
-            _key2 = ['{}'.format(state.id), 'actions_enter_or_stay', '{}'.format(self._name), 'repeat']
             if self.__repeat is None:
                 if allow_item_repeat:
                     repeat_text = " Repeat allowed by item configuration."
-                    result = self._abitem.update_webif(_key1, True)
-                    if result is False:
-                        self._abitem.update_webif(_key2, True)
+                    _update_repeat_webif(True)
                 else:
                     self._log_info("Action '{0}': Repeat denied by item configuration.", self._name)
-                    result = self._abitem.update_webif(_key1, False)
-                    if result is False:
-                        self._abitem.update_webif(_key2, False)
+                    _update_repeat_webif(False)
                     return
             elif self.__repeat.get():
                 repeat_text = " Repeat allowed by action configuration."
-                result = self._abitem.update_webif(_key1, True)
-                if result is False:
-                    self._abitem.update_webif(_key2, True)
+                _update_repeat_webif(True)
             else:
                 self._log_info("Action '{0}': Repeat denied by action configuration.", self._name)
-                result = self._abitem.update_webif(_key1, False)
-                if result is False:
-                    self._abitem.update_webif(_key2, False)
+                _update_repeat_webif(False)
                 return
         else:
             repeat_text = ""

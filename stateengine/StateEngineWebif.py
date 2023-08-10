@@ -60,55 +60,47 @@ class WebInterface(StateEngineTools.SeItemChild):
 
     def _actionlabel(self, state, label_type, conditionset, previousconditionset, previousstate_conditionset, label_format='table'):
         actionlabel = '<<table border="0">' if label_format == 'table' else '<'
+        # Check if conditions for action are met or not
+        # action_dict: abitem[state]['on_enter'/'on_stay'/'on_enter_or_stay'/'on_leave'].get(action)
+        # condition_to_meet: 'conditionset'/'previousconditionset''previousstate_conditionset'
+        # conditionset: name of conditionset that should get checked
+        def _check_webif_conditions(action_dict, condition_to_meet: str, conditionset: str):
+            _condition_check = action_dict.get(condition_to_meet)
+            _condition_check = StateEngineTools.flatten_list(_condition_check)
+            _condition_necessary = 1 if _condition_check != 'None' else 0
+            _condition_check = _condition_check if isinstance(_condition_check, list) else [_condition_check]
+            _condition_count = 0
+            for cond in _condition_check:
+                try:
+                    _cond = re.compile(cond)
+                    _matching = _cond.fullmatch(conditionset)
+                except Exception:
+                    _matching = True
+                _condition_count += 1 if _matching else 0
+                _condition = True if _matching else False
+            return _condition_count, _condition, _condition_check, _condition_necessary
+
         originaltype = label_type
         types = [label_type] if label_type == 'actions_leave' else ['actions_enter_or_stay', label_type]
         for label_type in types:
             for action in self.__states[state].get(label_type):
-                _repeat = self.__states[state][label_type][action].get('repeat')
-                _delay = self.__states[state][label_type][action].get('delay') or 0
-                _delta = self.__states[state][label_type][action].get('delta') or 0
-                _mindelta = self.__states[state][label_type][action].get('mindelta') or 0
+                action_dict = self.__states[state][label_type].get(action)
+                _repeat = action_dict.get('repeat')
+                _delay = action_dict.get('delay') or 0
+                _delta = action_dict.get('delta') or 0
+                _mindelta = action_dict.get('mindelta') or 0
                 condition_necessary = 0
                 condition_met = True
                 condition_count = 0
-                condition_to_meet = self.__states[state][label_type][action].get('conditionset')
-                condition_to_meet = StateEngineTools.flatten_list(condition_to_meet)
-                condition_necessary += 1 if condition_to_meet != 'None' else 0
-                condition_to_meet = condition_to_meet if isinstance(condition_to_meet, list) else [condition_to_meet]
-                for cond in condition_to_meet:
-                    try:
-                        cond = re.compile(cond)
-                        matching = cond.fullmatch(conditionset)
-                    except Exception:
-                        matching = True
-                    condition_count += 1 if matching else 0
-                    condition1 = True if matching else False
-
-                previouscondition_to_meet = self.__states[state][label_type][action].get('previousconditionset')
-                previouscondition_to_meet = StateEngineTools.flatten_list(previouscondition_to_meet)
-                condition_necessary += 1 if previouscondition_to_meet != 'None' else 0
-                previouscondition_to_meet = previouscondition_to_meet if isinstance(previouscondition_to_meet, list) else [previouscondition_to_meet]
-                for cond in previouscondition_to_meet:
-                    try:
-                        cond = re.compile(cond)
-                        matching = cond.fullmatch(previousconditionset)
-                    except Exception:
-                        matching = True
-                    condition_count += 1 if matching else 0
-                    condition2 = True if matching else False
-
-                previousstate_condition_to_meet = self.__states[state][label_type][action].get('previousstate_conditionset')
-                previousstate_condition_to_meet = StateEngineTools.flatten_list(previousstate_condition_to_meet)
-                condition_necessary += 1 if previousstate_condition_to_meet != 'None' else 0
-                previousstate_condition_to_meet = previousstate_condition_to_meet if isinstance(previousstate_condition_to_meet, list) else [previousstate_condition_to_meet]
-                for cond in previousstate_condition_to_meet:
-                    try:
-                        cond = re.compile(cond)
-                        matching = cond.fullmatch(previousstate_conditionset)
-                    except Exception:
-                        matching = True
-                    condition_count += 1 if matching else 0
-                    condition3 = True if matching else False
+                count, condition1, condition_to_meet, necessary = _check_webif_conditions(action_dict, 'conditionset', conditionset)
+                condition_count += count
+                condition_necessary += necessary
+                count, condition2, previouscondition_to_meet, necessary = _check_webif_conditions(action_dict, 'previousconditionset', previousconditionset)
+                condition_count += count
+                condition_necessary += necessary
+                count, condition3, previousstate_condition_to_meet, necessary = _check_webif_conditions(action_dict, 'previousstate_conditionset', previousstate_conditionset)
+                condition_count += count
+                condition_necessary += necessary
 
                 if condition_count < condition_necessary:
                     condition_met = False

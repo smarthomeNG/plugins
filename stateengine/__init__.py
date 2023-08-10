@@ -211,5 +211,5 @@ class StateEngine(SmartPlugin):
             return '<h4>Can not show visualization. Most likely GraphViz is missing.</h4> ' \
                    'Please download and install <a href="https://graphviz.org/download/" target="_new">' \
                    'https://graphviz.org/download/</a><br/>' \
-                   'on Windows add install path to your environment path AND run dot -c.' \
+                   'on Windows add install path to your environment path AND run dot -c. ' \
                    'Additionally copy dot.exe to fdp.exe!'

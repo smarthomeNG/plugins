@@ -556,7 +556,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                 return True
 
         except Exception as ex:
-            self._log_warning("Problem checking value {}", ex)
+            self._log_warning("Problem checking value: {}", ex)
         finally:
             self._log_decrease_indent()
 
