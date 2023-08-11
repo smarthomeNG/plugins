@@ -188,6 +188,7 @@ FILE_HEADER = """\
 
 """
 
+
 def get_attrs(sub_dict: dict = {}) -> list:
     attributes = []
     for entry in ITEM_ATTRIBUTES:
@@ -196,7 +197,12 @@ def get_attrs(sub_dict: dict = {}) -> list:
                 attributes.append(db_addon_fct)
     return attributes
 
+
 def export_item_attributes_py():
+
+    print()
+    print(f"A) Start generation of {FILENAME_ATTRIBUTES}")
+
     ATTRS = dict()
     ATTRS['ALL_ONCHANGE_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'onchange'})
     ATTRS['ALL_DAILY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'daily'})
@@ -240,9 +246,10 @@ def export_item_attributes_py():
         with open(FILENAME_ATTRIBUTES, "a") as f:
             print(f'{attr} = {alist!r}', file=f)
 
-    print('item_attributes.py successfully created!')
+    print(f"   {FILENAME_ATTRIBUTES} successfully generated.")
 
-def create_plugin_yaml_item_attribute_valids():
+
+def create_plugin_yaml_item_attribute_valids(attribute):
     """Create valid_list of db_addon_fct based on master dict"""
 
     valid_list_str =         """        # NOTE: valid_list is automatically created by using item_attributes_master.py"""
@@ -267,33 +274,89 @@ def create_plugin_yaml_item_attribute_valids():
 
     return valid_list_str, valid_list_desc_str, valid_list_item_type, valid_list_calculation
 
+
 def update_plugin_yaml_item_attributes():
     """Update 'valid_list', 'valid_list_description', 'valid_list_item_type' and 'valid_list_calculation' of item attributes in plugin.yaml"""
 
+    print()
+    print(f"B) Start updating valid for attributes in {FILENAME_PLUGIN}")
+
+    for attribute in ITEM_ATTRIBUTES:
+
+        print(f"   Attribute {attribute} in progress")
+
+        yaml = ruamel.yaml.YAML()
+        yaml.indent(mapping=4, sequence=4, offset=4)
+        yaml.width = 200
+        yaml.allow_unicode = True
+        yaml.preserve_quotes = False
+
+        valid_list_str, valid_list_desc_str, valid_list_item_type_str, valid_list_calc_str = create_plugin_yaml_item_attribute_valids(attribute)
+
+        with open(FILENAME_PLUGIN, 'r', encoding="utf-8") as f:
+            data = yaml.load(f)
+
+        if data.get('item_attributes', {}).get(attribute):
+            data['item_attributes'][attribute]['valid_list'] = yaml.load(valid_list_str)
+            data['item_attributes'][attribute]['valid_list_description'] = yaml.load(valid_list_desc_str)
+            data['item_attributes'][attribute]['valid_list_item_type'] = yaml.load(valid_list_item_type_str)
+            data['item_attributes'][attribute]['valid_list_calculation'] = yaml.load(valid_list_calc_str)
+
+            with open(FILENAME_PLUGIN, 'w', encoding="utf-8") as f:
+                yaml.dump(data, f)
+            print(f"   Successfully updated Attribute '{attribute}' in plugin.yaml!")
+        else:
+            print(f"   Attribute '{attribute}' not defined in plugin.yaml")
+
+
+def check_plugin_yaml_structs():
+    # check structs for wrong attributes
+    print()
+    print(f'C) Checking used attributes in structs defined in {FILENAME_PLUGIN} ')
+
+    # open plugin.yaml and update
     yaml = ruamel.yaml.YAML()
     yaml.indent(mapping=4, sequence=4, offset=4)
     yaml.width = 200
     yaml.allow_unicode = True
     yaml.preserve_quotes = False
-
-    valid_list_str, valid_list_desc_str, valid_list_item_type_str, valid_list_calc_str = create_plugin_yaml_item_attribute_valids()
-
     with open(FILENAME_PLUGIN, 'r', encoding="utf-8") as f:
         data = yaml.load(f)
 
-    if data.get('item_attributes', {}).get(attribute):
-        data['item_attributes'][attribute]['valid_list'] = yaml.load(valid_list_str)
-        data['item_attributes'][attribute]['valid_list_description'] = yaml.load(valid_list_desc_str)
-        data['item_attributes'][attribute]['valid_list_item_type'] = yaml.load(valid_list_item_type_str)
-        data['item_attributes'][attribute]['valid_list_calculation'] = yaml.load(valid_list_calc_str)
+    structs = data.get('item_structs')
 
-        with open(FILENAME_PLUGIN, 'w', encoding="utf-8") as f:
-            yaml.dump(data, f)
-        print(f"Successfully updated Attribute '{attribute}' in plugin.yaml!")
-    else:
-        print(f"Attribute '{attribute}' not defined in plugin.yaml")
+    def get_all_keys(d):
+        for key, value in d.items():
+            yield key, value
+            if isinstance(value, dict):
+                yield from get_all_keys(value)
+
+    attr_valid = True
+
+    if structs:
+        for attr, attr_val in get_all_keys(structs):
+            if attr in ITEM_ATTRIBUTES:
+                if attr_val not in ITEM_ATTRIBUTES[attr].keys():
+                    print(f"    - {attr_val} not a valid value for {ITEM_ATTRIBUTES[attr]}")
+                    attr_valid = False
+
+    if attr_valid:
+        print(f"   All used attributes are valid.")
+
+    print(f'   Check complete.')
+
+
 
 if __name__ == '__main__':
+
+    print(f'Start automated update and check of {FILENAME_PLUGIN} and generation of {FILENAME_ATTRIBUTES}.')
+    print('-------------------------------------------------------------')
+
     export_item_attributes_py()
-    for attribute in ITEM_ATTRIBUTES:
-        update_plugin_yaml_item_attributes()
+
+    update_plugin_yaml_item_attributes()
+
+    check_plugin_yaml_structs()
+
+    print()
+    print(f'Automated update and check of {FILENAME_PLUGIN} and generation of {FILENAME_ATTRIBUTES} complete.')

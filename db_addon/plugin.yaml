@@ -66,8 +66,8 @@ parameters:
         type: bool
         default: false
         description:
-            de: 'Sperren der Datenbank während der Abfrage'
-            en: 'Lock the database during queries'
+            de: Sperren der Datenbank während der Abfrage
+            en: Lock the database during queries
 
 item_attributes:
     db_addon_fct:

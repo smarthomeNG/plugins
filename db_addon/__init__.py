@@ -25,6 +25,7 @@
 #
 #########################################################################
 
+import os
 import sqlvalidator
 import datetime
 import time
@@ -32,9 +33,11 @@ import re
 import queue
 import threading
 import logging
+import pickle
 from dateutil.relativedelta import relativedelta
 from typing import Union
 from dataclasses import dataclass, InitVar
+from collections import deque
 
 from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
@@ -58,7 +61,7 @@ class DatabaseAddOn(SmartPlugin):
 
     PLUGIN_VERSION = '1.2.3'
     # ToDo: remove revision
-    REVISION = 'D'
+    REVISION = 'E'
 
     def __init__(self, sh):
         """
@@ -68,18 +71,22 @@ class DatabaseAddOn(SmartPlugin):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
+        self.logger.debug(f'Start of {self.get_shortname()} Plugin.')
+
         # get item and shtime instance
         self.shtime = Shtime.get_instance()
         self.items = Items.get_instance()
         self.plugins = Plugins.get_instance()
 
         # define cache dicts
-        self.current_values = {}                     # Dict to hold min and max value of current day / week / month / year for items
-        self.previous_values = {}                    # Dict to hold value of end of last day / week / month / year for items
-        self.item_cache = {}                         # Dict to hold item_id, oldest_log_ts and oldest_entry for items
+        self.pickle_data_validity_time = 600  # seconds after which the data saved in pickle are not valid anymore
+        self.current_values = {}  # Dict to hold min and max value of current day / week / month / year for items
+        self.previous_values = {}  # Dict to hold value of end of last day / week / month / year for items
+        self.item_cache = {}  # Dict to hold item_id, oldest_log_ts and oldest_entry for items
 
         # define variables for database, database connection, working queue and status
         self.item_queue = queue.Queue()              # Queue containing all to be executed items
+        self.update_item_delay_deque = deque()       # Deque for delay working of updated item values
         # ToDo: Check if still needed
         self.queue_consumer_thread = None            # Queue consumer thread
         self._db_plugin = None                       # object if database plugin
@@ -93,6 +100,7 @@ class DatabaseAddOn(SmartPlugin):
         self.startup_finished = False                # Startup of Plugin finished
         self.suspended = False                       # Is plugin activity suspended
         self.active_queue_item: str = '-'            # String holding item path of currently executed item
+        self.onchange_delay_time = 30
 
         # define default mysql settings
         self.default_connect_timeout = 60
@@ -107,11 +115,15 @@ class DatabaseAddOn(SmartPlugin):
         self.use_oldest_entry = self.get_parameter_value('use_oldest_entry')
         self.lock_db_for_query = self.get_parameter_value('lock_db_for_query')
 
+        # path and filename for data storage
+        data_storage_file = 'db_addon_data'
+        self.data_storage_path = f"{os.getcwd()}/var/plugin_data/{self.get_shortname()}/{data_storage_file}.pkl"
+
         # get debug log options
         self.debug_log = DebugLogOptions(self.log_level)
 
-        # init cache dicts
-        self._init_cache_dicts()
+        # init cache data
+        self.init_cache_data()
 
         # init webinterface
         self.init_webinterface(WebInterface)
@@ -153,6 +165,9 @@ class DatabaseAddOn(SmartPlugin):
         self.logger.info(f"Set scheduler for calculating startup-items with delay of {self.startup_run_delay + 3}s to {dt}.")
         self.scheduler_add('startup', self.execute_startup_items, next=dt)
 
+        # add scheduler for delayed working if onchange items
+        self.scheduler_add('onchange_delay', self.work_update_item_delay_deque, prio=3, cron=None, cycle=30, value=None, offset=None, next=None)
+
         # update database_items in item config, where path was given
         self._update_database_items()
 
@@ -183,7 +198,10 @@ class DatabaseAddOn(SmartPlugin):
         self.logger.debug("Stop method called")
         self.alive = False
         self.scheduler_remove('cyclic')
+        self.scheduler_remove('onchange_delay')
         self._db.close()
+        self.save_cache_data()
+
         # ToDo: Check if still needed
         # self._queue_consumer_thread_shutdown()
 
@@ -740,6 +758,115 @@ class DatabaseAddOn(SmartPlugin):
                     self._init_cache_dicts()
                     item(False, self.get_shortname())
 
+    def _save_pickle(self, data) -> None:
+        """Saves received data as pickle to given file"""
+
+        if data and len(data) > 0:
+            self.logger.debug(f"Start writing data {data=} to '{self.data_storage_path}'")
+            os.makedirs(os.path.dirname(self.data_storage_path), exist_ok=True)
+            try:
+                with open(self.data_storage_path, "wb") as output:
+                    try:
+                        pickle.dump(data, output, pickle.HIGHEST_PROTOCOL)
+                        self.logger.debug(f"Successfully wrote data to '{self.data_storage_path}'")
+                    except Exception as e:
+                        self.logger.debug(f"Unable to write data to '{self.data_storage_path}': {e}")
+                        pass
+            except OSError as e:
+                self.logger.debug(f"Unable to write data to '{self.data_storage_path}': {e}")
+                pass
+
+    def _read_pickle(self):
+        """read a pickle file to gather data"""
+
+        self.logger.debug(f"Start reading data from '{self.data_storage_path}'")
+
+        if os.path.exists(self.data_storage_path):
+            with open(self.data_storage_path, 'rb') as data:
+                try:
+                    data = pickle.load(data)
+                    self.logger.debug(f"Successfully read data from {self.data_storage_path}")
+                    return data
+                except Exception as e:
+                    self.logger.debug(f"Unable to read data from {self.data_storage_path}: {e}")
+                    return None
+
+        self.logger.debug(f"Unable to read data from {self.data_storage_path}: 'File/Path not existing'")
+        return None
+
+    def init_cache_data(self):
+        """init cache dicts by reading pickle"""
+
+        def create_items_1(d):
+            n_d = {}
+            for item_str in d:
+                item = self.items.return_item(item_str)
+                if item:
+                    n_d[item] = d[item_str]
+            return n_d
+
+        def create_items_2(d):
+            n_d = {}
+            for timeframe in d:
+                n_d[timeframe] = {}
+                for item_str in d[timeframe]:
+                    item = self.items.return_item(item_str)
+                    if item:
+                        n_d[timeframe][item] = d[timeframe][item_str]
+            return n_d
+
+        # init cache dicts
+        self._init_cache_dicts()
+
+        # read pickle and set data
+        raw_data = self._read_pickle()
+
+        if not isinstance(raw_data, dict):
+            self.logger.info("Unable to extract db_addon data from pickle file. Start with empty cache.")
+            return
+
+        current_values = raw_data.get('current_values')
+        previous_values = raw_data.get('previous_values')
+        item_cache = raw_data.get('item_cache')
+        stop_time = raw_data.get('stop_time')
+
+        if not stop_time or (int(time.time()) - stop_time) > self.pickle_data_validity_time:
+            self.logger.info("Data for db_addon read from pickle are expired. Start with empty cache.")
+            return
+
+        if isinstance(current_values, dict):
+            self.current_values = create_items_2(current_values)
+        if isinstance(previous_values, dict):
+            self.previous_values = create_items_2(previous_values)
+        if isinstance(item_cache, dict):
+            self.item_cache = create_items_1(item_cache)
+
+    def save_cache_data(self):
+        """save all relevant data to survive restart, transform items in item_str"""
+
+        def clean_items_1(d):
+            n_d = {}
+            for item in d:
+                n_d[item.path()] = d[item]
+            return n_d
+
+        def clean_items_2(d):
+            n_d = {}
+            for timeframe in d:
+                n_d[timeframe] = {}
+                for item in d[timeframe]:
+                    n_d[timeframe][item.path()] = d[timeframe][item]
+            return n_d
+
+        self._save_pickle({'current_values': clean_items_2(self.current_values),
+                           'previous_values': clean_items_2(self.previous_values),
+                           'item_cache': clean_items_1(self.item_cache),
+                           'stop_time': int(time.time())})
+
+    #########################################
+    #           Item Handling
+    #########################################
+
     def execute_due_items(self) -> None:
         """Execute all items, which are due"""
 
@@ -838,11 +965,23 @@ class DatabaseAddOn(SmartPlugin):
                     item, value = queue_entry
                     self.logger.info(f"# {self.item_queue.qsize() + 1} item(s) to do. || 'on-change' item={item.path()} with {value=} will be processed.")
                     self.active_queue_item = str(item.path())
-                    self.handle_onchange(item, value)
+                    # self.handle_onchange(item, value)
+                    self.update_item_delay_deque.append([int(time.time()) + self.onchange_delay_time, item, value])
                 else:
                     self.logger.info(f"# {self.item_queue.qsize() + 1} item(s) to do. || 'on-demand' item={queue_entry.path()} will be processed.")
                     self.active_queue_item = str(queue_entry.path())
                     self.handle_ondemand(queue_entry)
+
+    def work_update_item_delay_deque(self):
+        """check update_item_delay_deque is due and process it"""
+
+        for i in range(len(self.update_item_delay_deque)):
+            [update_time, item, value] = self.update_item_delay_deque.popleft()
+            if update_time < int(time.time()):
+                self.logger.debug(f"Item {item.path()} with {value=} is now due for being processed.")
+                self.handle_onchange(item, value)
+            else:
+                self.update_item_delay_deque.append([update_time, item, value])
 
     def handle_ondemand(self, item: Item) -> None:
         """
