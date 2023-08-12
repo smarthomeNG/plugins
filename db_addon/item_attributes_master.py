@@ -25,6 +25,8 @@ FILENAME_ATTRIBUTES = 'item_attributes.py'
 
 FILENAME_PLUGIN = 'plugin.yaml'
 
+DOC_FILE_NAME = 'user_doc.rst'
+
 ITEM_ATTRIBUTES = {
     'db_addon_fct': {
         'verbrauch_heute':                         {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages)'},
@@ -312,7 +314,7 @@ def update_plugin_yaml_item_attributes():
 def check_plugin_yaml_structs():
     # check structs for wrong attributes
     print()
-    print(f'C) Checking used attributes in structs defined in {FILENAME_PLUGIN} ')
+    print(f'D) Checking used attributes in structs defined in {FILENAME_PLUGIN} ')
 
     # open plugin.yaml and update
     yaml = ruamel.yaml.YAML()
@@ -346,10 +348,52 @@ def check_plugin_yaml_structs():
     print(f'   Check complete.')
 
 
+def update_user_doc():
+    # Update user_doc.rst
+    print()
+    print(f'C) Start updating DB-Addon-Attributes and descriptions in {DOC_FILE_NAME}!"')
+    attribute_list = [
+        "Dieses Kapitel wurde automatisch durch Ausführen des Skripts in der Datei 'item_attributes_master.py' erstellt.\n", "\n",
+        "Nachfolgend eine Auflistung der möglichen Attribute für das Plugin im Format: Attribute: Beschreibung | Berechnungszyklus | Item-Type\n",
+        "\n"]
+
+    for attribute in ITEM_ATTRIBUTES:
+        attribute_list.append("\n")
+        attribute_list.append(f"{attribute}\n")
+        attribute_list.append('-' * len(attribute))
+        attribute_list.append("\n")
+        attribute_list.append("\n")
+
+        for db_addon_fct in ITEM_ATTRIBUTES[attribute]:
+            attribute_list.append(f"- {db_addon_fct}: {ITEM_ATTRIBUTES[attribute][db_addon_fct]['description']} "
+                                  f"| Berechnung: {ITEM_ATTRIBUTES[attribute][db_addon_fct]['calc']} "
+                                  f"| Item-Type: {ITEM_ATTRIBUTES[attribute][db_addon_fct]['item_type']}\n")
+            attribute_list.append("\n")
+
+    with open(DOC_FILE_NAME, 'r', encoding='utf-8') as file:
+        lines = file.readlines()
+
+    start = end = None
+    for i, line in enumerate(lines):
+        if 'db_addon Item-Attribute' in line:
+            start = i + 3
+        if 'Hinweise' in line:
+            end = i - 1
+
+    part1 = lines[0:start]
+    part3 = lines[end:len(lines)]
+    new_lines = part1 + attribute_list + part3
+
+    with open(DOC_FILE_NAME, 'w', encoding='utf-8') as file:
+        for line in new_lines:
+            file.write(line)
+
+    print(f"   Successfully updated Foshk-Attributes in {DOC_FILE_NAME}!")
+
 
 if __name__ == '__main__':
 
-    print(f'Start automated update and check of {FILENAME_PLUGIN} and generation of {FILENAME_ATTRIBUTES}.')
+    print(f'Start automated update and check of {FILENAME_PLUGIN} with generation of {FILENAME_ATTRIBUTES} and update of {DOC_FILE_NAME}.')
     print('-------------------------------------------------------------')
 
     export_item_attributes_py()
@@ -357,6 +401,8 @@ if __name__ == '__main__':
     update_plugin_yaml_item_attributes()
 
     check_plugin_yaml_structs()
+
+    update_user_doc()
 
     print()
     print(f'Automated update and check of {FILENAME_PLUGIN} and generation of {FILENAME_ATTRIBUTES} complete.')

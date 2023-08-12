@@ -975,13 +975,15 @@ class DatabaseAddOn(SmartPlugin):
     def work_update_item_delay_deque(self):
         """check update_item_delay_deque is due and process it"""
 
-        for i in range(len(self.update_item_delay_deque)):
-            [update_time, item, value] = self.update_item_delay_deque.popleft()
-            if update_time < int(time.time()):
-                self.logger.debug(f"Item {item.path()} with {value=} is now due for being processed.")
-                self.handle_onchange(item, value)
-            else:
-                self.update_item_delay_deque.append([update_time, item, value])
+        deque_len = len(self.update_item_delay_deque)
+        if deque_len > 0:
+            for i in range(deque_len):
+                [update_time, item, value] = self.update_item_delay_deque.popleft()
+                if update_time < int(time.time()):
+                    self.logger.debug(f"Item {item.path()} with {value=} is now due for being processed.")
+                    self.handle_onchange(item, value)
+                else:
+                    self.update_item_delay_deque.append([update_time, item, value])
 
     def handle_ondemand(self, item: Item) -> None:
         """
