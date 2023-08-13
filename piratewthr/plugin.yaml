@@ -11,7 +11,7 @@ plugin:
     keywords: weather sun wind rain precipitation
     #documentation: ''
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1852685'
-    version: 1.2.1                # Plugin version
+    version: 1.2.2                # Plugin version
     sh_minversion: 1.9.5.4        # minimum shNG version to use this plugin
     #sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
@@ -29,14 +29,14 @@ parameters:
     latitude:
         type: num
         mandatory: False
-        default: ''
+        default: 0
         description:
             de: 'Latitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings'
             en: 'Latitude for the location, of which weather data is requested. Default: SmartHomeNG Settings'
     longitude:
         type: num
         mandatory: False
-        default: ''
+        default: 0
         description:
             de: 'Longitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings.'
             en: 'Longitude for the location, of which weather data is requested. Default: SmartHomeNG Settings.'
