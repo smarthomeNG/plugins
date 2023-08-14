@@ -34,7 +34,7 @@ class Tasmota(MqttPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.5.1'
+    PLUGIN_VERSION = '1.5.2'
 
     LIGHT_MSG = ['HSBColor', 'Dimmer', 'Color', 'CT', 'Scheme', 'Fade', 'Speed', 'LedTable', 'White']
 
@@ -463,14 +463,19 @@ class Tasmota(MqttPlugin):
 
         self._handle_retained_message(topic, retain)
 
-        if not isinstance(payload, dict):
-            return
-
         try:
+            self.logger.dbgmed(f"on_mqtt_discovery_message: topic {topic} = {payload}")
             (tasmota, discovery, device_id, msg_type) = topic.split('/')
             self.logger.info(f"on_mqtt_discovery_message: device_id={device_id}, type={msg_type}, payload={payload}")
         except ValueError as e:
             self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
+            return
+        except Exception as e:
+            self.logger.exception(f"on_mqtt_discovery_message: Exception {e.__class__.__name__}: {e}")
+            return
+
+        if not isinstance(payload, dict):
+            self.logger.debug(f'Payload not of type dict. Message will be discarded.')
             return
 
         if msg_type == 'config':
@@ -584,15 +589,16 @@ class Tasmota(MqttPlugin):
         """
         self._handle_retained_message(topic, retain)
 
-        if not isinstance(payload, bool):
-            return
-
         try:
+            self.logger.dbgmed(f"on_mqtt_lwt_message: topic {topic} = {payload}")
             (topic_type, tasmota_topic, info_topic) = topic.split('/')
+            self.logger.info(f"on_mqtt_lwt_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
         except ValueError as e:
             self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
             return
-
+        except Exception as e:
+            self.logger.exception(f"on_mqtt_lwt_message: Exception {e.__class__.__name__}: {e}")
+            return
 
         self.logger.info(f"Received LWT Message for {tasmota_topic} with value={payload} and retain={retain}")
         if payload:
@@ -662,14 +668,19 @@ class Tasmota(MqttPlugin):
 
         self._handle_retained_message(topic, retain)
 
-        if not isinstance(payload, dict):
-            return
-
         try:
+            self.logger.dbgmed(f"on_mqtt_status0_message: topic {topic} = {payload}")
             (topic_type, tasmota_topic, info_topic) = topic.split('/')
             self.logger.info(f"on_mqtt_status0_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
         except ValueError as e:
             self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
+            return
+        except Exception as e:
+            self.logger.exception(f"on_mqtt_status0_message: Exception {e.__class__.__name__}: {e}")
+            return
+
+        if not isinstance(payload, dict):
+            self.logger.debug(f'Payload not of type dict. Message will be discarded.')
             return
 
         self.logger.info(f"Received Status0 Message for {tasmota_topic} with value={payload} and retain={retain}")
@@ -768,14 +779,19 @@ class Tasmota(MqttPlugin):
 
         self._handle_retained_message(topic, retain)
 
-        if not isinstance(payload, dict):
-            return
-
         try:
+            self.logger.dbgmed(f"on_mqtt_info_message: topic {topic} = {payload}")
             (topic_type, tasmota_topic, info_topic) = topic.split('/')
-            self.logger.debug(f"on_mqtt_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
+            self.logger.info(f"on_mqtt_info_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
         except ValueError as e:
             self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
+            return
+        except Exception as e:
+            self.logger.exception(f"on_mqtt_info_message: Exception {e.__class__.__name__}: {e}")
+            return
+
+        if not isinstance(payload, dict):
+            self.logger.debug(f'Payload not of type dict. Message will be discarded.')
             return
 
         if info_topic == 'INFO1':
@@ -820,14 +836,19 @@ class Tasmota(MqttPlugin):
 
         self._handle_retained_message(topic, retain)
 
-        if not isinstance(payload, dict):
-            return
-
         try:
+            self.logger.dbgmed(f"on_mqtt_message: topic {topic} = {payload}")
             (topic_type, tasmota_topic, info_topic) = topic.split('/')
             self.logger.info(f"on_mqtt_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
-        except ValueError as e:
-            self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
+        except ValueError:
+            self.logger.error(f"received topic {topic} is not in correct format.")
+            return
+        except Exception as e:
+            self.logger.exception(f"on_mqtt_message: Exception {e.__class__.__name__}: {e}")
+            return
+
+        if not isinstance(payload, dict):
+            self.logger.debug(f'Payload not of type dict. Message will be discarded.')
             return
 
         # handle unknown device
@@ -905,7 +926,7 @@ class Tasmota(MqttPlugin):
         # setting online_item to True
         self._set_item_value(tasmota_topic, 'online', True, info_topic)
 
-    def on_mqtt_power_message(self,  topic: str, payload: dict, qos: int = None, retain: bool = None) -> None:
+    def on_mqtt_power_message(self,  topic: str, payload: bool, qos: int = None, retain: bool = None) -> None:
         """
         Callback function to handle received power messages
 
@@ -918,14 +939,15 @@ class Tasmota(MqttPlugin):
 
         self._handle_retained_message(topic, retain)
 
-        if not isinstance(payload, dict):
-            return
-
         try:
+            self.logger.dbgmed(f"on_mqtt_power_message: topic {topic} = {payload}")
             (topic_type, tasmota_topic, info_topic) = topic.split('/')
             self.logger.info(f"on_mqtt_power_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
-        except ValueError as e:
-            self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
+        except ValueError:
+            self.logger.error(f"received topic {topic} is not in correct format.")
+            return
+        except Exception as e:
+            self.logger.exception(f"on_mqtt_power_message: Exception {e.__class__.__name__}: {e}")
             return
 
         device = self.tasmota_devices.get(tasmota_topic)
@@ -933,10 +955,10 @@ class Tasmota(MqttPlugin):
             return
 
         if info_topic.startswith('POWER'):
-            tasmota_relay = str(info_topic[5:])
+            tasmota_relay = (info_topic[5:])
             if not tasmota_relay:
                 tasmota_relay = 1
-            self._set_item_value(tasmota_topic, f'relay.{tasmota_relay}', payload == 'ON', info_topic)
+            self._set_item_value(tasmota_topic, f'relay.{tasmota_relay}', payload, info_topic)
             self.tasmota_devices[tasmota_topic]['relais'][info_topic] = payload
 
     ############################################################
@@ -1390,11 +1412,11 @@ class Tasmota(MqttPlugin):
       # self.add_tasmota_subscription('tele', '+', 'INFO1',  'dict', callback=self.on_mqtt_message)
       # self.add_tasmota_subscription('tele', '+', 'INFO2',  'dict', callback=self.on_mqtt_message)
         self.add_tasmota_subscription('tele', '+', 'INFO3',  'dict', callback=self.on_mqtt_info_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER',  'num',  callback=self.on_mqtt_power_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER1', 'num',  callback=self.on_mqtt_power_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER2', 'num',  callback=self.on_mqtt_power_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER3', 'num',  callback=self.on_mqtt_power_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER4', 'num',  callback=self.on_mqtt_power_message)
+        self.add_tasmota_subscription('stat', '+', 'POWER',  'bool', bool_values=['OFF', 'ON'], callback=self.on_mqtt_power_message)
+        self.add_tasmota_subscription('stat', '+', 'POWER1', 'bool', bool_values=['OFF', 'ON'], callback=self.on_mqtt_power_message)
+        self.add_tasmota_subscription('stat', '+', 'POWER2', 'bool', bool_values=['OFF', 'ON'], callback=self.on_mqtt_power_message)
+        self.add_tasmota_subscription('stat', '+', 'POWER3', 'bool', bool_values=['OFF', 'ON'], callback=self.on_mqtt_power_message)
+        self.add_tasmota_subscription('stat', '+', 'POWER4', 'bool', bool_values=['OFF', 'ON'], callback=self.on_mqtt_power_message)
 
     def check_online_status(self):
         """
@@ -1410,7 +1432,7 @@ class Tasmota(MqttPlugin):
                 else:
                     self.logger.debug(f'check_online_status: Checking online status of {tasmota_topic} successful')
 
-    def add_tasmota_subscription(self, prefix: str, topic: str, detail: str, payload_type: str, bool_values: list = None, item: Item=None, callback=None) -> None:
+    def add_tasmota_subscription(self, prefix: str, topic: str, detail: str, payload_type: str, bool_values: list = None, item: Item = None, callback=None) -> None:
         """
         build the topic in Tasmota style and add the subscription to mqtt
 
@@ -1429,7 +1451,7 @@ class Tasmota(MqttPlugin):
         tpc += detail
         self.add_subscription(tpc, payload_type, bool_values=bool_values, callback=callback)
 
-    def publish_tasmota_topic(self, prefix: str, topic: str, detail: str, payload, item: Item=None, qos: int = None, retain: bool = False, bool_values: list = None) -> None:
+    def publish_tasmota_topic(self, prefix: str, topic: str, detail: str, payload, item: Item = None, qos: int = None, retain: bool = False, bool_values: list = None) -> None:
         """
         build the topic in Tasmota style and publish to mqtt
 
@@ -1688,7 +1710,6 @@ class Tasmota(MqttPlugin):
         else:
             if topic in self.topics_of_retained_messages:
                 self.topics_of_retained_messages.remove(topic)
-
 
     ############################################################
     #   Plugin Properties
