@@ -306,22 +306,24 @@
 			<td class="py-1">{{ (p.startup_run_delay) }}s</td>
 		</tr>
 		{% set first = True %}
-		{% for key, value in p._db._params.items() %}
-			{% if loop.index % 4 == 0 %}
-				<tr>
-				{% endif %}
-					{% if key != "passwd" %}
-					    <td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{{ value }}</td>
-					{% else %}
-					    <td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{% for letter in value %}*{% endfor %}</td>
-					{% endif %}
-					{% if loop.index % 3 > 0 and loop.last %}
-						<td class="py-1" colspan="{{ loop.index % 3 }}"></td>
-					{% endif %}
-				{% if loop.index % 4 == 0 and not first %}
-				</tr>
-			{% endif %}
-        {% endfor %}
+        {% if p._db %}
+            {% for key, value in p._db._params.items() %}
+                {% if loop.index % 4 == 0 %}
+                    <tr>
+                    {% endif %}
+                        {% if key != "passwd" %}
+                            <td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{{ value }}</td>
+                        {% else %}
+                            <td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{% for letter in value %}*{% endfor %}</td>
+                        {% endif %}
+                        {% if loop.index % 3 > 0 and loop.last %}
+                            <td class="py-1" colspan="{{ loop.index % 3 }}"></td>
+                        {% endif %}
+                    {% if loop.index % 4 == 0 and not first %}
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
         <tr>
             <td class="py-1"><strong>{{ _('Item in Berechnung') }}</strong></td>
             <td class="py-1 active_item truncate" id="active_queue_item">{{ p.active_queue_item }}</td>

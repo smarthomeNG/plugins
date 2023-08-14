@@ -36,7 +36,7 @@ parameters:
             en: Delay in seconds, after which the startup calculations will be run
 
     ignore_0:
-        type: list
+        type: list(str)
         default: []
         description:
             de: 'Bei Items, bei denen ein String aus der Liste im Pfadnamen vorkommt, werden 0-Werte (val_num = 0) bei Datenbankauswertungen ignoriert. Beispieleintrag: temp | hum'
