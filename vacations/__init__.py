@@ -38,10 +38,11 @@ class Vacations(SmartPlugin):
         # Call init code of parent class (SmartPlugin or MqttPlugin)
         super().__init__()
 
-        self._cycle = 300
+        self._cycle = self.get_parameter_value('cycle')
         self.shtime = Shtime.get_instance()
         self._province_codes = self.ALLOWED_PROVINCES
         self._vacation_list = {}
+        self._update_vacations()
         self.init_webinterface()
 
     def run(self):
@@ -85,7 +86,7 @@ class Vacations(SmartPlugin):
 
     def get_vacation(self, date_str=None, province=None):
         if province is None:
-            if self.shtime.config.get('location', None).get('country') not in ['DE', 'de']:
+            if self.shtime.config.get('location', None).get('country').lower() not in ['de', 'germany']:
                 self.logger.error('The SmartHomeNG country "%s" not supported by vacations plugin' % self.shtime.config.get('location', None).get('country'))
                 return
             else:
@@ -122,7 +123,7 @@ class Vacations(SmartPlugin):
     def is_vacation(self, date_str=None, province=None):
         v = self.get_vacation(date_str, province)
         if v is not None:
-            return True,
+            return True
         else:
             return False
 
