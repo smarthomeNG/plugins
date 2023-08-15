@@ -78,14 +78,15 @@ class WebInterface(SmartPluginWebIf):
         if dataSet is None:
             data = {}
             data['beodevice_info'] = self.plugin.beodevices.beodeviceinfo
-            data['item_values'] = self.plugin._item_values
-            return json.dumps(data)
 
-            # return it as json the the web page
+            data['item_values'] = self.plugin._item_values
+            #return json.dumps(data)
+
+            # return it as json the web page
             try:
                 return json.dumps(data)
             except Exception as e:
-                self.logger.error("get_data_html exception: {}".format(e))
+                self.logger.error(f"get_data_html exception: {e} - {data['beodevice_info']}")
                 return {}
 
         return
