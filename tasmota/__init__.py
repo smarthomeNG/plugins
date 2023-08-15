@@ -467,8 +467,8 @@ class Tasmota(MqttPlugin):
             self.logger.dbgmed(f"on_mqtt_discovery_message: topic {topic} = {payload}")
             (tasmota, discovery, device_id, msg_type) = topic.split('/')
             self.logger.info(f"on_mqtt_discovery_message: device_id={device_id}, type={msg_type}, payload={payload}")
-        except ValueError as e:
-            self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
+        except ValueError:
+            self.logger.error(f"received topic {topic} is not in correct format.")
             return
         except Exception as e:
             self.logger.exception(f"on_mqtt_discovery_message: Exception {e.__class__.__name__}: {e}")
@@ -593,8 +593,8 @@ class Tasmota(MqttPlugin):
             self.logger.dbgmed(f"on_mqtt_lwt_message: topic {topic} = {payload}")
             (topic_type, tasmota_topic, info_topic) = topic.split('/')
             self.logger.info(f"on_mqtt_lwt_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
-        except ValueError as e:
-            self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
+        except ValueError:
+            self.logger.error(f"received topic {topic} is not in correct format.")
             return
         except Exception as e:
             self.logger.exception(f"on_mqtt_lwt_message: Exception {e.__class__.__name__}: {e}")
@@ -672,8 +672,8 @@ class Tasmota(MqttPlugin):
             self.logger.dbgmed(f"on_mqtt_status0_message: topic {topic} = {payload}")
             (topic_type, tasmota_topic, info_topic) = topic.split('/')
             self.logger.info(f"on_mqtt_status0_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
-        except ValueError as e:
-            self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
+        except ValueError:
+            self.logger.error(f"received topic {topic} is not in correct format.")
             return
         except Exception as e:
             self.logger.exception(f"on_mqtt_status0_message: Exception {e.__class__.__name__}: {e}")
@@ -783,8 +783,8 @@ class Tasmota(MqttPlugin):
             self.logger.dbgmed(f"on_mqtt_info_message: topic {topic} = {payload}")
             (topic_type, tasmota_topic, info_topic) = topic.split('/')
             self.logger.info(f"on_mqtt_info_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
-        except ValueError as e:
-            self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
+        except ValueError:
+            self.logger.error(f"received topic {topic} is not in correct format.")
             return
         except Exception as e:
             self.logger.exception(f"on_mqtt_info_message: Exception {e.__class__.__name__}: {e}")
@@ -1406,17 +1406,13 @@ class Tasmota(MqttPlugin):
     def add_tasmota_subscriptions(self):
         self.logger.info(f"Further tasmota_subscriptions for regular/cyclic messages will be added")
 
-        self.add_tasmota_subscription('tele', '+', 'STATE',  'dict', callback=self.on_mqtt_message)
-        self.add_tasmota_subscription('tele', '+', 'SENSOR', 'dict', callback=self.on_mqtt_message)
-        self.add_tasmota_subscription('tele', '+', 'RESULT', 'dict', callback=self.on_mqtt_message)
-      # self.add_tasmota_subscription('tele', '+', 'INFO1',  'dict', callback=self.on_mqtt_message)
-      # self.add_tasmota_subscription('tele', '+', 'INFO2',  'dict', callback=self.on_mqtt_message)
+        for detail in ('STATE', 'SENSOR', 'RESULT'):
+            self.add_tasmota_subscription('tele', '+',  detail, 'dict', callback=self.on_mqtt_message)
+
         self.add_tasmota_subscription('tele', '+', 'INFO3',  'dict', callback=self.on_mqtt_info_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER',  'bool', bool_values=['OFF', 'ON'], callback=self.on_mqtt_power_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER1', 'bool', bool_values=['OFF', 'ON'], callback=self.on_mqtt_power_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER2', 'bool', bool_values=['OFF', 'ON'], callback=self.on_mqtt_power_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER3', 'bool', bool_values=['OFF', 'ON'], callback=self.on_mqtt_power_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER4', 'bool', bool_values=['OFF', 'ON'], callback=self.on_mqtt_power_message)
+
+        for detail in ('POWER', 'POWER1', 'POWER2', 'POWER3', 'POWER4'):
+            self.add_tasmota_subscription('stat', '+', detail, 'bool', bool_values=['OFF', 'ON'], callback=self.on_mqtt_power_message)
 
     def check_online_status(self):
         """
