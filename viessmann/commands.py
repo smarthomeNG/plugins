@@ -13,7 +13,7 @@
 
 commands = {
     'ALL': {
-        'Anlagentyp': {'read': True, 'write': False, 'opcode': '00f8', 'reply_pattern': '*', 'item_type': 'str', 'dev_datatype': 'H', 'params': {'value': 'VAL', 'len': 2}, 'lookup': 'devicetypes', 'item_attrs': {'no_read_groups': True, 'attributes': {'md_read_initial': True}}},     # getAnlTyp -- Information - Allgemein: Anlagentyp (204D)
+        'Anlagentyp': {'read': True, 'write': False, 'opcode': '00f8', 'reply_pattern': '*', 'item_type': 'str', 'dev_datatype': 'H', 'params': {'value': 'VAL', 'len': 2}, 'lookup': 'devicetypes', 'item_attrs': {'no_read_groups': True, 'initial': True}},     # getAnlTyp -- Information - Allgemein: Anlagentyp (204D)
     },
     'V200KO1B': {
         'Allgemein': {
@@ -497,7 +497,7 @@ commands = {
                 'Aussen':             {'read': True, 'write': False, 'opcode': '0101', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 10, 'signed': True, 'len': 2}},     # getTempA -- Information - Allgemein: Aussentemperatur (-40..70)
             },
             # Anlagenstatus
-            'Betriebsart':            {'read': True, 'write': True,  'opcode': 'b000', 'reply_pattern': '*', 'item_type': 'str',  'dev_datatype': 'H', 'params': {'value': 'VAL', 'len': 1}, 'lookup': 'operatingmodes', 'item_attrs': {'attributes': {'md_read_initial': True}, 'lookup_item': True}},     # getBetriebsart -- Bedienung HK1 - Heizkreis 1: Betriebsart (Textstring)
+            'Betriebsart':            {'read': True, 'write': True,  'opcode': 'b000', 'reply_pattern': '*', 'item_type': 'str',  'dev_datatype': 'H', 'params': {'value': 'VAL', 'len': 1}, 'lookup': 'operatingmodes', 'item_attrs': {'initial': True, 'lookup_item': True}},     # getBetriebsart -- Bedienung HK1 - Heizkreis 1: Betriebsart (Textstring)
             'Manuell':                {'read': True, 'write': True,  'opcode': 'b020', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}, 'cmd_settings': {'force_min': 0, 'force_max': 2}},     # getManuell / setManuell -- 0 = normal, 1 = manueller Heizbetrieb, 2 = 1x Warmwasser auf Temp2
             # Allgemein
             'Outdoor_Fanspeed':       {'read': True, 'write': False, 'opcode': '1a52', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}},     # getSpdFanOut -- Outdoor Fanspeed

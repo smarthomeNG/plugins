@@ -36,13 +36,14 @@ if __name__ == '__main__':
 
     BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
     sys.path.insert(0, BASE)
+    from protocol import SDPProtocolViessmann
 
 else:
     builtins.SDP_standalone = False
+    from .protocol import SDPProtocolViessmann
 
 from lib.model.sdp.globals import PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_PROTOCOL
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
-from .protocol import SDPProtocolViessmann
 
 
 if not SDP_standalone:
@@ -244,4 +245,4 @@ class viessmann(SmartDevicePlugin):
 
 
 if __name__ == '__main__':
-    s = Standalone(sdp_viessmann, sys.argv[0])
+    s = Standalone(viessmann, sys.argv[0])
