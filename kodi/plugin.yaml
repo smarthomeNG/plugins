@@ -1,5 +1,3 @@
-%YAML 1.1
----
 
 plugin:
     type: interface
@@ -30,8 +28,8 @@ parameters:
         default: ''
 
         description:
-            de: 'Item-Pfad für das Suspend-Item'
-            en: 'item path for suspend switch item'
+            de: Item-Pfad für das Suspend-Item
+            en: item path for suspend switch item
 
     timeout:
         type: num
@@ -78,16 +76,16 @@ parameters:
         default: 30
 
         description:
-            de: 'Pause zwischen Durchgängen von Verbindungsversuchen'
-            en: 'wait time between connect retry rounds'
+            de: Pause zwischen Durchgängen von Verbindungsversuchen
+            en: wait time between connect retry rounds
 
     retry_suspend:
         type: num
         default: 0
 
         description:
-            de: 'Anzahl von Durchgängen vor Verbindungsabbruch oder Suspend-Modus'
-            en: 'number of connect rounds before giving up / entering suspend mode'
+            de: Anzahl von Durchgängen vor Verbindungsabbruch oder Suspend-Modus
+            en: number of connect rounds before giving up / entering suspend mode
 
     message_timeout:
         type: num
@@ -212,198 +210,202 @@ item_structs:
 
     info:
 
-        info:
+        read:
+            type: bool
+            enforce_updates: true
+            kodi_read_group_trigger@instance: info
 
-            player:
-                type: num
-                kodi_command@instance: info.player
-                kodi_read@instance: true
-                kodi_write@instance: false
+        player:
+            type: num
+            kodi_command@instance: info.player
+            kodi_read@instance: true
+            kodi_write@instance: false
 
-            state:
-                type: str
-                kodi_command@instance: info.state
-                kodi_read@instance: true
-                kodi_write@instance: false
+        state:
+            type: str
+            kodi_command@instance: info.state
+            kodi_read@instance: true
+            kodi_write@instance: false
 
-            media:
-                type: str
-                kodi_command@instance: info.media
-                kodi_read@instance: true
-                kodi_write@instance: false
+        media:
+            type: str
+            kodi_command@instance: info.media
+            kodi_read@instance: true
+            kodi_write@instance: false
 
-            title:
-                type: str
-                kodi_command@instance: info.title
-                kodi_read@instance: true
-                kodi_write@instance: false
+        title:
+            type: str
+            kodi_command@instance: info.title
+            kodi_read@instance: true
+            kodi_write@instance: false
 
-            streams:
-                type: list
-                kodi_command@instance: info.streams
-                kodi_read@instance: true
-                kodi_write@instance: false
+        streams:
+            type: list
+            kodi_command@instance: info.streams
+            kodi_read@instance: true
+            kodi_write@instance: false
 
-            subtitles:
-                type: list
-                kodi_command@instance: info.subtitles
-                kodi_read@instance: true
-                kodi_write@instance: false
+        subtitles:
+            type: list
+            kodi_command@instance: info.subtitles
+            kodi_read@instance: true
+            kodi_write@instance: false
 
-            macro:
-                type: bool
-                kodi_command@instance: info.macro
-                kodi_read@instance: true
-                kodi_write@instance: true
+        macro:
+            type: bool
+            kodi_command@instance: info.macro
+            kodi_read@instance: true
+            kodi_write@instance: true
 
     status:
 
-        status:
+        read:
+            type: bool
+            enforce_updates: true
+            kodi_read_group_trigger@instance: status
 
-            read:
-                type: bool
-                enforce_updates: true
-                kodi_read_group_trigger@instance: status
+        update:
+            type: bool
+            kodi_command@instance: status.update
+            kodi_read@instance: false
+            kodi_write@instance: true
+            kodi_read_group@instance:
+            -   status
 
-            update:
-                type: bool
-                kodi_command@instance: status.update
-                kodi_read@instance: false
-                kodi_write@instance: true
-                kodi_read_group@instance:
-                -   status
+        ping:
+            type: bool
+            kodi_command@instance: status.ping
+            kodi_read@instance: true
+            kodi_write@instance: false
+            kodi_read_group@instance:
+            -   status
 
-            ping:
-                type: bool
-                kodi_command@instance: status.ping
-                kodi_read@instance: true
-                kodi_write@instance: false
-                kodi_read_group@instance:
-                -   status
+        get_status_au:
+            type: bool
+            kodi_command@instance: status.get_status_au
+            kodi_read@instance: true
+            kodi_write@instance: false
+            kodi_read_group@instance:
+            -   status
 
-            get_status_au:
-                type: bool
-                kodi_command@instance: status.get_status_au
-                kodi_read@instance: true
-                kodi_write@instance: false
-                kodi_read_group@instance:
-                -   status
+        get_players:
+            type: bool
+            kodi_command@instance: status.get_players
+            kodi_read@instance: true
+            kodi_write@instance: false
+            kodi_read_group@instance:
+            -   status
 
-            get_players:
-                type: bool
-                kodi_command@instance: status.get_players
-                kodi_read@instance: true
-                kodi_write@instance: false
-                kodi_read_group@instance:
-                -   status
+        get_actplayer:
+            type: bool
+            kodi_command@instance: status.get_actplayer
+            kodi_read@instance: true
+            kodi_write@instance: false
+            kodi_read_group@instance:
+            -   status
 
-            get_actplayer:
-                type: bool
-                kodi_command@instance: status.get_actplayer
-                kodi_read@instance: true
-                kodi_write@instance: false
-                kodi_read_group@instance:
-                -   status
+        get_status_play:
+            type: bool
+            kodi_command@instance: status.get_status_play
+            kodi_read@instance: true
+            kodi_write@instance: false
+            kodi_read_group@instance:
+            -   status
 
-            get_status_play:
-                type: bool
-                kodi_command@instance: status.get_status_play
-                kodi_read@instance: true
-                kodi_write@instance: false
-                kodi_read_group@instance:
-                -   status
+        get_item:
+            type: bool
+            kodi_command@instance: status.get_item
+            kodi_read@instance: true
+            kodi_write@instance: false
+            kodi_read_group@instance:
+            -   status
 
-            get_item:
-                type: bool
-                kodi_command@instance: status.get_item
-                kodi_read@instance: true
-                kodi_write@instance: false
-                kodi_read_group@instance:
-                -   status
-
-            get_favourites:
-                type: bool
-                kodi_command@instance: status.get_favourites
-                kodi_read@instance: true
-                kodi_write@instance: false
-                kodi_read_group@instance:
-                -   status
+        get_favourites:
+            type: bool
+            kodi_command@instance: status.get_favourites
+            kodi_read@instance: true
+            kodi_write@instance: false
+            kodi_read_group@instance:
+            -   status
 
     control:
 
-        control:
+        read:
+            type: bool
+            enforce_updates: true
+            kodi_read_group_trigger@instance: control
 
-            playpause:
-                type: bool
-                kodi_command@instance: control.playpause
-                kodi_read@instance: true
-                kodi_write@instance: true
+        playpause:
+            type: bool
+            kodi_command@instance: control.playpause
+            kodi_read@instance: true
+            kodi_write@instance: true
 
-            seek:
-                type: num
-                kodi_command@instance: control.seek
-                kodi_read@instance: true
-                kodi_write@instance: true
+        seek:
+            type: num
+            kodi_command@instance: control.seek
+            kodi_read@instance: true
+            kodi_write@instance: true
 
-            audio:
-                type: foo
-                kodi_command@instance: control.audio
-                kodi_read@instance: true
-                kodi_write@instance: true
+        audio:
+            type: foo
+            kodi_command@instance: control.audio
+            kodi_read@instance: true
+            kodi_write@instance: true
 
-            speed:
-                type: num
-                kodi_command@instance: control.speed
-                kodi_read@instance: true
-                kodi_write@instance: true
+        speed:
+            type: num
+            kodi_command@instance: control.speed
+            kodi_read@instance: true
+            kodi_write@instance: true
 
-            subtitle:
-                type: foo
-                kodi_command@instance: control.subtitle
-                kodi_read@instance: true
-                kodi_write@instance: true
+        subtitle:
+            type: foo
+            kodi_command@instance: control.subtitle
+            kodi_read@instance: true
+            kodi_write@instance: true
 
-            stop:
-                type: bool
-                kodi_command@instance: control.stop
-                kodi_read@instance: true
-                kodi_write@instance: true
+        stop:
+            type: bool
+            kodi_command@instance: control.stop
+            kodi_read@instance: true
+            kodi_write@instance: true
 
-            goto:
-                type: str
-                kodi_command@instance: control.goto
-                kodi_read@instance: true
-                kodi_write@instance: true
+        goto:
+            type: str
+            kodi_command@instance: control.goto
+            kodi_read@instance: true
+            kodi_write@instance: true
 
-            power:
-                type: bool
-                kodi_command@instance: control.power
-                kodi_read@instance: true
-                kodi_write@instance: true
+        power:
+            type: bool
+            kodi_command@instance: control.power
+            kodi_read@instance: true
+            kodi_write@instance: true
 
-            quit:
-                type: bool
-                kodi_command@instance: control.quit
-                kodi_read@instance: true
-                kodi_write@instance: true
+        quit:
+            type: bool
+            kodi_command@instance: control.quit
+            kodi_read@instance: true
+            kodi_write@instance: true
 
-            mute:
-                type: bool
-                kodi_command@instance: control.mute
-                kodi_read@instance: true
-                kodi_write@instance: true
+        mute:
+            type: bool
+            kodi_command@instance: control.mute
+            kodi_read@instance: true
+            kodi_write@instance: true
 
-            volume:
-                type: num
-                kodi_command@instance: control.volume
-                kodi_read@instance: true
-                kodi_write@instance: true
+        volume:
+            type: num
+            kodi_command@instance: control.volume
+            kodi_read@instance: true
+            kodi_write@instance: true
 
-            action:
-                type: str
-                kodi_command@instance: control.action
-                kodi_read@instance: true
-                kodi_write@instance: true
+        action:
+            type: str
+            kodi_command@instance: control.action
+            kodi_read@instance: true
+            kodi_write@instance: true
 
     ALL:
 
@@ -413,6 +415,11 @@ item_structs:
             kodi_read_group_trigger@instance: ALL
 
         info:
+
+            read:
+                type: bool
+                enforce_updates: true
+                kodi_read_group_trigger@instance: ALL.info
 
             player:
                 type: num
@@ -537,6 +544,11 @@ item_structs:
 
         control:
 
+            read:
+                type: bool
+                enforce_updates: true
+                kodi_read_group_trigger@instance: ALL.control
+
             playpause:
                 type: bool
                 kodi_command@instance: control.playpause
@@ -608,6 +620,5 @@ item_structs:
                 kodi_command@instance: control.action
                 kodi_read@instance: true
                 kodi_write@instance: true
-
 plugin_functions: NONE
 logic_parameters: NONE
