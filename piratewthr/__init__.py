@@ -37,7 +37,7 @@ from .webif import WebInterface
 class PirateWeather(SmartPlugin):
 
 
-    PLUGIN_VERSION = "1.2.2"
+    PLUGIN_VERSION = "1.2.3"
 
     # https://api.pirateweather.net/forecast/[apikey]/[latitude],[longitude]
     _base_url = 'https://api.pirateweather.net/forecast/'
