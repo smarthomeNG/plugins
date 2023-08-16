@@ -107,7 +107,9 @@ $("a").click(function() {
 <div class="container-fluid m-2 table-resize">
   <div class="mb-2">
     {{ _('Die folgenden Items verfügen über ein StateEngine Item') }}.
-    <strong>{{ _('Klick auf das Lupensymbol öffnet die Visualisierung!') }}</strong>
+    {% if p.vis_enabled %}
+      <strong>{{ _('Klick auf das Lupensymbol öffnet die Visualisierung!') }}</strong>
+    {% endif %}
   </div>
   <table id="maintable">
     <thead>
@@ -128,7 +130,12 @@ $("a").click(function() {
         <td class="py-1" id="{{ item }}_lastconditionset">
           {% if item.lastconditionset_name == "" %}-{% else %}{{ item.lastconditionset_name }}{% endif %}</td>
         <td>
-          <button type="button" class="btn btn-shng btn-sm" title="{{ _('Detailvisualisierung') }}" onclick="location.href='?action=get_graph&abitem={{ item }}';"><i class="fas fa-search"></i></button></td>
+          {% if p.vis_enabled %}
+            <button type="button" class="btn btn-shng btn-sm" title="{{ _('Detailvisualisierung') }}" onclick="location.href='?action=get_graph&abitem={{ item }}';"><i class="fas fa-search"></i></button>
+          {% else %}
+            <span title="{{ _('KeineVisualisierung') }}">X</span>
+          {% endif %}
+        </td>
         <td class="py-1">{{ item.log_level }}</td>
         <td class="py-1">{% for cond in item.webif_infos.keys() %}{% if not p.itemsApi.return_item(cond) == None %}{% if loop.index > 1 %},{% endif %}{{ p.itemsApi.return_item(cond)._name.split('.')[-1] }}{% endif %}{% endfor %}</td>
 

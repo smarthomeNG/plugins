@@ -13,3 +13,4 @@ plugin_translations:
     'Items':                                                        {'de': '=', 'en': '='}
     'SE Item':                                                      {'de': '=', 'en': '='}
     'Detailvisualisierung':                                         {'de': '=', 'en': 'Detailed Visualization'}
+    'KeineVisualisierung':                                          {'de': 'Visualisierung nicht verfügbar', 'en': 'Visualization not available'}

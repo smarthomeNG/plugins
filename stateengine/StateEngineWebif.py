@@ -357,8 +357,12 @@ class WebInterface(StateEngineTools.SeItemChild):
                 self.__conditionset_count = len(self.__states[state].get('conditionsets'))
                 if self.__conditionset_count == 0:
                     self.__states[state]['conditionsets'][''] = ''
+                try:
+                    list_index = list(self.__states.keys()).index(self.__active_state)
+                except Exception:
+                    list_index = 0
                 color = "chartreuse3" if state == self.__active_state \
-                    else "gray" if i > list(self.__states.keys()).index(self.__active_state) else "indianred2"
+                    else "gray" if i > list_index else "indianred2"
 
                 new_y -= 1 * self.__scalefactor
                 position = '{},{}!'.format(0, new_y)
