@@ -77,9 +77,9 @@ class SeState(StateEngineTools.SeItemChild):
         try:
             self.__id = self.__item.property.path
             self._log_info("Init state {}", self.__id)
-        except Exception as err:
+        except Exception as ex:
             self.__id = None
-            self._log_info("Problem init state ID of Item {}. {}", self.__item, err)
+            self._log_info("Problem init state ID of Item {}. {}", self.__item, ex)
         self.__text = StateEngineValue.SeValue(self._abitem, "State Name", False, "str")
         self.__use = StateEngineValue.SeValue(self._abitem, "State configuration extension", True, "item")
         self.__release = StateEngineValue.SeValue(self._abitem, "State released by", True, "item")

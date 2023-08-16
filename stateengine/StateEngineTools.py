@@ -198,7 +198,10 @@ def cast_str(value):
     if isinstance(value, str):
         return value
     else:
-        raise ValueError("Can't cast {0} to str!".format(value))
+        try:
+            return str(value)
+        except Exception:
+            raise ValueError("Can't cast {0} to str!".format(value))
 
 
 # cast a value as list. Throws ValueError if cast is not possible

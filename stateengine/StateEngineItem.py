@@ -281,6 +281,7 @@ class SeItem:
             self.__has_released.pop('initial')
         except Exception:
             pass
+        self.__logger.info("".ljust(80, "_"))
         self.__logger.develop("ALL RELEASEDBY: {}", self.__all_releasedby)
         self.__logger.develop("HAS RELEASED: {}", self.__has_released)
 
@@ -756,7 +757,7 @@ class SeItem:
             return
         self.__queue.put(["stateevaluation", item, caller, source, dest])
         if not self.update_lock.locked():
-            self.__logger.debug("Run queue to update state. Item: {}, caller: {}, source: {}".format(item, caller, source))
+            self.__logger.debug("Run queue to update state. Item: {}, caller: {}, source: {}", item, caller, source)
             self.run_queue()
 
     # check if state can be entered after setting state-specific variables
@@ -1036,7 +1037,7 @@ class SeItem:
             self.__logger.info("Template {0}: {1}", t, self.__templates.get(t))
         self.__logger.info("Cycle: {0}", cycles)
         self.__logger.info("Cron: {0}", crons)
-        self.__logger.info("Trigger: {0}".format(triggers))
+        self.__logger.info("Trigger: {0}", triggers)
         self.__repeat_actions.write_to_logger()
 
         # log laststate settings
@@ -1214,7 +1215,7 @@ class SeItem:
         if not self.__ab_alive and self.__se_plugin.scheduler_get(scheduler_name):
             next_run = self.__shtime.now() + datetime.timedelta(seconds=3)
             self.__logger.debug(
-                "Startup Delay over but StateEngine Plugin not running yet. Will try again at {}".format(next_run))
+                "Startup Delay over but StateEngine Plugin not running yet. Will try again at {}", next_run)
             self.__se_plugin.scheduler_change(scheduler_name, next=next_run)
             self.__se_plugin.scheduler_trigger(scheduler_name)
         else:
@@ -1246,8 +1247,8 @@ class SeItem:
         if item_id is None:
             return None
         if not isinstance(item_id, str):
-            self.__logger.info("'{0}' should be defined as string. Check your item config!".format(item_id))
             return None
+            self.__logger.info("'{0}' should be defined as string. Check your item config!", item_id)
         item_id = item_id.strip()
         if item_id.startswith("struct:"):
             item = None
@@ -1256,16 +1257,16 @@ class SeItem:
                 #self.__logger.debug("Creating struct for id {}".format(item_id))
                 item = StateEngineStructs.create(self, item_id)
             except Exception as e:
-                self.__logger.error("struct {} creation failed. Error: {}".format(item_id, e))
+                self.__logger.error("struct {} creation failed. Error: {}", item_id, e)
             if item is None:
-                self.__logger.warning("Item '{0}' not found!".format(item_id))
             return item
+                self.__logger.warning("Item '{0}' not found!", item_id)
         if not item_id.startswith("."):
             item = self.itemsApi.return_item(item_id)
             if item is None:
-                self.__logger.warning("Item '{0}' not found!".format(item_id))
             return item
-        self.__logger.debug("Testing for relative item declaration {}".format(item_id))
+                self.__logger.warning("Item '{0}' not found!", item_id)
+        self.__logger.debug("Testing for relative item declaration {}", item_id)
         parent_level = 0
         for c in item_id:
             if c != '.':
@@ -1285,15 +1286,15 @@ class SeItem:
             result += "." + rel_item_id
         item = self.itemsApi.return_item(result)
         if item is None:
-            self.__logger.warning("Determined item '{0}' does not exist.".format(result))
+            self.__logger.warning("Determined item '{0}' does not exist.", result)
         else:
-            self.__logger.develop("Determined item '{0}' for id {1}.".format(item.id, item_id))
         return item
+            self.__logger.develop("Determined item '{0}' for id {1}.", item.id, item_id)
 
     # Return an item related to the StateEngine object item
     # attribute: Name of the attribute of the StateEngine object item, which contains the item_id to read
     def return_item_by_attribute(self, attribute):
         if attribute not in self.__item.conf:
-            self.__logger.warning("Problem with attribute '{0}'.".format(attribute))
             return None
+            self.__logger.warning("Problem with attribute '{0}'.", attribute)
         return self.return_item(self.__item.conf[attribute])

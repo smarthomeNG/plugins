@@ -201,6 +201,12 @@ class SeEval(StateEngineTools.SeItemChild):
             self._eval_lock.release()
         return returnvalue
 
+    # Alias for get_attributevalue
+    # item: can be a (relative) item or a stateengine variable
+    # attrib: name of attribute, can actually be any attribute name you can think of ;)
+    def get_attribute_value(self, item, attrib):
+        self.get_attributevalue(item, attrib)
+
     # Return an attribute of the current state declaration
     # item: can be a (relative) item or a stateengine variable
     # attrib: name of attribute, can actually be any attribute name you can think of ;)

@@ -502,8 +502,8 @@ class SeValue(StateEngineTools.SeItemChild):
     def cast_item(self, value):
         try:
             return self._abitem.return_item(value)
-        except Exception as e:
-            self._log_error("Can't cast {0} to item/struct! {1}".format(value, e))
+        except Exception as ex:
+            self._log_error("Can't cast {0} to item/struct! {1}".format(value, ex))
             return value
 
     def __update_item_listorder(self, value, newvalue, id=None):
@@ -578,7 +578,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         if any(x in value for x in ['sh.', '_eval', '(']):
                             raise ValueError("You most likely forgot to prefix your expression with 'eval:'")
                         else:
-                            raise ValueError("Not possible to cast: {}".format(ex))
+                            raise ValueError("Not possible to cast")
                     if value in self.__listorder:
                         self.__listorder[self.__listorder.index(value)] = _newvalue
                     value = _newvalue
@@ -666,7 +666,7 @@ class SeValue(StateEngineTools.SeItemChild):
             if "stateengine_eval" in self.__eval or "se_eval" in self.__eval:
                 # noinspection PyUnusedLocal
                 stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
-            self._log_debug("Checking eval: {0} from list {1}", self.__eval, self.__listorder)
+            self._log_debug("Checking eval: {0}", self.__eval)
             self._log_increase_indent()
             try:
                 _newvalue = self.__do_cast(eval(self.__eval))

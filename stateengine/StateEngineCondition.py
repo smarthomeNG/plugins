@@ -83,10 +83,14 @@ class SeCondition(StateEngineTools.SeItemChild):
                 _, _, value = value.partition(":")
             self.__status = self._abitem.return_item(value)
         elif func == "se_eval":
-            if ":" in value:
-                self._log_warning("Your eval configuration '{0}' is wrong! Define a plain eval "
-                                  "term without eval: at the beginning!", value)
-                _, _, value = value.partition(":")
+            if value.startswith("eval:"):
+                _, _, value = value.partition("eval:")
+            wrong_start = ["item:", "regex:", "value:", "var:"]
+            if any(value.startswith(wrong_start) for wrong_start in wrong_start):
+                self._log_warning("Your eval configuration '{0}' is wrong! You have to define "
+                                  "a plain eval expression", value)
+                issue = "Your eval configuration '{0}' is wrong!".format(value)
+                value = None
             self.__eval = value
         if func == "se_value":
             self.__value.set(value, self.__name)
@@ -226,7 +230,7 @@ class SeCondition(StateEngineTools.SeItemChild):
 
         # now we should have either 'item' or 'eval' set. If not, raise ValueError
         if self.__item is None and self.__status is None and self.__eval is None:
-            raise ValueError("Condition {}: Neither 'item' nor 'status' nor 'eval' given!".format(self.__name))
+            raise ValueError("Neither 'item' nor 'status' nor 'eval' given!")
 
         if (self.__item is not None or self.__status is not None or self.__eval is not None)\
            and not self.__changedby.is_empty() and self.__changedbynegate is None:
@@ -789,4 +793,4 @@ class SeCondition(StateEngineTools.SeItemChild):
                     return value
             else:
                 return self.__eval()
-        raise ValueError("Condition {}: Neither 'item' nor eval given!".format(self.__name))
+        raise ValueError("Condition {}: Neither 'item' nor 'status' nor 'eval' given!".format(self.__name))

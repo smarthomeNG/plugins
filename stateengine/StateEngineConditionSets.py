@@ -63,7 +63,9 @@ class SeConditionSets(StateEngineTools.SeItemChild):
         if name not in self.__condition_sets:
             self.__condition_sets[name] = StateEngineConditionSet.SeConditionSet(self._abitem, name, item)
         # Update this condition set
+        self._log_develop("Starting update of condition '{0}'.", name)
         self.__condition_sets[name].update(item, grandparent_item)
+        self._log_develop("Finished update of condition '{0}'.", name)
 
     # Check the condition sets, optimize and complete them
     # item_state: item to read from
