@@ -61,7 +61,7 @@ class DatabaseAddOn(SmartPlugin):
 
     PLUGIN_VERSION = '1.2.3'
     # ToDo: remove revision
-    REVISION = 'E'
+    REVISION = 'G'
 
     def __init__(self, sh):
         """
@@ -97,7 +97,6 @@ class DatabaseAddOn(SmartPlugin):
         self.item_attribute_search_str = 'database'  # attribute, on which an item configured for database can be identified
         self.last_connect_time = 0                   # mechanism for limiting db connection requests
         self.alive = None                            # Is plugin alive?
-        self.startup_finished = False                # Startup of Plugin finished
         self.suspended = False                       # Is plugin activity suspended
         self.active_queue_item: str = '-'            # String holding item path of currently executed item
         self.onchange_delay_time = 30
@@ -164,9 +163,6 @@ class DatabaseAddOn(SmartPlugin):
         dt = self.shtime.now() + relativedelta(seconds=(self.startup_run_delay + 3))
         self.logger.info(f"Set scheduler for calculating startup-items with delay of {self.startup_run_delay + 3}s to {dt}.")
         self.scheduler_add('startup', self.execute_startup_items, next=dt)
-
-        # add scheduler for delayed working if onchange items
-        self.scheduler_add('onchange_delay', self.work_update_item_delay_deque, prio=3, cron=None, cycle=30, value=None, offset=None, next=None)
 
         # update database_items in item config, where path was given
         self._update_database_items()
@@ -738,13 +734,13 @@ class DatabaseAddOn(SmartPlugin):
         if self.alive and caller != self.get_shortname():
             # handle database items
             if item in self._database_items():
-                if not self.startup_finished:
-                    self.logger.info(f"Handling of 'on-change' is paused for startup. No updated will be processed.")
-                elif self.suspended:
+                # if not self.startup_finished:
+                #     self.logger.info(f"Handling of 'on-change' is paused for startup. No updated will be processed.")
+                if self.suspended:
                     self.logger.info(f"Plugin is suspended. No updated will be processed.")
                 else:
-                    self.logger.info(f"+ Updated item '{item.path()}' with value {item()} will be put to queue for processing. {self.item_queue.qsize() + 1} items to do.")
-                    self.item_queue.put((item, item()))
+                    self.logger.debug(f" Updated Item {item.path()} with value {item()} will be put to queue in approx. {self.onchange_delay_time}s resp. after startup.")
+                    self.update_item_delay_deque.append([item, item(), int(time.time() + self.onchange_delay_time)])
 
             # handle admin items
             elif self.has_iattr(item.conf, 'db_addon_admin'):
@@ -762,7 +758,7 @@ class DatabaseAddOn(SmartPlugin):
         """Saves received data as pickle to given file"""
 
         if data and len(data) > 0:
-            self.logger.debug(f"Start writing data {data=} to '{self.data_storage_path}'")
+            self.logger.debug(f"Start writing {data=} to '{self.data_storage_path}'")
             os.makedirs(os.path.dirname(self.data_storage_path), exist_ok=True)
             try:
                 with open(self.data_storage_path, "wb") as output:
@@ -873,10 +869,13 @@ class DatabaseAddOn(SmartPlugin):
         self.execute_items()
 
     def execute_startup_items(self) -> None:
-        """Execute all startup_items"""
+        """Execute all startup_items and set scheduler for delaying on-change items"""
 
+        # execute item calculation
         self.execute_items(option='startup')
-        self.startup_finished = True
+
+        # add scheduler for delayed working if onchange items
+        self.scheduler_add('onchange_delay', self.work_update_item_delay_deque, prio=3, cron=None, cycle=30, value=None, offset=None, next=None)
 
     def execute_items(self, option: str = 'due', item: str = None):
         """Execute all items per option"""
@@ -965,25 +964,24 @@ class DatabaseAddOn(SmartPlugin):
                     item, value = queue_entry
                     self.logger.info(f"# {self.item_queue.qsize() + 1} item(s) to do. || 'on-change' item={item.path()} with {value=} will be processed.")
                     self.active_queue_item = str(item.path())
-                    # self.handle_onchange(item, value)
-                    self.update_item_delay_deque.append([int(time.time()) + self.onchange_delay_time, item, value])
+                    self.handle_onchange(item, value)
                 else:
                     self.logger.info(f"# {self.item_queue.qsize() + 1} item(s) to do. || 'on-demand' item={queue_entry.path()} will be processed.")
                     self.active_queue_item = str(queue_entry.path())
                     self.handle_ondemand(queue_entry)
 
     def work_update_item_delay_deque(self):
-        """check update_item_delay_deque is due and process it"""
+        """check if entries in update_item_delay_deque are due, if so put it to working queue"""
 
-        deque_len = len(self.update_item_delay_deque)
-        if deque_len > 0:
-            for i in range(deque_len):
-                [update_time, item, value] = self.update_item_delay_deque.popleft()
-                if update_time < int(time.time()):
-                    self.logger.debug(f"Item {item.path()} with {value=} is now due for being processed.")
-                    self.handle_onchange(item, value)
-                else:
-                    self.update_item_delay_deque.append([update_time, item, value])
+        while self.update_item_delay_deque:
+            update_time = self.update_item_delay_deque[0][2]
+            if update_time <= int(time.time()):
+                [item, value, *_] = self.update_item_delay_deque.popleft()
+                self.logger.info(f"+ Updated item '{item.path()}' with value {item()} is now due to be put to queue for processing. {self.item_queue.qsize() + 1} items to do.")
+                self.item_queue.put((item, value))
+            else:
+                self.logger.debug(f"Remaining items in deque are not due, yet.")
+                break
 
     def handle_ondemand(self, item: Item) -> None:
         """
