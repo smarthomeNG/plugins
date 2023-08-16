@@ -208,27 +208,30 @@ class WebInterface(StateEngineTools.SeItemChild):
                 if cond1 and cond2 and cond3 and cond4 and cond5 and cond6 and cond7 and cond8 and cond9 and cond10 and cond11:
                     if condition not in conditions_done:
                         current_clean = ", ".join(f"{k} = {v}" for k, v in current.items())
-                        text = " Current {}".format(current_clean) if len(current) > 0 else " Not evaluated."
+                        text = " Current {}".format(current_clean) if current and len(current) > 0 else " Not evaluated."
                         conditionlist += '<tr><td align="center" colspan="4"><table border="0" cellpadding="0" cellborder="0"><tr><td></td><td align="center">{}:{}</td><td></td></tr><tr><td width="40%"></td><td  align="center" border="1" height="1"></td><td width="40%"></td></tr></table></td></tr>'.format(condition.upper(), text)
                     conditions_done.append(condition)
                     conditionlist += '<tr><td align="center"><b>'
-
+                    info_status = str(condition_dict.get('status') or '')
+                    info_item = str(condition_dict.get('item') or '')
+                    info_eval = str(condition_dict.get('eval') or '')
+                    info_compare = str(condition_dict.get(compare) or '')
                     if not status_none:
-                        textlength = len(str(condition_dict.get('status')))
+                        textlength = len(info_status)
                         if textlength > self.__textlimit:
                             if tooltip_count > 0:
                                 condition_tooltip += '&#13;&#10;&#13;&#10;'
                             tooltip_count += 1
                             condition_tooltip += '{}'.format(condition_dict.get('status'))
                     elif not item_none:
-                        textlength = len(str(condition_dict.get('item')))
+                        textlength = len(info_item)
                         if textlength > self.__textlimit:
                             if tooltip_count > 0:
                                 condition_tooltip += '&#13;&#10;&#13;&#10;'
                             tooltip_count += 1
                             condition_tooltip += '{}'.format(condition_dict.get('item'))
                     elif not eval_none:
-                        textlength = len(str(condition_dict.get('eval')))
+                        textlength = len(info_eval)
                         if textlength > self.__textlimit:
                             if tooltip_count > 0:
                                 condition_tooltip += '&#13;&#10;&#13;&#10;'
@@ -237,12 +240,12 @@ class WebInterface(StateEngineTools.SeItemChild):
                     else:
                         textlength = 0
 
-                    info_item = str(condition_dict.get('item'))[:self.__textlimit] + '.. &nbsp;' * int(textlength > self.__textlimit)
-                    info_status = str(condition_dict.get('status'))[:self.__textlimit] + '.. &nbsp;' * int(textlength > self.__textlimit)
-                    info_eval = str(condition_dict.get('eval'))[:self.__textlimit] + '.. &nbsp;' * int(textlength > self.__textlimit)
-                    info_value = str(condition_dict.get(compare))[:self.__textlimit] + '.. &nbsp;' * \
-                        int(len(str(condition_dict.get(compare))) > self.__textlimit)
-                    textlength = len(str(condition_dict.get(compare)))
+                    info_item = info_item[:self.__textlimit] + '.. &nbsp;' * int(textlength > self.__textlimit)
+                    info_status = info_status[:self.__textlimit] + '.. &nbsp;' * int(textlength > self.__textlimit)
+                    info_eval = info_eval[:self.__textlimit] + '.. &nbsp;' * int(textlength > self.__textlimit)
+                    info_value = info_compare[:self.__textlimit] + '.. &nbsp;' * \
+                        int(len(info_compare) > self.__textlimit)
+                    textlength = len(info_compare)
                     if textlength > self.__textlimit:
                         if tooltip_count > 0:
                             condition_tooltip += '&#13;&#10;&#13;&#10;'
@@ -276,7 +279,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                                  else "=="
 
                     match_info = ''
-                    if len(match) > 0:
+                    if match and len(match) > 0:
                         match_info = match.get('value') if compare in ["min", "max", "value"]\
                                      else match.get('age') if compare in ["agemin", "agemax", "age"]\
                                      else match.get('value') if compare in ["min", "max", "value"]\
@@ -397,14 +400,19 @@ class WebInterface(StateEngineTools.SeItemChild):
                 action_tooltip = ''
                 j = 0
                 new_x = 0.9
+                actions_enter = self.__states[state].get('actions_enter') or []
+                actions_enter_or_stay = self.__states[state].get('actions_enter_or_stay') or []
+                actions_stay = self.__states[state].get('actions_stay') or []
+                actions_leave = self.__states[state].get('actions_leave') or []
                 for j, conditionset in enumerate(self.__states[state]['conditionsets']):
-                    if len(self.__states[state].get('actions_enter')) > 0 or len(self.__states[state].get('actions_enter_or_stay')) > 0:
+
+                    if len(actions_enter) > 0 or len(actions_enter_or_stay) > 0:
                         actionlist_enter, action_tooltip_enter, action_tooltip_count_enter = self._actionlabel(state, 'actions_enter', conditionset, previousconditionset, previousstate_conditionset)
 
-                    if len(self.__states[state].get('actions_stay')) > 0 or len(self.__states[state].get('actions_enter_or_stay')) > 0:
+                    if len(actions_stay) > 0 or len(actions_enter_or_stay) > 0:
                         actionlist_stay, action_tooltip_stay, action_tooltip_count_stay = self._actionlabel(state, 'actions_stay', conditionset, previousconditionset, previousstate_conditionset)
 
-                    if len(self.__states[state].get('actions_leave')) > 0:
+                    if len(actions_leave) > 0:
                         actionlist_leave, action_tooltip_leave, action_tooltip_count_leave = self._actionlabel(state, 'actions_leave', conditionset, previousconditionset, previousstate_conditionset)
 
                     new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
@@ -504,7 +512,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                                                              style='bold', color='black', tooltip='check next conditionset'))
                     previous_conditionset = self.__nodes['{}_{}'.format(state, conditionset)]
 
-                if len(self.__states[state].get('actions_leave')) > 0:
+                if len(actions_leave) > 0:
                     new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
                     position = '{},{}!'.format(0.5, new_y)
                     #self._log_debug('leaveconditions {}', position)
