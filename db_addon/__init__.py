@@ -980,7 +980,7 @@ class DatabaseAddOn(SmartPlugin):
                 self.logger.info(f"+ Updated item '{item.path()}' with value {item()} is now due to be put to queue for processing. {self.item_queue.qsize() + 1} items to do.")
                 self.item_queue.put((item, value))
             else:
-                self.logger.debug(f"Remaining items in deque are not due, yet.")
+                self.logger.debug(f"Remaining {len(self.update_item_delay_deque)} items in deque are not due, yet.")
                 break
 
     def handle_ondemand(self, item: Item) -> None:
