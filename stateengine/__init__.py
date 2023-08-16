@@ -209,7 +209,7 @@ class StateEngine(SmartPlugin):
         except ImportError as ex:
            self.logger.error("Problem getting graph for {}. ImportError: {}".format(abitem, ex))
            return '<h4>Can not show visualization.</h4> ' \
-                  'Current issue: ' + ex + '<br/>'\
+                  'Current issue: ' + str(ex) + '<br/>'\
                   'Please make sure <a href="https://graphviz.org/download/" target="_new">' \
                   'graphviz</a> is installed.<br/>' \
                   'On Windows add install path to your environment path AND run dot -c. ' \
@@ -217,4 +217,4 @@ class StateEngine(SmartPlugin):
         except Exception as ex:
             self.logger.error("Problem getting graph for {}. Unspecified Error: {}".format(abitem, ex))
             return '<h4>Can not show visualization.</h4> ' \
-                   'Current unspecified issue: ' + ex + '<br/>'
+                   'Current unspecified issue: ' + str(ex) + '<br/>'
