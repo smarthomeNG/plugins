@@ -206,10 +206,15 @@ class StateEngine(SmartPlugin):
                         <img src="static/img/visualisations/{0}.svg"\
                         style="max-width: 100%; height: auto; width: auto\9; ">\
                         </iframe></object>'.format(abitem)
+        except ImportError as ex:
+           self.logger.error("Problem getting graph for {}. ImportError: {}".format(abitem, ex))
+           return '<h4>Can not show visualization.</h4> ' \
+                  'Current issue: ' + ex + '<br/>'\
+                  'Please make sure <a href="https://graphviz.org/download/" target="_new">' \
+                  'graphviz</a> is installed.<br/>' \
+                  'On Windows add install path to your environment path AND run dot -c. ' \
+                  'Additionally copy dot.exe to fdp.exe!'
         except Exception as ex:
-            self.logger.error("Problem getting graph for {}. Error: {}".format(abitem, ex))
-            return '<h4>Can not show visualization. Most likely GraphViz is missing.</h4> ' \
-                   'Please download and install <a href="https://graphviz.org/download/" target="_new">' \
-                   'https://graphviz.org/download/</a><br/>' \
-                   'on Windows add install path to your environment path AND run dot -c. ' \
-                   'Additionally copy dot.exe to fdp.exe!'
+            self.logger.error("Problem getting graph for {}. Unspecified Error: {}".format(abitem, ex))
+            return '<h4>Can not show visualization.</h4> ' \
+                   'Current unspecified issue: ' + ex + '<br/>'
