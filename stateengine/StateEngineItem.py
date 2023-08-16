@@ -96,43 +96,53 @@ class SeItem:
 
     @property
     def laststate(self):
-        return self.__laststate_item_id.property.value
+        _returnvalue = None if self.__laststate_item_id is None else self.__laststate_item_id.property.value
+        return _returnvalue
 
     @property
     def previousstate(self):
-        return self.__previousstate_item_id.property.value
+        _returnvalue = None if self.__previousstate_item_id is None else self.__previousstate_item_id.property.value
+        return _returnvalue
 
     @property
     def lastconditionset(self):
-        return self.__lastconditionset_item_id.property.value
+        _returnvalue = None if self.__lastconditionset_item_id is None else self.__lastconditionset_item_id.property.value
+        return _returnvalue
 
     @property
     def previousconditionset(self):
-        return self.__previousconditionset_item_id.property.value
+        _returnvalue = None if self.__previousconditionset_item_id is None else self.__previousconditionset_item_id.property.value
+        return _returnvalue
 
     @property
     def previousstate_conditionset(self):
-        return self.__previousstate_conditionset_item_id.property.value
+        _returnvalue = None if self.__previousstate_conditionset_item_id is None else self.__previousstate_conditionset_item_id.property.value
+        return _returnvalue
 
     @property
     def laststate_name(self):
-        return self.__laststate_item_name.property.value
+        _returnvalue = None if self.__laststate_item_name is None else self.__laststate_item_name.property.value
+        return _returnvalue
 
     @property
     def previousstate_name(self):
-        return self.__previousstate_item_name.property.value
+        _returnvalue = None if self.__previousstate_item_name is None else self.__previousstate_item_name.property.value
+        return _returnvalue
 
     @property
     def lastconditionset_name(self):
-        return self.__lastconditionset_item_name.property.value
+        _returnvalue = None if self.__lastconditionset_item_name is None else self.__lastconditionset_item_name.property.value
+        return _returnvalue
 
     @property
     def previousconditionset_name(self):
-        return self.__previousconditionset_item_name.property.value
+        _returnvalue = None if self.__previousconditionset_item_name is None else self.__previousconditionset_item_name.property.value
+        return _returnvalue
 
     @property
     def previousstate_conditionset_name(self):
-        return self.__previousstate_conditionset_item_name.property.value
+        _returnvalue = None if self.__previousstate_conditionset_item_name is None else self.__previousstate_conditionset_item_name.property.value
+        return _returnvalue
 
     @property
     def ab_alive(self):
