@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/tasmota/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1520293-support-thread-für-das-tasmota-plugin
 
-    version: 1.5.1                 # Plugin version
+    version: 1.5.2                 # Plugin version
     sh_minversion: 1.9.3           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion:                # minimum Python version to use for this plugin
