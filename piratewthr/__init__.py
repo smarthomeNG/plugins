@@ -37,7 +37,7 @@ from .webif import WebInterface
 class PirateWeather(SmartPlugin):
 
 
-    PLUGIN_VERSION = "1.2.1"
+    PLUGIN_VERSION = "1.2.3"
 
     # https://api.pirateweather.net/forecast/[apikey]/[latitude],[longitude]
     _base_url = 'https://api.pirateweather.net/forecast/'
@@ -89,7 +89,7 @@ class PirateWeather(SmartPlugin):
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self._key = self.get_parameter_value('key')
-        if self.get_parameter_value('latitude') != '' and self.get_parameter_value('longitude') != '':
+        if self.get_parameter_value('latitude') != 0 and self.get_parameter_value('longitude') != 0:
             self._lat = self.get_parameter_value('latitude')
             self._lon = self.get_parameter_value('longitude')
         else:
@@ -220,6 +220,10 @@ class PirateWeather(SmartPlugin):
         if response.status_code >= 500:
             self.logger.warning(f"api.pirateweather.net: {self.get_http_response(response.status_code)} - Ignoring response.")
             return
+
+        if json_obj['currently']['temperature'] > 45:
+            # Log data, if receiving data in imperial units
+            self.logger.notice(f"Data in imperial units?: {json_obj}")
 
         daily_data = OrderedDict()
         if not json_obj.get('daily', False):

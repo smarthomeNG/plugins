@@ -22,19 +22,19 @@ plugin:
 
 parameters:
     latitude:
-        type: str
+        type: num
         mandatory: False
-        default: ''
+        default: 0.0
         description:
-            de: 'Breitengrad der Solaranlage in dezimalen Grad'
-            en: 'Latitude of solar system in decimal degree'
+            de: '(Optional) Breitengrad der Solaranlage in dezimalen Grad'
+            en: '(Optional) Latitude of solar system in decimal degree. Otherwise taken from smarthome config.'
     longitude:
-        type: str
+        type: num
         mandatory: False
-        default: ''
+        default: 0.0
         description:
-            de: 'Laengengrad der Solaranlage in dezimalen Grad'
-            en: 'Longitude of solar system in decimal degree'
+            de: '(Optional) Laengengrad der Solaranlage in dezimalen Grad. '
+            en: '(Optional) Longitude of solar system in decimal degree. Otherwise taken from smarthome config.'
     declination:
         type: num
         mandatory: True
