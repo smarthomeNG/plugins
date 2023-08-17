@@ -34,7 +34,7 @@ class Tasmota(MqttPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.5.1'
+    PLUGIN_VERSION = '1.5.2'
 
     LIGHT_MSG = ['HSBColor', 'Dimmer', 'Color', 'CT', 'Scheme', 'Fade', 'Speed', 'LedTable', 'White']
 
@@ -461,116 +461,123 @@ class Tasmota(MqttPlugin):
 
         """
 
-        self._handle_retained_message(topic, retain)
-
-        if not isinstance(payload, dict):
-            return
-
         try:
-            (tasmota, discovery, device_id, msg_type) = topic.split('/')
-            self.logger.info(f"on_mqtt_discovery_message: device_id={device_id}, type={msg_type}, payload={payload}")
-        except ValueError as e:
-            self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
-            return
+            self.logger.dbgmed(f"on_mqtt_discovery_message: topic {topic} = {payload}")
+            self._handle_retained_message(topic, retain)
 
-        if msg_type == 'config':
-            """
-            device_id = 2CF432CC2FC5
-
-            payload =
-            {
-                'ip': '192.168.2.33',                                                                                                   // IP address
-                'dn': 'NXSM200_01',                                                                                                     // Device name
-                'fn': ['NXSM200_01', None, None, None, None, None, None, None],                                                         // List of friendly names
-                'hn': 'NXSM200-01-4037',                                                                                                // Hostname
-                'mac': '2CF432CC2FC5',                                                                                                  // MAC Adresse ohne :
-                'md': 'NXSM200',                                                                                                        // Module
-                'ty': 0,                                                                                                                // Tuya
-                'if': 0,                                                                                                                // ifan
-                'ofln': 'Offline',                                                                                                      // LWT-offline
-                'onln': 'Online',                                                                                                       // LWT-online
-                'state': ['OFF', 'ON', 'TOGGLE', 'HOLD'],                                                                               // StateText[0..3]
-                'sw': '12.1.1',                                                                                                         // Firmware Version
-                't': 'NXSM200_01',                                                                                                      // Topic
-                'ft': '%prefix%/%topic%/',                                                                                              // Full Topic
-                'tp': ['cmnd', 'stat', 'tele'],                                                                                         // Topic [SUB_PREFIX, PUB_PREFIX, PUB_PREFIX2]
-                'rl': [1, 0, 0, 0, 0, 0, 0, 0],                                                                                         // Relays, 0: disabled, 1: relay, 2.. future extension (fan, shutter?)
-                'swc': [-1, -1, -1, -1, -1, -1, -1, -1],                                                                                // SwitchMode
-                'swn': [None, None, None, None, None, None, None, None],                                                                // SwitchName
-                'btn': [0, 0, 0, 0, 0, 0, 0, 0],                                                                                        // Buttons
-                'so': {'4': 0, '11': 0, '13': 0, '17': 0, '20': 0, '30': 0, '68': 0, '73': 0, '82': 0, '114': 0, '117': 0},             // SetOption needed by HA to map Tasmota devices to HA entities and triggers
-                'lk': 0,                                                                                                                // ctrgb
-                'lt_st': 0,                                                                                                             // Light subtype
-                'sho': [0, 0, 0, 0],
-                'sht': [[0, 0, 48], [0, 0, 46], [0, 0, 110], [0, 0, 108]],
-                'ver': 1                                                                                                                // Discovery protocol version
-            }
-            """
-
-            tasmota_topic = payload.get('t')
-            if tasmota_topic:
-
-                device_name = payload.get('dn')
-                self.logger.info(f"Discovered Tasmota Device with topic={tasmota_topic} and device_name={device_name}")
-
-                # if device is unknown, add it to dict
-                if tasmota_topic not in self.tasmota_devices:
-                    self.logger.info(f"New device based on Discovery Message found.")
-                    self._add_new_device_to_tasmota_devices(tasmota_topic)
-
-                # process decoding message and set device to status 'discovered'
-                self.tasmota_devices[tasmota_topic]['ip'] = payload.get('ip')
-                self.tasmota_devices[tasmota_topic]['friendly_name'] = payload.get('fn', ['None'])[0]
-                self.tasmota_devices[tasmota_topic]['fw_ver'] = payload.get('sw')
-                self.tasmota_devices[tasmota_topic]['device_id'] = device_id
-                self.tasmota_devices[tasmota_topic]['module'] = payload.get('md')
-                self.tasmota_devices[tasmota_topic]['mac'] = ':'.join(device_id[i:i + 2] for i in range(0, 12, 2))
-                self.tasmota_devices[tasmota_topic]['discovery_config'] = self._rename_discovery_keys(payload)
-                self.tasmota_devices[tasmota_topic]['status'] = 'discovered'
-
-                # start device interview
-                self._interview_device(tasmota_topic)
-
-                if payload['ft'] != self.full_topic:
-                    self.logger.warning(f"Device {device_name} discovered, but FullTopic of device does not match plugin setting!")
-
-                # if zigbee bridge, process those
-                if 'zigbee_bridge' in device_name.lower():
-                    self.logger.info(f"Zigbee_Bridge discovered")
-                    self.tasmota_devices[tasmota_topic]['zigbee']['status'] = 'discovered'
-                    self._configure_zigbee_bridge_settings(tasmota_topic)
-                    self._discover_zigbee_bridge_devices(tasmota_topic)
-
-        elif msg_type == 'sensors':
-            """
-            device_id = 2CF432CC2FC5
-
-            payload = {'sn': {'Time': '2022-11-19T13:35:59',
-                              'ENERGY': {'TotalStartTime': '2019-12-23T17:02:03', 'Total': 85.314, 'Yesterday': 0.0,
-                                         'Today': 0.0, 'Power': 0, 'ApparentPower': 0, 'ReactivePower': 0, 'Factor': 0.0,
-                                         'Voltage': 0, 'Current': 0.0}}, 'ver': 1}
-            """
-
-            # get payload with Sensor information
-            sensor_payload = payload.get('sn')
-
-            if not sensor_payload or not isinstance(sensor_payload, dict):
+            try:
+                (tasmota, discovery, device_id, msg_type) = topic.split('/')
+                self.logger.info(f"on_mqtt_discovery_message: device_id={device_id}, type={msg_type}, payload={payload}")
+            except ValueError:
+                self.logger.error(f"received topic {topic} is not in correct format.")
                 return
 
-            if 'Time' in sensor_payload:
-                sensor_payload.pop('Time')
+            if not isinstance(payload, dict):
+                self.logger.debug(f'Payload not of type dict. Message will be discarded.')
+                return
 
-            # find matching tasmota_topic
-            tasmota_topic = None
-            for entry in self.tasmota_devices:
-                if self.tasmota_devices[entry].get('device_id') == device_id:
-                    tasmota_topic = entry
-                    break
+            if msg_type == 'config':
+                """
+                device_id = 2CF432CC2FC5
+    
+                payload =
+                {
+                    'ip': '192.168.2.33',                                                                                                   // IP address
+                    'dn': 'NXSM200_01',                                                                                                     // Device name
+                    'fn': ['NXSM200_01', None, None, None, None, None, None, None],                                                         // List of friendly names
+                    'hn': 'NXSM200-01-4037',                                                                                                // Hostname
+                    'mac': '2CF432CC2FC5',                                                                                                  // MAC Adresse ohne :
+                    'md': 'NXSM200',                                                                                                        // Module
+                    'ty': 0,                                                                                                                // Tuya
+                    'if': 0,                                                                                                                // ifan
+                    'ofln': 'Offline',                                                                                                      // LWT-offline
+                    'onln': 'Online',                                                                                                       // LWT-online
+                    'state': ['OFF', 'ON', 'TOGGLE', 'HOLD'],                                                                               // StateText[0..3]
+                    'sw': '12.1.1',                                                                                                         // Firmware Version
+                    't': 'NXSM200_01',                                                                                                      // Topic
+                    'ft': '%prefix%/%topic%/',                                                                                              // Full Topic
+                    'tp': ['cmnd', 'stat', 'tele'],                                                                                         // Topic [SUB_PREFIX, PUB_PREFIX, PUB_PREFIX2]
+                    'rl': [1, 0, 0, 0, 0, 0, 0, 0],                                                                                         // Relays, 0: disabled, 1: relay, 2.. future extension (fan, shutter?)
+                    'swc': [-1, -1, -1, -1, -1, -1, -1, -1],                                                                                // SwitchMode
+                    'swn': [None, None, None, None, None, None, None, None],                                                                // SwitchName
+                    'btn': [0, 0, 0, 0, 0, 0, 0, 0],                                                                                        // Buttons
+                    'so': {'4': 0, '11': 0, '13': 0, '17': 0, '20': 0, '30': 0, '68': 0, '73': 0, '82': 0, '114': 0, '117': 0},             // SetOption needed by HA to map Tasmota devices to HA entities and triggers
+                    'lk': 0,                                                                                                                // ctrgb
+                    'lt_st': 0,                                                                                                             // Light subtype
+                    'sho': [0, 0, 0, 0],
+                    'sht': [[0, 0, 48], [0, 0, 46], [0, 0, 110], [0, 0, 108]],
+                    'ver': 1                                                                                                                // Discovery protocol version
+                }
+                """
 
-            # hand over sensor information payload for parsing
-            if tasmota_topic:
-                self.logger.info(f"Discovered Tasmota Device with topic={tasmota_topic} and SensorInformation")
-                self._handle_sensor(tasmota_topic, '', sensor_payload)
+                tasmota_topic = payload.get('t')
+                if tasmota_topic:
+
+                    device_name = payload.get('dn')
+                    self.logger.info(f"Discovered Tasmota Device with topic={tasmota_topic} and device_name={device_name}")
+
+                    # if device is unknown, add it to dict
+                    if tasmota_topic not in self.tasmota_devices:
+                        self.logger.info(f"New device based on Discovery Message found.")
+                        self._add_new_device_to_tasmota_devices(tasmota_topic)
+
+                    # process decoding message and set device to status 'discovered'
+                    self.tasmota_devices[tasmota_topic]['ip'] = payload.get('ip')
+                    self.tasmota_devices[tasmota_topic]['friendly_name'] = payload.get('fn', ['None'])[0]
+                    self.tasmota_devices[tasmota_topic]['fw_ver'] = payload.get('sw')
+                    self.tasmota_devices[tasmota_topic]['device_id'] = device_id
+                    self.tasmota_devices[tasmota_topic]['module'] = payload.get('md')
+                    self.tasmota_devices[tasmota_topic]['mac'] = ':'.join(device_id[i:i + 2] for i in range(0, 12, 2))
+                    self.tasmota_devices[tasmota_topic]['discovery_config'] = self._rename_discovery_keys(payload)
+                    self.tasmota_devices[tasmota_topic]['status'] = 'discovered'
+
+                    # start device interview
+                    self._interview_device(tasmota_topic)
+
+                    if payload['ft'] != self.full_topic:
+                        self.logger.warning(f"Device {device_name} discovered, but FullTopic of device does not match plugin setting!")
+
+                    # if zigbee bridge, process those
+                    if 'zigbee_bridge' in device_name.lower():
+                        self.logger.info(f"Zigbee_Bridge discovered")
+                        self.tasmota_devices[tasmota_topic]['zigbee']['status'] = 'discovered'
+                        self._configure_zigbee_bridge_settings(tasmota_topic)
+                        self._discover_zigbee_bridge_devices(tasmota_topic)
+
+            elif msg_type == 'sensors':
+                """
+                device_id = 2CF432CC2FC5
+    
+                payload = {'sn': {'Time': '2022-11-19T13:35:59',
+                                  'ENERGY': {'TotalStartTime': '2019-12-23T17:02:03', 'Total': 85.314, 'Yesterday': 0.0,
+                                             'Today': 0.0, 'Power': 0, 'ApparentPower': 0, 'ReactivePower': 0, 'Factor': 0.0,
+                                             'Voltage': 0, 'Current': 0.0}}, 'ver': 1}
+                """
+
+                # get payload with Sensor information
+                sensor_payload = payload.get('sn')
+
+                if not sensor_payload or not isinstance(sensor_payload, dict):
+                    return
+
+                if 'Time' in sensor_payload:
+                    sensor_payload.pop('Time')
+
+                # find matching tasmota_topic
+                tasmota_topic = None
+                for entry in self.tasmota_devices:
+                    if self.tasmota_devices[entry].get('device_id') == device_id:
+                        tasmota_topic = entry
+                        break
+
+                # hand over sensor information payload for parsing
+                if tasmota_topic:
+                    self.logger.info(f"Discovered Tasmota Device with topic={tasmota_topic} and SensorInformation")
+                    self._handle_sensor(tasmota_topic, '', sensor_payload)
+
+        except Exception as e:
+            self.logger.exception(f"on_mqtt_discovery_message: Exception {e.__class__.__name__}: {e}")
+            return
 
     def on_mqtt_lwt_message(self, topic: str, payload: bool, qos: int = None, retain: bool = None) -> None:
         """
@@ -582,28 +589,32 @@ class Tasmota(MqttPlugin):
         :param retain:      retain flag for this message (optional)
 
         """
-        self._handle_retained_message(topic, retain)
-
-        if not isinstance(payload, bool):
-            return
 
         try:
-            (topic_type, tasmota_topic, info_topic) = topic.split('/')
-        except ValueError as e:
-            self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
+            self.logger.dbgmed(f"on_mqtt_lwt_message: topic {topic} = {payload}")
+            self._handle_retained_message(topic, retain)
+
+            try:
+                (topic_type, tasmota_topic, info_topic) = topic.split('/')
+                self.logger.info(f"on_mqtt_lwt_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
+            except ValueError:
+                self.logger.error(f"received topic {topic} is not in correct format.")
+                return
+
+            self.logger.info(f"Received LWT Message for {tasmota_topic} with value={payload} and retain={retain}")
+            if payload:
+                if tasmota_topic not in self.tasmota_devices:
+                    self.logger.debug(f"New online device based on LWT Message discovered.")
+                    self._handle_new_discovered_device(tasmota_topic)
+                self.tasmota_devices[tasmota_topic]['online_timeout'] = datetime.now() + timedelta(seconds=self.telemetry_period + 5)
+
+            if tasmota_topic in self.tasmota_devices:
+                self.tasmota_devices[tasmota_topic]['online'] = payload
+                self._set_item_value(tasmota_topic, 'online', payload, info_topic)
+
+        except Exception as e:
+            self.logger.exception(f"on_mqtt_lwt_message: Exception {e.__class__.__name__}: {e}")
             return
-
-
-        self.logger.info(f"Received LWT Message for {tasmota_topic} with value={payload} and retain={retain}")
-        if payload:
-            if tasmota_topic not in self.tasmota_devices:
-                self.logger.debug(f"New online device based on LWT Message discovered.")
-                self._handle_new_discovered_device(tasmota_topic)
-            self.tasmota_devices[tasmota_topic]['online_timeout'] = datetime.now() + timedelta(seconds=self.telemetry_period + 5)
-
-        if tasmota_topic in self.tasmota_devices:
-            self.tasmota_devices[tasmota_topic]['online'] = payload
-            self._set_item_value(tasmota_topic, 'online', payload, info_topic)
 
     def on_mqtt_status0_message(self, topic: str, payload: dict, qos: int = None, retain: bool = None) -> None:
         """
@@ -660,100 +671,107 @@ class Tasmota(MqttPlugin):
         
         """
 
-        self._handle_retained_message(topic, retain)
-
-        if not isinstance(payload, dict):
-            return
-
         try:
-            (topic_type, tasmota_topic, info_topic) = topic.split('/')
-            self.logger.info(f"on_mqtt_status0_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
-        except ValueError as e:
-            self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
+            self.logger.dbgmed(f"on_mqtt_status0_message: topic {topic} = {payload}")
+            self._handle_retained_message(topic, retain)
+
+            try:
+                (topic_type, tasmota_topic, info_topic) = topic.split('/')
+                self.logger.info(f"on_mqtt_status0_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
+            except ValueError:
+                self.logger.error(f"received topic {topic} is not in correct format.")
+                return
+
+            if not isinstance(payload, dict):
+                self.logger.debug(f'Payload not of type dict. Message will be discarded.')
+                return
+
+            self.logger.info(f"Received Status0 Message for {tasmota_topic} with value={payload} and retain={retain}")
+            self.tasmota_devices[tasmota_topic]['status'] = 'interviewed'
+
+            # handle teleperiod
+            status_log = payload.get('StatusLOG')
+            if not status_log and not isinstance(status_log, dict):
+                return
+            self._handle_teleperiod(tasmota_topic, status_log)
+
+            # get status information
+            status = self.tasmota_devices[tasmota_topic]['status']
+            if status != 'interviewed' and status != 'discovered':
+                # friendly name
+                try:
+                    self.tasmota_devices[tasmota_topic]['friendly_name'] = payload['Status']['FriendlyName'][0]
+                except KeyError:
+                    pass
+
+                # IP Address
+                ip = None
+                ip_eth = None
+                try:
+                    ip = payload['StatusNET']['IPAddress']
+                except KeyError:
+                    pass
+                try:
+                    ip_eth = payload['StatusNET'].get('Ethernet', {}).get('IPAddress')
+                except KeyError:
+                    pass
+
+                if ip:
+                    if ip_eth and ip == '0.0.0.0':
+                        ip = ip_eth
+                    self.tasmota_devices[tasmota_topic]['ip'] = ip
+
+                # Firmware
+                try:
+                    self.tasmota_devices[tasmota_topic]['fw_ver'] = payload['StatusFWR']['Version'].split('(')[0]
+                except KeyError:
+                    pass
+
+                # MAC
+                try:
+                    self.tasmota_devices[tasmota_topic]['mac'] = payload['StatusNET']['Mac']
+                except KeyError:
+                    pass
+
+                # Module No
+                try:
+                    self.tasmota_devices[tasmota_topic]['template'] = payload['Status']['Module']
+                except KeyError:
+                    pass
+
+            # get detailed status using payload['StatusSTS']
+            status_sts = payload.get('StatusSTS')
+            if not status_sts and not isinstance(status_sts, dict):
+                return
+
+            # Handling Lights and Dimmer
+            if any([i in status_sts for i in self.LIGHT_MSG]):
+                self._handle_lights(tasmota_topic, info_topic, status_sts)
+
+            # Handling of Power
+            if any(item.startswith("POWER") for item in status_sts.keys()):
+                self._handle_power(tasmota_topic, info_topic, status_sts)
+
+            # Handling of RF messages
+            if any(item.startswith("Rf") for item in status_sts.keys()):
+                self._handle_rf(tasmota_topic, info_topic, status_sts)
+
+            # Handling of Wi-Fi
+            if 'Wifi' in status_sts:
+                self._handle_wifi(tasmota_topic, status_sts['Wifi'])
+
+            # Handling of Uptime
+            if 'Uptime' in status_sts:
+                self._handle_uptime(tasmota_topic, status_sts['Uptime'])
+
+            # Handling of UptimeSec
+            if 'UptimeSec' in status_sts:
+                self.logger.info(f"Received Message contains UptimeSec information.")
+                self._handle_uptime_sec(tasmota_topic, status_sts['UptimeSec'])
+
+        except Exception as e:
+            self.logger.exception(f"on_mqtt_status0_message: Exception {e.__class__.__name__}: {e}")
             return
-
-        self.logger.info(f"Received Status0 Message for {tasmota_topic} with value={payload} and retain={retain}")
-        self.tasmota_devices[tasmota_topic]['status'] = 'interviewed'
-
-        # handle teleperiod
-        status_log = payload.get('StatusLOG')
-        if not status_log and not isinstance(status_log, dict):
-            return
-        self._handle_teleperiod(tasmota_topic, status_log)
-
-        # get status information
-        status = self.tasmota_devices[tasmota_topic]['status']
-        if status != 'interviewed' and status != 'discovered':
-            # friendly name
-            try:
-                self.tasmota_devices[tasmota_topic]['friendly_name'] = payload['Status']['FriendlyName'][0]
-            except KeyError:
-                pass
-
-            # IP Address
-            ip = None
-            ip_eth = None
-            try:
-                ip = payload['StatusNET']['IPAddress']
-            except KeyError:
-                pass
-            try:
-                ip_eth = payload['StatusNET'].get('Ethernet', {}).get('IPAddress')
-            except KeyError:
-                pass
-
-            if ip:
-                if ip_eth and ip == '0.0.0.0':
-                    ip = ip_eth
-                self.tasmota_devices[tasmota_topic]['ip'] = ip
-
-            # Firmware
-            try:
-                self.tasmota_devices[tasmota_topic]['fw_ver'] = payload['StatusFWR']['Version'].split('(')[0]
-            except KeyError:
-                pass
-
-            # MAC
-            try:
-                self.tasmota_devices[tasmota_topic]['mac'] = payload['StatusNET']['Mac']
-            except KeyError:
-                pass
-
-            # Module No
-            try:
-                self.tasmota_devices[tasmota_topic]['template'] = payload['Status']['Module']
-            except KeyError:
-                pass
-
-        # get detailed status using payload['StatusSTS']
-        status_sts = payload.get('StatusSTS')
-        if not status_sts and not isinstance(status_sts, dict):
-            return
-
-        # Handling Lights and Dimmer
-        if any([i in status_sts for i in self.LIGHT_MSG]):
-            self._handle_lights(tasmota_topic, info_topic, status_sts)
-
-        # Handling of Power
-        if any(item.startswith("POWER") for item in status_sts.keys()):
-            self._handle_power(tasmota_topic, info_topic, status_sts)
-
-        # Handling of RF messages
-        if any(item.startswith("Rf") for item in status_sts.keys()):
-            self._handle_rf(tasmota_topic, info_topic, status_sts)
-
-        # Handling of Wi-Fi
-        if 'Wifi' in status_sts:
-            self._handle_wifi(tasmota_topic, status_sts['Wifi'])
-
-        # Handling of Uptime
-        if 'Uptime' in status_sts:
-            self._handle_uptime(tasmota_topic, status_sts['Uptime'])
-
-        # Handling of UptimeSec
-        if 'UptimeSec' in status_sts:
-            self.logger.info(f"Received Message contains UptimeSec information.")
-            self._handle_uptime_sec(tasmota_topic, status_sts['UptimeSec'])
 
     def on_mqtt_info_message(self, topic: str, payload: dict, qos: int = None, retain: bool = None) -> None:
         """
@@ -766,46 +784,53 @@ class Tasmota(MqttPlugin):
 
         """
 
-        self._handle_retained_message(topic, retain)
-
-        if not isinstance(payload, dict):
-            return
-
         try:
-            (topic_type, tasmota_topic, info_topic) = topic.split('/')
-            self.logger.debug(f"on_mqtt_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
-        except ValueError as e:
-            self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
+            self.logger.dbgmed(f"on_mqtt_info_message: topic {topic} = {payload}")
+            self._handle_retained_message(topic, retain)
+
+            try:
+                (topic_type, tasmota_topic, info_topic) = topic.split('/')
+                self.logger.info(f"on_mqtt_info_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
+            except ValueError:
+                self.logger.error(f"received topic {topic} is not in correct format.")
+                return
+
+            if not isinstance(payload, dict):
+                self.logger.debug(f'Payload not of type dict. Message will be discarded.')
+                return
+
+            if info_topic == 'INFO1':
+                # payload={'Info1': {'Module': 'Sonoff Basic', 'Version': '11.0.0(tasmota)', 'FallbackTopic': 'cmnd/DVES_2EB8AE_fb/', 'GroupTopic': 'cmnd/tasmotas/'}}
+                self.logger.debug(f"Received Message decoded as INFO1 message.")
+                try:
+                    self.tasmota_devices[tasmota_topic]['fw_ver'] = payload['Info1']['Version'].split('(')[0]
+                except KeyError:
+                    pass
+                try:
+                    self.tasmota_devices[tasmota_topic]['module_no'] = payload['Info1']['Module']
+                except KeyError:
+                    pass
+
+            elif info_topic == 'INFO2':
+                # payload={'Info2': {'WebServerMode': 'Admin', 'Hostname': 'SONOFF-B1-6318', 'IPAddress': '192.168.2.25'}}
+                self.logger.debug(f"Received Message decoded as INFO2 message.")
+                try:
+                    self.tasmota_devices[tasmota_topic]['ip'] = payload['Info2']['IPAddress']
+                except KeyError:
+                    pass
+
+            elif info_topic == 'INFO3':
+                # payload={'Info3': {'RestartReason': 'Software/System restart', 'BootCount': 1395}}
+                self.logger.debug(f"Received Message decoded as INFO3 message.")
+                try:
+                    restart_reason = payload['Info3']['RestartReason']
+                    self.logger.info(f"Device {tasmota_topic} (IP={self.tasmota_devices[tasmota_topic]['ip']}) just startet. Reason={restart_reason}")
+                except KeyError:
+                    pass
+
+        except Exception as e:
+            self.logger.exception(f"on_mqtt_info_message: Exception {e.__class__.__name__}: {e}")
             return
-
-        if info_topic == 'INFO1':
-            # payload={'Info1': {'Module': 'Sonoff Basic', 'Version': '11.0.0(tasmota)', 'FallbackTopic': 'cmnd/DVES_2EB8AE_fb/', 'GroupTopic': 'cmnd/tasmotas/'}}
-            self.logger.debug(f"Received Message decoded as INFO1 message.")
-            try:
-                self.tasmota_devices[tasmota_topic]['fw_ver'] = payload['Info1']['Version'].split('(')[0]
-            except KeyError:
-                pass
-            try:
-                self.tasmota_devices[tasmota_topic]['module_no'] = payload['Info1']['Module']
-            except KeyError:
-                pass
-
-        elif info_topic == 'INFO2':
-            # payload={'Info2': {'WebServerMode': 'Admin', 'Hostname': 'SONOFF-B1-6318', 'IPAddress': '192.168.2.25'}}
-            self.logger.debug(f"Received Message decoded as INFO2 message.")
-            try:
-                self.tasmota_devices[tasmota_topic]['ip'] = payload['Info2']['IPAddress']
-            except KeyError:
-                pass
-
-        elif info_topic == 'INFO3':
-            # payload={'Info3': {'RestartReason': 'Software/System restart', 'BootCount': 1395}}
-            self.logger.debug(f"Received Message decoded as INFO3 message.")
-            try:
-                restart_reason = payload['Info3']['RestartReason']
-                self.logger.info(f"Device {tasmota_topic} (IP={self.tasmota_devices[tasmota_topic]['ip']}) just startet. Reason={restart_reason}")
-            except KeyError:
-                pass
 
     def on_mqtt_message(self, topic: str, payload: dict, qos: int = None, retain: bool = None) -> None:
         """
@@ -818,94 +843,101 @@ class Tasmota(MqttPlugin):
 
         """
 
-        self._handle_retained_message(topic, retain)
-
-        if not isinstance(payload, dict):
-            return
-
         try:
-            (topic_type, tasmota_topic, info_topic) = topic.split('/')
-            self.logger.info(f"on_mqtt_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
-        except ValueError as e:
-            self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
+            self.logger.dbgmed(f"on_mqtt_message: topic {topic} = {payload}")
+            self._handle_retained_message(topic, retain)
+
+            try:
+                (topic_type, tasmota_topic, info_topic) = topic.split('/')
+                self.logger.info(f"on_mqtt_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
+            except ValueError:
+                self.logger.error(f"received topic {topic} is not in correct format.")
+                return
+
+            if not isinstance(payload, dict):
+                self.logger.debug(f'Payload not of type dict. Message will be discarded.')
+                return
+
+            # handle unknown device
+            if tasmota_topic not in self.tasmota_devices:
+                self._handle_new_discovered_device(tasmota_topic)
+
+            # handle message
+            if info_topic in ['STATE', 'RESULT']:
+
+                # Handling of TelePeriod
+                if 'TelePeriod' in payload:
+                    self.logger.info(f"Received Message decoded as teleperiod message.")
+                    self._handle_teleperiod(tasmota_topic, payload['TelePeriod'])
+
+                elif 'Module' in payload:
+                    self.logger.info(f"Received Message decoded as Module message.")
+                    self._handle_module(tasmota_topic, payload['Module'])
+
+                # Handling of Light messages
+                elif any([i in payload for i in self.LIGHT_MSG]):
+                    self.logger.info(f"Received Message decoded as light message.")
+                    self._handle_lights(tasmota_topic, info_topic, payload)
+
+                # Handling of Power messages
+                elif any(item.startswith("POWER") for item in payload.keys()):
+                    self.logger.info(f"Received Message decoded as power message.")
+                    self._handle_power(tasmota_topic, info_topic, payload)
+
+                # Handling of RF messages payload={'Time': '2022-11-21T11:22:55', 'RfReceived': {'Sync': 10120, 'Low': 330, 'High': 980, 'Data': '3602B8', 'RfKey': 'None'}}
+                elif 'RfReceived' in payload:
+                    self.logger.info(f"Received Message decoded as RF message.")
+                    self._handle_rf(tasmota_topic, info_topic, payload['RfReceived'])
+
+                # Handling of Setting messages
+                elif next(iter(payload)).startswith("SetOption"):
+                    # elif any(item.startswith("SetOption") for item in payload.keys()):
+                    self.logger.info(f"Received Message decoded as Tasmota Setting message.")
+                    self._handle_setting(tasmota_topic, payload)
+
+                # Handling of Zigbee Bridge Config messages
+                elif 'ZbConfig' in payload:
+                    self.logger.info(f"Received Message decoded as Zigbee Config message.")
+                    self._handle_zbconfig(tasmota_topic, payload['ZbConfig'])
+
+                # Handling of Zigbee Bridge Status messages
+                elif any(item.startswith("ZbStatus") for item in payload.keys()):
+                    self.logger.info(f"Received Message decoded as Zigbee ZbStatus message.")
+                    self._handle_zbstatus(tasmota_topic, payload)
+
+                # Handling of Wi-Fi
+                if 'Wifi' in payload:
+                    self.logger.info(f"Received Message contains Wifi information.")
+                    self._handle_wifi(tasmota_topic, payload['Wifi'])
+
+                # Handling of Uptime
+                if 'Uptime' in payload:
+                    self.logger.info(f"Received Message contains Uptime information.")
+                    self._handle_uptime(tasmota_topic, payload['Uptime'])
+
+                # Handling of UptimeSec
+                if 'UptimeSec' in payload:
+                    self.logger.info(f"Received Message contains UptimeSec information.")
+                    self._handle_uptime_sec(tasmota_topic, payload['UptimeSec'])
+
+            elif info_topic == 'SENSOR':
+                self.logger.info(f"Received Message contains sensor information.")
+                self._handle_sensor(tasmota_topic, info_topic, payload)
+
+            else:
+                self.logger.warning(f"Received Message '{payload}' not handled within plugin.")
+
+            # setting new online-timeout
+            self.tasmota_devices[tasmota_topic]['online_timeout'] = datetime.now() + timedelta(seconds=self.telemetry_period + 5)
+
+            # setting online_item to True
+            self._set_item_value(tasmota_topic, 'online', True, info_topic)
+
+        except Exception as e:
+            self.logger.exception(f"on_mqtt_message: Exception {e.__class__.__name__}: {e}")
             return
 
-        # handle unknown device
-        if tasmota_topic not in self.tasmota_devices:
-            self._handle_new_discovered_device(tasmota_topic)
-
-        # handle message
-        if info_topic in ['STATE', 'RESULT']:
-
-            # Handling of TelePeriod
-            if 'TelePeriod' in payload:
-                self.logger.info(f"Received Message decoded as teleperiod message.")
-                self._handle_teleperiod(tasmota_topic, payload['TelePeriod'])
-
-            elif 'Module' in payload:
-                self.logger.info(f"Received Message decoded as Module message.")
-                self._handle_module(tasmota_topic, payload['Module'])
-
-            # Handling of Light messages
-            elif any([i in payload for i in self.LIGHT_MSG]):
-                self.logger.info(f"Received Message decoded as light message.")
-                self._handle_lights(tasmota_topic, info_topic, payload)
-
-            # Handling of Power messages
-            elif any(item.startswith("POWER") for item in payload.keys()):
-                self.logger.info(f"Received Message decoded as power message.")
-                self._handle_power(tasmota_topic, info_topic, payload)
-
-            # Handling of RF messages payload={'Time': '2022-11-21T11:22:55', 'RfReceived': {'Sync': 10120, 'Low': 330, 'High': 980, 'Data': '3602B8', 'RfKey': 'None'}}
-            elif 'RfReceived' in payload:
-                self.logger.info(f"Received Message decoded as RF message.")
-                self._handle_rf(tasmota_topic, info_topic, payload['RfReceived'])
-
-            # Handling of Setting messages
-            elif next(iter(payload)).startswith("SetOption"):
-                # elif any(item.startswith("SetOption") for item in payload.keys()):
-                self.logger.info(f"Received Message decoded as Tasmota Setting message.")
-                self._handle_setting(tasmota_topic, payload)
-
-            # Handling of Zigbee Bridge Config messages
-            elif 'ZbConfig' in payload:
-                self.logger.info(f"Received Message decoded as Zigbee Config message.")
-                self._handle_zbconfig(tasmota_topic, payload['ZbConfig'])
-
-            # Handling of Zigbee Bridge Status messages
-            elif any(item.startswith("ZbStatus") for item in payload.keys()):
-                self.logger.info(f"Received Message decoded as Zigbee ZbStatus message.")
-                self._handle_zbstatus(tasmota_topic, payload)
-
-            # Handling of Wi-Fi
-            if 'Wifi' in payload:
-                self.logger.info(f"Received Message contains Wifi information.")
-                self._handle_wifi(tasmota_topic, payload['Wifi'])
-
-            # Handling of Uptime
-            if 'Uptime' in payload:
-                self.logger.info(f"Received Message contains Uptime information.")
-                self._handle_uptime(tasmota_topic, payload['Uptime'])
-
-            # Handling of UptimeSec
-            if 'UptimeSec' in payload:
-                self.logger.info(f"Received Message contains UptimeSec information.")
-                self._handle_uptime_sec(tasmota_topic, payload['UptimeSec'])
-
-        elif info_topic == 'SENSOR':
-            self.logger.info(f"Received Message contains sensor information.")
-            self._handle_sensor(tasmota_topic, info_topic, payload)
-
-        else:
-            self.logger.warning(f"Received Message '{payload}' not handled within plugin.")
-
-        # setting new online-timeout
-        self.tasmota_devices[tasmota_topic]['online_timeout'] = datetime.now() + timedelta(seconds=self.telemetry_period + 5)
-
-        # setting online_item to True
-        self._set_item_value(tasmota_topic, 'online', True, info_topic)
-
-    def on_mqtt_power_message(self,  topic: str, payload: dict, qos: int = None, retain: bool = None) -> None:
+    def on_mqtt_power_message(self,  topic: str, payload: bool, qos: int = None, retain: bool = None) -> None:
         """
         Callback function to handle received power messages
 
@@ -916,28 +948,31 @@ class Tasmota(MqttPlugin):
 
         """
 
-        self._handle_retained_message(topic, retain)
-
-        if not isinstance(payload, dict):
-            return
-
         try:
-            (topic_type, tasmota_topic, info_topic) = topic.split('/')
-            self.logger.info(f"on_mqtt_power_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
-        except ValueError as e:
-            self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
-            return
+            self.logger.dbgmed(f"on_mqtt_power_message: topic {topic} = {payload}")
+            self._handle_retained_message(topic, retain)
 
-        device = self.tasmota_devices.get(tasmota_topic)
-        if not device:
-            return
+            try:
+                (topic_type, tasmota_topic, info_topic) = topic.split('/')
+                self.logger.info(f"on_mqtt_power_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
+            except ValueError:
+                self.logger.error(f"received topic {topic} is not in correct format.")
+                return
 
-        if info_topic.startswith('POWER'):
-            tasmota_relay = str(info_topic[5:])
-            if not tasmota_relay:
-                tasmota_relay = 1
-            self._set_item_value(tasmota_topic, f'relay.{tasmota_relay}', payload == 'ON', info_topic)
-            self.tasmota_devices[tasmota_topic]['relais'][info_topic] = payload
+            device = self.tasmota_devices.get(tasmota_topic)
+            if not device:
+                return
+
+            if info_topic.startswith('POWER'):
+                tasmota_relay = (info_topic[5:])
+                if not tasmota_relay:
+                    tasmota_relay = 1
+                self._set_item_value(tasmota_topic, f'relay.{tasmota_relay}', payload, info_topic)
+                self.tasmota_devices[tasmota_topic]['relais'][info_topic] = payload
+
+        except Exception as e:
+            self.logger.exception(f"on_mqtt_power_message: Exception {e.__class__.__name__}: {e}")
+            return
 
     ############################################################
     #   Parse detailed messages
@@ -1384,17 +1419,13 @@ class Tasmota(MqttPlugin):
     def add_tasmota_subscriptions(self):
         self.logger.info(f"Further tasmota_subscriptions for regular/cyclic messages will be added")
 
-        self.add_tasmota_subscription('tele', '+', 'STATE',  'dict', callback=self.on_mqtt_message)
-        self.add_tasmota_subscription('tele', '+', 'SENSOR', 'dict', callback=self.on_mqtt_message)
-        self.add_tasmota_subscription('tele', '+', 'RESULT', 'dict', callback=self.on_mqtt_message)
-      # self.add_tasmota_subscription('tele', '+', 'INFO1',  'dict', callback=self.on_mqtt_message)
-      # self.add_tasmota_subscription('tele', '+', 'INFO2',  'dict', callback=self.on_mqtt_message)
+        for detail in ('STATE', 'SENSOR', 'RESULT'):
+            self.add_tasmota_subscription('tele', '+',  detail, 'dict', callback=self.on_mqtt_message)
+
         self.add_tasmota_subscription('tele', '+', 'INFO3',  'dict', callback=self.on_mqtt_info_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER',  'num',  callback=self.on_mqtt_power_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER1', 'num',  callback=self.on_mqtt_power_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER2', 'num',  callback=self.on_mqtt_power_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER3', 'num',  callback=self.on_mqtt_power_message)
-        self.add_tasmota_subscription('stat', '+', 'POWER4', 'num',  callback=self.on_mqtt_power_message)
+
+        for detail in ('POWER', 'POWER1', 'POWER2', 'POWER3', 'POWER4'):
+            self.add_tasmota_subscription('stat', '+', detail, 'bool', bool_values=['OFF', 'ON'], callback=self.on_mqtt_power_message)
 
     def check_online_status(self):
         """
@@ -1410,7 +1441,7 @@ class Tasmota(MqttPlugin):
                 else:
                     self.logger.debug(f'check_online_status: Checking online status of {tasmota_topic} successful')
 
-    def add_tasmota_subscription(self, prefix: str, topic: str, detail: str, payload_type: str, bool_values: list = None, item: Item=None, callback=None) -> None:
+    def add_tasmota_subscription(self, prefix: str, topic: str, detail: str, payload_type: str, bool_values: list = None, item: Item = None, callback=None) -> None:
         """
         build the topic in Tasmota style and add the subscription to mqtt
 
@@ -1429,7 +1460,7 @@ class Tasmota(MqttPlugin):
         tpc += detail
         self.add_subscription(tpc, payload_type, bool_values=bool_values, callback=callback)
 
-    def publish_tasmota_topic(self, prefix: str, topic: str, detail: str, payload, item: Item=None, qos: int = None, retain: bool = False, bool_values: list = None) -> None:
+    def publish_tasmota_topic(self, prefix: str, topic: str, detail: str, payload, item: Item = None, qos: int = None, retain: bool = False, bool_values: list = None) -> None:
         """
         build the topic in Tasmota style and publish to mqtt
 
@@ -1688,7 +1719,6 @@ class Tasmota(MqttPlugin):
         else:
             if topic in self.topics_of_retained_messages:
                 self.topics_of_retained_messages.remove(topic)
-
 
     ############################################################
     #   Plugin Properties

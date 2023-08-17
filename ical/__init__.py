@@ -33,7 +33,7 @@ from bin.smarthome import VERSION
 
 
 class iCal(SmartPlugin):
-    PLUGIN_VERSION = "1.6.2"
+    PLUGIN_VERSION = "1.6.3"
     ALLOW_MULTIINSTANCE = False
     DAYS = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")
     FREQ = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
@@ -284,7 +284,8 @@ class iCal(SmartPlugin):
                     self.logger.warning("problem parsing {0} no UID for event: {1}".format(ics, event))
                     continue
                 if 'SUMMARY' not in event:
-                    self.logger.warning("problem parsing {0} no SUMMARY for UID: {1}".format(ics, event['UID']))
+                    # Background info: Some events in google calender ICAS files have no summary:
+                    self.logger.info("problem parsing {0} no SUMMARY for UID: {1}".format(ics, event['UID']))
                     continue
                 if 'DTSTART' not in event:
                     self.logger.warning("problem parsing {0} no DTSTART for UID: {1}".format(ics, event['UID']))

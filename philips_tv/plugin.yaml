@@ -12,7 +12,7 @@ plugin:
     documentation: https://github.com/smarthomeNG/plugins/blob/develop/philips_tv/user_doc.rst
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1698335-supportthread-f%C3%BCr-philips_tv-plugin
 
-    version: 1.9.1                  # Plugin version
+    version: 1.9.2                  # Plugin version
     sh_minversion: 1.8.0            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -51,6 +51,8 @@ item_attributes:
         valid_list:
         - 'MUTE'
         - 'POWEROFF'
+        - 'AMBILIGHT_STATE'
+        - 'AMBILIGHT_HUE'
 
     philips_tv_rx_key:
         type: str
@@ -64,6 +66,8 @@ item_attributes:
         - 'POWERSTATE'
         - 'POWERSTATEINFO'
         - 'CHANNEL'
+        - 'AMBILIGHT_STATE'
+        - 'AMBILIGHT_HUE'
 
 plugin_functions: NONE 
 

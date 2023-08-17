@@ -113,7 +113,7 @@ class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = '2.0.9'
+    PLUGIN_VERSION = '2.1.0'
 
     # ToDo: FritzHome.handle_updated_item: implement 'saturation'
     # ToDo: FritzHome.handle_updated_item: implement 'unmapped_hue'
@@ -503,6 +503,9 @@ class AVM(SmartPlugin):
 
                 if not get_aha_index():
                     return
+
+                if avm_data_type in AHA_STATS_ATTRIBUTES:
+                    self.fritz_home.use_device_statistics = True
 
             # handle items updated by tr-064 interface
             elif avm_data_type in TR064_ATTRIBUTES:
@@ -1937,6 +1940,9 @@ class FritzHome:
         self._timeout = 10
         self.last_request = None
         self.log_entry_count = log_entry_count
+        self.use_device_statistics = False
+        self.last_device_statistics_update = 0
+        self.device_statistics_min_grid = 0
 
         # Login to test, if login is possible and get first sid
         self.login()
@@ -1956,6 +1962,11 @@ class FritzHome:
         update_time = int(time.time())
         self.logger.debug(f"Update of AHA-Device data took {update_time - start_time}s")
         item_count = 0
+
+        # add device statistics to devices if activated and due
+        if self.use_device_statistics and (self.last_device_statistics_update + self.device_statistics_min_grid) <= update_time:
+            self.last_device_statistics_update = update_time
+            self.add_device_statistics_to_devices()
 
         # iterate over items and get data
         for item in self.item_list():
@@ -2397,6 +2408,69 @@ class FritzHome:
         """
         return self.aha_request("getswitchname", ain=ain)
 
+    # statistics-related commands
+
+    def get_device_statistics(self, ain):
+        """
+        Get device statistics.
+        """
+        return self.aha_request("getbasicdevicestats", ain=ain)
+
+    def get_device_statistics_serie(self, ain: str, func: str = None):
+        """
+        Get device statistics of device as list of lists for smartvisu like [[timestamp1, value1], [timestamp2, value2], ...]
+        """
+
+        def get_series(_func):
+            element = dom.find(_func)
+            if element is not None:
+                stats = element.find("stats")
+                if stats is not None:
+                    series = []
+                    count = to_int(stats.attrib.get('count'))
+                    grid = to_int(stats.attrib.get('grid'))
+                    if self.device_statistics_min_grid == 0 or grid < self.device_statistics_min_grid:
+                        self.device_statistics_min_grid = grid
+                    datatime = to_int(stats.attrib.get('datatime'))
+                    raw_values = stats.text.split(',')
+                    raw_values = list(map(to_int, raw_values))
+                    values = [val / scales[_func] for val in raw_values]
+                    for value in values:
+                        count -= 1
+                        series.append([datatime - count * grid, value])
+                    return series
+
+        scales = {
+            'temperature': 10,  # Die Genauigkeit/Einheit der <temperature>-Werte ist 0,1°C.
+            'voltage': 1000,    # Die Genauigkeit/Einheit der <voltage>-Werte ist 0,001V.
+            'power': 100,       # Die Genauigkeit/Einheit der <power>-Werte ist 0,01W.
+            'energy': 1,        # Die Genauigkeit/Einheit der <energy>-Werte ist 1 Wh.
+            'humidity': 1,      # Die Genauigkeit/Einheit der <humidity>-Werte ist Prozent.
+        }
+
+        dom = self.get_device_statistics(ain)
+
+        if dom:
+            if func in ['temperature', 'humidity', 'voltage', 'power', 'energy']:
+                return get_series(func)
+
+            elif func == 'powermeter':
+                stats_voltage = get_series('voltage')
+                stats_power = get_series('power')
+                stats_energy = get_series('energy')
+                return stats_voltage, stats_power, stats_energy
+
+    def add_device_statistics_to_devices(self):
+        """Add device statistics to self._devices"""
+
+        for device in self.get_devices():
+            if device.has_temperature_sensor:
+                device.statistics_temp = self.get_device_statistics_serie(ain=device.ain, func='temperature')
+            elif device.has_humidity_sensor:
+                device.statistics_hum = self.get_device_statistics_serie(ain=device.ain, func='humidity')
+            elif device.has_powermeter:
+                device.statistics_voltage, device.statistics_power, device.statistics_energy = self.get_device_statistics_serie(ain=device.ain, func='powermeter')
+
     # switch-related commands
 
     def get_switch_state(self, ain: str):
@@ -2547,12 +2621,6 @@ class FritzHome:
         Get the thermostate eco temperature.
         """
         return self._get_temperature(ain, "gethkrabsenk")
-
-    def get_device_statistics(self, ain):
-        """
-        Get device statistics.
-        """
-        return self.aha_request("getbasicdevicestats", ain=ain)
 
     # Switch-related commands
 
@@ -3893,7 +3961,7 @@ class Callmonitor:
         self._stop_counter('incoming')
         self._stop_counter('outgoing')
 
-        if self._listen_thread:
+        if self._listen_thread and self._listen_thread.is_alive():
             try:
                 self._listen_thread.join(1)
             except Exception as e:   # AttributeError
@@ -4105,20 +4173,26 @@ class Callmonitor:
 
     def _stop_counter(self, direction: str):
         """
-        Stop counter to measure duration of a call, but only stop of thread is active
+        Stop counter to measure duration of a call, but only stop if thread is active
         """
         if self._call_active[direction]:
             self._call_active[direction] = False
             if self.debug_log:
                 self.logger.debug(f'STOPPING {direction}')
-            try:
-                if direction == 'incoming':
+
+            if direction == 'incoming' and self._duration_counter_thread_incoming and self._duration_counter_thread_incoming.is_alive():
+                try:
                     self._duration_counter_thread_incoming.join(1)
-                elif direction == 'outgoing':
+                except Exception as e:
+                    self.logger.warning(f"Error {e!r} occurred during stopping incoming counter of Callmonitor")
+                    pass
+
+            elif direction == 'outgoing' and self._duration_counter_thread_outgoing and self._duration_counter_thread_outgoing.is_alive():
+                try:
                     self._duration_counter_thread_outgoing.join(1)
-            except Exception as e:
-                self.logger.warning(f"Error {e!r} occurred during stopping counter of Callmonitor")
-                pass
+                except Exception as e:
+                    self.logger.warning(f"Error {e!r} occurred during stopping outgoing counter of Callmonitor")
+                    pass
 
     def _count_duration_incoming(self):
         """

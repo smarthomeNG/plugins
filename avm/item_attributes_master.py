@@ -25,6 +25,8 @@ FILENAME_ATTRIBUTES = 'item_attributes.py'
 
 FILENAME_PLUGIN = 'plugin.yaml'
 
+ATTRIBUTE = 'avm_data_type'
+
 FILE_HEADER = """\
 # !/usr/bin/env python
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
@@ -209,10 +211,16 @@ AVM_DATA_TYPES = {
       'alert_state':                  {'interface': 'aha',          'group': 'alarm',           'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'letzter übermittelter Alarmzustand'},
       'blind_mode':                   {'interface': 'aha',          'group': 'blind',           'sub_group': None,                 'access': 'ro',  'type': 'str ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'automatische Zeitschaltung oder manuell fahren'},
       'endpositionsset':              {'interface': 'aha',          'group': 'blind',           'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'ist die Endlage für das Rollo konfiguriert'},
+      'statistics_temp':              {'interface': 'aha',          'group': 'device',          'sub_group': 'statistics',         'access': 'ro',  'type': 'list',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Wertestatistik für Temperatur'},
+      'statistics_hum':               {'interface': 'aha',          'group': 'device',          'sub_group': 'statistics',         'access': 'ro',  'type': 'list',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Wertestatistik für Feuchtigkeit'},
+      'statistics_voltage':           {'interface': 'aha',          'group': 'device',          'sub_group': 'statistics',         'access': 'ro',  'type': 'list',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Wertestatistik für Spannung'},
+      'statistics_power':             {'interface': 'aha',          'group': 'device',          'sub_group': 'statistics',         'access': 'ro',  'type': 'list',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Wertestatistik für Leistung'},
+      'statistics_energy':            {'interface': 'aha',          'group': 'device',          'sub_group': 'statistics',         'access': 'ro',  'type': 'list',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Wertestatistik für Energie'},
     }
 }
 
 ATTRIBUTES_LIST = ['tr064', 'aha']
+
 
 def get_attrs(ifaces: list = ATTRIBUTES_LIST, sub_dict: dict = {}) -> list:
     attributes = []
@@ -222,7 +230,11 @@ def get_attrs(ifaces: list = ATTRIBUTES_LIST, sub_dict: dict = {}) -> list:
                 attributes.append(avm_data_type)
     return attributes
 
+
 def export_item_attributs_py():
+
+    print(f"A) Start creating {FILENAME_ATTRIBUTES}!")
+
     ATTRS = dict()
     ATTRS['ALL_ATTRIBUTES_SUPPORTED_BY_REPEATER'] = get_attrs(sub_dict={'supported_by_repeater': True})
     ATTRS['ALL_ATTRIBUTES_WRITEABLE'] = get_attrs(sub_dict={'access': 'wo'}) + get_attrs(sub_dict={'access': 'rw'})
@@ -232,6 +244,7 @@ def export_item_attributs_py():
     ATTRS['AHA_RO_ATTRIBUTES'] = get_attrs(['aha'], {'access': 'ro'})
     ATTRS['AHA_WO_ATTRIBUTES'] = get_attrs(['aha'], {'access': 'wo'})
     ATTRS['AHA_RW_ATTRIBUTES'] = get_attrs(['aha'], {'access': 'rw'})
+    ATTRS['AHA_STATS_ATTRIBUTES'] = get_attrs(['aha'], {'sub_group': 'statistics'})
     ATTRS['TR064_ATTRIBUTES'] = get_attrs(['tr064'])
     ATTRS['TR064_RW_ATTRIBUTES'] = get_attrs(['tr064'], {'access': 'rw'})
     ATTRS['CALL_MONITOR_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'call_monitor'})
@@ -267,7 +280,8 @@ def export_item_attributs_py():
         with open(FILENAME_ATTRIBUTES, "a") as f:
             print (f'{attr} = {alist!r}', file=f)
 
-    print('item_attributs.py successfully created!')
+    print(f'   {FILENAME_ATTRIBUTES} successfully created!')
+
 
 def create_plugin_yaml_avm_data_type_valids(ifaces: list = ATTRIBUTES_LIST):
     """Create valid_list of avm_data_type based on master dict"""
@@ -301,8 +315,12 @@ def create_plugin_yaml_avm_data_type_valids(ifaces: list = ATTRIBUTES_LIST):
 
     return valid_list_str, valid_list_desc_str
 
+
 def update_plugin_yaml_avm_data_type():
     """Update ´'valid_list' and 'valid_list_description' of 'avm_data_type´ in plugin.yaml"""
+
+    print()
+    print(f"B) Start updating Attribute '{ATTRIBUTE}' in {FILENAME_PLUGIN}!")
 
     yaml = ruamel.yaml.YAML()
     yaml.indent(mapping=4, sequence=4, offset=4)
@@ -315,21 +333,64 @@ def update_plugin_yaml_avm_data_type():
     with open(FILENAME_PLUGIN, 'r', encoding="utf-8") as f:
         data = yaml.load(f)
 
-    if data.get('item_attributes', {}).get('avm_data_type'):
-        data['item_attributes']['avm_data_type']['valid_list'] = yaml.load(valid_list_str)
-        data['item_attributes']['avm_data_type']['valid_list_description'] = yaml.load(valid_list_description_str)
+    if data.get('item_attributes', {}).get(ATTRIBUTE):
+        data['item_attributes'][ATTRIBUTE]['valid_list'] = yaml.load(valid_list_str)
+        data['item_attributes'][ATTRIBUTE]['valid_list_description'] = yaml.load(valid_list_description_str)
 
         with open(FILENAME_PLUGIN, 'w', encoding="utf-8") as f:
             yaml.dump(data, f)
-        print('valid_list and valid_list_description of avm_data_type successfully updated in plugin.yaml!')
+        print(f'   valid_list and valid_list_description of {ATTRIBUTE} successfully updated in {FILENAME_PLUGIN}!')
     else:
-        print('Attribut "avm_data_type" not defined in plugin.yaml')
+        print(f'   Attribut "avm_data_type" not defined in {FILENAME_PLUGIN}')
+
+
+def check_plugin_yaml_structs():
+    # check structs for wrong attributes
+    print()
+    print(f'C) Checking {ATTRIBUTE} in structs defined in {FILENAME_PLUGIN} ')
+
+    # open plugin.yaml and update
+    yaml = ruamel.yaml.YAML()
+    yaml.indent(mapping=4, sequence=4, offset=4)
+    yaml.width = 200
+    yaml.allow_unicode = True
+    yaml.preserve_quotes = False
+    with open(FILENAME_PLUGIN, 'r', encoding="utf-8") as f:
+        data = yaml.load(f)
+
+    structs = data.get('item_structs')
+
+    def get_all_keys(d):
+        for key, value in d.items():
+            yield key, value
+            if isinstance(value, dict):
+                yield from get_all_keys(value)
+
+    attributes_list = get_attrs()
+
+    failure_found = False
+    if structs:
+        for attr, attr_val in get_all_keys(structs):
+            if attr == ATTRIBUTE:
+                if attr_val not in attributes_list:
+                    print(f"    - {attr_val} not a valid value for {ATTRIBUTE}")
+                    failure_found = True
+
+    if not failure_found:
+        print(f'   All selected {ATTRIBUTE}s are valid.')
+    print(f'   Check complete.')
+
 
 
 if __name__ == '__main__':
     # Run main to export item_attributes.py and update ´valid_list and valid_list_description of avm_data_type in plugin.yaml
+
+    print()
+    print(f'Start automated update and check of {FILENAME_PLUGIN} and {FILENAME_ATTRIBUTES}.')
+    print('------------------------------------------------------------------------')
     export_item_attributs_py()
     update_plugin_yaml_avm_data_type()
+    check_plugin_yaml_structs()
 
 # Notes:
 #   - HOST_ATTRIBUTES: host index needed

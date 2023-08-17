@@ -48,13 +48,13 @@ class Solarforecast(SmartPlugin):
         self.session = requests.Session()
         
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        if self.get_parameter_value('latitude') != '' and self.get_parameter_value('longitude') != '':
+        if self.get_parameter_value('latitude') != 0 and self.get_parameter_value('longitude') != 0:
             self.latitude = self.get_parameter_value('latitude')
             self.longitude = self.get_parameter_value('longitude')
         else:
             self.logger.debug("__init__: latitude and longitude not provided, using shng system values instead.")
-            self.latitude = self.get_sh()._lat
-            self.longitude = self.get_sh()._lon
+            self.latitude = self.get_sh().lat
+            self.longitude = self.get_sh().lon
 
         self.declination = self.get_parameter_value('declination')
         self.azimuth = self.get_parameter_value('azimuth')
