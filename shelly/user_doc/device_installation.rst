@@ -76,7 +76,7 @@ Für Gen1 Devices
 - Max QoS vorzugsweise auf **1** setzen
 - **SAVE** klicken
 
-.. image:: user_doc/assets/gen1_mqtt_settings.jpg
+.. image:: assets/gen1_mqtt_settings.jpg
    :class: screenshot
 
 Für Gen2 Devices
@@ -90,7 +90,7 @@ Für Gen2 Devices
 - Falls der Broker eine Anmeldung erfordert, 'USERNAME' und 'PASSWORD' konfigurieren
 - **SAVE** klicken
 
-.. image:: user_doc/assets/gen2_mqtt_settings.jpg
+.. image:: assets/gen2_mqtt_settings.jpg
    :class: screenshot
 
 .. note::
