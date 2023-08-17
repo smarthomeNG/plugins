@@ -7,15 +7,23 @@ plugin_translations:
     'Produkt Typ':           {'de': '=', 'en': 'Product Type'}
     'nach Devices suchen':   {'de': '=', 'en': 'Scan for devices'}
 
+    # translations for the web interface
     'B&O Gerät':             {'de': '=', 'en': 'B&O Device'}
     'Software Version':      {'de': '=', 'en': '='}
     'Einschalt-Status':      {'de': '=', 'en': 'Power State'}
     'Quelle':                {'de': '=', 'en': 'Source'}
 
+    'Audiomode':             {'de': '=', 'en': '='}
+    'Volume':                {'de': '=', 'en': '='}
+    'Muted':                 {'de': '=', 'en': '='}
+    'Stand':                 {'de': '=', 'en': '='}
+
     'standby':               {'de': 'Standby', 'en': '='}
     'unknown':               {'de': 'unbekannt', 'en': '='}
     'on':                    {'de': 'Ein', 'en': '='}
+    '-':                     {'de': '=', 'en': '='}
 
+    'Wert 4':                {'de': '=', 'en': 'Value 4'}
     # Alternative format for translations of longer texts:
     'Hier kommt der Inhalt des Webinterfaces hin.':
         de: '='
