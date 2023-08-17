@@ -141,7 +141,7 @@ class Solarforecast(SmartPlugin):
         # Decode Json data:        
         wattHoursToday = None
         wattHoursTomorrow = None
-        today = self._sh.now().date()
+        today = self._sh.shtime.now().date()
         tomorrow = today + datetime.timedelta(days=1)
         self.last_update = today
 
