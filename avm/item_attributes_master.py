@@ -25,6 +25,8 @@ FILENAME_ATTRIBUTES = 'item_attributes.py'
 
 FILENAME_PLUGIN = 'plugin.yaml'
 
+DOC_FILE_NAME = 'user_doc.rst'
+
 ATTRIBUTE = 'avm_data_type'
 
 FILE_HEADER = """\
@@ -197,6 +199,8 @@ AVM_DATA_TYPES = {
       'colortemperature':             {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Farbtemperatur (Status und Setzen)'},
       'unmapped_hue':                 {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Hue (Status und Setzen)'},
       'unmapped_saturation':          {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Saturation (Status und Setzen)'},
+      'color':                        {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'list ', 'deprecated': False,  'supported_by_repeater': False,   'description': 'Farbwerte als Liste h,s (Status und Setzen)'},
+      'hsv':                          {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'list ', 'deprecated': False,  'supported_by_repeater': False,   'description': 'Farbwerte und Helligkeit als Liste h,s,v (Status und Setzen)'},
       'color_mode':                   {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Aktueller Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)'},
       'supported_color_mode':         {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Unterstützer Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)'},
       'fullcolorsupport':             {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Lampe unterstützt setunmappedcolor'},
@@ -269,7 +273,6 @@ def export_item_attributs_py():
     ATTRS['HOMEAUTO_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'homeauto'})
     ATTRS['MYFRITZ_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'myfritz'})
 
-
     # create file and write header
     f = open(FILENAME_ATTRIBUTES, "w")
     f.write(FILE_HEADER)
@@ -278,7 +281,7 @@ def export_item_attributs_py():
     # write avm_data_types
     for attr, alist in ATTRS.items():
         with open(FILENAME_ATTRIBUTES, "a") as f:
-            print (f'{attr} = {alist!r}', file=f)
+            print(f'{attr} = {alist!r}', file=f)
 
     print(f'   {FILENAME_ATTRIBUTES} successfully created!')
 
@@ -381,16 +384,65 @@ def check_plugin_yaml_structs():
     print(f'   Check complete.')
 
 
+def update_user_doc():
+    # Update user_doc.rst
+    print()
+    print(f'D) Start updating {ATTRIBUTE} and descriptions in {DOC_FILE_NAME}!"')
+    attribute_list = [
+        "\n",
+        "Dieses Kapitel wurde automatisch durch Ausführen des Skripts in der Datei 'datapoints.py' erstellt.\n", "\n",
+        "Nachfolgend eine Auflistung der möglichen Attribute für das Plugin:\n",
+        "\n"]
+
+    for attribute in AVM_DATA_TYPES:
+        attribute_list.append("\n")
+        attribute_list.append(f"{attribute.upper()}-Interface\n")
+        attribute_list.append('^' * (len(attribute) + 10))
+        attribute_list.append("\n")
+        attribute_list.append("\n")
+
+        for avm_data_type in AVM_DATA_TYPES[attribute]:
+            attribute_list.append(f"- {avm_data_type}: {AVM_DATA_TYPES[attribute][avm_data_type]['description']} "
+                                  f"| Zugriff: {AVM_DATA_TYPES[attribute][avm_data_type]['access']} "
+                                  f"| Item-Type: {AVM_DATA_TYPES[attribute][avm_data_type]['type']}\n")
+            attribute_list.append("\n")
+
+    with open(DOC_FILE_NAME, 'r', encoding='utf-8') as file:
+        lines = file.readlines()
+
+    start = end = None
+    for i, line in enumerate(lines):
+        if 'Attribute und Beschreibung' in line:
+            start = i
+        if 'item_structs' in line:
+            end = i
+
+    part1 = lines[0:start+2]
+    part3 = lines[end-1:len(lines)]
+    new_lines = part1 + attribute_list + part3
+
+    with open(DOC_FILE_NAME, 'w', encoding='utf-8') as file:
+        for line in new_lines:
+            file.write(line)
+
+    print(f"   Successfully updated {ATTRIBUTE} in {DOC_FILE_NAME}!")
+
 
 if __name__ == '__main__':
-    # Run main to export item_attributes.py and update ´valid_list and valid_list_description of avm_data_type in plugin.yaml
+    print()
+    print(f'Start automated update and check of {FILENAME_PLUGIN} with generation of {FILENAME_ATTRIBUTES} and update of {DOC_FILE_NAME}.')
+    print('------------------------------------------------------------------------')
+
+    export_item_attributs_py()
+
+    update_plugin_yaml_avm_data_type()
+
+    check_plugin_yaml_structs()
+
+    update_user_doc()
 
     print()
-    print(f'Start automated update and check of {FILENAME_PLUGIN} and {FILENAME_ATTRIBUTES}.')
-    print('------------------------------------------------------------------------')
-    export_item_attributs_py()
-    update_plugin_yaml_avm_data_type()
-    check_plugin_yaml_structs()
+    print(f'Automated update and check of {FILENAME_PLUGIN} and generation of {FILENAME_ATTRIBUTES} complete.')
 
 # Notes:
 #   - HOST_ATTRIBUTES: host index needed

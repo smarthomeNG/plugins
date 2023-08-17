@@ -54,6 +54,326 @@ zu Nichterreichbarkeit des Webservice) führen. Wird ein kürzerer Updatezyklus 
 werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
 
 
+Attribute und Beschreibung
+--------------------------
+
+Dieses Kapitel wurde automatisch durch Ausführen des Skripts in der Datei 'datapoints.py' erstellt.
+
+Nachfolgend eine Auflistung der möglichen Attribute für das Plugin:
+
+
+TR064-Interface
+^^^^^^^^^^^^^^^
+
+- uptime: Laufzeit des Fritzdevice in Sekunden | Zugriff: ro | Item-Type: num
+
+- serial_number: Serialnummer des Fritzdevice | Zugriff: ro | Item-Type: str
+
+- software_version: Software Version | Zugriff: ro | Item-Type: str
+
+- hardware_version: Hardware Version | Zugriff: ro | Item-Type: str
+
+- manufacturer: Hersteller | Zugriff: ro | Item-Type: str
+
+- product_class: Produktklasse | Zugriff: ro | Item-Type: str
+
+- manufacturer_oui: Hersteller OUI | Zugriff: ro | Item-Type: str
+
+- model_name: Modellname | Zugriff: ro | Item-Type: str
+
+- description: Modellbeschreibung | Zugriff: ro | Item-Type: str
+
+- device_log: Geräte Log | Zugriff: ro | Item-Type: str
+
+- security_port: Security Port | Zugriff: ro | Item-Type: str
+
+- reboot: Startet das Gerät neu | Zugriff: wo | Item-Type: bool
+
+- myfritz_status: MyFritz Status (an/aus) | Zugriff: ro | Item-Type: bool
+
+- call_direction: Richtung des letzten Anrufes | Zugriff: ro | Item-Type: str
+
+- call_event: Status des letzten Anrufes | Zugriff: ro | Item-Type: str
+
+- monitor_trigger: Monitortrigger | Zugriff: ro | Item-Type: bool
+
+- is_call_incoming: Eingehender Anruf erkannt | Zugriff: ro | Item-Type: bool
+
+- last_caller_incoming: Letzter Anrufer | Zugriff: ro | Item-Type: str
+
+- last_call_date_incoming: Zeitpunkt des letzten eingehenden Anrufs | Zugriff: ro | Item-Type: str
+
+- call_event_incoming: Status des letzten eingehenden Anrufs | Zugriff: ro | Item-Type: str
+
+- last_number_incoming: Nummer des letzten eingehenden Anrufes | Zugriff: ro | Item-Type: str
+
+- last_called_number_incoming: Angerufene Nummer des letzten eingehenden Anrufs | Zugriff: ro | Item-Type: str
+
+- is_call_outgoing: Ausgehender Anruf erkannt | Zugriff: ro | Item-Type: bool
+
+- last_caller_outgoing: Letzter angerufener Kontakt | Zugriff: ro | Item-Type: str
+
+- last_call_date_outgoing: Zeitpunkt des letzten ausgehenden Anrufs | Zugriff: ro | Item-Type: str
+
+- call_event_outgoing: Status des letzten ausgehenden Anrufs | Zugriff: ro | Item-Type: str
+
+- last_number_outgoing: Nummer des letzten ausgehenden Anrufes | Zugriff: ro | Item-Type: str
+
+- last_called_number_outgoing: Letzte verwendete Telefonnummer für ausgehenden Anruf | Zugriff: ro | Item-Type: str
+
+- call_duration_incoming: Dauer des eingehenden Anrufs | Zugriff: ro | Item-Type: num
+
+- call_duration_outgoing: Dauer des ausgehenden Anrufs | Zugriff: ro | Item-Type: num
+
+- tam: TAM an/aus | Zugriff: rw | Item-Type: bool
+
+- tam_name: Name des TAM | Zugriff: ro | Item-Type: str 
+
+- tam_new_message_number: Anzahl der alten Nachrichten | Zugriff: ro | Item-Type: num 
+
+- tam_old_message_number: Anzahl der neuen Nachrichten | Zugriff: ro | Item-Type: num 
+
+- tam_total_message_number: Gesamtanzahl der Nachrichten | Zugriff: ro | Item-Type: num 
+
+- wan_connection_status: WAN Verbindungsstatus | Zugriff: ro | Item-Type: str
+
+- wan_connection_error: WAN Verbindungsfehler | Zugriff: ro | Item-Type: str
+
+- wan_is_connected: WAN Verbindung aktiv | Zugriff: ro | Item-Type: bool
+
+- wan_uptime: WAN Verbindungszeit | Zugriff: ro | Item-Type: str
+
+- wan_ip: WAN IP Adresse | Zugriff: ro | Item-Type: str
+
+- wan_upstream: WAN Upstream Datenmenge | Zugriff: ro | Item-Type: num
+
+- wan_downstream: WAN Downstream Datenmenge | Zugriff: ro | Item-Type: num
+
+- wan_total_packets_sent: WAN Verbindung-Anzahl insgesamt versendeter Pakete | Zugriff: ro | Item-Type: num
+
+- wan_total_packets_received: WAN Verbindung-Anzahl insgesamt empfangener Pakete | Zugriff: ro | Item-Type: num
+
+- wan_current_packets_sent: WAN Verbindung-Anzahl aktuell versendeter Pakete | Zugriff: ro | Item-Type: num
+
+- wan_current_packets_received: WAN Verbindung-Anzahl aktuell empfangener Pakete | Zugriff: ro | Item-Type: num
+
+- wan_total_bytes_sent: WAN Verbindung-Anzahl insgesamt versendeter Bytes | Zugriff: ro | Item-Type: num
+
+- wan_total_bytes_received: WAN Verbindung-Anzahl insgesamt empfangener Bytes | Zugriff: ro | Item-Type: num
+
+- wan_current_bytes_sent: WAN Verbindung-Anzahl aktuelle Bitrate Senden | Zugriff: ro | Item-Type: num
+
+- wan_current_bytes_received: WAN Verbindung-Anzahl aktuelle Bitrate Empfangen | Zugriff: ro | Item-Type: num
+
+- wan_link: WAN Link | Zugriff: ro | Item-Type: bool
+
+- wlanconfig: WLAN An/Aus | Zugriff: rw | Item-Type: bool
+
+- wlanconfig_ssid: WLAN SSID | Zugriff: ro | Item-Type: str
+
+- wlan_guest_time_remaining: Verbleibende Zeit, bis zum automatischen Abschalten des Gäste-WLAN | Zugriff: ro | Item-Type: num
+
+- wlan_associates: Anzahl der verbundenen Geräte im jeweiligen WLAN | Zugriff: ro | Item-Type: num
+
+- wps_active: Schaltet WPS für das entsprechende WlAN an / aus | Zugriff: rw | Item-Type: bool
+
+- wps_status: WPS Status des entsprechenden WlAN | Zugriff: ro | Item-Type: str
+
+- wps_mode: WPS Modus des entsprechenden WlAN | Zugriff: ro | Item-Type: str
+
+- wlan_total_associates: Anzahl der verbundenen Geräte im WLAN | Zugriff: ro | Item-Type: num
+
+- hosts_count: Anzahl der Hosts | Zugriff: ro | Item-Type: num
+
+- hosts_info: Informationen über die Hosts | Zugriff: ro | Item-Type: dict
+
+- mesh_topology: Topologie des Mesh | Zugriff: ro | Item-Type: dict
+
+- number_of_hosts: Anzahl der verbundenen Hosts (Muss Child von "network_device" sein) | Zugriff: ro | Item-Type: num
+
+- hosts_url: URL zu Hosts (Muss Child von "network_device" sein) | Zugriff: ro | Item-Type: str
+
+- mesh_url: URL zum Mesh (Muss Child von "network_device" sein) | Zugriff: ro | Item-Type: str
+
+- network_device: Verbindungsstatus des Gerätes // Defines Network device via MAC-Adresse | Zugriff: ro | Item-Type: bool
+
+- device_ip: Geräte-IP (Muss Child von "network_device" sein) | Zugriff: ro | Item-Type: str
+
+- device_connection_type: Verbindungstyp (Muss Child von "network_device" sein) | Zugriff: ro | Item-Type: str
+
+- device_hostname: Gerätename (Muss Child von "network_device" sein | Zugriff: ro | Item-Type: str
+
+- connection_status: Verbindungsstatus (Muss Child von "network_device" sein) | Zugriff: ro | Item-Type: bool
+
+- is_host_active: Host aktiv? (Muss Child von "network_device" sein) | Zugriff: ro | Item-Type: bool
+
+- host_info: Informationen zum Host (Muss Child von "network_device" sein) | Zugriff: ro | Item-Type: str
+
+- number_of_deflections: Anzahl der eingestellten Rufumleitungen | Zugriff: ro | Item-Type: num
+
+- deflections_details: Details zu allen Rufumleitung (als dict) | Zugriff: ro | Item-Type: dict
+
+- deflection_details: Details zur Rufumleitung (als dict); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item | Zugriff: ro | Item-Type: dict
+
+- deflection_enable: Rufumleitung Status an/aus; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item | Zugriff: rw | Item-Type: bool
+
+- deflection_type: Type der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item | Zugriff: ro | Item-Type: str
+
+- deflection_number: Telefonnummer, die umgeleitet wird; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item | Zugriff: ro | Item-Type: str
+
+- deflection_to_number: Zielrufnummer der Umleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item | Zugriff: ro | Item-Type: str
+
+- deflection_mode: Modus der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item | Zugriff: ro | Item-Type: str
+
+- deflection_outgoing: Outgoing der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item | Zugriff: ro | Item-Type: str
+
+- deflection_phonebook_id: Phonebook_ID der Zielrufnummer (Only valid if Type==fromPB); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item | Zugriff: ro | Item-Type: str
+
+- aha_device: Steckdose schalten; siehe "switch_state" | Zugriff: rw | Item-Type: bool
+
+- hkr_device: Status des HKR (OPEN; CLOSED; TEMP) | Zugriff: ro | Item-Type: str
+
+- set_temperature: siehe "target_temperature" | Zugriff: ro | Item-Type: num
+
+- temperature: siehe "current_temperature" | Zugriff: ro | Item-Type: num
+
+- set_temperature_reduced: siehe "temperature_reduced" | Zugriff: ro | Item-Type: num
+
+- set_temperature_comfort: siehe "temperature_comfort" | Zugriff: ro | Item-Type: num
+
+- firmware_version: siehe "fw_version" | Zugriff: ro | Item-Type: str
+
+
+AHA-Interface
+^^^^^^^^^^^^^
+
+- device_id: Geräte -ID | Zugriff: ro | Item-Type: str 
+
+- manufacturer: Hersteller | Zugriff: ro | Item-Type: str 
+
+- product_name: Produktname | Zugriff: ro | Item-Type: str 
+
+- fw_version: Firmware Version | Zugriff: ro | Item-Type: str 
+
+- connected: Verbindungsstatus | Zugriff: ro | Item-Type: bool
+
+- device_name: Gerätename | Zugriff: ro | Item-Type: str 
+
+- tx_busy: Verbindung aktiv | Zugriff: ro | Item-Type: bool
+
+- device_functions: Im Gerät vorhandene Funktionen | Zugriff: ro | Item-Type: list
+
+- set_target_temperature: Soll-Temperatur Setzen | Zugriff: wo | Item-Type: num 
+
+- target_temperature: Soll-Temperatur (Status und Setzen) | Zugriff: rw | Item-Type: num 
+
+- current_temperature: Ist-Temperatur | Zugriff: ro | Item-Type: num 
+
+- temperature_reduced: Eingestellte reduzierte Temperatur | Zugriff: ro | Item-Type: num 
+
+- temperature_comfort: Eingestellte Komfort-Temperatur | Zugriff: ro | Item-Type: num 
+
+- temperature_offset: Eingestellter Temperatur-Offset | Zugriff: ro | Item-Type: num 
+
+- set_window_open: Window-Open-Funktion (Setzen) | Zugriff: wo | Item-Type: bool
+
+- window_open: Window-Open-Funktion (Status und Setzen) | Zugriff: rw | Item-Type: bool
+
+- windowopenactiveendtime: Zeitliches Ende der "Window Open" Funktion | Zugriff: ro | Item-Type: num 
+
+- set_hkr_boost: Boost-Funktion (Setzen) | Zugriff: wo | Item-Type: bool
+
+- hkr_boost: Boost-Funktion (Status und Setzen) | Zugriff: rw | Item-Type: bool
+
+- boost_active: Status der "Boost" Funktion | Zugriff: ro | Item-Type: bool
+
+- boostactiveendtime: Zeitliches Ende der Boost Funktion | Zugriff: ro | Item-Type: num 
+
+- summer_active: Status der "Sommer" Funktion | Zugriff: ro | Item-Type: bool
+
+- holiday_active: Status der "Holiday" Funktion | Zugriff: ro | Item-Type: bool
+
+- battery_low: Battery-low Status | Zugriff: ro | Item-Type: bool
+
+- battery_level: Batterie-Status in % | Zugriff: ro | Item-Type: num 
+
+- lock: Tastensperre über UI/API aktiv | Zugriff: ro | Item-Type: bool
+
+- device_lock: Tastensperre direkt am Gerät ein | Zugriff: ro | Item-Type: bool
+
+- errorcode: Fehlercodes die der HKR liefert | Zugriff: ro | Item-Type: num 
+
+- set_simpleonoff: Gerät/Aktor/Lampe an-/ausschalten | Zugriff: wo | Item-Type: bool
+
+- simpleonoff: Gerät/Aktor/Lampe (Status und Setzen) | Zugriff: rw | Item-Type: bool
+
+- set_level: Level/Niveau von 0 bis 255 (Setzen) | Zugriff: wo | Item-Type: num 
+
+- level: Level/Niveau von 0 bis 255 (Setzen & Status) | Zugriff: rw | Item-Type: num 
+
+- set_levelpercentage: Level/Niveau von 0% bis 100% (Setzen) | Zugriff: wo | Item-Type: num 
+
+- levelpercentage: Level/Niveau von 0% bis 100% (Setzen & Status) | Zugriff: rw | Item-Type: num 
+
+- set_hue: Hue (Setzen) | Zugriff: wo | Item-Type: num 
+
+- hue: Hue (Status und Setzen) | Zugriff: rw | Item-Type: num 
+
+- set_saturation: Saturation (Setzen) | Zugriff: wo | Item-Type: num 
+
+- saturation: Saturation (Status und Setzen) | Zugriff: rw | Item-Type: num 
+
+- set_colortemperature: Farbtemperatur (Setzen) | Zugriff: wo | Item-Type: num 
+
+- colortemperature: Farbtemperatur (Status und Setzen) | Zugriff: rw | Item-Type: num 
+
+- unmapped_hue: Hue (Status und Setzen) | Zugriff: rw | Item-Type: num 
+
+- unmapped_saturation: Saturation (Status und Setzen) | Zugriff: rw | Item-Type: num 
+
+- color: Farbwerte als Liste h,s (Status und Setzen) | Zugriff: rw | Item-Type: list 
+
+- hsv: Farbwerte und Helligkeit als Liste h,s,v (Status und Setzen) | Zugriff: rw | Item-Type: list 
+
+- color_mode: Aktueller Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode) | Zugriff: ro | Item-Type: num 
+
+- supported_color_mode: Unterstützer Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode) | Zugriff: ro | Item-Type: num 
+
+- fullcolorsupport: Lampe unterstützt setunmappedcolor | Zugriff: ro | Item-Type: bool
+
+- mapped: von den Colordefaults abweichend zugeordneter HueSaturation-Wert gesetzt | Zugriff: ro | Item-Type: bool
+
+- switch_state: Schaltzustand Steckdose (Status und Setzen) | Zugriff: rw | Item-Type: bool
+
+- switch_mode: Zeitschaltung oder manuell schalten | Zugriff: ro | Item-Type: str 
+
+- switch_toggle: Schaltzustand umschalten (toggle) | Zugriff: wo | Item-Type: bool
+
+- power: Leistung in W (Aktualisierung alle 2 min) | Zugriff: ro | Item-Type: num 
+
+- energy: absoluter Verbrauch seit Inbetriebnahme in Wh | Zugriff: ro | Item-Type: num 
+
+- voltage: Spannung in V (Aktualisierung alle 2 min) | Zugriff: ro | Item-Type: num 
+
+- humidity: Relative Luftfeuchtigkeit in % (FD440) | Zugriff: ro | Item-Type: num 
+
+- alert_state: letzter übermittelter Alarmzustand | Zugriff: ro | Item-Type: bool
+
+- blind_mode: automatische Zeitschaltung oder manuell fahren | Zugriff: ro | Item-Type: str 
+
+- endpositionsset: ist die Endlage für das Rollo konfiguriert | Zugriff: ro | Item-Type: bool
+
+- statistics_temp: Wertestatistik für Temperatur | Zugriff: ro | Item-Type: list
+
+- statistics_hum: Wertestatistik für Feuchtigkeit | Zugriff: ro | Item-Type: list
+
+- statistics_voltage: Wertestatistik für Spannung | Zugriff: ro | Item-Type: list
+
+- statistics_power: Wertestatistik für Leistung | Zugriff: ro | Item-Type: list
+
+- statistics_energy: Wertestatistik für Energie | Zugriff: ro | Item-Type: list
+
+
 item_structs
 ------------
 Zur Vereinfachung der Einrichtung von Items sind für folgende Item-structs vordefiniert:
