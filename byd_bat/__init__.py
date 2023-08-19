@@ -32,7 +32,7 @@
 #
 # V0.0.2 230812 - Korrektur Berechnung Batteriestrom
 #
-# V0.0.3        - Code mit pycodestyle kontrolliert/angepasst
+# V0.0.3 230819 - Code mit pycodestyle kontrolliert/angepasst
 #               - Anpassungen durch 'check_plugin'
 #
 # -----------------------------------------------------------------------
@@ -176,7 +176,7 @@ class byd_bat(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '0.0.2'
+    PLUGIN_VERSION = '0.0.3'
     
     def __init__(self,sh):
         """
