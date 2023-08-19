@@ -68,18 +68,19 @@ class SeCondition(StateEngineTools.SeItemChild):
     # 'triggeredby','changedbynegate', 'updatedbynegate', 'triggeredbynegate','agemin', 'agemax' or 'agenegate')
     # value: Value for function
     def set(self, func, value):
+        issue = None
         if func == "se_item":
             if ":" in value:
                 self._log_warning("Your item configuration '{0}' is wrong! Define a plain (relative) "
                                   "item without item: at the beginning!", value)
                 _, _, value = value.partition(":")
-            self.__item = self._abitem.return_item(value)
+            self.__item, issue = self._abitem.return_item(value)
         elif func == "se_status":
             if ":" in value:
                 self._log_warning("Your status configuration '{0}' is wrong! Define a plain (relative) "
                                   "item without item: at the beginning!", value)
                 _, _, value = value.partition(":")
-            self.__status = self._abitem.return_item(value)
+            self.__status, issue = self._abitem.return_item(value)
         elif func == "se_eval":
             if value.startswith("eval:"):
                 _, _, value = value.partition("eval:")
@@ -118,6 +119,8 @@ class SeCondition(StateEngineTools.SeItemChild):
             self.__agenegate = value
         elif func != "se_item" and func != "se_eval" and func != "se_status":
             self._log_warning("Function '{0}' is no valid function! Please check item attribute.", func)
+            issue = "Function '{0}' is no valid function!".format(func)
+        return issue
 
     def get(self):
         _eval_result = str(self.__eval)
@@ -212,13 +215,13 @@ class SeCondition(StateEngineTools.SeItemChild):
         if self.__item is None:
             result = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self.__name)
             if result is not None:
-                self.__item = self._abitem.return_item(result)
+                self.__item, issue = self._abitem.return_item(result)
 
         # missing status in condition: Try to find it
         if self.__status is None:
             result = StateEngineTools.find_attribute(self._sh, item_state, "se_status_" + self.__name)
             if result is not None:
-                self.__status = self._abitem.return_item(result)
+                self.__status, issue = self._abitem.return_item(result)
 
         # missing eval in condition: Try to find it
         if self.__eval is None:

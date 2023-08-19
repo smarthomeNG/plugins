@@ -20,7 +20,7 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 import datetime
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from . import StateEngineTools
 from .StateEngineLogger import SeLogger
 from . import StateEngineState
@@ -29,9 +29,11 @@ from . import StateEngineCurrent
 from . import StateEngineValue
 from . import StateEngineStruct
 from . import StateEngineStructs
+
 from lib.item import Items
 from lib.shtime import Shtime
 from lib.item.item import Item
+from copy import copy
 import threading
 import queue
 
@@ -213,42 +215,44 @@ class SeItem:
         self.__suspend_time.set_from_attr(self.__item, "se_suspend_time", StateEngineDefaults.suspend_time)
 
         # Init laststate and previousstate items/values
-        self.__laststate_item_id = self.return_item_by_attribute("se_laststate_item_id")
+        self.__laststate_item_id, _ = self.return_item_by_attribute("se_laststate_item_id")
         self.__laststate_internal_id = "" if self.__laststate_item_id is None else self.__laststate_item_id.property.value
-        self.__laststate_item_name = self.return_item_by_attribute("se_laststate_item_name")
+        self.__laststate_item_name, _ = self.return_item_by_attribute("se_laststate_item_name")
         self.__laststate_internal_name = "" if self.__laststate_item_name is None else self.__laststate_item_name.property.value
-        self.__previousstate_item_id = self.return_item_by_attribute("se_previousstate_item_id")
+        self.__previousstate_item_id, _ = self.return_item_by_attribute("se_previousstate_item_id")
         self.__previousstate_internal_id = "" if self.__previousstate_item_id is None else self.__previousstate_item_id.property.value
-        self.__previousstate_item_name = self.return_item_by_attribute("se_previousstate_item_name")
+        self.__previousstate_item_name, _ = self.return_item_by_attribute("se_previousstate_item_name")
         self.__previousstate_internal_name = "" if self.__previousstate_item_name is None else self.__previousstate_item_name.property.value
 
         # Init releasedby items/values
-        self.___shouldnotrelease_item = self.return_item_by_attribute("se_shouldnotrelease_item")
-        self.__hasreleased_item = self.return_item_by_attribute("se_hasreleased_item")
+        self.___shouldnotrelease_item, _ = self.return_item_by_attribute("se_shouldnotrelease_item")
+        self.__hasreleased_item, _ = self.return_item_by_attribute("se_hasreleased_item")
         self.__has_released = {} if self.__hasreleased_item is None else self.__hasreleased_item.property.value
         self.__logger.develop("has released = {}", self.__has_released)
         self.__should_not_release = {} if self.___shouldnotrelease_item is None else self.___shouldnotrelease_item.property.value
 
         # Init lastconditionset items/values
-        self.__lastconditionset_item_id = self.return_item_by_attribute("se_lastconditionset_item_id")
+        self.__lastconditionset_item_id, _ = self.return_item_by_attribute("se_lastconditionset_item_id")
         self.__lastconditionset_internal_id = "" if self.__lastconditionset_item_id is None else \
             self.__lastconditionset_item_id.property.value
-        self.__lastconditionset_item_name = self.return_item_by_attribute("se_lastconditionset_item_name")
+        self.__lastconditionset_item_name, _ = self.return_item_by_attribute("se_lastconditionset_item_name")
         self.__lastconditionset_internal_name = "" if self.__lastconditionset_item_name is None else \
             self.__lastconditionset_item_name.property.value
 
         # Init previousconditionset items/values
-        self.__previousconditionset_item_id = self.return_item_by_attribute("se_previousconditionset_item_id")
+        self.__previousconditionset_item_id, _ = self.return_item_by_attribute("se_previousconditionset_item_id")
         self.__previousconditionset_internal_id = "" if self.__previousconditionset_item_id is None else \
             self.__previousconditionset_item_id.property.value
-        self.__previousconditionset_item_name = self.return_item_by_attribute("se_previousconditionset_item_name")
+        self.__previousconditionset_item_name, _ = self.return_item_by_attribute("se_previousconditionset_item_name")
         self.__previousconditionset_internal_name = "" if self.__previousconditionset_item_name is None else \
             self.__previousconditionset_item_name.property.value
 
-        self.__previousstate_conditionset_item_id = self.return_item_by_attribute("se_previousstate_conditionset_item_id")
+        self.__previousstate_conditionset_item_id, _ = self.return_item_by_attribute(
+            "se_previousstate_conditionset_item_id")
         self.__previousstate_conditionset_internal_id = "" if self.__previousstate_conditionset_item_id is None else \
             self.__previousstate_conditionset_item_id.property.value
-        self.__previousstate_conditionset_item_name = self.return_item_by_attribute("se_previousstate_conditionset_item_name")
+        self.__previousstate_conditionset_item_name, _ = self.return_item_by_attribute(
+            "se_previousstate_conditionset_item_name")
         self.__previousstate_conditionset_internal_name = "" if self.__previousstate_conditionset_item_name is None else \
             self.__previousstate_conditionset_item_name.property.value
 
@@ -256,6 +260,9 @@ class SeItem:
         self.__state_ids = {}
         self.__conditionsets = {}
         self.__templates = {}
+        self.__unused_attributes = {}
+        self.__used_attributes = {}
+        self.__action_status = {}
         self.__webif_infos = OrderedDict()
         self.__instant_leaveaction = StateEngineValue.SeValue(self, "Instant Leave Action", False, "bool")
         self.__instant_leaveaction.set_from_attr(self.__item, "se_instant_leaveaction",
@@ -293,18 +300,18 @@ class SeItem:
             "previous.state_conditionset_id": "",
             "previous.state_conditionset_name": ""
         }
+        try:
+            _statecount = 0
+            for item_state in self.__item.return_children():
+                self.__initialize_state(item_state, _statecount)
+        except Exception as ex:
+            self.__logger.error("Ignoring stateevaluation for {} because {}", self.__id, ex)
 
-        # initialize states
-        for item_state in self.__item.return_children():
-            try:
-                _state = StateEngineState.SeState(self, item_state)
-                self.__states.append(_state)
-                self.__state_ids.update({item_state.property.path: _state})
-            except ValueError as ex:
-                self.__logger.error("Ignoring state {0} because:  {1}".format(item_state.property.path, ex))
-
-        if len(self.__states) == 0:
-            raise ValueError("{0}: No states defined!".format(self.id))
+        try:
+            self.__finish_states()
+        except Exception as ex:
+            self.__logger.error("Issue finishing states because {}", ex)
+            return
 
         # Write settings to log
         self.__write_to_log()
@@ -316,6 +323,16 @@ class SeItem:
         self.__logger.develop("ALL RELEASEDBY: {}", self.__all_releasedby)
         self.__logger.develop("HAS RELEASED: {}", self.__has_released)
 
+        # show issues summary
+        filtered_dict = {key: value for key, value in self.__unused_attributes.items() if
+                         key not in self.__used_attributes or 'issue' in value.keys()}
+        self.__unused_attributes = filtered_dict
+        self.__logger.info("".ljust(80, "_"))
+        if self.__unused_attributes:
+            self.__log_issues('attributes')
+        if self.__action_status:
+            self.__log_issues('actions')
+        self.__logger.info("".ljust(80, "_"))
         # start timer with startup-delay
         _startup_delay_param = self.__startup_delay.get()
         startup_delay = 1 if self.__startup_delay.is_empty() or _startup_delay_param == 0 else _startup_delay_param
@@ -367,6 +384,7 @@ class SeItem:
             SeLogger.manage_logdirectory(base, SeLogger.log_directory, True)
         self.__logger.debug("Current log level {}, default {}, currently using default {}",
                             self.__logger.log_level, _default_log_level, self.__logger.using_default)
+        self.__logger.debug("Current instant leave action {}", self.__instant_leaveaction)
         self.update_lock.acquire(True, 10)
         while not self.__queue.empty() and self.__ab_alive:
             job = self.__queue.get()
@@ -644,6 +662,54 @@ class SeItem:
             self.__webif_infos[key] = value
             return True
 
+    def update_action_status(self, action_status):
+        def combine_dicts(dict1, dict2):
+            combined_dict = dict1.copy()
+
+            for key, value in dict2.items():
+                if key in combined_dict:
+                    combined_dict[key]['issueorigin'].extend(value['issueorigin'])
+                else:
+                    combined_dict[key] = value
+
+            return combined_dict
+
+        action_dict = copy(action_status)
+        combined_dict = combine_dicts(action_dict, self.__action_status)
+        self.__action_status = combined_dict
+
+    def update_attributes(self, unused_attributes, used_attributes):
+        combined_unused_dict = copy(unused_attributes)  # Create a copy of dict1
+
+        for key, value in self.__unused_attributes.items():
+            if key in combined_unused_dict:
+                if unused_attributes.get(key):
+                    existing_issue = unused_attributes[key].get('issueorigin')
+                else:
+                    existing_issue = None
+                combined_unused_dict[key].update(value)  # Update nested dictionaries
+                if existing_issue:
+                    try:
+                        combined_dict = defaultdict(set)
+                        for entry in existing_issue + combined_unused_dict[key].get('issueorigin'):
+                            combined_dict[entry['state']].add(entry['conditionset'])
+
+                        combined_entries = [{'state': state, 'conditionset': ', '.join(conditionsets)} for
+                                            state, conditionsets in combined_dict.items()]
+                        combined_unused_dict[key]['issueorigin'] = combined_entries
+                    except Exception as ex:
+                        pass
+
+        self.__unused_attributes = combined_unused_dict
+
+        combined_dict = self.__used_attributes.copy()  # Create a copy of dict1
+        for key, value in used_attributes.items():
+            if key in combined_dict:
+                combined_dict[key].update(value)  # Update nested dictionaries
+            else:
+                combined_dict[key] = value  # Add new key-value pairs
+        self.__used_attributes = combined_dict
+
     def update_releasedby(self, state):
         # create dependencies
         _id = state.id
@@ -674,6 +740,60 @@ class SeItem:
             elif state.id not in self.__all_torelease.get(i):
                 self.__all_torelease[i].append(_id)
         '''
+
+    def __log_issues(self, issue_type):
+        self.__logger.info("")
+        self.__logger.warning("The following {} have issues:", issue_type)
+        self.__logger.increase_indent()
+        if issue_type == 'actions':
+            to_check = self.__action_status.items()
+        else:
+            to_check = self.__unused_attributes.items()
+        for entry, value in to_check:
+            if 'issue' in value:
+                origin_text = ''
+                origin_list = value.get('issueorigin') or []
+                self.__logger.info("Definition {} used in", entry)
+                self.__logger.increase_indent()
+                for i, origin in enumerate(origin_list):
+                    if issue_type == 'actions':
+                        origin_text = 'state {}, action {}, on_{}'.format(origin.get('state'), origin.get('action'),
+                                                                          origin.get('type'))
+                    else:
+                        origin_text = 'state {}, conditionset {}'.format(origin.get('state'),
+                                                                         origin.get('conditionset'))
+                    self.__logger.info("{}", origin_text)
+                self.__logger.decrease_indent()
+                text = "has an issue: {}".format(value.get('issue'))
+                self.__logger.info("{}", text)
+                self.__logger.info("")
+        for entry, value in self.__action_status.items():
+            if 'issue' not in value:
+                text = "Definition {} not used in any {}.".format(entry, issue_type)
+                self.__logger.info("{}", text)
+        self.__logger.decrease_indent()
+
+    def __initialize_state(self, item_state, _statecount):
+        # initialize states
+        try:
+            _state = StateEngineState.SeState(self, item_state)
+            _statecount += 1
+            self.__states.append(_state)
+            self.__state_ids.update({item_state.property.path: _state})
+            if _statecount == 1:
+                self.__unused_attributes = copy(_state.unused_attributes)
+            filtered_dict = {key: value for key, value in self.__unused_attributes.items() if
+                             key not in _state.used_attributes}
+            self.__unused_attributes = filtered_dict
+        except ValueError as ex:
+            self.__logger.error("Ignoring state {0} because ValueError: {1}", item_state.property.path, ex)
+        except Exception as ex:
+            self.__logger.error("Ignoring state {0} because: {1}", item_state.property.path, ex)
+
+    def __finish_states(self):
+        # initialize states
+        if len(self.__states) == 0:
+            raise ValueError("{0}: No states defined!".format(self.id))
 
     def __check_releasedby(self, state, _checked_states, _releasedby, _wouldenter, _wouldnotenter,
                            _flagged, _laststate, _possible_states, result):
@@ -880,13 +1000,13 @@ class SeItem:
 
     # return id of last conditionset
     def __lastconditionset_get_id(self):
-        _lastconditionset_item_id = self.return_item_by_attribute("se_lastconditionset_item_id")
+        _lastconditionset_item_id, _ = self.return_item_by_attribute("se_lastconditionset_item_id")
         _lastconditionset_item_id = "" if _lastconditionset_item_id is None else _lastconditionset_item_id.property.value
         return _lastconditionset_item_id
 
     # return name of last conditionset
     def __lastconditionset_get_name(self):
-        _lastconditionset_item_name = self.return_item_by_attribute("se_lastconditionset_item_name")
+        _lastconditionset_item_name, _ = self.return_item_by_attribute("se_lastconditionset_item_name")
         _lastconditionset_item_name = "" if _lastconditionset_item_name is None else _lastconditionset_item_name.property.value
         return _lastconditionset_item_name
 
@@ -933,27 +1053,27 @@ class SeItem:
 
     # return id of last conditionset
     def __previousconditionset_get_id(self):
-        _previousconditionset_item_id = self.return_item_by_attribute("se_previousconditionset_item_id")
+        _previousconditionset_item_id, _ = self.return_item_by_attribute("se_previousconditionset_item_id")
         _previousconditionset_item_id = "" if _previousconditionset_item_id is None else _previousconditionset_item_id.property.value
         return _previousconditionset_item_id
 
     # return name of last conditionset
     def __previousconditionset_get_name(self):
-        _previousconditionset_item_name = self.return_item_by_attribute("se_previousconditionset_item_name")
+        _previousconditionset_item_name, _ = self.return_item_by_attribute("se_previousconditionset_item_name")
         _previousconditionset_item_name = "" if _previousconditionset_item_name is None else _previousconditionset_item_name.property.value
         return _previousconditionset_item_name
 
     # return id of conditionset of last state
     def __previousstate_conditionset_get_id(self):
-        _previousconditionset_item_id = self.return_item_by_attribute("se_previousstate_conditionset_item_id")
-        _previousconditionset_item_id = "" if _previousstate_conditionset_item_id is None else _previousstate_conditionset_item_id.property.value
-        return _previousconditionset_item_id
+        _previousstate_conditionset_item_id, _ = self.return_item_by_attribute("se_previousstate_conditionset_item_id")
+        _previousstate_conditionset_item_id = "" if _previousstate_conditionset_item_id is None else _previousstate_conditionset_item_id.property.value
+        return _previousstate_conditionset_item_id
 
     # return name of conditionset of last state
     def __previousstate_conditionset_get_name(self):
-        _previousconditionset_item_name = self.return_item_by_attribute("se_previousstate_conditionset_item_name")
-        _previousconditionset_item_name = "" if _previousstate_conditionset_item_name is None else _previousstate_conditionset_item_name.property.value
-        return _previousconditionset_item_name
+        _previousstate_conditionset_item_name, _ = self.return_item_by_attribute("se_previousstate_conditionset_item_name")
+        _previousstate_conditionset_item_name = "" if _previousstate_conditionset_item_name is None else _previousstate_conditionset_item_name.property.value
+        return _previousstate_conditionset_item_name
 
     def previousconditionset_set(self, last_id, last_name):
         self.__previousconditionset_internal_id = last_id
@@ -1134,23 +1254,23 @@ class SeItem:
             self.__logger.info("Item 'Has released': {0}", self.__hasreleased_item.property.path)
 
         # log lastcondition settings
-        _conditionset_id = self.return_item_by_attribute("se_lastconditionset_item_id")
-        _conditionset_name = self.return_item_by_attribute("se_lastconditionset_item_name")
+        _conditionset_id, _ = self.return_item_by_attribute("se_lastconditionset_item_id")
+        _conditionset_name, _ = self.return_item_by_attribute("se_lastconditionset_item_name")
         if _conditionset_id is not None:
             self.__logger.info("Item 'Lastcondition Id': {0}", _conditionset_id.property.path)
         if _conditionset_name is not None:
             self.__logger.info("Item 'Lastcondition Name': {0}", _conditionset_name.property.path)
 
         # log previouscondition settings
-        _previousconditionset_id = self.return_item_by_attribute("se_previousconditionset_item_id")
-        _previousconditionset_name = self.return_item_by_attribute("se_previousconditionset_item_name")
+        _previousconditionset_id, _ = self.return_item_by_attribute("se_previousconditionset_item_id")
+        _previousconditionset_name, _ = self.return_item_by_attribute("se_previousconditionset_item_name")
         if _previousconditionset_id is not None:
             self.__logger.info("Item 'Previouscondition Id': {0}", _previousconditionset_id.property.path)
         if _previousconditionset_name is not None:
             self.__logger.info("Item 'Previouscondition Name': {0}", _previousconditionset_name.property.path)
 
-        _previousstate_conditionset_id = self.return_item_by_attribute("se_previousstate_conditionset_item_id")
-        _previousstate_conditionset_name = self.return_item_by_attribute("se_previousstate_conditionset_item_name")
+        _previousstate_conditionset_id, _ = self.return_item_by_attribute("se_previousstate_conditionset_item_id")
+        _previousstate_conditionset_name, _ = self.return_item_by_attribute("se_previousstate_conditionset_item_name")
         if _previousstate_conditionset_id is not None:
             self.__logger.info("Item 'Previousstate condition Id': {0}", _previousstate_conditionset_id.property.path)
         if _previousstate_conditionset_name is not None:
@@ -1320,32 +1440,37 @@ class SeItem:
     # - item_id = "..threedots" will return item "my.threedots"
     # - item_id = "..threedots.further.down" will return item "my.threedots.further.down"
     def return_item(self, item_id):
+        _issue = None
         if isinstance(item_id, (StateEngineStruct.SeStruct, self.__itemClass)):
-            return item_id
+            return item_id, None
         if isinstance(item_id, StateEngineState.SeState):
-            return self.itemsApi.return_item(item_id.id)
+            return self.itemsApi.return_item(item_id.id), None
         if item_id is None:
-            return None
+            _issue = "item_id is None"
+            return None, _issue
         if not isinstance(item_id, str):
-            return None
             self.__logger.info("'{0}' should be defined as string. Check your item config!", item_id)
+            _issue = "'{0}' is not defined as string.".format(item_id)
+            return None, _issue
         item_id = item_id.strip()
         if item_id.startswith("struct:"):
             item = None
             _, item_id = StateEngineTools.partition_strip(item_id, ":")
             try:
-                #self.__logger.debug("Creating struct for id {}".format(item_id))
+                # self.__logger.debug("Creating struct for id {}".format(item_id))
                 item = StateEngineStructs.create(self, item_id)
             except Exception as e:
                 self.__logger.error("struct {} creation failed. Error: {}", item_id, e)
             if item is None:
-            return item
                 self.__logger.warning("Item '{0}' not found!", item_id)
+                _issue = "'{0}' not found.".format(item_id)
+            return item, _issue
         if not item_id.startswith("."):
             item = self.itemsApi.return_item(item_id)
             if item is None:
-            return item
                 self.__logger.warning("Item '{0}' not found!", item_id)
+                _issue = "'{0}' not found.".format(item_id)
+            return item, _issue
         self.__logger.debug("Testing for relative item declaration {}", item_id)
         parent_level = 0
         for c in item_id:
@@ -1367,14 +1492,17 @@ class SeItem:
         item = self.itemsApi.return_item(result)
         if item is None:
             self.__logger.warning("Determined item '{0}' does not exist.", result)
+            _issue = "Determined item '{0}' does not exist.".format(item_id)
         else:
-        return item
             self.__logger.develop("Determined item '{0}' for id {1}.", item.id, item_id)
+        return item, _issue
 
     # Return an item related to the StateEngine object item
     # attribute: Name of the attribute of the StateEngine object item, which contains the item_id to read
     def return_item_by_attribute(self, attribute):
+        _issue = None
         if attribute not in self.__item.conf:
-            return None
+            _issue = "Problem with attribute '{0}'".format(attribute)
             self.__logger.warning("Problem with attribute '{0}'.", attribute)
+            return None, _issue
         return self.return_item(self.__item.conf[attribute])

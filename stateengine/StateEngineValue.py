@@ -288,7 +288,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     self.__value = [] if self.__value is None else [self.__value] if not isinstance(self.__value, list) else self.__value
                     self.__value.append(None if s != "value" else self.__do_cast(field_value[i]))
                 self.__item = [] if self.__item is None else [self.__item] if not isinstance(self.__item, list) else self.__item
-                self.__item.append(None if s != "item" else self.__absolute_item(self._abitem.return_item(field_value[i]), field_value[i]))
+                self.__item.append(None if s != "item" else self.__absolute_item(self._abitem.return_item(field_value[i])[0], field_value[i]))
                 self.__eval = [] if self.__eval is None else [self.__eval] if not isinstance(self.__eval, list) else self.__eval
                 self.__eval.append(None if s != "eval" else field_value[i])
                 self.__regex = [] if self.__regex is None else [self.__regex] if not isinstance(self.__regex, list) else self.__regex
@@ -311,7 +311,7 @@ class SeValue(StateEngineTools.SeItemChild):
             self.__varname = self.__varname[0] if len(self.__varname) == 1 else None if len(self.__varname) == 0 else self.__varname
 
         else:
-            self.__item = None if source != "item" else self.__absolute_item(self._abitem.return_item(field_value), field_value)
+            self.__item = None if source != "item" else self.__absolute_item(self._abitem.return_item(field_value)[0], field_value)
             self.__eval = None if source != "eval" else field_value
             self.__regex = None if source != "regex" else field_value
             self.__struct = None if source != "struct" else StateEngineStructs.create(self._abitem, field_value)
@@ -469,7 +469,7 @@ class SeValue(StateEngineTools.SeItemChild):
     # returns: value as item or struct
     def cast_item(self, value):
         try:
-            return self._abitem.return_item(value)
+            return self._abitem.return_item(value)[0]
         except Exception as ex:
             self._log_error("Can't cast {0} to item/struct! {1}".format(value, ex))
             return value

@@ -34,6 +34,10 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def name(self):
         return self._name
 
+    @property
+    def action_status(self):
+        return self.__action_status
+
     # Cast function for delay
     # value: value to cast
     @staticmethod
@@ -73,6 +77,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._scheduler_name = None
         self.__function = None
         self.__template = None
+        self.__action_status = {}
         self.__queue = abitem.queue
 
     def update_delay(self, value):
@@ -415,15 +420,21 @@ class SeActionSetItem(SeActionBase):
                 item = item.replace('shtime', 'self._shtime')
                 item = eval(item)
                 if item is not None:
-                    self.__item = self._abitem.return_item(item)
+                    self.__item, _issue = self._abitem.return_item(item)
+                    _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
                     self.__value.set_cast(self.__item.cast)
                     self.__mindelta.set_cast(self.__item.cast)
                     self._scheduler_name = "{}-SeItemDelayTimer".format(self.__item.property.path)
                     if self._abitem.id == self.__item.property.path:
                         self._caller += '_self'
             except Exception as ex:
+                _issue = {self._name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
                 raise Exception("Problem evaluating item '{}' from eval: {}".format(self.__item, ex))
+            finally:
+                self.__action_status = _issue
             if item is None:
+                _issue = {self._name: {'issue': 'Item {} from eval not existing'.format(self.__item), 'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
+                self.__action_status = _issue
                 raise Exception("Problem evaluating item '{}' from eval. It does not exist.".format(self.__item))
 
     # set the action based on a set_(action_name) attribute
@@ -434,6 +445,7 @@ class SeActionSetItem(SeActionBase):
     # Complete action
     # item_state: state item to read from
     def complete(self, item_state, evals_items=None):
+        _issue = None
         try:
             _name = evals_items.get(self.name)
             if _name is not None:
@@ -442,7 +454,8 @@ class SeActionSetItem(SeActionBase):
                 _selfitem = self.__item if self.__item is not None and self.__item != "None" else None
                 _item = _item if _item is not None and _item != "None" else None
                 _eval = _eval if _eval is not None and _eval != "None" else None
-                self.__item = _selfitem or self._abitem.return_item(_item) or _eval
+                self.__item = _selfitem or self._abitem.return_item(_item)[0] or _eval
+                _issue = {self._name: {'issue': self._abitem.return_item(_item)[1], 'issueorigin': [{'state': item_state.property.path, 'action': 'set'}]}}
         except Exception as ex:
             self._log_error("No valid item info for action {}, trying to get differently. Problem: {}", self.name, ex)
         # missing item in action: Try to find it.
@@ -450,17 +463,22 @@ class SeActionSetItem(SeActionBase):
             item = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self._name)
 
             if item is not None:
-                self.__item = self._abitem.return_item(item)
+                self.__item, _issue = self._abitem.return_item(item)
+                _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': item_state.property.path, 'action': 'set'}]}}
             else:
                 item = StateEngineTools.find_attribute(self._sh, item_state, "se_eval_" + self._name)
-                self.__item = str(item)
+                if item is not None:
+                    self.__item = str(item)
 
+        if self.__item is None and _issue is None:
+            _issue = {self._name: {'issue': 'Item not defined in rules section', 'issueorigin': [{'state': item_state.property.path, 'action': 'set'}]}}
         # missing status in action: Try to find it.
         if self.__status is None:
             status = StateEngineTools.find_attribute(self._sh, item_state, "se_status_" + self._name)
 
             if status is not None:
-                self.__status = self._abitem.return_item(status)
+                self.__status, _issue = self._abitem.return_item(status)
+                _issue = {self._name: {'issue': 'Item not defined in rules section', 'issueorigin': [{'state': item_state.property.path, 'action': 'set'}]}}
 
         if self.__mindelta.is_empty():
             mindelta = StateEngineTools.find_attribute(self._sh, item_state, "se_mindelta_" + self._name)
@@ -482,6 +500,9 @@ class SeActionSetItem(SeActionBase):
                 self._scheduler_name = "{}-SeItemDelayTimer".format(self.__item.property.path)
                 if self._abitem.id == self.__item.property.path:
                     self._caller += '_self'
+        self.__action_status = _issue
+        self._log_develop("Issue with set action {}", _issue)
+        return _issue
 
     # Write action to logger
     def write_to_logger(self):
@@ -600,6 +621,7 @@ class SeActionSetByattr(SeActionBase):
     # item_state: state item to read from
     def complete(self, item_state, evals_items=None):
         self._scheduler_name = "{}-SeByAttrDelayTimer".format(self.__byattr)
+        return {self._name: {'attribute': self.__byattr}}
 
     # Write action to logger
     def write_to_logger(self):
@@ -652,6 +674,7 @@ class SeActionTrigger(SeActionBase):
     # item_state: state item to read from
     def complete(self, item_state, evals_items=None):
         self._scheduler_name = "{}-SeLogicDelayTimer".format(self.__logic)
+        return {self._name: {'logic': self.__logic}}
 
     # Write action to logger
     def write_to_logger(self):
@@ -712,6 +735,7 @@ class SeActionRun(SeActionBase):
     # item_state: state item to read from
     def complete(self, item_state, evals_items=None):
         self._scheduler_name = "{}-SeRunDelayTimer".format(StateEngineTools.get_eval_name(self.__eval))
+        return {self._name: {'eval': StateEngineTools.get_eval_name(self.__eval)}}
 
     # Write action to logger
     def write_to_logger(self):
@@ -795,11 +819,13 @@ class SeActionForceItem(SeActionBase):
     # Complete action
     # item_state: state item to read from
     def complete(self, item_state, evals_items=None):
+        _issue = None
         # missing item in action: Try to find it.
         if self.__item is None:
             item = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self._name)
             if item is not None:
-                self.__item = self._abitem.return_item(item)
+                self.__item, _issue = self._abitem.return_item(item)
+                _issue = {self._name: {'issue': 'Item not defined in rules section', 'issueorigin': [{'state': item_state.property.path, 'action': 'force'}]}}
             else:
                 item = StateEngineTools.find_attribute(self._sh, item_state, "se_eval_" + self._name)
                 self.__item = str(item)
@@ -817,12 +843,8 @@ class SeActionForceItem(SeActionBase):
             if mindelta is not None:
                 self.__mindelta.set(mindelta)
 
-        if isinstance(self.__item, str):
-            pass
-        elif self.__item is not None:
-            self.__value.set_cast(self.__item.cast)
-            self.__mindelta.set_cast(self.__item.cast)
-            self._scheduler_name = "{}-SeItemDelayTimer".format(self.__item.property.path)
+        if self.__item is None and _issue is None:
+            _issue = {self._name: {'issue': 'Item not found', 'issueorigin': [{'state': item_state.property.path, 'action': 'force'}]}}
         if self.__status is not None:
             self.__value.set_cast(self.__status.cast)
             self.__mindelta.set_cast(self.__status.cast)
@@ -838,6 +860,8 @@ class SeActionForceItem(SeActionBase):
                 self._scheduler_name = "{}-SeItemDelayTimer".format(self.__item.property.path)
                 if self._abitem.id == self.__item.property.path:
                     self._caller += '_self'
+        self.__action_status = _issue
+        return _issue
 
     # Write action to logger
     def write_to_logger(self):
@@ -874,6 +898,7 @@ class SeActionForceItem(SeActionBase):
 
     def _getitem_fromeval(self):
         if isinstance(self.__item, str):
+            _issue = None
             if "stateengine_eval" in self.__item or "se_eval" in self.__item:
                 # noinspection PyUnusedLocal
                 stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
@@ -882,7 +907,8 @@ class SeActionForceItem(SeActionBase):
                 item = item.replace('shtime', 'self._shtime')
                 item = eval(item)
                 if item is not None:
-                    self.__item = self._abitem.return_item(item)
+                    self.__item, _issue = self._abitem.return_item(item)
+                    _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
                     self.__value.set_cast(self.__item.cast)
                     self.__mindelta.set_cast(self.__item.cast)
                     self._scheduler_name = "{}-SeItemDelayTimer".format(self.__item.property.path)
@@ -892,8 +918,11 @@ class SeActionForceItem(SeActionBase):
                     self._log_error("Problem evaluating item '{}' from eval. It is None.", item)
 
             except Exception as ex:
+                _issue = {self._name: {'issue': 'Problem evaluating item {} from eval'.format(self.__item), 'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
                 self._log_error("Problem evaluating item '{}' from eval: {}.", self.__item, ex)
-                return
+            finally:
+                self.__action_status = _issue
+                return _issue
 
     # Really execute the action (needs to be implemented in derived classes)
     # noinspection PyProtectedMember
@@ -993,6 +1022,7 @@ class SeActionSpecial(SeActionBase):
         else:
             item = self.__value.property.path
         self._scheduler_name = "{}_{}-SeSpecialDelayTimer".format(self.__special, item)
+        return {self._name: {'scheduler': self._scheduler_name}}
 
     # Write action to logger
     def write_to_logger(self):
@@ -1030,36 +1060,54 @@ class SeActionSpecial(SeActionBase):
         self._log_debug("Special action {0}: done", self.__special)
 
     def suspend_get_value(self, value):
+        _issue = None
         if value is None:
+            _issue = {self._name: {'issue': 'Special action suspend requires arguments', 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
+            self.__action_status = _issue
             raise ValueError("Action {0}: Special action 'suspend' requires arguments!", self._name)
 
         suspend, manual = StateEngineTools.partition_strip(value, ",")
         if suspend is None or manual is None:
+            _issue = {self._name: {'issue': 'Special action suspend requires two arguments', 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
+            self.__action_status = _issue
             raise ValueError("Action {0}: Special action 'suspend' requires two arguments (separated by a comma)!", self._name)
 
-        suspend_item = self._abitem.return_item(suspend)
+        suspend_item, _issue = self._abitem.return_item(suspend)
+        _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
         if suspend_item is None:
+            _issue = {self._name: {'issue': 'Suspend item not found', 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
+            self.__action_status = _issue
             raise ValueError("Action {0}: Suspend item '{1}' not found!", self._name, suspend)
 
-        manual_item = self._abitem.return_item(manual)
+        manual_item, _issue = self._abitem.return_item(manual)
+        _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
         if manual_item is None:
+            _issue = {self._name: {'issue': 'Manual item {} not found'.format(manual), 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
+            self.__action_status = _issue
             raise ValueError("Action {0}: Manual item '{1}' not found!", self._name, manual)
-
+        self.__action_status = _issue
         return [suspend_item, manual_item.property.path]
 
     def retrigger_get_value(self, value):
         if value is None:
+            _issue = {self._name: {'issue': 'Special action retrigger requires item', 'issueorigin': [{'state': 'retrigger', 'action': 'retrigger'}]}}
+            self.__action_status = _issue
             raise ValueError("Action {0}: Special action 'retrigger' requires item", self._name)
 
         se_item, __ = StateEngineTools.partition_strip(value, ",")
 
-        se_item = self._abitem.return_item(se_item)
+        se_item, _issue = self._abitem.return_item(se_item)
+        _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'retrigger', 'action': 'retrigger'}]}}
+        self.__action_status = _issue
         if se_item is None:
+            _issue = {self._name: {'issue': 'Retrigger item {} not found'.format(se_item), 'issueorigin': [{'state': 'retrigger', 'action': 'retrigger'}]}}
+            self.__action_status = _issue
             raise ValueError("Action {0}: Retrigger item '{1}' not found!", self._name, se_item)
         return se_item
 
     def suspend_execute(self, state=None, current_condition=None, previous_condition=None, previousstate_condition=None):
-        suspend_item = self._abitem.return_item(self.__value[0])
+        suspend_item, _issue = self._abitem.return_item(self.__value[0])
+        _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': state.property.path, 'action': 'suspend'}]}}
         source = "SuspendAction, {}".format(self.set_source(current_condition, previous_condition, previousstate_condition))
         if self._abitem.get_update_trigger_source() == self.__value[1]:
             # triggered by manual-item: Update suspend item
@@ -1077,6 +1125,7 @@ class SeActionSpecial(SeActionBase):
         suspend_remaining = int(suspend_time - suspend_over + 0.5)   # adding 0.5 causes round up ...
         self._abitem.set_variable("item.suspend_remaining", suspend_remaining)
         self._log_debug("Updated variable 'item.suspend_remaining' to {0}", suspend_remaining)
+        self.__action_status = _issue
 
     def get(self):
         try:

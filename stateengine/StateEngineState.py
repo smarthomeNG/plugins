@@ -28,6 +28,7 @@ from . import StateEngineStruct
 
 from lib.item import Items
 from lib.item.item import Item
+from copy import copy
 
 
 # Class representing an object state, consisting of name, conditions to be met and configured actions for state
@@ -61,6 +62,22 @@ class SeState(StateEngineTools.SeItemChild):
     def conditions(self):
         return self.__conditions
 
+    # Return orphaned definitions
+    @property
+    def unused_attributes(self):
+        return self.__unused_attributes
+
+    # Return used definitions
+    @property
+    def used_attributes(self):
+        return self.__used_attributes
+
+    # Return used definitions
+    @property
+    def action_status(self):
+        return self.__action_status
+
+    # Return releasedby information
     @property
     def releasedby(self):
         return self.__release.get()
@@ -83,6 +100,9 @@ class SeState(StateEngineTools.SeItemChild):
         self.__use = StateEngineValue.SeValue(self._abitem, "State configuration extension", True, "item")
         self.__release = StateEngineValue.SeValue(self._abitem, "State released by", True, "item")
         self.__name = ''
+        self.__unused_attributes = {}
+        self.__used_attributes = {}
+        self.__action_status = {}
         self.__use_done = []
         self.__conditions = StateEngineConditionSets.SeConditionSets(self._abitem)
         self.__actions_enter_or_stay = StateEngineActions.SeActions(self._abitem)
@@ -258,7 +278,7 @@ class SeState(StateEngineTools.SeItemChild):
             self._log_decrease_indent()
 
     def update_releasedby_internal(self):
-        _returnvalue, _returntype = self.__release.set_from_attr(self.__item, "se_released_by")
+        _returnvalue, _returntype, _ = self.__release.set_from_attr(self.__item, "se_released_by")
         return _returnvalue, _returntype, self.releasedby
 
     def update_name(self, item_state, recursion_depth=0):
@@ -279,6 +299,41 @@ class SeState(StateEngineTools.SeItemChild):
     # recursion_depth: current recursion_depth (recursion is canceled after five levels)
     # se_use: If se_use Attribute is used or not
     def __fill(self, item_state, recursion_depth, se_use=None):
+        def update_unused(used_attributes, type, name):
+            #filtered_dict = {key: value for key, value in self.__unused_attributes.items() if key not in used_attributes}
+            #self.__unused_attributes = copy(filtered_dict)
+
+            for item, nested_dict in self.__unused_attributes.items():
+                if item in used_attributes.keys():
+                    used_attributes[item].update({type: name})
+                    used_attributes[item].update(nested_dict)
+                    self.__used_attributes.update(used_attributes)
+            #self._log_develop("Unused attributes of action '{0}': {1}. Used: {2}. Return used: {3}", name, self.__unused_attributes, self.__used_attributes, used_attributes)
+
+        def update_action_status(action_status, actiontype):
+            for item, dict in action_status.items():
+                if item not in self.__action_status:
+                    self.__action_status.update({item: dict})
+            for item in self.__action_status.keys():
+                #if item in _used_attributes.keys():
+                if 'issue' in self.__action_status[item].keys():
+                    origin_list = copy(self.__action_status[item].get('issueorigin'))
+                    if not origin_list:
+                        self.__action_status[item].update({'issueorigin': []})
+                    new_list = []
+                    for i, listitem in enumerate(origin_list):
+                        entry_unknown = {'state': 'unknown', 'action': listitem.get('action')}
+                        entry_notype = {'state': self.id, 'action': listitem.get('action')}
+                        entry = {'state': self.id, 'action': listitem.get('action'), 'type': actiontype}
+                        if entry_unknown == listitem or entry_notype == listitem:
+                            origin_list[i] = {'state': self.id, 'action': listitem.get('action'), 'type': actiontype}
+                        elif entry not in new_list:
+                            new_list.append(entry)
+
+                    new_list.extend(origin_list)
+                    self.__action_status[item].update({'issueorigin': new_list})
+            self._log_develop("Updated action status: {}", self.__action_status)
+
         if recursion_depth > 5:
             self._log_error("{0}/{1}: too many levels of 'use'", self.id, item_state.property.path)
             return
@@ -332,30 +387,70 @@ class SeState(StateEngineTools.SeItemChild):
         _enter_stay_actioncount = 0
         _leave_actioncount = 0
         _stay_actioncount = 0
+        _actioncount = 0
+        _unused_attributes = {}
+        _used_attributes = {}
+        # first check all conditions
+        for child_item in child_items:
+            child_name = StateEngineTools.get_last_part_of_item_id(child_item)
+            try:
+                if child_name == "enter" or child_name.startswith("enter_"):
+                    _conditioncount += 1
+                    _unused_attributes, _used_attributes = self.__conditions.update(child_name, child_item, parent_item)
+                    if _conditioncount == 1:
+                        self.__unused_attributes = copy(_unused_attributes)
+                        self.__used_attributes = copy(_used_attributes)
+                    for item in self.__unused_attributes.keys():
+                        if 'issue' in self.__unused_attributes[item].keys():
+                            if not self.__unused_attributes[item].get('issueorigin'):
+                                self.__unused_attributes[item].update({'issueorigin': []})
+                            entry = {'state': self.id, 'conditionset': child_name}
+                            if entry not in self.__unused_attributes[item].get('issueorigin'):
+                                self.__unused_attributes[item]['issueorigin'].append(entry)
+            except ValueError as ex:
+                raise ValueError("Condition {0} error: {1}".format(child_name, ex))
+
+        if _conditioncount == 0:
+            for attribute in parent_item.conf:
+                func, name = StateEngineTools.partition_strip(attribute, "_")
+                cond1 = name and name not in self.__used_attributes
+                cond2 = func == "se_item" or func == "se_eval" or func == "se_status"
+                cond3 = name not in self.__unused_attributes.keys()
+
+                if cond1 and cond2 and cond3:
+                    self.__unused_attributes.update({name: {}})
+
+        child_items = item_state.return_children()
         for child_item in child_items:
             child_name = StateEngineTools.get_last_part_of_item_id(child_item)
             try:
                 if child_name == "on_enter":
+                    _actioncount += 1
                     for attribute in child_item.conf:
                         _enter_actioncount += 1
                         self.__actions_enter.update(attribute, child_item.conf[attribute])
+                        update_unused(_used_attributes, 'action', child_name)
                 elif child_name == "on_stay":
+                    _actioncount += 1
                     for attribute in child_item.conf:
                         _stay_actioncount += 1
                         self.__actions_stay.update(attribute, child_item.conf[attribute])
+                        update_unused(_used_attributes, 'action', child_name)
                 elif child_name == "on_enter_or_stay":
+                    _actioncount += 1
                     for attribute in child_item.conf:
                         _enter_stay_actioncount += 1
                         self.__actions_enter_or_stay.update(attribute, child_item.conf[attribute])
+                        update_unused(_used_attributes, 'action', child_name)
                 elif child_name == "on_leave":
+                    _actioncount += 1
                     for attribute in child_item.conf:
                         _leave_actioncount += 1
                         self.__actions_leave.update(attribute, child_item.conf[attribute])
-                elif child_name == "enter" or child_name.startswith("enter_"):
-                    _conditioncount += 1
-                    self.__conditions.update(child_name, child_item, parent_item)
+                        update_unused(_used_attributes, 'action', child_name)
             except ValueError as ex:
-                raise ValueError("Condition {0} error: {1}".format(child_name, ex))
+                raise ValueError("Condition {0} check for actions error: {1}".format(child_name, ex))
+        self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
         # Actions defined directly in the item go to "enter_or_stay"
         for attribute in item_state.conf:
             _enter_stay_actioncount += self.__actions_enter_or_stay.update(attribute, item_state.conf[attribute]) or 0
@@ -363,16 +458,22 @@ class SeState(StateEngineTools.SeItemChild):
         _total_actioncount = _enter_actioncount + _stay_actioncount + _enter_stay_actioncount + _leave_actioncount
 
         self.update_name(item_state, recursion_depth)
-
         # Complete condition sets and actions at the end
         if recursion_depth == 0:
             self.__conditions.complete(item_state)
-
-            self.__actions_enter.complete(item_state, self.__conditions.evals_items)
-            self.__actions_stay.complete(item_state, self.__conditions.evals_items)
-            self.__actions_enter_or_stay.complete(item_state, self.__conditions.evals_items)
-            self.__actions_leave.complete(item_state, self.__conditions.evals_items)
-
+            _action_status = self.__actions_enter.complete(item_state, self.__conditions.evals_items)
+            if _action_status:
+                update_action_status(_action_status, 'enter')
+            _action_status = self.__actions_stay.complete(item_state, self.__conditions.evals_items)
+            if _action_status:
+                update_action_status(_action_status, 'stay')
+            _action_status = self.__actions_enter_or_stay.complete(item_state, self.__conditions.evals_items)
+            if _action_status:
+                update_action_status(_action_status, 'enter_or_stay')
+            _action_status = self.__actions_leave.complete(item_state, self.__conditions.evals_items)
+            if _action_status:
+                update_action_status(_action_status, 'leave')
+            self._abitem.update_action_status(self.__action_status)
         _summary = "{} on_enter, {} on_stay , {} on_enter_or_stay, {} on_leave"
         if se_use is not None:
             self._log_debug("Added {} action(s) based on se_use {}. " + _summary, _total_actioncount, se_use,

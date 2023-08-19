@@ -377,11 +377,14 @@ class SeActions(StateEngineTools.SeItemChild):
     # Check the actions optimize and complete them
     # item_state: item to read from
     def complete(self, item_state, evals_items=None):
+        _status = {}
         for name in self.__actions:
             try:
-                self.__actions[name].complete(item_state, evals_items)
+                _status.update(self.__actions[name].complete(item_state, evals_items))
             except ValueError as ex:
+                _status.update({name: {'issue': ex, 'issueorigin': {'state': item_state.property.path, 'action': 'unknown'}}})
                 raise ValueError("State '{0}', Action '{1}': {2}".format(item_state.property.path, name, ex))
+        return _status
 
     def set(self, value):
         for name in self.__actions:

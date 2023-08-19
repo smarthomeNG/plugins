@@ -65,6 +65,7 @@ class SeConditionSets(StateEngineTools.SeItemChild):
         self._log_develop("Starting update of condition '{0}'.", name)
         self.__condition_sets[name].update(item, grandparent_item)
         self._log_develop("Finished update of condition '{0}'.", name)
+        return self.__condition_sets[name].unused_attributes, self.__condition_sets[name].used_attributes
 
     # Check the condition sets, optimize and complete them
     # item_state: item to read from

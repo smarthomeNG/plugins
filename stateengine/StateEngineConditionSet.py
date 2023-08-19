@@ -45,6 +45,16 @@ class SeConditionSet(StateEngineTools.SeItemChild):
     def evals_items(self):
         return self.__evals_items
 
+    # Return orphaned definitions
+    @property
+    def unused_attributes(self):
+        return self.__unused_attributes
+
+    # Return used definitions
+    @property
+    def used_attributes(self):
+        return self.__used_attributes
+
     @property
     def dict_conditions(self):
         result = OrderedDict()
@@ -62,6 +72,8 @@ class SeConditionSet(StateEngineTools.SeItemChild):
         self.__id = conditionid
         self.__conditions = OrderedDict()
         self.__evals_items = {}
+        self.__unused_attributes = {}
+        self.__used_attributes = {}
 
     def __repr__(self):
         return "SeConditionSet {}".format(self.__conditions)
@@ -74,7 +86,6 @@ class SeConditionSet(StateEngineTools.SeItemChild):
         if isinstance(item, collections.abc.Mapping) or isinstance(grandparent_item, collections.abc.Mapping):
             self._log_error("Condition '{0}' item or parent is a dictionary. Something went wrong!", item)
             return
-
         if item is not None:
             for attribute in item.conf:
                 func, name = StateEngineTools.partition_strip(attribute, "_")
@@ -84,28 +95,44 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                     # update this condition
                     if name not in self.__conditions:
                         self.__conditions[name] = StateEngineCondition.SeCondition(self._abitem, name)
-                    self.__conditions[name].set(func, item.conf[attribute])
+                    issue = self.__conditions[name].set(func, item.conf[attribute])
                     self.__conditions.move_to_end(name, last=True)
+                    if issue:
+                        self.__unused_attributes.update({name: {'attribute': attribute, 'issue': issue}})
+                    elif name not in self.__used_attributes.keys():
+                        self.__used_attributes.update({name: {'attribute': attribute}})
 
                 except ValueError as ex:
+                    self.__unused_attributes.update({name: {'attribute': attribute, 'issue': ex}})
                     raise ValueError("Condition {0} error: {1}".format(name, ex))
 
         # Update item from grandparent_item
         for attribute in grandparent_item.conf:
             func, name = StateEngineTools.partition_strip(attribute, "_")
+
             if name == "":
                 continue
+            cond1 = name not in self.__used_attributes.keys()
+            cond2 = func == "se_item" or func == "se_eval" or func == "se_status"
+            cond3 = name not in self.__unused_attributes.keys()
+            if cond1:
+                if cond2 and cond3:
+                    self.__unused_attributes.update({name: {'attribute': attribute}})
+                continue
             # update item/eval in this condition
-
-            if func == "se_item" or func == "se_eval" or func == "se_status":
+            if cond2:
                 if name not in self.__conditions:
                     self.__conditions[name] = StateEngineCondition.SeCondition(self._abitem, name)
                 try:
-                    self.__conditions[name].set(func, grandparent_item.conf[attribute])
+                    issue = self.__conditions[name].set(func, grandparent_item.conf[attribute])
+                    if issue:
+                        self.__unused_attributes.update({name: {'attribute': attribute, 'issue': issue}})
                 except ValueError as ex:
+                    self.__unused_attributes.update({name: {'attribute': attribute, 'issue': ex}})
                     text = "Item '{0}', Attribute '{1}' Error: {2}"
                     raise ValueError(text.format(grandparent_item.property.path, attribute, ex))
                 self.__evals_items.update({name: self.__conditions[name].get()})
+        return self.__unused_attributes, self.__used_attributes
 
     # Check the condition set, optimize and complete it
     # item_state: item to read from
@@ -118,6 +145,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                     conditions_to_remove.append(name)
                     continue
             except ValueError as ex:
+                self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
                 text = "State '{0}', Condition Set '{1}', Condition '{2}' Error: {3}"
                 raise ValueError(text.format(item_state.property.path, self.name, name, ex))
 

@@ -116,10 +116,10 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_itemid({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                returnvalue = self._abitem.return_item(self._abitem._initstate.id).property.path
+                returnvalue = self._abitem.return_item(self._abitem._initstate.id)[0].property.path
                 self._log_debug("Return item path '{0}' during init", returnvalue)
             else:
-                returnvalue = self._abitem.return_item(subitem_id).property.path
+                returnvalue = self._abitem.return_item(subitem_id)[0].property.path
                 self._log_debug("Return item path '{0}'", returnvalue)
         except Exception as ex:
             returnvalue = None
@@ -137,10 +137,10 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_item({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                returnvalue = self._abitem.return_item(self._abitem._initstate.id)
+                returnvalue, issue = self._abitem.return_item(self._abitem._initstate.id)
                 self._log_debug("Return item '{0}' during init", returnvalue)
             else:
-                returnvalue = self._abitem.return_item(subitem_id)
+                returnvalue, issue = self._abitem.return_item(subitem_id)
                 self._log_debug("Return item '{0}'", returnvalue)
         except Exception as ex:
             returnvalue = None
@@ -161,7 +161,7 @@ class SeEval(StateEngineTools.SeItemChild):
                 returnvalue = self._abitem._initstate.text
                 self._log_debug("Return item value '{0}' during init", returnvalue)
             else:
-                item = self._abitem.return_item(subitem_id)
+                item, issue = self._abitem.return_item(subitem_id)
                 returnvalue = item.property.value
                 self._log_debug("Return item value '{0}' for item {1}", returnvalue, item.property.path)
         except Exception as ex:
@@ -180,16 +180,16 @@ class SeEval(StateEngineTools.SeItemChild):
         self._eval_lock.acquire()
         self._log_debug("Executing method 'get_relative_itemproperty({0}, {1})'", subitem_id, prop)
         try:
-            item = self._abitem.return_item(subitem_id)
+            item, issue = self._abitem.return_item(subitem_id)
         except Exception as ex:
             self._log_warning("Problem evaluating property of {0} - relative item might not exist. Error: {1}", subitem_id, ex)
             self._eval_lock.release()
             return
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                returnvalue = getattr(self._abitem.return_item(self._abitem._initstate.id).property, prop)
+                returnvalue = getattr(self._abitem.return_item(self._abitem._initstate.id)[0].property, prop)
                 self._log_debug("Return item property '{0}' from {1}: {2} during init", prop,
-                                self._abitem.return_item(self._abitem._initstate.id).property.path, returnvalue)
+                                self._abitem.return_item(self._abitem._initstate.id)[0].property.path, returnvalue)
             else:
                 returnvalue = getattr(item.property, prop)
                 self._log_debug("Return item property {0} from {1}: {2}", prop, item.property.path, returnvalue)
@@ -217,14 +217,14 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_attributevalue({0}, {1})'", item, attrib)
         if ":" in item:
             var_type, item = StateEngineTools.partition_strip(item, ":")
-            item = self._abitem.return_item(self._abitem.get_variable(item)) if var_type == "var" else item
+            item, issue = self._abitem.return_item(self._abitem.get_variable(item)) if var_type == "var" else item
         else:
-            item = self._abitem.return_item(item)
+            item, issue = self._abitem.return_item(item)
         try:
             if self._abitem._initstate and item == '..state_name':
                 returnvalue = self._abitem.return_item(self._abitem._initstate.id).conf[attrib]
                 self._log_debug("Return item attribute '{0}' from {1}: {2} during init",
-                                attrib, self._abitem.return_item(self._abitem._initstate.id).property.path, returnvalue)
+                                attrib, self._abitem.return_item(self._abitem._initstate.id)[0].property.path, returnvalue)
             else:
                 returnvalue = item.conf[attrib]
                 self._log_debug("Return item attribute {0} from {1}: {2}", attrib, item.property.path, returnvalue)
@@ -246,9 +246,9 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'insert_suspend_time({0}, {1})'", suspend_item_id, suspend_text)
         self._log_increase_indent()
         try:
-            suspend_time = self._abitem.get_variable("item.suspend_time")
+            suspend_time = self._abitem.get_variable("item.suspend_time") or 0
             self._log_debug("Suspend time is {0}", suspend_time)
-            suspend_item = self._abitem.return_item(suspend_item_id)
+            suspend_item, issue = self._abitem.return_item(suspend_item_id)
             if suspend_item is None:
                 text = "Eval-Method 'insert_suspend_time': Suspend Item {0} not found!"
                 self._eval_lock.release()
