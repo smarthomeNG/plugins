@@ -28,7 +28,7 @@ byd:
 Alle verfügbaren Daten werden im Struct 'byd_struct' bereitgestellt. Diverse Parameter besitzen bereits die Eigenschaft 'database: init', so dass die Daten für die Visualisierung bereitgestellt werden.
 
 Anforderungen
--------------
+=============
 
 Der BYD Energiespeicher muss mit dem LAN verbunden sind. Die IP-Adresse des BYD wird über DHCP zugewiesen und muss ermittelt werden. Diese IP-Adresse muss in der Plugin-Konfiguration gespeichert werden.
 
@@ -50,7 +50,7 @@ Folgende Typen werden unterstützt:
 Bitte Debug-Daten (level: DEBUG) von noch nicht getesteten BYD Energiespeichern an Plugin-Autor senden. Beim Start von smarthomeng werden die Diagnosedaten sofort ermittelt.
 
 Konfiguration
--------------
+=============
 
 plugin.yaml
 ~~~~~~~~~~~
@@ -76,12 +76,12 @@ Funktionen
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 Web Interface
--------------
+=============
 
 Ein Web Interface ist implementiert und zeigt die eingelesenen Daten an.
 
 Beispiele
----------
+=========
 
 Oben rechts werden die wichtigsten Daten zum BYD Energiespeicher angezeigt.
 
