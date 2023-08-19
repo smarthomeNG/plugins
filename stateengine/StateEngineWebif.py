@@ -282,7 +282,6 @@ class WebInterface(StateEngineTools.SeItemChild):
                     if match and len(match) > 0:
                         match_info = match.get('value') if compare in ["min", "max", "value"]\
                                      else match.get('age') if compare in ["agemin", "agemax", "age"]\
-                                     else match.get('value') if compare in ["min", "max", "value"]\
                                      else match.get(compare)
                     conditionlist += '<td align="center" width="5">{}</td><td align="center">'.format(comparison)
                     conditionlist += '"{}"'.format(info) if not item_none and not status_none and not eval_none else ''
@@ -296,7 +295,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     conditionlist += ' (negate)' if condition_dict.get('agenegate') == 'True' and "age" in compare else ''
                     match_info = '<img src="sign_true.png" />' if match_info == 'yes'\
                                  else '<img src="sign_false.png" />' if match_info == 'no'\
-                                 else '<img src="sign_warn.png" />' if len(match_info) > 0\
+                                 else '<img src="sign_warn.png" />' if match_info and len(match_info) > 0\
                                  else ''
                     conditionlist += '</td><td>{}</td></tr>'.format(match_info)
         conditionlist += '<tr><td></td><td></td><td></td><td></td></tr></table>>'
