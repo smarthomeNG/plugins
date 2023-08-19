@@ -20,7 +20,6 @@
 #########################################################################
 from . import StateEngineAction
 from . import StateEngineTools
-from . import StateEngineDefaults
 
 import ast
 import threading

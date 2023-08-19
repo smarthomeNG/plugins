@@ -22,12 +22,10 @@ from . import StateEngineTools
 from . import StateEngineCurrent
 from . import StateEngineValue
 from . import StateEngineEval
-from . import StateEngineDefaults
 
 from lib.item.item import Item
 import datetime
 import re
-from collections import OrderedDict
 
 
 # Class representing a single condition

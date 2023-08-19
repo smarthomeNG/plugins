@@ -20,7 +20,6 @@
 #########################################################################
 from . import StateEngineConditionSet
 from . import StateEngineTools
-from . import StateEngineDefaults
 
 from collections import OrderedDict
 

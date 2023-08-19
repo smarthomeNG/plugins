@@ -42,12 +42,12 @@ class SeEval(StateEngineTools.SeItemChild):
 
     # Get lamella angle based on sun_altitude for sun tracking
     def sun_tracking(self, offset=None):
-        def reMap(_value, _minoutput):
+        def remap(_value, _minoutput):
             _value = 100 if _value > 100 else _value
             _value = 0 if _value < 0 else _value
-            outputSpan = 100 - _minoutput
-            scaledThrust = float(_value) / float(100)
-            return _minoutput + (scaledThrust * outputSpan)
+            output_span = 100 - _minoutput
+            scaled_thrust = float(_value) / float(100)
+            return _minoutput + (scaled_thrust * output_span)
 
         if offset is None:
             offset = StateEngineDefaults.suntracking_offset
@@ -65,7 +65,7 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Current sun altitude is {0:.2f}°", altitude)
         _lamella_open_value = StateEngineDefaults.lamella_open_value
         _lamella_text = " (based on lamella open value of {0})".format(_lamella_open_value)
-        value = reMap(90 - altitude, _lamella_open_value) + offset
+        value = remap(90 - altitude, _lamella_open_value) + offset
         self._log_debug("Blinds at right angle to the sun at {0}° with an offset of {1}°{2}", value, offset, _lamella_text)
 
         self._log_decrease_indent()

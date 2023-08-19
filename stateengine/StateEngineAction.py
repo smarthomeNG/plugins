@@ -186,6 +186,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
         def _check_condition(condition: str):
             _conditions_met_count = 0
             _conditions_necessary_count = 0
+            _condition_to_meet = None
+            _updated__current_condition = None
             if condition == 'conditionset':
                 _condition_to_meet = None if self.conditionset.is_empty() else self.conditionset.get()
                 _current_condition = self._abitem.get_lastconditionset_id()
@@ -203,8 +205,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
             for cond in _condition_to_meet:
                 if cond is not None:
                     _conditions_necessary_count += 1
+                    _orig_cond = cond
                     try:
-                        _orig_cond = cond
                         cond = re.compile(cond)
                         _matching = cond.fullmatch(_updated__current_condition)
                         if _matching:
@@ -802,6 +804,14 @@ class SeActionForceItem(SeActionBase):
                 item = StateEngineTools.find_attribute(self._sh, item_state, "se_eval_" + self._name)
                 self.__item = str(item)
 
+        # missing status in action: Try to find it.
+        if self.__status is None:
+            status = StateEngineTools.find_attribute(self._sh, item_state, "se_status_" + self._name)
+
+            if status is not None:
+                self.__status, _issue = self._abitem.return_item(status)
+                _issue = {self._name: {'issue': 'Item not defined in rules section', 'issueorigin': [{'state': item_state.property.path, 'action': 'force'}]}}
+
         if self.__mindelta.is_empty():
             mindelta = StateEngineTools.find_attribute(self._sh, item_state, "se_mindelta_" + self._name)
             if mindelta is not None:
@@ -813,6 +823,21 @@ class SeActionForceItem(SeActionBase):
             self.__value.set_cast(self.__item.cast)
             self.__mindelta.set_cast(self.__item.cast)
             self._scheduler_name = "{}-SeItemDelayTimer".format(self.__item.property.path)
+        if self.__status is not None:
+            self.__value.set_cast(self.__status.cast)
+            self.__mindelta.set_cast(self.__status.cast)
+            self._scheduler_name = "{}-SeItemDelayTimer".format(self.__status.property.path)
+            if self._abitem.id == self.__status.property.path:
+                self._caller += '_self'
+        elif self.__status is None:
+            if isinstance(self.__item, str):
+                pass
+            elif self.__item is not None:
+                self.__value.set_cast(self.__item.cast)
+                self.__mindelta.set_cast(self.__item.cast)
+                self._scheduler_name = "{}-SeItemDelayTimer".format(self.__item.property.path)
+                if self._abitem.id == self.__item.property.path:
+                    self._caller += '_self'
 
     # Write action to logger
     def write_to_logger(self):
@@ -865,7 +890,7 @@ class SeActionForceItem(SeActionBase):
                         self._caller += '_self'
                 else:
                     self._log_error("Problem evaluating item '{}' from eval. It is None.", item)
-                    return
+
             except Exception as ex:
                 self._log_error("Problem evaluating item '{}' from eval: {}.", self.__item, ex)
                 return

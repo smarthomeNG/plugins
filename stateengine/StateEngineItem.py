@@ -258,7 +258,8 @@ class SeItem:
         self.__templates = {}
         self.__webif_infos = OrderedDict()
         self.__instant_leaveaction = StateEngineValue.SeValue(self, "Instant Leave Action", False, "bool")
-        self.__instant_leaveaction.set_from_attr(self.__item, "se_instant_leaveaction", StateEngineDefaults.instant_leaveaction)
+        self.__instant_leaveaction.set_from_attr(self.__item, "se_instant_leaveaction",
+                                                 StateEngineDefaults.instant_leaveaction)
         self.__repeat_actions = StateEngineValue.SeValue(self, "Repeat actions if state is not changed", False, "bool")
         self.__repeat_actions.set_from_attr(self.__item, "se_repeat_actions", True)
 
@@ -311,7 +312,7 @@ class SeItem:
             self.__has_released.pop('initial')
         except Exception:
             pass
-        self.__logger.info("".ljust(80, "_"))
+        self.__logger.develop("".ljust(80, "_"))
         self.__logger.develop("ALL RELEASEDBY: {}", self.__all_releasedby)
         self.__logger.develop("HAS RELEASED: {}", self.__has_released)
 
@@ -374,9 +375,11 @@ class SeItem:
                 break
             elif job[0] == "delayedaction":
                 self.__logger.debug("Job {}", job)
-                (_, action, actionname, namevar, repeat_text, value, current_condition, previous_condition, previousstate_condition, state) = job
-                self.__logger.info("Running delayed action: {0} based on current condition {1} or previous condition {2}",
-                                   actionname, current_condition, previous_condition)
+                (_, action, actionname, namevar, repeat_text, value, current_condition, previous_condition,
+                 previousstate_condition, state) = job
+                self.__logger.info(
+                    "Running delayed action: {0} based on current condition {1} or previous condition {2}",
+                    actionname, current_condition, previous_condition)
                 action.real_execute(state, actionname, namevar, repeat_text, value, False, current_condition)
             else:
                 (_, item, caller, source, dest) = job
@@ -384,10 +387,12 @@ class SeItem:
                 self.__logger.update_logfile()
                 self.__logger.header("Update state of item {0}".format(self.__name))
                 if caller:
-                    self.__logger.debug("Update triggered by {0} (item={1} source={2} dest={3})", caller, item_id, source, dest)
+                    self.__logger.debug("Update triggered by {0} (item={1} source={2} dest={3})", caller, item_id,
+                                        source, dest)
 
                 # Find out what initially caused the update to trigger if the caller is "Eval"
-                orig_caller, orig_source, orig_item = StateEngineTools.get_original_caller(self.__logger, caller, source, item)
+                orig_caller, orig_source, orig_item = StateEngineTools.get_original_caller(self.__logger, caller,
+                                                                                           source, item)
                 if orig_caller != caller:
                     text = "{0} initially triggered by {1} (item={2} source={3} value={4})."
                     self.__logger.debug(text, caller, orig_caller, orig_item.property.path,
@@ -428,17 +433,21 @@ class SeItem:
                 _original_conditionset_id = _last_conditionset_id
                 _original_conditionset_name = _last_conditionset_name
                 if self.__previousconditionset_internal_id not in ['', None]:
-                    self.__logger.info("Previous Conditionset: {0} ('{1}')", self.__previousconditionset_internal_id, self.__previousconditionset_internal_name)
+                    self.__logger.info("Previous Conditionset: {0} ('{1}')", self.__previousconditionset_internal_id,
+                                       self.__previousconditionset_internal_name)
                 else:
                     self.__logger.info("Previous Conditionset is empty")
                 _previous_conditionset_id = _last_conditionset_id
                 _previous_conditionset_name = _last_conditionset_name
                 # get previous state
                 if self.__previousstate_internal_id not in ['', None]:
-                    self.__logger.info("Previous state: {0} ('{1}')", self.__previousstate_internal_id, self.__previousstate_internal_name)
+                    self.__logger.info("Previous state: {0} ('{1}')", self.__previousstate_internal_id,
+                                       self.__previousstate_internal_name)
 
                 if self.__previousstate_conditionset_internal_id not in ['', None]:
-                    self.__logger.info("Previous state's Conditionset: {0} ('{1}')", self.__previousstate_conditionset_internal_id, self.__previousstate_conditionset_internal_name)
+                    self.__logger.info("Previous state's Conditionset: {0} ('{1}')",
+                                       self.__previousstate_conditionset_internal_id,
+                                       self.__previousstate_conditionset_internal_name)
                 else:
                     self.__logger.info("Previous state's Conditionset is empty")
 
@@ -476,7 +485,8 @@ class SeItem:
                                 _last_conditionset_name = ''
                             else:
                                 self.lastconditionset_set(_last_conditionset_id, _last_conditionset_name)
-                            self.__logger.debug("No release states True - Going back to {}. Condition set: {} ('{}')", new_state, _last_conditionset_id, _last_conditionset_name)
+                            self.__logger.debug("No release states True - Going back to {}. Condition set: {} ('{}')",
+                                                new_state, _last_conditionset_id, _last_conditionset_name)
                             break
                     result = self.__update_check_can_enter(state)
                     _previousstate_conditionset_id = _last_conditionset_id
@@ -484,15 +494,19 @@ class SeItem:
                     _last_conditionset_id = self.__lastconditionset_internal_id
                     _last_conditionset_name = self.__lastconditionset_internal_name
                     if state is not None and result is True:
-                        self.__conditionsets.update({state.state_item.property.path: [_last_conditionset_id, _last_conditionset_name]})
+                        self.__conditionsets.update(
+                            {state.state_item.property.path: [_last_conditionset_id, _last_conditionset_name]})
                     if _releasedby_active:
                         _todo, _releasedby, _wouldenter, _wouldnotenter, new_state, _possible_state, _flagged = self.__check_releasedby(
-                            state, _checked_states, _releasedby, _wouldenter, _wouldnotenter, _flagged, last_state, _possible_states, result)
+                            state, _checked_states, _releasedby, _wouldenter, _wouldnotenter, _flagged, last_state,
+                            _possible_states, result)
                         if self.__hasreleased_item is not None:
-                            self.__hasreleased_item(self.__has_released, StateEngineDefaults.plugin_identification, "StateEvaluation")
+                            self.__hasreleased_item(self.__has_released, StateEngineDefaults.plugin_identification,
+                                                    "StateEvaluation")
 
                         if self.___shouldnotrelease_item is not None:
-                            self.___shouldnotrelease_item(self.__should_not_release, StateEngineDefaults.plugin_identification,
+                            self.___shouldnotrelease_item(self.__should_not_release,
+                                                          StateEngineDefaults.plugin_identification,
                                                           "StateEvaluation")
                         if _possible_state:
                             _possible_states.append(_possible_state)
@@ -505,7 +519,8 @@ class SeItem:
                     if not _releasedby:
                         # New state is different from last state
                         if result is False and last_state == state and self.__instant_leaveaction.get() is True:
-                            self.__logger.info("Leaving {0} ('{1}'). Running actions immediately.", last_state.id, last_state.name)
+                            self.__logger.info("Leaving {0} ('{1}'). Running actions immediately.", last_state.id,
+                                               last_state.name)
                             last_state.run_leave(self.__repeat_actions.get())
                             _leaveactions_run = True
                         if result is True:
@@ -533,7 +548,8 @@ class SeItem:
                             self.__logger.info(text, last_state.id, last_state.name)
                         else:
                             text = "No matching state found, staying at {0} ('{1}') based on conditionset {2} ('{3}')"
-                            self.__logger.info(text, last_state.id, last_state.name, _last_conditionset_id, _last_conditionset_name)
+                            self.__logger.info(text, last_state.id, last_state.name, _last_conditionset_id,
+                                               _last_conditionset_name)
                         last_state.run_stay(self.__repeat_actions.get())
                     if self.update_lock.locked():
                         self.update_lock.release()
@@ -549,7 +565,7 @@ class SeItem:
                     _last_conditionset_id = ''
                     _last_conditionset_name = ''
                 self.previousconditionset_set(_previous_conditionset_id, _previous_conditionset_name)
-                #endblock
+                # endblock
                 # get data for new state
                 if last_state is not None and new_state.id == last_state.id:
                     if _last_conditionset_id in ['', None]:
@@ -567,7 +583,8 @@ class SeItem:
                     if last_state is not None and _leaveactions_run is True:
                         self.__logger.info("Left {0} ('{1}')", last_state.id, last_state.name)
                         if last_state.leaveactions.count() > 0:
-                            self.__logger.info("Maybe some actions were performed directly after leave - see log above.")
+                            self.__logger.info(
+                                "Maybe some actions were performed directly after leave - see log above.")
                     elif last_state is not None:
                         self.lastconditionset_set(_original_conditionset_id, _original_conditionset_name)
                         self.__logger.info("Leaving {0} ('{1}'). Condition set was: {2}.",
@@ -580,7 +597,8 @@ class SeItem:
                         _last_conditionset_name = ''
                     else:
                         self.lastconditionset_set(_last_conditionset_id, _last_conditionset_name)
-                    self.previousstate_conditionset_set(_previousstate_conditionset_id, _previousstate_conditionset_name)
+                    self.previousstate_conditionset_set(_previousstate_conditionset_id,
+                                                        _previousstate_conditionset_name)
                     if _last_conditionset_id in ['', None]:
                         self.__logger.info("Entering {0} ('{1}')", new_state.id, new_state.name)
                     else:
@@ -643,7 +661,8 @@ class SeItem:
                 self.__logger.error("Issue with {} for released_by check: {}", entry, ex)
         if _releasedby:
             self.__all_releasedby.update({_id: _convertedlist})
-            self.__logger.debug("Updated releasedby for state {}: {}. All releasedby: {}", state, _releasedby, self.__all_releasedby)
+            self.__logger.debug("Updated releasedby for state {}: {}. All releasedby: {}", state, _releasedby,
+                                self.__all_releasedby)
             if self.__hasreleased_item is None or self.__has_released.get('initial'):
                 self.__has_released.update({_id: _convertedlist})
                 self.__logger.develop("Added to hasreleased: {} for state {}", self.__has_released, state)
@@ -785,7 +804,8 @@ class SeItem:
                 new_state = state
                 return 'break', _releasedby, _wouldenter, _wouldnotenter, new_state, None, _flagged
             else:
-                self.__logger.debug( "State {} still could be releaed by {}, have to check that value", state.id, _releasedby)
+                self.__logger.debug("State {} still could be releaed by {}, have to check that value", state.id,
+                                    _releasedby)
         return 'nothing', _releasedby, _wouldenter, _wouldnotenter, None, None, _flagged
 
     # Find the state, matching the current conditions and perform the actions of this state
@@ -839,13 +859,16 @@ class SeItem:
         self.__laststate_internal_id = '' if new_state is None else new_state.id
         if self.__laststate_item_id is not None:
             # noinspection PyCallingNonCallable
-            self.__laststate_item_id(self.__laststate_internal_id, StateEngineDefaults.plugin_identification, "StateEvaluation")
+            self.__laststate_item_id(self.__laststate_internal_id, StateEngineDefaults.plugin_identification,
+                                     "StateEvaluation")
 
         self.__laststate_internal_name = '' if new_state is None else new_state.text
         if self.__laststate_item_name is not None:
             # noinspection PyCallingNonCallable
-            self.__laststate_item_name(self.__laststate_internal_name, StateEngineDefaults.plugin_identification, "StateEvaluation")
-        self.__logger.develop("Setting last state to {0} ('{1}')", self.__laststate_internal_id, self.__laststate_internal_name)
+            self.__laststate_item_name(self.__laststate_internal_name, StateEngineDefaults.plugin_identification,
+                                       "StateEvaluation")
+        self.__logger.develop("Setting last state to {0} ('{1}')", self.__laststate_internal_id,
+                              self.__laststate_internal_name)
 
     # get last state object based on laststate_id
     # returns: SeState instance of last state or "None" if no last state could be found
@@ -871,13 +894,16 @@ class SeItem:
         self.__lastconditionset_internal_id = new_id
         if self.__lastconditionset_item_id is not None:
             # noinspection PyCallingNonCallable
-            self.__lastconditionset_item_id(self.__lastconditionset_internal_id, StateEngineDefaults.plugin_identification, "StateEvaluation")
+            self.__lastconditionset_item_id(self.__lastconditionset_internal_id,
+                                            StateEngineDefaults.plugin_identification, "StateEvaluation")
 
         self.__lastconditionset_internal_name = new_name
         if self.__lastconditionset_item_name is not None:
             # noinspection PyCallingNonCallable
-            self.__lastconditionset_item_name(self.__lastconditionset_internal_name, StateEngineDefaults.plugin_identification, "StateEvaluation")
-        self.__logger.develop("Setting current Conditionset to {0} ('{1}')", self.__lastconditionset_internal_id, self.__lastconditionset_internal_name)
+            self.__lastconditionset_item_name(self.__lastconditionset_internal_name,
+                                              StateEngineDefaults.plugin_identification, "StateEvaluation")
+        self.__logger.develop("Setting current Conditionset to {0} ('{1}')", self.__lastconditionset_internal_id,
+                              self.__lastconditionset_internal_name)
 
     # endregion
 
@@ -888,12 +914,14 @@ class SeItem:
         self.__previousstate_internal_id = 'None' if last_state is None else last_state.id
         if self.__previousstate_item_id is not None:
             # noinspection PyCallingNonCallable
-            self.__previousstate_item_id(self.__previousstate_internal_id, StateEngineDefaults.plugin_identification, "StateEvaluation")
+            self.__previousstate_item_id(self.__previousstate_internal_id, StateEngineDefaults.plugin_identification,
+                                         "StateEvaluation")
 
         self.__previousstate_internal_name = 'None' if last_state is None else last_state.text
         if self.__previousstate_item_name is not None:
             # noinspection PyCallingNonCallable
-            self.__previousstate_item_name(self.__previousstate_internal_name, StateEngineDefaults.plugin_identification, "StateEvaluation")
+            self.__previousstate_item_name(self.__previousstate_internal_name,
+                                           StateEngineDefaults.plugin_identification, "StateEvaluation")
 
     # get previous state object based on previousstate_id
     # returns: SeState instance of last state or "None" if no last state could be found
@@ -931,25 +959,32 @@ class SeItem:
         self.__previousconditionset_internal_id = last_id
         if self.__previousconditionset_item_id is not None:
             # noinspection PyCallingNonCallable
-            self.__previousconditionset_item_id(self.__previousconditionset_internal_id, StateEngineDefaults.plugin_identification, "StateEvaluation")
+            self.__previousconditionset_item_id(self.__previousconditionset_internal_id,
+                                                StateEngineDefaults.plugin_identification, "StateEvaluation")
 
         self.__previousconditionset_internal_name = last_name
         if self.__previousconditionset_item_name is not None:
             # noinspection PyCallingNonCallable
-            self.__previousconditionset_item_name(self.__previousconditionset_internal_name, StateEngineDefaults.plugin_identification, "StateEvaluation")
-        self.__logger.develop("Setting previous Conditionset to {0} ('{1}')", self.__previousconditionset_internal_id, self.__previousconditionset_internal_name)
+            self.__previousconditionset_item_name(self.__previousconditionset_internal_name,
+                                                  StateEngineDefaults.plugin_identification, "StateEvaluation")
+        self.__logger.develop("Setting previous Conditionset to {0} ('{1}')", self.__previousconditionset_internal_id,
+                              self.__previousconditionset_internal_name)
 
     def previousstate_conditionset_set(self, last_id, last_name):
         self.__previousstate_conditionset_internal_id = last_id
         if self.__previousstate_conditionset_item_id is not None:
             # noinspection PyCallingNonCallable
-            self.__previousstate_conditionset_item_id(self.__previousstate_conditionset_internal_id, StateEngineDefaults.plugin_identification, "StateEvaluation")
+            self.__previousstate_conditionset_item_id(self.__previousstate_conditionset_internal_id,
+                                                      StateEngineDefaults.plugin_identification, "StateEvaluation")
 
         self.__previousstate_conditionset_internal_name = last_name
         if self.__previousstate_conditionset_item_name is not None:
             # noinspection PyCallingNonCallable
-            self.__previousstate_conditionset_item_name(self.__previousstate_conditionset_internal_name, StateEngineDefaults.plugin_identification, "StateEvaluation")
-        self.__logger.develop("Setting Conditionset of previous state to {0} ('{1}')", self.__previousstate_conditionset_internal_id, self.__previousstate_conditionset_internal_name)
+            self.__previousstate_conditionset_item_name(self.__previousstate_conditionset_internal_name,
+                                                        StateEngineDefaults.plugin_identification, "StateEvaluation")
+        self.__logger.develop("Setting Conditionset of previous state to {0} ('{1}')",
+                              self.__previousstate_conditionset_internal_id,
+                              self.__previousstate_conditionset_internal_name)
 
     # endregion
 
@@ -1119,7 +1154,8 @@ class SeItem:
         if _previousstate_conditionset_id is not None:
             self.__logger.info("Item 'Previousstate condition Id': {0}", _previousstate_conditionset_id.property.path)
         if _previousstate_conditionset_name is not None:
-            self.__logger.info("Item 'Previousstate condition Name': {0}", _previousstate_conditionset_name.property.path)
+            self.__logger.info("Item 'Previousstate condition Name': {0}",
+                               _previousstate_conditionset_name.property.path)
 
         # log states
         for state in self.__states:
@@ -1140,10 +1176,14 @@ class SeItem:
         triggers = self.__verbose_triggers()
         handler.push("AutoState Item {0}:\n".format(self.id))
         handler.push("\tCurrent state: {0} ('{1}')\n".format(self.get_laststate_id(), self.get_laststate_name()))
-        handler.push("\tCurrent conditionset: {0} ('{1}')\n".format(self.get_lastconditionset_id(), self.get_lastconditionset_name()))
-        handler.push("\tPrevious state: {0} ('{1}')\n".format(self.get_previousstate_id(), self.get_previousstate_name()))
-        handler.push("\tPrevious state conditionset: {0} ('{1}')\n".format(self.get_previousstate_conditionset_id(), self.get_previousstate_conditionset_name()))
-        handler.push("\tPrevious conditionset: {0} ('{1}')\n".format(self.get_previousconditionset_id(), self.get_previousconditionset_name()))
+        handler.push("\tCurrent conditionset: {0} ('{1}')\n".format(self.get_lastconditionset_id(),
+                                                                    self.get_lastconditionset_name()))
+        handler.push(
+            "\tPrevious state: {0} ('{1}')\n".format(self.get_previousstate_id(), self.get_previousstate_name()))
+        handler.push("\tPrevious state conditionset: {0} ('{1}')\n".format(self.get_previousstate_conditionset_id(),
+                                                                           self.get_previousstate_conditionset_name()))
+        handler.push("\tPrevious conditionset: {0} ('{1}')\n".format(self.get_previousconditionset_id(),
+                                                                     self.get_previousconditionset_name()))
         handler.push(self.__startup_delay.get_text("\t", "\n"))
         handler.push("\tCycle: {0}\n".format(cycles))
         handler.push("\tCron: {0}\n".format(crons))

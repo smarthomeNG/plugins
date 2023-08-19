@@ -40,7 +40,7 @@ class SeLogger:
         return SeLogger.__startup_log_level.get()
 
     @startup_log_level.setter
-    def default_log_level(self, value):
+    def startup_log_level(self, value):
         SeLogger.__startup_log_level = value
 
     @property
@@ -111,17 +111,17 @@ class SeLogger:
     # Remove old log files (by scheduler)
     @staticmethod
     def remove_old_logfiles():
-        if SeLogger.log_maxage.get() == 0 or not os.path.isdir(SeLogger.log_directory):
+        if SeLogger.log_maxage.get() == 0 or not os.path.isdir(str(SeLogger.log_directory)):
             return
         logger = StateEngineDefaults.logger
         logger.info("Removing logfiles older than {0} days".format(SeLogger.log_maxage))
         count_success = 0
         count_error = 0
         now = datetime.datetime.now()
-        for file in os.listdir(SeLogger.log_directory):
+        for file in os.listdir(str(SeLogger.log_directory)):
             if file.endswith(".log"):
                 try:
-                    abs_file = os.path.join(SeLogger.log_directory, file)
+                    abs_file = os.path.join(str(SeLogger.log_directory), file)
                     stat = os.stat(abs_file)
                     mtime = datetime.datetime.fromtimestamp(stat.st_mtime)
                     age_in_days = (now - mtime).total_seconds() / 86400.0
@@ -166,7 +166,7 @@ class SeLogger:
         if self.__date == datetime.datetime.today() and self.__filename is not None:
             return
         self.__date = str(datetime.date.today())
-        self.__filename = str(SeLogger.log_directory + self.__date + '-' + self.__section + ".log")
+        self.__filename = f"{SeLogger.log_directory}{self.__date}-{self.__section}.log"
 
     # Increase indentation level
     # by: number of levels to increase

@@ -127,7 +127,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                                  else ""
                 if _issue:
                     if tooltip_count > 0:
-                        condition_tooltip += '&#13;&#10;&#13;&#10;'
+                        action_tooltip += '&#13;&#10;&#13;&#10;'
                     tooltip_count += 1
                     action_tooltip += '{}'.format(_issue) if _issue is not None else ''
 
