@@ -432,7 +432,7 @@ class SeActions(StateEngineTools.SeItemChild):
         return finalactions
 
     # log all actions
-    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+    def write_to_logger(self):
         actions = []
         for name in self.__actions:
             actions.append((self.__actions[name].get_order(), self.__actions[name]))
@@ -441,6 +441,6 @@ class SeActions(StateEngineTools.SeItemChild):
             self._log_info("Action '{0}':", action.name)
             self._log_increase_indent()
             self._abitem._initactionname = action.name
-            action.write_to_logger(log_level)
+            action.write_to_logger()
             self._abitem._initactionname = None
             self._log_decrease_indent()

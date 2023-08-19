@@ -127,11 +127,11 @@ class SeConditionSet(StateEngineTools.SeItemChild):
             del self.conditions[name]
 
     # Write the whole condition set to the logger
-    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+    def write_to_logger(self):
         for name in self.__conditions:
             self._log_info("Condition '{0}':", name)
             self._log_increase_indent()
-            self.__conditions[name].write_to_logger(log_level)
+            self.__conditions[name].write_to_logger()
             self._log_decrease_indent()
 
     def __currentconditionset_set(self, conditionsetid, name):

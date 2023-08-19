@@ -299,7 +299,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         return True
 
     # Write condition to logger
-    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+    def write_to_logger(self):
         if self.__error is not None:
             self._log_warning("error: {0}", self.__error)
         if self.__item is not None:
@@ -320,22 +320,22 @@ class SeCondition(StateEngineTools.SeItemChild):
                     self._log_info("eval: {0}", StateEngineTools.get_eval_name(e))
             else:
                 self._log_info("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
-        self.__value.write_to_logger(log_level)
-        self.__min.write_to_logger(log_level)
-        self.__max.write_to_logger(log_level)
+        self.__value.write_to_logger()
+        self.__min.write_to_logger()
+        self.__max.write_to_logger()
         if self.__negate is not None:
             self._log_info("negate: {0}", self.__negate)
-        self.__agemin.write_to_logger(log_level)
-        self.__agemax.write_to_logger(log_level)
+        self.__agemin.write_to_logger()
+        self.__agemax.write_to_logger()
         if self.__agenegate is not None:
             self._log_info("age negate: {0}", self.__agenegate)
-        self.__changedby.write_to_logger(log_level)
+        self.__changedby.write_to_logger()
         if self.__changedbynegate is not None and not self.__changedby.is_empty():
             self._log_info("changedby negate: {0}", self.__changedbynegate)
-        self.__updatedby.write_to_logger(log_level)
+        self.__updatedby.write_to_logger()
         if self.__updatedbynegate is not None and not self.__updatedby.is_empty():
             self._log_info("updatedby negate: {0}", self.__updatedbynegate)
-        self.__triggeredby.write_to_logger(log_level)
+        self.__triggeredby.write_to_logger()
         if self.__updatedbynegate is not None and not self.__triggeredby.is_empty():
             self._log_info("triggeredby negate: {0}", self.__triggeredbynegate)
 

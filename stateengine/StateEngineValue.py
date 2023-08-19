@@ -41,7 +41,10 @@ class SeValue(StateEngineTools.SeItemChild):
     # allow_value_list: Flag: list of values allowed
     # value_type: Type of value to preset the cast function (allowed: str, num, bool, time)
     def __init__(self, abitem, name, allow_value_list=False, value_type=None):
-        super().__init__(abitem)
+        try:
+            super().__init__(abitem)
+        except Exception:
+            pass
         self.__name = name
         self.__allow_value_list = allow_value_list
         self.__value = None
@@ -85,9 +88,14 @@ class SeValue(StateEngineTools.SeItemChild):
     # attribute_name: name of attribute to use
     # default_value: default value to be used if item contains no such attribute
     def set_from_attr(self, item, attribute_name, default_value=None, reset=True, attr_type=None):
-        value = copy.deepcopy(item.conf.get(attribute_name)) or default_value
+        value = copy.deepcopy(item.conf.get(attribute_name))
         if value is not None:
+            _using_default = False
             self._log_develop("Processing value {0} from attribute name {1}, reset {2}", value, attribute_name, reset)
+        else:
+            value = default_value
+            _using_default = True
+            self._log_develop("Processing value from attribute name {0}, reset {1}: using default value {2}", attribute_name, reset, value)
         value_list = []
         if value is not None and isinstance(value, list) and attr_type is not None:
             for i, entry in enumerate(value):
@@ -115,7 +123,7 @@ class SeValue(StateEngineTools.SeItemChild):
         if value is not None:
             self._log_develop("Setting value {0}, attribute name {1}, reset {2}", value, attribute_name, reset)
         _returnvalue, _returntype = self.set(value, attribute_name, reset, item)
-        return _returnvalue, _returntype
+        return _returnvalue, _returntype, _using_default
 
     def _set_additional(self, _additional_sources):
         for _use in _additional_sources:
@@ -389,89 +397,50 @@ class SeValue(StateEngineTools.SeItemChild):
             return self.__type_listorder
 
     # Write condition to logger
-    def write_to_logger(self, log_level=StateEngineDefaults.log_level):
+    def write_to_logger(self):
         if self.__template is not None:
-            if log_level == -1:
-                self._log_debug("{0}: Using template(s) {1}", self.__name, self.__template)
-            else:
-                self._log_info("{0}: Using template(s) {1}", self.__name, self.__template)
+            self._log_info("{0}: Using template(s) {1}", self.__name, self.__template)
         if self.__value is not None:
             if isinstance(self.__value, list):
                 for i in self.__value:
                     if i is not None:
-                        if log_level == -1:
-                            self._log_info("{0}: {1} ({2})", self.__name, i, type(i))
-                        else:
-                            self._log_debug("{0}: {1} ({2})", self.__name, i, type(i))
+                        self._log_debug("{0}: {1} ({2})", self.__name, i, type(i))
             else:
-                if log_level == -1:
-                    self._log_info("{0}: {1} ({2})", self.__name, self.__value, type(self.__value))
-                else:
-                    self._log_debug("{0}: {1} ({2})", self.__name, self.__value, type(self.__value))
+                self._log_debug("{0}: {1} ({2})", self.__name, self.__value, type(self.__value))
         if self.__regex is not None:
             if isinstance(self.__regex, list):
                 for i in self.__regex:
                     if i is not None:
-                        if log_level == -1:
-                            self._log_info("{0} from regex: {1}", self.__name, i)
-                        else:
-                            self._log_debug("{0} from regex: {1}", self.__name, i)
+                        self._log_debug("{0} from regex: {1}", self.__name, i)
             else:
-                if log_level == -1:
-                    self._log_info("{0} from regex: {1}", self.__name, self.__regex)
-                else:
-                    self._log_debug("{0} from regex: {1}", self.__name, self.__regex)
+                self._log_debug("{0} from regex: {1}", self.__name, self.__regex)
         if self.__struct is not None:
             if isinstance(self.__struct, list):
                 for i in self.__struct:
                     if i is not None:
-                        if log_level == -1:
-                            self._log_info("{0} from struct: {1}", self.__name, i.property.path)
-                        else:
-                            self._log_debug("{0} from struct: {1}", self.__name, i.property.path)
+                        self._log_debug("{0} from struct: {1}", self.__name, i.property.path)
 
             else:
-                if log_level == - 1:
-                    self._log_info("{0} from struct: {1}", self.__name, self.__struct.property.path)
-                else:
-                    self._log_debug("{0} from struct: {1}", self.__name, self.__struct.property.path)
+                self._log_debug("{0} from struct: {1}", self.__name, self.__struct.property.path)
         if self.__item is not None:
             if isinstance(self.__item, list):
                 for i in self.__item:
                     if i is not None:
-                        if log_level == - 1:
-                            self._log_info("{0} from item: {1}", self.__name, i.property.path)
-                        else:
-                            self._log_debug("{0} from item: {1}", self.__name, i.property.path)
+                        self._log_debug("{0} from item: {1}", self.__name, i.property.path)
             else:
-                if log_level == - 1:
-                    self._log_info("{0} from item: {1}", self.__name, self.__item.property.path)
-                else:
-                    self._log_debug("{0} from item: {1}", self.__name, self.__item.property.path)
+                self._log_debug("{0} from item: {1}", self.__name, self.__item.property.path)
         if self.__eval is not None:
-            if log_level == - 1:
-                self._log_info("{0} from eval: {1}", self.__name, self.__eval)
-            else:
-                self._log_debug("{0} from eval: {1}", self.__name, self.__eval)
+            self._log_debug("{0} from eval: {1}", self.__name, self.__eval)
             _original_listorder = copy.copy(self.__listorder)
-            if log_level == - 1:
-                self._log_info("Currently eval results in {}", self.__get_eval())
-            else:
-                self._log_debug("Currently eval results in {}", self.__get_eval())
+            self._log_debug("Currently eval results in {}", self.__get_eval())
             self.__listorder = _original_listorder
         if self.__varname is not None:
             if isinstance(self.__varname, list):
                 for i in self.__varname:
                     if i is not None:
-                        if log_level == - 1:
-                            self._log_info("{0} from variable: {1}", self.__name, i)
-                        else:
-                            self._log_debug("{0} from variable: {1}", self.__name, i)
+                        self._log_debug("{0} from variable: {1}", self.__name, i)
             else:
-                if log_level == - 1:
-                    self._log_info("{0} from variable: {1}", self.__name, self.__varname)
-                else:
-                    self._log_debug("{0} from variable: {1}", self.__name, self.__varname)
+                self._log_debug("{0} from variable: {1}", self.__name, self.__varname)
 
     # Get Text (similar to logger text)
     # prefix: Prefix for text

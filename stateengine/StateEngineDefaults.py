@@ -26,8 +26,6 @@ startup_delay = 10
 
 suspend_time = 3600
 
-log_level = 0
-
 suntracking_offset = 0
 
 lamella_open_value = 0
@@ -39,8 +37,6 @@ plugin_identification = "StateEngine Plugin"
 VERBOSE = logging.DEBUG - 1
 
 logger = None
-
-se_logger = logging.getLogger('stateengine')
 
 log_maxage = 0
 

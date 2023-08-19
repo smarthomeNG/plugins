@@ -117,27 +117,57 @@ parameters:
         type: int
         default: 0
         valid_list:
+          - -1
           - 0
           - 1
           - 2
           - 3
         valid_list_description:
-            de: ['deaktiviert', 'Info', 'Debug', 'Develop']
-            en: ['deactivated', 'Info', 'Debug', 'Develop']
+            de: ['Standardlevel aus plugin.yaml', 'deaktiviert', 'Info', 'Debug', 'Develop']
+            en: ['default level from plugin.yaml', 'deactivated', 'Info', 'Debug', 'Develop']
         description:
-            de: 'Erweiterte Protokollierung: Loglevel (0: aus, 1: Info, 2: Debug, 3: Develop/Verbose)'
-            en: 'Extended Logging: Loglevel (0: off, 1: Info, 2: Debug, 3: Develop/Verbose)'
+            de: 'Erweiterte Protokollierung: Loglevel (-1: Wert aus plugin.yaml, 0: aus, 1: Info, 2: Debug, 3: Develop/Verbose)'
+            en: 'Extended Logging: Loglevel (-1: value from plugin.yaml, 0: off, 1: Info, 2: Debug, 3: Develop/Verbose)'
         description_long:
             de: '**Erweiterte Protokollierung:**\n
-                 Bei einem Wert von 1 oder 2 wird pro Item eine eigene Logdatei im unter log_directory
+                 Bei einem Wert von 1, 2 oder 3 wird pro Item eine eigene Logdatei im unter log_directory
                  angegebenen Verzeichnis angelegt.
                  Wenn der Parameter nicht angegeben oder auf 0 gestellt ist,
                  ist die erweiterte Protokollierung deaktiviert.
                  '
             en: '**Extended Logging**:\n
-                If 1 or 2 is given  there will be a seperate log file for each item in the folder
+                If 1, 2 or 3 is given  there will be a seperate log file for each item in the folder
                 defined as log_directory.
                 If the parameter is absent or set to 0 no extended logging is active
+                '
+
+    startup_log_level:
+        type: int
+        default: 2
+        valid_list:
+          - -1
+          - 0
+          - 1
+          - 2
+          - 3
+        valid_list_description:
+            de: ['Standardlevel aus plugin.yaml', 'deaktiviert', 'Info', 'Debug', 'Develop']
+            en: ['default level from plugin.yaml', 'deactivated', 'Info', 'Debug', 'Develop']
+        description:
+            de: 'Erweiterte Protokollierung beim Starten des Plugins: Loglevel (-1: Wert aus plugin.yaml, 0: aus, 1: Info, 2: Debug, 3: Develop/Verbose)'
+            en: 'Extended Logging at plugin startup: Loglevel (-1: value from plugin.yaml, 0: off, 1: Info, 2: Debug, 3: Develop/Verbose)'
+        description_long:
+            de: '**Erweiterte Protokollierung:**\n
+                 Bei einem Wert von 1, 2 oder 3 wird pro Item eine eigene Logdatei im unter log_directory
+                 angegebenen Verzeichnis angelegt.
+                 Ist die Initialisierung eines Stateengine Items abgeschlossen, wird der über se_log_level oder
+                 den Standard Loglevel im plugin.yaml eingestellt.
+                 '
+            en: '**Extended Logging**:\n
+                If 1, 2 or 3 is given  there will be a seperate log file for each item in the folder
+                defined as log_directory.
+                After initialization of the stateengine items the log level will be set to the one
+                defined in se_log_level or as a standard log level in plugin.yaml.
                 '
 
     log_directory:
@@ -564,24 +594,20 @@ item_attributes:
                 '
 
     se_log_level:
-        type: int
-        valid_list:
-          - 0
-          - 1
-          - 2
-          - 3
-        valid_list_description:
-            de: ['deaktiviert', 'Info', 'Debug', 'Develop']
-            en: ['deactivated', 'Info', 'Debug', 'Develop']
+        type: foo
         description:
             de: 'Loglevel für ein konkretes Stateengine Item'
             en: 'Log level for a distinct stateengine item'
         description_long:
             de: 'Das global angegebene Loglevel kann für jedes SE item individuell überschrieben werden.
                  Somit ist es einfacher möglich, bestimme State Engines zu debuggen.
+                 Das Loglevel kann durch das Settings Item log_level im laufenden Betrieb angepasst werden.
+                 Ist der Wert auf -1 gesetzt, wird der Standardwert aus dem plugin.yaml übernommen.
                 '
             en: 'The globally defined log level can be overwritten for each SE item individually.
                  Therefore it is easier to debug specific state engines.
+                 The log level can be adjusted by changing the setting item log_level while the plugin is running.
+                 If the value is set to -1 the standard value from plugin.yaml is used.
                 '
 
     se_use:
@@ -700,6 +726,10 @@ item_structs:
             on_update: ..rules = True
 
         settings:
+            log_level:
+              type: num
+              initial_value: -1
+
             settings_edited:
                 type: bool
                 name: settings editiert
@@ -712,6 +742,7 @@ item_structs:
             remark: configure your se_item_* and eval_triggers here
             type: bool
             se_plugin: active
+            se_log_level: item:..settings.log_level
             eval: True
             se_laststate_item_id: ..state_id
             se_laststate_item_name: ..state_name

@@ -26,6 +26,7 @@ from . import StateEngineDefaults
 from . import StateEngineTools
 from . import StateEngineCliCommands
 from . import StateEngineFunctions
+from . import StateEngineValue
 from . import StateEngineWebif
 from . import StateEngineStructs
 import logging
@@ -63,11 +64,22 @@ class StateEngine(SmartPlugin):
         if not self.vis_enabled:
             self.logger.warning(f'StateEngine is missing the PyDotPlus package, WebIf visualization is disabled')
         self.init_webinterface(WebInterface)
-        self.__log_directory = self.get_parameter_value("log_directory")
+        self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
         try:
+
             log_level = self.get_parameter_value("log_level")
-            StateEngineDefaults.log_level = log_level
-            log_directory = self.__log_directory
+            startup_log_level = self.get_parameter_value("startup_log_level")
+            log_directory = self.get_parameter_value("log_directory")
+            default_log_level_value = StateEngineValue.SeValue(self, "Default Log Level", False, "num")
+            default_log_level_value.set(log_level)
+            SeLogger.default_log_level = default_log_level_value
+            startup_log_level_value = StateEngineValue.SeValue(self, "Startup Log Level", False, "num")
+            startup_log_level_value.set(startup_log_level)
+            SeLogger.startup_log_level = startup_log_level_value
+            log_level_value = StateEngineValue.SeValue(self, "Log Level", False, "num")
+            log_level_value.set(log_level)
+            SeLogger.log_level = log_level_value
+            self.logger.info("Set default log level to {}, Startup log level to {}.".format(SeLogger.log_level, SeLogger.startup_log_level))
             self.logger.info("Init StateEngine (log_level={0}, log_directory={1})".format(log_level, log_directory))
             StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
             StateEngineDefaults.suspend_time = self.get_parameter_value("suspend_time_default")
@@ -75,23 +87,22 @@ class StateEngine(SmartPlugin):
             StateEngineDefaults.suntracking_offset = self.get_parameter_value("lamella_offset")
             StateEngineDefaults.lamella_open_value = self.get_parameter_value("lamella_open_value")
             StateEngineDefaults.write_to_log(self.logger)
-            self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
-            StateEngineCurrent.init(self.get_sh())
 
+            StateEngineCurrent.init(self.get_sh())
             base = self.get_sh().get_basedir()
-            log_directory = SeLogger.create_logdirectory(base, log_directory)
+            log_directory = SeLogger.manage_logdirectory(base, log_directory, False)
+            SeLogger.log_directory = log_directory
 
             if log_level > 0:
                 text = "StateEngine extended logging is active. Logging to '{0}' with log level {1}."
                 self.logger.info(text.format(log_directory, log_level))
+
             log_maxage = self.get_parameter_value("log_maxage")
             if log_maxage > 0:
                 self.logger.info("StateEngine extended log files will be deleted after {0} days.".format(log_maxage))
                 SeLogger.set_logmaxage(log_maxage)
                 cron = ['init', '30 0 * *']
                 self.scheduler_add('StateEngine: Remove old logfiles', SeLogger.remove_old_logfiles, cron=cron, offset=0)
-            SeLogger.set_loglevel(log_level)
-            SeLogger.set_logdirectory(log_directory)
 
         except Exception as ex:
             self._init_complete = False
@@ -114,9 +125,6 @@ class StateEngine(SmartPlugin):
             item._eval = "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.id() + "', caller, source)"
         elif self.has_iattr(item.conf, "se_manual_invert"):
             item._eval = "not sh." + item.id() + "()"
-        if self.has_iattr(item.conf, "se_log_level"):
-            base = self.get_sh().get_basedir()
-            SeLogger.create_logdirectory(base, self.__log_directory)
         return None
 
     # Initialization of plugin

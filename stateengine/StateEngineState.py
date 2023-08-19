@@ -114,7 +114,7 @@ class SeState(StateEngineTools.SeItemChild):
         return result
 
     # log state data
-    def write_to_log(self, log_level=StateEngineDefaults.log_level):
+    def write_to_log(self):
         self._abitem._initstate = self
         self._log_info("State {0}:", self.id)
         self._log_increase_indent()
@@ -140,34 +140,34 @@ class SeState(StateEngineTools.SeItemChild):
         if self.__conditions.count() > 0:
             self._log_info("Condition sets to enter state:")
             self._log_increase_indent()
-            self.__conditions.write_to_logger(log_level)
+            self.__conditions.write_to_logger()
             self._log_decrease_indent()
 
         if self.__actions_enter.count() > 0:
             self._log_info("Actions to perform on enter:")
             self._log_increase_indent()
-            self.__actions_enter.write_to_logger(log_level)
+            self.__actions_enter.write_to_logger()
             self._log_decrease_indent()
             self._abitem.update_webif([self.id, 'actions_enter'], self.__actions_enter.dict_actions('actions_enter', self.id))
 
         if self.__actions_stay.count() > 0:
             self._log_info("Actions to perform on stay:")
             self._log_increase_indent()
-            self.__actions_stay.write_to_logger(log_level)
+            self.__actions_stay.write_to_logger()
             self._log_decrease_indent()
             self._abitem.update_webif([self.id, 'actions_stay'], self.__actions_stay.dict_actions('actions_stay', self.id))
 
         if self.__actions_enter_or_stay.count() > 0:
             self._log_info("Actions to perform on enter or stay:")
             self._log_increase_indent()
-            self.__actions_enter_or_stay.write_to_logger(log_level)
+            self.__actions_enter_or_stay.write_to_logger()
             self._log_decrease_indent()
             self._abitem.update_webif([self.id, 'actions_enter_or_stay'], self.__actions_enter_or_stay.dict_actions('actions_enter_or_stay', self.id))
 
         if self.__actions_leave.count() > 0:
             self._log_info("Actions to perform on leave (instant leave: {})", self._abitem.instant_leaveaction)
             self._log_increase_indent()
-            self.__actions_leave.write_to_logger(log_level)
+            self.__actions_leave.write_to_logger()
             self._log_decrease_indent()
             self._abitem.update_webif([self.id, 'actions_leave'], self.__actions_leave.dict_actions('actions_leave', self.id))
         self._abitem.set_variable("current.state_name", "")
