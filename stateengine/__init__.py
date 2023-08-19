@@ -66,19 +66,22 @@ class StateEngine(SmartPlugin):
         self.init_webinterface(WebInterface)
         self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
         try:
-
             log_level = self.get_parameter_value("log_level")
             startup_log_level = self.get_parameter_value("startup_log_level")
             log_directory = self.get_parameter_value("log_directory")
-            default_log_level_value = StateEngineValue.SeValue(self, "Default Log Level", False, "num")
-            default_log_level_value.set(log_level)
-            SeLogger.default_log_level = default_log_level_value
-            startup_log_level_value = StateEngineValue.SeValue(self, "Startup Log Level", False, "num")
-            startup_log_level_value.set(startup_log_level)
-            SeLogger.startup_log_level = startup_log_level_value
+            log_maxage = self.get_parameter_value("log_maxage")
             log_level_value = StateEngineValue.SeValue(self, "Log Level", False, "num")
             log_level_value.set(log_level)
             SeLogger.log_level = log_level_value
+            startup_log_level_value = StateEngineValue.SeValue(self, "Startup Log Level", False, "num")
+            startup_log_level_value.set(startup_log_level)
+            SeLogger.startup_log_level = startup_log_level_value
+            log_maxage_value = StateEngineValue.SeValue(self, "Log MaxAge", False, "num")
+            log_maxage_value.set(log_maxage)
+            SeLogger.log_maxage = log_maxage_value
+            default_log_level_value = StateEngineValue.SeValue(self, "Default Log Level", False, "num")
+            default_log_level_value.set(log_level)
+            SeLogger.default_log_level = default_log_level_value
             self.logger.info("Set default log level to {}, Startup log level to {}.".format(SeLogger.log_level, SeLogger.startup_log_level))
             self.logger.info("Init StateEngine (log_level={0}, log_directory={1})".format(log_level, log_directory))
             StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
@@ -97,10 +100,9 @@ class StateEngine(SmartPlugin):
                 text = "StateEngine extended logging is active. Logging to '{0}' with log level {1}."
                 self.logger.info(text.format(log_directory, log_level))
 
-            log_maxage = self.get_parameter_value("log_maxage")
+
             if log_maxage > 0:
                 self.logger.info("StateEngine extended log files will be deleted after {0} days.".format(log_maxage))
-                SeLogger.set_logmaxage(log_maxage)
                 cron = ['init', '30 0 * *']
                 self.scheduler_add('StateEngine: Remove old logfiles', SeLogger.remove_old_logfiles, cron=cron, offset=0)
 
