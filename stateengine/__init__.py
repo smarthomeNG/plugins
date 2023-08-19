@@ -86,7 +86,10 @@ class StateEngine(SmartPlugin):
             self.logger.info("Init StateEngine (log_level={0}, log_directory={1})".format(log_level, log_directory))
             StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
             StateEngineDefaults.suspend_time = self.get_parameter_value("suspend_time_default")
-            StateEngineDefaults.instant_leaveaction = self.get_parameter_value("instant_leaveaction")
+            default_instant_leaveaction = self.get_parameter_value("instant_leaveaction")
+            default_instant_leaveaction_value = StateEngineValue.SeValue(self, "Instant Leave Action", False, "bool")
+            default_instant_leaveaction_value.set(default_instant_leaveaction)
+            StateEngineDefaults.instant_leaveaction = default_instant_leaveaction_value
             StateEngineDefaults.suntracking_offset = self.get_parameter_value("lamella_offset")
             StateEngineDefaults.lamella_open_value = self.get_parameter_value("lamella_open_value")
             StateEngineDefaults.write_to_log(self.logger)

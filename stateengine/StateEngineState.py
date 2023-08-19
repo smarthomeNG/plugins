@@ -25,7 +25,6 @@ from . import StateEngineConditionSets
 from . import StateEngineActions
 from . import StateEngineValue
 from . import StateEngineStruct
-from . import StateEngineDefaults
 
 from lib.item import Items
 from lib.item.item import Item

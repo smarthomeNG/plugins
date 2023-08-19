@@ -23,7 +23,6 @@ from . import StateEngineTools
 from . import StateEngineEval
 from . import StateEngineStruct
 from . import StateEngineStructs
-from . import StateEngineDefaults
 
 from lib.item import Items
 from lib.item.item import Item

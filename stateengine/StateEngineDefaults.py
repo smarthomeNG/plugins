@@ -38,9 +38,6 @@ VERBOSE = logging.DEBUG - 1
 
 logger = None
 
-log_maxage = 0
-
-
 def write_to_log(logger):
     logger.info("StateEngine default suntracking offset = {0}".format(suntracking_offset))
     logger.info("StateEngine default suntracking lamella open value = {0}".format(lamella_open_value))

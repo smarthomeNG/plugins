@@ -44,6 +44,19 @@ class SeLogger:
         SeLogger.__startup_log_level = value
 
     @property
+    def log_maxage(self):
+        return SeLogger.__log_maxage.get()
+
+    @log_maxage.setter
+    def log_maxage(self, value):
+        try:
+            SeLogger.__log_maxage = int(value)
+        except ValueError:
+            SeLogger.__log_maxage = 0
+            logger = StateEngineDefaults.logger
+            logger.error("The maximum age of the log files has to be an int number.")
+
+    @property
     def using_default(self):
         return self.__using_default
 
@@ -94,24 +107,14 @@ class SeLogger:
             os.makedirs(log_directory)
         return log_directory
 
-    # Set max age for log files
-    # logmaxage: Maximum age for log files (days)
-    @staticmethod
-    def set_logmaxage(logmaxage):
-        try:
-            SeLogger.__logmaxage = int(logmaxage)
-        except ValueError:
-            SeLogger.__logmaxage = 0
-            logger = StateEngineDefaults.logger
-            logger.error("The maximum age of the log files has to be an int number.")
 
     # Remove old log files (by scheduler)
     @staticmethod
     def remove_old_logfiles():
-        if SeLogger.__logmaxage == 0 or not os.path.isdir(SeLogger.log_directory):
+        if SeLogger.log_maxage.get() == 0 or not os.path.isdir(SeLogger.log_directory):
             return
         logger = StateEngineDefaults.logger
-        logger.info("Removing logfiles older than {0} days".format(SeLogger.__logmaxage))
+        logger.info("Removing logfiles older than {0} days".format(SeLogger.log_maxage))
         count_success = 0
         count_error = 0
         now = datetime.datetime.now()
@@ -122,7 +125,7 @@ class SeLogger:
                     stat = os.stat(abs_file)
                     mtime = datetime.datetime.fromtimestamp(stat.st_mtime)
                     age_in_days = (now - mtime).total_seconds() / 86400.0
-                    if age_in_days > SeLogger.__logmaxage:
+                    if age_in_days > SeLogger.log_maxage.get():
                         os.unlink(abs_file)
                         count_success += 1
                 except Exception as ex:
@@ -148,7 +151,7 @@ class SeLogger:
         self.__startup_log_level = None
         self.__log_level = None
         self.__using_default = False
-        self.__logmaxage = StateEngineDefaults.log_maxage
+        self.__logmaxage = None
         self.__date = None
         self.__logerror = False
         self.__filename = ""

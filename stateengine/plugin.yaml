@@ -288,12 +288,21 @@ item_attributes:
             en: 'Data type of the object item. Has to be "bool"'
 
     se_instant_leaveaction:
-        type: bool
+        type: foo
         default: False
         description:
-            de: 'Ist dieser Parameter auf True gesetzt, werden "on leave" Aktionen sofort ausgeführt, wenn der aktuelle Zustand nicht mehr eingenommen wird. Standardmäßig werden die Aktionen erst direkt vor dem Eintreten in einen neuen Zustand getriggert.'
-            en: 'If this parameter is set to True the "on leave" actions are run immediately after not entering the current state
-            again. By default the actions are triggered directly before entering a new state.'
+            de: 'Ist dieser Parameter auf True gesetzt, werden "on leave" Aktionen
+                sofort ausgeführt, wenn der aktuelle Zustand nicht mehr eingenommen wird.
+                Standardmäßig werden die Aktionen erst direkt vor dem Eintreten in
+                einen neuen Zustand getriggert. Kann auch über ein Item zur Laufzeit geändert werden,
+                beispielsweise durch item:..settings.instant_leaveaction.
+                '
+            en: 'If this parameter is set to True the "on leave" actions are run
+                immediately after not entering the current state
+                again. By default the actions are triggered directly before
+                entering a new state. Can also be defined by a valid item,
+                e.g. item:..settings.instant_leaveaction
+                '
 
     se_plugin:
         type: str
@@ -730,6 +739,10 @@ item_structs:
               type: num
               initial_value: -1
 
+            instant_leaveaction:
+              type: bool 
+              initial_value: False
+
             settings_edited:
                 type: bool
                 name: settings editiert
@@ -743,6 +756,7 @@ item_structs:
             type: bool
             se_plugin: active
             se_log_level: item:..settings.log_level
+            se_instant_leaveaction: item:..settings.instant_leaveaction
             eval: True
             se_laststate_item_id: ..state_id
             se_laststate_item_name: ..state_name
