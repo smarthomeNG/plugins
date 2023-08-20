@@ -187,8 +187,16 @@ item_attributes:
             - kaeltesumme
             - waermesumme
             - gruenlandtempsumme
-            - tagesmitteltemperatur
             - wachstumsgradtage
+            - wuestentage
+            - heisse_tage
+            - tropennaechte
+            - sommertage
+            - heiztage
+            - vegetationstage
+            - frosttage
+            - eistage
+            - tagesmitteltemperatur
             - db_request
             - minmax
             - minmax_last
@@ -303,11 +311,19 @@ item_attributes:
             - Stundenmittelwert pro Tag der letzten 30 Tage (bspw. zur Berechnung der Tagesmitteltemperatur basierend auf den Mittelwert der Temperatur pro Stunde
             - Ausgabe des ältesten Wertes des entsprechenden "Parent-Items" mit database Attribut
             - Ausgabe des Timestamp des ältesten Eintrages des entsprechenden "Parent-Items" mit database Attribut
-            - 'Berechnet die Kältesumme für einen Zeitraum, db_addon_params: (year=mandatory, month=optional)'
-            - 'Berechnet die Wärmesumme für einen Zeitraum, db_addon_params: (year=mandatory, month=optional)'
-            - 'Berechnet die Grünlandtemperatursumme für einen Zeitraum, db_addon_params: (year=mandatory)'
-            - Berechnet die Tagesmitteltemperatur auf Basis der stündlichen Durchschnittswerte eines Tages für die angegebene Anzahl von Tagen (timeframe=day, count=integer)
+            - 'Berechnet die Kältesumme für einen Zeitraum, db_addon_params: (year=optional, month=optional)'
+            - 'Berechnet die Wärmesumme für einen Zeitraum, db_addon_params: (year=optional, month=optional)'
+            - 'Berechnet die Grünlandtemperatursumme für einen Zeitraum, db_addon_params: (year=optional)'
             - Berechnet die Wachstumsgradtage auf Basis der stündlichen Durchschnittswerte eines Tages für das laufende Jahr mit an Angabe des Temperaturschwellenwertes (threshold=Schwellentemperatur)
+            - 'Berechnet die Anzahl der Wüstentage des Jahres, db_addon_params: (year=optional)'
+            - 'Berechnet die Anzahl der heissen Tage des Jahres, db_addon_params: (year=optional)'
+            - 'Berechnet die Anzahl der Tropennächte des Jahres, db_addon_params: (year=optional)'
+            - 'Berechnet die Anzahl der Sommertage des Jahres, db_addon_params: (year=optional)'
+            - 'Berechnet die Anzahl der Heiztage des Jahres, db_addon_params: (year=optional)'
+            - 'Berechnet die Anzahl der Vegatationstage des Jahres, db_addon_params: (year=optional)'
+            - 'Berechnet die Anzahl der Frosttage des Jahres, db_addon_params: (year=optional)'
+            - 'Berechnet die Anzahl der Eistage des Jahres, db_addon_params: (year=optional)'
+            - Berechnet die Tagesmitteltemperatur auf Basis der stündlichen Durchschnittswerte eines Tages für die angegebene Anzahl von Tagen (timeframe=day, count=integer)
             - 'Abfrage der DB: db_addon_params: (func=mandatory, item=mandatory, timespan=mandatory, start=optional, end=optional, count=optional, group=optional, group2=optional)'
             - 'Berechnet einen min/max/avg Wert für einen bestimmen Zeitraum:  db_addon_params: (func=mandatory, timeframe=mandatory, start=mandatory)'
             - 'Berechnet einen min/max/avg Wert für ein bestimmtes Zeitfenster von jetzt zurück:  db_addon_params: (func=mandatory, timeframe=mandatory, start=mandatory, end=mandatory)'
@@ -425,8 +441,16 @@ item_attributes:
             - num
             - num
             - num
-            - list
             - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - list
             - list
             - num
             - num
@@ -541,6 +565,14 @@ item_attributes:
             - daily
             - no
             - no
+            - daily
+            - daily
+            - daily
+            - daily
+            - daily
+            - daily
+            - daily
+            - daily
             - daily
             - daily
             - daily

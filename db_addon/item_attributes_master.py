@@ -27,6 +27,8 @@ FILENAME_PLUGIN = 'plugin.yaml'
 
 DOC_FILE_NAME = 'user_doc.rst'
 
+PLUGIN_VERSION = '1.2.3'
+
 ITEM_ATTRIBUTES = {
     'db_addon_fct': {
         'verbrauch_heute':                         {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages)'},
@@ -136,11 +138,19 @@ ITEM_ATTRIBUTES = {
         'serie_tagesmittelwert_tag_stunde_30d':    {'cat': 'serie',         'sub_cat': 'mittel_d_h', 'item_type': 'list',  'calc': 'daily',     'params': False,  'description': 'Stundenmittelwert pro Tag der letzten 30 Tage (bspw. zur Berechnung der Tagesmitteltemperatur basierend auf den Mittelwert der Temperatur pro Stunde'},
         'general_oldest_value':                    {'cat': 'gen',           'sub_cat': None,         'item_type': 'num',   'calc': 'no',        'params': False,  'description': 'Ausgabe des ältesten Wertes des entsprechenden "Parent-Items" mit database Attribut'},
         'general_oldest_log':                      {'cat': 'gen',           'sub_cat': None,         'item_type': 'list',  'calc': 'no',        'params': False,  'description': 'Ausgabe des Timestamp des ältesten Eintrages des entsprechenden "Parent-Items" mit database Attribut'},
-        'kaeltesumme':                             {'cat': 'complex',       'sub_cat': 'summe',      'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Kältesumme für einen Zeitraum, db_addon_params: (year=mandatory, month=optional)'},
-        'waermesumme':                             {'cat': 'complex',       'sub_cat': 'summe',      'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Wärmesumme für einen Zeitraum, db_addon_params: (year=mandatory, month=optional)'},
-        'gruenlandtempsumme':                      {'cat': 'complex',       'sub_cat': None,         'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Grünlandtemperatursumme für einen Zeitraum, db_addon_params: (year=mandatory)'},
+        'kaeltesumme':                             {'cat': 'summe',         'sub_cat': None,         'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Kältesumme für einen Zeitraum, db_addon_params: (year=optional, month=optional)'},
+        'waermesumme':                             {'cat': 'summe',         'sub_cat': None,         'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Wärmesumme für einen Zeitraum, db_addon_params: (year=optional, month=optional)'},
+        'gruenlandtempsumme':                      {'cat': 'summe',         'sub_cat': None,         'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Grünlandtemperatursumme für einen Zeitraum, db_addon_params: (year=optional)'},
+        'wachstumsgradtage':                       {'cat': 'summe',         'sub_cat': None,         'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Wachstumsgradtage auf Basis der stündlichen Durchschnittswerte eines Tages für das laufende Jahr mit an Angabe des Temperaturschwellenwertes (threshold=Schwellentemperatur)'},
+        'wuestentage':                             {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der Wüstentage des Jahres, db_addon_params: (year=optional)'},
+        'heisse_tage':                             {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der heissen Tage des Jahres, db_addon_params: (year=optional)'},
+        'tropennaechte':                           {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der Tropennächte des Jahres, db_addon_params: (year=optional)'},
+        'sommertage':                              {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der Sommertage des Jahres, db_addon_params: (year=optional)'},
+        'heiztage':                                {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der Heiztage des Jahres, db_addon_params: (year=optional)'},
+        'vegetationstage':                         {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der Vegatationstage des Jahres, db_addon_params: (year=optional)'},
+        'frosttage':                               {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der Frosttage des Jahres, db_addon_params: (year=optional)'},
+        'eistage':                                 {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der Eistage des Jahres, db_addon_params: (year=optional)'},
         'tagesmitteltemperatur':                   {'cat': 'complex',       'sub_cat': None,         'item_type': 'list',  'calc': 'daily',     'params': True,   'description': 'Berechnet die Tagesmitteltemperatur auf Basis der stündlichen Durchschnittswerte eines Tages für die angegebene Anzahl von Tagen (timeframe=day, count=integer)'},
-        'wachstumsgradtage':                       {'cat': 'complex',       'sub_cat': None,         'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Wachstumsgradtage auf Basis der stündlichen Durchschnittswerte eines Tages für das laufende Jahr mit an Angabe des Temperaturschwellenwertes (threshold=Schwellentemperatur)'},
         'db_request':                              {'cat': 'complex',       'sub_cat': None,         'item_type': 'list',  'calc': 'group',     'params': True,   'description': 'Abfrage der DB: db_addon_params: (func=mandatory, item=mandatory, timespan=mandatory, start=optional, end=optional, count=optional, group=optional, group2=optional)'},
         'minmax':                                  {'cat': 'complex',       'sub_cat': None,         'item_type': 'num',   'calc': 'timeframe', 'params': True,   'description': 'Berechnet einen min/max/avg Wert für einen bestimmen Zeitraum:  db_addon_params: (func=mandatory, timeframe=mandatory, start=mandatory)'},
         'minmax_last':                             {'cat': 'complex',       'sub_cat': None,         'item_type': 'num',   'calc': 'timeframe', 'params': True,   'description': 'Berechnet einen min/max/avg Wert für ein bestimmtes Zeitfenster von jetzt zurück:  db_addon_params: (func=mandatory, timeframe=mandatory, start=mandatory, end=mandatory)'},
@@ -211,7 +221,7 @@ def export_item_attributes_py():
     ATTRS['ALL_WEEKLY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'weekly'})
     ATTRS['ALL_MONTHLY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'monthly'})
     ATTRS['ALL_YEARLY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'yearly'})
-    ATTRS['ALL_NEED_PARAMS_ATTRIBUTES'] = get_attrs(sub_dict={'params': True})
+    ATTRS['ALL_PARAMS_ATTRIBUTES'] = get_attrs(sub_dict={'params': True})
     ATTRS['ALL_VERBRAUCH_ATTRIBUTES'] = get_attrs(sub_dict={'cat': 'verbrauch'})
     ATTRS['VERBRAUCH_ATTRIBUTES_ONCHANGE'] = get_attrs(sub_dict={'cat': 'verbrauch', 'sub_cat': 'onchange'})
     ATTRS['VERBRAUCH_ATTRIBUTES_TIMEFRAME'] = get_attrs(sub_dict={'cat': 'verbrauch', 'sub_cat': 'timeframe'})
@@ -236,6 +246,7 @@ def export_item_attributes_py():
     ATTRS['SERIE_ATTRIBUTES_MITTEL_H1'] = get_attrs(sub_dict={'cat': 'serie', 'sub_cat': 'mittel_h1'})
     ATTRS['SERIE_ATTRIBUTES_MITTEL_D_H'] = get_attrs(sub_dict={'cat': 'serie', 'sub_cat': 'mittel_d_h'})
     ATTRS['ALL_GEN_ATTRIBUTES'] = get_attrs(sub_dict={'cat': 'gen'})
+    ATTRS['ALL_SUMME_ATTRIBUTES'] = get_attrs(sub_dict={'cat': 'summe'})
     ATTRS['ALL_COMPLEX_ATTRIBUTES'] = get_attrs(sub_dict={'cat': 'complex'})
 
     # create file and write header
@@ -314,7 +325,7 @@ def update_plugin_yaml_item_attributes():
 def check_plugin_yaml_structs():
     # check structs for wrong attributes
     print()
-    print(f'D) Checking used attributes in structs defined in {FILENAME_PLUGIN} ')
+    print(f'C) Checking used attributes in structs defined in {FILENAME_PLUGIN} ')
 
     # open plugin.yaml and update
     yaml = ruamel.yaml.YAML()
@@ -351,7 +362,7 @@ def check_plugin_yaml_structs():
 def update_user_doc():
     # Update user_doc.rst
     print()
-    print(f'C) Start updating DB-Addon-Attributes and descriptions in {DOC_FILE_NAME}!"')
+    print(f'D) Start updating DB-Addon-Attributes and descriptions in {DOC_FILE_NAME}!"')
     attribute_list = [
         "Dieses Kapitel wurde automatisch durch Ausführen des Skripts in der Datei 'item_attributes_master.py' erstellt.\n", "\n",
         "Nachfolgend eine Auflistung der möglichen Attribute für das Plugin im Format: Attribute: Beschreibung | Berechnungszyklus | Item-Type\n",

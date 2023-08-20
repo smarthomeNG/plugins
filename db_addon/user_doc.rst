@@ -317,15 +317,31 @@ db_addon_fct
 
 - general_oldest_log: Ausgabe des Timestamp des ältesten Eintrages des entsprechenden "Parent-Items" mit database Attribut | Berechnung: no | Item-Type: list
 
-- kaeltesumme: Berechnet die Kältesumme für einen Zeitraum, db_addon_params: (year=mandatory, month=optional) | Berechnung: daily | Item-Type: num
+- kaeltesumme: Berechnet die Kältesumme für einen Zeitraum, db_addon_params: (year=optional, month=optional) | Berechnung: daily | Item-Type: num
 
-- waermesumme: Berechnet die Wärmesumme für einen Zeitraum, db_addon_params: (year=mandatory, month=optional) | Berechnung: daily | Item-Type: num
+- waermesumme: Berechnet die Wärmesumme für einen Zeitraum, db_addon_params: (year=optional, month=optional) | Berechnung: daily | Item-Type: num
 
-- gruenlandtempsumme: Berechnet die Grünlandtemperatursumme für einen Zeitraum, db_addon_params: (year=mandatory) | Berechnung: daily | Item-Type: num
-
-- tagesmitteltemperatur: Berechnet die Tagesmitteltemperatur auf Basis der stündlichen Durchschnittswerte eines Tages für die angegebene Anzahl von Tagen (timeframe=day, count=integer) | Berechnung: daily | Item-Type: list
+- gruenlandtempsumme: Berechnet die Grünlandtemperatursumme für einen Zeitraum, db_addon_params: (year=optional) | Berechnung: daily | Item-Type: num
 
 - wachstumsgradtage: Berechnet die Wachstumsgradtage auf Basis der stündlichen Durchschnittswerte eines Tages für das laufende Jahr mit an Angabe des Temperaturschwellenwertes (threshold=Schwellentemperatur) | Berechnung: daily | Item-Type: num
+
+- wuestentage: Berechnet die Anzahl der Wüstentage des Jahres, db_addon_params: (year=optional) | Berechnung: daily | Item-Type: num
+
+- heisse_tage: Berechnet die Anzahl der heissen Tage des Jahres, db_addon_params: (year=optional) | Berechnung: daily | Item-Type: num
+
+- tropennaechte: Berechnet die Anzahl der Tropennächte des Jahres, db_addon_params: (year=optional) | Berechnung: daily | Item-Type: num
+
+- sommertage: Berechnet die Anzahl der Sommertage des Jahres, db_addon_params: (year=optional) | Berechnung: daily | Item-Type: num
+
+- heiztage: Berechnet die Anzahl der Heiztage des Jahres, db_addon_params: (year=optional) | Berechnung: daily | Item-Type: num
+
+- vegetationstage: Berechnet die Anzahl der Vegatationstage des Jahres, db_addon_params: (year=optional) | Berechnung: daily | Item-Type: num
+
+- frosttage: Berechnet die Anzahl der Frosttage des Jahres, db_addon_params: (year=optional) | Berechnung: daily | Item-Type: num
+
+- eistage: Berechnet die Anzahl der Eistage des Jahres, db_addon_params: (year=optional) | Berechnung: daily | Item-Type: num
+
+- tagesmitteltemperatur: Berechnet die Tagesmitteltemperatur auf Basis der stündlichen Durchschnittswerte eines Tages für die angegebene Anzahl von Tagen (timeframe=day, count=integer) | Berechnung: daily | Item-Type: list
 
 - db_request: Abfrage der DB: db_addon_params: (func=mandatory, item=mandatory, timespan=mandatory, start=optional, end=optional, count=optional, group=optional, group2=optional) | Berechnung: group | Item-Type: list
 
@@ -390,6 +406,67 @@ Hinweise
    starker Systembelastung nützlich sein.
 
 
+Konfiguration im Item
+=====================
+
+direkt
+------
+Bei der direkten Konfiguration wird das auszuwertende Database-Item durch das Plugin selbst bestimmt. Dazu muss die Konfiguration des
+Attributes `db_addon_fct` oder eines entsprechenden `struct` direkt im Database-Item oder in der Itemstruktur bis zu 3 Ebenen darunter erfolgen.
+
+.. code-block:: yaml
+    wasserzaehler:
+        zaehlerstand:
+            type: num
+            knx_dpt: 12
+            knx_cache: 5/3/4
+            database: init
+            struct:
+                  - db_addon.verbrauch_1
+
+oder
+
+.. code-block:: yaml
+    wasserzaehler:
+        zaehlerstand:
+            type: num
+            knx_dpt: 12
+            knx_cache: 5/3/4
+            database: init
+
+            auswertung:
+                type: foo
+                struct:
+                      - db_addon.verbrauch_1
+
+
+indirekt
+--------
+Bei der indirekten Konfiguration muss das auszuwertende Database-Item zusätzlich über das Attribut `db_addon_database_item` konfiguriert/angegeben werden.
+Die Konfiguration kann somit frei im Itembaum erfolgen. Es wird hier der gleiche Syntax wie bei `eval_trigger` verwendet (Itempfad als String)
+
+.. code-block:: yaml
+    wasserzaehler:
+        zaehlerstand:
+            type: num
+            knx_dpt: 12
+            knx_cache: 5/3/4
+            database: init
+
+    auswertungen:
+        wasser:
+            typ: foo
+            db_addon_database_item: wasserzaehler.zaehlerstand
+            db_addon_startup: yes
+            db_addon_ignore_value_list: ['!=0']
+            struct:
+                  - db_addon.verbrauch_1
+
+Hinweis:
+Da ein Zähler nicht 0 werden kann/sollte, aber beim Starten/Beenden von shNG auch 0 in die Datenbank geschrieben wird, kann man mit Hilfe des Attributs `db_addon_ignore_value_list`
+diese Werte bei Abfragen der Datenbank maskieren.
+
+
 Beispiele
 =========
 
@@ -437,7 +514,7 @@ Soll bspw. die minimalen und maximalen Temperaturen ausgewertet werden, kann die
 Die Temperaturwerte werden in die Datenbank geschrieben und darauf basierend ausgewertet. Die structs
 'db_addon.minmax_1' und 'db_addon.minmax_2' stellen entsprechende Items für die min/max Auswertung zur Verfügung.
 
-|
+
 
 Web Interface
 =============
