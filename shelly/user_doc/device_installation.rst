@@ -2,15 +2,13 @@
 Shelly Device in Betrieb nehmen
 ===============================
 
-*** Ausgelagert ***
-
 Um Shelly Plugs mit diesem Plugin zu nutzen, müssen sie in das lokale WLAN eingebunden sein und die MQTT Unterstützung
 muss aktiviert sein.
 
 Einbindung ins WLAN
 -------------------
 
-Shelly in den AP-Modus versetzen
+Shelly in den AccessPoint-Modus versetzen
 
 - in die Steckdose stecken/an Strom anschließen
 - Falls die LED nicht rot/blau blinken, den Taster drücken -> Shelly Plug wird in den AP Mode versetzt
@@ -25,6 +23,9 @@ Gen1 Devices einbinden
 - **WIFI MODE - CLIENT** aufklappen
 - Haken bei **Connect the Shelly device to an existing WiFi Network** setzen
 - SSID und Password eingeben
+- Vorsicht: Bei Gen1 Devices wird beim sichern der AccessPoint Modus beendet und man muss sich mit dem Device über das
+  konfigurierte WLAN verbinden. In diesem Fall ist es sinnvoll, zuerst die MQTT Konfiguration vorzunehmen, damit
+  SmartHomeNG das Device discovern kann und die im konfigurierten WLAN vergebene IP Addresse im Web Interface anzeigt.
 - **SAVE** klicken
 - Mit dem Browser unter der neuen IP Adresse (http://shellyplug-s-xxxxxx) im lokalen WLAN verbinden
 
@@ -85,7 +86,8 @@ Für Gen2 Devices
 - In der Navigation links auf **Settings** klicken
 - Im Abschnitt 'Connectivity' auf **MQTT** klicken
 - Den Haken bei **Enable MQTT Network** setzen
-- Den 'MQTT PREFIX' auf **shellies/gen2** konfigurieren
+- Der 'MQTT PREFIX' ist standardmäßig mit der Client ID vorbelegt. Er muss auf auf **shellies/gen2/<Client ID>**
+  konfiguriert werden.
 - IP-Adresse und Port des MQTT Brokers unter 'SERVER' konfigurieren
 - Falls der Broker eine Anmeldung erfordert, 'USERNAME' und 'PASSWORD' konfigurieren
 - **SAVE** klicken
@@ -97,7 +99,7 @@ Für Gen2 Devices
 
     Bei späteren Rekonfigurationen ist im allgemeinen das PASSWORD Feld leer und das Password muss
     (bevor **Save Settings** geklickt wird) erneut eingegeben werden. Sonst verbindet sich das Device
-    nicht dem Broker.
+    anschließend nicht dem Broker.
 
 |
 

@@ -7,8 +7,7 @@
 #  https://www.smarthomeNG.de
 #  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.5 and
-#  upwards.
+#  Plugin to support Shelly devices
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -72,9 +71,6 @@ class WebInterface(SmartPluginWebIf):
         """
         self.plugin.get_broker_info()
 
-        # sort shelly_items for display in web interface
-        self.plugin.shelly_items = sorted(self.plugin.shelly_items, key=lambda k: str.lower(k['_path']))
-
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
@@ -106,4 +102,5 @@ class WebInterface(SmartPluginWebIf):
                 return {}
 
         return
+
 

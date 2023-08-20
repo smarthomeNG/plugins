@@ -109,22 +109,38 @@
 		<th>{{ _('Wert') }}</th>
 		<th>{{ _('Shelly Device') }}</th>
 		<th>{{ _('Shelly ID') }}</th>
+<!--
 		<th>{{ _('Relais') }}</th>
+-->
 		<th>{{ _('Letztes Update') }}</th>
 		<th>{{ _('Letzter Change') }}</th>
 	</tr>
 	</thead>
-	{% for item in p.shelly_items %}
+	{% for item in p.get_item_list() | sort(attribute='property.path') %}
 		<tr>
 			<td class="py-1">{{ item._path }}</td>
 			<td class="py-1">{{ item._type }}</td>
-			<td id="{{ item.id() }}_value" class="py-1">{{ item() }}</td>
-			<td class="py-1">{{ p.get_iattr_value(item.conf, 'shelly_type') }}</td>
+			{% if p.get_shelly_device_from_conf_id( p.get_iattr_value(item.conf, 'shelly_id') ) == {} %}
+				<td class="py-1">-</td>
+			{% else %}
+				<td id="{{ item.id() }}_value" class="py-1">{{ item() }}</td>
+			{% endif %}
+			{% if p.get_iattr_value(item.conf, 'shelly_type') == None or p.get_iattr_value(item.conf, 'shelly_type') == '' %}
+				<td class="py-1">{{ p.get_shelly_device_from_conf_id( p.get_iattr_value(item.conf, 'shelly_id') )['app'] }}</td>
+			{% else %}
+				<td class="py-1">({{ p.get_iattr_value(item.conf, 'shelly_type') }})</td>
+			{% endif %}
 			<td class="py-1">{{ p.get_iattr_value(item.conf, 'shelly_id') }}</td>
 
-			<td class="py-1">{% if p.shelly_relay %}{{ p.get_iattr_value(item.conf, 'shelly_relay') }}{% else %}0{% endif %}</td>
-			<td id="{{ item.id() }}_last_update" class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-			<td id="{{ item.id() }}_last_change" class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+<!--
+			<td class="py-1">{ % if p.shelly_relay % }{{ p.get_iattr_value(item.conf, 'shelly_relay') }}{ % else % }0{ % endif % }</td>
+-->
+			{% if p.get_shelly_device_from_conf_id( p.get_iattr_value(item.conf, 'shelly_id') ) == {} %}
+				<td colspan="2" class="py-1">{{ _('Kein passendes Shelly Device gefunden') }}</td>
+			{% else %}
+				<td id="{{ item.id() }}_last_update" class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+				<td id="{{ item.id() }}_last_change" class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+			{% endif %}
 		</tr>
 	{% endfor %}
 </table>
@@ -140,24 +156,36 @@
 	<thead>
 	<tr>
 		<th>{{ _('Shelly ID') }}</th>
+		<th>{{ _('API') }}</th>
+		<th>{{ _('Devicetype') }}</th>
 		<th>{{ _('Online') }}</th>
 		<th>{{ _('Mac Adresse') }}</th>
 		<th>{{ _('IP Adresse') }}</th>
 		<th>{{ _('Firmware Version') }}</th>
 		<th>{{ _('neue Firmware') }}</th>
-		<th>{{ _('konfiguriert') }}</th>
+		<th>{{ _('Item(s) konfiguriert') }}</th>
 	</tr>
 	</thead>
-	{% for device in p.shelly_devices %}
+	{% for device in p.shelly_devices | sort %}
 		<tr>
-			<td class="py-1"><a class="text-shng" href="http://{{ p.shelly_devices[device].ip }}" target="_blank">{{ device }}</a></td>
-			<td class="py-1">{{ p.shelly_devices[device].online }}</td>
+			{% if not p.shelly_devices[device].ip %}
+				<td class="py-1"><a class="text-shng" href="http://{{ device }}" target="_blank">{{ device }}</a></td>
+			{% else %}
+				<td class="py-1"><a class="text-shng" href="http://{{ p.shelly_devices[device].ip }}" target="_blank">{{ device }} </a></td>
+			{% endif %}
+			{% if not p.shelly_devices[device].gen %}
+				<td class="py-1">?</td>
+			{% else %}
+				<td class="py-1">Gen{{ p.shelly_devices[device].gen }}</td>
+			{% endif %}
+			<td class="py-1">{{ p.shelly_devices[device].app }}</td>
+			<td class="py-1">{{ p.ja_nein(p.shelly_devices[device].online) }}</td>
 			<td class="py-1">{{ p.shelly_devices[device].mac }}</td>
 			<td class="py-1">{{ p.shelly_devices[device].ip }}</td>
 			<td class="py-1">{{ p.shelly_devices[device].fw_ver }}</td>
-			<td class="py-1">{{ p.shelly_devices[device].new_fw }}</td>
+			<td class="py-1">{{ p.ja_nein( p.shelly_devices[device].new_fw ) }}</td>
 
-			<td class="py-1">{{ p.shelly_devices[device].connected_to_item }}</td>
+			<td class="py-1">{{ p.ja_nein( p.shelly_devices[device].connected_to_item ) }}</td>
 		</tr>
 	{% endfor %}
 </table>

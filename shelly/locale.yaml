@@ -1,16 +1,19 @@
 # translations for the web interface
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'Relais':             {'de': '=', 'en': 'Relay'}
-    'Mac Adresse':        {'de': '=', 'en': 'Mac Address'}
-    'IP Adresse':         {'de': '=', 'en': 'IP Address'}
-    'Firmware Version':   {'de': '=', 'en': '='}
-    'neue Firmware':      {'de': 'neue FW verfügbar', 'en': 'new FW available'}
-    'konfiguriert':       {'de': '=', 'en': 'configured'}
-    'Message Durchsatz':  {'de': '=', 'en': 'Message throughput'}
-    'letzte Minute':      {'de': '=', 'en': 'last minute'}
-    'letzte 5 Min.':      {'de': '=', 'en': 'last 5 min'}
-    'letzte 15 Min.':     {'de': '=', 'en': 'last 15 min'}
+    'Relais':                  {'de': '=', 'en': 'Relay'}
+    'Mac Adresse':             {'de': '=', 'en': 'Mac Address'}
+    'IP Adresse':              {'de': '=', 'en': 'IP Address'}
+    'Firmware Version':        {'de': '=', 'en': '='}
+    'neue Firmware':           {'de': 'neue FW verfügbar', 'en': 'new FW available'}
+    'konfiguriert':            {'de': '=', 'en': 'configured'}
+    'Message Durchsatz':       {'de': '=', 'en': 'Message throughput'}
+    'letzte Minute':           {'de': '=', 'en': 'last minute'}
+    'letzte 5 Min.':           {'de': '=', 'en': 'last 5 min'}
+    'letzte 15 Min.':          {'de': '=', 'en': 'last 15 min'}
+
+    'Unbehandelter Status':    {'de': '=', 'en': 'Unhandled status'}
+    'Unbehandelter Substatus': {'de': '=', 'en': 'Unhandled sub-status'}
 
     # Alternative format for translations of longer texts:
     'Durchschnittlich Messages je Minute empfangen':

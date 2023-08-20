@@ -18,7 +18,10 @@ die Dokumentation des jeweiligen Devices zu Rate ziehen.
 
 |
 
-Zurzeit werden folgende Shelly Devices mit Gen1 API unterstützt:
+Konfiguration
+=============
+
+Zurzeit werden folgende Shelly Devices mit Gen1 API im **Backward-Compatibility Mode** unterstützt:
 
 - Shelly1/pm
 - Shelly2
@@ -29,6 +32,9 @@ Zurzeit werden folgende Shelly Devices mit Gen1 API unterstützt:
 - Shelly H&T
 - Shelly Flood
 - Shelly Door/Window 2
+
+Diese Devices werden konfiguriert, wie es bis zur Version 1.2.0 des shally Plugins üblich war.
+
 
 Es werden alle Relays eines Shelly Devices (bis zu 4) unterstützt. Weiterhin werden die folgenden
 Attribute/Parameter der Devices unterstützt, soweit die Devices selbst diese unterstützen:
@@ -54,6 +60,12 @@ sowie der online-Status.
     Das Plugin kommuniziert über MQTT und benötigt das mqtt Modul, welches die Kommunikation mit dem MQTT Broker
     durchführt. Dieses Modul muß geladen und konfiguriert sein, damit das Plugin funktioniert.
 
+Allgemeine Informationen zur Konfiguration und die vollständige Beschreibung der Item-Attribute sind
+unter :doc:`/plugins_doc/config/shelly` zu finden.
+
+Weitergehende Informationen zur Konfiguration dieses Plugins sind unter
+:doc:`/plugins/shelly/user_doc/plugin_configuration` zu finden.
+
 |
 
 .. toctree::
@@ -61,42 +73,6 @@ sowie der online-Status.
 
   user_doc/device_installation.rst
   user_doc/plugin_configuration.rst
-
-
-Konfiguration des Plugins
-=========================
-
-Item structs
-------------
-
-Zur Vereinfachung der Einrichtung von Items sind für folgende Shelly Devices Item-structs vordefiniert:
-
-- shellyplug
-- shellyplug_s
-- shellyht
-- shellyflood
-
-Unter Verwendung der entsprechenden Vorlage kann die Einrichtung einfach durch Angabe der shally_id des
-entsprechenden Devices erfolgen:
-
-.. code:: yaml
-
-    plug1:
-        name: Mein erster Shellyplug-S
-        type: bool
-        shelly_id: '040BD0'
-        struct: shelly.shellyplug_s
-
-
-Damit werden außer dem Schalter selbst, Unteritems für Online-Status, Leistung, Energieverbrauch und Temperatur
-des Devices (in °C und °F) angelegt.
-
-
-weitere Informationen
----------------------
-
-Informationen zur Konfiguration und die vollständige Beschreibung der Item-Attribute sind
-unter :doc:`/plugins_doc/config/shelly` zu finden.
 
 
 Web Interface
