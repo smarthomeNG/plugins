@@ -6,19 +6,19 @@
 2. [Credits](#credits)
 3. [Change Log](#changelog)<sup><span style="color:red"> **Neu**</sup></span>
 4. [Konfiguration](#konfiguration)<sup><span style="color:blue"> **Update**</sup></span>
-5. [Web-Interface](#webinterface)<sup><span style="color:blue"> **Update**</sup></span>
+5. [Web-Interface](#webinterface)
 6. [Logik-Trigger](#logiktrigger)
 7. [öffentlich Funktionen (API)](#api)
 8. [Gartenkarte "pimpen"](#gardenmap)
 9. [Nutzung der Original Bosch-Mäher-Symbole](#boschpics)
-10. [Die Bosch-Api 3.0 - behind the scenes](#boschapi)
+10. [Die Bosch-Api 4.0.1 - behind the scenes](#boschapi)
 
 ## Generell<a name="generell"/></a>
 
 Das Indego-Plugin wurde durch ein Reverse-Engineering der aktuellen (Version 3.0) App
 von Bosch entwickelt. Als Basis diente das ursprüngliche Plugin von Marcov. Es werden alle Funktionen der App für den Betrieb sowie einige zusätzliche bereitgestellt.
 Für die Ersteinrichtung wird weiterhin die Bosch-App benötigt.
-Das Plugin erhält die Version der aktuellen Bosch-API. (3.0)
+Das Plugin erhält die Version der aktuellen Bosch-API. (4.0.1)
 
 ## Credits<a name="credits"/></a>
 
@@ -33,6 +33,12 @@ Vielen Dank an Jan Odvarko für die Entwicklung des Color-Pickers (http://jscolo
 
 <a name="changelog"/></a>
 ## Change Log
+#### 2023-05-06 V4.0.1
+- Login via Single-Key-ID eingebaut
+- Endpoit der Bosch-API wurde geändert (siehe Konfiguration)
+
+#### 2023-03-08 V4.0.0
+- Login via Bosch-ID eingebaut
 
 #### 2023-02-05 V3.0.2
 - Anpassungen für die geänderten Daten für das Wetter (es werden nun 7 Tage statt 5 übermittelt, die Sonnenstunden je Tag wurden entfern)
@@ -120,6 +126,7 @@ zum "pimpen" der Gartenkarte verwenden
 * `indego_credentials : XXXXXXX`:  sind die Zugangsdaten für den Bosch-Server im Format base64 encoded.
 * `parent_item : indego`:  name des übergeordneten items für alle Child-Items
 * `cycle : 30`:  Intervall in Sekunden für das Abrufen des Mäher-Status (default = 30 Sekunden)
+* `url: https://api.indego-cloud.iot.bosch-si.com/api/v1/` : Url des Bosch-Endpoints
 
 Die Zugangsdaten (indego_credentials) können nach dem Erststart des Plugins im Web-Interface erfasst und gespeichert werden
 
@@ -136,7 +143,7 @@ Indego4shNG:
     indego_credentials:
     parent_item: indego
     cycle: '30'
-    url: https://api.indego.iot.bosch-si.com/api/v1/
+    url: https://api.indego-cloud.iot.bosch-si.com/api/v1/
 ```
 
 
@@ -361,18 +368,22 @@ Sobald die Dateien mit den Bildern vorhanden sind findet das Widget diese und ve
 Die entsprechenden Bilder für die "Großen"/"Kleinen" werden auf Grund des Mähertyps automatisch gewählt und dargestellt. 
 
 <a name="boschapi"/></a>
-## Die Bosch-Api 3.0 - behind the scenes
+## Die Bosch-Api 4.0.1 - behind the scenes
 
 Hier ist die Schnittstelle der Bosch-API kurz beschrieben und die Implementierung im Plugin dokumentiert.
 Der Header ist in den meisten Fällen mit der Session-ID zu füllen :
 ```
-headers = {
-           'x-im-context-id' : SESSION-ID
-          }
+headers = {'accept' : '*/*',
+                   'authorization' : 'Bearer '+ self._bearer,
+                   'connection' : 'Keep-Alive',
+                   'host'  : 'api.indego-cloud.iot.bosch-si.com',
+                   'user-agent' : 'Indego-Connect_4.0.0.12253',
+                   'content-type' : 'application/json'
+           }
 ```
-@Get - steht für einen get-request in Python. Die URL lautet : "https://api.indego.iot.bosch-si.com/api/v1/" gefolgt vom entsprechenden Zugriffspunkt
+@Get - steht für einen get-request in Python. Die URL lautet : "https://api.indego-cloud.iot.bosch-si.com/api/v1/" gefolgt vom entsprechenden Zugriffspunkt
 ```
-url = "https://api.indego.iot.bosch-si.com/api/v1/" +"alms/{}/automaticUpdate".format(alm_sn) 
+url = "https://api.indego-cloud.iot.bosch-si.com/api/v1/" +"alms/{}/automaticUpdate".format(alm_sn) 
 response = requests.get(url, headers=headers)
 ```
 
