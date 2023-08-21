@@ -308,7 +308,6 @@ class SeState(StateEngineTools.SeItemChild):
                     used_attributes[item].update({type: name})
                     used_attributes[item].update(nested_dict)
                     self.__used_attributes.update(used_attributes)
-            #self._log_develop("Unused attributes of action '{0}': {1}. Used: {2}. Return used: {3}", name, self.__unused_attributes, self.__used_attributes, used_attributes)
 
         def update_action_status(action_status, actiontype):
             for item, dict in action_status.items():
@@ -316,7 +315,7 @@ class SeState(StateEngineTools.SeItemChild):
                     self.__action_status.update({item: dict})
             for item in self.__action_status.keys():
                 #if item in _used_attributes.keys():
-                if 'issue' in self.__action_status[item].keys():
+                if 'issue' in self.__action_status[item].keys() and 'issue' is not None:
                     origin_list = copy(self.__action_status[item].get('issueorigin'))
                     if not origin_list:
                         self.__action_status[item].update({'issueorigin': []})
@@ -332,7 +331,16 @@ class SeState(StateEngineTools.SeItemChild):
 
                     new_list.extend(origin_list)
                     self.__action_status[item].update({'issueorigin': new_list})
-            self._log_develop("Updated action status: {}", self.__action_status)
+            filtered_dict = {}
+            for key, nested_dict in self.__action_status.items():
+                filtered_dict.update({key: {}})
+                filtered_dict[key].update({'used in': actiontype})
+                filtered_dict[key].update(nested_dict)
+                #self._log_develop("Add {} to used {}", key, filtered_dict)
+            self.__used_attributes = copy(filtered_dict)
+            filtered_dict = {key: value for key, value in self.__action_status.items() if value.get('issue') is not None}
+            self.__action_status = filtered_dict
+            #self._log_develop("Updated action status: {}, updated used {}", self.__action_status, self.__used_attributes)
 
         if recursion_depth > 5:
             self._log_error("{0}/{1}: too many levels of 'use'", self.id, item_state.property.path)
@@ -474,6 +482,7 @@ class SeState(StateEngineTools.SeItemChild):
             if _action_status:
                 update_action_status(_action_status, 'leave')
             self._abitem.update_action_status(self.__action_status)
+            self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
         _summary = "{} on_enter, {} on_stay , {} on_enter_or_stay, {} on_leave"
         if se_use is not None:
             self._log_debug("Added {} action(s) based on se_use {}. " + _summary, _total_actioncount, se_use,

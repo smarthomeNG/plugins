@@ -445,7 +445,7 @@ class SeActionSetItem(SeActionBase):
     # Complete action
     # item_state: state item to read from
     def complete(self, item_state, evals_items=None):
-        _issue = {self._name: {'issue': None, 'issueorigin': [{'state': item_state.property.path, 'action': 'set'}]}}
+        _issue = {self._name: {'issue': None, 'issueorigin': [{'state': item_state.property.path, 'action': 'set initital'}]}}
         try:
             _name = evals_items.get(self.name)
             if _name is not None:
@@ -455,7 +455,7 @@ class SeActionSetItem(SeActionBase):
                 _item = _item if _item is not None and _item != "None" else None
                 _eval = _eval if _eval is not None and _eval != "None" else None
                 self.__item = _selfitem or self._abitem.return_item(_item)[0] or _eval
-                _issue = {self._name: {'issue': self._abitem.return_item(_item)[1], 'issueorigin': [{'state': item_state.property.path, 'action': 'set'}]}}
+                _issue = {self._name: {'issue': self._abitem.return_item(_item)[1], 'issueorigin': [{'state': item_state.property.path, 'action': 'set (first try to get item)'}]}}
         except Exception as ex:
             self._log_error("No valid item info for action {}, trying to get differently. Problem: {}", self.name, ex)
         # missing item in action: Try to find it.
@@ -470,7 +470,7 @@ class SeActionSetItem(SeActionBase):
                 if item is not None:
                     self.__item = str(item)
 
-        if self.__item is None and _issue is None:
+        if self.__item is None and _issue[self._name].get('issue') is None:
             _issue = {self._name: {'issue': 'Item not defined in rules section', 'issueorigin': [{'state': item_state.property.path, 'action': 'set'}]}}
         # missing status in action: Try to find it.
         if self.__status is None:
@@ -826,7 +826,7 @@ class SeActionForceItem(SeActionBase):
     # Complete action
     # item_state: state item to read from
     def complete(self, item_state, evals_items=None):
-        _issue = None
+        _issue = {self._name: {'issue': None, 'issueorigin': [{'state': item_state.property.path, 'action': 'force initital'}]}}
         # missing item in action: Try to find it.
         if self.__item is None:
             item = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self._name)
@@ -850,7 +850,7 @@ class SeActionForceItem(SeActionBase):
             if mindelta is not None:
                 self.__mindelta.set(mindelta)
 
-        if self.__item is None and _issue is None:
+        if self.__item is None and _issue[self._name].get('issue') is None:
             _issue = {self._name: {'issue': 'Item not found', 'issueorigin': [{'state': item_state.property.path, 'action': 'force'}]}}
         if self.__status is not None:
             self.__value.set_cast(self.__status.cast)
@@ -867,7 +867,9 @@ class SeActionForceItem(SeActionBase):
                 self._scheduler_name = "{}-SeItemDelayTimer".format(self.__item.property.path)
                 if self._abitem.id == self.__item.property.path:
                     self._caller += '_self'
-        self.__action_status = _issue
+        if _issue[self._name].get('issue') is not None:
+            self.__action_status = _issue
+            self._log_develop("Issue with force action {}", _issue)
         return _issue
 
     # Write action to logger
@@ -905,7 +907,7 @@ class SeActionForceItem(SeActionBase):
 
     def _getitem_fromeval(self):
         if isinstance(self.__item, str):
-            _issue = None
+            _issue = {self._name: {'issue': None, 'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
             if "stateengine_eval" in self.__item or "se_eval" in self.__item:
                 # noinspection PyUnusedLocal
                 stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
@@ -1068,7 +1070,7 @@ class SeActionSpecial(SeActionBase):
         self._log_debug("Special action {0}: done", self.__special)
 
     def suspend_get_value(self, value):
-        _issue = None
+        _issue = {self._name: {'issue': None, 'issueorigin': [{'state': 'suspend', 'action': 'suspend initital'}]}}
         if value is None:
             _issue = {self._name: {'issue': 'Special action suspend requires arguments', 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
             self.__action_status = _issue

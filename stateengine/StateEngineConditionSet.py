@@ -146,6 +146,8 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                     continue
             except ValueError as ex:
                 self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
+                self._abitem.update_state_issues({item_state.property.path: {'issue': ex, 'issueorigin':
+                    [{'conditionset': self.name, 'condition': name}]}})
                 text = "State '{0}', Condition Set '{1}', Condition '{2}' Error: {3}"
                 raise ValueError(text.format(item_state.property.path, self.name, name, ex))
 
