@@ -424,7 +424,8 @@ class SmartVisu(SmartPlugin):
             dirname = self.read_from_sv_configini('pages')
             result = (dirname != '')
         else:
-            self.logger.warning(f"Could not determine version of smartVISU in configured directory {self.smartvisu_dir}")
+            if self.smartvisu_dir:
+                self.logger.warning(f"Could not determine version of smartVISU in configured directory {self.smartvisu_dir}")
             result = False
 
         return result
