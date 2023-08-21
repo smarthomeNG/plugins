@@ -793,6 +793,7 @@ class SeItem:
         else:
             to_check = self.__unused_attributes.items()
             warn = ', '.join(key for key in self.__unused_attributes.keys())
+        self.__logger.info("")
         self.__logger.warning("There are {} issues: {} Please check extended "
                               "log file for details.", issue_type, warn)
         self.__logger.info("")
@@ -808,7 +809,8 @@ class SeItem:
                     self.__logger.info("Attribute {} has an issue: {}", entry, value.get('issue'))
                     continue
                 else:
-                    self.__logger.info("Definition {} used in", entry)
+                    additional = " used in" if origin_list else ""
+                    self.__logger.info("Definition {}{}", entry, additional)
                 self.__logger.increase_indent()
                 for origin in origin_list:
                     if issue_type == 'actions':
