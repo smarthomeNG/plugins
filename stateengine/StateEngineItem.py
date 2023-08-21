@@ -781,17 +781,23 @@ class SeItem:
         '''
 
     def __log_issues(self, issue_type):
-        self.__logger.info("")
-        self.__logger.warning("The following {} have issues:", issue_type)
-        self.__logger.increase_indent()
         if issue_type == 'actions':
             to_check = self.__action_status.items()
+            warn = ', '.join(key for key in self.__action_status.keys())
         elif issue_type == 'states':
             to_check = self.__state_issues.items()
+            warn = ', '.join(key for key in self.__state_issues.keys())
         elif issue_type == 'config entries':
             to_check = self.__config_issues.items()
+            warn = ', '.join(key for key in self.__config_issues.keys())
         else:
             to_check = self.__unused_attributes.items()
+            warn = ', '.join(key for key in self.__unused_attributes.keys())
+        self.__logger.warning("There are {} issues: {} Please check extended "
+                              "log file for details.", issue_type, warn)
+        self.__logger.info("")
+        self.__logger.info("The following {} have issues:", issue_type)
+        self.__logger.increase_indent()
         for entry, value in to_check:
             if 'issue' in value:
                 origin_text = ''
