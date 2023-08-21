@@ -737,10 +737,12 @@ item_structs:
         settings:
             log_level:
               type: num
+              cache: True
               initial_value: -1
 
             instant_leaveaction:
-              type: bool 
+              type: bool
+              cache: True
               initial_value: False
 
             settings_edited:
