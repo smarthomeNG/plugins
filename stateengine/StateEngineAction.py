@@ -249,15 +249,18 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._log_info("Action '{0}': Preparing", self._name)
         if not self._can_execute(state):
             return
-        current_condition_met, conditions_met, condition_necessary = _check_condition('conditionset')
-        conditions_met += conditions_met
-        condition_necessary += condition_necessary
-        previous_condition_met, conditions_met, condition_necessary = _check_condition('previousconditionset')
-        conditions_met += conditions_met
-        condition_necessary += condition_necessary
-        previousstate_condition_met, conditions_met, condition_necessary = _check_condition('previousstate_conditionset')
-        conditions_met += conditions_met
-        condition_necessary += condition_necessary
+        conditions_met = 0
+        condition_necessary = 0
+        current_condition_met, cur_conditions_met, cur_condition_necessary = _check_condition('conditionset')
+        conditions_met += cur_conditions_met
+        condition_necessary += cur_condition_necessary
+        previous_condition_met, prev_conditions_met, prev_condition_necessary = _check_condition('previousconditionset')
+        conditions_met += prev_conditions_met
+        condition_necessary += prev_condition_necessary
+        previousstate_condition_met, prevst_conditions_met, prevst_condition_necessary = _check_condition('previousstate_conditionset')
+        conditions_met += prevst_conditions_met
+        condition_necessary += prevst_condition_necessary
+        self._log_develop("Action '{0}': conditions met: {1}, necessary {2}.", self._name, conditions_met, condition_necessary)
         if conditions_met < condition_necessary:
             self._log_info("Action '{0}': Skipping because not all conditions are met.", self._name)
             return
