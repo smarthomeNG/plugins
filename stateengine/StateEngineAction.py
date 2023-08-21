@@ -1115,7 +1115,7 @@ class SeActionSpecial(SeActionBase):
 
     def suspend_execute(self, state=None, current_condition=None, previous_condition=None, previousstate_condition=None):
         suspend_item, _issue = self._abitem.return_item(self.__value[0])
-        _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': state.property.path, 'action': 'suspend'}]}}
+        _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': state.id, 'action': 'suspend'}]}}
         source = "SuspendAction, {}".format(self.set_source(current_condition, previous_condition, previousstate_condition))
         if self._abitem.get_update_trigger_source() == self.__value[1]:
             # triggered by manual-item: Update suspend item
