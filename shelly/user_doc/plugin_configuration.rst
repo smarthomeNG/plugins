@@ -73,9 +73,9 @@ unterstützt. Getestet wurde es allerdings bisher nur mit folgenden Gen1 Devices
 Unterschiede zwischen Plugin Modi
 ---------------------------------
 
-Das Attribut ``online`` wird durch das Plugin im Modus für Gen2 Devices nicht mehr unterstützt. Das Attribut ist auf
-den verschiedenen Shelly Devices zu unterschiedlich implementiert, als das es sinnvoll genutzt werden könnte. Einige
-batterie betriebene Devices melden ``online``=False bevor sie sich schlafen legen, andere lassen den Status
+Das Attribut ``online`` wird durch das Plugin im Modus für Gen2 Devices nicht durchgehend unterstützt. Das Attribut ist
+auf den verschiedenen Shelly Devices zu unterschiedlich implementiert, als das es sinnvoll genutzt werden könnte.
+Einige batterie betriebene Devices melden ``online``=False bevor sie sich schlafen legen, andere lassen den Status
 auf True. Andere Decives hingegen haben den ``online`` Status gar nicht implementiert.
 
 Im **Backward-Compatibility Mode** für Gen1 Devices steht das ``online`` Attribut (falls es im Plugin

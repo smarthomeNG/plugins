@@ -12,7 +12,7 @@ plugin:
 #    documentation: http://smarthomeng.de/user/plugins/mqtt2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1451853-support-thread-für-das-shelly-plugin
 
-    version: 1.5.5                 # Plugin version
+    version: 1.5.6                 # Plugin version
     sh_minversion: 1.9.5.5         # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -198,7 +198,7 @@ item_structs:
     shellydw2:
         name: WLAN Tür und Fenster Sensor, mit Temperaturmessung
         type: str
-        shelly_type: shellydw2
+        shelly_group: sensor
         shelly_attr: state
 
         open:
@@ -208,42 +208,54 @@ item_structs:
         tilt:
             type: num
             shelly_id: ..:.
-            shelly_type: ..:.
+            shelly_group: sensor
             shelly_attr: tilt
         vibration:
             type: num
             shelly_id: ..:.
-            shelly_type: ..:.
+            shelly_group: sensor
             shelly_attr: vibration
         lux:
             type: num
             shelly_id: ..:.
-            shelly_type: ..:.
+            shelly_group: sensor
             shelly_attr: lux
         illumination:
             type: str
             shelly_id: ..:.
-            shelly_type: ..:.
+            shelly_group: sensor
             shelly_attr: illumination
         temp:
             type: num
             shelly_id: ..:.
-            shelly_type: ..:.
             shelly_attr: temp
-        online:
-            type: bool
+        temp_f:
+            type: num
             shelly_id: ..:.
-            shelly_type: ..:.
-            shelly_attr: online
+            shelly_attr: temp_f
         battery:
             type: num
             shelly_id: ..:.
-            shelly_type: ..:.
+            shelly_group: sensor
             shelly_attr: battery
+        voltage:
+            type: num
+            shelly_id: ..:.
+            shelly_group: sensor
+            shelly_attr: voltage
+        online:
+            type: bool
+            shelly_id: ..:.
+            shelly_attr: online
+        act_reasons:
+            type: list
+            shelly_id: ..:.
+            shelly_group: sensor
+            shelly_attr: act_reasons
         error:
             type: num
             shelly_id: ..:.
-            shelly_type: ..:.
+            shelly_group: sensor
             shelly_attr: error
 
     shellyflood:

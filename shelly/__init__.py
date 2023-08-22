@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.5.5'
+    PLUGIN_VERSION = '1.5.6'
 
 
     def __init__(self, sh):
@@ -335,27 +335,47 @@ class Shelly(MqttPlugin):
                 self.logger.notice(f"Device with id {shelly_id} was not discovered yet (for {item.id()}")
 
 
-    def get_shelly_device_from_conf_id(self, conf_id):
-        """
-        Get the shelly device data for a device specified by the configuration shelly_id from items.yaml
+    # ----------------------------------------------------------------------------------------------
+    #  Support messages for Gen1 and Gen2 devices
+    # ----------------------------------------------------------------------------------------------
 
-        :param conf_id:
+    def get_shelly_device_from_item(self, item):
+        """
+        Get the shelly device data for a device specified by an item object
+
+        :param item:
         :return:
         """
-        conf_id = conf_id.lower()
-        for shelly_id in list(self.shelly_devices.keys()):
-            if self.shelly_devices[shelly_id].get('mac', '-').endswith(conf_id):
-                return self.shelly_devices[shelly_id]
-            # if self.shelly_devices[shelly_id]['gen'] == '1':
-            #     if self.shelly_devices[shelly_id]['mac'].endswith(conf_id):
-            #         return self.shelly_devices[shelly_id]
-            # elif self.shelly_devices[shelly_id]['gen'] == '2':
-            #     if self.shelly_devices[shelly_id]['mac'] == conf_id:
-            #         return self.shelly_devices[shelly_id]
+
+        config_data = self.get_item_config(item)
+        shelly_id = config_data.get('shelly_id', None)
+        if shelly_id is not None:
+            return self.shelly_devices[shelly_id]
         return {}
 
 
+    # def get_shelly_device_from_conf_id(self, conf_id):
+    #     """
+    #     Get the shelly device data for a device specified by the configuration shelly_id from items.yaml
+    #
+    #     :param conf_id:
+    #     :return:
+    #     """
+    #
+    #     conf_id = conf_id.lower()
+    #     for shelly_id in list(self.shelly_devices.keys()):
+    #         if self.shelly_devices[shelly_id].get('mac', '-').endswith(conf_id):
+    #             return self.shelly_devices[shelly_id]
+    #     return {}
+
+
     def isolate_version(self, version_str: str) -> str:
+        """
+        Isolate the version number from a string that conains version-, date- and build-information
+
+        :param version_str: String to isolagte the version from
+        :return: Version number (in the form of v1.2.3)
+        """
         try:
             wrk = version_str.split('/')[1]
             if wrk.find('@') >= 0:
@@ -370,6 +390,87 @@ class Shelly(MqttPlugin):
             fw_ver = version_str
         return fw_ver
 
+
+    def get_shng_typeinfo(self, value) -> str:
+
+        if value is None:
+            typ = "'None' (" + self.translate("Empfangener Wert ist 'null'") + ")"
+        else:
+            typ = str(type(value)).split(chr(39))[1]
+            if typ in ['float', 'int']:
+                typ = f"'num' ({typ})"
+            else:
+                typ = f"'{typ}'"
+        return typ
+
+
+    def update_items_with_mapping(self, shelly_id: str, source: str, value, item_mapping: str):
+
+        gen = self.shelly_devices[shelly_id]['gen']
+        items = self.get_items_for_mapping(item_mapping)
+        for item in items:
+            # Update all items with the same mapping
+            if gen == '2' or (item.conf.get('shelly_type', None) is None or item.conf['shelly_type'] == ''):
+                self.logger.dbghigh(f"update_items_from_status: Gen{gen} '{item.id()}', value={value}")
+                if source:
+                    source = self.shelly_devices[shelly_id]['app'] + ':' + source
+                else:
+                    source = self.shelly_devices[shelly_id]['app']
+                item(value, self.get_shortname(), source)
+        return
+
+
+    logged_attrs = []
+
+    def list_attribute(self, shelly_id, group, attr, typ):
+
+        # List attributes which are sent by a device, if configuration requests it
+        if not shelly_id + '-' + group + '-' + attr in self.logged_attrs:
+            #typ = self.get_shng_typeinfo(value)
+            msg = f"list_attrs '{self.shelly_devices[shelly_id]['conf_id']}' ({self.shelly_devices[shelly_id]['app']}): "
+            if group == '':
+                self.logger.info(msg + f"shelly_attr='{attr}' type={typ}")
+            else:
+                self.logger.info(msg + f"shelly_attr='{attr}' shelly_group='{group}' type={typ}")
+            self.logged_attrs.append(shelly_id + '-' + group + '-' + attr)
+
+
+    def update_items_from_status(self, shelly_id, group, attr, value, source=None):
+
+        if group == '':
+            mapping = '-global-' + attr
+        else:
+            mapping = '-' + group + '-' + attr
+
+        if self.shelly_devices[shelly_id]['gen'] == '1':
+            # get the given part of the mac address (complete mac address is not given in config for Gen1 devices)
+            parts = shelly_id.split('-')
+            item_mapping = parts[-1:][0].lower() + mapping
+        elif self.shelly_devices[shelly_id]['gen'] == '2':
+            item_mapping = self.shelly_devices[shelly_id]['mac'] + mapping
+        else:
+            self.logger.error(f"update_items_from_status: Unknown API version for {shelly_id}")
+            return
+
+        if self.shelly_devices[shelly_id]['list_attrs']:
+            # List attributes which are sent by a device, if configuration requests it
+            typ = self.get_shng_typeinfo(value)
+            self.list_attribute(shelly_id, group, attr, typ)
+            # if not shelly_id + '-' + group + '-' + attr in self.logged_attrs:
+            #     typ = self.get_shng_typeinfo(value)
+            #     msg = f"list_attrs '{self.shelly_devices[shelly_id]['conf_id']}' ({self.shelly_devices[shelly_id]['app']}): "
+            #     if group == '':
+            #         self.logger.info(msg + f"shelly_attr='{attr}' type={typ}")
+            #     else:
+            #         self.logger.info(msg + f"shelly_attr='{attr}' shelly_group='{group}' type={typ}")
+            #     self.logged_attrs.append(shelly_id + '-' + group + '-' + attr)
+
+        self.update_items_with_mapping(shelly_id, source, value, item_mapping)
+
+
+    # ----------------------------------------------------------------------------------------------
+    #  Callback functions for subscriptions through the paho client
+    # ----------------------------------------------------------------------------------------------
 
     def on_mqtt_announce(self, topic, payload, qos=None, retain=None):
         """
@@ -456,6 +557,7 @@ class Shelly(MqttPlugin):
                 self.shelly_devices[shelly_id]['conf_id'] = config_data['shelly_conf_id']
                 if config_data['shelly_list_attrs']:
                     self.shelly_devices[shelly_id]['list_attrs'] = config_data['shelly_list_attrs']
+            self.update_items_from_status(shelly_id, '', 'online', config_data.get('online', True))
 
         except Exception as e:
             self.logger.exception(f"{inspect.stack()[0][3]}: Exception {e.__class__.__name__}: {e}\n- mqtt-topic={topic}\n- mqtt-payload={payload}")
@@ -473,15 +575,13 @@ class Shelly(MqttPlugin):
         :param retain:
         """
         try:
+            self.logger.dbglow(f"on_mqtt_online: topic {topic} = {payload}, qos={qos}, retain={retain}")
+
             topic_split =  topic.split('/')
             if topic_split[1] == 'gen2':
                 shelly_id = topic.split('/')[2]
             else:
                 shelly_id = topic.split('/')[1]
-
-            if retain == 1:
-                self.logger.dbghigh(f"on_mqtt_online: topic {topic} = {payload}, qos={qos} ignored because retain-flag was set -> shelly_id={shelly_id}")
-                return
 
             if not self.shelly_devices.get(shelly_id, None):
                 self.shelly_devices[shelly_id] = {}
@@ -493,76 +593,18 @@ class Shelly(MqttPlugin):
 
             self.logger.dbghigh(f"on_mqtt_online: topic {topic} = {payload}, qos={qos} -> shelly_id={shelly_id}")
             self.shelly_devices[shelly_id]['online'] = payload
+            if self.shelly_devices[shelly_id].get('mac)', None) is not None:
+                self.update_items_from_status(shelly_id, '', 'online', payload)
 
         except Exception as e:
             self.logger.exception(f"{inspect.stack()[0][3]}: Exception {e.__class__.__name__}: {e}\n- mqtt-topic={topic}\n- mqtt-payload={payload}")
 
         return
 
-    # ----------------------------- Handling for Gen2 API -----------------------------
 
-    def handle_gen2_event(self, shelly_id: str, event: dict):
-        """
-        Handle event information received from a Shelly device with Gen2 API
-
-        :param shelly_id: Id of the shelly device
-        :param event: Event information
-
-        :return:
-        """
-        #if shelly_devices.get('shelly_id')
-        self.logger.notice(f"handle_gen2_event: NO action {shelly_id} event={event}")
-
-    logged_attrs = []
-
-    def update_items_from_status(self, shelly_id, group, attr, value, source=None):
-
-        if group == '':
-            mapping = '-global-' + attr
-        else:
-            mapping = '-' + group + '-' + attr
-
-        if self.shelly_devices[shelly_id]['gen'] == '1':
-            # get the given part of the mac address (complete mac address is not given in config for Gen1 devices)
-            parts = shelly_id.split('-')
-            item_mapping = parts[-1:][0].lower() + mapping
-        elif self.shelly_devices[shelly_id]['gen'] == '2':
-            item_mapping = self.shelly_devices[shelly_id]['mac'] + mapping
-        else:
-            self.logger.error(f"update_items_from_status: Unknown API version for {shelly_id}")
-            return
-
-        if self.shelly_devices[shelly_id]['list_attrs']:
-            # List attributes which are sent by a device, if configuration requests it
-            if not shelly_id+'-'+group+'-'+attr in self.logged_attrs:
-                if value is None:
-                    typ = "'None' (" + self.translate("Empfangener Wert ist 'null'") + ")"
-                else:
-                    typ = str(type(value)).split(chr(39))[1]
-                    if typ in ['float', 'int']:
-                        typ = f"'num' ({typ})"
-                    else:
-                        typ = f"'{typ}'"
-
-                msg = f"list_attrs '{self.shelly_devices[shelly_id]['conf_id']}' ({self.shelly_devices[shelly_id]['app']}): "
-                if group == '':
-                    self.logger.info(msg + f"shelly_attr='{attr}' type={typ}")
-                else:
-                    self.logger.info(msg + f"shelly_attr='{attr}' shelly_group='{group}' type={typ}")
-                self.logged_attrs.append(shelly_id+'-'+group+'-'+attr)
-
-        gen = self.shelly_devices[shelly_id]['gen']
-        items = self.get_items_for_mapping(item_mapping)
-        for item in items:
-            # Update all items with the same mapping
-            if gen == '2' or (item.conf.get('shelly_type', None) is None or item.conf['shelly_type'] == ''):
-                self.logger.dbghigh(f"update_items_from_status: Gen{gen} '{item.id()}', value={value}")
-                if source:
-                    source = self.shelly_devices[shelly_id]['app'] + ':' + source
-                else:
-                    source = self.shelly_devices[shelly_id]['app']
-                item(value, self.get_shortname(), source)
-
+    # ----------------------------------------------------------------------------------------------
+    #  Handling for Gen2 API
+    # ----------------------------------------------------------------------------------------------
 
     def handle_gen2_device_status(self, shelly_id, group, status):
         """
@@ -747,6 +789,33 @@ class Shelly(MqttPlugin):
                 self.log_unhandled_status(shelly_id, group, sub_status, params=params, group=group, position='*g2s1')
 
 
+    def handle_gen2_events(self, shelly_id: str, params: dict):
+        """
+        Handle status information received from a Shelly device with Gen2 API
+
+        :param shelly_id: Id of the shelly device
+        :param event: Event information
+
+        :return:
+        """
+        self.logger.dbglow(f"handle_gen2_events: {shelly_id} params={params}")
+        for param in params.keys():
+            if param == 'ts':
+                pass
+            elif param == 'events':
+                events = params['events']
+                for event in events:
+                    if event.get('component', '') == 'sys' and event.get('event', '') == 'sleep':
+                        self.shelly_devices[shelly_id]['online'] = False
+                        self.update_items_from_status(shelly_id, '', 'online', False)
+                        self.logger.dbghigh(f"handle_gen2_events: Handled 'sleep' event for {shelly_id}")
+                    else:
+                        self.logger.info("handle_gen2_events: " + self.translate("Unbehandeltes Event") + f" '{event}'  -  from {shelly_id}")
+
+            else:
+                self.logger.info("handle_gen2_events: " + self.translate("Unbehandelte Event Nachricht") + f" param '{param}'= {params[param]}  ---  from {shelly_id}")
+
+
     def on_mqtt_gen2_events(self, topic, payload, qos=None, retain=None):
         """
         Callback function to handle received messages
@@ -765,12 +834,12 @@ class Shelly(MqttPlugin):
             if shelly_id is None:
                 self.logger.notice(f"on_mqtt_gen2_events: Message without shelly_id in the payload - {topic}, {payload}")
                 return
-            if self.shelly_devices.get(shelly_id) is None:
-                self.logger.notice(f"on_mqtt_gen2_events: From undiscovered device - {topic}, {payload}")
+            if self.shelly_devices.get(shelly_id, {}).get('mac', None) is None:
+                self.logger.dbgmed(f"on_mqtt_gen2_events: From undiscovered device - {topic}, {payload}")
                 self.publish_topic('shellies/command', 'announce')
                 return
             if self.shelly_devices[shelly_id].get('mac', None) is None:
-                self.logger.dbgmed(f"on_mqtt_gen2_events: Message before discovery of '{shelly_id}' ignored - {topic}, {payload}")
+                self.logger.dbghigh(f"on_mqtt_gen2_events: Message before discovery of '{shelly_id}' ignored - {topic}, {payload}")
                 return
 
             self.shelly_devices[shelly_id]['last_contact'] = self.shtime.now().strftime('%Y-%m-%d %H:%M')
@@ -781,7 +850,7 @@ class Shelly(MqttPlugin):
                 self.logger.dbghigh(f"on_mqtt_gen2_events: {topic} payload={payload} -> shelly_id={shelly_id}")
                 if payload['method'] == 'NotifyEvent':
                     if payload.get('params', None) is not None:
-                        self.handle_gen2_event(shelly_id, payload['params'])
+                        self.handle_gen2_events(shelly_id, payload['params'])
                     else:
                         self.logger.notice(f"on_mqtt_gen2_events: Unexpected NotifyEvent: topic {topic} payload={payload}")
                 elif payload['method'] in ['NotifyStatus', 'NotifyFullStatus']:   # NotifyFullStatus is used by Shelly PlusHT
