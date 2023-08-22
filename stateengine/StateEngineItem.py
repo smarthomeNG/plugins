@@ -93,6 +93,14 @@ class SeItem:
         return self.__instant_leaveaction
 
     @property
+    def default_instant_leaveaction(self):
+        return self.__default_instant_leaveaction.get()
+
+    @default_instant_leaveaction.setter
+    def default_instant_leaveaction(self, value):
+        self.__default_instant_leaveaction = value
+
+    @property
     def laststate(self):
         _returnvalue = None if self.__laststate_item_id is None else self.__laststate_item_id.property.value
         return _returnvalue
@@ -166,6 +174,8 @@ class SeItem:
         self.__se_plugin = se_plugin
         self.__active_schedulers = []
         self.__all_releasedby = {}
+        self.__default_instant_leaveaction = StateEngineValue.SeValue(self, "Default Instant Leave Action", False,
+                                                                      "bool")
         #self.__all_torelease = {}
         try:
             self.__id = self.__item.property.path
@@ -205,6 +215,9 @@ class SeItem:
         if _startup_log_level > 0:
             base = self.__sh.get_basedir()
             SeLogger.manage_logdirectory(base, SeLogger.log_directory, True)
+        self.__log_level = _log_level
+        self.__instant_leaveaction = StateEngineValue.SeValue(self, "Instant Leave Action", False, "num")
+
         # get startup delay
         self.__startup_delay = StateEngineValue.SeValue(self, "Startup Delay", False, "num")
         self.__startup_delay.set_from_attr(self.__item, "se_startup_delay", StateEngineDefaults.startup_delay)
@@ -280,9 +293,7 @@ class SeItem:
         self.__action_status = {}
         self.__state_issues = {}
         self.__webif_infos = OrderedDict()
-        self.__instant_leaveaction = StateEngineValue.SeValue(self, "Instant Leave Action", False, "bool")
-        self.__instant_leaveaction.set_from_attr(self.__item, "se_instant_leaveaction",
-                                                 StateEngineDefaults.instant_leaveaction)
+
         self.__repeat_actions = StateEngineValue.SeValue(self, "Repeat actions if state is not changed", False, "bool")
         self.__repeat_actions.set_from_attr(self.__item, "se_repeat_actions", True)
 
@@ -295,6 +306,7 @@ class SeItem:
         self.__update_original_item = None
         self.__update_original_caller = None
         self.__update_original_source = None
+        self.__using_default_instant_leaveaction = False
 
         # Check item configuration
         self.__check_item_config()
@@ -303,7 +315,7 @@ class SeItem:
         self.__variables = {
             "item.suspend_time": self.__suspend_time.get(),
             "item.suspend_remaining": 0,
-            "item.instant_leaveaction": self.__instant_leaveaction.get(),
+            "item.instant_leaveaction": 0,
             "current.state_id": "",
             "current.state_name": "",
             "current.conditionset_id": "",
@@ -329,8 +341,11 @@ class SeItem:
             self.__logger.error("Issue finishing states because {}", ex)
             return
 
-        # Write settings to log
-        self.__write_to_log()
+
+    def __repr__(self):
+        return self.__id
+
+    def startup(self):
         try:
             self.__has_released.pop('initial')
         except Exception:
@@ -338,7 +353,25 @@ class SeItem:
         self.__logger.develop("".ljust(80, "_"))
         self.__logger.develop("ALL RELEASEDBY: {}", self.__all_releasedby)
         self.__logger.develop("HAS RELEASED: {}", self.__has_released)
+        self.__logger.info("".ljust(80, "_"))
+        # start timer with startup-delay
+        _startup_delay_param = self.__startup_delay.get()
+        startup_delay = 1 if self.__startup_delay.is_empty() or _startup_delay_param == 0 else _startup_delay_param
+        if startup_delay > 0:
+            first_run = self.__shtime.now() + datetime.timedelta(seconds=startup_delay)
+            self.__logger.info("Will start stateengine evaluation at {}", first_run)
+            scheduler_name = self.__id + "-Startup Delay"
+            value = {"item": self.__item, "caller": "Init"}
+            self.__se_plugin.scheduler_add(scheduler_name, self.__startup_delay_callback, value=value, next=first_run)
+        elif startup_delay == -1:
+            self.__startup_delay_over = True
+            self.__add_triggers()
+        else:
+            self.__startup_delay_callback(self.__item, "Init", None, None)
+        self.__logger.info("Reset log level to {}", self.__log_level)
+        self.__logger.log_level = self.__log_level
 
+    def show_issues_summary(self):
         # show issues summary
         filtered_dict = {key: value for key, value in self.__unused_attributes.items() if
                          key not in self.__used_attributes or 'issue' in value.keys()}
@@ -356,26 +389,31 @@ class SeItem:
         if self.__state_issues:
             self.__log_issues('states')
 
-        self.__logger.info("".ljust(80, "_"))
-        # start timer with startup-delay
-        _startup_delay_param = self.__startup_delay.get()
-        startup_delay = 1 if self.__startup_delay.is_empty() or _startup_delay_param == 0 else _startup_delay_param
-        if startup_delay > 0:
-            first_run = self.__shtime.now() + datetime.timedelta(seconds=startup_delay)
-            self.__logger.info("Will start stateengine evaluation at {}", first_run)
-            scheduler_name = self.__id + "-Startup Delay"
-            value = {"item": self.__item, "caller": "Init"}
-            self.__se_plugin.scheduler_add(scheduler_name, self.__startup_delay_callback, value=value, next=first_run)
-        elif startup_delay == -1:
-            self.__startup_delay_over = True
-            self.__add_triggers()
-        else:
-            self.__startup_delay_callback(self.__item, "Init", None, None)
-        self.__logger.info("Reset log level to {}", _log_level)
-        self.__logger.log_level = _log_level
+    def update_leave_action(self, default_instant_leaveaction):
+        self.__default_instant_leaveaction = default_instant_leaveaction
 
-    def __repr__(self):
-        return self.__id
+        _returnvalue_leave, _returntype_leave, _using_default_leave = self.__instant_leaveaction.set_from_attr(
+            self.__item, "se_instant_leaveaction", default_instant_leaveaction)
+
+        if len(_returnvalue_leave) > 1:
+            self.__logger.warning("se_instant_leaveaction for item {} can not be defined as a list"
+                                  " ({}). Using default value {}.", self.id, _returnvalue_leave, default_instant_leaveaction)
+            self.__instant_leaveaction.set(default_instant_leaveaction)
+            self.__variables.update({"item.instant_leaveaction": default_instant_leaveaction})
+        elif len(_returnvalue_leave) == 1 and _returnvalue_leave[0] is None:
+            self.__instant_leaveaction.set(default_instant_leaveaction)
+            self.__variables.update({"item.instant_leaveaction": default_instant_leaveaction})
+            self.__logger.info("Using default instant_leaveaction {0} "
+                               "as no se_instant_leaveaction is set.".format(default_instant_leaveaction))
+        elif _using_default_leave:
+            self.__variables.update({"item.instant_leaveaction": default_instant_leaveaction})
+            self.__logger.info("Using default instant_leaveaction {0} "
+                               "as no se_instant_leaveaction is set.".format(default_instant_leaveaction))
+        else:
+            self.__variables.update({"item.instant_leaveaction": _returnvalue_leave})
+            self.__logger.info("Using instant_leaveaction {0} "
+                               "from attribute se_instant_leaveaction. "
+                               "Default value is {1}".format(_returnvalue_leave, default_instant_leaveaction))
 
     def updatetemplates(self, template, value):
         if value is None:
@@ -407,8 +445,14 @@ class SeItem:
             base = self.__sh.get_basedir()
             SeLogger.manage_logdirectory(base, SeLogger.log_directory, True)
         self.__logger.debug("Current log level {}, default {}, currently using default {}",
-                            self.__logger.log_level, _default_log_level, self.__logger.using_default)
-        self.__logger.debug("Current instant leave action {}", self.__instant_leaveaction)
+                            self.__logger.log_level, _default_log_level, self.__logger.using_default_log_level)
+        if self.__instant_leaveaction.get() == -1:
+            self.__using_default_instant_leaveaction = True
+        else:
+            self.__using_default_instant_leaveaction = False
+        self.__logger.debug("Current instant leave action {}, default {}, currently using default {}",
+                            self.__instant_leaveaction, self.__default_instant_leaveaction,
+                            self.__using_default_instant_leaveaction)
         self.update_lock.acquire(True, 10)
         while not self.__queue.empty() and self.__ab_alive:
             job = self.__queue.get()
@@ -459,8 +503,8 @@ class SeItem:
                 StateEngineCurrent.update()
                 self.__variables["item.suspend_time"] = self.__suspend_time.get()
                 self.__variables["item.suspend_remaining"] = -1
-                self.__variables["item.instant_leaveaction"] = self.__instant_leaveaction.get()
-
+                self.__variables["item.instant_leaveaction"] = self.__default_instant_leaveaction.get() \
+                    if self.__using_default_instant_leaveaction is True else self.__instant_leaveaction.get()
                 # get last state
                 last_state = self.__laststate_get()
                 if last_state is not None:
@@ -560,7 +604,14 @@ class SeItem:
 
                     if not _releasedby:
                         # New state is different from last state
-                        if result is False and last_state == state and self.__instant_leaveaction.get() is True:
+                        _instant_leaveaction = self.__instant_leaveaction.get()
+                        if self.__using_default_instant_leaveaction:
+                            _instant_leaveaction = self.__default_instant_leaveaction.get()
+                        if _instant_leaveaction == 1:
+                            _instant_leaveaction = True
+                        elif _instant_leaveaction == 0:
+                            _instant_leaveaction = False
+                        if result is False and last_state == state and _instant_leaveaction is True:
                             self.__logger.info("Leaving {0} ('{1}'). Running actions immediately.", last_state.id,
                                                last_state.name)
                             last_state.run_leave(self.__repeat_actions.get())
@@ -1284,7 +1335,7 @@ class SeItem:
         return crons, cycles
 
     # log item data
-    def __write_to_log(self):
+    def write_to_log(self):
         # get crons and cycles
         crons, cycles = self.__verbose_crons_and_cycles()
         triggers = self.__verbose_triggers()

@@ -87,9 +87,9 @@ class StateEngine(SmartPlugin):
             StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
             StateEngineDefaults.suspend_time = self.get_parameter_value("suspend_time_default")
             default_instant_leaveaction = self.get_parameter_value("instant_leaveaction")
-            default_instant_leaveaction_value = StateEngineValue.SeValue(self, "Instant Leave Action", False, "bool")
-            default_instant_leaveaction_value.set(default_instant_leaveaction)
-            StateEngineDefaults.instant_leaveaction = default_instant_leaveaction_value
+            self.__default_instant_leaveaction = StateEngineValue.SeValue(self, "Default Instant Leave Action", False, "bool")
+            self.__default_instant_leaveaction.set(default_instant_leaveaction)
+
             StateEngineDefaults.suntracking_offset = self.get_parameter_value("lamella_offset")
             StateEngineDefaults.lamella_open_value = self.get_parameter_value("lamella_open_value")
             StateEngineDefaults.write_to_log(self.logger)
@@ -142,6 +142,10 @@ class StateEngine(SmartPlugin):
                 try:
                     abitem = StateEngineItem.SeItem(self.get_sh(), item, self)
                     abitem.ab_alive = True
+                    abitem.update_leave_action(self.__default_instant_leaveaction)
+                    abitem.write_to_log()
+                    abitem.show_issues_summary()
+                    abitem.startup()
                     self._items[abitem.id] = abitem
                 except ValueError as ex:
                     self.logger.error("Problem with Item: {0}: {1}".format(item.property.path, ex))

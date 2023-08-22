@@ -291,17 +291,19 @@ item_attributes:
         type: foo
         default: False
         description:
-            de: 'Ist dieser Parameter auf True gesetzt, werden "on leave" Aktionen
+            de: 'Ist dieser Parameter auf True bzw. 1 gesetzt, werden "on leave" Aktionen
                 sofort ausgeführt, wenn der aktuelle Zustand nicht mehr eingenommen wird.
                 Standardmäßig werden die Aktionen erst direkt vor dem Eintreten in
                 einen neuen Zustand getriggert. Kann auch über ein Item zur Laufzeit geändert werden,
-                beispielsweise durch item:..settings.instant_leaveaction.
+                beispielsweise durch item:..settings.instant_leaveaction. Der Wert -1 sorgt dafür,
+                dass der in der plugin.yaml angegebene Standardwert herangezogen wird.
                 '
-            en: 'If this parameter is set to True the "on leave" actions are run
+            en: 'If this parameter is set to True or 1 the "on leave" actions are run
                 immediately after not entering the current state
                 again. By default the actions are triggered directly before
                 entering a new state. Can also be defined by a valid item,
-                e.g. item:..settings.instant_leaveaction
+                e.g. item:..settings.instant_leaveaction. By setting the value to -1
+                the default value from the plugin.yaml file is used.
                 '
 
     se_plugin:
@@ -741,9 +743,9 @@ item_structs:
               initial_value: -1
 
             instant_leaveaction:
-              type: bool
+              type: num
               cache: True
-              initial_value: False
+              initial_value: -1
 
             settings_edited:
                 type: bool
