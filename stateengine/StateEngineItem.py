@@ -758,7 +758,10 @@ class SeItem:
         _convertedlist = []
         for entry in _releasedby:
             try:
-                if entry is not None:
+                if not any(entry.property.path == test.id for test in self.__states):
+                    self.__logger.warning("State {} defined in se_released_by attribute does not exist. Removing it.",
+                                          entry.property.path)
+                elif entry is not None and entry not in _convertedlist:
                     _convertedlist.append(entry.property.path)
                 else:
                     self.__logger.warning("Found invalid state in se_released_by attribute. Ignoring {}", entry)
@@ -766,8 +769,8 @@ class SeItem:
                 self.__logger.error("Issue with {} for released_by check: {}", entry, ex)
         if _releasedby:
             self.__all_releasedby.update({_id: _convertedlist})
-            self.__logger.debug("Updated releasedby for state {}: {}. All releasedby: {}", state, _releasedby,
-                                self.__all_releasedby)
+            self.__logger.develop("Updated releasedby for state {}: Configured releasedby: {}. Final all releasedby: {}",
+                                  state, _releasedby, self.__all_releasedby)
             if self.__hasreleased_item is None or self.__has_released.get('initial'):
                 self.__has_released.update({_id: _convertedlist})
                 self.__logger.develop("Added to hasreleased: {} for state {}", self.__has_released, state)
