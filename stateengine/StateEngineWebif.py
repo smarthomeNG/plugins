@@ -153,10 +153,18 @@ class WebInterface(StateEngineTools.SeItemChild):
                 else:
                     action2 = 'None'
                     action3 = ""
-                success_info = '<td width="24"><img src="sign_warn.png" /></td></tr>' if _issue is not None\
-                             else '<td width="24"><img src="sign_false.png" /></td></tr>' if _success == 'False'\
-                             else '<td width="24"><img src="sign_true.png" /></td></tr>' if _success == 'True'\
-                             else '<td width="1"></td></tr>'
+                cond1 = conditionset in ['', self.__active_conditionset] and state == self.__active_state
+                cond_enter = originaltype == 'actions_enter' and self.__states[state].get('enter') is True
+                cond_stay = originaltype == 'actions_stay' and self.__states[state].get('stay') is True
+                active = True if (cond_enter or cond_stay) and cond1 else False
+                self._log_warning('action {}: enter {}, stay {}, originaltype {}, 1 {}, enter {}, stay {}, active {}', action, self.__states[state].get('enter'), self.__states[state].get('stay'), originaltype, cond1, cond_enter, cond_stay, active)
+                success_info = '<td width="24"><img src="sign_warn.png" /></td></tr>' \
+                    if _issue is not None and active \
+                    else '<td width="24"><img src="sign_false.png" /></td></tr>' \
+                    if (_success == 'False' or not condition_met) and active \
+                    else '<td width="24"><img src="sign_true.png" /></td></tr>' \
+                    if _success == 'True' and active \
+                    else '<td width="1"></td></tr>'
                 if not action2 == 'None':
                     actionlabel += '<tr><td align="center"><font color="{}">{} {} {} {}</font></td>'.format(fontcolor, action1, action2, action3, additionaltext)
                     actionlabel += '{}'.format(success_info)
