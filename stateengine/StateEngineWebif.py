@@ -157,7 +157,6 @@ class WebInterface(StateEngineTools.SeItemChild):
                 cond_enter = originaltype == 'actions_enter' and self.__states[state].get('enter') is True
                 cond_stay = originaltype == 'actions_stay' and self.__states[state].get('stay') is True
                 active = True if (cond_enter or cond_stay) and cond1 else False
-                self._log_warning('action {}: enter {}, stay {}, originaltype {}, 1 {}, enter {}, stay {}, active {}', action, self.__states[state].get('enter'), self.__states[state].get('stay'), originaltype, cond1, cond_enter, cond_stay, active)
                 success_info = '<td width="24"><img src="sign_warn.png" /></td></tr>' \
                     if _issue is not None and active \
                     else '<td width="24"><img src="sign_false.png" /></td></tr>' \
