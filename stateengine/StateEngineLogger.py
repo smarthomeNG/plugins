@@ -57,12 +57,12 @@ class SeLogger:
             logger.error("The maximum age of the log files has to be an int number.")
 
     @property
-    def using_default(self):
-        return self.__using_default
+    def using_default_log_level(self):
+        return self.__using_default_log_level
 
-    @using_default.setter
-    def using_default(self, value):
-        self.__using_default = value
+    @using_default_log_level.setter
+    def using_default_log_level(self, value):
+        self.__using_default_log_level = value
 
     @property
     def name(self):
@@ -150,7 +150,7 @@ class SeLogger:
         self.__default_log_level = None
         self.__startup_log_level = None
         self.__log_level = None
-        self.__using_default = False
+        self.__using_default_log_level = False
         self.__logmaxage = None
         self.__date = None
         self.__logerror = False
@@ -188,10 +188,10 @@ class SeLogger:
         # Section given: Check level
         _log_level = self.get_loglevel()
         if _log_level == -1:
-            self.using_default = True
+            self.using_default_log_level = True
             _log_level = SeLogger.default_log_level.get()
         else:
-            self.using_default = False
+            self.using_default_log_level = False
         if level <= _log_level:
             indent = "\t" * self.__indentlevel
             text = text.format(*args)
