@@ -21,19 +21,9 @@ die Dokumentation des jeweiligen Devices zu Rate ziehen.
 Konfiguration
 =============
 
-Zurzeit werden folgende Shelly Devices mit Gen1 API im **Backward-Compatibility Mode** unterstützt:
-
-- Shelly1/pm
-- Shelly2
-- Shelly2.5
-- Shelly4Pro
-- Shelly Plug
-- Shelly PlugS
-- Shelly H&T
-- Shelly Flood
-- Shelly Door/Window 2
-
-Diese Devices werden konfiguriert, wie es bis zur Version 1.2.0 des shally Plugins üblich war.
+Zurzeit werden eine Reihe von Shelly Devices mit Gen1 API im **Backward-Compatibility Mode** unterstützt. Dabei handelt
+es sich um die Devices, die bereits in der v1.2.0 des Plugins unterstützt wurden. Diese Devices werden konfiguriert,
+wie es bis zur v1.2.0 des shally Plugins üblich war.
 
 
 Es werden alle Relays eines Shelly Devices (bis zu 4) unterstützt. Weiterhin werden die folgenden
@@ -55,16 +45,16 @@ Attribute/Parameter der Devices unterstützt, soweit die Devices selbst diese un
 sowie der online-Status.
 
 
-.. attention::
-
-    Das Plugin kommuniziert über MQTT und benötigt das mqtt Modul, welches die Kommunikation mit dem MQTT Broker
-    durchführt. Dieses Modul muß geladen und konfiguriert sein, damit das Plugin funktioniert.
+Weitergehende Informationen speziell zur Konfiguration dieses Plugins sind unter
+:doc:`/plugins/shelly/user_doc/plugin_configuration` zu finden.
 
 Allgemeine Informationen zur Konfiguration und die vollständige Beschreibung der Item-Attribute sind
 unter :doc:`/plugins_doc/config/shelly` zu finden.
 
-Weitergehende Informationen zur Konfiguration dieses Plugins sind unter
-:doc:`/plugins/shelly/user_doc/plugin_configuration` zu finden.
+.. attention::
+
+    Das Plugin kommuniziert über MQTT und benötigt das mqtt Modul, welches die Kommunikation mit dem MQTT Broker
+    durchführt. Dieses Modul muß geladen und konfiguriert sein, damit das Plugin funktioniert.
 
 |
 

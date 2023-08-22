@@ -2,6 +2,11 @@
 Konfiguration des Plugins
 =========================
 
+...
+
+Backward-Compatibility Mode
+---------------------------
+
 Zurzeit werden folgende Shelly Devices mit Gen1 API im **Backward-Compatibility Mode** unterstützt:
 
 - Shelly1/pm
@@ -18,11 +23,34 @@ Diese Devices werden konfiguriert, wie es bis zur Version 1.2.0 des shally Plugi
 Attributee ``shelly_id``, ``shelly_type`` und ``shelly_attr``). So konfigurierte Items sind im internen Handling
 kompatibel zur alten Version des Plugins.
 
+Es werden dabei alle Relays eines Shelly Devices (bis zu 4) unterstützt. Weiterhin werden die folgenden
+Attribute/Parameter der Devices unterstützt, soweit die Devices selbst diese unterstützen:
+
+- humidity
+- state
+- tilt
+- vibration
+- lux
+- illumination
+- flood
+- battery
+- power
+- energy
+- temperature
+- temperature_f
+
+sowie der online-Status.
+
+|
+
+Aktueller Konfigurations Modus
+------------------------------
+
 Weitere Gen1 Devices werden unterstützt, wenn Sie analog zu Gen2 Devices konfiguriert werden. Dieser Modus ist
 für Gen1 Devices noch experimentell.
 
-Devices mit dem Gen2 API werden ohne Angabe von ``shelly_type`` konfiguriert. Die Information über den Typ des Devices
-erhält das Plugin vpm Device.
+Devices mit dem Gen2 API werden **ohne** Angabe von ``shelly_type`` konfiguriert. Die Information über den Typ des
+Devices erhält das Plugin vpm Device.
 
 ...
 
@@ -30,6 +58,9 @@ Es wird eine große Anzahl von Shelly Devices mit Gen2 API unterstützt. Geteste
 folgenden Gen2 Devices:
 
 - Shelly Plus Plug S
+- Shelly Plus H&T
+- Shelly Plus 2PM
+- Shelly Plus Add-On (getestet am Shelly Plus 2PM)
 
 Es wird Anzahl von Shelly Devices mit Gen1 API im experimentellen Modus (konfiguriert analog zu Gen2 Devices)
 unterstützt. Getestet wurde es allerdings bisher nur mit folgenden Gen1 Devices:
@@ -68,13 +99,13 @@ können konfiguriert werden, wie im folgenden beschrieben wird.
 
 Für die Devices werden die Attribute
 
-  - **shelly_id**: Mac Adresse des Devices, mindestens jedoch die letzten 6 Stellen der Mac Adresse
-  - **shelly_attr**: Name des Attributes, welches eingelesen werden soll. (Wenn der Name des Attributes nicht
+  - ``shelly_id``: Mac Adresse des Devices, mindestens jedoch die letzten 6 Stellen der Mac Adresse
+  - ``shelly_attr``: Name des Attributes, welches eingelesen werden soll. (Wenn der Name des Attributes nicht
     bekannt ist, können die von dem Shelly Device unterstützten Attribute, wie im folgenden beschrieben, ermittelt
     werden).
-  - und evtl. **shelly_group**: Optional: Name der Gruppe, zu der dieses Attribut gehört (z.B. "switch:0")
+  - und evtl. ``shelly_group``: Optional: Name der Gruppe, zu der dieses Attribut gehört (z.B. "switch:0")
 
-angegeben. Das Attribut **shelly_type** darf **NICHT** angegeben werden.
+angegeben. Das Attribut ``shelly_type`` darf **NICHT** angegeben werden.
 
 
 Ermitteln der unterstützten Status Attribute
@@ -137,8 +168,8 @@ Die Temperatur (in °C) wird von den verschiedenen Devices z.B. als **temp**, **
 Nicht unterstützte Status Attribute
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Es kann vorkommen, dass ein Shelly Device Attribute oder Gruppen bisher nicht unterstützt. In diesem Fall erfolgt
-folgender Eintrag im **smarthome-warnings.log**:
+Es kann vorkommen, dass für ein Shelly Device Attribute oder Gruppen bisher nicht unterstützt werden. In diesem Fall
+erfolgt folgender Eintrag im **smarthome-warnings.log**:
 
 .. code-block:: text
 
@@ -164,8 +195,10 @@ Ein Eintrag zu einem bisher nicht unterstützen Attribut sieht z.B. so aus:
 Wenn diese Information im Forum im Support Thread für das shelly Plugin oder als Issue auf Github gepostet wird,
 kann mit diesen Informationen das Attribut bzw. die Gruppe Gruppen zeitnah in das Plugin integriert werden.
 
-Diese nicht unterstützten Attribute werden werden bei gesetztem **shelly_list_attrs** Attribut nicht geloggt.
-Ein Logging bei **shelly_list_attrs** erfolgt nur für bereits unterstützte Attribute.
+Diese nicht unterstützten Attribute werden werden bei gesetztem ``shelly_list_attrs`` Attribut nicht geloggt.
+Ein Logging bei ``shelly_list_attrs`` erfolgt nur für bereits unterstützte Attribute.
+
+|
 
 Attribute um ein Device zu steuern
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -184,6 +217,7 @@ Zur Vereinfachung der Einrichtung von Items sind für folgende Shelly Devices It
 - shellyplug_s
 - shellyht
 - shellyflood
+- shellyplusplug_s
 
 Unter Verwendung der entsprechenden Vorlage kann die Einrichtung einfach durch Angabe der shally_id des
 entsprechenden Devices erfolgen:
