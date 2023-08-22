@@ -794,8 +794,12 @@ class SeItem:
             to_check = self.__unused_attributes.items()
             warn = ', '.join(key for key in self.__unused_attributes.keys())
         self.__logger.info("")
-        self.__logger.warning("There are {} issues: {} Please check extended "
-                              "log file for details.", issue_type, warn)
+        if issue_type == 'attributes':
+            self.__logger.info("These attributes are not used: {} Please check extended "
+                               "log file for details.", warn)
+        else:
+            self.__logger.warning("There are {} issues: {} Please check extended "
+                                  "log file for details.", issue_type, warn)
         self.__logger.info("")
         self.__logger.info("The following {} have issues:", issue_type)
         self.__logger.increase_indent()
