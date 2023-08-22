@@ -163,6 +163,7 @@
 		<th>{{ _('IP Adresse') }}</th>
 		<th>{{ _('Firmware Version') }}</th>
 		<th>{{ _('neue Firmware') }}</th>
+		<th>{{ _('rssi') }}</th>
 		<th>{{ _('Item(s) konfiguriert') }}</th>
 	</tr>
 	</thead>
@@ -184,6 +185,7 @@
 			<td class="py-1">{{ p.shelly_devices[device].ip }}</td>
 			<td class="py-1">{{ p.shelly_devices[device].fw_ver }}</td>
 			<td class="py-1">{{ p.ja_nein( p.shelly_devices[device].new_fw ) }}</td>
+			<td class="py-1">{{ p.shelly_devices[device].rssi }}</td>
 
 			<td class="py-1">{{ p.ja_nein( p.shelly_devices[device].connected_to_item ) }}</td>
 		</tr>

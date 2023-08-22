@@ -39,6 +39,18 @@ unterstützt. Getestet wurde es allerdings bisher nur mit folgenden Gen1 Devices
 - Shelly Door/Window2
 
 
+Unterschiede zwischen Plugin Modi
+---------------------------------
+
+Das Attribut ``online`` wird durch das Plugin im Modus für Gen2 Devices nicht mehr unterstützt. Das Attribut ist auf
+den verschiedenen Shelly Devices zu unterschiedlich implementiert, als das es sinnvoll genutzt werden könnte. Einige
+batterie betriebene Devices melden ``online``=False bevor sie sich schlafen legen, andere lassen den Status
+auf True. Andere Decives hingegen haben den ``online`` Status gar nicht implementiert.
+
+Im **Backward-Compatibility Mode** für Gen1 Devices steht das ``online`` Attribut (falls es im Plugin
+v1.20 implementiert war) weiterhin zur Verfügung.
+
+
 Konfiguration im Kompatibilitäts-Modus
 --------------------------------------
 
@@ -65,10 +77,11 @@ Für die Devices werden die Attribute
 angegeben. Das Attribut **shelly_type** darf **NICHT** angegeben werden.
 
 
-Ermitteln der unterstützten Attribute
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ermitteln der unterstützten Status Attribute
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Um die Attribute zu ermitteln, die ein Shelly Device unterstützt, muss folgendermaßen vorgegangen werden:
+Um die Attribute zu ermitteln, die ein Shelly Device sendet (also Attribute, die einen Status des Devices übermitteln),
+muss folgendermaßen vorgegangen werden:
 
 - Ein Item konfigurieren, welches nur die folgenden zwei Attribute bsitzt:
 
@@ -78,15 +91,18 @@ Um die Attribute zu ermitteln, die ein Shelly Device unterstützt, muss folgende
         shelly_attr:<MAC Adresse>
         shelly_list_attrs: True
 
-Außerdem muß der Logger **plugins.shelly** auf den Level INFO konfiguriert werden. Nach dem Neustart von SmartHomeNG
-werden dann die Attribute, wenn sie vom Shelly Device gesendet werden, in das **smarthome-details.log** geschrieben.
+Außerdem muß der Logger **plugins.shelly** auf den Level INFO konfiguriert werden. Anschließend werden dann die
+Attribute, wenn sie vom Shelly Device gesendet werden, in das **smarthome-details.log** geschrieben.
 Die Logeinträge enthalten den Namen des Attributes, optional den Namen der Gruppe und den Typ, den das SmartHomeNG Item
 haben muß. Falls der Typ **num** ist, wird als Zusatzinfo geloggt, ob der vom Device gelieferte Wert in Integer oder
 ein Float Wert ist.
 
-Das kann einige Zeit in Anspruch nehmen, da die Devices nicht ständig alle Attribute senden und einige Battere
-betriebene Devices zum Teil mehrere Stunden schweigen, oder wie der Shelly Button1 nur senden, wenn der Button gedrückt
-wird.
+Das kann einige Zeit in Anspruch nehmen, da die Devices nicht ständig alle Attribute senden und einige Batterie
+betriebene Devices zum Teil mehrere Stunden schweigen (z.B.Shelly Plus H&T), oder wie der Shelly Button1 nur senden,
+wenn der Button gedrückt wird.
+
+Einige Devices senden den Status eines Attributes auch nur bei einer Änderung des Zustandes
+(z.B. das ADD-ON zum ShellyPlus 2 PM).
 
 Im Log finden sich dann Einträge, die wie die folgenden aussehen:
 
@@ -109,17 +125,17 @@ Im Log finden sich dann Einträge, die wie die folgenden aussehen:
     2023-08-20  16:42:51 INFO     plugins.shelly         list_attrs '485519db1e1d': shelly_attr='event' shelly_group='input_event:0' type='str'
 
 Mit diesen Informationen können die entsprechenden Items in SmartHomeNG konfiguriert werden. (Nicht vergessen das
-test_item zu löschen)
+test_item wieder zu löschen)
 
 Die Namen der Attribute entsprechen zum großen Teil den Bezeichnern, die das Shelly Device sendet. Einige Attribut Namen
 werden vom Plugin jedoch angepasst, da die unterschiedlichen Shelly Devices gleiche Informationen zum Teil unter
 unterschidlichen Bezeichnern publizieren. Eine solche Vereinheitlichung ist zum Beispiel der Attribut Name **temp**.
 Die Temperatur (in °C) wird von den verschiedenen Devices z.B. als **temp**, **temperature**, **tC** oder auch als dict
-**temperature['tC]** publiziert. Zur Vereinfachung, ist für alle diese Bezeichner der Attribut Name **temp**
+**temperature['tC']** publiziert. Zur Vereinfachung, ist für alle diese Bezeichner der Attribut Name **temp**
 
 
-Nicht unterstützte Attribute
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Nicht unterstützte Status Attribute
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Es kann vorkommen, dass ein Shelly Device Attribute oder Gruppen bisher nicht unterstützt. In diesem Fall erfolgt
 folgender Eintrag im **smarthome-warnings.log**:
@@ -128,8 +144,8 @@ folgender Eintrag im **smarthome-warnings.log**:
 
     2023-08-20  18:02:04 NOTICE   plugins.shelly         Unbekannter Status empfangen von 'shellyplusht-80646fcbb6c8' - Loglevel des Plugin-Loggers auf INFO setzen und das Details-Log beobachten
 
-Dann muß man man den Logger **plugins.shelly** auf den Level INFO konfigurieren. Nach dem Neustart von SmartHomeNG
-werden dann die Informationen zu den bisher nicht unterstützten Attributen in das **smarthome-details.log** geschrieben.
+Dann muß man man den Logger **plugins.shelly** auf den Level INFO konfigurieren. Anschließend werden dann die
+Informationen zu den bisher nicht unterstützten Attributen in das **smarthome-details.log** geschrieben.
 
 Ein Eintrag zu einem bisher nicht unterstützen Attribut sieht z.B. so aus:
 
@@ -143,14 +159,19 @@ Ein Eintrag zu einem bisher nicht unterstützen Attribut sieht z.B. so aus:
      - Parameter: 'battery'={'V': 6.03, 'percent': 100}
      - Group='devicepower:0'
      - Params={'id': 0, 'battery': {'V': 6.03, 'percent': 100}, 'external': {'present': False}}
-     - During action: 'handle_switch_status'
-     - Code Position: '*sw1'
+     - Calling method=handle_gen2_device_status (pos='*ds1')
 
 Wenn diese Information im Forum im Support Thread für das shelly Plugin oder als Issue auf Github gepostet wird,
 kann mit diesen Informationen das Attribut bzw. die Gruppe Gruppen zeitnah in das Plugin integriert werden.
 
 Diese nicht unterstützten Attribute werden werden bei gesetztem **shelly_list_attrs** Attribut nicht geloggt.
 Ein Logging bei **shelly_list_attrs** erfolgt nur für bereits unterstützte Attribute.
+
+Attribute um ein Device zu steuern
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Aktuell wird nur zum steuern eines Shelly Devices nur das Attribt ``output`` unterstützt. Es kann in den
+Gruppen ``switch:0`` bis ``switch:3`` genutzt werden.
 
 |
 

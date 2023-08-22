@@ -8,7 +8,7 @@ muss aktiviert sein.
 Einbindung ins WLAN
 -------------------
 
-Shelly in den AccessPoint-Modus versetzen
+Shelly in den AccessPoint Modus versetzen
 
 - in die Steckdose stecken/an Strom anschließen
 - Falls die LED nicht rot/blau blinken, den Taster drücken -> Shelly Plug wird in den AP Mode versetzt
@@ -38,6 +38,8 @@ Gen2 Devices einbinden
 - SSID und Password eingeben
 - **SAVE** klicken
 - Mit dem Browser unter der neuen IP Adresse (http://shellyplug-s-xxxxxx) im lokalen WLAN verbinden
+- Nachdem die Verbindung zu dem Device über das normale WLAN aufgebaut wurde, sollte das AccessPoint Modus disabled
+  werden.
 
 |
 
