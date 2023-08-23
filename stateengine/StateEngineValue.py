@@ -91,6 +91,8 @@ class SeValue(StateEngineTools.SeItemChild):
         if value is not None:
             _using_default = False
             self._log_develop("Processing value {0} from attribute name {1}, reset {2}", value, attribute_name, reset)
+        elif default_value is None:
+            return None, None, False
         else:
             value = default_value
             _using_default = True
