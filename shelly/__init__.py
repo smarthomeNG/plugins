@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.5.6'
+    PLUGIN_VERSION = '1.6.0'
 
 
     def __init__(self, sh):
@@ -1094,6 +1094,15 @@ class Shelly(MqttPlugin):
         return
 
 # --------------------  for the web interface  --------------------
+
+    def discovered_devices(self) -> list:
+
+        result = []
+        for shelly_id in list(self.shelly_devices.keys()):
+            if self.shelly_devices[shelly_id].get('mac', None) is not None:
+                result.append(shelly_id)
+        return result
+
 
     def ja_nein(self, value) -> str:
         """
