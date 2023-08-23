@@ -27,11 +27,12 @@ FILENAME_PLUGIN = 'plugin.yaml'
 
 DOC_FILE_NAME = 'user_doc.rst'
 
-PLUGIN_VERSION = '1.2.3'
+PLUGIN_VERSION = '1.2.4'
 
 ITEM_ATTRIBUTES = {
     'db_addon_fct': {
         'verbrauch_heute':                         {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages)'},
+        'verbrauch_tag':                           {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages)'},
         'verbrauch_woche':                         {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch in der aktuellen Woche'},
         'verbrauch_monat':                         {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch im aktuellen Monat'},
         'verbrauch_jahr':                          {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch im aktuellen Jahr'},
@@ -42,6 +43,15 @@ ITEM_ATTRIBUTES = {
         'verbrauch_heute_minus5':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch heute -5 Tage'},
         'verbrauch_heute_minus6':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch heute -6 Tage'},
         'verbrauch_heute_minus7':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch heute -7 Tage'},
+        'verbrauch_heute_minus8':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch heute -8 Tage'},
+        'verbrauch_tag_minus1':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch gestern (heute -1 Tag) (Differenz zwischen Wert am Ende des gestrigen Tages und dem Wert am Ende des Tages davor)'},
+        'verbrauch_tag_minus2':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch vorgestern (heute -2 Tage)'},
+        'verbrauch_tag_minus3':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch heute -3 Tage'},
+        'verbrauch_tag_minus4':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch heute -4 Tage'},
+        'verbrauch_tag_minus5':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch heute -5 Tage'},
+        'verbrauch_tag_minus6':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch heute -6 Tage'},
+        'verbrauch_tag_minus7':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch heute -7 Tage'},
+        'verbrauch_tag_minus8':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch heute -8 Tage'},
         'verbrauch_woche_minus1':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'weekly',    'params': False,  'description': 'Verbrauch Vorwoche (aktuelle Woche -1)'},
         'verbrauch_woche_minus2':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'weekly',    'params': False,  'description': 'Verbrauch aktuelle Woche -2 Wochen'},
         'verbrauch_woche_minus3':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'weekly',    'params': False,  'description': 'Verbrauch aktuelle Woche -3 Wochen'},
@@ -54,6 +64,7 @@ ITEM_ATTRIBUTES = {
         'verbrauch_jahr_minus1':                   {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'yearly',    'params': False,  'description': 'Verbrauch Vorjahr (aktuelles Jahr -1 Jahr)'},
         'verbrauch_jahr_minus2':                   {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'yearly',    'params': False,  'description': 'Verbrauch aktuelles Jahr -2 Jahre'},
         'verbrauch_rolling_12m_heute_minus1':      {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Tages'},
+        'verbrauch_rolling_12m_tag_minus1':        {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Tages'},
         'verbrauch_rolling_12m_woche_minus1':      {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'calc': 'weekly',    'params': False,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende der letzten Woche'},
         'verbrauch_rolling_12m_monat_minus1':      {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'calc': 'monthly',   'params': False,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Monats'},
         'verbrauch_rolling_12m_jahr_minus1':       {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'calc': 'yearly',    'params': False,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Jahres'},
@@ -63,6 +74,9 @@ ITEM_ATTRIBUTES = {
         'zaehlerstand_heute_minus1':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Zählerstand / Wert am Ende des letzten Tages (heute -1 Tag)'},
         'zaehlerstand_heute_minus2':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Zählerstand / Wert am Ende des vorletzten Tages (heute -2 Tag)'},
         'zaehlerstand_heute_minus3':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Zählerstand / Wert am Ende des vorvorletzten Tages (heute -3 Tag)'},
+        'zaehlerstand_tag_minus1':                 {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Zählerstand / Wert am Ende des letzten Tages (heute -1 Tag)'},
+        'zaehlerstand_tag_minus2':                 {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Zählerstand / Wert am Ende des vorletzten Tages (heute -2 Tag)'},
+        'zaehlerstand_tag_minus3':                 {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Zählerstand / Wert am Ende des vorvorletzten Tages (heute -3 Tag)'},
         'zaehlerstand_woche_minus1':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'weekly',    'params': False,  'description': 'Zählerstand / Wert am Ende der vorvorletzten Woche (aktuelle Woche -1 Woche)'},
         'zaehlerstand_woche_minus2':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'weekly',    'params': False,  'description': 'Zählerstand / Wert am Ende der vorletzten Woche (aktuelle Woche -2 Wochen)'},
         'zaehlerstand_woche_minus3':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'weekly',    'params': False,  'description': 'Zählerstand / Wert am Ende der aktuellen Woche -3 Wochen'},
@@ -90,6 +104,18 @@ ITEM_ATTRIBUTES = {
         'minmax_heute_minus3_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Minimalwert heute vor 3 Tagen'},
         'minmax_heute_minus3_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Maximalwert heute vor 3 Tagen'},
         'minmax_heute_minus3_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Durchschnittswert heute vor 3 Tagen'},
+        'minmax_tag_min':                          {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Minimalwert seit Tagesbeginn'},
+        'minmax_tag_max':                          {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Maximalwert seit Tagesbeginn'},
+        'minmax_tag_avg':                          {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Durschnittswert seit Tagesbeginn'},
+        'minmax_tag_minus1_min':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Minimalwert gestern (heute -1 Tag)'},
+        'minmax_tag_minus1_max':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Maximalwert gestern (heute -1 Tag)'},
+        'minmax_tag_minus1_avg':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Durchschnittswert gestern (heute -1 Tag)'},
+        'minmax_tag_minus2_min':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Minimalwert vorgestern (heute -2 Tage)'},
+        'minmax_tag_minus2_max':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Maximalwert vorgestern (heute -2 Tage)'},
+        'minmax_tag_minus2_avg':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Durchschnittswert vorgestern (heute -2 Tage)'},
+        'minmax_tag_minus3_min':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Minimalwert heute vor 3 Tagen'},
+        'minmax_tag_minus3_max':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Maximalwert heute vor 3 Tagen'},
+        'minmax_tag_minus3_avg':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Durchschnittswert heute vor 3 Tagen'},
         'minmax_woche_min':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Minimalwert seit Wochenbeginn'},
         'minmax_woche_max':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Maximalwert seit Wochenbeginn'},
         'minmax_woche_minus1_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'weekly',    'params': False,  'description': 'Minimalwert Vorwoche (aktuelle Woche -1)'},
@@ -115,6 +141,10 @@ ITEM_ATTRIBUTES = {
         'tagesmitteltemperatur_heute_minus1':      {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Tagesmitteltemperatur des letzten Tages (heute -1 Tag)'},
         'tagesmitteltemperatur_heute_minus2':      {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Tagesmitteltemperatur des vorletzten Tages (heute -2 Tag)'},
         'tagesmitteltemperatur_heute_minus3':      {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Tagesmitteltemperatur des vorvorletzten Tages (heute -3 Tag)'},
+        'tagesmitteltemperatur_tag':               {'cat': 'tagesmittel',   'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Tagesmitteltemperatur heute'},
+        'tagesmitteltemperatur_tag_minus1':        {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Tagesmitteltemperatur des letzten Tages (heute -1 Tag)'},
+        'tagesmitteltemperatur_tag_minus2':        {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Tagesmitteltemperatur des vorletzten Tages (heute -2 Tag)'},
+        'tagesmitteltemperatur_tag_minus3':        {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Tagesmitteltemperatur des vorvorletzten Tages (heute -3 Tag)'},
         'serie_minmax_monat_min_15m':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'calc': 'monthly',   'params': False,  'description': 'monatlicher Minimalwert der letzten 15 Monate (gleitend)'},
         'serie_minmax_monat_max_15m':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'calc': 'monthly',   'params': False,  'description': 'monatlicher Maximalwert der letzten 15 Monate (gleitend)'},
         'serie_minmax_monat_avg_15m':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'calc': 'monthly',   'params': False,  'description': 'monatlicher Mittelwert der letzten 15 Monate (gleitend)'},
@@ -248,6 +278,11 @@ def export_item_attributes_py():
     ATTRS['ALL_GEN_ATTRIBUTES'] = get_attrs(sub_dict={'cat': 'gen'})
     ATTRS['ALL_SUMME_ATTRIBUTES'] = get_attrs(sub_dict={'cat': 'summe'})
     ATTRS['ALL_COMPLEX_ATTRIBUTES'] = get_attrs(sub_dict={'cat': 'complex'})
+    ATTRS['TAGESMITTEL_ATTRIBUTES_ONCHANGE'] = get_attrs(sub_dict={'cat': 'tagesmittel', 'sub_cat': 'onchange'})
+
+    for entry in ATTRS['HISTORIE_ATTRIBUTES_ONCHANGE']:
+        if entry.endswith('avg'):
+            ATTRS['TAGESMITTEL_ATTRIBUTES_ONCHANGE'].append(entry)
 
     # create file and write header
     f = open(FILENAME_ATTRIBUTES, "w")

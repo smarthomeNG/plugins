@@ -68,6 +68,7 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after being rendered
         """
 
+        pagelength = self.plugin.get_parameter_value('webif_pagelength')
         tmpl = self.tplenv.get_template('index.html')
 
         if action is not None:
@@ -84,7 +85,7 @@ class WebInterface(SmartPluginWebIf):
                 self.plugin._activate_item_calculation(item=item_path, active=bool(int(active)))
 
         return tmpl.render(p=self.plugin,
-                           webif_pagelength=self.plugin.get_parameter_value('webif_pagelength'),
+                           webif_pagelength=pagelength,
                            suspended='true' if self.plugin.suspended else 'false',
                            items=self.plugin.get_item_list('db_addon', 'function'),
                            item_count=len(self.plugin.get_item_list('db_addon', 'function')),

@@ -60,9 +60,7 @@ class DatabaseAddOn(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.2.3'
-    # ToDo: remove revision
-    REVISION = 'H'
+    PLUGIN_VERSION = '1.2.4'
 
     def __init__(self, sh):
         """
@@ -254,7 +252,7 @@ class DatabaseAddOn(SmartPlugin):
 
             elif db_addon_fct in ZAEHLERSTAND_ATTRIBUTES_TIMEFRAME:
                 # handle functions 'zaehlerstand' in format 'zaehlerstand_timeframe_timedelta' like 'zaehlerstand_heute_minus1'
-                # func = 'max'
+                func = 'last'
                 timeframe = translate_timeframe(db_addon_fct_vars[1])
                 end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
                 start = end
@@ -272,7 +270,6 @@ class DatabaseAddOn(SmartPlugin):
             elif db_addon_fct in VERBRAUCH_ATTRIBUTES_TIMEFRAME:
                 # handle functions 'verbrauch on-demand' in format 'verbrauch_timeframe_timedelta' like 'verbrauch_heute_minus2'
                 timeframe = translate_timeframe(db_addon_fct_vars[1])
-                # end = to_int(db_addon_fct_vars[2][-1])
                 end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
                 start = end + 1
                 log_text = 'verbrauch_timeframe_timedelta'
@@ -329,7 +326,6 @@ class DatabaseAddOn(SmartPlugin):
 
             elif db_addon_fct in SERIE_ATTRIBUTES_ZAEHLERSTAND:
                 # handle functions 'serie_zaehlerstand' in format 'serie_zaehlerstand_timeframe_start|group' like 'serie_zaehlerstand_tag_30d'
-                func = 'max'
                 timeframe = translate_timeframe(db_addon_fct_vars[2])
                 start, group = split_sting_letters_numbers(db_addon_fct_vars[3])
                 start = to_int(start)
@@ -339,7 +335,6 @@ class DatabaseAddOn(SmartPlugin):
 
             elif db_addon_fct in SERIE_ATTRIBUTES_VERBRAUCH:
                 # handle all functions of format 'serie_verbrauch_timeframe_start|group' like 'serie_verbrauch_tag_30d'
-                func = 'diff_max'
                 timeframe = translate_timeframe(db_addon_fct_vars[2])
                 start, group = split_sting_letters_numbers(db_addon_fct_vars[3])
                 start = to_int(start)
@@ -1054,6 +1049,14 @@ class DatabaseAddOn(SmartPlugin):
             else:
                 result = None
 
+        # handle all functions using temperature sums
+        elif db_addon_fct in ALL_SUMME_ATTRIBUTES:
+            new_params = {}
+            for entry in ('threshold', 'variant', 'result', 'data_con_func'):
+                if entry in params:
+                    new_params.update({entry: params[entry]})
+            result = self._handle_temp_sums(func=db_addon_fct, database_item=database_item, year=params.get('year'), month=params.get('month'), ignore_value_list=params.get('ignore_value_list'),  params=new_params)
+
         # handle info functions
         elif db_addon_fct == 'info_db_version':
             result = self._get_db_version()
@@ -1065,14 +1068,6 @@ class DatabaseAddOn(SmartPlugin):
         # handle oldest_log
         elif db_addon_fct == 'general_oldest_log':
             result = self._get_oldest_log(database_item)
-
-        # handle all functions using temperature sums
-        elif db_addon_fct in ALL_SUMME_ATTRIBUTES:
-            new_params = {}
-            for entry in ('threshold', 'variant', 'result', 'data_con_func'):
-                if entry in params:
-                    new_params.update({entry: params[entry]})
-            result = self._handle_temp_sums(func=db_addon_fct, database_item=database_item, year=params.get('year'), month=params.get('month'), ignore_value_list=params.get('ignore_value_list'),  params=new_params)
 
         # handle everything else
         else:
@@ -1213,7 +1208,7 @@ class DatabaseAddOn(SmartPlugin):
                 continue
 
             # handle minmax on-change items tagesmitteltemperatur_heute, minmax_heute_avg
-            if db_addon_fct in ['tagesmitteltemperatur_heute', 'minmax_heute_avg']:
+            if db_addon_fct in TAGESMITTEL_ATTRIBUTES_ONCHANGE:
                 new_value = handle_tagesmittel()
 
             # handle minmax on-change items like minmax_heute_max, minmax_heute_min, minmax_woche_max, minmax_woche_min.....
@@ -1326,6 +1321,7 @@ class DatabaseAddOn(SmartPlugin):
 
         :param item_path: item object or item_id for which the query should be done
         :param year: year the gruenlandtemperatursumme should be calculated for
+        :param ignore_value_list: list of comparison operators for val_num, which will be applied during query
         :return: gruenlandtemperatursumme
         """
 
@@ -1341,6 +1337,7 @@ class DatabaseAddOn(SmartPlugin):
         :param item_path: item object or item_id for which the query should be done
         :param year: year the waermesumme should be calculated for
         :param month: month the waermesumme should be calculated for
+        :param ignore_value_list: list of comparison operators for val_num, which will be applied during query
         :param threshold: threshold for temperature
         :return: waermesumme
         """
@@ -1357,6 +1354,7 @@ class DatabaseAddOn(SmartPlugin):
         :param item_path: item object or item_id for which the query should be done
         :param year: year the kaeltesumme should be calculated for
         :param month: month the kaeltesumme should be calculated for
+        :param ignore_value_list: list of comparison operators for val_num, which will be applied during query
         :return: kaeltesumme
         """
 
@@ -1371,6 +1369,7 @@ class DatabaseAddOn(SmartPlugin):
 
         :param item_path: item object or item_id for which the query should be done
         :param year: year the wachstumsgradtage should be calculated for
+        :param ignore_value_list: list of comparison operators for val_num, which will be applied during query
         :param variant: variant to be used
         :param threshold: Temperature in °C as threshold: Ein Tage mit einer Tagesdurchschnittstemperatur oberhalb des Schwellenwertes gilt als Wachstumsgradtag
         :return: wachstumsgradtage
@@ -1386,6 +1385,7 @@ class DatabaseAddOn(SmartPlugin):
 
         :param item_path: item object or item_id for which the query should be done
         :param year: year the wachstumsgradtage should be calculated for
+        :param ignore_value_list: list of comparison operators for val_num, which will be applied during query
         :param data_con_func: data concentration function
         :return: temperature series
         """
@@ -1395,6 +1395,21 @@ class DatabaseAddOn(SmartPlugin):
             return self._handle_temp_sums(func='temperaturserie', database_item=item, year=year, ignore_value_list=ignore_value_list, params={'data_con_func': data_con_func})
 
     def query_item(self, func: str, item_path: str, timeframe: str, start: int = None, end: int = 0, group: str = None, group2: str = None, ignore_value_list=None) -> list:
+        """
+        Query database, format response and return it
+
+        :param func: function, defined in query_item method to be used at query
+        :param item_path: item str or item_id for which the query should be done
+        :param timeframe: time increment für definition of start, end, count (day, week, month, year)
+        :param start: start of timeframe (oldest) for query given in x time increments (default = None, meaning complete database)
+        :param end: end of timeframe (newest) for query given in x time increments (default = 0, meaning today, end of last week, end of last month, end of last year)
+        :param group: first grouping parameter (default = None, possible values: day, week, month, year)
+        :param group2: second grouping parameter (default = None, possible values: day, week, month, year)
+        :param ignore_value_list: list of comparison operators for val_num, which will be applied during query
+
+        :return: formatted query response
+        """
+
         item = self.items.return_item(item_path)
         if item is None:
             return []
@@ -1405,7 +1420,7 @@ class DatabaseAddOn(SmartPlugin):
         """
         Query database, format response and return it
 
-        :param func: function to be used at query
+        :param func: sql function to be used at query
         :param item_path: item str or item_id for which the query should be done
         :param timeframe: time increment für definition of start, end, count (day, week, month, year)
         :param start: start of timeframe (oldest) for query given in x time increments (default = None, meaning complete database)
@@ -1562,7 +1577,7 @@ class DatabaseAddOn(SmartPlugin):
         timeframe = query_params['timeframe']
         start = query_params['start']
 
-        for i in range(1, start):
+        for i in range(start, 1, -1):
             value = self._handle_verbrauch({'database_item': database_item, 'timeframe': timeframe, 'start': i + 1, 'end': i})
             ts_start, ts_end = self._get_start_end_as_timestamp(timeframe, i, i + 1)
             series.append([ts_end, value])
@@ -1621,14 +1636,14 @@ class DatabaseAddOn(SmartPlugin):
         timeframe = query_params['timeframe']
         start = query_params['start']
 
-        for i in range(1, start):
+        for i in range(start, 1, -1):
             value = self._handle_zaehlerstand({'database_item': database_item, 'timeframe': timeframe, 'start': i, 'end': i})
             ts_start = self._get_start_end_as_timestamp(timeframe, i, i)[0]
             series.append([ts_start, value])
 
         return series
 
-    def _handle_temp_sums(self, func: str, database_item: Item, year: Union[int, str] = None, month: Union[int, str] = None, ignore_value_list: list = None, params: dict = {}) -> Union[list, None]:
+    def _handle_temp_sums(self, func: str, database_item: Item, year: Union[int, str] = None, month: Union[int, str] = None, ignore_value_list: list = None, params: dict = None) -> Union[list, None]:
         """
         Calculates diverse temperature sums and day counts
         
@@ -1675,6 +1690,9 @@ class DatabaseAddOn(SmartPlugin):
                     'frosttage':           {'start_end': timeframe[3], 'data_con_func': 'minmax_day'},
                     'eistage':             {'start_end': timeframe[3], 'data_con_func': 'minmax_day'},
                     }
+
+        if not params:
+            params = dict()
 
         def kaeltesumme() -> float:
             """Berechnung der Kältesumme durch Akkumulieren aller negativen Tagesdurchschnittstemperaturen im Abfragezeitraum
@@ -1901,6 +1919,10 @@ class DatabaseAddOn(SmartPlugin):
                                     - first_hour: determines first value per hour of values within plugin
                                     - minmax_day: determines min and max value per day of values within plugin
                                     - minmax_hour: determines min and max value per hour of values within plugin
+                                    - min_day: determines min value per day of values within plugin
+                                    - max_hour: determines max value per hour of values within plugin
+                                    - min_day: determines min value per day of values within plugin
+                                    - max_hour: determines max value per hour of values within plugin
                                     - first_hour_avg_day: 2-step concentration: 1) concentrate values within an hour by using first value 2) concentrate values by average for first value of each hour
         :return:                    list of list with [timestamp, value]
         """
@@ -1936,6 +1958,8 @@ class DatabaseAddOn(SmartPlugin):
                                     'first' will take first entry of list per datetime to get as close to value at full hour as possible
                                     'avg' will use the calculated average of values in list per datetime
                                     'minmax' will get min and max value of list per datetime
+                                    'min' will get the min value of list per datetime
+                                    'max' will get the min value of list per datetime
             """
 
             _value_list = []
@@ -1948,12 +1972,16 @@ class DatabaseAddOn(SmartPlugin):
                     _value_list.append([_timestamp, round(sum(value_dict[entry]) / len(value_dict[entry]), 2)])
                 elif option == 'minmax':
                     _value_list.append([_timestamp, min(value_dict[entry]), max(value_dict[entry])])
+                elif option == 'max':
+                    _value_list.append([_timestamp, max(value_dict[entry])])
+                elif option == 'min':
+                    _value_list.append([_timestamp, min(value_dict[entry])])
             return _value_list
 
         if self.debug_log.prepare:
             self.logger.debug(f'called with database_item={database_item.path()}, {timeframe=}, {start=}, {end=}, {ignore_value_list=}, {data_con_func=}')
 
-        if data_con_func not in ('avg', 'minmax', 'first', 'avg_day', 'avg_hour', 'minmax_day', 'minmax_hour', 'first_day','first_hour', 'first_hour_avg_day', 'avg_hour_avg_day'):
+        if data_con_func not in ('min', 'max', 'avg', 'minmax', 'first', 'avg_day', 'avg_hour', 'minmax_day', 'minmax_hour', 'first_day', 'first_hour', 'first_hour_avg_day', 'avg_hour_avg_day', 'min_hour', 'min_day', 'max_hour', 'max_day'):
             self.logger.warning(f"defined {data_con_func=} for _prepare_value_list unknown. Need to be 'avg', 'minmax', 'first', 'avg_day', 'avg_hour', 'minmax_day', 'minmax_hour', 'first_day','first_hour', 'first_hour_avg_day' or 'avg_hour_avg_day'. Aborting...")
             return
 
@@ -2712,7 +2740,6 @@ class DatabaseAddOn(SmartPlugin):
         tuples = self._query(self._db.fetchall, query, params, cur)
         return None if tuples is None else list(tuples)
 
-    # ToDo: Check if still needed.
     def _query(self, fetch, query: str, params: dict = None, cur=None) -> Union[None, list]:
         """query using commit to get latest data from db"""
 
@@ -2757,7 +2784,7 @@ class DatabaseAddOn(SmartPlugin):
         return tuples
 
     # ToDo: Check if still needed.
-    def _query_geht_gut(self, fetch, query: str, params: dict = None, cur=None) -> Union[None, list]:
+    def _query_with_close(self, fetch, query: str, params: dict = None, cur=None) -> Union[None, list]:
         """query open and close connection for each query to get latest data from db"""
 
         if params is None:

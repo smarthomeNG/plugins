@@ -105,6 +105,8 @@ db_addon_fct
 
 - verbrauch_heute: Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages) | Berechnung: onchange | Item-Type: num
 
+- verbrauch_tag: Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages) | Berechnung: onchange | Item-Type: num
+
 - verbrauch_woche: Verbrauch in der aktuellen Woche | Berechnung: onchange | Item-Type: num
 
 - verbrauch_monat: Verbrauch im aktuellen Monat | Berechnung: onchange | Item-Type: num
@@ -124,6 +126,24 @@ db_addon_fct
 - verbrauch_heute_minus6: Verbrauch heute -6 Tage | Berechnung: daily | Item-Type: num
 
 - verbrauch_heute_minus7: Verbrauch heute -7 Tage | Berechnung: daily | Item-Type: num
+
+- verbrauch_heute_minus8: Verbrauch heute -8 Tage | Berechnung: daily | Item-Type: num
+
+- verbrauch_tag_minus1: Verbrauch gestern (heute -1 Tag) (Differenz zwischen Wert am Ende des gestrigen Tages und dem Wert am Ende des Tages davor) | Berechnung: daily | Item-Type: num
+
+- verbrauch_tag_minus2: Verbrauch vorgestern (heute -2 Tage) | Berechnung: daily | Item-Type: num
+
+- verbrauch_tag_minus3: Verbrauch heute -3 Tage | Berechnung: daily | Item-Type: num
+
+- verbrauch_tag_minus4: Verbrauch heute -4 Tage | Berechnung: daily | Item-Type: num
+
+- verbrauch_tag_minus5: Verbrauch heute -5 Tage | Berechnung: daily | Item-Type: num
+
+- verbrauch_tag_minus6: Verbrauch heute -6 Tage | Berechnung: daily | Item-Type: num
+
+- verbrauch_tag_minus7: Verbrauch heute -7 Tage | Berechnung: daily | Item-Type: num
+
+- verbrauch_tag_minus8: Verbrauch heute -8 Tage | Berechnung: daily | Item-Type: num
 
 - verbrauch_woche_minus1: Verbrauch Vorwoche (aktuelle Woche -1) | Berechnung: weekly | Item-Type: num
 
@@ -149,6 +169,8 @@ db_addon_fct
 
 - verbrauch_rolling_12m_heute_minus1: Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Tages | Berechnung: daily | Item-Type: num
 
+- verbrauch_rolling_12m_tag_minus1: Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Tages | Berechnung: daily | Item-Type: num
+
 - verbrauch_rolling_12m_woche_minus1: Verbrauch der letzten 12 Monate ausgehend im Ende der letzten Woche | Berechnung: weekly | Item-Type: num
 
 - verbrauch_rolling_12m_monat_minus1: Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Monats | Berechnung: monthly | Item-Type: num
@@ -166,6 +188,12 @@ db_addon_fct
 - zaehlerstand_heute_minus2: Zählerstand / Wert am Ende des vorletzten Tages (heute -2 Tag) | Berechnung: daily | Item-Type: num
 
 - zaehlerstand_heute_minus3: Zählerstand / Wert am Ende des vorvorletzten Tages (heute -3 Tag) | Berechnung: daily | Item-Type: num
+
+- zaehlerstand_tag_minus1: Zählerstand / Wert am Ende des letzten Tages (heute -1 Tag) | Berechnung: daily | Item-Type: num
+
+- zaehlerstand_tag_minus2: Zählerstand / Wert am Ende des vorletzten Tages (heute -2 Tag) | Berechnung: daily | Item-Type: num
+
+- zaehlerstand_tag_minus3: Zählerstand / Wert am Ende des vorvorletzten Tages (heute -3 Tag) | Berechnung: daily | Item-Type: num
 
 - zaehlerstand_woche_minus1: Zählerstand / Wert am Ende der vorvorletzten Woche (aktuelle Woche -1 Woche) | Berechnung: weekly | Item-Type: num
 
@@ -221,6 +249,30 @@ db_addon_fct
 
 - minmax_heute_minus3_avg: Durchschnittswert heute vor 3 Tagen | Berechnung: daily | Item-Type: num
 
+- minmax_tag_min: Minimalwert seit Tagesbeginn | Berechnung: onchange | Item-Type: num
+
+- minmax_tag_max: Maximalwert seit Tagesbeginn | Berechnung: onchange | Item-Type: num
+
+- minmax_tag_avg: Durschnittswert seit Tagesbeginn | Berechnung: onchange | Item-Type: num
+
+- minmax_tag_minus1_min: Minimalwert gestern (heute -1 Tag) | Berechnung: daily | Item-Type: num
+
+- minmax_tag_minus1_max: Maximalwert gestern (heute -1 Tag) | Berechnung: daily | Item-Type: num
+
+- minmax_tag_minus1_avg: Durchschnittswert gestern (heute -1 Tag) | Berechnung: daily | Item-Type: num
+
+- minmax_tag_minus2_min: Minimalwert vorgestern (heute -2 Tage) | Berechnung: daily | Item-Type: num
+
+- minmax_tag_minus2_max: Maximalwert vorgestern (heute -2 Tage) | Berechnung: daily | Item-Type: num
+
+- minmax_tag_minus2_avg: Durchschnittswert vorgestern (heute -2 Tage) | Berechnung: daily | Item-Type: num
+
+- minmax_tag_minus3_min: Minimalwert heute vor 3 Tagen | Berechnung: daily | Item-Type: num
+
+- minmax_tag_minus3_max: Maximalwert heute vor 3 Tagen | Berechnung: daily | Item-Type: num
+
+- minmax_tag_minus3_avg: Durchschnittswert heute vor 3 Tagen | Berechnung: daily | Item-Type: num
+
 - minmax_woche_min: Minimalwert seit Wochenbeginn | Berechnung: onchange | Item-Type: num
 
 - minmax_woche_max: Maximalwert seit Wochenbeginn | Berechnung: onchange | Item-Type: num
@@ -270,6 +322,14 @@ db_addon_fct
 - tagesmitteltemperatur_heute_minus2: Tagesmitteltemperatur des vorletzten Tages (heute -2 Tag) | Berechnung: daily | Item-Type: num
 
 - tagesmitteltemperatur_heute_minus3: Tagesmitteltemperatur des vorvorletzten Tages (heute -3 Tag) | Berechnung: daily | Item-Type: num
+
+- tagesmitteltemperatur_tag: Tagesmitteltemperatur heute | Berechnung: onchange | Item-Type: num
+
+- tagesmitteltemperatur_tag_minus1: Tagesmitteltemperatur des letzten Tages (heute -1 Tag) | Berechnung: daily | Item-Type: num
+
+- tagesmitteltemperatur_tag_minus2: Tagesmitteltemperatur des vorletzten Tages (heute -2 Tag) | Berechnung: daily | Item-Type: num
+
+- tagesmitteltemperatur_tag_minus3: Tagesmitteltemperatur des vorvorletzten Tages (heute -3 Tag) | Berechnung: daily | Item-Type: num
 
 - serie_minmax_monat_min_15m: monatlicher Minimalwert der letzten 15 Monate (gleitend) | Berechnung: monthly | Item-Type: list
 
