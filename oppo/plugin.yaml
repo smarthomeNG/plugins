@@ -15,73 +15,6 @@ plugin:
 
 parameters:
 
-    model:
-        type: str
-        mandatory: false
-        valid_list:
-        -   ''
-        -   UDP-203
-
-        description:
-            de: Modellauswahl
-            en: model selection
-
-    timeout:
-        type: num
-        default: 3
-
-        description:
-            de: Timeout für Geräteantwort
-            en: timeout for device replies
-
-    terminator:
-        type: str
-        default: "\r"
-
-        description:
-            de: Zeilen-/Antwortbegrenzer
-            en: line or reply terminator
-
-    binary:
-        type: bool
-        default: false
-
-        description:
-            de: Binärer Übertragungsmodus
-            en: binary communication mode
-
-    autoreconnect:
-        type: bool
-        default: true
-
-        description:
-            de: Automatisches Neuverbinden bei Abbruch
-            en: automatic reconnect on disconnect
-
-    autoconnect:
-        type: bool
-        default: true
-
-        description:
-            de: Automatisches Verbinden bei Senden
-            en: automatic connect on send
-
-    connect_retries:
-        type: num
-        default: 5
-
-        description:
-            de: Anzahl Verbindungsversuche
-            en: number of connect retries
-
-    connect_cycle:
-        type: num
-        default: 3
-
-        description:
-            de: Pause zwischen Verbindungsversuchen
-            en: wait time between connect retries
-
     host:
         type: str
         mandatory: false
@@ -135,6 +68,98 @@ parameters:
         description:
             de: Klasse für Verarbeitung von Kommandos
             en: class for command processing
+            
+    model:
+        type: str
+        mandatory: false
+        valid_list:
+        -   ''
+        -   UDP-203
+
+        description:
+            de: Modellauswahl
+            en: model selection
+
+    timeout:
+        type: num
+        default: 3
+
+        description:
+            de: Timeout für Geräteantwort
+            en: timeout for device replies
+
+    terminator:
+        type: str
+        default: "\r"
+
+        description:
+            de: Zeilen-/Antwortbegrenzer
+            en: line or reply terminator
+
+    binary:
+        type: bool
+        default: false
+
+        description:
+            de: Binärer Übertragungsmodus
+            en: binary communication mode
+
+    autoreconnect:
+        type: bool
+        default: true
+
+        description:
+            de: Automatisches Neuverbinden bei Abbruch
+            en: automatic reconnect on disconnect
+
+    autoconnect:
+        type: bool
+        mandatory: false
+
+        description:
+            de: Automatisches Verbinden bei Senden
+            en: automatic connect on send
+
+    connect_retries:
+        type: num
+        default: 5
+
+        description:
+            de: Anzahl Verbindungsversuche
+            en: number of connect retries
+
+    connect_cycle:
+        type: num
+        default: 3
+
+        description:
+            de: Pause zwischen Verbindungsversuchen
+            en: wait time between connect retries
+
+    retry_cycle:
+        type: num
+        default: 30
+
+        description:
+            de: Pause zwischen Durchgängen von Verbindungsversuchen
+            en: wait time between connect retry rounds
+
+    retry_suspend:
+        type: num
+        default: 3
+
+        description:
+            de: Anzahl von Durchgängen vor Verbindungsabbruch oder Suspend-Modus
+            en: number of connect rounds before giving up / entering suspend mode
+
+    suspend_item:
+        type: str
+        default: ''
+
+        description:
+            de: Item-Pfad für das Standby-Item
+            en: item path for standby switch item
+
 
 item_attributes:
 
