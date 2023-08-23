@@ -68,7 +68,7 @@ parameters:
         description:
             de: Klasse für Verarbeitung von Kommandos
             en: class for command processing
-            
+
     model:
         type: str
         mandatory: false
@@ -103,6 +103,44 @@ parameters:
         description:
             de: Binärer Übertragungsmodus
             en: binary communication mode
+
+    baudrate:
+        type: num
+        default: 9600
+
+        description:
+            de: Serielle Übertragungsgeschwindigkeit
+            en: serial transmission speed
+
+    bytesize:
+        type: num
+        default: 8
+
+        description:
+            de: Anzahl Datenbits
+            en: number of data bits
+
+    parity:
+        type: str
+        default: N
+        valid_list:
+        -   N
+        -   E
+        -   O
+        -   M
+        -   S
+
+        description:
+            de: Parität
+            en: parity
+
+    stopbits:
+        type: num
+        default: 1
+
+        description:
+            de: Anzahl Stopbits
+            en: number of stop bits
 
     autoreconnect:
         type: bool
