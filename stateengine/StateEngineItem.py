@@ -446,7 +446,7 @@ class SeItem:
             SeLogger.manage_logdirectory(base, SeLogger.log_directory, True)
         self.__logger.debug("Current log level {}, default {}, currently using default {}",
                             self.__logger.log_level, _default_log_level, self.__logger.using_default_log_level)
-        if self.__instant_leaveaction.get() == -1:
+        if self.__instant_leaveaction.get() <= -1:
             self.__using_default_instant_leaveaction = True
         else:
             self.__using_default_instant_leaveaction = False
@@ -607,9 +607,9 @@ class SeItem:
                         _instant_leaveaction = self.__instant_leaveaction.get()
                         if self.__using_default_instant_leaveaction:
                             _instant_leaveaction = self.__default_instant_leaveaction.get()
-                        if _instant_leaveaction == 1:
+                        if _instant_leaveaction >= 1:
                             _instant_leaveaction = True
-                        elif _instant_leaveaction == 0:
+                        else:
                             _instant_leaveaction = False
                         if result is False and last_state == state and _instant_leaveaction is True:
                             self.__logger.info("Leaving {0} ('{1}'). Running actions immediately.", last_state.id,

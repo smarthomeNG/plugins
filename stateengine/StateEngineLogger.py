@@ -187,7 +187,7 @@ class SeLogger:
     def log(self, level, text, *args):
         # Section given: Check level
         _log_level = self.get_loglevel()
-        if _log_level == -1:
+        if _log_level <= -1:
             self.using_default_log_level = True
             _log_level = SeLogger.default_log_level.get()
         else:
