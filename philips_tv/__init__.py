@@ -40,7 +40,7 @@ from requests.auth import HTTPDigestAuth
 class Philips_TV(SmartPlugin):
     PLUGIN_VERSION = '1.9.2'
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
         Initializes the plugin.
 

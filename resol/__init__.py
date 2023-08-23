@@ -20,7 +20,6 @@
 #########################################################################
   
 import socket
-#from lib.network import Tcp_client
 import time
 from lib.model.smartplugin import *
 
@@ -29,7 +28,7 @@ class Resol(SmartPlugin):
     PLUGIN_VERSION = '1.0.7'    # (must match the version specified in plugin.yaml)
 
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
         Initalizes the plugin.
 
