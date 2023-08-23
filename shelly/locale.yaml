@@ -1,19 +1,20 @@
 # translations for the web interface
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'Mac Adresse':             {'de': '=', 'en': 'Mac Address'}
-    'IP Adresse':              {'de': '=', 'en': 'IP Address'}
-    'Firmware Version':        {'de': '=', 'en': '='}
-    'neue Firmware':           {'de': 'neue FW<br>verfügbar', 'en': 'new FW<br>available'}
-    'Item(s) konfiguriert':    {'de': 'Item(s)<br>konfiguriert', 'en': 'item(s)<br>configured'}
+    'Mac Adresse':                {'de': '=', 'en': 'Mac Address'}
+    'IP Adresse':                 {'de': '=', 'en': 'IP Address'}
+    'Firmware Version':           {'de': '=', 'en': '='}
+    'neue Firmware':              {'de': 'neue FW<br>verfügbar', 'en': 'new FW<br>available'}
+    'Item(s) konfiguriert':       {'de': 'Item(s)<br>konfiguriert', 'en': 'item(s)<br>configured'}
 
-#    'Message Durchsatz':       {'de': '=', 'en': 'Message throughput'}
-#    'letzte Minute':           {'de': '=', 'en': 'last minute'}
-#    'letzte 5 Min.':           {'de': '=', 'en': 'last 5 min'}
-#    'letzte 15 Min.':          {'de': '=', 'en': 'last 15 min'}
+#    'Message Durchsatz':          {'de': '=', 'en': 'Message throughput'}
+#    'letzte Minute':              {'de': '=', 'en': 'last minute'}
+#    'letzte 5 Min.':              {'de': '=', 'en': 'last 5 min'}
+#    'letzte 15 Min.':             {'de': '=', 'en': 'last 15 min'}
 
-    'Unbehandelter Status':    {'de': '=', 'en': 'Unhandled status'}
-    'Unbehandelter Substatus': {'de': '=', 'en': 'Unhandled sub-status'}
+    'Unbehandelter Status':       {'de': '=', 'en': 'Unhandled status'}
+    'Unbehandelter Substatus':    {'de': '=', 'en': 'Unhandled sub-status'}
+    'Unbehandelter {gen} Status': {'de': '=', 'en': 'Unhandled {gen} status'}
 
     # Alternative format for translations of longer texts:
     'Durchschnittlich Messages je Minute empfangen':

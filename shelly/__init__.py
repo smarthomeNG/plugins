@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.1'
 
 
     def __init__(self, sh):
@@ -557,7 +557,7 @@ class Shelly(MqttPlugin):
                 self.shelly_devices[shelly_id]['conf_id'] = config_data['shelly_conf_id']
                 if config_data['shelly_list_attrs']:
                     self.shelly_devices[shelly_id]['list_attrs'] = config_data['shelly_list_attrs']
-            self.update_items_from_status(shelly_id, '', 'online', config_data.get('online', True))
+            self.update_items_from_status(shelly_id, '', 'online', self.shelly_devices.get('online', True))
 
         except Exception as e:
             self.logger.exception(f"{inspect.stack()[0][3]}: Exception {e.__class__.__name__}: {e}\n- mqtt-topic={topic}\n- mqtt-payload={payload}")
@@ -978,6 +978,23 @@ class Shelly(MqttPlugin):
                         pass
                     elif property == 'has_update':
                         pass
+
+                    elif property in ['mode']:    # for SHRGBW2
+                        self.update_items_from_status(shelly_id, '', property, sub_status)
+                    elif property == 'lights':    # for SHRGBW2
+                        if len(sub_status) > 0:
+                            light = sub_status[0]
+                            self.update_items_from_status(shelly_id, 'light', 'on', light.get('ison', False))
+                            self.update_items_from_status(shelly_id, 'light', 'mode', light.get('mode', ''))
+                            self.update_items_from_status(shelly_id, 'light', 'red', light.get('mode', 0))
+                            self.update_items_from_status(shelly_id, 'light', 'green', light.get('mode', 0))
+                            self.update_items_from_status(shelly_id, 'light', 'blue', light.get('mode', 0))
+                            self.update_items_from_status(shelly_id, 'light', 'white', light.get('mode', 0))
+                            self.update_items_from_status(shelly_id, 'light', 'gain', light.get('gain', 0))
+                            self.update_items_from_status(shelly_id, 'light', 'effect', light.get('effect', 0))
+                            self.update_items_from_status(shelly_id, 'light', 'transition', light.get('transition', 0))
+                            self.update_items_from_status(shelly_id, 'light', 'power', light.get('power', 0))
+                            self.update_items_from_status(shelly_id, 'light', 'overpower', light.get('overpower', False))
 
                     elif property == 'sensor':
                         self.update_items_from_status(shelly_id, 'sensor', 'state', sub_status['state'], 'info')
