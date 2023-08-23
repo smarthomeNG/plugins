@@ -33,7 +33,7 @@ class Neato(SmartPlugin):
     PLUGIN_VERSION = '1.6.8'
     robot = 'None'
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
         Initalizes the plugin.
 
