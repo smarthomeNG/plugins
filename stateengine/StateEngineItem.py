@@ -225,7 +225,7 @@ class SeItem:
 
         # Init suspend settings
         self.__suspend_time = StateEngineValue.SeValue(self, "Suspension time on manual changes", False, "num")
-        self.__suspend_time.set_from_attr(self.__item, "se_suspend_time", StateEngineDefaults.suspend_time)
+        self.__suspend_time.set_from_attr(self.__item, "se_suspend_time", StateEngineDefaults.suspend_time.get())
 
         # Init laststate and previousstate items/values
         self.__config_issues = {}
@@ -307,6 +307,7 @@ class SeItem:
         self.__update_original_caller = None
         self.__update_original_source = None
         self.__using_default_instant_leaveaction = False
+        self.__using_default_suspendtime = False
 
         # Check item configuration
         self.__check_item_config()
@@ -453,6 +454,13 @@ class SeItem:
         self.__logger.debug("Current instant leave action {}, default {}, currently using default {}",
                             self.__instant_leaveaction, self.__default_instant_leaveaction,
                             self.__using_default_instant_leaveaction)
+        if self.__suspend_time.get() < 0:
+            self.__using_default_suspendtime = True
+        else:
+            self.__using_default_suspendtime = False
+        self.__logger.debug("Current suspend time {}, default {}, currently using default {}",
+                            self.__suspend_time, StateEngineDefaults.suspend_time,
+                            self.__using_default_suspendtime)
         self.update_lock.acquire(True, 10)
         while not self.__queue.empty() and self.__ab_alive:
             job = self.__queue.get()
@@ -501,7 +509,8 @@ class SeItem:
 
                 # Update current values
                 StateEngineCurrent.update()
-                self.__variables["item.suspend_time"] = self.__suspend_time.get()
+                self.__variables["item.suspend_time"] = StateEngineDefaults.suspend_time.get() \
+                    if self.__using_default_suspendtime is True else self.__suspend_time.get()
                 self.__variables["item.suspend_remaining"] = -1
                 self.__variables["item.instant_leaveaction"] = self.__default_instant_leaveaction.get() \
                     if self.__using_default_instant_leaveaction is True else self.__instant_leaveaction.get()

@@ -85,7 +85,10 @@ class StateEngine(SmartPlugin):
             self.logger.info("Set default log level to {}, Startup log level to {}.".format(SeLogger.log_level, SeLogger.startup_log_level))
             self.logger.info("Init StateEngine (log_level={0}, log_directory={1})".format(log_level, log_directory))
             StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
-            StateEngineDefaults.suspend_time = self.get_parameter_value("suspend_time_default")
+            suspend_time = self.get_parameter_value("suspend_time_default")
+            suspend_time_value = StateEngineValue.SeValue(self, "Default Suspend Time", False, "num")
+            suspend_time_value.set(suspend_time)
+            StateEngineDefaults.suspend_time = suspend_time_value
             default_instant_leaveaction = self.get_parameter_value("instant_leaveaction")
             self.__default_instant_leaveaction = StateEngineValue.SeValue(self, "Default Instant Leave Action", False, "bool")
             self.__default_instant_leaveaction.set(default_instant_leaveaction)

@@ -555,7 +555,7 @@ item_attributes:
 
     se_suspend_time:
         type: foo
-        valid_min: 1
+        valid_min: -60
         valid_max: 86400
         description:
             de: 'Dauer der Unterbrechung der automatischen Steuerung nach manuellen Aktionen in Sekunden'
@@ -746,13 +746,6 @@ item_structs:
               type: num
               cache: True
               initial_value: -1
-
-            settings_edited:
-                type: bool
-                name: settings editiert
-                eval_trigger: ...settings.*
-                eval: not sh..self()
-                on_update: ...retrigger = True if sh..self.property.prev_update_age > 0.1 else None
 
         rules:
             name: Zustandsautomat
@@ -1075,7 +1068,7 @@ item_structs:
                     visu_acl: rw
                     cache: True
                     enforce_updates: True
-                    initial_value: 60
+                    initial_value: -1
                     on_change: .seconds = value * 60 if not sh..self.property.last_change_by in ["On_Change:{}".format(sh..seconds.property.path), "On_Change:{}".format(sh..duration_format.property.path)] else None
                     on_update: .seconds = value * 60 if "Init" in sh..self.property.last_update_by else None
 
@@ -1101,7 +1094,7 @@ item_structs:
                     visu_acl: rw
                     cache: True
                     enforce_updates: True
-                    initial_value: 60
+                    initial_value: -1
                     on_change: .seconds = value * 60 if not sh..self.property.last_change_by in ["On_Change:{}".format(sh..seconds.property.path), "On_Change:{}".format(sh..duration_format.property.path)] else None
                     on_update: .seconds = value * 60 if "Init" in sh..self.property.last_update_by else None
 
@@ -1127,7 +1120,7 @@ item_structs:
                     visu_acl: rw
                     cache: True
                     enforce_updates: True
-                    initial_value: 60
+                    initial_value: -1
                     on_change: .seconds = value * 60 if not sh..self.property.last_change_by in ["On_Change:{}".format(sh..seconds.property.path), "On_Change:{}".format(sh..duration_format.property.path)] else None
                     on_update: .seconds = value * 60 if "Init" in sh..self.property.last_update_by else None
 
@@ -1174,7 +1167,7 @@ item_structs:
                 visu_acl: rw
                 cache: True
                 enforce_updates: True
-                initial_value: 60
+                initial_value: -1
                 on_change: .seconds = value * 60 if not sh..self.property.last_change_by in ["On_Change:{}".format(sh..seconds.property.path), "On_Change:{}".format(sh..duration_format.property.path)] else None
                 on_update: .seconds = value * 60 if "Init" in sh..self.property.last_update_by else None
 
