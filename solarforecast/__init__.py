@@ -34,7 +34,7 @@ import datetime
 class Solarforecast(SmartPlugin):
     PLUGIN_VERSION = '1.9.1'
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
         Initalizes the plugin.
 
