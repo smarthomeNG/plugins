@@ -23,7 +23,6 @@
 import serial
 import os
 import sys
-import logging
 import struct
 import time
 import threading
@@ -169,7 +168,7 @@ class EnOcean(SmartPlugin):
     PLUGIN_VERSION = "1.3.11"
 
     
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
         Initalizes the plugin.
 
@@ -180,7 +179,6 @@ class EnOcean(SmartPlugin):
 
         self._sh = sh
         self.port = self.get_parameter_value("serialport")
-        self.logger = logging.getLogger(__name__)
         tx_id = self.get_parameter_value("tx_id")
         if (len(tx_id) < 8):
             self.tx_id = 0
