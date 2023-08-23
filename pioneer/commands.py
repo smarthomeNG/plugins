@@ -3,11 +3,11 @@
 
 # commands for dev pioneer
 models = {
-    'ALL': ['general.pqls', 'general.setup.surroundposition', 'general.setup.speakersystem', 'general.setup.xcurve', 'general.setup.xover', 'general.setup.hdmi', 'general.setup.name', 'general.setup.language', 'general.dimmer', 'general.sleep', 'general.display', 'general.error', 'general.multizone', 'tuner', 'zone1', 'zone2.control', 'hdzone'],
-    'SC-LX87': ['general.amp', 'general.setup.loudness', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
-    'SC-LX77': ['general.amp', 'general.setup.loudness', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
-    'SC-LX57': ['general.amp', 'general.setup.loudness', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
-    'SC-2023': ['zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
+    'ALL': ['general.pqls', 'general.settings.speakersystem', 'general.settings.xcurve', 'general.settings.hdmi', 'general.settings.name', 'general.settings.language', 'general.dimmer', 'general.sleep', 'general.display', 'general.error', 'general.multizone', 'tuner', 'zone1', 'zone2.control', 'hdzone'],
+    'SC-LX87': ['general.amp', 'general.settings.surroundposition', 'general.settings.xover', 'general.settings.loudness', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
+    'SC-LX77': ['general.amp', 'general.settings.surroundposition', 'general.settings.xover', 'general.settings.loudness', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
+    'SC-LX57': ['general.amp', 'general.settings.surroundposition', 'general.settings.xover', 'general.settings.loudness', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
+    'SC-2023': ['general.settings.surroundposition', 'general.settings.xover', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
     'SC-1223': ['zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control'],
     'VSX-1123': [],
     'VSX-923': []
@@ -23,20 +23,20 @@ commands = {
         'amp': {'read': True, 'write': True, 'read_cmd': '?SAC', 'write_cmd': '{VALUE}SAC', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'SAC{LOOKUP}', 'lookup': 'AMP', 'item_attrs': {'attributes': {'remark': '0 = AMP, 1 = THR'}, 'lookup_item': True}},
         'multizone': {'read': False, 'write': True, 'write_cmd': 'ZZ', 'item_type': 'str', 'dev_datatype': 'str'},
         'settings': {
-            'language': {'read': True, 'write': True, 'read_cmd': '?SSE', 'write_cmd': '{RAW_VALUE:02}SSE', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SSE{LOOKUP}', 'lookup': 'LANGUAGE', 'item_attrs': {'initial': True}},
+            'language': {'read': True, 'write': True, 'read_cmd': '?SSE', 'write_cmd': '{VALUE}SSE', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SSE{LOOKUP}', 'lookup': 'LANGUAGE', 'item_attrs': {'initial': True}},
             'name': {'read': True, 'write': True, 'read_cmd': '?SSO', 'write_cmd': '{VALUE}SSO', 'item_type': 'str', 'dev_datatype': 'PioName', 'reply_pattern': r'SSO(?:\d{2})(.*)', 'item_attrs': {'initial': True}},
-            'speakersystem': {'read': True, 'write': True, 'read_cmd': '?SSF', 'write_cmd': '{RAW_VALUE:02}SSF', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SSF{LOOKUP}', 'lookup': 'SPEAKERSYSTEM', 'item_attrs': {'initial': True}},
-            'surroundposition': {'read': True, 'write': True, 'read_cmd': '?SSP', 'write_cmd': '{RAW_VALUE:01}SSP', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SSP{LOOKUP}', 'lookup': 'SURROUNDPOSITION', 'item_attrs': {'initial': True}},
-            'xover': {'read': True, 'write': True, 'read_cmd': '?SSQ', 'write_cmd': '{RAW_VALUE:01}SSQ', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SSQ{LOOKUP}', 'lookup': 'XOVER', 'item_attrs': {'initial': True}},
-            'xcurve': {'read': True, 'write': True, 'read_cmd': '?SST', 'write_cmd': '{RAW_VALUE:01}SST', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SST{LOOKUP}', 'lookup': 'XCURVE', 'item_attrs': {'initial': True}},
+            'speakersystem': {'read': True, 'write': True, 'read_cmd': '?SSF', 'write_cmd': '{VALUE}SSF', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SSF{LOOKUP}', 'lookup': 'SPEAKERSYSTEM', 'item_attrs': {'lookup_item': True, 'initial': True}},
+            'surroundposition': {'read': True, 'write': True, 'read_cmd': '?SSP', 'write_cmd': '{VALUE}SSP', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SSP{LOOKUP}', 'lookup': 'SURROUNDPOSITION', 'item_attrs': {'lookup_item': True, 'initial': True}},
+            'xover': {'read': True, 'write': True, 'read_cmd': '?SSQ', 'write_cmd': '{VALUE}SSQ', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SSQ{LOOKUP}', 'lookup': 'XOVER', 'item_attrs': {'initial': True}},
+            'xcurve': {'read': True, 'write': True, 'read_cmd': '?SST', 'write_cmd': '{VALUE}SST', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SST{LOOKUP}', 'lookup': 'XCURVE', 'item_attrs': {'initial': True}},
             'loudness': {'read': True, 'write': True, 'read_cmd': '?SSU', 'write_cmd': '{RAW_VALUE:01}SSU', 'item_type': 'bool', 'dev_datatype': 'raw', 'reply_pattern': r'SSU(\d{1})', 'item_attrs': {'initial': True}},
             'initialvolume': {'read': True, 'write': True, 'read_cmd': '?SUC', 'write_cmd': '{VALUE}SUC', 'item_type': 'num', 'dev_datatype': 'PioInitVol', 'reply_pattern': r'SUC(\d{3})', 'item_attrs': {'initial': True}},
-            'mutelevel': {'read': True, 'write': True, 'read_cmd': '?SUE', 'write_cmd': '{RAW_VALUE:01}SUE', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': r'SUE{LOOKUP}', 'lookup': 'MUTELEVEL', 'item_attrs': {'initial': True}},
+            'mutelevel': {'read': True, 'write': True, 'read_cmd': '?SUE', 'write_cmd': '{VALUE}SUE', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': r'SUE{LOOKUP}', 'lookup': 'MUTELEVEL', 'item_attrs': {'initial': True}},
             'hdmi': {
                 'control': {'read': True, 'write': True, 'read_cmd': '?STQ', 'write_cmd': '{RAW_VALUE:01}STQ', 'item_type': 'bool', 'dev_datatype': 'raw', 'reply_pattern': r'STQ(\d{1})', 'item_attrs': {'initial': True}},
                 'controlmode': {'read': True, 'write': True, 'read_cmd': '?STR', 'write_cmd': '{RAW_VALUE:01}STR', 'item_type': 'bool', 'dev_datatype': 'raw', 'reply_pattern': r'STR(\d{1})', 'item_attrs': {'initial': True}},
                 'arc': {'read': True, 'write': True, 'read_cmd': '?STT', 'write_cmd': '{RAW_VALUE:01}STT', 'item_type': 'bool', 'dev_datatype': 'raw', 'reply_pattern': r'STT(\d{1})', 'item_attrs': {'initial': True}},
-                'standbythrough': {'read': True, 'write': True, 'read_cmd': '?STU', 'write_cmd': '{RAW_VALUE:02}STU', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'STU{LOOKUP})', 'lookup': 'STANDBYTHROUGH', 'item_attrs': {'initial': True}}
+                'standbythrough': {'read': True, 'write': True, 'read_cmd': '?STU', 'write_cmd': '{VALUE}STU', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'STU{LOOKUP}', 'lookup': 'STANDBYTHROUGH', 'item_attrs': {'lookup_item': True, 'initial': True}}
             }
 
     }
