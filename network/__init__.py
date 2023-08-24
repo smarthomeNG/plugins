@@ -227,7 +227,6 @@ class Network(SmartPlugin):
         if self.get_parameter_value('tcp'):
             self.add_listener('tcp', self.get_parameter_value('ip'), self.get_parameter_value('port'), self.tcp_acl,
                               generic=True)
-        print(f'val is {self.get_parameter_value("udp")}, type is {self.get_parameter_value("udp")}')
         if self.get_parameter_value('udp'):
             self.add_listener('udp', self.get_parameter_value('ip'), self.get_parameter_value('port'), self.udp_acl,
                               generic=True)
