@@ -844,6 +844,16 @@ class SeItem:
         '''
 
     def __log_issues(self, issue_type):
+        def list_issues(v):
+            if isinstance(v.get('issue'), list) and len(v.get('issue')) > 1:
+                self.__logger.info("has the following issues:")
+                self.__logger.increase_indent()
+                for e in v.get('issue'):
+                    self.__logger.info("- {}", e)
+                self.__logger.decrease_indent()
+            else:
+                self.__logger.info("has the following issue: {}", v.get('issue'))
+
         if issue_type == 'actions':
             to_check = self.__action_status.items()
             warn = ', '.join(key for key in self.__action_status.keys())
@@ -873,7 +883,14 @@ class SeItem:
                 if issue_type == 'states':
                     self.__logger.info("State {} is ignored because", entry)
                 elif issue_type == 'config entries':
-                    self.__logger.info("Attribute {} has an issue: {}", entry, value.get('issue'))
+                    if value.get('attribute'):
+                        self.__logger.info("Attribute {}", value.get('attribute'))
+                        self.__logger.increase_indent()
+                        self.__logger.info("defined in state {}", entry)
+                        self.__logger.decrease_indent()
+                        list_issues(value)
+                    else:
+                        self.__logger.info("Attribute {} has an issue: {}", entry, value.get('issue'))
                     continue
                 else:
                     additional = " used in" if origin_list else ""
@@ -891,8 +908,7 @@ class SeItem:
                                                                          origin.get('conditionset'))
                     self.__logger.info("{}", origin_text)
                 self.__logger.decrease_indent()
-                text = "has an issue: {}".format(value.get('issue'))
-                self.__logger.info("{}", text)
+                list_issues(value)
                 self.__logger.info("")
         for entry, value in to_check:
             if 'issue' not in value:

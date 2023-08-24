@@ -217,7 +217,8 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_attributevalue({0}, {1})'", item, attrib)
         if ":" in item:
             var_type, item = StateEngineTools.partition_strip(item, ":")
-            item, issue = self._abitem.return_item(self._abitem.get_variable(item)) if var_type == "var" else item
+            if var_type == "var":
+                item, issue = self._abitem.return_item(self._abitem.get_variable(item))
         else:
             item, issue = self._abitem.return_item(item)
         try:

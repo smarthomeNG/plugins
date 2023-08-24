@@ -105,6 +105,9 @@ class SeValue(StateEngineTools.SeItemChild):
                 else:
                     value_list.append("{}:{}".format(attr_type, entry))
             value = value_list
+        elif value is not None and attr_type is not None:
+            # update value type correctly based on attr_type
+            value = "{}:{}".format(attr_type, value)
         # Convert weird string representation of OrderedDict correctly
         if isinstance(value, str) and value.startswith("["):
             value = re.split('(, (?![^(]*\)))', value.strip(']['))
