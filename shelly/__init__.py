@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.6.2'
 
 
     def __init__(self, sh):
@@ -312,19 +312,27 @@ class Shelly(MqttPlugin):
                 shelly_id = self.get_iattr_value(item.conf, 'shelly_id').upper()
                 shelly_type = self.get_iattr_value(item.conf, 'shelly_type', '').lower()
                 if shelly_type != '':
-                    # old configuration type
+                    # old configuration mode
                     shelly_relay = self.get_iattr_value(item.conf, 'shelly_relay')
                     if not shelly_relay:
                         shelly_relay = '0'
                     topic = 'shellies/' + shelly_type + '-' + shelly_id + '/relay/' + shelly_relay + '/command'
                     self.publish_topic(topic, item(), item, bool_values=['off', 'on'])
                 else:
-                    # new configuration type
+                    # new configuration mode for Gen1 device
                     topic = 'shellies/' + config_data.get('shelly_id', '')
                     shelly_group = config_data['shelly_group']
                     if shelly_group.startswith('switch:'):
                         topic += '/relay/' + shelly_group.split(':')[1] + '/command'
                         self.publish_topic(topic, item(), bool_values=['off', 'on'])
+                    elif shelly_group.startswith('lights:'):
+                        topic += '/color/' + shelly_group.split(':')[1] + '/set'
+                        shelly_attr = config_data['shelly_attr']
+                        if shelly_attr == 'on':
+                            shelly_attr = 'turn'
+                        payload = {shelly_attr: item()}
+
+                        pass
                     else:
                         self.logger.warning(f"update_item: Output to group {shelly_group} is not supported")
             elif config_data.get('gen', None) == '2':
@@ -984,17 +992,20 @@ class Shelly(MqttPlugin):
                     elif property == 'lights':    # for SHRGBW2
                         if len(sub_status) > 0:
                             light = sub_status[0]
-                            self.update_items_from_status(shelly_id, 'light', 'on', light.get('ison', False))
-                            self.update_items_from_status(shelly_id, 'light', 'mode', light.get('mode', ''))
-                            self.update_items_from_status(shelly_id, 'light', 'red', light.get('mode', 0))
-                            self.update_items_from_status(shelly_id, 'light', 'green', light.get('mode', 0))
-                            self.update_items_from_status(shelly_id, 'light', 'blue', light.get('mode', 0))
-                            self.update_items_from_status(shelly_id, 'light', 'white', light.get('mode', 0))
-                            self.update_items_from_status(shelly_id, 'light', 'gain', light.get('gain', 0))
-                            self.update_items_from_status(shelly_id, 'light', 'effect', light.get('effect', 0))
-                            self.update_items_from_status(shelly_id, 'light', 'transition', light.get('transition', 0))
-                            self.update_items_from_status(shelly_id, 'light', 'power', light.get('power', 0))
-                            self.update_items_from_status(shelly_id, 'light', 'overpower', light.get('overpower', False))
+                            for property in light:
+                                if property == 'ison':
+                                    self.update_items_from_status(shelly_id, 'lights:0', 'on', light.get(property, False))
+                                elif property == 'mode':
+                                    self.update_items_from_status(shelly_id, 'lights:0', property, light.get(property, ''))
+                                elif property in ['red', 'green', 'blue', 'white', 'gain', 'effect', 'transition', 'power']:
+                                    self.update_items_from_status(shelly_id, 'lights:0', property, light.get(property, 0))
+                                elif property == 'overpower':
+                                    self.update_items_from_status(shelly_id, 'lights:0', property, light.get(property, False))
+                                else:
+                                    self.log_unhandled_status(shelly_id, property, light.get(property), topic=topic, payload=payload, group='lights:0', position='*l1')
+                            if len(sub_status) > 1:
+                                self.log_unhandled_status(shelly_id, 'light[1]', light[1], topic=topic, payload=payload, group='lights:'+str(len(sub_status)), position='*l1')
+
 
                     elif property == 'sensor':
                         self.update_items_from_status(shelly_id, 'sensor', 'state', sub_status['state'], 'info')
