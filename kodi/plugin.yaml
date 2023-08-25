@@ -81,7 +81,7 @@ parameters:
 
     retry_suspend:
         type: num
-        default: 0
+        default: 3
 
         description:
             de: Anzahl von Durchgängen vor Verbindungsabbruch oder Suspend-Modus
