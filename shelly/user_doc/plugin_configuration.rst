@@ -119,7 +119,7 @@ muss folgendermaßen vorgegangen werden:
 .. code-block:: yaml
 
     test_item:
-        shelly_attr:<MAC Adresse>
+        shelly_id:<MAC Adresse>
         shelly_list_attrs: True
 
 Außerdem muß der Logger **plugins.shelly** auf den Level INFO konfiguriert werden. Anschließend werden dann die

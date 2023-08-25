@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.5'
+    PLUGIN_VERSION = '1.6.6'
 
 
     def __init__(self, sh):
@@ -63,7 +63,7 @@ class Shelly(MqttPlugin):
             return
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        # self.param1 = self.get_parameter_value('param1')
+        self.gen1debug = self.get_parameter_value('gen1debug')
 
         # Initialization code goes here
         self.shelly_devices = {}    # dict to store information about discovered shelly devices
@@ -331,8 +331,7 @@ class Shelly(MqttPlugin):
                         if shelly_attr == 'on':
                             shelly_attr = 'turn'
                         payload = {shelly_attr: item()}
-
-                        pass
+                        self.publish_topic(topic, payload)
                     else:
                         self.logger.warning(f"update_item: Output to group {shelly_group} is not supported")
             elif config_data.get('gen', None) == '2':
@@ -1096,6 +1095,10 @@ class Shelly(MqttPlugin):
             #self.logger.notice(f"on_mqtt_shellies: Entry {topic=}, {payload=} ({type(payload)=})")
             if topic.endswith('/rpc'):
                 return
+
+            if self.gen1debug:
+                self.logger.info(f"gen1debug: topic={topic}, payload={payload}")
+
             topic_parts = topic.split('/')
             if topic_parts[1].lower() in ['gen2', 'command', 'announce']:
                 return
