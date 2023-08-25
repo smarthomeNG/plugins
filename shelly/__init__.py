@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.2'
+    PLUGIN_VERSION = '1.6.4'
 
 
     def __init__(self, sh):
@@ -968,10 +968,9 @@ class Shelly(MqttPlugin):
             elif property == 'online':
                 #mapping = 'global-' + property
                 self.update_items_from_status(shelly_id, '', property, payload)
-            elif property in ['temperature', 'temperature_f', 'overtemperature']:
+            elif property in ['temperature', 'temperature_f', 'overtemperature', 'overpower']:
                 if property in property_mapping:
                     property = property_mapping[property]
-                #mapping = 'global-' + property
                 self.update_items_from_status(shelly_id, '', property, payload)
             elif property == 'info' and isinstance(payload, dict):
                 for property in payload.keys():
@@ -989,23 +988,23 @@ class Shelly(MqttPlugin):
 
                     elif property in ['mode']:    # for SHRGBW2
                         self.update_items_from_status(shelly_id, '', property, sub_status)
+                    elif property == 'meters':    # for SHRGBW2
+                        pass
                     elif property == 'lights':    # for SHRGBW2
                         if len(sub_status) > 0:
-                            light = sub_status[0]
-                            for property in light:
-                                if property == 'ison':
-                                    self.update_items_from_status(shelly_id, 'lights:0', 'on', light.get(property, False))
-                                elif property == 'mode':
-                                    self.update_items_from_status(shelly_id, 'lights:0', property, light.get(property, ''))
-                                elif property in ['red', 'green', 'blue', 'white', 'gain', 'effect', 'transition', 'power']:
-                                    self.update_items_from_status(shelly_id, 'lights:0', property, light.get(property, 0))
-                                elif property == 'overpower':
-                                    self.update_items_from_status(shelly_id, 'lights:0', property, light.get(property, False))
-                                else:
-                                    self.log_unhandled_status(shelly_id, property, light.get(property), topic=topic, payload=payload, group='lights:0', position='*l1')
-                            if len(sub_status) > 1:
-                                self.log_unhandled_status(shelly_id, 'light[1]', light[1], topic=topic, payload=payload, group='lights:'+str(len(sub_status)), position='*l1')
-
+                            for index, light in enumerate(sub_status):
+                                light_group = 'lights:'+str(index)
+                                for property in light:
+                                    if property == 'ison':
+                                        self.update_items_from_status(shelly_id, light_group, 'on', light.get(property, False))
+                                    elif property == 'mode':
+                                        self.update_items_from_status(shelly_id, light_group, property, light.get(property, ''))
+                                    elif property in ['red', 'green', 'blue', 'white', 'gain', 'brightness', 'effect', 'transition', 'power']:
+                                        self.update_items_from_status(shelly_id, light_group, property, light.get(property, 0))
+                                    elif property == 'overpower':
+                                        self.update_items_from_status(shelly_id, light_group, property, light.get(property, False))
+                                    else:
+                                        self.log_unhandled_status(shelly_id, property, light.get(property), topic=topic, payload=payload, group=light_group, position='*l1')
 
                     elif property == 'sensor':
                         self.update_items_from_status(shelly_id, 'sensor', 'state', sub_status['state'], 'info')

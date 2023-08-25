@@ -122,6 +122,7 @@ class WebInterface(SmartPluginWebIf):
                 value_dict['shelly_fw'] = self.plugin.shelly_devices[device]['fw_ver']
                 value_dict['shelly_newfw'] = self.ja_nein(self.plugin.shelly_devices[device]['new_fw'])
                 value_dict['shelly_rssi'] = self.plugin.shelly_devices[device].get('rssi', '')
+                value_dict['list_attrs'] = self.ja_nein(self.plugin.shelly_devices[device].get('list_attrs', ''))
                 value_dict['items_defined'] = self.ja_nein(self.plugin.shelly_devices[device]['connected_to_item'])
                 device_list.append(value_dict)
 

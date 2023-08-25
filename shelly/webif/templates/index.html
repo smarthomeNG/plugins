@@ -71,31 +71,31 @@
 		itemtable = $('#itemtable').DataTable( {
 			columnDefs: [
 				{
-					title: '{{ _('Item') }}',
+					title: "{{ _('Item') }}",
 					targets: [1]
 				},
 				{
-					title: '{{ _('Typ') }}',
+					title: "{{ _('Typ') }}",
 					targets: [2], "className": "type"
 				},
 				{
-					title: '{{ _('Wert') }}',
+					title: "{{ _('Wert') }}",
 					targets: [3], "className": "value dt-head-right"
 				},
 				{
-					title: '{{ _('Deviceetype') }}',
+					title: "{{ _('Deviceetype') }}",
 					targets: [4], "className": "shelly_type"
 		  		},
 				{
-					title: '{{ _('Shelly ID') }}',
+					title: "{{ _('Shelly ID') }}",
 					targets: [5], "className": "shelly_id"
 		  		},
 				{
-					title: '{{ _('Letztes Update') }}',
+					title: "{{ _('Letztes Update') }}",
 					targets: [6], "className": "change_update"
 				},
 				{
-					title: '{{ _('Letzte Änderung') }}',
+					title: "{{ _('Letzte Änderung') }}",
 					targets: [7], "className": "change_update"
 				}
 			].concat($.fn.dataTable.defaults.columnDefs),
@@ -105,11 +105,11 @@
 		devicetable = $('#devicetable').DataTable( {
 			columnDefs: [
 				{
-					title: '{{ _('Device') }}',
+					title: "{{ _('Device') }}",
 					targets: [1], "className": "deviceid"
 				},
 				{
-					title: '{{ _('Devicetype') }}',
+					title: "{{ _('Devicetype') }}",
 					targets: [2], "className": "devicetype"
 				},
 				{
@@ -125,24 +125,28 @@
 					targets: [5], "className": "devicemac"
 				},
 				{
-					title: '{{ _('IP Adresse') }}',
+					title: "{{ _('IP Adresse') }}",
 					targets: [6], "className": "deviceip"
 				},
 				{
-					title: '{{ _('FW Version') }}',
+					title: "{{ _('FW Version') }}",
 					targets: [7], "className": "devicefw"
 				},
 				{
-					title: '{{ _('neue FW verfügbar') }}',
+					title: "{{ _('neue FW verfügbar') }}",
 					targets: [8], "className": "devicefw"
 				},
 				{
-					title: '{{ _('rssi') }}',
+					title: "{{ _('rssi') }}",
 					targets: [9], "className": "devicerssi"
 				},
 				{
-					title: '{{ _('Items definiert') }}',
-					targets: [10], "className": "bool"
+					title: "{{ _('List Attributes') }}",
+					targets: [10], "className": "devicelistattrs"
+				},
+				{
+					title: "{{ _('Items definiert') }}",
+					targets: [11], "className": "bool"
 				}
 			].concat($.fn.dataTable.defaults.columnDefs),
 			pageLength: webif_pagelength,
@@ -194,12 +198,13 @@
 				let devicefw = devices[device]['shelly_fw'];
 				let devicenewfw = devices[device]['shelly_newfw'];
 				let devicerssi = devices[device]['shelly_rssi'];
+				let devicelistattrs = devices[device]['list_attrs'];
 
 				let items_defined = devices[device]['items_defined'];
 				if (items_defined == 0) {
-					items_defined = '{{ _('Nein') }}'
+					items_defined = "{{ _('Nein') }}"
 				}
-				let newRow = devicetable.row.add( [ null, deviceid, devicetype, devicegen, deviceonline, devicemac, deviceip, devicefw, devicenewfw, devicerssi, items_defined] ).draw(false).node();
+				let newRow = devicetable.row.add( [ null, deviceid, devicetype, devicegen, deviceonline, devicemac, deviceip, devicefw, devicenewfw, devicerssi, devicelistattrs, items_defined] ).draw(false).node();
 			}
 
 			let deviceinfo = '';

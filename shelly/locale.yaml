@@ -4,7 +4,8 @@ plugin_translations:
     'Mac Adresse':                {'de': '=', 'en': 'Mac Address'}
     'IP Adresse':                 {'de': '=', 'en': 'IP Address'}
     'Firmware Version':           {'de': '=', 'en': '='}
-    'neue Firmware':              {'de': 'neue FW<br>verfügbar', 'en': 'new FW<br>available'}
+    'neue FW verfügbar':          {'de': 'neue FW<br>verfügbar', 'en': 'new FW<br>available'}
+    'List Attributes':            {'de': 'List<br>Attributes', 'en': 'List<br>Attributes'}
     'Item(s) konfiguriert':       {'de': 'Item(s)<br>konfiguriert', 'en': 'item(s)<br>configured'}
 
 #    'Message Durchsatz':          {'de': '=', 'en': 'Message throughput'}
