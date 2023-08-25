@@ -106,7 +106,10 @@
 			columnDefs: [
 				{
 					title: "{{ _('Device') }}",
-					targets: [1], "className": "deviceid"
+					targets: [1], "className": "deviceid",
+			        render: function ( data, type, row, meta ) {
+            			return '<a href="http://' +  data + '" target="_blank">'+data+'</a>';
+        			}
 				},
 				{
 					title: "{{ _('Devicetype') }}",
@@ -126,7 +129,10 @@
 				},
 				{
 					title: "{{ _('IP Adresse') }}",
-					targets: [6], "className": "deviceip"
+					targets: [6], "className": "deviceip",
+			        render: function ( data, type, row, meta ) {
+            			return '<a href="http://' +  data + '" target="_blank">'+data+'</a>';
+        			}
 				},
 				{
 					title: "{{ _('FW Version') }}",
@@ -141,7 +147,7 @@
 					targets: [9], "className": "devicerssi"
 				},
 				{
-					title: "{{ _('List Attributes') }}",
+					title: "{{ _('List<br>Attributes') }}",
 					targets: [10], "className": "devicelistattrs"
 				},
 				{

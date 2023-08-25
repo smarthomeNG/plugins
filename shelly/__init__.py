@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.6'
+    PLUGIN_VERSION = '1.6.7'
 
 
     def __init__(self, sh):
@@ -1047,6 +1047,14 @@ class Shelly(MqttPlugin):
         elif group.startswith('switch:'):
             if property in ['output', 'power', 'energy']:
                 self.update_items_from_status(shelly_id, group, property, payload)
+                self.logger.dbghigh(
+                    f"handle_gen1_status: {shelly_id} {group} - {property}={payload}  -  (mapping={group + '-' + property})")
+            else:
+                self.logger.notice(f"handle_gen1_status: {shelly_id} {group} - {property}={payload}")
+
+        elif group.startswith('lights:'):
+            if property in ['xxx']:
+                self.update_items_from_status(shelly_id, group, property, payload)
                 self.logger.dbghigh(f"handle_gen1_status: {shelly_id} {group} - {property}={payload}  -  (mapping={group + '-' + property})")
             else:
                 self.logger.notice(f"handle_gen1_status: {shelly_id} {group} - {property}={payload}")
@@ -1121,18 +1129,26 @@ class Shelly(MqttPlugin):
                 else:
                     property = 'output'
                     payload = (payload == 'on')
-                self.handle_gen1_status(shelly_id, property, topic, payload, switch)
+                self.handle_gen1_status(shelly_id, property, topic, payload, group=switch)
             elif property == 'sensor':
                 if len(topic_parts) == 4:
                     property = topic_parts[3]
-                self.handle_gen1_status(shelly_id, property, topic, payload, 'sensor')
+                self.handle_gen1_status(shelly_id, property, topic, payload, group='sensor')
             elif property == 'input_event':
                 if len(topic_parts) == 4:
                     property = topic_parts[3]
-                self.handle_gen1_status(shelly_id, property, topic, payload, 'input_event')
+                self.handle_gen1_status(shelly_id, property, topic, payload, group='input_event')
+            elif property in ['color', 'white']:       # for SHRGBW2
+                # shellies/shellyrgbw2-2CCBCD/color/0/status
+                if len(topic_parts) == 5:
+                    group = 'lights:' + str(topic_parts[3])
+                    property = topic_parts[4]
+                self.handle_gen1_status(shelly_id, property, topic, payload, group=group)
             else:
                 #self.logger.notice(f"on_mqtt_shellies: {shelly_id} - {property}={payload}")
                 self.handle_gen1_status(shelly_id, property, topic, payload)
+
+# handle_gen1_status(shelly_id: str, property, topic, payload, group=None):
 
         except Exception as e:
             self.logger.exception(f"{inspect.stack()[0][3]}: Exception {e.__class__.__name__}: {e}\n- mqtt-topic={topic}\n- mqtt-payload={payload}")
