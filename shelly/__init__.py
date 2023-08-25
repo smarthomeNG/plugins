@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.4'
+    PLUGIN_VERSION = '1.6.5'
 
 
     def __init__(self, sh):
@@ -715,7 +715,7 @@ class Shelly(MqttPlugin):
         if shelly_id + '-' + group + '-' + param_name in self.unhandled_status_logged:
             return
 
-        msg = self.translate("Unbehandelter {gen} Status", {'gen', gen})
+        msg = self.translate("Unbehandelter {gen} Status", {'gen': gen})
         if self.short_log:
             if group != '':
                 group = "Group '" + group + "' "
@@ -988,8 +988,23 @@ class Shelly(MqttPlugin):
 
                     elif property in ['mode']:    # for SHRGBW2
                         self.update_items_from_status(shelly_id, '', property, sub_status)
+
                     elif property == 'meters':    # for SHRGBW2
-                        pass
+                        if len(sub_status) > 0:
+                            for index, light in enumerate(sub_status):
+                                light_group = 'meters:'+str(index)
+                                for property in light:
+                                    if property == 'is_valid':
+                                        self.update_items_from_status(shelly_id, light_group, 'on', light.get(property, False))
+                                    elif property == 'counters':
+                                        self.update_items_from_status(shelly_id, light_group, property, light.get(property, []))
+                                    elif property in ['power', 'total']:
+                                        self.update_items_from_status(shelly_id, light_group, property, light.get(property, 0))
+                                    elif property == 'overpower':
+                                        self.update_items_from_status(shelly_id, light_group, property, light.get(property, False))
+                                    else:
+                                        self.log_unhandled_status(shelly_id, property, light.get(property), topic=topic, payload=payload, group=light_group, position='*l1')
+
                     elif property == 'lights':    # for SHRGBW2
                         if len(sub_status) > 0:
                             for index, light in enumerate(sub_status):
@@ -1018,8 +1033,8 @@ class Shelly(MqttPlugin):
                         #self.update_items_from_status(shelly_id, '', 'temp', sub_status['tC'], 'info')
                         self.update_items_from_status(shelly_id, '', 'temp_f', sub_status['tF'], 'info')
 
-                    elif property == 'charger':
-                        self.update_items_from_status(shelly_id, 'sensor', property, sub_status, 'info')
+                    #elif property == 'charger':
+                    #    self.update_items_from_status(shelly_id, 'sensor', property, sub_status, 'info')
 
                     elif property == 'wifi_sta':
                         self.shelly_devices[shelly_id]['ip'] = sub_status.get('ip', '')
