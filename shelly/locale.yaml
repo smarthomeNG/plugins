@@ -1,27 +1,25 @@
 # translations for the web interface
 plugin_translations:
+
     # Translations for the plugin specially for the web interface
-    'Mac Adresse':                {'de': '=', 'en': 'Mac Address'}
-    'IP Adresse':                 {'de': '=', 'en': 'IP Address'}
-    'Firmware Version':           {'de': '=', 'en': '='}
-    'neue FW verfügbar':          {'de': 'neue FW<br>verfügbar', 'en': 'new FW<br>available'}
-    'List Attributes':            {'de': 'List<br>Attributes', 'en': 'List<br>Attributes'}
-    'Item(s) konfiguriert':       {'de': 'Item(s)<br>konfiguriert', 'en': 'item(s)<br>configured'}
+    'Shelly ID':                    {'de': '=', 'en': '='}
 
-#    'Message Durchsatz':          {'de': '=', 'en': 'Message throughput'}
-#    'letzte Minute':              {'de': '=', 'en': 'last minute'}
-#    'letzte 5 Min.':              {'de': '=', 'en': 'last 5 min'}
-#    'letzte 15 Min.':             {'de': '=', 'en': 'last 15 min'}
+    'Devices':                      {'de': '=', 'en': '='}
+    'Device':                       {'de': '=', 'en': '='}
+    'Devicetype':                   {'de': '=', 'en': '='}
+    'API':                          {'de': '=', 'en': '='}
+    'Online':                       {'de': '=', 'en': '='}
+    'Mac Adresse':                  {'de': '=', 'en': 'Mac Address'}
+    'IP Adresse':                   {'de': '=', 'en': 'IP Address'}
+#    'FW Version':                   {'de': '=', 'en': '='}
+    'neue FW verfügbar':            {'de': 'neue FW<br>verfügbar', 'en': 'new FW<br>available'}
+    'rssi':                         {'de': '=', 'en': '='}
+    'List Attributes':              {'de': 'List<br>Attributes', 'en': 'List<br>Attributes'}
+    'Items konfiguriert':           {'de': 'Item(s)<br>konfiguriert', 'en': 'item(s)<br>configured'}
 
-    'Unbehandelter Status':       {'de': '=', 'en': 'Unhandled status'}
-    'Unbehandelter Substatus':    {'de': '=', 'en': 'Unhandled sub-status'}
-    'Unbehandelter {gen} Status': {'de': '=', 'en': 'Unhandled {gen} status'}
+    'Firmware Version':             {'de': '=', 'en': '='}
 
-    # Alternative format for translations of longer texts:
-    'Durchschnittlich Messages je Minute empfangen':
-        de: '='
-        en: 'Messages per minute received on average'
-    'Durchschnittlich Messages je Minute gesendet':
-        de: '='
-        en: 'Messages per minute sent on average'
+    'Unbehandelter Status':         {'de': '=', 'en': 'Unhandled status'}
+    'Unbehandelter Substatus':      {'de': '=', 'en': 'Unhandled sub-status'}
+    'Unbehandelter {gen} Status':   {'de': '=', 'en': 'Unhandled {gen} status'}
 

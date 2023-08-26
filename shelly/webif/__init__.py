@@ -30,8 +30,8 @@ import os
 import json
 
 from lib.item import Items
-from lib.model.smartplugin import SmartPluginWebIf
-from lib.model.mqttplugin import *
+from lib.model.mqttplugin import MqttPluginWebIf
+#from lib.model.mqttplugin import *
 
 # ------------------------------------------
 #    Webinterface of the plugin
@@ -42,7 +42,7 @@ import csv
 from jinja2 import Environment, FileSystemLoader
 
 
-class WebInterface(SmartPluginWebIf):
+class WebInterface(MqttPluginWebIf):
 
     def __init__(self, webif_dir, plugin):
         """

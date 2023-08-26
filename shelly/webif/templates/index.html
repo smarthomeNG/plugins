@@ -83,7 +83,7 @@
 					targets: [3], "className": "value dt-head-right"
 				},
 				{
-					title: "{{ _('Deviceetype') }}",
+					title: "{{ _('Devicetype') }}",
 					targets: [4], "className": "shelly_type"
 		  		},
 				{
@@ -147,11 +147,11 @@
 					targets: [9], "className": "devicerssi"
 				},
 				{
-					title: "{{ _('List<br>Attributes') }}",
+					title: "{{ _('List Attributes') }}",
 					targets: [10], "className": "devicelistattrs"
 				},
 				{
-					title: "{{ _('Items definiert') }}",
+					title: "{{ _('Items konfiguriert') }}",
 					targets: [11], "className": "bool"
 				}
 			].concat($.fn.dataTable.defaults.columnDefs),
@@ -213,16 +213,7 @@
 				let newRow = devicetable.row.add( [ null, deviceid, devicetype, devicegen, deviceonline, devicemac, deviceip, devicefw, devicenewfw, devicerssi, devicelistattrs, items_defined] ).draw(false).node();
 			}
 
-			let deviceinfo = '';
-			let buses = objResponse['buses'];
-			for (bus in buses) {
-				if (deviceinfo !== '') {
-					deviceinfo += ', '
-				}
-				deviceinfo += '<strong>' + buses[bus]['bus'] + ' </strong>: ' + str(len(p.discovered_devices())) +' {{ _('Device(e)') }}'
-			}
 			shngInsertText ('devicecount', objResponse['devices'].length);
-			shngInsertText ('deviceinfo', deviceinfo);
 			devicetable.draw(false);
 
 			shngInsertText ('broker_uptime', objResponse['broker']['broker_uptime']);
@@ -360,7 +351,6 @@
 {% set tab2title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Devices') ~ "</strong> (<span id=devicecount>" ~ p.discovered_devices()|length ~ "</span>)" %}
 {% block bodytab2 %}
 <div class="container-fluid table-resize" style="margin-top: 6px">
-	<div id="deviceinfo">Device Information</div>
 	<table id="devicetable"></table>
 </div>
 {% endblock bodytab2 %}

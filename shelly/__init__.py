@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.7'
+    PLUGIN_VERSION = '1.7.0'
 
 
     def __init__(self, sh):
@@ -64,6 +64,9 @@ class Shelly(MqttPlugin):
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self.gen1debug = self.get_parameter_value('gen1debug')
+        self.debuggen1devices = self.get_parameter_value('debuggen1devices')
+        for i in range(len(self.debuggen1devices)):
+            self.debuggen1devices[i] = self.debuggen1devices[i].lower()
 
         # Initialization code goes here
         self.shelly_devices = {}    # dict to store information about discovered shelly devices
@@ -297,7 +300,7 @@ class Shelly(MqttPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        self.logger.debug("update_item: {}".format(item.id()))
+        self.logger.debug(f"update_item: {item.id()}")
 
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
@@ -308,38 +311,84 @@ class Shelly(MqttPlugin):
 
             if config_data.get('gen', None) == '1':
                 # Handle Gen1 device
-                # publish topic with new relay state
-                shelly_id = self.get_iattr_value(item.conf, 'shelly_id').upper()
-                shelly_type = self.get_iattr_value(item.conf, 'shelly_type', '').lower()
-                if shelly_type != '':
-                    # old configuration mode
-                    shelly_relay = self.get_iattr_value(item.conf, 'shelly_relay')
-                    if not shelly_relay:
-                        shelly_relay = '0'
-                    topic = 'shellies/' + shelly_type + '-' + shelly_id + '/relay/' + shelly_relay + '/command'
-                    self.publish_topic(topic, item(), item, bool_values=['off', 'on'])
-                else:
-                    # new configuration mode for Gen1 device
-                    topic = 'shellies/' + config_data.get('shelly_id', '')
-                    shelly_group = config_data['shelly_group']
-                    if shelly_group.startswith('switch:'):
-                        topic += '/relay/' + shelly_group.split(':')[1] + '/command'
-                        self.publish_topic(topic, item(), bool_values=['off', 'on'])
-                    elif shelly_group.startswith('lights:'):
-                        topic += '/color/' + shelly_group.split(':')[1] + '/set'
-                        shelly_attr = config_data['shelly_attr']
-                        if shelly_attr == 'on':
-                            shelly_attr = 'turn'
-                        payload = {shelly_attr: item()}
-                        self.publish_topic(topic, payload)
-                    else:
-                        self.logger.warning(f"update_item: Output to group {shelly_group} is not supported")
+                self.update_Gen1_from_item(item, config_data)
+                # # publish topic with new relay state
+                # shelly_id = self.get_iattr_value(item.conf, 'shelly_id').upper()
+                # shelly_type = self.get_iattr_value(item.conf, 'shelly_type', '').lower()
+                # if shelly_type != '':
+                #     # old configuration mode
+                #     shelly_relay = self.get_iattr_value(item.conf, 'shelly_relay')
+                #     if not shelly_relay:
+                #         shelly_relay = '0'
+                #     topic = 'shellies/' + shelly_type + '-' + shelly_id + '/relay/' + shelly_relay + '/command'
+                #     self.publish_topic(topic, item(), item, bool_values=['off', 'on'])
+                # else:
+                #     # new configuration mode for Gen1 device
+                #     topic = 'shellies/' + config_data.get('shelly_id', '')
+                #     shelly_group = config_data['shelly_group']
+                #     if shelly_group.startswith('switch:'):
+                #         topic += '/relay/' + shelly_group.split(':')[1] + '/command'
+                #         self.publish_topic(topic, item(), bool_values=['off', 'on'])
+                #     elif shelly_group.startswith('lights:'):
+                #         topic += '/color/' + shelly_group.split(':')[1] + '/set'
+                #         shelly_attr = config_data['shelly_attr']
+                #         if shelly_attr == 'on':
+                #             shelly_attr = 'turn'
+                #         payload = {shelly_attr: item()}
+                #         self.publish_topic(topic, payload)
+                #     else:
+                #         self.logger.warning(f"update_item: Output to group {shelly_group} is not supported")
             elif config_data.get('gen', None) == '2':
                 # Handle Gen2 device
                 self.request_gen2_switch(config_data['shelly_id'], config_data['shelly_group'], item())
             else:
                 shelly_id = self.get_iattr_value(item.conf, 'shelly_id')
                 self.logger.notice(f"Device with id {shelly_id} was not discovered yet (for {item.id()}")
+
+
+    def update_Gen1_from_item(self, item, config_data):
+
+        # publish topic with new relay state
+        shelly_id = self.get_iattr_value(item.conf, 'shelly_id').upper()
+        shelly_type = self.get_iattr_value(item.conf, 'shelly_type', '').lower()
+
+        # handle old configuration mode
+        if shelly_type != '':
+            shelly_relay = self.get_iattr_value(item.conf, 'shelly_relay')
+            if not shelly_relay:
+                shelly_relay = '0'
+            topic = 'shellies/' + shelly_type + '-' + shelly_id + '/relay/' + shelly_relay + '/command'
+            self.publish_topic(topic, item(), item, bool_values=['off', 'on'])
+
+
+        # handle new configuration mode for Gen1 device
+        else:
+            topic = 'shellies/' + config_data.get('shelly_id', '')
+            shelly_group = config_data['shelly_group']
+
+            if shelly_group.startswith('switch:'):
+                topic += '/relay/' + shelly_group.split(':')[1] + '/command'
+                self.publish_topic(topic, item(), bool_values=['off', 'on'])
+
+            elif shelly_group.startswith('color:') or shelly_group.startswith('white:'):
+                topic += '/' + shelly_group.split(':')[0] + '/' + shelly_group.split(':')[1]
+                shelly_attr = config_data['shelly_attr']
+                if shelly_attr == 'on':
+                    topic += '/command'
+                    if self.gen1debug:
+                        self.logger.info(f"update_Gen1_from_item: topic={topic} payload={item()}")
+                    self.publish_topic(topic, item(), bool_values=['off', 'on'])
+                else:
+                    topic += '/set'
+                    payload = {shelly_attr: item()}
+                    if self.gen1debug:
+                        self.logger.info(f"update_Gen1_from_item: topic={topic} payload={payload}")
+                    self.publish_topic(topic, payload)
+
+            else:
+                self.logger.warning(f"update_Gen1_from_item: Output to group {shelly_group} is not supported")
+
+        return
 
 
     # ----------------------------------------------------------------------------------------------
@@ -449,28 +498,21 @@ class Shelly(MqttPlugin):
         else:
             mapping = '-' + group + '-' + attr
 
-        if self.shelly_devices[shelly_id]['gen'] == '1':
+        device_data = self.shelly_devices.get(shelly_id, {})
+        if device_data.get('gen', '?') == '1':
             # get the given part of the mac address (complete mac address is not given in config for Gen1 devices)
             parts = shelly_id.split('-')
             item_mapping = parts[-1:][0].lower() + mapping
-        elif self.shelly_devices[shelly_id]['gen'] == '2':
+        elif device_data.get('gen', '?') == '2':
             item_mapping = self.shelly_devices[shelly_id]['mac'] + mapping
         else:
-            self.logger.error(f"update_items_from_status: Unknown API version for {shelly_id}")
+            self.logger.warning(f"update_items_from_status: Unknown API version of {shelly_id} - group={group}, attr={attr}, value={value}, source={source}")
             return
 
         if self.shelly_devices[shelly_id]['list_attrs']:
             # List attributes which are sent by a device, if configuration requests it
             typ = self.get_shng_typeinfo(value)
             self.list_attribute(shelly_id, group, attr, typ)
-            # if not shelly_id + '-' + group + '-' + attr in self.logged_attrs:
-            #     typ = self.get_shng_typeinfo(value)
-            #     msg = f"list_attrs '{self.shelly_devices[shelly_id]['conf_id']}' ({self.shelly_devices[shelly_id]['app']}): "
-            #     if group == '':
-            #         self.logger.info(msg + f"shelly_attr='{attr}' type={typ}")
-            #     else:
-            #         self.logger.info(msg + f"shelly_attr='{attr}' shelly_group='{group}' type={typ}")
-            #     self.logged_attrs.append(shelly_id + '-' + group + '-' + attr)
 
         self.update_items_with_mapping(shelly_id, source, value, item_mapping)
 
@@ -696,16 +738,17 @@ class Shelly(MqttPlugin):
                 self.logger.dbghigh(f"handle_gen2_device_status: Handled '{property}'={sub_status} - (for shelly_id={shelly_id})")
 
 
-    short_log = False
+    # short_log = False
     devices_with_unhandled_status = []
     unhandled_status_logged = []
 
     def log_unhandled_status(self, shelly_id, param_name, param_content, params=None, topic=None, payload=None, group='', position=''):
 
         calling_method = inspect.stack()[1][3]
-        gen = 'Gen' + self.shelly_devices[shelly_id].get('gen', '?')
-        if gen == 'Gen?':
-            self.logger.warning(f"log_unhandled_status: Unknown API version for '{shelly_id}' device data = {self.shelly_devices[shelly_id]}")
+        device_data = self.shelly_devices.get(shelly_id, {})
+        gen = 'Gen' + device_data.get('gen', '?')
+        if gen == 'Gen?' and device_data != {}:
+            self.logger.warning(f"log_unhandled_status: Unknown API version for '{shelly_id}' device data={device_data} - param {param_name}={param_content}")
 
         if not shelly_id in self.devices_with_unhandled_status:
             self.logger.notice(self.translate("Unbekannter Status empfangen von '{shelly_id}' - Loglevel des Plugin-Loggers auf INFO setzen und das Details-Log beobachten", {'shelly_id': shelly_id}))
@@ -715,20 +758,20 @@ class Shelly(MqttPlugin):
             return
 
         msg = self.translate("Unbehandelter {gen} Status", {'gen': gen})
-        if self.short_log:
-            if group != '':
-                group = "Group '" + group + "' "
-            if payload is None:
-                self.logger.info(f"{gen}: {group}Parameter='{param_name}'={param_content}  ---  params={params} - für {shelly_id} {position}")
-            else:
-                self.logger.info(f"{gen}: {group}Parameter='{param_name}'={param_content}  ---  payload={payload} - für {shelly_id} {position}")
-            return
+        # if self.short_log:
+        #     if group != '':
+        #         group = "Group '" + group + "' "
+        #     if payload is None:
+        #         self.logger.info(f"{gen}: {group}Parameter='{param_name}'={param_content}  ---  params={params} - für {shelly_id} {position}")
+        #     else:
+        #         self.logger.info(f"{gen}: {group}Parameter='{param_name}'={param_content}  ---  payload={payload} - für {shelly_id} {position}")
+        #     return
 
         msg += f" für {shelly_id}:"
-        if self.shelly_devices[shelly_id].get('model', '?') != '?':
+        if self.shelly_devices.get(shelly_id, {}).get('model', '?') != '?':
             msg += f"\n - Model='{self.shelly_devices[shelly_id]['model']}'"
         msg += f"\n - API: {gen}"
-        if self.shelly_devices[shelly_id].get('app', '?') != '?':
+        if self.shelly_devices.get(shelly_id, {}).get('app', '?') != '?':
             msg += f"\n - App={self.shelly_devices[shelly_id]['app']}"
         msg += f"\n - Client_ID={shelly_id}"
         msg += f"\n - Parameter: '{param_name}'={param_content}"
@@ -958,7 +1001,7 @@ class Shelly(MqttPlugin):
 
         :return:
         """
-        self.logger.dbgmed(f"handle_gen1_status: {shelly_id} payload={payload}")
+        self.logger.dbgmed(f"handle_gen1_status (Enter): {shelly_id} group={group} payload={payload}")
 
         if group is None:
             property_mapping = {'temperature': 'temp', 'temperature_f': 'temp_f'}
@@ -1004,21 +1047,26 @@ class Shelly(MqttPlugin):
                                     else:
                                         self.log_unhandled_status(shelly_id, property, light.get(property), topic=topic, payload=payload, group=light_group, position='*l1')
 
-                    elif property == 'lights':    # for SHRGBW2
+                    elif property in 'lights':    # for SHRGBW2
                         if len(sub_status) > 0:
                             for index, light in enumerate(sub_status):
-                                light_group = 'lights:'+str(index)
                                 for property in light:
-                                    if property == 'ison':
-                                        self.update_items_from_status(shelly_id, light_group, 'on', light.get(property, False))
-                                    elif property == 'mode':
-                                        self.update_items_from_status(shelly_id, light_group, property, light.get(property, ''))
-                                    elif property in ['red', 'green', 'blue', 'white', 'gain', 'brightness', 'effect', 'transition', 'power']:
-                                        self.update_items_from_status(shelly_id, light_group, property, light.get(property, 0))
-                                    elif property == 'overpower':
-                                        self.update_items_from_status(shelly_id, light_group, property, light.get(property, False))
+                                    mode = light.get('mode', '')
+                                    if mode == '':
+                                        self.log_unhandled_status(shelly_id, property, light.get(property), topic=topic, payload=payload, group=light_group, position='*l2 (no mode)')
                                     else:
-                                        self.log_unhandled_status(shelly_id, property, light.get(property), topic=topic, payload=payload, group=light_group, position='*l1')
+                                        #light_group = 'lights:' + str(index)
+                                        light_group = mode + ':' + str(index)
+                                        if property == 'ison':
+                                            self.update_items_from_status(shelly_id, light_group, 'on', light.get(property, False))
+                                        elif property == 'mode':
+                                            self.update_items_from_status(shelly_id, light_group, property, light.get(property, ''))
+                                        elif property in ['red', 'green', 'blue', 'white', 'gain', 'brightness', 'effect', 'transition', 'power']:
+                                            self.update_items_from_status(shelly_id, light_group, property, light.get(property, 0))
+                                        elif property == 'overpower':
+                                            self.update_items_from_status(shelly_id, light_group, property, light.get(property, False))
+                                        else:
+                                            self.log_unhandled_status(shelly_id, property, light.get(property), topic=topic, payload=payload, group=light_group, position='*l3')
 
                     elif property == 'sensor':
                         self.update_items_from_status(shelly_id, 'sensor', 'state', sub_status['state'], 'info')
@@ -1047,17 +1095,30 @@ class Shelly(MqttPlugin):
         elif group.startswith('switch:'):
             if property in ['output', 'power', 'energy']:
                 self.update_items_from_status(shelly_id, group, property, payload)
-                self.logger.dbghigh(
-                    f"handle_gen1_status: {shelly_id} {group} - {property}={payload}  -  (mapping={group + '-' + property})")
-            else:
-                self.logger.notice(f"handle_gen1_status: {shelly_id} {group} - {property}={payload}")
-
-        elif group.startswith('lights:'):
-            if property in ['xxx']:
-                self.update_items_from_status(shelly_id, group, property, payload)
                 self.logger.dbghigh(f"handle_gen1_status: {shelly_id} {group} - {property}={payload}  -  (mapping={group + '-' + property})")
             else:
-                self.logger.notice(f"handle_gen1_status: {shelly_id} {group} - {property}={payload}")
+                self.log_unhandled_status(shelly_id, property, payload, topic=topic, payload=payload, group=group, position='*2')
+
+        elif group.startswith('lights:') or group.startswith('color:') or group.startswith('white:') or group.startswith('light:'):
+            if property == 'status':
+                source = payload.get('source', None)
+                for property in payload.keys():
+                    light_group = group
+                    if property in ['source', 'has_timer', 'timer_started', 'timer_duration', 'timer_remaining']:
+                        pass
+                    elif property == 'ison':
+                        self.update_items_from_status(shelly_id, group, 'on', payload[property], source=source)
+                    elif property == 'mode':
+                        self.update_items_from_status(shelly_id, group, property, payload[property], source=source)
+                    elif property in ['red', 'green', 'blue', 'white', 'gain', 'brightness', 'effect', 'transition',
+                                      'power']:
+                        self.update_items_from_status(shelly_id, light_group, property, payload[property], source=source)
+                    elif property == 'overpower':
+                        self.update_items_from_status(shelly_id, group, property, payload[property], source=source)
+                    else:
+                        self.log_unhandled_status(shelly_id, param_name=property, param_content=payload[property], topic=topic, payload=payload, group=light_group, position='*l4')
+            else:
+                self.log_unhandled_status(shelly_id, param_name=property, param_content=payload, topic=topic, payload=payload, group=group, position='*3')
 
         elif group == 'sensor':
             if property in ['state', 'tilt', 'vibration', 'lux', 'illumination', 'battery',
@@ -1066,8 +1127,7 @@ class Shelly(MqttPlugin):
             elif property == 'temperature':
                 self.update_items_from_status(shelly_id, '', 'temp', payload)
             else:
-                self.logger.notice("handle_gen1_status: " + self.translate("Unbehandelter Status") + f"main_property={group} - {property}={payload} - from {shelly_id} *2")
-                self.log_unhandled_status(shelly_id, property, payload, payload=payload, group=group, position='*2')
+                self.log_unhandled_status(shelly_id, property, payload, topic=topic, payload=payload, group=group, position='*4')
 
         elif group == 'input_event':
             group += ':' + property
@@ -1078,12 +1138,10 @@ class Shelly(MqttPlugin):
                 elif property == 'event':
                     self.update_items_from_status(shelly_id, group, property, sub_status)
                 else:
-                    self.logger.notice("handle_gen1_status: " + self.translate("Unbehandelter Status") + f" '{property}'={sub_status} - payload={payload} from {shelly_id} *3")
-                    self.log_unhandled_status(shelly_id, property, sub_status, payload=payload, position='*3')
+                    self.log_unhandled_status(shelly_id, property, sub_status, topic=topic, payload=payload, position='*5')
 
         else:
-            self.logger.notice("handle_gen1_status: " + self.translate("Unbehandelter Status") + f" property='{property}'={payload} - from {shelly_id} *4")
-            self.log_unhandled_status(shelly_id, property, payload, payload=payload, position='*4')
+            self.log_unhandled_status(shelly_id, property, payload, topic=topic, payload=payload, position='*6')
 
 
     def on_mqtt_shellies(self, topic, payload, qos=None, retain=None):
@@ -1104,9 +1162,6 @@ class Shelly(MqttPlugin):
             if topic.endswith('/rpc'):
                 return
 
-            if self.gen1debug:
-                self.logger.info(f"gen1debug: topic={topic}, payload={payload}")
-
             topic_parts = topic.split('/')
             if topic_parts[1].lower() in ['gen2', 'command', 'announce']:
                 return
@@ -1114,12 +1169,31 @@ class Shelly(MqttPlugin):
                 return
 
             shelly_id = topic_parts[1]
+
+            debug_this_msg = False
+            if self.gen1debug:
+                if self.debuggen1devices == []:
+                    self.logger.info(f"gen1debug (all): topic={topic}, payload={payload}")
+                    debug_this_msg = True
+                else:
+                    for id in self.debuggen1devices:
+                        if shelly_id.lower().endswith(id):
+                            self.logger.info(f"gen1debug ({id}): topic={topic}, payload={payload}")
+                            debug_this_msg = True
+
             if not self.shelly_devices.get(shelly_id, None) or self.shelly_devices[shelly_id].get('gen', None) is None:
                 self.logger.dbghigh(f"on_mqtt_shellies: not discovered Gen1 device {shelly_id} - {topic}={payload}")
-                return
+                if not debug_this_msg:
+                    return
 
-            self.shelly_devices[shelly_id]['last_contact'] = self.shtime.now().strftime('%Y-%m-%d %H:%M')
+            try: # ignore, if device is not discovered yet
+                self.shelly_devices[shelly_id]['last_contact'] = self.shtime.now().strftime('%Y-%m-%d %H:%M')
+            except: pass
+
             property = topic_parts[2]
+
+            if debug_this_msg:
+                self.logger.info(f"gen1debug: {shelly_id} {property=} {topic_parts}")
 
             if property == 'relay':
                 relay = topic_parts[3]
@@ -1138,11 +1212,16 @@ class Shelly(MqttPlugin):
                 if len(topic_parts) == 4:
                     property = topic_parts[3]
                 self.handle_gen1_status(shelly_id, property, topic, payload, group='input_event')
-            elif property in ['color', 'white']:       # for SHRGBW2
+            elif property in ['color', 'white', 'light']:       # for SHRGBW2
                 # shellies/shellyrgbw2-2CCBCD/color/0/status
                 if len(topic_parts) == 5:
-                    group = 'lights:' + str(topic_parts[3])
+                    if property == 'color':
+                        group = 'color:' + str(topic_parts[3])
+                    else:
+                        group = 'white:' + str(topic_parts[3])
                     property = topic_parts[4]
+                if debug_this_msg:
+                    self.logger.info(f"gen1debug (in property): {shelly_id} group={group} property={property} topic_parts={topic_parts}")
                 self.handle_gen1_status(shelly_id, property, topic, payload, group=group)
             else:
                 #self.logger.notice(f"on_mqtt_shellies: {shelly_id} - {property}={payload}")
