@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.7.0'
+    PLUGIN_VERSION = '1.7.1'
 
 
     def __init__(self, sh):
@@ -1014,7 +1014,7 @@ class Shelly(MqttPlugin):
                 if property in property_mapping:
                     property = property_mapping[property]
                 self.update_items_from_status(shelly_id, '', property, payload)
-            elif property == 'info' and isinstance(payload, dict):
+            elif property == 'info':
                 for property in payload.keys():
                     sub_status = payload[property]
                     if property in ['accel', 'lux', 'cloud', 'mqtt', 'time', 'unixtime', 'serial', 'mac', 'cfg_changed_cnt',
@@ -1090,6 +1090,8 @@ class Shelly(MqttPlugin):
                     else:
                         #self.logger.notice("handle_gen1_status: " + self.translate("Unbehandelter Status") + f" '{property}'={sub_status} - payload={payload} from {shelly_id} *1")
                         self.log_unhandled_status(shelly_id, property, sub_status, topic=topic, payload=payload, position='*1')
+            else:
+                self.log_unhandled_status(shelly_id, property, payload, topic=topic, payload=payload, position='*1.1')
 
 
         elif group.startswith('switch:'):

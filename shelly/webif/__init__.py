@@ -38,8 +38,6 @@ from lib.model.mqttplugin import MqttPluginWebIf
 # ------------------------------------------
 
 import cherrypy
-import csv
-from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(MqttPluginWebIf):
