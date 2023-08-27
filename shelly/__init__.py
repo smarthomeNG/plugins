@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.7.1'
+    PLUGIN_VERSION = '1.7.5'
 
 
     def __init__(self, sh):
@@ -461,6 +461,14 @@ class Shelly(MqttPlugin):
 
 
     def update_items_with_mapping(self, shelly_id: str, source: str, value, item_mapping: str):
+        """
+        Update all items that have the given mapping with a new value
+
+        :param shelly_id: Shelly ID that is the source of the value
+        :param source: source that changed the shelly device, if reported by the device (e.g. 'button', 'http', 'mqtt', ...)
+        :param value: Value to assign to the items
+        :param item_mapping: mapping of the items to which the value should be assigned
+        """
 
         gen = self.shelly_devices[shelly_id]['gen']
         items = self.get_items_for_mapping(item_mapping)
@@ -472,7 +480,7 @@ class Shelly(MqttPlugin):
                     source = self.shelly_devices[shelly_id]['app'] + ':' + source
                 else:
                     source = self.shelly_devices[shelly_id]['app']
-                item(value, self.get_shortname(), source)
+                item(value, caller=self.get_shortname(), source=source)
         return
 
 
@@ -1031,6 +1039,12 @@ class Shelly(MqttPlugin):
                     elif property in ['mode']:    # for SHRGBW2
                         self.update_items_from_status(shelly_id, '', property, sub_status)
 
+                    if property in ['calib_progress', 'calib_ststus', 'calib_running', 'forced_neutral', 'loaderror', 'debug']:
+                        pass   # for dimmer2
+
+                    elif property in ['wire_mode', 'overtemperature', 'overpower']:  # for dimmer2
+                        self.update_items_from_status(shelly_id, '', property, sub_status)
+
                     elif property == 'meters':    # for SHRGBW2
                         if len(sub_status) > 0:
                             for index, light in enumerate(sub_status):
@@ -1088,7 +1102,6 @@ class Shelly(MqttPlugin):
                         self.shelly_devices[shelly_id]['rssi'] = sub_status.get('rssi', '')
 
                     else:
-                        #self.logger.notice("handle_gen1_status: " + self.translate("Unbehandelter Status") + f" '{property}'={sub_status} - payload={payload} from {shelly_id} *1")
                         self.log_unhandled_status(shelly_id, property, sub_status, topic=topic, payload=payload, position='*1')
             else:
                 self.log_unhandled_status(shelly_id, property, payload, topic=topic, payload=payload, position='*1.1')
@@ -1102,7 +1115,9 @@ class Shelly(MqttPlugin):
                 self.log_unhandled_status(shelly_id, property, payload, topic=topic, payload=payload, group=group, position='*2')
 
         elif group.startswith('lights:') or group.startswith('color:') or group.startswith('white:') or group.startswith('light:'):
-            if property == 'status':
+            if property in ['power', 'energy', 'overpower']:
+                pass
+            elif property == 'status':
                 source = payload.get('source', None)
                 for property in payload.keys():
                     light_group = group
