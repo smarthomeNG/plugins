@@ -141,6 +141,9 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem.set_variable("current.state_name", self.name)
         self._abitem.set_variable("current.state_id", self.id)
         self.__text.write_to_logger()
+        if self.__use_done:
+            _log_se_use = self.__use_done[0] if len(self.__use_done) == 1 else self.__use_done
+            self._log_info("State configuration extended by se_use: {}", _log_se_use)
         self._log_info("Updating Web Interface...")
         self._log_increase_indent()
         self._abitem.update_webif(self.id, {'name': self.name,
@@ -152,9 +155,6 @@ class SeState(StateEngineTools.SeItemChild):
                                             'leave': False, 'enter': False, 'stay': False})
         self._log_decrease_indent()
         self._log_info("Finished Web Interface Update")
-        if self.__use_done:
-            _log_se_use = self.__use_done[0] if len(self.__use_done) == 1 else self.__use_done
-            self._log_info("State configuration extended by se_use: {}", _log_se_use)
         self.__release.write_to_logger()
         if self.__conditions.count() > 0:
             self._log_info("Condition sets to enter state:")

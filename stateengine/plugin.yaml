@@ -781,7 +781,7 @@ item_structs:
         rules:
             se_item_lock: ..lock
             eval_trigger:
-               - merge_unique*
+                - merge_unique*
                 - ..lock
 
             lock:
@@ -1303,6 +1303,7 @@ item_structs:
             knx_dpt: 1
             visu_acl: rw
             enforce_updates: True
+            on_update: ..rules = True if value is True else None
             autotimer: 1 = False
 
         suspend:
@@ -1363,9 +1364,6 @@ item_structs:
             se_item_release: ..release
             se_item_suspend_end: ..suspend_end.date_time
             se_item_suspend_start: ..suspend_start.date_time
-            eval_trigger:
-                - merge_unique*
-                - ..release
 
             release:
                 name: release

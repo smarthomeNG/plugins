@@ -103,6 +103,8 @@ def get_last_part_of_item_id(item):
 
 
 def parse_relative(evalstr, begintag, endtags):
+    if begintag == '' and endtags == '':
+        return evalstr
     if evalstr.find(begintag+'.') == -1:
         return evalstr
     pref = ''

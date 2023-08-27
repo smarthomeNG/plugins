@@ -196,7 +196,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
             if condition == 'conditionset':
                 _condition_to_meet = None if self.conditionset.is_empty() else self.conditionset.get()
                 _current_condition = self._abitem.get_lastconditionset_id()
-                _updated__current_condition = self._abitem.get_laststate_id() if _current_condition == '' else _current_condition
+                _updated__current_condition = self._abitem.get_variable("current.state_id") if _current_condition == '' else _current_condition
             elif condition == 'previousconditionset':
                 _condition_to_meet = None if self.previousconditionset.is_empty() else self.previousconditionset.get()
                 _current_condition = self._abitem.get_previousconditionset_id()

@@ -427,12 +427,16 @@ class SeValue(StateEngineTools.SeItemChild):
             else:
                 self._log_debug("{0} from struct: {1}", self.__name, self.__struct.property.path)
         if self.__item is not None:
+            _original_listorder = copy.copy(self.__listorder)
             if isinstance(self.__item, list):
-                for i in self.__item:
-                    if i is not None:
-                        self._log_debug("{0} from item: {1}", self.__name, i.property.path)
+                for i, item in enumerate(self.__item):
+                    if item is not None:
+                        self._log_debug("{0} from item: {1}", self.__name, item.property.path)
+                        self._log_debug("Currently item results in {}", self.__get_from_item()[i])
             else:
                 self._log_debug("{0} from item: {1}", self.__name, self.__item.property.path)
+                self._log_debug("Currently item results in {}", self.__get_from_item())
+            self.__listorder = _original_listorder
         if self.__eval is not None:
             self._log_debug("{0} from eval: {1}", self.__name, self.__eval)
             _original_listorder = copy.copy(self.__listorder)
@@ -499,7 +503,7 @@ class SeValue(StateEngineTools.SeItemChild):
     def __absolute_item(self, value, id=None):
         if isinstance(value, list):
             valuelist = []
-            idlist = [] if id is None else [id] if not isinstance(id, list) else id
+            #idlist = [] if id is None else [id] if not isinstance(id, list) else id
             for i, element in enumerate(value):
                 element = self.cast_item(element)
                 self.__update_item_listorder(value, element, id[i])

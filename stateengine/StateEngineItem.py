@@ -1600,13 +1600,13 @@ class SeItem:
                 self.__logger.error("struct {} creation failed. Error: {}", item_id, e)
             if item is None:
                 self.__logger.warning("Item '{0}' not found!", item_id)
-                _issue = "'{0}' not found.".format(item_id)
+                _issue = "Item '{0}' not found.".format(item_id)
             return item, _issue
         if not item_id.startswith("."):
             item = self.itemsApi.return_item(item_id)
             if item is None:
                 self.__logger.warning("Item '{0}' not found!", item_id)
-                _issue = "'{0}' not found.".format(item_id)
+                _issue = "Item '{0}' not found.".format(item_id)
             return item, _issue
         self.__logger.debug("Testing for relative item declaration {}", item_id)
         parent_level = 0
