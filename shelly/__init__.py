@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.7.7'
+    PLUGIN_VERSION = '1.7.8'
 
 
     def __init__(self, sh):
@@ -344,13 +344,13 @@ class Shelly(MqttPlugin):
                 topic += '/relay/' + shelly_group.split(':')[1] + '/command'
                 self.publish_topic(topic, item(), bool_values=['off', 'on'])
 
-            elif shelly_group.startswith('color:') or shelly_group.startswith('white:'):
+            elif shelly_group.startswith('color:') or shelly_group.startswith('white:') or shelly_group.startswith('light:'):
                 topic += '/' + shelly_group.split(':')[0] + '/' + shelly_group.split(':')[1]
                 shelly_attr = config_data['shelly_attr']
                 if shelly_attr == 'on':
                     topic += '/command'
                     if self.gen1debug:
-                        self.logger.info(f"update_Gen1_from_item: topic={topic} payload={item()}")
+                        self.logger.info(f"update_Gen1_from_item: topic={topic} payload={['off', 'on'][item()]}")
                     self.publish_topic(topic, item(), bool_values=['off', 'on'])
                 else:
                     topic += '/set'
@@ -989,10 +989,11 @@ class Shelly(MqttPlugin):
             property_mapping = {'temperature': 'temp', 'temperature_f': 'temp_f'}
             if property.startswith('command'):
                 pass
+            elif property == 'loaderror':
+                pass
             elif property == 'online':
-                #mapping = 'global-' + property
                 self.update_items_from_status(shelly_id, '', property, payload)
-            elif property in ['temperature', 'temperature_f', 'overtemperature', 'overpower']:
+            elif property in ['temperature', 'temperature_f', 'overtemperature', 'overpower', 'input']:
                 if property in property_mapping:
                     property = property_mapping[property]
                 self.update_items_from_status(shelly_id, '', property, payload)
@@ -1012,7 +1013,7 @@ class Shelly(MqttPlugin):
                         #  - 'lux' ('value', 'illumination')
                         # are handled throuh sensor group
                         pass
-                    elif property in ['mode']:    # for SHRGBW2
+                    elif property in ['mode', 'input']:    # for SHRGBW2
                         self.update_items_from_status(shelly_id, '', property, sub_status)
 
                     elif property in ['source', 'has_timer', 'timer_started', 'timer_duration', 'timer_remaining',
@@ -1044,13 +1045,17 @@ class Shelly(MqttPlugin):
                     elif property in 'lights':    # for SHRGBW2
                         if len(sub_status) > 0:
                             for index, light in enumerate(sub_status):
+                                #is_dimmer = (shelly_id.find('dimmer') >= 0)
+                                is_dimmer = ('wire_mode' in payload.keys())
                                 for property in light:
                                     mode = light.get('mode', '')
                                     if mode == '':
                                         self.log_unhandled_status(shelly_id, property, light.get(property), topic=topic, payload=payload, group=light_group, position='*l2 (no mode)')
                                     else:
-                                        #light_group = 'lights:' + str(index)
-                                        light_group = mode + ':' + str(index)
+                                        if is_dimmer:
+                                            light_group = 'light' + ':' + str(index)
+                                        else:
+                                            light_group = mode + ':' + str(index)
                                         if property in ['source', 'has_timer', 'timer_started', 'timer_duration',
                                                         'timer_remaining', 'calibrated', 'calib_progress',
                                                         'calib_status', 'calib_running', 'forced_neutral',
@@ -1061,6 +1066,7 @@ class Shelly(MqttPlugin):
                                         elif property == 'mode':
                                             self.update_items_from_status(shelly_id, light_group, property, light.get(property, ''))
                                         elif property in ['red', 'green', 'blue', 'white', 'gain', 'brightness', 'effect', 'transition', 'power']:
+                                            self.logger.notice(f"in 'lights': {light_group=} {property=}")
                                             self.update_items_from_status(shelly_id, light_group, property, light.get(property, 0))
                                         elif property == 'overpower':
                                             self.update_items_from_status(shelly_id, light_group, property, light.get(property, False))
@@ -1117,13 +1123,16 @@ class Shelly(MqttPlugin):
                     light_group = group
                     if property in ['source', 'has_timer', 'timer_started', 'timer_duration', 'timer_remaining']:
                         pass
+                    elif property == 'on':
+                        self.update_items_from_status(shelly_id, group, 'on', (payload[property]=='on'), source=source)
                     elif property == 'ison':
                         self.update_items_from_status(shelly_id, group, 'on', payload[property], source=source)
                     elif property == 'mode':
                         self.update_items_from_status(shelly_id, group, property, payload[property], source=source)
                     elif property in ['red', 'green', 'blue', 'white', 'gain', 'brightness', 'effect', 'transition',
                                       'power']:
-                        self.update_items_from_status(shelly_id, light_group, property, payload[property], source=source)
+                        self.logger.notice(f"in 'status': {group=} {property=}")
+                        self.update_items_from_status(shelly_id, group, property, payload[property], source=source)
                     elif property == 'overpower':
                         self.update_items_from_status(shelly_id, group, property, payload[property], source=source)
                     else:
@@ -1204,7 +1213,7 @@ class Shelly(MqttPlugin):
             property = topic_parts[2]
 
             if debug_this_msg:
-                self.logger.info(f"gen1debug: {shelly_id} {property=} {topic_parts}")
+                self.logger.info(f"gen1debug: {shelly_id} {property=} {topic_parts=}")
 
             if property == 'relay':
                 relay = topic_parts[3]
@@ -1225,12 +1234,18 @@ class Shelly(MqttPlugin):
                 self.handle_gen1_status(shelly_id, property, topic, payload, group='input_event')
             elif property in ['color', 'white', 'light']:       # for SHRGBW2
                 # shellies/shellyrgbw2-2CCBCD/color/0/status
-                if len(topic_parts) == 5:
+                if len(topic_parts) >= 4:
                     if property == 'color':
                         group = 'color:' + str(topic_parts[3])
-                    else:
+                    elif property == 'white':
                         group = 'white:' + str(topic_parts[3])
-                    property = topic_parts[4]
+                    else:
+                        group = 'light:' + str(topic_parts[3])
+                    if len(topic_parts) == 5:
+                        property = topic_parts[4]
+                    else:
+                        property = 'on'
+                self.logger.notice(f"on_mqtt_shellies: {group=} {property=} {topic_parts=}")
                 if debug_this_msg:
                     self.logger.info(f"gen1debug (in property): {shelly_id} group={group} property={property} topic_parts={topic_parts}")
                 self.handle_gen1_status(shelly_id, property, topic, payload, group=group)
