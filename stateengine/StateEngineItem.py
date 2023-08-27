@@ -21,6 +21,8 @@
 #########################################################################
 import datetime
 from collections import OrderedDict, defaultdict
+
+import lib.item.item
 from . import StateEngineTools
 from .StateEngineLogger import SeLogger
 from . import StateEngineState
@@ -36,6 +38,7 @@ from lib.item.item import Item
 from copy import copy
 import threading
 import queue
+import re
 
 
 # Class representing a blind item
@@ -173,7 +176,6 @@ class SeItem:
         self.__shtime = Shtime.get_instance()
         self.__se_plugin = se_plugin
         self.__active_schedulers = []
-        self.__all_releasedby = {}
         self.__default_instant_leaveaction = StateEngineValue.SeValue(self, "Default Instant Leave Action", False,
                                                                       "bool")
         #self.__all_torelease = {}
@@ -187,8 +189,8 @@ class SeItem:
         self.__logger.header("")
         _log_level = StateEngineValue.SeValue(self, "Log Level", False, "num")
         _default_log_level = SeLogger.default_log_level.get()
-        _returnvalue, _returntype, _using_default = _log_level.set_from_attr(self.__item, "se_log_level",
-                                                                             _default_log_level)
+        _returnvalue, _returntype, _using_default, _issue = _log_level.set_from_attr(self.__item, "se_log_level",
+                                                                                     _default_log_level)
 
         if len(_returnvalue) > 1:
             self.__logger.warning("se_log_level for item {} can not be defined as a list"
@@ -241,15 +243,6 @@ class SeItem:
         self.__previousstate_item_name, _issue = self.return_item_by_attribute("se_previousstate_item_name")
         self.__previousstate_internal_name = "" if self.__previousstate_item_name is None else self.__previousstate_item_name.property.value
         self.__config_issues.update(_issue)
-
-        # Init releasedby items/values
-        self.___shouldnotrelease_item, _issue = self.return_item_by_attribute("se_shouldnotrelease_item")
-        self.__config_issues.update(_issue)
-        self.__hasreleased_item, _issue = self.return_item_by_attribute("se_hasreleased_item")
-        self.__config_issues.update(_issue)
-        self.__has_released = {} if self.__hasreleased_item is None else self.__hasreleased_item.property.value
-        self.__logger.develop("has released = {}", self.__has_released)
-        self.__should_not_release = {} if self.___shouldnotrelease_item is None else self.___shouldnotrelease_item.property.value
 
         # Init lastconditionset items/values
         self.__lastconditionset_item_id, _issue = self.return_item_by_attribute("se_lastconditionset_item_id")
@@ -347,13 +340,6 @@ class SeItem:
         return self.__id
 
     def startup(self):
-        try:
-            self.__has_released.pop('initial')
-        except Exception:
-            pass
-        self.__logger.develop("".ljust(80, "_"))
-        self.__logger.develop("ALL RELEASEDBY: {}", self.__all_releasedby)
-        self.__logger.develop("HAS RELEASED: {}", self.__has_released)
         self.__logger.info("".ljust(80, "_"))
         # start timer with startup-delay
         _startup_delay_param = self.__startup_delay.get()
@@ -393,7 +379,7 @@ class SeItem:
     def update_leave_action(self, default_instant_leaveaction):
         self.__default_instant_leaveaction = default_instant_leaveaction
 
-        _returnvalue_leave, _returntype_leave, _using_default_leave = self.__instant_leaveaction.set_from_attr(
+        _returnvalue_leave, _returntype_leave, _using_default_leave, _issue = self.__instant_leaveaction.set_from_attr(
             self.__item, "se_instant_leaveaction", default_instant_leaveaction)
 
         if len(_returnvalue_leave) > 1:
@@ -462,8 +448,10 @@ class SeItem:
                             self.__suspend_time, StateEngineDefaults.suspend_time,
                             self.__using_default_suspendtime)
         self.update_lock.acquire(True, 10)
+        all_released_by = {}
         while not self.__queue.empty() and self.__ab_alive:
             job = self.__queue.get()
+            new_state = None
             if job is None or self.__ab_alive is False:
                 self.__logger.debug("No jobs in queue left or plugin not active anymore")
                 break
@@ -547,19 +535,8 @@ class SeItem:
                     self.__logger.info("Previous state's Conditionset is empty")
 
                 # find new state
-                new_state = None
                 _leaveactions_run = False
 
-                # for releasedby functionality
-                _releasedby_active = True if self.__all_releasedby else False
-                if _releasedby_active:
-                    _wouldenter = None
-                    _wouldnotenter = []
-                    _flagged = []
-                    _checked_states = []
-                    _possible_states = []
-
-                _releasedby = []
                 for state in self.__states:
                     if not self.__ab_alive:
                         self.__logger.debug("StateEngine Plugin not running (anymore). Stop state evaluation.")
@@ -568,21 +545,6 @@ class SeItem:
                     _key_name = ['{}'.format(state.id), 'name']
                     self.update_webif(_key_name, state.name)
 
-                    if _releasedby_active:
-                        _checked_states.append(state)
-                        if _wouldenter and not _releasedby:
-                            new_state = self.__state_ids[_wouldenter]
-                            _last_conditionset_id = self.__conditionsets[_wouldenter][0]
-                            _last_conditionset_name = self.__conditionsets[_wouldenter][1]
-                            if new_state.conditions.count() == 0:
-                                self.lastconditionset_set('', '')
-                                _last_conditionset_id = ''
-                                _last_conditionset_name = ''
-                            else:
-                                self.lastconditionset_set(_last_conditionset_id, _last_conditionset_name)
-                            self.__logger.debug("No release states True - Going back to {}. Condition set: {} ('{}')",
-                                                new_state, _last_conditionset_id, _last_conditionset_name)
-                            break
                     result = self.__update_check_can_enter(state)
                     _previousstate_conditionset_id = _last_conditionset_id
                     _previousstate_conditionset_name = _last_conditionset_name
@@ -591,54 +553,29 @@ class SeItem:
                     if state is not None and result is True:
                         self.__conditionsets.update(
                             {state.state_item.property.path: [_last_conditionset_id, _last_conditionset_name]})
-                    if _releasedby_active:
-                        _todo, _releasedby, _wouldenter, _wouldnotenter, new_state, _possible_state, _flagged = self.__check_releasedby(
-                            state, _checked_states, _releasedby, _wouldenter, _wouldnotenter, _flagged, last_state,
-                            _possible_states, result)
-                        if self.__hasreleased_item is not None:
-                            self.__hasreleased_item(self.__has_released, StateEngineDefaults.plugin_identification,
-                                                    "StateEvaluation")
 
-                        if self.___shouldnotrelease_item is not None:
-                            self.___shouldnotrelease_item(self.__should_not_release,
-                                                          StateEngineDefaults.plugin_identification,
-                                                          "StateEvaluation")
-                        if _possible_state:
-                            _possible_states.append(_possible_state)
-                            self.__logger.info("Possible states: {}", _possible_states)
-                        if _todo == 'continue':
-                            continue
-                        if _todo == 'break':
-                            break
-
-                    if not _releasedby:
-                        # New state is different from last state
-                        _instant_leaveaction = self.__instant_leaveaction.get()
-                        if self.__using_default_instant_leaveaction:
-                            _instant_leaveaction = self.__default_instant_leaveaction.get()
-                        if _instant_leaveaction >= 1:
-                            _instant_leaveaction = True
-                        else:
-                            _instant_leaveaction = False
-                        if result is False and last_state == state and _instant_leaveaction is True:
-                            self.__logger.info("Leaving {0} ('{1}'). Running actions immediately.", last_state.id,
-                                               last_state.name)
-                            last_state.run_leave(self.__repeat_actions.get())
-                            _leaveactions_run = True
-                        if result is True:
-                            new_state = state
-                            break
+                    # New state is different from last state
+                    _instant_leaveaction = self.__instant_leaveaction.get()
+                    if self.__using_default_instant_leaveaction:
+                        _instant_leaveaction = self.__default_instant_leaveaction.get()
+                    if _instant_leaveaction >= 1:
+                        _instant_leaveaction = True
+                    else:
+                        _instant_leaveaction = False
+                    if result is False and last_state == state and _instant_leaveaction is True:
+                        self.__logger.info("Leaving {0} ('{1}'). Running actions immediately.", last_state.id,
+                                           last_state.name)
+                        last_state.run_leave(self.__repeat_actions.get())
+                        _leaveactions_run = True
+                    if result is True:
+                        new_state = state
+                        break
 
                 # no new state -> stay
                 if new_state is None:
                     if last_state is None:
                         self.__logger.info("No matching state found, no previous state available. Doing nothing.")
                     else:
-                        try:
-                            _last_conditionset_id = self.__conditionsets[_wouldenter][0]
-                            _last_conditionset_name = self.__conditionsets[_wouldenter][1]
-                        except:
-                            pass
                         if last_state.conditions.count() == 0:
                             self.lastconditionset_set('', '')
                             _last_conditionset_id = ''
@@ -657,6 +594,7 @@ class SeItem:
                         self.update_lock.release()
                     self.__logger.debug("State evaluation finished")
                     self.__logger.info("State evaluation queue empty.")
+                    self.__handle_releasedby(new_state, last_state)
                     return
 
                 _last_conditionset_id = self.__lastconditionset_internal_id
@@ -720,9 +658,91 @@ class SeItem:
                     self.update_webif(_key_enter, False)
 
                 self.__logger.debug("State evaluation finished")
+                all_released_by = self.__handle_releasedby(new_state, last_state)
+
         self.__logger.info("State evaluation queue empty.")
+        if new_state:
+            self.__logger.develop("States {}, Current state released by {}", self.__states, all_released_by.get(new_state))
+
         if self.update_lock.locked():
             self.update_lock.release()
+
+    def __update_can_release(self, can_release):
+        dict1 = {state.id: state for state in self.__states}
+        for entry in can_release:
+            if entry in dict1.keys():
+                state = dict1.get(entry)
+                state.update_can_release_internal(can_release.get(entry))
+                self.__logger.develop("Updated 'can_release' property of state {} to {}",
+                                      state.id, state.can_release)
+            else:
+                self.__logger.info("Entry {} in se_released_by of state(s) {} is no valid state.",
+                                   entry, can_release.get(entry))
+
+    def __handle_releasedby(self, new_state, last_state):
+        def update_item_value(entry):
+            if isinstance(entry, Item):
+                entry = entry.property.value
+                if isinstance(entry, str) and entry.startswith("."):
+                    entry = "{}{}".format(new_state.id.rsplit(".", 1)[0], entry)
+            return entry
+
+        def update_can_release(can_release, returnvalue, state):
+            for entry in returnvalue:
+                entry = update_item_value(entry)
+                if entry and can_release.get(entry) and state.id not in can_release.get(entry):
+                    can_release[entry].append(state.id)
+                elif entry:
+                    can_release.update({entry: [state.id]})
+            return can_release
+
+        self.__logger.info("".ljust(80, "_"))
+        self.__logger.info("Handling released_by attributes")
+        can_release = {}
+        all_released_by = {}
+        for state in self.__states:
+            _returnvalue = state.releasedby
+            all_released_by.update({state: _returnvalue})
+            if _returnvalue:
+                _returnvalue = _returnvalue if isinstance(_returnvalue, list) else [_returnvalue]
+                can_release = update_can_release(can_release, _returnvalue, state)
+
+        self.__update_can_release(can_release)
+
+        if last_state and last_state != new_state and last_state.is_copy_for:
+            self.__states.remove(last_state)
+            last_state.is_copy_for = None
+            self.__logger.debug("Removed state copy {} because it was just left.", last_state.id)
+        if last_state != new_state:
+            new_states = copy(self.__states)
+            for entry in new_states:
+                self.__logger.develop(
+                    "Testing entry.can_release {}, laststate.id: {}, entry {} new_state: {}",
+                    entry.can_release, last_state.id, entry, new_state)
+                if entry.can_release.get() is not None and last_state.id in entry.can_release.get() \
+                        and entry.is_copy_for and entry != new_state:
+                    self.__states.remove(entry)
+                    self.__logger.debug("Removed state copy {} (is copy for {}) because "
+                                        "state was released by other possible state.", entry.id, last_state.id)
+                    entry.is_copy_for = None
+
+        if new_state:
+            releasedby = all_released_by.get(new_state)
+            if releasedby:
+                dict1 = {item.id: item for item in self.__states}
+                releasedby = releasedby if isinstance(releasedby, list) else [releasedby]
+                for entry in releasedby:
+                    entry = update_item_value(entry)
+                    self.__logger.develop("Testing if entry {} should become a state copy", entry)
+                    if entry in dict1.keys():
+                        relevant_state = dict1.get(entry)
+                        index = self.__states.index(new_state)
+                        if self.__states.index(relevant_state) != index - 1:
+                            relevant_state.is_copy_for = new_state
+                            self.__states.insert(index, relevant_state)
+                            self.__logger.debug("Inserted copy of state {}", relevant_state)
+        self.__logger.info("".ljust(80, "_"))
+        return all_released_by
 
     def update_webif(self, key, value):
         def _nested_set(dic, keys, val):
@@ -808,40 +828,6 @@ class SeItem:
             else:
                 combined_dict[key] = value  # Add new key-value pairs
         self.__used_attributes = combined_dict
-
-    def update_releasedby(self, state):
-        # create dependencies
-        _id = state.id
-        _returnvalue, _returntype, _releasedby = state.update_releasedby_internal()
-        _releasedby = _releasedby if isinstance(_releasedby, list) else \
-            [_releasedby] if _releasedby is not None else []
-        _convertedlist = []
-        for entry in _releasedby:
-            try:
-                if not any(entry.property.path == test.id for test in self.__states):
-                    self.__logger.warning("State {} defined in se_released_by attribute does not exist. Removing it.",
-                                          entry.property.path)
-                elif entry is not None and entry not in _convertedlist:
-                    _convertedlist.append(entry.property.path)
-                else:
-                    self.__logger.warning("Found invalid state in se_released_by attribute. Ignoring {}", entry)
-            except Exception as ex:
-                self.__logger.error("Issue with {} for released_by check: {}", entry, ex)
-        if _releasedby:
-            self.__all_releasedby.update({_id: _convertedlist})
-            self.__logger.develop("Updated releasedby for state {}: Configured releasedby: {}. Final all releasedby: {}",
-                                  state, _releasedby, self.__all_releasedby)
-            if self.__hasreleased_item is None or self.__has_released.get('initial'):
-                self.__has_released.update({_id: _convertedlist})
-                self.__logger.develop("Added to hasreleased: {} for state {}", self.__has_released, state)
-
-        '''
-        for i in _releasedby:
-            if i.property.path not in self.__all_torelease.keys():
-                self.__all_torelease.update({i: [_id]})
-            elif state.id not in self.__all_torelease.get(i):
-                self.__all_torelease[i].append(_id)
-        '''
 
     def __log_issues(self, issue_type):
         def list_issues(v):
@@ -937,139 +923,6 @@ class SeItem:
         # initialize states
         if len(self.__states) == 0:
             raise ValueError("{0}: No states defined!".format(self.id))
-
-    def __check_releasedby(self, state, _checked_states, _releasedby, _wouldenter, _wouldnotenter,
-                           _flagged, _laststate, _possible_states, result):
-        self.__logger.develop("Self ID {}, flagged: {}, wouldnotenter {}", state.id, _flagged, _wouldnotenter)
-        cond1 = state.id in _releasedby
-        cond2 = self.__has_released.get(_wouldenter) and state.id in self.__has_released.get(_wouldenter)
-        cond3 = self.__should_not_release.get(_wouldenter) and state.id in self.__should_not_release.get(_wouldenter)
-        if cond1 and cond2:
-            _releasedby.remove(state.id)
-            self.__logger.develop("State {} has already released, removed from _releasedby {}. has_released = {}",
-                                  state.id, _releasedby, self.__has_released)
-            if cond3:
-                self.__should_not_release.get(_wouldenter).remove(state.id)
-                self.__logger.develop("State {} removed from shouldnotrelease {}", state.id, self.__should_not_release)
-            if result is False:
-                self.__has_released[_wouldenter].remove(state.id)
-                self.__logger.develop("State {} removed from hasreleased because it got FALSE. {}", state.id,
-                                      self.__has_released)
-                _possible_state = None
-            else:
-                _possible_state = state
-                self.__logger.debug("State {} added to possible_states as it is true", state.id)
-            self.__logger.develop("Skipping rest of evaluation")
-            return 'continue', _releasedby, _wouldenter, _wouldnotenter, None, _possible_state, _flagged
-        if result is False and state.id in self.__all_releasedby.keys():
-            _flagged = list(self.__all_releasedby.get(state.id))
-            if state.id not in _wouldnotenter:
-                _wouldnotenter.append(state.id)
-            self.__logger.develop("FLAGGED {}, wouldnot {}", _flagged, _wouldnotenter)
-        cond4 = result is True and _laststate == state and state.id in self.__all_releasedby.keys()
-        if cond4:
-            self.__logger.develop("State {} cond4. wouldenter: {}, releasedby {}.", state.id, _wouldenter, _releasedby)
-            if _wouldenter:
-                self.logger.debug("State {} could be released, too. Prevent layered releaseby", state.id)
-            else:
-                _releasedby = list(self.__all_releasedby.get(state.id))
-                _wouldenter = state.id
-                self.__logger.debug("State {} could be entered but can be released by {}.", state.id, _releasedby)
-        elif result is True and not cond1 and not state.id == _wouldenter:
-            _possible_state = state
-            self.__logger.develop("State {} has nothing to do with release, writing down "
-                                  "as possible candidate to enter", state.id)
-            return 'nothing', _releasedby, _wouldenter, _wouldnotenter, None, _possible_state, _flagged
-        if result is True and state.id in _flagged:
-            self.__logger.develop("State {} should get added to shouldnotrelease {}. wouldnotenter = {}.",
-                                  state.id, self.__should_not_release, _wouldnotenter)
-            for entry in _wouldnotenter:
-                if self.__should_not_release.get(entry):
-                    if state.id not in self.__should_not_release[entry]:
-                        self.__should_not_release[entry].append(state.id)
-                else:
-                    self.__should_not_release.update({entry: [state.id]})
-                self.__logger.develop("State {} added to should not release of {}.", state.id, entry)
-        if result is True and state.id in _releasedby:
-            if self.__has_released.get(_wouldenter) and state.id in self.__has_released.get(_wouldenter):
-                _releasedby.remove(state.id)
-                self.__logger.develop("State {} has already released, removed from _releasedby {}. has_released = {}",
-                                      state.id, _releasedby, self.__has_released)
-            else:
-                self.__logger.develop("shouldnotrelease: {}, wouldenter: {}", self.__should_not_release,
-                                      _wouldenter)
-                if self.__should_not_release.get(_wouldenter) and state.id in self.__should_not_release.get(
-                        _wouldenter):
-                    _releasedby.remove(state.id)
-                    self.__logger.develop("State {} has not released yet, but it is in shouldnotrelease. "
-                                          "Removed from releasedby {}.", state.id, _releasedby)
-                    return 'continue', _releasedby, _wouldenter, _wouldnotenter, None, None, _flagged
-                if self.__has_released.get(_wouldenter):
-                    if state.id not in self.__has_released.get(_wouldenter):
-                        self.__has_released[_wouldenter].append(state.id)
-                        self.__logger.develop("State {} in releasedby, not released yet, appended to hasreleased {}",
-                                              state.id, self.__has_released)
-                else:
-                    self.__has_released.update({_wouldenter: [state.id]})
-                    self.__logger.develop("State {} in releasedby, created hasreleased {}",
-                                          state.id, self.__has_released)
-                self.__logger.develop("State {} has not released yet, could set as new state.", state.id)
-                if _possible_states:
-                    self.logger.develop("However, higher ranked state could be entered - entering that: {}",
-                                        _possible_states)
-                    new_state = _possible_states[0]
-                else:
-                    new_state = state
-                return 'break', _releasedby, _wouldenter, _wouldnotenter, new_state, None, _flagged
-
-        elif result is False:
-            self.__logger.develop("State {} FALSE, has_released {}, _releasedby list {}, _wouldenter {}",
-                                  state.id, self.__has_released, _releasedby, _wouldenter)
-            if _wouldenter is None:
-                for entry in self.__has_released.keys():
-                    if state.id in self.__has_released.get(entry):
-                        self.__has_released[entry].remove(state.id)
-                        self.__logger.develop("State {} removed from hasreleased because wouldenter is None. {}",
-                                              state.id, self.__has_released)
-                for entry in self.__should_not_release.keys():
-                    if state.id in self.__should_not_release.get(entry):
-                        self.__should_not_release[entry].remove(state.id)
-                        self.__logger.develop("State {} removed from shouldnotrelease because wouldenter is None. {}",
-                                              state.id, self.__has_released)
-            if self.__has_released.get(_wouldenter) and state.id in self.__has_released.get(_wouldenter):
-                self.__has_released[_wouldenter].remove(state.id)
-                self.__should_not_release[_wouldenter].remove(state.id)
-                self.__logger.develop("State {} in releasedby but FALSE, removed from hasreleased {} and shouldnot {}",
-                                      state.id, self.__has_released, self.__should_not_release)
-                if state.id in _releasedby:
-                    _releasedby.remove(state.id)
-                    self.__logger.develop("State {} removed from _releasedby {} because FALSE and hasreleased",
-                                          state.id, _releasedby)
-                    new_state = self.__state_ids[_wouldenter]
-                    self.__logger.develop("State {} - Going back to {}", state.id, _wouldenter)
-                    return 'break', _releasedby, _wouldenter, _wouldnotenter, new_state, None, _flagged
-            elif state.id in _releasedby:
-                _releasedby.remove(state.id)
-                if self.__should_not_release.get(_wouldenter) and state.id in self.__should_not_release.get(
-                        _wouldenter):
-                    self.__should_not_release[_wouldenter].remove(state.id)
-                    self.__logger.develop("State {} removed from shouldnotrelease FALSE", state.id,
-                                          self.__should_not_release)
-                self.__logger.develop("State {} removed from _releasedby {} because FALSE", state.id, _releasedby)
-        if cond4 and _releasedby == self.__has_released.get(_wouldenter):
-            _checked = True
-            for entry in _checked_states:
-                if entry not in _releasedby:
-                    _checked = False
-            if _checked is True:
-                self.__logger.info("State {} could be releaed by {}, but those states already have released it",
-                                   state.id, _releasedby)
-                new_state = state
-                return 'break', _releasedby, _wouldenter, _wouldnotenter, new_state, None, _flagged
-            else:
-                self.__logger.debug("State {} still could be releaed by {}, have to check that value", state.id,
-                                    _releasedby)
-        return 'nothing', _releasedby, _wouldenter, _wouldnotenter, None, None, _flagged
 
     # Find the state, matching the current conditions and perform the actions of this state
     # caller: Caller that triggered the update
@@ -1359,6 +1212,75 @@ class SeItem:
             crons = "Inactive"
         return crons, cycles
 
+    def __update_releasedby(self):
+        def process_returnvalue(entry, state, convertedlist, returntype):
+            _issue = None
+            if entry is None:
+                return convertedlist, None
+            try:
+                if isinstance(entry, str) and entry.startswith(".") and returntype[i] == 'value':
+                    entry = "{}{}".format(state.id.rsplit(".", 1)[0], entry)
+                if returntype[i] == 'value' and not any(entry == test.id for test in self.__states):
+                    _issue = "State {} defined by value in se_released_by attribute of state {} "\
+                             "does not exist.".format(entry, state.id)
+                    self.__logger.warning("{} Removing it.", _issue)
+                elif returntype[i] == 'regex':
+                    regex_check = re.compile(entry)
+                    matches = [test.id for test in self.__states if regex_check.match(test.id)]
+                    for match in matches:
+                        convertedlist.append(match)
+                    if not matches:
+                        _issue = "No states match regex {} defined in "\
+                                 "se_released_by attribute of state {}.".format(entry.replace("regex:", ""), state.id)
+                        self.__logger.warning("{} Removing it.", _issue)
+                elif entry not in convertedlist:
+                    convertedlist.append(entry)
+                    self.__logger.develop("Adding {} as releasedby for state {}", entry, state.id)
+                else:
+                    _issue = "Found invalid definition in se_released_by attribute "\
+                             "of state {}. Ignoring {}".format(state.id, entry)
+                    self.__logger.warning("{} Removing it.", _issue)
+            except Exception as ex:
+                _issue = "Issue with {} for released_by of state {} check: {}".format(entry, state.id, ex)
+                self.__logger.error(_issue)
+            return convertedlist, _issue
+
+        def update_can_release(can_release, returnvalue, state):
+            for entry in returnvalue:
+                if entry and can_release.get(entry) and state.id not in can_release.get(entry):
+                    can_release[entry].append(state.id)
+                elif entry:
+                    can_release.update({entry: [state.id]})
+            return can_release
+
+        self.__logger.info("".ljust(80, "_"))
+        self.__logger.info("Checking released_by attributes")
+        can_release = {}
+        for state in self.__states:
+            _issuelist = []
+            _returnvalue, _returntype, _issue = state.update_releasedby_internal()
+            _issuelist.append(_issue)
+            if _returnvalue:
+                _convertedlist = []
+
+                for i, entry in enumerate(_returnvalue):
+
+                    _convertedlist, _issue = process_returnvalue(entry, state, _convertedlist, _returntype)
+                    _issuelist.append(_issue)
+
+                update_can_release(can_release, _convertedlist, state)
+
+
+                _issuelist.append(_issue)
+                _issuelist = [issue for issue in _issuelist if issue is not None]
+                _issuelist = None if len(_issuelist) == 0 else _issuelist[0] if len(_issuelist) == 1 else _issuelist
+                self.__config_issues.update({state.id: {'issue': _issuelist, 'attribute': 'se_released_by'}})
+                state.update_releasedby_internal(_convertedlist)
+
+        self.__update_can_release(can_release)
+
+        self.__logger.info("".ljust(80, "_"))
+
     # log item data
     def write_to_log(self):
         # get crons and cycles
@@ -1390,12 +1312,6 @@ class SeItem:
         if self.__previousstate_item_name is not None:
             self.__logger.info("Item 'Previousstate Name': {0}", self.__previousstate_item_name.property.path)
 
-        # log releasedby settings
-        if self.___shouldnotrelease_item is not None:
-            self.__logger.info("Item 'Should not release': {0}", self.___shouldnotrelease_item.property.path)
-        if self.__hasreleased_item is not None:
-            self.__logger.info("Item 'Has released': {0}", self.__hasreleased_item.property.path)
-
         # log lastcondition settings
         if self.__lastconditionset_item_id is not None:
             self.__logger.info("Item 'Lastcondition Id': {0}", self.__lastconditionset_item_id.property.path)
@@ -1414,12 +1330,15 @@ class SeItem:
             self.__logger.info("Item 'Previousstate condition Name': {0}",
                                self.__previousstate_conditionset_item_name.property.path)
 
-        # log states
+        self.__update_releasedby()
+
         for state in self.__states:
-            # Update Releasedby Dict
-            self.update_releasedby(state)
+            # log states
             state.write_to_log()
             self._initstate = None
+
+        filtered_dict = {key: value for key, value in self.__config_issues.items() if value.get('issue') not in [[], None]}
+        self.__config_issues = filtered_dict
 
     # endregion
 

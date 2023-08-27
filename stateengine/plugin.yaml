@@ -496,41 +496,6 @@ item_attributes:
                  It can be used for visualization, actions and conditions.
                  '
 
-    se_shouldnotrelease_item:
-        type: str
-        description:
-            de: 'ID des Items, in dem interne Informationen für das released_by Feature gespeichert werden'
-            en: 'ID of the item that saves internal information for the released_by feature'
-        description_long:
-            de: '**ID des Items, in dem interne Informationen für das released_by Feature gespeichert werden:**\n
-               Ein Dictionary mit den Stati als Keys, die ein se_released_by Attribut haben und den Stati/Items
-               als Values, die zuvor schon aktiv waren und erst bei einem erneuten Wechsel von "can not be entered"
-               auf "can be entered" den entsprechenden Status released, also (vorübergehend) auflöst.
-               '
-            en: '**ID of the item that saves internal information for the released_by feature:**\n
-                A dictionary with the states as keys that have an se_released_by attribute and the states/items
-                as values that have been active before already and only release/overrule the relevant state
-                if they change from "can not be entered" to "can be entered".
-                '
-
-    se_hasreleased_item:
-        type: str
-        description:
-            de: 'ID des Items, in dem interne Informationen für das released_by Feature gespeichert werden'
-            en: 'ID of the item that saves internal information for the released_by feature'
-        description_long:
-            de: '**ID des Items, in dem interne Informationen für das released_by Feature gespeichert werden:**\n
-               Ein Dictionary mit den Stati als Keys, die ein se_released_by Attribut haben und den Stati/Items
-               als Values, die jene Items bereits aufgelöst haben und somit erst bei erneutem Wechsel
-               von "can not be entered" auf "can be entered" den enstprechenden Status released, also (vorübergehend)
-               auflösen.
-               '
-            en: '**ID of the item that saves internal information for the released_by feature:**\n
-                A dictionary with the states as keys that have an se_released_by attribute and the states/items
-                as values that have released them already and only release/overrule the relevant state
-                if they change from "can not be entered" to "can be entered" again.
-                '
-
     se_repeat_actions:
         type: bool
         description:
@@ -715,20 +680,6 @@ item_structs:
             visu_acl: ro
             cache: True
 
-        shouldnotrelease:
-            remark: Helper item for releasedby function
-            type: dict
-            visu_acl: ro
-            cache: True
-            initial_value: "{}"
-
-        hasreleased:
-            remark: Helper item for releasedby function
-            type: dict
-            visu_acl: ro
-            cache: True
-            initial_value: "{'initial': 'start'}"
-
         retrigger:
             remark: Item to retrigger the rule set evaluation
             type: bool
@@ -766,8 +717,6 @@ item_structs:
             se_previousstate_item_name: ..previousstate_name
             se_previousstate_conditionset_item_id: ..previousstate_conditionset_id
             se_previousstate_conditionset_item_name: ..previousstate_conditionset_name
-            se_shouldnotrelease_item: ..shouldnotrelease
-            se_hasreleased_item: ..hasreleased
 
     state_lock:
         name: Zustandsvorlage zum Sperren der Evaluierung
