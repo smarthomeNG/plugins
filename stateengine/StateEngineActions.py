@@ -75,6 +75,7 @@ class SeActions(StateEngineTools.SeItemChild):
         # Split attribute in function and action name
         func, name = StateEngineTools.partition_strip(attribute, "_")
         _count = 0
+        _issue = None
         try:
             if func == "se_delay":
                 # set delay
@@ -141,17 +142,18 @@ class SeActions(StateEngineTools.SeItemChild):
                     self.__actions[name].update_order(value)
                 return
             elif func == "se_action":  # and name not in self.__actions:
-                self.__handle_combined_action_attribute(name, value)
+                _issue = self.__handle_combined_action_attribute(name, value)
                 _count += 1
             elif self.__ensure_action_exists(func, name):
                 # update action
-                self.__actions[name].update(value)
+                _issue = self.__actions[name].update(value)
                 _count += 1
         except ValueError as ex:
             if name in self.__actions:
                 del self.__actions[name]
+            _issue = {name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
             self._log_warning("Ignoring action {0} because: {1}", attribute, ex)
-        return _count
+        return _count, _issue
 
     # ensure that action exists and create if missing
     # func: action function
@@ -287,6 +289,7 @@ class SeActions(StateEngineTools.SeItemChild):
 
         # create action based on function
         exists = False
+        _issue = None
         try:
             if parameter['function'] == "set":
                 if self.__ensure_action_exists("se_set", name):
@@ -350,6 +353,7 @@ class SeActions(StateEngineTools.SeItemChild):
             exists = False
             if name in self.__actions:
                 del self.__actions[name]
+            _issue = {name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
             self._log_warning("Ignoring action {0} because: {1}", name, ex)
 
         # add additional parameters
@@ -370,6 +374,8 @@ class SeActions(StateEngineTools.SeItemChild):
                 self.__actions[name].update_previousstate_conditionsets(parameter['previousstate_conditionset'])
             if parameter['mode'] is not None:
                 self.__actions[name].update_modes(parameter['mode'])
+
+        return _issue
 
     # noinspection PyMethodMayBeStatic
     def __raise_missing_parameter_error(self, parameter, param_name):

@@ -95,7 +95,9 @@ class SeStruct(StateEngineTools.SeItemChild):
             self._struct_rest = struct_rest
             self.get()
         except Exception as ex:
-            raise Exception("Struct {0} conversion error: {1}".format(self.struct_path, ex))
+            _issue = "Conversion error: {}".format(ex)
+            self._abitem.update_issues('struct', {self.struct_path: {'issue': _issue}})
+            raise Exception("Struct {} {}".format(self.struct_path, _issue))
 
     def get(self):
         raise NotImplementedError("Class {} doesn't implement get()".format(self.__class__.__name__))
@@ -118,7 +120,9 @@ class SeStructMain(SeStruct):
             parent = SeStructParent(self._abitem, self.struct_path, self._global_struct)
             self._parent_struct = parent
         except Exception as ex:
-            raise Exception("Struct {0} create parent error: {1}".format(self.struct_path, ex))
+            _issue = "Create parent error: {}".format(ex)
+            self._abitem.update_issues('struct', {self.struct_path: {'issue': _issue}})
+            raise Exception("Struct {} {}".format(self.struct_path, _issue))
 
     def return_parent(self):
         return self._parent_struct
@@ -134,7 +138,9 @@ class SeStructMain(SeStruct):
                 c = SeStructChild(self._abitem, '{}.{}'.format(self.struct_path, c), self._global_struct)
                 self._children_structs.append(c)
         except Exception as ex:
-            raise Exception("Struct {0} create children error: {1}".format(self.struct_path, ex))
+            _issue = "Create children error: {}".format(ex)
+            self._abitem.update_issues('struct', {self.struct_path: {'issue': _issue}})
+            raise Exception("Struct {} {}".format(self.struct_path, _issue))
         self.valid_se_use = _se_ok
 
     def return_children(self):
@@ -154,9 +160,13 @@ class SeStructMain(SeStruct):
                 self.create_children()
                 self.valid_se_use = True if "se_use" in self._full_conf else self.valid_se_use
             else:
-                self._log_error("Item '{}' does not exist in struct {}", self._struct_rest, self._struct)
-        except Exception as e:
-            self._log_error("Problem getting struct {}: {}", self._conf, e)
+                _issue = "Item '{}' does not exist".format( self._struct_rest)
+                self._abitem.update_issues('struct', {self.struct_path: {'issue': _issue}})
+                self._log_error("{} in struct {}", _issue, self._struct)
+        except Exception as ex:
+            _issue = "Problem getting struct {}".format(ex)
+            self._abitem.update_issues('struct', {self.struct_path: {'issue': _issue}})
+            self._log_error("Problem getting struct {}: {}", self._conf, ex)
             self._conf = {}
 
 

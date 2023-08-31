@@ -285,6 +285,7 @@ class SeItem:
         self.__used_attributes = {}
         self.__action_status = {}
         self.__state_issues = {}
+        self.__struct_issues = {}
         self.__webif_infos = OrderedDict()
 
         self.__repeat_actions = StateEngineValue.SeValue(self, "Repeat actions if state is not changed", False, "bool")
@@ -375,6 +376,8 @@ class SeItem:
             self.__log_issues('actions')
         if self.__state_issues:
             self.__log_issues('states')
+        if self.__struct_issues:
+            self.__log_issues('structs')
 
     def update_leave_action(self, default_instant_leaveaction):
         self.__default_instant_leaveaction = default_instant_leaveaction
@@ -782,21 +785,27 @@ class SeItem:
         combined_dict = combine_dicts(action_status, self.__action_status)
         self.__action_status = combined_dict
 
-    def update_state_issues(self, state_issues):
+    def update_issues(self, issue_type, issues):
         def combine_dicts(dict1, dict2):
             combined_dict = dict1.copy()
 
             for key, value in dict2.items():
-                if key in combined_dict:
+                if key in combined_dict and combined_dict[key].get('issueorigin'):
                     combined_dict[key]['issueorigin'].extend(value['issueorigin'])
                 else:
                     combined_dict[key] = value
 
             return combined_dict
 
-        state_dict = copy(state_issues)
-        combined_dict = combine_dicts(state_dict, self.__state_issues)
-        self.__state_issues = combined_dict
+        if issue_type == "state":
+            combined_dict = combine_dicts(issues, self.__state_issues)
+            self.__state_issues = combined_dict
+        elif issue_type == "config":
+            combined_dict = combine_dicts(issues, self.__config_issues)
+            self.__config_issues = combined_dict
+        elif issue_type == "struct":
+            combined_dict = combine_dicts(issues, self.__struct_issues)
+            self.__struct_issues = combined_dict
 
     def update_attributes(self, unused_attributes, used_attributes):
         combined_unused_dict = unused_attributes.copy()  # Create a copy of dict1
@@ -831,18 +840,24 @@ class SeItem:
 
     def __log_issues(self, issue_type):
         def list_issues(v):
-            if isinstance(v.get('issue'), list) and len(v.get('issue')) > 1:
+            _issuelist = StateEngineTools.flatten_list(v.get('issue'))
+            if isinstance(_issuelist, list) and len(_issuelist) > 1:
                 self.__logger.info("has the following issues:")
                 self.__logger.increase_indent()
-                for e in v.get('issue'):
+                for e in _issuelist:
                     self.__logger.info("- {}", e)
                 self.__logger.decrease_indent()
+            elif isinstance(_issuelist, list) and len(_issuelist) == 1:
+                self.__logger.info("has the following issue: {}", _issuelist[0])
             else:
-                self.__logger.info("has the following issue: {}", v.get('issue'))
+                self.__logger.info("has the following issue: {}", _issuelist)
 
         if issue_type == 'actions':
             to_check = self.__action_status.items()
             warn = ', '.join(key for key in self.__action_status.keys())
+        elif issue_type == 'structs':
+            to_check = self.__struct_issues.items()
+            warn = ', '.join(key for key in self.__struct_issues.keys())
         elif issue_type == 'states':
             to_check = self.__state_issues.items()
             warn = ', '.join(key for key in self.__state_issues.keys())
@@ -877,6 +892,11 @@ class SeItem:
                         list_issues(value)
                     else:
                         self.__logger.info("Attribute {} has an issue: {}", entry, value.get('issue'))
+                    self.__logger.info("")
+                    continue
+                elif issue_type == 'structs':
+                    self.__logger.info("Struct {} has an issue: {}", entry, value.get('issue'))
+                    self.__logger.info("")
                     continue
                 else:
                     additional = " used in" if origin_list else ""
@@ -910,7 +930,7 @@ class SeItem:
             self.__states.append(_state)
             self.__state_ids.update({item_state.property.path: _state})
             if _statecount == 1:
-                self.__unused_attributes = copy(_state.unused_attributes)
+                self.__unused_attributes = _state.unused_attributes.copy()
             filtered_dict = {key: value for key, value in self.__unused_attributes.items() if
                              key not in _state.used_attributes}
             self.__unused_attributes = filtered_dict
@@ -1516,16 +1536,17 @@ class SeItem:
                 # self.__logger.debug("Creating struct for id {}".format(item_id))
                 item = StateEngineStructs.create(self, item_id)
             except Exception as e:
-                self.__logger.error("struct {} creation failed. Error: {}", item_id, e)
+                _issue = "Struct {} creation failed. Error: {}".format(item_id, e)
+                self.__logger.error(_issue)
             if item is None:
-                self.__logger.warning("Item '{0}' not found!", item_id)
-                _issue = "Item '{0}' not found.".format(item_id)
+                _issue = "Item '{0}' in struct not found.".format(item_id)
+                self.__logger.warning(_issue)
             return item, _issue
         if not item_id.startswith("."):
             item = self.itemsApi.return_item(item_id)
             if item is None:
-                self.__logger.warning("Item '{0}' not found!", item_id)
                 _issue = "Item '{0}' not found.".format(item_id)
+                self.__logger.warning(_issue)
             return item, _issue
         self.__logger.debug("Testing for relative item declaration {}", item_id)
         parent_level = 0
@@ -1547,8 +1568,8 @@ class SeItem:
             result += "." + rel_item_id
         item = self.itemsApi.return_item(result)
         if item is None:
-            self.__logger.warning("Determined item '{0}' does not exist.", result)
             _issue = "Determined item '{0}' does not exist.".format(item_id)
+            self.__logger.warning(_issue)
         else:
             self.__logger.develop("Determined item '{0}' for id {1}.", item.id, item_id)
         return item, _issue

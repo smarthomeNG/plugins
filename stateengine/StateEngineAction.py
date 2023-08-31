@@ -443,7 +443,9 @@ class SeActionSetItem(SeActionBase):
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
-        self.__value.set(value)
+        _, _, _issue = self.__value.set(value)
+        _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'unknown', 'action': 'set initital'}]}}
+        return _issue
 
     # Complete action
     # item_state: state item to read from
@@ -620,6 +622,9 @@ class SeActionSetByattr(SeActionBase):
     # value: Value of the set_(action_name) attribute
     def update(self, value):
         self.__byattr = value
+        _issue = {self._name: {'issue': None, 'attribute': self.__byattr,
+                               'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
+        return _issue
 
     # Complete action
     # item_state: state item to read from
@@ -674,7 +679,10 @@ class SeActionTrigger(SeActionBase):
         logic, value = StateEngineTools.partition_strip(value, ":")
         self.__logic = logic
         value = None if value == "" else value
-        self.__value.set(value)
+        _, _, _issue = self.__value.set(value)
+        _issue = {self._name: {'issue': _issue, 'logic': self.__logic,
+                               'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
+        return _issue
 
     # Complete action
     # item_state: state item to read from
@@ -738,6 +746,9 @@ class SeActionRun(SeActionBase):
 
         if func == "eval":
             self.__eval = value
+        _issue = {self._name: {'issue': None, 'eval': StateEngineTools.get_eval_name(self.__eval),
+                               'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
+        return _issue
 
     # Complete action
     # item_state: state item to read from
@@ -824,7 +835,9 @@ class SeActionForceItem(SeActionBase):
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
-        self.__value.set(value)
+        _, _, _issue = self.__value.set(value)
+        _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'unknown', 'action': 'force initital'}]}}
+        return _issue
 
     # Complete action
     # item_state: state item to read from
@@ -1025,6 +1038,8 @@ class SeActionSpecial(SeActionBase):
         else:
             raise ValueError("Action {0}: Unknown special value '{1}'!".format(self._name, special))
         self.__special = special
+        _issue = {self._name: {'issue': None, 'special': self.__value, 'issueorigin': [{'state': 'unknown', 'action': 'special'}]}}
+        return _issue
 
     # Complete action
     # item_state: state item to read from
@@ -1034,7 +1049,7 @@ class SeActionSpecial(SeActionBase):
         else:
             item = self.__value.property.path
         self._scheduler_name = "{}_{}-SeSpecialDelayTimer".format(self.__special, item)
-        _issue = {self._name: {'issue': None, 'scheduler': self._scheduler_name, 'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
+        _issue = {self._name: {'issue': None, 'special': item, 'issueorigin': [{'state': 'unknown', 'action': 'special'}]}}
         return _issue
 
     # Write action to logger

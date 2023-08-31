@@ -474,32 +474,44 @@ class SeState(StateEngineTools.SeItemChild):
                     _actioncount += 1
                     for attribute in child_item.conf:
                         _enter_actioncount += 1
-                        self.__actions_enter.update(attribute, child_item.conf[attribute])
+                        _, _action_status = self.__actions_enter.update(attribute, child_item.conf[attribute])
+                        if _action_status:
+                            update_action_status(_action_status, 'enter')
                         update_unused(_used_attributes, 'action', child_name)
                 elif child_name == "on_stay":
                     _actioncount += 1
                     for attribute in child_item.conf:
                         _stay_actioncount += 1
-                        self.__actions_stay.update(attribute, child_item.conf[attribute])
+                        _, _action_status = self.__actions_stay.update(attribute, child_item.conf[attribute])
+                        if _action_status:
+                            update_action_status(_action_status, 'stay')
                         update_unused(_used_attributes, 'action', child_name)
                 elif child_name == "on_enter_or_stay":
                     _actioncount += 1
                     for attribute in child_item.conf:
                         _enter_stay_actioncount += 1
-                        self.__actions_enter_or_stay.update(attribute, child_item.conf[attribute])
+                        _, _action_status = self.__actions_enter_or_stay.update(attribute, child_item.conf[attribute])
+                        if _action_status:
+                            update_action_status(_action_status, 'enter_or_stay')
                         update_unused(_used_attributes, 'action', child_name)
                 elif child_name == "on_leave":
                     _actioncount += 1
                     for attribute in child_item.conf:
                         _leave_actioncount += 1
-                        self.__actions_leave.update(attribute, child_item.conf[attribute])
+                        _, _action_status = self.__actions_leave.update(attribute, child_item.conf[attribute])
+                        if _action_status:
+                            update_action_status(_action_status, 'leave')
                         update_unused(_used_attributes, 'action', child_name)
             except ValueError as ex:
                 raise ValueError("Condition {0} check for actions error: {1}".format(child_name, ex))
         self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
         # Actions defined directly in the item go to "enter_or_stay"
         for attribute in item_state.conf:
-            _enter_stay_actioncount += self.__actions_enter_or_stay.update(attribute, item_state.conf[attribute]) or 0
+            _result = self.__actions_enter_or_stay.update(attribute, item_state.conf[attribute])
+            _enter_stay_actioncount += _result[0] if _result else 0
+            _action_status = _result[1]
+            if _action_status:
+                update_action_status(_action_status, 'enter_or_stay')
 
         _total_actioncount = _enter_actioncount + _stay_actioncount + _enter_stay_actioncount + _leave_actioncount
 
