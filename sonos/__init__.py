@@ -273,7 +273,7 @@ class SubscriptionHandler(object):
                     self.logger.dbglow("Preparing to terminate thread")
                     if debug:
                         self.logger.dbghigh(f"unsubscribe(): Preparing to terminate thread for endpoint {self._endpoint}")
-                    self._thread.join(2)
+                    self._thread.join(timeout=4)
                     if debug:
                         self.logger.dbghigh(f"unsubscribe(): Thread joined for endpoint {self._endpoint}")
 
@@ -283,7 +283,7 @@ class SubscriptionHandler(object):
                             self.logger.dbghigh(f"Thread killed for endpoint {self._endpoint}")
 
                     else:
-                        self.logger.error("unsubscibe(): Error, thread is still alive")
+                        self.logger.warning("unsubscibe(): Error, thread is still alive after termination (join timed-out)")
                     self._thread = None
                 self.logger.info(f"Event {self._endpoint} unsubscribed and thread terminated")
                 if debug:
@@ -2298,9 +2298,99 @@ class Speaker(object):
                 return False
             return True
     
-
     def _play_radio(self, station_name: str, music_service: str = 'TuneIn', start: bool = True) -> tuple:
         """
+        Old legacy radio select function. The function is not based on the SoCo library.
+        Plays a radio station by a given radio name. If more than one radio station are found, the first result will be
+        played.
+        :param station_name: radio station name
+        :param start: Start playing after setting the radio stream? Default: True
+        :return: None
+        """
+
+        # ------------------------------------------------------------------------------------------------------------ #
+
+        # This code here is a quick workaround for issue https://github.com/SoCo/SoCo/issues/557 and will be fixed
+        # if a patch is applied.
+
+        # ------------------------------------------------------------------------------------------------------------ #
+
+        if not self._check_property():
+            return False, "Property check failed"
+        if not self.is_coordinator:
+            sonos_speaker[self.coordinator].play_tunein(station_name, start)
+        else:
+
+            data = '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Header><credentials ' \
+                   'xmlns="http://www.sonos.com/Services/1.1"><deviceId>anon</deviceId>' \
+                   '<deviceProvider>Sonos</deviceProvider></credentials></s:Header><s:Body>' \
+                   '<search xmlns="http://www.sonos.com/Services/1.1"><id>search:station</id><term>{search}</term>' \
+                   '<index>0</index><count>100</count></search></s:Body></s:Envelope>'.format(
+                search=station_name)
+
+            headers = {
+                "SOAPACTION": "http://www.sonos.com/Services/1.1#search",
+                "USER-AGENT": "Linux UPnP/1.0 Sonos/40.5-49250 (WDCR:Microsoft Windows NT 10.0.16299)",
+                "CONTENT-TYPE": 'text/xml; charset="utf-8"'
+            }
+
+            response = requests.post("http://legato.radiotime.com/Radio.asmx", data=data.encode("utf-8"),
+                                     headers=headers)
+            schema = XML.fromstring(response.content)
+            body = schema.find("{http://schemas.xmlsoap.org/soap/envelope/}Body")[0]
+
+            response = list(xmltodict.parse(XML.tostring(body), process_namespaces=True,
+                                            namespaces={'http://www.sonos.com/Services/1.1': None}).values())[0]
+
+            items = []
+            # The result to be parsed is in either searchResult or getMetadataResult
+            if 'searchResult' in response:
+                response = response['searchResult']
+            elif 'getMetadataResult' in response:
+                response = response['getMetadataResult']
+            else:
+                raise ValueError('"response" should contain either the key '
+                                 '"searchResult" or "getMetadataResult"')
+                return False, "response should contain either the key 'searchResult' or 'getMetadataResult'"
+
+            for result_type in ('mediaCollection', 'mediaMetadata'):
+                # Upper case the first letter (used for the class_key)
+                result_type_proper = result_type[0].upper() + result_type[1:]
+                raw_items = response.get(result_type, [])
+                # If there is only 1 result, it is not put in an array
+                if isinstance(raw_items, OrderedDict):
+                    raw_items = [raw_items]
+
+                for raw_item in raw_items:
+                    # Form the class_key, which is a unique string for this type,
+                    # formed by concatenating the result type with the item type. Turns
+                    # into e.g: MediaMetadataTrack
+                    class_key = result_type_proper + raw_item['itemType'].title()
+                    cls = get_class(class_key)
+                    #from plugins.sonos.soco.music_services.token_store import JsonFileTokenStore
+                    items.append(
+                        cls.from_music_service(MusicService(service_name='TuneIn'), raw_item))
+                        #cls.from_music_service(MusicService(service_name='TuneIn', token_store=JsonFileTokenStore()), raw_item))
+
+            if not items:
+                exit(0)
+
+            item_id = items[0].metadata['id']
+            sid = 254  # hard-coded TuneIn service id ?
+            sn = 0
+            meta = to_didl_string(items[0])
+
+            uri = "x-sonosapi-stream:{0}?sid={1}&flags=8224&sn={2}".format(item_id, sid, sn)
+
+            self.soco.avTransport.SetAVTransportURI([('InstanceID', 0),
+                                                     ('CurrentURI', uri), ('CurrentURIMetaData', meta)])
+            if start:
+                self.soco.play()
+            return True, ""
+
+    def _play_radio_dontuse(self, station_name: str, music_service: str = 'TuneIn', start: bool = True) -> tuple:
+        """
+        WARNING: THIS FUNCTION IS NOT WORKING FOR SOME RADIO STATIONS, e.g.
         Plays a radio station by a given radio name at a given music service. If more than one radio station are found,
         the first result will be played.
         :param music_service: music service name Default: TuneIn
@@ -2879,7 +2969,7 @@ class Sonos(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = "1.8.2"
+    PLUGIN_VERSION = "1.8.3"
 
     def __init__(self, sh):
         """Initializes the plugin."""

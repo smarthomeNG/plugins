@@ -360,6 +360,10 @@ class PirateWeather(SmartPlugin):
     def get_json_data(self):
         return self._jsonData
 
+    def get_dumped_json_data(self):
+
+        return json.dumps(self._jsonData, indent=4)
+
     def _build_url(self, url_type='forecast'):
         """
         Builds a request url

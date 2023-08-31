@@ -134,7 +134,7 @@ class KNX(SmartPlugin):
                 self.logger.warning(self.translate("Given path is absolute, using {}").format(self.projectpath))
             else:
                 self.projectpath = pathlib.Path(self.get_sh().get_basedir()) / self.projectpath / self.base_project_filename
-                self.logger.info(self.translate("Given path is relative, using {}").format(self.projectpath))
+                self.logger.info(self.translate("Given path is relative, using {path}", {'path': self.projectpath} ))
 
             self._parse_projectfile()
 
@@ -162,7 +162,7 @@ class KNX(SmartPlugin):
             # do not send anything while plugin is not really running
             self.logger.warning(self.translate('send called while self.alive is False, will NOT send anything to KNX'))
             return
- 
+
         if len(data) < 2 or len(data) > 0xffff:
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(self.translate('Illegal data size: {}').format(repr(data)))

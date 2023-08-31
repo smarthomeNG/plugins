@@ -117,7 +117,7 @@ class Echo(object):
 ##############################################################################
 
 class AlexaRc4shNG(SmartPlugin):
-    PLUGIN_VERSION = '1.0.3'
+    PLUGIN_VERSION = '1.0.4'
     ALLOW_MULTIINSTANCE = False
     """
     Main class of the Plugin. Does all plugin specific stuff and provides
@@ -1122,7 +1122,7 @@ class AlexaRc4shNG(SmartPlugin):
                     "Referer": myLocation
                    }
         newUrl = "https://www.amazon.de"+"/ap/signin/"+actSessionID
-        postfields = urllib3.request.urlencode(PostData)
+        postfields = urlencode(PostData)
         
         myStatus,myRespHeader, myRespCookie, myContent = self.send_post_request(newUrl,myHeaders,myCollectionCookie,PostData)
         myCollectionTxtCookie = self.parse_response_cookie_2_txt(myRespCookie,myCollectionTxtCookie)
@@ -1165,7 +1165,7 @@ class AlexaRc4shNG(SmartPlugin):
             myResults.append('MFA  : ' + 'use MFA/OTP - Login OTP : {}'.format(mfaCode))
             
         
-        postfields = urllib3.request.urlencode(PostData)
+        postfields = urlencode(PostData)
         myStatus,myRespHeader, myRespCookie, myContent = self.send_post_request(newUrl,myHeaders,myCollectionCookie,PostData)
         myCollectionTxtCookie = self.parse_response_cookie_2_txt(myRespCookie,myCollectionTxtCookie)
         myCollectionCookie = self.parse_response_cookie(myRespCookie,myCollectionCookie)

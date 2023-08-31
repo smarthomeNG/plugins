@@ -8,24 +8,28 @@
 */
 
 /**
- * Displays a google maps (from https://www.smarthomeng.de/google-maps-widget-fuer-smartvisu-2-9 ) map with the position and the path of the mower
- *
- * @param {id=''} unique id for this widget
- * @param {item(txt)=''} a gad/item with the name of the mower
- * @param {item(num)=0.0} a gad/item for latitude
- * @param {item(num)=0.0} a gad/item for longitude
- * @param {item(list)=[]} a gad/item for gps points
- * @param {text=''} the google maps key
- * @param {num=19} zoom level for map
- * @param {text='#3afd02'} color of mower path
- */
+* Displays a google maps (from https://www.smarthomeng.de/google-maps-widget-fuer-smartvisu-2-9 ) map with the position and the path of the mower
+*
+* @param {id=''} unique id for this widget
+* @param {item(txt)=''} a gad/item with the name of the mower
+* @param {item(num)=0.0} a gad/item for latitude
+* @param {item(num)=0.0} a gad/item for longitude
+* @param {item(list)=[]} a gad/item for gps points
+* @param {text=''} the google maps key
+* @param {num=19} zoom level for map
+* @param {text='#3afd02'} color of mower path
+*/
 {% macro map(id, gad_name, gad_lat, gad_lon, gad_points, mapskey, zoomlevel, pathcolor) %}
-<div id="{{ uid(page, id) }}"
-     style="width: 100%; height: 400px;"
-     data-widget="husky2.map"
-     data-mapskey="{{ mapskey|default('') }}"
-     data-zoomlevel="{{ zoomlevel|default(19) }}"
-     data-pathcolor="{{ pathcolor|default('#3afd02') }}"
-     data-item="{{ gad_lat|default(0.0) }}, {{ gad_lon|default(0.0) }}, {{ gad_points|default([]) }}, {{ gad_name|default('') }}">
-</div>
+    <div id="{{ uid(page, id) }}_husky_map_container">
+        <div id="{{ uid(page, id) }}_husky_map"
+             style="width: 100%; height: 400px;"
+             data-widget="husky2.map"
+             data-zoomlevel="{{ zoomlevel|default(19) }}"
+             data-pathcolor="{{ pathcolor|default('#3afd02') }}"
+             data-item="{{ gad_lat|default(0.0) }}, {{ gad_lon|default(0.0) }}, {{ gad_points|default([]) }}, {{ gad_name|default('') }}">
+        </div>
+        <script async
+                src="https://maps.googleapis.com/maps/api/js?key={{ mapskey|default('') }}&callback=Function.prototype">
+        </script>
+    </div>
 {% endmacro %}

@@ -34,7 +34,7 @@ import datetime
 class Solarforecast(SmartPlugin):
     PLUGIN_VERSION = '1.9.1'
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
         Initalizes the plugin.
 
@@ -141,7 +141,7 @@ class Solarforecast(SmartPlugin):
         # Decode Json data:        
         wattHoursToday = None
         wattHoursTomorrow = None
-        today = self._sh.now().date()
+        today = self._sh.shtime.now().date()
         tomorrow = today + datetime.timedelta(days=1)
         self.last_update = today
 

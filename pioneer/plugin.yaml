@@ -15,13 +15,6 @@ plugin:
 
 parameters:
 
-    standby_item_path:
-        type: str
-        default: ''
-        description:
-            de: 'Item-Pfad für das Standby-Item'
-            en: 'item path for standby switch item'
-
     host:
         type: str
         mandatory: false
@@ -78,38 +71,6 @@ parameters:
         description:
             de: Binärer Übertragungsmodus
             en: binary communication mode
-
-    autoreconnect:
-        type: bool
-        default: true
-
-        description:
-            de: Automatisches Neuverbinden bei Abbruch
-            en: automatic reconnect on disconnect
-
-    autoconnect:
-        type: bool
-        mandatory: false
-
-        description:
-            de: Automatisches Verbinden bei Senden
-            en: automatic connect on send
-
-    connect_retries:
-        type: num
-        default: 5
-
-        description:
-            de: Anzahl Verbindungsversuche
-            en: number of connect retries
-
-    connect_cycle:
-        type: num
-        default: 3
-
-        description:
-            de: Pause zwischen Verbindungsversuchen
-            en: wait time between connect retries
 
     port:
         type: int
@@ -179,6 +140,63 @@ parameters:
         description:
             de: Klasse für Verarbeitung von Kommandos
             en: class for command processing
+
+    autoreconnect:
+        type: bool
+        default: true
+
+        description:
+            de: Automatisches Neuverbinden bei Abbruch
+            en: automatic reconnect on disconnect
+
+    autoconnect:
+        type: bool
+        mandatory: false
+
+        description:
+            de: Automatisches Verbinden bei Senden
+            en: automatic connect on send
+
+    connect_retries:
+        type: num
+        default: 5
+
+        description:
+            de: Anzahl Verbindungsversuche
+            en: number of connect retries
+
+    connect_cycle:
+        type: num
+        default: 3
+
+        description:
+            de: Pause zwischen Verbindungsversuchen
+            en: wait time between connect retries
+
+    retry_cycle:
+        type: num
+        default: 30
+
+        description:
+            de: Pause zwischen Durchgängen von Verbindungsversuchen
+            en: wait time between connect retry rounds
+
+    retry_suspend:
+        type: num
+        default: 3
+
+        description:
+            de: Anzahl von Durchgängen vor Verbindungsabbruch oder Suspend-Modus
+            en: number of connect rounds before giving up / entering suspend mode
+
+    suspend_item:
+        type: str
+        default: ''
+
+        description:
+            de: Item-Pfad für das Standby-Item
+            en: item path for standby switch item
+
 
 item_attributes:
 
@@ -266,7 +284,7 @@ item_structs:
             -   general
 
         pqls:
-            type: str
+            type: bool
             pioneer_command: general.pqls
             pioneer_read: true
             pioneer_write: true
@@ -345,6 +363,10 @@ item_structs:
                 -   general.settings
                 pioneer_read_initial: true
 
+                lookup:
+                    type: list
+                    pioneer_lookup: SPEAKERSYSTEM#list
+
             surroundposition:
                 type: str
                 pioneer_command: general.settings.surroundposition
@@ -354,6 +376,10 @@ item_structs:
                 -   general
                 -   general.settings
                 pioneer_read_initial: true
+
+                lookup:
+                    type: list
+                    pioneer_lookup: SURROUNDPOSITION#list
 
             xover:
                 type: str
@@ -455,6 +481,10 @@ item_structs:
                     -   general.settings
                     -   general.settings.hdmi
                     pioneer_read_initial: true
+
+                    lookup:
+                        type: list
+                        pioneer_lookup: STANDBYTHROUGH#list
 
     tuner:
 
@@ -1310,7 +1340,7 @@ item_structs:
                 -   ALL.general
 
             pqls:
-                type: str
+                type: bool
                 pioneer_command: general.pqls
                 pioneer_read: true
                 pioneer_write: true
@@ -1340,6 +1370,120 @@ item_structs:
                 pioneer_command: general.multizone
                 pioneer_read: false
                 pioneer_write: true
+
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: ALL.general.settings
+
+                language:
+                    type: str
+                    pioneer_command: general.settings.language
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   ALL
+                    -   ALL.general
+                    -   ALL.general.settings
+                    pioneer_read_initial: true
+
+                name:
+                    type: str
+                    pioneer_command: general.settings.name
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   ALL
+                    -   ALL.general
+                    -   ALL.general.settings
+                    pioneer_read_initial: true
+
+                speakersystem:
+                    type: str
+                    pioneer_command: general.settings.speakersystem
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   ALL
+                    -   ALL.general
+                    -   ALL.general.settings
+                    pioneer_read_initial: true
+
+                    lookup:
+                        type: list
+                        pioneer_lookup: SPEAKERSYSTEM#list
+
+                xcurve:
+                    type: str
+                    pioneer_command: general.settings.xcurve
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   ALL
+                    -   ALL.general
+                    -   ALL.general.settings
+                    pioneer_read_initial: true
+
+                hdmi:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        pioneer_read_group_trigger: ALL.general.settings.hdmi
+
+                    control:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.control
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   ALL
+                        -   ALL.general
+                        -   ALL.general.settings
+                        -   ALL.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    controlmode:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.controlmode
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   ALL
+                        -   ALL.general
+                        -   ALL.general.settings
+                        -   ALL.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    arc:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.arc
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   ALL
+                        -   ALL.general
+                        -   ALL.general.settings
+                        -   ALL.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    standbythrough:
+                        type: str
+                        pioneer_command: general.settings.hdmi.standbythrough
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   ALL
+                        -   ALL.general
+                        -   ALL.general.settings
+                        -   ALL.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                        lookup:
+                            type: list
+                            pioneer_lookup: STANDBYTHROUGH#list
 
         tuner:
 
@@ -1992,7 +2136,7 @@ item_structs:
                 -   SC-LX87.general
 
             pqls:
-                type: str
+                type: bool
                 pioneer_command: general.pqls
                 pioneer_read: true
                 pioneer_write: true
@@ -2036,6 +2180,157 @@ item_structs:
                 pioneer_command: general.multizone
                 pioneer_read: false
                 pioneer_write: true
+
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: SC-LX87.general.settings
+
+                language:
+                    type: str
+                    pioneer_command: general.settings.language
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX87
+                    -   SC-LX87.general
+                    -   SC-LX87.general.settings
+                    pioneer_read_initial: true
+
+                name:
+                    type: str
+                    pioneer_command: general.settings.name
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX87
+                    -   SC-LX87.general
+                    -   SC-LX87.general.settings
+                    pioneer_read_initial: true
+
+                speakersystem:
+                    type: str
+                    pioneer_command: general.settings.speakersystem
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX87
+                    -   SC-LX87.general
+                    -   SC-LX87.general.settings
+                    pioneer_read_initial: true
+
+                    lookup:
+                        type: list
+                        pioneer_lookup: SPEAKERSYSTEM#list
+
+                surroundposition:
+                    type: str
+                    pioneer_command: general.settings.surroundposition
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX87
+                    -   SC-LX87.general
+                    -   SC-LX87.general.settings
+                    pioneer_read_initial: true
+
+                    lookup:
+                        type: list
+                        pioneer_lookup: SURROUNDPOSITION#list
+
+                xover:
+                    type: str
+                    pioneer_command: general.settings.xover
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX87
+                    -   SC-LX87.general
+                    -   SC-LX87.general.settings
+                    pioneer_read_initial: true
+
+                xcurve:
+                    type: str
+                    pioneer_command: general.settings.xcurve
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX87
+                    -   SC-LX87.general
+                    -   SC-LX87.general.settings
+                    pioneer_read_initial: true
+
+                loudness:
+                    type: bool
+                    pioneer_command: general.settings.loudness
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX87
+                    -   SC-LX87.general
+                    -   SC-LX87.general.settings
+                    pioneer_read_initial: true
+
+                hdmi:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        pioneer_read_group_trigger: SC-LX87.general.settings.hdmi
+
+                    control:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.control
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-LX87
+                        -   SC-LX87.general
+                        -   SC-LX87.general.settings
+                        -   SC-LX87.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    controlmode:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.controlmode
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-LX87
+                        -   SC-LX87.general
+                        -   SC-LX87.general.settings
+                        -   SC-LX87.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    arc:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.arc
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-LX87
+                        -   SC-LX87.general
+                        -   SC-LX87.general.settings
+                        -   SC-LX87.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    standbythrough:
+                        type: str
+                        pioneer_command: general.settings.hdmi.standbythrough
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-LX87
+                        -   SC-LX87.general
+                        -   SC-LX87.general.settings
+                        -   SC-LX87.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                        lookup:
+                            type: list
+                            pioneer_lookup: STANDBYTHROUGH#list
 
         tuner:
 
@@ -2924,7 +3219,7 @@ item_structs:
                 -   SC-LX77.general
 
             pqls:
-                type: str
+                type: bool
                 pioneer_command: general.pqls
                 pioneer_read: true
                 pioneer_write: true
@@ -2968,6 +3263,157 @@ item_structs:
                 pioneer_command: general.multizone
                 pioneer_read: false
                 pioneer_write: true
+
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: SC-LX77.general.settings
+
+                language:
+                    type: str
+                    pioneer_command: general.settings.language
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX77
+                    -   SC-LX77.general
+                    -   SC-LX77.general.settings
+                    pioneer_read_initial: true
+
+                name:
+                    type: str
+                    pioneer_command: general.settings.name
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX77
+                    -   SC-LX77.general
+                    -   SC-LX77.general.settings
+                    pioneer_read_initial: true
+
+                speakersystem:
+                    type: str
+                    pioneer_command: general.settings.speakersystem
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX77
+                    -   SC-LX77.general
+                    -   SC-LX77.general.settings
+                    pioneer_read_initial: true
+
+                    lookup:
+                        type: list
+                        pioneer_lookup: SPEAKERSYSTEM#list
+
+                surroundposition:
+                    type: str
+                    pioneer_command: general.settings.surroundposition
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX77
+                    -   SC-LX77.general
+                    -   SC-LX77.general.settings
+                    pioneer_read_initial: true
+
+                    lookup:
+                        type: list
+                        pioneer_lookup: SURROUNDPOSITION#list
+
+                xover:
+                    type: str
+                    pioneer_command: general.settings.xover
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX77
+                    -   SC-LX77.general
+                    -   SC-LX77.general.settings
+                    pioneer_read_initial: true
+
+                xcurve:
+                    type: str
+                    pioneer_command: general.settings.xcurve
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX77
+                    -   SC-LX77.general
+                    -   SC-LX77.general.settings
+                    pioneer_read_initial: true
+
+                loudness:
+                    type: bool
+                    pioneer_command: general.settings.loudness
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX77
+                    -   SC-LX77.general
+                    -   SC-LX77.general.settings
+                    pioneer_read_initial: true
+
+                hdmi:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        pioneer_read_group_trigger: SC-LX77.general.settings.hdmi
+
+                    control:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.control
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-LX77
+                        -   SC-LX77.general
+                        -   SC-LX77.general.settings
+                        -   SC-LX77.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    controlmode:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.controlmode
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-LX77
+                        -   SC-LX77.general
+                        -   SC-LX77.general.settings
+                        -   SC-LX77.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    arc:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.arc
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-LX77
+                        -   SC-LX77.general
+                        -   SC-LX77.general.settings
+                        -   SC-LX77.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    standbythrough:
+                        type: str
+                        pioneer_command: general.settings.hdmi.standbythrough
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-LX77
+                        -   SC-LX77.general
+                        -   SC-LX77.general.settings
+                        -   SC-LX77.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                        lookup:
+                            type: list
+                            pioneer_lookup: STANDBYTHROUGH#list
 
         tuner:
 
@@ -3856,7 +4302,7 @@ item_structs:
                 -   SC-LX57.general
 
             pqls:
-                type: str
+                type: bool
                 pioneer_command: general.pqls
                 pioneer_read: true
                 pioneer_write: true
@@ -3900,6 +4346,157 @@ item_structs:
                 pioneer_command: general.multizone
                 pioneer_read: false
                 pioneer_write: true
+
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: SC-LX57.general.settings
+
+                language:
+                    type: str
+                    pioneer_command: general.settings.language
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX57
+                    -   SC-LX57.general
+                    -   SC-LX57.general.settings
+                    pioneer_read_initial: true
+
+                name:
+                    type: str
+                    pioneer_command: general.settings.name
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX57
+                    -   SC-LX57.general
+                    -   SC-LX57.general.settings
+                    pioneer_read_initial: true
+
+                speakersystem:
+                    type: str
+                    pioneer_command: general.settings.speakersystem
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX57
+                    -   SC-LX57.general
+                    -   SC-LX57.general.settings
+                    pioneer_read_initial: true
+
+                    lookup:
+                        type: list
+                        pioneer_lookup: SPEAKERSYSTEM#list
+
+                surroundposition:
+                    type: str
+                    pioneer_command: general.settings.surroundposition
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX57
+                    -   SC-LX57.general
+                    -   SC-LX57.general.settings
+                    pioneer_read_initial: true
+
+                    lookup:
+                        type: list
+                        pioneer_lookup: SURROUNDPOSITION#list
+
+                xover:
+                    type: str
+                    pioneer_command: general.settings.xover
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX57
+                    -   SC-LX57.general
+                    -   SC-LX57.general.settings
+                    pioneer_read_initial: true
+
+                xcurve:
+                    type: str
+                    pioneer_command: general.settings.xcurve
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX57
+                    -   SC-LX57.general
+                    -   SC-LX57.general.settings
+                    pioneer_read_initial: true
+
+                loudness:
+                    type: bool
+                    pioneer_command: general.settings.loudness
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX57
+                    -   SC-LX57.general
+                    -   SC-LX57.general.settings
+                    pioneer_read_initial: true
+
+                hdmi:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        pioneer_read_group_trigger: SC-LX57.general.settings.hdmi
+
+                    control:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.control
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-LX57
+                        -   SC-LX57.general
+                        -   SC-LX57.general.settings
+                        -   SC-LX57.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    controlmode:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.controlmode
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-LX57
+                        -   SC-LX57.general
+                        -   SC-LX57.general.settings
+                        -   SC-LX57.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    arc:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.arc
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-LX57
+                        -   SC-LX57.general
+                        -   SC-LX57.general.settings
+                        -   SC-LX57.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    standbythrough:
+                        type: str
+                        pioneer_command: general.settings.hdmi.standbythrough
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-LX57
+                        -   SC-LX57.general
+                        -   SC-LX57.general.settings
+                        -   SC-LX57.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                        lookup:
+                            type: list
+                            pioneer_lookup: STANDBYTHROUGH#list
 
         tuner:
 
@@ -4788,7 +5385,7 @@ item_structs:
                 -   SC-2023.general
 
             pqls:
-                type: str
+                type: bool
                 pioneer_command: general.pqls
                 pioneer_read: true
                 pioneer_write: true
@@ -4818,6 +5415,146 @@ item_structs:
                 pioneer_command: general.multizone
                 pioneer_read: false
                 pioneer_write: true
+
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: SC-2023.general.settings
+
+                language:
+                    type: str
+                    pioneer_command: general.settings.language
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-2023
+                    -   SC-2023.general
+                    -   SC-2023.general.settings
+                    pioneer_read_initial: true
+
+                name:
+                    type: str
+                    pioneer_command: general.settings.name
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-2023
+                    -   SC-2023.general
+                    -   SC-2023.general.settings
+                    pioneer_read_initial: true
+
+                speakersystem:
+                    type: str
+                    pioneer_command: general.settings.speakersystem
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-2023
+                    -   SC-2023.general
+                    -   SC-2023.general.settings
+                    pioneer_read_initial: true
+
+                    lookup:
+                        type: list
+                        pioneer_lookup: SPEAKERSYSTEM#list
+
+                surroundposition:
+                    type: str
+                    pioneer_command: general.settings.surroundposition
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-2023
+                    -   SC-2023.general
+                    -   SC-2023.general.settings
+                    pioneer_read_initial: true
+
+                    lookup:
+                        type: list
+                        pioneer_lookup: SURROUNDPOSITION#list
+
+                xover:
+                    type: str
+                    pioneer_command: general.settings.xover
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-2023
+                    -   SC-2023.general
+                    -   SC-2023.general.settings
+                    pioneer_read_initial: true
+
+                xcurve:
+                    type: str
+                    pioneer_command: general.settings.xcurve
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-2023
+                    -   SC-2023.general
+                    -   SC-2023.general.settings
+                    pioneer_read_initial: true
+
+                hdmi:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        pioneer_read_group_trigger: SC-2023.general.settings.hdmi
+
+                    control:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.control
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-2023
+                        -   SC-2023.general
+                        -   SC-2023.general.settings
+                        -   SC-2023.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    controlmode:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.controlmode
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-2023
+                        -   SC-2023.general
+                        -   SC-2023.general.settings
+                        -   SC-2023.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    arc:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.arc
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-2023
+                        -   SC-2023.general
+                        -   SC-2023.general.settings
+                        -   SC-2023.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    standbythrough:
+                        type: str
+                        pioneer_command: general.settings.hdmi.standbythrough
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-2023
+                        -   SC-2023.general
+                        -   SC-2023.general.settings
+                        -   SC-2023.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                        lookup:
+                            type: list
+                            pioneer_lookup: STANDBYTHROUGH#list
 
         tuner:
 
@@ -5706,7 +6443,7 @@ item_structs:
                 -   SC-1223.general
 
             pqls:
-                type: str
+                type: bool
                 pioneer_command: general.pqls
                 pioneer_read: true
                 pioneer_write: true
@@ -5736,6 +6473,120 @@ item_structs:
                 pioneer_command: general.multizone
                 pioneer_read: false
                 pioneer_write: true
+
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: SC-1223.general.settings
+
+                language:
+                    type: str
+                    pioneer_command: general.settings.language
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-1223
+                    -   SC-1223.general
+                    -   SC-1223.general.settings
+                    pioneer_read_initial: true
+
+                name:
+                    type: str
+                    pioneer_command: general.settings.name
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-1223
+                    -   SC-1223.general
+                    -   SC-1223.general.settings
+                    pioneer_read_initial: true
+
+                speakersystem:
+                    type: str
+                    pioneer_command: general.settings.speakersystem
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-1223
+                    -   SC-1223.general
+                    -   SC-1223.general.settings
+                    pioneer_read_initial: true
+
+                    lookup:
+                        type: list
+                        pioneer_lookup: SPEAKERSYSTEM#list
+
+                xcurve:
+                    type: str
+                    pioneer_command: general.settings.xcurve
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-1223
+                    -   SC-1223.general
+                    -   SC-1223.general.settings
+                    pioneer_read_initial: true
+
+                hdmi:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        pioneer_read_group_trigger: SC-1223.general.settings.hdmi
+
+                    control:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.control
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-1223
+                        -   SC-1223.general
+                        -   SC-1223.general.settings
+                        -   SC-1223.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    controlmode:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.controlmode
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-1223
+                        -   SC-1223.general
+                        -   SC-1223.general.settings
+                        -   SC-1223.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    arc:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.arc
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-1223
+                        -   SC-1223.general
+                        -   SC-1223.general.settings
+                        -   SC-1223.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    standbythrough:
+                        type: str
+                        pioneer_command: general.settings.hdmi.standbythrough
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   SC-1223
+                        -   SC-1223.general
+                        -   SC-1223.general.settings
+                        -   SC-1223.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                        lookup:
+                            type: list
+                            pioneer_lookup: STANDBYTHROUGH#list
 
         tuner:
 
@@ -6478,7 +7329,7 @@ item_structs:
                 -   VSX-1123.general
 
             pqls:
-                type: str
+                type: bool
                 pioneer_command: general.pqls
                 pioneer_read: true
                 pioneer_write: true
@@ -6508,6 +7359,120 @@ item_structs:
                 pioneer_command: general.multizone
                 pioneer_read: false
                 pioneer_write: true
+
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: VSX-1123.general.settings
+
+                language:
+                    type: str
+                    pioneer_command: general.settings.language
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   VSX-1123
+                    -   VSX-1123.general
+                    -   VSX-1123.general.settings
+                    pioneer_read_initial: true
+
+                name:
+                    type: str
+                    pioneer_command: general.settings.name
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   VSX-1123
+                    -   VSX-1123.general
+                    -   VSX-1123.general.settings
+                    pioneer_read_initial: true
+
+                speakersystem:
+                    type: str
+                    pioneer_command: general.settings.speakersystem
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   VSX-1123
+                    -   VSX-1123.general
+                    -   VSX-1123.general.settings
+                    pioneer_read_initial: true
+
+                    lookup:
+                        type: list
+                        pioneer_lookup: SPEAKERSYSTEM#list
+
+                xcurve:
+                    type: str
+                    pioneer_command: general.settings.xcurve
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   VSX-1123
+                    -   VSX-1123.general
+                    -   VSX-1123.general.settings
+                    pioneer_read_initial: true
+
+                hdmi:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        pioneer_read_group_trigger: VSX-1123.general.settings.hdmi
+
+                    control:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.control
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   VSX-1123
+                        -   VSX-1123.general
+                        -   VSX-1123.general.settings
+                        -   VSX-1123.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    controlmode:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.controlmode
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   VSX-1123
+                        -   VSX-1123.general
+                        -   VSX-1123.general.settings
+                        -   VSX-1123.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    arc:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.arc
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   VSX-1123
+                        -   VSX-1123.general
+                        -   VSX-1123.general.settings
+                        -   VSX-1123.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    standbythrough:
+                        type: str
+                        pioneer_command: general.settings.hdmi.standbythrough
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   VSX-1123
+                        -   VSX-1123.general
+                        -   VSX-1123.general.settings
+                        -   VSX-1123.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                        lookup:
+                            type: list
+                            pioneer_lookup: STANDBYTHROUGH#list
 
         tuner:
 
@@ -7160,7 +8125,7 @@ item_structs:
                 -   VSX-923.general
 
             pqls:
-                type: str
+                type: bool
                 pioneer_command: general.pqls
                 pioneer_read: true
                 pioneer_write: true
@@ -7190,6 +8155,120 @@ item_structs:
                 pioneer_command: general.multizone
                 pioneer_read: false
                 pioneer_write: true
+
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: VSX-923.general.settings
+
+                language:
+                    type: str
+                    pioneer_command: general.settings.language
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   VSX-923
+                    -   VSX-923.general
+                    -   VSX-923.general.settings
+                    pioneer_read_initial: true
+
+                name:
+                    type: str
+                    pioneer_command: general.settings.name
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   VSX-923
+                    -   VSX-923.general
+                    -   VSX-923.general.settings
+                    pioneer_read_initial: true
+
+                speakersystem:
+                    type: str
+                    pioneer_command: general.settings.speakersystem
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   VSX-923
+                    -   VSX-923.general
+                    -   VSX-923.general.settings
+                    pioneer_read_initial: true
+
+                    lookup:
+                        type: list
+                        pioneer_lookup: SPEAKERSYSTEM#list
+
+                xcurve:
+                    type: str
+                    pioneer_command: general.settings.xcurve
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   VSX-923
+                    -   VSX-923.general
+                    -   VSX-923.general.settings
+                    pioneer_read_initial: true
+
+                hdmi:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        pioneer_read_group_trigger: VSX-923.general.settings.hdmi
+
+                    control:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.control
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   VSX-923
+                        -   VSX-923.general
+                        -   VSX-923.general.settings
+                        -   VSX-923.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    controlmode:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.controlmode
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   VSX-923
+                        -   VSX-923.general
+                        -   VSX-923.general.settings
+                        -   VSX-923.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    arc:
+                        type: bool
+                        pioneer_command: general.settings.hdmi.arc
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   VSX-923
+                        -   VSX-923.general
+                        -   VSX-923.general.settings
+                        -   VSX-923.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                    standbythrough:
+                        type: str
+                        pioneer_command: general.settings.hdmi.standbythrough
+                        pioneer_read: true
+                        pioneer_write: true
+                        pioneer_read_group:
+                        -   VSX-923
+                        -   VSX-923.general
+                        -   VSX-923.general.settings
+                        -   VSX-923.general.settings.hdmi
+                        pioneer_read_initial: true
+
+                        lookup:
+                            type: list
+                            pioneer_lookup: STANDBYTHROUGH#list
 
         tuner:
 

@@ -20,6 +20,7 @@
 #########################################################################
 from . import StateEngineAction
 from . import StateEngineTools
+
 import ast
 import threading
 import queue
@@ -27,14 +28,6 @@ import queue
 
 # Class representing a list of actions
 class SeActions(StateEngineTools.SeItemChild):
-    @property
-    def dict_actions(self):
-        result = {}
-        for name in self.__actions:
-            self._abitem._initactionname = name
-            result.update({name: self.__actions[name].get()})
-            self._abitem._initactionname = None
-        return result
 
     # Initialize the set of actions
     # abitem: parent SeItem instance
@@ -56,6 +49,21 @@ class SeActions(StateEngineTools.SeItemChild):
     def __repr__(self):
         return "SeActions, count {}".format(self.count())
 
+    def dict_actions(self, type, state):
+        result = {}
+        for name in self.__actions:
+            self._abitem._initactionname = name
+            result.update({name: self.__actions[name].get()})
+            try:
+                result[name].update({'actionstatus': self._abitem.webif_infos[state][type][name].get('actionstatus')})
+            except Exception:
+                pass
+            self._abitem._initactionname = None
+        return result
+
+    def reset(self):
+        self.__actions = {}
+
     # Return number of actions in list
     def count(self):
         return len(self.__actions)
@@ -67,6 +75,7 @@ class SeActions(StateEngineTools.SeItemChild):
         # Split attribute in function and action name
         func, name = StateEngineTools.partition_strip(attribute, "_")
         _count = 0
+        _issue = None
         try:
             if func == "se_delay":
                 # set delay
@@ -133,17 +142,18 @@ class SeActions(StateEngineTools.SeItemChild):
                     self.__actions[name].update_order(value)
                 return
             elif func == "se_action":  # and name not in self.__actions:
-                self.__handle_combined_action_attribute(name, value)
+                _issue = self.__handle_combined_action_attribute(name, value)
                 _count += 1
             elif self.__ensure_action_exists(func, name):
                 # update action
-                self.__actions[name].update(value)
+                _issue = self.__actions[name].update(value)
                 _count += 1
         except ValueError as ex:
             if name in self.__actions:
                 del self.__actions[name]
+            _issue = {name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
             self._log_warning("Ignoring action {0} because: {1}", attribute, ex)
-        return _count
+        return _count, _issue
 
     # ensure that action exists and create if missing
     # func: action function
@@ -279,6 +289,7 @@ class SeActions(StateEngineTools.SeItemChild):
 
         # create action based on function
         exists = False
+        _issue = None
         try:
             if parameter['function'] == "set":
                 if self.__ensure_action_exists("se_set", name):
@@ -342,6 +353,7 @@ class SeActions(StateEngineTools.SeItemChild):
             exists = False
             if name in self.__actions:
                 del self.__actions[name]
+            _issue = {name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
             self._log_warning("Ignoring action {0} because: {1}", name, ex)
 
         # add additional parameters
@@ -363,6 +375,8 @@ class SeActions(StateEngineTools.SeItemChild):
             if parameter['mode'] is not None:
                 self.__actions[name].update_modes(parameter['mode'])
 
+        return _issue
+
     # noinspection PyMethodMayBeStatic
     def __raise_missing_parameter_error(self, parameter, param_name):
         if param_name not in parameter or parameter[param_name] is None:
@@ -372,11 +386,14 @@ class SeActions(StateEngineTools.SeItemChild):
     # Check the actions optimize and complete them
     # item_state: item to read from
     def complete(self, item_state, evals_items=None):
+        _status = {}
         for name in self.__actions:
             try:
-                self.__actions[name].complete(item_state, evals_items)
+                _status.update(self.__actions[name].complete(item_state, evals_items))
             except ValueError as ex:
+                _status.update({name: {'issue': ex, 'issueorigin': {'state': item_state.property.path, 'action': 'unknown'}}})
                 raise ValueError("State '{0}', Action '{1}': {2}".format(item_state.property.path, name, ex))
+        return _status
 
     def set(self, value):
         for name in self.__actions:
@@ -390,7 +407,7 @@ class SeActions(StateEngineTools.SeItemChild):
     # item_allow_repeat: Is repeating actions generally allowed for the item?
     # state: state item triggering the action
     # additional_actions: SeActions-Instance containing actions which should be executed, too
-    def execute(self, is_repeat: bool, allow_item_repeat: bool, state: str, additional_actions=None):
+    def execute(self, is_repeat: bool, allow_item_repeat: bool, state, additional_actions=None):
         actions = []
         for name in self.__actions:
             actions.append((self.__actions[name].get_order(), self.__actions[name]))

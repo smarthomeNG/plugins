@@ -1,0 +1,334 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin fuer die Anzeige von Daten von BYD Batterien'
+        en: 'Plugin to display data from BYD batteries'
+    maintainer: Matthias Manhart
+    tester: Matthias Manhart
+    state: develop                  # change to ready when done with development
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1886748-support-thread-f%C3%BCr-das-byd-batterie-plugin
+
+    version: 0.0.3                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.9              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: false           # plugin supports multi instance
+    restartable: true
+    classname: byd_bat              # class containing the plugin
+
+parameters:
+
+    ip:
+        type: ip
+        default: '192.168.16.254'
+        description:
+            de: "IP-Adresse der BYD Batterie (Master)"
+            en: "IP address of the BYD battery (master)"
+
+    imgpath:
+        type: str
+        default: ''
+        description:
+            de: "Pfad fuer Heatmap-Bilder (z.Bsp. fuer smartvisu)"
+            en: "Path for heatmap images (e.g. for smartvisu)"
+
+item_attributes:
+
+    byd_root:                        # only used internally - do not use for own items !
+        type: bool
+        mandatory: True
+        description:
+            de: 'Root-Flag fuer das Plugin'
+            en: 'Root-Flag for plugin'
+
+item_structs:
+
+    byd_struct:
+    
+        byd_root: true               # must stay here - used by the plugin internally - do not remove !
+        
+        info:
+        
+            connection:              # shows connection status of plugin to battery
+                type: bool
+                initial_value: false
+                enforce_updates: true
+                visu_acl: ro
+
+        state:
+        
+            current:                 # [A] Charge / Discharge Current
+                type: num
+                visu_acl: ro
+                database: init
+                
+            power:                   # [W] Power (+ discharge / - charge battery)
+                type: num
+                visu_acl: ro
+                database: init
+                
+            power_charge:            # [W] Power charging
+                type: num
+                visu_acl: ro
+                database: init
+                
+            power_discharge:         # [W] Charge discharging
+                type: num
+                visu_acl: ro
+                database: init
+                
+            soc:                     # [%] SOC
+                type: num
+                visu_acl: ro
+                database: init
+                
+            soh:                     # [%] SOH
+                type: num
+                visu_acl: ro
+                database: init
+                
+            tempbatt:                # [°C] Battery Temperature
+                type: num
+                visu_acl: ro
+                database: init
+                
+            tempmax:                 # [°C] Max Cell Temp
+                type: num
+                visu_acl: ro
+                database: init
+                
+            tempmin:                 # [°C] Min Cell Temp
+                type: num
+                visu_acl: ro
+                database: init
+                
+            voltbatt:                # [V] Battery Voltage
+                type: num
+                visu_acl: ro
+                database: init
+                
+            voltdiff:                # [V] Max - Min Cell Voltage
+                type: num
+                visu_acl: ro
+                database: init
+                
+            voltmax:                 # [V] Max Cell Voltage
+                type: num
+                visu_acl: ro
+                database: init
+                
+            voltmin:                 # [V] Min Cell Voltage
+                type: num
+                visu_acl: ro
+                database: init
+                
+            voltout:                 # [V] Output Voltage
+                type: num
+                visu_acl: ro
+                database: init
+                
+        system:
+        
+            bms:                     # F/W BMS
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            bmu:                     # F/W BMU
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            bmubanka:                # F/W BMU-BankA
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            bmubankb:                # F/W BMU-BankB
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            batttype:                # Battery Type
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            errornum:                # Error (numeric)
+                type: num
+                cache: true
+                visu_acl: ro
+                
+            errorstr:                # Error (string)
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            grid:                    # Parameter Table
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            invtype:                 # Inverter Type
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            modules:                 # modules (count)
+                type: num
+                cache: true
+                visu_acl: ro
+                
+            bmsqty:                  # tours (count)
+                type: num
+                cache: true
+                visu_acl: ro
+                
+            capacity_total:          # Total capacitiy (all modules) [kWh]
+                type: num
+                cache: true
+                visu_acl: ro
+                
+            paramt:                  # F/W BMU
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            serial:                  # Serial number
+                type: str
+                cache: true
+                visu_acl: ro
+                
+        diagnosis:
+        
+            tower1:
+            
+                soc:                 # [%] SOC
+                    type: num
+                    visu_acl: ro
+                    database: init
+                    
+                volt_max:
+                
+                    volt:            # max voltage [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of max voltage
+                        type: num
+                        visu_acl: ro
+                        database: init
+        
+                volt_min:
+                
+                    volt:            # min voltage [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of min voltage
+                        type: num
+                        visu_acl: ro
+                        database: init
+    
+                temp_max_cell:       # cell number of max temperature
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                temp_min_cell:       # cell number of min temperature
+                    type: num
+                    visu_acl: ro
+                    database: init
+                
+            tower2:
+            
+                soc:                 # [%] SOC
+                    type: num
+                    visu_acl: ro
+                    database: init
+                    
+                volt_max:
+                
+                    volt:            # max voltage [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of max voltage
+                        type: num
+                        visu_acl: ro
+                        database: init
+        
+                volt_min:
+                
+                    volt:            # min voltage [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of min voltage
+                        type: num
+                        visu_acl: ro
+                        database: init
+    
+                temp_max_cell:       # cell number of max temperature
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                temp_min_cell:       # cell number of min temperature
+                    type: num
+                    visu_acl: ro
+                    database: init
+                
+            tower3:
+            
+                soc:                 # [%] SOC
+                    type: num
+                    visu_acl: ro
+                    database: init
+                    
+                volt_max:
+                
+                    volt:            # max voltage [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of max voltage
+                        type: num
+                        visu_acl: ro
+                        database: init
+        
+                volt_min:
+                
+                    volt:            # min voltage [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of min voltage
+                        type: num
+                        visu_acl: ro
+                        database: init
+    
+                temp_max_cell:       # cell number of max temperature
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                temp_min_cell:       # cell number of min temperature
+                    type: num
+                    visu_acl: ro
+                    database: init
+                
+logic_parameters: NONE
+
+plugin_functions: NONE

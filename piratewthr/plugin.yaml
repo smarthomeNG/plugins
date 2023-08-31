@@ -632,7 +632,7 @@ item_structs:
 
         temperatureMin:
             type: num
-            pw_matchstring_@instance: "daily/{..:_day}/cloudCover"
+            pw_matchstring_@instance: "daily/{..:_day}/temperatureMin"
             database@instance: ..:my_database
             database_maxage@instance: ..:my_database_maxage
 

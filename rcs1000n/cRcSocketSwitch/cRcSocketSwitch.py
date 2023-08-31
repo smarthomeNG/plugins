@@ -204,19 +204,36 @@ class RCS1000N:
         logging.info("binary string: {}\n".format(binstr))
         return int(binstr, 2)
 
+    def calculateDecimalCode(self, systemCode, buttonCode, status):
+        '''
+        Calculate the Decimal/Binary Code which to send to actuator
+        '''
+        values = self.prepareCodes(systemCode, buttonCode, status)
+        self.config['code'] = self.calc_DecimalCode_python_style(*values)
+        return None
 
-    def send(self, systemCode, btn_code, status):
+    
+    def sendData(self, device):
+        '''
+        send data to device
+        '''
+        device.enable_tx()
+        device.tx_repeat = 10
+        device.tx_code(**self.config)
+        return None
+
+    
+    def send(self, systemCode, buttonCode, status):
         '''
         Method to prepare the codes and send it to the actuator
         '''
         try:
             rfdevice = RFDevice(self.gpio)
-            rfdevice.enable_tx()
-            rfdevice.tx_repeat = 10
-            values = self.prepareCodes(systemCode, btn_code, status)
-            send_code = self.calc_DecimalCode_python_style(*values)
-            self.config['code'] = send_code
-            rfdevice.tx_code(**self.config)
-
-        finally:
+        except Exception as err:
+            logging.error('Error: during instantiation of object: {}'.format(err))
+        else:
+            self.calculateDecimalCode(systemCode, buttonCode, status)
+            self.sendData(rfdevice)
             rfdevice.cleanup()
+        finally:
+            pass

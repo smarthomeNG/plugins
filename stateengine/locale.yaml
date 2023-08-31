@@ -6,10 +6,15 @@ plugin_translations:
     'Zustände':                                                     {'de': '=', 'en': 'States'}
     'aktueller Zustand':                                            {'de': '=', 'en': 'current state'}
     'aktuelles Bedingungsset':                                      {'de': '=', 'en': 'current conditionset'}
+    'Standard Log Level':                                           {'de': '=', 'en': 'Default Log Level'}
     'Log Level':                                                    {'de': '=', 'en': '='}
     'Log Verzeichnis':                                              {'de': '=', 'en': 'Log Folder'}
+    'Logs löschen nach':                                            {'de': '=', 'en': 'Delete logs after'}
+    'Tagen':                                                        {'de': '=', 'en': 'days'}
+    'Tag':                                                          {'de': '=', 'en': 'day'}
     'Startverzögerung':                                             {'de': '=', 'en': 'Startup Delay'}
     'Suspend Dauer':                                                {'de': '=', 'en': 'Suspend Duration'}
     'Items':                                                        {'de': '=', 'en': '='}
     'SE Item':                                                      {'de': '=', 'en': '='}
     'Detailvisualisierung':                                         {'de': '=', 'en': 'Detailed Visualization'}
+    'KeineVisualisierung':                                          {'de': 'Visualisierung nicht verfügbar', 'en': 'Visualization not available'}
