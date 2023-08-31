@@ -449,6 +449,7 @@ class SeItem:
                             self.__using_default_suspendtime)
         self.update_lock.acquire(True, 10)
         all_released_by = {}
+        new_state = None
         while not self.__queue.empty() and self.__ab_alive:
             job = self.__queue.get()
             new_state = None
@@ -778,8 +779,7 @@ class SeItem:
 
             return combined_dict
 
-        action_dict = copy(action_status)
-        combined_dict = combine_dicts(action_dict, self.__action_status)
+        combined_dict = combine_dicts(action_status, self.__action_status)
         self.__action_status = combined_dict
 
     def update_state_issues(self, state_issues):
@@ -799,7 +799,7 @@ class SeItem:
         self.__state_issues = combined_dict
 
     def update_attributes(self, unused_attributes, used_attributes):
-        combined_unused_dict = copy(unused_attributes)  # Create a copy of dict1
+        combined_unused_dict = unused_attributes.copy()  # Create a copy of dict1
         for key, value in self.__unused_attributes.items():
             if key in combined_unused_dict:
                 if unused_attributes.get(key):
@@ -933,7 +933,7 @@ class SeItem:
             return
         self.__queue.put(["stateevaluation", item, caller, source, dest])
         if not self.update_lock.locked():
-            self.__logger.debug("Run queue to update state. Item: {}, caller: {}, source: {}", item, caller, source)
+            self.__logger.debug("Run queue to update state. Item: {}, caller: {}, source: {}", item.property.path, caller, source)
             self.run_queue()
 
     # check if state can be entered after setting state-specific variables
@@ -1505,8 +1505,8 @@ class SeItem:
             _issue = "item_id is None"
             return None, _issue
         if not isinstance(item_id, str):
-            self.__logger.info("'{0}' should be defined as string. Check your item config!", item_id)
             _issue = "'{0}' is not defined as string.".format(item_id)
+            self.__logger.info("{0} Check your item config!", _issue, item_id)
             return None, _issue
         item_id = item_id.strip()
         if item_id.startswith("struct:"):

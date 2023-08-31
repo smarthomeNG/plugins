@@ -283,31 +283,33 @@ class SeState(StateEngineTools.SeItemChild):
         self._log_decrease_indent()
 
     def refill(self):
-        cond1 = not self.__use.is_empty() and "eval" in self.__use.get_type()
-        cond2 = not self.__releasedby.is_empty() and ("eval" in self.__releasedby.get_type() or "item" in self.__releasedby.get_type())
-        if cond1 and cond2:
-            self._log_debug("State {}: se_use attribute including eval and se_released_by "
-                            "attribute including item or eval - updating state conditions and actions", self.__name)
-            self._log_increase_indent()
-            self.__fill(self.__item, 0, "refill")
-            self._log_decrease_indent()
-        elif cond1:
-            self._log_debug("State {}: se_use attribute including eval "
+        cond_refill = not self.__use.is_empty() and ("eval" in self.__use.get_type() or "item" in self.__use.get_type())
+        if cond_refill:
+            self._log_debug("State {}: se_use attribute including item or eval "
                             "- updating state conditions and actions", self.__name)
             self._log_increase_indent()
-            self.__fill(self.__item, 0, "refill")
+            self.__fill(self.__item, 0, "reinit")
             self._log_decrease_indent()
 
     def update_releasedby_internal(self, states=None):
-        if states:
+        if states == []:
+            _returnvalue, _returntype, _issue = self.__releasedby.set([None])
+        elif states:
+            self._log_develop("Setting releasedby to {}", states)
             _returnvalue, _returntype, _issue = self.__releasedby.set(states)
+            self._log_develop("returnvalue {}", _returnvalue)
         else:
             _returnvalue, _returntype, _, _issue = self.__releasedby.set_from_attr(self.__item, "se_released_by")
         return _returnvalue, _returntype, _issue
 
     def update_can_release_internal(self, states):
-        _returnvalue, _returntype, _issue = self.__can_release.set(states)
-        return _returnvalue, _returntype, self.can_release, _issue
+        if states == []:
+            _returnvalue, _returntype, _issue = self.__can_release.set([None])
+        elif states:
+            _returnvalue, _returntype, _issue = self.__can_release.set(states)
+        else:
+            _returnvalue, _returntype, _issue = [None], [None], None
+        return _returnvalue, _returntype, _issue
 
     def update_name(self, item_state, recursion_depth=0):
         # if an item name is given, or if we do not have a name after returning from all recursions,
@@ -338,27 +340,31 @@ class SeState(StateEngineTools.SeItemChild):
                     self.__used_attributes.update(used_attributes)
 
         def update_action_status(action_status, actiontype):
-            for item, dict in action_status.items():
-                if item not in self.__action_status:
-                    self.__action_status.update({item: dict})
-            for item in self.__action_status.keys():
-                #if item in _used_attributes.keys():
-                if 'issue' in self.__action_status[item].keys() and 'issue' is not None:
-                    origin_list = copy(self.__action_status[item].get('issueorigin'))
-                    if not origin_list:
-                        self.__action_status[item].update({'issueorigin': []})
-                    new_list = []
+            if action_status is None:
+                return
+
+            for itm, dct in action_status.items():
+                if itm not in self.__action_status:
+                    self.__action_status.update({itm: dct})
+
+            for (itm, dct) in action_status.items():
+                issues = dct.get('issue')
+                if issues:
+                    origin_list = self.__action_status[itm].get('issueorigin', [])
+                    new_list = origin_list.copy()
                     for i, listitem in enumerate(origin_list):
                         entry_unknown = {'state': 'unknown', 'action': listitem.get('action')}
+                        entry_unknown2 = {'state': 'unknown', 'action': 'unknown'}
                         entry_notype = {'state': self.id, 'action': listitem.get('action')}
-                        entry = {'state': self.id, 'action': listitem.get('action'), 'type': actiontype}
-                        if entry_unknown == listitem or entry_notype == listitem:
-                            origin_list[i] = {'state': self.id, 'action': listitem.get('action'), 'type': actiontype}
-                        elif entry not in new_list:
-                            new_list.append(entry)
+                        entry_final = {'state': self.id, 'action': listitem.get('action'), 'type': actiontype}
 
-                    new_list.extend(origin_list)
-                    self.__action_status[item].update({'issueorigin': new_list})
+                        if listitem in (entry_unknown, entry_unknown2, entry_notype):
+                            new_list[i] = entry_final
+                        elif entry_final not in origin_list:
+                            new_list.append(entry_final)
+
+                    self.__action_status[itm]['issueorigin'] = new_list
+
             filtered_dict = {}
             for key, nested_dict in self.__action_status.items():
                 filtered_dict.update({key: {}})
@@ -366,10 +372,18 @@ class SeState(StateEngineTools.SeItemChild):
                 filtered_dict[key].update(nested_dict)
                 #self._log_develop("Add {} to used {}", key, filtered_dict)
             self.__used_attributes = copy(filtered_dict)
-            filtered_dict = {key: value for key, value in self.__action_status.items() if value.get('issue') is not None}
+            filtered_dict = {key: value for key, value in self.__action_status.items() if value.get('issue') not in [[], None]}
             self.__action_status = filtered_dict
             #self._log_develop("Updated action status: {}, updated used {}", self.__action_status, self.__used_attributes)
 
+        if se_use == "reinit":
+            self._log_develop("Resetting conditions and actions at re-init")
+            self.__conditions.reset()
+            self.__actions_enter_or_stay.reset()
+            self.__actions_enter.reset()
+            self.__actions_stay.reset()
+            self.__actions_leave.reset()
+            self.__use_done = []
         if recursion_depth > 5:
             self._log_error("{0}/{1}: too many levels of 'use'", self.id, item_state.property.path)
             return

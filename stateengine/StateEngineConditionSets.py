@@ -43,6 +43,9 @@ class SeConditionSets(StateEngineTools.SeItemChild):
     def __repr__(self):
         return "{}".format(self.get())
 
+    def reset(self):
+        self.__condition_sets = OrderedDict()
+
     # Return number of condition sets in list
     def count(self):
         return len(self.__condition_sets)

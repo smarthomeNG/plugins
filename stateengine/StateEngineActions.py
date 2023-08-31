@@ -61,6 +61,9 @@ class SeActions(StateEngineTools.SeItemChild):
             self._abitem._initactionname = None
         return result
 
+    def reset(self):
+        self.__actions = {}
+
     # Return number of actions in list
     def count(self):
         return len(self.__actions)

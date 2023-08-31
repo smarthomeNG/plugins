@@ -156,6 +156,7 @@ class SeValue(StateEngineTools.SeItemChild):
     # value: string indicating value or source of value
     # name: name of object ("time" is being handled differently)
     def set(self, value, name="", reset=True, item=None):
+        #value = copy.deepcopy(value)
         if reset:
             self.__resetvalue()
         if isinstance(value, list):
@@ -366,7 +367,7 @@ class SeValue(StateEngineTools.SeItemChild):
     def get(self, default=None, originalorder=True):
         returnvalues = []
         try:
-            _original_listorder = copy.copy(self.__listorder)
+            _original_listorder = self.__listorder.copy()
         except Exception as ex:
             self._log_error("Can not read listorder. Error: {}", ex)
             originalorder = False
@@ -444,7 +445,7 @@ class SeValue(StateEngineTools.SeItemChild):
             else:
                 self._log_debug("{0} from struct: {1}", self.__name, self.__struct.property.path)
         if self.__item is not None:
-            _original_listorder = copy.copy(self.__listorder)
+            _original_listorder = self.__listorder.copy()
             if isinstance(self.__item, list):
                 for i, item in enumerate(self.__item):
                     if item is not None:
@@ -456,7 +457,7 @@ class SeValue(StateEngineTools.SeItemChild):
             self.__listorder = _original_listorder
         if self.__eval is not None:
             self._log_debug("{0} from eval: {1}", self.__name, self.__eval)
-            _original_listorder = copy.copy(self.__listorder)
+            _original_listorder = self.__listorder.copy()
             self._log_debug("Currently eval results in {}", self.__get_eval())
             self.__listorder = _original_listorder
         if self.__varname is not None:
@@ -771,31 +772,30 @@ class SeValue(StateEngineTools.SeItemChild):
 
     # Determine value from variable
     def __get_from_variable(self):
-        if isinstance(self.__varname, list):
-            values = []
-            for var in self.__varname:
-                value = self._abitem.get_variable(var)
-                _newvalue = self.__do_cast(value)
-                _newvalue = 'var:{}'.format(self.__varname) if _newvalue == '' else _newvalue
-                if isinstance(_newvalue, str) and 'Unknown variable' in _newvalue:
-                    self._log_warning("There is a problem with your variable: {}", _newvalue)
-                    _newvalue = ''
-                values.append(_newvalue)
-                if 'var:{}'.format(var) in self.__listorder:
-                    self._log_debug("Checking variable in loop '{0}', value {1} from list {2}",
-                                    self.__varname, _newvalue, self.__listorder)
-                    self.__listorder[self.__listorder.index('var:{}'.format(var))] = _newvalue
-        else:
-            _newvalue = self._abitem.get_variable(self.__varname)
-            _newvalue = 'var:{}'.format(self.__varname) if _newvalue == '' else _newvalue
-            if isinstance(_newvalue, str) and 'Unknown variable' in _newvalue:
-                self._log_warning("There is a problem with your variable: {}", _newvalue)
-                _newvalue = ''
+        def update_value(varname):
+            value = self._abitem.get_variable(varname)
+            new_value = self.__do_cast(value)
+            new_value = 'var:{}'.format(varname) if new_value == '' else new_value
+            if isinstance(new_value, str) and 'Unknown variable' in new_value:
+                issue = "There is a problem with your variable {}".format(new_value)
+                self.__issues.append(issue)
+                self._log_warning(issue)
+                new_value = ''
             self._log_debug("Checking variable '{0}', value {1} from list {2}",
-                            self.__varname, _newvalue, self.__listorder)
-            if 'var:{}'.format(self.__varname) in self.__listorder:
-                self.__listorder[self.__listorder.index('var:{}'.format(self.__varname))] = _newvalue
-            values = _newvalue
+                            varname, new_value, self.__listorder)
+            if 'var:{}'.format(varname) in self.__listorder:
+                self.__listorder[self.__listorder.index('var:{}'.format(varname))] = new_value
+            return new_value
+
+        values = []
+
+        if isinstance(self.__varname, list):
+            for var in self.__varname:
+                values.append(update_value(var))
+                self._log_debug("Checking variable in loop '{0}', value {1} from list {2}",
+                                var, values[-1], self.__listorder)
+        else:
+            values = update_value(self.__varname)
             self._log_debug("Variable result: {0}", values)
 
         return values

@@ -1077,27 +1077,27 @@ class SeActionSpecial(SeActionBase):
         if value is None:
             _issue = {self._name: {'issue': 'Special action suspend requires arguments', 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
             self.__action_status = _issue
-            raise ValueError("Action {0}: Special action 'suspend' requires arguments!", self._name)
+            raise ValueError("Action {0}: Special action 'suspend' requires arguments!".format(self._name))
 
         suspend, manual = StateEngineTools.partition_strip(value, ",")
         if suspend is None or manual is None:
             _issue = {self._name: {'issue': 'Special action suspend requires two arguments', 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
             self.__action_status = _issue
-            raise ValueError("Action {0}: Special action 'suspend' requires two arguments (separated by a comma)!", self._name)
+            raise ValueError("Action {0}: Special action 'suspend' requires two arguments (separated by a comma)!".format(self._name))
 
         suspend_item, _issue = self._abitem.return_item(suspend)
         _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
         if suspend_item is None:
             _issue = {self._name: {'issue': 'Suspend item not found', 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
             self.__action_status = _issue
-            raise ValueError("Action {0}: Suspend item '{1}' not found!", self._name, suspend)
+            raise ValueError("Action {0}: Suspend item '{1}' not found!".format(self._name, suspend))
 
         manual_item, _issue = self._abitem.return_item(manual)
         _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
         if manual_item is None:
             _issue = {self._name: {'issue': 'Manual item {} not found'.format(manual), 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
             self.__action_status = _issue
-            raise ValueError("Action {0}: Manual item '{1}' not found!", self._name, manual)
+            raise ValueError("Action {0}: Manual item '{1}' not found!".format(self._name, manual))
         self.__action_status = _issue
         return [suspend_item, manual_item.property.path]
 
@@ -1105,7 +1105,7 @@ class SeActionSpecial(SeActionBase):
         if value is None:
             _issue = {self._name: {'issue': 'Special action retrigger requires item', 'issueorigin': [{'state': 'retrigger', 'action': 'retrigger'}]}}
             self.__action_status = _issue
-            raise ValueError("Action {0}: Special action 'retrigger' requires item", self._name)
+            raise ValueError("Action {0}: Special action 'retrigger' requires item".format(self._name))
 
         se_item, __ = StateEngineTools.partition_strip(value, ",")
 
@@ -1115,7 +1115,7 @@ class SeActionSpecial(SeActionBase):
         if se_item is None:
             _issue = {self._name: {'issue': 'Retrigger item {} not found'.format(se_item), 'issueorigin': [{'state': 'retrigger', 'action': 'retrigger'}]}}
             self.__action_status = _issue
-            raise ValueError("Action {0}: Retrigger item '{1}' not found!", self._name, se_item)
+            raise ValueError("Action {0}: Retrigger item '{1}' not found!".format(self._name, se_item))
         return se_item
 
     def suspend_execute(self, state=None, current_condition=None, previous_condition=None, previousstate_condition=None):

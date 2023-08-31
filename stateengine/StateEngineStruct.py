@@ -141,7 +141,8 @@ class SeStructMain(SeStruct):
         return self._children_structs
 
     def get(self):
-        _temp_dict = self.dict_get(self._global_struct.get(self._struct) or {}, self._struct_rest, self._global_struct.get(self._struct) or {})
+        _temp_dict = self.dict_get(self._global_struct.get(self._struct) or {}, self._struct_rest,
+                                   self._global_struct.get(self._struct) or {})
         self._full_conf = _temp_dict
         try:
             _temp_dict = collections.OrderedDict(

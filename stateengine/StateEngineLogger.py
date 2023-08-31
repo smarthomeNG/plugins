@@ -194,7 +194,8 @@ class SeLogger:
             self.using_default_log_level = False
         if level <= _log_level:
             indent = "\t" * self.__indentlevel
-            text = text.format(*args)
+            if args:
+                text = text.format(*args)
             logtext = "{0}{1} {2}\r\n".format(datetime.datetime.now(), indent, text)
             try:
                 with open(self.__filename, mode="a", encoding="utf-8") as f:
@@ -220,7 +221,9 @@ class SeLogger:
         self.log(1, text, *args)
         indent = "\t" * self.__indentlevel
         text = '{}{}'.format(indent, text)
-        self.logger.info(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.info(text)
 
     # log with level=debug
     # text: text to log
@@ -229,7 +232,9 @@ class SeLogger:
         self.log(2, text, *args)
         indent = "\t" * self.__indentlevel
         text = '{}{}'.format(indent, text)
-        self.logger.debug(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.debug(text)
 
     # log with level=develop
     # text: text to log
@@ -238,7 +243,9 @@ class SeLogger:
         self.log(3, "DEV: " + text, *args)
         indent = "\t" * self.__indentlevel
         text = '{}{}'.format(indent, text)
-        self.logger.log(StateEngineDefaults.VERBOSE, text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.log(StateEngineDefaults.VERBOSE, text)
 
     # log warning (always to main smarthome.py log)
     # text: text to log
@@ -248,7 +255,9 @@ class SeLogger:
         self.log(1, "WARNING: " + text, *args)
         indent = "\t" * self.__indentlevel
         text = '{}{}'.format(indent, text)
-        self.logger.warning(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.warning(text)
 
     # log error (always to main smarthome.py log)
     # text: text to log
@@ -258,7 +267,9 @@ class SeLogger:
         self.log(1, "ERROR: " + text, *args)
         indent = "\t" * self.__indentlevel
         text = '{}{}'.format(indent, text)
-        self.logger.error(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.error(text)
 
     # log exception (always to main smarthome.py log'
     # msg: message to log
@@ -312,27 +323,35 @@ class SeLoggerDummy:
     # @param text text to log
     # @param *args parameters for text
     def info(self, text, *args):
-        self.logger.info(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.info(text)
 
     # log with level=debug (always to main smarthomeNG log)
     # text: text to log
     # *args: parameters for text
     def debug(self, text, *args):
-        self.logger.debug(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.debug(text)
 
     # log warning (always to main smarthomeNG log)
     # text: text to log
     # *args: parameters for text
     # noinspection PyMethodMayBeStatic
     def warning(self, text, *args):
-        self.logger.warning(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.warning(text)
 
     # log error (always to main smarthomeNG log)
     # text: text to log
     # *args: parameters for text
     # noinspection PyMethodMayBeStatic
     def error(self, text, *args):
-        self.logger.error(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.error(text)
 
     # log exception (always to main smarthomeNG log)
     # msg: message to log
