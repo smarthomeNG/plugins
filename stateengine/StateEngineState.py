@@ -389,20 +389,28 @@ class SeState(StateEngineTools.SeItemChild):
             return
         # Import data from other item if attribute "use" is found
         if "se_use" in item_state.conf:
-            self.__use.set_from_attr(item_state, "se_use")
+            _returnvalue, _returntype, _, _issue = self.__use.set_from_attr(item_state, "se_use")
+            _configvalue = copy(_returnvalue)
+            _configvalue = [_configvalue] if not isinstance(_configvalue, list) else _configvalue
+            self._abitem.update_issues('config', {item_state.property.path: {'issue': _issue, 'attribute': 'se_use'}})
             _use = self.__use.get()
             if self.__use.is_empty() or _use is None:
-                self._log_warning("se_use is set up in a wrong way - ignoring {}", _use)
+                _issue = "se_use {} is set up in a wrong way".format(_use)
+                self._abitem.update_issues('config',
+                                           {item_state.property.path: {'issue': _issue, 'attribute': 'se_use'}})
+                self._log_warning("{} - ignoring.", _issue)
             else:
                 _use = [_use] if not isinstance(_use, list) else StateEngineTools.flatten_list(_use)
-
-                for loop, element in enumerate(_use):
+                _returntype = [_returntype] if not isinstance(_returntype, list) else _returntype
+                cleaned_use_list = []
+                for i, element in enumerate(_use):
                     try:
                         _name = element.property.path
                     except Exception:
                         _name = element
                     _fill = True
                     _path = None
+
                     if isinstance(element, StateEngineStruct.SeStruct):
                         _path = element.property.path
                         text1 = "Reading struct {0}. It is{1} a valid struct for the state configuration.{2}"
@@ -410,20 +418,38 @@ class SeState(StateEngineTools.SeItemChild):
                         valid1 = " NOT" if _fill is False else ""
                         valid2 = " Ignoring." if _fill is False else ""
                         self._log_info(text1, _path, valid1, valid2)
+                        if _fill is False:
+                            _issue = "Not valid. Ensure it is addressed by <structpath>.rules.<state>."
+                            self._abitem.update_issues('struct', {_path: {'issue': _issue}})
+                        elif _configvalue and _configvalue[i] not in cleaned_use_list:
+                            cleaned_use_list.append(_configvalue[i])
                     elif isinstance(element, self.__itemClass):
                         _path = element.property.path
                         text1 = "Reading Item {0}. It is{1} a valid item for the state configuration.{2}"
                         valid1 = " NOT" if _fill is False else " most likely"
                         valid2 = " Ignoring." if _fill is False else ""
                         self._log_info(text1, _path, valid1, valid2)
-
+                        if _fill is False:
+                            _issue = "Item {} is not a valid item for the state configuration.".format(_path)
+                            self._abitem.update_issues('config',
+                                                       {item_state.property.path: {'issue': _issue,
+                                                                                   'attribute': 'se_use'}})
+                        elif _configvalue and _configvalue[i] not in cleaned_use_list:
+                            cleaned_use_list.append(_configvalue[i])
+                    if _returntype[i] in ['item', 'eval']:
+                        _path = _configvalue[i]
+                        self._log_info("se_use {} defined by item/eval. Even if current result is not valid, "
+                                       "entry will be re-evaluated on next state evaluation.", _path)
+                        if _path not in cleaned_use_list:
+                            cleaned_use_list.append(_path)
                     if _path is None:
-                        if not isinstance(element, str):
-                            self._log_warning("se_use {} is not valid.", element)
+                        pass
                     elif _fill and element not in self.__use_done:
-                        #self._log_debug("Adding {} again to state fill function.", _name)
+                        self._log_develop("Adding element {} to state fill function.", _name)
                         self.__use_done.append(element)
                         self.__fill(element, recursion_depth + 1, _name)
+
+                self.__use.set(cleaned_use_list)
 
         # Get action sets and condition sets
         parent_item = item_state.return_parent()
