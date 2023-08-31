@@ -84,23 +84,39 @@ class SeState(StateEngineTools.SeItemChild):
 
     @releasedby.setter
     def releasedby(self, value):
-        self.__releasedby = value
+        self.__releasedby.set(value)
 
     @property
     def can_release(self):
-        return self.__can_release
+        return self.__can_release.get()
 
     @can_release.setter
     def can_release(self, value):
-        self.__can_release = value
+        self.__can_release.set(value)
+
+    @property
+    def has_released(self):
+        return self.__has_released.get()
+
+    @has_released.setter
+    def has_released(self, value):
+        self.__has_released.set(value)
+
+    @property
+    def was_releasedby(self):
+        return self.__was_releasedby.get()
+
+    @was_releasedby.setter
+    def was_releasedby(self, value):
+        self.__was_releasedby.set(value)
 
     @property
     def is_copy_for(self):
-        return self.__is_copy_for
+        return self.__is_copy_for.get()
 
     @is_copy_for.setter
     def is_copy_for(self, value):
-        self.__is_copy_for = value
+        self.__is_copy_for.set(value)
 
     # Constructor
     # abitem: parent SeItem instance
@@ -110,7 +126,7 @@ class SeState(StateEngineTools.SeItemChild):
         self.itemsApi = Items.get_instance()
         self.__item = item_state
         self.__itemClass = Item
-        self.__is_copy_for = None
+        self.__is_copy_for = StateEngineValue.SeValue(self._abitem, "State is a copy to release")
         try:
             self.__id = self.__item.property.path
             self._log_info("Init state {}", self.__id)
@@ -120,7 +136,9 @@ class SeState(StateEngineTools.SeItemChild):
         self.__text = StateEngineValue.SeValue(self._abitem, "State Name", False, "str")
         self.__use = StateEngineValue.SeValue(self._abitem, "State configuration extension", True, "item")
         self.__releasedby = StateEngineValue.SeValue(self._abitem, "State can be released by", True, "str")
-        self.__can_release = StateEngineValue.SeValue(self._abitem, "State can release", True, "str")
+        self.__can_release = StateEngineValue.SeValue(self._abitem, "State can release")
+        self.__has_released = StateEngineValue.SeValue(self._abitem, "State has released")
+        self.__was_releasedby = StateEngineValue.SeValue(self._abitem, "State was released by")
         self.__name = ''
         self.__unused_attributes = {}
         self.__used_attributes = {}
@@ -145,8 +163,8 @@ class SeState(StateEngineTools.SeItemChild):
     def can_enter(self):
         self._log_decrease_indent(10)
         self._log_info("Check if state '{0}' ('{1}') can be entered:", self.id, self.name)
-
         self._log_increase_indent()
+        self.__is_copy_for.write_to_logger()
         self.__releasedby.write_to_logger()
         self.__can_release.write_to_logger()
         result = self.__conditions.one_conditionset_matching(self)
@@ -166,11 +184,13 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem.set_variable("current.state_name", self.name)
         self._abitem.set_variable("current.state_id", self.id)
         self.__text.write_to_logger()
+        self.__is_copy_for.write_to_logger()
+        self.__releasedby.write_to_logger()
+        self.__can_release.write_to_logger()
         if self.__use_done:
             _log_se_use = self.__use_done[0] if len(self.__use_done) == 1 else self.__use_done
             self._log_info("State configuration extended by se_use: {}", _log_se_use)
-        self.__releasedby.write_to_logger()
-        self.__can_release.write_to_logger()
+
         self._log_info("Updating Web Interface...")
         self._log_increase_indent()
         self._abitem.update_webif(self.id, {'name': self.name,
