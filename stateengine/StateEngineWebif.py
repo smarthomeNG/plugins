@@ -175,7 +175,7 @@ class WebInterface(StateEngineTools.SeItemChild):
         #self._log_debug('actionlabel: {}', actionlabel)
         return actionlabel, action_tooltip, tooltip_count
 
-    def _conditionlabel(self, state, conditionset):
+    def _conditionlabel(self, state, conditionset, i):
         condition_tooltip = ''
         conditions_done = []
         _empty_set = self.__states[state]['conditionsets'].get(conditionset) == ''
@@ -213,6 +213,10 @@ class WebInterface(StateEngineTools.SeItemChild):
                 cond10 = not compare == 'current'
                 cond11 = not compare == 'match'
                 if cond1 and cond2 and cond3 and cond4 and cond5 and cond6 and cond7 and cond8 and cond9 and cond10 and cond11:
+                    try:
+                        list_index = list(self.__states.keys()).index(self.__active_state)
+                    except Exception:
+                        list_index = 0
                     if condition not in conditions_done:
                         current_clean = ", ".join(f"{k} = {v}" for k, v in current.items())
                         text = " Current {}".format(current_clean) if current and len(current) > 0 else " Not evaluated."
@@ -300,9 +304,10 @@ class WebInterface(StateEngineTools.SeItemChild):
                     conditionlist += ' (negate)' if condition_dict.get('negate') == 'True' and "age" \
                                      not in compare and not compare == "value" else ''
                     conditionlist += ' (negate)' if condition_dict.get('agenegate') == 'True' and "age" in compare else ''
-                    match_info = '<img src="sign_true.png" />' if match_info == 'yes'\
-                                 else '<img src="sign_false.png" />' if match_info == 'no'\
-                                 else '<img src="sign_warn.png" />' if match_info and len(match_info) > 0\
+                    active = i < list_index or (i == list_index and conditionset in ['', self.__active_conditionset])
+                    match_info = '<img src="sign_true.png" />' if match_info == 'yes' and active\
+                                 else '<img src="sign_false.png" />' if match_info == 'no' and active\
+                                 else '<img src="sign_warn.png" />' if match_info and len(match_info) > 0 and active\
                                  else ''
                     conditionlist += '</td><td>{}</td></tr>'.format(match_info)
         conditionlist += '<tr><td></td><td></td><td></td><td></td></tr></table>>'
@@ -314,9 +319,9 @@ class WebInterface(StateEngineTools.SeItemChild):
         cond_enter = action_type == 'actions_enter' and self.__states[state].get('enter') is False
         cond_stay = action_type == 'actions_stay' and self.__states[state].get('stay') is False
         color_enter = "gray" if (cond1 and cond2 and cond5) or \
-                                (cond_enter and cond4 and cond5) else "chartreuse3" if cond4 else "indianred2"
+                                (cond_enter and cond4 and cond5) else "olivedrab" if cond4 else "indianred2"
         color_stay = "gray" if (cond1 and cond2 and cond5) or \
-                               (cond_stay and cond4 and cond5) else "chartreuse3" if cond4 else "indianred2"
+                               (cond_stay and cond4 and cond5) else "olivedrab" if cond4 else "indianred2"
 
         label = 'first enter' if action_type == 'actions_enter' else 'staying at state'
 
@@ -367,7 +372,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     list_index = list(self.__states.keys()).index(self.__active_state)
                 except Exception:
                     list_index = 0
-                color = "chartreuse3" if state == self.__active_state \
+                color = "olivedrab" if state == self.__active_state \
                     else "gray" if i > list_index else "indianred2"
 
                 new_y -= 1 * self.__scalefactor
@@ -430,7 +435,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     conditionset_positions.append(new_y)
                     #self._log_debug('conditionset: {} {}, previous {}', conditionset, position, previous_conditionset)
 
-                    conditionlist, condition_tooltip, condition_tooltip_count = self._conditionlabel(state, conditionset)
+                    conditionlist, condition_tooltip, condition_tooltip_count = self._conditionlabel(state, conditionset, i)
                     cond3 = conditionset == ''
                     try:
                         cond1 = i >= list(self.__states.keys()).index(self.__active_state)
@@ -449,7 +454,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     except Exception as ex:
                         #self._log_debug('Condition 2 problem {}'.format(ex))
                         cond2 = False if cond3 and cond4 else True
-                    color = "gray" if cond1 and cond2 else "chartreuse3" \
+                    color = "gray" if cond1 and cond2 else "olivedrab" \
                         if (conditionset == self.__active_conditionset or cond3) and state == self.__active_state else "indianred2"
                     label = 'no condition' if conditionset == '' else conditionset
                     self.__nodes['{}_{}'.format(state, conditionset)] = pydotplus.Node(
@@ -535,7 +540,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     except Exception:
                         cond2 = True
                     cond3 = True if self.__states[state].get('leave') is True else False
-                    color = "gray" if cond1 and cond2 and not cond3 else "chartreuse3" if cond3 else "indianred2"
+                    color = "gray" if cond1 and cond2 and not cond3 else "olivedrab" if cond3 else "indianred2"
                     self.__nodes['{}_leave'.format(state)] = pydotplus.Node('{}_leave'.format(state),
                                                                             style="filled", fillcolor=color, shape="diamond",
                                                                             label='leave', pos=position)
