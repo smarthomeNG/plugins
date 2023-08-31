@@ -266,10 +266,13 @@ kann auch durch ein eval oder Item zur Laufzeit berechnet werden.
        'delay: <eval>/<item>' --> Ergebnis eines Eval-Ausdrucks oder eines Items
        'delay: 30'            --> 30 Sekunden
        'delay: 30m'           --> 30 Minuten
+       'delay: -1'            --> Entfernen des Schedulers
 
-Der Timer zur Ausführung der Aktion nach der angegebenen
-Verzögerung wird entfernt, wenn eine gleichartige Aktion
-ausgeführt werden soll (egal ob verzögert oder nicht).
+Der Timer zur Ausführung der Aktion nach der angegebenen Verzögerung wird entfernt,
+wenn eine gleichartige Aktion mit Delay-Angabe ausgeführt werden soll. Außerdem
+ist es möglich, den Timer bewusst abzubrechen, ohne eine Aktion auszuführen,
+indem der Delay auf -1 gesetzt wird. Dies macht insbesondere beim Verlassen von
+Zuständen Sinn, um ungewünschte verzögerte Aktionen vom "alten" Zustand zu verhindern.
 
 **instanteval: <bool>**
 
