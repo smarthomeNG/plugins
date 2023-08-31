@@ -35,11 +35,11 @@ plugin:
              - Python Modul pydotplus: ``pip3 install pydotplus``\n
              '
     maintainer: onkelandy
-    tester: '?'
+    tester: 'Morg42'
     state: ready
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.10.0
+    version: 2.0.0
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
@@ -610,9 +610,14 @@ item_attributes:
             de: 'Definieren von untergeordneten Zuständen, die den aktuellen Zustand auflösen können'
             en: 'Definition of subordinate states that can release the current state'
         description_long:
-            de: '
+            de: 'Durch Setzen dieses Attributs können Zustände durch untergeordnete Zustände aufgelöst
+                 werden. Sobald ein durch das Attribut definierter untergeordneter Zustand neu
+                 eingenommen werden könnte, wird der aktuelle Zustand verlassen und eine neue
+                 Zustandsevaluierung ausgeführt.
                 '
-            en: '
+            en: 'By setting this attribute, states can be resolved by subordinate states.
+                 As soon as a subordinate state defined by the attribute could be newly
+                 entered by the attribute, the current state is left and a new state evaluation is performed.
                 '
 
 item_structs:
