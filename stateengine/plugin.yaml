@@ -920,6 +920,11 @@ item_structs:
                       - 'to:  '
                       - 'order: 5'
                       - 'delay: 1'
+                    se_action_retrigger:
+                      - 'function: special'
+                      - 'value: retrigger:..retrigger'
+                      - 'delay: -1'
+                      - 'order: 1'
 
                 enter_manuell:
                     se_value_trigger_source: eval:se_eval.get_relative_itemproperty('..manuell', 'path')
@@ -1224,6 +1229,11 @@ item_structs:
                       - 'to:  '
                       - 'order: 5'
                       - 'delay: 1'
+                    se_action_retrigger:
+                      - 'function: special'
+                      - 'value: retrigger:..retrigger'
+                      - 'delay: -1'
+                      - 'order: 1'
 
                 enter_manuell:
                     se_value_trigger_source: eval:se_eval.get_relative_itemproperty('..manuell', 'path')
