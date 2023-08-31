@@ -58,6 +58,7 @@ class WebInterface(SmartPluginWebIf):
         self.webif_dir = webif_dir
         self.plugin = plugin
         self.tplenv = self.init_template_environment()
+        self.vis_enabled = plugin.vis_enabled
 
     @cherrypy.expose
     def index(self, action=None, item_id=None, item_path=None, reload=None, abitem=None, page='index'):
@@ -80,12 +81,14 @@ class WebInterface(SmartPluginWebIf):
                     self.logger.warning("Item {} not initialized yet. "
                                         "Try again later. Error: {}".format(abitem, e))
                     return None
-            self.plugin.get_graph(abitem, 'graph')
+            if self.vis_enabled:
+                self.plugin.get_graph(abitem, 'graph')
             tmpl = self.tplenv.get_template('visu.html')
             return tmpl.render(p=self.plugin, item=abitem,
                                language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now())
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
+                           vis_enabled=self.vis_enabled,
                            webif_pagelength=pagelength,
                            item_count=len(self.plugin._items),
                            language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now())
@@ -106,7 +109,9 @@ class WebInterface(SmartPluginWebIf):
             for item in self.plugin.get_items():
                 conditionset = item.lastconditionset_name
                 conditionset = "-" if conditionset == "" else conditionset
-                data.update({item.id: {'laststate': item.laststate_name, 'lastconditionset': conditionset}})
+                log_level = str(item.logger.log_level)
+                data.update({item.id: {'laststate': item.laststate_name,
+                            'lastconditionset': conditionset, 'log_level': log_level}})
             try:
                 return json.dumps(data)
             except Exception as e:

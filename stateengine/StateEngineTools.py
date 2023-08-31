@@ -19,6 +19,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
+from . import StateEngineLogger
 import datetime
 from ast import literal_eval
 from lib.item import Items
@@ -37,41 +38,45 @@ class SeItemChild:
     # abitem: parent SeItem instance
     def __init__(self, abitem):
         self._abitem = abitem
+        if self._abitem is None:
+            self.__logger = StateEngineLogger.SeLoggerDummy()
+        else:
+            self.__logger = self._abitem.logger
         self.se_plugin = abitem.se_plugin
         self._sh = abitem.sh
         self._shtime = abitem.shtime
 
     # wrapper method for logger.info
     def _log_info(self, text, *args):
-        self._abitem.logger.info(text, *args)
+        self.__logger.info(text, *args)
 
     # wrapper method for logger.debug
     def _log_develop(self, text, *args):
-        self._abitem.logger.develop(text, *args)
+        self.__logger.develop(text, *args)
 
     # wrapper method for logger.debug
     def _log_debug(self, text, *args):
-        self._abitem.logger.debug(text, *args)
+        self.__logger.debug(text, *args)
 
     # wrapper method for logger.warning
     def _log_warning(self, text, *args):
-        self._abitem.logger.warning(text, *args)
+        self.__logger.warning(text, *args)
 
     # wrapper method for logger.error
     def _log_error(self, text, *args):
-        self._abitem.logger.error(text, *args)
+        self.__logger.error(text, *args)
 
     # wrapper method for logger.exception
     def _log_exception(self, msg, *args, **kwargs):
-        self._abitem.logger.exception(msg, *args, **kwargs)
+        self.__logger.exception(msg, *args, **kwargs)
 
     # wrapper method for logger.increase_indent
     def _log_increase_indent(self, by=1):
-        self._abitem.logger.increase_indent(by)
+        self.__logger.increase_indent(by)
 
     # wrapper method for logger.decrease_indent
     def _log_decrease_indent(self, by=1):
-        self._abitem.logger.decrease_indent(by)
+        self.__logger.decrease_indent(by)
 
 
 # Find a certain item below a given item.
@@ -98,6 +103,8 @@ def get_last_part_of_item_id(item):
 
 
 def parse_relative(evalstr, begintag, endtags):
+    if begintag == '' and endtags == '':
+        return evalstr
     if evalstr.find(begintag+'.') == -1:
         return evalstr
     pref = ''
@@ -117,7 +124,7 @@ def parse_relative(evalstr, begintag, endtags):
         rel = rest[:rest.find(endtag)]
         rest = rest[rest.find(endtag)+len(endtag):]
         if 'property' in endtag:
-            rest1 = re.split('( |\+|\-|\*|\/)', rest, 1)
+            rest1 = re.split('( |\+|-|\*|/)', rest, 1)
             rest = ''.join(rest1[1:])
             pref += "se_eval.get_relative_itemproperty('{}', '{}')".format(rel, rest1[0])
         elif '()' in endtag:
@@ -198,7 +205,10 @@ def cast_str(value):
     if isinstance(value, str):
         return value
     else:
-        raise ValueError("Can't cast {0} to str!".format(value))
+        try:
+            return str(value)
+        except Exception:
+            raise ValueError("Can't cast {0} to str!".format(value))
 
 
 # cast a value as list. Throws ValueError if cast is not possible
