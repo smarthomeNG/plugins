@@ -750,6 +750,9 @@ class SeItem:
     def __handle_releasedby(self, new_state, last_state):
         def update_can_release_list():
             for e in _returnvalue:
+                if isinstance(e, list):
+                    self.__logger.warning("Entry {} should not be list. Please check!", e)
+                    e = e[0]
                 e = self.__update_release_item_value(e, new_state)
                 if e and state.id not in can_release.setdefault(e, [state.id]):
                     can_release[e].append(state.id)
@@ -882,7 +885,11 @@ class SeItem:
 
             for key, value in dict2.items():
                 if key in combined_dict:
-                    combined_dict[key]['issueorigin'].extend(value['issueorigin'])
+                    for k, v in combined_dict.items():
+                        v['issueorigin'].extend(
+                            [item for item in v['issueorigin'] if item not in combined_dict[k]['issueorigin']])
+                        v['issue'].extend([item for item in v['issue'] if item not in combined_dict[k]['issue']])
+
                 else:
                     combined_dict[key] = value
 

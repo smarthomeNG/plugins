@@ -83,75 +83,84 @@ class SeActions(StateEngineTools.SeItemChild):
                     # If we do not have the action yet (delay-attribute before action-attribute), ...
                     self.__unassigned_delays[name] = value
                 else:
-                    self.__actions[name].update_delay(value)
-                return
+                    _issue = self.__actions[name].update_delay(value)
+                return _count, _issue
             elif func == "se_instanteval":
                 # set instant calculation
                 if name not in self.__actions:
                     # If we do not have the action yet (repeat-attribute before action-attribute), ...
                     self.__unassigned_instantevals[name] = value
                 else:
-                    self.__actions[name].update_instanteval(value)
-                return
+                    _issue = self.__actions[name].update_instanteval(value)
+                return _count, _issue
             elif func == "se_repeat":
                 # set repeat
                 if name not in self.__actions:
                     # If we do not have the action yet (repeat-attribute before action-attribute), ...
                     self.__unassigned_repeats[name] = value
                 else:
-                    self.__actions[name].update_repeat(value)
-                return
+                    _issue = self.__actions[name].update_repeat(value)
+                return _count, _issue
             elif func == "se_conditionset":
                 # set conditionset
                 if name not in self.__actions:
                     # If we do not have the action yet (conditionset-attribute before action-attribute), ...
                     self.__unassigned_conditionsets[name] = value
                 else:
-                    self.__actions[name].update_conditionsets(value)
-                return
+                    _issue = self.__actions[name].update_conditionset(value)
+                return _count, _issue
             elif func == "se_previousconditionset":
                 # set conditionset
                 if name not in self.__actions:
                     # If we do not have the action yet (conditionset-attribute before action-attribute), ...
                     self.__unassigned_previousconditionsets[name] = value
                 else:
-                    self.__actions[name].update_previousconditionsets(value)
-                return
+                    _issue = self.__actions[name].update_previousconditionset(value)
+                return _count, _issue
             elif func == "se_previousstate_conditionset":
                 # set conditionset
                 if name not in self.__actions:
                     # If we do not have the action yet (conditionset-attribute before action-attribute), ...
                     self.__unassigned_previousstate_conditionsets[name] = value
                 else:
-                    self.__actions[name].update_previousstate_conditionsets(value)
-                return
+                    _issue = self.__actions[name].update_previousstate_conditionset(value)
+                return _count, _issue
             elif func == "se_mode":
                 # set remove mode
+                _issue_list = []
                 if name not in self.__actions:
                     # If we do not have the action yet (mode-attribute before action-attribute), ...
                     self.__unassigned_modes[name] = value
                 else:
                     self.__actions[name].update_modes(value)
-                return
+                return _count, _issue_list
             elif func == "se_order":
                 # set order
                 if name not in self.__actions:
                     # If we do not have the action yet (order-attribute before action-attribute), ...
                     self.__unassigned_orders[name] = value
                 else:
-                    self.__actions[name].update_order(value)
-                return
+                    _issue = self.__actions[name].update_order(value)
+                return _count, _issue
             elif func == "se_action":  # and name not in self.__actions:
                 _issue = self.__handle_combined_action_attribute(name, value)
                 _count += 1
-            elif self.__ensure_action_exists(func, name):
-                # update action
-                _issue = self.__actions[name].update(value)
-                _count += 1
+            else:
+                _issue_list = []
+                _ensure_action, _issue = self.__ensure_action_exists(func, name)
+                if _issue:
+                    _issue_list.append(_issue)
+                if _ensure_action:
+                    # update action
+                    _issue = self.__actions[name].update(value)
+                    if _issue:
+                        _issue_list.append(_issue)
+                    _count += 1
+                _issue = StateEngineTools.flatten_list(_issue_list)
         except ValueError as ex:
             if name in self.__actions:
                 del self.__actions[name]
-            _issue = {name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
+            _issue = {name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': self.__actions[name].function}]}}
             self._log_warning("Ignoring action {0} because: {1}", attribute, ex)
         return _count, _issue
 

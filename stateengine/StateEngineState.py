@@ -362,7 +362,12 @@ class SeState(StateEngineTools.SeItemChild):
         def update_action_status(action_status, actiontype):
             if action_status is None:
                 return
-
+            action_status = StateEngineTools.flatten_list(action_status)
+            #self._log_debug("Action status: {}", action_status)
+            if isinstance(action_status, list):
+                for e in action_status:
+                    update_action_status(e, actiontype)
+                return
             for itm, dct in action_status.items():
                 if itm not in self.__action_status:
                     self.__action_status.update({itm: dct})
@@ -370,6 +375,9 @@ class SeState(StateEngineTools.SeItemChild):
             for (itm, dct) in action_status.items():
                 issues = dct.get('issue')
                 if issues:
+                    if isinstance(issues, list):
+                        self.__action_status[itm]['issue'].extend(
+                            [issue for issue in issues if issue not in self.__action_status[itm]['issue']])
                     origin_list = self.__action_status[itm].get('issueorigin', [])
                     new_list = origin_list.copy()
                     for i, listitem in enumerate(origin_list):
@@ -392,7 +400,8 @@ class SeState(StateEngineTools.SeItemChild):
                 filtered_dict[key].update(nested_dict)
                 #self._log_develop("Add {} to used {}", key, filtered_dict)
             self.__used_attributes = copy(filtered_dict)
-            filtered_dict = {key: value for key, value in self.__action_status.items() if value.get('issue') not in [[], None]}
+            filtered_dict = {key: value for key, value in self.__action_status.items()
+                             if value.get('issue') not in [[], [None], None]}
             self.__action_status = filtered_dict
             #self._log_develop("Updated action status: {}, updated used {}", self.__action_status, self.__used_attributes)
 
@@ -523,6 +532,7 @@ class SeState(StateEngineTools.SeItemChild):
                         _, _action_status = self.__actions_enter.update(attribute, child_item.conf[attribute])
                         if _action_status:
                             update_action_status(_action_status, 'enter')
+                            self._abitem.update_action_status(self.__action_status)
                         update_unused(_used_attributes, 'action', child_name)
                 elif child_name == "on_stay":
                     _actioncount += 1
@@ -531,6 +541,7 @@ class SeState(StateEngineTools.SeItemChild):
                         _, _action_status = self.__actions_stay.update(attribute, child_item.conf[attribute])
                         if _action_status:
                             update_action_status(_action_status, 'stay')
+                            self._abitem.update_action_status(self.__action_status)
                         update_unused(_used_attributes, 'action', child_name)
                 elif child_name == "on_enter_or_stay":
                     _actioncount += 1
@@ -539,6 +550,7 @@ class SeState(StateEngineTools.SeItemChild):
                         _, _action_status = self.__actions_enter_or_stay.update(attribute, child_item.conf[attribute])
                         if _action_status:
                             update_action_status(_action_status, 'enter_or_stay')
+                            self._abitem.update_action_status(self.__action_status)
                         update_unused(_used_attributes, 'action', child_name)
                 elif child_name == "on_leave":
                     _actioncount += 1
@@ -547,6 +559,7 @@ class SeState(StateEngineTools.SeItemChild):
                         _, _action_status = self.__actions_leave.update(attribute, child_item.conf[attribute])
                         if _action_status:
                             update_action_status(_action_status, 'leave')
+                            self._abitem.update_action_status(self.__action_status)
                         update_unused(_used_attributes, 'action', child_name)
             except ValueError as ex:
                 raise ValueError("Condition {0} check for actions error: {1}".format(child_name, ex))
@@ -558,6 +571,7 @@ class SeState(StateEngineTools.SeItemChild):
             _action_status = _result[1]
             if _action_status:
                 update_action_status(_action_status, 'enter_or_stay')
+                self._abitem.update_action_status(self.__action_status)
 
         _total_actioncount = _enter_actioncount + _stay_actioncount + _enter_stay_actioncount + _leave_actioncount
 
@@ -568,15 +582,19 @@ class SeState(StateEngineTools.SeItemChild):
             _action_status = self.__actions_enter.complete(item_state, self.__conditions.evals_items)
             if _action_status:
                 update_action_status(_action_status, 'enter')
+                self._abitem.update_action_status(self.__action_status)
             _action_status = self.__actions_stay.complete(item_state, self.__conditions.evals_items)
             if _action_status:
                 update_action_status(_action_status, 'stay')
+                self._abitem.update_action_status(self.__action_status)
             _action_status = self.__actions_enter_or_stay.complete(item_state, self.__conditions.evals_items)
             if _action_status:
                 update_action_status(_action_status, 'enter_or_stay')
+                self._abitem.update_action_status(self.__action_status)
             _action_status = self.__actions_leave.complete(item_state, self.__conditions.evals_items)
             if _action_status:
                 update_action_status(_action_status, 'leave')
+                self._abitem.update_action_status(self.__action_status)
             self._abitem.update_action_status(self.__action_status)
             self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
         _summary = "{} on_enter, {} on_stay , {} on_enter_or_stay, {} on_leave"
