@@ -830,6 +830,7 @@ class SeActionForceItem(SeActionBase):
     def __init__(self, abitem, name: str):
         super().__init__(abitem, name)
         self.__item = None
+        self.__status = None
         self.__value = StateEngineValue.SeValue(self._abitem, "value")
         self.__mindelta = StateEngineValue.SeValue(self._abitem, "mindelta")
         self.__function = "force set"
