@@ -55,25 +55,25 @@ Konfiguration
 plugin.yaml
 -----------
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Zu den Informationen, welche Parameter in der ../etc/plugin.yaml konfiguriert werden können bzw. müssen, bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/byd_bat>` lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 
 items.yaml
 ----------
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Zu den Informationen, welche Attribute in der Item Konfiguration verwendet werden können bzw. müssen, bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/byd_bat>` lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 
 logic.yaml
 ----------
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Zu den Informationen, welche Konfigurationsmöglichkeiten für Logiken bestehen, bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/byd_bat>` lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 
 Funktionen
 ----------
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Zu den Informationen, welche Funktionen das Plugin bereitstellt (z.B. zur Nutzung in Logiken), bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/byd_bat>` lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 Web Interface
 =============
