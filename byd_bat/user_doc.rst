@@ -87,20 +87,20 @@ Oben rechts werden die wichtigsten Daten zum BYD Energiespeicher angezeigt.
 
 Im Tab "BYD Home" sind die Grunddaten des Energiespeichers dargestellt:
 
-.. image:: assets/home.JPG
+.. image:: assets/home.PNG
    :class: screenshot
 
 Im Tab "BYD Diagnose" werden Diagnosedaten angezeigt:
 
-.. image:: assets/diag.JPG
+.. image:: assets/diag.PNG
    :class: screenshot
 
 Im Tab "BYD Spannungen" werden die Spannungen der Module als Heatmap angezeigt:
 
-.. image:: assets/volt.JPG
+.. image:: assets/volt.PNG
    :class: screenshot
 
 Im Tab "BYD Temperaturen" werden die Temperaturen der Module als Heatmap angezeigt:
 
-.. image:: assets/temp.JPG
+.. image:: assets/temp.PNG
    :class: screenshot
