@@ -331,7 +331,7 @@ class Speaker(object):
         self.logger = logger
         self.plugin_shortname = plugin_shortname
         self.uid_items = []
-        self._uid = ""
+        self._uid = uid
         self._soco = None
         self._events = None
         self._zone_group = []
@@ -2271,7 +2271,7 @@ class Speaker(object):
         if not self.is_coordinator:
             sonos_speaker[self.coordinator].play_tunein(station_name, start)
         else:
-            result, msg = self._play_radio(station_name=station_name, music_service='TuneIn', start=start)
+            result, msg = self._play_tunein(station_name=station_name, music_service='TuneIn', start=start)
             if not result:
                 self.logger.warning(msg)
                 return False
@@ -2298,7 +2298,7 @@ class Speaker(object):
                 return False
             return True
     
-    def _play_radio(self, station_name: str, music_service: str = 'TuneIn', start: bool = True) -> tuple:
+    def _play_tunein(self, station_name: str, music_service: str = 'TuneIn', start: bool = True) -> tuple:
         """
         Old legacy radio select function. The function is not based on the SoCo library.
         Plays a radio station by a given radio name. If more than one radio station are found, the first result will be
@@ -2314,9 +2314,10 @@ class Speaker(object):
         # if a patch is applied.
 
         # ------------------------------------------------------------------------------------------------------------ #
-
+        self.logger.warning(f"DEBUG: _play_radio start")
         if not self._check_property():
             return False, "Property check failed"
+
         if not self.is_coordinator:
             sonos_speaker[self.coordinator].play_tunein(station_name, start)
         else:
@@ -2354,6 +2355,8 @@ class Speaker(object):
                 return False, "response should contain either the key 'searchResult' or 'getMetadataResult'"
 
             for result_type in ('mediaCollection', 'mediaMetadata'):
+                self.logger.warning(f"DEBUG loop: result is {result_type}")
+
                 # Upper case the first letter (used for the class_key)
                 result_type_proper = result_type[0].upper() + result_type[1:]
                 raw_items = response.get(result_type, [])
@@ -2365,6 +2368,9 @@ class Speaker(object):
                     # Form the class_key, which is a unique string for this type,
                     # formed by concatenating the result type with the item type. Turns
                     # into e.g: MediaMetadataTrack
+
+                    self.logger.warning(f"DEBUG loop 2: raw_item is {raw_item}")
+
                     class_key = result_type_proper + raw_item['itemType'].title()
                     cls = get_class(class_key)
                     #from plugins.sonos.soco.music_services.token_store import JsonFileTokenStore
@@ -2373,6 +2379,7 @@ class Speaker(object):
                         #cls.from_music_service(MusicService(service_name='TuneIn', token_store=JsonFileTokenStore()), raw_item))
 
             if not items:
+                self.logger.warning(f"DEBUG _play radio: No matching items found")
                 exit(0)
 
             item_id = items[0].metadata['id']
@@ -2385,12 +2392,15 @@ class Speaker(object):
             self.soco.avTransport.SetAVTransportURI([('InstanceID', 0),
                                                      ('CurrentURI', uri), ('CurrentURIMetaData', meta)])
             if start:
+                self.logger.warning(f"DEBUG _play radio: Starting play")
                 self.soco.play()
+
+            self.logger.warning(f"DEBUG _play radio: finished function")
             return True, ""
 
-    def _play_radio_dontuse(self, station_name: str, music_service: str = 'TuneIn', start: bool = True) -> tuple:
+    def _play_radio(self, station_name: str, music_service: str = 'TuneIn', start: bool = True) -> tuple:
         """
-        WARNING: THIS FUNCTION IS NOT WORKING FOR SOME RADIO STATIONS, e.g.
+        WARNING: THIS FUNCTION IS NOT WORKING FOR SOME RADIO STATIONS, e.g. with space in the name. Other names can cause infinite loops.
         Plays a radio station by a given radio name at a given music service. If more than one radio station are found,
         the first result will be played.
         :param music_service: music service name Default: TuneIn
@@ -3734,16 +3744,30 @@ class Sonos(SmartPlugin):
             return False
         except subprocess.TimeoutExpired:
             self.logger.debug(f"Ping {ip_address} process timed out")
-            return False     
-
+            return False 
+    
     def _get_zone_name_from_uid(self, uid: str) -> str:
         """
         Return zone/speaker name per uid
         """
 
         for zone in self.zones:
+            if (zone._uid is None) or (uid is None):
+                return 'unknown'
             if zone._uid.lower() == uid.lower():
                 return zone._player_name
+
+    @property
+    def get_rechable_zones(self):
+        valid_zones = []
+        for zone in self.zones:
+            try:
+                uid = zone.uid
+            except:
+                pass
+            else:
+                valid_zones.append(zone)
+        return valid_zones
 
     @property
     def sonos_speaker(self):
