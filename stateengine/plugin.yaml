@@ -735,7 +735,6 @@ item_structs:
         rules:
             se_item_lock: ..lock
             eval_trigger:
-                - merge_unique*
                 - ..lock
 
             lock:
@@ -871,7 +870,6 @@ item_structs:
             se_suspend_time: item:..settings.suspendduration.seconds
 
             eval_trigger:
-                - merge_unique*
                 - ..manuell
 
             suspend:
@@ -1175,7 +1173,6 @@ item_structs:
             se_suspend_time: eval:se_eval.get_relative_itemvalue('..settings.suspendvariant.suspendduration{}.seconds'.format(max(0, min(se_eval.get_relative_itemvalue('..settings.suspendvariant'), 2))))
 
             eval_trigger:
-                - merge_unique*
                 - ..manuell
 
             suspend:
@@ -1519,10 +1516,9 @@ item_attribute_prefixes:
             en: 'Definition wether an action should be repeated or not when reentering the same state (deprecated - use se_action instead)'
 
     se_order_:
-        type: int
         description:
-            de: 'Definiert die Reihenfolge einer Aktion (veraltet - Nutze stattdessen se_action)'
-            en: 'Definition of the running order of an action (deprecated - use se_action instead)'
+            de: 'Definiert die Reihenfolge einer Aktion als Integerzahl (veraltet - Nutze stattdessen se_action)'
+            en: 'Definition of the running order of an action as integer (deprecated - use se_action instead)'
 
     se_manual_:
         description:
