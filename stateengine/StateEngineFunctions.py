@@ -37,7 +37,7 @@ class SeFunctions:
     def ab_alive(self, value):
         self.__ab_alive = value
 
-    def __init__(self, smarthome, logger):
+    def __init__(self, smarthome=None, logger=None):
         self.logger = logger
         self.__sh = smarthome
         self.__locks = {}
@@ -66,7 +66,7 @@ class SeFunctions:
     def manual_item_update_eval(self, item_id, caller=None, source=None):
         item = self.itemsApi.return_item(item_id)
         if item is None:
-            self.logger.error("manual_item_update_eval: item {0} not found!", item_id)
+            self.logger.error("manual_item_update_eval: item {0} not found!".format(item_id))
 
         # Leave immediately in case StateEngine Plugin is not yet fully running
         if not self.__ab_alive:
@@ -80,7 +80,7 @@ class SeFunctions:
                 elog_item_id = item.conf["se_manual_logitem"]
                 elog_item = self.itemsApi.return_item(elog_item_id)
                 if elog_item is None:
-                    self.logger.error("manual_item_update_item: se_manual_logitem {0} not found!", elog_item_id)
+                    self.logger.error("manual_item_update_item: se_manual_logitem {0} not found!".format(elog_item_id))
                     elog = StateEngineLogger.SeLoggerDummy()
                 else:
                     elog = StateEngineLogger.SeLogger.create(elog_item)

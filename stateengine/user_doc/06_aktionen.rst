@@ -24,6 +24,12 @@ stehenden Beispiel wird der Lamellenwert abhängig vom Sonnenstand berechnet. Oh
 würden sich die Lamellen ständig um wenige Grad(bruchteile) ändern. Wird jedoch mindelta
 beispielsweise auf den Wert 10 gesetzt, findet eine Änderung erst statt, wenn sich der
 errechnete Wert um mindestens 10 Grad vom aktuellen Lamellenwert unterscheidet.
+Im Beispiel wird auch mittels ``se_status_<Bedingungsname>`` ein gesondertes Item definiert,
+das den Wert vom KNX-Aktor empfängt.
+
+Außerdem ist es möglich, über ``se_repeat_actions`` generell zu definieren,
+ob Aktionen für die Stateengine wiederholt ausgeführt werden sollen oder nicht. Diese Konfiguration
+kann für einzelne Aktionen individuell über die Angabe ``repeat`` überschrieben werden. Siehe auch :ref:`Aktionen`.
 
 Beispiel zu Aktionen
 --------------------
@@ -43,6 +49,7 @@ Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
             rules:
                 se_item_height: raffstore1.hoehe # Definition des zu ändernden Höhe-Items
                 se_item_lamella: raffstore1.lamelle # Definition des zu ändernden Lamellen-Items
+                se_status_lamella: raffstore1.lamelle.status # Definition des Lamellen Statusitems
                 se_mindelta_lamella: 10 # Mindeständerung von 10 Grad, sonst werden die Lamellen nicht aktualisiert.
                 Daemmerung:
                     <...>
@@ -259,10 +266,13 @@ kann auch durch ein eval oder Item zur Laufzeit berechnet werden.
        'delay: <eval>/<item>' --> Ergebnis eines Eval-Ausdrucks oder eines Items
        'delay: 30'            --> 30 Sekunden
        'delay: 30m'           --> 30 Minuten
+       'delay: -1'            --> Entfernen des Schedulers
 
-Der Timer zur Ausführung der Aktion nach der angegebenen
-Verzögerung wird entfernt, wenn eine gleichartige Aktion
-ausgeführt werden soll (egal ob verzögert oder nicht).
+Der Timer zur Ausführung der Aktion nach der angegebenen Verzögerung wird entfernt,
+wenn eine gleichartige Aktion mit Delay-Angabe ausgeführt werden soll. Außerdem
+ist es möglich, den Timer bewusst abzubrechen, ohne eine Aktion auszuführen,
+indem der Delay auf -1 gesetzt wird. Dies macht insbesondere beim Verlassen von
+Zuständen Sinn, um ungewünschte verzögerte Aktionen vom "alten" Zustand zu verhindern.
 
 **instanteval: <bool>**
 

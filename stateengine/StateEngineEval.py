@@ -42,12 +42,12 @@ class SeEval(StateEngineTools.SeItemChild):
 
     # Get lamella angle based on sun_altitude for sun tracking
     def sun_tracking(self, offset=None):
-        def reMap(_value, _minoutput):
+        def remap(_value, _minoutput):
             _value = 100 if _value > 100 else _value
             _value = 0 if _value < 0 else _value
-            outputSpan = 100 - _minoutput
-            scaledThrust = float(_value) / float(100)
-            return _minoutput + (scaledThrust * outputSpan)
+            output_span = 100 - _minoutput
+            scaled_thrust = float(_value) / float(100)
+            return _minoutput + (scaled_thrust * output_span)
 
         if offset is None:
             offset = StateEngineDefaults.suntracking_offset
@@ -65,7 +65,7 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Current sun altitude is {0:.2f}°", altitude)
         _lamella_open_value = StateEngineDefaults.lamella_open_value
         _lamella_text = " (based on lamella open value of {0})".format(_lamella_open_value)
-        value = reMap(90 - altitude, _lamella_open_value) + offset
+        value = remap(90 - altitude, _lamella_open_value) + offset
         self._log_debug("Blinds at right angle to the sun at {0}° with an offset of {1}°{2}", value, offset, _lamella_text)
 
         self._log_decrease_indent()
@@ -116,10 +116,10 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_itemid({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                returnvalue = self._abitem.return_item(self._abitem._initstate.id).property.path
+                returnvalue = self._abitem.return_item(self._abitem._initstate.id)[0].property.path
                 self._log_debug("Return item path '{0}' during init", returnvalue)
             else:
-                returnvalue = self._abitem.return_item(subitem_id).property.path
+                returnvalue = self._abitem.return_item(subitem_id)[0].property.path
                 self._log_debug("Return item path '{0}'", returnvalue)
         except Exception as ex:
             returnvalue = None
@@ -137,10 +137,10 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_item({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                returnvalue = self._abitem.return_item(self._abitem._initstate.id)
+                returnvalue, issue = self._abitem.return_item(self._abitem._initstate.id)
                 self._log_debug("Return item '{0}' during init", returnvalue)
             else:
-                returnvalue = self._abitem.return_item(subitem_id)
+                returnvalue, issue = self._abitem.return_item(subitem_id)
                 self._log_debug("Return item '{0}'", returnvalue)
         except Exception as ex:
             returnvalue = None
@@ -161,7 +161,7 @@ class SeEval(StateEngineTools.SeItemChild):
                 returnvalue = self._abitem._initstate.text
                 self._log_debug("Return item value '{0}' during init", returnvalue)
             else:
-                item = self._abitem.return_item(subitem_id)
+                item, issue = self._abitem.return_item(subitem_id)
                 returnvalue = item.property.value
                 self._log_debug("Return item value '{0}' for item {1}", returnvalue, item.property.path)
         except Exception as ex:
@@ -180,16 +180,16 @@ class SeEval(StateEngineTools.SeItemChild):
         self._eval_lock.acquire()
         self._log_debug("Executing method 'get_relative_itemproperty({0}, {1})'", subitem_id, prop)
         try:
-            item = self._abitem.return_item(subitem_id)
+            item, issue = self._abitem.return_item(subitem_id)
         except Exception as ex:
             self._log_warning("Problem evaluating property of {0} - relative item might not exist. Error: {1}", subitem_id, ex)
             self._eval_lock.release()
             return
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                returnvalue = getattr(self._abitem.return_item(self._abitem._initstate.id).property, prop)
+                returnvalue = getattr(self._abitem.return_item(self._abitem._initstate.id)[0].property, prop)
                 self._log_debug("Return item property '{0}' from {1}: {2} during init", prop,
-                                self._abitem.return_item(self._abitem._initstate.id).property.path, returnvalue)
+                                self._abitem.return_item(self._abitem._initstate.id)[0].property.path, returnvalue)
             else:
                 returnvalue = getattr(item.property, prop)
                 self._log_debug("Return item property {0} from {1}: {2}", prop, item.property.path, returnvalue)
@@ -201,6 +201,12 @@ class SeEval(StateEngineTools.SeItemChild):
             self._eval_lock.release()
         return returnvalue
 
+    # Alias for get_attributevalue
+    # item: can be a (relative) item or a stateengine variable
+    # attrib: name of attribute, can actually be any attribute name you can think of ;)
+    def get_attribute_value(self, item, attrib):
+        self.get_attributevalue(item, attrib)
+
     # Return an attribute of the current state declaration
     # item: can be a (relative) item or a stateengine variable
     # attrib: name of attribute, can actually be any attribute name you can think of ;)
@@ -211,14 +217,15 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_attributevalue({0}, {1})'", item, attrib)
         if ":" in item:
             var_type, item = StateEngineTools.partition_strip(item, ":")
-            item = self._abitem.return_item(self._abitem.get_variable(item)) if var_type == "var" else item
+            if var_type == "var":
+                item, issue = self._abitem.return_item(self._abitem.get_variable(item))
         else:
-            item = self._abitem.return_item(item)
+            item, issue = self._abitem.return_item(item)
         try:
             if self._abitem._initstate and item == '..state_name':
                 returnvalue = self._abitem.return_item(self._abitem._initstate.id).conf[attrib]
                 self._log_debug("Return item attribute '{0}' from {1}: {2} during init",
-                                attrib, self._abitem.return_item(self._abitem._initstate.id).property.path, returnvalue)
+                                attrib, self._abitem.return_item(self._abitem._initstate.id)[0].property.path, returnvalue)
             else:
                 returnvalue = item.conf[attrib]
                 self._log_debug("Return item attribute {0} from {1}: {2}", attrib, item.property.path, returnvalue)
@@ -240,9 +247,9 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'insert_suspend_time({0}, {1})'", suspend_item_id, suspend_text)
         self._log_increase_indent()
         try:
-            suspend_time = self._abitem.get_variable("item.suspend_time")
+            suspend_time = self._abitem.get_variable("item.suspend_time") or 0
             self._log_debug("Suspend time is {0}", suspend_time)
-            suspend_item = self._abitem.return_item(suspend_item_id)
+            suspend_item, issue = self._abitem.return_item(suspend_item_id)
             if suspend_item is None:
                 text = "Eval-Method 'insert_suspend_time': Suspend Item {0} not found!"
                 self._eval_lock.release()
@@ -253,7 +260,7 @@ class SeEval(StateEngineTools.SeItemChild):
             suspend_remaining = suspend_time - suspend_over
             self._log_debug("Remaining suspend time: {0}", suspend_remaining)
             if suspend_remaining < 0:
-                self._log_debug("Eval-Method 'insert_suspend_time': Suspend should already be finished!")
+                self._log_debug("Eval-Method 'insert_suspend_time': Suspend time already over.")
                 self._eval_lock.release()
                 return "Suspend already over."
             suspend_until = self._abitem.shtime.now() + datetime.timedelta(seconds=suspend_remaining)

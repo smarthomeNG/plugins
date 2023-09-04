@@ -43,29 +43,28 @@ das Attribute ``se_plugin`` auf inactive zu setzen:
 Item-Definitionen
 -----------------
 
-Bedingungen und Aktionen beziehen sich überlicherweise auf Items wie beispielsweise
+Bedingungen und Aktionen beziehen sich üblicherweise auf Items wie beispielsweise
 die Höhe einer Jalousie oder die Außenhelligkeit.
 Diese Items müssen auf Ebene des Regelwerk-Items über das Attribut
-``se_item_<Bedingungsname/Aktionsname>`` bekannt gemacht werden.
+``se_item_<Bedingungsname/Aktionsname>`` bekannt gemacht werden. Um einfacher zwischen Items,
+die für Bedingungen und solchen, die für Aktionen genutzt werden, unterscheiden zu können,
+können Items, die nur für Bedingungen gebraucht werden, mittels ``se_status_<Bedingungsname>``
+deklariert werden. Diese Variante ist auch besonders dann relevant, wenn es zwei separate Items
+für "Senden" und "Empfangen" gibt, also z.B. Senden der Jalousiehöhe und Empfangen des aktuellen
+Werts vom KNX-Aktor.
 
 Anstatt direkt das Item in Form des absoluten oder relativen Pfades mittels ``se_item_`` zu
 setzen, kann auch die Angabe ``se_eval_`` genutzt werden. In diesem Fall wird eine beliebige
-Funktion anstelle des Itemnamen angegeben. Dies ist sowohl für Bedingungsabfragen,
-als auch für das Setzen von "dynamischen" Items möglich.
+Funktion anstelle des Itemnamen angegeben. Dies ist primär für das Setzen von "dynamischen" Items
+gedacht, allerdings ist es auch möglich, hier einen beliebigen Eval-Ausdruck als Bedingung festzulegen.
 
-An dieser Stelle ist es auch möglich, über ``se_mindelta_`` zu definieren, um welchen Wert
-sich ein Item mindestens geändert haben muss, um neu gesetzt zu werden. Siehe auch :ref:`Aktionen`.
-
-Außerdem ist es möglich, über ``se_repeat_actions`` generell zu definieren,
-ob Aktionen für die Stateengine wiederholt ausgeführt werden sollen oder nicht. Diese Konfiguration
-kann für einzelne Aktionen individuell über die Angabe ``repeat`` überschrieben werden. Siehe auch :ref:`Aktionen`.
 
 Beispiel se_item
 ================
 
 Im Beispiel wird durch ``se_item_height`` das Item ``beispiel.raffstore1.hoehe``
 dem Plugin unter dem Namen "height" bekannt gemacht. Das Item ``beispiel.wetterstation.helligkeit``
-wird durch ``se_item_brightness`` als "brightness" referenziert.
+wird durch ``se_item_brightness`` (alternativ via ``se_status_brightness``) als "brightness" referenziert.
 
 Auf diese Namen beziehen sich nun in weiterer Folge Bedingungen und Aktionen. Im Beispiel
 wird im Zustand Nacht das Item ``beispiel.raffstore1.hoehe`` auf den Wert 100 gesetzt, sobald
@@ -95,7 +94,7 @@ und Aktionen folgen auf den nächsten Seiten.
 Beispiel se_eval
 ================
 
-se_eval ist für Sonderfälle und etwas komplexere Konfiurationen sinnvoll, kann aber
+se_eval ist für Sonderfälle und etwas komplexere Konfigurationen sinnvoll, kann aber
 im ersten Durchlauf ignoriert werden. Es wird daher empfohlen, als Beginner
 dieses Beispiel einfach zu überspringen ;)
 
