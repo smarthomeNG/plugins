@@ -33,12 +33,12 @@ Anforderungen
 Der BYD Energiespeicher muss mit dem LAN verbunden sind. Die IP-Adresse des BYD wird über DHCP zugewiesen und muss ermittelt werden. Diese IP-Adresse muss in der Plugin-Konfiguration gespeichert werden.
 
 Notwendige Software
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * matplotlib
 
 Unterstützte Geräte
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 Folgende Typen werden unterstützt:
 
@@ -53,25 +53,25 @@ Konfiguration
 =============
 
 plugin.yaml
-~~~~~~~~~~~
+-----------
 
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 
 items.yaml
-~~~~~~~~~~
+----------
 
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 
 logic.yaml
-~~~~~~~~~~
+----------
 
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 
 Funktionen
-~~~~~~~~~~
+----------
 
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
@@ -87,20 +87,20 @@ Oben rechts werden die wichtigsten Daten zum BYD Energiespeicher angezeigt.
 
 Im Tab "BYD Home" sind die Grunddaten des Energiespeichers dargestellt:
 
-.. image:: assets/home.PNG
+.. image:: assets/home.png
    :class: screenshot
 
 Im Tab "BYD Diagnose" werden Diagnosedaten angezeigt:
 
-.. image:: assets/diag.PNG
+.. image:: assets/diag.png
    :class: screenshot
 
 Im Tab "BYD Spannungen" werden die Spannungen der Module als Heatmap angezeigt:
 
-.. image:: assets/volt.PNG
+.. image:: assets/volt.png
    :class: screenshot
 
 Im Tab "BYD Temperaturen" werden die Temperaturen der Module als Heatmap angezeigt:
 
-.. image:: assets/temp.PNG
+.. image:: assets/temp.png
    :class: screenshot
