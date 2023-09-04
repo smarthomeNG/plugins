@@ -186,39 +186,40 @@ class SeItem:
         self.__name = str(self.__item)
         self.__itemClass = Item
         # initialize logging
-        self.__logger.header("")
-        _log_level = StateEngineValue.SeValue(self, "Log Level", False, "num")
-        _default_log_level = SeLogger.default_log_level.get()
-        _returnvalue, _returntype, _using_default, _issue = _log_level.set_from_attr(self.__item, "se_log_level",
-                                                                                     _default_log_level)
 
+        self.__log_level = StateEngineValue.SeValue(self, "Log Level", False, "num")
+
+        _default_log_level = SeLogger.default_log_level.get()
+        _returnvalue, _returntype, _using_default, _issue = self.__log_level.set_from_attr(self.__item, "se_log_level",
+                                                                                           _default_log_level)
+        self.__using_default_log_level = False
+        _startup_log_level = SeLogger.startup_log_level.get()
+        self.__logger.log_level_as_num = _startup_log_level
+        self.__logger.info("Set log level to startup log level {}", _startup_log_level)
+        self.__logger.header("")
         if len(_returnvalue) > 1:
             self.__logger.warning("se_log_level for item {} can not be defined as a list"
                                   " ({}). Using default value {}.", self.id, _returnvalue, _default_log_level)
-            _log_level.set(_default_log_level)
+            self.__log_level.set(_default_log_level)
         elif len(_returnvalue) == 1 and _returnvalue[0] is None:
-            _log_level.set(_default_log_level)
+            self.__log_level.set(_default_log_level)
             self.__logger.header("Initialize Item {0} (Log {1}, Level set"
-                                 " to {2} based on default log level {3}"
-                                 " because se_log_level has issues)".format(self.id, self.__logger.name, _log_level,
+                                 " to {2} based on default log level"
+                                 " because se_log_level has issues)".format(self.id, self.__logger.name,
                                                                             _default_log_level))
         elif _using_default:
             self.__logger.header("Initialize Item {0} (Log {1}, Level set"
                                  " to {2} based on default log level {3})".format(self.id, self.__logger.name,
-                                                                                  _log_level,
-                                                                                  _default_log_level))
+                                                                                  _returnvalue, _default_log_level))
         else:
             self.__logger.header("Initialize Item {0} (Log {1}, Level set"
-                                 " to {2}, default log level is {3})".format(self.id, self.__logger.name, _log_level,
-                                                                             _default_log_level))
-        _startup_log_level = SeLogger.startup_log_level.get()
-        self.__logger.log_level.set(_startup_log_level)
-        self.__logger.info("Set log level to startup log level {}", _startup_log_level)
+                                 " to {2}, default log level is {3})".format(self.id, self.__logger.name,
+                                                                             _returnvalue, _default_log_level))
         if _startup_log_level > 0:
             base = self.__sh.get_basedir()
             SeLogger.manage_logdirectory(base, SeLogger.log_directory, True)
-        self.__log_level = _log_level
         self.__instant_leaveaction = StateEngineValue.SeValue(self, "Instant Leave Action", False, "num")
+        self.__logger.log_level_as_num = _startup_log_level
 
         # get startup delay
         self.__startup_delay = StateEngineValue.SeValue(self, "Startup Delay", False, "num")
@@ -361,8 +362,9 @@ class SeItem:
             self.__add_triggers()
         else:
             self.__startup_delay_callback(self.__item, "Init", None, None)
-        self.__logger.info("Reset log level to {}", self.__log_level)
-        self.__logger.log_level = self.__log_level
+        _log_level = self.__log_level.get()
+        self.__logger.info("Reset log level to {}", _log_level)
+        self.__logger.log_level_as_num = _log_level
 
     def show_issues_summary(self):
         # show issues summary
@@ -434,14 +436,24 @@ class SeItem:
             self.__logger.debug("{} not running (anymore). Queue not activated.",
                                 StateEngineDefaults.plugin_identification)
             return
-        _current_log_level = self.__logger.get_loglevel()
+        _current_log_level = self.__log_level.get()
         _default_log_level = SeLogger.default_log_level.get()
+
+        if _current_log_level <= -1:
+            self.__using_default_log_level = True
+            value = SeLogger.default_log_level.get()
+        else:
+            value = _current_log_level
+            self.__using_default_log_level = False
+        self.__logger.log_level_as_num = value
+
         if _current_log_level > 0:
             base = self.__sh.get_basedir()
             SeLogger.manage_logdirectory(base, SeLogger.log_directory, True)
-        self.__logger.debug("Current log level {}, default {}, currently using default {}",
-                            self.__logger.log_level, _default_log_level, self.__logger.using_default_log_level)
         if self.__instant_leaveaction.get() <= -1:
+        additional_text = ", currently using default" if self.__using_default_log_level is True else ""
+        self.__logger.info("Current log level {} ({}), default {}{}",
+                            _current_log_level, type(self.__logger.log_level), _default_log_level, additional_text)
             self.__using_default_instant_leaveaction = True
         else:
             self.__using_default_instant_leaveaction = False
@@ -837,10 +849,10 @@ class SeItem:
                         if cond_index or relevant_state not in self.__states:
                             current_log_level = self.__log_level.get()
                             if current_log_level < 3:
-                                self.__logger.log_level.set(0)
                             can_enter = self.__update_check_can_enter(relevant_state)
                             #can_enter = relevant_state.can_enter()
-                            self.__logger.log_level.set(current_log_level)
+                                self.__logger.log_level_as_num = 0
+                            self.__logger.log_level_as_num = current_log_level
                             if relevant_state == last_state:
                                 self.__logger.debug("Possible release state {} = last state {}, "\
                                                     "not copying", relevant_state.id, last_state.id)
