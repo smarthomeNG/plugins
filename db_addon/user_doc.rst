@@ -29,7 +29,7 @@ ermittelt.
 Alternativ kann mit dem Attribute "db_addon_database_item"  auch der absolute Pfad des Items angegeben werden,  für das
 das Database Attribut konfiguriert ist.
 
-Bsp:
+Beispiel:
 
 
 .. code-block:: yaml
@@ -97,37 +97,36 @@ Dazu folgenden Block am Ende der Datei */etc/mysql/my.cnf* einfügen bzw den exi
 Hinweise
 ========
 
- - Das Plugin startet die Berechnungen der Werte nach einer gewissen (konfigurierbaren) Zeit (Attribut `startup_run_delay`)
-   nach dem Start von shNG, um den Startvorgang nicht zu beeinflussen.
+- Das Plugin startet die Berechnungen der Werte nach einer gewissen (konfigurierbaren) Zeit (Attribut `startup_run_delay`)
+  nach dem Start von shNG, um den Startvorgang nicht zu beeinflussen.
 
- - Bei Start werden automatisch nur die Items berechnet, für das das Attribute `db_addon_startup` gesetzt wurde. Alle anderen
-   Items werden erst zur konfigurierten Zeit berechnet. Das Attribute `db_addon_startup` kann auch direkt am `Database-Item`
-   gesetzt werden. Dabei wird das Attribut auf alle darunter liegenden `db_addon-Items` (bspw. bei Verwendung von structs) vererbt.
-   Über das WebIF kann die Berechnung aller definierten Items ausgelöst werden.
+- Bei Start werden automatisch nur die Items berechnet, für das das Attribute `db_addon_startup` gesetzt wurde. Alle anderen
+  Items werden erst zur konfigurierten Zeit berechnet. Das Attribute `db_addon_startup` kann auch direkt am `Database-Item`
+  gesetzt werden. Dabei wird das Attribut auf alle darunter liegenden `db_addon-Items` (bspw. bei Verwendung von structs) vererbt.
+  Über das WebIF kann die Berechnung aller definierten Items ausgelöst werden.
 
- - Für sogenannte `on_change` Items, also Items, deren Berechnung bis zum Jetzt (bspw. verbrauch-heute) gehen, wird die Berechnung
-   immer bei eintreffen eines neuen Wertes gestartet. Zu Reduktion der Belastung auf die Datenbank werden die Werte für das Ende der
-   letzten Periode gecached.
+- Für sogenannte `on_change` Items, also Items, deren Berechnung bis zum Jetzt (bspw. verbrauch-heute) gehen, wird die Berechnung
+  immer bei eintreffen eines neuen Wertes gestartet. Zu Reduktion der Belastung auf die Datenbank werden die Werte für das Ende der
+  letzten Periode gecached.
 
- - Berechnungen werden nur ausgeführt, wenn für den kompletten abgefragten Zeitraum Werte in der Datenbank vorliegen. Wird bspw.
-   der Verbrauch des letzten Monats abgefragt wobei erst Werte ab dem 3. des Monats in der Datenbank sind, wird die Berechnung abgebrochen.
+- Berechnungen werden nur ausgeführt, wenn für den kompletten abgefragten Zeitraum Werte in der Datenbank vorliegen. Wird bspw.
+  der Verbrauch des letzten Monats abgefragt wobei erst Werte ab dem 3. des Monats in der Datenbank sind, wird die Berechnung abgebrochen.
 
- - Mit dem Attribut `use_oldest_entry` kann dieses Verhalten verändert werden. Ist das Attribut gesetzt, wird, wenn für den
-   Beginn der Abfragezeitraums keinen Werte vorliegen, der älteste Eintrag der Datenbank genutzt.
+- Mit dem Attribut `use_oldest_entry` kann dieses Verhalten verändert werden. Ist das Attribut gesetzt, wird, wenn für den
+  Beginn der Abfragezeitraums keinen Werte vorliegen, der älteste Eintrag der Datenbank genutzt.
 
- - Für die Auswertung kann es nützlich sein, bestimmte Werte aus der Datenbank bei der Berechnung auszublenden. Hierfür stehen
-   2 Möglichkeiten zur Verfügung:
+- Für die Auswertung kann es nützlich sein, bestimmte Werte aus der Datenbank bei der Berechnung auszublenden. Hierfür stehen 2 Möglichkeiten zur Verfügung:
     - Plugin-Attribut `ignore_0`: (list of strings) Bei Items, bei denen ein String aus der Liste im Pfadnamen vorkommt,
       werden 0-Werte (val_num = 0) bei Datenbankauswertungen ignoriert. Hat also das Attribut den Wert ['temp'] werden bei allen Items mit
       'temp' im Pfadnamen die 0-Werte bei der Auswertung ignoriert.
-    - Item-Attribut `db_addon_ignore_value`: (num) Dieser Wert wird bei der Abfrage bzw. Auswertung der Datenbank für diese
-      Item ignoriert.
 
- - Das Plugin enthält sehr ausführliche Logginginformation. Bei unerwartetem Verhalten, den LogLevel entsprechend anpassen,
-   um mehr information zu erhalten.
+    - Item-Attribut `db_addon_ignore_value`: (num) Dieser Wert wird bei der Abfrage bzw. Auswertung der Datenbank für dieses Item ignoriert.
 
- - Berechnungen des Plugins können im WebIF unterbrochen werden. Auch das gesamte Plugin kann pausiert werden. Dies kann bei
-   starker Systembelastung nützlich sein.
+- Das Plugin enthält sehr ausführliche Logginginformation. Bei unerwartetem Verhalten, den LogLevel entsprechend anpassen,
+  um mehr information zu erhalten.
+
+- Berechnungen des Plugins können im WebIF unterbrochen werden. Auch das gesamte Plugin kann pausiert werden. Dies kann bei
+  starker Systembelastung nützlich sein.
 
 
 Beispiele
@@ -140,6 +139,7 @@ Soll bspw. der Verbrauch von Wasser ausgewertet werden, so ist dies wie folgt m�
 
 
 .. code-block:: yaml
+
     wasserzaehler:
         zaehlerstand:
             type: num
@@ -161,6 +161,7 @@ minmax
 Soll bspw. die minimalen und maximalen Temperaturen ausgewertet werden, kann dies so umgesetzt werden:
 
 .. code-block:: yaml
+
     temperature:
         aussen:
             nord:
@@ -177,7 +178,6 @@ Soll bspw. die minimalen und maximalen Temperaturen ausgewertet werden, kann die
 Die Temperaturwerte werden in die Datenbank geschrieben und darauf basierend ausgewertet. Die structs
 'db_addon.minmax_1' und 'db_addon.minmax_2' stellen entsprechende Items für die min/max Auswertung zur Verfügung.
 
-|
 
 Web Interface
 =============
@@ -228,6 +228,7 @@ Folgende Parameter sind möglich / notwendig:
 
 
 .. code-block:: yaml
+
     db_addon_params: "year=current"
 
 - year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr  (default: 'current')
@@ -246,11 +247,12 @@ siehe https://de.wikipedia.org/wiki/Wachstumsgradtag
 Folgende Parameter sind möglich / notwendig:
 
 .. code-block:: yaml
+
     db_addon_params: "year=current, method=1, threshold=10"
 
 - year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr  (default: 'current')
 - method: 0-Berechnung über "einfachen Durchschnitt der Tagestemperaturen", 1-Berechnung über "modifizierten Durchschnitt (default: 0)
-der Tagestemperaturen" 2-Anzahl der Tage, mit Mitteltempertatur oberhalb Schwellentemperatur// 10, 11 Ausgabe aus Zeitserie
+    der Tagestemperaturen" 2-Anzahl der Tage, mit Mitteltempertatur oberhalb Schwellentemperatur// 10, 11 Ausgabe aus Zeitserie
 - threshold: Schwellentemperatur in °C (int) (default: 10)
 
 
@@ -265,6 +267,7 @@ siehe https://de.wikipedia.org/wiki/W%C3%A4rmesumme
 Folgende Parameter sind möglich / notwendig:
 
 .. code-block:: yaml
+
     db_addon_params: "year=current, month=1, threshold=10"
 
 - year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr (default: 'current')
@@ -283,6 +286,7 @@ siehe https://de.wikipedia.org/wiki/K%C3%A4ltesumme
 Folgende Parameter sind möglich / notwendig:
 
 .. code-block:: yaml
+
     db_addon_params: "year=current, month=1"
 
 - year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr (default: 'current')
