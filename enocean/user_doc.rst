@@ -42,7 +42,7 @@ Aktoren, Schalter oder Stellglieder, die vom Enocean plugin gesteuert werden sol
 Für das Auslesen von Statusinfromationen von Enocean Sensoren ist kein Anlernvorgang nötig.
 
 Verwendung via IP
--------------
+-----------------
 
 Alternativ kann eines der oben erwähnten Serial-Geräte auch über das Netzwerk freigegeben werden und per RFC2217 eingebunden werden. Die Freigabe erfolgt auf dem Host mithilfe von `ser2net <https://linux.die.net/man/8/ser2net>`. Eine beispielhafte Konfiguration (ser2net.yaml) könnte so aussehen:
 
@@ -121,14 +121,16 @@ Zu b)
 item.yaml
 ---------
 
-#### enocean_rx_id, enocean_rx_eep and enocean_tx_id_offset
+enocean_rx_id, enocean_rx_eep and enocean_tx_id_offset
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Ein EnOcean Item (Sensor oder Aktor) muss mindestens ein ``enocean_rx_id`` und ein ``enocean_rx_eep`` Attribut definieren.
-Der Attribut ``enocean_rx_id'' gibt dabei die eindeutige ID (EnOcean Identification Number) als hexadezimaler String an. Dieser ist auf dem Gerät vermerkt.
+Der Attribut ``enocean_rx_id`` gibt dabei die eindeutige ID (EnOcean Identification Number) als hexadezimaler String an. Dieser ist auf dem Gerät vermerkt.
 Alternativ kann über das Webinterface unbekannte IDs von sendeden Enocean Geräten in der Nähe angezeigt werden.
 
 Die Enocean EEP gibt das EnOcean Equipment Profile an. Das Datenblatt des Enocean Geräts verrät, welche EEPs unterstützt werden.
 In einer Nachricht einer bestimmten Nachricht können sich verschiedene Signale wie z.B. Batteriestatus, Schaltstatus (an/aus) etc. befinden. Um diese Signale den einzelnen smarthomeNG
-Items zuzuordnen, werden abgekürzte `Keys` verwendet und als Attribut ``enocean_rx_key angegeben. 
+Items zuzuordnen, werden abgekürzte `Keys` verwendet und als Attribut ``enocean_rx_key`` angegeben. 
 
 Im Beispiel sind die verschiedenen `Keys` ersichtlich. Folgende `Keys` werden vom Plugin unterstützt:
 
@@ -140,7 +142,7 @@ Im Beispiel sind die verschiedenen `Keys` ersichtlich. Folgende `Keys` werden vo
   B0 = right rocker up
 
 
- **Schalter mit zwei Tastern), (EEP F6_02_03)
+ **Schalter mit zwei Tastern**, (EEP F6_02_03)
 
   AI = left rocker down
   A0 = left rocker up
@@ -153,7 +155,6 @@ Im Beispiel sind die verschiedenen `Keys` ersichtlich. Folgende `Keys` werden vo
  **Fenstergriff**, (EEP F6_10_0)
 
   STATUS = handle_status
-
 
  
 Sendende Items, z.B. um Schaltaktoren zu schalten, benötigen weiterhin eine Transmitting ID. Diese wird im Attribut ``enocean_tx_id_offset`` definiert.
@@ -224,28 +225,26 @@ Außerdem kann das Webinterface direkt über http://smarthome.local:8383/enocean
 
 Das Webinterface zeigt oben rechts allgemeine Informationen, wie 
 
- * die BaseID der verwendeten Hardware
- * ob der Sendemodus aktiviert ist
- * ob empfangene Enocean Nachrichten von unbekannten (nicht konfigurierten) Geräten in die Konsole geloggt werden sollen
- * ob der UTE Anlernmodus aktiviert ist.
+* die BaseID der verwendeten Hardware
+* ob der Sendemodus aktiviert ist
+* ob empfangene Enocean Nachrichten von unbekannten (nicht konfigurierten) Geräten in die Konsole geloggt werden sollen
+* ob der UTE Anlernmodus aktiviert ist.
 
 Weiterhin können über Schaltflächen
 
- * der Sendemodus aktiviert und deaktiviert werden
- * der UTE Anlernmodus aktiviert und deaktiviert werden
- * das Logging von empfangenen Nachrichten unbekannten Enocean Geräte aktiviert und deaktiviert werden.
+* der Sendemodus aktiviert und deaktiviert werden
+* der UTE Anlernmodus aktiviert und deaktiviert werden
+* das Logging von empfangenen Nachrichten unbekannten Enocean Geräte aktiviert und deaktiviert werden.
 
 Unter dem TAB `Übersicht` werden alle konfigurierten Enocean items angezeigt.
 
-Unter dem TAB 'Neu anlerenen' können neue Enocean Aktuatoren angelernt werden. Hierzu wird 
+Unter dem TAB 'Neu anlernen' können neue Enocean Aktuatoren angelernt werden. Hierzu wird 
 
-  a) Der entsprechende Aktor/Stellglied in den Anlernmodus gebracht (siehe jeweilige Bedienungsanleitung)
-  b) Eine Transmit ID ausgewählt (TX ID). Enocean unterstützt bis zu 127 verschiedene IDs.
-  c) Als Hinweis bzw. Vorschlag wird die erste freie ID auf der linken Seite angezeigt.
-  c) Der Aktortyp ausgwählt. Im Plugin wird anhand des Typs das Lerntelegram ausgewählt. 
-  d) Auf die Schaltfläche ``Anlernen`` klicken. Das Anlerntelegram wird gesendet und der Aktor sollte den Anlernvorgang quittieren (siehe jeweilige Bedienungsanleitung).
-
-
+a) Der entsprechende Aktor/Stellglied in den Anlernmodus gebracht (siehe jeweilige Bedienungsanleitung)
+b) Eine Transmit ID ausgewählt (TX ID). Enocean unterstützt bis zu 127 verschiedene IDs.
+c) Als Hinweis bzw. Vorschlag wird die erste freie ID auf der linken Seite angezeigt.
+d) Der Aktortyp ausgwählt. Im Plugin wird anhand des Typs das Lerntelegram ausgewählt. 
+e) Auf die Schaltfläche ``Anlernen`` klicken. Das Anlerntelegram wird gesendet und der Aktor sollte den Anlernvorgang quittieren (siehe jeweilige Bedienungsanleitung).
 
 
 Beispiele
@@ -255,23 +254,23 @@ Beispiele für eine Item.yaml mit verschiedenen Enocean Sensoren und Aktoren:
 
 .. code-block:: yaml
 
-  EnOcean_Item:
-    Outside_Temperature:
-        type: num
-        enocean_rx_id: 0180924D
-        enocean_rx_eep: A5_02_05
-        enocean_rx_key: TMP
+    EnOcean_Item:
+        Outside_Temperature:
+            type: num
+            enocean_rx_id: 0180924D
+            enocean_rx_eep: A5_02_05
+            enocean_rx_key: TMP
 
-    Door:
-        enocean_rx_id: 01234567
-        enocean_rx_eep: D5_00_01
-        status:
-            type: bool
-            enocean_rx_key: STATUS
+        Door:
+            enocean_rx_id: 01234567
+            enocean_rx_eep: D5_00_01
+            status:
+                type: bool
+                enocean_rx_key: STATUS
 
-    FT55switch:
-        enocean_rx_id: 012345AA
-        enocean_rx_eep: F6_02_03
+        FT55switch:
+            enocean_rx_id: 012345AA
+            enocean_rx_eep: F6_02_03
             up:
                 type: bool
                 enocean_rx_key: BO
@@ -279,285 +278,281 @@ Beispiele für eine Item.yaml mit verschiedenen Enocean Sensoren und Aktoren:
                 type: bool
                 enocean_rx_key: BI
 
-    Brightness_Sensor:
-        name: brightness_sensor_east
-        remark: Eltako FAH60
-        type: num
-        enocean_rx_id: 01A51DE6
-        enocean_rx_eep: A5_06_01
-        enocean_rx_key: BRI
-        visu_acl: rw
-        sqlite: 'yes'
-
-    dimmer1:
-        remark: Eltako FDG14 - Dimmer
-        enocean_rx_id: 00112233
-        enocean_rx_eep: A5_11_04
-        light:
-        type: bool
-        enocean_rx_key: STAT
-        enocean_tx_eep: A5_38_08_02
-        enocean_tx_id_offset: 1
-        level:
+        Brightness_Sensor:
+            name: brightness_sensor_east
+            remark: Eltako FAH60
             type: num
-            enocean_rx_key: D
-            enocean_tx_eep: A5_38_08_03
-            enocean_tx_id_offset: 1
-            ref_level: 80
-            dim_speed: 100
-            block_dim_value: 'False'
-
-    handle:
-        enocean_rx_id: 01234567
-        enocean_rx_eep: F6_10_00
-        status:
-            type: num
-            enocean_rx_key: STATUS
-
-    actor1:
-        enocean_rx_id: FFAABBCC
-        enocean_rx_eep: A5_12_01
-        power:
-            type: num
-            enocean_rx_key: VALUE
-
-    actor1B:
-        remark: Eltako FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP - Switch for Ligths
-        enocean_rx_id: 1A794D3
-        enocean_rx_eep: F6_02_03
-        light:
-            type: bool
-            enocean_tx_eep: A5_38_08_01
-            enocean_tx_id_offset: 1
-            enocean_rx_key: B
-            block_switch: 'False'
-            cache: 'True'
-            enforce_updates: 'True'
+            enocean_rx_id: 01A51DE6
+            enocean_rx_eep: A5_06_01
+            enocean_rx_key: BRI
             visu_acl: rw
+            sqlite: 'yes'
 
-    actor_D2:
-        remark: Actor with VLD Command
-        enocean_rx_id: FFDB7381
-        enocean_rx_eep: D2_01_07
-        move:
+        dimmer1:
+            remark: Eltako FDG14 - Dimmer
+            enocean_rx_id: 00112233
+            enocean_rx_eep: A5_11_04
+            light:
             type: bool
             enocean_rx_key: STAT
-            enocean_tx_eep: D2_01_07
+            enocean_tx_eep: A5_38_08_02
             enocean_tx_id_offset: 1
-            # pulsewith-attribute removed use autotimer functionality instead
-            autotimer: 1 = 0  
-            
-    actorD2_01_12:
-        enocean_rx_id: 050A2FF4
-        enocean_rx_eep: D2_01_12
-        switch:
-            cache: 'on'
-            type: bool
-            enocean_rx_key: STAT_A
-            enocean_channel: A
-            enocean_tx_eep: D2_01_12
-            enocean_tx_id_offset: 2
+            level:
+                type: num
+                enocean_rx_key: D
+                enocean_tx_eep: A5_38_08_03
+                enocean_tx_id_offset: 1
+                ref_level: 80
+                dim_speed: 100
+                block_dim_value: 'False'
 
-    awning:
-        name: Eltako FSB14, FSB61, FSB71
-        remark: actor for Shutter
-        type: str
-        enocean_rx_id: 1A869C3
-        enocean_rx_eep: F6_0G_03
-        enocean_rx_key: STATUS
-        move:
-            type: num
-            enocean_tx_eep: A5_3F_7F
-            enocean_tx_id_offset: 0
-            enocean_rx_key: B
-            enocean_rtime: 60
-            block_switch: 'False'
-            enforce_updates: 'True'
-            cache: 'True'
-            visu_acl: rw
+        handle:
+            enocean_rx_id: 01234567
+            enocean_rx_eep: F6_10_00
+            status:
+                type: num
+                enocean_rx_key: STATUS
 
-    rocker:
-        enocean_rx_id: 0029894A
-        enocean_rx_eep: F6_02_01
-        short_800ms_directly_to_knx:
-            type: bool
-            enocean_rx_key: AI
-            enocean_rocker_action: **toggle**
-            enocean_rocker_sequence: released **within** 0.8
-            knx_dpt: 1
-            knx_send: 3/0/60
+        actor1:
+            enocean_rx_id: FFAABBCC
+            enocean_rx_eep: A5_12_01
+            power:
+                type: num
+                enocean_rx_key: VALUE
 
-        long_800ms_directly_to_knx:
-            type: bool
-            enocean_rx_key: AI
-            enocean_rocker_action: toggle
-            enocean_rocker_sequence: released **after** 0.8
-            knx_dpt: 1
-            knx_send: 3/0/61
+        actor1B:
+            remark: Eltako FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP - Switch for Ligths
+            enocean_rx_id: 1A794D3
+            enocean_rx_eep: F6_02_03
+            light:
+                type: bool
+                enocean_tx_eep: A5_38_08_01
+                enocean_tx_id_offset: 1
+                enocean_rx_key: B
+                block_switch: 'False'
+                cache: 'True'
+                enforce_updates: 'True'
+                visu_acl: rw
 
-        rocker_double_800ms_to_knx_send_1:
-            type: bool
-            enforce_updates: true
-            enocean_rx_key: AI
-            enocean_rocker_action: **set**
-            enocean_rocker_sequence: **released within 0.4, pressed within 0.4**
-            knx_dpt: 1
-            knx_send: 3/0/62
+        actor_D2:
+            remark: Actor with VLD Command
+            enocean_rx_id: FFDB7381
+            enocean_rx_eep: D2_01_07
+            move:
+                type: bool
+                enocean_rx_key: STAT
+                enocean_tx_eep: D2_01_07
+                enocean_tx_id_offset: 1
+                # pulsewith-attribute removed use autotimer functionality instead
+                autotimer: 1 = 0  
+                
+        actorD2_01_12:
+            enocean_rx_id: 050A2FF4
+            enocean_rx_eep: D2_01_12
+            switch:
+                cache: 'on'
+                type: bool
+                enocean_rx_key: STAT_A
+                enocean_channel: A
+                enocean_tx_eep: D2_01_12
+                enocean_tx_id_offset: 2
 
-    brightness_sensor:
-        enocean_rx_id: 01234567
-        enocean_rx_eep: A5_08_01
-        lux:
-            type: num
-            enocean_rx_key: BRI
-
-        movement:
-            type: bool
-            enocean_rx_key: MOV
-
-    occupancy_sensor:
-        enocean_rx_id: 01234567
-        enocean_rx_eep: A5_07_03
-        lux:
-            type: num
-            enocean_rx_key: ILL
-
-        movement:
-            type: bool
-            enocean_rx_key: PIR
-
-        voltage:
-            type: bool
-            enocean_rx_key: SVC
-
-    temperature_sensor:
-        enocean_rx_id: 01234567
-        enocean_rx_eep: A5_04_02
-        temperature:
-            type: num
-            enocean_rx_key: TMP
-
-        humidity:
-            type: num
-            enocean_rx_key: HUM
-
-        power_status:
-            type: num
-            enocean_rx_key: ENG
-
-    sunblind:
-        name: Eltako FSB14, FSB61, FSB71
-        remark: actor for Shutter
-        type: str
-        enocean_rx_id: 1A869C3
-        enocean_rx_eep: F6_0G_03
-        enocean_rx_key: STATUS
-        # runtime Range [0 - 255] s
-        enocean_rtime: 80
-        Tgt_Position:
+        awning:
             name: Eltako FSB14, FSB61, FSB71
-            remark: Pos. 0...255
-            type: num
-            enocean_rx_id: ..:.
-            enocean_rx_eep: ..:.
-            enforce_updates: 'True'
-            cache: 'True'
-            visu_acl: rw
-        Act_Position:
-            name: Eltako FSB14, FSB61, FSB71
-            remark: Ist-Pos. 0...255 berechnet aus (letzer Pos. + Fahrzeit * 255/rtime)
-            type: num
-            enocean_rx_id: ..:.
-            enocean_rx_eep: ..:.
-            enocean_rx_key: POSITION
-            enforce_updates: 'True'
-            cache: 'True'
-            visu_acl: rw
-            eval: min(max(value, 0), 255)
-            on_update:
-                - EnOcean_Item.sunblind = 'stopped'
-        Run:
-            name: Eltako FSB14, FSB61, FSB71
-            remark: Ansteuerbefehl 0x00, 0x01, 0x02
-            type: num
-            enocean_rx_id: ..:.
-            enocean_rx_eep: ..:.
-            enocean_tx_eep: A5_3F_7F
-            enocean_tx_id_offset: 0
-            enocean_rx_key: B
-            enocean_rtime: ..:.
-            # block actuator
-            block_switch: 'True'
-            enforce_updates: 'True'
-            cache: 'True'
-            visu_acl: rw
-            struct: uzsu.child
-        Movement:
-            name: Eltako FSB14, FSB61, FSB71
-            remark: Wenn Rolladen gestoppt wurde steht hier die gefahrene Zeit in s und die Richtung
-            type: num
-            enocean_rx_id: ..:.
-            enocean_rx_eep: A5_0G_03
-            enocean_rx_key: MOVE
-            cache: 'False'
-            enforce_updates: 'True'
-            eval: value * 255/int(sh.EnOcean_Item.sunblind.property.enocean_rtime)
-            on_update:
-                - EnOcean_Item.sunblind = 'stopped'
-                - EnOcean_Item.sunblind.Act_Position = EnOcean_Item.sunblind.Act_Position() + value
+            remark: actor for Shutter
+            type: str
+            enocean_rx_id: 1A869C3
+            enocean_rx_eep: F6_0G_03
+            enocean_rx_key: STATUS
+            move:
+                type: num
+                enocean_tx_eep: A5_3F_7F
+                enocean_tx_id_offset: 0
+                enocean_rx_key: B
+                enocean_rtime: 60
+                block_switch: 'False'
+                enforce_updates: 'True'
+                cache: 'True'
+                visu_acl: rw
 
-    RGBdimmer:
-        type: num
-        remark: Eltako FRGBW71L - RGB Dimmer
-        enocean_rx_id: 1A869C3
-        enocean_rx_eep: A5_3F_7F
-        enocean_rx_key: DI_0
-        red:
+        rocker:
+            enocean_rx_id: 0029894A
+            enocean_rx_eep: F6_02_01
+            short_800ms_directly_to_knx:
+                type: bool
+                enocean_rx_key: AI
+                enocean_rocker_action: **toggle**
+                enocean_rocker_sequence: released **within** 0.8
+                knx_dpt: 1
+                knx_send: 3/0/60
+
+            long_800ms_directly_to_knx:
+                type: bool
+                enocean_rx_key: AI
+                enocean_rocker_action: toggle
+                enocean_rocker_sequence: released **after** 0.8
+                knx_dpt: 1
+                knx_send: 3/0/61
+
+            rocker_double_800ms_to_knx_send_1:
+                type: bool
+                enforce_updates: true
+                enocean_rx_key: AI
+                enocean_rocker_action: **set**
+                enocean_rocker_sequence: **released within 0.4, pressed within 0.4**
+                knx_dpt: 1
+                knx_send: 3/0/62
+
+        brightness_sensor:
+            enocean_rx_id: 01234567
+            enocean_rx_eep: A5_08_01
+            lux:
+                type: num
+                enocean_rx_key: BRI
+
+            movement:
+                type: bool
+                enocean_rx_key: MOV
+
+        occupancy_sensor:
+            enocean_rx_id: 01234567
+            enocean_rx_eep: A5_07_03
+            lux:
+                type: num
+                enocean_rx_key: ILL
+
+            movement:
+                type: bool
+                enocean_rx_key: PIR
+
+            voltage:
+                type: bool
+                enocean_rx_key: SVC
+
+        temperature_sensor:
+            enocean_rx_id: 01234567
+            enocean_rx_eep: A5_04_02
+            temperature:
+                type: num
+                enocean_rx_key: TMP
+
+            humidity:
+                type: num
+                enocean_rx_key: HUM
+
+            power_status:
+                type: num
+                enocean_rx_key: ENG
+
+        sunblind:
+            name: Eltako FSB14, FSB61, FSB71
+            remark: actor for Shutter
+            type: str
+            enocean_rx_id: 1A869C3
+            enocean_rx_eep: F6_0G_03
+            enocean_rx_key: STATUS
+            # runtime Range [0 - 255] s
+            enocean_rtime: 80
+            Tgt_Position:
+                name: Eltako FSB14, FSB61, FSB71
+                remark: Pos. 0...255
+                type: num
+                enocean_rx_id: ..:.
+                enocean_rx_eep: ..:.
+                enforce_updates: 'True'
+                cache: 'True'
+                visu_acl: rw
+            Act_Position:
+                name: Eltako FSB14, FSB61, FSB71
+                remark: Ist-Pos. 0...255 berechnet aus (letzer Pos. + Fahrzeit * 255/rtime)
+                type: num
+                enocean_rx_id: ..:.
+                enocean_rx_eep: ..:.
+                enocean_rx_key: POSITION
+                enforce_updates: 'True'
+                cache: 'True'
+                visu_acl: rw
+                eval: min(max(value, 0), 255)
+                on_update:
+                    - EnOcean_Item.sunblind = 'stopped'
+            Run:
+                name: Eltako FSB14, FSB61, FSB71
+                remark: Ansteuerbefehl 0x00, 0x01, 0x02
+                type: num
+                enocean_rx_id: ..:.
+                enocean_rx_eep: ..:.
+                enocean_tx_eep: A5_3F_7F
+                enocean_tx_id_offset: 0
+                enocean_rx_key: B
+                enocean_rtime: ..:.
+                # block actuator
+                block_switch: 'True'
+                enforce_updates: 'True'
+                cache: 'True'
+                visu_acl: rw
+                struct: uzsu.child
+            Movement:
+                name: Eltako FSB14, FSB61, FSB71
+                remark: Wenn Rolladen gestoppt wurde steht hier die gefahrene Zeit in s und die Richtung
+                type: num
+                enocean_rx_id: ..:.
+                enocean_rx_eep: A5_0G_03
+                enocean_rx_key: MOVE
+                cache: 'False'
+                enforce_updates: 'True'
+                eval: value * 255/int(sh.EnOcean_Item.sunblind.property.enocean_rtime)
+                on_update:
+                    - EnOcean_Item.sunblind = 'stopped'
+                    - EnOcean_Item.sunblind.Act_Position = EnOcean_Item.sunblind.Act_Position() + value
+
+        RGBdimmer:
             type: num
-            enocean_tx_eep: 07_3F_7F
-            enocean_tx_id_offset: 1
+            remark: Eltako FRGBW71L - RGB Dimmer
+            enocean_rx_id: 1A869C3
+            enocean_rx_eep: A5_3F_7F
             enocean_rx_key: DI_0
-            ref_level: 80
-            dim_speed: 100
-            color: red
-        green:
-            type: num
-            enocean_tx_eep: 07_3F_7F
-            enocean_tx_id_offset: 1
-            enocean_rx_key: DI_1
-            ref_level: 80
-            dim_speed: 100
-            color: green
-        blue:
-            type: num
-            enocean_tx_eep: 07_3F_7F
-            enocean_tx_id_offset: 1
-            enocean_rx_key: DI_2
-            ref_level: 80
-            dim_speed: 100
-            color: blue
-        white:
-            type: num
-            enocean_tx_eep: 07_3F_7F
-            enocean_tx_id_offset: 1
-            enocean_rx_key: DI_3
-            ref_level: 80
-            dim_speed: 100
-            color: white 
-    water_sensor:
-        enocean_rx_id: 00000000
-        enocean_rx_eep: A5_30_03
+            red:
+                type: num
+                enocean_tx_eep: 07_3F_7F
+                enocean_tx_id_offset: 1
+                enocean_rx_key: DI_0
+                ref_level: 80
+                dim_speed: 100
+                color: red
+            green:
+                type: num
+                enocean_tx_eep: 07_3F_7F
+                enocean_tx_id_offset: 1
+                enocean_rx_key: DI_1
+                ref_level: 80
+                dim_speed: 100
+                color: green
+            blue:
+                type: num
+                enocean_tx_eep: 07_3F_7F
+                enocean_tx_id_offset: 1
+                enocean_rx_key: DI_2
+                ref_level: 80
+                dim_speed: 100
+                color: blue
+            white:
+                type: num
+                enocean_tx_eep: 07_3F_7F
+                enocean_tx_id_offset: 1
+                enocean_rx_key: DI_3
+                ref_level: 80
+                dim_speed: 100
+                color: white 
+        water_sensor:
+            enocean_rx_id: 00000000
+            enocean_rx_eep: A5_30_03
 
-        alarm:
-            type: bool
-            enocean_rx_key: ALARM
-            visu_acl: ro
+            alarm:
+                type: bool
+                enocean_rx_key: ALARM
+                visu_acl: ro
 
-        temperature:
-            type: num
-            enocean_rx_key: TEMP
-            visu_acl: ro
-  
-
-
-
+            temperature:
+                type: num
+                enocean_rx_key: TEMP
+                visu_acl: ro
