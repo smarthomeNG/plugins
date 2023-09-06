@@ -3,11 +3,11 @@
 #########################################################################
 #  Copyright 2022 De Filippis Ivan
 #  Copyright 2022 Ronny Schulz
+#  Copyright 2023 Bernd Meiners
 #########################################################################
 #  This file is part of SmartHomeNG.
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
-#  upwards.
+#  Modbus_TCP plugin for SmartHomeNG
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -58,13 +58,17 @@ AttrDirection = 'modBusDirection'
 
 
 class modbus_tcp(SmartPlugin):
-    ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.0.8'
+    """
+    This class provides a Plugin for SmarthomeNG to read and or write to modbus
+    devices.
+    """
+
+    PLUGIN_VERSION = '1.0.9'
 
     def __init__(self, sh, *args, **kwargs):
         """
-        Initializes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-        :param sh:  The instance of the smarthome object, save it for later references
+        Initializes the Modbus TCP plugin.
+        The parameters are retrieved from get_parameter_value(parameter_name)
         """
 
         self.logger.info('Init modbus_tcp plugin')
@@ -73,8 +77,17 @@ class modbus_tcp(SmartPlugin):
         super().__init__()
 
         self._host = self.get_parameter_value('host')
-        self._port = int(self.get_parameter_value('port'))
-        self._cycle = int(self.get_parameter_value('cycle'))
+        self._port = self.get_parameter_value('port')
+
+        self._cycle  = self.get_parameter_value('cycle')      # the frequency in seconds how often the device should be accessed
+        if self._cycle == 0:
+            self._cycle = None
+        self._crontab  = self.get_parameter_value('crontab')  # the more complex way to specify the device query frequency
+        if self._crontab == '':
+            self._crontab = None
+        if not (self._cycle or self._crontab):
+            self.logger.error(f"{self.get_fullname()}: no update cycle or crontab set. Modbus will not be queried automatically")
+        
         self._slaveUnit = int(self.get_parameter_value('slaveUnit'))
         self._slaveUnitRegisterDependend = False
 
@@ -95,18 +108,24 @@ class modbus_tcp(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.scheduler_add('poll_device_' + self._host, self.poll_device, cycle=self._cycle, prio=5)
+        self.logger.debug(f"Plugin '{self.get_fullname()}': run method called")
         self.alive = True
+        if self._cycle or self._crontab:
+            # self.get_shortname()
+            self.scheduler_add('poll_device_' + self._host, self.poll_device, cycle=self._cycle, cron=self._crontab, prio=5)
+            #self.scheduler_add(self.get_shortname(), self._update_values_callback, prio=5, cycle=self._update_cycle, cron=self._update_crontab, next=shtime.now())
+        self.logger.debug(f"Plugin '{self.get_fullname()}': run method finished")
 
     def stop(self):
         """
         Stop method for the plugin
         """
         self.alive = False
-        self.logger.debug("stop modbus_tcp plugin")
+        self.logger.debug(f"Plugin '{self.get_fullname()}': stop method called")
         self.scheduler_remove('poll_device_' + self._host)
         self._Mclient.close()
         self.connected = False
+        self.logger.debug(f"Plugin '{self.get_fullname()}': stop method finished")
 
     def parse_item(self, item):
         """
@@ -117,7 +136,7 @@ class modbus_tcp(SmartPlugin):
         :param item:    The item to process.
         """
         if self.has_iattr(item.conf, AttrAddress):
-            self.logger.debug("parse item: {0}".format(item))
+            self.logger.debug(f"parse item: {item}")
             regAddr = int(self.get_iattr_value(item.conf, AttrAddress))
 
             objectType = 'HoldingRegister'
@@ -173,11 +192,11 @@ class modbus_tcp(SmartPlugin):
                        'dataDir': dataDirection}
             if dataDirection == 'read':
                 self._regToRead.update({reg: regPara})
-                self.logger.info("parse item: {0} Attributes {1}".format(item, regPara))
+                self.logger.info(f"parse item: {item} Attributes {regPara}")
             elif dataDirection == 'read_write':
                 self._regToRead.update({reg: regPara})
                 self._regToWrite.update({reg: regPara})
-                self.logger.info("parse item: {0} Attributes {1}".format(item, regPara))
+                self.logger.info(f"parse item: {item} Attributes {regPara}")
                 return self.update_item
             else:
                 self.logger.warning("Invalid data direction -> default(read) is used")
@@ -195,15 +214,15 @@ class modbus_tcp(SmartPlugin):
         with self.lock:
             try:
                 if self._Mclient.connect():
-                    self.logger.info("connected to {0}".format(str(self._Mclient)))
+                    self.logger.info(f"connected to {str(self._Mclient)}")
                     self.connected = True
                 else:
-                    self.logger.error("could not connect to {0}:{1}".format(self._host, self._port))
+                    self.logger.error(f"could not connect to {self._host}:{self._port}")
                     self.connected = False
                     return
 
             except Exception as e:
-                self.logger.error("connection expection: {0} {1}".format(str(self._Mclient), e))
+                self.logger.error(f"connection exception: {str(self._Mclient)} {e}")
                 self.connected = False
                 return
 
@@ -214,12 +233,12 @@ class modbus_tcp(SmartPlugin):
                 with self.lock:
                     regAddr = regPara['regAddr']
                     value = self.__read_Registers(regPara)
-                    # self.logger.debug("value readed: {0} type: {1}".format(value, type(value)))
+                    # self.logger.debug(f"value read: {value} type: {type(value)}")
                     if value is not None:
                         item = regPara['item']
                         if regPara['factor'] != 1:
                             value = value * regPara['factor']
-                            # self.logger.debug("value {0} multiply by: {1}".format(value, regPara['factor']))
+                            # self.logger.debug(f"value {value} multiply by: {regPara['factor']}")
                         item(value, self.get_fullname())
                         regCount += 1
 
@@ -236,9 +255,9 @@ class modbus_tcp(SmartPlugin):
             if regCount > 0:
                 self._pollStatus['last_dt'] = datetime.now()
                 self._pollStatus['regCount'] = regCount
-            self.logger.debug("poll_device: {0} register readed requed-time: {1}".format(regCount, duration))
+            self.logger.debug(f"poll_device: {regCount} register read required {duration} seconds")
         except Exception as e:
-            self.logger.error("something went wrong in the poll_device function: {0}".format(e))
+            self.logger.error(f"something went wrong in the poll_device function: {e}")
 
     # called each time an item changes.
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -259,21 +278,20 @@ class modbus_tcp(SmartPlugin):
         dataDirection = 'read'
 
         if caller == self.get_fullname():
-            # self.logger.debug('item was changed by the plugin itself - caller:{0} source:{1} dest:{2} '.format(caller, source, dest))
+            # self.logger.debug(f'item was changed by the plugin itself - caller:{caller} source:{source} dest:{dest}')
             return
 
         if self.has_iattr(item.conf, AttrDirection):
             dataDirection = self.get_iattr_value(item.conf, AttrDirection)
             if not dataDirection == 'read_write':
-                self.logger.debug(
-                    'update_item:{0} Writing is not allowed - selected dataDirection:{1}'.format(item, dataDirection))
+                self.logger.debug(f'update_item: {item} Writing is not allowed - selected dataDirection:{dataDirection}')
                 return
             # else:
-            #    self.logger.debug('update_item:{0} dataDirection:{1}'.format(item, dataDirection))
+            #    self.logger.debug(f'update_item:{item} dataDirection: {dataDirection}')
             if self.has_iattr(item.conf, AttrAddress):
                 regAddr = int(self.get_iattr_value(item.conf, AttrAddress))
             else:
-                self.logger.warning('update_item:{0} Item has no register address'.format(item))
+                self.logger.warning(f'update_item:{item} Item has no register address')
                 return
             if self.has_iattr(item.conf, AttrSlaveUnit):
                 slaveUnit = int(self.get_iattr_value(item.conf, AttrSlaveUnit))
@@ -292,18 +310,18 @@ class modbus_tcp(SmartPlugin):
             if reg in self._regToWrite:
                 with self.lock:
                     regPara = self._regToWrite[reg]
-                    self.logger.debug('update_item:{0} value:{1} regToWrite:{2}'.format(item, item(), reg))
+                    self.logger.debug(f'update_item:{item} value:{item()} regToWrite: {reg}')
                     try:
                         if self._Mclient.connect():
-                            self.logger.info("connected to {0}".format(str(self._Mclient)))
+                            self.logger.info(f"connected to {str(self._Mclient)}")
                             self.connected = True
                         else:
-                            self.logger.error("could not connect to {0}:{1}".format(self._host, self._port))
+                            self.logger.error(f"could not connect to {self._host}:{self._port}")
                             self.connected = False
                             return
 
                     except Exception as e:
-                        self.logger.error("connection expection: {0} {1}".format(str(self._Mclient), e))
+                        self.logger.error(f"connection exception: {str(self._Mclient)} {e}")
                         self.connected = False
                         return
 
@@ -312,7 +330,7 @@ class modbus_tcp(SmartPlugin):
                     try:
                         self.__write_Registers(regPara, item())
                     except Exception as e:
-                        self.logger.error("something went wrong in the __write_Registers function: {0}".format(e))
+                        self.logger.error(f"something went wrong in the __write_Registers function: {e}")
 
     def __write_Registers(self, regPara, value):
         objectType = regPara['objectType']
@@ -335,12 +353,10 @@ class modbus_tcp(SmartPlugin):
             registerCount = int(bits / 16)
 
         if regPara['factor'] != 1:
-            # self.logger.debug("value {0} divided by: {1}".format(value, regPara['factor']))
+            # self.logger.debug(f"value {value} divided by: {regPara['factor']}")
             value = value * (1 / regPara['factor'])
 
-        self.logger.debug(
-            "write {0} to {1}.{2}.{3} (address.slaveUnit) dataType:{4}".format(value, objectType, address, slaveUnit,
-                                                                               dataTypeStr))
+        self.logger.debug(f"write {value} to {objectType}.{address}.{address} (address.slaveUnit) dataType:{dataTypeStr}")
         builder = BinaryPayloadBuilder(byteorder=bo, wordorder=wo)
 
         if dataType.lower() == 'uint':
@@ -351,7 +367,7 @@ class modbus_tcp(SmartPlugin):
             elif bits == 64:
                 builder.add_64bit_uint(int(value))
             else:
-                self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
+                self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
         elif dataType.lower() == 'int':
             if bits == 16:
                 builder.add_16bit_int(int(value))
@@ -360,28 +376,28 @@ class modbus_tcp(SmartPlugin):
             elif bits == 64:
                 builder.add_64bit_int(int(value))
             else:
-                self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
+                self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
         elif dataType.lower() == 'float':
             if bits == 32:
                 builder.add_32bit_float(value)
             elif bits == 64:
                 builder.add_64bit_float(value)
             else:
-                self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
+                self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
         elif dataType.lower() == 'string':
             builder.add_string(value)
         elif dataType.lower() == 'bit':
             if objectType == 'Coil' or objectType == 'DiscreteInput':
                 if not isinstance(value, bool):  # test is boolean
-                    self.logger.error("Value is not boolean: {0}".format(value))
+                    self.logger.error(f"Value is not boolean: {value}")
                     return
             else:
                 if set(value).issubset({'0', '1'}) and bool(value):  # test is bit-string '00110101'
                     builder.add_bits(value)
                 else:
-                    self.logger.error("Value is not a bitstring: {0}".format(value))
+                    self.logger.error(f"Value is not a bitstring: {value}")
         else:
-            self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
+            self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
             return None
 
         if objectType == 'Coil':
@@ -390,18 +406,15 @@ class modbus_tcp(SmartPlugin):
             registers = builder.to_registers()
             result = self._Mclient.write_registers(address, registers, unit=slaveUnit)
         elif objectType == 'DiscreteInput':
-            self.logger.warning(
-                "this object type cannot be written {0}:{1} slaveUnit:{2}".format(objectType, address, slaveUnit))
+            self.logger.warning(f"this object type cannot be written {objectType}:{address} slaveUnit:{slaveUnit}")
             return
         elif objectType == 'InputRegister':
-            self.logger.warning(
-                "this object type cannot be written {0}:{1} slaveUnit:{2}".format(objectType, address, slaveUnit))
+            self.logger.warning(f"this object type cannot be written {objectType}:{address} slaveUnit:{slaveUnit}")
             return
         else:
             return
         if result.isError():
-            self.logger.error(
-                "write error: {0} {1}.{2}.{3} (address.slaveUnit)".format(result, objectType, address, slaveUnit))
+            self.logger.error(f"write error: {result} {objectType}.{address}.{slaveUnit} (address.slaveUnit)")
             return None
 
         if 'write_dt' in regPara:
@@ -441,10 +454,10 @@ class modbus_tcp(SmartPlugin):
             registerCount = int(bits / 16)
 
         if self.connected == False:
-            self.logger.error(" not connect {0}:{1}".format(self._host, self._port))
+            self.logger.error(f"not connected to {self._host}:{self._port}")
             return None
 
-        # self.logger.debug("read {0}.{1}.{2} (address.slaveUnit) regCount:{3}".format(objectType, address, slaveUnit, registerCount))
+        # self.logger.debug(f"read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}")
         if objectType == 'Coil':
             if pymodbus_baseversion > 2:
                 result = self._Mclient.read_coils(address, registerCount, slave=slaveUnit)
@@ -466,13 +479,11 @@ class modbus_tcp(SmartPlugin):
             else:
                 result = self._Mclient.read_holding_registers(address, registerCount, unit=slaveUnit)
         else:
-            self.logger.error("{0} not supported: {1}".format(AttrObjectType, objectType))
+            self.logger.error(f"{AttrObjectType} not supported: {objectType}")
             return None
 
         if result.isError():
-            self.logger.error(
-                "read error: {0} {1}.{2}.{3} (address.slaveUnit) regCount:{4}".format(result, objectType, address,
-                                                                                      slaveUnit, registerCount))
+            self.logger.error(f"read error: {result} {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}")
             return None
 
         if objectType == 'Coil':
@@ -484,9 +495,7 @@ class modbus_tcp(SmartPlugin):
         else:
             decoder = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo, wordorder=wo)
 
-        self.logger.debug(
-            "read {0}.{1}.{2} (address.slaveUnit) regCount:{3} result:{4}".format(objectType, address, slaveUnit,
-                                                                                  registerCount, result))
+        self.logger.debug(f"read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount} result:{result}")
 
         if dataType.lower() == 'uint':
             if bits == 16:
@@ -496,7 +505,7 @@ class modbus_tcp(SmartPlugin):
             elif bits == 64:
                 return decoder.decode_64bit_uint()
             else:
-                self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
+                self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
         elif dataType.lower() == 'int':
             if bits == 16:
                 return decoder.decode_16bit_int()
@@ -505,25 +514,25 @@ class modbus_tcp(SmartPlugin):
             elif bits == 64:
                 return decoder.decode_64bit_int()
             else:
-                self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
+                self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
         elif dataType.lower() == 'float':
             if bits == 32:
                 return decoder.decode_32bit_float()
             elif bits == 64:
                 return decoder.decode_64bit_float()
             else:
-                self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
+                self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
         elif dataType.lower() == 'string':
             # bei string: bits = bytes !! string16 -> 16Byte
             ret = decoder.decode_string(bits)
             return str(ret, 'ASCII')
         elif dataType.lower() == 'bit':
             if objectType == 'Coil' or objectType == 'DiscreteInput':
-                # self.logger.debug("readed bit value: {0}".format(value))
+                # self.logger.debug(f"read bit value: {value}")
                 return value
             else:
-                self.logger.debug("readed bits values: {0}".format(value.decode_bits()))
+                self.logger.debug(f"read bits values: {value.decode_bits()}")
                 return decoder.decode_bits()
         else:
-            self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
+            self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
         return None
