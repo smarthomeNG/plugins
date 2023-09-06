@@ -49,9 +49,12 @@ Diese Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration
 unter :doc:`/plugins_doc/config/avm` beschrieben.
 
 
-.. note:: Kürzere Updatezyklen können abhängig vom FritzDevice aufgrund hoher CPU Auslastung zu Problemen (u.a.
-zu Nichterreichbarkeit des Webservice) führen. Wird ein kürzerer Updatezyklus benötigt, sollte das shNG Log beobachtet
-werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
+.. note::
+
+    Kürzere Updatezyklen können abhängig vom FritzDevice aufgrund hoher CPU Auslastung zu Problemen
+    (u.a. zu Nichterreichbarkeit des Webservice) führen. 
+    Wird ein kürzerer Updatezyklus benötigt, sollte das SmartHomeNG Log beobachtet
+    werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
 
 
 item_structs
