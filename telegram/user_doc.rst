@@ -95,7 +95,8 @@ In ihm werden Chat-IDs und Zugriff auf den Bot gespeichert. Siehe obiges Beispie
 
 
 telegram_message
------------------
+----------------
+
 Items mit dem Attribut ``telegram_message`` lösen eine Nachricht aus, wenn sich der Itemwert ändert. Es ist möglich Platzhalter
 in der Nachricht zu verwenden.
 
@@ -174,7 +175,7 @@ Beispiel
        telegram_value_match_regex: 1            # nur Nachricht senden wenn 1 (True)
        
        
-telegram_message_chat_id     
+telegram_message_chat_id
 ------------------------
 Ist zusätzlich zum Attribut ``telegram_message`` auch das Attribut ``telegram_message_chat_id`` gesetzt, wird die Nachricht nur an die dort angegebene Chat-ID (hier 3234123342) gesendet.
 Ist das Attribut nicht gesetzt, erfolgt der Versand der Nachricht an alle Chat-IDs, die dem Plugin bekannt sind.
@@ -267,26 +268,36 @@ Mit einer Logik kann basierend darauf ein Menu und entsprechende Abfragen an shN
 Siehe dazu ein Beispiel weiter unten.
 
 telegram_control
--------------
+----------------
 
 Für alle Items mit diesem Attribut wird eine Liste mit Kommandos für den Bot erstellt. Der Listeneintrag muss mit ``name`` spezifiziert werden.
 Wird das Kommando ``/control`` an den Bot gesendet, so erstellt der Bot ein Tastaturmenü, dass jedes Attribut als Kommando enthält.
 Dabei werden auch alle aktuellen Werte der Items ausgegeben.
 Bei Auswahl eines dieser Kommandos im Telegram Client kann dann ein Item vom Type bool geschalten werden (on/off) oder beim Type 'num' kein eine Zahl zum SH-Item gesendet werden.
 
-``name``    Item wird mit diesem Namen im Bot als Kommando dargestellt
-``type``    Möglichkeiten: on, off, onoff, toggle, num
-    on          * nur Einschalten ist möglich
-    off         * nur Ausschalten ist möglich
-    onoff       * das Ein- und Ausschalten muss mit einen weiteren Kommando vom Tastaturmenu ausgewählt werden 
-                [On] [Off] (nach einem Timeout ohne Antwort wird der Befehl abgebrochen)
-    toggle      * der Wert des Items wird umgeschltet (0 zu 1; 1 zu 0)
-    num         * es kann eine Zahl an SH gesendet werden und das entsprechende Item wird damit geschrieben. (nach einem Timeout ohne Antwort wird der Befehl abgebrochen)
-``question``Sicherheitsabfrage vor dem Schalten des Items (verwendbar bei type:on/off/toggle - nach einem Timeout ohne Antwort wird der Befehl abgebrochen) 
-            [Yes] [No]
-``min``     Minimalwert (verwendbar bei type:num)
-``max``     Maximalwert (verwendbar bei type:num)
-``timeout`` Zeit nach welcher der Befehl mit Antwort(onoff/question/num) abgebrochen wird (default 20Sekunden)
+``name``
+    Item wird mit diesem Namen im Bot als Kommando dargestellt
+``type``    
+    Möglichkeiten: on, off, onoff, toggle, num
+        on          
+            * nur Einschalten ist möglich
+        off         
+            * nur Ausschalten ist möglich
+        onoff       
+            * das Ein- und Ausschalten muss mit einen weiteren Kommando vom Tastaturmenu ausgewählt werden 
+              [On] [Off] (nach einem Timeout ohne Antwort wird der Befehl abgebrochen)
+        toggle      
+            * der Wert des Items wird umgeschltet (0 zu 1; 1 zu 0)
+        num         
+            * es kann eine Zahl an SH gesendet werden und das entsprechende Item wird damit geschrieben. (nach einem Timeout ohne Antwort wird der Befehl abgebrochen)
+``question``
+    Sicherheitsabfrage vor dem Schalten des Items (verwendbar bei type:on/off/toggle - nach einem Timeout ohne Antwort wird der Befehl abgebrochen) [Yes] [No]
+``min``     
+    Minimalwert (verwendbar bei type:num)
+``max``     
+    Maximalwert (verwendbar bei type:num)
+``timeout``
+    Zeit nach welcher der Befehl mit Antwort(onoff/question/num) abgebrochen wird (default 20Sekunden)
 
 
 Beispiel
@@ -403,8 +414,8 @@ Die folgende Beispiellogik zeigt einige Nutzungsmöglichkeiten für die Funktion
 Anwendungen
 ===========
 
-Menugestützte Interaktion zwischen Telegram und shNG
-----------------------------------------------------
+Menugestützte Interaktion zwischen Telegram und SmartHomeNG
+-----------------------------------------------------------
 
 Diese Anwendung nutzt den Wert, den Telegram in das Item mit dem Attribut ``telegram_text`` schreibt.
 Dieser Wert beinhaltet den den User, die Chat-ID und die Message. Basierend auf diesem wird mit einer Logik ein Menu im Chat
