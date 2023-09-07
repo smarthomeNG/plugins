@@ -24,17 +24,22 @@
   .buttonrow {
     margin-right: 10px;
   }
-  #visu_div{
+  #visu_div {
     opacity: 0.9;
     border: 3px solid white;
     padding: 10px;
     overflow: hidden;
-    width:99%;
+    width:100%;
     height:100%;
     z-index: -1;
   }
-  #visu_div.active{
-    opacity: 1;
+  #visu_parent {
+    width:99%;
+    height:100%;
+    padding-bottom: 50px;
+  }
+  body {
+    overflow-y: scroll;
   }
   #visu_div.active.hovered{
     border: 3px solid darkred;
@@ -45,11 +50,14 @@
 </style>
 {% endblock pluginstyles %}
 {% block pluginscripts %}
-<script src="static/panzoom.min.js"></script>
+<script src="static/panzoom.min.js">
+if ("{{firstrun}}" != 'None'){
+  window.update_active = true;
+  refresh.set_interval(5000, false);
+</script>
 <script>
-  function refreshGraph() {
+function refreshGraph() {
   const graphContainer = document.getElementById('visu_div');
-
   // Fetch the updated HTML content from the server (replace 'fetch_url' with the actual URL)
   fetch(window.location.href)
     .then(response => response.text())
@@ -63,29 +71,31 @@
 
       // Insert the extracted content into the target <div>
       graphContainer.innerHTML = graphContent;
-      initPanzoom()
+      initPanzoom();
+
     })
     .catch(error => {
       console.error('Error fetching data:', error);
-    });
+  });
+
 }
 </script>
 <script>
 function initPanzoom() {
-  const elem = document.getElementById('visu_object')
+  const elem = document.getElementById('visu_object');
   if (elem !== null) {
     const panzoom = Panzoom(elem, { canvas: true, animate: true, duration: 800, step: 0.2, maxScale: 3, minScale: 0.3, panOnlyWhenZoomed: true, roundPixels: true })
-    const parent = elem.parentElement
+    const parent = elem.parentElement;
 
     parent.addEventListener('wheel', function(event) {
       if (!event.shiftKey) return
-      panzoom.zoomWithWheel(event)
+      panzoom.zoomWithWheel(event);
     })
-    const zoomInButton = document.getElementById('zoomInButton')
-    const zoomOutButton = document.getElementById('zoomOutButton')
-    const resetButton = document.getElementById('resetButton')
-    const rangeInput = document.getElementById('zoomSlider')
-    const toolTip = document.getElementById('toolTip')
+    const zoomInButton = document.getElementById('zoomInButton');
+    const zoomOutButton = document.getElementById('zoomOutButton');
+    const resetButton = document.getElementById('resetButton');
+    const rangeInput = document.getElementById('zoomSlider');
+    const toolTip = document.getElementById('toolTip');
 
     toolTip.addEventListener('click', function() {
       if ($('#visu_object').hasClass("enable_tooltip")) {
@@ -114,10 +124,25 @@ function initPanzoom() {
 	function handleUpdatedData(response, dataSet) {
     objResponse = JSON.parse(response);
     if (objResponse['success'] == 'true'){
-      shngInsertText ('active', 'Bitte Seite aktualisieren.', null, 2);
+      const active = document.getElementById('active');
+      const elem = document.getElementById('visu_object');
+      shngInsertText ('active', 'Seite wird aktualisiert.', null, 2);
+
+      if (window.update_active == true)
+        if (active != undefined)
+          setTimeout(function() {
+              window.location.reload();
+          }, 3000);
+        else if (elem != undefined)
+          refreshGraph();
+
+      else
+        refresh.stop();
     }
     else
       shngInsertText ('active', 'Bitte warten.', null, 2);
+      if (window.refresh.active == false)
+        window.update_blocked = true;
   };
 </script>
 
@@ -134,8 +159,7 @@ window.addEventListener('load', function() {
 {% set tabcount = 1 %}
 {% block bodytab1 %}
 {% if firstrun == 'None' %}
-  <div class ="mb-2" style="padding-bottom: 50px;">
-
+  <div class ="mb-2" id="visu_parent">
     {{ _('Detailvisualisierung') }} - {{ item }}
     <a href="static/img/visualisations/{{ item }}.svg" style="display: inline-block; position: relative; z-index: 1;" target="_blank">
       {{ _('Klicken zum Öffnen des SVG Files') }}</a>
@@ -155,6 +179,7 @@ window.addEventListener('load', function() {
   </div>
 
   <div class="container-fluid m-2" id="visu_div">
+
       {{ p.get_graph(item, 'graph') }}
   </div>
 {% else %}
