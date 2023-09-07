@@ -35,6 +35,7 @@ import copy
 from lib.model.smartplugin import *
 from lib.item import Items
 from .webif import WebInterface
+from datetime import datetime
 
 try:
     import pydotplus
@@ -228,14 +229,23 @@ class StateEngine(SmartPlugin):
         try:
             if graphtype == 'link':
                 return '<a href="static/img/visualisations/{}.svg"><img src="static/img/vis.png" width="30"></a>'.format(abitem)
-            else:
+            elif abitem.firstrun is None:
                 webif.drawgraph(vis_file)
-                return '<object type="image/svg+xml" data="static/img/visualisations/{0}.svg"\
-                        style="max-width: 100%; height: auto; width: auto\9; ">\
-                        <iframe src="static/img/visualisations/{0}.svg">\
-                        <img src="static/img/visualisations/{0}.svg"\
-                        style="max-width: 100%; height: auto; width: auto\9; ">\
-                        </iframe></object>'.format(abitem)
+                try:
+                    change_timestamp = os.path.getmtime(vis_file)
+                    change_datetime = datetime.fromtimestamp(change_timestamp)
+                    formatted_date = change_datetime.strftime('%H:%M:%S, %d. %B')
+                except Exception:
+                    pass
+                return f'<div style="margin-bottom:15px;">{self.translate("Letzte Aktualisierung:")} {formatted_date}<br></div>\
+                        <object type="image/svg+xml" data="static/img/visualisations/{abitem}.svg"\
+                        style="max-width: 100%; height: auto; width: auto;" id="visu_object">\
+                        <iframe src="static/img/visualisations/{abitem}.svg">\
+                        <img src="static/img/visualisations/{abitem}.svg"\
+                        style="max-width: 100%; height: auto; width: auto;">\
+                        </iframe></object>'
+            else:
+                return ''
         except pydotplus.graphviz.InvocationException as ex:
            self.logger.error("Problem getting graph for {}. Error: {}".format(abitem, ex))
            return '<h4>Can not show visualization. Most likely GraphViz is not installed.</h4> ' \

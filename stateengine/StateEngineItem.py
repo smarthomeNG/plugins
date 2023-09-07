@@ -54,6 +54,10 @@ class SeItem:
         return self.__variables
 
     @property
+    def firstrun(self):
+        return self.__first_run
+
+    @property
     def templates(self):
         return self.__templates
 
@@ -290,7 +294,7 @@ class SeItem:
 
         self.__repeat_actions = StateEngineValue.SeValue(self, "Repeat actions if state is not changed", False, "bool")
         self.__repeat_actions.set_from_attr(self.__item, "se_repeat_actions", True)
-
+        self.__first_run = None
         self._initstate = None
         self._initactionname = None
         self.__update_trigger_item = None
@@ -352,12 +356,14 @@ class SeItem:
         startup_delay = 1 if self.__startup_delay.is_empty() or _startup_delay_param == 0 else _startup_delay_param
         if startup_delay > 0:
             first_run = self.__shtime.now() + datetime.timedelta(seconds=startup_delay)
-            self.__logger.info("Will start stateengine evaluation at {}", first_run)
+            self.__first_run = first_run.strftime('%H:%M:%S, %d.%m.')
+            self.__logger.info("Will start stateengine evaluation at {}", self.__first_run)
             scheduler_name = self.__id + "-Startup Delay"
             value = {"item": self.__item, "caller": "Init"}
             self.__se_plugin.scheduler_add(scheduler_name, self.__startup_delay_callback, value=value, next=first_run)
         elif startup_delay == -1:
             self.__startup_delay_over = True
+            self.__first_run = None
             self.__add_triggers()
         else:
             self.__startup_delay_callback(self.__item, "Init", None, None)
@@ -372,8 +378,7 @@ class SeItem:
         self.__unused_attributes = filtered_dict
 
         self.__logger.info("".ljust(80, "_"))
-        #filtered_dict = {key: value for key, value in self.__action_status.items() if value.get('issue') is not None}
-        #self.__action_status = filtered_dict
+
         if self.__config_issues:
             self.__log_issues('config entries')
         if self.__unused_attributes:
@@ -1746,6 +1751,7 @@ class SeItem:
             if self.__se_plugin.scheduler_get(scheduler_name):
                 self.__se_plugin.scheduler_remove(scheduler_name)
                 self.__logger.debug('Startup Delay over. Removed scheduler {}', scheduler_name)
+            self.__first_run = None
             self.update_state(item, "Startup Delay", source, dest)
             self.__add_triggers()
 
