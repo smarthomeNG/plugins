@@ -285,7 +285,7 @@ class SeItem:
         self.__previousstate_conditionset_internal_name = "" if self.__previousstate_conditionset_item_name is None else \
             self.__previousstate_conditionset_item_name.property.value
         self.__config_issues.update(_issue)
-        filtered_dict = {key: value for key, value in self.__config_issues.items() if value.get('issue') is not None}
+        filtered_dict = {key: value for key, value in self.__config_issues.items() if value.get('issue') not in [[], [None], None]}
         self.__config_issues = filtered_dict
 
         self.__states = []
@@ -1016,13 +1016,18 @@ class SeItem:
             warn = ', '.join(key for key in self.__config_issues.keys())
         else:
             to_check = self.__unused_attributes.items()
-            warn = ', '.join(key for key in self.__unused_attributes.keys())
+            warn_unused = ', '.join(key for key, value in self.__unused_attributes.items() if 'issue' not in value)
+            warn_issues = ', '.join(key for key, value in self.__unused_attributes.items() if 'issue' in value)
         self.__logger.info("")
         if issue_type == 'attributes':
-            self.__logger.info("These attributes are not used: {} Please check extended "
-                               "log file for details.", warn)
+            if warn_unused:
+                self.__logger.info("These attributes are not used: {}. Please check extended "
+                                   "log file for details.", warn_unused)
+            if warn_issues:
+                self.__logger.warning("There are attribute issues: {}. Please check extended "
+                                      "log file for details.", warn_issues)
         else:
-            self.__logger.warning("There are {} issues: {} Please check extended "
+            self.__logger.warning("There are {} issues: {}. Please check extended "
                                   "log file for details.", issue_type, warn)
         self.__logger.info("")
         self.__logger.info("The following {} have issues:", issue_type)
@@ -1057,8 +1062,15 @@ class SeItem:
                         origin_text = 'state {}, action {}, on_{}'.format(origin.get('state'), origin.get('action'),
                                                                           origin.get('type'))
                     elif issue_type == 'states':
-                        origin_text = 'condition {} defined in conditionset {}'.format(origin.get('condition'),
-                                                                                       origin.get('conditionset'))
+                        if origin.get('condition') == 'GeneralError' and len(origin_list) == 1:
+                            origin_text = 'there was a general error. The state'
+                        elif origin.get('condition') == 'ValueError' and len(origin_list) == 1:
+                            origin_text = 'there was a value error. The state'
+                        else:
+                            if origin.get('condition') in ['GeneralError', 'ValueError']:
+                                continue
+                            origin_text = 'condition {} defined in conditionset {}'.format(origin.get('condition'),
+                                                                                           origin.get('conditionset'))
                     else:
                         origin_text = 'state {}, conditionset {}'.format(origin.get('state'),
                                                                          origin.get('conditionset'))
@@ -1085,8 +1097,12 @@ class SeItem:
                              key not in _state.used_attributes}
             self.__unused_attributes = filtered_dict
         except ValueError as ex:
+            self.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
+                [{'conditionset': 'None', 'condition': 'ValueError'}]}})
             self.__logger.error("Ignoring state {0} because ValueError: {1}", item_state.property.path, ex)
         except Exception as ex:
+            self.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
+                [{'conditionset': 'None', 'condition': 'GeneralError'}]}})
             self.__logger.error("Ignoring state {0} because: {1}", item_state.property.path, ex)
 
     def __finish_states(self):
@@ -1581,32 +1597,32 @@ class SeItem:
 
         # log laststate settings
         if self.__laststate_item_id is not None:
-            self.__logger.info("Item 'Laststate Id': {0}", self.__laststate_item_id.property.path)
+            self.__logger.debug("Item 'Laststate Id': {0}", self.__laststate_item_id.property.path)
         if self.__laststate_item_name is not None:
-            self.__logger.info("Item 'Laststate Name': {0}", self.__laststate_item_name.property.path)
+            self.__logger.debug("Item 'Laststate Name': {0}", self.__laststate_item_name.property.path)
 
         # log previousstate settings
         if self.__previousstate_item_id is not None:
-            self.__logger.info("Item 'Previousstate Id': {0}", self.__previousstate_item_id.property.path)
+            self.__logger.debug("Item 'Previousstate Id': {0}", self.__previousstate_item_id.property.path)
         if self.__previousstate_item_name is not None:
-            self.__logger.info("Item 'Previousstate Name': {0}", self.__previousstate_item_name.property.path)
+            self.__logger.debug("Item 'Previousstate Name': {0}", self.__previousstate_item_name.property.path)
 
         # log lastcondition settings
         if self.__lastconditionset_item_id is not None:
-            self.__logger.info("Item 'Lastcondition Id': {0}", self.__lastconditionset_item_id.property.path)
+            self.__logger.debug("Item 'Lastcondition Id': {0}", self.__lastconditionset_item_id.property.path)
         if self.__lastconditionset_item_name is not None:
-            self.__logger.info("Item 'Lastcondition Name': {0}", self.__lastconditionset_item_name.property.path)
+            self.__logger.debug("Item 'Lastcondition Name': {0}", self.__lastconditionset_item_name.property.path)
 
         # log previouscondition settings
         if self.__previousconditionset_item_id is not None:
-            self.__logger.info("Item 'Previouscondition Id': {0}", self.__previousconditionset_item_id.property.path)
+            self.__logger.debug("Item 'Previouscondition Id': {0}", self.__previousconditionset_item_id.property.path)
         if self.__previousconditionset_item_name is not None:
-            self.__logger.info("Item 'Previouscondition Name': {0}", self.__previousconditionset_item_name.property.path)
+            self.__logger.debug("Item 'Previouscondition Name': {0}", self.__previousconditionset_item_name.property.path)
 
         if self.__previousstate_conditionset_item_id is not None:
-            self.__logger.info("Item 'Previousstate condition Id': {0}", self.__previousstate_conditionset_item_id.property.path)
+            self.__logger.debug("Item 'Previousstate condition Id': {0}", self.__previousstate_conditionset_item_id.property.path)
         if self.__previousstate_conditionset_item_name is not None:
-            self.__logger.info("Item 'Previousstate condition Name': {0}",
+            self.__logger.debug("Item 'Previousstate condition Name': {0}",
                                self.__previousstate_conditionset_item_name.property.path)
 
         self.__init_releasedby()
@@ -1616,7 +1632,7 @@ class SeItem:
             state.write_to_log()
             self._initstate = None
 
-        filtered_dict = {key: value for key, value in self.__config_issues.items() if value.get('issue') not in [[], None]}
+        filtered_dict = {key: value for key, value in self.__config_issues.items() if value.get('issue') not in [[], [None], None]}
         self.__config_issues = filtered_dict
 
     # endregion
@@ -1783,11 +1799,11 @@ class SeItem:
             return self.itemsApi.return_item(item_id.id), None
         if item_id is None:
             _issue = "item_id is None"
-            return None, _issue
+            return None, [_issue]
         if not isinstance(item_id, str):
             _issue = "'{0}' is not defined as string.".format(item_id)
             self.__logger.info("{0} Check your item config!", _issue, item_id)
-            return None, _issue
+            return None, [_issue]
         item_id = item_id.strip()
         if item_id.startswith("struct:"):
             item = None
@@ -1801,7 +1817,7 @@ class SeItem:
             if item is None:
                 _issue = "Item '{0}' in struct not found.".format(item_id)
                 self.__logger.warning(_issue)
-            return item, _issue
+            return item, [_issue]
         if not item_id.startswith("."):
             match = re.match(r'^(.*):', item_id)
             if item_id.startswith("eval:"):
@@ -1821,7 +1837,7 @@ class SeItem:
             if item is None:
                 _issue = "Item '{0}' not found.".format(item_id)
                 self.__logger.warning(_issue)
-            return item, _issue
+            return item, [_issue]
         self.__logger.debug("Testing for relative item declaration {}", item_id)
         parent_level = 0
         for c in item_id:
@@ -1846,13 +1862,13 @@ class SeItem:
             self.__logger.warning(_issue)
         else:
             self.__logger.develop("Determined item '{0}' for id {1}.", item.id, item_id)
-        return item, _issue
+        return item, [_issue]
 
     # Return an item related to the StateEngine object item
     # attribute: Name of the attribute of the StateEngine object item, which contains the item_id to read
     def return_item_by_attribute(self, attribute):
         if attribute not in self.__item.conf:
-            _issue = {attribute: {'issue': 'Attribute missing in stateeninge configuration.'}}
+            _issue = {attribute: {'issue': ['Attribute missing in stateeninge configuration.']}}
             self.__logger.warning("Attribute '{0}' missing in stateeninge configuration.", attribute)
             return None, _issue
         _returnvalue, _issue = self.return_item(self.__item.conf[attribute])

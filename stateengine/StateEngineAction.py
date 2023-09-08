@@ -81,40 +81,76 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._scheduler_name = None
         self._function = None
         self.__template = None
-        self.__action_status = {}
+        self._action_status = {}
         self.__queue = abitem.queue
 
     def update_delay(self, value):
-        self.__delay.set(value)
-        self.__delay.set_cast(SeActionBase.__cast_delay)
+        _issue_list = []
+        _, _, _issue = self.__delay.set(value)
+        if _issue:
+            _issue = {self._name: {'issue': _issue, 'attribute': 'delay',
+                                   'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
+            _issue_list.append(_issue)
+        _issue = self.__delay.set_cast(SeActionBase.__cast_delay)
+        if _issue:
+            _issue = {self._name: {'issue': _issue, 'attribute': 'delay',
+                                   'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
+            _issue_list.append(_issue)
+        _issue_list = StateEngineTools.flatten_list(_issue_list)
+        return _issue_list
 
     def update_instanteval(self, value):
         if self.__instanteval is None:
             self.__instanteval = StateEngineValue.SeValue(self._abitem, "instanteval", False, "bool")
-        self.__instanteval.set(value)
+        _, _, _issue = self.__instanteval.set(value)
+        _issue = {self._name: {'issue': _issue, 'attribute': 'instanteval',
+                               'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
+        return _issue
 
     def update_repeat(self, value):
         if self.__repeat is None:
             self.__repeat = StateEngineValue.SeValue(self._abitem, "repeat", False, "bool")
-        self.__repeat.set(value)
+        _, _, _issue = self.__repeat.set(value)
+        _issue = {self._name: {'issue': _issue, 'attribute': 'repeat',
+                               'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
+        return _issue
 
     def update_order(self, value):
-        self.__order.set(value)
+        _, _, _issue = self.__order.set(value)
+        _issue = {self._name: {'issue': _issue, 'attribute': 'order',
+                               'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
+        return _issue
 
-    def update_conditionsets(self, value):
-        self.conditionset.set(value)
+    def update_conditionset(self, value):
+        _, _, _issue = self.conditionset.set(value)
+        _issue = {self._name: {'issue': _issue, 'attribute': 'conditionset',
+                               'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
+        return _issue
 
-    def update_previousconditionsets(self, value):
-        self.previousconditionset.set(value)
+    def update_previousconditionset(self, value):
+        _, _, _issue = self.previousconditionset.set(value)
+        _issue = {self._name: {'issue': _issue, 'attribute': 'previousconditionset',
+                               'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
+        return _issue
 
-    def update_previousstate_conditionsets(self, value):
-        self.previousstate_conditionset.set(value)
+    def update_previousstate_conditionset(self, value):
+        _, _, _issue = self.previousstate_conditionset.set(value)
+        _issue = {self._name: {'issue': _issue, 'attribute': 'previousstate_conditionset',
+                               'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
+        return _issue
 
-    def update_modes(self, value):
-        self.__mode.set(value)
+    def update_mode(self, value):
+        _value, _, _issue = self.__mode.set(value)
+        _issue = {self._name: {'issue': _issue, 'attribute': 'mode',
+                               'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
+        return _value[0], _issue
 
     def get_order(self):
-        return self.__order.get(1)
+        order = self.__order.get(1)
+        if not isinstance(order, int):
+            self._log_warning("Order is currently {} but must be an integer. Setting it to 1.", order)
+            order = 1
+        return order
 
     def update_webif_actionstatus(self, state, name, success, issue=None):
         try:
@@ -852,7 +888,7 @@ class SeActionRun(SeActionBase):
         if func == "eval":
             self.__eval = value
         _issue = {self._name: {'issue': None, 'eval': StateEngineTools.get_eval_name(self.__eval),
-                               'issueorigin': [{'state': 'unknown', 'action': 'unknown'}]}}
+                               'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     # Complete action
@@ -941,7 +977,7 @@ class SeActionForceItem(SeActionBase):
     # value: Value of the set_(action_name) attribute
     def update(self, value):
         _, _, _issue = self.__value.set(value)
-        _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'unknown', 'action': 'force initital'}]}}
+        _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     # Complete action
@@ -1097,7 +1133,7 @@ class SeActionSpecial(SeActionBase):
         else:
             raise ValueError("Action {0}: Unknown special value '{1}'!".format(self._name, special))
         self.__special = special
-        _issue = {self._name: {'issue': None, 'special': self.__value, 'issueorigin': [{'state': 'unknown', 'action': 'special'}]}}
+        _issue = {self._name: {'issue': None, 'special': self.__value, 'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     # Complete action
@@ -1108,7 +1144,7 @@ class SeActionSpecial(SeActionBase):
         else:
             item = self.__value.property.path
         self._scheduler_name = "{}_{}-SeSpecialDelayTimer".format(self.__special, item)
-        _issue = {self._name: {'issue': None, 'special': item, 'issueorigin': [{'state': 'unknown', 'action': 'special'}]}}
+        _issue = {self._name: {'issue': None, 'special': item, 'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     # Write action to logger
@@ -1146,48 +1182,48 @@ class SeActionSpecial(SeActionBase):
         self._log_debug("Special action {0}: done", self.__special)
 
     def suspend_get_value(self, value):
-        _issue = {self._name: {'issue': None, 'issueorigin': [{'state': 'suspend', 'action': 'suspend initital'}]}}
+        _issue = {self._name: {'issue': None, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
         if value is None:
             _issue = {self._name: {'issue': 'Special action suspend requires arguments', 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
-            self.__action_status = _issue
+            self._action_status = _issue
             raise ValueError("Action {0}: Special action 'suspend' requires arguments!".format(self._name))
 
         suspend, manual = StateEngineTools.partition_strip(value, ",")
         if suspend is None or manual is None:
             _issue = {self._name: {'issue': 'Special action suspend requires two arguments', 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
-            self.__action_status = _issue
+            self._action_status = _issue
             raise ValueError("Action {0}: Special action 'suspend' requires two arguments (separated by a comma)!".format(self._name))
 
         suspend_item, _issue = self._abitem.return_item(suspend)
         _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
         if suspend_item is None:
             _issue = {self._name: {'issue': 'Suspend item not found', 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
-            self.__action_status = _issue
+            self._action_status = _issue
             raise ValueError("Action {0}: Suspend item '{1}' not found!".format(self._name, suspend))
 
         manual_item, _issue = self._abitem.return_item(manual)
         _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
         if manual_item is None:
             _issue = {self._name: {'issue': 'Manual item {} not found'.format(manual), 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
-            self.__action_status = _issue
+            self._action_status = _issue
             raise ValueError("Action {0}: Manual item '{1}' not found!".format(self._name, manual))
-        self.__action_status = _issue
+        self._action_status = _issue
         return [suspend_item, manual_item.property.path]
 
     def retrigger_get_value(self, value):
         if value is None:
             _issue = {self._name: {'issue': 'Special action retrigger requires item', 'issueorigin': [{'state': 'retrigger', 'action': 'retrigger'}]}}
-            self.__action_status = _issue
+            self._action_status = _issue
             raise ValueError("Action {0}: Special action 'retrigger' requires item".format(self._name))
 
         se_item, __ = StateEngineTools.partition_strip(value, ",")
 
         se_item, _issue = self._abitem.return_item(se_item)
         _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'retrigger', 'action': 'retrigger'}]}}
-        self.__action_status = _issue
+        self._action_status = _issue
         if se_item is None:
             _issue = {self._name: {'issue': 'Retrigger item {} not found'.format(se_item), 'issueorigin': [{'state': 'retrigger', 'action': 'retrigger'}]}}
-            self.__action_status = _issue
+            self._action_status = _issue
             raise ValueError("Action {0}: Retrigger item '{1}' not found!".format(self._name, se_item))
         return se_item
 
@@ -1211,7 +1247,7 @@ class SeActionSpecial(SeActionBase):
         suspend_remaining = int(suspend_time - suspend_over + 0.5)   # adding 0.5 causes round up ...
         self._abitem.set_variable("item.suspend_remaining", suspend_remaining)
         self._log_debug("Updated variable 'item.suspend_remaining' to {0}", suspend_remaining)
-        self.__action_status = _issue
+        self._action_status = _issue
 
     def get(self):
         try:
