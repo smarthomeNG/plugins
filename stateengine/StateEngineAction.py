@@ -606,6 +606,8 @@ class SeActionSetItem(SeActionBase):
         return "SeAction Set {}".format(self._name)
 
     def _getitem_fromeval(self):
+        if self.__item is None:
+            return
         self.__item, self.__value, self.__mindelta, _issue = self.check_getitem_fromeval(self.__item, self.__value,
                                                                                          self.__mindelta)
         if self.__item is None:
@@ -631,13 +633,18 @@ class SeActionSetItem(SeActionBase):
     def write_to_logger(self):
         SeActionBase.write_to_logger(self)
         if isinstance(self.__item, str):
-            self._log_debug("item from eval: {0}", self.__item)
-            self._log_increase_indent()
-            current, _, _, _ = self.check_getitem_fromeval(self.__item)
-            self._log_debug("Currently eval results in {}", current)
-            self._log_decrease_indent()
+            try:
+                self._log_debug("item from eval: {0}", self.__item)
+                self._log_increase_indent()
+                current, _, _, _ = self.check_getitem_fromeval(self.__item)
+                self._log_debug("Currently eval results in {}", current)
+                self._log_decrease_indent()
+            except Exception as ex:
+                self._log_warning("Issue while getting item from eval {}", ex)
         elif self.__item is not None:
             self._log_debug("item: {0}", self.__item.property.path)
+        else:
+            self._log_debug("item is not defined! Check log file.")
         if self.__status is not None:
             self._log_debug("status: {0}", self.__status.property.path)
         self.__mindelta.write_to_logger()
@@ -708,7 +715,10 @@ class SeActionSetItem(SeActionBase):
 
     def get(self):
         orig_item = self.__item
-        self._getitem_fromeval()
+        try:
+            self._getitem_fromeval()
+        except Exception as ex:
+            self._log_warning("Issue while getting item from eval {}", ex)
         item_from_eval = orig_item if orig_item != self.__item else False
         try:
             if self.__item is not None:
@@ -992,13 +1002,18 @@ class SeActionForceItem(SeActionBase):
     def write_to_logger(self):
         SeActionBase.write_to_logger(self)
         if isinstance(self.__item, str):
-            self._log_debug("item from eval: {0}", self.__item)
-            self._log_increase_indent()
-            current, _, _, _ = self.check_getitem_fromeval(self.__item)
-            self._log_debug("Currently eval results in {}", current)
-            self._log_decrease_indent()
+            try:
+                self._log_debug("item from eval: {0}", self.__item)
+                self._log_increase_indent()
+                current, _, _, _ = self.check_getitem_fromeval(self.__item)
+                self._log_debug("Currently eval results in {}", current)
+                self._log_decrease_indent()
+            except Exception as ex:
+                self._log_warning("Issue while getting item from eval {}", ex)
         elif self.__item is not None:
             self._log_debug("item: {0}", self.__item.property.path)
+        else:
+            self._log_debug("item is not defined! Check log file.")
         if self.__status is not None:
             self._log_debug("status: {0}", self.__status.property.path)
         self.__mindelta.write_to_logger()
@@ -1024,6 +1039,8 @@ class SeActionForceItem(SeActionBase):
         return True
 
     def _getitem_fromeval(self):
+        if self.__item is None:
+            return
         self.__item, self.__value, self.__mindelta, _issue = self.check_getitem_fromeval(self.__item, self.__value,
                                                                                          self.__mindelta)
         if self.__item is None:
@@ -1085,7 +1102,10 @@ class SeActionForceItem(SeActionBase):
 
     def get(self):
         orig_item = self.__item
-        self._getitem_fromeval()
+        try:
+            self._getitem_fromeval()
+        except Exception as ex:
+            self._log_warning("Issue while getting item from eval {}", ex)
         item_from_eval = orig_item if orig_item != self.__item else False
         try:
             if self.__item is not None:
