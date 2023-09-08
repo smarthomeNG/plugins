@@ -515,7 +515,7 @@ class SeState(StateEngineTools.SeItemChild):
             for attribute in parent_item.conf:
                 func, name = StateEngineTools.partition_strip(attribute, "_")
                 cond1 = name and name not in self.__used_attributes
-                cond2 = func == "se_item" or func == "se_eval" or func == "se_status"
+                cond2 = func == "se_item" or func == "se_eval" or func == "se_status_eval" or func == "se_status"
                 cond3 = name not in self.__unused_attributes.keys()
 
                 if cond1 and cond2 and cond3:

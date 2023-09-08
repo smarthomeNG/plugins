@@ -44,6 +44,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__item = None
         self.__status = None
         self.__eval = None
+        self.__status_eval = None
         self.__value = StateEngineValue.SeValue(self._abitem, "value", True)
         self.__min = StateEngineValue.SeValue(self._abitem, "min")
         self.__max = StateEngineValue.SeValue(self._abitem, "max")
@@ -61,36 +62,94 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__itemClass = Item
 
     def __repr__(self):
-        return "SeCondition 'item': {}, 'status': {}, 'eval': {}, 'value': {}".format(self.__item, self.__status, self.__eval, self.__value)
+        return "SeCondition 'item': {}, 'status': {}, 'eval': {}, " \
+               "'status_eval': {}, 'value': {}".format(self.__item, self.__status, self.__eval, self.__status_eval, self.__value)
+
+    def check_items(self, check, value=None, item_state=None):
+        item_issue, status_issue, eval_issue, status_eval_issue = None, None, None, None
+        item_value, status_value, eval_value, status_eval_value = None, None, None, None
+        if check == "se_item" or (check == "attribute" and self.__item is None and self.__eval is None):
+            if value is None:
+                value = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self.__name)
+            if value is not None:
+                match = re.match(r'^(.*):', value)
+                if isinstance(value, str) and value.startswith("eval:"):
+                    _, _, value = value.partition(":")
+                    self.__eval = value
+                    self.__item = None
+                elif match:
+                    self._log_warning("Your item configuration '{0}' is wrong! Define a plain (relative) "
+                                      "item without {1} at the beginning!", value, match.group(1))
+                    item_issue = "Your eval configuration '{0}' is wrong, remove {1}".format(value, match.group(1))
+                    self.__item = None
+                else:
+                    value, issue = self._abitem.return_item(value)
+                    self.__item = value
+                item_value = value
+        if check == "se_status" or (check == "attribute" and self.__status is None and self.__status_eval is None):
+            if value is None:
+                value = StateEngineTools.find_attribute(self._sh, item_state, "se_status_" + self.__name)
+            if value is not None:
+                match = re.match(r'^(.*):', value)
+                if isinstance(value, str) and value.startswith("eval:"):
+                    _, _, value = value.partition(":")
+                    self.__status_eval = value
+                    self.__status = None
+                elif match:
+                    self._log_warning("Your item configuration '{0}' is wrong! Define a plain (relative) "
+                                      "item without {1} at the beginning!", value, match.group(1))
+                    status_issue = "Your eval configuration '{0}' is wrong, remove {1}".format(value, match.group(1))
+                    self.__status = None
+                    value = None
+                else:
+                    value, issue = self._abitem.return_item(value)
+                    self.__status = value
+            status_value = value
+        if check == "se_eval" or (check == "attribute" and self.__eval is None):
+            if value is None:
+                value = StateEngineTools.find_attribute(self._sh, item_state, "se_eval_" + self.__name)
+            if value is not None:
+                match = re.match(r'^(.*):', value)
+                if value.startswith("eval:"):
+                    _, _, value = value.partition("eval:")
+                elif match:
+                    self._log_warning("Your eval configuration '{0}' is wrong! You have to define "
+                                      "a plain eval expression", value)
+                    eval_issue = "Your eval configuration '{0}' is wrong!".format(value)
+                    value = None
+                self.__eval = value
+            eval_value = value
+        if check == "se_status_eval" or (check == "attribute" and self.__status_eval is None):
+            if value is None:
+                value = StateEngineTools.find_attribute(self._sh, item_state, "se_status_eval_" + self.__name)
+            if value is not None:
+                match = re.match(r'^(.*):', value)
+                if value.startswith("eval:"):
+                    _, _, value = value.partition("eval:")
+                elif match:
+                    self._log_warning("Your status eval configuration '{0}' is wrong! You have to define "
+                                      "a plain eval expression", value)
+                    status_eval_issue = "Your status eval configuration '{0}' is wrong!".format(value)
+                    value = None
+                self.__status_eval = value
+            status_eval_value = value
+        return item_value, status_value, eval_value, status_eval_value, item_issue, status_issue, eval_issue, status_eval_issue
 
     # set a certain function to a given value
-    # func: Function to set ('item', 'eval', 'value', 'min', 'max', 'negate', 'changedby', 'updatedby',
+    # func: Function to set ('item', 'eval', 'status_eval', 'value', 'min', 'max', 'negate', 'changedby', 'updatedby',
     # 'triggeredby','changedbynegate', 'updatedbynegate', 'triggeredbynegate','agemin', 'agemax' or 'agenegate')
     # value: Value for function
     def set(self, func, value):
         issue = None
         if func == "se_item":
-            if ":" in value:
-                self._log_warning("Your item configuration '{0}' is wrong! Define a plain (relative) "
-                                  "item without item: at the beginning!", value)
-                _, _, value = value.partition(":")
-            self.__item, issue = self._abitem.return_item(value)
+            value, _, _, _, issue, _, _, _ = self.check_items("se_item", value)
         elif func == "se_status":
-            if ":" in value:
-                self._log_warning("Your status configuration '{0}' is wrong! Define a plain (relative) "
-                                  "item without item: at the beginning!", value)
-                _, _, value = value.partition(":")
-            self.__status, issue = self._abitem.return_item(value)
+            _, value, _, _, _, issue, _, _ = self.check_items("se_status", value)
         elif func == "se_eval":
-            if value.startswith("eval:"):
-                _, _, value = value.partition("eval:")
-            wrong_start = ["item:", "regex:", "value:", "var:"]
-            if any(value.startswith(wrong_start) for wrong_start in wrong_start):
-                self._log_warning("Your eval configuration '{0}' is wrong! You have to define "
-                                  "a plain eval expression", value)
-                issue = "Your eval configuration '{0}' is wrong!".format(value)
-                value = None
-            self.__eval = value
+            _, _, value, _, _, _, issue, _ = self.check_items("se_eval", value)
+        elif func == "se_status_eval":
+            _, _, _, value, _, _, _, issue = self.check_items("se_status_eval", value)
+
         if func == "se_value":
             self.__value.set(value, self.__name)
         elif func == "se_min":
@@ -117,18 +176,23 @@ class SeCondition(StateEngineTools.SeItemChild):
             self.__negate = value
         elif func == "se_agenegate":
             self.__agenegate = value
-        elif func != "se_item" and func != "se_eval" and func != "se_status":
+        elif func != "se_item" and func != "se_eval" and func != "se_status_eval" and func != "se_status":
             self._log_warning("Function '{0}' is no valid function! Please check item attribute.", func)
             issue = "Function '{0}' is no valid function!".format(func)
         return issue
 
     def get(self):
         _eval_result = str(self.__eval)
+        _status_eval_result = str(self.__status_eval)
         if 'SeItem' in _eval_result:
             _eval_result = _eval_result.split('SeItem.')[1].split(' ')[0]
         if 'SeCurrent' in _eval_result:
             _eval_result = _eval_result.split('SeCurrent.')[1].split(' ')[0]
-        _value_result = str(self.__value.get_for_webif())
+        if 'SeItem' in _status_eval_result:
+            _status_eval_result = _status_eval_result.split('SeItem.')[1].split(' ')[0]
+        if 'SeCurrent' in _status_eval_result:
+            _status_eval_result = _status_eval_result.split('SeCurrent.')[1].split(' ')[0]
+        _value_result = self.__value.get_for_webif()
         try:
             _item = self.__item.property.path
         except Exception:
@@ -137,7 +201,8 @@ class SeCondition(StateEngineTools.SeItemChild):
             _status = self.__status.property.path
         except Exception:
             _status = self.__status
-        result = {'item': _item, 'status': _status, 'eval': _eval_result, 'value': _value_result,
+        result = {'item': _item, 'status': _status, 'eval': _eval_result, 'status_eval': _status_eval_result,
+                  'value': _value_result,
                   'min': str(self.__min),
                   'max': str(self.__max), 'agemin': str(self.__agemin), 'agemax': str(self.__agemax),
                   'negate': str(self.__negate), 'agenegate': str(self.__agenegate),
@@ -159,7 +224,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             return False
 
         # set 'eval' for some known conditions if item and eval are not set, yet
-        if self.__item is None and self.__status is None and self.__eval is None:
+        if all(item is None for item in [self.__item, self.__status, self.__eval, self.__status_eval]):
             if self.__name == "weekday":
                 self.__eval = StateEngineCurrent.values.get_weekday
             elif self.__name == "sun_azimut":
@@ -211,35 +276,19 @@ class SeCondition(StateEngineTools.SeItemChild):
             elif self.__name == "original_source":
                 self.__eval = self._abitem.get_update_original_source
 
-        # missing item in condition: Try to find it
-        if self.__item is None:
-            result = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self.__name)
-            if result is not None:
-                self.__item, issue = self._abitem.return_item(result)
+        self.check_items("attribute", None, item_state)
 
-        # missing status in condition: Try to find it
-        if self.__status is None:
-            result = StateEngineTools.find_attribute(self._sh, item_state, "se_status_" + self.__name)
-            if result is not None:
-                self.__status, issue = self._abitem.return_item(result)
+        # now we should have either 'item' or '(status)eval' set. If not, raise ValueError
+        if all(item is None for item in [self.__item, self.__status, self.__eval, self.__status_eval]):
+            raise ValueError("Neither 'item' nor 'status' nor '(status)eval' given!")
 
-        # missing eval in condition: Try to find it
-        if self.__eval is None:
-            result = StateEngineTools.find_attribute(self._sh, item_state, "se_eval_" + self.__name)
-            if result is not None:
-                self.__eval = result
-
-        # now we should have either 'item' or 'eval' set. If not, raise ValueError
-        if self.__item is None and self.__status is None and self.__eval is None:
-            raise ValueError("Neither 'item' nor 'status' nor 'eval' given!")
-
-        if (self.__item is not None or self.__status is not None or self.__eval is not None)\
+        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval])\
            and not self.__changedby.is_empty() and self.__changedbynegate is None:
             self.__changedbynegate = False
-        if (self.__item is not None or self.__status is not None or self.__eval is not None)\
+        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval])\
            and not self.__updatedby.is_empty() and self.__updatedbynegate is None:
             self.__updatedbynegate = False
-        if (self.__item is not None or self.__status is not None or self.__eval is not None)\
+        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval])\
            and not self.__triggeredby.is_empty() and self.__triggeredbynegate is None:
             self.__triggeredbynegate = False
 
@@ -261,7 +310,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             elif self.__name == "time":
                 self.__cast_all(StateEngineTools.cast_time)
         except Exception as ex:
-            raise ValueError("Condition {0}: Error when casting: {1}".format(self.__name, ex))
+            raise ValueError("Error when casting: {0}".format(ex))
 
         # 'agemin' and 'agemax' can only be used for items
         cond_min_max = self.__agemin.is_empty() and self.__agemax.is_empty()
@@ -269,15 +318,22 @@ class SeCondition(StateEngineTools.SeItemChild):
             cond_evalitem = self.__eval and ("get_relative_item(" in self.__eval or "return_item(" in self.__eval)
         except Exception:
             cond_evalitem = False
-        if self.__item is None and self.__status is None and not cond_min_max and not cond_evalitem:
+        try:
+            cond_status_evalitem = self.__status_eval and \
+                                   ("get_relative_item(" in self.__status_eval or "return_item(" in self.__status_eval)
+        except Exception:
+            cond_status_evalitem = False
+        if self.__item is None and self.__status is None and \
+                not cond_min_max and not cond_evalitem and not cond_status_evalitem:
             raise ValueError("Condition {}: 'agemin'/'agemax' can not be used for eval!".format(self.__name))
         return True
 
     # Check if condition is matching
     def check(self, state):
         # Ignore if no current value can be determined (should not happen as we check this earlier, but to be sure ...)
-        if self.__item is None and self.__status is None and self.__eval is None:
-            self._log_info("Condition '{0}': No item, status or eval found! Considering condition as matching!", self.__name)
+        if all(item is None for item in [self.__item, self.__status, self.__eval, self.__status_eval]):
+            self._log_info("Condition '{0}': No item, status or (status)eval found! "
+                           "Considering condition as matching!", self.__name)
             return True
         self._log_debug("Condition '{0}': Checking all relevant stuff", self.__name)
         self._log_increase_indent()
@@ -316,11 +372,17 @@ class SeCondition(StateEngineTools.SeItemChild):
             else:
                 self._log_info("status item: {0} ({1})", self.__name, self.__status.property.path)
         if self.__eval is not None:
-            if isinstance(self.__item, list):
-                for e in self.__item:
+            if isinstance(self.__eval, list):
+                for e in self.__eval:
                     self._log_info("eval: {0}", StateEngineTools.get_eval_name(e))
             else:
                 self._log_info("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
+        if self.__status_eval is not None:
+            if isinstance(self.__status_eval, list):
+                for e in self.__status_eval:
+                    self._log_info("status eval: {0}", StateEngineTools.get_eval_name(e))
+            else:
+                self._log_info("status eval: {0}", StateEngineTools.get_eval_name(self.__status_eval))
         self.__value.write_to_logger()
         self.__min.write_to_logger()
         self.__max.write_to_logger()
@@ -537,7 +599,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                 for i, _ in enumerate(min_value):
                     min = None if min_value[i] == 'novalue' else min_value[i]
                     max = None if max_value[i] == 'novalue' else max_value[i]
-                    self._log_debug("Checking minvalue {} ({}) and maxvalue {}({}) against current {}({})", min, type(min), max, type(max), current, type(current))
+                    self._log_debug("Checking minvalue {} ({}) and maxvalue {} ({}) against current {} ({})", min, type(min), max, type(max), current, type(current))
                     if min is not None and max is not None and min > max:
                         min, max = max, min
                         self._log_warning("Condition {}: min must not be greater than max! "
@@ -664,7 +726,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             return True
 
         # Ignore if no current value can be determined
-        if self.__item is None and self.__status is None and self.__eval is None:
+        if all(item is None for item in [self.__item, self.__status, self.__eval, self.__status_eval]):
             self._log_warning("Age of '{0}': No item/eval found! Considering condition as matching!", self.__name)
             return True
 
@@ -672,17 +734,25 @@ class SeCondition(StateEngineTools.SeItemChild):
             cond_evalitem = self.__eval and ("get_relative_item(" in self.__eval or "return_item(" in self.__eval)
         except Exception:
             cond_evalitem = False
+        try:
+            cond_status_evalitem = self.__status_eval and \
+                                   ("get_relative_item(" in self.__status_eval or "return_item(" in self.__status_eval)
+        except Exception:
+            cond_status_evalitem = False
         if self.__item is None and cond_evalitem is False:
-            self._log_warning("Make sure your se_eval '{}' really contains an item and not an ID. If the age "
-                              "condition does not work though, please check your eval!", self.__eval)
-
+            self._log_warning("Make sure your se_eval/se_item: eval:<..> '{}' really returns an item and not an ID. "
+                              "If the age condition does not work, please check your eval!", self.__eval)
+        if self.__status is None and cond_status_evalitem is False:
+            self._log_warning("Make sure your se_status: eval:<..> '{}' really returns an item and not an ID. "
+                              "If the age condition does not work, please check your eval!", self.__status_eval)
         try:
             current = self.__get_current(eval_type='age')
         except Exception as ex:
             _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'age']
-            self._abitem.update_webif(_key, 'Not possible to get age from eval {}'.format(self.__eval))
-            self._log_warning("Age of '{0}': Not possible to get age from eval {1}! "
-                              "Considering condition as matching: {2}", self.__name, self.__eval, ex)
+            self._abitem.update_webif(_key, 'Not possible to get age from eval {} '
+                                            'or status_eval {}'.format(self.__eval, self.__status_eval))
+            self._log_warning("Age of '{0}': Not possible to get age from eval {1} or status_eval {2}! "
+                              "Considering condition as matching: {3}", self.__name, self.__eval, self.__status_eval, ex)
 
             return True
         agemin = None if self.__agemin.is_empty() else self.__agemin.get()
@@ -752,6 +822,32 @@ class SeCondition(StateEngineTools.SeItemChild):
 
     # Current value of condition (based on item or eval)
     def __get_current(self, eval_type='value'):
+        def check_eval(eval_or_status_eval):
+            if isinstance(eval_or_status_eval, str):
+                sh = self._sh
+                shtime = self._shtime
+                # noinspection PyUnusedLocal
+                if "stateengine_eval" in eval_or_status_eval or "se_eval" in eval_or_status_eval:
+                    # noinspection PyUnusedLocal
+                    stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
+                try:
+                    eval_result = eval(eval_or_status_eval)
+                    if isinstance(eval_result, self.__itemClass):
+                        value = eval_result.property.last_change_age if eval_type == 'age' else \
+                                eval_result.property.last_change_by if eval_type == 'changedby' else \
+                                eval_result.property.last_update_by if eval_type == 'updatedby' else \
+                                eval_result.property.last_trigger_by if eval_type == 'triggeredby' else \
+                                eval_result.property.value
+                    else:
+                        value = eval_result
+                except Exception as ex:
+                    text = "Condition {}: problem evaluating {}: {}"
+                    raise ValueError(text.format(self.__name, eval_or_status_eval, ex))
+                else:
+                    return value
+            else:
+                return eval_or_status_eval()
+
         if self.__status is not None:
             # noinspection PyUnusedLocal
             self._log_debug("Trying to get {} of status item {}", eval_type, self.__status)
@@ -768,30 +864,13 @@ class SeCondition(StateEngineTools.SeItemChild):
                    self.__item.property.last_update_by if eval_type == 'updatedby' else\
                    self.__item.property.last_trigger_by if eval_type == 'triggeredby' else\
                    self.__item.property.value
-        if self.__eval is not None:
-            # noinspection PyUnusedLocal
-            self._log_debug("Trying to get {} of eval {}", eval_type, self.__eval)
-            sh = self._sh
-            shtime = self._shtime
-            if isinstance(self.__eval, str):
-                # noinspection PyUnusedLocal
-                if "stateengine_eval" in self.__eval or "se_eval" in self.__eval:
-                    # noinspection PyUnusedLocal
-                    stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
-                try:
-                    if isinstance(eval(self.__eval), self.__itemClass):
-                        value = eval(self.__eval).property.last_change_age if eval_type == 'age' else \
-                                eval(self.__eval).property.last_change_by if eval_type == 'changedby' else \
-                                eval(self.__eval).property.last_update_by if eval_type == 'updatedby' else \
-                                eval(self.__eval).property.last_trigger_by if eval_type == 'triggeredby' else \
-                                eval(self.__eval).property.value
-                    else:
-                        value = eval(self.__eval)
-                except Exception as ex:
-                    text = "Condition {}: problem evaluating {}: {}"
-                    raise ValueError(text.format(self.__name, self.__eval, ex))
-                else:
-                    return value
-            else:
-                return self.__eval()
-        raise ValueError("Condition {}: Neither 'item' nor 'status' nor 'eval' given!".format(self.__name))
+        if self.__status_eval is not None:
+            self._log_debug("Trying to get {} of statuseval {}", eval_type, self.__status_eval)
+            return_value = check_eval(self.__status_eval)
+            return return_value
+        elif self.__eval is not None:
+            self._log_debug("Trying to get {} of statuseval {}", eval_type, self.__eval)
+            return_value = check_eval(self.__eval)
+            return return_value
+
+        raise ValueError("Condition {}: Neither 'item' nor 'status' nor '(status)eval' given!".format(self.__name))

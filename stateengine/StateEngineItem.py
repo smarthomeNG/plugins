@@ -31,6 +31,7 @@ from . import StateEngineCurrent
 from . import StateEngineValue
 from . import StateEngineStruct
 from . import StateEngineStructs
+from . import StateEngineEval
 
 from lib.item import Items
 from lib.shtime import Shtime
@@ -1802,7 +1803,21 @@ class SeItem:
                 self.__logger.warning(_issue)
             return item, _issue
         if not item_id.startswith("."):
-            item = self.itemsApi.return_item(item_id)
+            match = re.match(r'^(.*):', item_id)
+            if item_id.startswith("eval:"):
+                if "stateengine_eval" in item_id or "se_eval" in item_id:
+                    # noinspection PyUnusedLocal
+                    stateengine_eval = se_eval = StateEngineEval.SeEval(self)
+                item = item_id.replace('sh', 'self._sh')
+                item = item.replace('shtime', 'self._shtime')
+                _, _, item = item.partition(":")
+                return item, None
+            elif match:
+                _issue = "Item '{0}' has to be defined as an item path or eval expression without {}.".format(match.group(1), item_id)
+                self.__logger.warning(_issue)
+                return None, [_issue]
+            else:
+                item = self.itemsApi.return_item(item_id)
             if item is None:
                 _issue = "Item '{0}' not found.".format(item_id)
                 self.__logger.warning(_issue)

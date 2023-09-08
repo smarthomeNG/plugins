@@ -140,16 +140,16 @@ class WebInterface(StateEngineTools.SeItemChild):
                                  else ""
                 action1 = action_dict.get('function')
                 if action1 == 'set':
-                    action2 = action_dict.get('item')
-                    value_check = action_dict.get('value')
+                    action2 = str(action_dict.get('item'))
+                    value_check = str(action_dict.get('value'))
                     value_check = '""' if value_check == "" else value_check
-                    is_number = value_check.lstrip('-').replace('.','',1).isdigit()
+                    is_number = value_check.lstrip('-').replace('.', '', 1).isdigit()
                     if is_number and "." in value_check:
                         value_check = round(float(value_check), 2)
                     action3 = 'to {}'.format(value_check)
                 elif action1 == 'special':
-                    action2 = action_dict.get('special')
-                    action3 = action_dict.get('value')
+                    action2 = str(action_dict.get('special'))
+                    action3 = str(action_dict.get('value'))
                 else:
                     action2 = 'None'
                     action3 = ""
@@ -188,10 +188,11 @@ class WebInterface(StateEngineTools.SeItemChild):
             current = condition_dict.get('current')
             match = condition_dict.get('match')
 
-            item_none = str(condition_dict.get('item')) == 'None'
             status_none = str(condition_dict.get('status')) == 'None'
-            eval_none = condition_dict.get('eval') == 'None'
-            value_none = condition_dict.get('value') == 'None'
+            item_none = str(condition_dict.get('item')) == 'None' or not status_none
+            status_eval_none = condition_dict.get('status_eval') == 'None'
+            eval_none = condition_dict.get('eval') == 'None' or not status_eval_none
+            value_none = str(condition_dict.get('value')) == 'None'
             min_none = condition_dict.get('min') == 'None'
             max_none = condition_dict.get('max') == 'None'
             agemin_none = condition_dict.get('agemin') == 'None'
@@ -202,17 +203,10 @@ class WebInterface(StateEngineTools.SeItemChild):
 
             for compare in condition_dict:
                 cond1 = not condition_dict.get(compare) == 'None'
-                cond2 = not compare == 'item'
-                cond3 = not compare == 'eval'
-                cond4 = not compare == 'negate'
-                cond5 = not compare == 'agenegate'
-                cond6 = not compare == 'changedbynegate'
-                cond7 = not compare == 'updatedbynegate'
-                cond8 = not compare == 'triggeredbynegate'
-                cond9 = not compare == 'status'
-                cond10 = not compare == 'current'
-                cond11 = not compare == 'match'
-                if cond1 and cond2 and cond3 and cond4 and cond5 and cond6 and cond7 and cond8 and cond9 and cond10 and cond11:
+                excluded_values = ['item', 'eval', 'negate', 'agenegate', 'changedbynegate',
+                                   'updatedbynegate', 'triggeredbynegate', 'status', 'current', 'match', 'status_eval']
+
+                if cond1 and compare not in excluded_values:
                     try:
                         list_index = list(self.__states.keys()).index(self.__active_state)
                     except Exception:
@@ -226,6 +220,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     info_status = str(condition_dict.get('status') or '')
                     info_item = str(condition_dict.get('item') or '')
                     info_eval = str(condition_dict.get('eval') or '')
+                    info_status_eval = str(condition_dict.get('status_eval') or '')
                     info_compare = str(condition_dict.get(compare) or '')
                     if not status_none:
                         textlength = len(info_status)
@@ -234,13 +229,13 @@ class WebInterface(StateEngineTools.SeItemChild):
                                 condition_tooltip += '&#13;&#10;&#13;&#10;'
                             tooltip_count += 1
                             condition_tooltip += '{}'.format(condition_dict.get('status'))
-                    elif not item_none:
-                        textlength = len(info_item)
+                    elif not status_eval_none:
+                        textlength = len(info_status_eval)
                         if textlength > self.__textlimit:
                             if tooltip_count > 0:
                                 condition_tooltip += '&#13;&#10;&#13;&#10;'
                             tooltip_count += 1
-                            condition_tooltip += '{}'.format(condition_dict.get('item'))
+                            condition_tooltip += '{}'.format(condition_dict.get('status_eval'))
                     elif not eval_none:
                         textlength = len(info_eval)
                         if textlength > self.__textlimit:
@@ -248,14 +243,21 @@ class WebInterface(StateEngineTools.SeItemChild):
                                 condition_tooltip += '&#13;&#10;&#13;&#10;'
                             tooltip_count += 1
                             condition_tooltip += '{}'.format(condition_dict.get('eval'))
+                    elif not item_none:
+                        textlength = len(info_item)
+                        if textlength > self.__textlimit:
+                            if tooltip_count > 0:
+                                condition_tooltip += '&#13;&#10;&#13;&#10;'
+                            tooltip_count += 1
+                            condition_tooltip += '{}'.format(condition_dict.get('item'))
                     else:
                         textlength = 0
 
                     info_item = info_item[:self.__textlimit] + '.. &nbsp;' * int(textlength > self.__textlimit)
                     info_status = info_status[:self.__textlimit] + '.. &nbsp;' * int(textlength > self.__textlimit)
                     info_eval = info_eval[:self.__textlimit] + '.. &nbsp;' * int(textlength > self.__textlimit)
-                    info_value = info_compare[:self.__textlimit] + '.. &nbsp;' * \
-                        int(len(info_compare) > self.__textlimit)
+                    info_status_eval = info_status_eval[:self.__textlimit] + '.. &nbsp;' * int(textlength > self.__textlimit)
+                    info_value = info_compare[:self.__textlimit] + '.. &nbsp;' * int(len(info_compare) > self.__textlimit)
                     textlength = len(info_compare)
                     if textlength > self.__textlimit:
                         if tooltip_count > 0:
@@ -265,10 +267,12 @@ class WebInterface(StateEngineTools.SeItemChild):
 
                     if not status_none:
                         info = info_status
-                    elif not item_none:
-                        info = info_item
+                    elif not status_eval_none:
+                        info = info_status_eval
                     elif not eval_none:
                         info = info_eval
+                    elif not item_none:
+                        info = info_item
                     else:
                         info = ""
                     conditionlist += '{}</b></td>'.format(info)
@@ -295,12 +299,16 @@ class WebInterface(StateEngineTools.SeItemChild):
                                      else match.get('age') if compare in ["agemin", "agemax", "age"]\
                                      else match.get(compare)
                     conditionlist += '<td align="center" width="5">{}</td><td align="center">'.format(comparison)
-                    conditionlist += '"{}"'.format(info) if not item_none and not status_none and not eval_none else ''
+                    conditionlist += '"{}"'.format(info) if not item_none and not status_none \
+                        and not eval_none and not status_eval_none else ''
 
                     info = info_value
+                    cond1 = eval_none and not item_none
+                    cond2 = eval_none and (not status_none or not status_eval_none)
+                    cond3 = not eval_none and item_none
+                    cond4 = not eval_none and status_eval_none and status_none
                     conditionlist += '{}'.format(info) if not condition_dict.get(compare) == 'None' and (
-                                     (eval_none and not item_none) or (eval_none and not status_none) or \
-                                     (not eval_none and item_none) or (not eval_none and status_none)) else ''
+                                     cond1 or cond2 or cond3 or cond4) else ''
                     conditionlist += ' (negate)' if condition_dict.get('negate') == 'True' and "age" \
                                      not in compare and not compare == "value" else ''
                     conditionlist += ' (negate)' if condition_dict.get('agenegate') == 'True' and "age" in compare else ''
@@ -361,7 +369,6 @@ class WebInterface(StateEngineTools.SeItemChild):
         previousconditionset = ''
         previousstate = ''
         previousstate_conditionset = ''
-        #self._log_debug('STATES {}', self.__states)
         for i, state in enumerate(self.__states):
             #self._log_debug('Adding state for webif {}', self.__states[state])
             if isinstance(self.__states[state], (OrderedDict, dict)):
@@ -422,13 +429,16 @@ class WebInterface(StateEngineTools.SeItemChild):
                 for j, conditionset in enumerate(self.__states[state]['conditionsets']):
 
                     if len(actions_enter) > 0 or len(actions_enter_or_stay) > 0:
-                        actionlist_enter, action_tooltip_enter, action_tooltip_count_enter = self._actionlabel(state, 'actions_enter', conditionset, previousconditionset, previousstate_conditionset)
+                        actionlist_enter, action_tooltip_enter, action_tooltip_count_enter = \
+                            self._actionlabel(state, 'actions_enter', conditionset, previousconditionset, previousstate_conditionset)
 
                     if len(actions_stay) > 0 or len(actions_enter_or_stay) > 0:
-                        actionlist_stay, action_tooltip_stay, action_tooltip_count_stay = self._actionlabel(state, 'actions_stay', conditionset, previousconditionset, previousstate_conditionset)
+                        actionlist_stay, action_tooltip_stay, action_tooltip_count_stay = \
+                            self._actionlabel(state, 'actions_stay', conditionset, previousconditionset, previousstate_conditionset)
 
                     if len(actions_leave) > 0:
-                        actionlist_leave, action_tooltip_leave, action_tooltip_count_leave = self._actionlabel(state, 'actions_leave', conditionset, previousconditionset, previousstate_conditionset)
+                        actionlist_leave, action_tooltip_leave, action_tooltip_count_leave = \
+                            self._actionlabel(state, 'actions_leave', conditionset, previousconditionset, previousstate_conditionset)
 
                     new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
                     position = '{},{}!'.format(0.5, new_y)
