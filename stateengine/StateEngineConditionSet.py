@@ -113,7 +113,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
             if name == "":
                 continue
             cond1 = name not in self.__used_attributes.keys()
-            cond2 = func == "se_item" or func == "se_eval" or func == "se_status"
+            cond2 = func == "se_item" or func == "se_eval" or func == "se_status_eval" or func == "se_status"
             cond3 = name not in self.__unused_attributes.keys()
             if cond1:
                 if cond2 and cond3:
