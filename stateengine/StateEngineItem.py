@@ -195,16 +195,26 @@ class SeItem:
         _default_log_level = SeLogger.default_log_level.get()
         _returnvalue, _returntype, _using_default, _issue = self.__log_level.set_from_attr(self.__item, "se_log_level",
                                                                                            _default_log_level)
-        self.__using_default_log_level = False
+        self.__using_default_log_level = _using_default
+        _returnvalue = self.__log_level.get()
+        if isinstance(_returnvalue, list) and len(_returnvalue) == 1:
+            _returnvalue = _returnvalue[0]
+        self.__logger.log_level_as_num = 2
+        self.__logger.header("")
+
         _startup_log_level = SeLogger.startup_log_level.get()
+
+        if _startup_log_level > 0:
+            base = self.__sh.get_basedir()
+            SeLogger.manage_logdirectory(base, SeLogger.log_directory, True)
         self.__logger.log_level_as_num = _startup_log_level
         self.__logger.info("Set log level to startup log level {}", _startup_log_level)
-        self.__logger.header("")
-        if len(_returnvalue) > 1:
+
+        if isinstance(_returnvalue, list) and len(_returnvalue) > 1:
             self.__logger.warning("se_log_level for item {} can not be defined as a list"
                                   " ({}). Using default value {}.", self.id, _returnvalue, _default_log_level)
             self.__log_level.set(_default_log_level)
-        elif len(_returnvalue) == 1 and _returnvalue[0] is None:
+        elif _returnvalue is None:
             self.__log_level.set(_default_log_level)
             self.__logger.header("Initialize Item {0} (Log {1}, Level set"
                                  " to {2} based on default log level"
@@ -218,10 +228,6 @@ class SeItem:
             self.__logger.header("Initialize Item {0} (Log {1}, Level set"
                                  " to {2}, default log level is {3})".format(self.id, self.__logger.name,
                                                                              _returnvalue, _default_log_level))
-        if _startup_log_level > 0:
-            base = self.__sh.get_basedir()
-            SeLogger.manage_logdirectory(base, SeLogger.log_directory, True)
-        self.__logger.log_level_as_num = _startup_log_level
 
         # get startup delay
         self.__startup_delay = StateEngineValue.SeValue(self, "Startup Delay", False, "num")
