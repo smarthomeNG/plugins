@@ -299,18 +299,23 @@ class SeValue(StateEngineTools.SeItemChild):
                     elif field_value[i] == "":
                         field_value[i] = s
                         s = "value"
-                    cond3 = isinstance(field_value[i], str) and field_value[i].lstrip('-').replace('.','',1).isdigit()
-                    if cond3:
-                        field_value[i] = ast.literal_eval(field_value[i])
-                    elif isinstance(field_value[i], str) and field_value[i].lower() in ['true', 'yes']:
-                        field_value[i] = True
-                    elif isinstance(field_value[i], str) and field_value[i].lower() in ['false', 'no']:
-                        field_value[i] = False
-                    self.__value = [] if self.__value is None else [self.__value] if not isinstance(self.__value, list) else self.__value
-                    _value, _issue = self.__do_cast(field_value[i])
-                    if _issue:
-                        self.__issues.append(_issue)
-                    self.__value.append(None if s != "value" else _value)
+                    self.__value = [] if self.__value is None else [self.__value] if not isinstance(self.__value,
+                                                                                                    list) else self.__value
+                    if s == "value":
+                        cond3 = isinstance(field_value[i], str) and field_value[i].lstrip('-').replace('.','',1).isdigit()
+                        if cond3:
+                            field_value[i] = ast.literal_eval(field_value[i])
+                        elif isinstance(field_value[i], str) and field_value[i].lower() in ['true', 'yes']:
+                            field_value[i] = True
+                        elif isinstance(field_value[i], str) and field_value[i].lower() in ['false', 'no']:
+                            field_value[i] = False
+
+                        _value, _issue = self.__do_cast(field_value[i])
+                        if _issue:
+                            self.__issues.append(_issue)
+                        self.__value.append(_value)
+                    else:
+                        self.__value.append(None)
                 self.__item = [] if self.__item is None else [self.__item] if not isinstance(self.__item, list) else self.__item
                 if s == "item":
                     _item, _issue = self._abitem.return_item(field_value[i])
