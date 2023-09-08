@@ -83,7 +83,7 @@ class SeFunctions:
                     self.logger.error("manual_item_update_item: se_manual_logitem {0} not found!".format(elog_item_id))
                     elog = StateEngineLogger.SeLoggerDummy()
                 else:
-                    elog = StateEngineLogger.SeLogger.create(elog_item)
+                    elog = StateEngineLogger.SeLogger.create(elog_item, manual=True)
             else:
                 elog = StateEngineLogger.SeLoggerDummy()
             elog.header("manual_item_update_eval")
