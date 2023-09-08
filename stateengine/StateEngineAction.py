@@ -278,21 +278,21 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 self._log_error("Problem evaluating item '{}' from eval: {}", check_item, ex)
                 check_item = None
             if item is None:
-                _issue = {self._name: {'issue': 'Item {} from eval not existing'.format(check_item),
+                _issue = {self._name: {'issue': ['Item {} from eval not existing'.format(check_item)],
                                        'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
                 # self._action_status = _issue
                 # raise Exception("Problem evaluating item '{}' from eval. It does not exist.".format(check_item))
                 self._log_error("Problem evaluating item '{}' from eval. It does not exist", check_item)
                 check_item = None
         elif check_item is None:
-            _issue = {self._name: {'issue': 'Item is None',
+            _issue = {self._name: {'issue': ['Item is None'],
                                    'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return check_item, check_value, check_mindelta, _issue
 
     def check_complete(self, item_state, check_item, check_status, check_mindelta, check_value, action_type, evals_items=None):
         _issue = {self._name: {'issue': None,
                                'issueorigin': [{'state': item_state.property.path, 'action': self._function}]}}
-        self._log_debug("Check item {} status {} value {} evals_items {}", check_item, check_status, check_value, evals_items)
+        self._log_develop("Check item {} status {} value {} evals_items {}", check_item, check_status, check_value, evals_items)
         try:
             _name = evals_items.get(self.name)
             if _name is not None:
@@ -326,7 +326,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                     check_item = str(item)
 
         if check_item is None and _issue[self._name].get('issue') is None:
-            _issue = {self._name: {'issue': 'Item not defined in rules section',
+            _issue = {self._name: {'issue': ['Item not defined in rules section'],
                                    'issueorigin': [{'state': item_state.property.path, 'action': self._function}]}}
         # missing status in action: Try to find it.
         if check_status is None:
