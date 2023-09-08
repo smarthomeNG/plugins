@@ -84,7 +84,7 @@ class WebInterface(SmartPluginWebIf):
             if self.vis_enabled:
                 self.plugin.get_graph(abitem, 'graph')
             tmpl = self.tplenv.get_template('visu.html')
-            return tmpl.render(p=self.plugin, item=abitem,
+            return tmpl.render(p=self.plugin, item=abitem, firstrun=str(abitem.firstrun),
                                language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now())
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
@@ -103,17 +103,15 @@ class WebInterface(SmartPluginWebIf):
         :param dataSet: Dataset for which the data should be returned (standard: None)
         :return: dict with the data needed to update the web page.
         """
-        if dataSet is None:
-            # get the new data
-            data = {}
-            for item in self.plugin.get_items():
-                conditionset = item.lastconditionset_name
-                conditionset = "-" if conditionset == "" else conditionset
-                log_level = str(item.logger.log_level)
-                data.update({item.id: {'laststate': item.laststate_name,
-                            'lastconditionset': conditionset, 'log_level': log_level}})
+
+        if dataSet and isinstance(dataSet, str):
             try:
-                return json.dumps(data)
+                dataSet = self.plugin.abitems[dataSet]
             except Exception as e:
-                self.logger.error(f"get_data_html exception: {e}")
-        return {}
+                self.logger.warning("Item {} not initialized yet. "
+                                    "Try again later. Error: {}".format(dataSet, e))
+                return json.dumps({"success": "error"})
+            if self.vis_enabled and dataSet.firstrun is None:
+                self.plugin.get_graph(dataSet, 'graph')
+                return json.dumps({"success": "true"})
+        return json.dumps({"success": "false"})

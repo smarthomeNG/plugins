@@ -57,31 +57,16 @@ class SeLogger:
             logger.error("The maximum age of the log files has to be an int number.")
 
     @property
-    def using_default_log_level(self):
-        return self.__using_default_log_level
+    def log_level_as_num(self):
+        return self.__log_level_as_num
 
-    @using_default_log_level.setter
-    def using_default_log_level(self, value):
-        self.__using_default_log_level = value
+    @log_level_as_num.setter
+    def log_level_as_num(self, value):
+        self.__log_level_as_num = value
 
     @property
     def name(self):
         return self.__name
-
-    # Set global log level
-    # loglevel: current loglevel
-    @property
-    def log_level(self):
-        return self.__log_level.get()
-
-    @log_level.setter
-    def log_level(self, value):
-        try:
-            self.__log_level = int(value)
-        except ValueError:
-            self.__log_level = 0
-            logger = StateEngineDefaults.logger
-            logger.error("Loglevel has to be an int number!")
 
     @property
     def log_directory(self):
@@ -147,19 +132,13 @@ class SeLogger:
         self.__name = 'stateengine.{}'.format(item.property.path)
         self.__section = item.property.path.replace(".", "_").replace("/", "")
         self.__indentlevel = 0
-        self.__default_log_level = None
-        self.__startup_log_level = None
-        self.__log_level = None
-        self.__using_default_log_level = False
+        self.__log_level_as_num = 0
         self.__logmaxage = None
         self.__date = None
         self.__logerror = False
         self.__filename = ""
         self.update_logfile()
 
-    # get current log level of abitem
-    def get_loglevel(self):
-        return self.log_level.get()
 
     # Update name logfile if required
     def update_logfile(self):
@@ -186,13 +165,7 @@ class SeLogger:
     # text: text to log
     def log(self, level, text, *args):
         # Section given: Check level
-        _log_level = self.get_loglevel()
-        if _log_level <= -1:
-            self.using_default_log_level = True
-            _log_level = SeLogger.default_log_level.get()
-        else:
-            self.using_default_log_level = False
-        if level <= _log_level:
+        if level <= self.__log_level_as_num:
             indent = "\t" * self.__indentlevel
             if args:
                 text = text.format(*args)

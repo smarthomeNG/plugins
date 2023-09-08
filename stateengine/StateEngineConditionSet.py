@@ -97,7 +97,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                         self.__conditions[name] = StateEngineCondition.SeCondition(self._abitem, name)
                     issue = self.__conditions[name].set(func, item.conf[attribute])
                     self.__conditions.move_to_end(name, last=True)
-                    if issue:
+                    if issue not in [[], None, [None]]:
                         self.__unused_attributes.update({name: {'attribute': attribute, 'issue': issue}})
                     elif name not in self.__used_attributes.keys():
                         self.__used_attributes.update({name: {'attribute': attribute}})
@@ -113,7 +113,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
             if name == "":
                 continue
             cond1 = name not in self.__used_attributes.keys()
-            cond2 = func == "se_item" or func == "se_eval" or func == "se_status"
+            cond2 = func == "se_item" or func == "se_eval" or func == "se_status_eval" or func == "se_status"
             cond3 = name not in self.__unused_attributes.keys()
             if cond1:
                 if cond2 and cond3:
@@ -125,7 +125,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                     self.__conditions[name] = StateEngineCondition.SeCondition(self._abitem, name)
                 try:
                     issue = self.__conditions[name].set(func, grandparent_item.conf[attribute])
-                    if issue:
+                    if issue not in [[], None, [None]]:
                         self.__unused_attributes.update({name: {'attribute': attribute, 'issue': issue}})
                 except ValueError as ex:
                     self.__unused_attributes.update({name: {'attribute': attribute, 'issue': ex}})

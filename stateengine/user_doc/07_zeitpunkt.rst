@@ -52,7 +52,7 @@ Die Konfiguration von instant_leaveaction bestimmt, ob on_leave Aktionen sofort 
 eines Zustands ausgeführt werden oder erst am Ende der Statusevaluierung.
 Die Option kann sowohl in der globalen Pluginkonfiguration
 mittels ``instant_leaveaction`` (boolscher Wert True oder False), als auch pro Item
-mittels ``se_instant_leaveaction``festgelegt werden. Letzteres Attribut kann auch
+mittels ``se_instant_leaveaction`` festgelegt werden. Letzteres Attribut kann auch
 auf ein Item verweisen, dem der Wert -1 = Nutzen des Default Wertes, 0 = False,
 1 = True zugewiesen werden kann. Im ``general struct`` sind bereits entsprechende
 Einträge und Items angelegt (mit einem Wert von -1).

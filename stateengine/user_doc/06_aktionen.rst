@@ -9,8 +9,7 @@ Aktionen
 Es gibt zwei Möglichkeiten, Aktionen zu definieren. Die :ref:`Aktionen - einzeln`
 Variante wird am Ende der Dokumentation der Vollständigkeit halber beschrieben.
 Für einfache Aktionen ohne Angabe zusätzlicher Attribute wie delay, order, repeat, etc.
-kann diese andere Möglichkeit der Aktionsangabe durchaus Sinn machen. Sie wurde
-allerdings in der weiteren Pluginentwicklung nicht mehr getestet.
+kann diese andere Möglichkeit der Aktionsangabe durchaus Sinn machen.
 
 Bei der hier beschriebenen kombinierten Variante zur Definition von Aktionen werden
 alle Parameter einer Aktion in einem Attribut definiert. Der Aktionsname ``se_action_<Bedingungsname/Aktionsname>``
@@ -29,7 +28,7 @@ das den Wert vom KNX-Aktor empfängt.
 
 Außerdem ist es möglich, über ``se_repeat_actions`` generell zu definieren,
 ob Aktionen für die Stateengine wiederholt ausgeführt werden sollen oder nicht. Diese Konfiguration
-kann für einzelne Aktionen individuell über die Angabe ``repeat`` überschrieben werden. Siehe auch :ref:`Aktionen`.
+kann für einzelne Aktionen individuell über die Angabe ``repeat`` überschrieben werden.
 
 Beispiel zu Aktionen
 --------------------
@@ -346,20 +345,20 @@ Die einzelnen Angaben einer Liste werden als ``OR`` evaluiert.
 
 .. code-block:: yaml
 
-screens:
-    conditionset_to_check:
-        type: str
-        value: "screens.osten_s1.automatik.rules.abend.enter_abend"
+    screens:
+        conditionset_to_check:
+            type: str
+            value: "screens.osten_s1.automatik.rules.abend.enter_abend"
 
-      conditionset:
-        - regex:enter_(.*)_test
-        - eval:sh.screens.conditionset_to_check.property.name
+          conditionset:
+            - regex:enter_(.*)_test
+            - eval:sh.screens.conditionset_to_check.property.name
 
 Der gesamte Pfad könnte wie folgt evaluiert werden:
 
 .. code-block:: yaml
 
-      "eval:se_eval.get_relative_itemid('{}.<bedingungsset>'.format(se_eval.get_relative_itemvalue('..state_id')))"
+    "eval:se_eval.get_relative_itemid('{}.<bedingungsset>'.format(se_eval.get_relative_itemvalue('..state_id')))"
 
 Eine sinnvolle Anwendung hierfür wäre, anstelle von verschiedenen Zuständen mit
 leicht anderen Bedingungen, alles in einen Zustand zu packen und anhand des Conditionsets
