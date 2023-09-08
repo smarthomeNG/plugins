@@ -1114,14 +1114,14 @@ item_structs:
                     type: str
                     visu_acl: rw
                     cache: True
-                    initial_value: ''
+                    initial_value: 'struct:stateengine.state_standard.rules.standard'
 
                 additionaluse2:
                     remark: set this value to a struct or (relative) state that should be added to the condition sets if suspendvariant is 2
                     type: str
                     visu_acl: rw
                     cache: True
-                    initial_value: ''
+                    initial_value: 'struct:stateengine.state_standard.rules.standard'
 
             suspendduration:
                 remark: duration of suspend mode in minutes (gets converted automatically)
