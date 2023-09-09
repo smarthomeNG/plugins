@@ -524,6 +524,8 @@ class SeItem:
                 # Find out what initially caused the update to trigger if the caller is "Eval"
                 orig_caller, orig_source, orig_item = StateEngineTools.get_original_caller(self.__logger, caller,
                                                                                            source, item)
+                if orig_item is None:
+                    orig_item = item
                 if orig_caller != caller:
                     text = "{0} initially triggered by {1} (item={2} source={3} value={4})."
                     self.__logger.debug(text, caller, orig_caller, orig_item.property.path,
