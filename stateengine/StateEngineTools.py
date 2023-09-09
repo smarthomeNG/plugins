@@ -327,6 +327,7 @@ def get_eval_name(eval_func):
 # item: item being updated
 # eval_type: update or change
 def get_original_caller(elog, caller, source, item=None, eval_keyword=['Eval'], eval_type='update'):
+    eval_keyword = [caller]
     original_caller = caller
     original_item = item
     if isinstance(source, str):
@@ -336,7 +337,7 @@ def get_original_caller(elog, caller, source, item=None, eval_keyword=['Eval'], 
     while original_caller in eval_keyword:
         original_item = itemsApi.return_item(original_source)
         if original_item is None:
-            elog.warning("get_caller({0}, {1}): original item not found", caller, source)
+            elog.info("get_caller({0}, {1}): original item not found", caller, source)
             break
         original_manipulated_by = original_item.property.last_update_by if eval_type == "update" else \
             original_item.property.last_change_by
