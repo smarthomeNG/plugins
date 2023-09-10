@@ -124,7 +124,7 @@ def parse_relative(evalstr, begintag, endtags):
         rel = rest[:rest.find(endtag)]
         rest = rest[rest.find(endtag)+len(endtag):]
         if 'property' in endtag:
-            rest1 = re.split('( |\+|-|\*|/)', rest, 1)
+            rest1 = re.split('([ +\-*/])', rest, 1)
             rest = ''.join(rest1[1:])
             pref += "se_eval.get_relative_itemproperty('{}', '{}')".format(rel, rest1[0])
         elif '()' in endtag:
