@@ -122,17 +122,20 @@ class SeLogger:
     # Return SeLogger instance for given item
     # item: item for which the detailed log is
     @staticmethod
-    def create(item):
-        return SeLogger(item)
+    def create(item, manual=False):
+        return SeLogger(item, manual)
 
     # Constructor
     # item: item for which the detailed log is (used as part of file name)
-    def __init__(self, item):
+    def __init__(self, item, manual=False):
         self.logger = logging.getLogger('stateengine.{}'.format(item.property.path))
         self.__name = 'stateengine.{}'.format(item.property.path)
         self.__section = item.property.path.replace(".", "_").replace("/", "")
         self.__indentlevel = 0
-        self.__log_level_as_num = 0
+        if manual:
+            self.__log_level_as_num = 2
+        else:
+            self.__log_level_as_num = 0
         self.__logmaxage = None
         self.__date = None
         self.__logerror = False

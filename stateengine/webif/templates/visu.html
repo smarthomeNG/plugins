@@ -51,9 +51,6 @@
 {% endblock pluginstyles %}
 {% block pluginscripts %}
 <script src="static/panzoom.min.js">
-if ("{{firstrun}}" != 'None'){
-  window.update_active = true;
-  refresh.set_interval(5000, false);
 </script>
 <script>
 function refreshGraph() {
@@ -149,6 +146,10 @@ function initPanzoom() {
 <script>
 window.addEventListener('load', function() {
   initPanzoom();
+  if ("{{firstrun}}" != 'None'){
+    window.update_active = true;
+    refresh.set_interval(5000, false);
+  }
 });
 </script>
 {% endblock pluginscripts %}

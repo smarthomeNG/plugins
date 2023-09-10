@@ -83,11 +83,11 @@ class SeFunctions:
                     self.logger.error("manual_item_update_item: se_manual_logitem {0} not found!".format(elog_item_id))
                     elog = StateEngineLogger.SeLoggerDummy()
                 else:
-                    elog = StateEngineLogger.SeLogger.create(elog_item)
+                    elog = StateEngineLogger.SeLogger.create(elog_item, manual=True)
             else:
                 elog = StateEngineLogger.SeLoggerDummy()
             elog.header("manual_item_update_eval")
-            elog.info("running for item '{0}' source '{1}' caller '{2}'", item_id, caller, source)
+            elog.info("running for item '{0}' source '{1}' caller '{2}'", item_id, source, caller)
 
             retval_no_trigger = item()
             retval_trigger = not item()
@@ -121,7 +121,9 @@ class SeFunctions:
                     result = entry.match(original)
                     elog.info("Checking regex result {}", result)
                     if result is not None:
-                        elog.info("{0}: matching. Writing value {1}", entry, retval_no_trigger)
+                        elog.info("{0}: matching.", entry)
+                        elog.decrease_indent()
+                        elog.info("Writing value {0}", retval_no_trigger)
                         return retval_no_trigger
                     elog.info("{0}: not matching", entry)
                 elog.decrease_indent()
@@ -144,7 +146,9 @@ class SeFunctions:
                     result = entry.match(original)
                     elog.info("Checking regex result {}", result)
                     if result is not None:
-                        elog.info("{0}: matching. Writing value {1}", entry, retval_no_trigger)
+                        elog.info("{0}: matching.", entry)
+                        elog.decrease_indent()
+                        elog.info("Writing value {0}", retval_no_trigger)
                         return retval_no_trigger
                     elog.info("{0}: not matching", entry)
                 elog.decrease_indent()
@@ -166,7 +170,9 @@ class SeFunctions:
                     result = entry.match(original)
                     elog.info("Checking regex result {}", result)
                     if result is not None:
-                        elog.info("{0}: matching. Writing value {1}", entry, retval_trigger)
+                        elog.info("{0}: matching.", entry)
+                        elog.decrease_indent()
+                        elog.info("Writing value {0}", retval_no_trigger)
                         return retval_trigger
                     elog.info("{0}: not matching", entry)
                 elog.decrease_indent()
