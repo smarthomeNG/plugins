@@ -20,10 +20,47 @@
   .shng_button_highlight{
     background-color: green;
   }
+  .checkmark {
+  background-color: green;
+  color: white;
+  }
+  .checkmark:hover {
+  background-color: darkgreen;
+  color: white;
+  }
+  .issue {
+  background-color: red;
+  color: white;
+  }
+  .issue:hover {
+  background-color: darkred;
+  color: white;
+  }
 </style>
 {% endblock pluginstyles %}
 {% block pluginscripts %}
 <script>
+  function updateButton(buttonElement, success) {
+      if (success == "checkmark")
+        buttonElement
+          .prop("disabled", true)
+          .html('<i class="fas fa-check"></i>')
+          .addClass(success);
+      else
+        buttonElement
+          .prop("disabled", true)
+          .html('<i class="fas fa-times"></i>')
+          .addClass(success);
+
+      // After 2 seconds, revert the button to its original state
+      setTimeout(function() {
+        console.log("reset button")
+        buttonElement
+          .prop("disabled", false)
+          .html('<i class="fas fa-play"></i>')
+          .removeClass(success);
+      }, 2000); // 2 seconds (2000 milliseconds)
+  }
   $(document).ready( function () {
     $("#button_pressed").submit(function(e) {
       console.log('Sending lirc command for ' + $("#button").val());
@@ -32,23 +69,24 @@
 
         // die Kennung des gedrückten Buttons per AJAX senden
         $.post('submit', {item: $("#button").val()}, function(data) {
+          console.log("Return value from plugin: " + data);
+          const escapedVal = $.escapeSelector($("#button").val());
+          const buttonElement = $("#" + escapedVal + "_button");
+          if (data)
+            updateButton(buttonElement, "checkmark");
+          else
+            updateButton(buttonElement, "issue");
 
-
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+          // Error callback
+          console.error("AJAX request failed:", textStatus, errorThrown);
+          const escapedVal = $.escapeSelector($("#button").val());
+          const buttonElement = $("#" + escapedVal + "_button");
+          updateButton(buttonElement, "issue");
         });
         return false ;
     });
     $(window).trigger('datatables_defaults');
-      /* get pagelength from http module or plugin. */
-	    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-        resize = true;
-        webif_pagelength = -1;
-      }
-      else {
-        resize = false;
-      }
-	  console.log("Webif page length " + webif_pagelength + ", pageResize: " + resize);
-
 		try {
       table = $('#maintable').DataTable( {
         columnDefs: [
@@ -83,9 +121,8 @@
           title: '{{ _('Letzte Änderung') }}',
           targets: 6, "className": "last_change"
         }
-        ].concat($.fn.dataTable.defaults.columnDefs),
-        pageLength: webif_pagelength,
-        pageResize: resize});
+        ].concat($.fn.dataTable.defaults.columnDefs)
+      });
 		}
 		catch (e) {
 			console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
@@ -97,7 +134,6 @@
 	function handleUpdatedData(response, dataSet) {
 			var objResponse = JSON.parse(response);
 			myProto = document.getElementById(dataSet);
-      console.log(response);
       for (var item in objResponse['items']) {
         shngInsertText (item+'_last_update', objResponse['items'][item]['last_update'], 'maintable', 5);
         shngInsertText (item+'_last_change', objResponse['items'][item]['last_change'], 'maintable', 5);
@@ -150,7 +186,7 @@
           <td></td>
           <td class="py-1">{{ item.property.path }}</td>
           <td>
-            <button id="{{ item }}_button" type="button" class="btn btn-shng btn-sm" title="{{ _('Senden') }}" onclick=" $('#button').val('{{ item }}');$('#button_pressed').submit();"><i class="fas fa-play"></i></button></td>
+            <button id="{{ item }}_button" type="button" class="btn btn-shng btn-sm" title="{{ _('Senden') }} {{ item }}" onclick=" $('#button').val('{{ item }}');$('#button_pressed').submit();"><i class="fas fa-play"></i></button></td>
           <td class="py-1">{{ p.get_iattr_value(item.conf, 'lirc_remote') }}</td>
           <td class="py-1">{{ p.get_iattr_value(item.conf, 'lirc_key') }}</td>
           <td class="py-1" id="{{ item._path }}_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
