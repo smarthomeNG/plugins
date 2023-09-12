@@ -137,7 +137,7 @@ class UZSU(SmartPlugin):
         self.logger.debug("run method called")
         self.alive = True
         self.scheduler_add('uzsu_sunupdate', self._update_all_suns,
-                           value={'caller': 'scheduler'}, cron=self._suncalculation_cron)
+                           value={'caller': 'Scheduler:UZSU'}, cron=self._suncalculation_cron)
         self.logger.info("Adding sun update schedule for midnight")
 
         for item in self._items:
@@ -568,7 +568,7 @@ class UZSU(SmartPlugin):
         """
         if caller != "dry_run":
             self.scheduler_remove('{}'.format(item.property.path))
-            _caller = "scheduler"
+            _caller = "Scheduler:UZSU"
             self.logger.debug('Schedule Item {}, Trigger: {}, Changed by: {}'.format(
                 item, caller, item.changed_by()))
         else:
@@ -717,7 +717,7 @@ class UZSU(SmartPlugin):
                 self._webdata['items'][item.id()].update({'planned': {'value': _value, 'time': _next.strftime('%d.%m.%Y %H:%M')}})
                 self._update_count['done'] = self._update_count.get('done') + 1
                 self.scheduler_add('{}'.format(item.property.path), self._set,
-                                   value={'item': item, 'value': _value}, next=_next)
+                                   value={'item': item, 'value': _value, 'caller': 'Scheduler'}, next=_next)
                 if self._update_count.get('done') == self._update_count.get('todo'):
                     self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
                     self._update_count = {'done': 0, 'todo': 0}
@@ -736,7 +736,7 @@ class UZSU(SmartPlugin):
         _uzsuitem, _itemvalue = self._get_dependant(item)
         _uzsuitem(value, 'UZSU Plugin', 'set')
         self._webdata['items'][item.id()].update({'depend': {'item': _uzsuitem.id(), 'value': str(_itemvalue)}})
-        if not caller:
+        if not caller or caller == "Scheduler":
             self._schedule(item, caller='set')
 
     def _get_time(self, entry, timescan, item=None, entryindex=None, caller=None):
