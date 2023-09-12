@@ -104,7 +104,7 @@ class UZSU(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = "1.6.5"      # item buffer for all uzsu enabled items
+    PLUGIN_VERSION = "1.6.6"      # item buffer for all uzsu enabled items
 
     def __init__(self, smarthome):
         """
@@ -356,7 +356,7 @@ class UZSU(SmartPlugin):
         if self._planned.get(item) not in [None, {}, 'notinit'] and self._items[item].get('active') is True:
             self.logger.info("Item '{}' is going to be set to {} at {}".format(
                 item, self._planned[item]['value'], self._planned[item]['next']))
-            self._webdata['items'][item.id()].update({'planned': {'value': self._planned[item]['value'], 
+            self._webdata['items'][item.id()].update({'planned': {'value': self._planned[item]['value'],
                                                                   'time': self._planned[item]['next']}})
             return self._planned[item]
         elif self._planned.get(item) == 'notinit' and self._items[item].get('active') is True:
@@ -792,8 +792,8 @@ class UZSU(SmartPlugin):
                             entry['rrule'], time))
                         if 'sun' in time:
                             rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(
-                                weekbefore, self._sun(datetime.combine(weekbefore.date(), 
-                                                                       datetime.min.time()).replace(tzinfo=self._timezone), 
+                                weekbefore, self._sun(datetime.combine(weekbefore.date(),
+                                                                       datetime.min.time()).replace(tzinfo=self._timezone),
                                                       time, timescan).time()))
                             self.logger.debug("Looking for {} sun-related time. Found rrule: {}".format(
                                 timescan, str(rrule).replace('\n', ';')))
@@ -808,8 +808,8 @@ class UZSU(SmartPlugin):
                         return None, None
                     if 'sun' in time:
                         sleep(0.01)
-                        next = self._sun(datetime.combine(dt.date(), 
-                                                          datetime.min.time()).replace(tzinfo=self._timezone), 
+                        next = self._sun(datetime.combine(dt.date(),
+                                                          datetime.min.time()).replace(tzinfo=self._timezone),
                                          time, timescan)
                         self.logger.debug("Result parsing time (rrule) {}: {}".format(time, next))
                         if entryindex is not None and timescan == 'next':
@@ -855,7 +855,7 @@ class UZSU(SmartPlugin):
                 self._itpl[item][next.timestamp() * 1000.0] = value
                 self.logger.debug("Looking for {} series-related time. Found rrule: {} with start-time . {}".format(
                     timescan, entry['rrule'].replace('\n', ';'), entry['series']['timeSeriesMin']))
-            
+
             cond_today = False if next is None else next.date() == today.date()
             cond_yesterday = False if next is None else next.date() - timedelta(days=1) == yesterday.date()
             cond_tomorrow = False if next is None else next.date() == tomorrow.date()
