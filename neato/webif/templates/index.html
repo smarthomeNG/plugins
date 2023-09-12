@@ -340,9 +340,9 @@
 			{{ _('Verfuegbare Boundary IDs (Raeume) ins Log schreiben') }}
 			</div>
 			<div class="col-md-3 mb-3">
-				<input type="text" class="form-control mb-1" id="input-mapid" placeholder="{{ _('Hier Map ID eintragen') }}" maxlength="25" style="width: 300px;">
+				<input type="text" class="form-control mb-1" id="input-mapid" placeholder="{{ _('Hier Map ID eintragen') }}" {% if p.get_known_mapId() %} value = {{ p.get_known_mapId() }} {% endif %}
+ 				maxlength="25" style="width: 300px;">
 			</div>
-
 			<div class="col-md-6 mb-3">
 				<button type="button" class="btn btn-shng btn-sm" onclick="listAvailableMaps()" title= "{{ _('Schreibt die verfuegbaren Raeume ins Logfile') }}">{{ _('Liste Raeume') }}</button>
 			</div>
