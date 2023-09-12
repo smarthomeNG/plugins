@@ -43,30 +43,29 @@ Unterstützte Plugin Attribute
 
 Folgende Item Attribute (neato_attribute) werden vom Plugin unterstützt:
 
-=================== ========== =====================
-Attribut             Itemtyp    Lesend/Schreibend
-=================== ========== =====================
-name                      str        r
-state                     str        r
-state_action              str        r
-command                   num        w
-is_docked                 bool       r
-is_schedule_enabled       bool       r
-is_charging               bool       r
-charge_percentage         num        r
-command_goToBaseAvailable bool       r
-alert                     str        r
-clean_room                str        w
-=================== ========== =====================
-
+=========================== ========== =====================
+Attribut                      Itemtyp    Lesend/Schreibend
+=========================== ========== =====================
+name                           str        r
+state                          str        r
+state_action                   str        r
+command                        num        w
+is_docked                      bool       r
+is_schedule_enabled            bool       r
+is_charging                    bool       r
+charge_percentage              num        r
+command_goToBaseAvailable      bool       r
+alert                          str        r
+clean_room                     str        w
+=========================== ========== =====================
 
 
 Roboter Status
-==============
+--------------
 
 Das String Item für den Roboterstatus (state) kann folgende Zustände einnehmen:
 
-===================== 
+=====================
 Roboterstatus (state)  
 =====================
 invalid
@@ -79,7 +78,7 @@ error
 Das Num Item für den Roboterzustand (state_action) kann folgende Zustände einnehmen:
 
 ========================================= =========
-Roboterzustand (state_action)  dezimal
+Roboterzustand (state_action)               dezimal
 ========================================= =========
 Invalid                                     0
 House Cleaning                              1
@@ -99,7 +98,7 @@ Creating & Uploading Map                    14
 Suspended Exploration                       15
 ========================================= =========
 
-Roboter Befehle
+Roboterbefehle
 ===============
 
 Das Num Item für die Roboterbefehle (command) kann folgende Zustände einnehmen:
