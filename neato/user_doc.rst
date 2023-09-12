@@ -65,15 +65,15 @@ Roboter Status
 
 Das String Item für den Roboterstatus (state) kann folgende Zustände einnehmen:
 
-=====================
+=======================
 Roboterstatus (state)  
-=====================
+=======================
 invalid
 idle
 busy
 paused
 error
-=====================
+=======================
 
 Das Num Item für den Roboterzustand (state_action) kann folgende Zustände einnehmen:
 
