@@ -180,6 +180,7 @@ class UZSU(SmartPlugin):
         Stop method for the plugin
         """
         self.logger.debug("stop method called")
+        self.scheduler_remove('uzsu_sunupdate')
         for item in self._items:
             try:
                 self.scheduler_remove('{}'.format(item.property.path))
@@ -195,7 +196,7 @@ class UZSU(SmartPlugin):
         :type caller:   str
         """
         for item in self._items:
-            success = self._update_sun(item)
+            success = self._update_sun(item, caller="update_all_suns")
             if success:
                 self.logger.debug('Updating sun info for item {}. Caller: {}'.format(item, caller))
                 self._update_item(item, 'UZSU Plugin', 'update_all_suns')
@@ -223,8 +224,8 @@ class UZSU(SmartPlugin):
                 item, caller, self._items[item]['sunrise'], self._items[item]['sunset']))
             success = True
         except Exception as e:
-            success = False
-            self.logger.debug("Not updated sun entries for item {}. Error {}".format(item, e))
+            success = "Not updated sun entries for item {}. Error {}".format(item, e)
+            self.logger.debug(success)
         return success
 
     def _update_suncalc(self, item, entry, entryindex, entryvalue):
@@ -355,7 +356,8 @@ class UZSU(SmartPlugin):
         if self._planned.get(item) not in [None, {}, 'notinit'] and self._items[item].get('active') is True:
             self.logger.info("Item '{}' is going to be set to {} at {}".format(
                 item, self._planned[item]['value'], self._planned[item]['next']))
-            self._webdata['items'][item.id()].update({'planned': {'value': self._planned[item]['value'], 'time': self._planned[item]['next']}})
+            self._webdata['items'][item.id()].update({'planned': {'value': self._planned[item]['value'], 
+                                                                  'time': self._planned[item]['next']}})
             return self._planned[item]
         elif self._planned.get(item) == 'notinit' and self._items[item].get('active') is True:
             self.logger.info("Item '{}' is active but not fully initialized yet.".format(item))
@@ -524,26 +526,24 @@ class UZSU(SmartPlugin):
         success = self._get_sun4week(item, caller="_update_item")
         if success:
             self.logger.debug('Updated weekly sun info for item {}'
-                              ' caller : {} comment : {}'.format(item, caller, comment))
+                              ' caller: {} comment: {}'.format(item, caller, comment))
         else:
             self.logger.debug('Issues with updating weekly sun info'
-                              ' for item {} caller : {} comment : {}'.format(item, caller, comment))
-        success = False
+                              ' for item {} caller: {} comment: {}'.format(item, caller, comment))
         success = self._series_calculate(item, caller, comment)
-        if success:
+        if success is True:
             self.logger.debug('Updated seriesCalculated for item {}'
-                              ' caller : {} comment : {}'.format(item, caller, comment))
+                              ' caller: {} comment: {}'.format(item, caller, comment))
         else:
             self.logger.debug('Issues with updating seriesCalculated'
-                              ' for item {} caller : {} comment : {}'.format(item, caller, comment))
-        success = False
+                              ' for item {} caller: {} comment: {}, issue: {}'.format(item, caller, comment, success))
         success = self._update_sun(item, caller="_update_item")
-        if success:
+        if success is True:
             self.logger.debug('Updated sunset/rise calculations for item {}'
-                              ' caller : {} comment : {}'.format(item, caller, comment))
+                              ' caller: {} comment: {}'.format(item, caller, comment))
         else:
             self.logger.debug('Issues with updating sunset/rise calculations'
-                              ' for item {} caller : {} comment : {}'.format(item, caller, comment))
+                              ' for item {} caller: {} comment: {}, issue: {}'.format(item, caller, comment, success))
         item(self._items[item], caller, comment)
         self._webdata['items'][item.id()].update({'interpolation': self._items[item].get('interpolation')})
         self._webdata['items'][item.id()].update({'active': str(self._items[item].get('active'))})
@@ -562,9 +562,9 @@ class UZSU(SmartPlugin):
         This function schedules an item: First the item is removed from the scheduler.
         If the item is active then the list is searched for the nearest next execution time.
         No matter if active or not the calculation for the execution time is triggered.
-        :param item:    item to be updated towards the plugin
+        :param item:    item to be updated towards the plugin.
         :param caller:  if given it represents the callers name. If the caller is set
-                        to "dry_run" the evaluation of sun entries takes place but no scheduler will be set
+                        to "dry_run" the evaluation of sun entries takes place but no scheduler will be set.
         """
         if caller != "dry_run":
             self.scheduler_remove('{}'.format(item.property.path))
@@ -767,6 +767,7 @@ class UZSU(SmartPlugin):
             if 'time' not in entry:
                 return None, None
             value = entry['value']
+            next = None
             active = True if caller == "dry_run" else entry['active']
             today = datetime.today()
             tomorrow = today + timedelta(days=1)
@@ -791,9 +792,9 @@ class UZSU(SmartPlugin):
                             entry['rrule'], time))
                         if 'sun' in time:
                             rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(
-                                weekbefore, self._sun(datetime.combine(weekbefore.date(),
-                                                                       datetime.min.time()).replace(tzinfo=self._timezone),
-                                                                       time, timescan).time()))
+                                weekbefore, self._sun(datetime.combine(weekbefore.date(), 
+                                                                       datetime.min.time()).replace(tzinfo=self._timezone), 
+                                                      time, timescan).time()))
                             self.logger.debug("Looking for {} sun-related time. Found rrule: {}".format(
                                 timescan, str(rrule).replace('\n', ';')))
                         else:
@@ -807,9 +808,9 @@ class UZSU(SmartPlugin):
                         return None, None
                     if 'sun' in time:
                         sleep(0.01)
-                        next = self._sun(datetime.combine(dt.date(),
-                                                          datetime.min.time()).replace(tzinfo=self._timezone),
-                                                          time, timescan)
+                        next = self._sun(datetime.combine(dt.date(), 
+                                                          datetime.min.time()).replace(tzinfo=self._timezone), 
+                                         time, timescan)
                         self.logger.debug("Result parsing time (rrule) {}: {}".format(time, next))
                         if entryindex is not None and timescan == 'next':
                             self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
@@ -854,13 +855,13 @@ class UZSU(SmartPlugin):
                 self._itpl[item][next.timestamp() * 1000.0] = value
                 self.logger.debug("Looking for {} series-related time. Found rrule: {} with start-time . {}".format(
                     timescan, entry['rrule'].replace('\n', ';'), entry['series']['timeSeriesMin']))
-
-            cond_today = next.date() == today.date()
-            cond_yesterday = next.date() - timedelta(days=1) == yesterday.date()
-            cond_tomorrow = next.date() == tomorrow.date()
-            cond_next = next > datetime.now(self._timezone)
-            cond_previous_today = next - timedelta(seconds=1) < datetime.now(self._timezone)
-            cond_previous_yesterday = next - timedelta(days=1) < datetime.now(self._timezone)
+            
+            cond_today = False if next is None else next.date() == today.date()
+            cond_yesterday = False if next is None else next.date() - timedelta(days=1) == yesterday.date()
+            cond_tomorrow = False if next is None else next.date() == tomorrow.date()
+            cond_next = False if next is None else next > datetime.now(self._timezone)
+            cond_previous_today = False if next is None else next - timedelta(seconds=1) < datetime.now(self._timezone)
+            cond_previous_yesterday = False if next is None else next - timedelta(days=1) < datetime.now(self._timezone)
             if next and cond_today and cond_next:
                 self._itpl[item][next.timestamp() * 1000.0] = value
                 self.logger.debug("Return next today: {}, value {}".format(next, value))
@@ -959,7 +960,7 @@ class UZSU(SmartPlugin):
                     elif seriesend is not None and 'sun' not in seriesend:
                         endtime = datetime.strptime(seriesend, "%H:%M")
 
-                    if seriesend is None:
+                    if seriesend is None and endtime:
                         seriesend = str(endtime.time())[:5]
 
                     if endtime <= starttime:
