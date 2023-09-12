@@ -21,7 +21,7 @@ Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/co
 
 Anforderungen
 =============
-1) Es muss auf dem SmarthomeNG Rechcner en_US.utf8 installiert sein (sudo dpkg-reconfigure locales)
+1) Es muss auf dem SmarthomeNG Rechner en_US.utf8 installiert sein (sudo dpkg-reconfigure locales)
 
 Unterstützte Hardware
 =====================
@@ -29,12 +29,12 @@ Unterstützte Hardware
 =============== ============= ==========
 Roboter          Unterstützt   Getestet
 =============== ============= ==========
-Neato Botvac D3 ja       nein
-Neato Botvac D4 ja       nein
-Neato Botvac D5 ja       ja
-Neato Botvac D6 ja       nein
-Neato Botvac D7 ja       nein
-Vorwerk VR300   ja       ja
+Neato Botvac D3   ja             nein
+Neato Botvac D4   ja             nein
+Neato Botvac D5   ja             ja
+Neato Botvac D6   ja             nein
+Neato Botvac D7   ja             nein
+Vorwerk VR300     ja             ja
 =============== ============= ==========
 
 
@@ -43,9 +43,9 @@ Unterstützte Plugin Attribute
 
 Folgende Item Attribute (neato_attribute) werden vom Plugin unterstützt:
 
-=================== ========= =====================
+=================== ========== =====================
 Attribut             Itemtyp    Lesend/Schreibend
-=================== ========= =====================
+=================== ========== =====================
 name                      str        r
 state                     str        r
 state_action              str        r
@@ -57,7 +57,7 @@ charge_percentage         num        r
 command_goToBaseAvailable bool       r
 alert                     str        r
 clean_room                str        w
-=================== ========= =====================
+=================== ========== =====================
 
 
 
@@ -70,35 +70,34 @@ Das String Item für den Roboterstatus (state) kann folgende Zustände einnehmen
 Roboterstatus (state)  
 =====================
 invalid
-invalid
 idle
 busy
 paused
 error
-=============== 
+=====================
 
 Das Num Item für den Roboterzustand (state_action) kann folgende Zustände einnehmen:
 
-============================= =========
+========================================= =========
 Roboterzustand (state_action)  dezimal
-============================= =========
-Invalid                       0
-House Cleaning                1
-Spot Cleaning                 2
-Manual Cleaning               3
-Docking                       4
-User Menu Active              5
-Suspended Cleaning            6
-Updating                      7
-Copying Logs                  8
-Recovering Location           9
-IEC Test                     10
-Map cleaning                 11
-Exploring map (creating a persistent map) 12
-Acquiring Persistent Map IDs 13
-Creating & Uploading Map     14
-Suspended Exploration        15
-============================= =========
+========================================= =========
+Invalid                                     0
+House Cleaning                              1
+Spot Cleaning                               2
+Manual Cleaning                             3
+Docking                                     4
+User Menu Active                            5
+Suspended Cleaning                          6
+Updating                                    7
+Copying Logs                                8
+Recovering Location                         9
+IEC Test                                    10
+Map cleaning                                11
+Exploring map (creating a persistent map)   12
+Acquiring Persistent Map IDs                13
+Creating & Uploading Map                    14
+Suspended Exploration                       15
+========================================= =========
 
 Roboter Befehle
 ===============
