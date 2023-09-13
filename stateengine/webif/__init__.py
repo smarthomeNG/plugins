@@ -103,8 +103,18 @@ class WebInterface(SmartPluginWebIf):
         :param dataSet: Dataset for which the data should be returned (standard: None)
         :return: dict with the data needed to update the web page.
         """
-
-        if dataSet and isinstance(dataSet, str):
+        if dataSet is None:
+            # get the new data
+            data = {}
+            for item in self.plugin.get_items():
+                conditionset = item.lastconditionset_name
+                conditionset = "-" if conditionset == "" else conditionset
+                data.update({item.id: {'laststate': item.laststate_name, 'lastconditionset': conditionset}})
+            try:
+                return json.dumps(data)
+            except Exception as e:
+                self.logger.error(f"get_data_html exception: {e}")
+        elif dataSet and isinstance(dataSet, str):
             try:
                 dataSet = self.plugin.abitems[dataSet]
             except Exception as e:
@@ -114,4 +124,6 @@ class WebInterface(SmartPluginWebIf):
             if self.vis_enabled and dataSet.firstrun is None:
                 self.plugin.get_graph(dataSet, 'graph')
                 return json.dumps({"success": "true"})
-        return json.dumps({"success": "false"})
+            return json.dumps({"success": "false"})
+        else:
+            return {}
