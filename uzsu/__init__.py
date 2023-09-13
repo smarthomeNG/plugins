@@ -48,19 +48,19 @@
 #                   time series is mandatory using dict key 'series'
 #
 #     series:   definition of the time series as dict using keys 'active', 'timeSeriesMin',
-#               'timeSeriesMax', 'timeSeriesinterval'
+#               'timeSeriesMax', 'timeSeriesintervall'
 #                   example:
 #                       "series":{"active":true,
 #                                 "timeSeriesMin":"06:15",
 #                                 "timeSeriesMax":"15:30",
-#                                 "timeSeriesinterval":"01:00"}
+#                                 "timeSeriesintervall":"01:00"}
 #               alternative to 'timeSeriesMax', which indicated the end time of the time series, the key 'timeSeriesCount'
 #               can be used to define the number of cycles to be run
 #                   example:
 #                       "series":{"active":true,
 #                                 "timeSeriesMin":"06:15",
 #                                 "timeSeriesCount":"4",
-#                                 "timeSeriesinterval":"01:00"}
+#                                 "timeSeriesintervall":"01:00"}
 #
 #
 #     rrule:    You can use the recurrence rules documented in the iCalendar RFC for recurrence use of a switching entry.
@@ -908,7 +908,7 @@ class UZSU(SmartPlugin):
                 try:
                     #####################
                     seriesbegin, seriesend, daycount, mydict = self._fix_empty_values(mydict)
-                    interval = mydict['series'].get('timeSeriesinterval', None)
+                    interval = mydict['series'].get('timeSeriesintervall', None)
                     seriesstart = seriesbegin
                     endtime = None
 
@@ -924,7 +924,7 @@ class UZSU(SmartPlugin):
                         self.logger.warning(issue)
                         return issue
 
-                    interval = int(interval.split(":")[0]) * 60 + int(mydict['series']['timeSeriesinterval'].split(":")[1])
+                    interval = int(interval.split(":")[0]) * 60 + int(mydict['series']['timeSeriesintervall'].split(":")[1])
 
                     if interval == 0:
                         issue = "Could not calculate serie because interval is ZERO - {}".format(mydict)
@@ -987,8 +987,8 @@ class UZSU(SmartPlugin):
                                                                            str(starttime.minute)).time()))
                     mynewlist = []
 
-                    interval = int(mydict['series']['timeSeriesinterval'].split(":")[0])*60 + \
-                                int(mydict['series']['timeSeriesinterval'].split(":")[1])
+                    interval = int(mydict['series']['timeSeriesintervall'].split(":")[0])*60 + \
+                                int(mydict['series']['timeSeriesintervall'].split(":")[1])
                     exceptions = 0
                     for day in list(rrule):
                         if not mydays[day.weekday()] in mydict['rrule']:
@@ -1020,7 +1020,7 @@ class UZSU(SmartPlugin):
                                                     item, datetime.strftime(starttime, "%H:%M"),
                                                     datetime.strftime(endtime, "%H:%M"),
                                                     max_interval.seconds // 3600, max_interval.seconds % 3600//60,
-                                                    mydict['series']['timeSeriesinterval']))
+                                                    mydict['series']['timeSeriesintervall']))
                             exceptions += 1
                             max_interval = int(max_interval.total_seconds() / 60)
                             myrulenext = "FREQ=MINUTELY;COUNT=1;INTERVAL={}".format(max_interval)
@@ -1132,11 +1132,11 @@ class UZSU(SmartPlugin):
 
         returnvalue = None
         seriesbegin, seriesend, daycount, mydict = self._fix_empty_values(mydict)
-        interval = mydict['series'].get('timeSeriesinterval', None)
+        interval = mydict['series'].get('timeSeriesintervall', None)
         seriesstart = seriesbegin
 
         if interval is not None and interval != "":
-            interval = int(interval.split(":")[0])*60 + int(mydict['series']['timeSeriesinterval'].split(":")[1])
+            interval = int(interval.split(":")[0])*60 + int(mydict['series']['timeSeriesintervall'].split(":")[1])
         else:
             return returnvalue
         if interval == 0:
