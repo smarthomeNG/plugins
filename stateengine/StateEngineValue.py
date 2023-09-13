@@ -156,7 +156,7 @@ class SeValue(StateEngineTools.SeItemChild):
     # value: string indicating value or source of value
     # name: name of object ("time" is being handled differently)
     def set(self, value, name="", reset=True, item=None):
-        #value = copy.deepcopy(value)
+        value = copy.deepcopy(value)
         if reset:
             self.__resetvalue()
         if isinstance(value, list):
