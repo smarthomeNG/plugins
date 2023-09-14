@@ -24,6 +24,7 @@ import threading
 import re
 from . import StateEngineLogger
 from . import StateEngineTools
+from . import StateEngineDefaults
 from lib.item import Items
 
 
@@ -97,7 +98,7 @@ class SeFunctions:
             elog.info("get_caller({0}, {1}): original trigger by {2}:{3}", caller, source,
                       original_caller, original_source)
             original = "{}:{}".format(original_caller, original_source)
-            entry = re.compile("Stateengine Plugin", re.IGNORECASE)
+            entry = re.compile(StateEngineDefaults.plugin_identification, re.IGNORECASE)
             result = entry.match(original)
             if result is not None:
                 elog.info("Manual item updated by Stateengine Plugin. Ignoring change and writing value {}",
