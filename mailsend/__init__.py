@@ -35,15 +35,11 @@ from lib.item import Items
 
 class SMTP(SmartPlugin):
 
-    PLUGIN_VERSION = "1.4.1"
+    PLUGIN_VERSION = "1.4.2"
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
-
-        from bin.smarthome import VERSION
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self._tls = self.get_parameter_value('tls')
         self._host = self.get_parameter_value('host')
@@ -53,14 +49,14 @@ class SMTP(SmartPlugin):
         self._password = self.get_parameter_value('password')
 
 
-    def send(self, to, sub, msg):
-        self.__call__(to, sub, msg)
+    def send(self, to, sub, msg, caller=None, source=None):
+        self.__call__(to, sub, msg, caller, source)
 
-    def __call__(self, to, sub, msg):
+    def __call__(self, to, sub, msg, caller=None, source=None):
         try:
             smtp = self._connect()
         except Exception as e:
-            self.logger.warning("Could not connect to {0}: {1}".format(self._host, e))
+            self.logger.warning(f"Could not connect to {self._host}: {e}")
             return
         try:
             msg = MIMEText(msg, 'plain', 'utf-8')
@@ -73,7 +69,7 @@ class SMTP(SmartPlugin):
             self.logger.debug("email prepared for sending")
             smtp.sendmail(self._from, to, msg.as_string())
         except Exception as e:
-            self.logger.warning("Could not send message {} to {}: {}".format(sub, to, e))
+            self.logger.warning(f"Could not send message {sub} to {to} (caller={caller}): {e}")
         finally:
             try:
                 smtp.quit()
