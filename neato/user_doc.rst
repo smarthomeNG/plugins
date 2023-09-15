@@ -37,6 +37,47 @@ Neato Botvac D7   ja             nein
 Vorwerk VR300     ja             ja
 =============== ============= ==========
 
+Authentifizierung
+=================
+
+Das Plugin unterstützt zwei verschiedene Arten der Authentifizierung mit dem Neato oder Vorwerk Backend: 
+
+a) Authentifizierung über Emailadresse des Nutzerkontos und zugehöriges Passwort. Nutzbar für Neato und alte Vorwerk API
+
+.. code-block:: html
+    Neato:
+        plugin_name: neato
+        account_email: 'your_neato_account_email'
+        account_pass: 'your_neato_account_password!'
+        robot_vendor: 'neato or vorwerk'
+
+b) Oauth2 Authentifizierung über Emailadresse des Nutzerkontos und Token. Nutzbar nur für Vorwerk mit dem aktuellen MyKobol APP Interface
+
+.. code-block:: html
+
+    Neato:
+        plugin_name: neato
+        account_email: 'your_neato_account_email'
+        token: 'HEX_ASCII_TOKEN'
+        robot_vendor: 'vorwerk'
+
+Der Token kann hier kompfortabel über die Schritt für Schritt Anleitung des Plugin Webinterfaces generiert werden, siehe Vorwerk OAuth2 Tab.
+
+Wenn eine Nutzung des Webinterfaces nicht möglich ist, kann ein Token auch manuell generiert werden. Hierzu:
+ 
+a) Neato plugin aktivieren und Emailadresse des Vorwerk Nutzerkontos konfigurieren. 
+
+b) Plugin Logging auf Level INFO stellen (in logger.yaml oder via Admin Interface)
+
+c) Plugin Funktion request_oauth2_code ausführen. Hierbei wird ein Code bei Vorwerk angefragt, welcher an die oben angegebene Emaildresse gesendet wird. 
+
+d) Nach Erhalt des Codes die Plugin Funktion request_oauth2_token(code) ausführen, wobei als Argument der per Email erhaltene Code übergeben wird. 
+
+e) Im Logfile nach dem generierten ASCII Token im Hexadezimalformat suchen
+
+f) Das Hex ASCII Token in der plugin.yaml angeben. 
+
+
 
 Unterstützte Plugin Attribute
 =============================
