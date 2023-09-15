@@ -78,11 +78,15 @@ class SMTP(SmartPlugin):
                 pass
             self.logger.debug("email was sent")
 
-    def extended(self, to, sub, msg, sender_name: str, img_list: list=[], attachments: list=[]):
+    def extended(self, to, sub, msg, sender_name: str, img_list: list=None, attachments: list=None, caller=None, source=None):
+        if img_list is None:
+            img_list = []
+        if attachments is None:
+            attachments = []
         try:
             smtp = self._connect()
         except Exception as e:
-            self.logger.warning("Could not connect to {0}: {1}".format(self._host, e))
+            self.logger.warning(f"Could not connect to {self._host}: {e}")
             return
         try:
             sender_name = Header(sender_name, 'utf-8').encode()
