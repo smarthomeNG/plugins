@@ -107,10 +107,18 @@ class WebInterface(SmartPluginWebIf):
             # get the new data
             data = {}
             for item in self.plugin.get_items():
+                laststate = item.laststate_name
+                laststate = "-" if laststate in ["", None] else laststate
                 conditionset = item.lastconditionset_name
-                conditionset = "-" if conditionset == "" else conditionset
+                conditionset = "-" if conditionset in ["", None] else conditionset
                 ll = item.logger.log_level_as_num
-                data.update({item.id: {'laststate': item.laststate_name, 'lastconditionset': conditionset, 'log_level': ll}})
+                if item.laststate_releasedby in [None, []]:
+                    lsr = "-"
+                else:
+                    lsr = [entry.split('.')[-1] for entry in item.laststate_releasedby]
+                data.update({item.id: {'laststate': laststate,
+                           'lastconditionset': conditionset, 'log_level': ll,
+                           'laststate_releasedby': lsr}})
             try:
                 return json.dumps(data)
             except Exception as e:

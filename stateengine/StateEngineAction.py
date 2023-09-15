@@ -82,6 +82,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._function = None
         self.__template = None
         self._action_status = {}
+        self._retrigger_issue = None
+        self._suspend_issue = None
         self.__queue = abitem.queue
 
     def update_delay(self, value):
@@ -260,7 +262,6 @@ class SeActionBase(StateEngineTools.SeItemChild):
                     check_item, _issue = self._abitem.return_item(item)
                     _issue = {
                         self._name: {'issue': _issue, 'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
-                    # self._action_status = _issue
                     if check_value:
                         check_value.set_cast(check_item.cast)
                     if check_mindelta:
@@ -273,14 +274,12 @@ class SeActionBase(StateEngineTools.SeItemChild):
                     self._log_develop("Got no item from eval on {} with initial item {}", self._function, self.__item)
             except Exception as ex:
                 _issue = {self._name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
-                # self._action_status = _issue
                 # raise Exception("Problem evaluating item '{}' from eval: {}".format(check_item, ex))
                 self._log_error("Problem evaluating item '{}' from eval: {}", check_item, ex)
                 check_item = None
             if item is None:
                 _issue = {self._name: {'issue': ['Item {} from eval not existing'.format(check_item)],
                                        'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
-                # self._action_status = _issue
                 # raise Exception("Problem evaluating item '{}' from eval. It does not exist.".format(check_item))
                 self._log_error("Problem evaluating item '{}' from eval. It does not exist", check_item)
                 check_item = None
@@ -359,7 +358,6 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 if self._abitem.id == check_item.property.path:
                     self._caller += '_self'
         if _issue[self._name].get('issue') not in [[], [None], None]:
-            # self._action_status = _issue
             self._log_develop("Issue with {} action {}", action_type, _issue)
         else:
             _issue = {self._name: {'issue': None,
@@ -440,7 +438,6 @@ class SeActionBase(StateEngineTools.SeItemChild):
             _validitem = True
         except Exception as ex:
             _validitem = False
-            #self._log_develop("action issues {}", self._action_status)
             self._log_decrease_indent()
         if not self._can_execute(state):
             self._log_decrease_indent()
@@ -561,6 +558,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
             else:
                 value = None
             self._abitem.add_scheduler_entry(self._scheduler_name)
+            self.update_webif_actionstatus(state, self._name, 'Scheduled')
             self._se_plugin.scheduler_add(self._scheduler_name, self._delayed_execute,
                                           value={'actionname': actionname, 'namevar': self._name,
                                                  'repeat_text': repeat_text, 'value': value,
@@ -791,6 +789,7 @@ class SeActionSetByattr(SeActionBase):
         if returnvalue:
             return value
         self._log_info("{0}: Setting values by attribute '{1}'.{2}", actionname, self.__byattr, repeat_text)
+        self.update_webif_actionstatus(state, self._name, 'True')
         source = self.set_source(current_condition, previous_condition, previousstate_condition)
         for item in self.itemsApi.find_items(self.__byattr):
             self._log_info("\t{0} = {1}", item.property.path, item.conf[self.__byattr])
@@ -855,6 +854,7 @@ class SeActionTrigger(SeActionBase):
 
         if returnvalue:
             return value
+        self.update_webif_actionstatus(state, self._name, 'True')
         self._log_info("{0}: Triggering logic '{1}' using value '{2}'.{3}", actionname, self.__logic, value, repeat_text)
         add_logics = 'logics.{}'.format(self.__logic) if not self.__logic.startswith('logics.') else self.__logic
         self._sh.trigger(add_logics, by=self._caller, source=self._name, value=value)
@@ -937,10 +937,12 @@ class SeActionRun(SeActionBase):
                 if previousstate_condition:
                     self._log_debug("Running eval {0} based on previous state's conditionset {1}", self.__eval, previousstate_condition)
                 eval(self.__eval)
+                self.update_webif_actionstatus(state, self._name, 'True')
                 self._log_decrease_indent()
             except Exception as ex:
                 self._log_decrease_indent()
                 text = "{0}: Problem evaluating '{1}': {2}."
+                self.update_webif_actionstatus(state, self._name, 'False', 'Problem evaluating: {}'.format(ex))
                 self._log_error(text.format(actionname, StateEngineTools.get_eval_name(self.__eval), ex))
         else:
             try:
@@ -954,9 +956,11 @@ class SeActionRun(SeActionBase):
                 if previousstate_condition:
                     self._log_debug("Running eval {0} based on previous state's conditionset {1}", self.__eval, previousstate_condition)
                 self.__eval()
+                self.update_webif_actionstatus(state, self._name, 'True')
                 self._log_decrease_indent()
             except Exception as ex:
                 self._log_decrease_indent()
+                self.update_webif_actionstatus(state, self._name, 'False', 'Problem calling: {}'.format(ex))
                 text = "{0}: Problem calling '{0}': {1}."
                 self._log_error(text.format(actionname, StateEngineTools.get_eval_name(self.__eval), ex))
 
@@ -1057,6 +1061,7 @@ class SeActionForceItem(SeActionBase):
 
         if value is None:
             self._log_debug("{0}: Value is None", actionname)
+            self.update_webif_actionstatus(state, self._name, 'False', 'Value is None')
             return
 
         if returnvalue:
@@ -1068,6 +1073,7 @@ class SeActionForceItem(SeActionBase):
             # noinspection PyCallingNonCallable
             delta = float(abs(self.__item() - value))
             if delta < mindelta:
+                self.update_webif_actionstatus(state, self._name, 'False')
                 text = "{0}: Not setting '{1}' to '{2}' because delta '{3:.2}' is lower than mindelta '{4}'"
                 self._log_debug(text, actionname, self.__item.property.path, value, delta, mindelta)
                 return
@@ -1097,6 +1103,7 @@ class SeActionForceItem(SeActionBase):
             self._log_debug("{0}: New value differs from old value, no force required.", actionname)
         self._log_decrease_indent()
         self._log_debug("{0}: Set '{1}' to '{2}'.{3}", actionname, self.__item.property.path, value, repeat_text)
+        self.update_webif_actionstatus(state, self._name, 'True')
         # noinspection PyCallingNonCallable
         self.__item(value, caller=self._caller, source=source)
 
@@ -1190,61 +1197,84 @@ class SeActionSpecial(SeActionBase):
         self._log_increase_indent()
         if self.__special == "suspend":
             self.suspend_execute(state, current_condition, previous_condition, previousstate_condition)
+            if self._suspend_issue in ["", [], None, [None]]:
+                self.update_webif_actionstatus(state, self._name, 'True')
+            else:
+                self.update_webif_actionstatus(state, self._name, 'False', self._suspend_issue)
             self._log_decrease_indent()
         elif self.__special == "retrigger":
+            if self._retrigger_issue in ["", [], None, [None]]:
+                self.update_webif_actionstatus(state, self._name, 'True')
+            else:
+                self.update_webif_actionstatus(state, self._name, 'False', self._retrigger_issue)
             # noinspection PyCallingNonCallable
             self._abitem.update_state(self.__value, self._caller)
             #self.__value(True, caller=self._caller)
             self._log_decrease_indent()
         else:
             self._log_decrease_indent()
+            self.update_webif_actionstatus(state, self._name, 'False', 'Unknown special value {}'.format(self.__special))
             raise ValueError("{0}: Unknown special value '{1}'!".format(actionname, self.__special))
         self._log_debug("Special action {0}: done", self.__special)
 
     def suspend_get_value(self, value):
         _issue = {self._name: {'issue': None, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
         if value is None:
-            _issue = {self._name: {'issue': 'Special action suspend requires arguments', 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
+            text = 'Special action suspend requires arguments'
+            _issue = {self._name: {'issue': text, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
             self._action_status = _issue
-            raise ValueError("Action {0}: Special action 'suspend' requires arguments!".format(self._name))
+            self._suspend_issue = text
+            raise ValueError("Action {0}: {1}".format(self._name, text))
 
         suspend, manual = StateEngineTools.partition_strip(value, ",")
         if suspend is None or manual is None:
-            _issue = {self._name: {'issue': 'Special action suspend requires two arguments', 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
+            text = "Special action 'suspend' requires two arguments (separated by a comma)!"
+            _issue = {self._name: {'issue': text, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
             self._action_status = _issue
-            raise ValueError("Action {0}: Special action 'suspend' requires two arguments (separated by a comma)!".format(self._name))
+            self._suspend_issue = text
+            raise ValueError("Action {0}: {1}".format(self._name, text))
 
         suspend_item, _issue = self._abitem.return_item(suspend)
         _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
         if suspend_item is None:
-            _issue = {self._name: {'issue': 'Suspend item not found', 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
+            text = "Suspend item '{}' not found!".format(suspend)
+            _issue = {self._name: {'issue': text, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
             self._action_status = _issue
-            raise ValueError("Action {0}: Suspend item '{1}' not found!".format(self._name, suspend))
+            self._suspend_issue = text
+            raise ValueError("Action {0}: {1}".format(self._name, text))
 
         manual_item, _issue = self._abitem.return_item(manual)
+        self._suspend_issue = _issue
         _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
         if manual_item is None:
-            _issue = {self._name: {'issue': 'Manual item {} not found'.format(manual), 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
+            text = 'Manual item {} not found'.format(manual)
+            _issue = {self._name: {'issue': text, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
             self._action_status = _issue
-            raise ValueError("Action {0}: Manual item '{1}' not found!".format(self._name, manual))
+            self._suspend_issue = text
+            raise ValueError("Action {0}: {1}".format(self._name, text))
         self._action_status = _issue
         return [suspend_item, manual_item.property.path]
 
     def retrigger_get_value(self, value):
         if value is None:
-            _issue = {self._name: {'issue': 'Special action retrigger requires item', 'issueorigin': [{'state': 'retrigger', 'action': 'retrigger'}]}}
+            text = 'Special action retrigger requires item'
+            _issue = {self._name: {'issue': text, 'issueorigin': [{'state': 'retrigger', 'action': 'retrigger'}]}}
             self._action_status = _issue
-            raise ValueError("Action {0}: Special action 'retrigger' requires item".format(self._name))
+            self._retrigger_issue = text
+            raise ValueError("Action {0}: {1}".format(self._name, text))
 
         se_item, __ = StateEngineTools.partition_strip(value, ",")
 
         se_item, _issue = self._abitem.return_item(se_item)
+        self._retrigger_issue = _issue
         _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'retrigger', 'action': 'retrigger'}]}}
         self._action_status = _issue
         if se_item is None:
-            _issue = {self._name: {'issue': 'Retrigger item {} not found'.format(se_item), 'issueorigin': [{'state': 'retrigger', 'action': 'retrigger'}]}}
+            text = 'Retrigger item {} not found'.format(se_item)
+            _issue = {self._name: {'issue': text, 'issueorigin': [{'state': 'retrigger', 'action': 'retrigger'}]}}
             self._action_status = _issue
-            raise ValueError("Action {0}: Retrigger item '{1}' not found!".format(self._name, se_item))
+            self._retrigger_issue = text
+            raise ValueError("Action {0}: {1}".format(self._name, text))
         return se_item
 
     def suspend_execute(self, state=None, current_condition=None, previous_condition=None, previousstate_condition=None):

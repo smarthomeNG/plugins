@@ -116,6 +116,12 @@ class SeState(StateEngineTools.SeItemChild):
 
     @is_copy_for.setter
     def is_copy_for(self, value):
+        if value:
+            webif_id = value.id
+        else:
+            webif_id = None
+        _key_copy = ['{}'.format(self.id), 'is_copy_for']
+        self._abitem.update_webif(_key_copy, webif_id)
         self.__is_copy_for.set(value, "", True, None, False)
 
     # Constructor
@@ -199,7 +205,8 @@ class SeState(StateEngineTools.SeItemChild):
                                             'actions_enter_or_stay': {},
                                             'actions_stay': {},
                                             'actions_leave': {},
-                                            'leave': False, 'enter': False, 'stay': False})
+                                            'leave': False, 'enter': False, 'stay': False,
+                                            'is_copy_for': None, 'releasedby': None})
         self._log_decrease_indent()
         self._log_info("Finished Web Interface Update")
 

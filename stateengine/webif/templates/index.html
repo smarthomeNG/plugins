@@ -27,12 +27,6 @@ function mainpage() {
 }
 </script>
 <script>
-$("a").click(function() {
-    var value = $(this).data("value");
-    Console.debug(value);
-});
-</script>
-<script>
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
 		try {
@@ -46,10 +40,11 @@ $("a").click(function() {
         { width: '15%', targets: 2 },
         { className: "item", targets: 1 },
         { className: "state", targets: 2 },
-        { className: "conditionset", targets: 3 },
-        { className: "visu", targets: 4 },
-        { className: "loglevel", targets: 5 },
-        { className: "states", targets: 6 }
+        { className: "released", targets: 3 },
+        { className: "conditionset", targets: 4 },
+        { className: "visu", targets: 5 },
+        { className: "loglevel", targets: 6 },
+        { className: "states", targets: 7 }
         ].concat($.fn.dataTable.defaults.columnDefs)});
 		}
 		catch (e) {
@@ -67,6 +62,7 @@ $("a").click(function() {
         shngInsertText (item+'_laststate', objResponse[item]['laststate'], 'maintable', 10);
         shngInsertText (item+'_lastconditionset', objResponse[item]['lastconditionset'], 'maintable', 10);
         shngInsertText (item+'_log_level', objResponse[item]['log_level'], 'maintable', 10);
+        shngInsertText (item+'_can_be_released_by', objResponse[item]['laststate_releasedby'], 'maintable', 10);
 			}
 		}
 	}
@@ -123,6 +119,7 @@ $("a").click(function() {
     <tr><th></th>
       <th>{{ _('SE Item') }}</th>
       <th>{{ _('aktueller Zustand') }}</th>
+      <th>{{ _('potenzieller Release') }}</th>
       <th>{{ _('aktuelles Bedingungsset') }}</th>
       <th>Visu</th>
       <th>{{ _('Log Level') }}</th>
@@ -133,9 +130,10 @@ $("a").click(function() {
     {% for item in p.get_items() %}
     <tr><td></td>
         <td class="py-1">{{ item }}</td>
-        <td class="py-1" id="{{ item }}_laststate">{{ item.laststate_name }}</td>
+        <td class="py-1" id="{{ item }}_laststate">{% if item.laststate_name in ["", None] %}-{% else %}{{ item.laststate_name }}{% endif %}</td>
+        <td class="py-1" id="{{ item }}_can_be_released_by">{% if item.laststate_releasedby in [[], None] %}-{% else %}{{ item.laststate_releasedby }}{% endif %}</td>
         <td class="py-1" id="{{ item }}_lastconditionset">
-          {% if item.lastconditionset_name == "" %}-{% else %}{{ item.lastconditionset_name }}{% endif %}</td>
+          {% if item.lastconditionset_name in ["", None] %}-{% else %}{{ item.lastconditionset_name }}{% endif %}</td>
         <td>
           {% if p.vis_enabled %}
             <button type="button" class="btn btn-shng btn-sm" title="{{ _('Detailvisualisierung') }}" onclick="location.href='?action=get_graph&abitem={{ item }}';"><i class="fas fa-search"></i></button>
@@ -145,6 +143,7 @@ $("a").click(function() {
         </td>
         <td class="py-1" id="{{ item }}_log_level">{{ item.logger.log_level_as_num }}</td>
         <td class="py-1">{% for cond in item.webif_infos.keys() %}{% if not p.itemsApi.return_item(cond) == None %}{% if loop.index > 1 %},{% endif %}{{ p.itemsApi.return_item(cond)._name.split('.')[-1] }}{% endif %}{% endfor %}</td>
+
 
       </tr>
 
