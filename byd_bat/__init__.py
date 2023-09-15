@@ -35,6 +35,8 @@
 # V0.0.3 230819 - Code mit pycodestyle kontrolliert/angepasst
 #               - Anpassungen durch 'check_plugin'
 #
+# V0.0.4 230904 - Bilder JPG in PNG konvertiert fuer user_doc.rst
+#
 # -----------------------------------------------------------------------
 #
 # Als Basis fuer die Implementierung wurde die folgende Quelle verwendet:
@@ -176,7 +178,7 @@ class byd_bat(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '0.0.3'
+    PLUGIN_VERSION = '0.0.4'
     
     def __init__(self,sh):
         """
