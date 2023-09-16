@@ -7,20 +7,8 @@
 <script>
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
-      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-      console.log('pagelength ' + webif_pagelength);
-      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-        resize = true;
-        webif_pagelength = -1;
-        console.log('Activating automatic table resize ' + webif_pagelength);
-      }
-      else {
-        resize = false;
-      }
-
 		try {
       itemtable = $('#itemtable').DataTable( {
-        pageResize: resize,
         columnDefs: [
         { responsivePriority: 1, targets: 1 },
         { responsivePriority: 3, targets: 4 },
@@ -33,11 +21,9 @@
         { className: "logcount", targets: 6, render: $.fn.dataTable.render.number('.', ',', 0, '') },
         { className: "maxage", targets: -2 },
         { className: "no-sort actions", targets: -1 }
-        ].concat($.fn.dataTable.defaults.columnDefs),
-        pageLength: webif_pagelength});
+        ].concat($.fn.dataTable.defaults.columnDefs)});
       {%  if p.count_logentries %}
       orphantable = $('#orphantable').DataTable( {
-        pageResize: resize,
         columnDefs: [
         { responsivePriority: 1, targets: 1 },
         { responsivePriority: 2, targets: 2 },
@@ -46,11 +32,9 @@
         { className: "type", targets: 3 },
         { className: "id", targets: 4, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
         { className: "logcount", targets: 5, render: $.fn.dataTable.render.number('.', ',', 0, '') },
-        ].concat($.fn.dataTable.defaults.columnDefs),
-        pageLength: webif_pagelength});
+        ].concat($.fn.dataTable.defaults.columnDefs)});
       {% else %}
       orphantable = $('#orphantable').DataTable( {
-        pageResize: resize,
         columnDefs: [
         { responsivePriority: 1, targets: 1 },
         { responsivePriority: 2, targets: 2 },
@@ -58,12 +42,10 @@
         { className: "time", targets: 2 },
         { className: "type", targets: 3 },
         { className: "id", targets: 4, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
-        ].concat($.fn.dataTable.defaults.columnDefs),
-        pageLength: webif_pagelength});
+        ].concat($.fn.dataTable.defaults.columnDefs)});
       {% endif %}
 
       detailtable = $('#item_details_table').DataTable( {
-        pageLength: webif_pagelength,
         order: [[2, 'desc']],
         columnDefs: [
         { responsivePriority: 1, targets: 1 },
@@ -81,8 +63,7 @@
             this.api().columns.adjust();
             this.api().fixedHeader.adjust();
             this.api().responsive.recalc();
-        },
-        pageResize: resize});
+        }});
 		}
 		catch (e) {
 			console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
@@ -96,7 +77,8 @@
 <link rel="stylesheet" href="/gstatic/bootstrap-datepicker/css/bootstrap-datepicker.min.css" type="text/css"/>
 <style>
     .hidden {
-      display:none;}
+      display:none;
+    }
     .logcount {
       width: 100px;
       text-align:right;
