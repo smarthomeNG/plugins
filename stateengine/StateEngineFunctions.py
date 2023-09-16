@@ -69,7 +69,7 @@ class SeFunctions:
         def check_include_exclude(entry_type):
             conf_entry = item.conf["se_manual_{}".format(entry_type)]
             if isinstance(conf_entry, str):
-                if ',' in conf_entry:
+                if ',' in conf_entry or conf_entry.startswith("["):
                     try:
                         new_conf_entry = literal_eval(conf_entry)
                         if isinstance(new_conf_entry, list):
@@ -79,22 +79,23 @@ class SeFunctions:
                 else:
                     conf_entry = [conf_entry, ]
             elif not isinstance(conf_entry, list):
-                elog.error("Item '{0}', Attribute 'se_manual_exclude': Value must be a string or a list!", item_id)
+                elog.error("Item '{0}', Attribute 'se_manual_{1}': Value must be a string or a list!", item_id, entry_type)
                 return retval_no_trigger
-            elog.info("checking {0} values: {1}", entry_type, conf_entry)
+            elog.info("checking manual {0} values: {1}", entry_type, conf_entry)
             elog.increase_indent()
 
             # If current value is in list -> Return "Trigger"
-            for entry in conf_entry:
-                entry = re.compile(entry, re.IGNORECASE)
-                result = entry.match(original)
+            for e in conf_entry:
+                e = re.compile(e, re.IGNORECASE)
+                result = e.match(original)
                 elog.info("Checking regex result {}", result)
                 if result is not None:
-                    elog.info("{0}: matching.", entry)
+                    elog.info("{0}: matching.", e)
                     elog.decrease_indent()
-                    elog.info("Writing value {0}", retval_no_trigger)
-                    return retval_trigger
-                elog.info("{0}: not matching", entry)
+                    returnvalue = retval_trigger if entry_type == "include" else retval_no_trigger
+                    elog.info("Writing value {0}", returnvalue)
+                    return returnvalue
+                elog.info("{0}: not matching", e)
             elog.decrease_indent()
 
         item = self.itemsApi.return_item(item_id)
