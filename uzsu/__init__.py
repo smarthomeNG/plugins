@@ -48,19 +48,19 @@
 #                   time series is mandatory using dict key 'series'
 #
 #     series:   definition of the time series as dict using keys 'active', 'timeSeriesMin',
-#               'timeSeriesMax', 'timeSeriesintervall'
+#               'timeSeriesMax', 'timeSeriesIntervall'
 #                   example:
 #                       "series":{"active":true,
 #                                 "timeSeriesMin":"06:15",
 #                                 "timeSeriesMax":"15:30",
-#                                 "timeSeriesintervall":"01:00"}
+#                                 "timeSeriesIntervall":"01:00"}
 #               alternative to 'timeSeriesMax', which indicated the end time of the time series, the key 'timeSeriesCount'
 #               can be used to define the number of cycles to be run
 #                   example:
 #                       "series":{"active":true,
 #                                 "timeSeriesMin":"06:15",
 #                                 "timeSeriesCount":"4",
-#                                 "timeSeriesintervall":"01:00"}
+#                                 "timeSeriesIntervall":"01:00"}
 #
 #
 #     rrule:    You can use the recurrence rules documented in the iCalendar RFC for recurrence use of a switching entry.
@@ -126,7 +126,6 @@ class UZSU(SmartPlugin):
         self._webdata = {'sunCalculated': {}, 'items': {}}
         self._update_count = {'todo': 0, 'done': 0}
         self._itpl = {}
-        self._pluginname = self.get_fullname()
         self.init_webinterface(WebInterface)
         self.logger.info("Init with timezone {}".format(self._timezone))
 
@@ -146,7 +145,7 @@ class UZSU(SmartPlugin):
             self._items[item]['interpolation']['itemtype'] = self._add_type(item)
             self._lastvalues[item] = None
             self._webdata['items'][item.id()].update({'lastvalue': '-'})
-            self._update_item(item, self._pluginname, 'run')
+            self._update_item(item, 'UZSU Plugin', 'run')
             cond1 = self._items[item].get('active') and self._items[item]['active'] is True
             cond2 = self._items[item].get('list')
             if cond1 and cond2:
@@ -159,7 +158,7 @@ class UZSU(SmartPlugin):
             # remove lastvalue dict entry, it is not used anymore
             try:
                 self._items[item].pop('lastvalue')
-                self._update_item(item, self._pluginname, 'lastvalue removed')
+                self._update_item(item, 'UZSU Plugin', 'lastvalue removed')
                 self.logger.debug("Item '{}': removed lastvalue dict entry as it is deprecated.".format(item))
             except Exception:
                 pass
@@ -200,7 +199,7 @@ class UZSU(SmartPlugin):
             success = self._update_sun(item, caller="update_all_suns")
             if success:
                 self.logger.debug('Updating sun info for item {}. Caller: {}'.format(item, caller))
-                self._update_item(item, self._pluginname, 'update_all_suns')
+                self._update_item(item, 'UZSU Plugin', 'update_all_suns')
 
     def _update_sun(self, item, caller=None):
         """
@@ -240,12 +239,12 @@ class UZSU(SmartPlugin):
         if entry.get('calculated') and entryvalue is None:
             self.logger.debug("No sunset/rise in time for current entry {}. Removing calculated value.".format(entry))
             self._items[item]['list'][entryindex].pop('calculated')
-            self._update_item(item, self._pluginname, 'update_sun')
+            self._update_item(item, 'UZSU Plugin', 'update_sun')
         elif update is True and not entry.get('calculated') == entryvalue:
             self.logger.debug("Updated calculated time for item {} entry {} with value {}.".format(
                 item, self._items[item]['list'][entryindex], entryvalue))
             self._items[item]['list'][entryindex]['calculated'] = entryvalue
-            self._update_item(item, self._pluginname, 'update_sun')
+            self._update_item(item, 'UZSU Plugin', 'update_sun')
         elif entry.get('calculated'):
             self.logger.debug("Sun calculation {} entry not updated for item {} with value {}".format(
                 entryvalue, item, entry.get('calculated')))
@@ -306,7 +305,7 @@ class UZSU(SmartPlugin):
             self._items[item] = item()
             self._items[item]['active'] = activevalue
             self.logger.info("Item {} is set via logic to: {}".format(item, activevalue))
-            self._update_item(item, self._pluginname, 'logic')
+            self._update_item(item, 'UZSU Plugin', 'logic')
             return activevalue
         if activevalue is None:
             return self._items[item].get('active')
@@ -323,7 +322,7 @@ class UZSU(SmartPlugin):
             self._items[item]['interpolation']['initage'] = int(backintime)
             self.logger.info("Item {} interpolation is set via logic to: type={}, interval={}, backintime={}".format(
                 item, intpl_type, abs(interval), backintime))
-            self._update_item(item, self._pluginname, 'logic')
+            self._update_item(item, 'UZSU Plugin', 'logic')
             return self._items[item].get('interpolation')
 
     def _logics_clear(self, clear=False, item=None):
@@ -336,7 +335,7 @@ class UZSU(SmartPlugin):
             self._items[item].clear()
             self._items[item] = {'interpolation': {}, 'active': False}
             self.logger.info("UZSU settings for item '{}' are cleared".format(item))
-            self._update_item(item, self._pluginname, 'clear')
+            self._update_item(item, 'UZSU Plugin', 'clear')
             return True
         else:
             return False
@@ -430,7 +429,7 @@ class UZSU(SmartPlugin):
                     self._items[item]['list'][entry].pop('delayedExec', None)
 
             self._webdata['items'].update({item.id(): {}})
-            self._update_item(item, self._pluginname, 'init')
+            self._update_item(item, 'UZSU Plugin', 'init')
             self._planned.update({item: 'notinit'})
             self._webdata['items'][item.id()].update({'planned': {'value': '-', 'time': '-'}})
 
@@ -479,7 +478,7 @@ class UZSU(SmartPlugin):
                         self.logger.warning("Error creating rrule: {}".format(err))
             if count > 0:
                 self.logger.debug("Updated {} rrule entries for item: {}".format(count, item))
-                self._update_item(item, self._pluginname, 'create_rrule')
+                self._update_item(item, 'UZSU Plugin', 'create_rrule')
             if _inactive >= len(self._items[item]['list']):
                 self._planned.update({item: None})
                 self._webdata['items'][item.id()].update({'planned': {'value': '-', 'time': '-'}})
@@ -493,7 +492,7 @@ class UZSU(SmartPlugin):
         :param source:  if given it represents the source
         :param dest:    if given it represents the dest
         """
-        cond = (not caller == self._pluginname) or source == 'logic'
+        cond = (not caller == 'UZSU Plugin') or source == 'logic'
         self.logger.debug('Update Item {}, Caller {}, Source {}, Dest {}. Will update: {}'.format(
             item, caller, source, dest, cond))
         if not source == 'create_rrule':
@@ -521,7 +520,7 @@ class UZSU(SmartPlugin):
             self._schedule(item, caller='dry_run')
 
         if self._items[item] != self.itemsApi.return_item(str(item)) and cond:
-            self._update_item(item, self._pluginname, 'update')
+            self._update_item(item, 'UZSU Plugin', 'update')
 
     def _update_item(self, item, caller="", comment=""):
         success = self._get_sun4week(item, caller="_update_item")
@@ -629,7 +628,7 @@ class UZSU(SmartPlugin):
             if _interval < 0:
                 _interval = abs(int(_interval))
                 self._items[item]['interpolation']['interval'] = _interval
-                self._update_item(item, self._pluginname, 'intervalchange')
+                self._update_item(item, 'UZSU Plugin', 'intervalchange')
             _interpolation = self._items[item]['interpolation'].get('type')
             _interpolation = self._interpolation_type if not _interpolation else _interpolation
             _initage = self._items[item]['interpolation'].get('initage')
@@ -664,7 +663,7 @@ class UZSU(SmartPlugin):
                 self.logger.info("Looking if there was a value set after {} for item {}".format(
                     _timediff, item))
                 self._items[item]['interpolation']['initialized'] = True
-                self._update_item(item, self._pluginname, 'init')
+                self._update_item(item, 'UZSU Plugin', 'init')
             if cond1 and not cond2 and cond3 and cond6:
                 self._set(item=item, value=_initvalue, caller=_caller)
                 self.logger.info("Updated item {} on startup with value {} from time {}".format(
@@ -710,7 +709,7 @@ class UZSU(SmartPlugin):
                                     " to not enough values set in the UZSU.".format(_value, item))
             if _reset_interpolation is True:
                 self._items[item]['interpolation']['type'] = 'none'
-                self._update_item(item, self._pluginname, 'reset_interpolation')
+                self._update_item(item, 'UZSU Plugin', 'reset_interpolation')
             if _caller != "dry_run":
                 self.logger.debug("will add scheduler named uzsu_{} with datetime {} and tzinfo {}"
                                   " and value {}".format(item.property.path, _next, _next.tzinfo, _value))
@@ -720,7 +719,7 @@ class UZSU(SmartPlugin):
                 self.scheduler_add('{}'.format(item.property.path), self._set,
                                    value={'item': item, 'value': _value, 'caller': 'Scheduler'}, next=_next)
                 if self._update_count.get('done') == self._update_count.get('todo'):
-                    self.scheduler_trigger('uzsu_sunupdate', by=self._pluginname)
+                    self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
                     self._update_count = {'done': 0, 'todo': 0}
         elif self._items[item].get('active') is True and self._items[item].get('list'):
             self.logger.warning("item '{}' is active but has no active entries.".format(item))
@@ -735,7 +734,7 @@ class UZSU(SmartPlugin):
         :param caller:  if given it represents the callers name
         """
         _uzsuitem, _itemvalue = self._get_dependant(item)
-        _uzsuitem(value, self._pluginname, 'set')
+        _uzsuitem(value, 'UZSU Plugin', 'set')
         self._webdata['items'][item.id()].update({'depend': {'item': _uzsuitem.id(), 'value': str(_itemvalue)}})
         if not caller or caller == "Scheduler":
             self._schedule(item, caller='set')
@@ -909,7 +908,7 @@ class UZSU(SmartPlugin):
                 try:
                     #####################
                     seriesbegin, seriesend, daycount, mydict = self._fix_empty_values(mydict)
-                    interval = mydict['series'].get('timeSeriesintervall', None)
+                    interval = mydict['series'].get('timeSeriesIntervall', None)
                     seriesstart = seriesbegin
                     endtime = None
 
@@ -925,7 +924,7 @@ class UZSU(SmartPlugin):
                         self.logger.warning(issue)
                         return issue
 
-                    interval = int(interval.split(":")[0]) * 60 + int(mydict['series']['timeSeriesintervall'].split(":")[1])
+                    interval = int(interval.split(":")[0]) * 60 + int(mydict['series']['timeSeriesIntervall'].split(":")[1])
 
                     if interval == 0:
                         issue = "Could not calculate serie because interval is ZERO - {}".format(mydict)
@@ -988,8 +987,8 @@ class UZSU(SmartPlugin):
                                                                            str(starttime.minute)).time()))
                     mynewlist = []
 
-                    interval = int(mydict['series']['timeSeriesintervall'].split(":")[0])*60 + \
-                                int(mydict['series']['timeSeriesintervall'].split(":")[1])
+                    interval = int(mydict['series']['timeSeriesIntervall'].split(":")[0])*60 + \
+                                int(mydict['series']['timeSeriesIntervall'].split(":")[1])
                     exceptions = 0
                     for day in list(rrule):
                         if not mydays[day.weekday()] in mydict['rrule']:
@@ -1021,7 +1020,7 @@ class UZSU(SmartPlugin):
                                                     item, datetime.strftime(starttime, "%H:%M"),
                                                     datetime.strftime(endtime, "%H:%M"),
                                                     max_interval.seconds // 3600, max_interval.seconds % 3600//60,
-                                                    mydict['series']['timeSeriesintervall']))
+                                                    mydict['series']['timeSeriesIntervall']))
                             exceptions += 1
                             max_interval = int(max_interval.total_seconds() / 60)
                             myrulenext = "FREQ=MINUTELY;COUNT=1;INTERVAL={}".format(max_interval)
@@ -1133,11 +1132,11 @@ class UZSU(SmartPlugin):
 
         returnvalue = None
         seriesbegin, seriesend, daycount, mydict = self._fix_empty_values(mydict)
-        interval = mydict['series'].get('timeSeriesintervall', None)
+        interval = mydict['series'].get('timeSeriesIntervall', None)
         seriesstart = seriesbegin
 
         if interval is not None and interval != "":
-            interval = int(interval.split(":")[0])*60 + int(mydict['series']['timeSeriesintervall'].split(":")[1])
+            interval = int(interval.split(":")[0])*60 + int(mydict['series']['timeSeriesIntervall'].split(":")[1])
         else:
             return returnvalue
         if interval == 0:
