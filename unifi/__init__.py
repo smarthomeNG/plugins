@@ -29,6 +29,7 @@ from jinja2 import Environment, FileSystemLoader
 import cherrypy
 from lib.module import Modules
 from lib.model.smartplugin import *
+from .webif import WebInterface
 from lib.utils import Utils
 from plugins.unifi.ubiquiti.unifi import API as UniFiAPI
 from plugins.unifi.ubiquiti.unifi import DataException as UniFiDataException
@@ -319,7 +320,7 @@ class UniFiControllerClient(SmartPlugin):
         self._cycle = self.get_parameter_value(UniFiConst.PARAMETER_CYCLE_TIME)
         self._logging = True
 
-        self.init_webinterface()
+        self.init_webinterface(WebInterface)
 
         return
 
@@ -657,85 +658,3 @@ class UniFiControllerClient(SmartPlugin):
         except ConnectionError as ex:
             self._pollfailed += 1
             self.logger.error("Poll failed: {} for {} time(s) in a row.".format(repr(ex), self._pollfailed))
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            # try/except to handle running in a core version that does not support modules
-            self.mod_http = Modules.get_instance().get_module('http')
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
-            return False
-
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-    @cherrypy.expose
-    def index(self, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-
-        tabcount = 2
-
-        tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
-                           plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(),
-                           tabcount=tabcount,
-                           p=self.plugin)
