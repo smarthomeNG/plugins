@@ -97,6 +97,7 @@ class SeFunctions:
                     return returnvalue
                 elog.info("{0}: not matching", e)
             elog.decrease_indent()
+            return None
 
         item = self.itemsApi.return_item(item_id)
         if item is None:
@@ -139,16 +140,23 @@ class SeFunctions:
                 return retval_no_trigger
 
             if "se_manual_on" in item.conf:
-                check_include_exclude("on")
+                returnvalue = check_include_exclude("on")
+                if returnvalue is not None:
+                    return returnvalue
 
             if "se_manual_exclude" in item.conf:
-                check_include_exclude("exclude")
+                returnvalue = check_include_exclude("exclude")
+                if returnvalue is not None:
+                    return returnvalue
 
             if "se_manual_include" in item.conf:
-                check_include_exclude("include")
-                # Current value not in list -> Return "No Trigger
-                elog.info("No include values matching. Writing value {0}", retval_no_trigger)
-                return retval_no_trigger
+                returnvalue = check_include_exclude("include")
+                if returnvalue is not None:
+                    return returnvalue
+                else:
+                    # Current value not in list -> Return "No Trigger
+                    elog.info("No include values matching. Writing value {0}", retval_no_trigger)
+                    return retval_no_trigger
             else:
                 # No include-entries -> return "Trigger"
                 elog.info("No include limitation. Writing value {0}", retval_trigger)
