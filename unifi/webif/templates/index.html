@@ -144,56 +144,54 @@
 -->
 {% set tab1title = "<strong>Items</strong> (" ~ p._model.get_item_count() ~ ")" %}
 {% block bodytab1 %}
+  <table id="maintable">
+  	<thead>
+  		<tr class="shng_heading"><th></th>
+  			<th>{{ _('Pfad') }}</th>
+  			<th>{{ _('Typ') }}</th>
+  			<th>unifi_type</th>
+  			<th>{{ _('Item Wert') }}</th>
+  			<th>{{ _('Letztes Update') }}</th>
+  			<th>{{ _('Letzter Change') }}</th>
+  			<th>{{ _('Probleme') }}</th>
+  		</tr>
+  	</thead>
+  	<tbody>
+  		{% for item in p._model.get_items() %}
+  			<tr id="r{{ loop.index }}_head"><td></td>
+  				<td class="py-1"><div class="rel" id="{{ item }}_id">{{ item.id() }}</div></td>
+  				<td class="py-1" id="{{ item }}_type">{{ item.type() }}</td>
+  				<td class="py-1" id="{{ item }}_unifi_type">{{ item.conf['unifi_type'] }}</td>
+  				<td class="py-1" id="{{ item }}_value">{{ item() }}</td>
+  				<td class="py-1" id="{{ item }}_last_update">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+  				<td class="py-1" id="{{ item }}_last_change">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+  				<td class="py-1" id="{{ item }}_issues">
+            {% if p._model.get_item_issues(item.id()).get_issues() | length == 0 %}
+              {{ _('Keine')}}
+            {% else %}
+  						{% for issue in p._model.get_item_issues(item.id()).get_issues() %}
+                {% if p._model.get_item_issues(item.id()).get_issues() | length > 1 and loop.index == 1 %}
+                  <br/>
+                {% endif %}
+  							{% if issue[0:2] == "1:" %}
+  								<i class="fas fa-info" style="color: #cccccc" id=""></i>{{ issue[2:400] }}
+  							{% elif issue[0:2] == "2:" %}
+  								<i class="fas fa-flag" style="color: lightgreen"></i>{{ issue[2:400] }}
+  							{% elif issue[0:2] == "3:" %}
+  								<i class="fas fa-exclamation-circle" style="color: #FFD700"></i>{{ issue[2:400] }}
+  							{% elif issue[0:2] == "4:" %}
+  								<i class="fas fa-exclamation-triangle" style="color: red"></i>{{ issue[2:400] }}
+  							{% else %}
+  								{{ issue }}
+  							{% endif %}
+  							<br/>
+  						{% endfor %}
+            {% endif %}
+  				</td>
+  		{% endfor %}
+  	</tbody>
+  </table>
 
-<div class="container-fluid m-2 table-resize">
-		<table id="maintable">
-			<thead>
-				<tr class="shng_heading"><th></th>
-					<th>{{ _('Pfad') }}</th>
-					<th>{{ _('Typ') }}</th>
-					<th>unifi_type</th>
-					<th>{{ _('Item Wert') }}</th>
-					<th>{{ _('Letztes Update') }}</th>
-					<th>{{ _('Letzter Change') }}</th>
-					<th>{{ _('Probleme') }}</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for item in p._model.get_items() %}
-					<tr id="r{{ loop.index }}_head"><td></td>
-						<td class="py-1"><div class="rel" id="{{ item }}_id">{{ item.id() }}</div></td>
-						<td class="py-1" id="{{ item }}_type">{{ item.type() }}</td>
-						<td class="py-1" id="{{ item }}_unifi_type">{{ item.conf['unifi_type'] }}</td>
-						<td class="py-1" id="{{ item }}_value">{{ item() }}</td>
-						<td class="py-1" id="{{ item }}_last_update">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1" id="{{ item }}_last_change">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1" id="{{ item }}_issues">
-              {% if p._model.get_item_issues(item.id()).get_issues() | length == 0 %}
-                {{ _('Keine')}}
-              {% else %}
-  							{% for issue in p._model.get_item_issues(item.id()).get_issues() %}
-                  {% if p._model.get_item_issues(item.id()).get_issues() | length > 1 and loop.index == 1 %}
-                    <br/>
-                  {% endif %}
-  								{% if issue[0:2] == "1:" %}
-  									<i class="fas fa-info" style="color: #cccccc" id=""></i>{{ issue[2:400] }}
-  								{% elif issue[0:2] == "2:" %}
-  									<i class="fas fa-flag" style="color: lightgreen"></i>{{ issue[2:400] }}
-  								{% elif issue[0:2] == "3:" %}
-  									<i class="fas fa-exclamation-circle" style="color: #FFD700"></i>{{ issue[2:400] }}
-  								{% elif issue[0:2] == "4:" %}
-  									<i class="fas fa-exclamation-triangle" style="color: red"></i>{{ issue[2:400] }}
-  								{% else %}
-  									{{ issue }}
-  								{% endif %}
-  								<br/>
-  							{% endfor %}
-              {% endif %}
-						</td>
-				{% endfor %}
-			</tbody>
-		</table>
-</div>
 {% endblock bodytab1 %}
 
 
