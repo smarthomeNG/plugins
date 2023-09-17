@@ -26,14 +26,11 @@
 import datetime
 import time
 import os
+import json
 
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
 
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
 
 import cherrypy
 import csv
@@ -69,8 +66,10 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
         tmpl = self.tplenv.get_template('index.html')
+        pagelength = self.plugin.get_parameter_value('webif_pagelength')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
+                           webif_pagelength=pagelength,
                            items=self.plugin._items,
                            item_count=0)
 
@@ -89,14 +88,10 @@ class WebInterface(SmartPluginWebIf):
             # get the new data
             data = {}
 
-            # data['item'] = {}
-            # for i in self.plugin.items:
-            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
-            #
-            # return it as json the the web page
-            # try:
-            #     return json.dumps(data)
-            # except Exception as e:
-            #     self.logger.error("get_data_html exception: {}".format(e))
+            for item in self.plugin._items.keys():
+                data[item.property.path] = item.property.value
+            try:
+                return json.dumps(data)
+            except Exception as e:
+                self.logger.error("get_data_html exception: {}".format(e))
         return {}
-
