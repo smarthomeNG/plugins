@@ -27,7 +27,7 @@ FILENAME_PLUGIN = 'plugin.yaml'
 
 DOC_FILE_NAME = 'user_doc.rst'
 
-PLUGIN_VERSION = '1.2.4'
+PLUGIN_VERSION = '1.2.5'
 
 ITEM_ATTRIBUTES = {
     'db_addon_fct': {
@@ -36,6 +36,8 @@ ITEM_ATTRIBUTES = {
         'verbrauch_woche':                         {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch in der aktuellen Woche'},
         'verbrauch_monat':                         {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch im aktuellen Monat'},
         'verbrauch_jahr':                          {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch im aktuellen Jahr'},
+        'verbrauch_last_24h':                      {'cat': 'verbrauch',     'sub_cat': 'last',       'item_type': 'num',   'calc': 'hourly',    'params': False,  'description': 'Verbrauch innerhalb letzten 24h'},
+        'verbrauch_last_7d':                       {'cat': 'verbrauch',     'sub_cat': 'last',       'item_type': 'num',   'calc': 'hourly',    'params': False,  'description': 'Verbrauch innerhalb letzten 7 Tage'},
         'verbrauch_heute_minus1':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch gestern (heute -1 Tag) (Differenz zwischen Wert am Ende des gestrigen Tages und dem Wert am Ende des Tages davor)'},
         'verbrauch_heute_minus2':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch vorgestern (heute -2 Tage)'},
         'verbrauch_heute_minus3':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'calc': 'daily',     'params': False,  'description': 'Verbrauch heute -3 Tage'},
@@ -247,6 +249,7 @@ def export_item_attributes_py():
 
     ATTRS = dict()
     ATTRS['ALL_ONCHANGE_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'onchange'})
+    ATTRS['ALL_HOURLY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'hourly'})
     ATTRS['ALL_DAILY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'daily'})
     ATTRS['ALL_WEEKLY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'weekly'})
     ATTRS['ALL_MONTHLY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'monthly'})
@@ -255,6 +258,7 @@ def export_item_attributes_py():
     ATTRS['ALL_VERBRAUCH_ATTRIBUTES'] = get_attrs(sub_dict={'cat': 'verbrauch'})
     ATTRS['VERBRAUCH_ATTRIBUTES_ONCHANGE'] = get_attrs(sub_dict={'cat': 'verbrauch', 'sub_cat': 'onchange'})
     ATTRS['VERBRAUCH_ATTRIBUTES_TIMEFRAME'] = get_attrs(sub_dict={'cat': 'verbrauch', 'sub_cat': 'timeframe'})
+    ATTRS['VERBRAUCH_ATTRIBUTES_LAST'] = get_attrs(sub_dict={'cat': 'verbrauch', 'sub_cat': 'last'})
     ATTRS['VERBRAUCH_ATTRIBUTES_ROLLING'] = get_attrs(sub_dict={'cat': 'verbrauch', 'sub_cat': 'rolling'})
     ATTRS['VERBRAUCH_ATTRIBUTES_JAHRESZEITRAUM'] = get_attrs(sub_dict={'cat': 'verbrauch', 'sub_cat': 'jahrzeit'})
     ATTRS['ALL_ZAEHLERSTAND_ATTRIBUTES'] = get_attrs(sub_dict={'cat': 'zaehler'})

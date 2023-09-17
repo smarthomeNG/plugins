@@ -131,23 +131,40 @@ class WebInterface(SmartPluginWebIf):
                 self.logger.error(f"get_data_html exception: {e}")
 
     @cherrypy.expose
-    def submit(self, param1=None):
-        '''
-        Submit handler für Ajax
-        '''
+    def submit(self, item=None):
         result = None
+        item_path, cmd = item.split(':')
+        if item_path is not None and cmd is not None:
+            self.logger.debug(f"Sending db_addon {cmd=} for {item_path=} via web interface")
 
-        self.logger.warning(f'{param1}')
+            if cmd == "recalc_item":
+                self.logger.info(f"Recalc of item={item_path} called via WebIF. Item put to Queue for new calculation.")
+                result = self.plugin.execute_items(option='item', item=item_path)
+                self.logger.debug(f"Result for web interface: {result}")
+                return json.dumps(result).encode('utf-8')
 
-        if param1 is not None:
+            elif cmd == "clean_item_cache":
+                self.logger.info(f"Clean item cache of item={item_path} called via WebIF. Plugin item value cache will be cleaned.")
+                result = self.plugin._clean_item_cache(item=item_path)
+                self.logger.debug(f"Result for web interface: {result}")
+                return json.dumps(result).encode('utf-8')
 
-            # verarbeite die Daten
-            self.logger.warning(f'{param1}')
+            elif cmd.startswith("set_item_calculation"):
+                cmd, value = cmd.split(',')
+                self.logger.info(f"Item calculation of item={item_path} will be set to '{value}' via WebIF.")
+                if value == "True":
+                    value = True
+                else:
+                    value = False
+                result = self.plugin._activate_item_calculation(item=item_path, active=value)
+                self.logger.debug(f"Result for web interface: {result}")
+                return json.dumps(result).encode('utf-8')
 
-        if result_dict is not None:
+        if result is not None:
             # JSON zurücksenden
             cherrypy.response.headers['Content-Type'] = 'application/json'
-            return json.dumps(result_dict).encode('utf-8')
+            self.logger.debug(f"Result for web interface: {result}")
+            return json.dumps(result).encode('utf-8')
 
     @cherrypy.expose
     def recalc_all(self):

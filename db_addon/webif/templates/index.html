@@ -65,6 +65,49 @@
 <!-- Additional script tag for plugin specific javascript code go into this block -->
 {% block pluginscripts %}
 <script>
+  function toggleButton(button, active) {
+    const escapedId = $.escapeSelector(button);
+    const buttonElement = $("#" + escapedId);
+    const icon = buttonElement.find('i');
+    if (active === "false") {
+      // Change to pause icon
+      buttonElement.val(button.replace(/_button_playpause$/, "") + ":set_item_calculation,True");
+      icon.removeClass('fa-play').addClass('fa-pause');
+      buttonElement.attr('title', "{{ _('Berechnung deaktivieren') }}");
+    } else {
+      // Change to play icon
+      buttonElement.val(button.replace(/_button_playpause$/, "") + ":set_item_calculation,False");
+      icon.removeClass('fa-pause').addClass('fa-play');
+      buttonElement.attr('title', "{{ _('Berechnung aktivieren') }}");
+    }
+
+    // Your additional logic here
+  }
+
+  function updateButton(buttonElement, success) {
+      if (success == "checkmark")
+        buttonElement
+          .prop("disabled", true)
+          .html('<i class="fas fa-check"></i>')
+          .addClass(success);
+      else
+        buttonElement
+          .prop("disabled", true)
+          .html('<i class="fas fa-times"></i>')
+          .addClass(success);
+
+      // After 2 seconds, revert the button to its original state
+      setTimeout(function() {
+        console.log("reset button")
+        buttonElement
+          .prop("disabled", false)
+          .html('<i class="fas fa-play"></i>')
+          .removeClass(success);
+      }, 2000); // 2 seconds (2000 milliseconds)
+  }
+</script>
+
+<script>
 	function handleUpdatedData(response, dataSet=null) {
 		if (dataSet === 'devices_info' || dataSet === null) {
 			var objResponse = JSON.parse(response);
@@ -105,32 +148,55 @@
 			}
 		}
 
-      { document.getElementById('debug_parse').checked = objResponse['debug_log']['parse']; }
-      { document.getElementById('debug_execute').checked = objResponse['debug_log']['execute']; }
-      { document.getElementById('debug_ondemand').checked = objResponse['debug_log']['ondemand']; }
-      { document.getElementById('debug_onchange').checked = objResponse['debug_log']['onchange']; }
-      { document.getElementById('debug_prepare').checked = objResponse['debug_log']['prepare']; }
-      { document.getElementById('debug_sql').checked = objResponse['debug_log']['sql']; }
+      document.getElementById('debug_parse').checked = objResponse['debug_log']['parse'];
+      document.getElementById('debug_execute').checked = objResponse['debug_log']['execute'];
+      document.getElementById('debug_ondemand').checked = objResponse['debug_log']['ondemand'];
+      document.getElementById('debug_onchange').checked = objResponse['debug_log']['onchange'];
+      document.getElementById('debug_prepare').checked = objResponse['debug_log']['prepare'];
+      document.getElementById('debug_sql').checked = objResponse['debug_log']['sql'];
 	}
 </script>
 
 <script>
     $(document).ready( function () {
-			$(window).trigger('datatables_defaults');
-      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-        resize = true;
-        webif_pagelength = -1;
-		  console.log('Activating automatic table resize');
-      }
-      else {
-        resize = false;
-      }
 
+      // Handler für Formular - das "submit"-Element (Senden) wird abgefangen
+      $("#button_pressed").submit(function(e) {
+
+        // keine HTML-Aktion ausführen (z.B. Formular senden)
+        e.preventDefault();
+        let value = $("#button").val();
+        console.log('Sending db_addon command for ' + value);
+        // die Kennung des gedrückten Buttons per AJAX senden
+        $.post('submit', {item: value}, function(data) {
+          let id = $("#button_id").val();
+          console.log("Return value from plugin: " + data + " id " + id);
+
+            toggleButton(id, data)
+
+          const escapedVal = $.escapeSelector(value);
+          const buttonElement = $("#" + escapedVal + "_button");
+          if (data)
+            updateButton(buttonElement, "checkmark");
+          else
+            updateButton(buttonElement, "issue");
+
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+          // Error callback
+          console.error("AJAX request failed:", textStatus, errorThrown);
+          const escapedVal = $.escapeSelector($("#button").val());
+          const buttonElement = $("#" + escapedVal + "_button");
+          updateButton(buttonElement, "issue");
+        });
+        return false ;
+      });
+
+	  $(window).trigger('datatables_defaults');
       try {
         maintable = $('#maintable').DataTable( {
-          pageLength: webif_pagelength,
           columnDefs: [
+          { responsivePriority: 1, targets: 1 },
+        { responsivePriority: 2, targets: -1 },
           {
             title: '',
             targets: [0], "className": ""
@@ -170,8 +236,7 @@
           {
             title: '{{ _('Aktionen') }}',
             targets: [9], "className": "aktion"
-          }].concat($.fn.dataTable.defaults.columnDefs),
-          pageResize: resize});
+          }].concat($.fn.dataTable.defaults.columnDefs)});
 
         {% if maintenance %}
           mtable2 = $('#mtable2').DataTable( {
@@ -187,9 +252,7 @@
             {
               title: '{{ _('content') }}',
               targets: [2], "className": "content"
-            }].concat($.fn.dataTable.defaults.columnDefs),
-            pageLength: webif_pagelength,
-            pageResize: resize});
+            }].concat($.fn.dataTable.defaults.columnDefs)});
         {% endif %}
       }
       catch (e) {
@@ -209,49 +272,6 @@
         document.getElementById('pause').classList = 'btn btn-danger btn-sm';
         document.getElementById('pause').disabled = true;
       }
-
-        // Handler für einfachen Button - das "click"-Element wird abgefangen
-        $("#clear").click(function(e) {
-
-            // keine HTML-Aktion ausführen (z.B. Formular senden)
-            e.preventDefault();
-
-            // festen Wert per AJAX senden
-            $.post('submit', {clear: "true"}, function(data) {
-
-                // Ergebnis in Feld #fromip schreiben. Der dritte Parameter muss mit der Tabellen-ID identisch sein.
-                shngInsertText('fromip', data.ip, 'maintable')
-            });
-            return false ;
-        });
-
-        // Handler für Formular - das "submit"-Element (Senden) wird abgefangen
-        $("#button_pressed").submit(function(e) {
-
-            // keine HTML-Aktion ausführen (z.B. Formular senden)
-            e.preventDefault();
-
-            // die Kennung des gedrückten Buttons per AJAX senden
-            $.post('submit', {button: $("#button").val()}, function(data) {
-
-                // Zeile ermitteln
-                var row = $("#button").val()
-                var id = row + "_value"
-                
-                console.log(row)
-
-                // nur die betroffene Zeile ändern. Der dritte Parameter muss mit der Tabellen-ID identisch sein.
-                shngInserText(id, data.wert, 'maintable')
-
-                // alternativ kann auch ein ganzes Feld übertragen werden...
-                for (var row in data) {
-                        shngInsertText(row + "_value", data.row.wert, 'maintable')
-                }
-            });
-            return false ;
-        });
-
-      
     });
 </script>
 
@@ -287,10 +307,15 @@
 <script>
   function checkbox(log, value)
   {
-    console.log('debug_log_option_'+log+'_'+value)
-    jQuery.get('debug_log_option_'+log+'_'+value)
+    if ($("#logging").length > 0){
+      console.log('debug_log_option_'+log+'_'+value)
+      jQuery.get('debug_log_option_'+log+'_'+value)
+    } else {
+      console.log('debug_log_option deactivated')
+    }
   }
 </script>
+
 {% endblock pluginscripts %}
 
 
@@ -333,24 +358,26 @@
             <td class="py-1">
                 {{ p.log_level }}
                 {% if p.log_level == 10 %}
-                    {{ ('  ||  ') }}
-	                <div class="form-check form-check-inline">
-                        <input type="checkbox" id="debug_parse" name="debug_parse" value="parse" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für parse_item">
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input type="checkbox" id="debug_execute" name="debug_execute" value="execute" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für execute_items">
-                    </div>
-                    <div class="form-check form-check-inline">
-                      <input type="checkbox" id="debug_ondemand" name="debug_ondemand" value="ondemand" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für on_demand">
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input type="checkbox" id="debug_onchange" name="debug_onchange" value="parse" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für on_change">
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input type="checkbox" id="debug_prepare" name="debug_prepare" value="execute" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für prepare">
-                    </div>
-                    <div class="form-check form-check-inline">
-                      <input type="checkbox" id="debug_sql" name="debug_sql" value="sql" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für sql">
+                    <div id="logging">
+                        {{ ('  ||  ') }}
+                        <div class="form-check form-check-inline">
+                            <input type="checkbox" id="debug_parse" name="debug_parse" value="parse" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für parse_item">
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input type="checkbox" id="debug_execute" name="debug_execute" value="execute" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für execute_items">
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input type="checkbox" id="debug_ondemand" name="debug_ondemand" value="ondemand" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für on_demand">
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input type="checkbox" id="debug_onchange" name="debug_onchange" value="parse" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für on_change">
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input type="checkbox" id="debug_prepare" name="debug_prepare" value="execute" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für prepare">
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input type="checkbox" id="debug_sql" name="debug_sql" value="sql" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für sql">
+                        </div>
                     </div>
                 {% endif %}
             </td>
@@ -404,22 +431,11 @@
                 <td class="py-1" id="{{ item._path }}_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 <td class="py-1" id="{{ item._path }}_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 <td>
-                    <button class="btn-shng btn-sm" type="button" title="{{ _('Neuberechnung') }}" onclick="location.href='?action=recalc_item&item_path={{ item.property.path }}';"><i class="fas fa-redo"></i></button>
-                    <button class="btn-outline-danger btn-sm" type="button" title="{{ _('Wertecache löschen') }}" onclick="location.href='?action=clean_item_cache&item_path={{ item.property.path }}';"><i class="fas fa-trash"></i></button>
-                    {% if p.get_item_config(item._path)['active'] %}
-                        <button class="btn-sm btn-success" type="button" title="{{ _('Berechnung pausieren') }}" onclick="location.href='?action=_activate_item_calculation&active=0&item_path={{ item.property.path }}';"><i class="fas fa-play"></i></button>
-                    {% else %}
-                        <button class="btn-sm btn-outline-dark" type="button" title="{{ _('Berechnung aktivieren') }}" onclick="location.href='?action=_activate_item_calculation&active=1&item_path={{ item.property.path }}';"><i class="fas fa-pause"></i></button>
-                    {% endif %}
+                    <button id="{{ item }}_button_recalc" type="button" class="btn btn-shng btn-sm" title="{{ _('Neuberechnung') }}" onclick="$('#button').val('{{ item.property.path }}:recalc_item');$('#button_pressed').submit();"><i class="fas fa-redo"></i></button>
+                    <button id="{{ item }}_button_cache_del" type="button" class="btn-outline-danger btn-sm" title="{{ _('Wertecache löschen') }}" onclick="$('#button').val('{{ item.property.path }}:clean_item_cache');$('#button_pressed').submit();"><i class="fas fa-trash"></i></button>
 
-                    <button
-                      class="btn-sm btn-secondary"
-                      type="button"
-                      title="{{ 'TestButton' }}"
-                      onclick="$('#button').val('{{ item }}');$('#button_pressed').submit();"
-                    >
-                        T
-                    </button>
+                        <button id="{{ item.property.path }}_button_playpause" type="button" class="btn-sm btn-succes" title="wait" onclick="$('#button_id').val(this.id);$('#button').val(this.value);$('#button_pressed').submit();"><i class="fas"></i></button>
+                          <script>toggleButton("{{ item.property.path }}_button_playpause", {{ p.get_item_config(item._path)['active'] | lower }})</script>
                 </td>
             </tr>
          {% endfor %}
@@ -427,6 +443,7 @@
 </table>
 <form id="button_pressed" action="" method="post">
   <input type="hidden" id="button" name="button" value="" />
+  <input type="hidden" id="button_id" name="button_id" value="">
 </form>
 {% endblock bodytab1 %}
 

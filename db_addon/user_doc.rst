@@ -68,6 +68,7 @@ Hinweis: Das Plugin selbst ist aktuell nicht multi-instance fähig. Das bedeutet
 des Database-Plugin abgebunden werden kann.
 
 
+
 Konfiguration
 =============
 
@@ -92,9 +93,230 @@ Dazu folgenden Block am Ende der Datei */etc/mysql/my.cnf* einfügen bzw den exi
     interactive_timeout = 28800
 
 
-db_addon Item-Attribute
-=======================
 
+Hinweise
+========
+
+ - Das Plugin startet die Berechnungen der Werte nach einer gewissen (konfigurierbaren) Zeit (Attribut `startup_run_delay`)
+   nach dem Start von shNG, um den Startvorgang nicht zu beeinflussen.
+
+ - Bei Start werden automatisch nur die Items berechnet, für das das Attribute `db_addon_startup` gesetzt wurde. Alle anderen
+   Items werden erst zur konfigurierten Zeit berechnet. Das Attribute `db_addon_startup` kann auch direkt am `Database-Item`
+   gesetzt werden. Dabei wird das Attribut auf alle darunter liegenden `db_addon-Items` (bspw. bei Verwendung von structs) vererbt.
+   Über das WebIF kann die Berechnung aller definierten Items ausgelöst werden.
+
+ - Für sogenannte `on_change` Items, also Items, deren Berechnung bis zum Jetzt (bspw. verbrauch-heute) gehen, wird die Berechnung
+   immer bei eintreffen eines neuen Wertes gestartet. Zu Reduktion der Belastung auf die Datenbank werden die Werte für das Ende der
+   letzten Periode gecached.
+
+ - Berechnungen werden nur ausgeführt, wenn für den kompletten abgefragten Zeitraum Werte in der Datenbank vorliegen. Wird bspw.
+   der Verbrauch des letzten Monats abgefragt wobei erst Werte ab dem 3. des Monats in der Datenbank sind, wird die Berechnung abgebrochen.
+
+ - Mit dem Attribut `use_oldest_entry` kann dieses Verhalten verändert werden. Ist das Attribut gesetzt, wird, wenn für den
+   Beginn der Abfragezeitraums keinen Werte vorliegen, der älteste Eintrag der Datenbank genutzt.
+
+ - Für die Auswertung kann es nützlich sein, bestimmte Werte aus der Datenbank bei der Berechnung auszublenden. Hierfür stehen
+   2 Möglichkeiten zur Verfügung:
+    - Plugin-Attribut `ignore_0`: (list of strings) Bei Items, bei denen ein String aus der Liste im Pfadnamen vorkommt,
+      werden 0-Werte (val_num = 0) bei Datenbankauswertungen ignoriert. Hat also das Attribut den Wert ['temp'] werden bei allen Items mit
+      'temp' im Pfadnamen die 0-Werte bei der Auswertung ignoriert.
+    - Item-Attribut `db_addon_ignore_value`: (num) Dieser Wert wird bei der Abfrage bzw. Auswertung der Datenbank für diese
+      Item ignoriert.
+
+ - Das Plugin enthält sehr ausführliche Logginginformation. Bei unerwartetem Verhalten, den LogLevel entsprechend anpassen,
+   um mehr information zu erhalten.
+
+ - Berechnungen des Plugins können im WebIF unterbrochen werden. Auch das gesamte Plugin kann pausiert werden. Dies kann bei
+   starker Systembelastung nützlich sein.
+
+
+Beispiele
+=========
+
+Verbrauch
+---------
+
+Soll bspw. der Verbrauch von Wasser ausgewertet werden, so ist dies wie folgt möglich:
+
+
+.. code-block:: yaml
+
+    wasserzaehler:
+        zaehlerstand:
+            type: num
+            knx_dpt: 12
+            knx_cache: 5/3/4
+            eval: round(value/1000, 1)
+            database: init
+            struct:
+                  - db_addon.verbrauch_1
+                  - db_addon.verbrauch_2
+                  - db_addon.zaehlerstand_1
+
+Die Werte des Wasserzählerstandes werden in die Datenbank geschrieben und darauf basierend ausgewertet. Die structs
+'db_addon.verbrauch_1' und 'db_addon.verbrauch_2' stellen entsprechende Items für die Verbrauchsauswerten zur Verfügung.
+
+minmax
+------
+
+Soll bspw. die minimalen und maximalen Temperaturen ausgewertet werden, kann dies so umgesetzt werden:
+
+.. code-block:: yaml
+
+    temperature:
+        aussen:
+            nord:
+                name: Außentemp Nordseite
+                type: num
+                visu_acl: ro
+                knx_dpt: 9
+                knx_cache: 6/5/1
+                database: init
+                struct:
+                  - db_addon.minmax_1
+                  - db_addon.minmax_2
+
+Die Temperaturwerte werden in die Datenbank geschrieben und darauf basierend ausgewertet. Die structs
+'db_addon.minmax_1' und 'db_addon.minmax_2' stellen entsprechende Items für die min/max Auswertung zur Verfügung.
+
+|
+
+Web Interface
+=============
+
+Das WebIF stellt neben der Ansicht verbundener Items und deren Parameter und Werte auch Funktionen für die
+Administration des Plugins bereit.
+
+Es stehen Button für:
+
+- Neuberechnung aller Items
+- Abbruch eines aktiven Berechnungslaufes
+- Pausieren des Plugins
+- Wiederaufnahme des Plugins
+
+bereit.
+
+Achtung: Das Auslösen einer kompletten Neuberechnung aller Items kann zu einer starken Belastung der Datenbank
+aufgrund vieler Leseanfragen führen.
+
+
+db_addon Items
+--------------
+
+Dieser Reiter des Webinterface zeigt die Items an, für die ein DatabaseAddon Attribut konfiguriert ist.
+
+
+db_addon Maintenance
+--------------------
+
+Das Webinterface zeigt detaillierte Informationen über die im Plugin verfügbaren Daten an.
+Dies dient der Maintenance bzw. Fehlersuche. Dieser Tab ist nur bei Log-Level "Debug" verfügbar.
+
+
+Erläuterungen zu Temperatursummen
+=================================
+
+
+Grünlandtemperatursumme
+-----------------------
+
+Beim Grünland wird die Wärmesumme nach Ernst und Loeper benutzt, um den Vegetationsbeginn und somit den Termin von Düngungsmaßnahmen zu bestimmen.
+Dabei erfolgt die Aufsummierung der Tagesmitteltemperaturen über 0 °C, wobei der Januar mit 0.5 und der Februar mit 0.75 gewichtet wird.
+Bei einer Wärmesumme von 200 Grad ist eine Düngung angesagt.
+
+siehe: https://de.wikipedia.org/wiki/Gr%C3%BCnlandtemperatursumme
+
+Folgende Parameter sind möglich / notwendig:
+
+
+.. code-block:: yaml
+
+    db_addon_params: "year=current"
+
+- year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr  (default: 'current')
+
+
+Wachstumsgradtag
+----------------
+Der Begriff Wachstumsgradtage (WGT) ist ein Überbegriff für verschiedene Größen.
+Gemeinsam ist ihnen, daß zur Berechnung eine Lufttemperatur von einem Schwellenwert subtrahiert wird.
+Je nach Fragestellung und Pflanzenart werden der Schwellenwert unterschiedlich gewählt und die Temperatur unterschiedlich bestimmt.
+Verfügbar sind die Berechnung über 0) "einfachen Durchschnitt der Tagestemperaturen", 1) "modifizierten Durchschnitt der Tagestemperaturen"
+und 2) Anzahl der Tage, deren Mitteltempertatur oberhalb der Schwellentemperatur lag.
+
+siehe https://de.wikipedia.org/wiki/Wachstumsgradtag
+
+Folgende Parameter sind möglich / notwendig:
+
+.. code-block:: yaml
+
+    db_addon_params: "year=current, method=1, threshold=10"
+
+- year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr  (default: 'current')
+- method: 0-Berechnung über "einfachen Durchschnitt der Tagestemperaturen", 1-Berechnung über "modifizierten Durchschnitt (default: 0)
+der Tagestemperaturen" 2-Anzahl der Tage, mit Mitteltempertatur oberhalb Schwellentemperatur// 10, 11 Ausgabe aus Zeitserie
+- threshold: Schwellentemperatur in °C (int) (default: 10)
+
+
+Wärmesumme
+----------
+
+Die Wärmesumme soll eine Aussage über den Sommer und die Pflanzenreife liefern. Es gibt keine eindeutige Definition der Größe "Wärmesumme".
+Berechnet wird die Wärmesumme als Summe aller Tagesmitteltemperaturen über einem Schwellenwert ab dem 1.1. des Jahres.
+
+siehe https://de.wikipedia.org/wiki/W%C3%A4rmesumme
+
+Folgende Parameter sind möglich / notwendig:
+
+.. code-block:: yaml
+
+    db_addon_params: "year=current, month=1, threshold=10"
+
+- year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr (default: 'current')
+- month: Monat (int) des Jahres, für das die Berechnung ausgeführt werden soll (optional) (default: None)
+- threshold: Schwellentemperatur in °C (int) (default: 10)
+
+
+Kältesumme
+----------
+
+Die Kältesumme soll eine Aussage über die Härte des Winters liefern.
+Berechnet wird die Kältesumme als Summe aller negativen Tagesmitteltemperaturen ab dem 21.9. des Jahres bis 31.3. des Folgejahres.
+
+siehe https://de.wikipedia.org/wiki/K%C3%A4ltesumme
+
+Folgende Parameter sind möglich / notwendig:
+
+.. code-block:: yaml
+
+    db_addon_params: "year=current, month=1"
+
+- year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr (default: 'current')
+- month: Monat (int) des Jahres, für das die Berechnung ausgeführt werden soll (optional) (default: None)
+
+
+Tagesmitteltemperatur
+---------------------
+
+Die Tagesmitteltemperatur wird auf Basis der stündlichen Durchschnittswerte eines Tages (aller in der DB enthaltenen Datensätze)
+für die angegebene Anzahl von Tagen (days=optional) berechnet.
+
+
+
+Vorgehen bei Funktionserweiterung des Plugins bzw. Ergänzung weiterer Werte für Item-Attribute
+----------------------------------------------------------------------------------------------
+
+Aufgrund der Vielzahl der möglichen Werte der Itemattribute, insbesondere des Itemattributes `db_addon_fct`, wurde die Erstellung/Update
+der entsprechenden Teile der `plugin.yam` sowie die Erstellung der Datei `item_attributes.py`, die vom Plugin verwendet wird, automatisiert.
+
+Die Masterinformationen für alle Itemattribute sowie die Skripte zum Erstellen/Update der beiden Dateien sind in der
+Datei `item_attributes_master.py` enthalten.
+
+.. important::
+
+    Korrekturen, Erweiterungen etc. der Itemattribute sollten nur in der Datei `item_attributes_master.py`
+    im Dict der Variable `ITEM_ATTRIBUTS` vorgenommen werden. Das Ausführen der Datei `item_attributes_master.py` (main)
+    erstellt die `item_attributes.py` und aktualisiert die `plugin.yaml` entsprechend.
 Dieses Kapitel wurde automatisch durch Ausführen des Skripts in der Datei 'item_attributes_master.py' erstellt.
 
 Nachfolgend eine Auflistung der möglichen Attribute für das Plugin im Format: Attribute: Beschreibung | Berechnungszyklus | Item-Type
@@ -112,6 +334,10 @@ db_addon_fct
 - verbrauch_monat: Verbrauch im aktuellen Monat | Berechnung: onchange | Item-Type: num
 
 - verbrauch_jahr: Verbrauch im aktuellen Jahr | Berechnung: onchange | Item-Type: num
+
+- verbrauch_last_24h: Verbrauch innerhalb letzten 24h | Berechnung: hourly | Item-Type: num
+
+- verbrauch_last_7d: Verbrauch innerhalb letzten 7 Tage | Berechnung: hourly | Item-Type: num
 
 - verbrauch_heute_minus1: Verbrauch gestern (heute -1 Tag) (Differenz zwischen Wert am Ende des gestrigen Tages und dem Wert am Ende des Tages davor) | Berechnung: daily | Item-Type: num
 
@@ -466,67 +692,6 @@ Hinweise
    starker Systembelastung nützlich sein.
 
 
-Konfiguration im Item
-=====================
-
-direkt
-------
-Bei der direkten Konfiguration wird das auszuwertende Database-Item durch das Plugin selbst bestimmt. Dazu muss die Konfiguration des
-Attributes `db_addon_fct` oder eines entsprechenden `struct` direkt im Database-Item oder in der Itemstruktur bis zu 3 Ebenen darunter erfolgen.
-
-.. code-block:: yaml
-    wasserzaehler:
-        zaehlerstand:
-            type: num
-            knx_dpt: 12
-            knx_cache: 5/3/4
-            database: init
-            struct:
-                  - db_addon.verbrauch_1
-
-oder
-
-.. code-block:: yaml
-    wasserzaehler:
-        zaehlerstand:
-            type: num
-            knx_dpt: 12
-            knx_cache: 5/3/4
-            database: init
-
-            auswertung:
-                type: foo
-                struct:
-                      - db_addon.verbrauch_1
-
-
-indirekt
---------
-Bei der indirekten Konfiguration muss das auszuwertende Database-Item zusätzlich über das Attribut `db_addon_database_item` konfiguriert/angegeben werden.
-Die Konfiguration kann somit frei im Itembaum erfolgen. Es wird hier der gleiche Syntax wie bei `eval_trigger` verwendet (Itempfad als String)
-
-.. code-block:: yaml
-    wasserzaehler:
-        zaehlerstand:
-            type: num
-            knx_dpt: 12
-            knx_cache: 5/3/4
-            database: init
-
-    auswertungen:
-        wasser:
-            typ: foo
-            db_addon_database_item: wasserzaehler.zaehlerstand
-            db_addon_startup: yes
-            db_addon_ignore_value_list: ['!=0']
-            struct:
-                  - db_addon.verbrauch_1
-
-Hinweis:
-Da ein Zähler nicht 0 werden kann/sollte, aber beim Starten/Beenden von shNG auch 0 in die Datenbank geschrieben wird, kann man mit Hilfe des Attributs `db_addon_ignore_value_list`
-diese Werte bei Abfragen der Datenbank maskieren.
-
-
 Beispiele
 =========
 
@@ -537,6 +702,7 @@ Soll bspw. der Verbrauch von Wasser ausgewertet werden, so ist dies wie folgt m�
 
 
 .. code-block:: yaml
+
     wasserzaehler:
         zaehlerstand:
             type: num
@@ -558,6 +724,7 @@ minmax
 Soll bspw. die minimalen und maximalen Temperaturen ausgewertet werden, kann dies so umgesetzt werden:
 
 .. code-block:: yaml
+
     temperature:
         aussen:
             nord:
@@ -574,7 +741,7 @@ Soll bspw. die minimalen und maximalen Temperaturen ausgewertet werden, kann die
 Die Temperaturwerte werden in die Datenbank geschrieben und darauf basierend ausgewertet. Die structs
 'db_addon.minmax_1' und 'db_addon.minmax_2' stellen entsprechende Items für die min/max Auswertung zur Verfügung.
 
-
+|
 
 Web Interface
 =============
@@ -615,8 +782,8 @@ Erläuterungen zu Temperatursummen
 Grünlandtemperatursumme
 -----------------------
 
-Beim Grünland wird die Wärmesumme nach Ernst und Loeper benutzt, um den Vegetationsbeginn und somit den Termin von Düngungsmaßnahmen zu bestimmen. 
-Dabei erfolgt die Aufsummierung der Tagesmitteltemperaturen über 0 °C, wobei der Januar mit 0.5 und der Februar mit 0.75 gewichtet wird. 
+Beim Grünland wird die Wärmesumme nach Ernst und Loeper benutzt, um den Vegetationsbeginn und somit den Termin von Düngungsmaßnahmen zu bestimmen.
+Dabei erfolgt die Aufsummierung der Tagesmitteltemperaturen über 0 °C, wobei der Januar mit 0.5 und der Februar mit 0.75 gewichtet wird.
 Bei einer Wärmesumme von 200 Grad ist eine Düngung angesagt.
 
 siehe: https://de.wikipedia.org/wiki/Gr%C3%BCnlandtemperatursumme
@@ -625,6 +792,7 @@ Folgende Parameter sind möglich / notwendig:
 
 
 .. code-block:: yaml
+
     db_addon_params: "year=current"
 
 - year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr  (default: 'current')
@@ -632,10 +800,10 @@ Folgende Parameter sind möglich / notwendig:
 
 Wachstumsgradtag
 ----------------
-Der Begriff Wachstumsgradtage (WGT) ist ein Überbegriff für verschiedene Größen. 
-Gemeinsam ist ihnen, daß zur Berechnung eine Lufttemperatur von einem Schwellenwert subtrahiert wird. 
-Je nach Fragestellung und Pflanzenart werden der Schwellenwert unterschiedlich gewählt und die Temperatur unterschiedlich bestimmt. 
-Verfügbar sind die Berechnung über 0) "einfachen Durchschnitt der Tagestemperaturen", 1) "modifizierten Durchschnitt der Tagestemperaturen" 
+Der Begriff Wachstumsgradtage (WGT) ist ein Überbegriff für verschiedene Größen.
+Gemeinsam ist ihnen, daß zur Berechnung eine Lufttemperatur von einem Schwellenwert subtrahiert wird.
+Je nach Fragestellung und Pflanzenart werden der Schwellenwert unterschiedlich gewählt und die Temperatur unterschiedlich bestimmt.
+Verfügbar sind die Berechnung über 0) "einfachen Durchschnitt der Tagestemperaturen", 1) "modifizierten Durchschnitt der Tagestemperaturen"
 und 2) Anzahl der Tage, deren Mitteltempertatur oberhalb der Schwellentemperatur lag.
 
 siehe https://de.wikipedia.org/wiki/Wachstumsgradtag
@@ -643,6 +811,7 @@ siehe https://de.wikipedia.org/wiki/Wachstumsgradtag
 Folgende Parameter sind möglich / notwendig:
 
 .. code-block:: yaml
+
     db_addon_params: "year=current, method=1, threshold=10"
 
 - year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr  (default: 'current')
@@ -655,13 +824,14 @@ Wärmesumme
 ----------
 
 Die Wärmesumme soll eine Aussage über den Sommer und die Pflanzenreife liefern. Es gibt keine eindeutige Definition der Größe "Wärmesumme".
-Berechnet wird die Wärmesumme als Summe aller Tagesmitteltemperaturen über einem Schwellenwert ab dem 1.1. des Jahres. 
+Berechnet wird die Wärmesumme als Summe aller Tagesmitteltemperaturen über einem Schwellenwert ab dem 1.1. des Jahres.
 
 siehe https://de.wikipedia.org/wiki/W%C3%A4rmesumme
 
 Folgende Parameter sind möglich / notwendig:
 
 .. code-block:: yaml
+
     db_addon_params: "year=current, month=1, threshold=10"
 
 - year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr (default: 'current')
@@ -672,7 +842,7 @@ Folgende Parameter sind möglich / notwendig:
 Kältesumme
 ----------
 
-Die Kältesumme soll eine Aussage über die Härte des Winters liefern. 
+Die Kältesumme soll eine Aussage über die Härte des Winters liefern.
 Berechnet wird die Kältesumme als Summe aller negativen Tagesmitteltemperaturen ab dem 21.9. des Jahres bis 31.3. des Folgejahres.
 
 siehe https://de.wikipedia.org/wiki/K%C3%A4ltesumme
@@ -680,6 +850,7 @@ siehe https://de.wikipedia.org/wiki/K%C3%A4ltesumme
 Folgende Parameter sind möglich / notwendig:
 
 .. code-block:: yaml
+
     db_addon_params: "year=current, month=1"
 
 - year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr (default: 'current')
@@ -697,10 +868,10 @@ für die angegebene Anzahl von Tagen (days=optional) berechnet.
 Vorgehen bei Funktionserweiterung des Plugins bzw. Ergänzung weiterer Werte für Item-Attribute
 ----------------------------------------------------------------------------------------------
 
-Augrund der Vielzahl der möglichen Werte der Itemattribute, insbesondere des Itemattributes`db_addon_fct`, wurde die Erstellung/Update
+Aufgrund der Vielzahl der möglichen Werte der Itemattribute, insbesondere des Itemattributes `db_addon_fct`, wurde die Erstellung/Update
 der entsprechenden Teile der `plugin.yam` sowie die Erstellung der Datei `item_attributes.py`, die vom Plugin verwendet wird, automatisiert.
 
-Die Masterinformationen für alle Itemattributs sowie die Skripte zum Erstellen/Update der beiden Dateien sind in der
+Die Masterinformationen für alle Itemattribute sowie die Skripte zum Erstellen/Update der beiden Dateien sind in der
 Datei `item_attributes_master.py` enthalten.
 
 .. important::

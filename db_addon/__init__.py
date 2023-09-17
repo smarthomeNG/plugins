@@ -49,6 +49,7 @@ from .webif import WebInterface
 from .item_attributes import *
 import lib.db
 
+HOUR = 'hour'
 DAY = 'day'
 WEEK = 'week'
 MONTH = 'month'
@@ -60,7 +61,7 @@ class DatabaseAddOn(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.2.4'
+    PLUGIN_VERSION = '1.2.5'
 
     def __init__(self, sh):
         """
@@ -157,7 +158,7 @@ class DatabaseAddOn(SmartPlugin):
             self._check_db_connection_setting()
 
         # add scheduler for cyclic trigger item calculation
-        self.scheduler_add('cyclic', self.execute_due_items, prio=3, cron='10 0 * * *', cycle=None, value=None, offset=None, next=None)
+        self.scheduler_add('cyclic', self.execute_due_items, prio=3, cron='10 * * * *', cycle=None, value=None, offset=None, next=None)
 
         # add scheduler to trigger items to be calculated at startup with delay
         dt = self.shtime.now() + relativedelta(seconds=(self.startup_run_delay + 3))
@@ -195,7 +196,8 @@ class DatabaseAddOn(SmartPlugin):
         self.alive = False
         self.scheduler_remove('cyclic')
         self.scheduler_remove('onchange_delay')
-        self._db.close()
+        if self._db:
+            self._db.close()
         self.save_cache_data()
 
         # ToDo: Check if still needed
@@ -273,6 +275,15 @@ class DatabaseAddOn(SmartPlugin):
                 end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
                 start = end + 1
                 log_text = 'verbrauch_timeframe_timedelta'
+                required_params = [timeframe, start, end]
+
+            elif db_addon_fct in VERBRAUCH_ATTRIBUTES_LAST:
+                # handle functions 'verbrauch_last' in format 'verbrauch_last_timedelta|timeframe' like 'verbrauch_last_24h'
+                start, timeframe = split_sting_letters_numbers(db_addon_fct_vars[2])
+                start = to_int(start)
+                timeframe = translate_timeframe(timeframe)
+                end = 0
+                log_text = 'verbrauch_last_timedelta|timeframe'
                 required_params = [timeframe, start, end]
 
             elif db_addon_fct in VERBRAUCH_ATTRIBUTES_ROLLING:
@@ -673,7 +684,9 @@ class DatabaseAddOn(SmartPlugin):
                 self.logger.debug(f"Item={item.path()} added with db_addon_fct={db_addon_fct} and database_item={database_item}")
 
             # add cycle for item groups
-            if db_addon_fct in ALL_DAILY_ATTRIBUTES:
+            if db_addon_fct in ALL_HOURLY_ATTRIBUTES:
+                item_config_data_dict.update({'cycle': 'hourly'})
+            elif db_addon_fct in ALL_DAILY_ATTRIBUTES:
                 item_config_data_dict.update({'cycle': 'daily'})
             elif db_addon_fct in ALL_WEEKLY_ATTRIBUTES:
                 item_config_data_dict.update({'cycle': 'weekly'})
@@ -693,6 +706,9 @@ class DatabaseAddOn(SmartPlugin):
             elif db_addon_fct == 'minmax':
                 cycle = item_config_data_dict['query_params']['timeframe']
                 item_config_data_dict.update({'cycle': f"{timeframe_to_updatecyle(cycle)}"})
+            else:
+                self.logger.warning(f"Cycle for {item.path()} undefined")
+                item_config_data_dict.update({'cycle': None})
 
             # do logging
             if self.debug_log.parse:
@@ -891,30 +907,38 @@ class DatabaseAddOn(SmartPlugin):
         def _create_due_items() -> list:
             """Create list of items which are due and reset cache dicts"""
 
-            # täglich zu berechnende Items zur Action Liste hinzufügen
+            # set für zu berechnende Items erstellen
             _todo_items = set()
-            _todo_items.update(set(self._daily_items()))
-            self.current_values[DAY] = {}
-            self.previous_values[DAY] = {}
-            self.value_list_raw_data = {}
 
-            # wenn Wochentag == Montag, werden auch die wöchentlichen Items berechnet
-            if self.shtime.weekday(self.shtime.today()) == 1:
-                _todo_items.update(set(self._weekly_items()))
-                self.current_values[WEEK] = {}
-                self.previous_values[WEEK] = {}
+            # stündlich zu berechnende Items hinzufügen
+            _todo_items.update(set(self._hourly_items()))
+            self.current_values[HOUR] = {}
+            self.previous_values[HOUR] = {}
 
-            # wenn der erste Tage eines Monates ist, werden auch die monatlichen Items berechnet
-            if self.shtime.now().day == 1:
-                _todo_items.update(set(self._monthly_items()))
-                self.current_values[MONTH] = {}
-                self.previous_values[MONTH] = {}
+            # wenn aktuelle Stunde == 0, werden auch die täglichen Items berechnet
+            if self.shtime.now().hour == 0:
+                _todo_items.update(set(self._daily_items()))
+                self.current_values[DAY] = {}
+                self.previous_values[DAY] = {}
+                self.value_list_raw_data = {}
 
-                # wenn der erste Tage des ersten Monates eines Jahres ist, werden auch die jährlichen Items berechnet
-                if self.shtime.now().month == 1:
-                    _todo_items.update(set(self._yearly_items()))
-                    self.current_values[YEAR] = {}
-                    self.previous_values[YEAR] = {}
+                # wenn zusätzlich der Wochentag == Montag, werden auch die wöchentlichen Items berechnet
+                if self.shtime.weekday(self.shtime.today()) == 1:
+                    _todo_items.update(set(self._weekly_items()))
+                    self.current_values[WEEK] = {}
+                    self.previous_values[WEEK] = {}
+
+                # wenn zusätzlich der erste Tage eines Monates ist, werden auch die monatlichen Items berechnet
+                if self.shtime.now().day == 1:
+                    _todo_items.update(set(self._monthly_items()))
+                    self.current_values[MONTH] = {}
+                    self.previous_values[MONTH] = {}
+
+                    # wenn zusätzlich der erste Monat ist, werden auch die jährlichen Items berechnet
+                    if self.shtime.now().month == 1:
+                        _todo_items.update(set(self._yearly_items()))
+                        self.current_values[YEAR] = {}
+                        self.previous_values[YEAR] = {}
 
             return list(_todo_items)
 
@@ -956,7 +980,10 @@ class DatabaseAddOn(SmartPlugin):
 
         # put to queue
         self.logger.info(f"{len(todo_items)} items will be calculated for {option=}.")
+        if self.debug_log.execute:
+            self.logger.debug(f"Items to be calculated: {todo_items=}")
         [self.item_queue.put(i) for i in todo_items]
+        return True
 
     def work_item_queue(self) -> None:
         """Handles item queue were all to be executed items were be placed in."""
@@ -1228,6 +1255,7 @@ class DatabaseAddOn(SmartPlugin):
             item(new_value, self.get_shortname())
 
     def _update_database_items(self) -> None:
+        """Turns given as database_item path into database_items"""
         for item in self._database_item_path_items():
             item_config = self.get_item_config(item)
             database_item_path = item_config.get('database_item')
@@ -1242,7 +1270,7 @@ class DatabaseAddOn(SmartPlugin):
                 if db_addon_startup:
                     item_config.update({'startup': True})
 
-    def _activate_item_calculation(self, item: Union[str, Item], active: bool = True) -> None:
+    def _activate_item_calculation(self, item: Union[str, Item], active: bool = True) -> Union[bool, None]:
         """active / de-active item calculation"""
         if isinstance(item, str):
             item = self.items.return_item(item)
@@ -1252,6 +1280,7 @@ class DatabaseAddOn(SmartPlugin):
 
         item_config = self.get_item_config(item)
         item_config['active'] = active
+        return active
 
     @property
     def log_level(self) -> int:
@@ -1268,6 +1297,9 @@ class DatabaseAddOn(SmartPlugin):
 
     def _onchange_items(self) -> list:
         return self.get_item_list('cycle', 'on-change')
+
+    def _hourly_items(self) -> list:
+        return self.get_item_list('cycle', 'hourly')
 
     def _daily_items(self) -> list:
         return self.get_item_list('cycle', 'daily')
@@ -1495,15 +1527,11 @@ class DatabaseAddOn(SmartPlugin):
         Ermittlung des Verbrauches innerhalb eines Zeitraumes
 
         Die Vorgehensweise ist:
-            - Endwert: Abfrage des letzten Eintrages im Zeitraum
-                - Ergibt diese Abfrage einen Wert, gab eines einen Eintrag im Zeitraum in der DB, es wurde also etwas verbraucht, dann entspricht dieser dem Endzählerstand
+            - Endwert / Endzählerstand: Abfrage des letzten Eintrages (Zählerstandes) im Zeitraum
                 - Ergibt diese Abfrage keinen Wert, gab eines keinen Eintrag im Zeitraum in der DB, es wurde also nichts verbraucht -> Rückgabe von 0
-            - Startwert: Abfrage des letzten Eintrages im Zeitraum vor dem Abfragezeitraum
-                - Ergibt diese Abfrage einen Wert, entspricht dieser dem Zählerstand am Ende des Zeitraumes vor dem Abfragezeitraum
-                - Ergibt diese Abfrage keinen Wert, wurde in Zeitraum, vor dem Abfragezeitraum nichts verbraucht, der Anfangszählerstand kann so nicht ermittelt werden.
-                    - Abfrage des nächsten Wertes vor dem Zeitraum
-                    - Ergibt diese Abfrage einen Wert, entspricht dieser dem Anfangszählerstand
-                    - Ergibt diese Abfrage keinen Wert, Anfangszählerstand = 0
+            - Startwert / Anfangszählerstand: Abfrage des letzten Eintrages (Zählerstandes) vor dem Abfragezeitraum
+                - Ergibt diese Abfrage einen Wert, entspricht dieser dem Anfangszählerstand
+                - Ergibt diese Abfrage keinen Wert, Anfangszählerstand = 0
         """
 
         # define start, end for verbrauch_jahreszeitraum_timedelta
@@ -1523,7 +1551,7 @@ class DatabaseAddOn(SmartPlugin):
             self.logger.debug(f"called with {query_params=}")
 
         # get value for end and check it;
-        query_params.update({'func': 'last', 'start': end, 'end': end})
+        query_params.update({'func': 'last', 'start': start, 'end': end})
         value_end = self._query_item(**query_params)[0][1]
 
         if self.debug_log.prepare:
@@ -1533,27 +1561,18 @@ class DatabaseAddOn(SmartPlugin):
             return value_end
 
         # get value for start and check it;
-        query_params.update({'func': 'last', 'start': start, 'end': start})
+        query_params.update({'func': 'next', 'start': start, 'end': start})
         value_start = self._query_item(**query_params)[0][1]
         if self.debug_log.prepare:
-            self.logger.debug(f"{value_start=}")
-
-        if value_start is None:
-            if self.debug_log.prepare:
-                self.logger.debug(f"Error occurred during query. Return.")
-            return
-
-        if not value_start:
-            self.logger.info(f"No DB Entry of item={query_params['database_item'].path()} found for requested start date. Looking for next recent DB entry.")
-            query_params.update({'func': 'next'})
-            value_start = self._query_item(**query_params)[0][1]
-            if self.debug_log.prepare:
-                self.logger.debug(f"next recent value is {value_start=}")
+            self.logger.debug(f"next recent value is {value_start=}")
 
         if not value_start:
             value_start = 0
             if self.debug_log.prepare:
                 self.logger.debug(f"No start value available. Will be set to 0 as default")
+
+        if self.debug_log.prepare:
+            self.logger.debug(f"{value_start=}")
 
         # calculate consumption
         consumption = value_end - value_start
@@ -1583,6 +1602,30 @@ class DatabaseAddOn(SmartPlugin):
             series.append([ts_end, value])
 
         return series
+
+    def _handle_verbrauch_serie_new(self, query_params: dict) -> list:
+        """Ermittlung einer Serie von Verbräuchen in einem Zeitraum für x Zeiträume"""
+
+        # ToDo: Test method
+
+        query_params.update({'data_con_func': 'max_day', 'cache': True})
+        raw_data = self._prepare_value_list(**query_params)
+
+        new_dict = {k[0]: k[1:][0] for k in raw_data}
+        consumption_list = []
+        start_ts = min(new_dict)
+        start_val = new_dict[start_ts]
+
+        for i in range(query_params['start']):
+            end_ts = int(start_ts + 24 * 60 * 60)
+            end_val = new_dict.get(end_ts, None)
+            if not end_val:
+                end_val = start_val
+            consumption_list.append([end_ts, round((end_val - start_val), 2)])
+            start_ts = end_ts
+            start_val = end_val
+
+        return consumption_list
 
     def _handle_zaehlerstand(self, query_params: dict) -> Union[float, int, None]:
         """
@@ -1642,6 +1685,30 @@ class DatabaseAddOn(SmartPlugin):
             series.append([ts_start, value])
 
         return series
+
+    def _handle_zaehlerstand_serie_new(self, query_params: dict) -> list:
+        """Ermittlung einer Serie von Zählerständen zum Ende eines Zeitraumes für x Zeiträume"""
+
+        # ToDo: Test method
+
+        query_params.update({'data_con_func': 'max_day', 'cache': True})
+        raw_data = self._prepare_value_list(**query_params)
+
+        new_dict = {k[0]: k[1:][0] for k in raw_data}
+        zaehler_list = []
+        start_ts = min(new_dict)
+        start_val = new_dict[start_ts]
+
+        for i in range(query_params['start']):
+            end_ts = int(start_ts + 24 * 60 * 60)
+            end_val = new_dict.get(end_ts, None)
+            if not end_val:
+                end_val = start_val
+            zaehler_list.append([end_ts, round(end_val, 2)])
+            start_ts = end_ts
+            start_val = end_val
+
+        return zaehler_list
 
     def _handle_temp_sums(self, func: str, database_item: Item, year: Union[int, str] = None, month: Union[int, str] = None, ignore_value_list: list = None, params: dict = None) -> Union[list, None]:
         """
@@ -2257,7 +2324,7 @@ class DatabaseAddOn(SmartPlugin):
         if ts_end is None or ts_start > ts_end:
             if self.debug_log.prepare:
                 self.logger.debug(f"{ts_start=}, {ts_end=}")
-            self.logger.warning(f"Requested {start=} for item={database_item.path()} is not valid since {start=} < {end=} or end not given. Query cancelled.")
+            self.logger.warning(f"Requested {start=} for item={database_item.path()} is not valid since {start=} > {end=} or end not given. Query cancelled.")
             return error_result
 
         # define item_id
@@ -2325,6 +2392,7 @@ class DatabaseAddOn(SmartPlugin):
         self.item_cache = {}
 
         self.current_values = {
+            HOUR: {},
             DAY: {},
             WEEK: {},
             MONTH: {},
@@ -2332,6 +2400,7 @@ class DatabaseAddOn(SmartPlugin):
         }
 
         self.previous_values = {
+            HOUR: {},
             DAY: {},
             WEEK: {},
             MONTH: {},
@@ -2340,14 +2409,14 @@ class DatabaseAddOn(SmartPlugin):
 
         self.value_list_raw_data = {}
 
-    def _clean_item_cache(self, item: Union[str, Item]) -> None:
+    def _clean_item_cache(self, item: Union[str, Item]) -> bool:
         """set cached values for item to None"""
 
         if isinstance(item, str):
             item = self.items.return_item(item)
 
         if not isinstance(item, Item):
-            return
+            return False
 
         database_item = self.get_item_config(item).get('database_item')
 
@@ -2361,6 +2430,9 @@ class DatabaseAddOn(SmartPlugin):
                 for cached_item in self.current_values[timeframe]:
                     if cached_item == database_item:
                         self.current_values[timeframe][cached_item] = {}
+
+            return True
+        return False
 
     def _clear_queue(self) -> None:
         """
@@ -2412,26 +2484,32 @@ class DatabaseAddOn(SmartPlugin):
         ts_start = ts_end = None
 
         def get_query_timestamp(_offset) -> int:
-            if timeframe == 'week':
-                _date = self.shtime.beginning_of_week(offset=_offset)
+            if timeframe == 'hour':
+                dt = self.shtime.now().replace(microsecond=0, second=0, minute=0) - datetime.timedelta(hours=_offset)
+                return self._datetime_to_timestamp(dt) * 1000
+            elif timeframe == 'week':
+                _date = self.shtime.beginning_of_week(offset=-_offset)
             elif timeframe == 'month':
-                _date = self.shtime.beginning_of_month(offset=_offset)
+                _date = self.shtime.beginning_of_month(offset=-_offset)
             elif timeframe == 'year':
-                _date = self.shtime.beginning_of_year(offset=_offset)
+                _date = self.shtime.beginning_of_year(offset=-_offset)
             else:
-                _date = self.shtime.today(offset=_offset)
+                _date = self.shtime.today(offset=-_offset)
 
             return self._datetime_to_timestamp(datetime.datetime.combine(_date, datetime.datetime.min.time())) * 1000
 
         if isinstance(start, str) and start.isdigit():
             start = int(start)
         if isinstance(start, int):
-            ts_start = get_query_timestamp(-start)
+            ts_start = get_query_timestamp(start)
 
         if isinstance(end, str) and end.isdigit():
             end = int(end)
         if isinstance(end, int):
-            ts_end = get_query_timestamp(-end + 1)
+            if timeframe == 'hour':
+                ts_end = get_query_timestamp(end)
+            else:
+                ts_end = get_query_timestamp(end - 1)
 
         return ts_start, ts_end
 

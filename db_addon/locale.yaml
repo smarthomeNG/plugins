@@ -1,6 +1,7 @@
 # translations for the web interface
 plugin_translations:
     # Translations for the plugin specially for the web interface
+    'hourly':     {'de': 'stündlich', 'en': 'hourly'}
     'daily':     {'de': 'täglich', 'en': 'daily'}
     'weekly':    {'de': 'wöchentlich', 'en': '='}
     'monthly':   {'de': 'monatlich', 'en': '='}
