@@ -33,12 +33,12 @@ Anforderungen
 Der BYD Energiespeicher muss mit dem LAN verbunden sind. Die IP-Adresse des BYD wird über DHCP zugewiesen und muss ermittelt werden. Diese IP-Adresse muss in der Plugin-Konfiguration gespeichert werden.
 
 Notwendige Software
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * matplotlib
 
 Unterstützte Geräte
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 Folgende Typen werden unterstützt:
 
@@ -53,27 +53,27 @@ Konfiguration
 =============
 
 plugin.yaml
-~~~~~~~~~~~
+-----------
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Zu den Informationen, welche Parameter in der ../etc/plugin.yaml konfiguriert werden können bzw. müssen, bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/byd_bat>` lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 
 items.yaml
-~~~~~~~~~~
+----------
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Zu den Informationen, welche Attribute in der Item Konfiguration verwendet werden können bzw. müssen, bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/byd_bat>` lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 
 logic.yaml
-~~~~~~~~~~
+----------
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Zu den Informationen, welche Konfigurationsmöglichkeiten für Logiken bestehen, bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/byd_bat>` lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 
 Funktionen
-~~~~~~~~~~
+----------
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Zu den Informationen, welche Funktionen das Plugin bereitstellt (z.B. zur Nutzung in Logiken), bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/byd_bat>` lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 Web Interface
 =============
@@ -87,20 +87,20 @@ Oben rechts werden die wichtigsten Daten zum BYD Energiespeicher angezeigt.
 
 Im Tab "BYD Home" sind die Grunddaten des Energiespeichers dargestellt:
 
-.. image:: assets/home.JPG
+.. image:: assets/home.png
    :class: screenshot
 
 Im Tab "BYD Diagnose" werden Diagnosedaten angezeigt:
 
-.. image:: assets/diag.JPG
+.. image:: assets/diag.png
    :class: screenshot
 
 Im Tab "BYD Spannungen" werden die Spannungen der Module als Heatmap angezeigt:
 
-.. image:: assets/volt.JPG
+.. image:: assets/volt.png
    :class: screenshot
 
 Im Tab "BYD Temperaturen" werden die Temperaturen der Module als Heatmap angezeigt:
 
-.. image:: assets/temp.JPG
+.. image:: assets/temp.png
    :class: screenshot

@@ -41,7 +41,7 @@ from .webif import WebInterface
 import cherrypy
 
 class ODLInfo(SmartPlugin):
-    PLUGIN_VERSION = "1.5.2"
+    PLUGIN_VERSION = "1.5.3"
     _base_url = 'https://www.imis.bfs.de/ogc/opendata/ows'
 
     def __init__(self, sh, *args, **kwargs):
@@ -55,6 +55,7 @@ class ODLInfo(SmartPlugin):
         if not self.init_webinterface(WebInterface):
             self._init_complete = False
         self._cycle = self.get_parameter_value('cycle')
+        self._verify = self.get_parameter_value('verify')
         self._stations = []
         self._items = {}
         self._update_timestamp = None
@@ -88,7 +89,7 @@ class ODLInfo(SmartPlugin):
         """
         try:
             parameters = "service=WFS&version=1.1.0&request=GetFeature&typeName=opendata:odlinfo_odl_1h_latest&outputFormat=application/json&sortBy=plz"
-            response = self._session.get(self._build_url(parameters))
+            response = self._session.get(self._build_url(parameters), verify=self._verify)
             self._update_timestamp = self.shtime.now()
 
         except Exception as e:

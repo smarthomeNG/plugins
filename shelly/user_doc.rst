@@ -21,7 +21,7 @@ die Dokumentation des jeweiligen Devices zu Rate ziehen.
 Konfiguration
 =============
 
-Zurzeit werden eine Reihe von Shelly Devices mit Gen1 API im **Backward-Compatibility Mode** unterstützt. Dabei handelt
+Zurzeit werden eine Reihe von Shelly Devices mit Gen1 API im **Backward-Co^mpatibility Mode** unterstützt. Dabei handelt
 es sich um die Devices, die bereits in der v1.2.0 des Plugins unterstützt wurden. Diese Devices werden konfiguriert,
 wie es bis zur v1.2.0 des shally Plugins üblich war.
 

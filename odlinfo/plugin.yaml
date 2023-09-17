@@ -12,7 +12,7 @@ plugin:
     documentation: https://smarthomeng.de/user/plugins_doc/config/odlinfo.html
     support: https://knx-user-forum.de/node/986480
 
-    version: 1.5.2                 # Plugin version
+    version: 1.5.3                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -27,6 +27,12 @@ parameters:
         description:
             de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 3600 Sekunden.'
             en: '(optional) Time period between two update cycles. Default is 3600 seconds.'
+    verify:
+        type: bool
+        default: True
+        description:
+            de: 'Schaltet die Prüfung der Zertifikate des odlinfo Endpunkts ab.'
+            en: 'Removes certificate validation of the odlinfo endpoint.'
 
 item_attributes:
     # Definition of item attributes defined by this plugin

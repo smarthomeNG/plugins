@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.8.0'
+    PLUGIN_VERSION = '1.8.1'
 
 
     def __init__(self, sh):
@@ -361,7 +361,7 @@ class Shelly(MqttPlugin):
     #  Support methods for Gen1 and Gen2 devices
     # ----------------------------------------------------------------------------------------------
 
-    def get_shelly_device_from_item(self, item):
+    def get_shelly_device_from_item(self, item) -> dict:
         """
         Get the shelly device data for a device specified by an item object
 
@@ -1078,6 +1078,8 @@ class Shelly(MqttPlugin):
             elif property == 'sensor':
                 self.update_items_from_status(shelly_id, 'sensor', 'state', sub_property['state'], 'info')
 
+            elif property == 'charger':
+                self.update_items_from_status(shelly_id, 'sensor', property, sub_property)
             elif property == 'bat':
                 self.update_items_from_status(shelly_id, 'sensor', 'battery', sub_property['value'], 'info')
                 self.update_items_from_status(shelly_id, 'sensor', 'voltage', sub_property['voltage'], 'info')
@@ -1092,8 +1094,7 @@ class Shelly(MqttPlugin):
                 self.shelly_devices[shelly_id]['rssi'] = sub_property.get('rssi', '')
 
             else:
-                self.log_unhandled_status(shelly_id, property, sub_property, topic=topic, payload=payload,
-                                          position='*1')
+                self.log_unhandled_status(shelly_id, property, sub_property, topic=topic, payload=payload, position='*1')
 
         return
 
@@ -1113,8 +1114,10 @@ class Shelly(MqttPlugin):
             property_mapping = {'temperature': 'temp', 'temperature_f': 'temp_f'}
             if property.startswith('command'):
                 pass
-            elif property == 'loaderror':
+            elif property in ['loaderror']:
                 pass
+            elif property == 'charger':
+                self.update_items_from_status(shelly_id, 'sensor', property, payload)
             elif property == 'online':
                 self.update_items_from_status(shelly_id, '', property, payload)
             elif property in ['temperature', 'temperature_f', 'overtemperature', 'overpower', 'input']:
@@ -1127,7 +1130,9 @@ class Shelly(MqttPlugin):
                 self.log_unhandled_status(shelly_id, property, payload, topic=topic, payload=payload, position='*1.1')
 
         elif group.startswith('switch:'):
-            if property in ['output', 'power', 'energy']:
+            if property == 'command':    # ignore commands sent to the shelly device
+                pass
+            elif property in ['output', 'power', 'energy']:
                 self.update_items_from_status(shelly_id, group, property, payload)
                 self.logger.dbghigh(f"handle_gen1_status: {shelly_id} {group} - {property}={payload}  -  (mapping={group + '-' + property})")
             else:
