@@ -3,7 +3,7 @@
 {% set logo_frame = false %}
 
 <!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
-{% set update_interval = 30000 %}
+{% set update_interval = update_interval %}
 
 <!--
 	Additional script tag for plugin specific javascript code go into this block
@@ -14,9 +14,11 @@
 		if (dataSet === 'devices_info' || dataSet === null) {
 			var objResponse = JSON.parse(response);
 			myProto = document.getElementById(dataSet);
-			for (item in objResponse) {
-				shngInsertText (item+'_value', objResponse[item], "itemtable", 10);
+			for (item in objResponse['items']) {
+				shngInsertText (item+'_value', objResponse['items'][item], "itemtable", 10);
 			}
+			shngInsertText ('laststr', objResponse['laststr'], null, 2);
+			shngInsertText ('lastjq', objResponse['lastjq'], null, 2);
 		}
 	}
 </script>
@@ -87,7 +89,7 @@
 {% set tab1title = "<strong>" ~ _("Letzte Auslesung") ~ "</strong>" %}
 {% block bodytab1 %}
 <div class="container-fluid m-2">
-	<pre>{{ p._lastresultstr }}</pre>
+	<pre id="laststr">{{ p._lastresultstr }}</pre>
 </div>
 {% endblock bodytab1 %}
 
@@ -118,6 +120,6 @@
 {% set tab3title = "<strong>" ~ _("Letzte Auslesung einfache jq Abfragesyntax") ~ "</strong>" %}
 {% block bodytab3 %}
 <div class="container-fluid m-2">
-	<pre>{{ p._lastresultjq }}</pre>
+	<pre id="lastjq">{{ p._lastresultjq }}</pre>
 </div>
 {% endblock bodytab3 %}

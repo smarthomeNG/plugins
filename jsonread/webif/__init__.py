@@ -70,6 +70,7 @@ class WebInterface(SmartPluginWebIf):
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
                            webif_pagelength=pagelength,
+                           update_interval=self.plugin._cycle * 1000,
                            items=self.plugin._items,
                            item_count=0)
 
@@ -86,10 +87,12 @@ class WebInterface(SmartPluginWebIf):
         """
         if dataSet is None:
             # get the new data
-            data = {}
+            data = {'items': {}, 'laststr': '', 'lastjq': ''}
 
             for item in self.plugin._items.keys():
-                data[item.property.path] = item.property.value
+                data['items'][item.property.path] = item.property.value
+            data['laststr'] = self.plugin._lastresultstr
+            data['lastjq'] = self.plugin._lastresultjq
             try:
                 return json.dumps(data)
             except Exception as e:
