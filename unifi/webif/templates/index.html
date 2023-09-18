@@ -1,13 +1,108 @@
 {% extends "base_plugin.html" %}
-
+{% set update_interval = 5000 %}
 {% set logo_frame = false %}
+{% block pluginstyles %}
+<style>
+  table th.item {
+    min-width: 200px;
+  }
+  table th.type {
+    width: 50px;
+  }
+  table th.unifi_type {
+    width: 100px;
+  }
+	table th.value {
+    width: 100px;
+  }
+	table th.lastupdate {
+    width: 100px;
+  }
+	table th.lastchange {
+    width: 100px;
+  }
+  table td.exclamationcircle:before {
+    color: #FFD700;
+  }
+  table td.exclamationtriangle:before {
+    color: red!important;
+  }
+  table td.info:before {
+    color: #999999!important;
+  }
+  table td.flag:before {
+    color: lightgreen!important;
+  }
+  table td.noissue:before {
+    color: darkgreen!important;
+  }
+</style>
+{% endblock pluginstyles %}
+{% block pluginscripts %}
+<script>
+  $(document).ready( function () {
+    $(window).trigger('datatables_defaults');
+		try {
+      table = $('#maintable').DataTable( {
+				columnDefs: [
+        { responsivePriority: 1, targets: 1 },
+        { responsivePriority: 2, targets: 3 },
+        { className: "item", targets: 1 },
+        { className: "type", targets: 2 },
+        { className: "unifi_type", targets: 3 },
+        { className: "value", targets: 4 },
+        { className: "lastupdate", targets: 5 },
+        { className: "lastchange", targets: 6 },
+				{ className: "none problems", targets: 7 }
+        ].concat($.fn.dataTable.defaults.columnDefs)
+			});
+		}
+		catch (e) {
+			console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
+    }
+    $("#maintable tr").each(function() {
+        var lastCell = $(this).find("td:last");
+        var lastCellText = lastCell.text().trim();
+        var newClass = "noissue";
 
-{% block headtable %}	
+        if (lastCell.find("i.fas.fa-exclamation-triangle").length > 0) {
+          newClass = "exclamationtriangle";
+        } else if (lastCell.find("i.fas.fa-exclamation-circle").length > 0) {
+          newClass = "exclamationcircle";
+        }
+        else if (lastCell.find("i.fas.fa-flag").length > 0) {
+          newClass = "flag";
+        }
+        else if (lastCell.find("i.fas.fa-info").length > 0) {
+          newClass = "info";
+        }
+
+        // Add the new class to the first cell (first column) in the current row
+        $(this).find("td:first").addClass(newClass);
+    });
+  });
+</script>
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			shngInsertText ('requests', objResponse['requests'], null, 5);
+			for (item in objResponse['items']) {
+				shngInsertText (item+'_value', objResponse['items'][item]['value'], 'maintable', 10);
+        shngInsertText (item+'_last_update', objResponse['items'][item]['last_update'], 'maintable', 10);
+        shngInsertText (item+'_last_change', objResponse['items'][item]['last_change'], 'maintable', 10);
+			}
+		}
+	}
+</script>
+{% endblock pluginscripts %}
+{% block headtable %}
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
 			<td class="py-1"><strong>{{ _('NumFromStart') }}</strong></td>
-			<td class="py-1">{{ p._model.get_total_number_of_requests_to_controller() }}</td>
+			<td class="py-1" id="requests">{{ p._model.get_total_number_of_requests_to_controller() }}</td>
 			<td class="py-1" width="50px"></td>
 			<td class="py-1"><strong>Controller URL</strong></td>
 			<td class="py-1">{{ p._model.get_controller_url() }}</td>
@@ -33,21 +128,6 @@
 </table>
 {% endblock headtable %}
 
-
-<!--
-	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
--->
-{% block buttons %}
-{% if 1==2 %}
-	<form action="" method="post">
-	<button id="btn1" class="btn btn-shng btn-sm" name="learn" type="submit" value="on"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;Mach was&nbsp;</button>
-	</form>
-{% endif %}
-{% endblock %}
-
-<!--
-	Define the number of tabs for the body of the web interface (1 - 3)
--->
 {% set tabcount = 2 %}
 
 
@@ -64,104 +144,53 @@
 -->
 {% set tab1title = "<strong>Items</strong> (" ~ p._model.get_item_count() ~ ")" %}
 {% block bodytab1 %}
-
-<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
-	<div class="col-sm-12">
-		<table class="table table-striped table-hover pluginList">
-			<thead>
-				<tr class="shng_heading">
-					<th>&nbsp;</th>
-					<th>{{ _('Pfad') }}</th>
-					<th>{{ _('Typ') }}</th>
-					<th>unifi_type</th>
-					<th>{{ _('Item Wert') }}</th>
-					<th>{{ _('Letztes Update') }}</th>
-					<th>{{ _('Letzter Change') }}</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for item in p._model.get_items() %}
-					<tr id="r{{ loop.index }}_head">
-						<td class="py-1"><div class="rel" id="r{{ loop.index }}_lvl">
-						{% set warn_level =  p._model.get_item_issues(item.id()).get_worst_level() %}
-						{% if warn_level == 1 %}
-							<i class="fas fa-chevron-circle-down" style="color: #cccccc; font-size: 16pt;" id="r{{ loop.index }}_d"></i>
-							<i class="fas fa-chevron-circle-right" style="color: #cccccc; font-size: 16pt;" id="r{{ loop.index }}_r"></i>
-						{% elif warn_level == 2 %}
-							<i class="fas fa-chevron-circle-down" style="color: lightgreen; font-size: 16pt;" id="r{{ loop.index }}_d"></i>
-							<i class="fas fa-chevron-circle-right" style="color: lightgreen; font-size: 16pt;" id="r{{ loop.index }}_r"></i>
-						{% elif warn_level == 3 %}
-							<i class="fas fa-chevron-circle-down" style="color: #FFD700; font-size: 16pt;" id="r{{ loop.index }}_d"></i>
-							<i class="fas fa-chevron-circle-right" style="color: #FFD700; font-size: 16pt;" id="r{{ loop.index }}_r"></i>
-						{% elif warn_level == 4 %}
-							<i class="fas fa-chevron-circle-down" style="color: red; font-size: 16pt;" id="r{{ loop.index }}_d"></i>
-							<i class="fas fa-chevron-circle-right" style="color: red; font-size: 16pt;" id="r{{ loop.index }}_r"></i>
-						{% endif %}
-						</div></td>
-						<td class="py-1"><div class="rel" id="r{{ loop.index }}_id">{{ item.id() }}</div></td>
-						<td class="py-1">{{ item.type() }}</td>
-						<td class="py-1">{{ item.conf['unifi_type'] }}</td>
-						<td class="py-1">{{ item() }}</td>
-						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-					</tr>
-					<tr id="r{{ loop.index }}_body2">
-						<td colspan="7">&nbsp;</td>
-					</tr>
-					<tr id="r{{ loop.index }}_body1">
-						<td>&nbsp;</td>
-						<td colspan="6">
-						{% for issue in p._model.get_item_issues(item.id()).get_issues() %}
-							{% if issue[0:2] == "1:" %}
-								&nbsp;<i class="fas fa-info" style="color: #cccccc"></i>&nbsp;{{ issue[2:400] }}
-							{% elif issue[0:2] == "2:" %}
-								<i class="fas fa-flag" style="color: lightgreen"></i>{{ issue[2:400] }}
-							{% elif issue[0:2] == "3:" %}
-								<i class="fas fa-exclamation-circle" style="color: #FFD700"></i>{{ issue[2:400] }}
-							{% elif issue[0:2] == "4:" %}
-								<i class="fas fa-exclamation-triangle" style="color: red"></i>{{ issue[2:400] }}
-							{% else %}
-								{{ issue }}
-							{% endif %}
-							<br/>
-						{% endfor %}
-						</td>
-					</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-	</div>
-</div>
-
-<script>
-var popper;
-var lastShow = 0;
-
-function showRow(row) {
-	$("#r"+lastShow+"_body1").hide();
-	$("#r"+lastShow+"_d").hide();
-	$("#r"+lastShow+"_r").show();
-	if(lastShow != row) {
-		$("#r"+row+"_body1").show();
-		$("#r"+row+"_d").show();
-		$("#r"+row+"_r").hide();
-		lastShow = row;
-	} else {
-		lastShow = 0;
-	}
-}
-
-document.addEventListener('DOMContentLoaded', function(){
-{% for item in p._model.get_items() %}
-$("#r{{ loop.index }}_body1").hide();
-$("#r{{ loop.index }}_body2").hide();
-$("#r{{ loop.index }}_d").hide();
-$("#r{{ loop.index }}_lvl").click(function() {showRow({{ loop.index }}); });
-{% endfor %}
-
-});
-
-</script>
+  <table id="maintable">
+  	<thead>
+  		<tr class="shng_heading"><th></th>
+  			<th>{{ _('Pfad') }}</th>
+  			<th>{{ _('Typ') }}</th>
+  			<th>unifi_type</th>
+  			<th>{{ _('Item Wert') }}</th>
+  			<th>{{ _('Letztes Update') }}</th>
+  			<th>{{ _('Letzter Change') }}</th>
+  			<th>{{ _('Probleme') }}</th>
+  		</tr>
+  	</thead>
+  	<tbody>
+  		{% for item in p._model.get_items() %}
+  			<tr id="r{{ loop.index }}_head"><td></td>
+  				<td class="py-1"><div class="rel" id="{{ item }}_id">{{ item.id() }}</div></td>
+  				<td class="py-1" id="{{ item }}_type">{{ item.type() }}</td>
+  				<td class="py-1" id="{{ item }}_unifi_type">{{ item.conf['unifi_type'] }}</td>
+  				<td class="py-1" id="{{ item }}_value">{{ item() }}</td>
+  				<td class="py-1" id="{{ item }}_last_update">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+  				<td class="py-1" id="{{ item }}_last_change">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+  				<td class="py-1" id="{{ item }}_issues">
+            {% if p._model.get_item_issues(item.id()).get_issues() | length == 0 %}
+              {{ _('Keine')}}
+            {% else %}
+  						{% for issue in p._model.get_item_issues(item.id()).get_issues() %}
+                {% if p._model.get_item_issues(item.id()).get_issues() | length > 1 and loop.index == 1 %}
+                  <br/>
+                {% endif %}
+  							{% if issue[0:2] == "1:" %}
+  								<i class="fas fa-info" style="color: #cccccc" id=""></i>{{ issue[2:400] }}
+  							{% elif issue[0:2] == "2:" %}
+  								<i class="fas fa-flag" style="color: lightgreen"></i>{{ issue[2:400] }}
+  							{% elif issue[0:2] == "3:" %}
+  								<i class="fas fa-exclamation-circle" style="color: #FFD700"></i>{{ issue[2:400] }}
+  							{% elif issue[0:2] == "4:" %}
+  								<i class="fas fa-exclamation-triangle" style="color: red"></i>{{ issue[2:400] }}
+  							{% else %}
+  								{{ issue }}
+  							{% endif %}
+  							<br/>
+  						{% endfor %}
+            {% endif %}
+  				</td>
+  		{% endfor %}
+  	</tbody>
+  </table>
 
 {% endblock bodytab1 %}
 
