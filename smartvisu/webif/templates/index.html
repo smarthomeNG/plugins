@@ -266,7 +266,7 @@
 -->
 {% set tab1title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Clients') ~ "</strong> (<span id=clientcount>" ~ clients|length ~ "</span>)" %}
 {% block bodytab1 %}
-	<table id="clienttable"></table>
+	<table id="clienttable" class="dataTableAdditional"></table>
 {% endblock %}
 
 
@@ -276,7 +276,7 @@
 {% set tab2title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Items') ~ "</strong> (<span id=itemcount>" ~ items|length ~ "</span>)" %}
 {% block bodytab2 %}
 
-		<table id="itemtable">
+		<table id="itemtable" class="dataTableAdditional">
       <tbody>
 			{% for item in items %}
 				<tr><td></td>
@@ -295,7 +295,7 @@
 
 {% set tab3title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Logiken') ~ "</strong> (<span id=logiccount>" ~ logics|length ~ "</span>)" %}
 {% block bodytab3 %}
-		<table id="logictable">
+		<table id="logictable" class="dataTableAdditional">
       <tbody>
 			{% for logic in logics %}
 				<tr><td></td>
