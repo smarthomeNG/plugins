@@ -51,7 +51,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.10'
+    PLUGIN_VERSION = '1.6.11'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -786,7 +786,11 @@ class Database(SmartPlugin):
         :return: Time of oldest log record for the database ID
         """
         params = {'id': id}
-        return self._fetchall("SELECT min(time) FROM {log} WHERE item_id = :id;", params, cur=cur)[0][0]
+        db_values = self._fetchall("SELECT min(time) FROM {log} WHERE item_id = :id;", params, cur=cur)
+        if db_values is None:
+            return None
+        else:
+            return db_values[0][0]
 
 
     def readLatestLog(self, id, time=None, cur=None):
@@ -803,11 +807,18 @@ class Database(SmartPlugin):
         """
         if time is None:
             params = {'id': id}
-            return self._fetchall("SELECT max(time) FROM {log} WHERE item_id = :id;", params, cur=cur)[0][0]
+            db_values = self._fetchall("SELECT max(time) FROM {log} WHERE item_id = :id;", params, cur=cur)
+            if db_values is None:
+                return None
+            else:
+                return db_values[0][0]
         else:
             params = {'id': id, 'time': time}
-            return self._fetchall("SELECT max(time) FROM {log} WHERE item_id = :id AND time <= :time", params, cur=cur)[0][0]
-
+            db_values = self._fetchall("SELECT max(time) FROM {log} WHERE item_id = :id AND time <= :time", params, cur=cur)
+            if db_values is None:
+                return None
+            else:
+                return db_values[0][0]
 
     def readTotalLogCount(self, id=None, time_start=None, time_end=None, cur=None):
         """
@@ -825,7 +836,6 @@ class Database(SmartPlugin):
         if result == []:
             return 0
         return result[0][0]
-
 
     def readLogCount(self, id, time_start=None, time_end=None, cur=None):
         """
@@ -907,17 +917,30 @@ class Database(SmartPlugin):
         self.orphanlist = []
 
         items = [item.id() for item in self._buffer]
-        cur = self._db_maint.cursor()
-        try:
-            for item in self.readItems(cur=cur):
-                if item[COL_ITEM_NAME] not in items:
-                    if log_activity:
-                        self.logger.info(f"- Found data for item w/o database attribute: {item[COL_ITEM_NAME]}")
-                    self.orphanitemlist.append(item)
-                    self.orphanlist.append(item[COL_ITEM_NAME])
+        try: 
+            cur = self._db_maint.cursor()
         except Exception as e:
-            self.logger.error("Database build_orphan_list failed: {}".format(e))
-        cur.close()
+            self.logger.error("Database build_orphan_list failed obtaining cursor: {}".format(e))
+        else:
+
+            try:
+                return_list = self.readItems(cur=cur)
+                if return_list:
+                    for item in return_list:
+                        if item[COL_ITEM_NAME] not in items:
+                            if log_activity:
+                                self.logger.info(f"- Found data for item w/o database attribute: {item[COL_ITEM_NAME]}")
+                            self.orphanitemlist.append(item)
+                            self.orphanlist.append(item[COL_ITEM_NAME])
+            except Exception as e:
+                self.logger.error("Database build_orphan_list failed: {}".format(e))
+        
+            try:
+                if cur: 
+                    cur.close()
+            except Exception as e:
+                self.logger.error("Database build_orphan_list failed closing cursor: {}".format(e))
+
         self._count_orphanlogentries()
         if log_activity:
             self.logger.info("build_orphan_list: Finished")
@@ -1649,7 +1672,7 @@ class Database(SmartPlugin):
                     self.last_connect_time = time.time()
                     self._db.connect()
                 else:
-                    self.logger.error("Database reconnect supressed: Delta time: {0}".format(time_delta_last_connect))
+                    self.logger.info("Database reconnect supressed: Delta time: {0}".format(time_delta_last_connect))
                     return False
 
             if not self._db_initialized:
