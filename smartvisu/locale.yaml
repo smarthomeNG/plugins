@@ -21,4 +21,10 @@ plugin_translations:
     'nicht aktiv':                 {'de': '=', 'en': 'disabled'}
     'erlaubt':                     {'de': '=', 'en': 'enabled'}
     'nicht erlaubt':               {'de': '=', 'en': 'disabled'}
-
+    'Letzte Änderung':             {'de': '=', 'en': 'Last Change'}
+    'Letzte Aktualisierung':       {'de': '=', 'en': 'Last Update'}
+    'Logik':                       {'de': '=', 'en': 'Logic'}
+    'Status':                      {'de': '=', 'en': '='}
+    'Item':                        {'de': '=', 'en': '='}
+    'Typ':                         {'de': '=', 'en': 'Type'}
+    'Wert':                        {'de': '=', 'en': 'Value'}
