@@ -49,7 +49,7 @@ parameters:
         type: str
         default: ''
         description:
-            de: 'Absender-Adresse der eMails (mail@example.com)'
+            de: 'Absenderadresse der eMails (mail@example.com)'
             en: 'Sender address of the emails (mail@example.com)'
 
     username:
@@ -83,7 +83,7 @@ plugin_functions:
                 type: str
                 description:
                     de: "Empfänger der eMail (admin@smart.home)"
-                    en: "Receipient of email (admin@smart.home)"
+                    en: "Recipient of email (admin@smart.home)"
             subject:
                 type: foo
                 description:
