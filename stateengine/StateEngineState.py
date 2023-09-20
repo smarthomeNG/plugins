@@ -505,9 +505,8 @@ class SeState(StateEngineTools.SeItemChild):
                 if child_name == "enter" or child_name.startswith("enter_"):
                     _conditioncount += 1
                     _unused_attributes, _used_attributes = self.__conditions.update(child_name, child_item, parent_item)
-                    if _conditioncount == 1:
-                        self.__unused_attributes = copy(_unused_attributes)
-                        self.__used_attributes = copy(_used_attributes)
+                    self.__unused_attributes = copy(_unused_attributes)
+                    self.__used_attributes = copy(_used_attributes)
                     for item in self.__unused_attributes.keys():
                         if 'issue' in self.__unused_attributes[item].keys():
                             if not self.__unused_attributes[item].get('issueorigin'):
@@ -515,6 +514,7 @@ class SeState(StateEngineTools.SeItemChild):
                             entry = {'state': self.id, 'conditionset': child_name}
                             if entry not in self.__unused_attributes[item].get('issueorigin'):
                                 self.__unused_attributes[item]['issueorigin'].append(entry)
+                    self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
             except ValueError as ex:
                 raise ValueError("Condition {0} error: {1}".format(child_name, ex))
 

@@ -392,17 +392,24 @@ class SeItem:
         self.__unused_attributes = filtered_dict
 
         self.__logger.info("".ljust(80, "_"))
-
+        issues = 0
         if self.__config_issues:
+            issues += 1
             self.__log_issues('config entries')
         if self.__unused_attributes:
+            issues += 1
             self.__log_issues('attributes')
         if self.__action_status:
+            issues += 1
             self.__log_issues('actions')
         if self.__state_issues:
+            issues += 1
             self.__log_issues('states')
         if self.__struct_issues:
+            issues += 1
             self.__log_issues('structs')
+        if issues == 0:
+            self.__logger.info("No configuration issues found. Congratulations ;)")
 
     def update_leave_action(self, default_instant_leaveaction):
         default_instant_leaveaction_value = default_instant_leaveaction.get()
