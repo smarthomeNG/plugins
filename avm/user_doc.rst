@@ -14,7 +14,7 @@ avm
    :align: left
 
 Allgemeine Informationen
-------------------------
+========================
 
 Im Plugin wird das TR-064 Protokoll und das AHA Protokoll verwendet.
 
@@ -33,7 +33,7 @@ Unterstützung erhält man im Forum unter: https://knx-user-forum.de/forum/suppo
 
 
 Konfiguration der Fritz!Box
----------------------------
+===========================
 
 Für die Nutzung der Informationen über Telefonereignisse muss der CallMonitor aktiviert werden. Dazu muss auf
 einem direkt an die Fritz!Box angeschlossenen Telefon (Analog, ISDN S0 oder DECT) \*96#5# eingegeben werden.
@@ -43,7 +43,7 @@ und Kennwort umgestellt werden" und es sollte ein eigener User für das AVM Plug
 
 
 Konfiguration des Plugins
--------------------------
+=========================
 
 Diese Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
 unter :doc:`/plugins_doc/config/avm` beschrieben.
@@ -55,7 +55,7 @@ werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
 
 
 Attribute und Beschreibung
---------------------------
+==========================
 
 Dieses Kapitel wurde automatisch durch Ausführen des Skripts in der Datei 'datapoints.py' erstellt.
 
@@ -63,7 +63,7 @@ Nachfolgend eine Auflistung der möglichen Attribute für das Plugin:
 
 
 TR064-Interface
-^^^^^^^^^^^^^^^
+---------------
 
 - uptime: Laufzeit des Fritzdevice in Sekunden | Zugriff: ro | Item-Type: num
 
@@ -245,7 +245,7 @@ TR064-Interface
 
 
 AHA-Interface
-^^^^^^^^^^^^^
+-------------
 
 - device_id: Geräte -ID | Zugriff: ro | Item-Type: str 
 
@@ -311,29 +311,29 @@ AHA-Interface
 
 - level: Level/Niveau von 0 bis 255 (Setzen & Status) | Zugriff: rw | Item-Type: num 
 
-- set_levelpercentage: Level/Niveau von 0% bis 100% (Setzen) | Zugriff: wo | Item-Type: num 
+- set_levelpercentage: Level/Niveau in Prozent von 0% bis 100% (Setzen) | Zugriff: wo | Item-Type: num 
 
-- levelpercentage: Level/Niveau von 0% bis 100% (Setzen & Status) | Zugriff: rw | Item-Type: num 
+- levelpercentage: Level/Niveau in Prozent von 0% bis 100% (Setzen & Status) | Zugriff: rw | Item-Type: num 
 
-- set_hue: Hue (Setzen) | Zugriff: wo | Item-Type: num 
+- set_hue: Hue mit Wertebereich von 0° bis 359° (Setzen) | Zugriff: wo | Item-Type: num 
 
-- hue: Hue (Status und Setzen) | Zugriff: rw | Item-Type: num 
+- hue: Hue mit Wertebereich von 0° bis 359° (Status und Setzen) | Zugriff: rw | Item-Type: num 
 
-- set_saturation: Saturation (Setzen) | Zugriff: wo | Item-Type: num 
+- set_saturation: Saturation mit Wertebereich von 0 bis 255 (Setzen) | Zugriff: wo | Item-Type: num 
 
-- saturation: Saturation (Status und Setzen) | Zugriff: rw | Item-Type: num 
+- saturation: Saturation mit Wertebereich von 0 bis 255 (Status und Setzen) | Zugriff: rw | Item-Type: num 
 
-- set_colortemperature: Farbtemperatur (Setzen) | Zugriff: wo | Item-Type: num 
+- set_colortemperature: Farbtemperatur mit Wertebereich von 2700K bis 6500K (Setzen) | Zugriff: wo | Item-Type: num 
 
-- colortemperature: Farbtemperatur (Status und Setzen) | Zugriff: rw | Item-Type: num 
+- colortemperature: Farbtemperatur mit Wertebereich von 2700K bis 6500K (Status und Setzen) | Zugriff: rw | Item-Type: num 
 
-- unmapped_hue: Hue (Status und Setzen) | Zugriff: rw | Item-Type: num 
+- unmapped_hue: Hue mit Wertebereich von 0° bis 359° (Status und Setzen) | Zugriff: rw | Item-Type: num 
 
-- unmapped_saturation: Saturation (Status und Setzen) | Zugriff: rw | Item-Type: num 
+- unmapped_saturation: Saturation mit Wertebereich von 0 bis 255 (Status und Setzen) | Zugriff: rw | Item-Type: num 
 
-- color: Farbwerte als Liste h,s (Status und Setzen) | Zugriff: rw | Item-Type: list 
+- color: Farbwerte als Liste [Hue, Saturation] (Status und Setzen) | Zugriff: rw | Item-Type: list 
 
-- hsv: Farbwerte und Helligkeit als Liste h,s,v (Status und Setzen) | Zugriff: rw | Item-Type: list 
+- hsv: Farbwerte und Helligkeit als Liste [Hue, Saturation, Level in Prozent] (Status und Setzen) | Zugriff: rw | Item-Type: list 
 
 - color_mode: Aktueller Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode) | Zugriff: ro | Item-Type: num 
 
@@ -375,7 +375,7 @@ AHA-Interface
 
 
 item_structs
-------------
+============
 Zur Vereinfachung der Einrichtung von Items sind für folgende Item-structs vordefiniert:
 
 Fritz!Box // Fritz!Repeater mit TR-064
@@ -406,7 +406,7 @@ Welche Funktionen Euer spezifisches Gerät unterstützt, könnt ihr im WebIF im 
 
 
 Item Beispiel mit Verwendung der structs ohne Instanz
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------------------
 
 .. code-block:: yaml
 
@@ -459,7 +459,7 @@ Item Beispiel mit Verwendung der structs ohne Instanz
 
 
 Item Beispiel mit Verwendung der structs mit Instanz
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------------
 
 .. code-block:: yaml
 
@@ -483,15 +483,16 @@ Attribut "database" ergänzt, um den Wert in die Datenbank zuschreiben.
 
 
 Plugin Funktionen
------------------
+=================
 
 cancel_call
-~~~~~~~~~~~
+-----------
 
 Beendet einen aktiven Anruf.
 
+
 get_call_origin
-~~~~~~~~~~~~~~~
+---------------
 
 Gib den Namen des Telefons zurück, das aktuell als 'call origin' gesetzt ist.
 
@@ -506,29 +507,35 @@ CURL for this function:
 
     curl --anyauth -u user:password "https://fritz.box:49443/upnp/control/x_voip" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:dslforum-org:service:X_VoIP:1#X_AVM-DE_DialGetConfig" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:X_AVM-DE_DialGetConfig xmlns:u='urn:dslforum-org:service:X_VoIP:1' /></s:Body></s:Envelope>" -s -k
 
+
 get_calllist
-~~~~~~~~~~~~
+------------
 Ermittelt ein Array mit dicts aller Einträge der Anrufliste (Attribute 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date',' Duration' (einige optional)).
 
+
 get_contact_name_by_phone_number(phone_number)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------
 Durchsucht das Telefonbuch mit einer (vollständigen) Telefonnummer nach Kontakten. Falls kein Name gefunden wird, wird die Telefonnummer zurückgeliefert.
 
+
 get_device_log_from_lua
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 Ermittelt die Logeinträge auf dem Gerät über die LUA Schnittstelle /query.lua?mq_log=logger:status/log.
 
+
 get_device_log_from_tr064
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
 Ermittelt die Logeinträge auf dem Gerät über die TR-064 Schnittstelle.
 
+
 get_host_details
-~~~~~~~~~~~~~~~~
+----------------
 Ermittelt die Informationen zu einem Host an einem angegebenen Index.
 dict keys: name, interface_type, ip_address, mac_address, is_active, lease_time_remaining
 
+
 get_hosts
-~~~~~~~~~
+---------
 Ermittelt ein Array mit den Details aller verbundenen Hosts. Verwendet wird die Funktion "get_host_details"
 
 Beispiel einer Logik, die die Host von 3 verbundenen Geräten in eine Liste zusammenführt und in ein Item schreibt.
@@ -563,8 +570,9 @@ Beispiel einer Logik, die die Host von 3 verbundenen Geräten in eine Liste zusa
     string += '</ul>'
     sh.avm.devices.device_list(string)
 
+
 get_hosts_list
-~~~~~~~~~~~~~~
+--------------
 
 Ermittelt ein Array mit (gefilterten) Informationen der verbundenen Hosts. Dabei wird die die Abfrage der "Host List Contents" verwendet.
 Der Vorteil gegenüber "get_hosts" liegt in der deutlich schnelleren Abfrage.
@@ -595,6 +603,7 @@ In Abfrage der Hosts liefert folgenden Werte:
   - 'FriendlyName'
   - 'FriendlyNameIsWriteable'
 
+
 Auf all diese Werte kann mit dem Parameter "filter_dict" gefiltert werden. Dabei können auch mehrere Filter gesetzt werden.
 
 Das folgende Beispiel liefert alle Informationen zu den aktiven Hosts zurück:
@@ -603,11 +612,13 @@ Das folgende Beispiel liefert alle Informationen zu den aktiven Hosts zurück:
 
     hosts = sh.fritzbox_7490.get_hosts_list(filter_dict={'Active': True})
 
+
 Das folgende Beispiel liefer alle Informationen zu den aktiven Hosts zurück, bei den ein Update vorliegt:
 
 .. code-block:: python
 
     hosts = sh.fritzbox_7490.get_hosts_list(filter_dict={'Active': True, 'UpdateAvailable': True})
+
 
 Des Weiteren können über den Parameter "identifier_list" die Identifier des Hosts festgelegt werden, die zurückgegeben werden sollen.
 Möglich sind: 'index', 'ipaddress', 'macaddress', 'hostname', 'friendlyname'
@@ -618,16 +629,18 @@ Das folgende Beispiel liefer 'IPAddress' und 'MACAddress' zu den aktiven Hosts z
 
     hosts = sh.fritzbox_7490.get_hosts_list(identifier_list=['ipaddress', 'macaddress'], filter_dict={'Active': True, 'UpdateAvailable': True})
 
+
 get_phone_name
-~~~~~~~~~~~~~~
+--------------
 Gibt den Namen eines Telefons an einem Index zurück. Der zurückgegebene Wert kann in 'set_call_origin' verwendet werden.
 
 .. code-block:: python
 
     phone_name = sh.fb1.get_phone_name(1)
 
+
 get_phone_numbers_by_name(name)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------
 Durchsucht das Telefonbuch mit einem Namen nach nach Kontakten und liefert die zugehörigen Telefonnummern.
 
 .. code-block:: python
@@ -647,8 +660,9 @@ Durchsucht das Telefonbuch mit einem Namen nach nach Kontakten und liefert die z
         result_string += '</table></p>'
     sh.general_items.number_search_results(result_string)
 
+
 is_host_active
-~~~~~~~~~~~~~~
+--------------
 Prüft, ob eine MAC Adresse auf dem Gerät aktiv ist. Das kann bspw. für die Umsetzung einer Präsenzerkennung genutzt
 werden.
 
@@ -658,16 +672,19 @@ CURL for this function:
 
     curl --anyauth -u user:password "https://fritz.box:49443/upnp/control/hosts" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:dslforum-org:service:Hosts:1#GetSpecificHostEntry" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:GetSpecificHostEntry xmlns:u='urn:dslforum-org:service:Hosts:1'><s:NewMACAddress>XX:XX:XX:XX:XX:XX</s:NewMACAddress></u:GetSpecificHostEntry></s:Body></s:Envelope>" -s -k
 
+
 reboot
-~~~~~~
+------
 Startet das Gerät neu.
 
+
 reconnect
-~~~~~~~~~
+---------
 Verbindet das Gerät neu mit dem WAN (Wide Area Network).
 
+
 set_call_origin
-~~~~~~~~~~~~~~~
+---------------
 Setzt den 'call origin', bspw. vor dem Aufruf von 'start_call'. Typischerweise genutzt vor der Verwendung von "start_call".
 Der Origin kann auch mit direkt am Fritzdevice eingerichtet werden: "Telefonie -> Anrufe -> Wählhilfe verwenden ->
 Verbindung mit dem Telefon".
@@ -676,8 +693,9 @@ Verbindung mit dem Telefon".
 
     sh.fb1.set_call_origin("<phone_name>")
 
+
 start_call
-~~~~~~~~~~
+----------
 Startet einen Anruf an eine übergebene Telefonnummer (intern oder extern).
 
 .. code-block:: python
@@ -685,29 +703,85 @@ Startet einen Anruf an eine übergebene Telefonnummer (intern oder extern).
     sh.fb1.start_call('0891234567')
     sh.fb1.start_call('**9')
 
+
 wol(mac_address)
-~~~~~~~~~~~~~~~~
+----------------
 Sendet einen WOL (WakeOnLAN) Befehl an eine MAC Adresse.
 
+
 get_number_of_deflections
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
 Liefert die Anzahl der Rufumleitungen zurück.
 
+
 get_deflection
-~~~~~~~~~~~~~~
+--------------
 Liefert die Details der Rufumleitung der angegebenen ID zurück (Default-ID = 0)
 
+
 get_deflections
-~~~~~~~~~~~~~~~
+---------------
 Liefert die Details aller Rufumleitungen zurück.
 
+
 set_deflection_enable
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 Schaltet die Rufumleitung mit angegebener ID an oder aus.
 
 
+
+Farb- und Helligkeitseinstellungen bspw. an DECT!500
+====================================================
+
+Zur Einstellung von Farbe und Helligkeit bspw. an einem DECT500 stehen divese Attributwerte zur Verfügung.
+Diese sind:
+
+- level: Level/Niveau von 0 bis 255 (Setzen & Status) | Zugriff: rw | Item-Type: num 
+
+- levelpercentage: Level/Niveau von 0% bis 100% (Setzen & Status) | Zugriff: rw | Item-Type: num 
+
+- hue: Hue von 0 bis 359 (Status und Setzen) | Zugriff: rw | Item-Type: num 
+
+- saturation: Saturation von 0 bis 255 (Status und Setzen) | Zugriff: rw | Item-Type: num 
+
+- colortemperature: Farbtemperatur von 2700K bis 6500K (Status und Setzen) | Zugriff: rw | Item-Type: num 
+
+- color: Farbwerte als Liste [hue, saturation] (Status und Setzen) | Zugriff: rw | Item-Type: list 
+
+- hsv: Farbwerte und Helligkeit als Liste [hue, saturation ,levelpercentage] (Status und Setzen) | Zugriff: rw | Item-Type: list 
+
+
+Farbeinstellung
+---------------
+
+Zur Einstellung von Farbe werden die Größen **hue** und **saturation** verwendet. Die Angabe von Hue erfolgt in Grad von 0° bis 359°. Die Angabe von Saturation erfolgt im Bereich von 0 bis 255
+
+Es sind Attributwerte verfügbar, mit denen **hue** und **saturation** jeweils getrennt geändert werden, als auch der Attributwert **color**, bei dem **hue** und **saturation** gemeinsam als Liste [hue,saturation] übergeben und damit geändert werden.
+
+
+Helligkeitseinstellungen
+------------------------
+
+Die kombinierte Einstellung der Farbe und Helligkeit kann über die Attributwerte **level** im Bereich 0 bis 255 oder über **levelpercentage** im Wertebereich 0% bis 100% vorgenommen werden. 
+
+
+Kombinierte Einstellung von Farbe und Helligkeit
+------------------------------------------------
+
+Die Einstellung der Helligkeit kann über den Attributwert **hsv** vorgenommen werden. Dabei muss der Wert eine Liste aus **hue**, **saturation** und **levelpercentage**, also[hue,saturation,levelpercentage] sein.
+
+
+Einstellung der Farbtemperatur im "Weiß-Modus"
+----------------------------------------------
+
+Um eine spezifische Farbtemperatur im "Weiß-Modus" darstellen, wird der Attributwert **colortemperature** verwendet. Geschieht dies, wird in der Leuchte der Modus von "Full Color" auf "White" geändert.
+Als Itemwerte sind Farbtemperaturen in Kelvin im Bereich 2700K bis 6500K zulässig.
+Die Umstellung auf den "Full Color" Mode erfolgt automatisch, wenn Hue oder Saturation Werte gesendet werden.
+
+
+
 Web Interface
--------------
+=============
 
 Das avm Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die das Plugin nutzen
 übersichtlich dargestellt werden.
@@ -720,7 +794,7 @@ Das avm Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die d
 
 
 Aufruf des Webinterfaces
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 Das Plugin kann aus dem Admin-IF aufgerufen werden. Dazu auf der Seite Plugins in der entsprechenden
 Zeile das Icon in der Spalte **Web Interface** anklicken.
@@ -729,47 +803,53 @@ Es werden nur die Tabs angezeigt, deren Funktionen im Plugin aktiviert sind bzw.
 
 Im WebIF stehen folgende Reiter zur Verfügung:
 
+
 AVM AVM TR-064 Items
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 Tabellarische Auflistung aller Items, die mit dem TR-064 Protokoll ausgelesen werden
 
 .. image:: user_doc/assets/webif_tab1.jpg
    :class: screenshot
 
+
 AVM AHA Items
-~~~~~~~~~~~~~
+-------------
 Tabellarische Auflistung aller Items, die mit dem AHA Protokoll ausgelesen werden (Items der AVM HomeAutomation Geräte)
 
 .. image:: user_doc/assets/webif_tab2.jpg
    :class: screenshot
 
+
 AVM AHA Devices
-~~~~~~~~~~~~~~~
+---------------
 
 Auflistung der mit der Fritzbox verbundenen AVM HomeAutomation Geräte
 
 .. image:: user_doc/assets/webif_tab3.jpg
    :class: screenshot
 
+
 AVM Call Monitor Items
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 Tabellarische Auflistung des Anrufmonitors (nur wenn dieser konfiguriert ist)
 
 .. image:: user_doc/assets/webif_tab4.jpg
    :class: screenshot
 
+
 AVM Log-Einträge
-~~~~~~~~~~~~~~~~
+----------------
 
 Listung der Logeinträge der Fritzbox
 
 .. image:: user_doc/assets/webif_tab5.jpg
    :class: screenshot
 
+
 AVM Plugin-API
-~~~~~~~~~~~~~~
+--------------
 
 Beschreibung der Plugin-API
 
@@ -778,7 +858,7 @@ Beschreibung der Plugin-API
 
 
 Vorgehen bei Funktionserweiterung des Plugins bzw. Ergänzung weiterer Werte für Itemattribut `avm_data_type`
-------------------------------------------------------------------------------------------------------------
+============================================================================================================
 
 Augrund der Vielzahl der möglichen Werte des Itemattribut `avm_data_type` wurde die Erstellung/Update des entsprechenden Teils der
 `plugin.yam` sowie die Erstellung der Datei `item_attributes.py`, die vom Plugin verwendet wird, automatisiert.
