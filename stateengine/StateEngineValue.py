@@ -155,8 +155,9 @@ class SeValue(StateEngineTools.SeItemChild):
     # Set value
     # value: string indicating value or source of value
     # name: name of object ("time" is being handled differently)
-    def set(self, value, name="", reset=True, item=None):
-        value = copy.deepcopy(value)
+    def set(self, value, name="", reset=True, item=None, copyvalue=True):
+        if copyvalue is True:
+            value = copy.copy(value)
         if reset:
             self.__resetvalue()
         if isinstance(value, list):
@@ -372,6 +373,7 @@ class SeValue(StateEngineTools.SeItemChild):
         self.__issues = StateEngineTools.flatten_list(self.__issues)
         self.__listorder = StateEngineTools.flatten_list(self.__listorder)
         self.__type_listorder = StateEngineTools.flatten_list(self.__type_listorder)
+        del value
         return self.__listorder, self.__type_listorder, self.__issues
 
     # Set cast function

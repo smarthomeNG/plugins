@@ -804,8 +804,8 @@ item_structs:
             remark: Adapt the se_manual_exclude the way you need it
             #se_manual_include: KNX:* Force manual mode based on source
             se_manual_exclude:
-              - database:*
-              - init:*
+              - database:.*
+              - init:.*
 
         retrigger:
             remark: Item to retrigger the rule set evaluation
@@ -1000,8 +1000,8 @@ item_structs:
             remark: Adapt the se_manual_exclude the way you need it
             #se_manual_include: KNX:* Force manual mode based on source
             se_manual_exclude:
-              - database:*
-              - init:*
+              - database:.*
+              - init:.*
 
         retrigger:
             remark: Item to retrigger the rule set evaluation

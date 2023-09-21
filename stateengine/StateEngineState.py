@@ -84,7 +84,7 @@ class SeState(StateEngineTools.SeItemChild):
 
     @releasedby.setter
     def releasedby(self, value):
-        self.__releasedby.set(value)
+        self.__releasedby.set(value, "", True, None, False)
 
     @property
     def can_release(self):
@@ -92,7 +92,7 @@ class SeState(StateEngineTools.SeItemChild):
 
     @can_release.setter
     def can_release(self, value):
-        self.__can_release.set(value)
+        self.__can_release.set(value, "", True, None, False)
 
     @property
     def has_released(self):
@@ -100,7 +100,7 @@ class SeState(StateEngineTools.SeItemChild):
 
     @has_released.setter
     def has_released(self, value):
-        self.__has_released.set(value)
+        self.__has_released.set(value, "", True, None, False)
 
     @property
     def was_releasedby(self):
@@ -108,7 +108,7 @@ class SeState(StateEngineTools.SeItemChild):
 
     @was_releasedby.setter
     def was_releasedby(self, value):
-        self.__was_releasedby.set(value)
+        self.__was_releasedby.set(value, "", True, None, False)
 
     @property
     def is_copy_for(self):
@@ -116,7 +116,13 @@ class SeState(StateEngineTools.SeItemChild):
 
     @is_copy_for.setter
     def is_copy_for(self, value):
-        self.__is_copy_for.set(value)
+        if value:
+            webif_id = value.id
+        else:
+            webif_id = None
+        _key_copy = ['{}'.format(self.id), 'is_copy_for']
+        self._abitem.update_webif(_key_copy, webif_id)
+        self.__is_copy_for.set(value, "", True, None, False)
 
     # Constructor
     # abitem: parent SeItem instance
@@ -199,7 +205,8 @@ class SeState(StateEngineTools.SeItemChild):
                                             'actions_enter_or_stay': {},
                                             'actions_stay': {},
                                             'actions_leave': {},
-                                            'leave': False, 'enter': False, 'stay': False})
+                                            'leave': False, 'enter': False, 'stay': False,
+                                            'is_copy_for': None, 'releasedby': None})
         self._log_decrease_indent()
         self._log_info("Finished Web Interface Update")
 
@@ -313,10 +320,10 @@ class SeState(StateEngineTools.SeItemChild):
 
     def update_releasedby_internal(self, states=None):
         if states == []:
-            _returnvalue, _returntype, _issue = self.__releasedby.set([None])
+            _returnvalue, _returntype, _issue = self.__releasedby.set([None], "", True, None, False)
         elif states:
             self._log_develop("Setting releasedby to {}", states)
-            _returnvalue, _returntype, _issue = self.__releasedby.set(states)
+            _returnvalue, _returntype, _issue = self.__releasedby.set(states, "", True, None, False)
             self._log_develop("returnvalue {}", _returnvalue)
         else:
             _returnvalue, _returntype, _, _issue = self.__releasedby.set_from_attr(self.__item, "se_released_by")
@@ -324,9 +331,9 @@ class SeState(StateEngineTools.SeItemChild):
 
     def update_can_release_internal(self, states):
         if states == []:
-            _returnvalue, _returntype, _issue = self.__can_release.set([None])
+            _returnvalue, _returntype, _issue = self.__can_release.set([None], "", True, None, False)
         elif states:
-            _returnvalue, _returntype, _issue = self.__can_release.set(states)
+            _returnvalue, _returntype, _issue = self.__can_release.set(states, "", True, None, False)
         else:
             _returnvalue, _returntype, _issue = [None], [None], None
         return _returnvalue, _returntype, _issue
@@ -498,9 +505,8 @@ class SeState(StateEngineTools.SeItemChild):
                 if child_name == "enter" or child_name.startswith("enter_"):
                     _conditioncount += 1
                     _unused_attributes, _used_attributes = self.__conditions.update(child_name, child_item, parent_item)
-                    if _conditioncount == 1:
-                        self.__unused_attributes = copy(_unused_attributes)
-                        self.__used_attributes = copy(_used_attributes)
+                    self.__unused_attributes = copy(_unused_attributes)
+                    self.__used_attributes = copy(_used_attributes)
                     for item in self.__unused_attributes.keys():
                         if 'issue' in self.__unused_attributes[item].keys():
                             if not self.__unused_attributes[item].get('issueorigin'):
@@ -508,6 +514,7 @@ class SeState(StateEngineTools.SeItemChild):
                             entry = {'state': self.id, 'conditionset': child_name}
                             if entry not in self.__unused_attributes[item].get('issueorigin'):
                                 self.__unused_attributes[item]['issueorigin'].append(entry)
+                    self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
             except ValueError as ex:
                 raise ValueError("Condition {0} error: {1}".format(child_name, ex))
 

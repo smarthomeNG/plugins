@@ -135,7 +135,8 @@ class WebInterface(StateEngineTools.SeItemChild):
                                  else " ({} not met)".format(condition_info) if not condition_met\
                                  else " (no repeat)" if _repeat is False and originaltype == 'actions_stay'\
                                  else " (delay: {})".format(_delay) if _delay > 0\
-                                 else " (wrong delay!)" if _delay < 0\
+                                 else " (cancel delay!)" if _delay == -1 \
+                                 else " (wrong delay!)" if _delay < -1 \
                                  else " (delta {} &#60; {})".format(_delta, _mindelta) if cond_delta and cond1 and cond2\
                                  else ""
                 action1 = action_dict.get('function')
@@ -157,13 +158,17 @@ class WebInterface(StateEngineTools.SeItemChild):
                 cond_enter = originaltype == 'actions_enter' and self.__states[state].get('enter') is True
                 cond_stay = originaltype == 'actions_stay' and self.__states[state].get('stay') is True
                 active = True if (cond_enter or cond_stay) and cond1 else False
-                success_info = '<td width="24"><img src="sign_warn.png" /></td></tr>' \
+                success_info = '<td width="26"><img src="sign_warn.png" /></td></tr>' \
                     if _issue is not None and active \
-                    else '<td width="24"><img src="sign_false.png" /></td></tr>' \
+                    else '<td width="26"><img src="sign_false.png" /></td></tr>' \
                     if (_success == 'False' or not condition_met) and active \
-                    else '<td width="24"><img src="sign_true.png" /></td></tr>' \
+                    else '<td width="26"><img src="sign_scheduled.png" /></td></tr>' \
+                    if _success == 'Scheduled' and active \
+                    else '<td width="26"><img src="sign_delay.png" /></td></tr>' \
+                    if _success == 'True' and active and _delay > 0 \
+                    else '<td width="26"><img src="sign_true.png" /></td></tr>' \
                     if _success == 'True' and active \
-                    else '<td width="1"></td></tr>'
+                    else '<td width="10"></td></tr>'
                 if not action2 == 'None':
                     actionlabel += '<tr><td align="center"><font color="{}">{} {} {} {}</font></td>'.format(fontcolor, action1, action2, action3, additionaltext)
                     actionlabel += '{}'.format(success_info)
@@ -342,7 +347,7 @@ class WebInterface(StateEngineTools.SeItemChild):
         if self.__nodes.get('{}_{}_state_actions_enter_edge'.format(state, conditionset)) is None:
             self.__nodes['{}_{}_state_{}_edge'.format(state, conditionset, action_type)] = \
                 pydotplus.Edge(self.__nodes['{}_{}'.format(state, conditionset)], self.__nodes['{}_{}_state_{}'.format(
-                    state, conditionset, action_type)], style='bold', taillabel="    True", tooltip='first enter')
+                    state, conditionset, action_type)], style='bold', taillabel="    True",  tooltip='first enter')
             self.__graph.add_edge(self.__nodes['{}_{}_state_{}_edge'.format(state, conditionset, action_type)])
         else:
             self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}_state_actions_enter'.format(state, conditionset)],
@@ -405,10 +410,12 @@ class WebInterface(StateEngineTools.SeItemChild):
                 new_y -= 1 * self.__scalefactor
                 position = '{},{}!'.format(0, new_y)
                 #self._log_debug('state: {} {}',state, position)
+
                 self.__nodes[state] = pydotplus.Node(state, pos=position, pin=True, notranslate=True, style="filled",
                                                      fillcolor=color, shape="ellipse",
                                                      label='<<table border="0"><tr><td>{}</td></tr><hr/><tr>'
-                                                           '<td>{}</td></tr></table>>'.format(state, self.__states[state]['name']))
+                                                           '<td>{}</td></tr></table>>'.format(
+                                                            state, self.__states[state]['name']))
                 position = '{},{}!'.format(0.5, new_y)
                 self.__nodes['{}_right'.format(state)] = pydotplus.Node('{}_right'.format(state), pos=position,
                                                                         shape="square", width="0", label="")
@@ -522,11 +529,16 @@ class WebInterface(StateEngineTools.SeItemChild):
                         self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}'.format(state, conditionset)],
                                                              self.__nodes['{}_{}_right'.format(state, conditionset)],
                                                              style='bold', taillabel="    True", tooltip='action on enter'))
-
+                    if self.__states[state].get('is_copy_for'):
+                        xlabel = "can currently release {}\n\r".format(self.__states[state].get('is_copy_for'))
+                    elif self.__states[state].get('releasedby'):
+                        xlabel = "can currently get released by {}\n\r".format(self.__states[state].get('releasedby'))
+                    else:
+                        xlabel = ""
                     if j == 0:
                         self.__graph.add_edge(pydotplus.Edge(self.__nodes[state], self.__nodes['{}_right'.format(state)],
-                                                             style='bold', color='black', dir='none',
-                                                             edgetooltip='check first conditionset'))
+                                                             style='bold', color='black', dir='none', 
+                                                             xlabel=xlabel, edgetooltip='check first conditionset'))
                         self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_right'.format(state)],
                                                              self.__nodes['{}_{}'.format(state, conditionset)],
                                                              style='bold', color='black', tooltip='check first conditionset'))
@@ -572,7 +584,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     self.__graph.add_node(self.__nodes['{}_actions_leave'.format(state)])
                     self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_leave'.format(state)],
                                                          self.__nodes['{}_actions_leave'.format(state)], style='bold',
-                                                         taillabel="    True", tooltip='run leave actions'))
+                                                         taillabel="    True",  tooltip='run leave actions'))
 
                 previous_state = state
 

@@ -26,3 +26,4 @@ plugin_translations:
     'ist noch nicht initialisiert.':                                {'de': '=', 'en': 'is not initialized yet.'}
     'Die erste Evaluierung ist geplant für:':                       {'de': '=', 'en': 'The first evaluation is planned for:'}
     'Letzte Aktualisierung:':                                       {'de': '=', 'en': 'Last Update:'}
+    'Potenziell Released':                                          {'de': '=', 'en': 'Potential Released'}

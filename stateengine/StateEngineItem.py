@@ -114,6 +114,12 @@ class SeItem:
         return _returnvalue
 
     @property
+    def laststate_releasedby(self):
+        _returnvalue = None if self.__laststate_item_id is None \
+                       else self.__release_info.get(self.__laststate_item_id.property.value)
+        return _returnvalue
+
+    @property
     def previousstate(self):
         _returnvalue = None if self.__previousstate_item_id is None else self.__previousstate_item_id.property.value
         return _returnvalue
@@ -181,6 +187,7 @@ class SeItem:
         self.__shtime = Shtime.get_instance()
         self.__se_plugin = se_plugin
         self.__active_schedulers = []
+        self.__release_info = {}
         self.__default_instant_leaveaction = StateEngineValue.SeValue(self, "Default Instant Leave Action", False, "bool")
         self.__instant_leaveaction = StateEngineValue.SeValue(self, "Instant Leave Action", False, "num")
         try:
@@ -385,17 +392,24 @@ class SeItem:
         self.__unused_attributes = filtered_dict
 
         self.__logger.info("".ljust(80, "_"))
-
+        issues = 0
         if self.__config_issues:
+            issues += 1
             self.__log_issues('config entries')
         if self.__unused_attributes:
+            issues += 1
             self.__log_issues('attributes')
         if self.__action_status:
+            issues += 1
             self.__log_issues('actions')
         if self.__state_issues:
+            issues += 1
             self.__log_issues('states')
         if self.__struct_issues:
+            issues += 1
             self.__log_issues('structs')
+        if issues == 0:
+            self.__logger.info("No configuration issues found. Congratulations ;)")
 
     def update_leave_action(self, default_instant_leaveaction):
         default_instant_leaveaction_value = default_instant_leaveaction.get()
@@ -892,6 +906,9 @@ class SeItem:
                                 self.__logger.debug("Inserted copy of state {}", relevant_state.id)
                     _checkedentries.append(entry)
                 self.__logger.info("State {} can currently get released by: {}", new_state.id, _can_release_list)
+                self.__release_info = {new_state.id: _can_release_list}
+                _key_releasedby = ['{}'.format(new_state.id), 'releasedby']
+                self.update_webif(_key_releasedby, _can_release_list)
 
         self.__logger.info("".ljust(80, "_"))
         return all_released_by

@@ -96,6 +96,8 @@ class StateEngine(SmartPlugin):
 
             StateEngineDefaults.suntracking_offset = self.get_parameter_value("lamella_offset")
             StateEngineDefaults.lamella_open_value = self.get_parameter_value("lamella_open_value")
+            StateEngineDefaults.plugin_identification = self.get_fullname()
+            StateEngineDefaults.plugin_version = self.PLUGIN_VERSION
             StateEngineDefaults.write_to_log(self.logger)
 
             StateEngineCurrent.init(self.get_sh())
@@ -236,7 +238,7 @@ class StateEngine(SmartPlugin):
                     change_datetime = datetime.fromtimestamp(change_timestamp)
                     formatted_date = change_datetime.strftime('%H:%M:%S, %d. %B')
                 except Exception:
-                    pass
+                    formatted_date = "Unbekannt"
                 return f'<div style="margin-bottom:15px;">{self.translate("Letzte Aktualisierung:")} {formatted_date}<br></div>\
                         <object type="image/svg+xml" data="static/img/visualisations/{abitem}.svg"\
                         style="max-width: 100%; height: auto; width: auto;" id="visu_object">\
