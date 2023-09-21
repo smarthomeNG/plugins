@@ -27,7 +27,7 @@ FILENAME_PLUGIN = 'plugin.yaml'
 
 DOC_FILE_NAME = 'user_doc.rst'
 
-PLUGIN_VERSION = '1.2.5'
+PLUGIN_VERSION = '1.2.6'
 
 ITEM_ATTRIBUTES = {
     'db_addon_fct': {

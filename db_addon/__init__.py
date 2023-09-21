@@ -61,7 +61,7 @@ class DatabaseAddOn(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.2.5'
+    PLUGIN_VERSION = '1.2.6'
 
     def __init__(self, sh):
         """
@@ -273,7 +273,7 @@ class DatabaseAddOn(SmartPlugin):
                 # handle functions 'verbrauch on-demand' in format 'verbrauch_timeframe_timedelta' like 'verbrauch_heute_minus2'
                 timeframe = translate_timeframe(db_addon_fct_vars[1])
                 end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
-                start = end + 1
+                start = end
                 log_text = 'verbrauch_timeframe_timedelta'
                 required_params = [timeframe, start, end]
 
@@ -673,7 +673,7 @@ class DatabaseAddOn(SmartPlugin):
                 query_params.update({'ignore_value_list': db_addon_ignore_value_list_final})
 
             # create standard items config
-            item_config_data_dict = {'db_addon': 'function', 'db_addon_fct': db_addon_fct, 'database_item': database_item, 'query_params': query_params, 'active': True}
+            item_config_data_dict = {'db_addon': 'function', 'db_addon_fct': db_addon_fct, 'database_item': database_item, 'query_params': query_params, 'suspended': False}
             if isinstance(database_item, str):
                 item_config_data_dict.update({'database_item_path': True})
             else:
@@ -949,9 +949,9 @@ class DatabaseAddOn(SmartPlugin):
             self.logger.info(f"Plugin is suspended. No items will be calculated.")
             return
 
-        deactivated_items = self._deactivated_items()
-        if len(deactivated_items) > 0:
-            self.logger.info(f"{len(deactivated_items)} are de-activated and will not be calculated.")
+        suspended_items = self._suspended_items()
+        if len(suspended_items) > 0:
+            self.logger.info(f"{len(suspended_items)} are suspended and will not be calculated.")
 
         todo_items = []
         if option == 'startup':
@@ -974,9 +974,9 @@ class DatabaseAddOn(SmartPlugin):
             if isinstance(item, Item):
                 todo_items = [item]
 
-        # remove de-activated items
+        # remove suspended items
         if option != 'item':
-            todo_items = list(set(todo_items) - set(deactivated_items))
+            todo_items = list(set(todo_items) - set(suspended_items))
 
         # put to queue
         self.logger.info(f"{len(todo_items)} items will be calculated for {option=}.")
@@ -1270,8 +1270,8 @@ class DatabaseAddOn(SmartPlugin):
                 if db_addon_startup:
                     item_config.update({'startup': True})
 
-    def _activate_item_calculation(self, item: Union[str, Item], active: bool = True) -> Union[bool, None]:
-        """active / de-active item calculation"""
+    def _suspend_item_calculation(self, item: Union[str, Item], suspended: bool = False) -> Union[bool, None]:
+        """suspend calculation od decicated item"""
         if isinstance(item, str):
             item = self.items.return_item(item)
 
@@ -1279,8 +1279,8 @@ class DatabaseAddOn(SmartPlugin):
             return
 
         item_config = self.get_item_config(item)
-        item_config['active'] = active
-        return active
+        item_config['suspended'] = suspended
+        return suspended
 
     @property
     def log_level(self) -> int:
@@ -1331,8 +1331,8 @@ class DatabaseAddOn(SmartPlugin):
     def _ondemand_items(self) -> list:
         return self._daily_items() + self._weekly_items() + self._monthly_items() + self._yearly_items() + self._static_items()
 
-    def _deactivated_items(self) -> list:
-        return self.get_item_list('active', False)
+    def _suspended_items(self) -> list:
+        return self.get_item_list('suspended', True)
 
     def _all_items(self) -> list:
         # return self._ondemand_items() + self._onchange_items() + self._static_items() + self._admin_items() + self._info_items()

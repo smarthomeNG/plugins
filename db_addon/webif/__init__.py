@@ -135,7 +135,7 @@ class WebInterface(SmartPluginWebIf):
         result = None
         item_path, cmd = item.split(':')
         if item_path is not None and cmd is not None:
-            self.logger.debug(f"Sending db_addon {cmd=} for {item_path=} via web interface")
+            self.logger.debug(f"Received db_addon {cmd=} for {item_path=} via web interface")
 
             if cmd == "recalc_item":
                 self.logger.info(f"Recalc of item={item_path} called via WebIF. Item put to Queue for new calculation.")
@@ -149,14 +149,20 @@ class WebInterface(SmartPluginWebIf):
                 self.logger.debug(f"Result for web interface: {result}")
                 return json.dumps(result).encode('utf-8')
 
-            elif cmd.startswith("set_item_calculation"):
+            elif cmd.startswith("suspend_plugin_calculation"):
+                self.logger.debug(f"set_plugin_calculation {cmd=}")
                 cmd, value = cmd.split(',')
-                self.logger.info(f"Item calculation of item={item_path} will be set to '{value}' via WebIF.")
-                if value == "True":
-                    value = True
-                else:
-                    value = False
-                result = self.plugin._activate_item_calculation(item=item_path, active=value)
+                value = True if value == "True" else False
+                self.logger.info(f"Plugin will be set to suspended: {value} via WebIF.")
+                result = self.plugin.suspend(value)
+                self.logger.debug(f"Result for web interface: {result}")
+                return json.dumps(result).encode('utf-8')
+
+            elif cmd.startswith("suspend_item_calculation"):
+                cmd, value = cmd.split(',')
+                self.logger.info(f"Item calculation of item={item_path} will be set to suspended: {value} via WebIF.")
+                value = True if value == "True" else False
+                result = self.plugin._suspend_item_calculation(item=item_path, suspended=value)
                 self.logger.debug(f"Result for web interface: {result}")
                 return json.dumps(result).encode('utf-8')
 

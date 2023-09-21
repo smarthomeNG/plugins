@@ -59,33 +59,49 @@
   .shng_effect_standard {
     background-color: none;
   }
+  button.actionbutton {
+    width: 32px;
+  }
 </style>
 {% endblock pluginstyles %}
 
 <!-- Additional script tag for plugin specific javascript code go into this block -->
 {% block pluginscripts %}
 <script>
-  function toggleButton(button, active) {
-    const escapedId = $.escapeSelector(button);
+  function togglePlayPause(id, suspended) {
+    const escapedId = $.escapeSelector(id);
     const buttonElement = $("#" + escapedId);
     const icon = buttonElement.find('i');
-    if (active === "false") {
+    recalcElement = $("#" + escapedId.replace(/_button_playpause$/, "_button_recalc"));
+
+    if (suspended == "true") {
       // Change to pause icon
-      buttonElement.val(button.replace(/_button_playpause$/, "") + ":set_item_calculation,True");
+      recalcElement.prop("disabled", true);
+      if (id.startsWith("plugin"))
+        buttonElement.val(id.replace(/_button_playpause$/, "") + ":suspend_plugin_calculation,False");
+      else
+        buttonElement.val(id.replace(/_button_playpause$/, "") + ":suspend_item_calculation,False");
       icon.removeClass('fa-play').addClass('fa-pause');
-      buttonElement.attr('title', "{{ _('Berechnung deaktivieren') }}");
+      buttonElement.attr('title', "{{ _('Berechnung aktivieren') }}");
+      buttonElement.removeClass("btn btn-outline-success").addClass("btn actionbutton btn-outline-dark");
     } else {
       // Change to play icon
-      buttonElement.val(button.replace(/_button_playpause$/, "") + ":set_item_calculation,False");
+      if (id.startsWith("plugin"))
+        buttonElement.val(id.replace(/_button_playpause$/, "") + ":suspend_plugin_calculation,True");
+      else
+        buttonElement.val(id.replace(/_button_playpause$/, "") + ":suspend_item_calculation,True");
+      recalcElement.prop("disabled", false);
       icon.removeClass('fa-pause').addClass('fa-play');
-      buttonElement.attr('title', "{{ _('Berechnung aktivieren') }}");
+      buttonElement.attr('title', "{{ _('Berechnung deaktivieren') }}");
+      buttonElement.removeClass("btn actionbutton btn-outline-dark").addClass("btn btn-outline-success");
     }
 
     // Your additional logic here
   }
 
   function updateButton(buttonElement, success) {
-      if (success == "checkmark")
+      const originalHTML = buttonElement.html();
+      if (success == "btn-success")
         buttonElement
           .prop("disabled", true)
           .html('<i class="fas fa-check"></i>')
@@ -98,12 +114,11 @@
 
       // After 2 seconds, revert the button to its original state
       setTimeout(function() {
-        console.log("reset button")
         buttonElement
           .prop("disabled", false)
-          .html('<i class="fas fa-play"></i>')
+          .html(originalHTML)
           .removeClass(success);
-      }, 2000); // 2 seconds (2000 milliseconds)
+      }, 2000);
   }
 </script>
 
@@ -134,26 +149,17 @@
             shngInsertText('queue_length', item_count);
             shngInsertText('active_queue_item', objResponse['active_queue_item']);
 
-      if (objResponse['plugin_suspended'] === false) {
-				document.getElementById('play').classList = 'btn btn-success btn-sm';
-                document.getElementById('play').disabled = true;
-                document.getElementById('pause').classList = 'btn btn-outline-danger btn-sm';
-                document.getElementById('pause').disabled = false;
-			}
-			else {
-				document.getElementById('play').classList = 'btn btn-outline-success btn-sm';
-                document.getElementById('play').disabled = false;
-                document.getElementById('pause').classList = 'btn btn-danger btn-sm';
-                document.getElementById('pause').disabled = true;
-			}
+        togglePlayPause("plugin_button_playpause", objResponse['plugin_suspended'].toString());
 		}
 
-      document.getElementById('debug_parse').checked = objResponse['debug_log']['parse'];
-      document.getElementById('debug_execute').checked = objResponse['debug_log']['execute'];
-      document.getElementById('debug_ondemand').checked = objResponse['debug_log']['ondemand'];
-      document.getElementById('debug_onchange').checked = objResponse['debug_log']['onchange'];
-      document.getElementById('debug_prepare').checked = objResponse['debug_log']['prepare'];
-      document.getElementById('debug_sql').checked = objResponse['debug_log']['sql'];
+      if ($("#logging").length > 0){
+        document.getElementById('debug_parse').checked = objResponse['debug_log']['parse'];
+        document.getElementById('debug_execute').checked = objResponse['debug_log']['execute'];
+        document.getElementById('debug_ondemand').checked = objResponse['debug_log']['ondemand'];
+        document.getElementById('debug_onchange').checked = objResponse['debug_log']['onchange'];
+        document.getElementById('debug_prepare').checked = objResponse['debug_log']['prepare'];
+        document.getElementById('debug_sql').checked = objResponse['debug_log']['sql'];
+      }
 	}
 </script>
 
@@ -166,27 +172,26 @@
         // keine HTML-Aktion ausführen (z.B. Formular senden)
         e.preventDefault();
         let value = $("#button").val();
+        const id = $("#button_id").val();
+        const escapedId = $.escapeSelector(id);
+        const buttonElement = $("#" + escapedId);
         console.log('Sending db_addon command for ' + value);
         // die Kennung des gedrückten Buttons per AJAX senden
         $.post('submit', {item: value}, function(data) {
-          let id = $("#button_id").val();
-          console.log("Return value from plugin: " + data + " id " + id);
-
-            toggleButton(id, data)
-
-          const escapedVal = $.escapeSelector(value);
-          const buttonElement = $("#" + escapedVal + "_button");
-          if (data)
-            updateButton(buttonElement, "checkmark");
-          else
-            updateButton(buttonElement, "issue");
+          console.log("Return value from plugin: id=" + id + ", data=" + data);
+          if (id.endsWith("_playpause"))
+            togglePlayPause(id, data.toString());
+          else {
+            if (data === "true")
+              updateButton(buttonElement, "btn-success");
+            else
+              updateButton(buttonElement, "btn-danger");
+          }
 
         }).fail(function(jqXHR, textStatus, errorThrown) {
           // Error callback
           console.error("AJAX request failed:", textStatus, errorThrown);
-          const escapedVal = $.escapeSelector($("#button").val());
-          const buttonElement = $("#" + escapedVal + "_button");
-          updateButton(buttonElement, "issue");
+          updateButton(buttonElement, "btn-danger");
         });
         return false ;
       });
@@ -259,32 +264,7 @@
         console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
       }
 
-      // Handler für Suspend (Play/Pause) Button
-      if ({{ suspended }} == false) {
-        document.getElementById('play').classList = 'btn btn-success btn-sm';
-        document.getElementById('play').disabled = true;
-        document.getElementById('pause').classList = 'btn btn-outline-danger btn-sm';
-        document.getElementById('pause').disabled = false;
-      }
-      else {
-        document.getElementById('play').classList = 'btn btn-outline-success btn-sm';
-        document.getElementById('play').disabled = false;
-        document.getElementById('pause').classList = 'btn btn-danger btn-sm';
-        document.getElementById('pause').disabled = true;
-      }
     });
-</script>
-
-<script>
-  function reply_click(button_value)
-  {
-      if (button_value == 0) {
-        if (confirm('{{ _('Plugins pausieren?') }}')) { jQuery.get('suspend'); }
-      }
-      if (button_value == 1) {
-        if (confirm('{{ _('Plugin fortsetzen?') }}')) { jQuery.get('activate'); }
-      }
-  }
 </script>
 
 <script>
@@ -307,12 +287,8 @@
 <script>
   function checkbox(log, value)
   {
-    if ($("#logging").length > 0){
-      console.log('debug_log_option_'+log+'_'+value)
-      jQuery.get('debug_log_option_'+log+'_'+value)
-    } else {
-      console.log('debug_log_option deactivated')
-    }
+    console.log('debug_log_option_'+log+'_'+value)
+    jQuery.get('debug_log_option_'+log+'_'+value)
   }
 </script>
 
@@ -358,26 +334,24 @@
             <td class="py-1">
                 {{ p.log_level }}
                 {% if p.log_level == 10 %}
-                    <div id="logging">
-                        {{ ('  ||  ') }}
-                        <div class="form-check form-check-inline">
-                            <input type="checkbox" id="debug_parse" name="debug_parse" value="parse" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für parse_item">
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input type="checkbox" id="debug_execute" name="debug_execute" value="execute" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für execute_items">
-                        </div>
-                        <div class="form-check form-check-inline">
-                          <input type="checkbox" id="debug_ondemand" name="debug_ondemand" value="ondemand" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für on_demand">
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input type="checkbox" id="debug_onchange" name="debug_onchange" value="parse" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für on_change">
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input type="checkbox" id="debug_prepare" name="debug_prepare" value="execute" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für prepare">
-                        </div>
-                        <div class="form-check form-check-inline">
-                          <input type="checkbox" id="debug_sql" name="debug_sql" value="sql" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für sql">
-                        </div>
+                    {{'    ||     ' }}
+                    <div id="logging" class="form-check form-check-inline">
+                        <input type="checkbox" id="debug_parse" name="debug_parse" value="parse" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für parse_item">
+                    </div>
+                    <div id="logging" class="form-check form-check-inline">
+                        <input type="checkbox" id="debug_execute" name="debug_execute" value="execute" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für execute_items">
+                    </div>
+                    <div id="logging" class="form-check form-check-inline">
+                      <input type="checkbox" id="debug_ondemand" name="debug_ondemand" value="ondemand" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für on_demand">
+                    </div>
+                    <div id="logging" class="form-check form-check-inline">
+                        <input type="checkbox" id="debug_onchange" name="debug_onchange" value="parse" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für on_change">
+                    </div>
+                    <div id="logging" class="form-check form-check-inline">
+                        <input type="checkbox" id="debug_prepare" name="debug_prepare" value="execute" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für prepare">
+                    </div>
+                    <div id="logging" class="form-check form-check-inline">
+                      <input type="checkbox" id="debug_sql" name="debug_sql" value="sql" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für sql">
                     </div>
                 {% endif %}
             </td>
@@ -393,11 +367,13 @@
         <button id="recalc" type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Neuberechnung aller Items auslösen?') }}')) { jQuery.get('recalc_all');recalc_button(true); }" title="Ausführen einer Neuberechnung aller Items"><i class="fas fa-redo" id="recalc_icon"></i></button>
         <button id="clear_queue" type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Berechnungslauf abbrechen?') }}')) { jQuery.get('clear_queue'); }" title="Abbrechen des aktuellen Berechnungslaufes"><i class="fas fa-times"></i></button>
 		<button id="clear_cache" type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Leeren aller cache_dicts auslösen?') }}')) { jQuery.get('clean_cache_dicts'); }" title="Löschen alle Cache-Daten des Plugins"><i class="fas fa-trash"></i></button>
-        <div class="btn-group btn-group-toggle">
-            <button id="play" type="button" class="btn btn-shng btn-sm" onclick="reply_click(this.value)" value=1 title="Aktiviert die Berechnungen des Plugin"><i class="fas fa-play"></i></button>
-            <button id="pause" type="button" class="btn btn-shng btn-sm" onclick="reply_click(this.value)" value=0 title="Pausiert die Berechnungen des Plugin"><i class="fas fa-pause"></i></button>
-        </div>
+        <button id="plugin_button_playpause" type="button" class="btn actionbutton btn-sm btn-outline-dark" title="wait" onclick="$('#button_id').val(this.id);$('#button').val(this.value);$('#button_pressed').submit();"><i class="fas"></i></button>
+            <script>togglePlayPause("plugin_button_playpause", '{{ p.suspended | lower }}')</script>
 	</div>
+    <form id="button_pressed" action="" method="post">
+    <input type="hidden" id="button" name="button" value="" />
+    <input type="hidden" id="button_id" name="button_id" value="">
+</form>
 {% endblock %}
 
 <!-- Define the number of tabs for the body of the web interface (1 - 6) -->
@@ -427,15 +403,14 @@
                 <td class="py-1">{{ p.get_item_config(item._path)['db_addon_fct'] }}</td>
                 <td class="py-1" style="text-align: center">{{ _(p.get_item_config(item)['cycle']|string) }}</td>
                 <td class="py-1" style="text-align: center">{% if p.get_item_config(item)['startup'] %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
-                <td class="py-1" id="{{ item._path }}_value" style="text-align: right">{{ item._value | float | round(2) }}</td>
-                <td class="py-1" id="{{ item._path }}_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                <td class="py-1" id="{{ item._path }}_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                <td class="py-1" id="{{ item._path }}_value" style="text-align: right">&nbsp;</td>
+                <td class="py-1" id="{{ item._path }}_last_update" style="text-align: center">&nbsp;</td>
+                <td class="py-1" id="{{ item._path }}_last_change" style="text-align: center">&nbsp;</td>
                 <td>
-                    <button id="{{ item }}_button_recalc" type="button" class="btn btn-shng btn-sm" title="{{ _('Neuberechnung') }}" onclick="$('#button').val('{{ item.property.path }}:recalc_item');$('#button_pressed').submit();"><i class="fas fa-redo"></i></button>
-                    <button id="{{ item }}_button_cache_del" type="button" class="btn-outline-danger btn-sm" title="{{ _('Wertecache löschen') }}" onclick="$('#button').val('{{ item.property.path }}:clean_item_cache');$('#button_pressed').submit();"><i class="fas fa-trash"></i></button>
-
-                        <button id="{{ item.property.path }}_button_playpause" type="button" class="btn-sm btn-succes" title="wait" onclick="$('#button_id').val(this.id);$('#button').val(this.value);$('#button_pressed').submit();"><i class="fas"></i></button>
-                          <script>toggleButton("{{ item.property.path }}_button_playpause", {{ p.get_item_config(item._path)['active'] | lower }})</script>
+                    <button id="{{ item.property.path }}_button_recalc" type="button" class="btn actionbutton btn-shng btn-sm" title="{{ _('Neuberechnung') }}" onclick="$('#button_id').val(this.id);$('#button').val('{{ item.property.path }}:recalc_item');$('#button_pressed').submit();"><i class="fas fa-redo"></i></button>
+                    <button id="{{ item.property.path }}_button_cache_del" type="button" class="btn actionbutton btn-outline-danger btn-sm" title="{{ _('Wertecache löschen') }}" onclick="$('#button_id').val(this.id);$('#button').val('{{ item.property.path }}:clean_item_cache');$('#button_pressed').submit();"><i class="fas fa-trash"></i></button>
+                    <button id="{{ item.property.path }}_button_playpause" type="button" class="btn actionbutton btn-sm btn-outline-dark" title="wait" onclick="$('#button_id').val(this.id);$('#button').val(this.value);$('#button_pressed').submit();"><i class="fas"></i></button>
+                      <script>togglePlayPause("{{ item.property.path }}_button_playpause", '{{ p.get_item_config(item._path)['suspended'] | lower }}')</script>
                 </td>
             </tr>
          {% endfor %}
