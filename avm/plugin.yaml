@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/avm/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
-    version: 2.1.0                  # Plugin version (must match the version specified in __init__.py)
+    version: 2.2.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.8              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -259,6 +259,8 @@ item_attributes:
             - colortemperature                          # rw   num  
             - unmapped_hue                              # rw   num  
             - unmapped_saturation                       # rw   num  
+            - color                                     # rw   list 
+            - hsv                                       # rw   list 
             - color_mode                                # ro   num  
             - supported_color_mode                      # ro   num  
             - fullcolorsupport                          # ro   bool 
@@ -434,6 +436,8 @@ item_attributes:
             - Farbtemperatur (Status und Setzen)
             - Hue (Status und Setzen)
             - Saturation (Status und Setzen)
+            - Farbwerte als Liste h,s (Status und Setzen)
+            - Farbwerte und Helligkeit als Liste h,s,v (Status und Setzen)
             - Aktueller Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)
             - Unterstützer Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)
             - Lampe unterstützt setunmappedcolor
