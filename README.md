@@ -17,4 +17,4 @@ Es gibt eine stetig aktualisierte [Dokumentation für Entwickler](https://smarth
 
 ## Other languages
 
-It is possible to read the documentation with [Google's translation service](https://translate.google.com/translate?hl=&sl=de&tl=en&u=https://www.smarthomeng.de/dev/user/) in other languages as well.
+It is possible to read the documentation with [Google's translation service](https://translate.google.com/translate?hl=&sl=de&tl=en&u=https://smarthomeng.github.io/smarthome/) in other languages as well.
