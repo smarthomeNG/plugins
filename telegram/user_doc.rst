@@ -5,6 +5,13 @@
 telegram
 ========
 
+.. image:: webif/static/img/plugin_logo.svg
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
+   
 Das Plugin dient zum Senden und Empfangen von Nachrichten über den
 `Telegram Nachrichten Dienst <https://telegram.org/>`_
 
