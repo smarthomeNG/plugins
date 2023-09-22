@@ -8,6 +8,8 @@
 #
 #  This file is part of SmartHomeNG.
 #
+#  Telegram Plugin for querying and updating items or sending messages via Telegram
+#
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
@@ -66,7 +68,7 @@ MESSAGE_TAG_DEST          = '[DEST]'
 
 class Telegram(SmartPlugin):
 
-    PLUGIN_VERSION = "2.0.0"
+    PLUGIN_VERSION = "2.0.1"
 
     _items = []               # all items using attribute ``telegram_message``
     _items_info = {}          # dict used whith the info-command: key = attribute_value, val= item_list telegram_info
@@ -83,12 +85,12 @@ class Telegram(SmartPlugin):
         """
 
         self.logger.info('Init telegram plugin')
-        
+
         # Call init code of parent class (SmartPlugin or MqttPlugin)
         super().__init__()
         if not self._init_complete:
             return
-        
+
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(f"init {__name__}")
         self._init_complete = False
@@ -113,12 +115,12 @@ class Telegram(SmartPlugin):
         self._pretty_thread_names = self.get_parameter_value('pretty_thread_names')
         self._resend_delay = self.get_parameter_value('resend_delay')
         self._resend_attemps = self.get_parameter_value('resend_attemps')
-        
+
         self._bot =  None
         self._queue = Queue()
-        
+
         self._application = Application.builder().token(self._token).build()
-            
+
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("adding command handlers to application")
 
@@ -134,7 +136,7 @@ class Telegram(SmartPlugin):
         self._application.add_handler(CommandHandler('control', self.cHandler_control))
         # Filters.text includes also commands, starting with ``/`` so it is needed to exclude them.
         self._application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.mHandler))
-        
+
         self.init_webinterface()
         if not self.init_webinterface(WebInterface):
             self.logger.error("Unable to start Webinterface")
@@ -142,7 +144,7 @@ class Telegram(SmartPlugin):
         else:
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug("Init complete")
-        
+
         self._init_complete = True
 
     def __call__(self, msg, chat_id=None):
@@ -161,22 +163,22 @@ class Telegram(SmartPlugin):
         """
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("Run method called")
-            
+
         self.logics = Logics.get_instance()  # Returns the instance of the Logics class, to be used to access the logics-api
-        
+
         self.alive = True
-        
+
         self._loop.run_until_complete(self.run_coros())
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(f"Run method ended")
-    
+
     def stop(self):
         """
         This is called when the plugins thread is about to stop
         """
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("stop telegram plugin")
-        
+
         try:
             if self._bye_msg:
                 cids = [key for key, value in self._chat_ids_item().items() if value == 1]
@@ -185,7 +187,7 @@ class Telegram(SmartPlugin):
                     self.logger.debug("sent bye message")
         except Exception as e:
             self.logger.error(f"could not send bye message [{e}]")
-        
+
         time.sleep(1)
         self.alive = False  # Clears the infiniti loop in sendQueue
         try:
@@ -211,10 +213,10 @@ class Telegram(SmartPlugin):
         self._taskConn = asyncio.create_task(self.connect())
         self._taskQueue = asyncio.create_task(self.sendQueue())
         await asyncio.gather(self._taskConn, self._taskQueue)
-    
+
     async def connect(self):
         """
-        Connects 
+        Connects
         """
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("connect method called")
@@ -222,7 +224,7 @@ class Telegram(SmartPlugin):
             await self._application.initialize()
             await self._application.start()
             self._updater = self._application.updater
-            
+
             q = await self._updater.start_polling(timeout=self._long_polling_timeout, error_callback=self.error_handler)
 
             if self.logger.isEnabledFor(logging.DEBUG):
@@ -235,14 +237,14 @@ class Telegram(SmartPlugin):
                     self.logger.debug(f"sent welcome message {self._welcome_msg}")
                 cids = [key for key, value in self._chat_ids_item().items() if value == 1]
                 self.msg_broadcast(self._welcome_msg, chat_id=cids)
-                
+
         except TelegramError as e:
             # catch Unauthorized errors due to an invalid token
             self.logger.error(f"Unable to start up Telegram conversation. Maybe an invalid token? {e}")
             return False
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("connect method end")
-    
+
     def error_handler(self, update, context):
         """
         Just logs an error in case of a problem
@@ -257,7 +259,7 @@ class Telegram(SmartPlugin):
         Waiting for messages to be sent in the queue and sending them to Telegram.
         The queue expects a dictionary with various parameters
         dict txt:   {"msgType":"Text", "msg":msg, "chat_id":chat_id, "reply_markup":reply_markup, "parse_mode":parse_mode }
-        dict photo: {"msgType":"Photo", "photofile_or_url":photofile_or_url, "chat_id":chat_id, "caption":caption, "local_prepare":local_prepare} 
+        dict photo: {"msgType":"Photo", "photofile_or_url":photofile_or_url, "chat_id":chat_id, "caption":caption, "local_prepare":local_prepare}
         """
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(f"sendQueue called - queue: [{self._queue}]")
@@ -275,7 +277,7 @@ class Telegram(SmartPlugin):
                     resendDelay = message["resendDelay"]
                 if "resendAttemps" in message:
                     resendAttemps =  message["resendAttemps"]
-                
+
                 if resendDelay <= 0:
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug(f"message queue {message}")
@@ -283,18 +285,18 @@ class Telegram(SmartPlugin):
                         result = await self.async_msg_broadcast(message["msg"], message["chat_id"], message["reply_markup"], message["parse_mode"])
                     elif message["msgType"] == "Photo":
                         result = await self.async_photo_broadcast(message["photofile_or_url"], message["caption"], message["chat_id"], message["local_prepare"])
-                    
+
                     # An error occurred while sending - result: list containing the dic of the failed send attempt
-                    if result:      
+                    if result:
                         for res in result:
                             resendAttemps+=1
                             if resendAttemps > self._resend_attemps:
                                 if self.logger.isEnabledFor(logging.DEBUG):
                                     self.logger.debug(f"don't initiate any further send attempts for: {res}")
-                                break  
+                                break
                             else:
                                 resendDelay =  self._resend_delay
-                            
+
                             # Including the sendDelay and sendAttempts in the queue message for the next send attempt.
                             res["resendDelay"] = resendDelay
                             res["resendAttemps"] = resendAttemps
@@ -312,7 +314,7 @@ class Telegram(SmartPlugin):
 
     async def disconnect(self):
         """
-        Stop listening to push updates and logout of this istances Apple TV     
+        Stop listening to push updates and shutdown
         """
         self.logger.info(f"disconnecting")
 
@@ -522,7 +524,7 @@ class Telegram(SmartPlugin):
         sendResult = []
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(f"async msg_broadcast called")
-        
+
         for cid in self.get_chat_id_list(chat_id):
             try:
                 response = await self._bot.send_message(chat_id=cid, text=msg, reply_markup=reply_markup, parse_mode=parse_mode)
@@ -543,7 +545,7 @@ class Telegram(SmartPlugin):
             return None
         else:
             return sendResult
-        
+
 
     def msg_broadcast(self, msg, chat_id=None, reply_markup=None, parse_mode=None):
         if self.alive:
@@ -554,7 +556,7 @@ class Telegram(SmartPlugin):
                 self._queue.put(q_msg)
             except Exception as e:
                 self.logger.debug(f"Exception '{e}' occurred, please inform plugin maintainer!")
-            
+
     async def async_photo_broadcast(self, photofile_or_url, caption=None, chat_id=None, local_prepare=True):
         """
         Send an image to the given chat
@@ -1042,7 +1044,7 @@ class Telegram(SmartPlugin):
         if not text:
             text = self.translate("no items found with the attribute %s") % ITEM_ATTR_CONTROL
         #self._bot.sendMessage(chat_id=chat_id, text=text)
-        return text 
+        return text
 
     async def change_item(self, update, context, name, dicCtl):
         """
@@ -1146,4 +1148,3 @@ class Telegram(SmartPlugin):
             self._waitAnswer = None
             # self._bot.send_message(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard": self.create_control_reply_markup()})
             await context.bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard": self.create_control_reply_markup()})
-            
