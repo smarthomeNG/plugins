@@ -247,8 +247,7 @@ class DatabaseAddOn(SmartPlugin):
                 # handle functions 'min/max/avg' in format 'minmax_timeframe_timedelta_func' like 'minmax_heute_minus2_max'
                 func = db_addon_fct_vars[3]  # min, max, avg
                 timeframe = translate_timeframe(db_addon_fct_vars[1])  # day, week, month, year
-                end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
-                start = end
+                start = end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
                 log_text = 'minmax_timeframe_timedelta_func'
                 required_params = [func, timeframe, start, end]
 
@@ -256,24 +255,21 @@ class DatabaseAddOn(SmartPlugin):
                 # handle functions 'zaehlerstand' in format 'zaehlerstand_timeframe_timedelta' like 'zaehlerstand_heute_minus1'
                 func = 'last'
                 timeframe = translate_timeframe(db_addon_fct_vars[1])
-                end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
-                start = end
+                start = end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
                 log_text = 'zaehlerstand_timeframe_timedelta'
                 required_params = [timeframe, start, end]
 
             elif db_addon_fct in VERBRAUCH_ATTRIBUTES_ONCHANGE:
                 # handle functions 'verbrauch on-change' items in format 'verbrauch_timeframe' like 'verbrauch_heute', 'verbrauch_woche', 'verbrauch_monat', 'verbrauch_jahr'
                 timeframe = translate_timeframe(db_addon_fct_vars[1])
-                end = 0
-                start = 1
+                start = end = 0
                 log_text = 'verbrauch_timeframe'
                 required_params = [timeframe, start, end]
 
             elif db_addon_fct in VERBRAUCH_ATTRIBUTES_TIMEFRAME:
                 # handle functions 'verbrauch on-demand' in format 'verbrauch_timeframe_timedelta' like 'verbrauch_heute_minus2'
                 timeframe = translate_timeframe(db_addon_fct_vars[1])
-                end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
-                start = end
+                start = end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
                 log_text = 'verbrauch_timeframe_timedelta'
                 required_params = [timeframe, start, end]
 
@@ -318,8 +314,7 @@ class DatabaseAddOn(SmartPlugin):
                 # handle 'tagesmitteltemperatur_timeframe_timedelta' like 'tagesmitteltemperatur_heute_minus1'
                 func = 'max'
                 timeframe = translate_timeframe(db_addon_fct_vars[1])
-                end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
-                start = end
+                start = end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
                 data_con_func = 'first_hour_avg_day'
                 log_text = 'tagesmitteltemperatur_timeframe_timedelta'
                 required_params = [func, timeframe, start, end, data_con_func]
@@ -1564,15 +1559,12 @@ class DatabaseAddOn(SmartPlugin):
         query_params.update({'func': 'next', 'start': start, 'end': start})
         value_start = self._query_item(**query_params)[0][1]
         if self.debug_log.prepare:
-            self.logger.debug(f"next recent value is {value_start=}")
+            self.logger.debug(f"{value_start=}")
 
         if not value_start:
             value_start = 0
             if self.debug_log.prepare:
                 self.logger.debug(f"No start value available. Will be set to 0 as default")
-
-        if self.debug_log.prepare:
-            self.logger.debug(f"{value_start=}")
 
         # calculate consumption
         consumption = value_end - value_start
@@ -1629,39 +1621,24 @@ class DatabaseAddOn(SmartPlugin):
 
     def _handle_zaehlerstand(self, query_params: dict) -> Union[float, int, None]:
         """
-        Ermittlung des Zählerstandes zum Ende eines Zeitraumes
+        Ermittlung des Zählerstandes zu Beginn des Zeitraumes
 
         Die Vorgehensweise ist:
-            - Abfrage des letzten Eintrages im Zeitraum
-            - Ergibt diese Abfrage einen Wert, entspricht dieser dem Zählerstand
-            - Ergibt diese Abfrage keinen Wert, dann
-                - Abfrage des nächsten Wertes vor dem Zeitraum
-                - Ergibt diese Abfrage einen Wert, entspricht dieser dem Zählerstand
-                - Ergibt diese Abfrage keinen Wert, dann Rückgabe von None
+            - Abfrage des letzten Eintrages vor dem Beginn des Zeitraums
         """
 
         if self.debug_log.prepare:
             self.logger.debug(f"called with {query_params=}")
 
         # get last value of timeframe
-        query_params.update({'func': 'last'})
+        query_params.update({'func': 'next'})
         last_value = self._query_item(**query_params)[0][1]
         if self.debug_log.prepare:
             self.logger.debug(f"{last_value=}")
 
         if last_value is None:
-            if self.debug_log.prepare:
-                self.logger.debug(f"Error occurred during query. Return.")
-            return
-
-        if not last_value:
-            # get last value (next) before timeframe
-            if self.debug_log.prepare:
-                self.logger.debug(f"No DB entry for item={query_params['database_item'].path()} found for requested start date. Looking for next recent DB entry.")
-            query_params.update({'func': 'next'})
-            last_value = self._query_item(**query_params)[0][1]
-            if self.debug_log.prepare:
-                self.logger.debug(f"next recent value is {last_value=}")
+            self.logger.info('No entry in database found. Maybe item was just created. Setting last_value to 0.')
+            last_value = 0
 
         if isinstance(last_value, float):
             if last_value.is_integer():
