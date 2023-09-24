@@ -1,0 +1,8 @@
+15.09.2023:
+- Anpassung für pymodbus 3.5.2: bytorder und wordorder musste korrrigiert werden, statt Little und Big nun LITTLE und BIG
+
+11.09.2023:
+- unter Python 10 muss mindestens die Version 3.3.2 von pymodbus laufen, da sonst Verbindungsprobleme
+
+23.07.2023:
+- pymodbus mindestens Version 3.3.0, da Versionsmanagement geändert wurde, Version 2 wird nicht mehr unterstützt

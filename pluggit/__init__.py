@@ -29,23 +29,15 @@ import threading
 import logging
 from lib.model.smartplugin import SmartPlugin
 
-# pymodbus library from https://github.com/riptideio/pymodbus
-from pymodbus.version import version
-pymodbus_baseversion = int(version.short().split('.')[0])
-
-if pymodbus_baseversion > 2:
-    # for newer versions of pymodbus
-    from pymodbus.client.tcp import ModbusTcpClient
-else:
-    # for older versions of pymodbus
-    from pymodbus.client.sync import ModbusTcpClient
+# pymodbus library from https://github.com/pymodbus-dev/pymodbus
+from pymodbus.client.tcp import ModbusTcpClient
 
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.payload import BinaryPayloadBuilder
 
 class Pluggit(SmartPlugin):
-    PLUGIN_VERSION="2.0.4"
+    PLUGIN_VERSION="2.0.6"
 
     _itemReadDictionary = {}
     _itemWriteDictionary = {}
@@ -378,7 +370,7 @@ class Pluggit(SmartPlugin):
                 if unitstate != -1:
                     pluggit_paramList = self._modbusRegisterDictionary['prmRamIdxUnitMode']
                     registerValue = self._Pluggit.read_holding_registers(pluggit_paramList[self.DICT_READ_ADDRESS], pluggit_paramList[self.DICT_ADDRESS_QUANTITY])
-                    vdecoder = BinaryPayloadDecoder.fromRegisters(registerValue.registers, byteorder=Endian.Big, wordorder=Endian.Little)
+                    vdecoder = BinaryPayloadDecoder.fromRegisters(registerValue.registers, byteorder=Endian.BIG, wordorder=Endian.LITTLE)
                     readItemValue = vdecoder.decode_16bit_uint()
                     #if readItemValue & unitstate != unitstate:
                         # workaround for manual bypass timeout
@@ -472,7 +464,7 @@ class Pluggit(SmartPlugin):
                     registerValue = self._Pluggit.read_holding_registers(pluggit_paramList[self.DICT_READ_ADDRESS], pluggit_paramList[self.DICT_ADDRESS_QUANTITY])
                     # TODO: auswerten, wenn Reigister nicht auslesbar
                     readCacheDictionary[pluggit_key] = registerValue
-                vdecoder = BinaryPayloadDecoder.fromRegisters(registerValue.registers, byteorder=Endian.Big, wordorder=Endian.Little)
+                vdecoder = BinaryPayloadDecoder.fromRegisters(registerValue.registers, byteorder=Endian.BIG, wordorder=Endian.LITTLE)
 
                 readItemValue = None
                     
