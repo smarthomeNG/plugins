@@ -51,9 +51,10 @@ from bin.smarthome import VERSION
 
 class Robvac(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.2.3"
+    PLUGIN_VERSION = "1.2.4"
 
     def __init__(self, smarthome):
+        super().__init__()
         self._ip = self.get_parameter_value("ip")
         self._token = self.get_parameter_value("token")
         self._cycle = self.get_parameter_value("read_cycle")
