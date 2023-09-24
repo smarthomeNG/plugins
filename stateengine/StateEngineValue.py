@@ -312,7 +312,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             field_value[i] = False
 
                         _value, _issue = self.__do_cast(field_value[i])
-                        if _issue:
+                        if _issue and _issue not in self.__issues:
                             self.__issues.append(_issue)
                         self.__value.append(_value)
                     else:
@@ -320,7 +320,7 @@ class SeValue(StateEngineTools.SeItemChild):
                 self.__item = [] if self.__item is None else [self.__item] if not isinstance(self.__item, list) else self.__item
                 if s == "item":
                     _item, _issue = self._abitem.return_item(field_value[i])
-                    if _issue:
+                    if _issue and _issue not in self.__issues:
                         self.__issues.append(_issue)
                 self.__item.append(None if s != "item" else self.__absolute_item(_item, field_value[i]))
                 self.__eval = [] if self.__eval is None else [self.__eval] if not isinstance(self.__eval, list) else self.__eval
@@ -347,7 +347,7 @@ class SeValue(StateEngineTools.SeItemChild):
         else:
             if source == "item":
                 _item, _issue = self._abitem.return_item(field_value)
-                if _issue:
+                if _issue and _issue not in self.__issues:
                     self.__issues.append(_issue)
             self.__item = None if source != "item" else self.__absolute_item(_item, field_value)
             self.__eval = None if source != "eval" else field_value
@@ -366,7 +366,7 @@ class SeValue(StateEngineTools.SeItemChild):
                 elif isinstance(field_value, str) and field_value.lower() in ['false', 'no']:
                     field_value = False
                 self.__value, _issue = self.__do_cast(field_value)
-                if _issue:
+                if _issue and _issue not in self.__issues:
                     self.__issues.append(_issue)
             else:
                 self.__value = None
@@ -788,7 +788,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     _newvalue = None
                 else:
                     _newvalue, _issue = self.__do_cast(val.property.value)
-                    if _issue:
+                    if _issue and _issue not in _issue_list:
                         _issue_list.append(_issue)
                 values.append(_newvalue)
                 search_item = 'item:{}'.format(val)
@@ -799,7 +799,7 @@ class SeValue(StateEngineTools.SeItemChild):
             if self.__item is None:
                 return None
             _newvalue, _issue = self.__do_cast(self.__item.property.value)
-            if _issue:
+            if _issue and _issue not in _issue_list:
                 _issue_list.append(_issue)
             search_item = 'item:{}'.format(self.__item)
             if search_item in self.__listorder:
@@ -822,7 +822,7 @@ class SeValue(StateEngineTools.SeItemChild):
             _issue_list.append(_issue)
             self._log_info(_issue)
         _newvalue, _issue = self.__do_cast(values)
-        if _issue:
+        if _issue and _issue not in _issue_list:
             _issue_list.append(_issue)
         return _newvalue
 
