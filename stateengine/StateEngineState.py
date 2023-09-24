@@ -87,6 +87,14 @@ class SeState(StateEngineTools.SeItemChild):
         self.__releasedby.set(value, "", True, None, False)
 
     @property
+    def order(self):
+        return self.__order.get()
+
+    @order.setter
+    def order(self, value):
+        self.__order.set(value, "", True, None, False)
+
+    @property
     def can_release(self):
         return self.__can_release.get()
 
@@ -155,6 +163,7 @@ class SeState(StateEngineTools.SeItemChild):
         self.__actions_enter = StateEngineActions.SeActions(self._abitem)
         self.__actions_stay = StateEngineActions.SeActions(self._abitem)
         self.__actions_leave = StateEngineActions.SeActions(self._abitem)
+        self.__order = StateEngineValue.SeValue(self._abitem, "State Order", False, "num")
         self._log_increase_indent()
         try:
             self.__fill(self.__item, 0)
@@ -190,6 +199,7 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem.set_variable("current.state_name", self.name)
         self._abitem.set_variable("current.state_id", self.id)
         self.__text.write_to_logger()
+        self.__order.write_to_logger()
         self.__is_copy_for.write_to_logger()
         self.__releasedby.write_to_logger()
         self.__can_release.write_to_logger()
@@ -246,6 +256,21 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem.set_variable("current.state_name", "")
         self._abitem.set_variable("current.state_id", "")
         self._log_decrease_indent()
+
+    def update_order(self, value=None):
+        if value is None and "se_stateorder" in self.__item.conf:
+            _original_order = copy(self.__order)
+            _returnvalue, _returntype, _, _issue = self.__order.set_from_attr(self.__item, "se_stateorder")
+            if _issue not in [[], None, [None]]:
+                _returnvalue = _original_order.get()
+                self.__order = _original_order
+            else:
+                self._log_info("Set state {} order to {}", self.__id, _returnvalue)
+        elif value is not None:
+            _returnvalue, _returntype, _issue = self.__order.set(value, "", True, None, False)
+        else:
+            _returnvalue, _returntype, _issue = self.__order.get(), None, [None]
+        return _returnvalue, _returntype, _issue
 
     # run actions when entering the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?

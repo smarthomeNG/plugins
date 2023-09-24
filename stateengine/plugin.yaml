@@ -539,6 +539,24 @@ item_attributes:
                 is used.
                 '
 
+    se_stateorder:
+        type: foo
+        valid_min: 1
+        description:
+            de: 'Position des Zustands bezüglich der Evaluierungsabfolge'
+            en: 'Position of the state regarding the evaluation order'
+        description_long:
+            de: 'Durch diesen Wert wird bestimmt, an welcher Position der Status eingeordnet wird.
+                 Normalerweise ist die Sortierung abhängig von der Angabe der Stati innerhalb des
+                 rules Items. Durch diesen Wert kann die Sortierung zur Laufzeit abgeändert werden.
+                 Der Wert kann als Zahl, item oder eval deklariert werden.
+                 '
+            en: 'This value determines the position at which the status is sorted.
+                 Normally, the sorting depends on the specification of the statuses within the
+                 rules item. This value can be used to change the sorting at runtime.
+                 The value can be declared as an int number, item or eval expression.
+                '
+
     se_item_suspend_end:
         type: str
         description:

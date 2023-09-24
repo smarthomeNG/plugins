@@ -347,12 +347,12 @@ class SeItem:
             "previous.state_conditionset_name": ""
         }
         try:
-            _statecount = 0
+            _statecount = 1
             for item_state in self.__item.return_children():
-                self.__initialize_state(item_state, _statecount)
+                _statecount = self.__initialize_state(item_state, _statecount)
         except Exception as ex:
             self.__logger.error("Ignoring stateevaluation for {} because {}", self.__id, ex)
-
+        self.__reorder_states()
         try:
             self.__finish_states()
         except Exception as ex:
@@ -656,7 +656,9 @@ class SeItem:
                         self.update_lock.release()
                     self.__logger.debug("State evaluation finished")
                     self.__logger.info("State evaluation queue empty.")
+                    self.__reorder_states()
                     self.__handle_releasedby(new_state, last_state, _instant_leaveaction)
+
                     return
 
                 if new_state.is_copy_for:
@@ -678,7 +680,9 @@ class SeItem:
                         self.update_webif(_key_leave, True)
                         self.update_webif(_key_stay, False)
                         self.update_webif(_key_enter, False)
+                    self.__reorder_states()
                     self.__handle_releasedby(new_state, last_state, _instant_leaveaction)
+
                     if self.update_lock.locked():
                         self.update_lock.release()
                     self.update_state(self.__item, "Released_by Retrigger", state.id)
@@ -747,6 +751,7 @@ class SeItem:
                     self.update_webif(_key_enter, False)
 
                 self.__logger.debug("State evaluation finished")
+                self.__reorder_states()
                 all_released_by = self.__handle_releasedby(new_state, last_state, _instant_leaveaction)
 
         self.__logger.info("State evaluation queue empty.")
@@ -1103,26 +1108,51 @@ class SeItem:
                 self.__logger.info("{}", text)
         self.__logger.decrease_indent()
 
+    def __reorder_states(self):
+        _reordered_states = []
+        self.__logger.info("".ljust(80, "_"))
+        self.__logger.info("Recalculating state order.")
+        for state in self.__states:
+            try:
+                _returnvalue, _returntype, _issue = state.update_order()
+                if _issue not in [[], None, [None]]:
+                    self.__config_issues.update({state.id: {'issue': _issue, 'attribute': 'se_stateorder'}})
+                    self.__logger.warning("Issue while getting state order: {}, using original order {}", _issue,
+                                          _returnvalue)
+                _reordered_states.append((_returnvalue, state))
+            except Exception as ex:
+                self.__logger.error("Problem setting order of state {0}: {1}", state.id, ex)
+                self.__config_issues.update({state.id: {'issue': ex, 'attribute': 'se_stateorder'}})
+        self.__states = []
+        for order, state in sorted(_reordered_states, key=lambda x: x[0]):
+            self.__states.append(state)
+        self.__logger.info("".ljust(80, "_"))
+
     def __initialize_state(self, item_state, _statecount):
-        # initialize states
         try:
             _state = StateEngineState.SeState(self, item_state)
-            _statecount += 1
+            _returnvalue, _returntype, _issue = _state.update_order(_statecount)
+            if _issue:
+                self.__config_issues.update({item_state.property.path: {'issue': _issue, 'attribute': 'se_stateorder'}})
+                self.__logger.error("Issue with state {0} while setting order: {1}", item_state.property.path, _issue)
             self.__states.append(_state)
             self.__state_ids.update({item_state.property.path: _state})
-            if _statecount == 1:
-                self.__unused_attributes = _state.unused_attributes.copy()
+            self.__logger.info("Appended state {}", item_state.property.path)
+            self.__unused_attributes = _state.unused_attributes.copy()
             filtered_dict = {key: value for key, value in self.__unused_attributes.items() if
                              key not in _state.used_attributes}
             self.__unused_attributes = filtered_dict
+            return _statecount + 1
         except ValueError as ex:
             self.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
                 [{'conditionset': 'None', 'condition': 'ValueError'}]}})
             self.__logger.error("Ignoring state {0} because ValueError: {1}", item_state.property.path, ex)
+            return _statecount
         except Exception as ex:
             self.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
                 [{'conditionset': 'None', 'condition': 'GeneralError'}]}})
             self.__logger.error("Ignoring state {0} because: {1}", item_state.property.path, ex)
+            return _statecount
 
     def __finish_states(self):
         # initialize states
