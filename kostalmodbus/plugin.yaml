@@ -5,17 +5,17 @@ plugin:
     description:
         de: 'Plugin zur Anbindung von einem Kostal Wechselrichter über Modbus an SmartHomeNG'
         en: 'Plugin to connect your Kostal inverter via modbus with SmartHomeNG'
-    maintainer: Thomas Hengsberg (thengsty)
+    maintainer: Thomas Hengsberg (thengsty), Cannon
     tester:
     state: develop                  # change to ready when done with development
 #    keywords: iot xyz
     documentation:
     support:
 
-    version: 1.6.2                  # Plugin version
-    sh_minversion: 1.6              # minimum shNG version to use this plugin
+    version: 1.6.3                  # Plugin version
+    sh_minversion: 1.8              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    py_minversion: 3.6              # minimum Python version to use this plugin
+    py_minversion: 3.8              # minimum Python version to use this plugin
 #    py_maxversion:                 # maximum Python version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
     restartable: unknown
