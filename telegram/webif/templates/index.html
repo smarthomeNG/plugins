@@ -3,29 +3,14 @@
 <script>
     $(document).ready( function () {
 			$(window).trigger('datatables_defaults');
-      /* get pagelength from http module or plugin. */
-      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-        resize = true;
-        webif_pagelength = -1;
-      }
-      else {
-        resize = false;
-      }
-      console.log("Webif page length " + webif_pagelength + ", pageResize: " + resize);
 
 			try
 				{
-					tableout = $('#table_out').DataTable( {pageLength: webif_pagelength,
-          pageResize: resize} );
-					tablein = $('#table_in').DataTable( {pageLength: webif_pagelength,
-          pageResize: resize} );
-          tablecontrol = $('#table_control').DataTable( {pageLength: webif_pagelength,
-          pageResize: resize} );
-          tablecontrol = $('#table_chatids').DataTable( {pageLength: webif_pagelength,
-          pageResize: resize} );
-          tablecontrol = $('#table_info').DataTable( {pageLength: webif_pagelength,
-          pageResize: resize} );
+					tableout = $('#table_out').DataTable( {} );
+					tablein = $('#table_in').DataTable( {} );
+          tablecontrol = $('#table_control').DataTable( {} );
+          tablecontrol = $('#table_chatids').DataTable( {} );
+          tablecontrol = $('#table_info').DataTable( {} );
 				}
 			catch (e)
 				{
