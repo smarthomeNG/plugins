@@ -258,19 +258,22 @@ class SeState(StateEngineTools.SeItemChild):
         self._log_decrease_indent()
 
     def update_order(self, value=None):
+        if isinstance(value, list):
+            if len(value) > 1:
+                _default_value = self.__order.get()
+                self._log_warning("se_stateorder for item {} can not be defined as a list"
+                                  " ({}). Using default value {}.", self.id, value, _default_value)
+                value = _default_value
+            elif len(value) == 1:
+                value = value[0]
         if value is None and "se_stateorder" in self.__item.conf:
-            _original_order = copy(self.__order)
-            _returnvalue, _returntype, _, _issue = self.__order.set_from_attr(self.__item, "se_stateorder")
-            if _issue not in [[], None, [None]]:
-                _returnvalue = _original_order.get()
-                self.__order = _original_order
-            else:
-                self._log_info("Set state {} order to {}", self.__id, _returnvalue)
+            _, _, _, _issue = self.__order.set_from_attr(self.__item, "se_stateorder")
         elif value is not None:
-            _returnvalue, _returntype, _issue = self.__order.set(value, "", True, None, False)
+            _, _, _issue = self.__order.set(value, "", True, None, False)
         else:
-            _returnvalue, _returntype, _issue = self.__order.get(), None, [None]
-        return _returnvalue, _returntype, _issue
+            _issue = [None]
+
+        return _issue
 
     # run actions when entering the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
