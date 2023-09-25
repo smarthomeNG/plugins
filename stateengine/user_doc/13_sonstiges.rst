@@ -38,6 +38,21 @@ Heißt, etwaige Zustandseinstellungen im eigentlichen Item erweitern und
 
 Weitere Details sind unter :ref:`Zustand-Templates` zu finden.
 
+
+Neukonfiguration der Hierarchie
+-------------------------------
+
+**se_stateorder (optional):**
+*Festlegen der Reihenfolge eines Status in der Hierarchiefolge*
+
+Dieses Attribut ermöglicht es, die hierarchische Reihenfolge, die sich ursprünglich
+aus der YAML Datei ergibt, anzupassen. Dies kann durch folgende Schlüsselwörter geschehen:
+
+- item:<Itempfad> liest den Wert aus gegebenem Item aus. Das Item sollte einen integer Wert beinhalten.
+- eval:<Ausdruck> ermöglicht die hierarchische Neuordnung mittels Eval-Ausdruck
+- value:<Itempfad> Angabe der hierarchischen Position durch Angabe eines Integer-Werts (min. 0)
+
+
 Auflösen von Zuständen
 ----------------------
 

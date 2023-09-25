@@ -11,6 +11,10 @@ Zustände
 Alle Items unterhalb des Regelwerk-Items (``rules``)
 beschreiben Zustände des Objekts ("Zustands-Item").
 Die Ids der Zustands-Items sind beliebig, im Beispiel ``day``.
+Prinzipiell werden die Zustände der Reihe nach, wie sie im YAML
+File angegeben wurden evaluiert. Es ist allerdings auch möglich,
+die Reihenfolge (selbst zur Laufzeit) mittels ``se_stateorder`` 
+zu verändern. Dies ist insbesondere für die ersten Tests sinnvoll.
 
 .. code-block:: yaml
 
@@ -81,7 +85,7 @@ Zusätzlich können eigene Zustände (beispielsweise day) definiert werden.
               - stateengine.general
               - stateengine.state_release
               - stateengine.state_lock
-              - stateengine.state_suspend            
+              - stateengine.state_suspend
 
             rules:
                 day:

@@ -121,7 +121,7 @@ standard
 ========
 
 Ein praktisch leerer Status, der immer am Ende angehängt werden sollte. Dieser Status wird
-eingenommen, wenn keine Bedingungen der anderen Stati erfüllt sind.
+eingenommen, wenn keine Bedingungen der anderen Zustände erfüllt sind.
 
 Pluginspezifische Templates
 ---------------------------

@@ -428,7 +428,7 @@ verwendet werden.
 
 Die Abfrage se_value_laststate ist besonders wichtig für
 Bedingungsabfragen, die über das Verbleiben im aktuellen Zustand
-bestimmen (z.b. enter_stay). So können aber auch Stati übersprungen
+bestimmen (z.b. enter_stay). So können aber auch Zustände übersprungen
 werden, wenn sie nicht nach einem bestimmten anderen Zustand aktiviert
 werden sollen.
 Wichtig: Hier muss die vollständige Item-Id angegeben werden
