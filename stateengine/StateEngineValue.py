@@ -184,7 +184,8 @@ class SeValue(StateEngineTools.SeItemChild):
                     field_value[i] = value[i]
                 if source[i] not in self.__valid_valuetypes:
                     _issue = "{0} is not a valid value type.".format(source[i])
-                    self.__issues.append(_issue)
+                    if _issue not in self.__issues:
+                        self.__issues.append(_issue)
                     self._log_warning("{0} Use one of {1} instead. Value '{2}' "
                                       "will be handled the same as the item type, e.g. string, bool, etc.",
                                       _issue, self.__valid_valuetypes, field_value[i])
@@ -209,7 +210,8 @@ class SeValue(StateEngineTools.SeItemChild):
                             val, field_value[i], source[i] = None, None, None
                     else:
                         _issue = "Template with name '{}' does not exist for this SE Item!".format(field_value[i])
-                        self.__issues.append(_issue)
+                        if _issue not in self.__issues:
+                            self.__issues.append(_issue)
                         self._log_warning(_issue)
                         self.__listorder = [i for i in self.__listorder if i != val]
                         source[i], field_value[i], val = None, None, None
@@ -237,7 +239,8 @@ class SeValue(StateEngineTools.SeItemChild):
                         self._log_warning("Removing template {}: {}", self.__template, ex)
                 else:
                     _issue = "Template with name '{}' does not exist for this SE Item!".format(self.__template)
-                    self.__issues.append(_issue)
+                    if _issue not in self.__issues:
+                        self.__issues.append(_issue)
                     self._log_warning(_issue)
                     self.__listorder = [i for i in self.__listorder if i != value]
                     source, field_value, value = None, None, None
@@ -255,7 +258,8 @@ class SeValue(StateEngineTools.SeItemChild):
                 source = "value"
             if source not in self.__valid_valuetypes:
                 _issue = "{0} is not a valid value type.".format(source)
-                self.__issues.append(_issue)
+                if _issue not in self.__issues:
+                    self.__issues.append(_issue)
                 self._log_warning("{0} Use one of {1} instead. Value '{2}' "
                                   "will be handled the same as the item type, e.g. string, bool, etc.",
                                   _issue, self.__valid_valuetypes, field_value)
@@ -285,7 +289,8 @@ class SeValue(StateEngineTools.SeItemChild):
                                 else:
                                     _issue = "Template with name '{}' does not exist for this SE Item!".format(
                                         self.__template)
-                                    self.__issues.append(_issue)
+                                    if _issue not in self.__issues:
+                                        self.__issues.append(_issue)
                                     self._log_warning(_issue)
                                     s = None
                     try:
@@ -312,7 +317,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             field_value[i] = False
 
                         _value, _issue = self.__do_cast(field_value[i])
-                        if _issue and _issue not in self.__issues:
+                        if _issue not in [[], None, [None], self.__issues]:
                             self.__issues.append(_issue)
                         self.__value.append(_value)
                     else:
@@ -320,7 +325,7 @@ class SeValue(StateEngineTools.SeItemChild):
                 self.__item = [] if self.__item is None else [self.__item] if not isinstance(self.__item, list) else self.__item
                 if s == "item":
                     _item, _issue = self._abitem.return_item(field_value[i])
-                    if _issue and _issue not in self.__issues:
+                    if _issue not in [[], None, [None], self.__issues]:
                         self.__issues.append(_issue)
                 self.__item.append(None if s != "item" else self.__absolute_item(_item, field_value[i]))
                 self.__eval = [] if self.__eval is None else [self.__eval] if not isinstance(self.__eval, list) else self.__eval
@@ -343,11 +348,10 @@ class SeValue(StateEngineTools.SeItemChild):
             self.__regex = self.__regex[0] if len(self.__regex) == 1 else None if len(self.__regex) == 0 else self.__regex
             self.__struct = None if len(self.__struct) == 0 else self.__struct
             self.__varname = self.__varname[0] if len(self.__varname) == 1 else None if len(self.__varname) == 0 else self.__varname
-
         else:
             if source == "item":
                 _item, _issue = self._abitem.return_item(field_value)
-                if _issue and _issue not in self.__issues:
+                if _issue not in [[], None, [None], self.__issues]:
                     self.__issues.append(_issue)
             self.__item = None if source != "item" else self.__absolute_item(_item, field_value)
             self.__eval = None if source != "eval" else field_value
@@ -366,7 +370,7 @@ class SeValue(StateEngineTools.SeItemChild):
                 elif isinstance(field_value, str) and field_value.lower() in ['false', 'no']:
                     field_value = False
                 self.__value, _issue = self.__do_cast(field_value)
-                if _issue and _issue not in self.__issues:
+                if _issue not in [[], None, [None], self.__issues]:
                     self.__issues.append(_issue)
             else:
                 self.__value = None
@@ -788,7 +792,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     _newvalue = None
                 else:
                     _newvalue, _issue = self.__do_cast(val.property.value)
-                    if _issue and _issue not in _issue_list:
+                    if _issue not in [[], None, [None], _issue_list]:
                         _issue_list.append(_issue)
                 values.append(_newvalue)
                 search_item = 'item:{}'.format(val)
@@ -799,7 +803,7 @@ class SeValue(StateEngineTools.SeItemChild):
             if self.__item is None:
                 return None
             _newvalue, _issue = self.__do_cast(self.__item.property.value)
-            if _issue and _issue not in _issue_list:
+            if _issue not in [[], None, [None], _issue_list]:
                 _issue_list.append(_issue)
             search_item = 'item:{}'.format(self.__item)
             if search_item in self.__listorder:
@@ -819,10 +823,11 @@ class SeValue(StateEngineTools.SeItemChild):
         except Exception as ex:
             values = self.__item
             _issue = "Problem while reading item path '{0}': {1}.".format(values, ex)
-            _issue_list.append(_issue)
+            if _issue not in _issue_list:
+                _issue_list.append(_issue)
             self._log_info(_issue)
         _newvalue, _issue = self.__do_cast(values)
-        if _issue and _issue not in _issue_list:
+        if _issue not in [[], None, [None], _issue_list]:
             _issue_list.append(_issue)
         return _newvalue
 
