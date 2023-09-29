@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/avm/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
-    version: 2.2.0                  # Plugin version (must match the version specified in __init__.py)
+    version: 2.2.1                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.8              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -425,19 +425,19 @@ item_attributes:
               # aha-level Attributes
             - Level/Niveau von 0 bis 255 (Setzen)
             - Level/Niveau von 0 bis 255 (Setzen & Status)
-            - Level/Niveau von 0% bis 100% (Setzen)
-            - Level/Niveau von 0% bis 100% (Setzen & Status)
+            - Level/Niveau in Prozent von 0% bis 100% (Setzen)
+            - Level/Niveau in Prozent von 0% bis 100% (Setzen & Status)
               # aha-color Attributes
-            - Hue (Setzen)
-            - Hue (Status und Setzen)
-            - Saturation (Setzen)
-            - Saturation (Status und Setzen)
-            - Farbtemperatur (Setzen)
-            - Farbtemperatur (Status und Setzen)
-            - Hue (Status und Setzen)
-            - Saturation (Status und Setzen)
-            - Farbwerte als Liste h,s (Status und Setzen)
-            - Farbwerte und Helligkeit als Liste h,s,v (Status und Setzen)
+            - Hue mit Wertebereich von 0° bis 359° (Setzen)
+            - Hue mit Wertebereich von 0° bis 359° (Status und Setzen)
+            - Saturation mit Wertebereich von 0 bis 255 (Setzen)
+            - Saturation mit Wertebereich von 0 bis 255 (Status und Setzen)
+            - Farbtemperatur mit Wertebereich von 2700K bis 6500K (Setzen)
+            - Farbtemperatur mit Wertebereich von 2700K bis 6500K (Status und Setzen)
+            - Hue mit Wertebereich von 0° bis 359° (Status und Setzen)
+            - Saturation mit Wertebereich von 0 bis 255 (Status und Setzen)
+            - Farbwerte als Liste [Hue, Saturation] (Status und Setzen)
+            - Farbwerte und Helligkeit als Liste [Hue (0-359), Saturation (0-255), Level (0-255)] (Status und Setzen)
             - Aktueller Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)
             - Unterstützer Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)
             - Lampe unterstützt setunmappedcolor
