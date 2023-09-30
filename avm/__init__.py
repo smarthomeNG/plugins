@@ -2056,7 +2056,7 @@ class FritzHome:
         Updated Item will be processed and value communicated to AVM Device
         """
 
-        self.logger.debug(f"handle_updated_item: item={item.path()}, value={item()}, {readafterwrite=}")
+        self.logger.debug(f"handle_updated_item: item={item.path()}, {avm_data_type=}, value={item()}, {readafterwrite=}")
 
         # define set method per avm_data_type // all avm_data_types of AHA_WO_ATTRIBUTES + AHA_RW_ATTRIBUTES must be defined here
         _dispatcher = {'window_open':         (self.set_window_open, {'seconds': item()}, self.get_window_open),
@@ -2068,10 +2068,10 @@ class FritzHome:
                        'switch_state':        (self.set_switch_state, {'state': item()}, self.get_switch_state),
                        'switch_toggle':       (self.set_switch_state_toggle, {}, self.get_switch_state),
                        'colortemperature':    (self.set_color_temp, {'temperature': item()}, self.get_color_temp),
-                       'hue':                 (self.set_hue, {'hue': int(item())}, self.get_hue),
-                       'saturation':          (self.set_saturation, {'saturation': int(item())}, self.get_saturation),
-                       'unmapped_hue':        (self.set_unmapped_hue, {'hue': int(item())}, self.get_unmapped_hue),
-                       'unmapped_saturation': (self.set_unmapped_saturation, {'saturation': int(item())}, self.get_unmapped_saturation),
+                       'hue':                 (self.set_hue, {'hue': item()}, self.get_hue),
+                       'saturation':          (self.set_saturation, {'saturation': item()}, self.get_saturation),
+                       'unmapped_hue':        (self.set_unmapped_hue, {'hue': item()}, self.get_unmapped_hue),
+                       'unmapped_saturation': (self.set_unmapped_saturation, {'saturation': item()}, self.get_unmapped_saturation),
                        'color':               (self.set_color, {'hs': item(), 'duration': 1, 'mapped': False}, self.get_color),
                        'hsv':                 (self.set_hsv, {'hsv': item(), 'duration': 1, 'mapped': False}, self.get_hsv),
                        }
