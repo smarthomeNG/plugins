@@ -112,20 +112,9 @@ class SeValue(StateEngineTools.SeItemChild):
             # update value type correctly based on attr_type
             value = "{}:{}".format(attr_type, value)
         # Convert weird string representation of OrderedDict correctly
-        if isinstance(value, str) and value.startswith("["):
-            value = re.split('(, (?![^(]*\)))', value.strip(']['))
-            value = [s for s in value if s != ', ']
-            result = []
-            for s in value:
-                m = re.match(r'^OrderedDict\((.+)\)$', s)
-                if m:
-                    result.append(dict(ast.literal_eval(m.group(1))))
-                else:
-                    result.append(ast.literal_eval(s))
-            value = result
         try:
-            value = ast.literal_eval(value)
-        except Exception as ex:
+            value = StateEngineTools.convert_str_to_dict(value)
+        except Exception:
             pass
         if value is not None:
             self._log_develop("Setting value {0}, attribute name {1}, reset {2}, type {3}",
@@ -245,8 +234,8 @@ class SeValue(StateEngineTools.SeItemChild):
                     self.__listorder = [i for i in self.__listorder if i != value]
                     source, field_value, value = None, None, None
             try:
-                cond1 = source.lstrip('-').replace('.','',1).isdigit()
-                cond2 = field_value.lstrip('-').replace('.','',1).isdigit()
+                cond1 = source.lstrip('-').replace('.', '', 1).isdigit()
+                cond2 = field_value.lstrip('-').replace('.', '', 1).isdigit()
             except Exception:
                 cond1 = False
                 cond2 = False
