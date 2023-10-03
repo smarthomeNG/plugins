@@ -106,7 +106,7 @@ Wertevergleich
 Der zu vergleichende Wert einer Bedingung kann auf folgende Arten definiert werden:
 
 - statischer Wert (also z.B. 500 Lux). Wird angegegeben mit ``value:500``, wobei das value: auch weggelassen werden kann.
-- Item (beispielsweise ein Item namens settings.helligkeitsschwellwert). Wird angegeben mit ``item:settings.helligkeitsschwellwert``
+- Item (beispielsweise ein Item namens settings.helligkeitsschwellwert). Wird angegeben mit ``item:settings.helligkeitsschwellwert``. Das Item kann auch eine Liste von Werten beinhalten.
 - Eval-Funktion (siehe auch `eval Ausdrücke <https://www.smarthomeng.de/user/referenz/items/standard_attribute/eval.html>`_). Wird angegeben mit ``eval:1*2*se_eval.get_relative_itemvalue('..bla')``
 - Regular Expression (siehe auch ` RegEx Howto <https://docs.python.org/3/howto/regex.html>`_) - Vergleich mittels re.fullmatch, wobei Groß/Kleinschreibung ignoriert wird. Wird angegeben mit ``regex:StateEngine Plugin:(.*)``
 - Template: eine Vorlage, z.B. eine eval Funktion, die immer wieder innerhalb

@@ -20,7 +20,9 @@ Seit Version 1.8 wird se_use gleich behandelt wie andere Plugin spezifische Attr
 Dadurch ist es nicht nur möglich, eine Liste von einzubindenden Zuständen zu deklarieren,
 sondern auch auf die verschiedenen Schlüsselwörter zurückzugreifen:
 
-- item:<Itempfad> liest den Wert aus gegebenem Item aus und nutzt diesen als Zustandserweiterung
+- item:<Itempfad> liest den Wert aus gegebenem Item aus und nutzt diesen als Zustandserweiterung. Es ist möglich,
+  mehrere Zustände als Liste im Item zu deklarieren, indem entweder ein Item mit Typ "list" referenziert wird
+  oder mehrere Einträge in einem "str" Item durch ein Komma getrennt angegeben werden.
 - eval:<Ausdruck> ermöglicht das dynamische Erweitern des Zustands, z.B. abhängig von einem vorigen Zustand, etc.
 - value:<Itempfad> sucht das angegebene Item und bindet dieses ein. Der Wert kann auch als
   relativer Pfad angegeben werden. Hierbei ist zu beachten, dass die relative Adressierung
@@ -65,9 +67,9 @@ eingenommen werden könnten. Gewünscht wird dies normalerweise beim
 Suspendzustand, allerdings kann das Attribut bei jedem
 beliebigem Zustand genutzt werden. Seit Version 2.0 wird se_released_by gleich
 behandelt wie andere Plugin spezifische Attribute mit Wertzuweisung, es können
-also alle gültigen Schlüsselwörter genutzt werden. Außerdem wurde in
-der Pluginversion 2.0 das released_by Feature komplett überarbeitet, sodass
-es nun zuverlässig funktionieren sollte ;)
+also alle gültigen Schlüsselwörter und auch Listenangaben in Items genutzt werden.
+Außerdem wurde in der Pluginversion 2.0 das released_by Feature komplett überarbeitet,
+sodass es nun zuverlässig funktionieren sollte ;)
 
 Ein Zustand mit diesem Attribut wird aufgelöst, also
 (vorerst) nicht mehr eingenommen, sobald ein mit dem
