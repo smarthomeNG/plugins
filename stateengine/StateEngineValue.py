@@ -325,18 +325,26 @@ class SeValue(StateEngineTools.SeItemChild):
                 self.__struct.append(None if s != "struct" else StateEngineStructs.create(self._abitem, field_value[i]))
                 self.__varname = [] if self.__varname is None else [self.__varname] if not isinstance(self.__varname, list) else self.__varname
                 self.__varname.append(None if s != "var" else field_value[i])
-            self.__item = [i for i in self.__item if i is not None]
-            self.__eval = [i for i in self.__eval if i is not None]
-            self.__regex = [i for i in self.__regex if i is not None]
-            self.__struct = [i for i in self.__struct if i is not None]
-            self.__varname = [i for i in self.__varname if i is not None]
-            self.__value = [i for i in self.__value if i is not None]
-            self.__value = self.__value[0] if len(self.__value) == 1 else None if len(self.__value) == 0 else self.__value
-            self.__item = self.__item[0] if len(self.__item) == 1 else None if len(self.__item) == 0 else self.__item
-            self.__eval = self.__eval[0] if len(self.__eval) == 1 else None if len(self.__eval) == 0 else self.__eval
-            self.__regex = self.__regex[0] if len(self.__regex) == 1 else None if len(self.__regex) == 0 else self.__regex
-            self.__struct = None if len(self.__struct) == 0 else self.__struct
-            self.__varname = self.__varname[0] if len(self.__varname) == 1 else None if len(self.__varname) == 0 else self.__varname
+
+            if self.__item:
+                self.__item = [i for i in self.__item if i is not None]
+                self.__item = self.__item[0] if len(self.__item) == 1 else None if len(self.__item) == 0 else self.__item
+            if self.__eval:
+                self.__eval = [i for i in self.__eval if i is not None]
+                self.__eval = self.__eval[0] if len(self.__eval) == 1 else None if len(self.__eval) == 0 else self.__eval
+            if self.__regex:
+                self.__regex = [i for i in self.__regex if i is not None]
+                self.__regex = self.__regex[0] if len(self.__regex) == 1 else None if len(self.__regex) == 0 else self.__regex
+            if self.__struct:
+                self.__struct = [i for i in self.__struct if i is not None]
+                self.__struct = None if len(self.__struct) == 0 else self.__struct
+            if self.__varname:
+                self.__varname = [i for i in self.__varname if i is not None]
+                self.__varname = self.__varname[0] if len(self.__varname) == 1 else None if len(self.__varname) == 0 else self.__varname
+            if self.__value:
+                self.__value = [i for i in self.__value if i is not None]
+                self.__value = self.__value[0] if len(self.__value) == 1 else None if len(self.__value) == 0 else self.__value
+
         else:
             if source == "item":
                 _item, _issue = self._abitem.return_item(field_value)
