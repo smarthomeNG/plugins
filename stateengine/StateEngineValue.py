@@ -697,7 +697,7 @@ class SeValue(StateEngineTools.SeItemChild):
             try:
                 _newvalue, _issue = self.__do_cast(eval(self.__eval))
                 if 'eval:{}'.format(self.__eval) in self.__listorder:
-                    self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = _newvalue
+                    self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = [_newvalue]
                 values = _newvalue
                 self._log_decrease_indent()
                 self._log_debug("Eval result: {0} ({1}).", values, type(values))
@@ -728,7 +728,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         try:
                             _newvalue, _issue = self.__do_cast(eval(val))
                             if 'eval:{}'.format(val) in self.__listorder:
-                                self.__listorder[self.__listorder.index('eval:{}'.format(val))] = _newvalue
+                                self.__listorder[self.__listorder.index('eval:{}'.format(val))] = [_newvalue]
                             value = _newvalue
                             self._log_decrease_indent()
                             self._log_debug("Eval result from list: {0}.", value)
@@ -745,7 +745,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         try:
                             _newvalue, _issue = self.__do_cast(val())
                             if 'eval:{}'.format(val) in self.__listorder:
-                                self.__listorder[self.__listorder.index('eval:{}'.format(val))] = _newvalue
+                                self.__listorder[self.__listorder.index('eval:{}'.format(val))] = [_newvalue]
                             value = _newvalue
                         except Exception as ex:
                             self._log_decrease_indent()
@@ -755,8 +755,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             self._log_info(_issue)
                             value = None
                     if value is not None:
-                        _newvalue, _issue = self.__do_cast(value)
-                        values.append(_newvalue)
+                        values.append(value)
                     self._log_decrease_indent()
             else:
                 self._log_debug("Checking eval (no str, no list): {0}.", self.__eval)
@@ -764,7 +763,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     self._log_increase_indent()
                     _newvalue, _issue = self.__do_cast(self.__eval())
                     if 'eval:{}'.format(self.__eval) in self.__listorder:
-                        self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = _newvalue
+                        self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = [_newvalue]
                     values = _newvalue
                     self._log_decrease_indent()
                     self._log_debug("Eval result (no str, no list): {0}.", values)
@@ -785,30 +784,63 @@ class SeValue(StateEngineTools.SeItemChild):
         if isinstance(self.__item, list):
             values = []
             for val in self.__item:
+                _new_values = []
                 if val is None:
                     _newvalue = None
                 else:
-                    _newvalue, _issue = self.__do_cast(val.property.value)
-                    if _issue not in [[], None, [None], _issue_list]:
-                        _issue_list.append(_issue)
-                values.append(_newvalue)
+                    try:
+                        checked_entry = StateEngineTools.convert_str_to_list(val.property.value)
+                    except Exception as ex:
+                        self._log_warning("While getting from list item: {}", ex)
+                        checked_entry = []
+                    checked_entry = checked_entry if isinstance(checked_entry, list) else [checked_entry]
+
+                    for entry in checked_entry:
+                        _newvalue, _issue = self.__do_cast(entry)
+                        if _issue not in [[], None, [None], _issue_list]:
+                            _issue_list.append(_issue)
+                        if _newvalue is not None:
+                            _new_values.append(_newvalue)
+
+                _new_values = _new_values[0] if len(_new_values) == 1 else None if len(_new_values) == 0 else _new_values
                 search_item = 'item:{}'.format(val)
                 if search_item in self.__listorder:
                     index = self.__listorder.index(search_item)
-                    self.__listorder[index] = _newvalue
+                    self.__listorder[index] = _new_values
+                search_item = self.itemsApi.return_item(val) or val
+                if search_item is not None and search_item in self.__listorder:
+                    index = self.__listorder.index(search_item)
+                    self.__listorder[index] = _new_values
+                values.append(_new_values)
+            if values is not None:
+                return values
         else:
             if self.__item is None:
                 return None
-            _newvalue, _issue = self.__do_cast(self.__item.property.value)
-            if _issue not in [[], None, [None], _issue_list]:
-                _issue_list.append(_issue)
+            try:
+                checked_entry = StateEngineTools.convert_str_to_list(self.__item.property.value)
+            except Exception as ex:
+                self._log_warning("While getting from item: {}", ex)
+                checked_entry = []
+            checked_entry = checked_entry if isinstance(checked_entry, list) else [checked_entry]
+            _new_values = []
+            for entry in checked_entry:
+                _newvalue, _issue = self.__do_cast(entry)
+                if _issue not in [[], None, [None], _issue_list]:
+                    _issue_list.append(_issue)
+                if _newvalue is not None:
+                    _new_values.append(_newvalue)
+            _new_values = _new_values[0] if len(_new_values) == 1 else None if len(_new_values) == 0 else [_new_values]
             search_item = 'item:{}'.format(self.__item)
             if search_item in self.__listorder:
                 index = self.__listorder.index(search_item)
-                self.__listorder[index] = _newvalue
-            values = _newvalue
-        if values is not None:
-            return values
+                self.__listorder[index] = _new_values
+            if self.__item in self.__listorder:
+                index = self.__listorder.index(self.__item)
+                self.__listorder[index] = _new_values
+            values = _new_values
+            if values is not None:
+                return values
 
         try:
             _newvalue = self.__item.property.path
