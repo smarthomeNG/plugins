@@ -381,8 +381,12 @@ class SeState(StateEngineTools.SeItemChild):
         for i, element in enumerate(item_states):
             if element == self.state_item:
                 self._log_info("Use element {} is same as current state - Ignoring.", element)
-            elif element is not None:
-                self.__fill(element, recursion_depth, se_use[i])
+            elif element is not None and element not in self.__use_done:
+                try:
+                    _use = se_use[i]
+                except Exception:
+                    _use = element
+                self.__fill(element, recursion_depth, _use)
                 self.__use_done.append(element)
 
     # Read configuration from item and populate data in class
