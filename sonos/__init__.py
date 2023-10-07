@@ -2314,7 +2314,7 @@ class Speaker(object):
         # if a patch is applied.
 
         # ------------------------------------------------------------------------------------------------------------ #
-        self.logger.warning(f"DEBUG: _play_radio start")
+        self.logger.warning(f"DEBUG: _play_tunein start")
         if not self._check_property():
             return False, "Property check failed"
 
@@ -2400,7 +2400,6 @@ class Speaker(object):
 
     def _play_radio(self, station_name: str, music_service: str = 'TuneIn', start: bool = True) -> tuple:
         """
-        WARNING: THIS FUNCTION IS NOT WORKING FOR SOME RADIO STATIONS, e.g. with space in the name. Other names can cause infinite loops.
         Plays a radio station by a given radio name at a given music service. If more than one radio station are found,
         the first result will be played.
         :param music_service: music service name Default: TuneIn
@@ -2424,7 +2423,7 @@ class Speaker(object):
                             </item>
                         </DIDL-Lite>' 
                         """
-
+        self.logger.dbghigh(f"_play_radio called with station_name= {station_name}")
         # get all music services
         all_music_services_names = MusicService.get_all_music_services_names()
 
@@ -2435,16 +2434,27 @@ class Speaker(object):
         # get music service instance
         music_service = MusicService(music_service)
 
+        # The following code is no longer necessary and will be removed. Its purpose was to cope with
+        # station names that included spaces. It seems that in the meantime, these spaces no longer
+        # include problems for the search
         # adapt station_name for optimal search results
-        if " " in station_name:
-            station_name_for_search = station_name.split(" ", 1)[0]
-        elif station_name[-1].isdigit():
-            station_name_for_search = station_name[:-1]
-        else:
-            station_name_for_search = station_name
+        #if " " in station_name:
+        #    station_name_for_search = station_name.split(" ", 1)[0]
+        #elif station_name[-1].isdigit():
+        #    station_name_for_search = station_name[:-1]
+        #else:
+        #    station_name_for_search = station_name
+        #self.logger.dbghigh(f"_play_radio: station_name_for_search = {station_name_for_search}")
+        #search_result = music_service.search(category='stations', term=station_name_for_search, index=0, count=100)
 
         # do search
-        search_result = music_service.search(category='stations', term=station_name_for_search, index=0, count=100)
+        search_result = music_service.search(category='stations', term=station_name, index=0, count=100)
+
+        # Debug output of whole search list:
+        k=1
+        for station in search_result:
+            self.logger.dbghigh(f"Entry {k}: {station.title}")
+            k = k + 1
 
         # get station object from search result
         the_station = None
@@ -2455,11 +2465,11 @@ class Speaker(object):
                 the_station = station
                 break
 
-        # Fuzzy match
+        # Fuzzy match with lower station name:
         if not the_station:
-            station_name = station_name.lower()
+            station_name_lower = station_name.lower()
             for station in search_result:
-                if station_name in station.title.lower():
+                if station_name_lower in station.title.lower():
                     self.logger.info(f"Fuzzy match '{station.title}' found")
                     the_station = station
                     break
@@ -2468,9 +2478,27 @@ class Speaker(object):
         if not the_station:
             last_char = len(station_name) - 1
             if station_name[last_char].isdigit():
-                station_name = f"{station_name[0:last_char]} {station_name[last_char:]}"
+                #old_station_name = f"{station_name[0:last_char]} {station_name[last_char:]}"
+                #self.logger.dbghigh(f"Debug: Old Very fuzzy query: {old_station_name}")
+
+                # Split Digits and Radio Name:
+                digitString = ''
+                radioNameString = ''
+                splitIndex = last_char
+                for i in reversed(range(len(station_name))): 
+                    if station_name[i].isdigit() or station_name[i] == '.' or station_name[i] == ',':
+                        digitString = station_name[i] + digitString
+                    else:
+                        splitIndex = i
+                        break
+                radioNameString = station_name[0:splitIndex ]
+                self.logger.dbghigh(f"Debug: RadioName: {radioNameString}, digitString: {digitString}")
+
+                new_station_name = f"{radioNameString.lower()} {digitString}"
+                self.logger.dbghigh(f"New very fuzzy query: {new_station_name}")
+
                 for station in search_result:
-                    if station_name in station.title.lower():
+                    if new_station_name in station.title.lower():
                         self.logger.info(f"Very fuzzy match '{station.title}' found")
                         the_station = station
                         break
@@ -2979,7 +3007,7 @@ class Sonos(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = "1.8.3"
+    PLUGIN_VERSION = "1.8.4"
 
     def __init__(self, sh):
         """Initializes the plugin."""
