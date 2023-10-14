@@ -2,7 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2012-2014 Oliver Hinckel                  github@ollisnet.de
-#  Copyright 2018-2021                              Bernd.Meiners@mail.de
+#  Copyright 2018-2023                              Bernd.Meiners@mail.de
 #  Copyright 2022-2022 Julian Scholle       julian.scholle@googlemail.com
 #########################################################################
 #
@@ -35,6 +35,7 @@ import serial_asyncio
 import traceback
 from smllib import SmlStreamReader
 from smllib import const as smlConst
+from .const import FURTHER_OBIS_NAMES
 
 from lib.module import Modules
 from lib.item import Items
@@ -95,7 +96,7 @@ class Sml2(SmartPlugin):
             self.smlx.logger.error("Connection so serial device was closed")
             self.smlx.connected = False
 
-    PLUGIN_VERSION = '2.0.0'
+    PLUGIN_VERSION = '2.0.1'
 
     def __init__(self, sh):
         """
@@ -135,6 +136,8 @@ class Sml2(SmartPlugin):
         self.init_webinterface(WebInterface)
         self.task = None
         self.values = {}
+        self.obis_names = { **smlConst.OBIS_NAMES, **FURTHER_OBIS_NAMES }
+        self.obis_units = smlConst.UNITS
 
     def run(self):
         """
@@ -339,8 +342,8 @@ class Sml2(SmartPlugin):
                     obis_code = sml_entry.obis.obis_code
                     if obis_code not in self.values:
                         self.values[obis_code] = dict()
-                        self.values[obis_code]['name'] = smlConst.OBIS_NAMES.get(sml_entry.obis)
-                        self.values[obis_code]['unit'] = smlConst.UNITS.get(sml_entry.unit)
+                        self.values[obis_code]['name'] = self.obis_names.get(sml_entry.obis)
+                        self.values[obis_code]['unit'] = self.obis_units.get(sml_entry.unit)
                     if obis_code in self._items:
                         if 'valueReal' in self._items[obis_code]:
                             for item in self._items[obis_code]['valueReal']:
