@@ -928,6 +928,9 @@ class FritzDevice:
         item_count = 0
         for item in self.item_list():
 
+            if not self._plugin_instance.alive:
+                return
+
             if not self.connected:
                 self.logger.warning("FritzDevice not connected. No update of item values possible.")
                 return
