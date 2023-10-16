@@ -2401,7 +2401,7 @@ class Speaker(object):
     def _play_radio(self, station_name: str, music_service: str = 'TuneIn', start: bool = True) -> tuple:
         """
         Plays a radio station by a given radio name at a given music service. If more than one radio station are found,
-        the first result will be played.
+        the first result will be played. This is the recommended function for selection of radio stations.
         :param music_service: music service name Default: TuneIn
         :param station_name: radio station name
         :param start: Start playing after setting the radio stream? Default: True
@@ -2433,19 +2433,6 @@ class Speaker(object):
 
         # get music service instance
         music_service = MusicService(music_service)
-
-        # The following code is no longer necessary and will be removed. Its purpose was to cope with
-        # station names that included spaces. It seems that in the meantime, these spaces no longer
-        # include problems for the search
-        # adapt station_name for optimal search results
-        #if " " in station_name:
-        #    station_name_for_search = station_name.split(" ", 1)[0]
-        #elif station_name[-1].isdigit():
-        #    station_name_for_search = station_name[:-1]
-        #else:
-        #    station_name_for_search = station_name
-        #self.logger.dbghigh(f"_play_radio: station_name_for_search = {station_name_for_search}")
-        #search_result = music_service.search(category='stations', term=station_name_for_search, index=0, count=100)
 
         # do search
         search_result = music_service.search(category='stations', term=station_name, index=0, count=100)
