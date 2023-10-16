@@ -55,6 +55,7 @@ Alternativ kann eines der oben erwähnten Serial-Geräte auch über das Netzwerk
                    57600n81,local
 
 Für <PORT> und <DEVICE> sind die entsprechenden Werte einzufügen.
+
 Konfiguration
 =============
 
@@ -112,7 +113,7 @@ Zu b)
 
 4. Nach dem Neustart das Logfile öffnen und nach dem Eintrag ``enocean: Base ID = 0xYYYYZZZZ`` suchen.
 
-6. Übernahme dieser im Log angezeigten Base-ID in die plugin.yaml als Parameter `tx_id`.
+5. Übernahme dieser im Log angezeigten Base-ID in die plugin.yaml als Parameter `tx_id`.
 
 
 item.yaml
