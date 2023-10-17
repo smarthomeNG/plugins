@@ -1127,6 +1127,7 @@ class SeItem:
         for i, state in enumerate(self.__states, 1):
             try:
                 _original_order = state.order
+                _issue = None
                 if state.is_copy_for and state not in _copied_states:
                     _order = i
                     _add_order += 1
