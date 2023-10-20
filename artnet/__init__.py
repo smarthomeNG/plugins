@@ -184,7 +184,10 @@ class ArtNet(SmartPlugin):
         for it in self._model._items:
             adr = int(self.get_iattr_value(it.conf, self.ADDR_ATTR))
             val = it()
-            if val < 0 or val > 255:
+            if val is None:
+                self.logger.warning(f"Value for address {adr} is None.")
+                continue
+            elif val < 0 or val > 255:
                 self.logger.warning(
                     "Impossible to update address: %s to value %s from item %s, value has to be >=0 and <=255" % (adr, val, it))
             else:
@@ -274,7 +277,8 @@ class ArtNet(SmartPlugin):
 
         # DMX Data
         for d in self.dmxdata:
-            data.append(struct.pack('B', int(d)))
+            if d is not None:
+                data.append(struct.pack('B', int(d)))
 
         # convert from list to string
         result = bytes()
