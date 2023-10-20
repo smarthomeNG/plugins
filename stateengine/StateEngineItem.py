@@ -836,7 +836,7 @@ class SeItem:
             _returnvalue = StateEngineTools.flatten_list(_returnvalue)
             all_released_by.update({state: _returnvalue})
 
-            if _returnvalue:
+            if _returnvalue not in [[], None, [None]]:
                 update_can_release_list()
 
         self.__update_can_release(can_release, new_state)
@@ -867,9 +867,9 @@ class SeItem:
         if new_state:
             new_state.was_releasedby = None
             _can_release_list = []
-            releasedby = all_released_by.get(new_state)
-            self.__logger.develop("releasedby {}", releasedby)
-            if releasedby:
+            releasedby = all_released_by.get(new_state)            
+            if releasedby not in [[], None, [None]]:
+                self.__logger.develop("releasedby {}", releasedby)
                 state_dict = {item.id: item for item in self.__states}
                 _stateindex = list(state_dict.keys()).index(new_state.id)
                 releasedby = releasedby if isinstance(releasedby, list) else [releasedby]
