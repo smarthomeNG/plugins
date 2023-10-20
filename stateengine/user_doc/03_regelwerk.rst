@@ -22,7 +22,9 @@ eingebunden werden. Das Item sieht dann folgendermaßen aus:
 
 Bei jedem Aufruf des Regelwerk-Items - im Beispiel auf Grund der cycle Angabe also
 alle 60 Sekunden - werden die Zustände hierarchisch evaluiert.
-Zuerst wird also der erste Status getestet. Kann dieser nicht aktiviert werden,
+Zuerst wird also der als erstes angegebene Status getestet. Die Reihenfolge ergibt sich
+aus der YAML Datei oder alternativ aus dem optionalen Attribut ``se_stateorder``.
+Kann der Zustand nicht aktiviert werden,
 folgt der darunter angegebene, etc. Details hierzu finden sich im nächsten Teil
 der Dokumentation.
 
