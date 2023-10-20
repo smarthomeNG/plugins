@@ -31,7 +31,7 @@ from lib.network import Tcp_client
 
 class Asterisk(SmartPlugin):
 
-    PLUGIN_VERSION = "1.4.1"
+    PLUGIN_VERSION = "1.4.2"
 
     DB = 'ast_db'
     DEV = 'ast_dev'
@@ -237,8 +237,27 @@ class Asterisk(SmartPlugin):
                 self._command({'Action': 'Hangup', 'Channel': channel}, reply=False)
 
     def found_terminator(self, client, data):
-        """called upon data reception"""
-        data = data.decode()
+        """called then terminator is found 
+
+        :param client: tcp client which is used for the connection
+        :param str data: the response from asterisk server
+        :return : None
+        """
+        if isinstance(data, bytes):
+            data = data.decode()
+
+        """
+        the response will be normally like ``key: value``
+        exception is start of communication which presents e.g.
+        ```
+        Asterisk Call Manager/5.0.4
+        Response: Success
+        Message: Authentication accepted
+        ```
+        The following code puts everything into the dict ``event``
+        It only implements a very basic inspection of the response
+        """ 
+        self.logger.debug(f"data to inspect: {data}")
         event = {}
         for line in data.splitlines():
             key, sep, value = line.partition(': ')
