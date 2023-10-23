@@ -867,7 +867,7 @@ class SeItem:
         if new_state:
             new_state.was_releasedby = None
             _can_release_list = []
-            releasedby = all_released_by.get(new_state)            
+            releasedby = all_released_by.get(new_state)
             if releasedby not in [[], None, [None]]:
                 self.__logger.develop("releasedby {}", releasedby)
                 state_dict = {item.id: item for item in self.__states}
@@ -1962,7 +1962,7 @@ class SeItem:
             _issue = "Determined item '{0}' does not exist.".format(item_id)
             self.__logger.warning(_issue)
         else:
-            self.__logger.develop("Determined item '{0}' for id {1}.", item.id, item_id)
+            self.__logger.develop("Determined item '{0}' for id {1}.".format(item.property.path, item_id))
         return item, [_issue]
 
     # Return an item related to the StateEngine object item
