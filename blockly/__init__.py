@@ -46,8 +46,8 @@ class Blockly(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
-    
-    PLUGIN_VERSION='1.4.0'
+
+    PLUGIN_VERSION='1.5.0'
 
 
     def __init__(self, sh, *args, **kwargs):
