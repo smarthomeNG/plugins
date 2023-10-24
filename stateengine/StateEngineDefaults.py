@@ -36,8 +36,11 @@ VERBOSE = logging.DEBUG - 1
 
 logger = None
 
+plugin_version = 0
+
 
 def write_to_log(logger):
+    logger.info("Plugin {0} Version {1}".format(plugin_identification, plugin_version))
     logger.info("StateEngine default suntracking offset = {0}".format(suntracking_offset))
     logger.info("StateEngine default suntracking lamella open value = {0}".format(lamella_open_value))
     logger.info("StateEngine default startup delay = {0}".format(startup_delay))

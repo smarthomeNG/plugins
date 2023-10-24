@@ -7,5 +7,5 @@ plugin_translations:
     'Letztes Update':   {'de': '=', 'en': 'Last update'}
     'Letzter Change':   {'de': '=', 'en': 'Last change'}
     'PollCycle':        {'de': 'Abfragezyklus (s)', 'en': 'Poll cycle (s)'}
-
-
+    'Probleme':         {'de': '=', 'en': 'Issues'}
+    'Keine':            {'de': '=', 'en': 'None'}

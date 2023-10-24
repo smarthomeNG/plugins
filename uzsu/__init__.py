@@ -104,7 +104,7 @@ class UZSU(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = "1.6.5"      # item buffer for all uzsu enabled items
+    PLUGIN_VERSION = "1.6.6"      # item buffer for all uzsu enabled items
 
     def __init__(self, smarthome):
         """
@@ -137,7 +137,7 @@ class UZSU(SmartPlugin):
         self.logger.debug("run method called")
         self.alive = True
         self.scheduler_add('uzsu_sunupdate', self._update_all_suns,
-                           value={'caller': 'scheduler'}, cron=self._suncalculation_cron)
+                           value={'caller': 'Scheduler:UZSU'}, cron=self._suncalculation_cron)
         self.logger.info("Adding sun update schedule for midnight")
 
         for item in self._items:
@@ -180,6 +180,7 @@ class UZSU(SmartPlugin):
         Stop method for the plugin
         """
         self.logger.debug("stop method called")
+        self.scheduler_remove('uzsu_sunupdate')
         for item in self._items:
             try:
                 self.scheduler_remove('{}'.format(item.property.path))
@@ -195,7 +196,7 @@ class UZSU(SmartPlugin):
         :type caller:   str
         """
         for item in self._items:
-            success = self._update_sun(item)
+            success = self._update_sun(item, caller="update_all_suns")
             if success:
                 self.logger.debug('Updating sun info for item {}. Caller: {}'.format(item, caller))
                 self._update_item(item, 'UZSU Plugin', 'update_all_suns')
@@ -223,8 +224,8 @@ class UZSU(SmartPlugin):
                 item, caller, self._items[item]['sunrise'], self._items[item]['sunset']))
             success = True
         except Exception as e:
-            success = False
-            self.logger.debug("Not updated sun entries for item {}. Error {}".format(item, e))
+            success = "Not updated sun entries for item {}. Error {}".format(item, e)
+            self.logger.debug(success)
         return success
 
     def _update_suncalc(self, item, entry, entryindex, entryvalue):
@@ -355,7 +356,8 @@ class UZSU(SmartPlugin):
         if self._planned.get(item) not in [None, {}, 'notinit'] and self._items[item].get('active') is True:
             self.logger.info("Item '{}' is going to be set to {} at {}".format(
                 item, self._planned[item]['value'], self._planned[item]['next']))
-            self._webdata['items'][item.id()].update({'planned': {'value': self._planned[item]['value'], 'time': self._planned[item]['next']}})
+            self._webdata['items'][item.id()].update({'planned': {'value': self._planned[item]['value'],
+                                                                  'time': self._planned[item]['next']}})
             return self._planned[item]
         elif self._planned.get(item) == 'notinit' and self._items[item].get('active') is True:
             self.logger.info("Item '{}' is active but not fully initialized yet.".format(item))
@@ -524,26 +526,24 @@ class UZSU(SmartPlugin):
         success = self._get_sun4week(item, caller="_update_item")
         if success:
             self.logger.debug('Updated weekly sun info for item {}'
-                              ' caller : {} comment : {}'.format(item, caller, comment))
+                              ' caller: {} comment: {}'.format(item, caller, comment))
         else:
             self.logger.debug('Issues with updating weekly sun info'
-                              ' for item {} caller : {} comment : {}'.format(item, caller, comment))
-        success = False
+                              ' for item {} caller: {} comment: {}'.format(item, caller, comment))
         success = self._series_calculate(item, caller, comment)
-        if success:
+        if success is True:
             self.logger.debug('Updated seriesCalculated for item {}'
-                              ' caller : {} comment : {}'.format(item, caller, comment))
+                              ' caller: {} comment: {}'.format(item, caller, comment))
         else:
             self.logger.debug('Issues with updating seriesCalculated'
-                              ' for item {} caller : {} comment : {}'.format(item, caller, comment))
-        success = False
+                              ' for item {} caller: {} comment: {}, issue: {}'.format(item, caller, comment, success))
         success = self._update_sun(item, caller="_update_item")
-        if success:
+        if success is True:
             self.logger.debug('Updated sunset/rise calculations for item {}'
-                              ' caller : {} comment : {}'.format(item, caller, comment))
+                              ' caller: {} comment: {}'.format(item, caller, comment))
         else:
             self.logger.debug('Issues with updating sunset/rise calculations'
-                              ' for item {} caller : {} comment : {}'.format(item, caller, comment))
+                              ' for item {} caller: {} comment: {}, issue: {}'.format(item, caller, comment, success))
         item(self._items[item], caller, comment)
         self._webdata['items'][item.id()].update({'interpolation': self._items[item].get('interpolation')})
         self._webdata['items'][item.id()].update({'active': str(self._items[item].get('active'))})
@@ -562,13 +562,13 @@ class UZSU(SmartPlugin):
         This function schedules an item: First the item is removed from the scheduler.
         If the item is active then the list is searched for the nearest next execution time.
         No matter if active or not the calculation for the execution time is triggered.
-        :param item:    item to be updated towards the plugin
+        :param item:    item to be updated towards the plugin.
         :param caller:  if given it represents the callers name. If the caller is set
-                        to "dry_run" the evaluation of sun entries takes place but no scheduler will be set
+                        to "dry_run" the evaluation of sun entries takes place but no scheduler will be set.
         """
         if caller != "dry_run":
             self.scheduler_remove('{}'.format(item.property.path))
-            _caller = "scheduler"
+            _caller = "Scheduler:UZSU"
             self.logger.debug('Schedule Item {}, Trigger: {}, Changed by: {}'.format(
                 item, caller, item.changed_by()))
         else:
@@ -717,7 +717,7 @@ class UZSU(SmartPlugin):
                 self._webdata['items'][item.id()].update({'planned': {'value': _value, 'time': _next.strftime('%d.%m.%Y %H:%M')}})
                 self._update_count['done'] = self._update_count.get('done') + 1
                 self.scheduler_add('{}'.format(item.property.path), self._set,
-                                   value={'item': item, 'value': _value}, next=_next)
+                                   value={'item': item, 'value': _value, 'caller': 'Scheduler'}, next=_next)
                 if self._update_count.get('done') == self._update_count.get('todo'):
                     self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
                     self._update_count = {'done': 0, 'todo': 0}
@@ -736,7 +736,7 @@ class UZSU(SmartPlugin):
         _uzsuitem, _itemvalue = self._get_dependant(item)
         _uzsuitem(value, 'UZSU Plugin', 'set')
         self._webdata['items'][item.id()].update({'depend': {'item': _uzsuitem.id(), 'value': str(_itemvalue)}})
-        if not caller:
+        if not caller or caller == "Scheduler":
             self._schedule(item, caller='set')
 
     def _get_time(self, entry, timescan, item=None, entryindex=None, caller=None):
@@ -767,6 +767,7 @@ class UZSU(SmartPlugin):
             if 'time' not in entry:
                 return None, None
             value = entry['value']
+            next = None
             active = True if caller == "dry_run" else entry['active']
             today = datetime.today()
             tomorrow = today + timedelta(days=1)
@@ -793,7 +794,7 @@ class UZSU(SmartPlugin):
                             rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(
                                 weekbefore, self._sun(datetime.combine(weekbefore.date(),
                                                                        datetime.min.time()).replace(tzinfo=self._timezone),
-                                                                       time, timescan).time()))
+                                                      time, timescan).time()))
                             self.logger.debug("Looking for {} sun-related time. Found rrule: {}".format(
                                 timescan, str(rrule).replace('\n', ';')))
                         else:
@@ -809,7 +810,7 @@ class UZSU(SmartPlugin):
                         sleep(0.01)
                         next = self._sun(datetime.combine(dt.date(),
                                                           datetime.min.time()).replace(tzinfo=self._timezone),
-                                                          time, timescan)
+                                         time, timescan)
                         self.logger.debug("Result parsing time (rrule) {}: {}".format(time, next))
                         if entryindex is not None and timescan == 'next':
                             self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
@@ -855,12 +856,12 @@ class UZSU(SmartPlugin):
                 self.logger.debug("Looking for {} series-related time. Found rrule: {} with start-time . {}".format(
                     timescan, entry['rrule'].replace('\n', ';'), entry['series']['timeSeriesMin']))
 
-            cond_today = next.date() == today.date()
-            cond_yesterday = next.date() - timedelta(days=1) == yesterday.date()
-            cond_tomorrow = next.date() == tomorrow.date()
-            cond_next = next > datetime.now(self._timezone)
-            cond_previous_today = next - timedelta(seconds=1) < datetime.now(self._timezone)
-            cond_previous_yesterday = next - timedelta(days=1) < datetime.now(self._timezone)
+            cond_today = False if next is None else next.date() == today.date()
+            cond_yesterday = False if next is None else next.date() - timedelta(days=1) == yesterday.date()
+            cond_tomorrow = False if next is None else next.date() == tomorrow.date()
+            cond_next = False if next is None else next > datetime.now(self._timezone)
+            cond_previous_today = False if next is None else next - timedelta(seconds=1) < datetime.now(self._timezone)
+            cond_previous_yesterday = False if next is None else next - timedelta(days=1) < datetime.now(self._timezone)
             if next and cond_today and cond_next:
                 self._itpl[item][next.timestamp() * 1000.0] = value
                 self.logger.debug("Return next today: {}, value {}".format(next, value))
@@ -893,7 +894,8 @@ class UZSU(SmartPlugin):
         """
         self.logger.debug("Series Calculate method for item {} called by {}. Source: {}".format(item, caller, source))
         if not self._items[item].get('list'):
-            return
+            issue = "No list entry in UZSU dict for item {}".format(item)
+            return issue
         try:
             mydays = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
             for i, mydict in enumerate(self._items[item]['list']):
@@ -906,32 +908,36 @@ class UZSU(SmartPlugin):
                 try:
                     #####################
                     seriesbegin, seriesend, daycount, mydict = self._fix_empty_values(mydict)
-                    intervall = mydict['series'].get('timeSeriesIntervall', None)
+                    interval = mydict['series'].get('timeSeriesIntervall', None)
                     seriesstart = seriesbegin
+                    endtime = None
 
-                    if intervall is None or intervall == "":
-                        self.logger.warning("Could not calculate serie for item {}"
-                                            " - because intervall is None - {}".format(item, mydict))
-                        return
+                    if interval is None or interval == "":
+                        issue = "Could not calculate serie for item {}"\
+                                " - because interval is None - {}".format(item, mydict)
+                        self.logger.warning(issue)
+                        return issue
 
                     if (daycount == '' or daycount is None) and seriesend is None:
-                        self.logger.warning("Could not calculate series"
-                                            " because timeSeriesCount is NONE and TimeSeriesMax is NONE")
-                        return
+                        issue = "Could not calculate series because "\
+                                "timeSeriesCount is NONE and TimeSeriesMax is NONE"
+                        self.logger.warning(issue)
+                        return issue
 
-                    intervall = int(intervall.split(":")[0]) * 60 + int(mydict['series']['timeSeriesIntervall'].split(":")[1])
+                    interval = int(interval.split(":")[0]) * 60 + int(mydict['series']['timeSeriesIntervall'].split(":")[1])
 
-                    if intervall == 0:
-                        self.logger.warning("Could not calculate serie because intervall is ZERO - {}".format(mydict))
-                        return
+                    if interval == 0:
+                        issue = "Could not calculate serie because interval is ZERO - {}".format(mydict)
+                        self.logger.warning(issue)
+                        return issue
 
                     if daycount is not None and daycount != '':
-                        if int(daycount) * intervall >= 1440:
+                        if int(daycount) * interval >= 1440:
                             org_daycount = daycount
-                            daycount = int(1439 / intervall)
+                            daycount = int(1439 / interval)
                             self.logger.warning("Cut your SerieCount to {} -"
-                                                " because intervall {} x SerieCount {}"
-                                                " is more than 24h".format(daycount, intervall, org_daycount))
+                                                " because interval {} x SerieCount {}"
+                                                " is more than 24h".format(daycount, interval, org_daycount))
 
                     if 'sun' not in mydict['series']['timeSeriesMin']:
                         starttime = datetime.strptime(mydict['series']['timeSeriesMin'], "%H:%M")
@@ -944,7 +950,7 @@ class UZSU(SmartPlugin):
                     # calculate End of Serie by Count
                     if seriesend is None:
                         endtime = starttime
-                        endtime += timedelta(minutes=intervall * int(daycount))
+                        endtime += timedelta(minutes=interval * int(daycount))
 
                     if seriesend is not None and 'sun' in seriesend:
                         mytime = self._sun(datetime.now().replace(hour=0, minute=0, second=0).astimezone(self._timezone),
@@ -954,7 +960,7 @@ class UZSU(SmartPlugin):
                     elif seriesend is not None and 'sun' not in seriesend:
                         endtime = datetime.strptime(seriesend, "%H:%M")
 
-                    if seriesend is None:
+                    if seriesend is None and endtime:
                         seriesend = str(endtime.time())[:5]
 
                     if endtime <= starttime:
@@ -964,13 +970,13 @@ class UZSU(SmartPlugin):
                     original_daycount = daycount
 
                     if daycount is None:
-                        daycount = int(timediff.total_seconds() / 60 / intervall)
+                        daycount = int(timediff.total_seconds() / 60 / interval)
                     else:
-                        new_daycount = int(timediff.total_seconds() / 60 / intervall)
+                        new_daycount = int(timediff.total_seconds() / 60 / interval)
                         if int(daycount) > new_daycount:
-                            self.logger.warning("Cut your SerieCount to {} - because intervall {}"
+                            self.logger.warning("Cut your SerieCount to {} - because interval {}"
                                                 " x SerieCount {} is not possible between {} and {}".format(
-                                                    new_daycount, intervall, daycount, starttime, endtime))
+                                                    new_daycount, interval, daycount, starttime, endtime))
                             daycount = new_daycount
 
                     #####################
@@ -981,13 +987,13 @@ class UZSU(SmartPlugin):
                                                                            str(starttime.minute)).time()))
                     mynewlist = []
 
-                    intervall = int(mydict['series']['timeSeriesIntervall'].split(":")[0])*60 + \
+                    interval = int(mydict['series']['timeSeriesIntervall'].split(":")[0])*60 + \
                                 int(mydict['series']['timeSeriesIntervall'].split(":")[1])
                     exceptions = 0
                     for day in list(rrule):
                         if not mydays[day.weekday()] in mydict['rrule']:
                             continue
-                        myrulenext = "FREQ=MINUTELY;COUNT={};INTERVAL={}".format(daycount, intervall)
+                        myrulenext = "FREQ=MINUTELY;COUNT={};INTERVAL={}".format(daycount, interval)
 
                         if 'sun' not in mydict['series']['timeSeriesMin']:
                             starttime = datetime.strptime(mydict['series']['timeSeriesMin'], "%H:%M")
@@ -1029,13 +1035,14 @@ class UZSU(SmartPlugin):
                                     mytpl = {'seriesMin': str(seriestarttime.time())[:5]}
                                     if original_daycount is not None:
                                         mytpl['seriesMax'] = str((seriestarttime +
-                                                                  timedelta(minutes=intervall * count)).time())[:5]
+                                                                  timedelta(minutes=interval * count)).time())[:5]
                                     else:
                                         mytpl['seriesMax'] = "{:02d}".format(endtime.hour) + ":" + \
                                                              "{:02d}".format(endtime.minute)
                                     mytpl['seriesDay'] = actday
                                     mytpl['maxCountCalculated'] = count if exceptions == 0 else 0
-                                    self.logger.debug("Mytpl: {}, count {}, daycount {}, interval {}".format(mytpl, count, daycount, intervall))
+                                    self.logger.debug("Mytpl: {}, count {}, "
+                                                      "daycount {}, interval {}".format(mytpl, count, daycount, interval))
                                     mynewlist.append(mytpl)
                                 count = 0
                                 seriestarttime = None
@@ -1051,14 +1058,14 @@ class UZSU(SmartPlugin):
                         if seriestarttime is not None:
                             mytpl = {'seriesMin': str(seriestarttime.time())[:5]}
                             if original_daycount is not None:
-                                mytpl['seriesMax'] = str((seriestarttime + timedelta(minutes=intervall * count)).time())[:5]
+                                mytpl['seriesMax'] = str((seriestarttime + timedelta(minutes=interval * count)).time())[:5]
                             else:
                                 mytpl['seriesMax'] = "{:02d}".format(endtime.hour) + ":" + "{:02d}".format(endtime.minute)
                             mytpl['maxCountCalculated'] = count if exceptions == 0 else 0
                             mytpl['seriesDay'] = actday
                             self.logger.debug("Mytpl for last time of day: {},"
                                               " count {} daycount {},"
-                                              " interval {}".format(mytpl, count, original_daycount, intervall))
+                                              " interval {}".format(mytpl, count, original_daycount, interval))
                             mynewlist.append(mytpl)
 
                     if mynewlist:
@@ -1125,15 +1132,15 @@ class UZSU(SmartPlugin):
 
         returnvalue = None
         seriesbegin, seriesend, daycount, mydict = self._fix_empty_values(mydict)
-        intervall = mydict['series'].get('timeSeriesIntervall', None)
+        interval = mydict['series'].get('timeSeriesIntervall', None)
         seriesstart = seriesbegin
 
-        if intervall is not None and intervall != "":
-            intervall = int(intervall.split(":")[0])*60 + int(mydict['series']['timeSeriesIntervall'].split(":")[1])
+        if interval is not None and interval != "":
+            interval = int(interval.split(":")[0])*60 + int(mydict['series']['timeSeriesIntervall'].split(":")[1])
         else:
             return returnvalue
-        if intervall == 0:
-            self.logger.warning("Could not calculate serie because intervall is ZERO - {}".format(mydict))
+        if interval == 0:
+            self.logger.warning("Could not calculate serie because interval is ZERO - {}".format(mydict))
             return returnvalue
 
         if 'sun' not in mydict['series']['timeSeriesMin']:
@@ -1155,30 +1162,29 @@ class UZSU(SmartPlugin):
             if endtime < starttime:
                 endtime += timedelta(days=1)
             timediff = endtime - starttime
-            daycount = int(timediff.total_seconds() / 60 / intervall)
+            daycount = int(timediff.total_seconds() / 60 / interval)
         else:
             if seriesend is None:
                 endtime = starttime
-                endtime += timedelta(minutes=intervall * int(daycount))
+                endtime += timedelta(minutes=interval * int(daycount))
                 timediff = endtime - starttime
-                daycount = int(timediff.total_seconds() / 60 / intervall)
+                daycount = int(timediff.total_seconds() / 60 / interval)
             else:
                 endtime = datetime.strptime(seriesend, "%H:%M")
                 timediff = endtime - starttime
 
         if daycount is not None and daycount != '':
-            if seriesend is None and (int(daycount) * intervall >= 1440):
+            if seriesend is None and (int(daycount) * interval >= 1440):
                 org_count = daycount
-                count = int(1439 / intervall)
-                self.logger.warning("Cut your SerieCount to {} - because intervall {}"
-                                    " x SerieCount {} is more than 24h".format(count, intervall, org_count))
+                count = int(1439 / interval)
+                self.logger.warning("Cut your SerieCount to {} - because interval {}"
+                                    " x SerieCount {} is more than 24h".format(count, interval, org_count))
             else:
-                new_daycount = int(timediff.total_seconds() / 60 / intervall)
-                #self.logger.debug("new daycount: {}, seriesend {}".format(new_daycount, seriesend))
+                new_daycount = int(timediff.total_seconds() / 60 / interval)
                 if int(daycount) > new_daycount:
-                    self.logger.warning("Cut your SerieCount to {} - because intervall {}"
+                    self.logger.warning("Cut your SerieCount to {} - because interval {}"
                                         " x SerieCount {} is not possible between {} and {}".format(
-                                            new_daycount, intervall, daycount, datetime.strftime(starttime, "%H:%M"),
+                                            new_daycount, interval, daycount, datetime.strftime(starttime, "%H:%M"),
                                             datetime.strftime(endtime, "%H:%M")))
                     daycount = new_daycount
         mylist = OrderedDict()
@@ -1191,7 +1197,7 @@ class UZSU(SmartPlugin):
             timestamp = day
             mylist[timestamp] = 'x'
             while mycount < daycount:
-                timestamp = timestamp + timedelta(minutes=intervall)
+                timestamp = timestamp + timedelta(minutes=interval)
                 mylist[timestamp] = 'x'
                 mycount += 1
 

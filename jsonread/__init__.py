@@ -30,11 +30,11 @@ from requests_file import FileAdapter
 import pyjq
 from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
-
 from .webif import WebInterface
 
+
 class JSONREAD(SmartPlugin):
-    PLUGIN_VERSION = "1.0.2"
+    PLUGIN_VERSION = "1.0.3"
 
     def __init__(self, sh):
         """

@@ -165,7 +165,7 @@ SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
 
 class EnOcean(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.11"
+    PLUGIN_VERSION = "1.4.0"
 
     
     def __init__(self, sh):
@@ -187,13 +187,7 @@ class EnOcean(SmartPlugin):
             self.tx_id = int(tx_id, 16)
             self.logger.info(f"Stick TX ID configured via plugin.conf to: {tx_id}")
         self._log_unknown_msg = self.get_parameter_value("log_unknown_messages")
-        try:
-            self._tcm = serial.serial_for_url(self.port, 57600, timeout=1.5)
-        except Exception as e:
-            self._tcm = None
-            self._init_complete = False
-            self.logger.error(f"Exception occurred during serial open: {e}")
-            return
+        self._tcm = None
         self._cmd_lock = threading.Lock()
         self._response_lock = threading.Condition()
         self._rx_items = {}
@@ -447,7 +441,18 @@ class EnOcean(SmartPlugin):
             self.logger.debug("Call function << run >>")
         self.alive = True
         self.UTE_listen = False
-        #self.learn_id = 0
+        
+        # open serial or serial2TCP device:
+        try:
+            self._tcm = serial.serial_for_url(self.port, 57600, timeout=1.5)
+        except Exception as e:
+            self._tcm = None
+            self._init_complete = False
+            self.logger.error(f"Exception occurred during serial open: {e}")
+            return
+        else:
+            self.logger.info(f"Serial port successfully opened at port {self.port}")
+
         t = threading.Thread(target=self._startup, name="enocean-startup")
         # if you need to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
@@ -508,6 +513,8 @@ class EnOcean(SmartPlugin):
             self._tcm.close()
         except Exception as e:
             self.logger.error(f"Exception during tcm close occured: {e}")
+        else:
+            self.logger.info(f"Enocean serial device closed")
         self.logger.info("Run method stopped")
 
     def stop(self):

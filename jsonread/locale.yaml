@@ -1,10 +1,8 @@
 # translations for the web interface
 plugin_translations:
-    # Translations for the plugin specially for the web interface
-    'Wert 2':         {'de': '=', 'en': 'Value 2'}
-    'Wert 4':         {'de': '=', 'en': 'Value 4'}
-
-    # Alternative format for translations of longer texts:
-    'Hier kommt der Inhalt des Webinterfaces hin.':
-        de: '='
-        en: 'Here goes the content of the web interface.'
+    'Item':                                       {'de': '=', 'en': '='}
+    'jsonread_filter':                            {'de': '=', 'en': '='}
+    'Wert':                                       {'de': '=', 'en': 'Value'}
+    'Letzte Auslesung':                           {'de': '=', 'en': 'Last Reading'}
+    'Items definiert':                            {'de': '=', 'en': 'Items defined'}
+    'Letzte Auslesung einfache jq Abfragesyntax': {'de': '=', 'en': 'Last Reading simple jq query syntax'}

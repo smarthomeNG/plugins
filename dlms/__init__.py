@@ -56,8 +56,6 @@ from . import conversion
 
 
 class DLMS(SmartPlugin, conversion.Conversion):
-    PLUGIN_VERSION = "1.9.4"
-
     """
     This class provides a Plugin for SmarthomeNG to reads out a smartmeter.
     The smartmeter needs to have an infrared interface and an IR-Adapter is needed for USB
@@ -67,6 +65,8 @@ class DLMS(SmartPlugin, conversion.Conversion):
     The tag 'dlms_obis_code' identifies the items which are to be updated from the plugin,
     the tag ``dlms_obis_readout`` will receive the last readout from smartmeter
     """
+
+    PLUGIN_VERSION = "1.9.5"
 
     # tags this plugin handles
     DLMS_OBIS_CODE = 'dlms_obis_code'       # a single code in form of '1-1:1.8.1'
@@ -78,7 +78,7 @@ class DLMS(SmartPlugin, conversion.Conversion):
     def __init__(self, sh, *args, **kwargs ):
         """
         Initializes the DLMS plugin
-        The parameter are retrieved from get_parameter_value(parameter_name)
+        The parameters are retrieved from get_parameter_value(parameter_name)
         """
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -91,6 +91,9 @@ class DLMS(SmartPlugin, conversion.Conversion):
         if not REQUIRED_PACKAGE_IMPORTED:
             self.logger.error(f"{self.get_fullname()}: Unable to import Python package 'pyserial'")
             return
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
 
         self._instance = self.get_parameter_value('instance')               # the instance of the plugin for questioning multiple smartmeter
         self._update_cycle  = self.get_parameter_value('update_cycle')      # the frequency in seconds how often the device should be accessed
@@ -145,7 +148,7 @@ class DLMS(SmartPlugin, conversion.Conversion):
         self.alive = True
         if self._update_cycle or self._update_crontab:
             self.scheduler_add(self.get_shortname(), self._update_values_callback, prio=5, cycle=self._update_cycle, cron=self._update_crontab, next=shtime.now())
-        self.logger.debug("run dlms")
+        self.logger.debug(f"Plugin '{self.get_fullname()}': run method finished")
 
     def stop(self):
         """

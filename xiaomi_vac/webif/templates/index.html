@@ -25,19 +25,8 @@ reload_table();
 <script>
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
-    /* get pagelength from http module or plugin. */
-    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-    if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-      resize = true;
-      webif_pagelength = -1;
-    }
-    else {
-      resize = false;
-    }
 		try {
-      table = $('#maintable').DataTable( {
-        pageLength: webif_pagelength,
-        pageResize: resize});
+      table = $('#maintable').DataTable( {});
 		}
 		catch (e) {
 			console.log("Datatable JS not loaded, showing standard table without reorder option " +e);

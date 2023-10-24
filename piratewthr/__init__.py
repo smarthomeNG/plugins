@@ -37,7 +37,7 @@ from .webif import WebInterface
 class PirateWeather(SmartPlugin):
 
 
-    PLUGIN_VERSION = "1.2.3"
+    PLUGIN_VERSION = "1.2.5"
 
     # https://api.pirateweather.net/forecast/[apikey]/[latitude],[longitude]
     _base_url = 'https://api.pirateweather.net/forecast/'
@@ -203,10 +203,11 @@ class PirateWeather(SmartPlugin):
         """
         Requests the forecast information at pirateweather.net
         """
-        self.logger.info(f"get_forecast: url={self._build_url()}")
+        url_to_send = self._build_url()
+        self.logger.info(f"get_forecast: url={url_to_send}")
         json_obj = None
         try:
-            response = self._session.get(self._build_url())
+            response = self._session.get(url_to_send)
         except Exception as e:
             self.logger.warning(f"get_forecast: Exception when sending GET request: {e}")
             return
@@ -221,9 +222,16 @@ class PirateWeather(SmartPlugin):
             self.logger.warning(f"api.pirateweather.net: {self.get_http_response(response.status_code)} - Ignoring response.")
             return
 
-        if json_obj['currently']['temperature'] > 45:
-            # Log data, if receiving data in imperial units
-            self.logger.notice(f"Data in imperial units?: {json_obj}")
+        if json_obj['flags']['units'].lower() != self._units.lower():
+            # Log data, if receiving data in other format than the requested units
+            self.logger.notice(f"get_forecast: url sent={url_to_send}")
+            self.logger.notice(f"get_forecast: Ignoring data in other units than requested: {json_obj}")
+            return
+
+        # if json_obj['currently']['temperature'] > 45:
+        #     # Log data, if receiving data in imperial units
+        #     self.logger.notice(f"get_forecast: url sent={url_to_send}")
+        #     self.logger.notice(f"get_forecast: Data in imperial units?: {json_obj}")
 
         daily_data = OrderedDict()
         if not json_obj.get('daily', False):

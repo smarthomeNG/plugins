@@ -389,14 +389,15 @@ Unteritem ``tts_fade_in``:
 Wird ein untergeordnetes Item vom Typ Boolean mit Attribut ``sonos_attrib: tts_fade_in`` definiert, wird die Lautstärke
 nach dem Abspielen der Nachricht von 0 auf das gewünschte Level schrittweise angehoben und eingeblendet. 
 
-play_tunein / play_sonos_radio
+play_sonos_radio / play_tunein
 ------------------------------
 ``write``
 
 Spielt einen Radiosender anhand eines Namens. Das Item ist vom Typ String. Sonos sucht dazu in einer Datenbank
 nach potentiellen Radiostationen, die dem Namen entsprechen.
 Wird mehr als ein zum Suchbegriff passender Radiosender gefunden, wird der erste Treffer verwendet. 
-Der Befehl ist ein Gruppenbefehl und wird für alle Speaker einer Gruppe angewendet.
+Der Befehl ist ein Gruppenbefehl und wird für alle Speaker einer Gruppe angewendet. Empfohlen wird die Nutzung der Funktion play_sonos_radio.
+Die alte Funktion play_tunein existiert noch, sollte aber nicht mehr verwendet werden. 
 
 Unteritem ``start_after``:
 Wird ein untergeordnetes Item vom Typ Boolean mit Attribut ``sonos_attrib: start_after`` definiert, wird das 

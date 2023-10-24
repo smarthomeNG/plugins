@@ -20,6 +20,7 @@
 #########################################################################
 
 import logging
+import threading
 import subprocess # we scrape apcaccess output
 from lib.model.smartplugin import SmartPlugin
 
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 ITEM_TAG = ['apcups']
 class APCUPS(SmartPlugin):
 
-    PLUGIN_VERSION = "1.3.3"
+    PLUGIN_VERSION = "1.4.0"
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)
@@ -42,49 +43,63 @@ class APCUPS(SmartPlugin):
         self._port = self.get_parameter_value('port')
         self._cycle = self.get_parameter_value('cycle')
         self._items = {}
+        self._lock = threading.Lock()
+        # the command goes here
+        self._command = f"/sbin/apcaccess status {self._host}:{ self._port}"
+        self._last_readout = ""
 
     def run(self):
         self.alive = True
-        self.scheduler_add('APCups', self.update_status, cycle=self._cycle)
+        self.scheduler_add(self.get_shortname(), self.update_status, cycle=self._cycle)
 
     def stop(self):
         self.alive = False
+        self.scheduler_remove(self.get_shortname())
+
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, ITEM_TAG[0]):
             apcups_key = (self.get_iattr_value(item.conf, ITEM_TAG[0])).lower()
             self._items[apcups_key]=item
-            self.logger.debug("item {0} added with apcupd_key {1}".format(item,apcups_key))
-            return self.update_item
-        else:
-            return None
+            self.logger.debug(f"item {item} added with apcupd_key {apcups_key}")
+        # no callback for any item needed as this plugin is readonly
+        return None
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != 'plugin':
-            self.logger.debug("update item: {0}".format(item.id()))
+        pass
 
     def update_status(self):
         """
         Start **apcaccess** on a shell, capture the output and parse it.
         The items attribut parameter will be matched against the shell output
         """
-        command = '/sbin/apcaccess status {0}:{1}'.format(self._host, self._port)   # the command goes here
-        output = subprocess.check_output(command.split(), shell=False)
-        # decode byte string to string
-        output = output.decode()
-        for line in output.split('\n'):
-            (key,spl,val) = line.partition(': ')
-            key = key.rstrip().lower()
-            val = val.strip()
+        
+        if not self._lock.acquire(timeout=1):
+            return
+        try:
+            self._command = f"/sbin/apcaccess status {self._host}:{self._port}"   # the command goes here
+            output = subprocess.check_output(self._command.split(), shell=False)
+            # decode byte string to string
+            output = output.decode()
+            # save for webinterface
+            self._last_readout = output
+            for line in output.split('\n'):
+                (key,spl,val) = line.partition(': ')
+                key = key.rstrip().lower()
+                val = val.strip()
 
-            if key in self._items:
-                 self.logger.debug("update item {0} with {1}".format(self._items[key],val))
-                 item = self._items[key]
-                 self.logger.debug("Item type {0}".format(item.type()))
-                 if item.type() == 'str':
-                     item (val, 'apcups')
-                 else:
-                     val = val.split(' ', 1)[0]  # ignore anything after 1st space
-                     item (float(val), 'apcups')
-        return
+                if key in self._items:
+                     self.logger.debug(f"update item {self._items[key]} with {val}")
+                     item = self._items[key]
+                     self.logger.debug(f"Item type {item.type()}")
+                     if item.type() == 'str':
+                         item (val, self.get_shortname())
+                     else:
+                         val = val.split(' ', 1)[0]  # ignore anything after 1st space
+                         item (float(val), self.get_shortname())
+            return
+        except Exception as e:
+            self.logger.error(f"Problem {e} reading output from call to {self._command}")
+        finally:
+            self._lock.release()
 

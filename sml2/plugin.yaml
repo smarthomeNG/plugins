@@ -12,7 +12,7 @@ plugin:
     documentation: https://www.smarthomeng.de/developer/plugins/smlx/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/39119-sml-plugin-datenblock-größenfehler
     restartable: True
-    version: 2.0.0                 # Plugin version
+    version: 2.0.1                 # Plugin version
     sh_minversion: 1.4.2           # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance

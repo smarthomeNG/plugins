@@ -20,22 +20,9 @@
 <script>
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
-      /* get pagelength from http module or plugin. */
-	    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-        resize = true;
-        webif_pagelength = -1;
-      }
-      else {
-        resize = false;
-      }
-	  console.log("Webif page length " + webif_pagelength + ", pageResize: " + resize);
-
 		try {
       table = $('#maintable').DataTable( {
-        columnDefs: [{ "targets": [8], "className": "none"}].concat($.fn.dataTable.defaults.columnDefs),
-        pageLength: webif_pagelength,
-        pageResize: resize});
+        columnDefs: [{ "targets": [8], "className": "none"}].concat($.fn.dataTable.defaults.columnDefs)});
 		}
 		catch (e) {
 			console.log("Datatable JS not loaded, showing standard table without reorder option " +e);

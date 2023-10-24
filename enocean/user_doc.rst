@@ -38,11 +38,11 @@ Hierzu folgendes in der Linux Konsole ausführen:
 
     sudo gpasswd --add smarthome dialout
 
-Aktoren, Schalter oder Stellglieder, die vom Enocean plugin gesteuert werden sollen, müssen vorher einmalig angelert werden. Der Anlernvorgang wird unten im Kaptiel Webinterface beschrieben.
-Für das Auslesen von Statusinfromationen von Enocean Sensoren ist kein Anlernvorgang nötig.
+Aktoren, Schalter oder Stellglieder, die vom Enocean plugin gesteuert werden sollen, müssen vorher einmalig angelert werden. Der Anlernvorgang wird unten im Kapitel Webinterface beschrieben.
+Für das Auslesen von Statusinformationen von Enocean Sensoren ist kein Anlernvorgang nötig.
 
 Verwendung via IP
--------------
+-----------------
 
 Alternativ kann eines der oben erwähnten Serial-Geräte auch über das Netzwerk freigegeben werden und per RFC2217 eingebunden werden. Die Freigabe erfolgt auf dem Host mithilfe von `ser2net <https://linux.die.net/man/8/ser2net>`. Eine beispielhafte Konfiguration (ser2net.yaml) könnte so aussehen:
 
@@ -66,15 +66,13 @@ plugin.yaml
 
 **serialport**
 
-Hier wird der `serialport` zum Enocean Hardwareadapter angegeben werden.
+Hier wird der `serialport` zum Enocean Hardwareadapter angegeben.
 Unter Linux wird empfohlen, das entsprechende Linux Uart device über eine Udev-Regel auf einen Link zu mappen und diesen Link dann als `serialport` anzugeben.
-
-Soll ein Gerät über das Netzwerk angebunden werden, wird hier anstatt des Unix-Handles eine URL in folgender Form angegeben: ``rfc2217://<HOST>:<PORT>``.
 
 **tx_id**
 
 Die tx_id ist die Transmitter ID der Enocean Hardware und als achtstelliger Hexadezimalwert definiert. Die Angabe ist erstmal optional und muss nur zwingend angegeben werden,
-falls Enocean Aktoren geschaltet werden sollen, d.h. der Hardware Kontroller auch Senebefehle absetzen muss.
+falls Enocean Aktoren geschaltet werden sollen, d.h. das Plugin auch Sendebefehle absetzen soll.
  
 Werden mehrere Aktuatoren betrieben, sollte die Base-ID (**not Unique-ID or Chip-ID**) der Enocean Hardware als Transmitter ID angegeben werden. 
 Weitere Information zum Unterschied zwischen Base-ID und Chip-ID finden sich unter:
@@ -109,53 +107,27 @@ Zu b)
 
 1. Konfiguriere das Enocean plugin in der plugin.yaml mit leerer tx_id (oder tx_id = 0).
 
-2. Konfiguriere das Loglevel INFO in logger.yaml für das Enocean Plugin. Alternativ über das Admin Interface unter Logger
+2. Konfiguriere das Loglevel INFO in logger.yaml für das Enocean Plugin. Alternativ über das Admin Interface unter Logs -> Liste der Ligger -> Plugin Logger
 
 3. Starte SmarthomeNG neu.
 
 4. Nach dem Neustart das Logfile öffnen und nach dem Eintrag ``enocean: Base ID = 0xYYYYZZZZ`` suchen.
 
-6. Übernahme dieser im Log angezeigten Base-ID in die plugin.yaml als Parameter `tx_id`.
+5. Übernahme dieser im Log angezeigten Base-ID in die plugin.yaml als Parameter `tx_id`.
 
 
 item.yaml
 ---------
 
-#### enocean_rx_id, enocean_rx_eep and enocean_tx_id_offset
 Ein EnOcean Item (Sensor oder Aktor) muss mindestens ein ``enocean_rx_id`` und ein ``enocean_rx_eep`` Attribut definieren.
-Der Attribut ``enocean_rx_id'' gibt dabei die eindeutige ID (EnOcean Identification Number) als hexadezimaler String an. Dieser ist auf dem Gerät vermerkt.
-Alternativ kann über das Webinterface unbekannte IDs von sendeden Enocean Geräten in der Nähe angezeigt werden.
+Das Attribut ``enocean_rx_id`` gibt dabei die eindeutige ID (EnOcean Identification Number) als hexadezimaler String an. Sie ist häufig als Aufkleber auf dem EnOcen Gerät vermerkt.
+Falls nicht, können über das Webinterface bisher unbekannte IDs von sendenden Enocean Geräten in der Nähe angezeigt werden.
 
 Die Enocean EEP gibt das EnOcean Equipment Profile an. Das Datenblatt des Enocean Geräts verrät, welche EEPs unterstützt werden.
-In einer Nachricht einer bestimmten Nachricht können sich verschiedene Signale wie z.B. Batteriestatus, Schaltstatus (an/aus) etc. befinden. Um diese Signale den einzelnen smarthomeNG
-Items zuzuordnen, werden abgekürzte `Keys` verwendet und als Attribut ``enocean_rx_key angegeben. 
+In einer bestimmten Nachricht können sich verschiedene Signale wie z.B. Batteriestatus, Schaltstatus (an/aus) etc. befinden. Um diese Signale den einzelnen smarthomeNG
+Items zuzuordnen, werden für empfangende Items zusätzlich zu den EEPs noch abgekürzte `Keys` verwendet und als Attribut ``enocean_rx_key`` angegeben. Die EEP definiert also den
+von Enocean definierten Nachrichtentyp auf den das Item hören soll. Der zusätzlich nötige Key dann das genaue Signal, da eine EEP mehrere Signale enthält.
 
-Im Beispiel sind die verschiedenen `Keys` ersichtlich. Folgende `Keys` werden vom Plugin unterstützt:
-
- **Schalter mit zwei Tastern**, (EEP F6_02_01 oder F6_02_02)
-
-  AI = left rocker down
-  A0 = left rocker up
-  BI = right rocker down
-  B0 = right rocker up
-
-
- **Schalter mit zwei Tastern), (EEP F6_02_03)
-
-  AI = left rocker down
-  A0 = left rocker up
-  BI = right rocker down
-  B0 = right rocker up
-  A = last state of left rocker
-  B = last state of right rocker
-
-
- **Fenstergriff**, (EEP F6_10_0)
-
-  STATUS = handle_status
-
-
- 
 Sendende Items, z.B. um Schaltaktoren zu schalten, benötigen weiterhin eine Transmitting ID. Diese wird im Attribut ``enocean_tx_id_offset`` definiert.
 
 
@@ -194,6 +166,49 @@ Die folgenden Status EEPs werden vom Plugin aktuell unterstützt:
 
 Eine vollständige Liste aller EEPs mit detallierten Informationen findet sich unter [EnOcean Alliance](http://www.enocean-alliance.org/eep/)
 
+Keys (nur für empfangende Items)
+--------------------------------
+
+=============== ==================== ========= ======================================
+Key                EEP                Itemtyp        Bedeutung
+=============== ==================== ========= ======================================
+AI               F6_02_01, F6_02_02    bool        linker Taster runter
+A0               F6_02_01, F6_02_02    bool        linker Taster rauf
+BI               F6_02_01, F6_02_02    bool        rechter Taster runter
+B0               F6_02_01, F6_02_02    bool        rechter Taster rauf
+
+AI               F6_02_03              bool        linker Taster runter
+A0               F6_02_03              bool        linker Taster rauf
+BI               F6_02_03              bool        rechter Taster runter
+B0               F6_02_03              bool        rechter Taster rauf
+A                F6_02_03              bool        letzter Status des linken Tasters
+B                F6_02_03              bool        letzter Status des linken Tasters
+
+STATUS           F6_10_0, D5_00_01     num         Fenstergriff- Türstatus
+                 F6_0G_03              
+
+TMP              A5_02_05              num         Außentemperatur
+BRI              A5_06_01, A5_08_01    num         Helligkeit
+MOV              A5_06_01, A5_08_01    bool        Bewegung
+        
+STAT             A5_11_04, D2_01_07    bool        Schaltstatus
+
+ILL              A5_07_03              num         Lux
+PIR              A5_07_03              bool        Bewegung
+SVC              A5_07_03              bool        Spannung
+
+TMP              A5_04_02              num         Temperatur
+HUM              A5_04_02              num         Luftfeuchtigkeit
+ENG              A5_04_02              num         Powerstatus
+
+DI_0             A5_3F_7F              num         RGB Dimmewert rot
+DI_1             A5_3F_7F              num         RGB Dimmewert grün
+DI_2             A5_3F_7F              num         RGB Dimmewert blau
+DI_3             A5_3F_7F              num         RGB Dimmewert weiß
+
+ALARM            A5_30_03              bool        Wasseralarm
+TEMP             A5_30_03              num         Temperatur
+=============== ==================== ========= ======================================
 
 Steuer EEPs
 -----------
@@ -224,28 +239,26 @@ Außerdem kann das Webinterface direkt über http://smarthome.local:8383/enocean
 
 Das Webinterface zeigt oben rechts allgemeine Informationen, wie 
 
- * die BaseID der verwendeten Hardware
- * ob der Sendemodus aktiviert ist
- * ob empfangene Enocean Nachrichten von unbekannten (nicht konfigurierten) Geräten in die Konsole geloggt werden sollen
- * ob der UTE Anlernmodus aktiviert ist.
+* die BaseID der verwendeten Hardware
+* ob der Sendemodus aktiviert ist
+* ob empfangene Enocean Nachrichten von unbekannten (nicht konfigurierten) Geräten in die Konsole geloggt werden sollen
+* ob der UTE Anlernmodus aktiviert ist.
 
 Weiterhin können über Schaltflächen
 
- * der Sendemodus aktiviert und deaktiviert werden
- * der UTE Anlernmodus aktiviert und deaktiviert werden
- * das Logging von empfangenen Nachrichten unbekannten Enocean Geräte aktiviert und deaktiviert werden.
+* der Sendemodus aktiviert und deaktiviert werden
+* der UTE Anlernmodus aktiviert und deaktiviert werden
+* das Logging von empfangenen Nachrichten unbekannten Enocean Geräte aktiviert und deaktiviert werden.
 
 Unter dem TAB `Übersicht` werden alle konfigurierten Enocean items angezeigt.
 
 Unter dem TAB 'Neu anlerenen' können neue Enocean Aktuatoren angelernt werden. Hierzu wird 
 
-  a) Der entsprechende Aktor/Stellglied in den Anlernmodus gebracht (siehe jeweilige Bedienungsanleitung)
-  b) Eine Transmit ID ausgewählt (TX ID). Enocean unterstützt bis zu 127 verschiedene IDs.
-  c) Als Hinweis bzw. Vorschlag wird die erste freie ID auf der linken Seite angezeigt.
-  c) Der Aktortyp ausgwählt. Im Plugin wird anhand des Typs das Lerntelegram ausgewählt. 
-  d) Auf die Schaltfläche ``Anlernen`` klicken. Das Anlerntelegram wird gesendet und der Aktor sollte den Anlernvorgang quittieren (siehe jeweilige Bedienungsanleitung).
-
-
+a) Der entsprechende Aktor/Stellglied in den Anlernmodus gebracht (siehe jeweilige Bedienungsanleitung)
+b) Eine Transmit ID ausgewählt (TX ID). Enocean unterstützt bis zu 127 verschiedene IDs.
+c) Als Hinweis bzw. Vorschlag wird die erste freie ID auf der linken Seite angezeigt.
+d) Der Aktortyp ausgewählt. Im Plugin wird anhand des Typs das Lerntelegram ausgewählt. 
+e) Auf die Schaltfläche ``Anlernen`` klicken. Das Anlerntelegram wird gesendet und der Aktor sollte den Anlernvorgang quittieren (siehe jeweilige Bedienungsanleitung).
 
 
 Beispiele

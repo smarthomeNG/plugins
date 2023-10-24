@@ -539,6 +539,24 @@ item_attributes:
                 is used.
                 '
 
+    se_stateorder:
+        type: foo
+        valid_min: 1
+        description:
+            de: 'Position des Zustands bezüglich der Evaluierungsabfolge'
+            en: 'Position of the state regarding the evaluation order'
+        description_long:
+            de: 'Durch diesen Wert wird bestimmt, an welcher Position der Status eingeordnet wird.
+                 Normalerweise ist die Sortierung abhängig von der Angabe der Stati innerhalb des
+                 rules Items. Durch diesen Wert kann die Sortierung zur Laufzeit abgeändert werden.
+                 Der Wert kann als Zahl, item oder eval deklariert werden.
+                 '
+            en: 'This value determines the position at which the status is sorted.
+                 Normally, the sorting depends on the specification of the statuses within the
+                 rules item. This value can be used to change the sorting at runtime.
+                 The value can be declared as an int number, item or eval expression.
+                '
+
     se_item_suspend_end:
         type: str
         description:
@@ -735,7 +753,6 @@ item_structs:
         rules:
             se_item_lock: ..lock
             eval_trigger:
-                - merge_unique*
                 - ..lock
 
             lock:
@@ -805,8 +822,8 @@ item_structs:
             remark: Adapt the se_manual_exclude the way you need it
             #se_manual_include: KNX:* Force manual mode based on source
             se_manual_exclude:
-              - database:*
-              - init:*
+              - database:.*
+              - init:.*
 
         retrigger:
             remark: Item to retrigger the rule set evaluation
@@ -871,7 +888,6 @@ item_structs:
             se_suspend_time: item:..settings.suspendduration.seconds
 
             eval_trigger:
-                - merge_unique*
                 - ..manuell
 
             suspend:
@@ -1002,8 +1018,8 @@ item_structs:
             remark: Adapt the se_manual_exclude the way you need it
             #se_manual_include: KNX:* Force manual mode based on source
             se_manual_exclude:
-              - database:*
-              - init:*
+              - database:.*
+              - init:.*
 
         retrigger:
             remark: Item to retrigger the rule set evaluation
@@ -1116,14 +1132,14 @@ item_structs:
                     type: str
                     visu_acl: rw
                     cache: True
-                    initial_value: ''
+                    initial_value: 'struct:stateengine.state_standard.rules.standard'
 
                 additionaluse2:
                     remark: set this value to a struct or (relative) state that should be added to the condition sets if suspendvariant is 2
                     type: str
                     visu_acl: rw
                     cache: True
-                    initial_value: ''
+                    initial_value: 'struct:stateengine.state_standard.rules.standard'
 
             suspendduration:
                 remark: duration of suspend mode in minutes (gets converted automatically)
@@ -1175,7 +1191,6 @@ item_structs:
             se_suspend_time: eval:se_eval.get_relative_itemvalue('..settings.suspendvariant.suspendduration{}.seconds'.format(max(0, min(se_eval.get_relative_itemvalue('..settings.suspendvariant'), 2))))
 
             eval_trigger:
-                - merge_unique*
                 - ..manuell
 
             suspend:
@@ -1519,10 +1534,9 @@ item_attribute_prefixes:
             en: 'Definition wether an action should be repeated or not when reentering the same state (deprecated - use se_action instead)'
 
     se_order_:
-        type: int
         description:
-            de: 'Definiert die Reihenfolge einer Aktion (veraltet - Nutze stattdessen se_action)'
-            en: 'Definition of the running order of an action (deprecated - use se_action instead)'
+            de: 'Definiert die Reihenfolge einer Aktion als Integerzahl (veraltet - Nutze stattdessen se_action)'
+            en: 'Definition of the running order of an action as integer (deprecated - use se_action instead)'
 
     se_manual_:
         description:

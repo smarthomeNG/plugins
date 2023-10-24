@@ -62,7 +62,6 @@ class Neato(SmartPlugin):
     def setClientIDHash(self, hash):
         return self.robot.setClientIDHash(hash)
 
-
     def run(self):
         self.logger.debug("Run method called")
         self.scheduler_add('poll_device', self.poll_device, prio=5, cycle=self._cycle)
@@ -140,6 +139,9 @@ class Neato(SmartPlugin):
         response = self.robot.robot_command("start", boundary_id, map_id)
         return self.check_command_response(response)
 
+    def get_known_mapId(self):
+        self.logger.info(f"MapID is {self.robot.mapId}")
+        return self.robot.mapId
 
     # returns boundaryIds (clean zones) for given mapID
     # returns True on success and False otherwise
@@ -150,7 +152,6 @@ class Neato(SmartPlugin):
     def dismiss_current_alert(self):
         response = self.robot.robot_command("dismiss_current_alert")
         return self.check_command_response(response)
-
 
     # enable cleaning schedule
     # returns True on success and False otherwise

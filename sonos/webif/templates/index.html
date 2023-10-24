@@ -252,7 +252,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 				</tr>
 			</thead>
 			<tbody>
-				{% for zone in p.zones %}
+				{% for zone in p.get_rechable_zones %}
 					<tr>
 						<td></td>
 						<td class="py-1">{{ zone._player_name }}</td>

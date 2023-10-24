@@ -31,7 +31,7 @@ from lib.network import Tcp_client
 
 class Asterisk(SmartPlugin):
 
-    PLUGIN_VERSION = "1.4.0"
+    PLUGIN_VERSION = "1.4.2"
 
     DB = 'ast_db'
     DEV = 'ast_dev'
@@ -76,6 +76,92 @@ class Asterisk(SmartPlugin):
         self._mailboxes = {}
         self._trigger_logics = {}
         self._log_in = lib.log.Log(self.get_sh(), 'env.asterisk.log.in', ['start', 'name', 'number', 'duration', 'direction'])
+
+    def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Run method called")
+        if self._client.connect():
+            self.alive = True
+        else:
+            self.logger.error(f'Connection to {self.host}:{self.port} not possible, plugin not starting')
+
+    def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Stop method called")
+        if self._client.connected():
+            self._client.close()
+        self.alive = False
+        self._reply_lock.acquire()
+        self._reply_lock.notify()
+        self._reply_lock.release()
+
+
+    def parse_item(self, item):
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+        The plugin can, corresponding to its attribute keywords, decide what to do with
+        the item in future, like adding it to an internal array for future reference
+        :param item:    The item to process.
+        :return:        If the plugin needs to be informed of an items change you should return a call back function
+                        like the function update_item down below. An example when this is needed is the knx plugin
+                        where parse_item returns the update_item function when the attribute knx_send is found.
+                        This means that when the items value is about to be updated, the call back function is called
+                        with the item, caller, source and dest as arguments and in case of the knx plugin the value
+                        can be sent to the knx with a knx write function within the knx plugin.
+        """
+        if self.has_iattr(item.conf, Asterisk.DEV):
+            self._devices[self.get_iattr_value(item.conf, Asterisk.DEV)] = item
+        if self.has_iattr(item.conf, Asterisk.BOX):
+            self._mailboxes[self.get_iattr_value(item.conf, Asterisk.BOX)] = item
+        if self.has_iattr(item.conf, Asterisk.DB):
+            return self.update_item
+
+
+    def parse_logic(self, logic):
+        """
+        Default plugin parse_logic method
+        """
+        if Asterisk.USEREVENT in logic.conf:
+            event = logic.conf[Asterisk.USEREVENT]
+            if event not in self._trigger_logics:
+                self._trigger_logics[event] = [logic]
+            else:
+                self._trigger_logics[event].append(logic)
+
+
+    def update_item(self, item, caller=None, source=None, dest=None):
+        """
+        Item has been updated
+
+        This method is called, if the value of an item has been updated by SmartHomeNG.
+        It should write the changed value out to the device (hardware/interface) that
+        is managed by this plugin.
+
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
+        if self.alive and caller != self.get_shortname():
+            self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            if self.has_iattr(item.conf, Asterisk.DB):
+                value = item()
+                if isinstance(value, bool):
+                    value = int(item())
+                self.db_write(self.get_iattr_value(item.conf, Asterisk.DB), value)
+
+
+    def handle_connect(self, client):
+        self._command(self._init_cmd, reply=False)
+        for mb in self._mailboxes:
+            mbc = self.mailbox_count(mb)
+            if mbc is not None:
+                self._mailboxes[mb](mbc[1])
+
 
     def _command(self, d, reply=True):
         """
@@ -150,8 +236,28 @@ class Asterisk(SmartPlugin):
             if device == hang:
                 self._command({'Action': 'Hangup', 'Channel': channel}, reply=False)
 
-    def found_terminator(self, data):
-        data = data.decode()
+    def found_terminator(self, client, data):
+        """called then terminator is found 
+
+        :param client: tcp client which is used for the connection
+        :param str data: the response from asterisk server
+        :return : None
+        """
+        if isinstance(data, bytes):
+            data = data.decode()
+
+        """
+        the response will be normally like ``key: value``
+        exception is start of communication which presents e.g.
+        ```
+        Asterisk Call Manager/5.0.4
+        Response: Success
+        Message: Authentication accepted
+        ```
+        The following code puts everything into the dict ``event``
+        It only implements a very basic inspection of the response
+        """ 
+        self.logger.debug(f"data to inspect: {data}")
         event = {}
         for line in data.splitlines():
             key, sep, value = line.partition(': ')
@@ -246,84 +352,3 @@ class Asterisk(SmartPlugin):
         channel, s, d = channel.rpartition('-')
         a, b, channel = channel.partition('/')
         return channel
-
-    def parse_item(self, item):
-        """
-        Default plugin parse_item method. Is called when the plugin is initialized.
-        The plugin can, corresponding to its attribute keywords, decide what to do with
-        the item in future, like adding it to an internal array for future reference
-        :param item:    The item to process.
-        :return:        If the plugin needs to be informed of an items change you should return a call back function
-                        like the function update_item down below. An example when this is needed is the knx plugin
-                        where parse_item returns the update_item function when the attribute knx_send is found.
-                        This means that when the items value is about to be updated, the call back function is called
-                        with the item, caller, source and dest as arguments and in case of the knx plugin the value
-                        can be sent to the knx with a knx write function within the knx plugin.
-        """
-        if self.has_iattr(item.conf, Asterisk.DEV):
-            self._devices[self.get_iattr_value(item.conf, Asterisk.DEV)] = item
-        if self.has_iattr(item.conf, Asterisk.BOX):
-            self._mailboxes[self.get_iattr_value(item.conf, Asterisk.BOX)] = item
-        if self.has_iattr(item.conf, Asterisk.DB):
-            return self.update_item
-
-    def update_item(self, item, caller=None, source=None, dest=None):
-        """
-        Item has been updated
-
-        This method is called, if the value of an item has been updated by SmartHomeNG.
-        It should write the changed value out to the device (hardware/interface) that
-        is managed by this plugin.
-
-        :param item: item to be updated towards the plugin
-        :param caller: if given it represents the callers name
-        :param source: if given it represents the source
-        :param dest: if given it represents the dest
-        """
-        if self.alive and caller != self.get_shortname():
-            self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.id()))
-            if self.has_iattr(item.conf, Asterisk.DB):
-                value = item()
-                if isinstance(value, bool):
-                    value = int(item())
-                self.db_write(self.get_iattr_value(item.conf, Asterisk.DB), value)
-
-    def parse_logic(self, logic):
-        """
-        Default plugin parse_logic method
-        """
-        if Asterisk.USEREVENT in logic.conf:
-            event = logic.conf[Asterisk.USEREVENT]
-            if event not in self._trigger_logics:
-                self._trigger_logics[event] = [logic]
-            else:
-                self._trigger_logics[event].append(logic)
-
-    def run(self):
-        """
-        Run method for the plugin
-        """
-        self.logger.debug("Run method called")
-        if self._client.connect():
-            self.alive = True
-        else:
-            self.logger.error(f'Connection to {self.host}:{self.port} not possible, plugin not starting')
-
-    def handle_connect(self):
-        self._command(self._init_cmd, reply=False)
-        for mb in self._mailboxes:
-            mbc = self.mailbox_count(mb)
-            if mbc is not None:
-                self._mailboxes[mb](mbc[1])
-
-    def stop(self):
-        """
-        Stop method for the plugin
-        """
-        self.logger.debug("Stop method called")
-        if self._client.connected():
-            self._client.close()
-        self.alive = False
-        self._reply_lock.acquire()
-        self._reply_lock.notify()
-        self._reply_lock.release()

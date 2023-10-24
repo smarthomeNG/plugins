@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Steuerung eines AV Gerätes über TCP/IP oder RS232 Schnittstelle'
-        en: 'Controlling AV devices via TCP/IP or RS232'
+        de: 'Steuerung eines AV Gerätes über TCP/IP oder RS232 Schnittstelle. Ersetzt durch verschiedene SmartDevice Plugins.'
+        en: 'Controlling AV devices via TCP/IP or RS232. Replaced by multiple SmartDevice plugins.'
     description_long:
         de: 'Steuerung eines AV Gerätes über TCP/IP oder RS232 Schnittstelle.
             Das Plugin unterstützt eine Vielzahl von AV-Geräten und wurde mit folgenden Geräten getestet:
@@ -12,6 +12,7 @@ plugin:
             - Denon AV Receiver > 2016
             - Epson Projektor < 2010
             - Oppo UHD Player
+            Zu diesen Geräten gibt es eigene neue Plugins, die auf dem SmartDevice Framework aufbauen.
             '
         en: 'Controlling AV devices via TCP/IP or RS232
             The plugin supports a variety of AV devices and was tested with the following models:
@@ -19,13 +20,14 @@ plugin:
             - Denon AV Receiver > 2016
             - Epson Projektor < 2010
             - Oppo UHD Player
+            For these devices there are newer separate plugins based on the SmartDevice framework.
             '
     requirements:
         de: 'pyserial Python Modul'
         en: 'pyserial python module'
     maintainer: onkelandy
     tester: Foxi352                     # Who tests this plugin?
-    state: ready
+    state: deprecated
 
     keywords: av denon pioneer epson oppo player amp receiver projector rs232 telnet tcpip remote control
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1097870-neues-plugin-av-device-f%C3%BCr-yamaha-pioneer-denon-etc

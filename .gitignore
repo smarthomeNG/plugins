@@ -25,7 +25,10 @@ ehthumbs.db
 Thumbs.db
 
 # don't upload private plugins
-/priv_*
+/priv_*/
+
+# don't upload plugins loaded from develop to a release installation
+/*_dev/
 
 # Pycharm settings
 /.idea

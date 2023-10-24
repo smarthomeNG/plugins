@@ -1,20 +1,196 @@
 {% extends "base_plugin.html" %}
+
 {% block buttons %}
 {{ super() }}
 <button type="button" class="btn btn-shng btn-sm" onclick="location.href='?'">{{ _('Übersicht') }}</button>
+
 {% endblock buttons %}
+{% block pluginstyles %}
+<style>
+  .slider {
+    color: #fff;
+    background-color: #286090;
+    border-color: #204d74;
+  }
+  .buttons {
+    margin:auto;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    top: 250px;
+    z-index: 1;
+  }
+  .buttonrow {
+    margin-right: 10px;
+  }
+  #visu_div {
+    opacity: 0.9;
+    border: 3px solid white;
+    padding: 10px;
+    overflow: hidden;
+    width:100%;
+    height:100%;
+    z-index: -1;
+  }
+  #visu_parent {
+    width:99%;
+    height:100%;
+    padding-bottom: 50px;
+  }
+  body {
+    overflow-y: scroll;
+  }
+  #visu_div.active.hovered{
+    border: 3px solid darkred;
+  }
+  .enable_tooltip {
+  pointer-events: none;
+  }
+</style>
+{% endblock pluginstyles %}
+{% block pluginscripts %}
+<script src="static/panzoom.min.js">
+</script>
+<script>
+function refreshGraph() {
+  const graphContainer = document.getElementById('visu_div');
+  // Fetch the updated HTML content from the server (replace 'fetch_url' with the actual URL)
+  fetch(window.location.href)
+    .then(response => response.text())
+    .then(data => {
+      // Create a temporary element to parse the HTML
+      const tempElement = document.createElement('div');
+      tempElement.innerHTML = data;
+
+      // Extract the content within the <div id="graphContainer">
+      const graphContent = tempElement.querySelector('#visu_div').innerHTML;
+
+      // Insert the extracted content into the target <div>
+      graphContainer.innerHTML = graphContent;
+      initPanzoom();
+
+    })
+    .catch(error => {
+      console.error('Error fetching data:', error);
+  });
+
+}
+</script>
+<script>
+function initPanzoom() {
+  const elem = document.getElementById('visu_object');
+  if (elem !== null) {
+    const panzoom = Panzoom(elem, { canvas: true, animate: true, duration: 800, step: 0.2, maxScale: 3, minScale: 0.3, panOnlyWhenZoomed: true, roundPixels: true })
+    const parent = elem.parentElement;
+
+    parent.addEventListener('wheel', function(event) {
+      if (!event.shiftKey) return
+      panzoom.zoomWithWheel(event);
+    })
+    const zoomInButton = document.getElementById('zoomInButton');
+    const zoomOutButton = document.getElementById('zoomOutButton');
+    const resetButton = document.getElementById('resetButton');
+    const rangeInput = document.getElementById('zoomSlider');
+    const toolTip = document.getElementById('toolTip');
+
+    toolTip.addEventListener('click', function() {
+      if ($('#visu_object').hasClass("enable_tooltip") || !toolTip.checked) {
+              $('#visu_object').removeClass("enable_tooltip");
+          }
+          else {
+              $('#visu_object').addClass("enable_tooltip");
+          }
+        });
+    zoomInButton.addEventListener('click', () => {
+         panzoom.zoomIn();
+         document.getElementById('zoomSlider').value = panzoom.getScale() + '';})
+
+    zoomOutButton.addEventListener('click', () => {
+         panzoom.zoomOut();
+         document.getElementById('zoomSlider').value = panzoom.getScale() + '';})
+    resetButton.addEventListener('click', () => {
+         panzoom.reset();
+         document.getElementById('zoomSlider').value = panzoom.getScale() + '';})
+    rangeInput.addEventListener('input', (event) => {
+      panzoom.zoom(event.target.valueAsNumber);})
+  }
+}
+</script>
+<script>
+	function handleUpdatedData(response, dataSet) {
+    objResponse = JSON.parse(response);
+    if (objResponse['success'] == 'true'){
+      const active = document.getElementById('active');
+      const elem = document.getElementById('visu_object');
+      shngInsertText ('active', 'Seite wird aktualisiert.', null, 2);
+
+      if (window.update_active == true)
+        if (active != undefined)
+          setTimeout(function() {
+              window.location.reload();
+          }, 3000);
+        else if (elem != undefined)
+          refreshGraph();
+
+      else
+        refresh.stop();
+    }
+    else
+      shngInsertText ('active', 'Bitte warten.', null, 2);
+      if (window.refresh.active == false)
+        window.update_blocked = true;
+  };
+</script>
+
+<script>
+window.addEventListener('load', function() {
+  initPanzoom();
+  if ("{{firstrun}}" != 'None'){
+    window.update_active = true;
+    refresh.set_interval(5000, false);
+  }
+});
+</script>
+{% endblock pluginscripts %}
+{% set update_interval = 0 %}
 {% set logo_frame = false %}
+{% set dataSet = item %}
 {% set tab1title = "<strong>" ~ _('Visualisierung')  ~ "</strong>" %}
 {% set tabcount = 1 %}
 {% block bodytab1 %}
-
-<div class="container-fluid m-2">
-  <div class="mb-2">
+{% if firstrun == 'None' %}
+  <div class ="mb-2" id="visu_parent">
     {{ _('Detailvisualisierung') }} - {{ item }}
     <a href="static/img/visualisations/{{ item }}.svg" style="display: inline-block; position: relative; z-index: 1;" target="_blank">
-      {{ _('Klicken für volle Größe') }}</a>
-    {{ p.get_graph(item, 'graph') }}
+      {{ _('Klicken zum Öffnen des SVG Files') }}</a>
+    <br>
+    Mittels Buttons und Slider kann jederzeit gezoomt werden. Ist die Zoom-Funktion aktiviert,
+    kann zusätzlich bei Halten der "Shift"-Taste  mittels Mausrad in der Grafik gezoomt werden.
+    Die linke Maustaste ermöglicht dann auch ein Verschieben des Ausschnitts. Dabei werden
+    allerdings die Tooltips nicht angezeigt - hierfür ist die Zoom-Funktion zu deaktivieren.
 
   </div>
-</div>
+  <div class="buttons" id="fixed">
+    <button id="zoomInButton" class="buttonrow btn btn-shng btn-sm">{{_('Zoom +')}}</button>
+    <button id="zoomOutButton" class="buttonrow btn btn-shng btn-sm">{{_('Zoom -')}}</button>
+    <input type="range" id="zoomSlider" min="0.3" max="3" defaultvalue="1" step="0.2" class="buttonrow">
+    <button id="resetButton" class="buttonrow btn btn-shng btn-sm">{{_('Zoom Reset')}}</button>
+    <input type="checkbox" id="toolTip" name="Tooltip" class="buttonrow">{{_('Zoom/Pan aktiv')}}
+  </div>
+
+  <div class="container-fluid m-2" id="visu_div">
+
+      {{ p.get_graph(item, 'graph') }}
+  </div>
+{% else %}
+  <div style="margin-top:15px;">
+  {{ item }} {{ _('ist noch nicht initialisiert.') }} {{ _('Die erste Evaluierung ist geplant für:') }} {{ firstrun }}
+
+  </div>
+  <div>
+    <span id="active"></span>
+  </div>
+{% endif %}
+
 {% endblock bodytab1 %}
