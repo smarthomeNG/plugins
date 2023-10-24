@@ -31,8 +31,8 @@ import ast
 import lib.config
 from lib.model.smartplugin import SmartPlugin
 from .webif import WebInterface
-from lib.utils import Utils
-from lib.module import Modules
+
+#from lib.module import Modules
 
 
 from .utils import *

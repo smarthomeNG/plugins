@@ -33,6 +33,7 @@ from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
 from lib.logic import Logics          # für update der /etc/logic.yaml
 from lib.logic import Logic           # für reload (bytecode)
+from lib.utils import Utils
 from ..utils import *
 
 # ------------------------------------------
@@ -151,6 +152,7 @@ class WebInterface(SmartPluginWebIf):
 
         tmpl = self.tplenv.get_template('blockly.html')
         return tmpl.render(smarthome=self._sh,
+                           p=self.plugin,
                            dyn_sh_toolbox=self._DynToolbox(self._sh),
                            cmd=self.cmd,
                            logicname=logicname,
