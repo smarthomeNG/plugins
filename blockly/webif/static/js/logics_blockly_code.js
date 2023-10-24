@@ -46,8 +46,7 @@ Code.loadBlocks = function() {
 Code.renderContent = function() {
 	//if (Code.selected == 'python') {
 		var content = document.getElementById('content_python');
-		//pycode = Blockly.Python.workspaceToCode(Code.workspace);
-    var pycode = Blockly.Python.forBlock[Code.workspace];
+		var pycode = Blockly.Python.workspaceToCode(Code.workspace);
 		content.textContent = pycode;
 		if (typeof prettyPrintOne == 'function') {
 		  pycode = content.innerHTML;
@@ -71,13 +70,13 @@ Code.wait = function (ms){
 Code.saveBlocks = function() {
   var logicname = "";
   var topblock = Code.workspace.getTopBlocks()[0];
+
   if (topblock.data == "sh_logic_main") {
       logicname = Code.workspace.getTopBlocks()[0].getFieldValue('LOGIC_NAME')
   };
   //Code.workspace;
-  //var pycode = Blockly.Python.workspaceToCode(Code.workspace);
-  var pycode = Blockly.Python.forBlock[Code.workspace];
-  var xmldom = Blockly.utils.xml.workspaceToDom(Code.workspace);
+  var pycode = Blockly.Python.workspaceToCode(Code.workspace);
+  var xmldom = Blockly.Xml.workspaceToDom(Code.workspace);
   var xmltxt = Blockly.utils.xml.domToText(xmldom);
 
   $.ajax({  url: "blockly_save_logic",
