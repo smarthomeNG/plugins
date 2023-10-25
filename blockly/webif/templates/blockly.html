@@ -1,14 +1,27 @@
 {% extends "base_plugin.html" %}
-{% block content %}
-
-{% include "logics_blockly_toolbox.html" %}
-
+{% block pluginstyles %}
+<link rel="stylesheet" href="static/blockly/style.css">
 <style>
 li.L0, li.L1, li.L2, li.L3,
 li.L5, li.L6, li.L7, li.L8
 { list-style-type: decimal !important }
 </style>
+{% endblock pluginstyles %}
+{% block pluginscripts %}
+<script src="static/blockly/blockly_compressed.js"></script>
+<script src="static/blockly/blocks_compressed.js"></script>
+<script src="static/blockly/python_compressed.js"></script>
+<script src="static/blockly/de.js"></script>
+<script src="static/blockly/{{ lang }}.js"></script>
 
+<script type="text/javascript" src="static/shblocks/sh_items.js"></script>
+<script type="text/javascript" src="static/shblocks/sh_logics.js"></script>
+<script type="text/javascript" src="static/shblocks/sh_logic.js"></script>
+<script type="text/javascript" src="static/shblocks/sh_notify.js"></script>
+<script type="text/javascript" src="static/shblocks/sh_tools.js"></script>
+<script type="text/javascript" src="static/shblocks/sh_time.js"></script>
+
+<script src="static/js/logics_blockly_code.js"></script>
 <script type="text/javascript" language="javascript">
 
 function closeEditor() {
@@ -29,6 +42,10 @@ myWait = function (ms){
 }
 
 </script>
+{% endblock pluginscripts %}
+{% block content %}
+
+{% include "logics_blockly_toolbox.html" %}
 
   <table width="99%" height="91%">
     <tr>
@@ -75,27 +92,5 @@ myWait = function (ms){
   <div id="content_blocks" class="content"></div>
   <pre id="content_python" class="content"></pre>
   <textarea id="content_xml" class="content" wrap="off"></textarea>
-
-
-<!-- BLOCKLY Script Editor -->
-<link rel="stylesheet" href="static/blockly/style.css">
-
-<!-- BLOCKLY Script Editor -->
-<script src="static/blockly/blockly_compressed.js"></script>
-<script src="static/blockly/blocks_compressed.js"></script>
-<script src="static/blockly/python_compressed.js"></script>
-
-<script src="static/blockly/en.js"></script>
-<script src="static/blockly/fr.js"></script>
-<script src="static/blockly/pl.js"></script>
-<script src="static/blockly/de.js"></script>
-<script type="text/javascript" src="static/shblocks/sh_items.js"></script>
-<script type="text/javascript" src="static/shblocks/sh_logics.js"></script>
-<script type="text/javascript" src="static/shblocks/sh_logic.js"></script>
-<script type="text/javascript" src="static/shblocks/sh_notify.js"></script>
-<script type="text/javascript" src="static/shblocks/sh_tools.js"></script>
-<script type="text/javascript" src="static/shblocks/sh_time.js"></script>
-
-<script src="static/js/logics_blockly_code.js"></script>
 
 {% endblock %}
