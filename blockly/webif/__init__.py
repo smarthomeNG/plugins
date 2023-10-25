@@ -113,6 +113,7 @@ class WebInterface(SmartPluginWebIf):
             self.logic_filename = filename
             self.logicname = logicname
         self.logger.info("index_html: self.logicname = '{}', self.logic_filename = '{}'".format(self.logicname, self.logic_filename))
+        language = self._sh.get_defaultlanguage()
 
         tmpl = self.tplenv.get_template('blockly.html')
         return tmpl.render(smarthome=self._sh,
@@ -120,6 +121,7 @@ class WebInterface(SmartPluginWebIf):
                            dyn_sh_toolbox=self._DynToolbox(self._sh),
                            cmd=self.cmd,
                            logicname=logicname,
+                           lang=language,
                            timestamp=str(time.time()))
 
 
@@ -148,7 +150,7 @@ class WebInterface(SmartPluginWebIf):
             self.logic_filename = filename
             self.logicname = logicname
         self.logger.info("edit_html: self.logicname = '{}', self.logic_filename = '{}'".format(self.logicname, self.logic_filename))
-
+        language = self._sh.get_defaultlanguage()
 
         tmpl = self.tplenv.get_template('blockly.html')
         return tmpl.render(smarthome=self._sh,
@@ -156,6 +158,7 @@ class WebInterface(SmartPluginWebIf):
                            dyn_sh_toolbox=self._DynToolbox(self._sh),
                            cmd=self.cmd,
                            logicname=logicname,
+                           lang=language,
                            timestamp=str(time.time()))
 
 

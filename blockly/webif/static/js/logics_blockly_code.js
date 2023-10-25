@@ -1,3 +1,4 @@
+
 /**
  * Create a namespace for the application.
  */
@@ -74,7 +75,6 @@ Code.saveBlocks = function() {
   if (topblock.data == "sh_logic_main") {
       logicname = Code.workspace.getTopBlocks()[0].getFieldValue('LOGIC_NAME')
   };
-  //Code.workspace;
   var pycode = Blockly.Python.workspaceToCode(Code.workspace);
   var xmldom = Blockly.Xml.workspaceToDom(Code.workspace);
   var xmltxt = Blockly.utils.xml.domToText(xmldom);
