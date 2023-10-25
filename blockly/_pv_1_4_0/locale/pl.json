@@ -1,0 +1,17 @@
+{
+	"Logik-Editor": "Edytor logiki",
+	"für SmartHomeNG": "SmartHomeNG",
+	
+	"_button": {
+		"Aktivieren": "Włącz",
+		"Beenden" : "Stop",
+		"Speichern" : "Zapisz",
+		"Speichern & schließen" : "Zapisz & Zamknij",
+		"Blöcke speichern" : "Zapisz Bloki",
+		"Verwerfen" : "Cofnij Zmiany",
+		"Änderungen verwerfen" : "Cofnij Zmiany",
+		"Leeren" : "Wyczyść",
+		"Schließen": "Zamknij"
+	}
+
+}
