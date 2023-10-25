@@ -30,7 +30,7 @@ Blockly.Blocks['shnotify_email'] = {
     this.setTooltip('');
   }
 };
-Blockly.Python['shnotify_email'] = function(block) {
+python.pythonGenerator.forBlock['shnotify_email'] = function(block) {
   var to = block.getFieldValue('TO');
   var subject = block.getFieldValue('SUBJECT');
   var text = Blockly.Python.valueToCode(block, 'TO', Blockly.Python.ORDER_ATOMIC);
@@ -71,7 +71,7 @@ Blockly.Blocks['shnotify_nma'] = {
     this.setTooltip('');
   }
 };
-Blockly.Python['shnotify_nma'] = function(block) {
+python.pythonGenerator.forBlock['shnotify_nma'] = function(block) {
   var text_subject = block.getFieldValue('SUBJECT');
   var value_text = Blockly.Python.valueToCode(block, 'TEXT', Blockly.Python.ORDER_ATOMIC);
   // TODO: Assemble Python into code variable.
@@ -92,4 +92,3 @@ Blockly.Blocks['shnotify_pushbullit'] = {
     this.appendDummyInput().appendField('Sende Nachricht mit Pushbullit:');
   },
 };
-

@@ -176,7 +176,7 @@ function NextLevel(trigger_block, logicname, ignore_crontab, ignore_watchitem)
   };
 };
 
-Blockly.Python['sh_logic_main'] = function(block)
+python.pythonGenerator.forBlock['sh_logic_main'] = function(block)
 {
   this.data = 'sh_logic_main'
   var trigger_block = block.getChildren();
@@ -323,7 +323,7 @@ Blockly.Blocks['sh_trigger_item'] = {
     }
 };
 
-Blockly.Python['sh_trigger_item'] = function(block)
+python.pythonGenerator.forBlock['sh_trigger_item'] = function(block)
 {
   var code = '';
   return code;
@@ -360,7 +360,7 @@ Blockly.Blocks['sh_trigger_cycle'] = {
     }
 };
 
-Blockly.Python['sh_trigger_cycle'] = function(block) {
+python.pythonGenerator.forBlock['sh_trigger_cycle'] = function(block) {
   var code = ''
   return code;
 };
@@ -396,7 +396,7 @@ Blockly.Blocks['sh_trigger_sun'] = {
     }
 };
 
-Blockly.Python['sh_trigger_sun'] = function(block)
+python.pythonGenerator.forBlock['sh_trigger_sun'] = function(block)
 {
   var code = '';
   return code;
@@ -437,7 +437,7 @@ Blockly.Blocks['sh_trigger_daily'] = {
     }
 };
 
-Blockly.Python['sh_trigger_daily'] = function(block)
+python.pythonGenerator.forBlock['sh_trigger_daily'] = function(block)
 {
   var code = '';
   return code;
@@ -469,7 +469,7 @@ Blockly.Blocks['sh_trigger_init'] = {
     }
 };
 
-Blockly.Python['sh_trigger_init'] = function(block)
+python.pythonGenerator.forBlock['sh_trigger_init'] = function(block)
 {
   var code = '';
   return code;
