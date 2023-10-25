@@ -59,14 +59,8 @@ myWait = function (ms){
 		{% else %}
 			<button onclick="Code.saveBlocks(); closeEditor()" class="btn btn-default btn-xs">{{ _('Speichern & schließen') }}</button>
 			<button onclick="Code.saveBlocks()" class="btn btn-default btn-xs">{{ _('Speichern') }}</button>
-			<!--
-			<button onclick="Code.loadBlocks(); window.history.back()" class="btn btn-default btn-xs">{{ _('Änderungen verwerfen','button') }}</button>
-			-->
 			<button onclick="closeEditor()" class="btn btn-default btn-xs">{{ _('Verwerfen') }}</button>
 		{% endif %}
-      <!--
-      <input name="close" value="{{ _('Schließen','button') }}" type="submit" class="btn btn-default btn-xs">
-      -->
 		</form>
         	</td>
 			</tr>
@@ -90,9 +84,11 @@ myWait = function (ms){
 <script src="static/blockly/blockly_compressed.js"></script>
 <script src="static/blockly/blocks_compressed.js"></script>
 <script src="static/blockly/python_compressed.js"></script>
-<script src="static/blockly/de.js"></script>
-<script src="static/blockly/en.js"></script>
 
+<script src="static/blockly/en.js"></script>
+<script src="static/blockly/fr.js"></script>
+<script src="static/blockly/pl.js"></script>
+<script src="static/blockly/de.js"></script>
 <script type="text/javascript" src="static/shblocks/sh_items.js"></script>
 <script type="text/javascript" src="static/shblocks/sh_logics.js"></script>
 <script type="text/javascript" src="static/shblocks/sh_logic.js"></script>
