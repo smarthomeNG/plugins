@@ -49,7 +49,7 @@ Blockly.Blocks['sh_item_obj'] = {
 Blockly.Python['sh_item_obj'] = function(block) {
   var iName = block.getFieldValue('N');
   var iPath = block.getFieldValue('P');
-  
+
   // TODO: Assemble Python into code variable.
 //  var code = 'sh.return_item("' + iPath + '")';
   var code = 'sh.items.return_item("' + iPath + '")';
@@ -110,9 +110,8 @@ Blockly.Blocks['sh_item_get'] = {
 
 Blockly.Python['sh_item_get'] = function(block) {
     var itemobj = Blockly.Python.valueToCode(block, 'ITEMOBJECT', Blockly.Python.ORDER_ATOMIC) || 'item';
-    var code = itemobj + '()';
-    //return [code, Blockly.Python.ORDER_NONE];
-    return code;
+    var code = itemobj + '.property.value';
+    return [code, Blockly.Python.ORDER_NONE];
 };
 
 
@@ -142,8 +141,7 @@ Blockly.Python['sh_item_set'] = function(block) {
   // TODO: Assemble Python into code variable.
   //var code = '...';
   var code = itemobject + '(' + value + ')\n';
-  //return [code, Blockly.Python.ORDER_FUNCTION_CALL];
-  return code;
+  return [code, Blockly.Python.ORDER_FUNCTION_CALL];
 };
 
 Blockly.Blocks['sh_item_hasattr'] = {
@@ -174,7 +172,7 @@ Blockly.Python['sh_item_hasattr'] = function(block) {
 
 };
 
-/** 
+/**
 Blockly.Blocks['sh_item_attr'] = {
   init: function() {
     var attrlist = new Blockly.FieldTextInput('0');
