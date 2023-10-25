@@ -1,7 +1,6 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'Logik-Editor':           {'de': '=', 'en': 'Logic-Editor', 'fr': 'Editeur de Logiques', 'pl': 'Edytor logiki'}
-    'für SmartHomeNG':           {'de': '=', 'en': 'for SmartHomeNG', 'fr': 'pour SmartHomeNG', 'pl': 'SmartHomeNG'}
+    'Logik-Editor für SmartHomeNG':           {'de': '=', 'en': 'Logic-Editor for SmartHomeNG', 'fr': 'Editeur de Logiques pour SmartHomeNG', 'pl': 'Edytor logiki SmartHomeNG'}
     'Aktivieren':           {'de': '=', 'en': 'Enable', 'fr': 'Activer', 'pl': 'Włącz'}
     'Beenden':           {'de': '=', 'en': 'Stop', 'fr': 'Terminer', 'pl': 'Stop'}
     'Speichern':           {'de': '=', 'en': 'Save', 'fr': 'Sauvegarder', 'pl': 'Zapisz'}

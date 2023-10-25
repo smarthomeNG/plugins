@@ -114,8 +114,8 @@ Code.init = function() {
 		var bBox = Code.getBBox_(container);
 		for (var i = 0; i < Code.TABS_.length; i++) {
 			var el = document.getElementById('content_' + Code.TABS_[i]);
-			el.style.top = bBox.y + 'px';
-			el.style.left = bBox.x + 'px';
+			el.style.top = bBox.y- $('#resize_wrapper').offset().top + 'px';
+			//el.style.left = bBox.x + 'px';
 			// Height and width need to be set, read back, then set again to
 			// compensate for scrollbars.
 			el.style.height = bBox.height + 'px';
