@@ -312,18 +312,21 @@ class kodi(SmartDevicePlugin):
             return
 
         # if we reach this point, no special handling case was detected, so just go on normally...
-
         try:
             # try and transform the JSON RPC method into the matching command
-            command = self._commands.get_command_from_reply(command)
-            value = self._commands.get_shng_data(command, data)
+            commands = self._commands.get_commands_from_reply(command)
+            if not isinstance(commands, list):
+                commands = [commands]
+
+            for command in commands:
+                value = self._commands.get_shng_data(command, data)
+
+                # pass on data for regular item assignment
+                self.logger.debug(f'received data "{data}" for command {command} converted to value {value}')
+                self._dispatch_callback(command, value, by)
         except Exception as e:
             self.logger.info(f'received data "{data}" for command {command}, error occurred while converting. Discarding data. Error was: {e}')
             return
-
-        # pass on data for regular item assignment
-        self.logger.debug(f'received data "{data}" for command {command} converted to value {value}')
-        self._dispatch_callback(command, value, by)
 
     def _do_before_send(self, command, value, kwargs):
         """
