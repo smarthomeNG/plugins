@@ -29,9 +29,10 @@ from bin.smarthome import VERSION
 
 class IMAP(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.4.1"
+    PLUGIN_VERSION = "1.4.2"
 
     def __init__(self, sh, *args, **kwargs):
+        super().__init__() 
         self._host = self.get_parameter_value('host')
         self._port = self.get_parameter_value('port')
         self._username = self.get_parameter_value('username')
