@@ -47,6 +47,7 @@ from lib.shtime import Shtime
 from lib.plugin import Plugins
 from .webif import WebInterface
 from .item_attributes import *
+from .item_attributes_master import ITEM_ATTRIBUTES
 import lib.db
 
 HOUR = 'hour'
@@ -61,7 +62,7 @@ class DatabaseAddOn(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.2.6'
+    PLUGIN_VERSION = '1.2.7'
 
     def __init__(self, sh):
         """
@@ -226,7 +227,7 @@ class DatabaseAddOn(SmartPlugin):
             required_params = None
 
             if db_addon_fct in HISTORIE_ATTRIBUTES_ONCHANGE:
-                # handle functions 'minmax on-change' in format 'minmax_timeframe_func' items like 'minmax_heute_max', 'minmax_heute_min', 'minmax_woche_max', 'minmax_woche_min'
+                # handle functions 'minmax onchange' in format 'minmax_timeframe_func' items like 'minmax_heute_max', 'minmax_heute_min', 'minmax_woche_max', 'minmax_woche_min'
                 timeframe = translate_timeframe(db_addon_fct_vars[1])
                 func = db_addon_fct_vars[2] if db_addon_fct_vars[2] in ALLOWED_MINMAX_FUNCS else None
                 start = end = 0
@@ -260,7 +261,7 @@ class DatabaseAddOn(SmartPlugin):
                 required_params = [timeframe, start, end]
 
             elif db_addon_fct in VERBRAUCH_ATTRIBUTES_ONCHANGE:
-                # handle functions 'verbrauch on-change' items in format 'verbrauch_timeframe' like 'verbrauch_heute', 'verbrauch_woche', 'verbrauch_monat', 'verbrauch_jahr'
+                # handle functions 'verbrauch onchange' items in format 'verbrauch_timeframe' like 'verbrauch_heute', 'verbrauch_woche', 'verbrauch_monat', 'verbrauch_jahr'
                 timeframe = translate_timeframe(db_addon_fct_vars[1])
                 start = end = 0
                 log_text = 'verbrauch_timeframe'
@@ -303,7 +304,7 @@ class DatabaseAddOn(SmartPlugin):
                 required_params = [timeframe, timedelta]
 
             elif db_addon_fct in TAGESMITTEL_ATTRIBUTES_ONCHANGE:
-                # handle functions 'tagesmitteltemperatur on-change' items in format 'tagesmitteltemperatur_timeframe' like 'tagesmitteltemperatur_heute', 'tagesmitteltemperatur_woche', 'tagesmitteltemperatur_monat', 'tagesmitteltemperatur_jahr'
+                # handle functions 'tagesmitteltemperatur onchange' items in format 'tagesmitteltemperatur_timeframe' like 'tagesmitteltemperatur_heute', 'tagesmitteltemperatur_woche', 'tagesmitteltemperatur_monat', 'tagesmitteltemperatur_jahr'
                 timeframe = translate_timeframe(db_addon_fct_vars[1])
                 func = 'max'
                 start = end = 0
@@ -547,7 +548,7 @@ class DatabaseAddOn(SmartPlugin):
             Check if item has db_addon_fct and is onchange
             """
             if self.has_iattr(check_item.conf, 'db_addon_fct'):
-                if self.get_iattr_value(check_item.conf, 'db_addon_fct').lower() in ALL_ONCHANGE_ATTRIBUTES:
+                if self.get_iattr_value(check_item.conf, 'db_addon_fct').lower() in ONCHANGE_ATTRIBUTES:
                     return True
             return False
 
@@ -623,8 +624,12 @@ class DatabaseAddOn(SmartPlugin):
             # get db_addon_fct attribute value
             db_addon_fct = self.get_iattr_value(item.conf, 'db_addon_fct').lower()
 
+            # read item_attribute_dict aus item_attributes_master
+            item_attribute_dict = ITEM_ATTRIBUTES['db_addon_fct'].get(db_addon_fct)
+            self.logger.debug(f"{db_addon_fct}: {item_attribute_dict=}")
+
             # get query parameters from db_addon_fct or db_addon_params
-            if db_addon_fct in ALL_PARAMS_ATTRIBUTES:
+            if item_attribute_dict['params']:
                 query_params = get_query_parameters_from_db_addon_params()
             else:
                 query_params = get_query_parameters_from_db_addon_fct()
@@ -678,39 +683,59 @@ class DatabaseAddOn(SmartPlugin):
             if self.debug_log.parse:
                 self.logger.debug(f"Item={item.path()} added with db_addon_fct={db_addon_fct} and database_item={database_item}")
 
+            # add type (onchange or ondemand) to item dict
+            item_config_data_dict.update({'on': item_attribute_dict['on']})
+            # ToDo: Remove
+            # if db_addon_fct in ONCHANGE_ATTRIBUTES:
+            #     item_config_data_dict.update({'on': 'change'})
+            # elif db_addon_fct in ONDEMAND_ATTRIBUTES:
+            #     item_config_data_dict.update({'on': 'demand'})
+
             # add cycle for item groups
-            if db_addon_fct in ALL_HOURLY_ATTRIBUTES:
-                item_config_data_dict.update({'cycle': 'hourly'})
-            elif db_addon_fct in ALL_DAILY_ATTRIBUTES:
-                item_config_data_dict.update({'cycle': 'daily'})
-            elif db_addon_fct in ALL_WEEKLY_ATTRIBUTES:
-                item_config_data_dict.update({'cycle': 'weekly'})
-            elif db_addon_fct in ALL_MONTHLY_ATTRIBUTES:
-                item_config_data_dict.update({'cycle': 'monthly'})
-            elif db_addon_fct in ALL_YEARLY_ATTRIBUTES:
-                item_config_data_dict.update({'cycle': 'yearly'})
-            elif db_addon_fct in ALL_GEN_ATTRIBUTES:
-                item_config_data_dict.update({'cycle': 'static'})
-            elif db_addon_fct in ALL_ONCHANGE_ATTRIBUTES:
-                item_config_data_dict.update({'cycle': 'on-change'})
-            elif db_addon_fct == 'db_request':
+            cycle = item_attribute_dict['calc']
+            if cycle == 'group':
                 cycle = item_config_data_dict['query_params'].get('group')
                 if not cycle:
                     cycle = item_config_data_dict['query_params'].get('timeframe')
-                item_config_data_dict.update({'cycle': f"{timeframe_to_updatecyle(cycle)}"})
-            elif db_addon_fct == 'minmax':
-                cycle = item_config_data_dict['query_params']['timeframe']
-                item_config_data_dict.update({'cycle': f"{timeframe_to_updatecyle(cycle)}"})
-            else:
-                self.logger.warning(f"Cycle for {item.path()} undefined")
-                item_config_data_dict.update({'cycle': None})
+                    cycle = f"{timeframe_to_updatecyle(cycle)}"
+            elif cycle == 'timeframe':
+                cycle = item_config_data_dict['query_params'].get('timeframe')
+                cycle = f"{timeframe_to_updatecyle(cycle)}"
+            elif cycle == 'None':
+                cycle = None
+            item_config_data_dict.update({'cycle': cycle})
+
+            # ToDo: Remove
+            # if db_addon_fct in ALL_HOURLY_ATTRIBUTES:
+            #     item_config_data_dict.update({'cycle': 'hourly'})
+            # elif db_addon_fct in ALL_DAILY_ATTRIBUTES:
+            #     item_config_data_dict.update({'cycle': 'daily'})
+            # elif db_addon_fct in ALL_WEEKLY_ATTRIBUTES:
+            #     item_config_data_dict.update({'cycle': 'weekly'})
+            # elif db_addon_fct in ALL_MONTHLY_ATTRIBUTES:
+            #     item_config_data_dict.update({'cycle': 'monthly'})
+            # elif db_addon_fct in ALL_YEARLY_ATTRIBUTES:
+            #     item_config_data_dict.update({'cycle': 'yearly'})
+            # elif db_addon_fct in ALL_GEN_ATTRIBUTES:
+            #     item_config_data_dict.update({'cycle': 'static'})
+            # elif db_addon_fct == 'db_request':
+            #     cycle = item_config_data_dict['query_params'].get('group')
+            #     if not cycle:
+            #         cycle = item_config_data_dict['query_params'].get('timeframe')
+            #     item_config_data_dict.update({'cycle': f"{timeframe_to_updatecyle(cycle)}"})
+            # elif db_addon_fct == 'minmax':
+            #     cycle = item_config_data_dict['query_params']['timeframe']
+            #     item_config_data_dict.update({'cycle': f"{timeframe_to_updatecyle(cycle)}"})
+            # else:
+            #     self.logger.warning(f"Cycle for {item.path()} undefined")
+            #     item_config_data_dict.update({'cycle': None})
 
             # do logging
             if self.debug_log.parse:
                 self.logger.debug(f"Item '{item.path()}' added to be run {item_config_data_dict['cycle']}.")
 
             # create item config for item to be run on startup
-            if db_addon_startup or db_addon_fct in ALL_GEN_ATTRIBUTES:
+            if db_addon_startup or item_attribute_dict['cat'] == 'gen':
                 item_config_data_dict.update({'startup': True})
             else:
                 item_config_data_dict.update({'startup': False})
@@ -734,7 +759,7 @@ class DatabaseAddOn(SmartPlugin):
         # Reference to 'update_item' für alle Items mit Attribut 'database', um die on_change Items zu berechnen
         elif self.has_iattr(item.conf, self.item_attribute_search_str) and has_db_addon_item():
             if self.debug_log.parse:
-                self.logger.debug(f"reference to update_item for item={item.path()} will be set due to on-change")
+                self.logger.debug(f"reference to update_item for item={item.path()} will be set due to onchange")
             self.add_item(item, config_data_dict={'db_addon': 'database'})
             return self.update_item
 
@@ -754,7 +779,7 @@ class DatabaseAddOn(SmartPlugin):
             # handle database items
             if item in self._database_items():
                 # if not self.startup_finished:
-                #     self.logger.info(f"Handling of 'on-change' is paused for startup. No updated will be processed.")
+                #     self.logger.info(f"Handling of 'onchange' is paused for startup. No updated will be processed.")
                 if self.suspended:
                     self.logger.info(f"Plugin is suspended. No updated will be processed.")
                 else:
@@ -888,7 +913,7 @@ class DatabaseAddOn(SmartPlugin):
         self.execute_items()
 
     def execute_startup_items(self) -> None:
-        """Execute all startup_items and set scheduler for delaying on-change items"""
+        """Execute all startup_items and set scheduler for delaying onchange items"""
 
         # execute item calculation
         self.execute_items(option='startup')
@@ -904,36 +929,57 @@ class DatabaseAddOn(SmartPlugin):
 
             # set für zu berechnende Items erstellen
             _todo_items = set()
+            _reset_items = set()
 
             # stündlich zu berechnende Items hinzufügen
-            _todo_items.update(set(self._hourly_items()))
+            _todo_items.update(set(self._ondemand_hourly_items()))
+            # cache dict leeren
             self.current_values[HOUR] = {}
             self.previous_values[HOUR] = {}
 
             # wenn aktuelle Stunde == 0, werden auch die täglichen Items berechnet
             if self.shtime.now().hour == 0:
-                _todo_items.update(set(self._daily_items()))
+                # item zur Aufgabeliste hinzufügen
+                _todo_items.update(set(self._ondemand_daily_items()))
+                # cache dict leeren
                 self.current_values[DAY] = {}
                 self.previous_values[DAY] = {}
                 self.value_list_raw_data = {}
+                # reset Item-Wert alle onchange
+                _reset_items.update(set(self._onchange_daily_items()))
 
                 # wenn zusätzlich der Wochentag == Montag, werden auch die wöchentlichen Items berechnet
                 if self.shtime.weekday(self.shtime.today()) == 1:
-                    _todo_items.update(set(self._weekly_items()))
+                    # item zur Aufgabeliste hinzufügen
+                    _todo_items.update(set(self._ondemand_weekly_items()))
+                    # cache dict leeren
                     self.current_values[WEEK] = {}
                     self.previous_values[WEEK] = {}
+                    # reset Item-Wert alle onchange
+                    _reset_items.update(set(self._onchange_weekly_items()))
 
                 # wenn zusätzlich der erste Tage eines Monates ist, werden auch die monatlichen Items berechnet
                 if self.shtime.now().day == 1:
-                    _todo_items.update(set(self._monthly_items()))
+                    # item zur Aufgabeliste hinzufügen
+                    _todo_items.update(set(self._ondemand_monthly_items()))
+                    # cache dict leeren
                     self.current_values[MONTH] = {}
                     self.previous_values[MONTH] = {}
+                    # reset Item-Wert alle onchange
+                    _reset_items.update(set(self._onchange_monthly_items()))
 
                     # wenn zusätzlich der erste Monat ist, werden auch die jährlichen Items berechnet
                     if self.shtime.now().month == 1:
-                        _todo_items.update(set(self._yearly_items()))
+                        # item zur Aufgabeliste hinzufügen
+                        _todo_items.update(set(self._ondemand_yearly_items()))
+                        # cache dict leeren
                         self.current_values[YEAR] = {}
                         self.previous_values[YEAR] = {}
+                        # reset Item-Wert alle onchange
+                        _reset_items.update(set(self._onchange_yearly_items()))
+
+            # reset der onchange items
+            [_item(0, self.get_shortname()) for _item in _reset_items]
 
             return list(_todo_items)
 
@@ -993,7 +1039,7 @@ class DatabaseAddOn(SmartPlugin):
             else:
                 if isinstance(queue_entry, tuple):
                     item, value = queue_entry
-                    self.logger.info(f"# {self.item_queue.qsize() + 1} item(s) to do. || 'on-change' item={item.path()} with {value=} will be processed.")
+                    self.logger.info(f"# {self.item_queue.qsize() + 1} item(s) to do. || 'onchange' item={item.path()} with {value=} will be processed.")
                     self.active_queue_item = str(item.path())
                     self.handle_onchange(item, value)
                 else:
@@ -1207,7 +1253,7 @@ class DatabaseAddOn(SmartPlugin):
         if self.debug_log.onchange:
             self.logger.debug(f"called with updated_item={updated_item.path()} and value={value}.")
 
-        relevant_item_list = set(self.get_item_list('database_item', updated_item)) & set(self.get_item_list('cycle', 'on-change'))
+        relevant_item_list = set(self.get_item_list('database_item', updated_item)) & set(self.get_item_list('cycle', 'onchange'))
 
         if self.debug_log.onchange:
             self.logger.debug(f"Following items where identified for update: {relevant_item_list}.")
@@ -1224,20 +1270,20 @@ class DatabaseAddOn(SmartPlugin):
             new_value = None
 
             # handle all non on_change functions
-            if db_addon_fct not in ALL_ONCHANGE_ATTRIBUTES:
+            if db_addon_fct not in ONCHANGE_ATTRIBUTES:
                 if self.debug_log.onchange:
-                    self.logger.debug(f"non on-change function detected. Skip update.")
+                    self.logger.debug(f"non onchange function detected. Skip update.")
                 continue
 
-            # handle minmax on-change items tagesmitteltemperatur_heute, minmax_heute_avg
+            # handle minmax onchange items tagesmitteltemperatur_heute, minmax_heute_avg
             if db_addon_fct in TAGESMITTEL_ATTRIBUTES_ONCHANGE:
                 new_value = handle_tagesmittel()
 
-            # handle minmax on-change items like minmax_heute_max, minmax_heute_min, minmax_woche_max, minmax_woche_min.....
+            # handle minmax onchange items like minmax_heute_max, minmax_heute_min, minmax_woche_max, minmax_woche_min.....
             elif db_addon_fct.startswith('minmax'):
                 new_value = handle_minmax()
 
-            # handle verbrauch on-change items ending with heute, woche, monat, jahr
+            # handle verbrauch onchange items ending with heute, woche, monat, jahr
             elif db_addon_fct.startswith('verbrauch'):
                 new_value = handle_verbrauch()
 
@@ -1291,7 +1337,40 @@ class DatabaseAddOn(SmartPlugin):
         return self.get_item_list('startup', True)
 
     def _onchange_items(self) -> list:
-        return self.get_item_list('cycle', 'on-change')
+        return self.get_item_list('on', 'change')
+
+    def _onchange_hourly_items(self) -> list:
+        return list(set(self._onchange_items()) & set(self._hourly_items()))
+
+    def _onchange_daily_items(self) -> list:
+        return list(set(self._onchange_items()) & set(self._daily_items()))
+
+    def _onchange_weekly_items(self) -> list:
+        return list(set(self._onchange_items()) & set(self._weekly_items()))
+
+    def _onchange_monthly_items(self) -> list:
+        return list(set(self._onchange_items()) & set(self._monthly_items()))
+
+    def _onchange_yearly_items(self) -> list:
+        return list(set(self._onchange_items()) & set(self._yearly_items()))
+
+    def _ondemand_items(self) -> list:
+        return self.get_item_list('on', 'demand')
+
+    def _ondemand_hourly_items(self) -> list:
+        return list(set(self._ondemand_items()) & set(self._hourly_items()))
+
+    def _ondemand_daily_items(self) -> list:
+        return list(set(self._ondemand_items()) & set(self._daily_items()))
+
+    def _ondemand_weekly_items(self) -> list:
+        return list(set(self._ondemand_items()) & set(self._weekly_items()))
+
+    def _ondemand_monthly_items(self) -> list:
+        return list(set(self._ondemand_items()) & set(self._monthly_items()))
+
+    def _ondemand_yearly_items(self) -> list:
+        return list(set(self._ondemand_items()) & set(self._yearly_items()))
 
     def _hourly_items(self) -> list:
         return self.get_item_list('cycle', 'hourly')
@@ -1322,9 +1401,6 @@ class DatabaseAddOn(SmartPlugin):
 
     def _database_item_path_items(self) -> list:
         return self.get_item_list('database_item_path', True)
-
-    def _ondemand_items(self) -> list:
-        return self._daily_items() + self._weekly_items() + self._monthly_items() + self._yearly_items() + self._static_items()
 
     def _suspended_items(self) -> list:
         return self.get_item_list('suspended', True)
