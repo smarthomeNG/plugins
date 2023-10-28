@@ -109,10 +109,8 @@ wird der Name auf die ID des Items zurückgreifen, was den Item-Tag
 Korrektes Logging
 =================
 
-Bitte lesen Sie die `Key
-Konzepte <https://docs.influxdata.com/influxdb/v1.8/concepts/key_concepts/>`_
-und `Schema
-Design <https://docs.influxdata.com/influxdb/v1.8/concepts/schema_and_data_layout/>`_
+Bitte lesen Sie die `Key Konzepte <https://docs.influxdata.com/influxdb/v1.8/concepts/key_concepts/>`_
+und `Schema Design <https://docs.influxdata.com/influxdb/v1.8/concepts/schema_and_data_layout/>`_
 
 Insbesondere diese:
 
