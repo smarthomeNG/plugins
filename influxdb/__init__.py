@@ -30,6 +30,7 @@ class InfluxDB(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, smarthome):
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init InfluxDB')
 
