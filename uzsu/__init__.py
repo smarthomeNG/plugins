@@ -74,9 +74,8 @@
 # {'value':0, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2;COUNT=5', 'time': '17:30'}
 # ]})
 
-import logging
 import functools
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
 from lib.shtime import Shtime
 
@@ -87,11 +86,9 @@ from dateutil import parser
 from dateutil.tz import tzutc
 from unittest import mock
 from collections import OrderedDict
-import copy
 import html
 import json
 from .webif import WebInterface
-from scipy import interpolate
 
 ITEM_TAG = ['uzsu_item']
 
@@ -149,7 +146,7 @@ class UZSU(SmartPlugin):
             cond1 = self._items[item].get('active') and self._items[item]['active'] is True
             cond2 = self._items[item].get('list')
             if cond1 and cond2:
-                self._update_count['todo'] = self._update_count.get('todo') + 1
+                self._update_count['todo'] = self._update_count.get('todo', 0) + 1
         self.logger.debug("Going to update {} items from {}".format(self._update_count['todo'], list(self._items.keys())))
 
         for item in self._items:
@@ -483,7 +480,7 @@ class UZSU(SmartPlugin):
                 self._planned.update({item: None})
                 self._webdata['items'][item.id()].update({'planned': {'value': '-', 'time': '-'}})
 
-    def update_item(self, item, caller=None, source=None, dest=None):
+    def update_item(self, item, caller=None, source='', dest=None):
         """
         This is called by smarthome engine when the item changes, e.g. by Visu or by the command line interface
         The relevant item is put into the internal item list and registered to the scheduler
@@ -547,15 +544,72 @@ class UZSU(SmartPlugin):
         item(self._items[item], caller, comment)
         self._webdata['items'][item.id()].update({'interpolation': self._items[item].get('interpolation')})
         self._webdata['items'][item.id()].update({'active': str(self._items[item].get('active'))})
-        #self._webdata['items'][item.id()].update({'sun': self._items[item].get('SunCalculated')})
+        # self._webdata['items'][item.id()].update({'sun': self._items[item].get('SunCalculated')})
         _suncalc = self._items[item].get('SunCalculated')
         self._webdata['items'][item.id()].update({'sun': _suncalc})
         self._webdata['sunCalculated'] = _suncalc
         self._webdata['items'][item.id()].update({'dict': self.get_itemdict(item)})
-        if not comment == "init":
+        if comment != "init":
             _uzsuitem, _itemvalue = self._get_dependant(item)
             item_id = None if _uzsuitem is None else _uzsuitem.id()
             self._webdata['items'][item.id()].update({'depend': {'item': item_id, 'value': str(_itemvalue)}})
+
+    def _linear(self, data: dict, time: float, use_precision=True):
+        """
+        Returns linear interpolation for series data at specified time
+        """
+        ts_last = 0
+        ts_next = -1
+        for ts in data.keys():
+            if ts <= time and ts > ts_last:
+                ts_last = ts
+            # use <= to get last data value for series of identical timestamps
+            if ts >= time and (ts <= ts_next or ts_next == -1):
+                ts_next = ts
+
+        if time == ts_next:
+            value = data[ts_next]
+        elif time == ts_last:
+            value = data[ts_last]
+        else:
+            d_last = float(data[ts_last])
+            d_next = float(data[ts_next])
+
+            value = d_last + ((d_next - d_last) / (ts_next - ts_last)) * (time - ts_last)
+
+        if use_precision:
+            value = round(value, self._interpolation_precision)
+
+        return value
+
+    def _cubic(self, data: dict, time: float, use_precision=True):
+        """
+        Returns cubic interpolation for series data at specified time
+        """
+        ts_last = 0
+        ts_next = -1
+        for ts in data.keys():
+            if ts <= time and ts > ts_last:
+                ts_last = ts
+            # use <= to get last data value for series of identical timestamps
+            if ts >= time and (ts <= ts_next or ts_next == -1):
+                ts_next = ts
+
+        if time == ts_next:
+            value = data[ts_next]
+        elif time == ts_last:
+            value = data[ts_last]
+        else:
+            d_last = float(data[ts_last])
+            d_next = float(data[ts_next])
+
+            t = (time - ts_last) / (ts_next - ts_last)
+            value = (2 * t ** 3 - 3 * t ** 2 + 1) * d_last + (-2 * t ** 3 + 3 * t ** 2) * d_next
+
+        if use_precision:
+            value = round(value, self._interpolation_precision)
+
+        return value
 
     def _schedule(self, item, caller=None):
         """
@@ -679,25 +733,24 @@ class UZSU(SmartPlugin):
                 _reset_interpolation = True
             elif _interpolation.lower() == 'cubic' and _interval > 0:
                 try:
-                    tck = interpolate.PchipInterpolator(list(self._itpl[item].keys()), list(self._itpl[item].values()))
                     _nextinterpolation = datetime.now(self._timezone) + timedelta(minutes=_interval)
                     _next = _nextinterpolation if _next > _nextinterpolation else _next
-                    _value = round(float(tck(_next.timestamp() * 1000.0)), self._interpolation_precision)
-                    _value_now = round(float(tck(entry_now)), self._interpolation_precision)
+                    _value = self._cubic(self._itpl[item], _next.timestamp() * 1000.0)
+                    _value_now = self._cubic(self._itpl[item], entry_now)
                     if _caller != "dry_run":
                         self._set(item=item, value=_value_now, caller=_caller)
                     self.logger.info("Updated: {}, cubic interpolation value: {}, based on dict: {}."
                                      " Next: {}, value: {}".format(item, _value_now, self._itpl[item], _next, _value))
+                    self.logger.info(f'New values: {self._cubic(self._itpl[item], entry_now)}, next: {self._cubic(self._itpl[item], _next.timestamp() * 1000.0)}')
                 except Exception as e:
                     self.logger.error("Error cubic interpolation for item {} "
                                       "with interpolation list {}: {}".format(item, self._itpl[item], e))
             elif _interpolation.lower() == 'linear' and _interval > 0:
                 try:
-                    tck = interpolate.interp1d(list(self._itpl[item].keys()), list(self._itpl[item].values()))
                     _nextinterpolation = datetime.now(self._timezone) + timedelta(minutes=_interval)
                     _next = _nextinterpolation if _next > _nextinterpolation else _next
-                    _value = round(float(tck(_next.timestamp() * 1000.0)), self._interpolation_precision)
-                    _value_now = round(float(tck(entry_now)), self._interpolation_precision)
+                    _value = self._linear(self._itpl[item], _next.timestamp() * 1000.0)
+                    _value_now = self._linear(self._itpl[item], entry_now)
                     if caller != 'set' and _caller != "dry_run":
                         self._set(item=item, value=_value_now, caller=_caller)
                     self.logger.info("Updated: {}, linear interpolation value: {}, based on dict: {}."
@@ -715,7 +768,7 @@ class UZSU(SmartPlugin):
                                   " and value {}".format(item.property.path, _next, _next.tzinfo, _value))
                 self._planned.update({item: {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M')}})
                 self._webdata['items'][item.id()].update({'planned': {'value': _value, 'time': _next.strftime('%d.%m.%Y %H:%M')}})
-                self._update_count['done'] = self._update_count.get('done') + 1
+                self._update_count['done'] = self._update_count.get('done', 0) + 1
                 self.scheduler_add('{}'.format(item.property.path), self._set,
                                    value={'item': item, 'value': _value, 'caller': 'Scheduler'}, next=_next)
                 if self._update_count.get('done') == self._update_count.get('todo'):
