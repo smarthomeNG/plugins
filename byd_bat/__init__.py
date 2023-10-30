@@ -37,6 +37,10 @@
 #
 # V0.0.4 230904 - Bilder JPG in PNG konvertiert fuer user_doc.rst
 #
+# V0.0.5 231030 - Diagnose ergaenzt: Bat-Voltag, V-Out, Current
+#               - Liste der Wechselrichter aktualisiert
+#               - Alle Plot-Dateien beim Plugin-Start loeschen
+#
 # -----------------------------------------------------------------------
 #
 # Als Basis fuer die Implementierung wurde die folgende Quelle verwendet:
@@ -45,7 +49,10 @@
 #
 # Diverse Notizen
 #
-# - Datenpaket wird mit CRC16/MODBUS am Ende abgeschlossen (2 Byte, LSB,MSB)
+# - Beginn Frame (Senden/Empfangen): 0x01 0x03
+# - Antwort 3.Byte (direkt nach Header): Anzahl Bytes Nutzdaten (2 Byte CRC werden mitgezaehlt)
+# - Datenpaket wird mit CRC16/MODBUS am Ende abgeschlossen (2 Byte, LSB,MSB) (Nutzdaten+Längenbyte)
+# - Der Server im BYD akzeptiert nur 1 Verbindung auf Port 8080/TCP !
 #
 # -----------------------------------------------------------------------
 
@@ -59,6 +66,7 @@ import time
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 byd_ip_default = "192.168.16.254"
 
@@ -72,7 +80,7 @@ byd_timeout_1s = 1.0
 byd_timeout_2s = 2.0
 byd_timeout_8s = 8.0
 
-byd_tours_max = 3
+byd_towers_max = 3
 byd_cells_max = 160
 byd_temps_max = 64
 
@@ -122,48 +130,52 @@ byd_errors = [
   "Low Temperature Discharging (Cells)"
 ]
 
+byd_invs_max = 19
 byd_invs = [
-  "Fronius HV",
-  "Goodwe HV",
-  "Fronius HV",
-  "Kostal HV",
-  "Goodwe HV",
-  "SMA SBS3.7/5.0",
-  "Kostal HV",
-  "SMA SBS3.7/5.0",
-  "Sungrow HV",
-  "Sungrow HV",
-  "Kaco HV",
-  "Kaco HV",
-  "Ingeteam HV",
-  "Ingeteam HV",
-  "SMA SBS 2.5 HV",
-  "",
-  "SMA SBS 2.5 HV",
-  "Fronius HV"
+  "Fronius HV",              # 0
+  "Goodwe HV",               # 1
+  "Fronius HV",              # 2
+  "Kostal HV",               # 3
+  "Goodwe HV",               # 4
+  "SMA SBS3.7/5.0",          # 5
+  "Kostal HV",               # 6
+  "SMA SBS3.7/5.0",          # 7
+  "Sungrow HV",              # 8
+  "Sungrow HV",              # 9
+  "Kaco HV",                 # 10
+  "Kaco HV",                 # 11
+  "Ingeteam HV",             # 12
+  "Ingeteam HV",             # 13
+  "SMA SBS 2.5 HV",          # 14
+  "",                        # 15
+  "SMA SBS 2.5 HV",          # 16
+  "Fronius HV",              # 17
+  "",                        # 18
+  "SMA STPx.0-3SE-40"        # 19
 ]
 
+byd_invs_lvs_max = 19
 byd_invs_lvs = [
-    "Fronius HV",
-    "Goodwe HV",
-    "Goodwe HV",
-    "Kostal HV",
-    "Selectronic LV",
-    "SMA SBS3.7/5.0",
-    "SMA LV",
-    "Victron LV",
-    "Suntech LV",
-    "Sungrow HV",
-    "Kaco HV",
-    "Studer LV",
-    "Solar Edge LV",
-    "Ingeteam HV",
-    "Sungrow LV",
-    "Schneider LV",
-    "SMA SBS2.5 HV",
-    "Solar Edge LV",
-    "Solar Edge LV",
-    "Solar Edge LV"
+    "Fronius HV",            # 0
+    "Goodwe HV",             # 1
+    "Goodwe HV",             # 2
+    "Kostal HV",             # 3
+    "Selectronic LV",        # 4
+    "SMA SBS3.7/5.0",        # 5
+    "SMA LV",                # 6
+    "Victron LV",            # 7
+    "Suntech LV",            # 8
+    "Sungrow HV",            # 9
+    "Kaco HV",               # 10
+    "Studer LV",             # 11
+    "Solar Edge LV",         # 12
+    "Ingeteam HV",           # 13
+    "Sungrow LV",            # 14
+    "Schneider LV",          # 15
+    "SMA SBS2.5 HV",         # 16
+    "Solar Edge LV",         # 17
+    "Solar Edge LV",         # 18
+    "Solar Edge LV"          # 19
 ]
 
 
@@ -178,7 +190,7 @@ class byd_bat(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '0.0.4'
+    PLUGIN_VERSION = '0.0.5'
     
     def __init__(self,sh):
         """
@@ -226,6 +238,9 @@ class byd_bat(SmartPlugin):
         self.byd_root_found = False
         
         self.byd_diag_soc = []
+        self.byd_diag_bat_voltag = []
+        self.byd_diag_v_out = []
+        self.byd_diag_current = []
         self.byd_diag_volt_max = []
         self.byd_diag_volt_max_c = []
         self.byd_diag_volt_min = []
@@ -234,8 +249,11 @@ class byd_bat(SmartPlugin):
         self.byd_diag_temp_min_c = []
         self.byd_volt_cell = []
         self.byd_temp_cell = []
-        for x in range(0,byd_tours_max + 1):
+        for x in range(0,byd_towers_max + 1):
           self.byd_diag_soc.append(0)
+          self.byd_diag_bat_voltag.append(0)
+          self.byd_diag_v_out.append(0)
+          self.byd_diag_current.append(0)
           self.byd_diag_volt_max.append(0)
           self.byd_diag_volt_max_c.append(0)
           self.byd_diag_volt_min.append(0)
@@ -253,6 +271,10 @@ class byd_bat(SmartPlugin):
           
         self.last_homedata = self.now_str()
         self.last_diagdata = self.now_str()
+        
+        self.plt_file_del()
+          
+        # self.simulate_data()  # for internal tests only
 
         # Initialization code goes here
 
@@ -507,7 +529,7 @@ class byd_bat(SmartPlugin):
 
         # Anzahl Tuerme und Anzahl Module pro Turm
         self.byd_bms_qty = data[36] // 0x10
-        if (self.byd_bms_qty == 0) or (self.byd_bms_qty > byd_tours_max):
+        if (self.byd_bms_qty == 0) or (self.byd_bms_qty > byd_towers_max):
           self.byd_bms_qty = 1
         self.byd_modules = data[36] % 0x10
         self.byd_batt_type_snr = data[5]
@@ -541,7 +563,7 @@ class byd_bat(SmartPlugin):
         self.byd_volt_max = self.buf2int16SI(data,5) * 1.0 / 100.0
         self.byd_volt_min = self.buf2int16SI(data,7) * 1.0 / 100.0
         self.byd_volt_diff = self.byd_volt_max - self.byd_volt_min
-        self.byd_current = self.buf2int16SI(data,11) * 1.0 / 10.0
+        self.byd_current = self.buf2int16SI(data,11) * 1.0 / 10.0     # Byte 11+12
         self.byd_power = self.byd_volt_out * self.byd_current
         if self.byd_power >= 0:
           self.byd_power_discharge = self.byd_power
@@ -632,9 +654,15 @@ class byd_bat(SmartPlugin):
         
         self.byd_inv_type = data[3]
         if self.byd_batt_str == "LVS":
-          self.byd_inv_str = byd_invs_lvs[self.byd_inv_type]
+          if self.byd_inv_type <= byd_invs_lvs_max:
+            self.byd_inv_str = byd_invs_lvs[self.byd_inv_type]
+          else:
+            self.byd_inv_str = "unknown"
         else:
-          self.byd_inv_str = byd_invs[self.byd_inv_type]
+          if self.byd_inv_type <= byd_invs_max:
+            self.byd_inv_str = byd_invs[self.byd_inv_type]
+          else:
+            self.byd_inv_str = "unknown"
         
         self.log_debug("Inv Type  : " + self.byd_inv_str + " (" + str(self.byd_inv_type) + ")")
         self.log_debug("Batt Type : " + self.byd_batt_str + " (" + str(self.byd_batt_type) + ")")
@@ -652,7 +680,10 @@ class byd_bat(SmartPlugin):
 
         self.log_debug("decode_5 (" + str(x) + ") : " + data.hex())
         
-        self.byd_diag_soc[x] = self.buf2int16SI(data,53) * 1.0 / 10.0
+        self.byd_diag_soc[x] = self.buf2int16SI(data,53) * 1.0 / 10.0          # Byte 53+54
+        self.byd_diag_bat_voltag[x] = self.buf2int16SI(data,45) * 1.0 / 10.0   # Byte 45+46
+        self.byd_diag_v_out[x] = self.buf2int16SI(data,51) * 1.0 / 10.0        # Byte 51+52
+        self.byd_diag_current[x] = self.buf2int16SI(data,57) * 1.0 / 10.0      # Byte 57+58
         self.byd_diag_volt_max[x] = self.buf2int16SI(data,5) / 1000.0
         self.byd_diag_volt_max_c[x] = data[9]
         self.byd_diag_volt_min[x] = self.buf2int16SI(data,7) / 1000.0
@@ -664,11 +695,14 @@ class byd_bat(SmartPlugin):
         for xx in range(0,16):
           self.byd_volt_cell[x][xx] = self.buf2int16SI(data,101 + (xx * 2)) / 1000.0
 
-        self.log_debug("SOC      : " + str(self.byd_diag_soc[x]))
-        self.log_debug("Volt max : " + str(self.byd_diag_volt_max[x]) + " c=" + str(self.byd_diag_volt_max_c[x]))
-        self.log_debug("Volt min : " + str(self.byd_diag_volt_min[x]) + " c=" + str(self.byd_diag_volt_min_c[x]))
-        self.log_debug("Temp max : " + " c=" + str(self.byd_diag_temp_max_c[x]))
-        self.log_debug("Temp min : " + " c=" + str(self.byd_diag_temp_min_c[x]))
+        self.log_debug("SOC        : " + str(self.byd_diag_soc[x]))
+        self.log_debug("Bat Voltag : " + str(self.byd_diag_bat_voltag[x]))
+        self.log_debug("V-Out      : " + str(self.byd_diag_v_out[x]))
+        self.log_debug("Current    : " + str(self.byd_diag_current[x]))
+        self.log_debug("Volt max   : " + str(self.byd_diag_volt_max[x]) + " c=" + str(self.byd_diag_volt_max_c[x]))
+        self.log_debug("Volt min   : " + str(self.byd_diag_volt_min[x]) + " c=" + str(self.byd_diag_volt_min_c[x]))
+        self.log_debug("Temp max   : " + " c=" + str(self.byd_diag_temp_max_c[x]))
+        self.log_debug("Temp min   : " + " c=" + str(self.byd_diag_temp_min_c[x]))
 #        for xx in range(0,16):
 #          self.log_debug("Turm " + str(x) + " Volt " + str(xx) + " : " + str(self.byd_volt_cell[x][xx]))
         
@@ -781,6 +815,9 @@ class byd_bat(SmartPlugin):
     def diagdata_save_one(self,device,x):
     
         device.soc(self.byd_diag_soc[x])
+        device.bat_voltag(self.byd_diag_bat_voltag[x])
+        device.v_out(self.byd_diag_v_out[x])
+        device.current(self.byd_diag_current[x])
         device.volt_max.volt(self.byd_diag_volt_max[x])
         device.volt_max.cell(self.byd_diag_volt_max_c[x])
         device.volt_min.volt(self.byd_diag_volt_min[x])
@@ -831,9 +868,9 @@ class byd_bat(SmartPlugin):
         
         ax.spines[:].set_visible(False)
         ax.set_xticks(np.arange(dd.shape[1] + 1) - .5,minor=True)
-        ax.set_yticks(np.arange(dd.shape[0] + 1) - .5,minor=True,size=10)
+        ax.set_yticks(np.arange(dd.shape[0] + 1) - .5,minor=True)
         ax.tick_params(which='minor',bottom=False,left=False)
-        ax.tick_params(axis='y',colors='white')
+        ax.tick_params(axis='y',colors='white',labelsize=10)
         
         textcolors = ("white","black")
         threshold = im.norm(dd.max()) / 2.
@@ -891,9 +928,9 @@ class byd_bat(SmartPlugin):
         
         ax.spines[:].set_visible(False)
         ax.set_xticks(np.arange(dd.shape[1] + 1) - .5,minor=True)
-        ax.set_yticks(np.arange(dd.shape[0] + 1) - .5,minor=True,size=10)
+        ax.set_yticks(np.arange(dd.shape[0] + 1) - .5,minor=True)
         ax.tick_params(which='minor',bottom=False,left=False)
-        ax.tick_params(axis='y',colors='white')
+        ax.tick_params(axis='y',colors='white',labelsize=10)
         
         textcolors = ("black","white")
         threshold = im.norm(dd.max()) / 2.
@@ -917,6 +954,55 @@ class byd_bat(SmartPlugin):
         self.log_debug("save " + self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(x) + byd_fname_ext)
         plt.close('all')
 
+        return
+        
+    def plt_file_del(self):
+        # Loescht alle Plot-Dateien
+        
+        # Spannungs-Plots
+        fn = self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(1) + byd_fname_ext
+        if os.path.exists(fn) == True:
+          os.remove(fn)
+        fn = self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(2) + byd_fname_ext
+        if os.path.exists(fn) == True:
+          os.remove(fn)
+        fn = self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(3) + byd_fname_ext
+        if os.path.exists(fn) == True:
+          os.remove(fn)
+
+        if len(self.bpath) != byd_path_empty:
+          fn = self.bpath + byd_fname_volt + str(1) + byd_fname_ext
+          if os.path.exists(fn) == True:
+            os.remove(fn)
+          fn = self.bpath + byd_fname_volt + str(2) + byd_fname_ext
+          if os.path.exists(fn) == True:
+            os.remove(fn)
+          fn = self.bpath + byd_fname_volt + str(3) + byd_fname_ext
+          if os.path.exists(fn) == True:
+            os.remove(fn)
+    
+        # Temperatur-Plots
+        fn = self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(1) + byd_fname_ext
+        if os.path.exists(fn) == True:
+          os.remove(fn)
+        fn = self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(2) + byd_fname_ext
+        if os.path.exists(fn) == True:
+          os.remove(fn)
+        fn = self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(3) + byd_fname_ext
+        if os.path.exists(fn) == True:
+          os.remove(fn)
+
+        if len(self.bpath) != byd_path_empty:
+          fn = self.bpath + byd_fname_temp + str(1) + byd_fname_ext
+          if os.path.exists(fn) == True:
+            os.remove(fn)
+          fn = self.bpath + byd_fname_temp + str(2) + byd_fname_ext
+          if os.path.exists(fn) == True:
+            os.remove(fn)
+          fn = self.bpath + byd_fname_temp + str(3) + byd_fname_ext
+          if os.path.exists(fn) == True:
+            os.remove(fn)
+    
         return
 
     def buf2int16SI(self,byteArray,pos):   # signed
@@ -981,3 +1067,27 @@ class byd_bat(SmartPlugin):
                                      description='')
 
         return True
+
+    def simulate_data(self):
+        # For internal tests only
+        self.byd_modules = 7
+        self.byd_batt_str = "HVM"
+        self.byd_capacity_module = 2.76
+        self.byd_volt_n = 16
+        self.byd_temp_n = 8
+        self.byd_cells_n = self.byd_modules * self.byd_volt_n
+        self.byd_temps_n = self.byd_modules * self.byd_temp_n
+        
+        for xx in range(0,self.byd_cells_n):
+          if (xx % 2) == 0:
+            self.byd_volt_cell[1][xx] = 2.2
+          else:
+            self.byd_volt_cell[1][xx] = 2.4
+        for xx in range(0,self.byd_temps_n):
+          if (xx % 2) == 0:
+            self.byd_temp_cell[1][xx] = 23
+          else:
+            self.byd_temp_cell[1][xx] = 26
+
+        self.diag_plot(1)
+        
