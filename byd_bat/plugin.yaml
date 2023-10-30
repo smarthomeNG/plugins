@@ -12,10 +12,10 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1886748-support-thread-f%C3%BCr-das-byd-batterie-plugin
 
-    version: 0.0.4                  # Plugin version (must match the version specified in __init__.py)
+    version: 0.0.5                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.9              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-#    py_minversion: 3.6             # minimum Python version to use for this plugin
+    py_minversion: 3.9             # minimum Python version to use for this plugin
 #    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: false           # plugin supports multi instance
     restartable: true
@@ -213,6 +213,21 @@ item_structs:
                     visu_acl: ro
                     database: init
                     
+                bat_voltag:          # BAT Voltage [V]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                v_out:               # V-Out [V]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                current:             # Current [A] (+ discharge / - charge battery)
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
                 volt_max:
                 
                     volt:            # max voltage [V]
@@ -254,6 +269,21 @@ item_structs:
                     visu_acl: ro
                     database: init
                     
+                bat_voltag:          # BAT Voltage [V]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                v_out:               # V-Out [V]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                current:             # Current [A] (+ discharge / - charge battery)
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
                 volt_max:
                 
                     volt:            # max voltage [V]
@@ -295,6 +325,21 @@ item_structs:
                     visu_acl: ro
                     database: init
                     
+                bat_voltag:          # BAT Voltage [V]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                v_out:               # V-Out [V]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                current:             # Current [A] (+ discharge / - charge battery)
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
                 volt_max:
                 
                     volt:            # max voltage [V]
