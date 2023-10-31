@@ -15,7 +15,7 @@ plugin:
     #documentation: https://www.smarthomeng.de/user/plugins/influxdb/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1498207-support-thread-f%C3%BCr-influxdb-plugin
 
-    version: 1.0.2                 # Plugin version
+    version: 1.0.3                 # Plugin version
     sh_minversion: 1.1             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
