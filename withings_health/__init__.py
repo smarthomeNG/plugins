@@ -128,8 +128,10 @@ class WithingsHealth(SmartPlugin):
                         userid=self._user_id,
                         client_id=self._client_id,
                         consumer_secret=self._consumer_secret)
-
-                    self._client = WithingsApi(self._creds, refresh_cb=self._store_tokens)
+                    try:
+                        self._client = WithingsApi(self._creds, refresh_cb=self._store_tokens)
+                    except Exception as e:
+                        self.logger.error("Client can not be initialized.")
                 else:
                     self.logger.error(
                         "Token is expired, run OAuth2 again from Web Interface (Expiry Date: {}).".format(
