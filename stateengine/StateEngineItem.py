@@ -867,7 +867,7 @@ class SeItem:
         if new_state:
             new_state.was_releasedby = None
             _can_release_list = []
-            releasedby = all_released_by.get(new_state)            
+            releasedby = all_released_by.get(new_state)
             if releasedby not in [[], None, [None]]:
                 self.__logger.develop("releasedby {}", releasedby)
                 state_dict = {item.id: item for item in self.__states}
@@ -1170,8 +1170,10 @@ class SeItem:
             _state = StateEngineState.SeState(self, item_state)
             _issue = _state.update_order(_statecount)
             if _issue:
-                self.__config_issues.update({item_state.property.path: {'issue': _issue, 'attribute': 'se_stateorder'}})
-                self.__logger.error("Issue with state {0} while setting order: {1}", item_state.property.path, _issue)
+                self.__config_issues.update({item_state.property.path:
+                                            {'issue': _issue, 'attribute': 'se_stateorder'}})
+                self.__logger.error("Issue with state {0} while setting order: {1}",
+                                    item_state.property.path, _issue)
             self.__states.append(_state)
             self.__state_ids.update({item_state.property.path: _state})
             self.__logger.info("Appended state {}", item_state.property.path)
@@ -1183,12 +1185,14 @@ class SeItem:
         except ValueError as ex:
             self.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
                 [{'conditionset': 'None', 'condition': 'ValueError'}]}})
-            self.__logger.error("Ignoring state {0} because ValueError: {1}", item_state.property.path, ex)
+            self.__logger.error("Ignoring state {0} because ValueError: {1}",
+                                item_state.property.path, ex)
             return _statecount
         except Exception as ex:
             self.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
                 [{'conditionset': 'None', 'condition': 'GeneralError'}]}})
-            self.__logger.error("Ignoring state {0} because: {1}", item_state.property.path, ex)
+            self.__logger.error("Ignoring state {0} because: {1}",
+                                item_state.property.path, ex)
             return _statecount
 
     def __finish_states(self):
@@ -1962,7 +1966,7 @@ class SeItem:
             _issue = "Determined item '{0}' does not exist.".format(item_id)
             self.__logger.warning(_issue)
         else:
-            self.__logger.develop("Determined item '{0}' for id {1}.", item.id, item_id)
+            self.__logger.develop("Determined item '{0}' for id {1}.", item.property.path, item_id)
         return item, [_issue]
 
     # Return an item related to the StateEngine object item
