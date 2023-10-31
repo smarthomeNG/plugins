@@ -25,16 +25,15 @@ Dieses Plugin benötigt die withings-api.
 Sie müssen sich unter `Withings (https://account.withings.com/)`_ registrieren.
 Weiters muss das Plugin struct mittles ``struct: withings_health.body`` eingebunden werden.
 
-Die bei der Registrierung einzugebende Callback-URL wird über die Weboberfläche des Plugins angezeigt
-bzw. im Developer Account von withings hinterlegt: <https://<Server-Adresse>/plugin/withings_health.
+Die bei der Registrierung einzugebende (lokale) Callback-URL wird über die Weboberfläche des Plugins angezeigt
+bzw. im Developer Account von withings hinterlegt: <http://<IP>:<Webinterface-Port>/plugin/withings_health.
 
 Der OAuth2-Prozess muss dann über die Weboberfläche des
 Plugins ausgelöst werden. Daher müssen zumindest die ersten vier Elemente des folgenden Beispiels
 vorhanden sein müssen (access_token, token_expiry, token_type, refresh_token).
 
 Falls Ihre SmartHomeNG-Instanz zu lange offline ist, verfallen die Token.
-Sie müssen dann den OAuth2-Prozess über das Webinterface
-neu starten. In diesem Fall werden Fehler protokolliert!
+Sie müssen dann den OAuth2-Prozess über das Webinterface neu starten. In diesem Fall werden Fehler protokolliert!
 
 Konfiguration
 =============
