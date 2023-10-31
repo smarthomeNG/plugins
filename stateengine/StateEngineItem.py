@@ -1124,27 +1124,52 @@ class SeItem:
         self.__logger.info("Recalculating state order. Current order: {}", self.__states)
         _copied_states = {}
         _add_order = 0
+        _changed_orders = []
         for i, state in enumerate(self.__states, 1):
             try:
                 _original_order = state.order
                 _issue = None
                 if state.is_copy_for and state not in _copied_states:
-                    _order = i
-                    _add_order += 1
+                    _order = i - 0.01
                     _copied_states[state] = _order
+                    self.__logger.develop("State {} is copy, set to {}", state, _order)
                 else:
                     _issue = state.update_order()
                     _order = state.order
+                    if _order != _original_order:
+                        _changed_orders.append(_order)
+                        _add_order -= 1
+                        self.__logger.develop("State {} changed order: {},"
+                                              " i: {} add order: {}.",
+                                              state, _order, i, _add_order)
+                    elif any(_order < value for value in _changed_orders):
+                        _order = i + _add_order
+                        _issue = state.update_order(_order)
+                        self.__logger.develop("State {} smaller, order: {},"
+                                              " i: {} add order: {}.",
+                                              state, _order, i, _add_order)
+                    elif any(_order == value for value in _changed_orders):
+                        _order = i + _add_order
+                        _issue = state.update_order(_order)
+                        self.__logger.develop("State {} equal, order: {},"
+                                              " i: {} add order: {}.",
+                                              state, _order, i, _add_order)
+                        _add_order += 1
+                    else:
+                        self.__logger.develop("State {} order: {},"
+                                              " i: {} add order: {}.",
+                                              state, _order, i, _add_order)
                 if _issue not in [[], None, [None]]:
                     self.__config_issues.update({state.id: {'issue': _issue, 'attribute': 'se_stateorder'}})
-                    self.__logger.warning("Issue while getting state order: {}, using original order {}", _issue, _original_order)
+                    self.__logger.warning("Issue while getting state order: {},"
+                                          " using original order {}", _issue, _original_order)
                     _order = _original_order
                     state.update_order(_original_order)
                 elif _copied_states.get(state) and _copied_states.get(state) > _order:
                     _reordered_states.remove((_copied_states.get(state), state))
                     state.is_copy_for = None
                     _add_order -= 1
-                elif state not in _copied_states:
+                elif state not in _copied_states and init is False:
                     _order += _add_order
                 _reordered_states.append((_order, state))
             except Exception as ex:
