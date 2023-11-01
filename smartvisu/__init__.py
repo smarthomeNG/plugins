@@ -184,8 +184,7 @@ class SmartVisu(SmartPlugin):
         item.expand_relativepathes('sv_widget2', "'", "'")
         item.expand_relativepathes('sv_nav_aside', "'", "'")
         item.expand_relativepathes('sv_nav_aside2', "'", "'")
-        if ('visu_acl' in item.conf):
-            self.add_item(item)
+        self.add_item(item)
 
 
     def parse_logic(self, logic):
