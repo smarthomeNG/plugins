@@ -58,7 +58,7 @@ items.yaml
 Logging in eine Messung namens ``root.some_item``, Standard-Tags und
 Tags/Felder wie in plugin.yaml angegeben
 
-.. code:: yaml
+.. code-block:: yaml
 
   root:
       some_item:
@@ -67,7 +67,7 @@ Tags/Felder wie in plugin.yaml angegeben
 Wenn ``keyword`` in der plugin.yaml auf ``sqlite`` gesetzt wird, kann dies auch
 als Ersatz für sqlite verwendet werden.
 
-.. code:: yaml
+.. code-block:: yaml
 
   root:
       some_item:
@@ -77,7 +77,7 @@ als Ersatz für sqlite verwendet werden.
 Tag ``room`` und Standard-Tags (einschließlich ``item: root.dining_temp``) und
 Tags/Felder wie in plugin.yaml angegeben
 
-.. code:: yaml
+.. code-block:: yaml
 
   root:
       dining_temp:
