@@ -121,6 +121,8 @@ Insbesondere diese:
 Daten aus dem Database Plugin transferieren
 ===========================================
 
+Diese Anleitung wurde unter influxdb2 getestet und muss eventuell für influxdb1 adaptiert werden.
+
 1. Pandas und influxdb_client Module für Python installieren
 2. CSV-Dump aus dem Webinterface des Datenbank-Plugins herunterladen
 3. Anpassen der Zugriffsparameter im unten stehenden Skript
