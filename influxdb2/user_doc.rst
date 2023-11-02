@@ -110,4 +110,11 @@ Hier können ausführlichere Beispiele und Anwendungsfälle beschrieben werden.
 Web Interface
 =============
 
-...
+Das Web Interface ermöglicht das Betrachten der Items, die mit der Datenbank verbunden sind.
+
+.. image:: assets/influxdb2_webif.png
+   :height: 1632px
+   :width: 3310px
+   :scale: 25%
+   :alt: Web Interface
+   :align: center
