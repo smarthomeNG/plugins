@@ -1,0 +1,23 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Port list':            {'en': '=', 'de': 'Port Liste', 'fr': 'Liste des ports'}
+    
+    'Default name':         {'en': '=', 'de': 'Standardname', 'fr': 'Nom par défaut'}
+    'Comment':              {'en': '=', 'de': 'Kommentar', 'fr': 'Commentaire'}
+    'Speed':                {'en': '=', 'de': 'Geschwindigkeit', 'fr': 'Vitesse'}
+    'Up':                   {'en': '=', 'de': 'Benutzt', 'fr': 'Utilisé'}
+    'Enabled':              {'en': '=', 'de': 'Aktiviert', 'fr': 'Activé'}
+    
+    'POE Enabled':          {'en': '=', 'de': 'POE aktiviert', 'fr': 'POE activé'}
+    'Identity':             {'en': '=', 'de': 'Identität', 'fr': 'Identité'}
+    'API username':         {'en': '=', 'de': 'API Benutzername', 'fr': "Nom de l'utilisateur API"}
+    'Model':                {'en': '=', 'de': 'Modell', 'fr': 'Modèle'}
+    'Serial number':        {'en': '=', 'de': 'Seriennummer', 'fr': 'Numéro de série'}
+    'RouterOS version':     {'en': '=', 'de': 'RouterOS Version', 'fr': 'Version de RouterOS'}
+
+    # Alternative format for translations of longer texts:
+    'Hier kommt der Inhalt des Webinterfaces hin.':
+        de: '='
+        fr: "Voici viendra le contenue de l'interface web"
+        en: 'Here goes the content of the web interface.'
