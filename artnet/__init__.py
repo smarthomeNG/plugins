@@ -29,10 +29,11 @@ import struct
 
 from lib.model.smartplugin import *
 from lib.module import Modules
+from .webif import WebInterface
 
 class ArtNet_Model:
 
-    def __init__(self, ip, port: int, net: int, subnet: int, universe: int, instance_name, update_cycle: int, min_channels: int):
+    def __init__(self, ip, port: int, net: int, subnet: int, universe: int, instance_name, update_cycle: int, min_channels: int, plugin):
         self._ip = ip
         self._port = port
 
@@ -42,6 +43,7 @@ class ArtNet_Model:
         self._instance_name = instance_name
         self._update_cycle = update_cycle
         self._min_channels = min_channels
+        self._plugin = plugin
 
         self._items = []
 
@@ -91,8 +93,8 @@ class ArtNet_Model:
 
         :return: array of items held by the device, sorted by their DMX-address
         """
-        return sorted(self._items, key=lambda i: self.get_iattr_value(i.conf, "artnet_address"))
-        
+        return sorted(self._items, key=lambda i: self._plugin.get_iattr_value(i.conf, "artnet_address"))
+
 
     def get_min_channels(self):
         """
@@ -106,7 +108,7 @@ class ArtNet_Model:
 class ArtNet(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.6.0"
+    PLUGIN_VERSION = "1.6.1"
     ADDR_ATTR = 'artnet_address'
 
     packet_counter = 1
@@ -116,6 +118,7 @@ class ArtNet(SmartPlugin):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         """
+        super().__init__()
         self.logger.info('Init ArtNet Plugin')
 
         self._model = ArtNet_Model(ip=self.get_parameter_value('ip'),
@@ -125,14 +128,15 @@ class ArtNet(SmartPlugin):
                                    universe=self.get_parameter_value('artnet_universe'),
                                    instance_name=self.get_instance_name(),
                                    update_cycle=self.get_parameter_value('update_cycle'),
-                                   min_channels=self.get_parameter_value('min_channels')
+                                   min_channels=self.get_parameter_value('min_channels'),
+                                   plugin=self
                                    )
 
         while len(self.dmxdata) < self._model._min_channels:
             self.dmxdata.append(0)
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.init_webinterface()
+        self.init_webinterface(WebInterface)
 
         self.logger.debug("Init ArtNet Plugin for %s done" %
                           self._model._instance_name)
@@ -180,7 +184,10 @@ class ArtNet(SmartPlugin):
         for it in self._model._items:
             adr = int(self.get_iattr_value(it.conf, self.ADDR_ATTR))
             val = it()
-            if val < 0 or val > 255:
+            if val is None:
+                self.logger.warning(f"Value for address {adr} is None.")
+                continue
+            elif val < 0 or val > 255:
                 self.logger.warning(
                     "Impossible to update address: %s to value %s from item %s, value has to be >=0 and <=255" % (adr, val, it))
             else:
@@ -241,7 +248,7 @@ class ArtNet(SmartPlugin):
 
     def __ArtDMX_broadcast(self):
         """
-        Assemble data according to ArtDmx packet definition, see at 
+        Assemble data according to ArtDmx packet definition, see at
         https://artisticlicence.com/WebSiteMaster/User Guides/art-net.pdf
         """
         data = []
@@ -267,10 +274,11 @@ class ArtNet(SmartPlugin):
 
         # Length of DMX Data, High Byte First
         data.append(struct.pack('>H', len(self.dmxdata)))
-        
+
         # DMX Data
         for d in self.dmxdata:
-            data.append(struct.pack('B', int(d)))
+            if d is not None:
+                data.append(struct.pack('B', int(d)))
 
         # convert from list to string
         result = bytes()
@@ -288,79 +296,3 @@ class ArtNet(SmartPlugin):
                                                                                         self._model._subnet,
                                                                                         self._model._universe))
         self.s.sendto(result, (self._model._ip, self._model._port))
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            # try/except to handle running in a core version that does not support modules
-            self.mod_http = Modules.get_instance().get_module('http')
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-
-        self.tplenv = self.init_template_environment()
-
-    @cherrypy.expose
-    def index(self, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        tabcount = 1
-
-        tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
-                           plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(),
-                           tabcount=tabcount,
-                           p=self.plugin)
