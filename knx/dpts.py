@@ -122,6 +122,17 @@ def de5001(payload):
     return round(struct.unpack('>B', payload)[0] * 100.0 / 255, 1)
 
 
+def en5003(value):
+    value = value % 360
+    return [0, int(value * 255.0 / 360) & 0xff]
+
+
+def de5003(payload):
+    if len(payload) != 1:
+        return None
+    return round(struct.unpack('>B', payload)[0] * 360.0 / 255, 1)
+
+
 def en5999(value):
     # artificial data point for tebis TS systems
     if value < 0:
@@ -545,6 +556,8 @@ decode = {
     '5': de5,
     '5001': de5001,
     '5.001': de5001,
+    '5003': de5003,     #DPT_Angle [0..360] °
+    '5.003': de5003,    #DPT_Angle [0..360] °
     '5999': de5999,
     '5.999': de5999,
     '6': de6,
@@ -591,7 +604,8 @@ encode = {
     '5': en5,           #One Byte: unsigned value
     '5001': en5001,     #DPT_Scaling [0 ... 100] %
     '5.001': en5001,    #DPT_Scaling [0 ... 100] %
-    # 5.003 -> DPT_Angle [0..360] °
+    '5003': en5003,     #DPT_Angle [0..360] °
+    '5.003': en5003,    #DPT_Angle [0..360] °
     # 5.004 -> DPT_Percent_U8 [0..255] %
     # 5.005 -> DPT_DecimalFactor
     '5999': en5999,     #artificial data point for tebis TS systems
