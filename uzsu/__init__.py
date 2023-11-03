@@ -547,37 +547,9 @@ class UZSU(SmartPlugin):
             item_id = None if _uzsuitem is None else _uzsuitem.property.path
             self._webdata['items'][item.property.path].update({'depend': {'item': item_id, 'value': str(_itemvalue)}})
 
-    def _linear(self, data: dict, time: float, use_precision=True):
+    def _interpolate(self, data: dict, time: float, linear=True, use_precision=True):
         """
-        Returns linear interpolation for series data at specified time
-        """
-        ts_last = 0
-        ts_next = -1
-        for ts in data.keys():
-            if ts <= time and ts > ts_last:
-                ts_last = ts
-            # use <= to get last data value for series of identical timestamps
-            if ts >= time and (ts <= ts_next or ts_next == -1):
-                ts_next = ts
-
-        if time == ts_next:
-            value = data[ts_next]
-        elif time == ts_last:
-            value = data[ts_last]
-        else:
-            d_last = float(data[ts_last])
-            d_next = float(data[ts_next])
-
-            value = d_last + ((d_next - d_last) / (ts_next - ts_last)) * (time - ts_last)
-
-        if use_precision:
-            value = round(value, self._interpolation_precision)
-
-        return value
-
-    def _cubic(self, data: dict, time: float, use_precision=True):
-        """
-        Returns cubic interpolation for series data at specified time
+        Returns linear / cubic interpolation for series data at specified time
         """
         ts_last = 0
         ts_next = -1
@@ -589,15 +561,22 @@ class UZSU(SmartPlugin):
                 ts_next = ts
 
         if time == ts_next:
-            value = data[ts_next]
+            value = float(data[ts_next])
         elif time == ts_last:
-            value = data[ts_last]
+            value = float(data[ts_last])
         else:
             d_last = float(data[ts_last])
             d_next = float(data[ts_next])
 
-            t = (time - ts_last) / (ts_next - ts_last)
-            value = (2 * t ** 3 - 3 * t ** 2 + 1) * d_last + (-2 * t ** 3 + 3 * t ** 2) * d_next
+            if linear:
+
+                # linear interpolation
+                value = d_last + ((d_next - d_last) / (ts_next - ts_last)) * (time - ts_last)
+            else:
+
+                # cubic interpolation with m0/m1 = 0
+                t = (time - ts_last) / (ts_next - ts_last)
+                value = (2 * t ** 3 - 3 * t ** 2 + 1) * d_last + (-2 * t ** 3 + 3 * t ** 2) * d_next
 
         if use_precision:
             value = round(value, self._interpolation_precision)
@@ -708,28 +687,17 @@ class UZSU(SmartPlugin):
             elif cond2 and _itemtype not in ['num']:
                 self.logger.warning(f'Interpolation is set to {item} but type of item {_interpolation} is {_itemtype}. Ignoring interpolation and setting UZSU interpolation to none.')
                 _reset_interpolation = True
-            elif _interpolation.lower() == 'cubic' and _interval > 0:
+            elif _interpolation.lower() in ('cubic', 'linear') and _interval > 0:
                 try:
                     _nextinterpolation = datetime.now(self._timezone) + timedelta(minutes=_interval)
                     _next = _nextinterpolation if _next > _nextinterpolation else _next
-                    _value = self._cubic(self._itpl[item], _next.timestamp() * 1000.0)
-                    _value_now = self._cubic(self._itpl[item], entry_now)
+                    _value = self._interpolate(self._itpl[item], _next.timestamp() * 1000.0, _interpolation.lower() == 'linear')
+                    _value_now = self._interpolate(self._itpl[item], entry_now, _interpolation.lower() == 'linear')
                     if _caller != "dry_run":
                         self._set(item=item, value=_value_now, caller=_caller)
-                    self.logger.info(f'Updated: {item}, cubic interpolation value: {_value_now}, based on dict: {self._itpl[item]}. Next: {_next}, value: {_value}')
+                    self.logger.info(f'Updated: {item}, {_interpolation.lower()} interpolation value: {_value_now}, based on dict: {self._itpl[item]}. Next: {_next}, value: {_value}')
                 except Exception as e:
-                    self.logger.error(f'Error cubic interpolation for item {item} with interpolation list {self._itpl[item]}: {e}')
-            elif _interpolation.lower() == 'linear' and _interval > 0:
-                try:
-                    _nextinterpolation = datetime.now(self._timezone) + timedelta(minutes=_interval)
-                    _next = _nextinterpolation if _next > _nextinterpolation else _next
-                    _value = self._linear(self._itpl[item], _next.timestamp() * 1000.0)
-                    _value_now = self._linear(self._itpl[item], entry_now)
-                    if caller != 'set' and _caller != "dry_run":
-                        self._set(item=item, value=_value_now, caller=_caller)
-                    self.logger.info(f'Updated: {item}, linear interpolation value: {_value_now}, based on dict: {self._itpl[item]}. Next: {_next}, value: {_value}')
-                except Exception as e:
-                    self.logger.error(f'Error linear interpolation: {e}')
+                    self.logger.error(f'Error {_interpolation.lower()} interpolation for item {item} with interpolation list {self._itpl[item]}: {e}')
             if cond5 and _value < 0:
                 self.logger.warning(f'value {_value} for item "{item}" is negative. This might be due to not enough values set in the UZSU.')
             if _reset_interpolation is True:
