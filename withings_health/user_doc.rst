@@ -22,11 +22,12 @@ Vorbereitung
 
 Dieses Plugin benötigt die withings-api.
 
-Sie müssen sich unter `Withings (https://account.withings.com/)`_ registrieren.
-Weiters muss das Plugin struct mittles ``struct: withings_health.body`` eingebunden werden.
+Sie müssen sich unter `Withings Account (https://account.withings.com/)`_ registrieren und im Dashboard
+eine Applikation anlegen. Der Name ist frei wählbar, die (lokale) Callback-URL wird über die Weboberfläche des Plugins angezeigt: <http://<IP>:<Webinterface-Port>/plugin/withings_health.
+Wenn Sie sich bei der `Withings App (https://app.withings.com/)`_ einloggen, kann die achtstellige Zahl
+in der URL ausgelesen und in der Pluginkonfiguration als user_id angegeben werden.
 
-Die bei der Registrierung einzugebende (lokale) Callback-URL wird über die Weboberfläche des Plugins angezeigt
-bzw. im Developer Account von withings hinterlegt: <http://<IP>:<Webinterface-Port>/plugin/withings_health.
+Weiters muss das Plugin struct mittles ``struct: withings_health.body`` eingebunden werden.
 
 Der OAuth2-Prozess muss dann über die Weboberfläche des
 Plugins ausgelöst werden. Daher müssen zumindest die ersten vier Elemente des folgenden Beispiels
