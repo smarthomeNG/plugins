@@ -4,7 +4,7 @@
 #  Copyright 2018 Nico P.
 #  THX to arvehj for the communication procedure (jvcprojectortools)
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -97,7 +97,7 @@ class JVC_DILA_Control(SmartPlugin):
     the update functions for the items
     """
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION='1.0.0'
+    PLUGIN_VERSION='1.0.1'
 
 
     def __init__(self, smarthome, host='0.0.0.0', gammaconf_dir='/usr/local/smarthome/etc/jvcproj/'):
@@ -107,6 +107,7 @@ class JVC_DILA_Control(SmartPlugin):
         :param gammaconf_dir:      location where the gamma.conf files are saved
         :port is fixed to 20554
         """
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self._sh=smarthome
         self.host_port = (host, 20554)
@@ -116,7 +117,7 @@ class JVC_DILA_Control(SmartPlugin):
     def run(self):
         """
         Run method for the plugin - called once to start the plugins processing
-        """        
+        """
         self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
         self.alive = True
 
@@ -130,7 +131,7 @@ class JVC_DILA_Control(SmartPlugin):
     def parse_item(self, item):
         """
         Plugin's parse_item method. Is called for every item when the plugin is initialized.
-        
+
         The plugin can, corresponding to its attribute keywords, decide what to do with
         the item in future, like adding it to an internal array for future reference
         :param item:    The item to process.
@@ -157,7 +158,7 @@ class JVC_DILA_Control(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         """
         Write items values
-        
+
         :param item: item to be updated towards the plugin
         :param caller: if given it represents the callers name
         :param source: if given it represents the source
