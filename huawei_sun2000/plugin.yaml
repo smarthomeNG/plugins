@@ -1,0 +1,1147 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Einbindung des Huawei SUN2000 Wechselrichters.'
+        en: 'Using of the Huawei SUN2000 inverters.'
+    maintainer: 'Ronny Schulz'
+#    tester:                         # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: huawei sun2000 wechselrichter inverter
+#    documentation: ''              # An url to optional plugin doc - NOT the url to user_doc!!!
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 0.0.2                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.9              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.10              # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: True            # plugin supports multi instance
+    restartable: True
+    classname: Huawei_Sun2000       # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    host:
+        type: ip
+        mandatory: True
+        description:
+            de: 'Hostname oder IP-Adresse des Wechselrichters.'
+            en: 'Hostname or IP address of the inverter.'
+
+    port:
+        type: int
+        default: 502
+        valid_min: 0
+        valid_max: 65535
+        description:
+            de: 'Port-Nummer des Wechselrichters.'
+            en: 'Port number of the inverter.'
+
+    slave:
+        type: int
+        default: 16
+        valid_min: 0
+        valid_max: 65535
+        description:
+            de: 'Modbus-Adresse des Wechselrichters.'
+            en: 'Modbus address of the inverter.'
+
+    cycle:
+        type: int
+        default: 300
+        description:
+            de: 'Zykluszeit.'
+            en: 'Cycle time.'
+
+item_attributes:
+    sun2000_read:
+        type: str
+        description:
+            de: 'Vom Wechselrichter zu lesende Daten.'
+            en: 'Data to be read from the inverter.'
+
+    sun2000_write:
+        type: str
+        description:
+            de: 'An den Wechselrichter zu sendende Daten.'
+            en: 'Data to be write to the inverter.'
+
+    cycle:
+        type: num
+        description:
+            de: 'Zykluszeit, die von der pluginspezifischen Zykluszeit abweichen kann.'
+            en: 'Cycle time different to the plugin specific cycle time.'
+
+item_structs:
+    inverter:
+        model_name:
+            type: str
+            sun2000_read@instance: MODEL_NAME
+            cycle_time@instance: 24h
+
+        serial_number:
+            type: str
+            sun2000_read@instance: SERIAL_NUMBER
+            cycle_time@instance: 24h
+
+        pn:
+            type: str
+            sun2000_read@instance: PN
+            cycle_time@instance: 24h
+
+        model_id:
+            type: num
+            sun2000_read@instance: MODEL_ID
+            cycle_time@instance: 24h
+
+        nb_pv_strings:
+            type: num
+            sun2000_read@instance: NB_PV_STRINGS
+            cycle_time@instance: 24h
+
+        nb_mpp_tracks:
+            type: num
+            sun2000_read@instance: NB_MPP_TRACKS
+            cycle_time@instance: 24h
+
+        rated_power:
+            type: num
+            sun2000_read@instance: RATED_POWER
+            cycle_time@instance: 24h
+
+        P_max:
+            type: num
+            sun2000_read@instance: P_MAX
+            cycle_time@instance: 24h
+
+        S_max:
+            type: num
+            sun2000_read@instance: S_MAX
+            cycle_time@instance: 24h
+
+        Q_max_out:
+            type: num
+            sun2000_read@instance: Q_MAX_OUT
+            cycle_time@instance: 24h
+
+        Q_max_in:
+            type: num
+            sun2000_read@instance: Q_MAX_IN
+            cycle_time@instance: 24h
+
+        state_1:
+            type: list
+            sun2000_read@instance: STATE_1
+
+        state_2:
+            type: list
+            sun2000_read@instance: STATE_2
+
+        state_3:
+            type: list
+            sun2000_read@instance: STATE_3
+
+        alarm_1:
+            type: list
+            sun2000_read@instance: ALARM_1
+
+        alarm_2:
+            type: list
+            sun2000_read@instance: ALARM_2
+
+        alarm_3:
+            type: list
+            sun2000_read@instance: ALARM_3
+
+        input_power:
+            type: num
+            sun2000_read@instance: INPUT_POWER
+
+        grid_voltage:
+            type: num
+            sun2000_read@instance: GRID_VOLTAGE
+
+        line_voltage_A_B:
+            type: num
+            sun2000_read@instance: LINE_VOLTAGE_A_B
+
+        line_voltage_B_C:
+            type: num
+            sun2000_read@instance: LINE_VOLTAGE_B_C
+
+        line_voltage_C_A:
+            type: num
+            sun2000_read@instance: LINE_VOLTAGE_C_A
+
+        phase_A_voltage:
+            type: num
+            sun2000_read@instance: PHASE_A_VOLTAGE
+
+        phase_B_voltage:
+            type: num
+            sun2000_read@instance: PHASE_B_VOLTAGE
+
+        phase_C_voltage:
+            type: num
+            sun2000_read@instance: PHASE_C_VOLTAGE
+
+        grid_current:
+            type: num
+            sun2000_read@instance: GRID_CURRENT
+
+        phase_A_current:
+            type: num
+            sun2000_read@instance: PHASE_A_CURRENT
+
+        phase_B_current:
+            type: num
+            sun2000_read@instance: PHASE_B_CURRENT
+
+        phase_C_current:
+            type: num
+            sun2000_read@instance: PHASE_C_CURRENT
+
+        day_active_power_peak:
+            type: num
+            sun2000_read@instance: DAY_ACTIVE_POWER_PEAK
+
+        active_power:
+            type: num
+            sun2000_read@instance: ACTIVE_POWER
+
+        reactive_power:
+            type: num
+            sun2000_read@instance: REACTIVE_POWER
+
+        power_factor:
+            type: num
+            sun2000_read@instance: POWER_FACTOR
+
+        grid_frequency:
+            type: num
+            sun2000_read@instance: GRID_FREQUENCY
+
+        efficiency:
+            type: num
+            sun2000_read@instance: EFFICIENCY
+
+        internal_temperature:
+            type: num
+            sun2000_read@instance: INTERNAL_TEMPERATURE
+
+        insulation_resistance:
+            type: num
+            sun2000_read@instance: INSULATION_RESISTANCE
+
+        device_status:
+            type: str
+            sun2000_read@instance: DEVICE_STATUS
+
+        fault_code:
+            type: num
+            sun2000_read@instance: FAULT_CODE
+
+        startup_time:
+            type: foo
+            sun2000_read@instance: STARTUP_TIME
+
+        shutdown_time:
+            type: foo
+            sun2000_read@instance: SHUTDOWN_TIME
+
+        accumulated_yield_energy:
+            type: num
+            sun2000_read@instance: ACCUMULATED_YIELD_ENERGY
+
+        daily_yield_energy:
+            type: num
+            sun2000_read@instance: DAILY_YIELD_ENERGY
+
+        capbank_running_time:
+            type: num
+            sun2000_read@instance: CAPBANK_RUNNING_TIME
+
+        internal_fan_1_running_time:
+            type: num
+            sun2000_read@instance: INTERNAL_FAN_1_RUNNING_TIME
+
+        inv_module_a_temp:
+            type: num
+            sun2000_read@instance: INV_MODULE_A_TEMP
+
+        inv_module_b_temp:
+            type: num
+            sun2000_read@instance: INV_MODULE_A_TEMP
+
+        inv_module_c_temp:
+            type: num
+            sun2000_read@instance: INV_MODULE_A_TEMP
+
+        anti_reverse_module_1_temp:
+            type: num
+            sun2000_read@instance: ANTI_REVERSE_MODULE_1_TEMP
+
+        anti_reverse_module_2_temp:
+            type: num
+            sun2000_read@instance: ANTI_REVERSE_MODULE_2_TEMP
+
+        output_board_relay_ambient_temp_max:
+            type: num
+            sun2000_read@instance: OUTPUT_BOARD_RELAY_AMBIENT_TEMP_MAX
+
+        dc_terminal_1_2_max_temp:
+            type: num
+            sun2000_read@instance: DC_TERMINAL_1_2_MAX_TEMP
+
+        ac_terminal_1_2_3_max_temp:
+            type: num
+            sun2000_read@instance: AC_TERMINAL_1_2_3_MAX_TEMP
+
+        phase_a_dc_component_dci:
+            type: num
+            sun2000_read@instance: PHASE_A_DC_COMPONENT_DCI
+
+        phase_b_dc_component_dci:
+            type: num
+            sun2000_read@instance: PHASE_B_DC_COMPONENT_DCI
+
+        phase_c_dc_component_dci:
+            type: num
+            sun2000_read@instance: PHASE_C_DC_COMPONENT_DCI
+
+        leakage_current_rcd:
+            type: num
+            sun2000_read@instance: LEAKAGE_CURRENT_RCD
+
+        positive_bus_voltage:
+            type: num
+            sun2000_read@instance: POSITIVE_BUS_VOLTAGE
+
+        negative_bus_voltage:
+            type: num
+            sun2000_read@instance: NEGATIVE_BUS_VOLTAGE
+
+        bus_negative_voltage_to_ground:
+            type: num
+            sun2000_read@instance: BUS_NEGATIVE_VOLTAGE_TO_GROUND
+
+        nb_optimizers:
+            type: num
+            sun2000_read@instance: NB_OPTIMIZERS
+            cycle_time@instance: 24h
+
+        nb_online_optimizers:
+            type: num
+
+        system_time:
+            type: foo
+            sun2000_read@instance: SYSTEM_TIME
+
+        system_time_raw:
+            type: num
+            sun2000_read@instance: SYSTEM_TIME_RAW
+
+        startup:
+            type: num
+            sun2000_write@instance: STARTUP
+
+        shutdown:
+            type: num
+            sun2000_write@instance: SHUTDOWN
+
+        grid_code:
+            type: foo
+            sun2000_read@instance: GRID_CODE
+
+        mppt_multimodal_scanning:
+            type: bool
+            sun2000_read@instance: MPPT_MULTIMODAL_SCANNING
+
+        mppt_scanning_interval:
+            type: num
+            sun2000_read@instance: MPPT_SCANNING_INTERVAL
+
+        mppt_predicted_power:
+            type: num
+            sun2000_read@instance: MPPT_PREDICTED_POWER
+
+        time_zone:
+            type: num
+            sun2000_read@instance: TIME_ZONE
+            sun2000_write@instance: TIME_ZONE
+
+        wlan_wakeup:
+            type: foo
+            sun2000_read@instance: WLAN_WAKEUP
+            sun2000_write@instance: WLAN_WAKEUP
+
+    meter:
+        meter_status:
+            type: num
+            sun2000_read@instance: METER_STATUS
+
+        grid_A_voltage:
+            type: num
+            sun2000_read@instance: GRID_A_VOLTAGE
+
+        grid_B_voltage:
+            type: num
+            sun2000_read@instance: GRID_B_VOLTAGE
+
+        grid_C_voltage:
+            type: num
+            sun2000_read@instance: GRID_C_VOLTAGE
+
+        active_grid_A_current:
+            type: num
+            sun2000_read@instance: ACTIVE_GRID_A_CURRENT
+
+        active_grid_B_current:
+            type: num
+            sun2000_read@instance: ACTIVE_GRID_B_CURRENT
+
+        active_grid_C_current:
+            type: num
+            sun2000_read@instance: ACTIVE_GRID_C_CURRENT
+
+        power_meter_active_power:
+            type: num
+            sun2000_read@instance: POWER_METER_ACTIVE_POWER
+
+        power_meter_reactive_power:
+            type: num
+            sun2000_read@instance: POWER_METER_REACTIVE_POWER
+
+        active_grid_power_factor:
+            type: num
+            sun2000_read@instance: ACTIVE_GRID_POWER_FACTOR
+
+        active_grid_frequency:
+            type: num
+            sun2000_read@instance: ACTIVE_GRID_FREQUENCY
+
+        grid_exported_energy:
+            type: num
+            sun2000_read@instance: GRID_EXPORTED_ENERGY
+
+        grid_accumulated_energy:
+            type: num
+            sun2000_read@instance: GRID_ACCUMULATED_ENERGY
+
+        grid_accumulated_reactive_power:
+            type: num
+            sun2000_read@instance: GRID_ACCUMULATED_REACTIVE_POWER
+
+        meter_type:
+            type: num
+            sun2000_read@instance: METER_TYPE
+
+        active_grid_A_B_voltage:
+            type: num
+            sun2000_read@instance: ACTIVE_GRID_A_B_VOLTAGE
+
+        active_grid_B_C_voltage:
+            type: num
+            sun2000_read@instance: ACTIVE_GRID_B_C_VOLTAGE
+
+        active_grid_C_A_voltage:
+            type: num
+            sun2000_read@instance: ACTIVE_GRID_C_A_VOLTAGE
+
+        active_grid_A_power:
+            type: num
+            sun2000_read@instance: ACTIVE_GRID_A_POWER
+
+        active_grid_B_power:
+            type: num
+            sun2000_read@instance: ACTIVE_GRID_B_POWER
+
+        active_grid_C_power:
+            type: num
+            sun2000_read@instance: ACTIVE_GRID_C_POWER
+
+        meter_type_check:
+            type: num
+            sun2000_read@instance: METER_TYPE_CHECK
+
+    storage:
+        equipment_part@instance: STORAGE
+
+        maximum_charge_power:
+            type: num
+            sun2000_read@instance: STORAGE_MAXIMUM_CHARGE_POWER
+            equipment_part@instance: ..:.
+
+        maximum_discharge_power:
+            type: num
+            sun2000_read@instance: STORAGE_MAXIMUM_DISCHARGE_POWER
+            equipment_part@instance: ..:.
+
+        rated_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_RATED_CAPACITY
+            equipment_part@instance: ..:.
+            cycle_time@instance: 24h
+
+        state_of_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_STATE_OF_CAPACITY
+            equipment_part@instance: ..:.
+
+        running_status:
+            type: num
+            sun2000_read@instance: STORAGE_RUNNING_STATUS
+            equipment_part@instance: ..:.
+
+        bus_voltage:
+            type: num
+            sun2000_read@instance: STORAGE_BUS_VOLTAGE
+            equipment_part@instance: ..:.
+
+        bus_current:
+            type: num
+            sun2000_read@instance: STORAGE_BUS_CURRENT
+            equipment_part@instance: ..:.
+
+        charge_discharge_power:
+            type: num
+            sun2000_read@instance: STORAGE_CHARGE_DISCHARGE_POWER
+            equipment_part@instance: ..:.
+
+        total_charge:
+            type: num
+            sun2000_read@instance: STORAGE_TOTAL_CHARGE
+            equipment_part@instance: ..:.
+
+        total_discharge:
+            type: num
+            sun2000_read@instance: STORAGE_TOTAL_DISCHARGE
+            equipment_part@instance: ..:.
+
+        current_day_charge_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_CURRENT_DAY_CHARGE_CAPACITY
+            equipment_part@instance: ..:.
+
+        current_day_discharge_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_CURRENT_DAY_DISCHARGE_CAPACITY
+            equipment_part@instance: ..:.
+
+    storage_unit_1:
+        equipment_part@instance: STORAGE_UNIT_1
+
+        product_model:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_PRODUCT_MODEL
+            equipment_part@instance: ..:.
+            cycle_time@instance: 24h
+
+        no:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_NO
+            equipment_part@instance: ..:.
+
+        running_status:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_RUNNING_STATUS
+            equipment_part@instance: ..:.
+
+        charge_discharge_power:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_CHARGE_DISCHARGE_POWER
+            equipment_part@instance: ..:.
+
+        bus_voltage:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BUS_VOLTAGE
+            equipment_part@instance: ..:.
+
+        state_of_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_STATE_OF_CAPACITY
+            equipment_part@instance: ..:.
+
+        working_mode_b:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_WORKING_MODE_B
+            equipment_part@instance: ..:.
+
+        rated_charge_power:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_RATED_CHARGE_POWER
+            equipment_part@instance: ..:.
+            cycle_time@instance: 24h
+
+        rated_discharge_power:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_RATED_DISCHARGE_POWER
+            equipment_part@instance: ..:.
+            cycle_time@instance: 24h
+
+        fault_id:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_FAULT_ID
+            equipment_part@instance: ..:.
+
+        current_day_charge_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_CURRENT_DAY_CHARGE_CAPACITY
+            equipment_part@instance: ..:.
+
+        current_day_discharge_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_CURRENT_DAY_DISCHARGE_CAPACITY
+            equipment_part@instance: ..:.
+
+        bus_current:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BUS_CURRENT
+            equipment_part@instance: ..:.
+
+        battery_temperature:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_TEMPERATURE
+            equipment_part@instance: ..:.
+
+        remaining_charge_discharge_time:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_REMAINING_CHARGE_DIS_CHARGE_TIME
+            equipment_part@instance: ..:.
+
+        dcdc_version:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_1_DCDC_VERSION
+            equipment_part@instance: ..:.
+
+        bms_version:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_1_BMS_VERSION
+            equipment_part@instance: ..:.
+
+        serial_number:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_1_SERIAL_NUMBER
+            equipment_part@instance: ..:.
+            cycle_time@instance: 24h
+
+        total_charge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_TOTAL_CHARGE
+            equipment_part@instance: ..:.
+
+        total_discharge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_TOTAL_DISCHARGE
+            equipment_part@instance: ..:.
+
+        software_version:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_1_SOFTWARE_VERSION
+            equipment_part@instance: ..:.
+
+    storage_unit_1_battery_pack_1:
+        equipment_part@instance: STORAGE_UNIT_1_BATTERY_PACK_1
+
+        serial_number:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_1_SERIAL_NUMBER
+            equipment_part@instance: ..:.
+            cycle_time@instance: 24h
+
+        firmware_version:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_1_FIRMWARE_VERSION
+            equipment_part@instance: ..:.
+
+        working_status:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_1_WORKING_STATUS
+            equipment_part@instance: ..:.
+
+        state_of_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_1_STATE_OF_CAPACITY
+            equipment_part@instance: ..:.
+
+        charge_discharge_power:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_1_CHARGE_DISCHARGE_POWER
+            equipment_part@instance: ..:.
+
+        voltage:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_1_VOLTAGE
+            equipment_part@instance: ..:.
+
+        current:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_1_CURRENT
+            equipment_part@instance: ..:.
+
+        total_charge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_1_TOTAL_CHARGE
+            equipment_part@instance: ..:.
+
+        total_discharge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_1_TOTAL_DISCHARGE
+            equipment_part@instance: ..:.
+
+        maximum_temperature:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_1_MAXIMUM_TEMPERATURE
+            equipment_part@instance: ..:.
+
+        minimum_temperature:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_1_MINIMUM_TEMPERATURE
+            equipment_part@instance: ..:.
+
+        no:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_PACK_1_NO
+            equipment_part@instance: ..:.
+
+    storage_unit_1_battery_pack_2:
+        equipment_part@instance: STORAGE_UNIT_1_BATTERY_PACK_2
+
+        serial_number:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_2_SERIAL_NUMBER
+            equipment_part@instance: ..:.
+            cycle_time@instance: 24h
+
+        firmware_version:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_2_FIRMWARE_VERSION
+            equipment_part@instance: ..:.
+
+        working_status:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_2_WORKING_STATUS
+            equipment_part@instance: ..:.
+
+        state_of_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_2_STATE_OF_CAPACITY
+            equipment_part@instance: ..:.
+
+        charge_discharge_power:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_2_CHARGE_DISCHARGE_POWER
+            equipment_part@instance: ..:.
+
+        voltage:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_2_VOLTAGE
+            equipment_part@instance: ..:.
+
+        current:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_2_CURRENT
+            equipment_part@instance: ..:.
+
+        total_charge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_2_TOTAL_CHARGE
+            equipment_part@instance: ..:.
+
+        total_discharge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_2_TOTAL_DISCHARGE
+            equipment_part@instance: ..:.
+
+        maximum_temperature:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_2_MAXIMUM_TEMPERATURE
+            equipment_part@instance: ..:.
+
+        minimum_temperature:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_2_MINIMUM_TEMPERATURE
+            equipment_part@instance: ..:.
+
+        no:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_PACK_2_NO
+            equipment_part@instance: ..:.
+
+    storage_unit_1_battery_pack_3:
+        equipment_part@instance: STORAGE_UNIT_1_BATTERY_PACK_3
+
+        serial_number:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_3_SERIAL_NUMBER
+            equipment_part@instance: ..:.
+            cycle_time@instance: 24h
+
+        firmware_version:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_3_FIRMWARE_VERSION
+            equipment_part@instance: ..:.
+
+        working_status:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_3_WORKING_STATUS
+            equipment_part@instance: ..:.
+
+        state_of_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_3_STATE_OF_CAPACITY
+            equipment_part@instance: ..:.
+
+        charge_discharge_power:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_3_CHARGE_DISCHARGE_POWER
+            equipment_part@instance: ..:.
+
+        voltage:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_3_VOLTAGE
+            equipment_part@instance: ..:.
+
+        current:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_3_CURRENT
+            equipment_part@instance: ..:.
+
+        total_charge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_3_TOTAL_CHARGE
+            equipment_part@instance: ..:.
+
+        total_discharge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_3_TOTAL_DISCHARGE
+            equipment_part@instance: ..:.
+
+        maximum_temperature:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_3_MAXIMUM_TEMPERATURE
+            equipment_part@instance: ..:.
+
+        minimum_temperature:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_BATTERY_PACK_3_MINIMUM_TEMPERATURE
+            equipment_part@instance: ..:.
+
+        no:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_1_PACK_3_NO
+            equipment_part@instance: ..:.
+
+    storage_unit_2:
+        equipment_part@instance: STORAGE_UNIT_2
+
+        product_model:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_PRODUCT_MODEL
+            equipment_part@instance: ..:.
+            cycle_time@instance: 24h
+
+        no:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_NO
+            equipment_part@instance: ..:.
+
+        running_status:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_RUNNING_STATUS
+            equipment_part@instance: ..:.
+
+        charge_discharge_power:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_CHARGE_DISCHARGE_POWER
+            equipment_part@instance: ..:.
+
+        bus_voltage:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BUS_VOLTAGE
+            equipment_part@instance: ..:.
+
+        state_of_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_STATE_OF_CAPACITY
+            equipment_part@instance: ..:.
+
+#        working_mode_b:
+#            type: num
+#            sun2000_read@instance: STORAGE_UNIT_2_WORKING_MODE_B
+#            equipment_part@instance: ..:.
+
+#        rated_charge_power:
+#            type: num
+#            sun2000_read@instance: STORAGE_UNIT_2_RATED_CHARGE_POWER
+#            equipment_part@instance: ..:.
+
+#        rated_discharge_power:
+#            type: num
+#            sun2000_read@instance: STORAGE_UNIT_2_RATED_DISCHARGE_POWER
+#            equipment_part@instance: ..:.
+
+#        fault_id:
+#            type: num
+#            sun2000_read@instance: STORAGE_UNIT_2_FAULT_ID
+#            equipment_part@instance: ..:.
+
+        current_day_charge_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_CURRENT_DAY_CHARGE_CAPACITY
+            equipment_part@instance: ..:.
+
+        current_day_discharge_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_CURRENT_DAY_DISCHARGE_CAPACITY
+            equipment_part@instance: ..:.
+
+        bus_current:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BUS_CURRENT
+            equipment_part@instance: ..:.
+
+        battery_temperature:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_TEMPERATURE
+            equipment_part@instance: ..:.
+
+#        remaining_charge_discharge_time:
+#            type: num
+#            sun2000_read@instance: STORAGE_UNIT_2_REMAINING_CHARGE_DIS_CHARGE_TIME
+#            equipment_part@instance: ..:.
+
+#        dcdc_version:
+#            type: str
+#            sun2000_read@instance: STORAGE_UNIT_2_DCDC_VERSION
+#            equipment_part@instance: ..:.
+
+#        bms_version:
+#            type: str
+#            sun2000_read@instance: STORAGE_UNIT_2_BMS_VERSION
+#            equipment_part@instance: ..:.
+
+        serial_number:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_2_SERIAL_NUMBER
+            equipment_part@instance: ..:.
+            cycle_time@instance: 24h
+
+        total_charge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_TOTAL_CHARGE
+            equipment_part@instance: ..:.
+
+        total_discharge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_TOTAL_DISCHARGE
+            equipment_part@instance: ..:.
+
+        software_version:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_2_SOFTWARE_VERSION
+            equipment_part@instance: ..:.
+
+    storage_unit_2_battery_pack_1:
+        equipment_part@instance: STORAGE_UNIT_2_BATTERY_PACK_1
+
+        serial_number:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_1_SERIAL_NUMBER
+            equipment_part@instance: ..:.
+            cycle_time@instance: 24h
+
+        firmware_version:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_1_FIRMWARE_VERSION
+            equipment_part@instance: ..:.
+
+        working_status:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_1_WORKING_STATUS
+            equipment_part@instance: ..:.
+
+        state_of_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_1_STATE_OF_CAPACITY
+            equipment_part@instance: ..:.
+
+        charge_discharge_power:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_1_CHARGE_DISCHARGE_POWER
+            equipment_part@instance: ..:.
+
+        voltage:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_1_VOLTAGE
+            equipment_part@instance: ..:.
+
+        current:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_1_CURRENT
+            equipment_part@instance: ..:.
+
+        total_charge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_1_TOTAL_CHARGE
+            equipment_part@instance: ..:.
+
+        total_discharge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_1_TOTAL_DISCHARGE
+            equipment_part@instance: ..:.
+
+        maximum_temperature:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_1_MAXIMUM_TEMPERATURE
+            equipment_part@instance: ..:.
+
+        minimum_temperature:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_1_MINIMUM_TEMPERATURE
+            equipment_part@instance: ..:.
+
+        no:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_PACK_1_NO
+            equipment_part@instance: ..:.
+
+    storage_unit_2_battery_pack_2:
+        equipment_part@instance: STORAGE_UNIT_2_BATTERY_PACK_2
+
+        serial_number:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_2_SERIAL_NUMBER
+            equipment_part@instance: ..:.
+            cycle_time@instance: 24h
+
+        firmware_version:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_2_FIRMWARE_VERSION
+            equipment_part@instance: ..:.
+
+        working_status:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_2_WORKING_STATUS
+            equipment_part@instance: ..:.
+
+        state_of_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_2_STATE_OF_CAPACITY
+            equipment_part@instance: ..:.
+
+        charge_discharge_power:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_2_CHARGE_DISCHARGE_POWER
+            equipment_part@instance: ..:.
+
+        voltage:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_2_VOLTAGE
+            equipment_part@instance: ..:.
+
+        current:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_2_CURRENT
+            equipment_part@instance: ..:.
+
+        total_charge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_2_TOTAL_CHARGE
+            equipment_part@instance: ..:.
+
+        total_discharge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_2_TOTAL_DISCHARGE
+            equipment_part@instance: ..:.
+
+        maximum_temperature:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_2_MAXIMUM_TEMPERATURE
+            equipment_part@instance: ..:.
+
+        minimum_temperature:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_2_MINIMUM_TEMPERATURE
+            equipment_part@instance: ..:.
+
+        no:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_PACK_2_NO
+            equipment_part@instance: ..:.
+
+    storage_unit_2_battery_pack_3:
+        equipment_part@instance: STORAGE_UNIT_2_BATTERY_PACK_3
+
+        serial_number:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_3_SERIAL_NUMBER
+            equipment_part@instance: ..:.
+            cycle_time@instance: 24h
+
+        firmware_version:
+            type: str
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_3_FIRMWARE_VERSION
+            equipment_part@instance: ..:.
+
+        working_status:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_3_WORKING_STATUS
+            equipment_part@instance: ..:.
+
+        state_of_capacity:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_3_STATE_OF_CAPACITY
+            equipment_part@instance: ..:.
+
+        charge_discharge_power:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_3_CHARGE_DISCHARGE_POWER
+            equipment_part@instance: ..:.
+
+        voltage:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_3_VOLTAGE
+            equipment_part@instance: ..:.
+
+        current:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_3_CURRENT
+            equipment_part@instance: ..:.
+
+        total_charge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_3_TOTAL_CHARGE
+            equipment_part@instance: ..:.
+
+        total_discharge:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_3_TOTAL_DISCHARGE
+            equipment_part@instance: ..:.
+
+        maximum_temperature:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_3_MAXIMUM_TEMPERATURE
+            equipment_part@instance: ..:.
+
+        minimum_temperature:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_BATTERY_PACK_3_MINIMUM_TEMPERATURE
+            equipment_part@instance: ..:.
+
+        no:
+            type: num
+            sun2000_read@instance: STORAGE_UNIT_2_PACK_3_NO
+            equipment_part@instance: ..:.
+
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
