@@ -39,8 +39,8 @@ plugin_translations:
     'Strom':                              {'de': '=', 'en': 'Current'}
     'Spannung max (Zelle)':               {'de': '=', 'en': 'Voltage max (cell)'}
     'Spannung min (Zelle)':               {'de': '=', 'en': 'Voltage min (cell)'}
-    'Temperatur Zelle max':               {'de': '=', 'en': 'Temperature cell max'}
-    'Temperatur Zelle min':               {'de': '=', 'en': 'Temperature cell min'}
+    'Temperatur max (Zelle)':             {'de': '=', 'en': 'Temperature max (cell)'}
+    'Temperatur min (Zelle)':             {'de': '=', 'en': 'Temperature min (cell)'}
 
     # Alternative format for translations of longer texts:
     'Hier kommt der Inhalt des Webinterfaces hin.':
