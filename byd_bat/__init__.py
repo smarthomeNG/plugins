@@ -40,6 +40,14 @@
 # V0.0.5 231030 - Diagnose ergaenzt: Bat-Voltag, V-Out, Current
 #               - Liste der Wechselrichter aktualisiert
 #               - Alle Plot-Dateien beim Plugin-Start loeschen
+#               - Anpassungen fuer mathplotlib 3.8.0 mit requirements.txt
+#               - webif aktualisiert (Uebersetzungen, Parameter)
+#
+# V0.0.6 2311xx - Diagnose ergaenzt Temperatur max/min
+#               - Auslesen und anzeigen der Balancing-Flags im Plot
+#               - Plot diverse Fehler korrigiert
+#               - Plot-Dateien loeschen ueberarbeitet
+#               - Batterietypen HVS, HVM und LVS im Plot getestet
 #
 # -----------------------------------------------------------------------
 #
@@ -68,6 +76,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
+#import random    # only for internal test
+
 byd_ip_default = "192.168.16.254"
 
 scheduler_name = 'mmbyd'
@@ -84,7 +94,9 @@ byd_towers_max = 3
 byd_cells_max = 160
 byd_temps_max = 64
 
-byd_no_of_col = 8
+byd_no_of_col_7 = 7
+byd_no_of_col_8 = 8
+byd_no_of_col_12 = 12
 
 byd_webif_img = "/webif/static/img/"
 byd_path_empty = "x"
@@ -92,24 +104,28 @@ byd_fname_volt = "bydvt"
 byd_fname_temp = "bydtt"
 byd_fname_ext = ".png"
 
-MESSAGE_0   = "010300000066c5e0"
-MESSAGE_1   = "01030500001984cc"
-MESSAGE_2   = "010300100003040e"
+MESSAGE_0    = "010300000066c5e0"
+MESSAGE_1    = "01030500001984cc"
+MESSAGE_2    = "010300100003040e"
 
-MESSAGE_3_1 = "0110055000020400018100f853"        # Start Messung Turm 1
-MESSAGE_3_2 = "01100550000204000281000853"        # Start Messung Turm 2
-MESSAGE_3_3 = "01100550000204000381005993"        # Start Messung Turm 3
-MESSAGE_4   = "010305510001d517"
-MESSAGE_5   = "01030558004104e5"
-MESSAGE_6   = "01030558004104e5"
-MESSAGE_7   = "01030558004104e5"
-MESSAGE_8   = "01030558004104e5"
-
-MESSAGE_9   = "01100100000306444542554700176f"    # switch to second turn for the last few cells (not tested, perhaps only for tower 1 ?)
-MESSAGE_10  = "0110055000020400018100f853"        # start measuring remaining cells (like 3a) (not tested, perhaps only for tower 1 ?)
-MESSAGE_11  = "010305510001d517"                  # (like 4) (not tested)
-MESSAGE_12  = "01030558004104e5"                  # (like 5) (not tested)
-MESSAGE_13  = "01030558004104e5"                  # (like 6) (not tested)
+MESSAGE_3_1  = "0110055000020400018100f853"        # Start Messung Turm 1
+MESSAGE_3_2  = "01100550000204000281000853"        # Start Messung Turm 2
+MESSAGE_3_3  = "01100550000204000381005993"        # Start Messung Turm 3
+MESSAGE_4    = "010305510001d517"
+MESSAGE_5    = "01030558004104e5"
+MESSAGE_6    = "01030558004104e5"
+MESSAGE_7    = "01030558004104e5"
+MESSAGE_8    = "01030558004104e5"
+                                                   # to read the 5th module, the box must first be reconfigured (not tested)
+MESSAGE_9    = "01100100000306444542554700176f"    # switch to second turn for the last few cells
+MESSAGE_10_1 = "0110055000020400018100f853"        # start measuring remaining cells in tower 1 (like 3)
+MESSAGE_10_2 = "01100550000204000281000853"        # start measuring remaining cells in tower 2 (like 3)
+MESSAGE_10_3 = "01100550000204000381005993"        # start measuring remaining cells in tower 3 (like 3)
+MESSAGE_11   = "010305510001d517"                  # (like 4)
+MESSAGE_12   = "01030558004104e5"                  # (like 5)
+MESSAGE_13   = "01030558004104e5"                  # (like 6)
+MESSAGE_14   = "01030558004104e5"                  # (like 7)
+MESSAGE_15   = "01030558004104e5"                  # (like 8)
 
 byd_errors = [
   "High Temperature Charging (Cells)",
@@ -190,7 +206,7 @@ class byd_bat(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '0.0.5'
+    PLUGIN_VERSION = '0.0.6'
     
     def __init__(self,sh):
         """
@@ -245,9 +261,12 @@ class byd_bat(SmartPlugin):
         self.byd_diag_volt_max_c = []
         self.byd_diag_volt_min = []
         self.byd_diag_volt_min_c = []
+        self.byd_diag_temp_max = []
         self.byd_diag_temp_max_c = []
+        self.byd_diag_temp_min = []
         self.byd_diag_temp_min_c = []
         self.byd_volt_cell = []
+        self.byd_balance_cell = []
         self.byd_temp_cell = []
         for x in range(0,byd_towers_max + 1):
           self.byd_diag_soc.append(0)
@@ -258,12 +277,18 @@ class byd_bat(SmartPlugin):
           self.byd_diag_volt_max_c.append(0)
           self.byd_diag_volt_min.append(0)
           self.byd_diag_volt_min_c.append(0)
+          self.byd_diag_temp_max.append(0)
           self.byd_diag_temp_max_c.append(0)
+          self.byd_diag_temp_min.append(0)
           self.byd_diag_temp_min_c.append(0)
           a = []
           for xx in range(0,byd_cells_max + 1):
             a.append(0)
           self.byd_volt_cell.append(a)
+          a = []
+          for xx in range(0,byd_cells_max + 1):
+            a.append(0)
+          self.byd_balance_cell.append(a)
           a = []
           for xx in range(0,byd_temps_max + 1):
             a.append(0)
@@ -274,7 +299,7 @@ class byd_bat(SmartPlugin):
         
         self.plt_file_del()
           
-        # self.simulate_data()  # for internal tests only
+#        self.simulate_data()  # for internal tests only
 
         # Initialization code goes here
 
@@ -360,7 +385,7 @@ class byd_bat(SmartPlugin):
           client.close()
           return
           
-        # 1.Befehl senden
+        # 0.Befehl senden
         client.send(bytes.fromhex(MESSAGE_0))
         client.settimeout(byd_timeout_1s)
         
@@ -373,7 +398,7 @@ class byd_bat(SmartPlugin):
           return
         self.decode_0(data)
         
-        # 2.Befehl senden
+        # 1.Befehl senden
         client.send(bytes.fromhex(MESSAGE_1))
         client.settimeout(byd_timeout_1s)
         
@@ -386,7 +411,7 @@ class byd_bat(SmartPlugin):
           return
         self.decode_1(data)
         
-        # 3.Befehl senden
+        # 2.Befehl senden
         client.send(bytes.fromhex(MESSAGE_2))
         client.settimeout(byd_timeout_1s)
         
@@ -398,6 +423,12 @@ class byd_bat(SmartPlugin):
           client.close()
           return
         self.decode_2(data)
+        if self.byd_cells_n == 0:
+          # Batterietyp wird nicht unterstuetzt !
+          self.log_info("battery type " + self.byd_batt_str + " not supported !")
+          self.byd_root.info.connection(False)
+          client.close()
+          return
         
         # Speichere die Basisdaten
         self.basisdata_save(self.byd_root)
@@ -416,7 +447,7 @@ class byd_bat(SmartPlugin):
         for x in range(1,self.byd_bms_qty + 1):
           self.log_debug("Turm " + str(x))
           
-          # 4.Befehl senden
+          # 3.Befehl senden
           if x == 1:
             client.send(bytes.fromhex(MESSAGE_3_1))
           elif x == 2:
@@ -435,7 +466,7 @@ class byd_bat(SmartPlugin):
           self.decode_nop(data,x)
           time.sleep(2)
           
-          # 5.Befehl senden
+          # 4.Befehl senden
           client.send(bytes.fromhex(MESSAGE_4))
           client.settimeout(byd_timeout_8s)
         
@@ -448,7 +479,7 @@ class byd_bat(SmartPlugin):
             return
           self.decode_nop(data,x)
           
-          # 6.Befehl senden
+          # 5.Befehl senden
           client.send(bytes.fromhex(MESSAGE_5))
           client.settimeout(byd_timeout_1s)
         
@@ -461,7 +492,7 @@ class byd_bat(SmartPlugin):
             return
           self.decode_5(data,x)
           
-          # 7.Befehl senden
+          # 6.Befehl senden
           client.send(bytes.fromhex(MESSAGE_6))
           client.settimeout(byd_timeout_1s)
         
@@ -474,7 +505,7 @@ class byd_bat(SmartPlugin):
             return
           self.decode_6(data,x)
           
-          # 8.Befehl senden
+          # 7.Befehl senden
           client.send(bytes.fromhex(MESSAGE_7))
           client.settimeout(byd_timeout_1s)
         
@@ -487,7 +518,7 @@ class byd_bat(SmartPlugin):
             return
           self.decode_7(data,x)
           
-          # 9.Befehl senden
+          # 8.Befehl senden
           client.send(bytes.fromhex(MESSAGE_8))
           client.settimeout(byd_timeout_1s)
         
@@ -500,6 +531,105 @@ class byd_bat(SmartPlugin):
             return
           self.decode_8(data,x)
           
+          if self.byd_cells_n > 128:
+            # Switch to second turn for the last module - 9.Befehl senden
+            client.send(bytes.fromhex(MESSAGE_9))
+            client.settimeout(byd_timeout_1s)
+
+            try:
+              data = client.recv(BUFFER_SIZE)
+            except:
+              self.log_info("client.recv 9 failed")
+              self.byd_root.info.connection(False)
+              client.close()
+              return
+            self.decode_nop(data,x)
+            time.sleep(2)
+
+            # 10.Befehl senden (wie Befehl 3)
+            if x == 1:
+              client.send(bytes.fromhex(MESSAGE_10_1))
+            elif x == 2:
+              client.send(bytes.fromhex(MESSAGE_10_2))
+            elif x == 3:
+              client.send(bytes.fromhex(MESSAGE_10_3))
+            client.settimeout(byd_timeout_2s)
+            
+            try:
+              data = client.recv(BUFFER_SIZE)
+            except:
+              self.log_info("client.recv 10 failed")
+              self.byd_root.info.connection(False)
+              client.close()
+              return
+            self.decode_nop(data,x)
+            time.sleep(2)
+          
+            # 11.Befehl senden (wie Befehl 4)
+            client.send(bytes.fromhex(MESSAGE_11))
+            client.settimeout(byd_timeout_8s)
+          
+            try:
+              data = client.recv(BUFFER_SIZE)
+            except:
+              self.log_info("client.recv 11 failed")
+              self.byd_root.info.connection(False)
+              client.close()
+              return
+            self.decode_nop(data,x)
+            
+            # 12.Befehl senden (wie Befehl 5)
+            client.send(bytes.fromhex(MESSAGE_12))
+            client.settimeout(byd_timeout_1s)
+          
+            try:
+              data = client.recv(BUFFER_SIZE)
+            except:
+              self.log_info("client.recv 12 failed")
+              self.byd_root.info.connection(False)
+              client.close()
+              return
+            self.decode_12(data,x)
+            
+            # 13.Befehl senden (wie Befehl 6)
+            client.send(bytes.fromhex(MESSAGE_13))
+            client.settimeout(byd_timeout_1s)
+          
+            try:
+              data = client.recv(BUFFER_SIZE)
+            except:
+              self.log_info("client.recv 13 failed")
+              self.byd_root.info.connection(False)
+              client.close()
+              return
+            self.decode_13(data,x)
+            
+            # 14.Befehl senden (wie Befehl 7)
+            client.send(bytes.fromhex(MESSAGE_14))
+            client.settimeout(byd_timeout_1s)
+          
+            try:
+              data = client.recv(BUFFER_SIZE)
+            except:
+              self.log_info("client.recv 14 failed")
+              self.byd_root.info.connection(False)
+              client.close()
+              return
+            self.decode_14(data,x)
+            
+            # 15.Befehl senden (wie Befehl 8)
+            client.send(bytes.fromhex(MESSAGE_15))
+            client.settimeout(byd_timeout_1s)
+          
+            try:
+              data = client.recv(BUFFER_SIZE)
+            except:
+              self.log_info("client.recv 15 failed")
+              self.byd_root.info.connection(False)
+              client.close()
+              return
+            self.decode_15(data,x)
+
         self.diagdata_save(self.byd_root)
         self.byd_root.info.connection(True)
 
@@ -515,7 +645,7 @@ class byd_bat(SmartPlugin):
         
         # Serienummer
         self.byd_serial = ""
-        for x in range(3,22):
+        for x in range(3,22):  # 3..21
           self.byd_serial = self.byd_serial + chr(data[x])
           
         # Firmware-Versionen
@@ -611,7 +741,7 @@ class byd_bat(SmartPlugin):
 
         self.byd_batt_type = data[5]
         if self.byd_batt_type == 0:
-          # HVL -> unknown specification, so 0 cells and 0 temps
+          # HVL -> Lithium Iron Phosphate (LFP), 3-8 Module (12kWh-32kWh), unknown specification, so 0 cells and 0 temps
           self.byd_batt_str = "HVL"
           self.byd_capacity_module = 4.0
           self.byd_volt_n = 0
@@ -680,19 +810,34 @@ class byd_bat(SmartPlugin):
 
         self.log_debug("decode_5 (" + str(x) + ") : " + data.hex())
         
-        self.byd_diag_soc[x] = self.buf2int16SI(data,53) * 1.0 / 10.0          # Byte 53+54
+        self.byd_diag_volt_max[x] = self.buf2int16SI(data,5) / 1000.0          # Byte 5+6   (Index 1)
+        self.byd_diag_volt_min[x] = self.buf2int16SI(data,7) / 1000.0          # Byte 7+8   (Index 2)
+        self.byd_diag_volt_max_c[x] = data[9]                                  # Byte 9     (Index 3)
+        self.byd_diag_volt_min_c[x] = data[10]                                 # Byte 10
+        self.byd_diag_temp_max[x] = self.buf2int16SI(data,11) / 1000.0         # Byte 11+12 (Index 4)
+        self.byd_diag_temp_min[x] = self.buf2int16SI(data,13) / 1000.0         # Byte 13+14 (Index 5)
+        self.byd_diag_temp_max_c[x] = data[15]                                 # Byte 15    (Index 6)
+        self.byd_diag_temp_min_c[x] = data[16]                                 # Byte 16
+        
+        # Balancing-Flags. Es folgen 8x 16-bit-Worte = 16 Byte => 0..127 Bits
+        i = 0
+        for xx in range(17,33):  # 0..32
+          a = data[xx] 
+          for yy in range(0,8):  # 0..7
+            if (a & 1) == 1:
+              self.byd_balance_cell[x][i] = 1
+            else:
+              self.byd_balance_cell[x][i] = 0
+            a = a / 2
+            i = i + 1
+        
         self.byd_diag_bat_voltag[x] = self.buf2int16SI(data,45) * 1.0 / 10.0   # Byte 45+46
         self.byd_diag_v_out[x] = self.buf2int16SI(data,51) * 1.0 / 10.0        # Byte 51+52
+        self.byd_diag_soc[x] = self.buf2int16SI(data,53) * 1.0 / 10.0          # Byte 53+54
         self.byd_diag_current[x] = self.buf2int16SI(data,57) * 1.0 / 10.0      # Byte 57+58
-        self.byd_diag_volt_max[x] = self.buf2int16SI(data,5) / 1000.0
-        self.byd_diag_volt_max_c[x] = data[9]
-        self.byd_diag_volt_min[x] = self.buf2int16SI(data,7) / 1000.0
-        self.byd_diag_volt_min_c[x] = data[10]
-        self.byd_diag_temp_max_c[x] = data[15]
-        self.byd_diag_temp_min_c[x] = data[16]
         
-        # starting with byte 101, ending with 131, Cell voltage 1-16
-        for xx in range(0,16):
+        # starting with byte 101, ending with 131, Cell voltage 0-15
+        for xx in range(0,16):  # 0..15
           self.byd_volt_cell[x][xx] = self.buf2int16SI(data,101 + (xx * 2)) / 1000.0
 
         self.log_debug("SOC        : " + str(self.byd_diag_soc[x]))
@@ -701,8 +846,8 @@ class byd_bat(SmartPlugin):
         self.log_debug("Current    : " + str(self.byd_diag_current[x]))
         self.log_debug("Volt max   : " + str(self.byd_diag_volt_max[x]) + " c=" + str(self.byd_diag_volt_max_c[x]))
         self.log_debug("Volt min   : " + str(self.byd_diag_volt_min[x]) + " c=" + str(self.byd_diag_volt_min_c[x]))
-        self.log_debug("Temp max   : " + " c=" + str(self.byd_diag_temp_max_c[x]))
-        self.log_debug("Temp min   : " + " c=" + str(self.byd_diag_temp_min_c[x]))
+        self.log_debug("Temp max   : " + str(self.byd_diag_temp_max[x]) + " c=" + str(self.byd_diag_temp_max_c[x]))
+        self.log_debug("Temp min   : " + str(self.byd_diag_temp_min[x]) + " c=" + str(self.byd_diag_temp_min_c[x]))
 #        for xx in range(0,16):
 #          self.log_debug("Turm " + str(x) + " Volt " + str(xx) + " : " + str(self.byd_volt_cell[x][xx]))
         
@@ -713,7 +858,7 @@ class byd_bat(SmartPlugin):
 
         self.log_debug("decode_6 (" + str(x) + ") : " + data.hex())
         
-        for xx in range(0,64):
+        for xx in range(0,64):  # 0..63, Cell voltage 16-79
           self.byd_volt_cell[x][16 + xx] = self.buf2int16SI(data,5 + (xx * 2)) / 1000.0
           
 #        for xx in range(0,64):
@@ -727,11 +872,11 @@ class byd_bat(SmartPlugin):
         self.log_debug("decode_7 (" + str(x) + ") : " + data.hex())
 
         # starting with byte 5, ending 101, voltage for cell 81 to 128
-        for xx in range(0,48):
+        for xx in range(0,48):  # 0..47, Cell voltage 80-127
           self.byd_volt_cell[x][80 + xx] = self.buf2int16SI(data,5 + (xx * 2)) / 1000.0
         
         # starting with byte 103, ending 132, temp for cell 1 to 30
-        for xx in range(0,30):
+        for xx in range(0,30):  # 0..29
           self.byd_temp_cell[x][xx] = data[103 + xx]
 
 #        for xx in range(0,48):
@@ -746,11 +891,62 @@ class byd_bat(SmartPlugin):
 
         self.log_debug("decode_8 (" + str(x) + ") : " + data.hex())
 
-        for xx in range(0,34):
+        for xx in range(0,34):  # 0..33
           self.byd_temp_cell[x][30 + xx] = data[5 + xx]
         
 #        for xx in range(0,34):
 #          self.log_debug("Turm " + str(x) + " Temp " + str(30 + xx) + " : " + str(self.byd_temp_cell[x][30 + xx]))
+
+        return
+
+    def decode_12(self,data,x):
+        # Decodieren der Nachricht auf Befehl 'MESSAGE_12'.
+
+        self.log_debug("decode_12 (" + str(x) + ") : " + data.hex())
+
+        # Balancing-Flags. Es folgen 8x 16-bit-Worte = 16 Byte => 0..127 Bits
+        i = 127
+        for xx in range(17,33):  # 0..32
+          a = data[xx] 
+          for yy in range(0,8):  # 0..7
+            if (a & 1) == 1:
+              self.byd_balance_cell[x][i] = 1
+            else:
+              self.byd_balance_cell[x][i] = 0
+            a = a / 2
+            i = i + 1
+        
+        # starting with byte 101, ending with 116, Cell voltage 129-144
+        for xx in range(0,16):  # 0..15, Cell voltage 128-143
+          self.byd_volt_cell[x][128 + xx] = self.buf2int16SI(data,101 + (xx * 2)) / 1000.0
+
+        return
+
+    def decode_13(self,data,x):
+        # Decodieren der Nachricht auf Befehl 'MESSAGE_13'.
+
+        self.log_debug("decode_13 (" + str(x) + ") : " + data.hex())
+        
+        # The first round measured up to 128 cells, request[12] then get another 16
+        # With 5 HVS Modules (max for HVS), only 16 cells are remaining
+
+        # starting with byte 5, ending with 21, Cell voltage 145-161
+        for xx in range(0,16):  # 0..15, Cell voltage 144-160
+          self.byd_volt_cell[x][144 + xx] = self.buf2int16SI(data,5 + (xx * 2)) / 1000.0
+
+        return
+
+    def decode_14(self,data,x):
+        # Decodieren der Nachricht auf Befehl 'MESSAGE_14'.
+
+        self.log_debug("decode_14 (" + str(x) + ") : " + data.hex())
+
+        return
+
+    def decode_15(self,data,x):
+        # Decodieren der Nachricht auf Befehl 'MESSAGE_15'.
+
+        self.log_debug("decode_15 (" + str(x) + ") : " + data.hex())
 
         return
 
@@ -822,8 +1018,10 @@ class byd_bat(SmartPlugin):
         device.volt_max.cell(self.byd_diag_volt_max_c[x])
         device.volt_min.volt(self.byd_diag_volt_min[x])
         device.volt_min.cell(self.byd_diag_volt_min_c[x])
-        device.temp_max_cell(self.byd_diag_temp_max_c[x])
-        device.temp_min_cell(self.byd_diag_temp_min_c[x])
+        device.temp_max.volt(self.byd_diag_temp_max[x])
+        device.temp_max.cell(self.byd_diag_temp_max_c[x])
+        device.temp_min.volt(self.byd_diag_temp_min[x])
+        device.temp_min.cell(self.byd_diag_temp_min_c[x])
         
         self.diag_plot(x)
         
@@ -836,27 +1034,32 @@ class byd_bat(SmartPlugin):
         return
         
     def diag_plot(self,x):
+        # Erstellt die beiden Plots fuer Turm 'x'.
     
         # Heatmap der Spannungen
+        if self.byd_volt_n == byd_no_of_col_7:
+          no_of_col = byd_no_of_col_7
+        else:
+          no_of_col = byd_no_of_col_8
         i = 0
         j = 1
-        rows = self.byd_cells_n // byd_no_of_col
+        rows = self.byd_cells_n // no_of_col  # Anzahl Zeilen bestimmen
         d = []
         rt = []
-        for r in range(0,rows):
+        for r in range(0,rows):  # 0..rows-1
           c = []
-          for cc in range(0,byd_no_of_col):
+          for cc in range(0,no_of_col):  # 0..no_of_col-1
             c.append(self.byd_volt_cell[x][i])
             i = i + 1
           d.append(c)
           rt.append("M" + str(j))
-          if ((r + 1) % (self.byd_volt_n // self.byd_modules)) == 0:
+          if ((r + 1) % (self.byd_volt_n // no_of_col)) == 0:
             j = j + 1
         dd = np.array(d)
                   
         fig,ax = plt.subplots(figsize=(10,4))  # Erzeugt ein Bitmap von 1000x500 Pixel
         
-        im = ax.imshow(dd)
+        im = ax.imshow(dd)                     # Befehl fuer Heatmap
         cbar = ax.figure.colorbar(im,ax=ax,shrink=0.5)
         cbar.ax.yaxis.set_tick_params(color='white')
         cbar.outline.set_edgecolor('white')
@@ -867,22 +1070,28 @@ class byd_bat(SmartPlugin):
         ax.set_yticks(np.arange(len(rt)),labels=rt)
         
         ax.spines[:].set_visible(False)
-        ax.set_xticks(np.arange(dd.shape[1] + 1) - .5,minor=True)
-        ax.set_yticks(np.arange(dd.shape[0] + 1) - .5,minor=True)
+        ax.set_xticks(np.arange(dd.shape[1] + 1) - 0.5,minor=True)
+        ax.set_yticks(np.arange(dd.shape[0] + 1) - 0.5,minor=True)
         ax.tick_params(which='minor',bottom=False,left=False)
         ax.tick_params(axis='y',colors='white',labelsize=10)
         
         textcolors = ("white","black")
-        threshold = im.norm(dd.max()) / 2.
+        threshold = im.norm(dd.max()) / 2.0
         kw = dict(horizontalalignment="center",verticalalignment="center",size=9)
         valfmt = matplotlib.ticker.StrMethodFormatter("{x:.3f}")
+        valfmtb = matplotlib.ticker.StrMethodFormatter("{x:.3f} B")
         
         # Loop over data dimensions and create text annotations.
-        for i in range(0,rows):
-          for j in range(0,byd_no_of_col):
+        k = 0
+        for i in range(0,rows):  # 0..rows-1
+          for j in range(0,no_of_col):  # 0..no_of_col-1
             kw.update(color=textcolors[int(im.norm(dd[i,j]) > threshold)])
-            text = ax.text(j,i,valfmt(dd[i,j], None),**kw)
-                           
+            if self.byd_balance_cell[x][k] == 0:
+              text = ax.text(j,i,valfmt(dd[i,j],None),**kw)
+            else:
+              text = ax.text(j,i,valfmtb(dd[i,j],None),**kw)
+            k = k + 1
+            
         ax.set_title("Turm " + str(x) + " - Spannungen [V]" + " (" + self.now_str() + ")",size=10,color='white')
         
         fig.tight_layout()
@@ -893,23 +1102,31 @@ class byd_bat(SmartPlugin):
                     format='png',transparent=True)
         self.log_debug("save " + self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(x) + byd_fname_ext)
         plt.close('all')
+        
+        if self.byd_temps_n == 0:
+          return
     
         # Heatmap der Temperaturen
+        if self.byd_temp_n == byd_no_of_col_8:
+          no_of_col = byd_no_of_col_8
+        else:
+          no_of_col = byd_no_of_col_12
         i = 0
         j = 1
-        rows = self.byd_temps_n // byd_no_of_col
+        rows = self.byd_temps_n // no_of_col
         d = []
         rt = []
         for r in range(0,rows):
           c = []
-          for cc in range(0,byd_no_of_col):
+          for cc in range(0,no_of_col):
             c.append(self.byd_temp_cell[x][i])
             i = i + 1
           d.append(c)
           rt.append("M" + str(j))
-          if ((r + 1) % (self.byd_temp_n // self.byd_modules)) == 0:
+          if ((r + 1) % (self.byd_temp_n // no_of_col)) == 0:
             j = j + 1
         dd = np.array(d)
+#        self.log_info("dd.min=" + str(dd.min()) + " dd.max=" + str(dd.max()))
         cmap = matplotlib.colors.LinearSegmentedColormap.from_list('',['#f5f242','#ffaf38','#fc270f'])
         norm = matplotlib.colors.TwoSlopeNorm(vcenter=dd.min() + (dd.max() - dd.min()) / 2,
                                               vmin=dd.min(),vmax=dd.max())
@@ -939,7 +1156,7 @@ class byd_bat(SmartPlugin):
         
         # Loop over data dimensions and create text annotations.
         for i in range(0,rows):
-          for j in range(0,byd_no_of_col):
+          for j in range(0,no_of_col):
             kw.update(color=textcolors[int(im.norm(dd[i,j]) > threshold)])
             text = ax.text(j,i,valfmt(dd[i,j], None),**kw)
                            
@@ -956,52 +1173,33 @@ class byd_bat(SmartPlugin):
 
         return
         
+    def plt_file_del_single(self,fn):
+        if os.path.exists(fn) == True:
+          os.remove(fn)
+        return
+        
     def plt_file_del(self):
         # Loescht alle Plot-Dateien
         
         # Spannungs-Plots
-        fn = self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(1) + byd_fname_ext
-        if os.path.exists(fn) == True:
-          os.remove(fn)
-        fn = self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(2) + byd_fname_ext
-        if os.path.exists(fn) == True:
-          os.remove(fn)
-        fn = self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(3) + byd_fname_ext
-        if os.path.exists(fn) == True:
-          os.remove(fn)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(1) + byd_fname_ext)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(2) + byd_fname_ext)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(3) + byd_fname_ext)
 
         if len(self.bpath) != byd_path_empty:
-          fn = self.bpath + byd_fname_volt + str(1) + byd_fname_ext
-          if os.path.exists(fn) == True:
-            os.remove(fn)
-          fn = self.bpath + byd_fname_volt + str(2) + byd_fname_ext
-          if os.path.exists(fn) == True:
-            os.remove(fn)
-          fn = self.bpath + byd_fname_volt + str(3) + byd_fname_ext
-          if os.path.exists(fn) == True:
-            os.remove(fn)
+          self.plt_file_del_single(self.bpath + byd_fname_volt + str(1) + byd_fname_ext)
+          self.plt_file_del_single(self.bpath + byd_fname_volt + str(2) + byd_fname_ext)
+          self.plt_file_del_single(self.bpath + byd_fname_volt + str(3) + byd_fname_ext)
     
         # Temperatur-Plots
-        fn = self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(1) + byd_fname_ext
-        if os.path.exists(fn) == True:
-          os.remove(fn)
-        fn = self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(2) + byd_fname_ext
-        if os.path.exists(fn) == True:
-          os.remove(fn)
-        fn = self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(3) + byd_fname_ext
-        if os.path.exists(fn) == True:
-          os.remove(fn)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(1) + byd_fname_ext)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(2) + byd_fname_ext)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(3) + byd_fname_ext)
 
         if len(self.bpath) != byd_path_empty:
-          fn = self.bpath + byd_fname_temp + str(1) + byd_fname_ext
-          if os.path.exists(fn) == True:
-            os.remove(fn)
-          fn = self.bpath + byd_fname_temp + str(2) + byd_fname_ext
-          if os.path.exists(fn) == True:
-            os.remove(fn)
-          fn = self.bpath + byd_fname_temp + str(3) + byd_fname_ext
-          if os.path.exists(fn) == True:
-            os.remove(fn)
+          self.plt_file_del_single(self.bpath + byd_fname_temp + str(1) + byd_fname_ext)
+          self.plt_file_del_single(self.bpath + byd_fname_temp + str(2) + byd_fname_ext)
+          self.plt_file_del_single(self.bpath + byd_fname_temp + str(3) + byd_fname_ext)
     
         return
 
@@ -1070,24 +1268,40 @@ class byd_bat(SmartPlugin):
 
     def simulate_data(self):
         # For internal tests only
-        self.byd_modules = 7
-        self.byd_batt_str = "HVM"
-        self.byd_capacity_module = 2.76
-        self.byd_volt_n = 16
-        self.byd_temp_n = 8
+        
+        simul = 1  # HVM
+#        simul = 2  # HVS
+#        simul = 3  # LVS
+        
+        if simul == 1:
+          self.byd_batt_str = "HVM"
+          self.byd_modules = 7
+          self.byd_capacity_module = 2.76
+          self.byd_volt_n = 16
+          self.byd_temp_n = 8
+        elif simul == 2:
+          self.byd_batt_str = "HVS"
+          self.byd_modules = 5
+          self.byd_capacity_module = 2.56
+          self.byd_volt_n = 32
+          self.byd_temp_n = 12
+        elif simul == 3:
+          self.byd_batt_str = "LVS"
+          self.byd_modules = 3
+          self.byd_capacity_module = 4.0
+          self.byd_volt_n = 7
+          self.byd_temp_n = 0
+          
         self.byd_cells_n = self.byd_modules * self.byd_volt_n
         self.byd_temps_n = self.byd_modules * self.byd_temp_n
         
         for xx in range(0,self.byd_cells_n):
-          if (xx % 2) == 0:
-            self.byd_volt_cell[1][xx] = 2.2
-          else:
-            self.byd_volt_cell[1][xx] = 2.4
+          self.byd_volt_cell[1][xx] = round(random.uniform(2.1,2.9),2)
+          self.byd_balance_cell[1][xx] = random.randint(0,1)
+#          self.log_info("xx=" + str(xx) + " v=" + str(self.byd_volt_cell[1][xx]))
         for xx in range(0,self.byd_temps_n):
-          if (xx % 2) == 0:
-            self.byd_temp_cell[1][xx] = 23
-          else:
-            self.byd_temp_cell[1][xx] = 26
+          self.byd_temp_cell[1][xx] = round(random.uniform(20.0,28.0),2)
+#          self.log_info("xx=" + str(xx) + " v=" + str(self.byd_temp_cell[1][xx]))
 
         self.diag_plot(1)
         
