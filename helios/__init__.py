@@ -432,10 +432,10 @@ class Helios(HeliosBase):
     def run(self):
         self.connect()
         self._alive = True
-        self._sh.scheduler.add('Helios', self._update, cycle=self._cycle)
+        self.scheduler_add('Helios', self._update, cycle=self._cycle)
 
     def stop(self):
-        self._sh.scheduler.remove('Helios')
+        self.scheduler_remove('Helios')
         self.disconnect()
         self._alive = False
 
