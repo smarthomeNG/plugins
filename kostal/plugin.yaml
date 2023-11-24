@@ -27,11 +27,11 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1109697-kostal-plugin-piko-wechselrichter
 
-    version: 1.3.2                 # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.3.3                 # Plugin version
+    sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: True           # plugin supports multi instance
-    restartable: unknown
+    multi_instance: true           # plugin supports multi instance
+    restartable: true
     classname: Kostal              # class containing the plugin
 
 parameters:
@@ -41,7 +41,7 @@ parameters:
 
     ip:
         type: ip
-        mandatory: True
+        mandatory: true
         description:
             de: "IP Adresse des Konverters"
             en: "IP address of converter"
