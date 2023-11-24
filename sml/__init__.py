@@ -52,7 +52,7 @@ class Sml(SmartPlugin):
         'smart-meter-gateway-com-1': 'hex'
     }
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.host = self.get_parameter_value('host')
         self.port = self.get_parameter_value('port')
         self.serialport = self.get_parameter_value('serialport')

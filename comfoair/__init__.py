@@ -33,7 +33,7 @@ class ComfoAir(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = '1.3.1'
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.logger = logging.getLogger('ComfoAir')
         self.connected = False
         self._params = {}

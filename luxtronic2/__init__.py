@@ -58,7 +58,7 @@ class LuxBase(SmartPlugin):
 
     # ATTENTION: This is NOT the SmartPlugin class of the plugin!!!
 
-    def __init__(self, host, port=8888):
+    def __init__(self, host, port=8888, **kwargs):
         self.logger = logging.getLogger(__name__)
         self.host = host
         self.port = int(port)
@@ -260,7 +260,7 @@ class Luxtronic2(LuxBase):
     _decoded = {}
     alive = True
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._is_connected = False
         self._cycle = self.get_parameter_value('cycle')
         LuxBase.__init__(self, self.get_parameter_value('host'), self.get_parameter_value('port'))

@@ -31,7 +31,7 @@ class ROOMBA_980(SmartPlugin):
 
     myroomba = None
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._address = self.get_parameter_value('adress')
         self._blid = self.get_parameter_value('blid')
         self._roombaPassword = self.get_parameter_value('roombaPassword')

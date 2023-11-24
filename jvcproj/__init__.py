@@ -99,7 +99,7 @@ class JVC_DILA_Control(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = '1.0.2'
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         :param host:               JVC DILA Projectors IP address

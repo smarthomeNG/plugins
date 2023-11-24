@@ -36,7 +36,7 @@ class Intercom2n(SmartPlugin):
     PLUGIN_VERSION = "1.3.1"
     ALLOW_MULTIINSTANCE = False
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._intercom_ip = self.get_parameter_value('intercom_ip')
         self._ssl = self.get_parameter_value('ssl')
         self._auth_type = self.get_parameter_value('auth_type')
