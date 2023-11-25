@@ -22,7 +22,7 @@ import telnetlib
 from lib.model.smartplugin import SmartPlugin
 
 class NUT(SmartPlugin):
-  PLUGIN_VERSION = '1.3.2'
+  PLUGIN_VERSION = '1.3.3'
   ALLOW_MULTIINSTANCE = True
 
   def __init__(self, sh):
@@ -36,20 +36,21 @@ class NUT(SmartPlugin):
     self._sh = sh
     self._cycle = self.get_parameter_value("cycle")
     self._host = self.get_parameter_value("host")
-    self._port = self.get_parameter_value("port ")
+    self._port = self.get_parameter_value("port")
     self._ups = self.get_parameter_value("ups")
     self._timeout = self.get_parameter_value("timeout")
 
     self._conn = None
     self._items = {}
-    self._sh.scheduler.add(__name__, self._read_ups, prio = 5, cycle = self._cycle)
-    self.logger.info('Init NUT Plugin')
+    self.logger.info('NUT Plugin initialized')
 
   def run(self):
+    self._sh.scheduler.add('poll_nut_device', self._read_ups, prio = 5, cycle = self._cycle)
     self.alive = True
 
   def stop(self):
     self.alive = False
+    self.scheduler_remove('poll_nut_device')
     if self._conn:
         self._conn.close()
 
@@ -64,6 +65,7 @@ class NUT(SmartPlugin):
     return
 
   def _read_ups(self):
+    self.logger.debug(f"Trying to connect to {self._host} on port {self._port}")
     try:
         self._conn = telnetlib.Telnet(self._host, self._port)
         self._conn.write('LIST VAR {}\n'.format(self._ups).encode('ascii'))
