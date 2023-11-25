@@ -43,7 +43,7 @@
 #               - Anpassungen fuer mathplotlib 3.8.0 mit requirements.txt
 #               - webif aktualisiert (Uebersetzungen, Parameter)
 #
-# V0.0.6 2311xx - Diagnose ergaenzt Temperatur max/min
+# V0.0.6 231125 - Diagnose ergaenzt Temperatur max/min
 #               - Auslesen und anzeigen der Balancing-Flags im Plot
 #               - Plot diverse Fehler korrigiert
 #               - Plot-Dateien loeschen ueberarbeitet
@@ -80,7 +80,7 @@ import os
 
 byd_ip_default = "192.168.16.254"
 
-scheduler_name = 'mmbyd'
+scheduler_name = 'byd_bat'
 
 BUFFER_SIZE = 4096
 
@@ -268,7 +268,7 @@ class byd_bat(SmartPlugin):
         self.byd_volt_cell = []
         self.byd_balance_cell = []
         self.byd_temp_cell = []
-        for x in range(0,byd_towers_max + 1):
+        for x in range(0,byd_towers_max + 1):   # 0..3
           self.byd_diag_soc.append(0)
           self.byd_diag_bat_voltag.append(0)
           self.byd_diag_v_out.append(0)
@@ -282,15 +282,15 @@ class byd_bat(SmartPlugin):
           self.byd_diag_temp_min.append(0)
           self.byd_diag_temp_min_c.append(0)
           a = []
-          for xx in range(0,byd_cells_max + 1):
+          for xx in range(0,byd_cells_max + 1):   # 0..160
             a.append(0)
           self.byd_volt_cell.append(a)
           a = []
-          for xx in range(0,byd_cells_max + 1):
+          for xx in range(0,byd_cells_max + 1):   # 0..160
             a.append(0)
           self.byd_balance_cell.append(a)
           a = []
-          for xx in range(0,byd_temps_max + 1):
+          for xx in range(0,byd_temps_max + 1):   # 0..64
             a.append(0)
           self.byd_temp_cell.append(a)
           
@@ -821,7 +821,7 @@ class byd_bat(SmartPlugin):
         
         # Balancing-Flags. Es folgen 8x 16-bit-Worte = 16 Byte => 0..127 Bits
         i = 0
-        for xx in range(17,33):  # 0..32
+        for xx in range(17,33):  # 17..32  (16 Byte)
           a = data[xx] 
           for yy in range(0,8):  # 0..7
             if (a & 1) == 1:
@@ -900,19 +900,20 @@ class byd_bat(SmartPlugin):
         return
 
     def decode_12(self,data,x):
-        # Decodieren der Nachricht auf Befehl 'MESSAGE_12'.
+        # Decodieren der Nachricht auf Befehl 'MESSAGE_12' fuer den Turm 'x'.
 
         self.log_debug("decode_12 (" + str(x) + ") : " + data.hex())
 
         # Balancing-Flags. Es folgen 8x 16-bit-Worte = 16 Byte => 0..127 Bits
         i = 127
-        for xx in range(17,33):  # 0..32
+        for xx in range(17,33):  # 17..32
           a = data[xx] 
           for yy in range(0,8):  # 0..7
-            if (a & 1) == 1:
-              self.byd_balance_cell[x][i] = 1
-            else:
-              self.byd_balance_cell[x][i] = 0
+            if i <= byd_cells_max:
+              if (a & 1) == 1:
+                self.byd_balance_cell[x][i] = 1
+              else:
+                self.byd_balance_cell[x][i] = 0
             a = a / 2
             i = i + 1
         
@@ -1269,9 +1270,11 @@ class byd_bat(SmartPlugin):
     def simulate_data(self):
         # For internal tests only
         
-        simul = 1  # HVM
-#        simul = 2  # HVS
+#        simul = 1  # HVM
+        simul = 2  # HVS
 #        simul = 3  # LVS
+
+        twr = 3
         
         if simul == 1:
           self.byd_batt_str = "HVM"
@@ -1296,12 +1299,12 @@ class byd_bat(SmartPlugin):
         self.byd_temps_n = self.byd_modules * self.byd_temp_n
         
         for xx in range(0,self.byd_cells_n):
-          self.byd_volt_cell[1][xx] = round(random.uniform(2.1,2.9),2)
-          self.byd_balance_cell[1][xx] = random.randint(0,1)
+          self.byd_volt_cell[twr][xx] = round(random.uniform(2.1,2.9),2)
+          self.byd_balance_cell[twr][xx] = random.randint(0,1)
 #          self.log_info("xx=" + str(xx) + " v=" + str(self.byd_volt_cell[1][xx]))
         for xx in range(0,self.byd_temps_n):
-          self.byd_temp_cell[1][xx] = round(random.uniform(20.0,28.0),2)
+          self.byd_temp_cell[twr][xx] = round(random.uniform(20.0,28.0),2)
 #          self.log_info("xx=" + str(xx) + " v=" + str(self.byd_temp_cell[1][xx]))
 
-        self.diag_plot(1)
+        self.diag_plot(twr)
         
