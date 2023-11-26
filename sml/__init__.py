@@ -20,7 +20,6 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 import time
 import re
 import serial
@@ -65,7 +64,6 @@ class Sml(SmartPlugin):
         self._dataoffset = 0
         self._items = {}
         self._lock = threading.Lock()
-        self.logger = logging.getLogger(__name__)
 
         if self._device in self._devices:
             self._device = self._devices[self._device]

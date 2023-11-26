@@ -36,7 +36,6 @@
 #    the use or application of the software.
 #########################################################################
 
-import logging
 import threading
 import time
 import socket
@@ -188,7 +187,6 @@ class SMA(SmartPlugin):
 
     def __init__(self, **kwargs):
         # TODO: self._own_bt_addr setzen
-        self.logger = logging.getLogger(__name__)
         self._inv_bt_addr = self.get_parameter_value('bt_addr')
         self._inv_password = self.get_parameter_value('password')
         self._update_cycle = self.get_parameter_value('update_cycle')

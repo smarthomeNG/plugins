@@ -18,7 +18,6 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 import socket
 import time
 import serial
@@ -34,7 +33,6 @@ class ComfoAir(SmartPlugin):
     PLUGIN_VERSION = '1.3.1'
 
     def __init__(self, **kwargs):
-        self.logger = logging.getLogger('ComfoAir')
         self.connected = False
         self._params = {}
         self._init_cmds = []
