@@ -12,7 +12,7 @@ plugin:
     documentation: https://www.smarthomeng.de/developer/plugins/russound/user_doc.html        # url of documentation (wiki) page
     support:       https://knx-user-forum.de/forum/supportforen/smarthome-py/1800440-support-thread-für-das-russound-plugin
 
-    version: 1.7.1                  # Plugin version
+    version: 1.7.2                  # Plugin version
     sh_minversion: 1.9.0            # minimum shNG version to use this plugin
     # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: false           # plugin supports multi instance
@@ -35,6 +35,13 @@ parameters:
             de: 'Russound Port'
             en: 'Russound port'
             fr: "Port de Russound"
+
+    standby_item:
+        type: str
+        default: ''
+        description:
+            de: 'Item zum Aktivieren des Suspend-Modus'
+            en: 'item for activating suspend mode'
 
 item_attributes:
     rus_path:

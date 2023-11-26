@@ -1,0 +1,175 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface
+    description:
+        de: "Mikrotik RouterOS Switch management"
+        en: "Mikrotik RouterOS switch management"
+        fr: "Gestion de commutateur Mikrotik basé sur RouterOS"
+    maintainer: Foxi352
+    state: develop # change to ready when done with development
+    keywords: infrastructure network
+    version: 1.0.0
+    sh_minversion: 1.9
+    multi_instance: true
+    restartable: true
+    classname: MikrotikPlugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+
+    hostname:
+        type: str
+        mandatory: true
+        description:
+            de: "Hostname oder IP des Switches"
+            en: "Switch hostname or ip"
+            fr: "Nom d'hôte ou adresse ip du commutateur"
+
+    port:
+        type: int
+        default: 8729
+        description:
+            de: "API Port des Switches"
+            en: "Switch api port number"
+            fr: "Numéro de port de l'api du commutateur"
+
+    username:
+        type: str
+        default: "admin"
+        description:
+            de: "API Benutzername"
+            en: "API username"
+            fr: "Nom d'utilisateur de l'API"
+
+    password:
+        type: str
+        default: ""
+        description:
+            de: "API Password"
+            en: "API password"
+            fr: "Mot de passe de l'api"
+
+    cycle:
+        type: int
+        default: 15
+        description:
+            de: "Zeitlicher Abstand in Sekunden zwischen zwei Abfragen des Gerätes"
+            en: "Time in seconds between two queries of the device"
+            fr: "Temps en secondes entre deux requêtes de l'appareil"
+
+item_attributes:
+    mikrotik_port:
+        type: str
+        description:
+            de: "Name des zu adressierenden Geräteanschlusses, Beispiel: ether1"
+            en: "Name of the device port to be addressed, example: ether1"
+            fr: "Nom du port de l'appareil à adresser, exemple : ether1"
+
+    mikrotik_parameter:
+        type: str
+        valid_list:
+            - "active"
+            - "enabled"
+            - "poe"
+        description:
+            de: "Parameter, auf den über den ausgewählten Anschluss zugegriffen werden soll"
+            en: "Parameter to be accessed on the selected port"
+            fr: "Paramètre à accéder sur le port sélectionné"
+
+item_structs: NONE
+
+plugin_functions:
+    get_port_status:
+        type: bool
+
+        description:
+            en: "Get actual port state. True = up, False = down"
+            de: "Aktuellen Port Status abfragen. True = in Betrieb, False = Aus"
+            fr: "Obtenir l'état actuel du port. True = Utilisé, False = Éteint"
+
+        parameters:
+            port:
+                type: str
+                description:
+                    en: "Actual port name. If you renamed the switch port, use the new name you have it !"
+                    de: "Aktueller Name des Anschlusses. Wenn Sie den Switchport umbenannt haben, verwenden Sie den neuen Namen, den Sie ihm gegeben haben!"
+                    fr: "Nom actuel du port. Si vous avez renommé le port du commutateur, utilisez le nouveau nom que vous lui avez donné !"
+
+    get_port_enabled:
+        type: bool
+
+        description:
+            en: "Get port enabled state. True = enabled, False = disabled"
+            de: "Port Status abfragen. True = aktiviert, False = deaktiviert"
+            fr: "Obtenir l'état du port. True = activé, False = désactivé"
+
+        parameters:
+            port:
+                type: str
+                description:
+                    en: "Actual port name. If you renamed the switch port, use the new name you have it !"
+                    de: "Aktueller Name des Anschlusses. Wenn Sie den Switchport umbenannt haben, verwenden Sie den neuen Namen, den Sie ihm gegeben haben!"
+                    fr: "Nom actuel du port. Si vous avez renommé le port du commutateur, utilisez le nouveau nom que vous lui avez donné !"
+
+    get_port_poe:
+        type: bool
+
+        description:
+            en: "Get port POE state. True = enabled, False = disabled"
+            de: "Port POE Status abfragen. True = aktiviert, False = deaktiviert"
+            fr: "Obtenir l'état de POE du port. True = activé, False = désactivé"
+
+        parameters:
+            port:
+                type: str
+                description:
+                    en: "Actual port name. If you renamed the switch port, use the new name you have it !"
+                    de: "Aktueller Name des Anschlusses. Wenn Sie den Switchport umbenannt haben, verwenden Sie den neuen Namen, den Sie ihm gegeben haben!"
+                    fr: "Nom actuel du port. Si vous avez renommé le port du commutateur, utilisez le nouveau nom que vous lui avez donné !"
+
+    set_port_enabled:
+        type: bool
+
+        description:
+            en: "Enable or disable specific port"
+            de: "Anschluss aktivieren oder deaktivieren"
+            fr: "Activer ou désactiver un port spécifique"
+
+        parameters:
+            port:
+                type: str
+                description:
+                    en: "Actual port name. If you renamed the switch port, use the new name you have it !"
+                    de: "Aktueller Name des Anschlusses. Wenn Sie den Switchport umbenannt haben, verwenden Sie den neuen Namen, den Sie ihm gegeben haben!"
+                    fr: "Nom actuel du port. Si vous avez renommé le port du commutateur, utilisez le nouveau nom que vous lui avez donné !"
+            state:
+                type: bool
+                description:
+                    en: "Wanted port enabled state (true = enabled, false = disabled)"
+                    de: "Gewünschter Aktivierungsstatus (true = aktiviert, false = deaktiviert)"
+                    fr: "État d'activation souhaité (true = activé, false = désactivé)"
+
+    set_port_poe:
+        type: bool
+
+        description:
+            en: "Set poe output for specific port"
+            de: "Poe Ausgabe für einen bestimmten Anschluss einstellen"
+            fr: "Définir la sortie poe pour un port spécifique"
+
+        parameters:
+            port:
+                type: str
+                description:
+                    en: "Actual port name. If you renamed the switch port, use the new name you have it !"
+                    de: "Aktueller Name des Anschlusses. Wenn Sie den Switchport umbenannt haben, verwenden Sie den neuen Namen, den Sie ihm gegeben haben!"
+                    fr: "Nom actuel du port. Si vous avez renommé le port du commutateur, utilisez le nouveau nom que vous lui avez donné !"
+            state:
+                type: bool
+                description:
+                    en: "Wanted POE state (true = auto-on, false = off)"
+                    de: "Gewünschter POE-Status (true = auto-on, false = off)"
+                    fr: "État POE souhaité (true = auto-on, false = off)"
+
+logic_parameters: NONE

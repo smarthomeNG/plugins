@@ -249,8 +249,10 @@ class KNX(SmartPlugin):
                 ga = kwargs['ga']
                 interval = int(kwargs['interval'])
                 next = self.shtime.now() + timedelta(seconds=interval)
-                self._sh.scheduler.add(f'KNX poll {item}', self._poll,
-                                    value={'instance': self.get_instance_name(), ITEM: item, 'ga': ga, 'interval': interval},
+                self.scheduler_add(f'KNX poll {item}', self._poll,
+                                    value={'caller': self.get_shortname(),
+                                    'instance': self.get_instance_name(),
+                                    ITEM: item, 'ga': ga, 'interval': interval},
                                     next=next)
             except Exception as ex:
                 self.logger.error(f"_poll function got an error {ex}")
@@ -542,7 +544,7 @@ class KNX(SmartPlugin):
             self._poll(**{ITEM: item, 'ga':_ga, 'interval':_interval})
 
         if self._send_time_do:
-            self._sh.scheduler.add('KNX[{0}] time'.format(self.get_instance_name()), self._send_time, prio=5, cycle=int(self._send_time_do))
+            self.scheduler_add('KNX[{0}] time'.format(self.get_instance_name()), self._send_time, prio=5, cycle=int(self._send_time_do))
 
     def stop(self):
         """

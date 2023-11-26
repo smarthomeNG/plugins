@@ -155,6 +155,7 @@ class SeEval(StateEngineTools.SeItemChild):
     # See description of StateEngineItem.SeItem.return_item for details
     def get_relative_itemvalue(self, subitem_id):
         self._eval_lock.acquire()
+        returnvalue = []
         self._log_debug("Executing method 'get_relative_itemvalue({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
@@ -163,12 +164,13 @@ class SeEval(StateEngineTools.SeItemChild):
             else:
                 item, issue = self._abitem.return_item(subitem_id)
                 returnvalue = item.property.value
-                self._log_debug("Return item value '{0}' for item {1}", returnvalue, item.property.path)
+                returnvalue = StateEngineTools.convert_str_to_list(returnvalue)
+                self._log_debug("Return item value '{0}' for item {1}", returnvalue, subitem_id)
         except Exception as ex:
-            returnvalue = None
             self._log_warning("Problem evaluating value of '{0}': {1}", subitem_id, ex)
         finally:
             self._eval_lock.release()
+        returnvalue = returnvalue[0] if len(returnvalue) == 1 else None if len(returnvalue) == 0 else returnvalue
         return returnvalue
 
     # Return the property of an item related to the StateEngine Object Item
@@ -192,6 +194,10 @@ class SeEval(StateEngineTools.SeItemChild):
                                 self._abitem.return_item(self._abitem._initstate.id)[0].property.path, returnvalue)
             else:
                 returnvalue = getattr(item.property, prop)
+                if prop == "value":
+                    returnvalue = StateEngineTools.convert_str_to_list(returnvalue)
+                    returnvalue = returnvalue[0] if len(returnvalue) == 1 else None if len(
+                        returnvalue) == 0 else returnvalue
                 self._log_debug("Return item property {0} from {1}: {2}", prop, item.property.path, returnvalue)
         except Exception as ex:
             returnvalue = None

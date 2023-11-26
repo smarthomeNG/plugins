@@ -30,7 +30,7 @@ from .robot import Robot
 
 
 class Neato(SmartPlugin):
-    PLUGIN_VERSION = '1.6.8'
+    PLUGIN_VERSION = '1.6.9'
     robot = 'None'
 
     def __init__(self, sh):

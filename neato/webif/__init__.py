@@ -113,8 +113,8 @@ class WebInterface(SmartPluginWebIf):
                     self.plugin.dismiss_current_alert()
                     resetAlarmsSuccessfull = True
             elif action =="listAvailableMaps":
-                    self.logger.warning("List all available maps via webinterface")
                     boundaryListSuccessfull = self.plugin.get_map_boundaries(map_id=mapIDInput)
+                    self.logger.warning(f"Request all available maps via webinterface successfull: {boundaryListSuccessfull }")
             else:
                 self.logger.error("Unknown command received via webinterface")
 

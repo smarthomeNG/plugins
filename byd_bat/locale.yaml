@@ -33,6 +33,14 @@ plugin_translations:
     'Module pro Turm':                    {'de': '=', 'en': 'Modules per tower'}
     'Parameter':                          {'de': '=', 'en': 'Parameter'}
     'Fehler':                             {'de': '=', 'en': 'Error'}
+    
+    'Batteriespannung':                   {'de': '=', 'en': 'Batteryvoltage'}
+    'Spannung Out':                       {'de': '=', 'en': 'Voltage Out'}
+    'Strom':                              {'de': '=', 'en': 'Current'}
+    'Spannung max (Zelle)':               {'de': '=', 'en': 'Voltage max (cell)'}
+    'Spannung min (Zelle)':               {'de': '=', 'en': 'Voltage min (cell)'}
+    'Temperatur Zelle max':               {'de': '=', 'en': 'Temperature cell max'}
+    'Temperatur Zelle min':               {'de': '=', 'en': 'Temperature cell min'}
 
     # Alternative format for translations of longer texts:
     'Hier kommt der Inhalt des Webinterfaces hin.':

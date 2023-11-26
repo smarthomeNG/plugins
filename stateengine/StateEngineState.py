@@ -87,6 +87,14 @@ class SeState(StateEngineTools.SeItemChild):
         self.__releasedby.set(value, "", True, None, False)
 
     @property
+    def order(self):
+        return self.__order.get()
+
+    @order.setter
+    def order(self, value):
+        self.__order.set(value, "", True, None, False)
+
+    @property
     def can_release(self):
         return self.__can_release.get()
 
@@ -155,6 +163,7 @@ class SeState(StateEngineTools.SeItemChild):
         self.__actions_enter = StateEngineActions.SeActions(self._abitem)
         self.__actions_stay = StateEngineActions.SeActions(self._abitem)
         self.__actions_leave = StateEngineActions.SeActions(self._abitem)
+        self.__order = StateEngineValue.SeValue(self._abitem, "State Order", False, "num")
         self._log_increase_indent()
         try:
             self.__fill(self.__item, 0)
@@ -190,12 +199,11 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem.set_variable("current.state_name", self.name)
         self._abitem.set_variable("current.state_id", self.id)
         self.__text.write_to_logger()
+        self.__order.write_to_logger()
         self.__is_copy_for.write_to_logger()
         self.__releasedby.write_to_logger()
         self.__can_release.write_to_logger()
-        if self.__use_done:
-            _log_se_use = self.__use_done[0] if len(self.__use_done) == 1 else self.__use_done
-            self._log_info("State configuration extended by se_use: {}", _log_se_use)
+        self.__use.write_to_logger()
 
         self._log_info("Updating Web Interface...")
         self._log_increase_indent()
@@ -246,6 +254,24 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem.set_variable("current.state_name", "")
         self._abitem.set_variable("current.state_id", "")
         self._log_decrease_indent()
+
+    def update_order(self, value=None):
+        if isinstance(value, list):
+            if len(value) > 1:
+                _default_value = self.__order.get()
+                self._log_warning("se_stateorder for item {} can not be defined as a list"
+                                  " ({}). Using default value {}.", self.id, value, _default_value)
+                value = _default_value
+            elif len(value) == 1:
+                value = value[0]
+        if value is None and "se_stateorder" in self.__item.conf:
+            _, _, _, _issue = self.__order.set_from_attr(self.__item, "se_stateorder")
+        elif value is not None:
+            _, _, _issue = self.__order.set(value, "", True, None, False)
+        else:
+            _issue = [None]
+
+        return _issue
 
     # run actions when entering the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
@@ -351,6 +377,18 @@ class SeState(StateEngineTools.SeItemChild):
         self.__name = self.text
         return self.__name
 
+    def __fill_list(self, item_states, recursion_depth, se_use=None):
+        for i, element in enumerate(item_states):
+            if element == self.state_item:
+                self._log_info("Use element {} is same as current state - Ignoring.", element)
+            elif element is not None and element not in self.__use_done:
+                try:
+                    _use = se_use[i]
+                except Exception:
+                    _use = element
+                self.__fill(element, recursion_depth, _use)
+                self.__use_done.append(element)
+
     # Read configuration from item and populate data in class
     # item_state: item to read from
     # recursion_depth: current recursion_depth (recursion is canceled after five levels)
@@ -370,7 +408,6 @@ class SeState(StateEngineTools.SeItemChild):
             if action_status is None:
                 return
             action_status = StateEngineTools.flatten_list(action_status)
-            #self._log_debug("Action status: {}", action_status)
             if isinstance(action_status, list):
                 for e in action_status:
                     update_action_status(e, actiontype)
@@ -436,7 +473,7 @@ class SeState(StateEngineTools.SeItemChild):
                                            {item_state.property.path: {'issue': _issue, 'attribute': 'se_use'}})
                 self._log_warning("{} - ignoring.", _issue)
             else:
-                _use = [_use] if not isinstance(_use, list) else StateEngineTools.flatten_list(_use)
+                _use = [_use] if not isinstance(_use, list) else _use
                 _returntype = [_returntype] if not isinstance(_returntype, list) else _returntype
                 cleaned_use_list = []
                 for i, element in enumerate(_use):
@@ -476,15 +513,20 @@ class SeState(StateEngineTools.SeItemChild):
                         _path = _configvalue[i]
                         self._log_info("se_use {} defined by item/eval. Even if current result is not valid, "
                                        "entry will be re-evaluated on next state evaluation.", _path)
-                        if _path not in cleaned_use_list:
+                        if _path is not None and _path not in cleaned_use_list:
                             cleaned_use_list.append(_path)
+                            self.__use_done.append(_path)
                     if _path is None:
                         pass
-                    elif _fill and element not in self.__use_done:
+                    elif element == self.state_item:
+                        self._log_info("Use element {} is same as current state - Ignoring.", _name)
+                    elif _fill and element is not None and element not in self.__use_done:
                         self._log_develop("Adding element {} to state fill function.", _name)
-                        self.__use_done.append(element)
-                        self.__fill(element, recursion_depth + 1, _name)
-
+                        if isinstance(_name, list):
+                            self.__fill_list(element, recursion_depth + 1, _name)
+                        else:
+                            self.__use_done.append(element)
+                            self.__fill(element, recursion_depth + 1, _name)
                 self.__use.set(cleaned_use_list)
 
         # Get action sets and condition sets

@@ -40,6 +40,7 @@ import copy
 import threading
 import queue
 import re
+from ast import literal_eval
 
 
 # Class representing a blind item
@@ -347,12 +348,12 @@ class SeItem:
             "previous.state_conditionset_name": ""
         }
         try:
-            _statecount = 0
+            _statecount = 1
             for item_state in self.__item.return_children():
-                self.__initialize_state(item_state, _statecount)
+                _statecount = self.__initialize_state(item_state, _statecount)
         except Exception as ex:
             self.__logger.error("Ignoring stateevaluation for {} because {}", self.__id, ex)
-
+        self.__reorder_states()
         try:
             self.__finish_states()
         except Exception as ex:
@@ -506,6 +507,7 @@ class SeItem:
         self.__logger.debug("Current suspend time {}, default {}{}",
                             _suspend_time, self.__default_suspend_time, additional_text)
         self.update_lock.acquire(True, 10)
+        self.__reorder_states(init=False)
         all_released_by = {}
         new_state = None
         if self.__using_default_instant_leaveaction:
@@ -657,6 +659,7 @@ class SeItem:
                     self.__logger.debug("State evaluation finished")
                     self.__logger.info("State evaluation queue empty.")
                     self.__handle_releasedby(new_state, last_state, _instant_leaveaction)
+
                     return
 
                 if new_state.is_copy_for:
@@ -679,6 +682,7 @@ class SeItem:
                         self.update_webif(_key_stay, False)
                         self.update_webif(_key_enter, False)
                     self.__handle_releasedby(new_state, last_state, _instant_leaveaction)
+
                     if self.update_lock.locked():
                         self.update_lock.release()
                     self.update_state(self.__item, "Released_by Retrigger", state.id)
@@ -766,50 +770,56 @@ class SeItem:
                                  "state {} has to be defined with one '.' only.".format(value, state.id)
             self.__logger.warning("{} Changing it accordingly.", _returnvalue_issue)
             value = re.sub(r'\.+', '.', value)
+        if isinstance(value, list):
+            new_value = []
+            for v in value:
+                if isinstance(v, str) and v.startswith("."):
+                    v = "{}{}".format(state.id.rsplit(".", 1)[0], v)
+                new_value.append(v)
+            value = new_value
         if isinstance(value, str) and value.startswith("."):
             value = "{}{}".format(state.id.rsplit(".", 1)[0], value)
-
         return value
 
     def __update_can_release(self, can_release, new_state=None):
         state_dict = {state.id: state for state in self.__states}
         for entry, release_list in can_release.items():  # Iterate through the dictionary items
             entry = self.__update_release_item_value(entry, new_state)
-            if entry in state_dict:
-                state = state_dict.get(entry)
-                if state.is_copy_for:
-                    self.__logger.develop("State {} is a copy.", state.id)
-                    #continue
-                can_release_list = []
-                _stateindex = list(state_dict.keys()).index(state.id)
-                for e in release_list:
-                    _valueindex = list(state_dict.keys()).index(e) if e in state_dict else -1
-                    self.__logger.develop("Testing entry in canrelease {}, state {} stateindex {}, "\
-                                          "valueindex {}", e, state.id, _stateindex, _valueindex)
-                    if e == state.id:
-                        self.__logger.info("Value in se_released_by must not be identical to state. Ignoring {}", e)
-                    elif _stateindex < _valueindex and not state.is_copy_for:
-                        self.__logger.info("Value {} in se_released_by must have lower priority "\
-                                           "than state. Ignoring {}", state.id, e)
-                    else:
-                        can_release_list.append(e)
-                        self.__logger.develop("Value added to possible can release states {}", e)
+            entry = entry if isinstance(entry, list) else [entry]
+            for en in entry:
+                if en in state_dict:
+                    state = state_dict.get(en)
+                    if state.is_copy_for:
+                        self.__logger.develop("State {} is a copy.", state.id)
+                    can_release_list = []
+                    _stateindex = list(state_dict.keys()).index(state.id)
+                    for e in release_list:
+                        _valueindex = list(state_dict.keys()).index(e) if e in state_dict else -1
+                        self.__logger.develop("Testing entry in canrelease {}, state {} stateindex {}, "\
+                                              "valueindex {}", e, state.id, _stateindex, _valueindex)
+                        if e == state.id:
+                            self.__logger.info("Value in se_released_by must not be identical to state. Ignoring {}", e)
+                        elif _stateindex < _valueindex and not state.is_copy_for:
+                            self.__logger.info("Value {} in se_released_by must have lower priority "\
+                                               "than state. Ignoring {}", state.id, e)
+                        else:
+                            can_release_list.append(e)
+                            self.__logger.develop("Value added to possible can release states {}", e)
 
-                state.update_can_release_internal(can_release_list)
-                self.__logger.develop("Updated 'can_release' property of state {} to {}", state.id, state.can_release)
+                    state.update_can_release_internal(can_release_list)
+                    self.__logger.develop("Updated 'can_release' property of state {} to {}", state.id, state.can_release)
 
-            else:
-                self.__logger.info("Entry {} in se_released_by of state(s) is not a valid state.", entry)
+                else:
+                    self.__logger.info("Entry {} in se_released_by of state(s) is not a valid state.", entry)
 
     def __handle_releasedby(self, new_state, last_state, instant_leaveaction):
         def update_can_release_list():
             for e in _returnvalue:
-                if isinstance(e, list):
-                    self.__logger.warning("Entry {} should not be list. Please check!", e)
-                    e = e[0]
                 e = self.__update_release_item_value(e, new_state)
-                if e and state.id not in can_release.setdefault(e, [state.id]):
-                    can_release[e].append(state.id)
+                e = e if isinstance(e, list) else [e]
+                for entry in e:
+                    if entry and state.id not in can_release.setdefault(entry, [state.id]):
+                        can_release[entry].append(state.id)
 
         self.__logger.info("".ljust(80, "_"))
         self.__logger.info("Handling released_by attributes")
@@ -822,10 +832,11 @@ class SeItem:
                 skip_copy = False
                 continue
             _returnvalue = state.releasedby
+            _returnvalue = _returnvalue if isinstance(_returnvalue, list) else [_returnvalue]
+            _returnvalue = StateEngineTools.flatten_list(_returnvalue)
             all_released_by.update({state: _returnvalue})
 
-            if _returnvalue:
-                _returnvalue = _returnvalue if isinstance(_returnvalue, list) else [_returnvalue]
+            if _returnvalue not in [[], None, [None]]:
                 update_can_release_list()
 
         self.__update_can_release(can_release, new_state)
@@ -857,54 +868,58 @@ class SeItem:
             new_state.was_releasedby = None
             _can_release_list = []
             releasedby = all_released_by.get(new_state)
-            self.__logger.develop("releasedby {}", releasedby)
-            if releasedby:
+            if releasedby not in [[], None, [None]]:
+                self.__logger.develop("releasedby {}", releasedby)
                 state_dict = {item.id: item for item in self.__states}
                 _stateindex = list(state_dict.keys()).index(new_state.id)
                 releasedby = releasedby if isinstance(releasedby, list) else [releasedby]
                 _checkedentries = []
                 for i, entry in enumerate(releasedby):
                     entry = self.__update_release_item_value(entry, new_state)
-                    if entry in _checkedentries:
-                        self.__logger.develop("Entry {} defined by {} already checked, skipping", entry, releasedby[i])
-                        continue
-                    cond_copy_for = entry in state_dict.keys()
-                    if cond_copy_for and new_state == state_dict.get(entry).is_copy_for:
-                        _can_release_list.append(entry)
-                        self.__logger.develop("Entry {} defined by {} is a copy, skipping", entry, releasedby[i])
-                        continue
-                    _entryindex = list(state_dict.keys()).index(entry) if entry in state_dict else -1
-                    self.__logger.develop("Testing if entry {} should become a state copy. "\
-                                          "stateindex {}, entryindex {}", entry, _stateindex, _entryindex)
-                    if entry == new_state.id:
-                        self.__logger.warning("Value in se_released_by must no be identical to state. Ignoring {}",
-                                              entry)
-                    elif _entryindex == -1:
-                        self.__logger.warning("State in se_released_by does not exist. Ignoring {}", entry)
-                    elif _stateindex > _entryindex:
-                        self.__logger.warning("Value in se_released_by must have lower priority than state. Ignoring {}",
-                                              entry)
-                    elif entry in state_dict.keys():
-                        relevant_state = state_dict.get(entry)
-                        index = self.__states.index(new_state)
-                        cond_index = relevant_state in self.__states and self.__states.index(relevant_state) != index - 1
-                        if cond_index or relevant_state not in self.__states:
-                            current_log_level = self.__log_level.get()
-                            if current_log_level < 3:
-                                self.__logger.log_level_as_num = 0
-                            can_enter = self.__update_check_can_enter(relevant_state, instant_leaveaction)
-                            self.__logger.log_level_as_num = current_log_level
-                            if relevant_state == last_state:
-                                self.__logger.debug("Possible release state {} = last state {}, "\
-                                                    "not copying", relevant_state.id, last_state.id)
-                            elif can_enter:
-                                self.__logger.debug("Relevant state {} could enter, not copying", relevant_state.id)
-                            elif not can_enter:
-                                relevant_state.is_copy_for = new_state
-                                self.__states.insert(index, relevant_state)
-                                _can_release_list.append(relevant_state.id)
-                                self.__logger.debug("Inserted copy of state {}", relevant_state.id)
-                    _checkedentries.append(entry)
+                    entry = entry if isinstance(entry, list) else [entry]
+                    for e in entry:
+                        if e in _checkedentries:
+                            self.__logger.develop("Entry {} defined by {} already checked, skipping", e, releasedby[i])
+                            continue
+                        cond_copy_for = e in state_dict.keys()
+                        if cond_copy_for and new_state == state_dict.get(e).is_copy_for:
+                            if e not in _can_release_list:
+                                _can_release_list.append(e)
+                            self.__logger.develop("Entry {} defined by {} is a copy, skipping", e, releasedby[i])
+                            continue
+                        _entryindex = list(state_dict.keys()).index(e) if e in state_dict else -1
+                        self.__logger.develop("Testing if entry {} should become a state copy. "\
+                                              "stateindex {}, entryindex {}", e, _stateindex, _entryindex)
+                        if e == new_state.id:
+                            self.__logger.warning("Value in se_released_by must no be identical to state. Ignoring {}",
+                                                  e)
+                        elif _entryindex == -1:
+                            self.__logger.warning("State in se_released_by does not exist. Ignoring {}", e)
+                        elif _stateindex > _entryindex:
+                            self.__logger.warning("Value in se_released_by must have lower priority than state. Ignoring {}",
+                                                  e)
+                        elif e in state_dict.keys():
+                            relevant_state = state_dict.get(e)
+                            index = self.__states.index(new_state)
+                            cond_index = relevant_state in self.__states and self.__states.index(relevant_state) != index - 1
+                            if cond_index or relevant_state not in self.__states:
+                                current_log_level = self.__log_level.get()
+                                if current_log_level < 3:
+                                    self.__logger.log_level_as_num = 0
+                                can_enter = self.__update_check_can_enter(relevant_state, instant_leaveaction)
+                                self.__logger.log_level_as_num = current_log_level
+                                if relevant_state == last_state:
+                                    self.__logger.debug("Possible release state {} = last state {}, "\
+                                                        "not copying", relevant_state.id, last_state.id)
+                                elif can_enter:
+                                    self.__logger.debug("Relevant state {} could enter, not copying", relevant_state.id)
+                                elif not can_enter:
+                                    relevant_state.is_copy_for = new_state
+                                    self.__states.insert(index, relevant_state)
+                                    if relevant_state.id not in _can_release_list:
+                                        _can_release_list.append(relevant_state.id)
+                                    self.__logger.debug("Inserted copy of state {}", relevant_state.id)
+                        _checkedentries.append(e)
                 self.__logger.info("State {} can currently get released by: {}", new_state.id, _can_release_list)
                 self.__release_info = {new_state.id: _can_release_list}
                 _key_releasedby = ['{}'.format(new_state.id), 'releasedby']
@@ -1103,26 +1118,107 @@ class SeItem:
                 self.__logger.info("{}", text)
         self.__logger.decrease_indent()
 
+    def __reorder_states(self, init=True):
+        _reordered_states = []
+        self.__logger.info("".ljust(80, "_"))
+        self.__logger.info("Recalculating state order. Current order: {}", self.__states)
+        _copied_states = {}
+        _add_order = 0
+        _changed_orders = []
+        for i, state in enumerate(self.__states, 1):
+            try:
+                _original_order = state.order
+                _issue = None
+                if state.is_copy_for and state not in _copied_states:
+                    _order = i - 0.01
+                    _copied_states[state] = _order
+                    self.__logger.develop("State {} is copy, set to {}", state, _order)
+                else:
+                    _issue = state.update_order()
+                    _order = state.order
+                    if _order != _original_order:
+                        _changed_orders.append(_order)
+                        _add_order -= 1
+                        self.__logger.develop("State {} changed order: {},"
+                                              " i: {} add order: {}.",
+                                              state, _order, i, _add_order)
+                    elif any(_order < value for value in _changed_orders):
+                        _order = i + _add_order
+                        _issue = state.update_order(_order)
+                        self.__logger.develop("State {} smaller, order: {},"
+                                              " i: {} add order: {}.",
+                                              state, _order, i, _add_order)
+                    elif any(_order == value for value in _changed_orders):
+                        _order = i + _add_order
+                        _issue = state.update_order(_order)
+                        self.__logger.develop("State {} equal, order: {},"
+                                              " i: {} add order: {}.",
+                                              state, _order, i, _add_order)
+                        _add_order += 1
+                    else:
+                        self.__logger.develop("State {} order: {},"
+                                              " i: {} add order: {}.",
+                                              state, _order, i, _add_order)
+                if _issue not in [[], None, [None]]:
+                    self.__config_issues.update({state.id: {'issue': _issue, 'attribute': 'se_stateorder'}})
+                    self.__logger.warning("Issue while getting state order: {},"
+                                          " using original order {}", _issue, _original_order)
+                    _order = _original_order
+                    state.update_order(_original_order)
+                elif _copied_states.get(state) and _copied_states.get(state) > _order:
+                    _reordered_states.remove((_copied_states.get(state), state))
+                    state.is_copy_for = None
+                    _add_order -= 1
+                elif state not in _copied_states and init is False:
+                    _order += _add_order
+                _reordered_states.append((_order, state))
+            except Exception as ex:
+                self.__logger.error("Problem setting order of state {0}: {1}", state.id, ex)
+                self.__config_issues.update({state.id: {'issue': ex, 'attribute': 'se_stateorder'}})
+        self.__states = []
+        for order, state in sorted(_reordered_states, key=lambda x: x[0]):
+            self.__states.append(state)
+        if init is False:
+            _reorder_webif = OrderedDict()
+            _copied_states = []
+            for state in self.__states:
+                if state.is_copy_for and state not in _copied_states:
+                    _copied_states.append(state)
+                else:
+                    _reorder_webif[state.id] = self.__webif_infos[state.id]
+            self.__webif_infos = _reorder_webif
+        self.__logger.info("Recalculated state order. New order: {}", self.__states)
+        self.__logger.info("".ljust(80, "_"))
+
     def __initialize_state(self, item_state, _statecount):
-        # initialize states
         try:
             _state = StateEngineState.SeState(self, item_state)
-            _statecount += 1
+            _issue = _state.update_order(_statecount)
+            if _issue:
+                self.__config_issues.update({item_state.property.path:
+                                            {'issue': _issue, 'attribute': 'se_stateorder'}})
+                self.__logger.error("Issue with state {0} while setting order: {1}",
+                                    item_state.property.path, _issue)
             self.__states.append(_state)
             self.__state_ids.update({item_state.property.path: _state})
-            if _statecount == 1:
-                self.__unused_attributes = _state.unused_attributes.copy()
+            self.__logger.info("Appended state {}", item_state.property.path)
+            self.__unused_attributes = _state.unused_attributes.copy()
             filtered_dict = {key: value for key, value in self.__unused_attributes.items() if
                              key not in _state.used_attributes}
             self.__unused_attributes = filtered_dict
+            return _statecount + 1
         except ValueError as ex:
             self.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
                 [{'conditionset': 'None', 'condition': 'ValueError'}]}})
-            self.__logger.error("Ignoring state {0} because ValueError: {1}", item_state.property.path, ex)
+            self.__logger.error("Ignoring state {0} because ValueError: {1}",
+                                item_state.property.path, ex)
+            return _statecount
         except Exception as ex:
             self.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
                 [{'conditionset': 'None', 'condition': 'GeneralError'}]}})
-            self.__logger.error("Ignoring state {0} because: {1}", item_state.property.path, ex)
+            self.__logger.error("Ignoring state {0} because: {1}",
+                                item_state.property.path, ex)
+            return _statecount
 
     def __finish_states(self):
         # initialize states
@@ -1146,7 +1242,7 @@ class SeItem:
     def __update_check_can_enter(self, state, instant_leaveaction, refill=True):
         try:
             wasreleasedby = state.was_releasedby.id
-        except Exception as ex:
+        except:
             wasreleasedby = state.was_releasedby
         try:
             iscopyfor = state.is_copy_for.id
@@ -1449,105 +1545,119 @@ class SeItem:
 
     def __init_releasedby(self):
         def process_returnvalue(value):
-            self.__logger.info("Testing value {}", value)
+            self.__logger.debug("Testing value {}", value)
             _returnvalue_issue = None
             if value is None:
                 return _returnvalue_issue
             try:
                 original_value = value
                 value = self.__update_release_item_value(_evaluated_returnvalue[i], state)
-                _stateindex = list(state_dict.keys()).index(state.id)
-                _valueindex = list(state_dict.keys()).index(value) if value in state_dict else -1
-                if _returntype[i] == 'value' and _valueindex == - 1: #not any(value == test.id for test in self.__states):
-                    _returnvalue_issue = "State {} defined by value in se_released_by attribute of state {} " \
-                                         "does not exist.".format(value, state.id)
-                    self.__logger.warning("{} Removing it.", _returnvalue_issue)
-                elif _returntype[i] == 'value' and _valueindex < _stateindex:
-                    _returnvalue_issue = "State {} defined by value in se_released_by attribute of state {} " \
-                                         "must be lower priority than actual state.".format(value, state.id)
-                    self.__logger.warning("{} Removing it.", _returnvalue_issue)
-                elif _returntype[i] == 'value' and value == state.id:
-                    _returnvalue_issue = "State {} defined by value in se_released_by attribute of state {} " \
-                                         "must not be identical.".format(value, state.id)
-                    self.__logger.warning("{} Removing it.", _returnvalue_issue)
-                elif _returntype[i] == 'item':
-                    if value == state.id:
-                        _returnvalue_issue = "State {} defined by {} in se_released_by attribute of state {} " \
-                                             "must not be identical.".format(value, _returnvalue[i], state.id)
-                    elif _valueindex == - 1: #not any(value == test.id for test in self.__states):
-                        _returnvalue_issue = "State {} defined by {} in se_released_by attribute of state {} " \
-                                             "does currently not exist.".format(value, _returnvalue[i], state.id)
-                    elif _valueindex < _stateindex:
+                value = value if isinstance(value, list) else [value]
+                v_list = []
+                for v in value:
+                    _stateindex = list(state_dict.keys()).index(state.id)
+                    _valueindex = list(state_dict.keys()).index(v) if v in state_dict else -1
+                    if _returntype[i] == 'value' and _valueindex == - 1:
                         _returnvalue_issue = "State {} defined by value in se_released_by attribute of state {} " \
-                                             "must be lower priority than actual state.".format(value, state.id)
-                    if _returnvalue_issue:
-                        self.__logger.warning("{} Make sure to change item value.", _returnvalue_issue)
-                    _convertedlist.append(original_value)
-                    _converted_evaluatedlist.append(value)
-                    _converted_typelist.append(_returntype[i])
-                    self.__logger.develop("Adding {} from item as releasedby for state {}", original_value, state.id)
-                elif _returntype[i] == 'regex':
-                    matches = [test.id for test in self.__states if _evaluated_returnvalue[i].match(test.id)]
-                    self.__logger.develop("matches {}", matches)
-                    _returnvalue_issue_list = []
-                    for match in matches:
-                        _valueindex = list(state_dict.keys()).index(match) if match in state_dict else -1
-                        if _valueindex == _stateindex:
-                            _returnvalue_issue = "State {} defined by {} in se_released_by attribute of state {} " \
-                                                 "must not be identical.".format(match, _returnvalue[i], state.id)
-                            self.__logger.warning("{} Removing it.", _returnvalue_issue)
-                            if _returnvalue_issue not in _returnvalue_issue_list:
-                                _returnvalue_issue_list.append(_returnvalue_issue)
-                        elif _valueindex < _stateindex:
-                            _returnvalue_issue = "State {} defined by {} in se_released_by " \
-                                                 "attribute of state {} must be lower priority "\
-                                                 "than actual state.".format(match, _returnvalue[i], state.id)
-                            self.__logger.warning("{} Removing it.", _returnvalue_issue)
-                            if _returnvalue_issue not in _returnvalue_issue_list:
-                                _returnvalue_issue_list.append(_returnvalue_issue)
-                        else:
-                            _convertedlist.append(match)
-                            _converted_evaluatedlist.append(value)
-                            _converted_typelist.append(_returntype[i])
-                            self.__logger.develop("Adding {} from regex as releasedby for state {}", match, state.id)
-                        _returnvalue_issue = _returnvalue_issue_list
-                    if not matches:
-                        _returnvalue_issue = "No states match regex {} defined in "\
-                                             "se_released_by attribute of state {}.".format(value, state.id)
+                                             "does not exist.".format(v, state.id)
                         self.__logger.warning("{} Removing it.", _returnvalue_issue)
-                elif _returntype[i] == 'eval':
-                    if value == state.id:
-                        _returnvalue_issue = "State {} defined by {} in se_released_by attribute of state {} " \
-                                             "must not be identical.".format(value, _returnvalue[i], state.id)
-                        self.__logger.warning("{} Make sure eval will result in a useful value later on.",
-                                              _returnvalue_issue)
-                    elif _valueindex < _stateindex:
+                    elif _returntype[i] == 'value' and _valueindex < _stateindex:
                         _returnvalue_issue = "State {} defined by value in se_released_by attribute of state {} " \
-                                             "must be lower priority than actual state.".format(value, state.id)
-                        self.__logger.warning("{} Make sure eval will result in a useful value later on.",
-                                              _returnvalue_issue)
-                    elif value is None:
-                        _returnvalue_issue = "Eval defined by {} in se_released_by attribute of state {} " \
-                                             "does currently return None.".format(_returnvalue[i], state.id)
-                        self.__logger.warning("{} Make sure eval will result in a useful value later on.",
-                                              _returnvalue_issue)
-                    _convertedlist.append(_returnvalue[i])
-                    _converted_evaluatedlist.append(value)
-                    _converted_typelist.append(_returntype[i])
-                    self.__logger.develop("Adding {} from eval as releasedby for state {}", _returnvalue[i], state.id)
-                elif value and value == state.id:
-                    _returnvalue_issue = "State {} defined by {} in se_released_by attribute of state {} " \
-                                         "must not be identical.".format(value, _returnvalue[i], state.id)
-                    self.__logger.warning("{} Removing it.", _returnvalue_issue)
-                elif value and value not in _convertedlist:
-                    _convertedlist.append(value)
-                    _converted_evaluatedlist.append(value)
-                    _converted_typelist.append(_returntype[i])
-                    self.__logger.develop("Adding {} as releasedby for state {}", value, state.id)
-                else:
-                    _returnvalue_issue = "Found invalid definition in se_released_by attribute "\
-                                         "of state {}, original {}.".format(state.id, value, original_value)
-                    self.__logger.warning("{} Removing it.", _returnvalue_issue)
+                                             "must be lower priority than actual state.".format(v, state.id)
+                        self.__logger.warning("{} Removing it.", _returnvalue_issue)
+                    elif _returntype[i] == 'value' and v == state.id:
+                        _returnvalue_issue = "State {} defined by value in se_released_by attribute of state {} " \
+                                             "must not be identical.".format(v, state.id)
+                        self.__logger.warning("{} Removing it.", _returnvalue_issue)
+                    elif _returntype[i] == 'item':
+                        if v == state.id:
+                            _returnvalue_issue = "State {} defined by {} in se_released_by attribute of state {} " \
+                                                 "must not be identical.".format(v, _returnvalue[i], state.id)
+                        elif _valueindex == - 1: #not any(value == test.id for test in self.__states):
+                            _returnvalue_issue = "State {} defined by {} in se_released_by attribute of state {} " \
+                                                 "does currently not exist.".format(v, _returnvalue[i], state.id)
+                        elif _valueindex < _stateindex:
+                            _returnvalue_issue = "State {} defined by value in se_released_by attribute of state {} " \
+                                                 "must be lower priority than actual state.".format(v, state.id)
+                        if _returnvalue_issue:
+                            self.__logger.warning("{} Make sure to change item value.", _returnvalue_issue)
+                        if original_value not in _convertedlist:
+                            _convertedlist.append(original_value)
+                            self.__logger.develop("Adding {} from item as releasedby for state {}", original_value,
+                                                  state.id)
+                        v_list.append(v)
+                        _converted_typelist.append(_returntype[i])
+
+                    elif _returntype[i] == 'regex':
+                        matches = [test.id for test in self.__states if _evaluated_returnvalue[i].match(test.id)]
+                        self.__logger.develop("matches {}", matches)
+                        _returnvalue_issue_list = []
+                        for match in matches:
+                            _valueindex = list(state_dict.keys()).index(match) if match in state_dict else -1
+                            if _valueindex == _stateindex:
+                                _returnvalue_issue = "State {} defined by {} in se_released_by attribute of state {} " \
+                                                     "must not be identical.".format(match, _returnvalue[i], state.id)
+                                self.__logger.warning("{} Removing it.", _returnvalue_issue)
+                                if _returnvalue_issue not in _returnvalue_issue_list:
+                                    _returnvalue_issue_list.append(_returnvalue_issue)
+                            elif _valueindex < _stateindex:
+                                _returnvalue_issue = "State {} defined by {} in se_released_by " \
+                                                     "attribute of state {} must be lower priority "\
+                                                     "than actual state.".format(match, _returnvalue[i], state.id)
+                                self.__logger.warning("{} Removing it.", _returnvalue_issue)
+                                if _returnvalue_issue not in _returnvalue_issue_list:
+                                    _returnvalue_issue_list.append(_returnvalue_issue)
+                            else:
+                                if match not in _convertedlist:
+                                    _convertedlist.append(match)
+                                    self.__logger.develop("Adding {} from regex as releasedby for state {}", match,
+                                                          state.id)
+                                v_list.append(value)
+                                _converted_typelist.append(_returntype[i])
+
+                            _returnvalue_issue = _returnvalue_issue_list
+                        if not matches:
+                            _returnvalue_issue = "No states match regex {} defined in "\
+                                                 "se_released_by attribute of state {}.".format(value, state.id)
+                            self.__logger.warning("{} Removing it.", _returnvalue_issue)
+                    elif _returntype[i] == 'eval':
+                        if v == state.id:
+                            _returnvalue_issue = "State {} defined by {} in se_released_by attribute of state {} " \
+                                                 "must not be identical.".format(v, _returnvalue[i], state.id)
+                            self.__logger.warning("{} Make sure eval will result in a useful value later on.",
+                                                  _returnvalue_issue)
+                        elif _valueindex < _stateindex:
+                            _returnvalue_issue = "State {} defined by value in se_released_by attribute of state {} " \
+                                                 "must be lower priority than actual state.".format(v, state.id)
+                            self.__logger.warning("{} Make sure eval will result in a useful value later on.",
+                                                  _returnvalue_issue)
+                        elif v is None:
+                            _returnvalue_issue = "Eval defined by {} in se_released_by attribute of state {} " \
+                                                 "does currently return None.".format(_returnvalue[i], state.id)
+                            self.__logger.warning("{} Make sure eval will result in a useful value later on.",
+                                                  _returnvalue_issue)
+                        if _returnvalue[i] not in _convertedlist:
+                            _convertedlist.append(_returnvalue[i])
+                            self.__logger.develop("Adding {} from eval as releasedby for state {}", _returnvalue[i],
+                                                  state.id)
+                        v_list.append(v)
+                        _converted_typelist.append(_returntype[i])
+
+                    elif v and v == state.id:
+                        _returnvalue_issue = "State {} defined by {} in se_released_by attribute of state {} " \
+                                             "must not be identical.".format(v, _returnvalue[i], state.id)
+                        self.__logger.warning("{} Removing it.", _returnvalue_issue)
+                    elif v and v not in _convertedlist:
+                        if value not in _convertedlist:
+                            _convertedlist.append(value)
+                            self.__logger.develop("Adding {} as releasedby for state {}", value, state.id)
+                        v_list.append(v)
+                        _converted_typelist.append(_returntype[i])
+                    else:
+                        _returnvalue_issue = "Found invalid definition in se_released_by attribute "\
+                                             "of state {}, original {}.".format(state.id, v, original_value)
+                        self.__logger.warning("{} Removing it.", _returnvalue_issue)
+                _converted_evaluatedlist.append(v_list)
             except Exception as ex:
                 _returnvalue_issue = "Issue with {} for released_by of state {} check: {}".format(value, state.id, ex)
                 self.__logger.error(_returnvalue_issue)
@@ -1559,20 +1669,21 @@ class SeItem:
                     value = self.__update_release_item_value(_converted_evaluatedlist[i], state)
                 elif _converted_typelist[i] == 'eval':
                     value = _converted_evaluatedlist[i]
-                if value and can_release.get(value) and state.id not in can_release.get(value):
-                    can_release[value].append(state.id)
-                elif value:
-                    can_release.update({value: [state.id]})
+                value = value if isinstance(value, list) else [value]
+                for v in value:
+                    if v and can_release.get(v) and state.id not in can_release.get(v):
+                        can_release[v].append(state.id)
+                    elif v:
+                        can_release.update({v: [state.id]})
 
         self.__logger.info("".ljust(80, "_"))
-        self.__logger.info("Checking released_by attributes")
+        self.__logger.info("Initializing released_by attributes")
         can_release = {}
         state_dict = {state.id: state for state in self.__states}
         for state in self.__states:
             _issuelist = []
             _returnvalue, _returntype, _issue = state.update_releasedby_internal()
             _returnvalue = copy.copy(_returnvalue)
-
             _issuelist.append(_issue)
             if _returnvalue:
                 _convertedlist = []
@@ -1580,11 +1691,11 @@ class SeItem:
                 _converted_typelist = []
                 _returnvalue = _returnvalue if isinstance(_returnvalue, list) else [_returnvalue]
                 _evaluated_returnvalue = state.releasedby
-                _evaluated_returnvalue = _evaluated_returnvalue if isinstance(_evaluated_returnvalue, list) \
-                    else [_evaluated_returnvalue]
+                _evaluated_returnvalue = _evaluated_returnvalue if isinstance(_evaluated_returnvalue, list) else [_evaluated_returnvalue]
                 for i, entry in enumerate(_returnvalue):
                     _issue = process_returnvalue(entry)
-                    _issuelist.append(_issue)
+                    if _issue is not None and _issue not in _issuelist:
+                        _issuelist.append(_issue)
                 update_can_release_list()
                 _issuelist = StateEngineTools.flatten_list(_issuelist)
                 _issuelist = [issue for issue in _issuelist if issue is not None and issue != []]
@@ -1880,7 +1991,7 @@ class SeItem:
             _issue = "Determined item '{0}' does not exist.".format(item_id)
             self.__logger.warning(_issue)
         else:
-            self.__logger.develop("Determined item '{0}' for id {1}.", item.id, item_id)
+            self.__logger.develop("Determined item '{0}' for id {1}.", item.property.path, item_id)
         return item, [_issue]
 
     # Return an item related to the StateEngine object item

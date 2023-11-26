@@ -42,7 +42,7 @@ class Russound(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.7.1'
+    PLUGIN_VERSION = '1.7.2'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -52,11 +52,11 @@ class Russound(SmartPlugin):
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
+        super().__init__(sh, args, kwargs)
         try:
             # sh = self.get_sh() to get it.
             self.host = self.get_parameter_value('host')
             self.port = self.get_parameter_value('port')
-            pass
         except KeyError as e:
             self.logger.critical(
                 "Plugin '{}': Inconsistent plugin (invalid metadata definition: {} not defined)".format(self.get_shortname(), e))
@@ -86,20 +86,20 @@ class Russound(SmartPlugin):
 
     def activate(self):
         self.logger.debug("Activate method called, queries to russound will be resumes and data will be written again")
-        self.suspended = False
-        self._client.connect()
+        self.resume()
         
-    def suspend(self):
-        self.logger.debug("Suspend method called, queries to russound will not be made and data will not be written")
-        self.suspended = True
-        self._client.close()
-
     def stop(self):
         """
         Stop method for the plugin
         """
         self.logger.debug("Stop method called")
         self.alive = False
+        self._client.close()
+
+    def connect(self):
+        self._client.open()
+
+    def disconnect(self):
         self._client.close()
 
     def parse_item(self, item):
@@ -120,6 +120,11 @@ class Russound(SmartPlugin):
         #     self.sources[s] = {'s': s, 'item':item}
         #     self.logger.debug("Source {0} added".format(s))
         #     return None
+
+        if item.path() == self._suspend_item_path:
+            self._suspend_item = item
+            self.logger.info(f'set suspend_item to {item.path()}')
+            return
 
         if self.has_iattr(item.conf, 'rus_path'):
             self.logger.debug("parse item: {}".format(item))
@@ -199,6 +204,14 @@ class Russound(SmartPlugin):
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
             self.logger.info("Update item: {}, item has been changed outside this plugin (caller={}, source={}, dest={})".format(item.id(), caller, source, dest))
+
+            if item.path() == self._suspend_item_path:
+                if self._suspend_item is not None:
+                    if item():
+                        self.suspend(f'suspend item {item.path()}')
+                    else:
+                        self.resume(f'suspend item {item.path()}')
+                return
 
             if self.has_iattr(item.conf, 'rus_path'):
                 path = self.get_iattr_value(item.conf, 'rus_path')

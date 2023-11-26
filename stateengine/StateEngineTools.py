@@ -299,6 +299,48 @@ def partition_strip(value, splitchar):
         return part1.strip(), part2.strip()
 
 
+# return list representation of string
+# value: list as string
+# returns: list or original value
+def convert_str_to_list(value):
+    if isinstance(value, str) and ("," in value and value.startswith("[")):
+        value = value.strip("[]")
+    if isinstance(value, str) and "," in value:
+        try:
+            elements = re.findall(r"'([^']+)'|([^,]+)", value)
+            flattened_elements = [element[0] if element[0] else element[1] for element in elements]
+            formatted_str = "[" + ", ".join(
+                ["'" + element.strip(" '\"") + "'" for element in flattened_elements]) + "]"
+            return literal_eval(formatted_str)
+        except Exception as ex:
+            raise ValueError("Problem converting string to list: {}".format(ex))
+    elif isinstance(value, list):
+        return value
+    else:
+        return [value]
+
+# return dict representation of string
+# value: OrderedDict as string
+# returns: OrderedDict or original value
+def convert_str_to_dict(value):
+    if isinstance(value, str) and value.startswith("["):
+        value = re.split('(, (?![^(]*\)))', value.strip(']['))
+        value = [s for s in value if s != ', ']
+        result = []
+        for s in value:
+            m = re.match(r'^OrderedDict\((.+)\)$', s)
+            if m:
+                result.append(dict(literal_eval(m.group(1))))
+            else:
+                result.append(literal_eval(s))
+        value = result
+    else:
+        return value
+    try:
+        return literal_eval(value)
+    except Exception as ex:
+        raise ValueError("Problem converting string to OrderedDict: {}".format(ex))
+
 # return string representation of eval function
 # eval_func: eval function
 # returns: string representation

@@ -389,14 +389,15 @@ Unteritem ``tts_fade_in``:
 Wird ein untergeordnetes Item vom Typ Boolean mit Attribut ``sonos_attrib: tts_fade_in`` definiert, wird die Lautstärke
 nach dem Abspielen der Nachricht von 0 auf das gewünschte Level schrittweise angehoben und eingeblendet. 
 
-play_tunein / play_sonos_radio
+play_sonos_radio / play_tunein
 ------------------------------
 ``write``
 
 Spielt einen Radiosender anhand eines Namens. Das Item ist vom Typ String. Sonos sucht dazu in einer Datenbank
 nach potentiellen Radiostationen, die dem Namen entsprechen.
 Wird mehr als ein zum Suchbegriff passender Radiosender gefunden, wird der erste Treffer verwendet. 
-Der Befehl ist ein Gruppenbefehl und wird für alle Speaker einer Gruppe angewendet.
+Der Befehl ist ein Gruppenbefehl und wird für alle Speaker einer Gruppe angewendet. Empfohlen wird die Nutzung der Funktion play_sonos_radio.
+Die alte Funktion play_tunein existiert noch, sollte aber nicht mehr verwendet werden. 
 
 Unteritem ``start_after``:
 Wird ein untergeordnetes Item vom Typ Boolean mit Attribut ``sonos_attrib: start_after`` definiert, wird das 
@@ -603,7 +604,6 @@ Hierzu wird ein untergeordnetes Item mit ``volume_dpt3`` angelegt, siehe Beispie
 
 zone_group_members
 ------------------
-
 ``read``
 
 Gibt eine Liste aller UIDs aus, die sich in der Gruppe des Speakers befinden. Die Liste enthält auch den aktuellen Speaker.
@@ -611,15 +611,13 @@ Das Item wird über Sonos Events aktualisiert und zeigt daher immer den aktuelle
 
 sonos_favorites
 ---------------
-
 ``read``
 
 Liest die Liste der gespeicherten Sonos Favoriten. Das Item ist vom Typ List.
 Das Item wird über Sonos Events aktualisiert und zeigt daher immer den aktuellen Status an.
 
 favorite_radio_stations
------------------------
-
+---------------
 ``read``
 
 Liest die Liste der gespeicherten Tunein Favoriten. Das Item ist vom Typ List.
@@ -627,7 +625,6 @@ Das Item wird über Sonos Events aktualisiert und zeigt daher immer den aktuelle
 
 play_favorite_title
 -------------------
-
 ``write``
 
 Spielt einen gespeicherten Sonos Favoriten anhand eines Namens. Das Item ist vom Typ String.
@@ -636,7 +633,6 @@ Die Liste der gespeicherten Favoriten kann mit dem Attribut ``sonos_favorites`` 
 
 play_favorite_number
 --------------------
-
 ``write``
 
 Spielt einen gespeicherten Sonos Favoriten anhand der Nummer des Listeneintrages. Das Item ist vom Typ Number
@@ -645,7 +641,6 @@ Der Befehl ist ein Gruppenbefehl und wird für alle Speaker einer Gruppe angewen
 
 play_favorite_radio_title
 -------------------------
-
 ``write``
 
 Spielt einen gespeicherten Tunein Radio Favoriten anhand eines Namens. Das Item ist vom Typ String.
@@ -654,7 +649,6 @@ Die Liste der gespeicherten Favoriten kann mit dem Attribut ``favorite_radio_sta
 
 play_favorite_radio_number
 --------------------------
-
 ``write``
 
 Spielt einen gespeicherten Tunein Radio Favoriten anhand der Nummer des Listeneintrages. Das Item ist vom Typ Number
@@ -668,10 +662,9 @@ Nicht echtzeitfähige Eigenschaften
 Einige Eigenschaften sind nicht Event basiert. Das bedeutet, dass sie nicht direkt nach
 Änderung über ein Event aktualisiert werden, sondern die Änderung erst bei der nächsten
 zyklischen Abfrage bei smarthomeNG ankommt.
-
 Folgende Eigenschaften sind **nicht** Event basiert:
-* snooze
-* status_light
+ * snooze
+ * status_light
 
 
 Gruppenbefehle
@@ -679,18 +672,18 @@ Gruppenbefehle
 Einige Items werden immer als Gruppenbefehl, d.h. auf alle Speaker innerhalb einer Gruppe ausgeführt.
 Folgende Methoden sind Gruppenbefehle:
   
-* play
-* pause
-* stop
-* mute
-* cross_fade
-* snooze
-* play_mode
-* next
-* previous
-* play_tunein
-* play_url
-* load_sonos_playlist
+ * play
+ * pause
+ * stop
+ * mute
+ * cross_fade
+ * snooze
+ * play_mode
+ * next
+ * previous
+ * play_tunein
+ * play_url
+ * load_sonos_playlist
 
 Für diese Items ist es egal, für welchen Speaker einer Gruppe diese Kommandos gesendet werden. Sie werden automatisch für alle
 Speaker einer Gruppe angewendet.
@@ -735,7 +728,7 @@ Beispiel:
         do_something()
 
 4a) Lautstärke inkrementell verstellen (via KNX dpt3)
------------------------------------------------------
+----------------------------------------------------
 
 Dieses Beispiel zeigt die Verstellung der Laustärke inkrementell via dpt3:
 

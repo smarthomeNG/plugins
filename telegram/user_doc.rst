@@ -5,6 +5,13 @@
 telegram
 ========
 
+.. image:: webif/static/img/plugin_logo.svg
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
+   
 Das Plugin dient zum Senden und Empfangen von Nachrichten über den
 `Telegram Nachrichten Dienst <https://telegram.org/>`_
 
@@ -71,7 +78,7 @@ Im Dictionary sind Paare von Chat-ID und Berechtigung gespeichert.
     # Beispiel value: '{ 3234123342: 1, 9234123341: 0 }'
     # Ein Dictionary mit chat id und:
     # 2 für Lese und Schreibzugriff ohne Willkommens- und Ende Nachricht
-    # 1 für Lese und Schreibzugriff 
+    # 1 für Lese und Schreibzugriff
     # 0 für einen nur Lese-Zugriff
     # Nachfolgend ein Chat dem Lese- und Schreibrechte gewährt werden
     value: '{ 3234123342: 1 }'
@@ -148,7 +155,7 @@ Einfaches Beispiel
        telegram_value_match_regex: (true|True|1)
 
 Dadurch wird auf eine mehrfache Zuweisung des Items mit dem Wert ``True`` nur einmal mit einer Nachricht reagiert. Um eine weitere Nachricht zu generieren
-muss das Item zunächst wieder den Wert ``False`` annehmen. Das Attribut ``telegram_value_match_regex`` filtert den Wert so das es bei der Änderung des Itemwertes 
+muss das Item zunächst wieder den Wert ``False`` annehmen. Das Attribut ``telegram_value_match_regex`` filtert den Wert so das es bei der Änderung des Itemwertes
 auf ``False`` zu keiner Meldung *Es klingelt an der Tür* kommt.
 
 
@@ -173,8 +180,8 @@ Beispiel
        cache: True
        telegram_message: "TestBool: [VALUE]"
        telegram_value_match_regex: 1            # nur Nachricht senden wenn 1 (True)
-       
-       
+
+
 telegram_message_chat_id
 ------------------------
 Ist zusätzlich zum Attribut ``telegram_message`` auch das Attribut ``telegram_message_chat_id`` gesetzt, wird die Nachricht nur an die dort angegebene Chat-ID (hier 3234123342) gesendet.
@@ -277,24 +284,24 @@ Bei Auswahl eines dieser Kommandos im Telegram Client kann dann ein Item vom Typ
 
 ``name``
     Item wird mit diesem Namen im Bot als Kommando dargestellt
-``type``    
+``type``
     Möglichkeiten: on, off, onoff, toggle, num
-        on          
+        on
             * nur Einschalten ist möglich
-        off         
+        off
             * nur Ausschalten ist möglich
-        onoff       
-            * das Ein- und Ausschalten muss mit einen weiteren Kommando vom Tastaturmenu ausgewählt werden 
+        onoff
+            * das Ein- und Ausschalten muss mit einen weiteren Kommando vom Tastaturmenu ausgewählt werden
               [On] [Off] (nach einem Timeout ohne Antwort wird der Befehl abgebrochen)
-        toggle      
+        toggle
             * der Wert des Items wird umgeschltet (0 zu 1; 1 zu 0)
-        num         
+        num
             * es kann eine Zahl an SH gesendet werden und das entsprechende Item wird damit geschrieben. (nach einem Timeout ohne Antwort wird der Befehl abgebrochen)
 ``question``
     Sicherheitsabfrage vor dem Schalten des Items (verwendbar bei type:on/off/toggle - nach einem Timeout ohne Antwort wird der Befehl abgebrochen) [Yes] [No]
-``min``     
+``min``
     Minimalwert (verwendbar bei type:num)
-``max``     
+``max``
     Maximalwert (verwendbar bei type:num)
 ``timeout``
     Zeit nach welcher der Befehl mit Antwort(onoff/question/num) abgebrochen wird (default 20Sekunden)
@@ -390,8 +397,8 @@ Die folgende Beispiellogik zeigt einige Nutzungsmöglichkeiten für die Funktion
 
 .. code:: python
 
-   telegram_plugin = sh.plugins.return_plugin('telegram') 
-   
+   telegram_plugin = sh.plugins.return_plugin('telegram')
+
    # Eine Nachricht `Hello world!` wird an alle vertrauten Chat Ids gesendet
    msg = "Hello world!"
    telegram_plugin.msg_broadcast(msg)
@@ -591,3 +598,27 @@ dargestellt und die entsprechenden Aktionen ausgeführt.
     # Message senden
     if msg != '':
         telegram_plugin.msg_broadcast(msg, message_chat_id, reply_markup, parse_mode)
+
+Web Interface
+=============
+
+Das Webinterface bietet folgende Informationen:
+
+-  **Allgemeines**: Oben rechts wird das Timeout, Begrüßungs- und Verabschiedungsnachricht angezeigt
+
+-  **Output Items**: Sämtliche Items, die zum Senden einer Nachricht beitragen
+
+-  **Input Items**: Items, über die Nachrichten empfangen werden können
+
+-  **Telegram Control**: Items, die über Telegram geändert werden können
+
+-  **Telegram Infos**: Befehle mit den zugehörigen Items, deren Werte auf eine Abfrage hin kommuniziert werden
+
+-  **Chat IDs**: Registrierte Chat IDs inkl. Angabe der Zugriffe
+
+.. image:: assets/telegram_webif.png
+   :height: 1584px
+   :width: 3340px
+   :scale: 25%
+   :alt: Web Interface
+   :align: center

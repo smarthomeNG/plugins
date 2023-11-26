@@ -7,8 +7,7 @@
 #  https://www.smarthomeNG.de
 #  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.5 and
-#  upwards.
+#  Plugin for withings health devices
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -37,7 +36,7 @@ from .webif import WebInterface
 
 
 class WithingsHealth(SmartPlugin):
-    PLUGIN_VERSION = "1.8.2"
+    PLUGIN_VERSION = "1.8.3"
 
     def __init__(self, sh):
         super().__init__()
@@ -129,8 +128,10 @@ class WithingsHealth(SmartPlugin):
                         userid=self._user_id,
                         client_id=self._client_id,
                         consumer_secret=self._consumer_secret)
-
-                    self._client = WithingsApi(self._creds, refresh_cb=self._store_tokens)
+                    try:
+                        self._client = WithingsApi(self._creds, refresh_cb=self._store_tokens)
+                    except Exception as e:
+                        self.logger.error("Client can not be initialized.")
                 else:
                     self.logger.error(
                         "Token is expired, run OAuth2 again from Web Interface (Expiry Date: {}).".format(

@@ -95,7 +95,7 @@ function initPanzoom() {
     const toolTip = document.getElementById('toolTip');
 
     toolTip.addEventListener('click', function() {
-      if ($('#visu_object').hasClass("enable_tooltip")) {
+      if ($('#visu_object').hasClass("enable_tooltip") || !toolTip.checked) {
               $('#visu_object').removeClass("enable_tooltip");
           }
           else {

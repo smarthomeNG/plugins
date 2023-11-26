@@ -641,7 +641,7 @@ Settings für Itemwerte
 Das Setup ist besonders flexibel, wenn zu setzende Werte nicht fix in den Zustandsvorgaben
 definiert werden, sondern in eigenen Items, die dann jederzeit zur Laufzeit änderbar
 sind. Das folgende Beispiel zeigt eine Leuchte, die abhängig vom aktuell definierten
-Lichtmodus (z.B. über die Visu) verschiedene Stati einnimmt und immer wieder dieselben
+Lichtmodus (z.B. über die Visu) verschiedene Zustände einnimmt und immer wieder dieselben
 Änderungen vornimmt. Sollte eine Änderung nicht möglich sein, weil das entsprechende
 Item nicht existiert, wird das Plugin die Aktion einfach ignorieren.
 

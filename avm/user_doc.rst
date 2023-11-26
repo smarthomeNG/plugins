@@ -336,7 +336,7 @@ AHA-Interface
 
 - color: Farbwerte als Liste [Hue, Saturation] (Status und Setzen) | Zugriff: rw | Item-Type: list 
 
-- hsv: Farbwerte und Helligkeit als Liste [Hue, Saturation, Level in Prozent] (Status und Setzen) | Zugriff: rw | Item-Type: list 
+- hsv: Farbwerte und Helligkeit als Liste [Hue (0-359), Saturation (0-255), Level (0-255)] (Status und Setzen) | Zugriff: rw | Item-Type: list 
 
 - color_mode: Aktueller Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode) | Zugriff: ro | Item-Type: num 
 
