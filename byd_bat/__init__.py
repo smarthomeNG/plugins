@@ -43,7 +43,7 @@
 #               - Anpassungen fuer mathplotlib 3.8.0 mit requirements.txt
 #               - webif aktualisiert (Uebersetzungen, Parameter)
 #
-# V0.0.6 231125 - Diagnose ergaenzt Temperatur max/min
+# V0.0.6 231126 - Diagnose ergaenzt Temperatur max/min
 #               - Auslesen und anzeigen der Balancing-Flags im Plot
 #               - Plot diverse Fehler korrigiert
 #               - Plot-Dateien loeschen ueberarbeitet
@@ -824,7 +824,7 @@ class byd_bat(SmartPlugin):
         for xx in range(17,33):  # 17..32  (16 Byte)
           a = data[xx] 
           for yy in range(0,8):  # 0..7
-            if (a & 1) == 1:
+            if (int(a) & 1) == 1:
               self.byd_balance_cell[x][i] = 1
             else:
               self.byd_balance_cell[x][i] = 0
@@ -910,7 +910,7 @@ class byd_bat(SmartPlugin):
           a = data[xx] 
           for yy in range(0,8):  # 0..7
             if i <= byd_cells_max:
-              if (a & 1) == 1:
+              if (int(a) & 1) == 1:
                 self.byd_balance_cell[x][i] = 1
               else:
                 self.byd_balance_cell[x][i] = 0
@@ -1019,9 +1019,9 @@ class byd_bat(SmartPlugin):
         device.volt_max.cell(self.byd_diag_volt_max_c[x])
         device.volt_min.volt(self.byd_diag_volt_min[x])
         device.volt_min.cell(self.byd_diag_volt_min_c[x])
-        device.temp_max.volt(self.byd_diag_temp_max[x])
+        device.temp_max.temp(self.byd_diag_temp_max[x])
         device.temp_max.cell(self.byd_diag_temp_max_c[x])
-        device.temp_min.volt(self.byd_diag_temp_min[x])
+        device.temp_min.temp(self.byd_diag_temp_min[x])
         device.temp_min.cell(self.byd_diag_temp_min_c[x])
         
         self.diag_plot(x)
