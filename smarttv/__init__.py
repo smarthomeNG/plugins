@@ -19,7 +19,6 @@
 #  along with SmartHomeNG.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import logging
 import socket
 import time
 import base64
@@ -34,7 +33,6 @@ class SmartTV(SmartPlugin):
     PLUGIN_VERSION = "1.3.3"
 
     def __init__(self, **kwargs):
-        self.logger = logging.getLogger(__name__)
         self._tv_version = self.get_parameter_value('tv_version')
         self._host = self.get_parameter_value('host')
         self._port = self.get_parameter_value('port')

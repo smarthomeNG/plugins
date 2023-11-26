@@ -19,7 +19,6 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 from lib.model.smartplugin import SmartPlugin
 from socket import gethostname
 import time
@@ -36,7 +35,6 @@ class RCswitch(SmartPlugin):
     PLUGIN_VERSION = "1.2.2"
 
     def __init__(self, **kwargs):
-        self.logger = logging.getLogger(__name__)
         self.setupOK = True
         self.mapping = {'a': 1, 'A': 1, 'b': 2, 'B': 2, 'c': 3, 'C': 3, 'd': 4, 'D': 4, 'e': 5, 'E': 5}
         self.rcswitch_dir = self.get_parameter_value('rcswitch_dir')

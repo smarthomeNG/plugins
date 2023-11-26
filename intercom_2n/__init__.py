@@ -20,7 +20,6 @@
 #########################################################################
 import json
 
-import logging
 import os
 from time import sleep
 import requests
@@ -44,7 +43,6 @@ class Intercom2n(SmartPlugin):
         self._password = self.get_parameter_value('password')
         self.is_stopped = False
         self.sid = None
-        self._logger = logging.getLogger(__name__)
         self.event_timeout = 30
         self.ip_cam = IPCam(self._intercom_ip, ssl=self._ssl, auth_type=self._auth_type, user=self._username, password=self._password)
 
