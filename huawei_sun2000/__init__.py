@@ -56,12 +56,12 @@ EquipmentDictionary = {
 }
 
 
-READITEM_CYCLE_DEFAULT = 0
-READITEM_CYCLE_STARTUP = -1
-READITEM_DEFAULT_SLAVE = -1
+ITEM_CYCLE_DEFAULT = 0
+ITEM_CYCLE_STARTUP = -1
+ITEM_DEFAULT_SLAVE = -1
 
 class ReadItem:
-    def __init__(self, register, cycle=READITEM_CYCLE_DEFAULT, slave=READITEM_DEFAULT_SLAVE, initialized=False):
+    def __init__(self, register, cycle=ITEM_CYCLE_DEFAULT, slave=ITEM_DEFAULT_SLAVE, initialized=False):
         self.register = register
         self.cycle = cycle
         self.slave = slave
@@ -69,7 +69,7 @@ class ReadItem:
 
 
 class Huawei_Sun2000(SmartPlugin):
-    PLUGIN_VERSION = '0.1.0'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = '0.1.1'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)
@@ -121,7 +121,7 @@ class Huawei_Sun2000(SmartPlugin):
                             # check for cycle
                             cycle = self._read_item_dictionary[item].cycle
                             initialized = self._read_item_dictionary[item].initialized
-                            if not initialized or cycle == READITEM_CYCLE_DEFAULT or cycle != READITEM_CYCLE_STARTUP or cycle < item.property.last_update_age:
+                            if not initialized or cycle == ITEM_CYCLE_DEFAULT or cycle != ITEM_CYCLE_STARTUP or cycle < item.property.last_update_age:
                                 # get register and set item
                                 result = await client.get(self._read_item_dictionary[item].register, slave)
                                 item(result.value, self.get_shortname())
@@ -130,15 +130,14 @@ class Huawei_Sun2000(SmartPlugin):
             except Exception as e:
                 self.logger.error(f"inverter_read: Error reading register from {self._host}:{self._port}, slave_id {slave}: {e}")
 
-    async def inverter_write(self, register, value):
-        for slave in self._slaves:
-            try:
-                client = await self.connect(slave)
-                if client is not None:
-                    await client.set(register, value, slave)
-                    await self.disconnect(client)
-            except Exception as e:
-                self.logger.error(f"Error writing register '{register}' to {self._host}:{self._port}, slave_id {slave}: {e}")
+    async def inverter_write(self, register, value, slave):
+        try:
+            client = await self.connect(slave)
+            if client is not None:
+                await client.set(register, value, slave)
+                await self.disconnect(client)
+        except Exception as e:
+            self.logger.error(f"Error writing register '{register}' to {self._host}:{self._port}, slave_id {slave}: {e}")
 
     async def validate_equipment(self):
         for slave in self._slaves:
@@ -177,13 +176,13 @@ class Huawei_Sun2000(SmartPlugin):
         return True
 
     def update_slaves(self, slave: int):
-        if not slave in self._slaves and slave != READITEM_DEFAULT_SLAVE:
+        if not slave in self._slaves and slave != ITEM_DEFAULT_SLAVE:
             self._slaves.append(slave)
 
     def string_to_seconds_special(self, timestring):
         timestring = timestring.lower()
         if timestring == "startup":
-            return READITEM_CYCLE_STARTUP
+            return ITEM_CYCLE_STARTUP
         if timestring.isnumeric():
             time_value = float(timestring)
             if time_value > 0:
@@ -231,7 +230,7 @@ class Huawei_Sun2000(SmartPlugin):
                     # check for slave id
                     if self.has_iattr(item.conf, 'sun2000_slave'):
                         slave = int(self.get_iattr_value(item.conf, 'sun2000_slave'))
-                        if slave == READITEM_DEFAULT_SLAVE:
+                        if slave == ITEM_DEFAULT_SLAVE:
                             slave = self._slave
                         self._read_item_dictionary[item].slave = slave
                         self.update_slaves(slave)
@@ -256,9 +255,13 @@ class Huawei_Sun2000(SmartPlugin):
                 register = self.get_iattr_value(item.conf, 'sun2000_write')
                 if hasattr(rn, register):
                     value = item()
+                    if self.has_iattr(item.conf, 'sun2000_slave'):
+                        slave = int(self.get_iattr_value(item.conf, 'sun2000_slave'))
+                        if slave == ITEM_DEFAULT_SLAVE:
+                            slave = self._slave
                     while self._loop.is_running():
                         time.sleep(1)
-                    self._loop.run_until_complete(inverter_write(register, value))
+                    self._loop.run_until_complete(inverter_write(register, value, slave))
                     self.logger.debug(f"Update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}")
                 else:
                     self.logger.warning(f"Invalid key for sun2000_write '{register}' configured")
