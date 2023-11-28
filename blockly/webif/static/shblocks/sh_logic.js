@@ -23,7 +23,7 @@ Blockly.Blocks['shlogic_by'] = {
     this.setTooltip('');
   }
 };
-Blockly.Python['shlogic_by'] = function(block) {
+python.pythonGenerator.forBlock['shlogic_by'] = function(block) {
   var code = "trigger['by']";
   // TODO: Change ORDER_NONE to the correct strength.
   return [code, Blockly.Python.ORDER_NONE];
@@ -43,7 +43,7 @@ Blockly.Blocks['shlogic_value'] = {
     this.setTooltip('');
   }
 };
-Blockly.Python['shlogic_value'] = function(block) {
+python.pythonGenerator.forBlock['shlogic_value'] = function(block) {
   var code = "trigger['value']";
   // TODO: Change ORDER_NONE to the correct strength.
   return [code, Blockly.Python.ORDER_NONE];
@@ -63,7 +63,7 @@ Blockly.Blocks['shlogic_source'] = {
     this.setTooltip('');
   }
 };
-Blockly.Python['shlogic_source'] = function(block) {
+python.pythonGenerator.forBlock['shlogic_source'] = function(block) {
   var code = "trigger['source']";
   // TODO: Change ORDER_NONE to the correct strength.
   return [code, Blockly.Python.ORDER_NONE];
@@ -83,7 +83,7 @@ Blockly.Blocks['shlogic_dest'] = {
     this.setTooltip('');
   }
 };
-Blockly.Python['shlogic_dest'] = function(block) {
+python.pythonGenerator.forBlock['shlogic_dest'] = function(block) {
   var code = "trigger['dest']";
   // TODO: Change ORDER_NONE to the correct strength.
   return [code, Blockly.Python.ORDER_NONE];
@@ -107,11 +107,10 @@ Blockly.Blocks['shlogic_trigger'] = {
     this.setTooltip('');
   }
 };
-Blockly.Python['shlogic_trigger'] = function(block) {
+python.pythonGenerator.forBlock['shlogic_trigger'] = function(block) {
   var value_datetime = Blockly.Python.valueToCode(block, 'DATETIME', Blockly.Python.ORDER_ATOMIC);
   // TODO: Assemble Python into code variable.
   var code = '...';
   return code;
 };
  */
- 

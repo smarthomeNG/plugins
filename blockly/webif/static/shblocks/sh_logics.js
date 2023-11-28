@@ -38,7 +38,7 @@ Blockly.Blocks['sh_logic_main'] = {
    */
   init: function() {
 /**
-    Blockly.HSV_SATURATION = 0.45; 
+    Blockly.HSV_SATURATION = 0.45;
     Blockly.HSV_VALUE = 0.65;
  */
     this.setColour(125);
@@ -54,7 +54,7 @@ Blockly.Blocks['sh_logic_main'] = {
     this.appendDummyInput()
         .appendField(new Blockly.FieldCheckbox("TRUE"), "ACTIVE")
         .appendField(new Blockly.FieldTextInput("Kommentar"), "COMMENT");
-        
+
     this.setPreviousStatement(false);
     this.setNextStatement(false);
     this.setTooltip('Block wird ausgeführt, sobald sich der Wert des Triggers ändert.');
@@ -68,7 +68,7 @@ function GetTriggerComment(trigger_block)
   var trigger_comment = trigger_block.getFieldValue('COMMENT');
   if (trigger_comment != 'Kommentar') {
     comment += trigger_comment;
-  };    
+  };
   return comment.trim();
 };
 
@@ -83,7 +83,7 @@ function GetTrigger(trigger_block)
   if (trigger_block.data == 'sh_trigger_item') {
     var trigger_id= trigger_block.getFieldValue('NAME');
     var itemcode = Blockly.Python.valueToCode(trigger_block, 'TRIG_ITEM', Blockly.Python.ORDER_ATOMIC);
-    var itemid = itemcode.split('"')[1] 
+    var itemid = itemcode.split('"')[1]
     trigger += '    watch_item: ' + itemid;
   };
   if (trigger_block.data == 'sh_trigger_sun') {
@@ -116,7 +116,7 @@ function GetMultiTriggers(trigger_block)
   var wic_list = [];
   var contab_triggers = ['sh_trigger_sun', 'sh_trigger_daily', 'sh_trigger_init'];
   var next_block = trigger_block;
-  
+
   while (next_block != null) {
     if (next_block.data != '')
     {
@@ -166,7 +166,7 @@ function NextLevel(trigger_block, logicname, ignore_crontab, ignore_watchitem)
         };
         tr_comment += line + '\n';
       };
-      
+
       var next_block = trigger_block.getNextBlock();
       var next = NextLevel(next_block, logicname, ignore_crontab, ignore_watchitem);
       tr_insert += next[0];
@@ -176,13 +176,13 @@ function NextLevel(trigger_block, logicname, ignore_crontab, ignore_watchitem)
   };
 };
 
-Blockly.Python['sh_logic_main'] = function(block)
+python.pythonGenerator.forBlock['sh_logic_main'] = function(block)
 {
   this.data = 'sh_logic_main'
   var trigger_block = block.getChildren();
-  var triggerid = Blockly.Python.variableDB_.getDistinctName('trigger_id', Blockly.Variables.NAME_TYPE);
+  var triggerid = Blockly.Python.nameDB_.getDistinctName('trigger_id', Blockly.Variables.NAME_TYPE);
   var itemcode = Blockly.Python.valueToCode(block, 'TRIG_ITEM', Blockly.Python.ORDER_ATOMIC);
-  var itemid = itemcode.split('"')[1] 
+  var itemid = itemcode.split('"')[1]
   //var item = block.getFieldValue('TRIG_ITEM');
   var branch = Blockly.Python.statementToCode(block, 'DO') ;
   //var branch = Blockly.Python.statementToCode(block, 'DO') || '  pass\n';
@@ -191,7 +191,7 @@ Blockly.Python['sh_logic_main'] = function(block)
 
   var triggerid = block.getFieldValue('NAME');
   var itemcode = Blockly.Python.valueToCode(block, 'TRIG_ITEM', Blockly.Python.ORDER_ATOMIC);
-  var itemid = itemcode.split('"')[1] 
+  var itemid = itemcode.split('"')[1]
 
   var code = '';
   var trigger = '';
@@ -234,7 +234,7 @@ Blockly.Python['sh_logic_main'] = function(block)
     };
     code += '#trigger#'+logicname+'#filename: '+logicname+'.py#crontab: [' + tr_list + ']#[' + co_list + ']\n';
   };
-  
+
   if (tr_watchitem_list.length > 1)
   {
     var tr_list = '';
@@ -249,11 +249,11 @@ Blockly.Python['sh_logic_main'] = function(block)
     };
     code += '#trigger#'+logicname+'#filename: '+logicname+'.py#watch_item: [' + tr_list + ']#[' + co_list + ']\n';
   };
-  
+
   code += '"""\n' + 'Logic '+ logicname + '.py\n';
   code += '\n' + text_comment + '\n';
-  
-  code += "\nTHIS FILE WAS GENERATED FROM A BLOCKY LOGIC WORKSHEET - DON'T EDIT THIS FILE, use the Blockly plugin instead !\n" 
+
+  code += "\nTHIS FILE WAS GENERATED FROM A BLOCKY LOGIC WORKSHEET - DON'T EDIT THIS FILE, use the Blockly plugin instead !\n"
   if (next[1] != '') {
     var trigger_comment = trigger_block[0].getFieldValue('COMMENT');
     code += '\nto be configured in /etc/logic.yaml:\n';
@@ -265,7 +265,7 @@ Blockly.Python['sh_logic_main'] = function(block)
     code += line + '\n';
     code += next[1];
   };
-  
+
   if (tr_watchitem_list.length > 1)
   {
     code += '    watch_item:\n'
@@ -315,7 +315,7 @@ Blockly.Blocks['sh_trigger_item'] = {
     this.appendDummyInput()
         .appendField("Kommentar")
         .appendField(new Blockly.FieldTextInput(""), "COMMENT");
-        
+
     this.setInputsInline(false);
     this.setPreviousStatement(true);
     this.setNextStatement(true);
@@ -323,7 +323,7 @@ Blockly.Blocks['sh_trigger_item'] = {
     }
 };
 
-Blockly.Python['sh_trigger_item'] = function(block)
+python.pythonGenerator.forBlock['sh_trigger_item'] = function(block)
 {
   var code = '';
   return code;
@@ -360,7 +360,7 @@ Blockly.Blocks['sh_trigger_cycle'] = {
     }
 };
 
-Blockly.Python['sh_trigger_cycle'] = function(block) {
+python.pythonGenerator.forBlock['sh_trigger_cycle'] = function(block) {
   var code = ''
   return code;
 };
@@ -396,7 +396,7 @@ Blockly.Blocks['sh_trigger_sun'] = {
     }
 };
 
-Blockly.Python['sh_trigger_sun'] = function(block)
+python.pythonGenerator.forBlock['sh_trigger_sun'] = function(block)
 {
   var code = '';
   return code;
@@ -437,7 +437,7 @@ Blockly.Blocks['sh_trigger_daily'] = {
     }
 };
 
-Blockly.Python['sh_trigger_daily'] = function(block)
+python.pythonGenerator.forBlock['sh_trigger_daily'] = function(block)
 {
   var code = '';
   return code;
@@ -469,7 +469,7 @@ Blockly.Blocks['sh_trigger_init'] = {
     }
 };
 
-Blockly.Python['sh_trigger_init'] = function(block)
+python.pythonGenerator.forBlock['sh_trigger_init'] = function(block)
 {
   var code = '';
   return code;

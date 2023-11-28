@@ -46,10 +46,10 @@ Blockly.Blocks['sh_item_obj'] = {
   }
 };
 
-Blockly.Python['sh_item_obj'] = function(block) {
+python.pythonGenerator.forBlock['sh_item_obj'] = function(block) {
   var iName = block.getFieldValue('N');
   var iPath = block.getFieldValue('P');
-  
+
   // TODO: Assemble Python into code variable.
 //  var code = 'sh.return_item("' + iPath + '")';
   var code = 'sh.items.return_item("' + iPath + '")';
@@ -84,7 +84,7 @@ Blockly.Python['sh_item_obj'] = function(block) {
   },
 };
 
-Blockly.Python['sh_item'] = function(block) {
+python.pythonGenerator.forBlock['sh_item'] = function(block) {
   // Variable getter.
   var code = 'sh.' + block.getFieldValue('ITEM');
   return [code, Blockly.Python.ORDER_ATOMIC];
@@ -108,11 +108,10 @@ Blockly.Blocks['sh_item_get'] = {
     }
 };
 
-Blockly.Python['sh_item_get'] = function(block) {
+python.pythonGenerator.forBlock['sh_item_get'] = function(block) {
     var itemobj = Blockly.Python.valueToCode(block, 'ITEMOBJECT', Blockly.Python.ORDER_ATOMIC) || 'item';
-    var code = itemobj + '()';
-    //return [code, Blockly.Python.ORDER_NONE];
-    return code;
+    var code = itemobj + '.property.value';
+    return [code, Blockly.Python.ORDER_NONE];
 };
 
 
@@ -136,14 +135,13 @@ Blockly.Blocks['sh_item_set'] = {
   }
 };
 
-Blockly.Python['sh_item_set'] = function(block) {
+python.pythonGenerator.forBlock['sh_item_set'] = function(block) {
   var itemobject = Blockly.Python.valueToCode(block, 'ITEMOJECT', Blockly.Python.ORDER_ATOMIC) || 'item';
   var value = Blockly.Python.valueToCode(block, 'VALUE', Blockly.Python.ORDER_ATOMIC) || '0';
   // TODO: Assemble Python into code variable.
   //var code = '...';
   var code = itemobject + '(' + value + ')\n';
-  //return [code, Blockly.Python.ORDER_FUNCTION_CALL];
-  return code;
+  return [code, Blockly.Python.ORDER_FUNCTION_CALL];
 };
 
 Blockly.Blocks['sh_item_hasattr'] = {
@@ -163,7 +161,7 @@ Blockly.Blocks['sh_item_hasattr'] = {
   }
 };
 
-Blockly.Python['sh_item_hasattr'] = function(block) {
+python.pythonGenerator.forBlock['sh_item_hasattr'] = function(block) {
   var value_item = Blockly.Python.valueToCode(block, 'ITEM', Blockly.Python.ORDER_ATOMIC);
   var text_attr = block.getFieldValue('ATTR');
   // TODO: Assemble Python into code variable.
@@ -174,7 +172,7 @@ Blockly.Python['sh_item_hasattr'] = function(block) {
 
 };
 
-/** 
+/**
 Blockly.Blocks['sh_item_attr'] = {
   init: function() {
     var attrlist = new Blockly.FieldTextInput('0');
@@ -199,7 +197,7 @@ Blockly.Blocks['sh_item_attr'] = {
   }
 };
 
-Blockly.Python['sh_item_attr'] = function(block) {
+python.pythonGenerator.forBlock['sh_item_attr'] = function(block) {
   var dropdown_attr = block.getFieldValue('ATTR');
   var value_item = Blockly.Python.valueToCode(block, 'ITEM', Blockly.Python.ORDER_ATOMIC);
   // TODO: Assemble Python into code variable.

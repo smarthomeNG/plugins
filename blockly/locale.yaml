@@ -1,0 +1,12 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Logik-Editor für SmartHomeNG':           {'de': '=', 'en': 'Logic-Editor for SmartHomeNG', 'fr': 'Editeur de Logiques pour SmartHomeNG', 'pl': 'Edytor logiki SmartHomeNG'}
+    'Aktivieren':           {'de': '=', 'en': 'Enable', 'fr': 'Activer', 'pl': 'Włącz'}
+    'Beenden':           {'de': '=', 'en': 'Stop', 'fr': 'Terminer', 'pl': 'Stop'}
+    'Speichern':           {'de': '=', 'en': 'Save', 'fr': 'Sauvegarder', 'pl': 'Zapisz'}
+    'Speichern & schließen':           {'de': '=', 'en': 'Save & Close', 'fr': 'Sauvegarder & Fermer', 'pl': 'Zapisz & Zamknij'}
+    'Blöcke speichern':           {'de': '=', 'en': 'Save Blocks', 'fr': 'Enregistrer les blocs', 'pl': 'Zapisz Bloki'}
+    'Verwerfen':           {'de': '=', 'en': 'Undo Changes', 'fr': 'Annuler', 'pl': 'Cofnij Zmiany'}
+    'Änderungen verwerfen':           {'de': '=', 'en': 'Undo Changes', 'fr': 'Annuler modifications', 'pl': 'Cofnij Zmiany'}
+    'Leeren':           {'de': '=', 'en': 'Clear', 'fr': 'Vider', 'pl': 'Wyczyść'}
+    'Schließen':           {'de': '=', 'en': 'Close', 'fr': 'Fermer', 'pl': 'Zamknij'}
