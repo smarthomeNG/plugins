@@ -218,8 +218,8 @@ Erläuterungen zu Temperatursummen
 Grünlandtemperatursumme
 -----------------------
 
-Beim Grünland wird die Wärmesumme nach Ernst und Loeper benutzt, um den Vegetationsbeginn und somit den Termin von Düngungsmaßnahmen zu bestimmen. 
-Dabei erfolgt die Aufsummierung der Tagesmitteltemperaturen über 0 °C, wobei der Januar mit 0.5 und der Februar mit 0.75 gewichtet wird. 
+Beim Grünland wird die Wärmesumme nach Ernst und Loeper benutzt, um den Vegetationsbeginn und somit den Termin von Düngungsmaßnahmen zu bestimmen.
+Dabei erfolgt die Aufsummierung der Tagesmitteltemperaturen über 0 °C, wobei der Januar mit 0.5 und der Februar mit 0.75 gewichtet wird.
 Bei einer Wärmesumme von 200 Grad ist eine Düngung angesagt.
 
 siehe: https://de.wikipedia.org/wiki/Gr%C3%BCnlandtemperatursumme
@@ -236,10 +236,10 @@ Folgende Parameter sind möglich / notwendig:
 
 Wachstumsgradtag
 ----------------
-Der Begriff Wachstumsgradtage (WGT) ist ein Überbegriff für verschiedene Größen. 
-Gemeinsam ist ihnen, daß zur Berechnung eine Lufttemperatur von einem Schwellenwert subtrahiert wird. 
-Je nach Fragestellung und Pflanzenart werden der Schwellenwert unterschiedlich gewählt und die Temperatur unterschiedlich bestimmt. 
-Verfügbar sind die Berechnung über 0) "einfachen Durchschnitt der Tagestemperaturen", 1) "modifizierten Durchschnitt der Tagestemperaturen" 
+Der Begriff Wachstumsgradtage (WGT) ist ein Überbegriff für verschiedene Größen.
+Gemeinsam ist ihnen, daß zur Berechnung eine Lufttemperatur von einem Schwellenwert subtrahiert wird.
+Je nach Fragestellung und Pflanzenart werden der Schwellenwert unterschiedlich gewählt und die Temperatur unterschiedlich bestimmt.
+Verfügbar sind die Berechnung über 0) "einfachen Durchschnitt der Tagestemperaturen", 1) "modifizierten Durchschnitt der Tagestemperaturen"
 und 2) Anzahl der Tage, deren Mitteltempertatur oberhalb der Schwellentemperatur lag.
 
 siehe https://de.wikipedia.org/wiki/Wachstumsgradtag
@@ -260,7 +260,7 @@ Wärmesumme
 ----------
 
 Die Wärmesumme soll eine Aussage über den Sommer und die Pflanzenreife liefern. Es gibt keine eindeutige Definition der Größe "Wärmesumme".
-Berechnet wird die Wärmesumme als Summe aller Tagesmitteltemperaturen über einem Schwellenwert ab dem 1.1. des Jahres. 
+Berechnet wird die Wärmesumme als Summe aller Tagesmitteltemperaturen über einem Schwellenwert ab dem 1.1. des Jahres.
 
 siehe https://de.wikipedia.org/wiki/W%C3%A4rmesumme
 
@@ -278,7 +278,7 @@ Folgende Parameter sind möglich / notwendig:
 Kältesumme
 ----------
 
-Die Kältesumme soll eine Aussage über die Härte des Winters liefern. 
+Die Kältesumme soll eine Aussage über die Härte des Winters liefern.
 Berechnet wird die Kältesumme als Summe aller negativen Tagesmitteltemperaturen ab dem 21.9. des Jahres bis 31.3. des Folgejahres.
 
 siehe https://de.wikipedia.org/wiki/K%C3%A4ltesumme
