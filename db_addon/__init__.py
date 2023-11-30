@@ -685,11 +685,6 @@ class DatabaseAddOn(SmartPlugin):
 
             # add type (onchange or ondemand) to item dict
             item_config_data_dict.update({'on': item_attribute_dict['on']})
-            # ToDo: Remove
-            # if db_addon_fct in ONCHANGE_ATTRIBUTES:
-            #     item_config_data_dict.update({'on': 'change'})
-            # elif db_addon_fct in ONDEMAND_ATTRIBUTES:
-            #     item_config_data_dict.update({'on': 'demand'})
 
             # add cycle for item groups
             cycle = item_attribute_dict['calc']
@@ -704,31 +699,6 @@ class DatabaseAddOn(SmartPlugin):
             elif cycle == 'None':
                 cycle = None
             item_config_data_dict.update({'cycle': cycle})
-
-            # ToDo: Remove
-            # if db_addon_fct in ALL_HOURLY_ATTRIBUTES:
-            #     item_config_data_dict.update({'cycle': 'hourly'})
-            # elif db_addon_fct in ALL_DAILY_ATTRIBUTES:
-            #     item_config_data_dict.update({'cycle': 'daily'})
-            # elif db_addon_fct in ALL_WEEKLY_ATTRIBUTES:
-            #     item_config_data_dict.update({'cycle': 'weekly'})
-            # elif db_addon_fct in ALL_MONTHLY_ATTRIBUTES:
-            #     item_config_data_dict.update({'cycle': 'monthly'})
-            # elif db_addon_fct in ALL_YEARLY_ATTRIBUTES:
-            #     item_config_data_dict.update({'cycle': 'yearly'})
-            # elif db_addon_fct in ALL_GEN_ATTRIBUTES:
-            #     item_config_data_dict.update({'cycle': 'static'})
-            # elif db_addon_fct == 'db_request':
-            #     cycle = item_config_data_dict['query_params'].get('group')
-            #     if not cycle:
-            #         cycle = item_config_data_dict['query_params'].get('timeframe')
-            #     item_config_data_dict.update({'cycle': f"{timeframe_to_updatecyle(cycle)}"})
-            # elif db_addon_fct == 'minmax':
-            #     cycle = item_config_data_dict['query_params']['timeframe']
-            #     item_config_data_dict.update({'cycle': f"{timeframe_to_updatecyle(cycle)}"})
-            # else:
-            #     self.logger.warning(f"Cycle for {item.path()} undefined")
-            #     item_config_data_dict.update({'cycle': None})
 
             # do logging
             if self.debug_log.parse:
@@ -1253,7 +1223,7 @@ class DatabaseAddOn(SmartPlugin):
         if self.debug_log.onchange:
             self.logger.debug(f"called with updated_item={updated_item.path()} and value={value}.")
 
-        relevant_item_list = set(self.get_item_list('database_item', updated_item)) & set(self.get_item_list('cycle', 'onchange'))
+        relevant_item_list = set(self.get_item_list('database_item', updated_item)) & set(self.get_item_list('on', 'change'))
 
         if self.debug_log.onchange:
             self.logger.debug(f"Following items where identified for update: {relevant_item_list}.")
