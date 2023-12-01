@@ -58,7 +58,7 @@ class Zigbee2Mqtt(MqttPlugin):
 
         self._items_read = []
         self._items_write = []
-        self._devices = {'bridge': {}}
+        self._devices = {'bridge': {'handler_in': self._handle_bridge}}
         # {
         #   'dev1': {
         #       'lastseen': <timestamp>,
@@ -66,12 +66,16 @@ class Zigbee2Mqtt(MqttPlugin):
         #       'data': {[...]},
         #       'exposes': {[...]},
         #       'scenes': {'name1': id1, 'name2': id2, [...]},
+        #       'handler_in:' <func>,
+        #       'handler_out:' <func>,
         #       'attr1': {
         #           'item': item1,
         #           'read': bool,
         #           'write': bool,
         #           'bool_values': ['OFF', 'ON'],
         #           'value': ...
+        #           'handler_in:' <func>,
+        #           'handler_out:' <func>,
         #       },
         #       'attr2': ...
         #   },
@@ -245,13 +249,19 @@ class Zigbee2Mqtt(MqttPlugin):
                 self.logger.info(f"update_item: {item}, item has been changed outside of this plugin in {caller} with value {item()}")
 
                 device, attr = mapping.split(MSEP)
+
+                # make access easier and code more readable
+                _device = self._devices[device]
+                _attr = _device[attr]
+
                 topic_3 = topic_4 = topic_5 = ''
                 payload = None
                 bool_values = self.bool_values
                 try:
-                    bool_values = self._devices[device][attr].get('bool_values', self.bool_values)
+                    bool_values = _attr.get('bool_values', self.bool_values)
                 except KeyError:
                     pass
+                scenes = _device.get('scenes')
 
                 # statically defined cmds for interaction with z2m-gateway
                 # independent from connected devices
@@ -283,18 +293,28 @@ class Zigbee2Mqtt(MqttPlugin):
                     # insert special cases here which don't correspond to
                     # base/device/set with payload "{attr: value}"
 
-                    # special case: color
-                    # color_mode, color_temp, color_x, color_y, hue, saturation
-                    # color: {'x': x, 'y': y'}
-                    # color: {'hue': h, 'saturation': sat}
-
 # TODO: shall we offer brightness scaled to 100%?
 # TODO: shall we offer color_temp as Kelvin?
 
                 else:
                     topic_3 = 'set'
+                    value = item()
+
+                    # apply bool_values if present and applicable
+                    if bool_values and isinstance(value, bool):
+                        value = bool_values[value]
+
+                    # replace scene with index
+                    if attr == 'scene_recall' and scenes:
+                        try:
+                            value = scenes[value]
+                        except KeyError:
+                            self.logger.warning(f'scene {value} not defined for {device}')
+                            return
+
+                    # create payload
                     payload = json.dumps({
-                        attr: item()
+                        attr: value
                     })
 
                 if payload is not None:
@@ -339,149 +359,99 @@ class Zigbee2Mqtt(MqttPlugin):
             self.logger.error(f'received mqtt msg with wrong base topic {topic}. Please report')
             return
 
-        # Handle data from bridge
-        if device == 'bridge':
+        # check handlers
+        try:
+            if 'handler_in' in self._devices[device]:
+                # handler has to return True to continue processing
+                if not self._devices[device]['handler_in'](device, topic_3, topic_4, topic_5, payload, qos, retain):
+                    return
+        except (KeyError, TypeError):
+            pass
 
-            # easier to read
-            bridge = self._devices[device]
+        if not isinstance(payload, dict):
+            return
 
-            if topic_3 == 'state':
-                # Payloads are 'online' and 'offline'; equal to LWT
-                self.logger.debug(f"LWT: detail: {topic_3} datetime: {datetime.now()} payload: {payload}")
-                bridge['online'] = bool(payload)
+        # Wenn Geräte zur Laufzeit des Plugins hinzugefügt werden, werden diese im dict ergänzt
+        if device not in self._devices:
+            self._devices[device] = {}
+            self.logger.info(f"New device discovered: {device}")
 
-            elif topic_3 == 'response':
-                if topic_4 in ('health_check', 'permit_join', 'networkmap'):
-                    if isinstance(payload, dict):
-                        t = topic_4
-                        if t == 'health_check':
-                            # warum?
-                            # t = 'health_status'
-                            bridge['online'] = bool(payload['data']['healthy'])
-                        else:
-                            bridge['online'] = True
+        # Korrekturen in der Payload
 
-                        bridge[t] = payload
+        # Umbenennen des Key 'friendlyName' in 'friendly_name', damit er identisch zu denen aus Log Topic und Config Topic ist
+        if 'device' in payload:
+            meta = payload['device']
+            if 'friendlyName' in meta:
+                meta['friendly_name'] = meta.pop('friendlyName')
+            del payload['device']
 
-            elif topic_3 == 'config':
-                if topic_4 == '':
-                    if isinstance(payload, dict):
-                        bridge['config'] = payload
+            if 'meta' not in self._devices[device]:
+                self._devices[device]['meta'] = {}
+            self._devices[device]['meta'].update(meta)
 
-            elif topic_3 == 'devices' or topic_3 == 'groups':
-                if isinstance(payload, list):
-                    self._get_device_data(payload, topic_4 == 'groups')
-
-                    for entry in payload:
-                        friendly_name = entry.get('friendly_name')
-                        try:
-                            exposes = entry['definition']['exposes']
-                        except (KeyError, TypeError):
-                            pass
-                        else:
-                            if friendly_name in self._devices:
-                                self._devices[friendly_name]['exposes'] = exposes
-
-            elif topic_3 == 'log':
-                if isinstance(payload, dict) and 'message' in payload and 'type' in payload:
-                    message = payload['message']
-                    message_type = payload['type']
-                    if message_type == 'devices' and isinstance(message, list):
-                        self._get_device_data(message)
-
-            elif topic_3 == 'info':
-                if topic_4 == '':
-                    if isinstance(payload, dict):
-                        bridge['info'] = payload
-                        bridge['online'] = True
-
-            else:
-                self.logger.debug(f"Function type message bridge/{topic_3} not implemented yet.")
-
-        # Handle Data from connected devices
-        elif topic_3 == topic_4 == topic_5 == '' and isinstance(payload, dict):
-
-            # Wenn Geräte zur Laufzeit des Plugins hinzugefügt werden, werden diese im dict ergänzt
-            if device not in self._devices:
-                self._devices[device] = {}
-                self.logger.info(f"New device discovered: {device}")
-
-            # Korrekturen in der Payload
-
-            # Umbenennen des Key 'friendlyName' in 'friendly_name', damit er identisch zu denen aus Log Topic und Config Topic ist
-            if 'device' in payload:
-                meta = payload['device']
-                if 'friendlyName' in meta:
-                    meta['friendly_name'] = meta.pop('friendlyName')
-                del payload['device']
-
-                if 'meta' not in self._devices[device]:
-                    self._devices[device]['meta'] = {}
-                self._devices[device]['meta'].update(meta)
-
-            # Korrektur des Lastseen
-            if 'last_seen' in payload:
-                last_seen = payload['last_seen']
-                if isinstance(last_seen, int):
-                    payload.update({'last_seen': datetime.fromtimestamp(last_seen / 1000)})
-                elif isinstance(last_seen, str):
+        # Korrektur des Lastseen
+        if 'last_seen' in payload:
+            last_seen = payload['last_seen']
+            if isinstance(last_seen, int):
+                payload.update({'last_seen': datetime.fromtimestamp(last_seen / 1000)})
+            elif isinstance(last_seen, str):
+                try:
+                    payload.update({'last_seen': datetime.strptime(last_seen, "%Y-%m-%dT%H:%M:%S.%fZ").replace(microsecond=0)})
+                except Exception:
                     try:
-                        payload.update({'last_seen': datetime.strptime(last_seen, "%Y-%m-%dT%H:%M:%S.%fZ").replace(microsecond=0)})
-                    except Exception:
-                        try:
-                            payload.update({'last_seen': datetime.strptime(last_seen, "%Y-%m-%dT%H:%M:%SZ")})
-                        except Exception as e:
-                            self.logger.debug(f"Error {e} occurred during decoding of last_seen using format '%Y-%m-%dT%H:%M:%SZ'.")
+                        payload.update({'last_seen': datetime.strptime(last_seen, "%Y-%m-%dT%H:%M:%SZ")})
+                    except Exception as e:
+                        self.logger.debug(f"Error {e} occurred during decoding of last_seen using format '%Y-%m-%dT%H:%M:%SZ'.")
 
-            # # Korrektur der Brightness von 0-254 auf 0-100%
-            # if 'brightness' in payload:
-            #     try:
-            #         payload.update({'brightness': int(round(payload['brightness'] * 100 / 254, 0))})
-            #     except Exception as e:
-            #         self.logger.debug(f"Error {e} occurred during decoding of brightness.")
+        # # Korrektur der Brightness von 0-254 auf 0-100%
+        # if 'brightness' in payload:
+        #     try:
+        #         payload.update({'brightness': int(round(payload['brightness'] * 100 / 254, 0))})
+        #     except Exception as e:
+        #         self.logger.debug(f"Error {e} occurred during decoding of brightness.")
 
-            # # Korrektur der Farbtemperatur von "mired scale" (Reziproke Megakelvin) auf Kelvin
-            # if 'color_temp' in payload:
-            #     try:
-            #         # keep mired and "true" kelvin
-            #         payload.update({'color_temp_mired': payload['color_temp']})
-            #         payload.update({'color_temp_k': int(round(1000000 / int(payload['color_temp']), 0))})
-            #
-            #         payload.update({'color_temp': int(round(10000 / int(payload['color_temp']), 0)) * 100})
-            #     except Exception as e:
-            #         self.logger.debug(f"Error {e} occurred during decoding of color_temp.")
+        # # Korrektur der Farbtemperatur von "mired scale" (Reziproke Megakelvin) auf Kelvin
+        # if 'color_temp' in payload:
+        #     try:
+        #         # keep mired and "true" kelvin
+        #         payload.update({'color_temp_mired': payload['color_temp']})
+        #         payload.update({'color_temp_k': int(round(1000000 / int(payload['color_temp']), 0))})
+        #
+        #         payload.update({'color_temp': int(round(10000 / int(payload['color_temp']), 0)) * 100})
+        #     except Exception as e:
+        #         self.logger.debug(f"Error {e} occurred during decoding of color_temp.")
 
-            # # Verarbeitung von Farbdaten
-            # if 'color_mode' in payload and 'color' in payload:
-            #     color_mode = payload['color_mode']
-            #     color = payload.pop('color')
-            #
-            #     if color_mode == 'hs':
-            #         payload['hue'] = color['hue']
-            #         payload['saturation'] = color['saturation']
-            #
-            #     if color_mode == 'xy':
-            #         payload['color_x'] = color['x']
-            #         payload['color_y'] = color['y']
+        # # Verarbeitung von Farbdaten
+        # if 'color_mode' in payload and 'color' in payload:
+        #     color_mode = payload['color_mode']
+        #     color = payload.pop('color')
+        #
+        #     if color_mode == 'hs':
+        #         payload['hue'] = color['hue']
+        #         payload['saturation'] = color['saturation']
+        #
+        #     if color_mode == 'xy':
+        #         payload['color_x'] = color['x']
+        #         payload['color_y'] = color['y']
 
-            if 'data' not in self._devices[device]:
-                self._devices[device]['data'] = {}
-            self._devices[device]['data'].update(payload)
+        if 'data' not in self._devices[device]:
+            self._devices[device]['data'] = {}
+        self._devices[device]['data'].update(payload)
 
-            # Setzen des Itemwertes
-            for attr in payload:
-                if attr in self._devices[device]:
-                    value = payload[attr]
-                    self._devices[device][attr]['value'] = value
-                    item = self._devices[device][attr].get('item')
-                    src = self.get_shortname() + ':' + device
-                    self.logger.debug(f"attribute: {attr}, value: {value}, item: {item}")
+        # Setzen des Itemwertes
+        for attr in payload:
+            if attr in self._devices[device]:
+                value = payload[attr]
+                self._devices[device][attr]['value'] = value
+                item = self._devices[device][attr].get('item')
+                src = self.get_shortname() + ':' + device
+                self.logger.debug(f"attribute: {attr}, value: {value}, item: {item}")
 
-                    if item is not None:
-                        item(value, src)
-                        self.logger.info(f"{device}: Item '{item}' set to value {value}")
-                    else:
-                        self.logger.info(f"{device}: No item for attribute '{attr}' defined to set to {value}")
+                if item is not None:
+                    item(value, src)
+                    self.logger.info(f"{device}: Item '{item}' set to value {value}")
+                else:
+                    self.logger.info(f"{device}: No item for attribute '{attr}' defined to set to {value}")
 
     def _build_topic_str(self, device: str, topic_3: str, topic_4: str, topic_5: str) -> str:
         """ Build the mqtt topic as string """
@@ -507,37 +477,37 @@ class Zigbee2Mqtt(MqttPlugin):
                         self._devices[device] = {'isgroup': is_group}
 
                     # easier to read
-                    dev = self._devices[device]
+                    _device = self._devices[device]
 
                     # scenes in devices
                     try:
-                        for ep in element['endpoints']:
-                            if element['endpoints'][ep].get('scenes'):
-                                dev['scenes'] = {
-                                    name: id for id, name in (x.values() for x in element['endpoints'][ep]['scenes'])
+                        for endpoint in element['endpoints']:
+                            if element['endpoints'][endpoint].get('scenes'):
+                                _device['scenes'] = {
+                                    name: id for id, name in (x.values() for x in element['endpoints'][endpoint]['scenes'])
                                 }
                     except KeyError:
                         pass
 
                     # scenes in groups
                     if element.get('scenes'):
-                        dev['scenes'] = {
+                        _device['scenes'] = {
                             name: id for id, name in (scene.values() for scene in element['scenes'])
                         }
 
                     # put list of scene names in scenelist item
-                    if dev.get('scenelist'):
+                    if _device.get('scenelist'):
                         try:
-                            scenelist = list(dev['scenes'].keys())
-                            dev['scenelist']['item'](scenelist)
+                            scenelist = list(_device['scenes'].keys())
+                            _device['scenelist']['item'](scenelist)
                         except (KeyError, ValueError, TypeError):
                             pass
 
                     # TODO: whatfor? really needed anymore?
                     # just copy meta
-                    if 'meta' not in dev:
-                        dev['meta'] = {}
-                    dev['meta'].update(element)
+                    if 'meta' not in _device:
+                        _device['meta'] = {}
+                    _device['meta'].update(element)
 
                     # TODO: parse meta and extract valid values for attrs
 
@@ -553,6 +523,69 @@ class Zigbee2Mqtt(MqttPlugin):
                 a = self._devices[device][attr]
                 if a.get('read', False) and a.get('item') is not None:
                     self.publish_z2m_topic(device, attr, 'get')
+
+#
+# special handlers
+#
+
+    def _handle_bridge(self, device: str, topic_3: str = "", topic_4: str = "", topic_5: str = "", payload=None, qos=None, retain=None):
+        """ handle device topics for "bridge" """
+
+        # catch AssertionError
+        try:
+            # easier to read
+            _bridge = self._devices[device]
+
+            if topic_3 == 'state':
+                self.logger.debug(f"state: detail: {topic_3} datetime: {datetime.now()} payload: {payload}")
+                # TODO: check - needs bool_values?
+                _bridge['online'] = bool(payload)
+
+            elif topic_3 == 'response' and topic_4 in ('health_check', 'permit_join', 'networkmap'):
+                assert isinstance(payload, dict), 'dict'
+                if topic_4 == 'health_check':
+                    _bridge['online'] = bool(payload['data']['healthy'])
+                else:
+                    _bridge['online'] = True
+
+                _bridge[topic_4] = payload
+
+            elif topic_3 == 'config' and topic_4 == '':
+                assert isinstance(payload, dict), 'dict'
+                _bridge['config'] = payload
+
+            elif topic_3 == 'devices' or topic_3 == 'groups':
+                assert isinstance(payload, list), 'list'
+                self._get_device_data(payload, topic_4 == 'groups')
+
+                for entry in payload:
+                    friendly_name = entry.get('friendly_name')
+                    try:
+                        exposes = entry['definition']['exposes']
+                    except (KeyError, TypeError):
+                        pass
+                    else:
+                        if friendly_name in self._devices:
+                            self._devices[friendly_name]['exposes'] = exposes
+
+            elif topic_3 == 'log':
+                assert isinstance(payload, dict), 'dict'
+                if 'message' in payload and 'type' in payload:
+                    message = payload['message']
+                    message_type = payload['type']
+                    if message_type == 'devices' and isinstance(message, list):
+                        self._get_device_data(message)
+
+            elif topic_3 == 'info' and topic_4 == '':
+                assert isinstance(payload, dict), 'dict'
+                if isinstance(payload, dict):
+                    _bridge['info'] = payload
+                    _bridge['online'] = True
+
+            else:
+                self.logger.debug(f"Function type message bridge/{topic_3} not implemented yet.")
+        except AssertionError as e:
+            self.logger.debug(f'Response format not of type {e}, ignoring data')
 
     def _get_z2m_topic_from_item(self, item) -> str:
         """ Get z2m_topic for given item search from given item in parent direction """

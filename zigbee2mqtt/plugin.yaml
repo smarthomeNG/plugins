@@ -115,8 +115,8 @@ item_structs:
             z2m_topic: ..:.
             z2m_attr: color_mode
 
-        set_scene:
-            type: num
+        scene:
+            type: str
             enforce_updates: true
             z2m_topic: ..:.
             z2m_attr: scene_recall
