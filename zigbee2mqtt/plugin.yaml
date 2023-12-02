@@ -54,6 +54,7 @@ parameters:
 
     bool_values:
         type: list
+        default: ['OFF', 'ON']
         description:
             de: Plugin-weite Ersetzungwerte für bool-Werte
             en: Plugin-wide substitution values for bool items
@@ -93,11 +94,9 @@ item_attributes:
 
 item_structs:
     light_white_ambient_group:
-        state:
-            type: bool
-            z2m_topic: ..:.
-            z2m_attr: state
-            z2m_bool_values: ['OFF', 'ON']
+        type: bool
+        z2m_attr: state
+        z2m_bool_values: ['OFF', 'ON']
 
         brightness:
             type: num
@@ -137,7 +136,7 @@ item_structs:
             z2m_attr: color_temp_startup
 
     light_white_ambient:
-        struct: zigbee2mqtt.light_white_ambient_group
+        struct: priv_z2m.light_white_ambient_group
 
         linkquality:
             type: num
@@ -165,7 +164,7 @@ item_structs:
                 eval_trigger: ..
 
     light_rgb_group:
-        struct: zigbee2mqtt.light_white_ambient_group
+        struct: priv_z2m.light_white_ambient_group
 
         color:
             type: dict
@@ -187,7 +186,7 @@ item_structs:
             z2m_attr: color_temp_startup
 
     light_rgb:
-        struct: zigbee2mqtt.light_rgb_group
+        struct: priv_z2m.light_rgb_group
 
         linkquality:
             type: num

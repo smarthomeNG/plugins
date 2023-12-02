@@ -163,11 +163,13 @@ class Zigbee2Mqtt(MqttPlugin):
                 return
 
             attr = self.get_iattr_value(item.conf, Z2M_ATTR).lower()
-            bval = self.get_iattr_value(item.conf, Z2M_BVAL)
-            if bval == []:
-                bval = None
-            elif not (bval is None or type(bval) is list):
-                bval = self.bool_values
+
+            if item.type() == 'bool':
+                bval = self.get_iattr_value(item.conf, Z2M_BVAL)
+                if bval == []:
+                    bval = None
+                if bval is None or type(bval) is not list:
+                    bval = self.bool_values
 
             # invert read-only/write-only logic to allow read/write
             write = not self.get_iattr_value(item.conf, Z2M_RO, False)
@@ -179,13 +181,16 @@ class Zigbee2Mqtt(MqttPlugin):
             if attr not in self._devices[device]:
                 self._devices[device][attr] = {}
 
-            self._devices[device][attr].update({
+            data = {
                 'value': None,
                 'item': item,
                 'read': read,
                 'write': write,
-                'bool_values': bval
-            })
+            }
+            if item.type() == 'bool':
+                data['bval'] = bval
+
+            self._devices[device][attr].update(data)
 
             if read and item not in self._items_read:
                 self._items_read.append(item)
@@ -586,6 +591,8 @@ class Zigbee2Mqtt(MqttPlugin):
                 self.logger.debug(f"Function type message bridge/{topic_3} not implemented yet.")
         except AssertionError as e:
             self.logger.debug(f'Response format not of type {e}, ignoring data')
+
+        return True
 
     def _get_z2m_topic_from_item(self, item) -> str:
         """ Get z2m_topic for given item search from given item in parent direction """
