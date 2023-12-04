@@ -93,6 +93,68 @@ item_attributes:
 
 
 item_structs:
+    dimmer:
+        action:
+            type: str
+            z2m_topic: ..:.
+            z2m_attr: action
+            enforce_updates: true
+
+        battery:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: battery
+
+        duration:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: action_duration
+
+        linkquality:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: linkquality
+
+        on:
+            type: bool
+            eval: True if sh...action() == 'on_press' else (False if sh...action() in ('on_press_release', 'on_hold_release') else None)
+            eval_trigger: ..action
+
+            hold:
+                type: bool
+                eval: True if sh....action() == 'on_hold' else (False if sh....action() == 'on_hold_release' else None)
+                eval_trigger: ...action
+
+        off:
+            type: bool
+            eval: True if sh...action() == 'off_press' else (False if sh...action() in ('off_press_release', 'off_hold_release') else None)
+            eval_trigger: ..action
+
+            hold:
+                type: bool
+                eval: True if sh....action() == 'off_hold' else (False if sh....action() == 'off_hold_release' else None)
+                eval_trigger: ...action
+
+        up:
+            type: bool
+            eval: True if sh...action() == 'up_press' else (False if sh...action() in ('up_press_release', 'up_hold_release') else None)
+            eval_trigger: ..action
+
+            hold:
+                type: bool
+                eval: True if sh....action() == 'up_hold' else (False if sh....action() == 'up_hold_release' else None)
+                eval_trigger: ...action
+
+        down:
+            type: bool
+            eval: True if sh...action() == 'down_press' else (False if sh...action() in ('down_press_release', 'down_hold_release') else None)
+            eval_trigger: ..action
+
+            hold:
+                type: bool
+                eval: True if sh....action() == 'down_hold' else (False if sh....action() == 'down_hold_release' else None)
+                eval_trigger: ...action
+
     light_white_ambient_group:
         type: bool
         z2m_attr: state
