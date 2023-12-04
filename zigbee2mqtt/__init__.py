@@ -27,6 +27,8 @@ from datetime import datetime
 import json
 
 from lib.model.mqttplugin import MqttPlugin
+
+from .rgbxy import Converter
 # from .webif import WebInterface
 
 Z2M_TOPIC = 'z2m_topic'
@@ -35,6 +37,11 @@ Z2M_RO = 'z2m_readonly'
 Z2M_WO = 'z2m_writeonly'
 Z2M_BVAL = 'z2m_bool_values'
 MSEP = '#'
+
+HANDLE_IN_PREFIX = '_handle_in_'
+HANDLE_OUT_PREFIX = '_handle_out_'
+HANDLE_DEV = 'dev_'
+HANDLE_ATTR = 'attr_'
 
 
 class Zigbee2Mqtt(MqttPlugin):
@@ -58,7 +65,7 @@ class Zigbee2Mqtt(MqttPlugin):
 
         self._items_read = []
         self._items_write = []
-        self._devices = {'bridge': {'handler_in': self._handle_bridge}}
+        self._devices = {'bridge': {}}
         # {
         #   'dev1': {
         #       'lastseen': <timestamp>,
@@ -66,16 +73,12 @@ class Zigbee2Mqtt(MqttPlugin):
         #       'data': {[...]},
         #       'exposes': {[...]},
         #       'scenes': {'name1': id1, 'name2': id2, [...]},
-        #       'handler_in:' <func>,
-        #       'handler_out:' <func>,
         #       'attr1': {
         #           'item': item1,
         #           'read': bool,
         #           'write': bool,
         #           'bool_values': ['OFF', 'ON'],
         #           'value': ...
-        #           'handler_in:' <func>,
-        #           'handler_out:' <func>,
         #       },
         #       'attr2': ...
         #   },
@@ -259,68 +262,44 @@ class Zigbee2Mqtt(MqttPlugin):
                 _device = self._devices[device]
                 _attr = _device[attr]
 
-                topic_3 = topic_4 = topic_5 = ''
+                # pre-set values
+                topic_3 = 'set'
+                topic_4 = topic_5 = ''
                 payload = None
-                bool_values = self.bool_values
-                try:
-                    bool_values = _attr.get('bool_values', self.bool_values)
-                except KeyError:
-                    pass
+                bool_values = _attr.get('bool_values', self.bool_values)
                 scenes = _device.get('scenes')
+                value = item()
 
-                # statically defined cmds for interaction with z2m-gateway
-                # independent from connected devices
-                bridge_cmds = {
-                    'permit_join': {'setval': 'VAL', 't5': ''},
-                    'health_check': {'setval': None, 't5': ''},
-                    'restart': {'setval': None, 't5': ''},
-                    'networkmap': {'setval': 'raw', 't5': 'remove'},
-                    'device_remove': {'setval': 'STR', 't5': ''},
-                    'device_configure': {'setval': 'STR', 't5': ''},
-                    'device_options': {'setval': 'STR', 't5': ''},
-                    'device_rename': {'setval': 'STR', 't5': ''}
-                }
+                # apply bool_values if present and applicable
+                if bool_values and isinstance(value, bool):
+                    value = bool_values[value]
 
-                if device == 'bridge' and attr in bridge_cmds:
-                    topic_3 = 'request'
-                    topic_4 = attr
-                    topic_5 = bridge_cmds[attr]['t5']
-                    payload = ''
-                    if attr.startswith('device_'):
-                        topic_4, topic_5 = attr.split('_')
-                    if bridge_cmds[attr]['setval'] == 'VAL':
-                        payload = item()
-                    if bridge_cmds[attr]['setval'] == 'STR':
-                        payload = str(item())
-                    elif bridge_cmds[attr]['setval'] == 'PATH':
-                        payload = item.property.path
+                # replace scene with index
+                if attr == 'scene_recall' and scenes:
+                    try:
+                        value = scenes[value]
+                    except KeyError:
+                        self.logger.warning(f'scene {value} not defined for {device}')
+                        return
 
-                    # insert special cases here which don't correspond to
-                    # base/device/set with payload "{attr: value}"
+                # check device handler
+                if hasattr(self, HANDLE_OUT_PREFIX + HANDLE_DEV + device):
+                    value, topic_3, topic_4, topic_5, abort = getattr(self, HANDLE_OUT_PREFIX + HANDLE_DEV + device)(item, value, topic_3, topic_4, topic_5, device, attr)
+                    if abort:
+                        self.logger.debug(f'processing of item {item} stopped due to abort statement from handler {HANDLE_OUT_PREFIX + HANDLE_DEV + device}')
+                        return
 
-# TODO: shall we offer brightness scaled to 100%?
-# TODO: shall we offer color_temp as Kelvin?
+                # check attribute handler
+                if hasattr(self, HANDLE_OUT_PREFIX + HANDLE_ATTR + attr):
+                    value, topic_3, topic_4, topic_5, abort = getattr(self, HANDLE_OUT_PREFIX + HANDLE_ATTR + attr)(item, value, topic_3, topic_4, topic_5, device, attr)
+                    if abort:
+                        self.logger.debug(f'processing of item {item} stopped due to abort statement from handler {HANDLE_OUT_PREFIX + HANDLE_ATTR + attr}')
+                        return
 
-                else:
-                    topic_3 = 'set'
-                    value = item()
-
-                    # apply bool_values if present and applicable
-                    if bool_values and isinstance(value, bool):
-                        value = bool_values[value]
-
-                    # replace scene with index
-                    if attr == 'scene_recall' and scenes:
-                        try:
-                            value = scenes[value]
-                        except KeyError:
-                            self.logger.warning(f'scene {value} not defined for {device}')
-                            return
-
-                    # create payload
-                    payload = json.dumps({
-                        attr: value
-                    })
+                # create payload
+                payload = json.dumps({
+                    attr: value
+                })
 
                 if payload is not None:
                     self.publish_z2m_topic(device, topic_3, topic_4, topic_5, payload, item, bool_values=bool_values)
@@ -365,13 +344,9 @@ class Zigbee2Mqtt(MqttPlugin):
             return
 
         # check handlers
-        try:
-            if 'handler_in' in self._devices[device]:
-                # handler has to return True to continue processing
-                if not self._devices[device]['handler_in'](device, topic_3, topic_4, topic_5, payload, qos, retain):
-                    return
-        except (KeyError, TypeError):
-            pass
+        if hasattr(self, HANDLE_IN_PREFIX + HANDLE_DEV + device):
+            if getattr(self, HANDLE_IN_PREFIX + HANDLE_DEV + device)(device, topic_3, topic_4, topic_5, payload, qos, retain):
+                return
 
         if not isinstance(payload, dict):
             return
@@ -446,10 +421,16 @@ class Zigbee2Mqtt(MqttPlugin):
         # Setzen des Itemwertes
         for attr in payload:
             if attr in self._devices[device]:
-                value = payload[attr]
-                self._devices[device][attr]['value'] = value
                 item = self._devices[device][attr].get('item')
                 src = self.get_shortname() + ':' + device
+
+                # check handlers
+                if hasattr(self, HANDLE_IN_PREFIX + HANDLE_ATTR + attr):
+                    if getattr(self, HANDLE_IN_PREFIX + HANDLE_ATTR + attr)(device, attr, payload, item):
+                        return
+
+                value = payload[attr]
+                self._devices[device][attr]['value'] = value
                 self.logger.debug(f"attribute: {attr}, value: {value}, item: {item}")
 
                 if item is not None:
@@ -501,6 +482,7 @@ class Zigbee2Mqtt(MqttPlugin):
                         }
 
                     # put list of scene names in scenelist item
+                    # key "scenelist" only present if attr/device requested in item tree
                     if _device.get('scenelist'):
                         try:
                             scenelist = list(_device['scenes'].keys())
@@ -508,7 +490,7 @@ class Zigbee2Mqtt(MqttPlugin):
                         except (KeyError, ValueError, TypeError):
                             pass
 
-                    # TODO: whatfor? really needed anymore?
+                    # TODO: possibly remove after further parsing
                     # just copy meta
                     if 'meta' not in _device:
                         _device['meta'] = {}
@@ -529,71 +511,6 @@ class Zigbee2Mqtt(MqttPlugin):
                 if a.get('read', False) and a.get('item') is not None:
                     self.publish_z2m_topic(device, attr, 'get')
 
-#
-# special handlers
-#
-
-    def _handle_bridge(self, device: str, topic_3: str = "", topic_4: str = "", topic_5: str = "", payload=None, qos=None, retain=None):
-        """ handle device topics for "bridge" """
-
-        # catch AssertionError
-        try:
-            # easier to read
-            _bridge = self._devices[device]
-
-            if topic_3 == 'state':
-                self.logger.debug(f"state: detail: {topic_3} datetime: {datetime.now()} payload: {payload}")
-                # TODO: check - needs bool_values?
-                _bridge['online'] = bool(payload)
-
-            elif topic_3 == 'response' and topic_4 in ('health_check', 'permit_join', 'networkmap'):
-                assert isinstance(payload, dict), 'dict'
-                if topic_4 == 'health_check':
-                    _bridge['online'] = bool(payload['data']['healthy'])
-                else:
-                    _bridge['online'] = True
-
-                _bridge[topic_4] = payload
-
-            elif topic_3 == 'config' and topic_4 == '':
-                assert isinstance(payload, dict), 'dict'
-                _bridge['config'] = payload
-
-            elif topic_3 == 'devices' or topic_3 == 'groups':
-                assert isinstance(payload, list), 'list'
-                self._get_device_data(payload, topic_4 == 'groups')
-
-                for entry in payload:
-                    friendly_name = entry.get('friendly_name')
-                    try:
-                        exposes = entry['definition']['exposes']
-                    except (KeyError, TypeError):
-                        pass
-                    else:
-                        if friendly_name in self._devices:
-                            self._devices[friendly_name]['exposes'] = exposes
-
-            elif topic_3 == 'log':
-                assert isinstance(payload, dict), 'dict'
-                if 'message' in payload and 'type' in payload:
-                    message = payload['message']
-                    message_type = payload['type']
-                    if message_type == 'devices' and isinstance(message, list):
-                        self._get_device_data(message)
-
-            elif topic_3 == 'info' and topic_4 == '':
-                assert isinstance(payload, dict), 'dict'
-                if isinstance(payload, dict):
-                    _bridge['info'] = payload
-                    _bridge['online'] = True
-
-            else:
-                self.logger.debug(f"Function type message bridge/{topic_3} not implemented yet.")
-        except AssertionError as e:
-            self.logger.debug(f'Response format not of type {e}, ignoring data')
-
-        return True
-
     def _get_z2m_topic_from_item(self, item) -> str:
         """ Get z2m_topic for given item search from given item in parent direction """
 
@@ -608,7 +525,233 @@ class Zigbee2Mqtt(MqttPlugin):
 
         return topic
 
-    def _item_color_xy_to_rgb(self, item_xy, item_brightness, item_r, item_g, item_b):
+#
+# special handlers for devices / attributes
+#
+# handlers_in:
+# def handle_in_dev_<device>(self, device: str, topic_3: str = "", topic_4: str = "", topic_5: str = "", payload={}, qos=None, retain=None)
+# def handle_in_attr_<attr>(self, device: str, attr: str, payload={}, item=None)
+#
+# return True: stop further processing
+# return False/None: continue processing (possibly with changed payload)
+#
+
+    def _handle_in_dev_bridge(self, device: str, topic_3: str = "", topic_4: str = "", topic_5: str = "", payload={}, qos=None, retain=None):
+        """ handle device topics for "bridge" """
+
+        # catch AssertionError
+        try:
+            # easier to read
+            _bridge = self._devices[device]
+
+            if topic_3 == 'state':
+                self.logger.debug(f"state: detail: {topic_3} datetime: {datetime.now()} payload: {payload}")
+                _bridge['online'] = bool(payload)
+
+            elif topic_3 in ('config', 'info'):
+                assert isinstance(payload, dict), 'dict'
+                _bridge[topic_3] = payload
+                _bridge['online'] = True
+
+            elif topic_3 == 'response' and topic_4 in ('health_check', 'permit_join', 'networkmap'):
+                assert isinstance(payload, dict), 'dict'
+                _bridge[topic_4] = payload
+                _bridge['online'] = True
+
+                if topic_4 == 'health_check':
+                    _bridge['online'] = bool(payload['data']['healthy'])
+
+            elif topic_3 == 'devices' or topic_3 == 'groups':
+                assert isinstance(payload, list), 'list'
+                self._get_device_data(payload, topic_4 == 'groups')
+
+                for entry in payload:
+                    friendly_name = entry.get('friendly_name')
+                    if friendly_name in self._devices:
+                        try:
+                            self._devices[friendly_name]['exposes'] = entry['definition']['exposes']
+                        except (KeyError, TypeError):
+                            pass
+
+            elif topic_3 == 'log':
+                assert isinstance(payload, dict), 'dict'
+                if 'message' in payload and payload.get('type') == 'devices':
+                    self._get_device_data(payload['message'])
+
+            else:
+                self.logger.debug(f"Function type message bridge/{topic_3}/{topic_4} not implemented yet.")
+        except AssertionError as e:
+            self.logger.debug(f'Response format not of type {e}, ignoring data')
+
+    def _handle_in_attr_color(self, device: str, attr: str, payload={}, item=None):
+        """ automatically sync rgb items """
+        if item is not None:
+            col = payload['color']
+            if 'x' in col and 'y' in col and 'brightness' in payload:
+                r, g, b = self._color_xy_to_rgb(color=col, brightness=payload['brightness'] / 254)
+                try:
+                    items_default = True
+                    item_r = item.r
+                    item_g = item.g
+                    item_b = item.b
+                except AttributeError:
+                    items_default = False
+
+                try:
+                    items_custom = True
+                    # try to get user-specified items to override default
+                    item_r = self._devices[device]['color_r']['item']
+                    item_g = self._devices[device]['color_g']['item']
+                    item_b = self._devices[device]['color_b']['item']
+                except (AttributeError, KeyError):
+                    items_custom = False
+
+                if not items_default and not items_custom:
+                    return
+
+                try:
+                    item_r(r, self.get_shortname())
+                    item_g(g, self.get_shortname())
+                    item_b(b, self.get_shortname())
+                except Exception as e:
+                    self.logger.warning(f'Trying to set rgb color values for color item {item}, but appropriate subitems ({item_r}, {item_g}, {item_b}) missing: {e}')
+
+    def _handle_in_attr_brightness(self, device: str, attr: str, payload={}, item=None):
+        """ automatically set brightness percent """
+        if item is not None:
+            target = None
+            try:
+                target = item.percent
+            except AttributeError:
+                pass
+
+            try:
+                target = self._devices[device]['brightness_percent']['item']
+            except (AttributeError, KeyError):
+                pass
+
+            if target is not None:
+                target(payload['brightness'] / 2.54, self.get_shortname())
+
+    def _handle_in_attr_color_temp(self, device: str, attr: str, payload={}, item=None):
+        """ automatically set color temp in kelvin """
+        if item is not None:
+            target = None
+            try:
+                target = item.kelvin
+            except AttributeError:
+                pass
+
+            try:
+                target = self._devices[device]['color_temp_kelvin']['item']
+            except (AttributeError, KeyError):
+                pass
+
+            if target is not None:
+                target(int(1000000 / payload['color_temp']), self.get_shortname())
+
+#
+# handlers out
+#
+# def _handle_out_<device/attr>(self, item, value, topic_3, topic_4, topic_5, device, attr):
+#     return value, topic_3, topic_4, topic_5, abort
+#
+
+    def _handle_out_dev_bridge(self, item, value, topic_3, topic_4, topic_5, device, attr):
+        # statically defined cmds for interaction with z2m-gateway
+        # independent from connected devices
+        bridge_cmds = {
+            'permit_join': {'setval': 'VAL', 't5': ''},
+            'health_check': {'setval': None, 't5': ''},
+            'restart': {'setval': None, 't5': ''},
+            'networkmap': {'setval': 'raw', 't5': 'remove'},
+            'device_remove': {'setval': 'STR', 't5': ''},
+            'device_configure': {'setval': 'STR', 't5': ''},
+            'device_options': {'setval': 'STR', 't5': ''},
+            'device_rename': {'setval': 'STR', 't5': ''}
+        }
+
+        if attr in bridge_cmds:
+            topic_3 = 'request'
+            topic_4 = attr
+            topic_5 = bridge_cmds[attr]['t5']
+            payload = ''
+            if attr.startswith('device_'):
+                topic_4, topic_5 = attr.split('_')
+            if bridge_cmds[attr]['setval'] == 'VAL':
+                payload = value
+            if bridge_cmds[attr]['setval'] == 'STR':
+                payload = str(value)
+            elif bridge_cmds[attr]['setval'] == 'PATH':
+                payload = item.property.path
+
+            value = payload
+
+        return value, topic_3, topic_4, topic_5, False
+
+    def _handle_out_attr_color_r(self, item, value, topic_3, topic_4, topic_5, device, attr):
+        try:
+            self._color_sync_from_rgb(self._devices[device]['state']['item'])
+        except Exception as e:
+            self.logger.debug(f'problem calling color sync: {e}')
+        return value, topic_3, topic_4, topic_5, True
+
+    def _handle_out_attr_color_g(self, item, value, topic_3, topic_4, topic_5, device, attr):
+        try:
+            self._color_sync_from_rgb(self._devices[device]['state']['item'])
+        except Exception as e:
+            self.logger.debug(f'problem calling color sync: {e}')
+        return value, topic_3, topic_4, topic_5, True
+
+    def _handle_out_attr_color_b(self, item, value, topic_3, topic_4, topic_5, device, attr):
+        try:
+            self._color_sync_from_rgb(self._devices[device]['state']['item'])
+        except Exception as e:
+            self.logger.debug(f'problem calling color sync: {e}')
+        return value, topic_3, topic_4, topic_5, True
+
+    def _handle_out_attr_brightness_percent(self, item, value, topic_3, topic_4, topic_5, device, attr):
+        brightness = value * 2.54
+        try:
+            self._devices[device]['brightness']['item'](brightness)
+        except (KeyError, AttributeError):
+            pass
+        return value, topic_3, topic_4, topic_5, True
+
+    def _handle_out_attr_color_temp_kelvin(self, item, value, topic_3, topic_4, topic_5, device, attr):
+        kelvin = int(1000000 / value)
+        try:
+            self._devices[device]['color_temp']['item'](kelvin)
+        except (KeyError, AttributeError):
+            pass
+        return value, topic_3, topic_4, topic_5, True
+
+#
+# Attention - color conversions xy/rgb:
+# due to - probably - rounding differences, this ist not a true
+# 1:1 conversion. Use at your own discretion...
+#
+
+    def _color_xy_to_rgb(self, color={}, x=None, y=None, brightness=1):
+        if color:
+            x = color.get('x')
+            y = color.get('y')
+        c = Converter()
+        return c.xy_to_rgb(x, y, brightness)
+
+    def _color_rgb_to_xy(self, r, g, b):
+        c = Converter()
+        return c.rgb_to_xyb(r, g, b)
+
+    def _color_sync_to_rgb(self, item, source=''):
+        """ sync xy color to rgb, needs struct items """
+        self._item_color_xy_to_rgb(item.color, item.brightness, item.color.r, item.color.g, item.color.b, source)
+
+    def _color_sync_from_rgb(self, item, source=''):
+        """ sync rgb color to xy, needs struct items """
+        self._item_color_rgb_to_xy(item.color.r, item.color.g, item.color.b, item.color, item.brightness, source)
+
+    def _item_color_xy_to_rgb(self, item_xy, item_brightness, item_r, item_g, item_b, source=''):
         """ convert xy and brightness item data to rgb and assign """
         try:
             x = item_xy()['x']
@@ -621,20 +764,21 @@ class Zigbee2Mqtt(MqttPlugin):
             bright = item_brightness()
             if bright < 0 or bright > 254:
                 raise TypeError
+            bright /= 254
         except (ValueError, TypeError):
             self.logger.warning(f"Item {item_brightness} doesn't contain a valid brightness value: {item_brightness()}")
             return
 
-        r, g, b = self._color_xy_to_rgb(x, y, bright)
+        r, g, b = self._color_xy_to_rgb(x=x, y=y, brightness=bright)
 
         try:
-            item_r(r)
-            item_g(g)
-            item_b(b)
+            item_r(r, source)
+            item_g(g, source)
+            item_b(b, source)
         except (ValueError, TypeError):
             self.logger.warning(f"Error on assigning rgb values {r},{g},{b} to items {item_r}, {item_g}, {item_b}")
 
-    def _item_color_rgb_to_xy(self, item_r, item_g, item_b, item_xy, item_brightness):
+    def _item_color_rgb_to_xy(self, item_r, item_g, item_b, item_xy, item_brightness, source=''):
         """ convert r, g, b items data to xy and brightness and assign """
         try:
             r = item_r()
@@ -647,89 +791,8 @@ class Zigbee2Mqtt(MqttPlugin):
         x, y, bright = self._color_rgb_to_xy(r, g, b)
 
         try:
-            item_xy({'x': x, 'y': y})
-            item_brightness(bright)
+            item_xy({'x': x, 'y': y}, source)
+            item_brightness(bright * 254, source)
         except (ValueError, TypeError):
             self.logger.warning(f"Error on assigning values {x},{y}, {bright} to items {item_xy} and {item_brightness}")
             return
-
-#
-# TODO: check correctness of calculations
-#
-
-    def _color_xy_to_rgb(self, x: float, y: float, brightness: int):
-        """
-        convert xy color value to Wide RGB
-
-        x, y are given as float 0.0...1.0
-        brightness is given as 0..255
-
-        returns a tuple (r, g, b) (0..255)
-        """
-
-        z = 1.0 - y - x
-
-        # calculate XYZ
-        Y = float(brightness) / 254.0
-        X = (Y / y) * x
-        Z = (Y / y) * z
-
-        # calculate rgb
-        rg = X * 1.612 - Y * 0.203 - Z * 0.302
-        gg = -X * 0.509 + Y * 1.412 + Z * 0.066
-        bg = X * 0.026 - Y * 0.072 + Z * 0.962
-
-        # remove gamma correction
-        if rg <= 0.0031308:
-            r = 0.0031308
-        else:
-            r = 12.92 * rg
-        if gg <= 0.0031308:
-            g = 0.0031308
-        else:
-            g = 12.92 * gg
-        if bg <= 0.0031308:
-            b = 0.0031308
-        else:
-            b = 12.92 * bg
-
-        # return (round(r * 255, 0), round(g * 255, 0), round(b * 255, 0))
-        return (r, g, b)
-
-    def _color_rgb_to_xy(self, r: int, g: int, b: int):
-        """
-        convert Wide RGB color value to xy
-
-        r, g, b are given as byte value 0..255
-        returns tuple (x, y, brightness)
-        """
-
-        # normalize
-        r1 = float(r) / 255.0
-        g1 = float(g) / 255.0
-        b1 = float(b) / 255.0
-
-        # apply gamma correction
-        if r1 > 0.04045:
-            rg = ((r1 + 0.055) / 1.055) ** 2.4
-        else:
-            rg = r1 / 12.92
-        if g1 > 0.04045:
-            gg = ((g1 + 0.055) / 1.055) ** 2.4
-        else:
-            gg = g1 / 12.92
-        if b1 > 0.04045:
-            bg = ((b1 + 0.055) / 1.055) ** 2.4
-        else:
-            bg = b1 / 12.92
-
-        # calculate XYZ values
-        X = rg * 0.649926 + gg * 0.103455 + bg * 0.197109
-        Y = rg * 0.234327 + gg * 0.743075 + bg * 0.022598
-        Z = rg * 0.0000000 + gg * 0.053077 + bg * 1.035763
-
-        # convert to xy
-        x = X / (X + Y + Z)
-        y = Y / (X + Y + Z)
-
-        return (x, y, round(Y * 254, 0))

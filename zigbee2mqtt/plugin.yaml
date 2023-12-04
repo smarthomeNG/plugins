@@ -102,13 +102,23 @@ item_structs:
             type: num
             z2m_topic: ..:.
             z2m_attr: brightness
-            
+
+            percent:
+                type: num
+                z2m_topic: ..:.
+                z2m_attr: brightness_percent
+
         color_temp:
             type: num
             remark: 153..454, coolest, cool, neutral, warm, warmest
             z2m_topic: ..:.
             z2m_attr: color_temp
             
+            kelvin:
+                type: num
+                z2m_topic: ..:.
+                z2m_attr: color_temp_kelvin
+
         color_mode:
             type: str
             z2m_topic: ..:.
@@ -173,12 +183,18 @@ item_structs:
 
             r:
                 type: num
+                z2m_topic: ..:.
+                z2m_attr: color_r
 
             g:
                 type: num
+                z2m_topic: ..:.
+                z2m_attr: color_g
 
             b:
                 type: num
+                z2m_topic: ..:.
+                z2m_attr: color_b
 
         color_startup:
             type: dict

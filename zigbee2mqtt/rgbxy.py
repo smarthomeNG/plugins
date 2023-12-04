@@ -4,12 +4,14 @@ Library for RGB / CIE1931 "x, y" coversion.
 Based on Philips implementation guidance:
 http://www.developers.meethue.com/documentation/color-conversions-rgb-xy
 Copyright (c) 2016 Benjamin Knight / MIT License.
+
+modifications by SH for zigbee2mqtt plugin in smarthomeNG
 """
 import math
 import random
 from collections import namedtuple
 
-__version__ = '0.5.1'
+__version__ = '0.5.1a'
 
 # Represents a CIE 1931 XY coordinate pair.
 XYPoint = namedtuple('XYPoint', ['x', 'y'])
@@ -151,6 +153,13 @@ class ColorHelper:
         """Returns an XYPoint object containing the closest available CIE 1931 x, y coordinates
         based on the RGB input values."""
 
+        xy_point, _ = self.get_xy_point_from_rgb(red_i, green_i, blue_i)
+        return xy_point
+
+    def get_xy_bri_from_rgb(self, red_i, green_i, blue_i):
+        """Returns an XYPoint object containing the closest available CIE 1931 x, y coordinates
+        based on the RGB input values."""
+
         red = red_i / 255.0
         green = green_i / 255.0
         blue = blue_i / 255.0
@@ -163,8 +172,13 @@ class ColorHelper:
         Y = r * 0.283881 + g * 0.668433 + b * 0.047685
         Z = r * 0.000088 + g * 0.072310 + b * 0.986039
 
-        cx = X / (X + Y + Z)
-        cy = Y / (X + Y + Z)
+        try:
+            cx = X / (X + Y + Z)
+            cy = Y / (X + Y + Z)
+        except ZeroDivisionError:
+            cx = 0.167
+            cy = 0.04
+            Y = 0
 
         # Check if the given XY value is within the colourreach of our lamps.
         xy_point = XYPoint(cx, cy)
@@ -173,7 +187,7 @@ class ColorHelper:
         if not in_reach:
             xy_point = self.get_closest_point_to_point(xy_point)
 
-        return xy_point
+        return xy_point, Y
 
     def get_rgb_from_xy_and_brightness(self, x, y, bri=1):
         """Inverse of `get_xy_point_from_rgb`. Returns (r, g, b) for given x, y values.
@@ -238,6 +252,13 @@ class Converter:
         """
         point = self.color.get_xy_point_from_rgb(red, green, blue)
         return (point.x, point.y)
+
+    def rgb_to_xyb(self, red, green, blue):
+        """Converts red, green and blue integer values to approximate CIE 1931
+        x and y coordinates.
+        """
+        point, bri = self.color.get_xy_bri_from_rgb(red, green, blue)
+        return (point.x, point.y, bri)
 
     def xy_to_hex(self, x, y, bri=1):
         """Converts CIE 1931 x and y coordinates and brightness value from 0 to 1
