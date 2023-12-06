@@ -258,6 +258,11 @@ item_structs:
                 z2m_topic: ..:.
                 z2m_attr: color_b
 
+            rgb:
+                type: str
+                z2m_topic: ..:.
+                z2m_attr: color_rgb
+
         color_startup:
             type: dict
             z2m_topic: ..:.

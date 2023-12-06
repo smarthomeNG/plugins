@@ -528,7 +528,8 @@ class Zigbee2Mqtt(MqttPlugin):
 #
 # special handlers for devices / attributes
 #
-# handlers_in:
+# handlers_in:  activated if values come in from mqtt
+#
 # def handle_in_dev_<device>(self, device: str, topic_3: str = "", topic_4: str = "", topic_5: str = "", payload={}, qos=None, retain=None)
 # def handle_in_attr_<attr>(self, device: str, attr: str, payload={}, item=None)
 #
@@ -616,6 +617,12 @@ class Zigbee2Mqtt(MqttPlugin):
                 except Exception as e:
                     self.logger.warning(f'Trying to set rgb color values for color item {item}, but appropriate subitems ({item_r}, {item_g}, {item_b}) missing: {e}')
 
+                try:
+                    target = self._devices[device]['color_rgb']['item']
+                except (AttributeError, KeyError):
+                    return
+                target(f'{r:x}{g:x}{b:x}', self.get_shortname())
+
     def _handle_in_attr_brightness(self, device: str, attr: str, payload={}, item=None):
         """ automatically set brightness percent """
         if item is not None:
@@ -651,7 +658,7 @@ class Zigbee2Mqtt(MqttPlugin):
                 target(int(1000000 / payload['color_temp']), self.get_shortname())
 
 #
-# handlers out
+# handlers out: activated when values are sent out from shng
 #
 # def _handle_out_<device/attr>(self, item, value, topic_3, topic_4, topic_5, device, attr):
 #     return value, topic_3, topic_4, topic_5, abort
@@ -726,6 +733,37 @@ class Zigbee2Mqtt(MqttPlugin):
             pass
         return value, topic_3, topic_4, topic_5, True
 
+    def _handle_out_attr_color_rgb(self, item, value, topic_3, topic_4, topic_5, device, attr):
+        if item is not None:
+            try:
+                col = {}
+                rgb = item()
+                col['r'] = int(rgb[0:2], 16)
+                col['g'] = int(rgb[2:4], 16)
+                col['b'] = int(rgb[4:6], 16)
+
+                for color in ('r', 'g', 'b'):
+                    target = None
+                    try:
+                        target = getattr(item.return_parent(), color)
+                    except AttributeError:
+                        pass
+
+                    try:
+                        target = self._devices[device]['color_' + color]['item']
+                    except (AttributeError, KeyError):
+                        pass
+
+                    if target is not None:
+                        target(col[color], self.get_shortname())
+
+                self._color_sync_from_rgb(self._devices[device]['state']['item'])
+
+            except Exception as e:
+                self.logger.debug(f'problem calling color sync: {e}')
+
+        return value, topic_3, topic_4, topic_5, True
+
 #
 # Attention - color conversions xy/rgb:
 # due to - probably - rounding differences, this ist not a true
@@ -747,7 +785,7 @@ class Zigbee2Mqtt(MqttPlugin):
         """ sync xy color to rgb, needs struct items """
         self._item_color_xy_to_rgb(item.color, item.brightness, item.color.r, item.color.g, item.color.b, source)
 
-    def _color_sync_from_rgb(self, item, source=''):
+    def _color_sync_from_rgb(self, item, source='', rgb=''):
         """ sync rgb color to xy, needs struct items """
         self._item_color_rgb_to_xy(item.color.r, item.color.g, item.color.b, item.color, item.brightness, source)
 
