@@ -31,7 +31,7 @@ parameters:
 
     poll_period:
         type: int
-        default: 300
+        default: 900
         valid_min: 10
         valid_max: 3600
         description:
