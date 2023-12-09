@@ -49,6 +49,10 @@
 #               - Plot-Dateien loeschen ueberarbeitet
 #               - Batterietypen HVS, HVM und LVS im Plot getestet
 #
+# V0.0.7 231209 - item_structs.byd_struct.enable_connection neu
+#                 true -> Kommunikation mit BYD aktiv, false -> keine Kommunikation
+#               - Temperatur Fehler beim Auslesen korrigiert
+#
 # -----------------------------------------------------------------------
 #
 # Als Basis fuer die Implementierung wurde die folgende Quelle verwendet:
@@ -206,7 +210,7 @@ class byd_bat(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '0.0.6'
+    PLUGIN_VERSION = '0.0.7'
     
     def __init__(self,sh):
         """
@@ -369,11 +373,16 @@ class byd_bat(SmartPlugin):
     def poll_device(self):
         # Wird alle 'self._cycle' aufgerufen
         
-        self.log_debug("BYD Start *********************")
-        
         if self.byd_root_found is False:
           self.log_debug("BYD not root found - please define root item with structure 'byd_struct'")
           return
+        
+        if self.byd_root.enable_connection() is False:
+          self.byd_root.info.connection(False)
+          self.log_info("communication disabled !")
+          return
+        
+        self.log_debug("BYD Start *********************")
         
         # Verbindung herstellen
         client = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -814,8 +823,8 @@ class byd_bat(SmartPlugin):
         self.byd_diag_volt_min[x] = self.buf2int16SI(data,7) / 1000.0          # Byte 7+8   (Index 2)
         self.byd_diag_volt_max_c[x] = data[9]                                  # Byte 9     (Index 3)
         self.byd_diag_volt_min_c[x] = data[10]                                 # Byte 10
-        self.byd_diag_temp_max[x] = self.buf2int16SI(data,11) / 1000.0         # Byte 11+12 (Index 4)
-        self.byd_diag_temp_min[x] = self.buf2int16SI(data,13) / 1000.0         # Byte 13+14 (Index 5)
+        self.byd_diag_temp_max[x] = self.buf2int16SI(data,11)                  # Byte 11+12 (Index 4)
+        self.byd_diag_temp_min[x] = self.buf2int16SI(data,13)                  # Byte 13+14 (Index 5)
         self.byd_diag_temp_max_c[x] = data[15]                                 # Byte 15    (Index 6)
         self.byd_diag_temp_min_c[x] = data[16]                                 # Byte 16
         
@@ -823,6 +832,7 @@ class byd_bat(SmartPlugin):
         i = 0
         for xx in range(17,33):  # 17..32  (16 Byte)
           a = data[xx] 
+          self.log_debug("Balancing i=" + str(i) + " d=" + str(a))
           for yy in range(0,8):  # 0..7
             if (int(a) & 1) == 1:
               self.byd_balance_cell[x][i] = 1
@@ -908,6 +918,7 @@ class byd_bat(SmartPlugin):
         i = 127
         for xx in range(17,33):  # 17..32
           a = data[xx] 
+          self.log_debug("Balancing i=" + str(i) + " d=" + str(a))
           for yy in range(0,8):  # 0..7
             if i <= byd_cells_max:
               if (int(a) & 1) == 1:
