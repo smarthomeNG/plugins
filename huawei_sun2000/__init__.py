@@ -56,20 +56,21 @@ EquipmentDictionary = {
 }
 
 
-ITEM_CYCLE_DEFAULT = 0
-ITEM_CYCLE_STARTUP = -1
-ITEM_DEFAULT_SLAVE = -1
+ITEM_CYCLE_DEFAULT = "default"
+ITEM_CYCLE_STARTUP = "startup"
+ITEM_SLAVE_DEFAULT = "default"
 
 class ReadItem:
-    def __init__(self, register, cycle=ITEM_CYCLE_DEFAULT, slave=ITEM_DEFAULT_SLAVE, initialized=False):
+    def __init__(self, register, cycle=ITEM_CYCLE_DEFAULT, slave=ITEM_SLAVE_DEFAULT, equipment=None, initialized=False):
         self.register = register
         self.cycle = cycle
         self.slave = slave
+        self.equipment = equipment
         self.initialized = initialized
 
 
 class Huawei_Sun2000(SmartPlugin):
-    PLUGIN_VERSION = '0.1.1'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = '0.2.0'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)
@@ -83,10 +84,9 @@ class Huawei_Sun2000(SmartPlugin):
 
         # global vars
         self._read_item_dictionary = {}
-        self._slaves = [int(self._slave)]
-
+        self._write_buffer = []
         self._loop = asyncio.new_event_loop()
-        self._loop.run_until_complete(self.validate_equipment())
+        self._client = None
 
         # On initialization error use:
         #   self._init_complete = False
@@ -98,101 +98,122 @@ class Huawei_Sun2000(SmartPlugin):
         #     self._init_complete = False
         return
 
-    async def connect(self, slave):
-        try:
-            self.logger.debug(f"Connecting to {self._host}:{self._port}, slave_id {slave}")
-            client = await AsyncHuaweiSolar.create(self._host, self._port, self._slave)
-        except Exception as e:
-            self.logger.error(f"Error connecting {self._host}:{self._port}, slave_id {slave}: {e}")
-            return None
-        return client
+    async def connect(self):
+        if self._client is None:
+            try:
+                self.logger.debug(f"Connecting to {self._host}:{self._port}, slave_id {self._slave}")
+                self._client = await AsyncHuaweiSolar.create(self._host, self._port, self._slave)
+            except Exception as e:
+                self.logger.error(f"Error connecting {self._host}:{self._port}, slave_id {self._slave}: {e}")
+                return None
+            self.logger.debug(f"Connected to {self._host}:{self._port}, slave_id {self._slave}")
+        return self._client
 
     async def disconnect(self, client):
         await client.stop()
+        self._client = None
 
-    async def inverter_read(self):
-        for slave in self._slaves:
+    async def inverter_read(self, hold_connection=False):
+        client = await self.connect()
+        if client is not None:
             try:
-                client = await self.connect(slave)
-                if client is not None:
-                    for item in self._read_item_dictionary:
-                        # check for correct slave id
-                        if self._read_item_dictionary[item].slave == slave:
-                            # check for cycle
-                            cycle = self._read_item_dictionary[item].cycle
-                            initialized = self._read_item_dictionary[item].initialized
-                            if not initialized or cycle == ITEM_CYCLE_DEFAULT or cycle != ITEM_CYCLE_STARTUP or cycle < item.property.last_update_age:
-                                # get register and set item
-                                result = await client.get(self._read_item_dictionary[item].register, slave)
-                                item(result.value, self.get_shortname())
-                                self._read_item_dictionary[item].initialized = True
-                    await self.disconnect(client)
-            except Exception as e:
-                self.logger.error(f"inverter_read: Error reading register from {self._host}:{self._port}, slave_id {slave}: {e}")
-
-    async def inverter_write(self, register, value, slave):
-        try:
-            client = await self.connect(slave)
-            if client is not None:
-                await client.set(register, value, slave)
-                await self.disconnect(client)
-        except Exception as e:
-            self.logger.error(f"Error writing register '{register}' to {self._host}:{self._port}, slave_id {slave}: {e}")
-
-    async def validate_equipment(self):
-        for slave in self._slaves:
-            try:
-                client = await self.connect(slave)
-                if client is not None:
-                    for equipment_key in EquipmentDictionary:
-                        result = await client.get(EquipmentDictionary[equipment_key].register, slave)
-                        if EquipmentDictionary[equipment_key].true_comparator == ">":
-                            if result.value > EquipmentDictionary[equipment_key].true_value:
-                                EquipmentDictionary[equipment_key].status = True
-                            else:
-                                EquipmentDictionary[equipment_key].status = False
-                        elif EquipmentDictionary[equipment_key].true_comparator == "<":
-                            if result.value < EquipmentDictionary[equipment_key].true_value:
-                                EquipmentDictionary[equipment_key].status = True
-                            else:
-                                EquipmentDictionary[equipment_key].status = False
+                for item in self._read_item_dictionary:
+                    if not self.alive:
+                        break
+                    # at first write buffer, if neccessary
+                    await self.write_buffer(True)
+                    # check for cycle
+                    cycle = self._read_item_dictionary[item].cycle
+                    equipment = self._read_item_dictionary[item].equipment
+                    initialized = self._read_item_dictionary[item].initialized
+                    if not initialized or cycle == ITEM_CYCLE_DEFAULT or cycle != ITEM_CYCLE_STARTUP or cycle < item.property.last_update_age:
+                        if equipment is None or equipment.status:
+                            # get register and set item
+                            result = await client.get(getattr(rn, self._read_item_dictionary[item].register), self._read_item_dictionary[item].slave)
+                            item(result.value, self.get_shortname())
+                            self._read_item_dictionary[item].initialized = True
                         else:
-                            if result.value == EquipmentDictionary[equipment_key].true_value:
-                                EquipmentDictionary[equipment_key].status = True
-                            else:
-                                EquipmentDictionary[equipment_key].status = False
-                    await self.disconnect(client)
+                            self.logger.debug(f"Equipment check skipped item '{item.property.path}'")
             except Exception as e:
-                self.logger.error(f"validate_equipment: Error reading register from {self._host}:{self._port}, slave_id {slave}: {e}")
+                self.logger.error(f"inverter_read: Error reading register '{self._read_item_dictionary[item].register}' from {self._host}:{self._port}, slave_id {self._read_item_dictionary[item].slave}: {e}")
+            if not hold_connection:
+                await self.disconnect(client)
+        else:
+            self.logger.error("inverter_read: Client not connected")
 
-    def check_equipment(self, item):
-        if self.has_iattr(item.conf, 'equipment_part'):
-            equipment_key = self.get_iattr_value(item.conf, 'equipment_part')
-            if equipment_key in EquipmentDictionary:
-                self.logger.debug(f"Equipment status for item '{item.property.path}': {EquipmentDictionary[equipment_key].status}")
-                return EquipmentDictionary[equipment_key].status
-            else:
-                self.logger.warning(f"Invalid key for equipment_part '{equipment_key}' configured")
-        return True
+    async def inverter_write(self, register, value, slave, hold_connection=False):
+        client = await self.connect()
+        if client is not None:
+            try:
+                await client.set(getattr(rn, register), value, slave)
+                self.logger.info(f"inverter_write: Register '{register}' to {self._host}:{self._port}, slave_id {slave} with value '{value}' written")
+            except Exception as e:
+                self.logger.error(f"inverter_write: Error writing register '{register}' to {self._host}:{self._port}, slave_id {slave}: {e}")
+            if not hold_connection:
+                await self.disconnect(client)
+        else:
+            self.logger.error("inverter_write: Client not connected")
 
-    def update_slaves(self, slave: int):
-        if not slave in self._slaves and slave != ITEM_DEFAULT_SLAVE:
-            self._slaves.append(slave)
+    async def write_buffer(self, hold_connection=False):
+        while len(self._write_buffer) > 0:
+            first = self._write_buffer[0]
+            register = first[0]
+            value = first[1]
+            slave = first[2]
+            self._write_buffer.pop(0)
+            self.inverter_write(register, value, slave, hold_connection)
 
-    def string_to_seconds_special(self, timestring):
-        timestring = timestring.lower()
-        if timestring == "startup":
+    async def validate_equipment(self, hold_connection=False):
+        client = await self.connect()
+        if client is not None:
+            try:
+                for item in self._read_item_dictionary:
+                    if not self.alive:
+                        break
+                    # at first write buffer, if neccessary
+                    await self.write_buffer(True)
+                    equipment = self._read_item_dictionary[item].equipment
+                    if equipment is not None:
+                        result = await client.get(equipment.register, self._read_item_dictionary[item].slave)
+                        match equipment.true_comparator:
+                            case ">":
+                                if result.value > equipment.true_value:
+                                    self._read_item_dictionary[item].equipment.status = True
+                                else:
+                                    self._read_item_dictionary[item].equipment.status = False
+                            case "<":
+                                if result.value < equipment.true_value:
+                                    self._read_item_dictionary[item].equipment.status = True
+                                else:
+                                    self._read_item_dictionary[item].equipment.status = False
+                            case _:
+                                if result.value == equipment.true_value:
+                                    self._read_item_dictionary[item].equipment.status = True
+                                else:
+                                    self._read_item_dictionary[item].equipment.status = False
+            except Exception as e:
+                self.logger.error(f"validate_equipment: Error reading register from {self._host}:{self._port}, slave_id {self._read_item_dictionary[item].slave}: {e}")
+            if not hold_connection:
+                await self.disconnect(client)
+        else:
+            self.logger.error("validate_equipment: Client not connected")
+
+    def string_to_seconds_special(self, input_str):
+        input_str = input_str.lower()
+        if input_str == ITEM_CYCLE_STARTUP:
             return ITEM_CYCLE_STARTUP
-        if timestring.isnumeric():
-            time_value = float(timestring)
+        if input_str == ITEM_CYCLE_DEFAULT:
+            return ITEM_CYCLE_DEFAULT
+        if input_str.isnumeric():
+            time_value = float(input_str)
             if time_value > 0:
                 return time_value
             else:
-                return 0
-        time_len = len(timestring)
+                return ITEM_CYCLE_DEFAULT
+        time_len = len(input_str)
         if time_len > 1:
-            time_format = timestring[-1:]
-            time_value = float(timestring[:-1])
+            time_format = input_str[-1:]
+            time_value = float(input_str[:-1])
             match time_format:
                 case "m":
                     time_value *= 60
@@ -202,72 +223,107 @@ class Huawei_Sun2000(SmartPlugin):
                     time_value *= 60*60*24
                 case "w":
                     time_value *= 60*60*24*7
-            self.logger.debug(f"timestring: {timestring}, time_format: {time_format}, time_value: {time_value}")
-            return time_value
+            if time_value > 0:
+                return time_value
+            else:
+                return ITEM_CYCLE_DEFAULT
         else:
-            return 0
+            return ITEM_CYCLE_DEFAULT
 
+    def string_to_int_special(self, input_str, default_str, default_value):
+        if input_str.lower() == default_str.lower():
+            return default_value
+        if input_str.isnumeric():
+            return int(input_str)
+        return default_value 
+
+    def wait_running_loop():
+        while self._loop.is_running():
+            time.sleep(1)
+        
     def run(self):
         self.logger.debug("Run method called")
+        self.logger.debug(f"Content of the dictionary _read_item_dictionary: '{self._read_item_dictionary}'")
         self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
         self.alive = True
+        self._loop.run_until_complete(self.validate_equipment())
 
     def stop(self):
         self.logger.debug("Stop method called")
         self.scheduler_remove('poll_device')
         self.alive = False
+        self.wait_running_loop()
         self._loop.close()
 
     def parse_item(self, item):
         # check for attribute 'sun2000_read'
         if self.has_iattr(item.conf, 'sun2000_read'):
-            self.logger.debug(f"Parse read item: {item}")
+            self.logger.debug(f"Parse sun2000_read item: {item}")
             register = self.get_iattr_value(item.conf, 'sun2000_read')
             if hasattr(rn, register):
-                # check equipment
-                if self.check_equipment(item):
-                    self._read_item_dictionary.update({item: ReadItem(getattr(rn, register))})
-                    # check for slave id
-                    if self.has_iattr(item.conf, 'sun2000_slave'):
-                        slave = int(self.get_iattr_value(item.conf, 'sun2000_slave'))
-                        if slave == ITEM_DEFAULT_SLAVE:
-                            slave = self._slave
-                        self._read_item_dictionary[item].slave = slave
-                        self.update_slaves(slave)
-                    # check for sun2000_cycle
-                    if self.has_iattr(item.conf, 'sun2000_cycle'):
-                        cycle = self.string_to_seconds_special(self.get_iattr_value(item.conf, 'sun2000_cycle'))
-                        self._read_item_dictionary[item].cycle = cycle
-                        self.logger.debug(f"Item {item.property.path}, Zyklus {cycle}")
-                    self.logger.debug(f"Content of the dictionary _read_item_dictionary: '{self._read_item_dictionary}'")
+                # check for slave id
+                if self.has_iattr(item.conf, 'sun2000_slave'):
+                    slave = self.string_to_int_special(self.get_iattr_value(item.conf, 'sun2000_slave'), ITEM_SLAVE_DEFAULT, self._slave)
+                    self.logger.debug(f"Item {item.property.path}, slave {slave}")
                 else:
-                    self.logger.debug(f"Equipment check skipped item '{item.property.path}'")
+                    slave = self._slave
+                # check for sun2000_cycle
+                if self.has_iattr(item.conf, 'sun2000_cycle'):
+                    cycle = self.string_to_seconds_special(self.get_iattr_value(item.conf, 'sun2000_cycle'))
+                    self.logger.debug(f"Item {item.property.path}, cycle {cycle}")
+                else:
+                    cycle = self._cycle
+                # check equipment
+                if self.has_iattr(item.conf, 'sun2000_equipment'):
+                    equipment_key = self.get_iattr_value(item.conf, 'sun2000_equipment')
+                    if equipment_key in EquipmentDictionary:
+                        equipment = EquipmentDictionary[equipment_key]
+                        self.logger.debug(f"Item {item.property.path}, equipment {equipment_key}")
+                    else:
+                        self.logger.warning(f"Invalid key for sun2000_equipment '{equipment_key}' configured")
+                else:
+                    equipment = None
+                self._read_item_dictionary.update({item: ReadItem(register, cycle, slave, equipment)})
             else:
-                self.logger.warning(f"Invalid key for '{read_attr}' '{register}' configured")
+                self.logger.warning(f"Invalid key for 'sun2000_read' '{register}' configured")
+        # check for attribute 'sun2000_write'
+        if self.has_iattr(item.conf, 'sun2000_write'):
+            self.logger.debug(f"Parse sun2000_write item: {item}")
+            register = self.get_iattr_value(item.conf, 'sun2000_write')
+            if hasattr(rn, register):
+                return self.update_item
+            else:
+                self.logger.warning(f"Invalid key for 'sun2000_write' '{register}' configured")
 
     def parse_logic(self, logic):
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
         if self.alive and caller != self.get_shortname():
-            # check for attribute 'sun2000_write'
-            if self.has_iattr(item.conf, 'sun2000_write'):
-                register = self.get_iattr_value(item.conf, 'sun2000_write')
-                if hasattr(rn, register):
-                    value = item()
-                    if self.has_iattr(item.conf, 'sun2000_slave'):
-                        slave = int(self.get_iattr_value(item.conf, 'sun2000_slave'))
-                        if slave == ITEM_DEFAULT_SLAVE:
-                            slave = self._slave
-                    while self._loop.is_running():
-                        time.sleep(1)
-                    self._loop.run_until_complete(inverter_write(register, value, slave))
-                    self.logger.debug(f"Update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}")
-                else:
-                    self.logger.warning(f"Invalid key for sun2000_write '{register}' configured")
+            # get attribute for 'sun2000_write'
+            register = self.get_iattr_value(item.conf, 'sun2000_write')
+            value = item()
+            # check for slave id
+            if self.has_iattr(item.conf, 'sun2000_slave'):
+                slave = self.string_to_int_special(self.get_iattr_value(item.conf, 'sun2000_slave'), ITEM_SLAVE_DEFAULT, self._slave)
+                self.logger.debug(f"Item {item.property.path}, slave {slave}")
+            else:
+                slave = self._slave
+            self.logger.debug(f"Update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}")
+            if not self._loop.is_running():
+                # write directly
+                self._loop.run_until_complete(self.inverter_write(register, value, slave))
+                self.logger.info("Update was running in direct mode")
+            else:
+                # put to write buffer
+                self._write_buffer.append([register, value, slave])
+                self.logger.info("Update is running in buffered mode")
 
     def poll_device(self):
         if self.alive:
-            self.logger.debug(f"List of all known slaves: {self._slaves}")
+            # skip cylce if last poll is not finished yet
             if not self._loop.is_running():
+                # read inverter registers
                 self._loop.run_until_complete(self.inverter_read())
+            else:
+                self.logger.debug("Cycle poll skipped, because loop is not finished.")
