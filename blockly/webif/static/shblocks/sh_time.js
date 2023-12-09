@@ -25,7 +25,7 @@ Blockly.Blocks['shtime_now'] = {
     this.setTooltip('');
   }
 };
-Blockly.Python['shtime_now'] = function(block) {
+python.pythonGenerator.forBlock['shtime_now'] = function(block) {
 //  var code = 'sh.now()';
   var code = 'sh.shtime.now()';
   // TODO: Change ORDER_NONE to the correct strength.
@@ -61,7 +61,7 @@ Blockly.Blocks['shtime_time'] = {
   }
 };
 
-Blockly.Python['shtime_time'] = function(block) {
+python.pythonGenerator.forBlock['shtime_time'] = function(block) {
   var text_time = block.getFieldValue('TIME');
   var code = 'datetime.strptime("'+text_time+'", "%H:%M")';
   // TODO: Change ORDER_NONE to the correct strength.
@@ -89,7 +89,7 @@ Blockly.Blocks['shtime_sunpos'] = {
     this.setTooltip('');
   }
 };
-Blockly.Python['shtime_sunpos'] = function(block) {
+python.pythonGenerator.forBlock['shtime_sunpos'] = function(block) {
   var delta = Blockly.Python.valueToCode(block, 'DELTA', Blockly.Python.ORDER_ATOMIC);
   var aa = block.getFieldValue('AA');
   var pm = block.getFieldValue('PM');
@@ -120,4 +120,3 @@ Blockly.Blocks['shtime_auto'] = {
     this.appendDummyInput().appendField('Autotimer:');
   },
 };
-

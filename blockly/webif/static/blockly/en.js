@@ -1,6 +1,21 @@
+/* eslint-disable */
+;(function(root, factory) {
+  if (typeof define === 'function' && define.amd) { // AMD
+    define([], factory);
+  } else if (typeof exports === 'object') { // Node.js
+    module.exports = factory();
+  } else { // Browser
+    var messages = factory();
+    for (var key in messages) {
+      root.Blockly.Msg[key] = messages[key];
+    }
+  }
+}(this, function() {
 // This file was automatically generated.  Do not modify.
 
 'use strict';
+
+var Blockly = Blockly || { Msg: Object.create(null) };
 
 Blockly.Msg["ADD_COMMENT"] = "Add Comment";
 Blockly.Msg["CANNOT_DELETE_VARIABLE_PROCEDURE"] = "Can't delete the variable '%1' because it's part of the definition of the function '%2'";
@@ -63,6 +78,8 @@ Blockly.Msg["DELETE_BLOCK"] = "Delete Block";
 Blockly.Msg["DELETE_VARIABLE"] = "Delete the '%1' variable";
 Blockly.Msg["DELETE_VARIABLE_CONFIRMATION"] = "Delete %1 uses of the '%2' variable?";
 Blockly.Msg["DELETE_X_BLOCKS"] = "Delete %1 Blocks";
+Blockly.Msg["DIALOG_CANCEL"] = "Cancel";
+Blockly.Msg["DIALOG_OK"] = "OK";
 Blockly.Msg["DISABLE_BLOCK"] = "Disable Block";
 Blockly.Msg["DUPLICATE_BLOCK"] = "Duplicate";
 Blockly.Msg["DUPLICATE_COMMENT"] = "Duplicate Comment";
@@ -72,19 +89,6 @@ Blockly.Msg["EXPAND_BLOCK"] = "Expand Block";
 Blockly.Msg["EXTERNAL_INPUTS"] = "External Inputs";
 Blockly.Msg["HELP"] = "Help";
 Blockly.Msg["INLINE_INPUTS"] = "Inline Inputs";
-Blockly.Msg["IOS_CANCEL"] = "Cancel";
-Blockly.Msg["IOS_ERROR"] = "Error";
-Blockly.Msg["IOS_OK"] = "OK";
-Blockly.Msg["IOS_PROCEDURES_ADD_INPUT"] = "+ Add Input";
-Blockly.Msg["IOS_PROCEDURES_ALLOW_STATEMENTS"] = "Allow statements";
-Blockly.Msg["IOS_PROCEDURES_DUPLICATE_INPUTS_ERROR"] = "This function has duplicate inputs.";
-Blockly.Msg["IOS_PROCEDURES_INPUTS"] = "INPUTS";
-Blockly.Msg["IOS_VARIABLES_ADD_BUTTON"] = "Add";
-Blockly.Msg["IOS_VARIABLES_ADD_VARIABLE"] = "+ Add Variable";
-Blockly.Msg["IOS_VARIABLES_DELETE_BUTTON"] = "Delete";
-Blockly.Msg["IOS_VARIABLES_EMPTY_NAME_ERROR"] = "You can't use an empty variable name.";
-Blockly.Msg["IOS_VARIABLES_RENAME_BUTTON"] = "Rename";
-Blockly.Msg["IOS_VARIABLES_VARIABLE_NAME"] = "Variable name";
 Blockly.Msg["LISTS_CREATE_EMPTY_HELPURL"] = "https://github.com/google/blockly/wiki/Lists#create-empty-list";
 Blockly.Msg["LISTS_CREATE_EMPTY_TITLE"] = "create empty list";
 Blockly.Msg["LISTS_CREATE_EMPTY_TOOLTIP"] = "Returns a list, of length 0, containing no data records";
@@ -308,7 +312,7 @@ Blockly.Msg["PROCEDURES_DEFRETURN_RETURN"] = "return";
 Blockly.Msg["PROCEDURES_DEFRETURN_TOOLTIP"] = "Creates a function with an output.";
 Blockly.Msg["PROCEDURES_DEF_DUPLICATE_WARNING"] = "Warning: This function has duplicate parameters.";
 Blockly.Msg["PROCEDURES_HIGHLIGHT_DEF"] = "Highlight function definition";
-Blockly.Msg["PROCEDURES_IFRETURN_HELPURL"] = "http://c2.com/cgi/wiki?GuardClause";
+Blockly.Msg["PROCEDURES_IFRETURN_HELPURL"] = "https://c2.com/cgi/wiki?GuardClause";
 Blockly.Msg["PROCEDURES_IFRETURN_TOOLTIP"] = "If a value is true, then return a second value.";
 Blockly.Msg["PROCEDURES_IFRETURN_WARNING"] = "Warning: This block may be used only within a function definition.";
 Blockly.Msg["PROCEDURES_MUTATORARG_TITLE"] = "input name:";
@@ -400,6 +404,7 @@ Blockly.Msg["VARIABLES_SET_HELPURL"] = "https://github.com/google/blockly/wiki/V
 Blockly.Msg["VARIABLES_SET_TOOLTIP"] = "Sets this variable to be equal to the input.";
 Blockly.Msg["VARIABLE_ALREADY_EXISTS"] = "A variable named '%1' already exists.";
 Blockly.Msg["VARIABLE_ALREADY_EXISTS_FOR_ANOTHER_TYPE"] = "A variable named '%1' already exists for another type: '%2'.";
+Blockly.Msg["WORKSPACE_ARIA_LABEL"] = "Blockly Workspace";
 Blockly.Msg["WORKSPACE_COMMENT_DEFAULT_TEXT"] = "Say something...";
 Blockly.Msg["CONTROLS_FOREACH_INPUT_DO"] = Blockly.Msg["CONTROLS_REPEAT_INPUT_DO"];
 Blockly.Msg["CONTROLS_FOR_INPUT_DO"] = Blockly.Msg["CONTROLS_REPEAT_INPUT_DO"];
@@ -431,3 +436,5 @@ Blockly.Msg["TEXTS_HUE"] = "160";
 Blockly.Msg["PROCEDURES_HUE"] = "290";
 Blockly.Msg["COLOUR_HUE"] = "20";
 Blockly.Msg["VARIABLES_DYNAMIC_HUE"] = "310";
+return Blockly.Msg;
+}));
