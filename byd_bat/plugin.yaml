@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1886748-support-thread-f%C3%BCr-das-byd-batterie-plugin
 
-    version: 0.0.6                  # Plugin version (must match the version specified in __init__.py)
+    version: 0.0.7                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.9              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.9             # minimum Python version to use for this plugin
@@ -59,6 +59,12 @@ item_structs:
                 initial_value: false
                 enforce_updates: true
                 visu_acl: ro
+                
+        enable_connection:
+            type: bool
+            initial_value: true
+            enforce_updates: true
+            visu_acl: rw
 
         state:
         
