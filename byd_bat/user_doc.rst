@@ -16,7 +16,7 @@ Anzeigen von Parametern eines BYD Energiespeichers. Die Parameter entsprechen de
 
 Es werden 1-3 Türme unterstützt.
 
-Die Grunddaten werden alle 60 Sekunden aktualisiert. Die Diagnosedaten werden beim Start des Plugin und dann immer zur vollen Stunde abgerufen.
+Die Grunddaten werden alle 60 Sekunden aktualisiert. Die Diagnosedaten werden beim Start des Plugin und gemäss dem Parameter 'diag_cycle' abgerufen.
 
 Die Spannungen und Temperaturen in den Modulen werden mit Hilfe von Heatmaps dargestellt. Diese werden im Web Interface angezeigt. Zusätzlich können diese Bilder auch in ein weiteres Verzeichnis kopiert werden (z.Bsp. für smartvisu).
 
