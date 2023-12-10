@@ -129,8 +129,8 @@ class WebInterface(SmartPluginWebIf):
         data['t1_current'] = f'{self.plugin.byd_diag_current[1]:.1f}' + " A"
         data['t1_volt_max'] = f'{self.plugin.byd_diag_volt_max[1]:.3f}' + " V (" + str(self.plugin.byd_diag_volt_max_c[1]) + ")"
         data['t1_volt_min'] = f'{self.plugin.byd_diag_volt_min[1]:.3f}' + " V (" + str(self.plugin.byd_diag_volt_min_c[1]) + ")"
-        data['t1_temp_max'] = f'{self.plugin.byd_diag_temp_max[1]:.3f}' + " V (" + str(self.plugin.byd_diag_temp_max_c[1]) + ")"
-        data['t1_temp_min'] = f'{self.plugin.byd_diag_temp_min[1]:.3f}' + " V (" + str(self.plugin.byd_diag_temp_min_c[1]) + ")"
+        data['t1_temp_max'] = f'{self.plugin.byd_diag_temp_max[1]:.1f}' + " V (" + str(self.plugin.byd_diag_temp_max_c[1]) + ")"
+        data['t1_temp_min'] = f'{self.plugin.byd_diag_temp_min[1]:.1f}' + " V (" + str(self.plugin.byd_diag_temp_min_c[1]) + ")"
         if self.plugin.byd_bms_qty > 1:
           data['t2_soc'] = f'{self.plugin.byd_diag_soc[2]:.1f}' + " %"
           data['t2_bat_voltag'] = f'{self.plugin.byd_diag_bat_voltag[2]:.1f}' + " V"
@@ -138,8 +138,8 @@ class WebInterface(SmartPluginWebIf):
           data['t2_current'] = f'{self.plugin.byd_diag_current[2]:.1f}' + " A"
           data['t2_volt_max'] = f'{self.plugin.byd_diag_volt_max[2]:.3f}' + " V (" + str(self.plugin.byd_diag_volt_max_c[2]) + ")"
           data['t2_volt_min'] = f'{self.plugin.byd_diag_volt_min[2]:.3f}' + " V (" + str(self.plugin.byd_diag_volt_min_c[2]) + ")"
-          data['t2_temp_max'] = f'{self.plugin.byd_diag_temp_max[2]:.3f}' + " V (" + str(self.plugin.byd_diag_temp_max_c[2]) + ")"
-          data['t2_temp_min'] = f'{self.plugin.byd_diag_temp_min[2]:.3f}' + " V (" + str(self.plugin.byd_diag_temp_min_c[2]) + ")"
+          data['t2_temp_max'] = f'{self.plugin.byd_diag_temp_max[2]:.1f}' + " V (" + str(self.plugin.byd_diag_temp_max_c[2]) + ")"
+          data['t2_temp_min'] = f'{self.plugin.byd_diag_temp_min[2]:.1f}' + " V (" + str(self.plugin.byd_diag_temp_min_c[2]) + ")"
         else:
           data['t2_soc'] = "-"
           data['t2_bat_voltag'] = "-"
@@ -156,8 +156,8 @@ class WebInterface(SmartPluginWebIf):
           data['t3_current'] = f'{self.plugin.byd_diag_current[3]:.1f}' + " A"
           data['t3_volt_max'] = f'{self.plugin.byd_diag_volt_max[3]:.3f}' + " V (" + str(self.plugin.byd_diag_volt_max_c[3]) + ")"
           data['t3_volt_min'] = f'{self.plugin.byd_diag_volt_min[3]:.3f}' + " V (" + str(self.plugin.byd_diag_volt_min_c[3]) + ")"
-          data['t3_temp_max'] = f'{self.plugin.byd_diag_temp_max[3]:.3f}' + " V (" + str(self.plugin.byd_diag_temp_max_c[3]) + ")"
-          data['t3_temp_min'] = f'{self.plugin.byd_diag_temp_min[3]:.3f}' + " V (" + str(self.plugin.byd_diag_temp_min_c[3]) + ")"
+          data['t3_temp_max'] = f'{self.plugin.byd_diag_temp_max[3]:.1f}' + " V (" + str(self.plugin.byd_diag_temp_max_c[3]) + ")"
+          data['t3_temp_min'] = f'{self.plugin.byd_diag_temp_min[3]:.1f}' + " V (" + str(self.plugin.byd_diag_temp_min_c[3]) + ")"
         else:
           data['t3_soc'] = "-"
           data['t3_bat_voltag'] = "-"
