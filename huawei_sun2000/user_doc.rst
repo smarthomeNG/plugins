@@ -5,41 +5,25 @@
 huawei_sun2000
 ==============
 
-Hier sollte eine allgemeine Beschreibung stehen, wozu das Plugin gut ist (was es tut).
-
-.. image:: webif/static/img/plugin_logo.png
-   :alt: plugin logo
-   :width: 300px
-   :height: 300px
-   :scale: 50 %
-   :align: left
+SmartHomeNG - Plugin zur Einbindung der Huawei SUN2000 Wechselrichterserie, sowie angebundener Speicher.
 
 
 Anforderungen
 =============
 
-Anforderungen des Plugins auflisten. Werden spezielle Soft- oder Hardwarekomponenten benötigt?
-
-
 Notwendige Software
 -------------------
 
-* die
-* benötigte
-* Software
-* auflisten
-
-Dies beinhaltet Python- und SmartHomeNG-Module
+* python >= 3.10
+* huawei-solar >= 2.2.9
+* pymodbus, Version abhängig von der verwendeten huawei-solar - Version
 
 Unterstützte Geräte
 -------------------
 
-* die
-* unterstütze
-* Hardware
-* auflisten
-
-|
+* getestet mit Huawei SUN2000-10KTL-M1
+* getestet mit Huawei LUNA2000-15-S0
+* weitere Wechselrichter der SUN2000-Serie und LUNA2000-Serie sollten funktionieren
 
 Konfiguration
 =============
@@ -93,6 +77,7 @@ Wenn das Plugin darüber hinaus noch Komponenten benötigt, werden diese im Ordn
 Version History
 ===============
 
-In diesem Abschnitt kann die Versionshistorie dokumentiert werden, falls der Plugin Autor dieses möchte. Diese Abschnitt
-ist optional.
+0.2.0
+- grundlegende Funktionen sind implentiert
+
 
