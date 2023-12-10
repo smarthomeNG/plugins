@@ -52,6 +52,7 @@
 # V0.0.7 231209 - item_structs.byd_struct.enable_connection neu
 #                 true -> Kommunikation mit BYD aktiv, false -> keine Kommunikation
 #               - Temperatur Fehler beim Auslesen korrigiert
+#               - Neuer Parameter 'diag_cycle' fuer Abfrage der Diagnosedaten
 #
 # -----------------------------------------------------------------------
 #
@@ -89,6 +90,7 @@ scheduler_name = 'byd_bat'
 BUFFER_SIZE = 4096
 
 byd_sample_basics = 60                           # Abfrage fuer Basisdaten [s]
+byd_sample_diag = 300                            # Abfrage fuer Diagnosedaten [s]
 
 byd_timeout_1s = 1.0
 byd_timeout_2s = 2.0
@@ -245,15 +247,26 @@ class byd_bat(SmartPlugin):
           self.log_info("no path defined")
           self.bpath = byd_path_empty
         
-        self.log_debug("BYD ip   = " + self.ip)
-        self.log_debug("BYD path = " + self.bpath)
+        if self.get_parameter_value('diag_cycle') != '':
+          self.diag_cycle = self.get_parameter_value('diag_cycle')
+          if self.diag_cycle is None:
+            self.diag_cycle = byd_sample_diag
+        else:
+          self.log_info("no diag_cycle defined => use default '" + str(byd_sample_diag) + "s'")
+          self.diag_cycle = byd_sample_diag
+        if self.diag_cycle < byd_sample_basics:
+          self.diag_cycle = byd_sample_basics
+        
+        self.log_debug("BYD ip               = " + self.ip)
+        self.log_debug("BYD path             = " + self.bpath)
+        self.log_debug("BYD diagnostic cycle = " + str(self.diag_cycle) + "s")
 
         # cycle time in seconds, only needed, if hardware/interface needs to be
         # polled for value changes by adding a scheduler entry in the run method of this plugin
         # (maybe you want to make it a plugin parameter?)
         self._cycle = byd_sample_basics
         
-        self.last_diag_hour = 99                  # erzwingt beim ersten Aufruf das Abfragen der Detaildaten
+        self.last_diag_secs = 9999                  # erzwingt beim ersten Aufruf das Abfragen der Detaildaten
         
         self.byd_root_found = False
         
@@ -443,14 +456,14 @@ class byd_bat(SmartPlugin):
         self.basisdata_save(self.byd_root)
         
         # Pruefe, ob die Diagnosedaten abgefragt werden sollen
-        tn = self.now()
-        if tn.hour == self.last_diag_hour:
+        self.last_diag_secs = self.last_diag_secs + self._cycle
+        if self.last_diag_secs < self.diag_cycle:
           self.byd_root.info.connection(True)
           self.log_debug("BYD Basic Done ****************")
           client.close()
           return
           
-        self.last_diag_hour = tn.hour
+        self.last_diag_secs = 0
         
         # Durchlaufe alle Tuerme
         for x in range(1,self.byd_bms_qty + 1):
