@@ -51,7 +51,7 @@ class Sml(SmartPlugin):
         'smart-meter-gateway-com-1': 'hex'
     }
 
-    def __init__(self, **kwargs):
+    def __init__(self, sh, **kwargs):
         self.host = self.get_parameter_value('host')
         self.port = self.get_parameter_value('port')
         self.serialport = self.get_parameter_value('serialport')
@@ -65,15 +65,15 @@ class Sml(SmartPlugin):
         self._items = {}
         self._lock = threading.Lock()
 
-        if self._device in self._devices:
-            self._device = self._devices[self._device]
+        if self.device in self._devices:
+            self.device = self._devices[self.device]
 
-        if self._device == "hex":
+        if self.device == "hex":
             self._prepare = self._prepareHex
-        elif self._device == "raw":
+        elif self.device == "raw":
             self._prepare = self._prepareRaw
         else:
-            self.logger.warning("Device type \"{}\" not supported - defaulting to \"raw\"".format(self._device))
+            self.logger.warning("Device type \"{}\" not supported - defaulting to \"raw\"".format(self.device))
             self._prepare = self._prepareRaw
 
     def run(self):

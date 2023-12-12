@@ -96,7 +96,7 @@ class HeliosBase(SmartPlugin):
     PLUGIN_VERSION = "1.4.3"
     ALLOW_MULTIINSTANCE = False
 
-    def __init__(self, **kwargs):
+    def __init__(self, sh, **kwargs):
         self.logger = logging.getLogger(__name__)
         self._is_connected = False
         self._lock = threading.Lock()
@@ -422,11 +422,11 @@ class HeliosBase(SmartPlugin):
 class Helios(HeliosBase):
     _items = {}
 
-    def __init__(self):
+    def __init__(self, sh, **kwargs):
         self._tty = self.get_parameter_value('tty')
         self._cycle = self.get_parameter_value('cycle')
         self._port = None
-        super().__init__()
+        super().__init__(sh, **kwargs)
         self._alive = False
 
     def run(self):
@@ -494,7 +494,7 @@ def main():
 
     helios = None
     try:
-        helios = HeliosBase(tty=args["tty"])
+        helios = HeliosBase(None, tty=args["tty"])
         helios.connect()
         if not helios._is_connected:
             raise Exception("Not connected")

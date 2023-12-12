@@ -185,7 +185,7 @@ class SMA(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = "1.3.2"
 
-    def __init__(self, **kwargs):
+    def __init__(self, sh, **kwargs):
         # TODO: self._own_bt_addr setzen
         self._inv_bt_addr = self.get_parameter_value('bt_addr')
         self._inv_password = self.get_parameter_value('password')

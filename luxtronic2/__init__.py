@@ -260,7 +260,7 @@ class Luxtronic2(LuxBase):
     _decoded = {}
     alive = True
 
-    def __init__(self, **kwargs):
+    def __init__(self, sh, **kwargs):
         self._is_connected = False
         self._cycle = self.get_parameter_value('cycle')
         LuxBase.__init__(self, self.get_parameter_value('host'), self.get_parameter_value('port'))
