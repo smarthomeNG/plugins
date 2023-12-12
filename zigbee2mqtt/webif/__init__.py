@@ -29,7 +29,6 @@ import json
 import cherrypy
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
-from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
@@ -72,8 +71,8 @@ class WebInterface(SmartPluginWebIf):
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
                            plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(),
-                           items=sorted(self.plugin.zigbee2mqtt_items, key=lambda k: str.lower(k['_path'])),
-                           item_count=len(self.plugin.zigbee2mqtt_items),
+                           items=sorted([i for i in self.plugin.get_item_list()], key=lambda x: x.path().lower()),
+                           item_count=len(self.plugin.get_item_list()),
                            p=self.plugin,
                            webif_pagelength=pagelength,
                            )
@@ -96,23 +95,24 @@ class WebInterface(SmartPluginWebIf):
             data['broker_uptime'] = self.plugin.broker_uptime()
 
             data['item_values'] = {}
-            for item in self.plugin.zigbee2mqtt_items:
+            for item in self.plugin.get_item_list():
                 data['item_values'][item.id()] = {}
                 data['item_values'][item.id()]['value'] = item.property.value
                 data['item_values'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                 data['item_values'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
             data['device_values'] = {}
-            for device in self.plugin.zigbee2mqtt_devices:
-                data['device_values'][device] = {}
-                if 'data' in self.plugin.zigbee2mqtt_devices[device]:
-                    data['device_values'][device]['lqi'] = str(self.plugin.zigbee2mqtt_devices[device]['data'].get('linkquality', '-'))
-                    data['device_values'][device]['data'] = ", ".join(list(self.plugin.zigbee2mqtt_devices[device]['data'].keys()))
+            for device in self.plugin._devices:
+                if 'data' in self.plugin._devices[device]:
+                    data['device_values'][device] = {
+                        'lqi': str(self.plugin._devices[device]['data'].get('linkquality', '-')),
+                        'data': ", ".join(list(self.plugin._devices[device]['data'].keys()))
+                    }
                 else:
-                    data['device_values'][device]['lqi'] = '-'
-                    data['device_values'][device]['data'] = '-'
-                if 'meta' in self.plugin.zigbee2mqtt_devices[device]:
-                    last_seen = self.plugin.zigbee2mqtt_devices[device]['meta'].get('lastSeen', None)
+                    data['device_values'][device] = {'lqi': '-', 'data': '-'}
+
+                if 'meta' in self.plugin._devices[device]:
+                    last_seen = self.plugin._devices[device]['meta'].get('lastSeen', None)
                     if last_seen:
                         data['device_values'][device]['last_seen'] = last_seen.strftime('%d.%m.%Y %H:%M:%S')
                     else:

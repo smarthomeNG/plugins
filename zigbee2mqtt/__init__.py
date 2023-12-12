@@ -29,7 +29,7 @@ import json
 from lib.model.mqttplugin import MqttPlugin
 
 from .rgbxy import Converter
-# from .webif import WebInterface
+from .webif import WebInterface
 
 Z2M_TOPIC = 'z2m_topic'
 Z2M_ATTR = 'z2m_attr'
@@ -62,6 +62,7 @@ class Zigbee2Mqtt(MqttPlugin):
         self.cycle = self.get_parameter_value('poll_period')
         self.read_at_init = self.get_parameter_value('read_at_init')
         self.bool_values = self.get_parameter_value('bool_values')
+        self._z2m_gui = self.get_parameter_value('z2m_gui')
 
         self._items_read = []
         self._items_write = []
@@ -101,6 +102,9 @@ class Zigbee2Mqtt(MqttPlugin):
 
         # Add subscription to get device announces
         self.add_z2m_subscription('+', '', '', '', 'dict', callback=self.on_mqtt_msg)
+
+        # try to load webif
+        self.init_webinterface(WebInterface)
 
     def run(self):
         """ Run method for the plugin """
@@ -382,37 +386,6 @@ class Zigbee2Mqtt(MqttPlugin):
                         payload.update({'last_seen': datetime.strptime(last_seen, "%Y-%m-%dT%H:%M:%SZ")})
                     except Exception as e:
                         self.logger.debug(f"Error {e} occurred during decoding of last_seen using format '%Y-%m-%dT%H:%M:%SZ'.")
-
-        # # Korrektur der Brightness von 0-254 auf 0-100%
-        # if 'brightness' in payload:
-        #     try:
-        #         payload.update({'brightness': int(round(payload['brightness'] * 100 / 254, 0))})
-        #     except Exception as e:
-        #         self.logger.debug(f"Error {e} occurred during decoding of brightness.")
-
-        # # Korrektur der Farbtemperatur von "mired scale" (Reziproke Megakelvin) auf Kelvin
-        # if 'color_temp' in payload:
-        #     try:
-        #         # keep mired and "true" kelvin
-        #         payload.update({'color_temp_mired': payload['color_temp']})
-        #         payload.update({'color_temp_k': int(round(1000000 / int(payload['color_temp']), 0))})
-        #
-        #         payload.update({'color_temp': int(round(10000 / int(payload['color_temp']), 0)) * 100})
-        #     except Exception as e:
-        #         self.logger.debug(f"Error {e} occurred during decoding of color_temp.")
-
-        # # Verarbeitung von Farbdaten
-        # if 'color_mode' in payload and 'color' in payload:
-        #     color_mode = payload['color_mode']
-        #     color = payload.pop('color')
-        #
-        #     if color_mode == 'hs':
-        #         payload['hue'] = color['hue']
-        #         payload['saturation'] = color['saturation']
-        #
-        #     if color_mode == 'xy':
-        #         payload['color_x'] = color['x']
-        #         payload['color_y'] = color['y']
 
         if 'data' not in self._devices[device]:
             self._devices[device]['data'] = {}
