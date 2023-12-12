@@ -237,7 +237,7 @@ class Huawei_Sun2000(SmartPlugin):
             return int(input_str)
         return default_value 
 
-    def wait_running_loop():
+    def wait_running_loop(self):
         while self._loop.is_running():
             time.sleep(1)
         
