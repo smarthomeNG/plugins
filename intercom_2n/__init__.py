@@ -20,7 +20,6 @@
 #########################################################################
 import json
 
-import logging
 import os
 from time import sleep
 import requests
@@ -31,17 +30,21 @@ import threading
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
+
 class Intercom2n(SmartPlugin):
-    PLUGIN_VERSION = "1.3.0.1"
+    PLUGIN_VERSION = "1.3.1"
     ALLOW_MULTIINSTANCE = False
 
-    def __init__(self, sh, intercom_ip, ssl=False, auth_type=0, username=None, password=None):
-        self._sh = sh
+    def __init__(self, **kwargs):
+        self._intercom_ip = self.get_parameter_value('intercom_ip')
+        self._ssl = self.get_parameter_value('ssl')
+        self._auth_type = self.get_parameter_value('auth_type')
+        self._username = self.get_parameter_value('username')
+        self._password = self.get_parameter_value('password')
         self.is_stopped = False
         self.sid = None
-        self._logger = logging.getLogger(__name__)
         self.event_timeout = 30
-        self.ip_cam = IPCam(intercom_ip, ssl=ssl, auth_type=auth_type, user=username, password=password)
+        self.ip_cam = IPCam(self._intercom_ip, ssl=self._ssl, auth_type=self._auth_type, user=self._username, password=self._password)
 
         # item dictionaries for events
         self.possible_events = [
@@ -104,7 +107,7 @@ class Intercom2n(SmartPlugin):
 
     def parse_event_data(self, raw_data):
         try:
-            raw_data =json.loads(raw_data)
+            raw_data = json.loads(raw_data)
         except Exception:
             self._logger.warning("Unknown 2n_event: '{event}' not in dictionary format.".format(event=raw_data))
             return
@@ -231,8 +234,8 @@ class Intercom2n(SmartPlugin):
             elif command == 'firmware_upload':
                 # check for child item firmware_filepath
                 child_items = parent_item.return_children()
-                for child_item in  child_items:
-                    path = child_item._name.replace(parent_item._name,'').lstrip('.')
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
                     if path == "firmware_file":
                         if os.path.exists(child_item()):
                             parent_item(self.ip_cam.commands.firmware_upload(child_item()))
@@ -241,16 +244,16 @@ class Intercom2n(SmartPlugin):
             elif command == 'config_get':
                 # check for child item config_file
                 child_items = parent_item.return_children()
-                for child_item in  child_items:
-                    path = child_item._name.replace(parent_item._name,'').lstrip('.')
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
                     if path == "config_file":
                         parent_item(self.ip_cam.commands.config_get(filename=child_item()))
                         break
             elif command == 'config_upload':
                 # check for child item firmware_filepath
                 child_items = parent_item.return_children()
-                for child_item in  child_items:
-                    path = child_item._name.replace(parent_item._name,'').lstrip('.')
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
                     if path == "config_file":
                         if os.path.exists(child_item()):
                             parent_item(self.ip_cam.commands.config_upload(child_item()))
@@ -261,8 +264,8 @@ class Intercom2n(SmartPlugin):
             elif command == 'switch_status':
                 switch = None
                 child_items = parent_item.return_children()
-                for child_item in  child_items:
-                    path = child_item._name.replace(parent_item._name,'').lstrip('.')
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
                     if path == "switch":
                         switch = child_item()
                         break
@@ -272,8 +275,8 @@ class Intercom2n(SmartPlugin):
                 action = None
                 response = None
                 child_items = parent_item.return_children()
-                for child_item in  child_items:
-                    path = child_item._name.replace(parent_item._name,'').lstrip('.')
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
                     if path == "switch":
                         switch = child_item()
                     elif path == "action":
@@ -286,8 +289,8 @@ class Intercom2n(SmartPlugin):
             elif command == 'io_caps':
                 port = None
                 child_items = parent_item.return_children()
-                for child_item in  child_items:
-                    path = child_item._name.replace(parent_item._name,'').lstrip('.')
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
                     if path == "port":
                         port = child_item()
                         break
@@ -295,8 +298,8 @@ class Intercom2n(SmartPlugin):
             elif command == 'io_status':
                 port = None
                 child_items = parent_item.return_children()
-                for child_item in  child_items:
-                    path = child_item._name.replace(parent_item._name,'').lstrip('.')
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
                     if path == "port":
                         port = child_item()
                         break
@@ -306,8 +309,8 @@ class Intercom2n(SmartPlugin):
                 action = None
                 response = None
                 child_items = parent_item.return_children()
-                for child_item in  child_items:
-                    path = child_item._name.replace(parent_item._name,'').lstrip('.')
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
                     if path == "port":
                         port = child_item()
                     elif path == "action":
@@ -320,50 +323,50 @@ class Intercom2n(SmartPlugin):
             elif command == 'phone_status':
                 account = None
                 child_items = parent_item.return_children()
-                for child_item in  child_items:
-                    path = child_item._name.replace(parent_item._name,'').lstrip('.')
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
                     if path == "account":
                         account = child_item()
                         break
                 parent_item(self.ip_cam.commands.phone_status(account))
             elif command == 'call_status':
-                    session = None
-                    child_items = parent_item.return_children()
-                    for child_item in  child_items:
-                        path = child_item._name.replace(parent_item._name,'').lstrip('.')
-                        if path == "session":
-                            session = child_item()
-                            break
-                    parent_item(self.ip_cam.commands.call_status(session))
+                session = None
+                child_items = parent_item.return_children()
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
+                    if path == "session":
+                        session = child_item()
+                        break
+                parent_item(self.ip_cam.commands.call_status(session))
             elif command == 'call_dial':
-                    number = None
-                    child_items = parent_item.return_children()
-                    for child_item in  child_items:
-                        path = child_item._name.replace(parent_item._name,'').lstrip('.')
-                        if path == "number":
-                            number = child_item()
-                            break
-                    parent_item(self.ip_cam.commands.call_dial(number))
+                number = None
+                child_items = parent_item.return_children()
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
+                    if path == "number":
+                        number = child_item()
+                        break
+                parent_item(self.ip_cam.commands.call_dial(number))
             elif command == 'call_answer':
-                    session = None
-                    child_items = parent_item.return_children()
-                    for child_item in  child_items:
-                        path = child_item._name.replace(parent_item._name,'').lstrip('.')
-                        if path == "session":
-                            session = child_item()
-                            break
-                    parent_item(self.ip_cam.commands.call_answer(session))
+                session = None
+                child_items = parent_item.return_children()
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
+                    if path == "session":
+                        session = child_item()
+                        break
+                parent_item(self.ip_cam.commands.call_answer(session))
             elif command == 'call_hangup':
-                    session = None
-                    reason = None
-                    child_items = parent_item.return_children()
-                    for child_item in  child_items:
-                        path = child_item._name.replace(parent_item._name,'').lstrip('.')
-                        if path == "session":
-                            session = child_item()
-                        if path == "reason":
-                            reason = child_item()
-                    parent_item(self.ip_cam.commands.call_hangup(session, reason))
+                session = None
+                reason = None
+                child_items = parent_item.return_children()
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
+                    if path == "session":
+                        session = child_item()
+                    if path == "reason":
+                        reason = child_item()
+                parent_item(self.ip_cam.commands.call_hangup(session, reason))
             elif command == 'camera_caps':
                 parent_item(self.ip_cam.commands.camera_caps())
             elif command == 'camera_snapshot':
@@ -373,8 +376,8 @@ class Intercom2n(SmartPlugin):
                 source = None
                 time = None
                 child_items = parent_item.return_children()
-                for child_item in  child_items:
-                    path = child_item._name.replace(parent_item._name,'').lstrip('.')
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
                     if path == "snapshot_file":
                         snapshot_file = child_item()
                     if path == "width":
@@ -384,7 +387,7 @@ class Intercom2n(SmartPlugin):
                     if path == "source":
                         source = child_item()
                     if path == "time":
-                        time == child_item()
+                        time = child_item()
                 parent_item(self.ip_cam.commands.camera_snapshot(width, height, snapshot_file, source, time))
             elif command == 'display_caps':
                 parent_item(self.ip_cam.commands.display_caps())
@@ -392,22 +395,22 @@ class Intercom2n(SmartPlugin):
                 gif_file = None
                 display = None
                 child_items = parent_item.return_children()
-                for child_item in  child_items:
-                    path = child_item._name.replace(parent_item._name,'').lstrip('.')
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
                     if path == "gif_file":
                         gif_file = child_item()
                     if path == "display":
                         display = child_item()
                 parent_item(self.ip_cam.commands.display_upload_image(display, gif_file))
             elif command == 'display_delete_image':
-                    display = None
-                    child_items = parent_item.return_children()
-                    for child_item in  child_items:
-                        path = child_item._name.replace(parent_item._name,'').lstrip('.')
-                        if path == "display":
-                            display = child_item()
-                            break
-                    parent_item(self.ip_cam.commands.display_delete_image(display))
+                display = None
+                child_items = parent_item.return_children()
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
+                    if path == "display":
+                        display = child_item()
+                        break
+                parent_item(self.ip_cam.commands.display_delete_image(display))
             elif command == 'log_caps':
                 parent_item(self.ip_cam.commands.log_caps())
             elif command == 'audio_test':
@@ -421,8 +424,8 @@ class Intercom2n(SmartPlugin):
                 picture_count = None
                 timespan = None
                 child_items = parent_item.return_children()
-                for child_item in  child_items:
-                    path = child_item._name.replace(parent_item._name,'').lstrip('.')
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
                     if path == "to":
                         to = child_item()
                     if path == "width":
@@ -441,8 +444,8 @@ class Intercom2n(SmartPlugin):
             elif command == 'pcap':
                 pcap_file = None
                 child_items = parent_item.return_children()
-                for child_item in  child_items:
-                    path = child_item._name.replace(parent_item._name,'').lstrip('.')
+                for child_item in child_items:
+                    path = child_item._name.replace(parent_item._name, '').lstrip('.')
                     if path == "pcap_file":
                         pcap_file = child_item()
                         break
