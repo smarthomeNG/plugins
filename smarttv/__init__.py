@@ -32,7 +32,7 @@ class SmartTV(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.3.3"
 
-    def __init__(self, **kwargs):
+    def __init__(self, sh, **kwargs):
         self._tv_version = self.get_parameter_value('tv_version')
         self._host = self.get_parameter_value('host')
         self._port = self.get_parameter_value('port')

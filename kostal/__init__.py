@@ -105,7 +105,7 @@ class Kostal(SmartPlugin):
         'l3_watt': 'ac3_w'
     }
 
-    def __init__(self, **kwargs):
+    def __init__(self, sh, **kwargs):
         self.ip = self.get_parameter_value('ip')
         self.user = self.get_parameter_value('user')
         self.passwd = self.get_parameter_value('passwd')

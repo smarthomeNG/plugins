@@ -32,7 +32,7 @@ class ComfoAir(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = '1.3.1'
 
-    def __init__(self, **kwargs):
+    def __init__(self, sh, **kwargs):
         self.connected = False
         self._params = {}
         self._init_cmds = []
@@ -456,7 +456,6 @@ class ComfoAir(SmartPlugin):
 
     def stop(self):
         self.alive = False
-        self._sh.connections.remove(self)
         self.scheduler_remove('ComfoAir-cyclic')
         self.disconnect()
 

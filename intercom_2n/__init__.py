@@ -35,7 +35,8 @@ class Intercom2n(SmartPlugin):
     PLUGIN_VERSION = "1.3.1"
     ALLOW_MULTIINSTANCE = False
 
-    def __init__(self, **kwargs):
+    def __init__(self, sh, **kwargs):
+        super().__init__()
         self._intercom_ip = self.get_parameter_value('intercom_ip')
         self._ssl = self.get_parameter_value('ssl')
         self._auth_type = self.get_parameter_value('auth_type')
@@ -90,7 +91,7 @@ class Intercom2n(SmartPlugin):
 
                     if 'id' in data['result']:
                         self.sid = data['result']['id']
-                        self._logger.debug('2n: sid={id}'.format(id=self.sid))
+                        self.logger.debug('2n: sid={id}'.format(id=self.sid))
 
                 if self.sid is not None:
                     self.parse_event_data(self.ip_cam.commands.log_pull(self.sid, timeout=self.event_timeout+10))
@@ -99,39 +100,39 @@ class Intercom2n(SmartPlugin):
             except Exception as err:
                 if self.is_stopped:
                     return
-                self._logger.debug("2N:" + str(err))
+                self.logger.debug("2N:" + str(err))
                 self.sid = None
                 sec = 20
-                self._logger.debug("2N: retrying in {sec} seconds".format(sec=sec))
+                self.logger.debug("2N: retrying in {sec} seconds".format(sec=sec))
                 sleep(sec)
 
     def parse_event_data(self, raw_data):
         try:
             raw_data = json.loads(raw_data)
         except Exception:
-            self._logger.warning("Unknown 2n_event: '{event}' not in dictionary format.".format(event=raw_data))
+            self.logger.warning("Unknown 2n_event: '{event}' not in dictionary format.".format(event=raw_data))
             return
         if 'success' not in raw_data:
-            self._logger.warning("Unknown 2n_event: {event}".format(event=raw_data))
+            self.logger.warning("Unknown 2n_event: {event}".format(event=raw_data))
             return
         if not raw_data['success']:
-            self._logger.error("2N error: {event}".format(event=raw_data))
+            self.logger.error("2N error: {event}".format(event=raw_data))
             return
         data = raw_data['result']
 
         # data['events'] is a list of events
         if 'events' not in data:
-            self._logger.warning("Unknown 2n_event: {event}".format(event=data))
+            self.logger.warning("Unknown 2n_event: {event}".format(event=data))
 
         for event in data['events']:
             # key 'name' has to be in every valid event
             if 'event' not in event:
-                self._logger.warning("Unhandled 2n_event '{event}'.".format(event=event))
+                self.logger.warning("Unhandled 2n_event '{event}'.".format(event=event))
                 return
             event_name = event['event']
 
             if event_name not in self.registered_events:
-                self._logger.warning(" 2n_event '{event}: not item registered".format(event=event))
+                self.logger.warning(" 2n_event '{event}: not item registered".format(event=event))
                 return
 
             # uncomment this to set the complete dict to the root item
@@ -150,7 +151,7 @@ class Intercom2n(SmartPlugin):
 
             # loop through event data and set their registered items
             if 'params' not in event:
-                self._logger.warning("Unknown 2n_event '{event}'. Parameter section not found.".format(event=event))
+                self.logger.warning("Unknown 2n_event '{event}'. Parameter section not found.".format(event=event))
                 return
 
             for key, value in event['params'].items():
@@ -159,7 +160,7 @@ class Intercom2n(SmartPlugin):
                         item(value)
 
     def run(self):
-        self._logger.debug("2N: run method called")
+        self.logger.debug("2N: run method called")
         self.get_event_thread.start()
         self.alive = True
 
