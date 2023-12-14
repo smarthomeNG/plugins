@@ -89,7 +89,7 @@ class Zigbee2Mqtt(MqttPlugin):
         # Add subscription to get bridge announces
         bridge_subs = [
             ['devices', 'list', None],
-            ['state', 'bool', ['offline', 'online']],
+            ['state', 'dict', None],
             ['info', 'dict', None],
             ['log', 'dict', None],
             ['extensions', 'list', None],
@@ -195,7 +195,7 @@ class Zigbee2Mqtt(MqttPlugin):
                 'write': write,
             }
             if item.type() == 'bool':
-                data['bval'] = bval
+                data['bool_values'] = bval
 
             self._devices[device][attr].update(data)
 
@@ -270,7 +270,9 @@ class Zigbee2Mqtt(MqttPlugin):
                 topic_3 = 'set'
                 topic_4 = topic_5 = ''
                 payload = None
-                bool_values = _attr.get('bool_values', self.bool_values)
+                bool_values = _attr.get('bool_values')
+                if bool_values is None:
+                    bool_values = self.bool_values
                 scenes = _device.get('scenes')
                 value = item()
 
@@ -288,27 +290,27 @@ class Zigbee2Mqtt(MqttPlugin):
 
                 # check device handler
                 if hasattr(self, HANDLE_OUT_PREFIX + HANDLE_DEV + device):
-                    value, topic_3, topic_4, topic_5, abort = getattr(self, HANDLE_OUT_PREFIX + HANDLE_DEV + device)(item, value, topic_3, topic_4, topic_5, device, attr)
+                    attr, value, topic_3, topic_4, topic_5, abort = getattr(self, HANDLE_OUT_PREFIX + HANDLE_DEV + device)(item, value, topic_3, topic_4, topic_5, device, attr)
                     if abort:
                         self.logger.debug(f'processing of item {item} stopped due to abort statement from handler {HANDLE_OUT_PREFIX + HANDLE_DEV + device}')
                         return
 
                 # check attribute handler
                 if hasattr(self, HANDLE_OUT_PREFIX + HANDLE_ATTR + attr):
-                    value, topic_3, topic_4, topic_5, abort = getattr(self, HANDLE_OUT_PREFIX + HANDLE_ATTR + attr)(item, value, topic_3, topic_4, topic_5, device, attr)
+                    attr, value, topic_3, topic_4, topic_5, abort = getattr(self, HANDLE_OUT_PREFIX + HANDLE_ATTR + attr)(item, value, topic_3, topic_4, topic_5, device, attr)
                     if abort:
                         self.logger.debug(f'processing of item {item} stopped due to abort statement from handler {HANDLE_OUT_PREFIX + HANDLE_ATTR + attr}')
                         return
 
                 # create payload
-                payload = json.dumps({
-                    attr: value
-                })
-
-                if payload is not None:
-                    self.publish_z2m_topic(device, topic_3, topic_4, topic_5, payload, item, bool_values=bool_values)
+                if value is not None:
+                    payload = json.dumps({
+                        attr: value
+                    })
                 else:
-                    self.logger.warning(f"update_item: {item}, no payload defined (by {caller})")
+                    payload = None
+
+                self.publish_z2m_topic(device, topic_3, topic_4, topic_5, payload, item, bool_values=bool_values)
             else:
                 self.logger.warning(f"update_item: {item}, trying to change item in SmartHomeNG that is readonly (by {caller})")
 
@@ -347,10 +349,14 @@ class Zigbee2Mqtt(MqttPlugin):
             self.logger.error(f'received mqtt msg with wrong base topic {topic}. Please report')
             return
 
-        # check handlers
+        # check / call handlers
         if hasattr(self, HANDLE_IN_PREFIX + HANDLE_DEV + device):
-            if getattr(self, HANDLE_IN_PREFIX + HANDLE_DEV + device)(device, topic_3, topic_4, topic_5, payload, qos, retain):
-                return
+            result = getattr(self, HANDLE_IN_PREFIX + HANDLE_DEV + device)(device, topic_3, topic_4, topic_5, payload, qos, retain)
+            if not isinstance(result, dict):
+                if result:
+                    return
+            else:
+                payload = result
 
         if not isinstance(payload, dict):
             return
@@ -400,7 +406,7 @@ class Zigbee2Mqtt(MqttPlugin):
                 # check handlers
                 if hasattr(self, HANDLE_IN_PREFIX + HANDLE_ATTR + attr):
                     if getattr(self, HANDLE_IN_PREFIX + HANDLE_ATTR + attr)(device, attr, payload, item):
-                        return
+                        continue
 
                 value = payload[attr]
                 self._devices[device][attr]['value'] = value
@@ -508,6 +514,7 @@ class Zigbee2Mqtt(MqttPlugin):
 #
 # return True: stop further processing
 # return False/None: continue processing (possibly with changed payload)
+# return <dict>: continue with returned dict as new payload
 #
 
     def _handle_in_dev_bridge(self, device: str, topic_3: str = "", topic_4: str = "", topic_5: str = "", payload={}, qos=None, retain=None):
@@ -519,23 +526,29 @@ class Zigbee2Mqtt(MqttPlugin):
             _bridge = self._devices[device]
 
             if topic_3 == 'state':
-                self.logger.debug(f"state: detail: {topic_3} datetime: {datetime.now()} payload: {payload}")
-                _bridge['online'] = bool(payload)
+                return {'online': bool(['offline', 'online'].index(payload.get(topic_3)))}
 
             elif topic_3 in ('config', 'info'):
                 assert isinstance(payload, dict), 'dict'
                 _bridge[topic_3] = payload
-                _bridge['online'] = True
+                payload['online'] = True
+
+                if payload.get('restart_required', None) is True:
+                    self.publish_z2m_topic('bridge', 'request', 'restart')
 
             elif topic_3 == 'response' and topic_4 in ('health_check', 'permit_join', 'networkmap'):
+                # permit_join: {"data":{"value":true},"status":"ok"}
+                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=None, topic_level4=networkmap, topic_level5=None, payload={'data': {'routes': False, 'type': 'raw', 'value': {'links': [{'depth': 1, 'linkquality': 5, 'lqi': 5, 'relationship': 1, 'routes': [], 'source': {'ieeeAddr': '0x588e81fffe28dec5', 'networkAddress': 39405}, 'sourceIeeeAddr': '0x588e81fffe28dec5', 'sourceNwkAddr': 39405, 'target': {'ieeeAddr': '0x00124b001cd4bbf0', 'networkAddress': 0}, 'targetIeeeAddr': '0x00124b001cd4bbf0'}, {'depth': 1, 'linkquality': 155, 'lqi': 155, 'relationship': 1, 'routes': [], 'source': {'ieeeAddr': '0x00124b00231e45b8', 'networkAddress': 18841}, 'sourceIeeeAddr': '0x00124b00231e45b8', 'sourceNwkAddr': 18841, 'target': {'ieeeAddr': '0x00124b001cd4bbf0', 'networkAddress': 0}, 'targetIeeeAddr': '0x00124b001cd4bbf0'}, {'depth': 1, 'linkquality': 1, 'lqi': 1, 'relationship': 1, 'routes': [], 'source': {'ieeeAddr': '0x00158d00067a0c2d', 'networkAddress': 60244}, 'sourceIeeeAddr': '0x00158d00067a0c2d', 'sourceNwkAddr': 60244, 'target': {'ieeeAddr': '0x00124b001cd4bbf0', 'networkAddress': 0}, 'targetIeeeAddr': '0x00124b001cd4bbf0'}], 'nodes': [{'definition': None, 'failed': [], 'friendlyName': 'Coordinator', 'ieeeAddr': '0x00124b001cd4bbf0', 'lastSeen': None, 'networkAddress': 0, 'type': 'Coordinator'}, {'definition': {'description': 'TRADFRI open/close remote', 'model': 'E1766', 'supports': 'battery, action, linkquality', 'vendor': 'IKEA'}, 'friendlyName': 'TRADFRI E1766_01', 'ieeeAddr': '0x588e81fffe28dec5', 'lastSeen': 1618408062253, 'manufacturerName': 'IKEA of Sweden', 'modelID': 'TRADFRI open/close remote', 'networkAddress': 39405, 'type': 'EndDevice'}, {'definition': {'description': 'Temperature and humidity sensor', 'model': 'SNZB-02', 'supports': 'battery, temperature, humidity, voltage, linkquality', 'vendor': 'SONOFF'}, 'friendlyName': 'SNZB02_01', 'ieeeAddr': '0x00124b00231e45b8', 'lastSeen': 1618407530272, 'manufacturerName': 'eWeLink', 'modelID': 'TH01', 'networkAddress': 18841, 'type': 'EndDevice'}, {'definition': {'description': 'Aqara vibration sensor', 'model': 'DJT11LM', 'supports': 'battery, action, strength, sensitivity, voltage, linkquality', 'vendor': 'Xiaomi'}, 'friendlyName': 'DJT11LM_01', 'ieeeAddr': '0x00158d00067a0c2d', 'lastSeen': 1618383303863, 'manufacturerName': 'LUMI', 'modelID': 'lumi.vibration.aq1', 'networkAddress': 60244, 'type': 'EndDevice'}]}}, 'status': 'ok', 'transaction': 'q15of-1'}
                 assert isinstance(payload, dict), 'dict'
                 _bridge[topic_4] = payload
-                _bridge['online'] = True
+                payload['online'] = True
 
                 if topic_4 == 'health_check':
-                    _bridge['online'] = bool(payload['data']['healthy'])
+                    # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=response, topic_level4=health_check, topic_level5=, payload={'data': {'healthy': True}, 'status': 'ok'}
+                    payload['online'] = bool(payload['data']['healthy'])
 
             elif topic_3 == 'devices' or topic_3 == 'groups':
+                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=config, topic_level4=devices, topic_level5=, payload=[{'dateCode': '20201127', 'friendly_name': 'Coordinator', 'ieeeAddr': '0x00124b001cd4bbf0', 'lastSeen': 1618861562211, 'networkAddress': 0, 'softwareBuildID': 'zStack12', 'type': 'Coordinator'}, {'dateCode': '20190311', 'description': 'TRADFRI open/close remote', 'friendly_name': 'TRADFRI E1766_01', 'hardwareVersion': 1, 'ieeeAddr': '0x588e81fffe28dec5', 'lastSeen': 1618511300581, 'manufacturerID': 4476, 'manufacturerName': 'IKEA of Sweden', 'model': 'E1766', 'modelID': 'TRADFRI open/close remote', 'networkAddress': 39405, 'powerSource': 'Battery', 'softwareBuildID': '2.2.010', 'type': 'EndDevice', 'vendor': 'IKEA'}, {'dateCode': '20201026', 'description': 'Temperature and humidity sensor', 'friendly_name': 'SNZB02_01', 'hardwareVersion': 1, 'ieeeAddr': '0x00124b00231e45b8', 'lastSeen': 1618861025534, 'manufacturerID': 0, 'manufacturerName': 'eWeLink', 'model': 'SNZB-02', 'modelID': 'TH01', 'networkAddress': 18841, 'powerSource': 'Battery', 'type': 'EndDevice', 'vendor': 'SONOFF'}, {'description': 'Aqara vibration sensor', 'friendly_name': 'DJT11LM_01', 'ieeeAddr': '0x00158d00067a0c2d', 'lastSeen': 1618383303863, 'manufacturerID': 4151, 'manufacturerName': 'LUMI', 'model': 'DJT11LM', 'modelID': 'lumi.vibration.aq1', 'networkAddress': 60244, 'powerSource': 'Battery', 'type': 'EndDevice', 'vendor': 'Xiaomi'}]
                 assert isinstance(payload, list), 'list'
                 self._get_device_data(payload, topic_4 == 'groups')
 
@@ -547,7 +560,14 @@ class Zigbee2Mqtt(MqttPlugin):
                         except (KeyError, TypeError):
                             pass
 
+                return {topic_3: payload}
+
             elif topic_3 == 'log':
+                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={"message":[{"dateCode":"20201127","friendly_name":"Coordinator","ieeeAddr":"0x00124b001cd4bbf0","lastSeen":1617961599543,"networkAddress":0,"softwareBuildID":"zStack12","type":"Coordinator"},{"dateCode":"20190311","description":"TRADFRI open/close remote","friendly_name":"TRADFRI E1766_01","hardwareVersion":1,"ieeeAddr":"0x588e81fffe28dec5","lastSeen":1617873345111,"manufacturerID":4476,"manufacturerName":"IKEA of Sweden","model":"E1766","modelID":"TRADFRI open/close remote","networkAddress":39405,"powerSource":"Battery","softwareBuildID":"2.2.010","type":"EndDevice","vendor":"IKEA"},{"dateCode":"20201026","description":"Temperature and humidity sensor","friendly_name":"SNZB02_01","hardwareVersion":1,"ieeeAddr":"0x00124b00231e45b8","lastSeen":1617961176234,"manufacturerID":0,"manufacturerName":"eWeLink","model":"SNZB-02","modelID":"TH01","networkAddress":18841,"powerSource":"Battery","type":"EndDevice","vendor":"SONOFF"}],"type":"devices"}'
+                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={'message': {'friendly_name': '0x00158d00067a0c2d'}, 'type': 'device_connected'}
+                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={'message': 'Publish \'set\' \'sensitivity\' to \'DJT11LM_01\' failed: \'Error: Write 0x00158d00067a0c2d/1 genBasic({"65293":{"value":21,"type":32}}, {"timeout":35000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":4447,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Data request failed with error: \'MAC transaction expired\' (240))\'', 'meta': {'friendly_name': 'DJT11LM_01'}, 'type': 'zigbee_publish_error'}
+                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={'message': 'announce', 'meta': {'friendly_name': 'DJT11LM_01'}, 'type': 'device_announced'}
+                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={'message': {'cluster': 'genOnOff', 'from': 'TRADFRI E1766_01', 'to': 'default_bind_group'}, 'type': 'device_bind_failed'}
                 assert isinstance(payload, dict), 'dict'
                 if 'message' in payload and payload.get('type') == 'devices':
                     self._get_device_data(payload['message'])
@@ -641,8 +661,8 @@ class Zigbee2Mqtt(MqttPlugin):
         # statically defined cmds for interaction with z2m-gateway
         # independent from connected devices
         bridge_cmds = {
-            'permit_join': {'setval': 'VAL', 't5': ''},
-            'health_check': {'setval': None, 't5': ''},
+            'permit_join': {'setval': 'VAL', 'attr': 'value', 't5': ''},
+            'health_check': {'t5': ''},
             'restart': {'setval': None, 't5': ''},
             'networkmap': {'setval': 'raw', 't5': 'remove'},
             'device_remove': {'setval': 'STR', 't5': ''},
@@ -658,37 +678,42 @@ class Zigbee2Mqtt(MqttPlugin):
             payload = ''
             if attr.startswith('device_'):
                 topic_4, topic_5 = attr.split('_')
-            if bridge_cmds[attr]['setval'] == 'VAL':
+            sv = bridge_cmds[attr].get('setval', '')
+            if sv == 'VAL':
                 payload = value
-            if bridge_cmds[attr]['setval'] == 'STR':
+            if sv == 'STR':
                 payload = str(value)
-            elif bridge_cmds[attr]['setval'] == 'PATH':
+            elif sv == 'PATH':
                 payload = item.property.path
+            elif sv is None:
+                payload = None
+            if 'attr' in bridge_cmds[attr]:
+                attr = bridge_cmds[attr]['attr']
 
             value = payload
 
-        return value, topic_3, topic_4, topic_5, False
+        return attr, value, topic_3, topic_4, topic_5, False
 
     def _handle_out_attr_color_r(self, item, value, topic_3, topic_4, topic_5, device, attr):
         try:
             self._color_sync_from_rgb(self._devices[device]['state']['item'])
         except Exception as e:
             self.logger.debug(f'problem calling color sync: {e}')
-        return value, topic_3, topic_4, topic_5, True
+        return attr, value, topic_3, topic_4, topic_5, True
 
     def _handle_out_attr_color_g(self, item, value, topic_3, topic_4, topic_5, device, attr):
         try:
             self._color_sync_from_rgb(self._devices[device]['state']['item'])
         except Exception as e:
             self.logger.debug(f'problem calling color sync: {e}')
-        return value, topic_3, topic_4, topic_5, True
+        return attr, value, topic_3, topic_4, topic_5, True
 
     def _handle_out_attr_color_b(self, item, value, topic_3, topic_4, topic_5, device, attr):
         try:
             self._color_sync_from_rgb(self._devices[device]['state']['item'])
         except Exception as e:
             self.logger.debug(f'problem calling color sync: {e}')
-        return value, topic_3, topic_4, topic_5, True
+        return attr, value, topic_3, topic_4, topic_5, True
 
     def _handle_out_attr_brightness_percent(self, item, value, topic_3, topic_4, topic_5, device, attr):
         brightness = value * 2.54
@@ -696,7 +721,7 @@ class Zigbee2Mqtt(MqttPlugin):
             self._devices[device]['brightness']['item'](brightness)
         except (KeyError, AttributeError):
             pass
-        return value, topic_3, topic_4, topic_5, True
+        return attr, value, topic_3, topic_4, topic_5, True
 
     def _handle_out_attr_color_temp_kelvin(self, item, value, topic_3, topic_4, topic_5, device, attr):
         kelvin = int(1000000 / value)
@@ -704,7 +729,7 @@ class Zigbee2Mqtt(MqttPlugin):
             self._devices[device]['color_temp']['item'](kelvin)
         except (KeyError, AttributeError):
             pass
-        return value, topic_3, topic_4, topic_5, True
+        return attr, value, topic_3, topic_4, topic_5, True
 
     def _handle_out_attr_color_rgb(self, item, value, topic_3, topic_4, topic_5, device, attr):
         if item is not None:
@@ -735,7 +760,7 @@ class Zigbee2Mqtt(MqttPlugin):
             except Exception as e:
                 self.logger.debug(f'problem calling color sync: {e}')
 
-        return value, topic_3, topic_4, topic_5, True
+        return attr, value, topic_3, topic_4, topic_5, True
 
 #
 # Attention - color conversions xy/rgb:
