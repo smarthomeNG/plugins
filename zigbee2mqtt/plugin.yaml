@@ -13,11 +13,11 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1856775-support-thread-f%C3%BCr-das-zigbee2mqtt-plugin
 
     version: 2.0.0                 # Plugin version
-    sh_minversion: 1.9.4           # minimum shNG version to use this plugin
+    sh_minversion: 1.9.5.6         # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.8             # minimum Python version to use for this plugin
     multi_instance: True           # plugin supports multi instance
-    restartable: yes
+    restartable: True
     classname: Zigbee2Mqtt         # class containing the plugin
 
 parameters:
@@ -117,6 +117,11 @@ item_structs:
             z2m_topic: ..:.
             z2m_attr: action_duration
 
+        last_seen:
+            type: foo
+            z2m_topic: ..:.
+            z2m_attr: last_seen
+
         linkquality:
             type: num
             z2m_topic: ..:.
@@ -214,6 +219,11 @@ item_structs:
             z2m_topic: ..:.
             z2m_attr: color_temp_startup
 
+        last_seen:
+            type: foo
+            z2m_topic: ..:.
+            z2m_attr: last_seen
+
     light_white_ambient:
         struct: priv_z2m.light_white_ambient_group
 
@@ -304,29 +314,67 @@ item_structs:
                 eval_trigger: ..
 
     bridge:
-        info:
-            type: dict
-            mqtt_topic_in: z2m/bridge
+        z2m_topic: bridge
 
-        state:
+        online:
             type: bool
-            mqtt_topic_in: z2m/bridge/state
+            z2m_topic: ..:.
+            z2m_attr: online
+            z2m_readonly: true
 
-        logging:
+        config:
             type: dict
-            mqtt_topic_in: z2m/bridge/logging
+            z2m_topic: ..:.
+            z2m_attr: config
+            z2m_readonly: true
+
+        coordinator:
+            type: dict
+            z2m_topic: ..:.
+            z2m_attr: coordinator
+            z2m_readonly: true
+
+        config_schema:
+            type: dict
+            z2m_topic: ..:.
+            z2m_attr: config_schema
+            z2m_readonly: true
+
+        network:
+            type: dict
+            z2m_topic: ..:.
+            z2m_attr: network
+            z2m_readonly: true
+
+        permit_join:
+            type: bool
+            z2m_topic: ..:.
+            z2m_attr: permit_join
+            z2m_bool_values: [false, true]
+
+        restart:
+            type: bool
+            z2m_topic: ..:.
+            z2m_attr: restart
+            z2m_bool_values: [false, true]
+            z2m_writeonly: true
+            autotimer: 1=False
+
+        version:
+            type: str
+            z2m_topic: ..:.
+            z2m_attr: version
 
         devices:
             type: list
-            mqtt_topic_in: z2m/bridge/devices
+            z2m_topic: ..:.
+            z2m_attr: devices
 
         groups:
             type: list
-            mqtt_topic_in: z2m/bridge/groups
+            z2m_topic: ..:.
+            z2m_attr: groups
 
-        events:
-            type: dict
-            mqtt_topic_in: z2m/bridge/event
         
 plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
