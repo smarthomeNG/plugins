@@ -26,18 +26,19 @@ from lib.model.smartplugin import *
 from lib.item import Items
 from .webif import WebInterface
 
-#import binascii
 import sys
 import requests
 import json
 import string
 
-# VIESSMANN_SCOPE = ["IoT User offline_access"]
+# Necessary python package for funktion "generate_code_verifier":
+from authlib.common.security import generate_token
+
 AUTHORIZE_URL = 'https://iam.viessmann.com/idp/v3/authorize'
 TOKEN_URL = 'https://iam.viessmann.com/idp/v3/token'
 
 class Vicare(SmartPlugin):
-    PLUGIN_VERSION = '1.9.0'
+    PLUGIN_VERSION = '1.9.1'
 
     def __init__(self, sh):
         """
@@ -183,7 +184,6 @@ class Vicare(SmartPlugin):
     ############################################################
 
     def generate_code_verifier(self):
-        from authlib.common.security import generate_token
         self.codeVerifier = generate_token(64)
         self.logger.warning(f"Generated code verifier {self.codeVerifier}")
 
@@ -537,8 +537,9 @@ class Vicare(SmartPlugin):
 
     def decodeFeatures(self, featureList, log_features = False):
         nr_features = len(featureList)
+        onlineStatus = nr_features > 0
         if nr_features == 0:
-            self.logger.warning(f"decodeFeatures, feature list is empty. Aborting")
+            self.logger.debug(f"decodeFeatures, feature list is empty. Aborting")
             return
 
         for i in range(0,nr_features):
@@ -573,7 +574,7 @@ class Vicare(SmartPlugin):
                     if isEnabled and log_features:
                         self.logger.info(f"Available properties: {properties}")
 
-            #Copy data in viessmann items:
+            #Copy feature data in viessmann items:
             for item in self._rx_items:
                 if (item.conf['vicare_rx_key'] == feature):
                     self.logger.debug(f"Vicare Item found for feature: {feature}. Updating")
@@ -600,6 +601,14 @@ class Vicare(SmartPlugin):
                         self.logger.warning(f"Rx Item {item} is missing the attribute vicare_path.")
                     else:
                         self.logger.warning(f"Vicare Item found for feature: {feature} but not marked as usable (enabled:{isEnabled}, ready:{isReady}, properties:{properties}, vicare_path:{self.has_iattr(item.conf, 'vicare_path')})")
+
+        # Copy global data in viessmann items:
+        for item in self._rx_items:
+            rx_key = item.conf['vicare_rx_key']
+            if rx_key == 'onlineStatus':
+                item(onlineStatus, self.get_shortname())
+                break
+
   
     def decodeCommandFeature(self, featureList, vicare_tx_key = '', vicare_tx_path = [], log_features = False):
         # Function returns arguments: uri, tag, type, min, max, stepping, enumList  
@@ -714,10 +723,11 @@ class Vicare(SmartPlugin):
     ####################################################################
 
     # Not working, TODO: debug
-    def generateAPIToken(self, redirectUrl = '',  codeVerifier = ''):
+    def generateAPIToken(self, codeVerifier = ''):
         from authlib.integrations.requests_client import OAuth2Session
+        VIESSMANN_SCOPE = ["IoT, User, offline_access"]
 
-        if redirectUrl == '':
+        if self.redirectUrl == '':
             self.logger.error(f"Redirect Url is empty but necessary for token request. Aborting.")
             return 'error'
 
@@ -727,29 +737,40 @@ class Vicare(SmartPlugin):
 
         self.logger.warning(f"Debug: Redirect URL is: {self.redirectUrl}")
 
-        oauth_session = OAuth2Session(self.clientID, redirect_uri=redirectUrl, scope=VIESSMANN_SCOPE, code_challenge_method='S256')
+        oauth_session = OAuth2Session(self.clientID, redirect_uri=self.redirectUrl, scope=VIESSMANN_SCOPE, code_challenge_method='S256')
         authorization_url, _ = oauth_session.create_authorization_url(AUTHORIZE_URL, code_verifier=codeVerifier)
         self.logger.warning(f"Authorization URL is: {authorization_url}")
 
-        header = {'Content-Type': 'application/x-www-form-urlencoded'}
-        response = requests.post(authorization_url, headers=header, auth=(self.user, self.password), allow_redirects=False)
 
-        if response.status_code == 401:
+        self.logger.warning(f"Debug: Sending authorization pos...")
+        header = {'Content-Type': 'application/x-www-form-urlencoded'}
+        response = requests.post(authorization_url, headers=header, auth=(self.user, self.password), allow_redirects=True)
+
+        if response is None: 
+            self.logger.error(f"generateAPIToken: response is None")
+        if response.status_code == 200:
+            self.logger.warning(f"SUCCESS: {response.json()}")
+        elif response.status_code == 401:
             self.logger.error(f"PyViCareInvalidConfigurationError: {response.json()}")
             return 'error'
 
         if 'Location' not in response.headers:
-            self.logger.error(f'Location not in response: {response}')
+            self.logger.error(f'Location not in response: {response.headers}')
             return 'error'
+        else:
+            self.logger.warning(f"SUCCESS: Location in response header: {response.headers}")
 
+        self.logger.warning(f"Debug: Fetching token...")
         accessToken = None
-        oauth_session.fetch_token(TOKEN_URL, authorization_response=response.headers['Location'], code_verifier=codeVerifier)
+        token = oauth_session.fetch_token(TOKEN_URL, authorization_response=response.headers['Location'], code_verifier=codeVerifier)
+
+        self.logger.warning(f"Debug: token reponse: {token}")
 
         if oauth_session.token is None:
             self.logger.error(f"PyViCareInvalidCredentialsError")
             return 'error'
         else:                                                                 
-            self.logger.warning(f"Valid token received: {oauth_session.token}")
+            self.logger.warning(f"SUCCESS: Valid token received: {oauth_session.token}")
             self.accessToken = oauth_session.token
             param_dict = {"testaccessToken": str(self.accessToken)}
             self.update_config_section(param_dict)
