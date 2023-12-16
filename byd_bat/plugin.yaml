@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1886748-support-thread-f%C3%BCr-das-byd-batterie-plugin
 
-    version: 0.0.5                  # Plugin version (must match the version specified in __init__.py)
+    version: 0.0.7                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.9              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.9             # minimum Python version to use for this plugin
@@ -59,6 +59,12 @@ item_structs:
                 initial_value: false
                 enforce_updates: true
                 visu_acl: ro
+                
+        enable_connection:
+            type: bool
+            initial_value: true
+            enforce_updates: true
+            visu_acl: rw
 
         state:
         
@@ -252,16 +258,30 @@ item_structs:
                         visu_acl: ro
                         database: init
     
-                temp_max_cell:       # cell number of max temperature
-                    type: num
-                    visu_acl: ro
-                    database: init
-        
-                temp_min_cell:       # cell number of min temperature
-                    type: num
-                    visu_acl: ro
-                    database: init
+                temp_max:
                 
+                    temp:            # max temperature [°C]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of max temperature
+                        type: num
+                        visu_acl: ro
+                        database: init
+        
+                temp_min:
+                
+                    temp:            # min temperature [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of min temperature
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
             tower2:
             
                 soc:                 # [%] SOC
@@ -308,15 +328,29 @@ item_structs:
                         visu_acl: ro
                         database: init
     
-                temp_max_cell:       # cell number of max temperature
-                    type: num
-                    visu_acl: ro
-                    database: init
+                temp_max:
+                
+                    temp:            # max temperature [°C]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of max temperature
+                        type: num
+                        visu_acl: ro
+                        database: init
         
-                temp_min_cell:       # cell number of min temperature
-                    type: num
-                    visu_acl: ro
-                    database: init
+                temp_min:
+                
+                    temp:            # min temperature [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of min temperature
+                        type: num
+                        visu_acl: ro
+                        database: init
                 
             tower3:
             
@@ -364,15 +398,29 @@ item_structs:
                         visu_acl: ro
                         database: init
     
-                temp_max_cell:       # cell number of max temperature
-                    type: num
-                    visu_acl: ro
-                    database: init
+                temp_max:
+                
+                    temp:            # max temperature [°C]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of max temperature
+                        type: num
+                        visu_acl: ro
+                        database: init
         
-                temp_min_cell:       # cell number of min temperature
-                    type: num
-                    visu_acl: ro
-                    database: init
+                temp_min:
+                
+                    temp:            # min temperature [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of min temperature
+                        type: num
+                        visu_acl: ro
+                        database: init
                 
 logic_parameters: NONE
 
