@@ -137,5 +137,5 @@ V2.0.3 - 25.10.2022
 
 29.08.2020
 
- - bool-Werte konnten nicht geschrieben werden
+- bool-Werte konnten nicht geschrieben werden
 
