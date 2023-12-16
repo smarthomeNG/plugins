@@ -1,0 +1,374 @@
+{% extends "base_plugin.html" %}
+{% set logo_frame = false %}
+{% set update_interval = 5000 %}
+
+{% block pluginstyles %}
+<style>
+  table th.no {
+    width: 20px;
+  }
+  table th.lqi {
+    width: 30px;
+  }
+  table th.data {
+    width: 300px;
+  }
+  table th.item {
+    width: 450px;
+  }
+  table th.type {
+    width: 100px;
+    }
+  table th.datatype {
+    width: 250px;
+  }
+  table th.value {
+    width: 250px;
+  }
+  /* hides the maintable datatable by default until it is initialized. */
+
+  #itemtable {
+    display: none;
+    table-layout: fixed;
+  }
+  #devicetable {
+    display: none;
+    table-layout: fixed;
+  }
+  #mtable1 {
+    display: none;
+    table-layout: fixed;
+  }
+  #mtable2 {
+    display: none;
+    table-layout: fixed;
+  }
+
+  /*
+  These are used for highligt effect in web interface when a value changes. If you don't want to overwrite the
+  default color, you can remove the entries here as the classes are already defined in smarthomeng.css
+  */
+
+  .shng_effect_highlight {
+    background-color: #FFFFE0;
+  }
+  .shng_effect_standard {
+    background-color: none;
+  }
+
+</style>
+{% endblock pluginstyles %}
+
+{% block pluginscripts %}
+<script>
+  $(document).ready( function () {
+    $(window).trigger('datatables_defaults');
+
+    try {
+      webif_pagelength = parseInt(document.getElementById('webif_pagelength').innerHTML);
+      if (webif_pagelength == 0) {
+        resize = true;
+        webif_pagelength = -1;
+      }
+      else {
+        resize = false;
+      }
+    }
+    catch (e) {
+      webif_pagelength = 100;
+      resize = false;
+      console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+      console.log("Error was " + e);
+    }
+
+    try {
+      table_1 = $('#itemtable').DataTable( {
+        pageLength: webif_pagelength,
+        pageResize: resize});
+      table_2 = $('#devicetable').DataTable( {
+        pageLength: webif_pagelength,
+        pageResize: resize});
+      table_3 = $('#mtable1').DataTable( {
+        pageLength: webif_pagelength,
+        pageResize: resize});
+      table_4 = $('#mtable2').DataTable( {
+        pageLength: webif_pagelength,
+        pageResize: resize});
+    }
+    catch (e) {
+        console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
+    }
+
+  });
+</script>
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+
+            for (var item in objResponse['item_values']) {
+				shngInsertText (item+'_value', objResponse['item_values'][item]['value'], 'itemtable', 5);
+				shngInsertText (item+'_last_update', objResponse['item_values'][item]['last_update'], 'itemtable');
+				shngInsertText (item+'_last_change', objResponse['item_values'][item]['last_change'], 'itemtable');
+			}
+
+            for (var device in objResponse['device_values']) {
+				shngInsertText (device+'_lqi', objResponse['device_values'][device]['lqi'], 'devicetable', 5);
+				shngInsertText (device+'_data', objResponse['device_values'][device]['data'], 'devicetable');
+				shngInsertText (device+'_last_seen', objResponse['device_values'][device]['last_seen'], 'devicetable');
+			}
+
+			shngInsertText ('broker_uptime', objResponse['broker_uptime']);
+
+			shngInsertText ('version', objResponse['broker_info']['version']);
+			shngInsertText ('active_clients', objResponse['broker_info']['active_clients']);
+			shngInsertText ('subscriptions', objResponse['broker_info']['subscriptions']);
+			shngInsertText ('stored_messages', objResponse['broker_info']['stored_messages']);
+			shngInsertText ('retained_messages', objResponse['broker_info']['retained_messages']);
+
+			shngInsertText ('msg_rcv_1min', objResponse['broker_info']['msg_rcv_1min']);
+			shngInsertText ('msg_rcv_5min', objResponse['broker_info']['msg_rcv_5min']);
+			shngInsertText ('msg_rcv_15min', objResponse['broker_info']['msg_rcv_15min']);
+			shngInsertText ('msg_snt_1min', objResponse['broker_info']['msg_snt_1min']);
+			shngInsertText ('msg_snt_5min', objResponse['broker_info']['msg_snt_5min']);
+			shngInsertText ('msg_snt_15min', objResponse['broker_info']['msg_snt_15min']);
+		}
+	}
+</script>
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
+<table class="table table-striped table-hover">
+    <tbody>
+        <tr>
+            <td class="py-1"><strong>{{_('Broker Host')}}</strong></td>
+            <td class="py-1">{{ p.broker_config.host }}</td>
+            <td class="py-1" width="50px"></td>
+            <td class="py-1"><strong>{{_('Broker Port')}}</strong></td>
+            <td class="py-1">{{ p.broker_config.port }}</td>
+            <td class="py-1" width="50px"></td>
+        </tr>
+        <tr>
+            <td class="py-1"><strong>{{_('Benutzer')}}</strong></td>
+            <td class="py-1">{{ p.broker_config.user }}</td>
+            <td class="py-1"></td>
+            <td class="py-1"><strong>{{_('Passwort')}}</strong></td>
+            <td class="py-1">
+            {% if p.broker_config.password %}
+                {% for letter in p.broker_config.password %}*{% endfor %}
+            {% endif %}
+            </td>
+            <td class="py-1"></td>
+        </tr>
+        <tr>
+            <td class="py-1"><strong>{{_('QoS')}}</strong></td>
+            <td class="py-1">{{ p.broker_config.qos }}</td>
+            <td class="py-1">{{ webif_pagelength }}</td>
+            <td class="py-1"><strong>{{_('Zigbee2Mqtt')}}</strong></td>
+            <td class="py-1"><a class="text-shng" href="http://{{ p.local_ip }}:8082" target="_blank">{{ 'GUI' }}</a></td>
+            <td class="py-1"></td>
+        </tr>
+    </tbody>
+</table>
+{% endblock headtable %}
+
+
+{% block buttons %}
+<!-- <button id="clear" class="btn btn-shng btn-sm" type="button">open Zigbee2Mqtt GUI</button> -->
+{% endblock %}
+
+{% set tabcount = 4 %}
+
+{% if not items %}
+    {% set start_tab = 2 %}
+{% endif %}
+
+
+{% set tab1title = "<strong>" ~ plugin_shortname ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% block bodytab1 %}
+<div class="container-fluid m-2 table-resize">
+    <table id="itemtable" class="table_1 table-striped table-hover pluginList display">
+        <thead>
+            <tr>
+                <th>{{ _('Item') }}</th>
+                <th>{{ _('Typ') }}</th>
+                <th style="text-align: right">{{ _('Wert') }}</th>
+                <th>{{ _('Topic') }}</th>
+                <th>{{ _('Letztes Update') }}</th>
+                <th>{{ _('Letzter Change') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+                {% set item_id = item.id() %}
+                <tr>
+                    <td class="py-1">{{ item_id }}</td>
+                    <td class="py-1">{{ item.property.type }}</td>
+                    <td class="py-1" id="{{ item_id }}_value" style="text-align: right">{{ item()}}</td>
+                    <td class="py-1">{{ p.get_iattr_value(item.conf, 'zigbee2mqtt_topic') }}</td>
+                    <td class="py-1" id="{{ item_id }}_last_update">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1" id="{{ item_id }}_last_change">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+
+{% set tab2title = "<strong>" ~ plugin_shortname ~ " Devices</strong>" %}
+{% block bodytab2 %}
+<div class="container-fluid m-2 table-resize">
+    <table id="devicetable" class="table_02 table-striped table-hover pluginList display">
+        <thead>
+            <tr>
+                <th class="no">{{ _('#') }}</th>
+                <th class="fn">{{ _('Friendy Name') }}</th>
+                <th>{{ _('IEEE Adresse') }}</th>
+                <th>{{ _('Vendor') }}</th>
+                <th>{{ _('Modell') }}</th>
+                <th>{{ _('Description') }}</th>
+                <th>{{ _('ModellID') }}</th>
+                <th>{{ _('Last seen') }}</th>
+                <th class="lqi">{{ _('LQI') }}</th>
+                <th class="data">{{ _('bereitgestellte Daten') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for device in p.zigbee2mqtt_devices %}
+                {% if p.zigbee2mqtt_devices[device]['meta'] %}
+                <tr>
+                    <td class="py-1">{{ loop.index }}</td>
+                    <td class="py-1">{{ device }}</td>
+                    <td class="py-1">{{ p.zigbee2mqtt_devices[device]['meta']['ieeeAddr'] }}</td>
+                    <td class="py-1">{{ p.zigbee2mqtt_devices[device]['meta']['vendor'] }}</td>
+                    <td class="py-1">{{ p.zigbee2mqtt_devices[device]['meta']['model'] }}</td>
+                    <td class="py-1">{{ p.zigbee2mqtt_devices[device]['meta']['description'] }}</td>
+                    <td class="py-1">{{ p.zigbee2mqtt_devices[device]['meta']['modelID'] }}</td>
+                    <td class="py-1" id="{{ device }}_last_seen">{{ _('Init...') }}</td>
+                    <td class="py-1" id="{{ device }}_lqi">{{ _('Init...') }}</td>
+                    <td class="py-1" id="{{ device }}_data">{{ _('Init...') }}</td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+
+{% set tab3title = "<strong>" ~ " Broker Information</strong>" %}
+{% block bodytab3 %}
+<table class="table table-striped table-hover pluginList">
+	<tr>
+		<td class="py-1"><strong>{{ 'Broker Version' }}</strong></td>
+		<td id="version" class="py-1">{{ p._broker.version }}</td>
+		<td class="py-1">{{ connection_result }}</td>
+	</tr>
+	<tr>
+		<td class="py-1"><strong>{{ 'Active Clients' }}</strong></td>
+		<td id="active_clients" class="py-1">{{ p._broker.active_clients }}</td>
+        <td></td>
+	</tr>
+	<tr>
+		<td class="py-1"><strong>{{ 'Subscriptions' }}</strong></td>
+		<td id="subscriptions" class="py-1">{{ p._broker.subscriptions }}</td>
+        <td></td>
+	</tr>
+	<tr>
+		<td class="py-1"><strong>{{ 'Messages stored' }}</strong></td>
+		<td id="stored_messages" class="py-1">{{ p._broker.stored_messages }}</td>
+        <td></td>
+	</tr>
+	<tr>
+		<td class="py-1"><strong>{{ 'Retained Messages' }}</strong></td>
+		<td id="retained_messages" class="py-1">{{ p._broker.retained_messages }}</td>
+        <td></td>
+	</tr>
+	{% if p.broker_monitoring %}
+        <tr>
+            <td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
+        </tr>
+        <tr>
+            <td class="py-1"><strong>{{ _('Laufzeit') }}</strong></td>
+            <td id="broker_uptime" class="py-1">{{ p.broker_uptime() }}</td>
+            <td width="500"></td>
+        </tr>
+        <tr>
+            <td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
+        </tr>
+	{% endif %}
+</table>
+
+{% if p.broker_monitoring %}
+    <table class="table table-striped table-hover pluginList">
+        <thead>
+            <th class="py-1">{{ _('Message Durchsatz') }}</th>
+            <th class="py-1">{{ _('letzte Minute') }}</th>
+            <th class="py-1">{{ _('letzte 5 Min.') }}</th>
+            <th class="py-1">{{ _('letzte 15 Min.') }}</th>
+            <th width="500"></th>
+        </thead>
+        <tr>
+            <td class="py-1">{{ _('Durchschnittlich Messages je Minute empfangen') }}</td>
+            <td id="msg_rcv_1min" class="py-1">{{ p._broker.msg_rcv_1min }}</td>
+            <td id="msg_rcv_5min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_rcv_5min }}</td>
+            <td id="msg_rcv_15min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_rcv_15min }}</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td class="py-1">{{ _('Durchschnittlich Messages je Minute gesendet') }}</td>
+            <td id="msg_snt_1min" class="py-1">{{ p._broker.msg_snt_1min }}</td>
+            <td id="msg_snt_5min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_snt_5min }}</td>
+            <td id="msg_snt_15min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_snt_15min }}</td>
+            <td></td>
+        </tr>
+    </table>
+{% endif %}
+{% endblock %}
+
+
+{% set tab4title = "<strong>" ~ plugin_shortname ~ " " ~ _('Maintenance') ~ "</strong>" %}
+{% block bodytab4 %}
+<div class="container-fluid m-2 table-resize">
+    <table id="mtable1" class="table table-striped table-hover pluginList display">
+        <thead>
+            <tr>
+                <th class="type">{{ _('Zigbee Device') }}</th>
+                <th class="data">{{ _('Meta') }}</th>
+                <th class="data">{{ _('Data') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for device in p.zigbee2mqtt_devices %}
+                <tr>
+                    <td class="py-1"><a>{{ device }}</a></td>
+                    <td class="py-1">{{ p.zigbee2mqtt_devices[device]['meta'] }}</td>
+                    <td class="py-1">{{ p.zigbee2mqtt_devices[device]['data'] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br>
+    <br>
+    <table id="mtable2" class="table table-striped table-hover pluginList display">
+        <thead>
+            <tr>
+                <th>{{ _('Plugin Device') }}</th>
+                <th>{{ _('Meta Data') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for device in p.zigbee2mqtt_plugin_devices %}
+                <tr>
+                    <td class="py-1"><a>{{ device }}</a></td>
+                    <td class="py-1">{{ p.zigbee2mqtt_plugin_devices[device]}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

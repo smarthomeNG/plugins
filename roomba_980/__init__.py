@@ -19,23 +19,23 @@
 #  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
+# TODO: das Modul ist im Sourcetree nicht vorhanden... woher soll das kommen?
 from plugins.roomba_980.roomba import Roomba
 from lib.model.smartplugin import SmartPlugin
-from lib.item import Items
+
 
 class ROOMBA_980(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.0.1"
+    PLUGIN_VERSION = "1.0.2"
 
     myroomba = None
 
-    def __init__(self, sh, adress=None, blid=None, roombaPassword=None, cycle=900):
-        self._address = adress
-        self._blid = blid
-        self._roombaPassword = roombaPassword
-        self._cycle = cycle
+    def __init__(self, sh, **kwargs):
+        self._address = self.get_parameter_value('adress')
+        self._blid = self.get_parameter_value('blid')
+        self._roombaPassword = self.get_parameter_value('roombaPassword')
+        self._cycle = self.get_parameter_value('cycle')
 
         self._status_batterie = None
         self._status_items = {}
@@ -61,7 +61,7 @@ class ROOMBA_980(SmartPlugin):
         self.alive = True
 
     def stop(self):
-        self.scheduler.remove('get_status')
+        self.scheduler_remove('get_status')
         self.myroomba.disconnect()
         self.alive = False
 
@@ -69,36 +69,35 @@ class ROOMBA_980(SmartPlugin):
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != __name__:
+        if caller != __name__ and self.alive:
             self.logger.debug('item_update {} '.format(item))
             if self.get_iattr_value(item.conf, 'roomba_980') == "start":
-               if item() == True:
-                   self.send_command("start")
+                if item() is True:
+                    self.send_command("start")
             elif self.get_iattr_value(item.conf, 'roomba_980') == "stop":
-               if item() == True:
-                   self.send_command("stop")
+                if item() is True:
+                    self.send_command("stop")
             elif self.get_iattr_value(item.conf, 'roomba_980') == "dock":
-               if item() == True:
-                   self.send_command("dock")
+                if item() is True:
+                    self.send_command("dock")
 
     def get_status(self):
         status = self.myroomba.master_state
 
         for status_item in self._status_items:
-          if status_item == "status_batterie":
-             self._status_items[status_item](status['state']['reported']['batPct'],__name__)
-          elif status_item == "status_bin_full":
-             self._status_items[status_item](status['state']['reported']['bin']['full'],__name__)
-          elif status_item == "status_cleanMissionStatus_phase":
-             self._status_items[status_item](status['state']['reported']['cleanMissionStatus']['phase'],__name__)
-          elif status_item == "status_cleanMissionStatus_error":
-             self._status_items[status_item](status['state']['reported']['cleanMissionStatus']['error'],__name__)
+            if status_item == "status_batterie":
+                self._status_items[status_item](status['state']['reported']['batPct'], __name__)
+            elif status_item == "status_bin_full":
+                self._status_items[status_item](status['state']['reported']['bin']['full'], __name__)
+            elif status_item == "status_cleanMissionStatus_phase":
+                self._status_items[status_item](status['state']['reported']['cleanMissionStatus']['phase'], __name__)
+            elif status_item == "status_cleanMissionStatus_error":
+                self._status_items[status_item](status['state']['reported']['cleanMissionStatus']['error'], __name__)
 
         self.logger.debug('Status update')
 
     def send_command(self, command):
-        if self.myroomba != None:
-             self.myroomba.send_command(command)
-             self.logger.debug('send command: {} to Roomba'.format(command))
-
+        if self.myroomba is not None:
+            self.myroomba.send_command(command)
+            self.logger.debug('send command: {} to Roomba'.format(command))
 

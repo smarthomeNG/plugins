@@ -1,0 +1,18 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Informationen':         {'de': '=', 'en': 'Informations'}
+    'Einstellungen':         {'de': '=', 'en': 'Settings'}
+
+    # Alternative format for translations of longer texts:
+    'Viessmann Explanation':
+        de: 'Schritt für Schritt Anleitung zur Verbindung des Plugins mit dem Vissmann Backend.'
+        en: 'Step by step manual for connecting the plugin with the Viessmann backend.'
+
+
+
+
+    
+
+
+

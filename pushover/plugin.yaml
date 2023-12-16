@@ -10,7 +10,7 @@ plugin:
     maintainer: 'Thomas Creutz'
     tester: None
     state: ready
-    version: 1.6.1                 # Plugin version
+    version: 1.6.2                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
     multi_instance: True           # plugin supports multi instance
     restartable: unknown

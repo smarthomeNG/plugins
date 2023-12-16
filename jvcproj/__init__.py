@@ -97,10 +97,9 @@ class JVC_DILA_Control(SmartPlugin):
     the update functions for the items
     """
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION='1.0.1'
+    PLUGIN_VERSION = '1.0.2'
 
-
-    def __init__(self, smarthome, host='0.0.0.0', gammaconf_dir='/usr/local/smarthome/etc/jvcproj/'):
+    def __init__(self, sh, **kwargs):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         :param host:               JVC DILA Projectors IP address
@@ -108,10 +107,9 @@ class JVC_DILA_Control(SmartPlugin):
         :port is fixed to 20554
         """
         super().__init__()
-        self.logger = logging.getLogger(__name__)
-        self._sh=smarthome
-        self.host_port = (host, 20554)
-        self.gammaconf_dir = gammaconf_dir
+        self.host = self.get_parameter_value('host')
+        self.gammaconf_dir = self.get_parameter_value('gammaconf_dir')
+        self.host_port = (self.host, 20554)
         self.logger.debug("Plugin '{}': configured for host: '{}'".format(self.get_fullname(), self.host_port))
 
     def run(self):
@@ -164,7 +162,7 @@ class JVC_DILA_Control(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        if item():
+        if item() and self.alive:
             if self.has_iattr(item.conf, 'jvcproj_cmd'):
                 if self.get_iattr_value(item.conf, 'jvcproj_cmd') == 'None':
                     self.logger.debug("Plugin '{}': no command given for update_item '{}'. Please check jvcproj_cmd!"
@@ -184,17 +182,16 @@ class JVC_DILA_Control(SmartPlugin):
                                       .format(self.get_fullname(), item, caller, source, dest))
                 self.check_gamma_cmd(item)
 
-
     def check_gamma_cmd(self, item):
         """check gamma options to import new gammatable"""
         self.logger.debug("Plugin '{}': checking for gamma.conf an correct gamma input (must a custom gammatable) in '{}' : '{}'."
                           .format(self.get_fullname(), item, self.get_iattr_value(item.conf, 'jvcproj_gamma')))
-        _checklist = (self.get_iattr_value(item.conf, 'jvcproj_gamma').replace(' ','')).split('|')
+        _checklist = (self.get_iattr_value(item.conf, 'jvcproj_gamma').replace(' ', '')).split('|')
         if len(_checklist) != 2:
             self.logger.debug("Plugin '{}': ERROR! Item:'{}': exactly two arguments (file and custom gamma table) must be given!"
                               .format(self.get_fullname(), item))
             return
-        _cmdlist=[]
+        _cmdlist = []
         if self.gammaconf_dir[-1] != '/':
             self.gammaconf_dir = self.gammaconf_dir + '/'
         if os_path.isfile(self.gammaconf_dir + _checklist[0]) is False:
@@ -243,7 +240,7 @@ class JVC_DILA_Control(SmartPlugin):
     def check_gammadata(self, table):
         """Check gamma data from file"""
         gammadata = table
-        if gammadata is None :
+        if gammadata is None:
             return None
         if len(gammadata) == 256:
             gammadata = [gammadata, gammadata, gammadata]
@@ -268,12 +265,11 @@ class JVC_DILA_Control(SmartPlugin):
             yield val % 256
             yield int(val / 256)
 
-
     def check_cmd(self, item):
         """create command list and execute low level string validation for each command"""
         self.logger.debug("Plugin '{}': create commandlist for item '{}' : '{}' and check command(s)."
                           .format(self.get_fullname(), item, self.get_iattr_value(item.conf, 'jvcproj_cmd')))
-        _checklist = (self.get_iattr_value(item.conf, 'jvcproj_cmd').replace(' ','')).split('|')
+        _checklist = (self.get_iattr_value(item.conf, 'jvcproj_cmd').replace(' ', '')).split('|')
         _cmdlist = []
         for _cmd in _checklist:
             if _cmd.upper()[2:6] == UNIT_ID and _cmd.upper()[-2:] == END:
@@ -297,7 +293,7 @@ class JVC_DILA_Control(SmartPlugin):
         """handle connection and sending commands for jvcproj_cmd"""
         self.connect()
         for cmd in cmdlist:
-            if cmd[:2] == REQ: ##maybe in the future??
+            if cmd[:2] == REQ:  # maybe in the future??
                 self.logger.debug("Plugin '{}': WARNING! A request is not yet supported!"
                                   .format(self.get_fullname()))
             elif cmd[:2] == OPE:
@@ -307,7 +303,6 @@ class JVC_DILA_Control(SmartPlugin):
                 self.logger.debug("Plugin '{}': operation command '{}' sent successfully!"
                                   .format(self.get_fullname(), cmd))
         self.disconnect('finished! Now disconnecting!')
-
 
     def connect(self):
         """Open network connection to projector and perform handshake"""
@@ -330,13 +325,13 @@ class JVC_DILA_Control(SmartPlugin):
             self.send(binascii.a2b_hex(cmd))
             self.expect(binascii.a2b_hex(ACK + cmd[2:10] + END))
         except Timeout:
-                self.disconnect('ERROR! Command not acknowledged! Aborting!')
-                raise CommandNack('Command not acknowledged', cmd)
+            self.disconnect('ERROR! Command not acknowledged! Aborting!')
+            raise CommandNack('Command not acknowledged', cmd)
 
     def get(self):
         pass
 
-    def disconnect(self, message ='disconnecting...'):
+    def disconnect(self, message='disconnecting...'):
         """Close socket"""
         self.logger.debug("Plugin '{}': {}"
                           .format(self.get_fullname(), message))
@@ -344,6 +339,8 @@ class JVC_DILA_Control(SmartPlugin):
 
     def send(self, data):
         """Send data with optional"""
+        if not self.alive:
+            return
         try:
             self.socket.send(data)
         except ConnectionAbortedError as err:
