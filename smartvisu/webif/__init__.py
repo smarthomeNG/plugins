@@ -115,12 +115,13 @@ class WebInterface(SmartPluginWebIf):
                 plgitems.append(item)
 
         plglogics = []
-        for logic in self.logics.return_logics():
-            plglogics.append(self.logics.get_logic_info(logic))
-
+        if self.logics:
+            for logic in self.logics.return_logics():
+                plglogics.append(self.logics.get_logic_info(logic))
+        pagelength = self.plugin.get_parameter_value('webif_pagelength')
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
-                           webif_pagelength=self.plugin.get_parameter_value('webif_pagelength'),
+                           webif_pagelength=pagelength,
                            items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
                            logics=sorted(plglogics, key=lambda k: str.lower(k['name'])),
                            clients=clients_sorted, client_count=len(clients_sorted))
@@ -137,23 +138,18 @@ class WebInterface(SmartPluginWebIf):
         :return: dict with the data needed to update the web page.
         """
         if dataSet is None:
-            result_array = []
-
             # callect data for 'items' tab
-            item_list = []
-            # for item in self.plugin.get_item_list():
-            #     item_config = self.plugin.get_item_config(item)
-            #     value_dict = {}
-            #     value_dict['path'] = item.id()
-            #     value_dict['type'] = item.type()
-            #     value_dict['not_discovered'] = (item_config['bus'] == '')
-            #     value_dict['sensor_addr'] = item_config['sensor_addr']
-            #     value_dict['deviceclass'] = item_config['deviceclass']
-            #     value_dict['value'] = item()
-            #     value_dict['value_unit'] = item_config['unit']
-            #     value_dict['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-            #     value_dict['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
-            #     item_list.append(value_dict)
+            item_dict = {}
+            for item in self.plugin.get_item_list():
+                item_config = self.plugin.get_item_config(item)
+                value_dict = {}
+                value_dict['type'] = item.property.type
+                if ('visu_acl' in item.conf):
+                    value_dict['acl'] = item.conf.get('visu_acl')
+                value_dict['value'] = item.property.value
+                value_dict['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                value_dict['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                item_dict[item.property.path] = value_dict
 
             # callect data for 'clients' tab
             client_list = []
@@ -174,8 +170,13 @@ class WebInterface(SmartPluginWebIf):
                 value_dict['browserversion'] = clientinfo.get('browserversion', '')
                 client_list.append(value_dict)
 
-            result = {'items': item_list, 'clients': client_list}
+            plglogics = []
+            if self.logics:
+                for logic in self.logics.return_logics():
+                    plglogics.append(self.logics.get_logic_info(logic))
 
+            result = {'items': item_dict, 'clients': client_list, 'logics': plglogics}
+            self.logger.error(result)
             # send result to wen interface
             try:
                 data = json.dumps(result)
@@ -187,4 +188,3 @@ class WebInterface(SmartPluginWebIf):
                 self.logger.error(f"get_data_html exception: {e}")
 
         return {}
-

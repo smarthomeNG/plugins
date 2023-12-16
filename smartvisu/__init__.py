@@ -46,7 +46,7 @@ from .svinstallwidgets import SmartVisuInstallWidgets
 
 class SmartVisu(SmartPlugin):
 
-    PLUGIN_VERSION="1.8.13"
+    PLUGIN_VERSION="1.8.14"
     ALLOW_MULTIINSTANCE = True
 
     visu_definition = None
@@ -184,6 +184,7 @@ class SmartVisu(SmartPlugin):
         item.expand_relativepathes('sv_widget2', "'", "'")
         item.expand_relativepathes('sv_nav_aside', "'", "'")
         item.expand_relativepathes('sv_nav_aside2', "'", "'")
+        self.add_item(item)
 
 
     def parse_logic(self, logic):
