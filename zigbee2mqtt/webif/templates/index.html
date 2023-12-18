@@ -193,6 +193,7 @@
     <table id="itemtable" class="table_1 table-striped table-hover pluginList display">
         <thead>
             <tr>
+                <th></th>
                 <th>{{ _('Item') }}</th>
                 <th>{{ _('Typ') }}</th>
                 <th style="text-align: right">{{ _('Wert') }}</th>
@@ -205,6 +206,7 @@
             {% for item in items %}
                 {% set item_id = item.id() %}
                 <tr>
+                    <td class="py-1"></td>
                     <td class="py-1">{{ item.property.path }}</td>
                     <td class="py-1">{{ item.property.type }}</td>
                     <td class="py-1" id="{{ item_id }}_value" style="text-align: right">{{ item()}}</td>
