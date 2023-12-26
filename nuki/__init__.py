@@ -161,7 +161,7 @@ class Nuki(SmartPlugin):
                 if response is not None:
                     if response['success']:
                         # self._get_nuki_status()
-                        self.logger.error(
+                        self.logger.debug(
                             "Plugin '{0}': update item: {1}".format(self.get_shortname(), item.property.path))
                         # immediatly update lock state via list, to e.g. the status information that lock is locking
                     self._get_nuki_status_via_list()
