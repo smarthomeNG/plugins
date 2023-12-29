@@ -12,7 +12,7 @@ plugin:
 #    documentation:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1842817-support-thread-f%C3%BCr-das-solarforecast-plugin
 
-    version: 1.9.2                  # Plugin version
+    version: 1.9.3                  # Plugin version
     sh_minversion: 1.8.0            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True            # plugin supports multi instance
@@ -43,9 +43,11 @@ parameters:
     azimuth:
         type: num
         mandatory: True
+        valid_min: -180
+        valid_max: 180
         description:
-            de: 'Azimutwinkel der Panelausrichtung. 0 Grad entspricht Süden'
-            en: 'Azimuth angle of panel direction. 0 degree is equivalent to southern direction'
+            de: 'Azimutwinkel der Panelausrichtung (-180 bis 180 Grad). 0 Grad entspricht Süden'
+            en: 'Azimuth angle of panel direction (-180 to 180 degrees). 0 degree is equivalent to southern direction'
     kwp:
         type: num
         mandatory: True
