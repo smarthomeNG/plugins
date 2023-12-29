@@ -26,7 +26,7 @@ Ersatz durch Bordmittel
 
 Details zum Memory Loghandler sind unter :doc:`Logging Handler </referenz/logging/logging_handler>`
 zu finden. Informationen zum Loggen bei Itemänderungen findet man unter
-:doc:` log_change </referenz/items/standard_attribute/log_change>`.
+:doc:`log_change </referenz/items/standard_attribute/log_change>`.
 
 Beispiel Logik
 --------------
