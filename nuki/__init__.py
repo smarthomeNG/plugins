@@ -43,7 +43,7 @@ lock = False
 
 
 class Nuki(SmartPlugin):
-    PLUGIN_VERSION = "1.6.2"
+    PLUGIN_VERSION = "1.6.3"
 
     def __init__(self, sh, *args, **kwargs):
 
@@ -103,13 +103,12 @@ class Nuki(SmartPlugin):
         self._clear_callbacks()
         self.scheduler_add(__name__, self._scheduler_job, prio=3, cron=None, cycle=300, value=None,
                            offset=None, next=None)
-
+        self._register_callback()
         self.alive = True
 
     def _scheduler_job(self):
         # will also be executed at start
         self._get_paired_nukis()
-        self._register_callback()
         self._get_nuki_status_via_list()
 
     def stop(self):
