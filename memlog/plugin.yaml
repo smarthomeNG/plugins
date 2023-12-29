@@ -3,15 +3,14 @@ plugin:
     # Global plugin attributes
     type: system                    # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Speichern der Logeinträge im Speicher (zur Anzeige in der VISU)'
-        en: 'Store log entries in memory (for display in VISU)'
+        de: 'Speichern der Logeinträge im Speicher (zur Anzeige in der VISU). Durch Bordmittel ersetzbar.'
+        en: 'Store log entries in memory (for display in VISU). Can be replaced by standard config.'
     maintainer: ohinckel
     tester: cmalo
-    state: ready
+    state: deprecated
     keywords: memory log            # keywords, where applicable
-#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 
-    version: 1.6.0                  # Plugin version
+    version: 1.6.1                  # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
@@ -40,26 +39,26 @@ parameters:
         # [time, thread, level, message]
         description:
             de: >
-                Definiert eine Liste mit kommagetrennten Werten die für jede Nachricht geloggt werden. 
+                Definiert eine Liste mit kommagetrennten Werten die für jede Nachricht geloggt werden.
                 Die folgenden internen Zuordnungen können benutzt werden:
-                
+
                 time - Zeitstempel des Eintrags
                 thread - Thread der die Daten erzeugt
                 level - Der log level (Standard ist INFO)
                 message - Die Nachricht
-                
-                Die Vorgabe sollte beibehalten werden, wenn das Log in SmartVISU angezeigt werden soll, 
+
+                Die Vorgabe sollte beibehalten werden, wenn das Log in SmartVISU angezeigt werden soll,
                 sonst werden die Werte von der SmartVISU für die Darstellung nicht korrekt interpretiert.
             en: >
-                This configures the list of values with comma separated values which are logged for each log message. 
+                This configures the list of values with comma separated values which are logged for each log message.
                 The following internal mappings can be used and will be automatically set
                 if not given explicitely when logging data:
-                
+
                 time - the timestamp of log
                 thread - the thread logging data
                 level - the log level (defaults to INFO)
                 message - the message
-                
+
                 The default value should not be changed. Otherwise the SmartVISU might misinterpret the values for display.
 
     maxlen:
@@ -75,7 +74,7 @@ parameters:
             de: >
                 Jedes mal wenn ein Item aktualisiert wird, wird ein Logeintrag geschrieben unter der
                 Berücksichtigung der konfigurierten Items und deren Werte als Log Werte
-                
+
                 Wird dies nicht angegeben, dann werden die vorgegebenen Zuordnungswerte verwendet:
                   - item_a --> now
                   - item_b --> thread info
@@ -85,7 +84,7 @@ parameters:
             en: >
                 Each time an item is updated using the memlog configuration setting, a log entry will be written
                 using the list of items configured in this attribute as log values.
-                
+
                 When this is not configured, the default mapping values will be used the associated item's value will
                 be logged. e.g.:
                   - item_a --> now
@@ -100,7 +99,7 @@ item_attributes:
         description:
             de: >
                 Bezeichnet den Namen des Logs in dem die Nachricht aufgezeichnet werden soll.
-                Alle´Einträge werden mit Level INFO erstellt
+                Alle Einträge werden mit Level INFO erstellt
             en: >
                 Defines the name of in-memory log which should be used to log the item's content to the log.
                 Everything is logged with 'INFO' level.
@@ -128,36 +127,33 @@ logic_parameters:
         type: str
         description:
             de: >
-                Legt das Mitteilungsformat des Logeintrages fest. In der Zeichenkette können folgende Platzhalter enthalten 
+                Legt das Mitteilungsformat des Logeintrages fest. In der Zeichenkette können folgende Platzhalter enthalten
                 sein, die durch eine format Anweisung ersetzt werden:
-                
+
                 logic - Das Logik Objekt, z.B. logic.name für den Logiknamen
                 plugin - Die Instanz des Memlog Plugins
                 by - Ursprung des Logiktriggers
                 source - Die Quelle
                 dest - Das Ziel
-                Die Logik und Plugin Platzhalter sind immer verfügbar, die weiteren hängen davon ab 
+                Die Logik und Plugin Platzhalter sind immer verfügbar, die weiteren hängen davon ab
                 wie die Logik aufgerufen bzw. getriggert wurde
-                
+
                 Beispiel:
                 memlog_message: "Die Logik {logic.name} wurde getriggert!"
 
             en: >
                 Defines the message to be logged. It configures a string which may contain placeholders which got
                 replaced by using the format() function.
-                
+
                 The following placeholders or object can be used in the message string:
-                
+
                 logic - the logic object, e.g. logic.name for the logic's name
                 plugin - the memlog plugin instance object
                 by - the string containing the origin of logic trigger
                 source - the source
                 dest - the destination
-                The logic and plugin placeholders are always available, the rest depends on the logic 
+                The logic and plugin placeholders are always available, the rest depends on the logic
                 invocation/trigger.
-                
+
                 Example:
                 memlog_message: "The logic {logic.name} was triggered!"
-
-
-
