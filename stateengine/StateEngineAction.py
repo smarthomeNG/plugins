@@ -1079,7 +1079,8 @@ class SeActionForceItem(SeActionBase):
                 return
         source = self.set_source(current_condition, previous_condition, previousstate_condition)
         # Set to different value first ("force")
-        if self.__item() == value:
+        current_value = self.__item()
+        if current_value == value:
             if self.__item._type == 'bool':
                 self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, not value)
                 self.__item(not value, caller=self._caller, source=source)
@@ -1091,12 +1092,8 @@ class SeActionForceItem(SeActionBase):
                     self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, '-')
                     self.__item('-', caller=self._caller, source=source)
             elif self.__item._type == 'num':
-                if value != 0:
-                    self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, 0)
-                    self.__item(0, caller=self._caller, source=source)
-                else:
-                    self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, 1)
-                    self.__item(1, caller=self._caller, source=source)
+                self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, current_value+0.1)
+                self.__item(current_value+0.1, caller=self._caller, source=source)
             else:
                 self._log_warning("{0}: Force not implemented for item type '{1}'", actionname, self.__item._type)
         else:
