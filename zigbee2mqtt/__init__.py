@@ -61,8 +61,11 @@ class Zigbee2Mqtt(MqttPlugin):
         self.z2m_base = self.get_parameter_value('base_topic').lower()
         self.cycle = self.get_parameter_value('poll_period')
         self.read_at_init = self.get_parameter_value('read_at_init')
-        self.bool_values = self.get_parameter_value('bool_values')
         self._z2m_gui = self.get_parameter_value('z2m_gui')
+
+        # bool_values is only good if used internally, because MQTT data is 
+        # usually sent in JSON. So just make this easy...
+        self.bool_values = [False, True]
 
         self._items_read = []
         self._items_write = []
@@ -88,17 +91,17 @@ class Zigbee2Mqtt(MqttPlugin):
 
         # Add subscription to get bridge announces
         bridge_subs = [
-            ['devices', 'list', None],
-            ['state', 'dict', None],
-            ['info', 'dict', None],
-            ['log', 'dict', None],
-            ['extensions', 'list', None],
-            ['config', 'dict', None],
-            ['groups', 'list', None],
-            ['response', 'dict', None]
+            ['devices', 'list'],
+            ['state', 'str'],
+            ['info', 'dict'],
+            ['log', 'dict'],
+            ['extensions', 'list'],
+            ['config', 'dict'],
+            ['groups', 'list'],
+            ['response', 'dict']
         ]
-        for attr, dtype, blist in bridge_subs:
-            self.add_z2m_subscription('bridge', attr, '', '', dtype, callback=self.on_mqtt_msg, bool_values=blist)
+        for attr, dtype in bridge_subs:
+            self.add_z2m_subscription('bridge', attr, '', '', dtype, callback=self.on_mqtt_msg)
 
         # Add subscription to get device announces
         self.add_z2m_subscription('+', '', '', '', 'dict', callback=self.on_mqtt_msg)
@@ -526,7 +529,11 @@ class Zigbee2Mqtt(MqttPlugin):
             _bridge = self._devices[device]
 
             if topic_3 == 'state':
-                return {'online': bool(['offline', 'online'].index(payload.get(topic_3)))}
+                try:
+                    data = json.loads(payload)
+                except json.JSONDecodeError:
+                    data = {'state': payload}
+                return {'online': bool(['offline', 'online'].index(data.get(topic_3)))}
 
             elif topic_3 in ('config', 'info'):
                 assert isinstance(payload, dict), 'dict'

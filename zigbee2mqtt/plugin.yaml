@@ -52,19 +52,12 @@ parameters:
             de: Pfad zum Suspend-Item
             en: Path to suspend item
 
-    bool_values:
-        type: list
-        default: ['OFF', 'ON']
-        description:
-            de: Plugin-weite Ersetzungwerte für bool-Werte
-            en: Plugin-wide substitution values for bool items
-
     z2m_gui:
         type: str
-        default: ''
+        default: 'localhost:8080'
         description:
-            de: Host:Port des zigbee2mqtt-Web-GUI
-            en: host:port of the zigbee2mqtt-web-GUI
+            de: Web-Adresse des zigbee2mqtt-Web-GUI (Standard localhost:8080)
+            en: Web address of the zigbee2mqtt-web-GUI (default localhost:8080)
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
@@ -95,8 +88,8 @@ item_attributes:
     z2m_bool_values:
         type: list
         description:
-            de: Ersetzungwerte für bool-Werte
-            en: substitution values for bool items
+            de: Ersetzungwerte für bool-Werte (z.B. ['OFF', 'ON'])
+            en: substitution values for bool items (e.g. ['OFF', 'ON'])
 
 
 item_structs:
@@ -225,7 +218,7 @@ item_structs:
             z2m_attr: last_seen
 
     light_white_ambient:
-        struct: priv_z2m.light_white_ambient_group
+        struct: zigbee2mqtt.light_white_ambient_group
 
         linkquality:
             type: num
@@ -253,7 +246,7 @@ item_structs:
                 eval_trigger: ..
 
     light_rgb_group:
-        struct: priv_z2m.light_white_ambient_group
+        struct: zigbee2mqtt.light_white_ambient_group
 
         color:
             type: dict
@@ -286,7 +279,7 @@ item_structs:
             z2m_attr: color_temp_startup
 
     light_rgb:
-        struct: priv_z2m.light_rgb_group
+        struct: zigbee2mqtt.light_rgb_group
 
         linkquality:
             type: num

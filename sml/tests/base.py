@@ -63,6 +63,7 @@ class TestSmlBase(unittest.TestCase):
 
         self.sh = MockSmartHome()
         plugin = Sml(self.sh)
+        plugin.alive = True
         plugin.connect()
         plugin.data = SmlPacketReader()
         plugin._serial = plugin.data
