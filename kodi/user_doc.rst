@@ -39,7 +39,7 @@ Damit ist die alte Item-Struktur 1:1 übernommen und nutzt die neuen Funktionen.
 Wenn die Items einzeln erstellt und konfiguriert wurden, muss die alte Item-Konfiguration
 manuell umgestellt werden, indem die entsprechenden Item-Attribute des kodi-Plugins ersetzt werden.
 
-.. code-block:: yaml 
+.. code-block:: yaml
 
     kodi:
         volume:
@@ -92,8 +92,7 @@ Konfiguration
 Hinweise zu Verbindungen
 ========================
 
-Über die plugin-Parameter `connect_retries` (Anzahl) und `connect_cycle (Wartezeit) kann eingestellt werden, wie oft das Plugin versucht, eine Verbindung zu Kodi aufzubauen. 
+Über die plugin-Parameter `connect_retries` (Anzahl) und `connect_cycle` (Wartezeit) kann eingestellt werden, wie oft das Plugin versucht, eine Verbindung zu Kodi aufzubauen. 
 
-Das weitere Verhalten wird über die Parameter `retry_cycle` (Wartezeit) und `retry_suspend` (Anzahl Zyklen) eingestellt. Nach Ablauf dieser Versuche wartet das Plugin 30 Sekunden (bzw. die in `retry_cycle` eingestellte Zeit), bevor das Ganze wiederholt wird. Wenn `retry_suspend` gesetzt ist, wechselt das Plugin nach dieser Anzahl von `retry_cycles` in den Suspend-Modus und beendet die Verbindungsversuche. 
+Das weitere Verhalten wird über die Parameter `retry_cycle` (Wartezeit) und `retry_suspend` (Anzahl Zyklen) eingestellt. Nach Ablauf dieser Versuche wartet das Plugin 30 Sekunden (bzw. die in `retry_cycle` eingestellte Zeit), bevor das Ganze wiederholt wird. Wenn `retry_suspend` gesetzt ist, wechselt das Plugin nach dieser Anzahl von `retry_cycles` in den Suspend-Modus und beendet die Verbindungsversuche.
 Um den Suspend-Modus zu beenden, kann mit dem Plugin-Attribut `suspend_item` ein Item konfiguriert werden, mit dem der Suspend-Modus ein- und ausgeschaltet werden kann. Alternativ stehen die Plugin-Funktionen `suspend()` und `resume()` zur Verfügung.
-
