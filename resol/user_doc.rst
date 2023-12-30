@@ -17,9 +17,8 @@ Allgemein
 
 Resol plugin, mit Unterstützung für Resol Solar Datenlogger, Frischwasserwärmetauscher und Regler.
 
-http://www.resol.de/index/produktdetail/kategorie/4/id/8/sprache/de
-
-http://www.cosmo-info.de/fileadmin/user_upload/DL/COSMO-Solarregelung/COSMO-Multi.pdf
+`Resol Webseite <http://www.resol.de/index/produktdetail/kategorie/4/id/8/sprache/de>`_
+`Cosmo Solarregelung <http://www.cosmo-info.de/fileadmin/user_upload/DL/COSMO-Solarregelung/COSMO-Multi.pdf>`_
 
 
 Konfiguration
@@ -53,7 +52,7 @@ Beispiel
         enforce_updates: 'true'
         resol_offset: 2
         resol_bituse: 15
-        resol_factor: 
+        resol_factor:
          - '0.1'
          - '25.6'
 
@@ -63,7 +62,7 @@ Beispiel
         enforce_updates: 'true'
         resol_offset: 28
         resol_bituse: 48
-        resol_factor: 
+        resol_factor:
          - '1'
          - '256'
          - '1000'
@@ -93,14 +92,12 @@ Beispiel
             database_maxage: 62
             resol_offset@solar: 0
             resol_bituse@solar: 16
-            resol_factor@solar: 
+            resol_factor@solar:
              - '0.1'
              - '25.6'
             resol_isSigned@solar:
              - False
              - True
-
-
 
 Resol Protokoll
 ===============
@@ -110,23 +107,22 @@ Informationen
 
 Weitere Informationen zu Resol Parametern und Quellen sind hier zu finden:
 
-https://github.com/danielwippermann/resol-vbus
-
-https://danielwippermann.github.io/resol-vbus/#/vsf
+`Github <https://github.com/danielwippermann/resol-vbus>`_
+`Daniel Wippermann <https://danielwippermann.github.io/resol-vbus/#/vsf>`_
 
 Über die Installation der Resol Software Service Center können weitere Offsets und Bitmasken ausgelesen werden.
 Diese werden im XML Format von RESOL als Teil der RSC Software (Resol Service Center) bereitgestellt. Hierzu
 einfach download, installieren (unter Linux ``wine`` nutzen) und die benötigten XML Dateien von hier beziehen: {Install_dir}/eclipse/plugins/de.resol.servicecenter.vbus.resol_2.0.0/ -
 
-Synch byte zwischen verschiedenen Messages: 0xAA
+Sync byte zwischen verschiedenen Messages: 0xAA
 
 Message:
 =============== =========================================================================
-Byte(s)                Inhalt       
+Byte(s)                Inhalt
 =============== =========================================================================
 0-1               Destination
 2-3               Source
-  4               Protocol Version,        0x10 -> "PV1", 0x20 -> "PV2", 0x30 -> "PV3"
+4                 Protocol Version,        0x10 -> "PV1", 0x20 -> "PV2", 0x30 -> "PV3"
 5-6               Command
 7-8               Frame count,             Example 0x1047-> 104 bytes
 =============== =========================================================================
