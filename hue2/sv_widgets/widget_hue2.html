@@ -8,7 +8,7 @@
  *
  */
 {% macro color_control(id, g_lamp, g_alert_effect) %}
-{% import "basic.html" as basic %}
+{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
 
 <table height="90%" width="90%" align="center">
 	<tr>
@@ -69,7 +69,7 @@
  *
  */
 {% macro attributes(id, g_lamp) %}
-{% import "basic.html" as basic %}
+{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
 
 	Name: {{ basic.print(id~'.lightname', g_lamp~'.lightname') }} <br>
 	Type: {{ basic.print(id~'.lighttype', g_lamp~'.lighttype') }} <br>
