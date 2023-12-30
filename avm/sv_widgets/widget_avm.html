@@ -9,7 +9,7 @@
  *
  */
 {% macro callmonitor_small(id, txt, gad_event, gad_last_caller, gad_last_call_date, gad_duration) %}
-    {% import "basic.html" as basic %}
+    {% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
     {% set uid = uid(page, id) %}
     {{ txt|e }}:<br/>
     <div id="{{ uid }}">
@@ -37,7 +37,7 @@
 *
 */
 {% macro wifi(id, gad_name, gad_wlan24, gad_wlan5, gad_wlanguest, gad_guesttime) %}
-    {% import "basic.html" as basic %}
+    {% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
     {% set uid = uid(page, id) %}
 
     <div>
@@ -61,7 +61,7 @@
  * @param       the gad/item for the serial number of the fritzdevice
  */
 {% macro system_info(id, gad_uptime, gad_firmware, gad_hardware_version, gad_serial_number) %}
-    {% import "basic.html" as basic %}
+    {% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
     {% set uid = uid(page, id) %}
     <div id="{{ uid }}">
         {% if gad_uptime %}Uptime: {{ basic.print(id~'uptime', gad_uptime, 'float', 'VAR / 3600') }} hours<br/>{% endif %}
@@ -88,7 +88,7 @@
  *
  */
 {% macro wan_info(id, gad_ip, gad_uptime, gad_connection_status, gad_connection_error, gad_total_packets_sent, gad_total_packets_received, gad_total_bytes_sent, gad_total_bytes_received, gad_upstream, gad_downstream) %}
-    {% import "basic.html" as basic %}
+    {% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
     {% set uid = uid(page, id) %}
     <div id="{{ uid }}">
         {% if gad_ip %}Internet-IP: {{ basic.print(id~'ip', gad_ip) }}<br/> {% endif %}
