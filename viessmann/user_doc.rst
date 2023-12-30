@@ -24,8 +24,40 @@ Das Plugin unterstützt die serielle Kommunikation mit dem Lesekopf (ggf. über 
 
 Zur Identifizierung des Heizungstyps kann das Plugin auch im Standalone-Modus betrieben werden (s.u.)
 
+
+Anpassungen durch Update auf sdp
+--------------------------------
+
+Durch die Umstellung auf sdp haben sich sowohl Änderungen in der Plugin- als auch der Item-Konfiguration geändert.
+
+Plugin-Konfiguration:
+~~~~~~~~~~~~~~~~~~~~~
+
+-  der Parameter ``heating_type`` ist in ``model`` umbenannt worden
+-  der Parameter ``suspend_item`` ist neu hinzugefügt worden und bestimmt (bei Bedarf) das Item zum Steuern des Suspend-Modus
+
+Item-Konfiguration:
+~~~~~~~~~~~~~~~~~~~
+
+Die Item-Konfiguration von sdp wird durch mitgelieferte Structs unterstützt. Zu Details siehe weiter unten.
+
+Das Attribut ``viess_balist`` gibt es nicht mehr, die Funktionalität wird durch Lookup-Tabellen abgebildet. Die Lookup-Tabelle zur Betriebsart ist im Item ``Allgemein.Betriebsart.lookup`` standardmäßig verfügbar.
+
+Plugin-Funktionen:
+~~~~~~~~~~~~~~~~~~
+
+Die Funktion ``update_all_read_items`` existiert nicht mehr. SmartDevicePlugin bietet - generell - die Funktion ``read_all_commands(group='')`` an, die die gleiche Funktionalität darstellt. Hier kann eine Gruppe, eine Liste von Gruppen oder 0 (für alle Items) angegeben werden, die gelesen werden sollen. Die Konfiguration entspricht den read_groups_triggers (die intern nur diese Funktion anstoßen).
+
+
 Changelog
 ---------
+
+1.3.0
+~~~~~
+
+-  komplettes Rewrite auf Basis SmartDevicePlugin
+-  Umfang der unterstützten Geräte beibehalten
+-  breaking Change: Konfiguration (Plugin und Items) müssen angepasst werden
 
 1.2.2
 ~~~~~
@@ -86,61 +118,56 @@ plugin.yaml
     viessmann:
         protocol: P300
         plugin_name: viessmann
-        heating_type: V200KO1B
+        model: V200KO1B
         serialport: /dev/ttyUSB_optolink
 
 
 items.yaml
 ----------
 
-Die Verknüfpung von SmartHomeNG-Items und Heizungsparametern ist vollständig flexibel und konfigurierbar. Mit den Item-Attributen kann das Verhalten des Plugins festgelegt werden.
+Zur Vereinfachung werden fertige Structs für alle unterstützten Gerätetypen mitgeliefert. Diese können wie folgt eingebunden werden:
+
+.. code:: yaml
+
+    heizungsitem:
+        struct: viessmann.MODEL
+
+
+:note: Das Wort "MODEL" in der Itemkonfiguration bleibt wörtlich so stehen, sdp verwendet automatisch den entsprechend passenden Struct.
+
+
+Sofern keine weiteren Angaben gewünscht sind, ist die Item-Konfiguration damit abgeschlossen. Da die Item-Struktur der Kommando-Struktur entspricht, werden sich die Items ändern, d.h. verschieben und ggf. umbenennen. Item-Referenzen müssen entsprechend angepasst werden.
+
+
+Sofern eine manuelle Item-Konfiguration gewünscht wird, ist dies auch möglich. Die Verknüfpung von SmartHomeNG-Items und Heizungsparametern ist vollständig flexibel und konfigurierbar. Mit den Item-Attributen kann das Verhalten des Plugins festgelegt werden.
 
 Die folgenden Attribute werden unterstützt:
+
+
+viess\_command
+~~~~~~~~~~~~~~
+
+Dieses Attribut legt fest, welcher Befehl ausgeführt bzw. welcher Parameter vom Gerät gelesen oder geschrieben werden soll.
+
+.. code:: yaml
+
+    item:
+        viess_command: Allgemein.Temperatur.Aussen
+
+
+:note: Dies entspricht prinzipiell dem bisherigen Attribut `viess_read`, ohne Aussagen über Lese- oder Schreibverhalten zu treffen. Durch die Umstellung der Befehlsstruktur müssen die Werte angepasst werden.
 
 
 viess\_read
 ~~~~~~~~~~~
 
-Der Wert des angegebenen Parameters wird gelesen und dem Item zugewiesen.
-
-.. code:: yaml
-
-    item:
-        viess_read: Raumtemperatur_Soll_Normalbetrieb_A1M1
+Das Item erhält Werte vom Gerät (Wert kann gelesen werden). Typ bool. (Entspricht grob dem alten Attribut `viess_read`)
 
 
-viess\_send
-~~~~~~~~~~~
+viess\_write
+~~~~~~~~~~~~
 
-Der angegebene Parameter wird bei Änderungen an diesem Item an die Heizung gesendet.
-
-.. code:: yaml
-
-    item:
-        viess_send: Raumtemperatur_Soll_Normalbetrieb_A1M1
-
-Sofern das Item sowohl zum Lesen als auch zum Schreiben eines Parameters konfiguriert wird, kann die vereinfachte Konfiguration mit ``true`` erfolgen:
-
-.. code:: yaml
-
-    item:
-        viess_read: Raumtemperatur_Soll_Normalbetrieb_A1M1
-        viess_send: true
-
-
-viess\_read\_afterwrite
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Wenn dieses Attribut mit einer Dauer in Sekunden angegeben ist, wird nach eine Schreibvorgang die angegebene Anzahl an Sekunden gewartet und ein erneuter Lesevorgang ausgelöst.
-
-Damit dieses Attribut verwendet werden kann, muss das Item sowohl die Attribute ``viess_read`` als auch ``viess_send`` enthalten.
-
-.. code:: yaml
-
-    item:
-        viess_read: Raumtemperatur_Soll_Normalbetrieb_A1M1
-        viess_send: true
-        viess_read_afterwrite: 1  # seconds
+Der Wert des Items wird bei Änderungen an die Heizung gesendet. Typ bool. (Entspricht grob dem alten Attribut `viess_send`)
 
 
 viess\_read\_cycle
@@ -151,97 +178,60 @@ Mit einer Angabe in Sekunden wird ein periodisches Lesen angefordert. ``viess_re
 .. code:: yaml
 
     item:
-        viess_read: Raumtemperatur_Soll_Normalbetrieb_A1M1
+        viess_command: Allgemein.Temperatur.Aussen
         viess_read_cycle: 3600  # every hour
 
 
-viess\_init
-~~~~~~~~~~~
+viess\_read\_initial
+~~~~~~~~~~~~~~~~~~~~
 
 Wenn dieses Attribut vorhanden und auf ``true`` gesetzt ist, wird das Item nach dem Start von SmartHomeNG einmalig gelesen.
-``viess_read`` muss zusätzlich konfiguriert sein.
 
 .. code:: yaml
 
     item:
-        viess_read: Raumtemperatur_Soll_Normalbetrieb_A1M1
-        viess_init: true
+        viess_command: Allgemein.Temperatur.Aussen
+        viess_read_initial: true
 
 
-viess\_trigger
+viess\_read\_group:
+~~~~~~~~~~~~~~~~~~~
+
+Weist das Item der angegebenen Gruppe zum gesammelten Lesen zu. Die Gruppe kann alt int-Wert oder als str (Name) angegeben werden, mehrere Gruppen können als Liste zugewiesen werden.
+
+.. code:: yaml
+
+    item:
+        viess_command: Betriebsart_A1M1
+        viess_read_group:
+           - Status
+           - Betrieb
+           - 5
+
+
+Standardmäßig sind in den Structs bereits Gruppen für alle Strukturbäume vorhanden.
+
+
+viess\_read\_group\_trigger:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Ein Item mit diesem Attribut löst das Lesen der angegebenen Gruppe(n) aus (siehe `viess_read_group`). Mehrere Gruppen können als Liste angegeben werden, wenn als Gruppe 0 angegeben wird, werden alle Werte vom Gerät gelesen.
+
+Dieses Attribut kann nicht gleichzeitig mit ``viess_command`` gesetzt werden.
+
+
+viess\_lookup:
 ~~~~~~~~~~~~~~
 
-Enthält eine Liste von Parametern. Wenn dieses Item aktualisiert wird, wird ein Lesevorgang für jeden Eintrag in der Liste angestoßen. ``viess_send`` muss zusätzlich konfiguriert sein.
-
-Zwischen dem Schreibvorgang und den folgenden Lesevorgängen ist standardmäßig eine Verzögerung von 5 Sekunden eingestellt. Diese kann mit ``viess_trigger_afterwrite`` verändert werden.
-
-Beispiel: wenn der Betriebsmodus geändert wird, können neue Sollwerte für Raum- und Wassertemperaturen gelesen werden.
+Wenn ein Befehl mit einer Lookup-Tabelle versehen ist, kann die Lookup-Tabelle mit dem angegebenen Namen beim Start einmalig in das Item geschrieben werden. Damit können z.B. Klartextwerte für die Visualisierung angeboten werden.
 
 .. code:: yaml
 
     item:
-        viess_send: Betriebsart_A1M1
-        viess_trigger:
-           - Raumtemperatur_Soll
-           - Wassertemperatur_Soll
+        viess_lookup: operationmode
 
 
-viess\_trigger\_afterwrite
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Wenn ein ``viess_trigger`` konfiguriert ist, kann mit diesem Attribut die Verzögerung zwischen Schreib- und Lesevorgang verändert werden.
-
-Standardmäßig beträgt diese Verzögerung 5 Sekunden.
-
-.. code:: yaml
-
-    item:
-        viess_send: Betriebsart_A1M1
-        viess_trigger:
-           - Raumtemperatur_Soll
-           - Wassertemperatur_Soll
-        viess_trigger_afterwrite: 10 # seconds
-
-
-viess\_update
-~~~~~~~~~~~~~
-Das Zuweisen von ``true`` an ein Item mit diesem Attribut löst den Lesevorgang aller konfigurierter Items mit ``viess_read`` aus.
-
-Der in der Itemkonfiguration angegebene Wert wird nicht ausgewertet.
-
-.. code:: yaml
-
-    item:
-        viess_update: 'egal'
-
-
-viess\_timer
-~~~~~~~~~~~~
-Das Item mit diesem Attribut übergibt als Attributwert den Namen einer Anwendung, z.B. Heizkreis_A1M1, und das Plugin gibt ein UZSU-formatiertes dict mit allen zugehörigen Timern der Heizung zurück
-Beim Schreiben wird das UZSU-dict in die einzelnen Tagestimer aufgeteilt und an die Heizung gesendet.
-
-.. code:: yaml
-
-    item:
-        viess_timer: 'Heizkreis_A1M1'
-
-
-viess\_ba\_list
-~~~~~~~~~~~~~~~
-Das Item mit diesem Attribut erhält einmalig beim Start des Plugins die Liste der für den konfigurierten Heizungstyp gültigen Betriebsarten.
-
-Diese kann z.B. in SmartVISU wie folgt eingebunden werden:
-
-.. code:: yaml
-
-    item:
-        viess_ba_list: 'egal'
-
-.. code::
-
-    {{ basic.select('heizen_ba_item', 'heizung.betriebsart', 'menu', '', '', '', '', '', 'heizung.ba_list') }}
-
-Dies erzeugt eine ("Menü"-) Auswahlliste, aus der die Betriebsart ausgewählt werden kann, die dann vom Plugin an die Heizung übergeben wird.
+:note: In den vorgefertigten Structs sind bei Items, die Werte aus Lookup-Tabellen zurückgeben, die jeweiligen Lookup-Tabellen in Unteritems mit dem Namen ``lookup`` vorhanden.
 
 
 Beispiel
@@ -253,137 +243,11 @@ V200KO1B:
 .. code:: yaml
 
     viessmann:
-        viessmann_update:
-            name: Update aller Items mit 'viess_read'
-            type: bool
-            visu_acl: rw
-            viess_update: 1
-            enforce_updates: true
-            autotimer: 1 = false = latest
-
-        allgemein:
-            aussentemp:
-                name: Aussentemperatur
-                type: num
-                viess_read: Aussentemperatur
-                viess_read_cycle: 300
-                viess_init: true
-                database: true
-
-            aussentemp_gedaempft:
-                name: Aussentemperatur
-                type: num
-                viess_read: Aussentemperatur_TP
-                viess_read_cycle: 300
-                viess_init: true
-                database: true
-
-        kessel:
-            kesseltemperatur_ist:
-                name: Kesseltemperatur_Ist
-                type: num
-                viess_read: Kesseltemperatur
-                viess_read_cycle: 180
-                viess_init: true
-                database: init
-            kesseltemperatur_soll:
-                name: Kesselsolltemperatur_Soll
-                type: num
-                viess_read: Kesselsolltemperatur
-                viess_read_cycle: 180
-                viess_init: true
-            abgastemperatur:
-                name: Abgastemperatur
-                type: num
-                viess_read: Abgastemperatur
-                viess_read_cycle: 180
-                viess_init: true
-                database: init
-        heizkreis_a1m1:
-           betriebsart:
-                betriebsart_aktuell:
-                    name: Aktuelle_Betriebsart_A1M1
-                    type: str
-                    viess_read: Aktuelle_Betriebsart_A1M1
-                    viess_read_cycle: 3600
-                    viess_init: true
-                betriebsart:
-                    name: Betriebsart_A1M1
-                    type: num
-                    viess_read: Betriebsart_A1M1
-                    viess_send: true
-                    viess_read_afterwrite: 5
-                    viess_init: true
-                    cache: true
-                    enforce_updates: true
-                    viess_trigger:
-                      - Aktuelle_Betriebsart_A1M1
-                    struct: viessmann.betriebsart
-                    visu_acl: rw
-                sparbetrieb:
-                    name: Sparbetrieb_A1M1
-                    type: bool
-                    viess_read: Sparbetrieb_A1M1
-                    viess_send: true
-                    viess_read_afterwrite: 5
-                    viess_trigger:
-                      - Betriebsart_A1M1
-                      - Aktuelle_Betriebsart_A1M1
-                    viess_init: true
-                    visu_acl: rw
-           schaltzeiten:
-                montag:
-                    name: Timer_A1M1_Mo
-                    type: list
-                    viess_read: Timer_A1M1_Mo
-                    viess_send: true
-                    viess_read_afterwrite: 5
-                    viess_init: true
-                    struct: viessmann.timer
-                    visu_acl: rw
-                dienstag:
-                    name: Timer_A1M1_Di
-                    type: list
-                    viess_read: Timer_A1M1_Di
-                    viess_send: true
-                    viess_read_afterwrite: 5
-                    viess_init: true
-                    struct: viessmann.timer
-                    visu_acl: rw
-           ferienprogramm:
-                status:
-                    name: Ferienprogramm_A1M1
-                    type: num
-                    viess_read: Ferienprogramm_A1M1
-                    viess_read_cycle: 3600
-                    viess_init: true
-                starttag:
-                    name: Ferien_Abreisetag_A1M1
-                    type: str
-                    viess_read: Ferien_Abreisetag_A1M1
-                    viess_send: true
-                    viess_read_afterwrite: 5
-                    viess_init: true
-                    visu_acl: rw
-                    eval: value[:10]
-                endtag:
-                    name: Ferien_Rückreisetag_A1M1
-                    type: str
-                    viess_read: Ferien_Rückreisetag_A1M1
-                    viess_send: true
-                    viess_read_afterwrite: 5
-                    viess_init: true
-                    visu_acl: rw
+        struct: MODEL
 
 
 Funktionen
 ==========
-
-update\_all\_read\_items()
---------------------------
-
-Diese Funktion stößt den Lesevorgang aller konfigurierten Items mit ``viess_read``-Attribut an.
-
 
 read\_addr(addr)
 ----------------
@@ -392,10 +256,10 @@ Diese Funktion löst das Lesen des Parameters mit der übergebenen Adresse ``add
 Der Rückgabewert ist das Ergebnis des Lesevorgangs oder None, wenn ein Fehler aufgetreten ist.
 
 
-read\_temp\_addr(addr, length, unit)
+read\_temp\_addr(addr, length=1, mult=0, signed=False)
 ------------------------------------
 
-Diese Funktion versucht, den Parameter an der Adresse ``addr`` zu lesen und einen Wert von ``length`` Bytes in die Einheit ``unit`` zu konvertieren. Die Adresse muss als vierstellige Hex-Zahl im String-Format übergeben werden, im Gegensatz zu ``read_addr()`` aber nicht im Befehlssatz definiert sein. ``length`` ist auf Werte zwischen 1 und 8 (Bytes) beschränkt. ``unit`` muss im aktuellen Befehlssatz definiert sein.
+Diese Funktion versucht, den Parameter an der Adresse ``addr`` zu lesen und einen Wert von ``length`` Bytes (ggf. mit einem Multiplikator ``mult`` und (nicht) vorzeichenbehaftet) zu konvertieren. Die Adresse muss als vierstellige Hex-Zahl im String-Format übergeben werden, im Gegensatz zu ``read_addr()`` aber nicht im Befehlssatz definiert sein. ``length`` ist auf Werte zwischen 1 und 8 (Bytes) beschränkt. ``mult`` gibt den Divisor an und ``signed``, ob der Wert vorzeichenbehaftet ist.
 Der Rückgabewert ist das Ergebnis des Lesevorgangs oder None, wenn ein Fehler aufgetreten ist.
 
 
@@ -438,6 +302,7 @@ Dazu muss das Plugin im Plugin-Ordner direkt aufgerufen werden:
 
 Der serielle Port ist dabei die Gerätedatei bzw. der entsprechende Port, an dem der Lesekopf angeschlossen ist, z.B. ``/dev/ttyUSB0``. Dieses Argument ist verpflichtend.
 
-Das optionale zweite Argument `-v` weist das Plugin an, zusätzliche Debug-Ausgaben zu erzeugen. Solange keine Probleme beim Aufruf auftreten, ist das nicht erforderlich.
+Das optionale zweite Argument ``-v`` weist das Plugin an, zusätzliche Debug-Ausgaben zu erzeugen. Solange keine Probleme beim Aufruf auftreten, ist das nicht erforderlich.
 
 Sollte die Datei sich nicht starten lassen, muss ggf. der Dateimodus angepasst werden. Mit ``chmod u+x __init__.py`` kann die z.B. unter Linux erfolgen.
+
