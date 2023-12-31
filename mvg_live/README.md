@@ -77,7 +77,6 @@ logger = logging.getLogger('mvg_info logics')
 now = Shtime.get_instance().now()
 
 results = sh.mvg_live.get_station_departures(sh.general.travel_info.mvg_station.search())
-logger.error(results)
 html_string = '<table>'
 i = 1
 
