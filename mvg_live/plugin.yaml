@@ -12,9 +12,9 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins_doc/config/mvg_live.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1108867-neues-plugin-mvg_live
 
-    version: 1.5.1                 # Plugin version
+    version: 1.6.0                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     restartable: unknown
     classname: MVG_Live            # class containing the plugin
