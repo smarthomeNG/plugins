@@ -6,7 +6,6 @@
 
 {% macro spinner(id, item,_backend ) %}
 
-{% import "basic.html" as basic %}
 <div{% if not id is empty %} id="{{ uid(page, id) }}"{% endif %} data-widget="indego.spinner" data-item="{{ item }}" data-designType="{{ _backend }}">
 
 <html>
@@ -33,7 +32,6 @@
 
 {% macro alerts(id, item,_backend ) %}
 
-{% import "basic.html" as basic %}
 <div{% if not id is empty %} id="{{ uid(page, id) }}"{% endif %} data-widget="indego.alerts" data-item="{{ item }}" data-designType="{{ _backend }}"></div>
 {% endmacro %}
 
@@ -76,7 +74,6 @@
 */
 
 {% macro symbol(id, items, pic, val, mode,text, ignore_text) %}
-	{% import "basic.html" as basic %}
 	<div id="{{ uid(page, id) }}" data-widget="indego.symbol" data-item="{{ implode(items) }}" data-val="{{ val|default('1') }}"
 		data-mode="{{ mode|default('or') }}" class="symbol hide">
         {% if not text is empty %}<font style="font-size:200%" color="red"><strong>{{  text }}</strong></font><br><br>{% endif %}
@@ -93,7 +90,6 @@
 *********************************************/
 {% macro smartmow_calendar(id, item,_backend ) %}
 
-{% import "basic.html" as basic %}
 	<div{% if not id is empty %} id="{{ uid(page, id) }}"{% endif %} data-widget="indego.smartmow_calendar" data-item="{{ item }}" data-designType="{{ _backend }}"></div>
 {% endmacro %}
 
@@ -105,7 +101,6 @@
 *********************************************/
 {% macro mow_calendar(id, item,_backend ) %}
 
-{% import "basic.html" as basic %}
 	<div{% if not id is empty %} id="{{ uid(page, id) }}"{% endif %} data-widget="indego.calendar" data-item="{{ item }}" data-designType="{{ _backend }}"></div>
 {% endmacro %}
 
@@ -120,7 +115,6 @@
 
 {% macro predictive_calendar(id, item,_backend ) %}
 
-{% import "basic.html" as basic %}
 	<div{% if not id is empty %} id="{{ uid(page, id) }}"{% endif %} data-widget="indego.calendar_predictive_list" data-item="{{ item }}" data-designType="{{ _backend }}"></div>
 {% endmacro %}
 
@@ -158,6 +152,5 @@
 *********************************************/
 {% macro mode(id, item,_backend ) %}
 
-{% import "basic.html" as basic %}
 	<div{% if not id is empty %} id="{{ uid(page, id) }}"{% endif %} data-widget="indego.mode" data-item="{{ item }}" data-designType="{{ _backend }}"></div>
 {% endmacro %}
