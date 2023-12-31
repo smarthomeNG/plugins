@@ -25,7 +25,7 @@ Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/co
 Requirements
 ============
 
-The plugin does not need a license key in public mode. An API key can be optained, which is optional.
+The plugin does not need a license key in public mode. An API key can be obtained, which is optional.
 
 
 Beispiele
