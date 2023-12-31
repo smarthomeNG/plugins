@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2021-      Michael Wenzel              wenzel_michael@web.de
+#  Copyright 2022-      Michael Wenzel              wenzel_michael@web.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
 #  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.5 and
-#  upwards.
+#  Part of AVM Plugin
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -26,15 +25,9 @@
 #########################################################################
 
 import json
+import cherrypy
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -49,47 +42,63 @@ class WebInterface(SmartPluginWebIf):
         :type webif_dir: str
         :type plugin: object
         """
+
         self.logger = plugin.logger
         self.webif_dir = webif_dir
         self.plugin = plugin
         self.items = Items.get_instance()
-
-        self.call_monitor_items = []
         self.tplenv = self.init_template_environment()
+
+        self.logger.debug(f"Init WebIF of {self.plugin.get_shortname()}")
 
     @cherrypy.expose
     def index(self, reload=None, action=None):
         """
         Build index.html for cherrypy
         Render the template and return the html file to be delivered to the browser
-        :return: contents of the template after beeing rendered
+
+        :return: contents of the template after being rendered
         """
 
-        if self.plugin._call_monitor:
-            self.call_monitor_items = []
-            self.call_monitor_items.extend(self.plugin._monitoring_service.get_items())
-            self.call_monitor_items.extend(self.plugin._monitoring_service.get_trigger_items())
-            self.call_monitor_items.extend(self.plugin._monitoring_service.get_items_incoming())
-            self.call_monitor_items.extend(self.plugin._monitoring_service.get_items_outgoing())
+        if self.plugin.fritz_device:
+            tr064_items = self.plugin.fritz_device.item_list()
+            tr064_item_count = len(tr064_items)
+        else:
+            tr064_items = None
+            tr064_item_count = None
 
-        try:
-            pagelength = self.plugin.webif_pagelength
-        except Exception:
-            pagelength = 100
+        if self.plugin.fritz_home:
+            aha_items = self.plugin.fritz_home.item_list()
+            aha_item_count = len(aha_items)
+            logentries = self.plugin.get_device_log_from_lua_separated()
+        else:
+            aha_items = None
+            aha_item_count = None
+            logentries = None
 
+        if self.plugin.monitoring_service:
+            call_monitor_items = self.plugin.monitoring_service.item_list()
+            call_monitor_item_count = len(call_monitor_items)
+        else:
+            call_monitor_items = None
+            call_monitor_item_count = None
+
+        pagelength = self.plugin.get_parameter_value('webif_pagelength')
         tmpl = self.tplenv.get_template('index.html')
 
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
                            plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(),
-                           avm_items=sorted(self.plugin.get_fritz_device().get_items(), key=lambda k: str.lower(k['_path'])),
-                           avm_item_count=len(self.plugin.get_fritz_device().get_items()),
-                           call_monitor_items=sorted(self.call_monitor_items, key=lambda k: str.lower(k['_path'])),
-                           call_monitor_item_count=len(self.call_monitor_items),
-                           smarthome_items=sorted(self.plugin.get_fritz_device().get_smarthome_items(), key=lambda k: str.lower(k['_path'])),
-                           smarthome_item_count=len(self.plugin.get_fritz_device().get_smarthome_items()),
+                           tr064_items=tr064_items,
+                           tr064_item_count=tr064_item_count,
+                           call_monitor_items=call_monitor_items,
+                           call_monitor_item_count=call_monitor_item_count,
+                           aha_items=aha_items,
+                           aha_item_count=aha_item_count,
+                           logentries=logentries,
                            p=self.plugin,
                            webif_pagelength=pagelength,
+                           maintenance=True if self.plugin.log_level <= 20 else False,
                            )
 
     @cherrypy.expose
@@ -102,39 +111,41 @@ class WebInterface(SmartPluginWebIf):
         :param dataSet: Dataset for which the data should be returned (standard: None)
         :return: dict with the data needed to update the web page.
         """
+
         if dataSet is None:
-            # get the new data
             data = dict()
-            if self.plugin._call_monitor:
-                if self.call_monitor_items:
-                    data['call_monitor'] = {}
-                    for item in self.call_monitor_items:
-                        data['call_monitor'][item.id()] = {}
-                        data['call_monitor'][item.id()]['value'] = item()
-                        data['call_monitor'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                        data['call_monitor'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+            if self.plugin.monitoring_service:
+                data['call_monitor'] = {}
+                for item in self.plugin.monitoring_service.item_list():
+                    data['call_monitor'][item.id()] = {}
+                    data['call_monitor'][item.id()]['value'] = item()
+                    data['call_monitor'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                    data['call_monitor'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
-            if self.plugin.get_fritz_device().get_items():
-                data['avm_items'] = {}
-                for item in self.plugin.get_fritz_device().get_items():
-                    data['avm_items'][item.id()] = {}
-                    data['avm_items'][item.id()]['value'] = item()
-                    data['avm_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                    data['avm_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+            if self.plugin.fritz_device:
+                data['tr064_items'] = {}
+                for item in self.plugin.fritz_device.item_list():
+                    data['tr064_items'][item.id()] = {}
+                    data['tr064_items'][item.id()]['value'] = item()
+                    data['tr064_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                    data['tr064_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                data['tr064_items_blacklistet'] = self.plugin.fritz_device.get_tr064_items_blacklisted()
 
-            if self.plugin.get_fritz_device().get_smarthome_items():
-                data['avm_smarthome_items'] = {}
-                for item in self.plugin.get_fritz_device().get_smarthome_items():
-                    data['avm_smarthome_items'][item.id()] = {}
-                    data['avm_smarthome_items'][item.id()]['value'] = item()
-                    data['avm_smarthome_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                    data['avm_smarthome_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+            if self.plugin.fritz_home:
+                data['aha_items'] = {}
+                for item in self.plugin.fritz_home.item_list():
+                    data['aha_items'][item.id()] = {}
+                    data['aha_items'][item.id()]['value'] = item()
+                    data['aha_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                    data['aha_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                data['aha_last_request'] = self.plugin.fritz_home.last_request
+
+            data['maintenance'] = True if self.plugin.log_level <= 20 else False
 
             try:
                 return json.dumps(data, default=str)
             except Exception as e:
                 self.logger.error(f"get_data_html exception: {e}")
-        return {}
 
     @cherrypy.expose
     def reboot(self):
@@ -143,3 +154,7 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     def reconnect(self):
         self.plugin.reconnect()
+
+    @cherrypy.expose
+    def reset_item_blacklist(self):
+        self.plugin.fritz_device.reset_item_blacklist()

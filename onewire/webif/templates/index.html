@@ -1,9 +1,5 @@
 {% extends "base_plugin.html" %}
 
-<!--
-{ % set update_params = item_id % }
--->
-
 {% set logo_frame = false %}
 
 <!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
@@ -255,7 +251,7 @@
 			<td class="py-1">{{ p.host }}</td>
 			<td class="py-1" width="50px"></td>
 			<td class="py-1"><strong>{{ _('IO Wartezeit') }}</strong></td>
-			<td class="py-1">{{ p._io_wait }}</td>
+			<td class="py-1">{{ p._io_wait }} {{ _('Sek.') }}</td>
 			<td class="py-1" width="50px"></td>
 		</tr>
 		<tr>
@@ -263,19 +259,15 @@
 			<td class="py-1">{{ p.port }}</td>
 			<td></td>
 			<td class="py-1"><strong>{{ _('iButton Wartezeit') }}</strong></td>
-			<td class="py-1">{{ p._button_wait }}</td>
+			<td class="py-1">{{ p._button_wait }} {{ _('Sek.') }}</td>
 			<td></td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>{{ _('Cycle') }}</strong></td>
-			<td class="py-1">{{ p._cycle }}</td>
+			<td class="py-1">{{ p._cycle }} {{ _('Sek.') }}</td>
 			<td></td>
-			<!--
-			<td class="py-1"><strong>{{ _('Alias verwenden') }}</strong></td>
-			<td class="py-1">{{ p._use_ow_aliases }}</td>
-			-->
-			<td></td>
-			<td></td>
+			<td class="py-1"><strong>{{ _('Wartezeit für parasitäre Spannung') }}</strong></td>
+			<td class="py-1">{{ p._parasitic_power_wait }} {{ _('Sek.') }}</td>
 			<td></td>
 		</tr>
 	</tbody>

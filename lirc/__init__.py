@@ -2,8 +2,11 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2017 Nino Coric                       mail2n.coric@gmail.com
+#  Copyright 2019- Andreas Künz                    onkelandy66@gmail.com
 #########################################################################
 #  This file is part of SmartHomeNG.
+#
+#  lirc plugin for USB remote
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -24,6 +27,8 @@ import threading
 import logging
 import time
 from lib.network import Tcp_client
+from .webif import WebInterface
+from lib.item import Items
 
 from lib.model.smartplugin import SmartPlugin
 from bin.smarthome import VERSION
@@ -32,11 +37,10 @@ REMOTE_ATTRS = ['lirc_remote', 'lirc_key']
 class LIRC(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.5.0"
+    PLUGIN_VERSION = "1.5.1"
 
     def __init__(self, smarthome):
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
+        super().__init__()
         self._host = self.get_parameter_value('host')
         if self._host is None:
             self._host = self.get_parameter_value('lirc_host')
@@ -45,6 +49,7 @@ class LIRC(SmartPlugin):
         self._connect_retries = self.get_parameter_value('connect_retries')
         self._connect_cycle = self.get_parameter_value('connect_cycle')
         name = 'plugins.' + self.get_fullname()
+        self.items = Items.get_instance()
         self._lirc_tcp_connection = Tcp_client(host=self._host,
                                                port=self._port,
                                                name=name,
@@ -64,6 +69,8 @@ class LIRC(SmartPlugin):
         self._parseLine = 0
         self._error = False
         self._lirc_server_alive = False
+        if self._init_complete:
+            self.init_webinterface(WebInterface)
 
     def run(self):
         self.alive = True
@@ -87,6 +94,7 @@ class LIRC(SmartPlugin):
         if self.has_iattr(item.conf, REMOTE_ATTRS[0]) and \
            self.has_iattr(item.conf, REMOTE_ATTRS[1]):
                 self.logger.debug("{}: callback assigned".format(item))
+                self.add_item(item, config_data_dict={'lirc': True})
                 return self.update_item
         return None
 
@@ -162,7 +170,9 @@ class LIRC(SmartPlugin):
 
     def update_item(self, item, caller=None, source=None, dest=None):
         val = item()
-        if val == 0:
+        if val == 0 and source == "Web Interface":
+            val = 1
+        elif val == 0:
             return None
         item(0)
         if val < 0:
@@ -172,21 +182,12 @@ class LIRC(SmartPlugin):
             key = self.get_iattr_value(item.conf,REMOTE_ATTRS[1])
             self.logger.debug("update_item {}, val: {}, remote: {}, key: {}".format(item, val, remote, key))
             command = "SEND_ONCE {} {} {}".format(remote,key,val)
-            self.logger.debug("command: {}".format(command))
-            self._send(command)
+            return self._send(command, item, True)
 
     def request_version(self):
-        self._lircd_version = self._send("VERSION", True)
-        if self._lircd_version:
-            self.logger.info("connected to lircd {} on {}:{}".format( \
-            self._lircd_version.replace("VERSION\n","").replace("\n",""), \
-            self._host,self._port))
-            return True
-        else:
-            self.logger.error("lircd Version not detectable")
-            return False
+        self._send("VERSION", None, True)
 
-    def _send(self, command, reply=True):
+    def _send(self, command, item=None, reply=True):
         i = 0
         while not self._lirc_server_alive:
             self.logger.debug("Waiting to send command {} as connection is not yet established. Count: {}/10".format(command, i))
@@ -204,14 +205,23 @@ class LIRC(SmartPlugin):
             self._reply_lock.wait(1)
         self._reply_lock.release()
         self._cmd_lock.release()
+        try:
+            self._responseStr = self._responseStr.replace("\n", "")
+        except Exception:
+            pass
         if self._error:
-            self.logger.error("error from lircd: {}".format(self._responseStr.replace("\n"," ")))
+            self.logger.error("error from lircd: {}".format(self._responseStr))
             self._error = False
         elif isinstance(self._responseStr, str):
-            self.logger.debug("response: {}".format(self._responseStr.replace("\n"," ")))
+            self.logger.debug("response: {}".format(self._responseStr.replace("\n","")))
+            if command == "VERSION":
+                self._lircd_version = self._responseStr
+                self.logger.info("connected to lircd {} on {}:{}".format( \
+                self._lircd_version.replace("VERSION\n","").replace("\n",""), \
+                self._host, self._port))
         return self._responseStr
 
 if __name__ == '__main__':
     myplugin = LIRC('smarthome-dummy')
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-    myplugin._send('VERSION')
+    myplugin._send('VERSION', None, True)

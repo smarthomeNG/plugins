@@ -1,1 +1,1 @@
-puresnmp >=1.7.2
+puresnmp >=1.7.2,<2.0.0

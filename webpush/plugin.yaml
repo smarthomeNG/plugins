@@ -1,0 +1,183 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: web                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zum Versenden von web push Nachrichten an Clients'
+        en: 'Plugin to send web push messages to clients'
+    maintainer: gruberth
+#    tester:                         # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: web, push, webpush, messages
+    documentation: ''               # Path to documentation ONLY IF OTHER than user_doc.rst and generated configuration page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1817454-support-thread
+
+    version: 1.1.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.8              # minimum shNG version to use this plugin
+    multi_instance: false           # plugin supports multi instance
+    restartable: unknown
+    classname: WebPush         # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    grouplist:
+        type: list
+        default: ["alarm", "info"]
+        description:
+            de: 'Nachrichten-Gruppen'
+            en: 'Message groups'
+
+    varpath:
+        type: str
+        default: "/usr/local/smarthome/var"
+        description:
+            de: 'Pfad zum SmarthomeNG var Verzeichnis (z.B. /usr/local/smarthome/var)'
+            en: 'Path to the SmarthomeNG var directory (ex. /usr/local/smarthome/var)'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    webpush_communication:
+        type: str
+        valid_list: ['fromclient']
+        description:
+            de: 'Benötigte Items zur Kommunikation zwischen Visu und Plugin'
+            en: 'Necessary items to communicate between visu and plugin'
+
+    webpush_config:
+        type: str
+        valid_list: ['grouplist', 'publickey']
+        description:
+            de: 'Benötigte Items zur Konfiguration der Visu und des Plugins'
+            en: 'Necessary items to configurate the visu and plugin'
+
+item_structs:
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    basic:
+        name: Default Webpush Template
+
+        config:
+            name: Config items
+
+            grouplist:
+                name: group list item
+                webpush_config: grouplist
+                type: list
+                visu_acl: ro
+                initial_value: []
+
+            publickey:
+                name: public key item
+                webpush_config: publickey
+                type: str
+                visu_acl: ro
+                initial_value: ''
+
+        comunication:
+            name: Communication items
+
+            fromclient:
+                name: from client item
+                webpush_communication: fromclient
+                type: str
+                visu_acl: rw
+                initial_value: ''
+                enforce_updates: True
+
+
+item_attribute_prefixes: NONE
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions:
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+    sendPushNotification:
+        type: void
+        description:
+            de: "Sendet die Nachricht in msg als web push an die entsprechende Gruppe in group"
+            en: "Sends the message in msg to the message group in group via web push"
+        parameters:
+            msg:
+                type: str
+                description:
+                    de: "Zu sendende Nachricht"
+                    en: "Message to send"
+            group:
+                type: str
+                description:
+                    de: "Gruppe an die die Nachricht geschrieben werden soll"
+                    en: "Group to wich te message should be sent"
+            title:
+                type: str
+                default: ""
+                description:
+                    de: "Titel der web push Nachricht"
+                    en: "Title of the web push message"
+            url:
+                type: str
+                default: ""
+                description:
+                    de: "Webadresse die bei Klick auf die Nachricht geöffnet werden soll"
+                    en: "Web address to open on click on the message"
+            requireInteraction:
+                type: bool
+                default: ""
+                description:
+                    de: "Verhindern, dass bei Desktop-Browsern Meldung nach ca 20sek ausgeblendet wird"
+                    en: "Stop desktop browsers form fading out messages after 20 seconds"
+            icon:
+                type: str
+                default: ""
+                description:
+                    de: "URL zu einem icon das als Benachrichtigungs Icon verwendet wird"
+                    en: "URL of an image to be used as an icon by the notification"
+            badge:
+                type: str
+                default: ""
+                description:
+                    de: "URL zu einem Bild das als Voransicht angezeigt wird wenn der Bildschirm zu klein ist, wie z.B. in der Android Statusleiste"
+                    en: "URL of an image to represent the notification when there is not enough space to display the notification itself such as for example, the Android Notification Bar"
+            image:
+                type: str
+                default: ""
+                description:
+                    de: "URL zu einem Bild das im Nachrichteninhalt angezeigt werden soll"
+                    en: "URL of an image wich should be shown in the message body"
+            silent:
+                type: bool
+                default: False
+                description:
+                    de: "Benachrichtigung ohne Ton und Vibration anzeigen"
+                    en: "Show message without sound and vibration"
+            vibrate:
+                type: list
+                default: []
+                description:
+                    de: "Vibrationsmuster das bei Nachrichteneingang abgespielt wird. Z.B. [300, 100, 400] vibriert 300ms, pausiert 100ms, und vibriert 400ms."
+                    en: "A vibration pattern to run with the display of the notification. For example, [300, 100, 400] would vibrate 300ms, pause 100ms, then vibrate 400ms."
+            ttl:
+                type: int
+                default: 604800
+                description:
+                    de: "Time To Live. Wenn das Client-Gerät offline oder nicht verfügbar ist, wird solange versucht die Nachricht zuzustellen. Angabe in Sekunden, Standard eine Woche. 0 bedeutet, dass der Server nur einmal versucht eine Nachricht zuzustellen."
+                    en: "Time To Live. Duration wich the server tries to deliver a notification if a client is offline or not reachable. Time in seconds, default one week. 0 means the server tries only once to deliver the notification."
+            highpriority:
+                type: bool
+                default: True
+                description:
+                    de: "Durch setzten des headers Urgency auf high steigt die Priorität am Server und Client mit der die Nachricht bearbeitet wird."
+                    en: "The header urgency is being set to high so the message gets a higher processing priority on server and client side."
+            returnval:
+                type: any
+                default: True
+                description:
+                    de: "Wert der von der Funktion zurückgegeben werden soll, damit ist es möglich die Funktion auch in eval ausdrücken zu verwenden und dennoch die Änderung auf 'value' des Items zu übernehmen."
+                    en: "Return value of the function, this gives the possibility to use the function in an eval statement and accept the changes of the item to 'value'."
+            timestamp:
+                type: bool
+                default: True
+                description:
+                    de: "Legt fest ob zu Beginn der Nachricht ein Zeitstempel angefügt werden soll"
+                    en: "Specify if a timestamp should be added at the beginning of the message"
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)

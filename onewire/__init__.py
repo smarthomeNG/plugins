@@ -43,7 +43,7 @@ class OneWire(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.9.1'
+    PLUGIN_VERSION = '1.9.4'
 
     _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
 
@@ -124,6 +124,7 @@ class OneWire(SmartPlugin):
         self.read_alias_definitions()
 
         self._io_wait = self.get_parameter_value('io_wait')
+        self._parasitic_power_wait = self.get_parameter_value('parasitic_power_wait')
         self._button_wait = self.get_parameter_value('button_wait')
         self._cycle = self.get_parameter_value('cycle')
         self.log_counter_cycle_time = self.get_parameter_value('log_counter_cycle_time')
@@ -289,10 +290,10 @@ class OneWire(SmartPlugin):
                     if key.startswith('O'):  # ignore output
                         continue
                     path = self._ios[addr][key]['path']
-                    items = self.get_items_for_command(addr + '-' + key)
+                    items = self.get_items_for_mapping(addr + '-' + key)
                     if path is None:
                         if debugLog:
-                            self.logger.debug(f"_io_cycle: path not found for {item.id()}")
+                            self.logger.debug(f"_io_cycle: no item path found for mapping '{addr}-{key}'")
                         continue
                     try:
                         # the following can take a while so if in the meantime the plugin should stop we can abort this process here
@@ -303,15 +304,19 @@ class OneWire(SmartPlugin):
                             value = (addr in entries)
                         else:
                             value = self._flip[self.owbase.read('/uncached' + path).decode()]
+                        self.stopevent.wait(self._parasitic_power_wait)
                     except ConnectionError as e:
+                        self.logger.warning(f"_io_cycle: 'raise' {self._ios[addr][key]['readerrors']}. problem connecting to {addr}-{key}, error: {e}")
                         raise
                     except Exception as e:
+                        # time.sleep(self._parasitic_power_wait)
+                        #self.stopevent.wait(self._parasitic_power_wait)
                         self._ios[addr][key]['readerrors'] = self._ios[addr][key].get('readerrors', 0) + 1
                         if self._ios[addr][key]['readerrors'] % self.warn_after == 0:
                             self.logger.warning(f"_io_cycle: {self._ios[addr][key]['readerrors']}. problem reading {addr}-{key}, error: {e}")
                         continue
                     if self._ios[addr][key].get('readerrors', 0) >= self.warn_after:
-                        self.logger.notice(f"_io_cycle: Success reading {addr}-{key}, up to now there were : {self._ios[addr][key]['readerrors']} problems")
+                        self.logger.notice(f"_io_cycle: Success reading '{addr}-{key}' {value=}, up to now there were {self._ios[addr][key]['readerrors']} consecutive problems")
                         self._ios[addr][key]['readerrors'] = 0
                     for item in items:
                         item(value, self.get_shortname(), path)
@@ -349,8 +354,8 @@ class OneWire(SmartPlugin):
             try:
                 entries = self.owbase.dir(path)
             except Exception:
-                #time.sleep(0.5)
-                self.stopevent.wait(0.5)
+                #time.sleep(self._parasitic_power_wait)
+                self.stopevent.wait(self._parasitic_power_wait)
                 error = True
                 continue
             for entry in entries:
@@ -390,22 +395,25 @@ class OneWire(SmartPlugin):
         start = time.time()
         for addr in self._sensors:
             if not self.alive:
-                self.logger.debug(f"Self not alive (sensor={addr})")
+                self.logger.debug(f"'self' not alive (sensor={addr})")
                 break
             for key in self._sensors[addr]:
                 path = self._sensors[addr][key]['path']
-                items = self.get_items_for_command(addr+'-'+key)
+                items = self.get_items_for_mapping(addr+'-'+key)
                 if path is None:
                     if debugLog:
-                        self.logger.debug(f"_sensor_cycle: path not found for {item.id()}")
+                        self.logger.debug(f"_sensor_cycle: no item path found for mapping '{addr}-{key}'")
                     continue
                 try:
                     value = self.owbase.read('/uncached' + path).decode()
+                    self.stopevent.wait(self._parasitic_power_wait)
                     value = float(value)
                     if key.startswith('T') and value == 85:
                         self.logger.error(f"reading {addr} gives error value 85.")
                         continue
                 except Exception as e:
+                    # time.sleep(self._parasitic_power_wait)
+                    #self.stopevent.wait(self._parasitic_power_wait)
                     self._sensors[addr][key]['readerrors'] = self._sensors[addr][key].get('readerrors', 0) + 1
                     if self._sensors[addr][key]['readerrors'] % self.warn_after == 0:
                         self.logger.warning(f"_sensor_cycle: {self._sensors[addr][key]['readerrors']}. problem reading {addr}-{key}, error: {e}")
@@ -419,7 +427,7 @@ class OneWire(SmartPlugin):
                         value = value * 310 + 450
 
                     if self._sensors[addr][key].get('readerrors', 0) >= self.warn_after:
-                        self.logger.notice(f"_sensor_cycle: Success reading {addr}-{key}, up to now there were : {self._sensors[addr][key]['readerrors']} problems")
+                        self.logger.notice(f"_sensor_cycle: Success reading {addr}-{key}, up to now there were {self._sensors[addr][key]['readerrors']} consecutive problems")
                         self._sensors[addr][key]['readerrors'] = 0
                     for item in items:
                         item(value, self.get_shortname(), path)
@@ -491,7 +499,7 @@ class OneWire(SmartPlugin):
                     if addr in self._ibutton_masters:
                         self._ibutton_buses[bus] = self._ibutton_masters[addr]
                     self._webif_buses[bus][addr]['deviceclass'] = 'iButton master'
-                    items = self.get_items_for_command(addr + '-' + 'BM')
+                    items = self.get_items_for_mapping(addr + '-' + 'BM')
                     for item in items:
                         config_dict = self.get_item_config(item)
                         config_dict['bus'] = bus
@@ -512,7 +520,7 @@ class OneWire(SmartPlugin):
                     for key in keys:
                         if key in table[addr]:
                             table[addr][key]['path'] = sensor + keys[key]
-                        items = self.get_items_for_command(addr + '-' + key)
+                        items = self.get_items_for_mapping(addr + '-' + key)
                         for item in items:
                             config_dict = self.get_item_config(item)
                             config_dict['sensor_key'] = key

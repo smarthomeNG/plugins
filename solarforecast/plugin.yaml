@@ -9,7 +9,7 @@ plugin:
     tester: henfri
     state: develop                  # change to ready when done with development
     keywords: solar.forecast, solar
-#    documentation: 
+#    documentation:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1842817-support-thread-f%C3%BCr-das-solarforecast-plugin
 
     version: 1.9.1                  # Plugin version
@@ -63,27 +63,6 @@ parameters:
             de: 'Webservice fuer Vorhersage'
             en: 'Webservice for forecast'
 
-    webif_pagelength:
-        type: int
-        valid_list:
-          - -1
-          - 0
-          - 25
-          - 50
-          - 100
-        description:
-            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.
-                 0 = automatisch, -1 = alle'
-            en: 'Amount of items being listed in a web interface table per page by default.
-                 0 = automatic, -1 = all'
-        description_long:
-            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.\n
-                 Bei 0 wird die Tabelle automatisch an die Höhe des Browserfensters angepasst.\n
-                 Bei -1 werden alle Tabelleneinträge auf einer Seite angezeigt.'
-            en: 'Amount of items being listed in a web interface table per page by default.\n
-                 0 adjusts the table height automatically based on the height of the browser windows.\n
-                 -1 shows all table entries on one page.'
-
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
@@ -111,7 +90,7 @@ item_structs: NONE
     #item_structs: NONE
 
 plugin_functions: NONE
-    
+
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)

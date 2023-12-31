@@ -166,7 +166,7 @@ SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
 
 class EnOcean(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.7"
+    PLUGIN_VERSION = "1.3.8"
 
     
     def __init__(self, sh, *args, **kwargs):
@@ -576,6 +576,10 @@ class EnOcean(SmartPlugin):
         if 'enocean_tx_eep' in item.conf:
             self.logger.debug(f"TX eep found in item {item._name}")
             
+            if not 'enocean_tx_id_offset' in item.conf:
+                self.logger.error(f"TX eep found for item {item._name} but no tx id offset specified.")
+                return
+
             tx_offset = item.conf['enocean_tx_id_offset']
             if not (tx_offset in self._used_tx_offsets):
                 self._used_tx_offsets.append(tx_offset)

@@ -20,7 +20,7 @@ plugin_translations:
     'Gerät(e)'                  : { 'de': '=', 'en': 'Device(s)' }
 
     # Alternative format for translations of longer texts:
-    'Hier kommt der Inhalt des Webinterfaces hin.':
+    'Wartezeit für parasitäre Spannung':
         de: '='
-        en: 'Here goes the content of the web interface.'
+        en: 'Parasitic power wait time'
 

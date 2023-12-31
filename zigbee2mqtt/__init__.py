@@ -26,7 +26,6 @@ from datetime import datetime
 import logging
 
 from lib.model.mqttplugin import *
-from lib.item import Items
 from lib.utils import Utils
 from .webif import WebInterface
 
@@ -36,7 +35,7 @@ class Zigbee2Mqtt(MqttPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.1'
+    PLUGIN_VERSION = '1.1.2'
 
     def __init__(self, sh):
         """

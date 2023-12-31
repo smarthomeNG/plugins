@@ -1,0 +1,1093 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: system                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Add-On für das database Plugin zur Datenauswertung'
+        en: 'Add-On for the database plugin for data evaluation'
+    maintainer: sisamiwe
+    tester: bmx, onkelandy          # Who tests this plugin?
+    state: ready                    # change to ready when done with development
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1848494-support-thread-databaseaddon-plugin
+    version: 1.1.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.9.3.5          # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.8              # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: false           # plugin supports multi instance
+    restartable: unknown
+    classname: DatabaseAddOn        # class containing the plugin
+
+parameters:
+    database_plugin_config:
+        type: str
+        default: 'database'
+        description:
+            de: "Konfiguration des Plugin 'Database', für die das Plugin 'DatabaseAddOn' verwendet wird"
+            en: "Config of Plugin 'Database, for which the Plugin 'DatabaseAddOn' should be active"
+
+    startup_run_delay:
+        type: int
+        default: 60
+        description:
+            de: 'Zeitlicher Abstand in Sekunden, mit der die Berechnungen bei Startup ausgeführt werden sollen'
+            en: 'Delay in seconds, after which the startup calculations will be run'
+
+    ignore_0:
+        type: list
+        default: []
+        description:
+            de: "Bei Items, bei denen ein String aus der Liste im Pfadnamen vorkommt, werden 0-Werte (val_num = 0) bei Datenbankauswertungen ignoriert. 
+                Beispieleintrag: temp | hum"
+            en: "At items having a entry of that list in path, val_num=0 will be ignored for database queries. 
+                Example: temp | hum"
+
+    use_oldest_entry:
+        type: bool
+        default: False
+        description:
+            de: "True: Verwendung des ältesten Eintrags des Items in der Datenbank, falls der Start des Abfragezeitraums zeitlich vor diesem Eintrag liegt
+                 False: Abbruch der Datenbankabfrage"
+            en: "True: Use of oldest entry of item in database, if start of query is prior to oldest entry
+                 False: Cancel query"
+
+item_attributes:
+    db_addon_fct:
+        type: str
+        description:
+            de: 'Auswertefunktion des DB-Addon Plugins'
+            en: 'Evaluation Function of DB-Addon Plugins'
+        valid_list:
+            - 'verbrauch_heute'
+            - 'verbrauch_woche'
+            - 'verbrauch_monat'
+            - 'verbrauch_jahr'
+            - 'verbrauch_heute_minus1'
+            - 'verbrauch_heute_minus2'
+            - 'verbrauch_heute_minus3'
+            - 'verbrauch_heute_minus4'
+            - 'verbrauch_heute_minus5'
+            - 'verbrauch_heute_minus6'
+            - 'verbrauch_heute_minus7'
+            - 'verbrauch_woche_minus1'
+            - 'verbrauch_woche_minus2'
+            - 'verbrauch_woche_minus3'
+            - 'verbrauch_woche_minus4'
+            - 'verbrauch_monat_minus1'
+            - 'verbrauch_monat_minus2'
+            - 'verbrauch_monat_minus3'
+            - 'verbrauch_monat_minus4'
+            - 'verbrauch_monat_minus12'
+            - 'verbrauch_jahr_minus1'
+            - 'verbrauch_jahr_minus2'
+            - 'verbrauch_rolling_12m_heute_minus1'
+            - 'verbrauch_rolling_12m_woche_minus1'
+            - 'verbrauch_rolling_12m_monat_minus1'
+            - 'verbrauch_rolling_12m_jahr_minus1'
+            - 'verbrauch_jahreszeitraum_minus1'
+            - 'verbrauch_jahreszeitraum_minus2'
+            - 'verbrauch_jahreszeitraum_minus3'
+            - 'zaehlerstand_heute_minus1'
+            - 'zaehlerstand_heute_minus2'
+            - 'zaehlerstand_heute_minus3'
+            - 'zaehlerstand_woche_minus1'
+            - 'zaehlerstand_woche_minus2'
+            - 'zaehlerstand_woche_minus3'
+            - 'zaehlerstand_monat_minus1'
+            - 'zaehlerstand_monat_minus2'
+            - 'zaehlerstand_monat_minus3'
+            - 'zaehlerstand_jahr_minus1'
+            - 'zaehlerstand_jahr_minus2'
+            - 'zaehlerstand_jahr_minus3'
+            - 'minmax_last_24h_min'
+            - 'minmax_last_24h_max'
+            - 'minmax_last_24h_avg'
+            - 'minmax_last_7d_min'
+            - 'minmax_last_7d_max'
+            - 'minmax_last_7d_avg'
+            - 'minmax_heute_min'
+            - 'minmax_heute_max'
+            - 'minmax_heute_minus1_min'
+            - 'minmax_heute_minus1_max'
+            - 'minmax_heute_minus1_avg'
+            - 'minmax_heute_minus2_min'
+            - 'minmax_heute_minus2_max'
+            - 'minmax_heute_minus2_avg'
+            - 'minmax_heute_minus3_min'
+            - 'minmax_heute_minus3_max'
+            - 'minmax_heute_minus3_avg'
+            - 'minmax_woche_min'
+            - 'minmax_woche_max'
+            - 'minmax_woche_minus1_min'
+            - 'minmax_woche_minus1_max'
+            - 'minmax_woche_minus1_avg'
+            - 'minmax_woche_minus2_min'
+            - 'minmax_woche_minus2_max'
+            - 'minmax_woche_minus2_avg'
+            - 'minmax_monat_min'
+            - 'minmax_monat_max'
+            - 'minmax_monat_minus1_min'
+            - 'minmax_monat_minus1_max'
+            - 'minmax_monat_minus1_avg'
+            - 'minmax_monat_minus2_min'
+            - 'minmax_monat_minus2_max'
+            - 'minmax_monat_minus2_avg'
+            - 'minmax_jahr_min'
+            - 'minmax_jahr_max'
+            - 'minmax_jahr_minus1_min'
+            - 'minmax_jahr_minus1_max'
+            - 'minmax_jahr_minus1_avg'
+            - 'tagesmitteltemperatur_heute'
+            - 'tagesmitteltemperatur_heute_minus1'
+            - 'tagesmitteltemperatur_heute_minus2'
+            - 'tagesmitteltemperatur_heute_minus3'
+            - 'serie_minmax_monat_min_15m'
+            - 'serie_minmax_monat_max_15m'
+            - 'serie_minmax_monat_avg_15m'
+            - 'serie_minmax_woche_min_30w'
+            - 'serie_minmax_woche_max_30w'
+            - 'serie_minmax_woche_avg_30w'
+            - 'serie_minmax_tag_min_30d'
+            - 'serie_minmax_tag_max_30d'
+            - 'serie_minmax_tag_avg_30d'
+            - 'serie_verbrauch_tag_30d'
+            - 'serie_verbrauch_woche_30w'
+            - 'serie_verbrauch_monat_18m'
+            - 'serie_zaehlerstand_tag_30d'
+            - 'serie_zaehlerstand_woche_30w'
+            - 'serie_zaehlerstand_monat_18m'
+            - 'serie_waermesumme_monat_24m'
+            - 'serie_kaeltesumme_monat_24m'
+            - 'serie_tagesmittelwert_stunde_0d'
+            - 'serie_tagesmittelwert_tag_stunde_30d'
+            - 'general_oldest_value'
+            - 'general_oldest_log'
+            - 'kaeltesumme'
+            - 'waermesumme'
+            - 'gruenlandtempsumme'
+            - 'tagesmitteltemperatur'
+            - 'wachstumsgradtage'
+            - 'db_request'
+        valid_list_description:
+            - 'Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages)'
+            - 'Verbrauch in der aktuellen Woche'
+            - 'Verbrauch im aktuellen Monat'
+            - 'Verbrauch im aktuellen Jahr'
+            - 'Verbrauch gestern (heute -1 Tag) (Differenz zwischen Wert am Ende des gestrigen Tages und dem Wert am Ende des Tages danach)'
+            - 'Verbrauch vorgestern (heute -2 Tage)'
+            - 'Verbrauch heute -3 Tage'
+            - 'Verbrauch heute -4 Tage'
+            - 'Verbrauch heute -5 Tage'
+            - 'Verbrauch heute -6 Tage'
+            - 'Verbrauch heute -7 Tage'
+            - 'Verbrauch Vorwoche (aktuelle Woche -1)'
+            - 'Verbrauch aktuelle Woche -2 Wochen'
+            - 'Verbrauch aktuelle Woche -3 Wochen'
+            - 'Verbrauch aktuelle Woche -4 Wochen'
+            - 'Verbrauch Vormonat (aktueller Monat -1)'
+            - 'Verbrauch aktueller Monat -2 Monate'
+            - 'Verbrauch aktueller Monat -3 Monate'
+            - 'Verbrauch aktueller Monat -4 Monate'
+            - 'Verbrauch aktueller Monat -12 Monate'
+            - 'Verbrauch Vorjahr (aktuelles Jahr -1 Jahr)'
+            - 'Verbrauch aktuelles Jahr -2 Jahre'
+            - 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Tages'
+            - 'Verbrauch der letzten 12 Monate ausgehend im Ende der letzten Woche'
+            - 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Monats'
+            - 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Jahres'
+            - 'Verbrauch seit dem 1.1. bis zum heutigen Tag des Vorjahres'
+            - 'Verbrauch seit dem 1.1. bis zum heutigen Tag vor 2 Jahren'
+            - 'Verbrauch seit dem 1.1. bis zum heutigen Tag vor 3 Jahren'
+            - 'Zählerstand / Wert am Ende des letzten Tages (heute -1 Tag)'
+            - 'Zählerstand / Wert am Ende des vorletzten Tages (heute -2 Tag)'
+            - 'Zählerstand / Wert am Ende des vorvorletzten Tages (heute -3 Tag)'
+            - 'Zählerstand / Wert am Ende der vorvorletzten Woche (aktuelle Woche -1 Woche)'
+            - 'Zählerstand / Wert am Ende der vorletzten Woche (aktuelle Woche -2 Wochen)'
+            - 'Zählerstand / Wert am Ende der aktuellen Woche -3 Wochen'
+            - 'Zählerstand / Wert am Ende des letzten Monates (aktueller Monat -1 Monat)'
+            - 'Zählerstand / Wert am Ende des vorletzten Monates (aktueller Monat -2 Monate)'
+            - 'Zählerstand / Wert am Ende des aktuellen Monats -3 Monate'
+            - 'Zählerstand / Wert am Ende des letzten Jahres (aktuelles Jahr -1 Jahr)'
+            - 'Zählerstand / Wert am Ende des vorletzten Jahres (aktuelles Jahr -2 Jahre)'
+            - 'Zählerstand / Wert am Ende des aktuellen Jahres -3 Jahre'
+            - 'minimaler Wert der letzten 24h'
+            - 'maximaler Wert der letzten 24h'
+            - 'durchschnittlicher Wert der letzten 24h'
+            - 'minimaler Wert der letzten 7 Tage'
+            - 'maximaler Wert der letzten 7 Tage'
+            - 'durchschnittlicher Wert der letzten 7 Tage'
+            - 'Minimalwert seit Tagesbeginn'
+            - 'Maximalwert seit Tagesbeginn'
+            - 'Minimalwert gestern (heute -1 Tag)'
+            - 'Maximalwert gestern (heute -1 Tag)'
+            - 'Durchschnittswert gestern (heute -1 Tag)'
+            - 'Minimalwert vorgestern (heute -2 Tage)'
+            - 'Maximalwert vorgestern (heute -2 Tage)'
+            - 'Durchschnittswert vorgestern (heute -2 Tage)'
+            - 'Minimalwert heute vor 3 Tagen'
+            - 'Maximalwert heute vor 3 Tagen'
+            - 'Durchschnittswert heute vor 3 Tagen'
+            - 'Minimalwert seit Wochenbeginn'
+            - 'Maximalwert seit Wochenbeginn'
+            - 'Minimalwert Vorwoche (aktuelle Woche -1)'
+            - 'Maximalwert Vorwoche (aktuelle Woche -1)'
+            - 'Durchschnittswert Vorwoche (aktuelle Woche -1)'
+            - 'Minimalwert aktuelle Woche -2 Wochen'
+            - 'Maximalwert aktuelle Woche -2 Wochen'
+            - 'Durchschnittswert aktuelle Woche -2 Wochen'
+            - 'Minimalwert seit Monatsbeginn'
+            - 'Maximalwert seit Monatsbeginn'
+            - 'Minimalwert Vormonat (aktueller Monat -1)'
+            - 'Maximalwert Vormonat (aktueller Monat -1)'
+            - 'Durchschnittswert Vormonat (aktueller Monat -1)'
+            - 'Minimalwert aktueller Monat -2 Monate'
+            - 'Maximalwert aktueller Monat -2 Monate'
+            - 'Durchschnittswert aktueller Monat -2 Monate'
+            - 'Minimalwert seit Jahresbeginn'
+            - 'Maximalwert seit Jahresbeginn'
+            - 'Minimalwert Vorjahr (aktuelles Jahr -1 Jahr)'
+            - 'Maximalwert Vorjahr (aktuelles Jahr -1 Jahr)'
+            - 'Durchschnittswert Vorjahr (aktuelles Jahr -1 Jahr)'
+            - 'Tagesmitteltemperatur heute'
+            - 'Tagesmitteltemperatur des letzten Tages (heute -1 Tag)'
+            - 'Tagesmitteltemperatur des vorletzten Tages (heute -2 Tag)'
+            - 'Tagesmitteltemperatur des vorvorletzten Tages (heute -3 Tag)'
+            - 'monatlicher Minimalwert der letzten 15 Monate (gleitend)'
+            - 'monatlicher Maximalwert der letzten 15 Monate (gleitend)'
+            - 'monatlicher Mittelwert der letzten 15 Monate (gleitend)'
+            - 'wöchentlicher Minimalwert der letzten 30 Wochen (gleitend)'
+            - 'wöchentlicher Maximalwert der letzten 30 Wochen (gleitend)'
+            - 'wöchentlicher Mittelwert der letzten 30 Wochen (gleitend)'
+            - 'täglicher Minimalwert der letzten 30 Tage (gleitend)'
+            - 'täglicher Maximalwert der letzten 30 Tage (gleitend)'
+            - 'täglicher Mittelwert der letzten 30 Tage (gleitend)'
+            - 'Verbrauch pro Tag der letzten 30 Tage'
+            - 'Verbrauch pro Woche der letzten 30 Wochen'
+            - 'Verbrauch pro Monat der letzten 18 Monate'
+            - 'Zählerstand am Tagesende der letzten 30 Tage'
+            - 'Zählerstand am Wochenende der letzten 30 Wochen'
+            - 'Zählerstand am Monatsende der letzten 18 Monate'
+            - 'monatliche Wärmesumme der letzten 24 Monate'
+            - 'monatliche Kältesumme der letzten 24 Monate'
+            - 'Stundenmittelwert für den aktuellen Tag'
+            - 'Stundenmittelwert pro Tag der letzten 30 Tage (bspw. zur Berechnung der Tagesmitteltemperatur basierend auf den Mittelwert der Temperatur pro Stunde'
+            - 'Ausgabe des ältesten Wertes des entsprechenden "Parent-Items" mit database Attribut'
+            - 'Ausgabe des Timestamp des ältesten Eintrages des entsprechenden "Parent-Items" mit database Attribut'
+            - 'Berechnet die Kältesumme für einen Zeitraum, db_addon_params: (year=mandatory: int, month=optional: str)'
+            - 'Berechnet die Wärmesumme für einen Zeitraum, db_addon_params: (year=mandatory: int, month=optional: str, threshold=optional: int)'
+            - 'Berechnet die Grünlandtemperatursumme für einen Zeitraum, db_addon_params: (year=mandatory)'
+            - 'Berechnet die Tagesmitteltemperatur auf Basis der stündlichen Durchschnittswerte eines Tages für die angegebene Anzahl von Tagen (timeframe=day, count=integer)'
+            - 'Berechnet die Wachstumsgradtage auf Basis der stündlichen Durchschnittswerte eines Tages für das laufende Jahr mit an Angabe des Temperaturschwellenwertes (year=Jahr: int, method=0/1: int, threshold=Schwellentemperatur: int)'
+            - 'Abfrage der DB: db_addon_params: (func=mandatory, item=mandatory, timespan=mandatory, start=optional, end=optional, count=optional, group=optional, group2=optional)'
+        valid_list_item_type:
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'num '
+            - 'list'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'list'
+            - 'num'
+            - 'list'
+        valid_list_calculation:
+            - 'onchange'
+            - 'onchange'
+            - 'onchange'
+            - 'onchange'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'yearly'
+            - 'yearly'
+            - 'daily'
+            - 'weekly'
+            - 'monthly'
+            - 'yearly'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'yearly'
+            - 'yearly'
+            - 'yearly'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'onchange'
+            - 'onchange'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'onchange'
+            - 'onchange'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'onchange'
+            - 'onchange'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'onchange'
+            - 'onchange'
+            - 'yearly'
+            - 'yearly'
+            - 'yearly'
+            - 'onchange'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'weekly'
+            - 'monthly'
+            - 'daily'
+            - 'weekly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'daily'
+            - 'daily'
+            - 'False'
+            - 'False'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'group'
+
+    db_addon_info:
+        type: str
+        description:
+            de: 'Info-Funktion des DB-Addon Plugins'
+            en: 'Info-Function of DB-Addon Plugins'
+        valid_list:
+            - 'db_version'
+        valid_list_description:
+            - 'Version der verbundenen Datenbank'
+        valid_list_item_type:
+            - 'str'
+
+    db_addon_admin:
+        type: str
+        description:
+            de: 'Admin-Funktion des DB-Addon Plugins'
+            en: 'Admin-Function of DB-Addon Plugins'
+        valid_list:
+            - 'suspend'
+            - 'recalc_all'
+            - 'clean_cache_values'
+        valid_list_description:
+            - 'unterbricht die Aktivitäten des Plugin -> bool'
+            - 'Startet einen Neuberechnungslauf aller on-demand items -> bool'
+            - 'Löscht Plugin-Cache und damit alle im Plugin zwischengespeicherten Werte -> bool'
+        valid_list_item_type:
+            - 'bool'
+            - 'bool'
+            - 'bool'
+
+    db_addon_params:
+        type: str
+        description:
+            de: "Parameter für eine Auswertefunktion des DB-Addon Plugins im Format 'kwargs' enclosed in quotes like 'keyword=argument, keyword=argument'"
+            en: "Parameters of a DB-Addon Plugin evaluation function. Need to have format of 'kwargs' enclosed in quotes like 'keyword=argument, keyword=argument'"
+
+    db_addon_startup:
+        type: bool
+        description:
+            de: 'Ausführen der Berechnung bei Plugin Start (mit zeitlichem Abstand, wie in den Plugin Parametern definiert)'
+            en: 'Run function in startup of plugin (with delay, set in plugin parameters)'
+
+    db_addon_ignore_value:
+        type: num
+        description:
+            de: 'Wert der bei Abfrage bzw. Auswertung der Datenbank für diese Item ignoriert werden soll'
+            en: 'Value which will be ignored at database query'
+
+    db_addon_database_item:
+        type: str
+        description:
+            de: 'Optional: Pfad des zu verwendenden Items mit Database Attribut'
+            en: 'Optional: Path of item with database attribut to be used'
+
+item_structs:
+    verbrauch_1:
+        name: Struct für Verbrauchsauswertung bei Zählern mit stetig ansteigendem Zählerstand (Teil 1)
+        verbrauch_heute:
+            name: Verbrauch heute
+            db_addon_fct: verbrauch_heute
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_woche:
+            name: Verbrauch seit Wochenbeginn
+            db_addon_fct: verbrauch_woche
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_monat:
+            name: Verbrauch seit Monatsbeginn
+            db_addon_fct: verbrauch_monat
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_jahr:
+            name: Verbrauch seit Jahresbeginn
+            db_addon_fct: verbrauch_jahr
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_rolling_12m:
+            name: Verbrauch innerhalb der letzten 12 Monate ausgehend von gestern
+            db_addon_fct: verbrauch_rolling_12m_heute_minus1
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_gestern:
+            name: Verbrauch gestern
+            db_addon_fct: verbrauch_heute_minus1
+            db_addon_startup: yes
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_gestern_minus1:
+            name: Verbrauch vorgestern
+            db_addon_fct: verbrauch_heute_minus2
+            db_addon_startup: yes
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_gestern_minus2:
+            name: Verbrauch vor 3 Tagen
+            db_addon_fct: verbrauch_heute_minus3
+            db_addon_startup: yes
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_vorwoche:
+            name: Verbrauch in der Vorwoche
+            db_addon_fct: verbrauch_woche_minus1
+            db_addon_startup: yes
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_vorwoche_minus1:
+            name: Verbrauch vor 2 Wochen
+            db_addon_fct: verbrauch_woche_minus2
+            db_addon_startup: yes
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_vormonat:
+            name: Verbrauch im Vormonat
+            db_addon_fct: verbrauch_monat_minus1
+            db_addon_startup: yes
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_vormonat_minus12:
+            name: Verbrauch vor 12 Monaten
+            db_addon_fct: verbrauch_monat_minus12
+            db_addon_startup: yes
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_vorjahreszeitraum:
+            name: Verbrauch im Jahreszeitraum 1.1. bis jetzt vor einem Jahr
+            db_addon_fct: verbrauch_jahreszeitraum_minus1
+            db_addon_startup: yes
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+    verbrauch_2:
+        name: Struct für Verbrauchsauswertung bei Zählern mit stetig ansteigendem Zählerstand (Teil 2)
+        verbrauch_gestern_minus3:
+            name: Verbrauch vor 3 Tagen
+            db_addon_fct: verbrauch_heute_minus3
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_gestern_minus4:
+            name: Verbrauch vor 4 Tagen
+            db_addon_fct: verbrauch_heute_minus4
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_gestern_minus5:
+            name: Verbrauch vor 5 Tagen
+            db_addon_fct: verbrauch_heute_minus5
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_gestern_minus6:
+            name: Verbrauch vor 6 Tagen
+            db_addon_fct: verbrauch_heute_minus6
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_gestern_minus7:
+            name: Verbrauch vor 7 Tagen
+            db_addon_fct: verbrauch_heute_minus7
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_vorwoche_minus2:
+            name: Verbrauch vor 3 Wochen
+            db_addon_fct: verbrauch_woche_minus3
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_vorwoche_minus3:
+            name: Verbrauch vor 4 Wochen
+            db_addon_fct: verbrauch_woche_minus4
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_vormonat_minus1:
+            name: Verbrauch vor 2 Monaten
+            db_addon_fct: verbrauch_monat_minus2
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_vormonat_minus2:
+            name: Verbrauch vor 3 Monaten
+            db_addon_fct: verbrauch_monat_minus3
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        verbrauch_vormonat_minus3:
+            name: Verbrauch vor 4 Monaten
+            db_addon_fct: verbrauch_monat_minus4
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+    zaehlerstand_1:
+        name: Struct für die Erfassung von Zählerständen zu bestimmten Zeitpunkten bei Zählern mit stetig ansteigendem Zählerstand
+        zaehlerstand_gestern:
+            name: Zählerstand zum Ende des gestrigen Tages
+            db_addon_fct: zaehlerstand_heute_minus1
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        zaehlerstand_vorwoche:
+            name: Zählerstand zum Ende der vorigen Woche
+            db_addon_fct: zaehlerstand_woche_minus1
+            db_addon_startup: yes
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        zaehlerstand_vormonat:
+            name: Zählerstand zum Ende des Vormonates
+            db_addon_fct: zaehlerstand_monat_minus1
+            db_addon_startup: yes
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        zaehlerstand_vormonat_minus1:
+            name: Zählerstand zum Monatsende vor 2 Monaten
+            db_addon_fct: zaehlerstand_monat_minus2
+            db_addon_startup: yes
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        zaehlerstand_vormonat_minus2:
+            name: Zählerstand zum Monatsende vor 3 Monaten
+            db_addon_fct: zaehlerstand_monat_minus3
+            db_addon_startup: yes
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+        zaehlerstand_vorjahr:
+            name: Zählerstand am Ende des vorigen Jahres
+            db_addon_fct: zaehlerstand_jahr_minus1
+            db_addon_startup: yes
+            type: num
+            visu_acl: ro
+            # cache: yes
+
+    minmax_1:
+        name: Struct für Auswertung der Wertehistorie bei schwankenden Werten wie bspw. Temperatur oder Leistung (Teil 1)
+
+        heute_min:
+            name: Minimaler Wert seit Tagesbeginn
+            db_addon_fct: minmax_heute_min
+            db_addon_ignore_value: 0
+            type: num
+            # cache: yes
+
+        heute_max:
+            name: Maximaler Wert seit Tagesbeginn
+            db_addon_fct: minmax_heute_max
+            type: num
+            # cache: yes
+
+        last24h_min:
+            name: Minimaler Wert in den letzten 24h (gleitend)
+            db_addon_fct: minmax_last_24h_min
+            type: num
+            # cache: yes
+
+        last24h_max:
+            name: Maximaler Wert in den letzten 24h (gleitend)
+            db_addon_fct: minmax_last_24h_max
+            type: num
+            # cache: yes
+
+        woche_min:
+            name: Minimaler Wert seit Wochenbeginn
+            db_addon_fct: minmax_woche_min
+            type: num
+            # cache: yes
+
+        woche_max:
+            name: Maximaler Wert seit Wochenbeginn
+            db_addon_fct: minmax_woche_max
+            type: num
+            # cache: yes
+
+        monat_min:
+            name: Minimaler Wert seit Monatsbeginn
+            db_addon_fct: minmax_monat_min
+            type: num
+            # cache: yes
+
+        monat_max:
+            name: Maximaler Wert seit Monatsbeginn
+            db_addon_fct: minmax_monat_max
+            type: num
+            # cache: yes
+
+        jahr_min:
+            name: Minimaler Wert seit Jahresbeginn
+            db_addon_fct: minmax_jahr_min
+            type: num
+            # cache: yes
+
+        jahr_max:
+            name: Maximaler Wert seit Jahresbeginn
+            db_addon_fct: minmax_jahr_max
+            type: num
+            # cache: yes
+
+        gestern_min:
+            name: Minimaler Wert gestern
+            db_addon_fct: minmax_heute_minus1_min
+            db_addon_startup: yes
+            type: num
+            # cache: yes
+
+        gestern_max:
+            name: Maximaler Wert gestern
+            db_addon_fct: minmax_heute_minus1_max
+            db_addon_startup: yes
+            type: num
+            # cache: yes
+
+        gestern_avg:
+            name: Durchschnittlicher Wert gestern
+            db_addon_fct: minmax_heute_minus1_avg
+            db_addon_startup: yes
+            type: num
+            # cache: yes
+
+        vorwoche_min:
+            name: Minimaler Wert in der Vorwoche
+            db_addon_fct: minmax_woche_minus1_min
+            db_addon_startup: yes
+            type: num
+            # cache: yes
+
+        vorwoche_max:
+            name: Maximaler Wert in der Vorwoche
+            db_addon_fct: minmax_woche_minus1_max
+            db_addon_startup: yes
+            type: num
+            # cache: yes
+
+        vorwoche_avg:
+            name: Durchschnittlicher Wert in der Vorwoche
+            db_addon_fct: minmax_woche_minus1_avg
+            db_addon_startup: yes
+            type: num
+            # cache: yes
+
+        vormonat_min:
+            name: Minimaler Wert im Vormonat
+            db_addon_fct: minmax_monat_minus1_min
+            db_addon_startup: yes
+            type: num
+            # cache: yes
+
+        vormonat_max:
+            name: Maximaler Wert im Vormonat
+            db_addon_fct: minmax_monat_minus1_max
+            db_addon_startup: yes
+            type: num
+            # cache: yes
+
+        vormonat_avg:
+            name: Durchschnittlicher Wert im Vormonat
+            db_addon_fct: minmax_monat_minus1_avg
+            db_addon_startup: yes
+            type: num
+            # cache: yes
+
+        vorjahr_min:
+            name: Minimaler Wert im Vorjahr
+            db_addon_fct: minmax_jahr_minus1_min
+            db_addon_startup: yes
+            type: num
+            # cache: yes
+
+        vorjahr_max:
+            name: Maximaler Wert im Vorjahr
+            db_addon_fct: minmax_jahr_minus1_max
+            db_addon_startup: yes
+            type: num
+            # cache: yes
+
+    minmax_2:
+        name: Struct für Auswertung der Wertehistorie bei schwankenden Werten wie bspw. Temperatur oder Leistung (Teil 2)
+
+        gestern_minus1_min:
+            name: Minimaler Wert vorgestern
+            db_addon_fct: minmax_heute_minus2_min
+            type: num
+            # cache: yes
+
+        gestern_minus1_max:
+            name: Maximaler Wert vorgestern
+            db_addon_fct: minmax_heute_minus2_max
+            type: num
+            # cache: yes
+
+        gestern_minus1_avg:
+            name: Durchschnittlicher Wert vorgestern
+            db_addon_fct: minmax_heute_minus2_avg
+            type: num
+            # cache: yes
+
+        gestern_minus2_min:
+            name: Minimaler Wert vor 3 Tagen
+            db_addon_fct: minmax_heute_minus3_min
+            type: num
+            # cache: yes
+
+        gestern_minus2_max:
+            name: Maximaler Wert vor 3 Tagen
+            db_addon_fct: minmax_heute_minus3_max
+            type: num
+            # cache: yes
+
+        gestern_minus2_avg:
+            name: Durchschnittlicher Wert vor 3 Tagen
+            db_addon_fct: minmax_heute_minus3_avg
+            type: num
+            # cache: yes
+
+        vorwoche_minus1_min:
+            name: Minimaler Wert in der Woche vor 2 Wochen
+            db_addon_fct: minmax_woche_minus2_min
+            type: num
+            # cache: yes
+
+        vorwoche_minus1_max:
+            name: Maximaler Wert in der Woche vor 2 Wochen
+            db_addon_fct: minmax_woche_minus2_max
+            type: num
+            # cache: yes
+
+        vorwoche_minus1_avg:
+            name: Durchschnittlicher Wert in der Woche vor 2 Wochen
+            db_addon_fct: minmax_woche_minus2_avg
+            type: num
+            # cache: yes
+
+        vormonat_minus1_min:
+            name: Minimaler Wert im Monat vor 2 Monaten
+            db_addon_fct: minmax_monat_minus2_min
+            type: num
+            # cache: yes
+
+        vormonat_minus1_max:
+            name: Maximaler Wert im Monat vor 2 Monaten
+            db_addon_fct: minmax_monat_minus2_max
+            type: num
+            # cache: yes
+
+        vormonat_minus1_avg:
+            name: Durchschnittlicher Wert im Monat vor 2 Monaten
+            db_addon_fct: minmax_monat_minus2_avg
+            type: num
+            # cache: yes
+
+item_attribute_prefixes: NONE
+
+plugin_functions:
+    fetch_log:
+        type: list
+        description:
+            de: 'Liefert für das angegebene Item und die Parameter das Abfrageergebnis zurück'
+            en: 'Return the database request result for the given item and parameters'
+            # mit dieser Funktion ist es möglich, eine Liste der "func" Werte pro "group" / "group2" eines "item" von "start""timespan" bis "end""timespan" oder von "start""timespan" bis "count" ausgegeben zu lassen
+            # bspw. minimale Tagestemperatur vom Item "outdoor.temp" der letzten 10 Tage startend von gestern davor --> func=min, item=outdoor.temp, timespan=day, start=1, count=10, group=day
+            # bspw. maximal Tagestemperatur vom Item "outdoor.temp" von jetzt bis 2 Monate davor --> func=max, item=outdoor.temp, timeframe=month, start=0, end=2, group=day
+        parameters:
+            func:
+                type: str
+                description:
+                    de: "zu verwendende Abfragefunktion"
+                    en: "database function to be used"
+                mandatory: True
+                valid_list:
+                  - min                 # Minimalwerte
+                  - max                 # Maximalwerte
+                  - sum                 # Summe
+                  - on
+                  - integrate
+                  - sum_max
+                  - sum_avg
+                  - sum_min_neg
+                  - diff_max
+            item:
+                type: foo
+                description:
+                    de: "Das Item-Objekt oder die Item_ID der DB"
+                    en: "An item object"
+                mandatory: True
+            timeframe:
+                type: str
+                description:
+                    de: "Zeitinkrement für die DB-Abfrage"
+                    en: "time increment for db-request"
+                mandatory: True
+                valid_list:
+                  - day
+                  - week
+                  - month
+                  - year
+            start:
+                type: int
+                description:
+                    de: "Zeitlicher Beginn der DB-Abfrage: x Zeitinkrementen von jetzt in die Vergangenheit"
+                    en: "start point in time for db-request; x time increments from now into the past"
+            end:
+                type: int
+                description:
+                    de: "Zeitliches Ende der DB-Abfrage: x Zeitinkrementen von jetzt in die Vergangenheit"
+                    en: "end point in time for db-request; x time increments from now into the past"
+            count:
+                type: int
+                description:
+                    de: "Anzahl der Zeitinkremente, vom Start in die Vergangenheit abzufragen sind. Alternative zu 'end'"
+                    en: "number of time increments from start point in time into the past. can be used alternativly to 'end'"
+            group:
+                type: str
+                description:
+                    de: "erste Gruppierung der DB-Abfrage"
+                    en: "first grouping for the db-request"
+                valid_list:
+                  - day
+                  - week
+                  - month
+                  - year
+            group2:
+                type: str
+                description:
+                    de: "zweite Gruppierung der DB-Abfrage"
+                    en: "second grouping for the db-request"
+                valid_list:
+                  - day
+                  - week
+                  - month
+                  - year
+
+    db_version:
+        type: str
+        description:
+            de: 'Liefer die verwendete Version der Datenbank'
+            en: 'Return the database version'
+
+    suspend:
+        type: bool
+        description:
+            de: 'Pausiert die Berechnungen des Plugins'
+            en: 'Suspends value evaluation of plugin'
+
+logic_parameters: NONE

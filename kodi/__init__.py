@@ -40,7 +40,7 @@ class Kodi(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     '''
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.1'
     ALLOW_MULTIINSTANCE = True
     _initcommands = ['get_actplayer', 'get_status_au', 'get_favourites']
 

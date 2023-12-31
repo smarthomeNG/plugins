@@ -5,14 +5,14 @@ plugin:
         de: '1-Wire Unterstützung über owserver'
         en: '1-Wire support via owserver'
         fr: 'Support de 1-Wire à travers owserver'
-    maintainer: bmxp
+    maintainer: bmxp, msinn
     tester: 'henfri, chester4444'
     state: ready
     keywords: 1wire onewire dallas ibutton sensor temperature humidity
     documentation: ''
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1493319-support-thread-zum-onewire-plugin
-    version: 1.9.1                 # Plugin version
-    sh_minversion: 1.9.3.4         # minimum shNG version to use this plugin
+    version: 1.9.4                 # Plugin version
+    sh_minversion: 1.9.3.5         # minimum shNG version to use this plugin
     multi_instance: True
     restartable: True
     classname: OneWire             # class containing the plugin
@@ -112,6 +112,15 @@ parameters:
             de: 'Zeitraum zwischen zwei Anfragen an den 1-wire I/O Chip.'
             en: 'Time period between two requests of 1-wire I/O chip.'
             fr: 'Délai entre deux demandes de puce 1-wire I/O.'
+
+    parasitic_power_wait:
+        type: num
+        default: 0.5
+        valid_min: 0.1
+        valid_max: 1.5
+        description:
+            de: 'Wartezeit in Sekunden, um pei parasitärer Spannungsversorgung der Sensoren die Busspannung zu regenerieren'
+            en: 'Waiting time in seconds to regenerate the bus voltage, if sensors are operated using parasitic power'
 
     log_counter_io_loop_time:
         type: num

@@ -1,0 +1,18 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Host':                 {'de': '=', 'en': '='}
+    'Port':                 {'de': '=', 'en': '='}
+    'Version':              {'de': '=', 'en': '='}
+    'Verbindung':           {'de': '=', 'en': 'Connection'}
+    'Autoreconnect':        {'de': '=', 'en': '='}
+    'Reconnect Details':    {'de': '=', 'en': '='}
+    'Retries':              {'de': '=', 'en': '='}
+    'Letzte Antwort':       {'de': '=', 'en': 'Last Response'}
+    'Senden':               {'de': '=', 'en': 'Send'}
+    'Item':                 {'de': '=', 'en': '='}
+    'Remote':               {'de': '=', 'en': '='}
+    'Key':                  {'de': '=', 'en': '='}
+    'Cycle':                {'de': '=', 'en': '='}
+    'Letztes Update':       {'de': '=', 'en': 'Last Update'}
+    'Letzte Änderung':      {'de': '=', 'en': 'Last Change'}

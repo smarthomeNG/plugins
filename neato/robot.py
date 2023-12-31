@@ -158,13 +158,13 @@ class Robot:
                 self.logger.warning(f"Command returned {str(responseJson['result'])}: Retry starting with non-persistent-map")
                 return self.robot_command(command = 'start_non-persistent-map')
             else:
-                self.logger.error("Sending command failed. Result: {0}".format(str(responseJson['result']) ))
+                self.logger.error("Sending command {command} failed. Result: {0}".format(str(responseJson['result']) ))
                 self.logger.error("Debug: send command response: {0}".format(start_cleaning_response.text))
         else:
             if 'message' in responseJson:
-                self.logger.error("Sending command failed. Message: {0}".format(str(responseJson['message'])))
+                self.logger.error("Sending command {command} failed. Message: {0}".format(str(responseJson['message'])))
             if 'error' in responseJson:
-                self.logger.error("Sending command failed. Error: {0}".format(str(responseJson['error'])))
+                self.logger.error("Sending command {command} failed. Error: {0}".format(str(responseJson['error'])))
 
         # - NOT on Charge BASE
         return start_cleaning_response
@@ -214,8 +214,11 @@ class Robot:
         elif statusCode == 404:
             self.logger.warning("Robot is not reachable for backend. Is robot online?")
             return 'error'
+        elif statusCode == 500:
+            self.logger.warning(f"Internal Backend Server Error 500, Optional message: {robot_cloud_state_response.text}")
+            return 'error'
         else:
-            self.logger.error("Sending cloud state request error: {0}, msg: {1}".format(statusCode,robot_cloud_state_response.text ))
+            self.logger.error(f"Sending cloud state request error: {statusCode}, msg: {robot_cloud_state_response.text}")
             return 'error'
 
         response = robot_cloud_state_response.json()

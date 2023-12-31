@@ -45,7 +45,7 @@ from .svinstallwidgets import SmartVisuInstallWidgets
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.8.6"
+    PLUGIN_VERSION="1.8.10"
     ALLOW_MULTIINSTANCE = True
 
     visu_definition = None
@@ -58,6 +58,10 @@ class SmartVisu(SmartPlugin):
 
 
     def __init__(self, sh):
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
         #self.logger = logging.getLogger(__name__)
         self._sh = sh
 
@@ -72,6 +76,8 @@ class SmartVisu(SmartPlugin):
         self._handle_widgets = self.get_parameter_value('handle_widgets')
         self._create_masteritem_file = self.get_parameter_value('create_masteritem_file')
         self.list_deprecated_warnings = self.get_parameter_value('list_deprecated_warnings')
+        self.protocol_over_reverseproxy = False
+        #self.protocol_over_reverseproxy = self.get_parameter_value('protocol_over_reverseproxy')
 
         self.smartvisu_version = self.get_smartvisu_version()
         if self.smartvisu_version == '':
@@ -94,10 +100,15 @@ class SmartVisu(SmartPlugin):
             self.mod_websocket = Modules.get_instance().get_module('websocket')
         except:
             self.mod_websocket = None
-        if self.mod_websocket == None:
             self.logger.info("Module 'websocket' could not be initialized.")
-        else:
-            self.mod_websocket.set_smartvisu_support(protocol_enabled=True, default_acl=self.default_acl, query_definitions=False, series_updatecycle=0)
+
+        self.payload_smartvisu = None
+        if self.mod_websocket is not None:
+            self.payload_smartvisu = self.mod_websocket.get_payload_protocol_by_id('sv')
+            try:
+                self.payload_smartvisu.set_smartvisu_support(protocol_enabled=True, default_acl=self.default_acl, query_definitions=False, series_updatecycle=0, protocol_over_reverseproxy=self.protocol_over_reverseproxy)
+            except:
+                self.logger.exception("Payload protocol 'smartvisu' of module 'websocket' could not be found.")
 
         self.port = ''
         self.tls_port = ''
@@ -272,57 +283,63 @@ class SmartVisu(SmartPlugin):
             widget = widget[:-5]
 
         used_widgets = []
-        for widget_name in self.removed_widgets:
-            if widget_code.find(widget_name) > -1:
-                used_widgets.append(widget_name)
-        if used_widgets != []:
-            self.removed_plugin_widgets.append(widget)
-            if self.list_deprecated_warnings:
-                self.logger.error("deprecated_widgets ({}): Removed widget(s) {} used in plugin-widget '{}' of plugin '{}'".format(self.smartvisu_version, used_widgets, widget, plugin))
+        if self.removed_widgets is not None:
+            for widget_name in self.removed_widgets:
+                if widget_code.find(widget_name) > -1:
+                    used_widgets.append(widget_name)
+            if used_widgets != []:
+                self.removed_plugin_widgets.append(widget)
+                if self.list_deprecated_warnings:
+                    self.logger.error("deprecated_widgets ({}): Removed widget(s) {} used in plugin-widget '{}' of plugin '{}'".format(self.smartvisu_version, used_widgets, widget, plugin))
 
         used_widgets2 = []
-        for widget_name in self.deprecated_widgets:
-            if widget_code.find(widget_name) > -1:
-                used_widgets2.append(widget_name)
-        if used_widgets2 != []:
-            self.deprecated_plugin_widgets.append(widget)
-            if self.list_deprecated_warnings:
-                self.logger.warning("deprecated_widgets ({}): Deprecate widget(s) {} used in plugin-widget '{}' of plugin '{}'".format(self.smartvisu_version, used_widgets2, widget, plugin))
+        if self.deprecated_widgets is not None:
+            for widget_name in self.deprecated_widgets:
+                if widget_code.find(widget_name) > -1:
+                    used_widgets2.append(widget_name)
+            if used_widgets2 != []:
+                self.deprecated_plugin_widgets.append(widget)
+                if self.list_deprecated_warnings:
+                    self.logger.warning("deprecated_widgets ({}): Deprecate widget(s) {} used in plugin-widget '{}' of plugin '{}'".format(self.smartvisu_version, used_widgets2, widget, plugin))
 
         used_widgets = []
-        for widget_name in self.deprecated_widgets:
-            if widget_code.find(widget_name) > -1:
-                self.deprecated_plugin_widgets.append(widget)
-                used_widgets.append(widget_name)
-        if used_widgets != []:
-            self.logger.warning("test_widget_for_deprecated_widgets ({}): Deprecated widget(s) {} used in plugin-widget '{}' of plugin '{}'".format(self.smartvisu_version, used_widgets, widget, plugin))
+        if self.deprecated_widgets is not None:
+            for widget_name in self.deprecated_widgets:
+                if widget_code.find(widget_name) > -1:
+                    self.deprecated_plugin_widgets.append(widget)
+                    used_widgets.append(widget_name)
+            if used_widgets != []:
+                self.logger.warning("test_widget_for_deprecated_widgets ({}): Deprecated widget(s) {} used in plugin-widget '{}' of plugin '{}'".format(self.smartvisu_version, used_widgets, widget, plugin))
         return
 
     def test_item_for_deprecated_widgets(self, item):
         """
         Test if a deprecated or removed widget is used in an item
         """
-        for widget in self.removed_widgets:
-            if self.r_usage.get(widget, None) is None:
-                self.r_usage[widget] = 0
-            self.test_item_widget_attribute(item, 'sv_widget', widget, self.r_usage, 'removed')
-            self.test_item_widget_attribute(item, 'sv_widget2', widget, self.r_usage, 'removed')
-            self.test_item_widget_attribute(item, 'sv_nav_aside', widget, self.r_usage, 'removed')
-            self.test_item_widget_attribute(item, 'sv_nav_aside2', widget, self.r_usage, 'removed')
+        if self.removed_widgets is not None:
+            for widget in self.removed_widgets:
+                if self.r_usage.get(widget, None) is None:
+                    self.r_usage[widget] = 0
+                self.test_item_widget_attribute(item, 'sv_widget', widget, self.r_usage, 'removed')
+                self.test_item_widget_attribute(item, 'sv_widget2', widget, self.r_usage, 'removed')
+                self.test_item_widget_attribute(item, 'sv_nav_aside', widget, self.r_usage, 'removed')
+                self.test_item_widget_attribute(item, 'sv_nav_aside2', widget, self.r_usage, 'removed')
 
-        for widget in self.deprecated_widgets:
-            if self.d_usage.get(widget, None) is None:
-                self.d_usage[widget] = 0
-            self.test_item_widget_attribute(item, 'sv_widget', widget, self.d_usage)
-            self.test_item_widget_attribute(item, 'sv_widget2', widget, self.d_usage)
-            self.test_item_widget_attribute(item, 'sv_nav_aside', widget, self.d_usage)
-            self.test_item_widget_attribute(item, 'sv_nav_aside2', widget, self.d_usage)
+        if self.deprecated_widgets is not None:
+            for widget in self.deprecated_widgets:
+                if self.d_usage.get(widget, None) is None:
+                    self.d_usage[widget] = 0
+                self.test_item_widget_attribute(item, 'sv_widget', widget, self.d_usage)
+                self.test_item_widget_attribute(item, 'sv_widget2', widget, self.d_usage)
+                self.test_item_widget_attribute(item, 'sv_nav_aside', widget, self.d_usage)
+                self.test_item_widget_attribute(item, 'sv_nav_aside2', widget, self.d_usage)
 
-        for widget in self.deprecated_plugin_widgets:
-            self.test_item_widget_attribute(item, 'sv_widget', widget+'.', None, 'plugin-widget')
-            self.test_item_widget_attribute(item, 'sv_widget2', widget+'.', None, 'plugin-widget')
-            self.test_item_widget_attribute(item, 'sv_nav_aside', widget+'.', None, 'plugin-widget')
-            self.test_item_widget_attribute(item, 'sv_nav_aside2', widget+'.', None, 'plugin-widget')
+        if self.deprecated_plugin_widgets is not None:
+            for widget in self.deprecated_plugin_widgets:
+                self.test_item_widget_attribute(item, 'sv_widget', widget+'.', None, 'plugin-widget')
+                self.test_item_widget_attribute(item, 'sv_widget2', widget+'.', None, 'plugin-widget')
+                self.test_item_widget_attribute(item, 'sv_nav_aside', widget+'.', None, 'plugin-widget')
+                self.test_item_widget_attribute(item, 'sv_nav_aside2', widget+'.', None, 'plugin-widget')
 
         return
 
@@ -450,7 +467,10 @@ class SmartVisu(SmartPlugin):
             self.logger.error("Cannot send url to visu because websocket module is not loaded")
             return False
 
-        result = self.mod_websocket.set_visu_url(url, clientip)
+        try:
+            result = self.payload_smartvisu.set_visu_url(url, clientip)
+        except:
+            self.logger.notice("Payload protocol 'smartvisu' of module 'websocket' could not be found.")
 
         return result
 
@@ -464,6 +484,11 @@ class SmartVisu(SmartPlugin):
         if self.mod_websocket is None:
             return {}
 
-        client_info = self.mod_websocket.get_visu_client_info()
-        self.logger.info(f"client_info = {client_info}")
+        try:
+            client_info = self.payload_smartvisu.get_visu_client_info()
+            self.logger.info(f"client_info = {client_info}")
+        except:
+            self.logger.notice("Payload protocol 'smartvisu' of module 'websocket' could not be found.")
+            client_info = {}
+
         return client_info

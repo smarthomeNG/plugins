@@ -1,0 +1,1992 @@
+# Metadata for the Indego plugin
+plugin:
+    # Global plugin attributes
+    type: web                # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Indego Plugin zum Auslesen und steuern von Bosch Indego Mährobotern mit Connect Ausstattung'
+        en: 'Indego Plugin to read out and control Bosch Indego mower robots with Connect interface'
+    maintainer: AndreK, schuma
+    tester: schuma, AndreK
+    state: ready                    # change to ready when done with development
+    keywords: Indego smartmower bosch connect
+    documentation: http://smarthomeng.de/user/plugins_doc/config/indego.html        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/966612-indego-connect
+
+    version: 4.0.0                  # Plugin version
+    sh_minversion: 1.6              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: yes
+    classname: Indego4shNG          # class containing the plugin
+
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    cycle:
+        type: int
+        default: 30
+        description:
+            de: 'Zeitlicher Abstand zwischen zwei Verbindungen zur Website'
+            en: 'Time between two connects to the website'
+    path_2_weather_pics:
+        type: str
+        default: '/smartVISU/lib/weather/pics/'
+        description:
+            de: 'Pfad zu den Wetter-PNG-Dateien - default =/smartVISU/lib/weather/pics/'
+            en: 'path to the weather pictures - default =/smartVISU/lib/weather/pics/'
+    indego_credentials:
+        type: str
+        default: ''
+        description:
+            de: 'Zugangsdaten base64 encoded im Format user:passwort'
+            en: 'Credentials base64 encoded in format user:password'
+    img_pfad:
+        type: str
+        default: '/tmp/garden.svg'
+        description:
+            de: 'Pfad und Dateiname, wo die Kartendatei gespeichert werden soll. Es müssen Schreibrechte für SmartHomeNG bestehen'
+            en: 'Path and filename where to save the mapfile. Write access for SmartHomeNG must be granted'
+    indego_url:
+        type: str
+        default: 'https://api.indego.iot.bosch-si.com/api/v1/'
+        description:
+            de: 'Indego Webseite für den Servicezugriff'
+            en: 'indego website for service access'
+    parent_item:
+        type: str
+        default: 'indego'
+        description:
+            de: 'Das Eltern Item für alle Kinditems, die diese Instanz betreffen'
+            en: 'The parent item for all children relating to this instance'
+
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    indego_function_4_all:
+        type: str
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des Indego4ShNG-Plugins'
+            en: 'internal function of the Indego4ShNG-Plugin'
+    indego_function_4_visu:
+        type: str
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des Indego4ShNG-Plugins'
+            en: 'internal function of the Indego4ShNG-Plugin'            
+    indego_config:
+        type: str
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des Indego4ShNG-Plugins'
+            en: 'internal function of the Indego4ShNG-Plugin'            
+    indego_config_url:
+        type: str
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des Indego4ShNG-Plugins'
+            en: 'internal function of the Indego4ShNG-Plugin'            
+    indego_attr_name:
+        type: str
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des Indego4ShNG-Plugins'
+            en: 'internal function of the Indego4ShNG-Plugin'
+    indego_attr_type:
+        type: str
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des Indego4ShNG-Plugins'
+            en: 'internal function of the Indego4ShNG-Plugin'                                    
+    indego_parse_2_attr:
+        type: str
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des Indego4ShNG-Plugins'
+            en: 'internal function of the Indego4ShNG-Plugin'                        
+    indego_command:
+        type: str
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des Indego4ShNG-Plugins'
+            en: 'internal function of the Indego4ShNG-Plugin'
+    indego_plugin_handled:
+        type: str
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des Indego4ShNG-Plugins'
+            en: 'internal function of the Indego4ShNG-Plugin'                                    
+    indego_add_key:
+        type: str
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des Indego4ShNG-Plugins'
+            en: 'internal function of the Indego4ShNG-Plugin'                        
+    indego_smart:
+        type: str
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des Indego4ShNG-Plugins'
+            en: 'internal function of the Indego4ShNG-Plugin'                        
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+    send_command:
+        type: str
+        description:
+            de: 'sendet ein Kommando an den Bosch-Server'
+            en: 'sends Commands to the Bosch Server'
+        parameters:
+            payload:
+                type: str
+                default: '{"state":"mow"}'
+                description:
+                    de: 'Payload für das zu sendende Kommando'
+                    en: 'payload for the command to send'
+                valid_list:
+                  - '{"state":"mow"}'
+                  - '{"state":"pause"}'
+                  - '{"state":"returnToDock"}'
+            trigger:
+                type: str
+                default: 'Logic'
+                description:
+                    de: 'Trigger der die Funktion ausgelöst hat'
+                    en: 'Trigger which caused the function'
+
+
+
+  
+item_structs:
+    child:
+        name: Vorlage Struktur Indego-Mower
+
+
+# Start - Definitions for the VISU-Items
+        visu:
+
+            battery_load:
+                type: num
+                visu_acl: rw
+                cache: 'on'
+
+            battery_load_icon:
+                type: num
+                cache: 'on'
+
+            refresh:
+                type: bool
+                visu_acl: rw
+                indego_function_4_all: '_handle_refresh'
+
+            network:
+                act_provider:
+                    type: str
+                    visu_acl: rw
+
+                available_provider:
+                    type: str
+                    visu_acl: rw
+            model:
+                type: str
+                visu_acl: rw
+                cache: 'on'
+
+            model_type:
+                type: num
+                visu_acl: rw
+                cache: 'on'
+
+            avoid_temperature:
+                type: bool
+                cache: 'on'
+                visu_acl: rw
+
+            avoid_rain:
+                type: bool
+                cache: 'on'
+                visu_acl: rw
+
+            use_grass_growth:
+                type: bool
+                cache: 'on'
+                visu_acl: rw
+
+            full_cuts:
+                type: num
+                cache: 'on'
+                visu_acl: rw
+
+            use_exclude_time_4_sms:
+                type: bool
+                visu_acl: rw
+                cache: 'on'
+
+            store_sms_profile:
+                type: bool
+                visu_acl: rw
+                indego_function_4_all: '_handle_store_cals'
+
+            alerts:
+                type: dict
+                visu_acl: rw
+                cache: 'on'
+
+            alert_new:
+                type: bool
+                visu_acl: rw
+                cache: 'on'
+
+            alerts_reset:
+                type: bool
+                visu_acl: rw
+
+            alerts_read:
+                type: bool
+                visu_acl: rw
+
+            alerts_set_read:
+                type : list
+                visu_acl: rw
+                indego_function_4_visu: '_handle_alerts'
+
+            alerts_set_clear:
+                type : list
+                visu_acl: rw
+                indego_function_4_visu: '_handle_alerts'
+
+            cal_2_show:
+                type : str
+                visu_acl: rw
+
+            smartmow_days:
+                type: list
+                visu_acl: rw
+                cache: 'on'
+
+            wintermodus:
+                type : str
+                visu_acl: rw
+                cache: 'on'
+
+            svg_pos:
+                type : str
+                visu_acl: rw
+                cache: 'on'
+
+            mow_track:
+                type : list
+                visu_acl: rw
+                cache: 'on'
+                indego_function_4_all: '_handle_mow_track'
+
+                last_percent_mowed:
+                    type: num
+                    cache: 'on'
+
+            svg_mow_track:
+                type : str
+                visu_acl: rw
+                cache: 'on'
+
+            show_mow_track:
+                type : bool
+                visu_acl: rw
+                cache: 'on'
+                indego_function_4_all: '_handle_mow_track'
+
+            add_svg_images:
+                type : str
+                visu_acl: rw
+                cache: 'on'
+                indego_function_4_all: '_handle_parse_map'
+
+            mower_colour:
+                visu_acl: rw
+                type : str
+                cache: 'on'
+                initial_value: "mower_colour:'#FFF601'"
+                indego_function_4_all: '_handle_parse_map'
+
+            map_2_display:
+                type : str
+                cache: 'on'
+                visu_acl: rw
+
+            fire_uszu_popup:
+                type : str
+                cache: 'on'
+                visu_acl: rw
+                initial_value: 'fire_uszu_popup|False'
+                autotimer: 1 = 'fire_uszu_popup|False'
+
+# End - Definitions for the VISU-Items
+
+# Start - Definitions for the Trigger_Items
+        trigger:
+
+            state_trigger_1:
+                type: bool
+                autotimer: 1 = False
+                initial_value: 0
+
+                state:
+                    type: str
+                    cache: 'on'
+                    initial_value: '99999-kein State-Trigger'
+
+            state_trigger_2:
+                type: bool
+                autotimer: 1 = False
+                initial_value: 0
+
+                state:
+                    type: str
+                    cache: 'on'
+                    initial_value: '99999-kein State-Trigger'
+
+            state_trigger_3:
+                type: bool
+                autotimer: 1 = False
+                initial_value: 0
+
+                state:
+                    type: str
+                    cache: 'on'
+                    initial_value: '99999-kein State-Trigger'
+
+            state_trigger_4:
+                type: bool
+                autotimer: 1 = False
+                initial_value: 0
+
+                state:
+                    type: str
+                    cache: 'on'
+                    initial_value: '99999-kein State-Trigger'
+
+            alarm_trigger_1:
+                type: bool
+                autotimer: 1 = False
+
+                alarm:
+                    type: str
+                    cache: 'on'
+                    initial_value: ''
+
+            alarm_trigger_2:
+                type: bool
+                autotimer: 1 = False
+
+                alarm:
+                    type: str
+                    cache: 'on'
+                    initial_value: ''
+
+            alarm_trigger_3:
+                type: bool
+                autotimer: 1 = False
+
+                alarm:
+                    type: str
+                    cache: 'on'
+                    initial_value: ''
+
+
+            alarm_trigger_4:
+                type: bool
+                autotimer: 1 = False
+
+                alarm:
+                    type: str
+                    cache: 'on'
+                    initial_value: ''
+
+
+# End - Definitions for the Trigger_Items
+
+# Start - Definitions for the webIf-Items
+        webif:
+
+            laststateCode:
+                type: num
+                cache: 'on'
+
+            state_protocoll:
+                type: list
+                cache: 'on'
+
+            communication_protocoll:
+                type: list
+                cache: 'on'
+
+            garden_map:
+                type : str
+                cache: 'on'
+                visu_acl: rw
+                indego_function_4_all: '_handle_parse_map'
+
+            location_longitude:
+                type: num
+                cache: 'on'                
+
+            location_latitude:
+                type: num
+                cache: 'on'                
+
+# End - Definitions for the webIf-Items
+
+        wartung:
+            
+            messer_zaehler:
+                type: bool
+                visu_acl: rw
+                indego_function_4_visu: '_handle_wartung'
+
+            update:
+                type: str
+                visu_acl: rw
+                initial_value: 'Nein'
+
+            update_start:
+                type: bool
+                visu_acl: rw
+                indego_function_4_visu: '_handle_wartung'
+
+            update_auto:
+                type: bool
+                visu_acl: rw
+                cache: 'on'
+                indego_function_4_visu: '_handle_wartung'
+
+            wintermodus:
+                type: bool
+                visu_acl: rw
+                cache: 'on'
+                indego_function_4_visu: '_handle_wartung'
+
+            alm_config:
+                type: foo
+                visu_acl: rw
+                cache: 'on'
+
+            bump_sensitivity:
+                type: num
+                visu_acl: rw
+                cache: 'on'
+                indego_config: '{"bump_sensitivity":#}'
+                indego_config_url: 'api/v1/alms/{}/config'
+                remark: 'bump_sensitivity = 0 = normal / bump_sensitivity = 1 = hohe / bump_sensitivity = 2 = niedrig'
+
+# Start - special Items to care about future developements
+        states_str:
+            type: str
+            cache: 'on'
+            indego_attr_name: 'states'
+            indego_attr_type: 'int'
+            indego_parse_2_attr: yes
+            initial_value: '{"0":["liest den Status","unknown"],"257":["lädt den Akku","dock"],"258":["ist angedockt","dock"],"259":["Softwareupdate!","dock"],"260":["lädt den Akku","dock"],"261":["ist angedockt","dock"],"262":["lädt die Karte","dock"],"263":["speichert die Karte","dock"],"266":["verlässt Ladestation","dock"],"513":["mäht","moving"],"514":["bestimmt den Ort","moving"],"515":["lädt die Karte","moving"],"516":["lernt den Garten","moving"],"517":["macht Pause","pause"],"518":["schneidet den Rand","moving"],"519":["angehalten!","hilfe"],"523":["mäht im SpotMow","moving"],"524":["mäht zufällig","moving"],"768":["fährt in die Station","moving"],"769":["fährt zurück zur Station","moving"],"770":["fährt zurück zur Station","moving"],"771":["fährt zum Laden in die Station","moving"],"772":["hat die Mähzeit beendet-fährt zurück","moving"],"773":["ist überhitzt-fährt zurück","help"],"774":["fährt in Station","moving"],"775":["hat fertig gemäht-fährt zurück","moving"],"776":["bestimmt seine Position","moving"],"1025":["Diagnosemodus!","unknown"],"1026":["Endoflive","hilfe"],"1281":["Softwareupdate!","dock"],"1537":["Stromsparmodus!","dock"],"64513":["Status abrufen...","dock"]}'
+
+
+        weather_pics:
+            type: str
+            cache: 'on'
+            initial_value: '{"100000":"sun_1.png","110000":"sun_3.png","110002":"sun_3.png","110001":"sun_10.png","120001":"sun_10.png","110010":"sun_12.png","110012":"sun_12.png","110030":"sun_12.png","110032":"sun_12.png","120010":"sun_12.png","120012":"sun_12.png","120020":"sun_12.png","120022":"sun_12.png","110011":"sun_11.png","110031":"sun_11.png","110101":"sun_11.png","111101":"sun_11.png","113301":"sun_11.png","120011":"sun_11.png","120021":"sun_11.png","120031":"sun_11.png","121101":"sun_11.png","122201":"sun_11.png","123001":"sun_11.png","110100":"sun_8.png","121100":"sun_8.png","121102":"sun_8.png","122200":"sun_8.png","122202":"sun_8.png","110102":"cloud_15.png","111100":"cloud_15.png","111102":"cloud_15.png","113300":"cloud_15.png","113302":"cloud_15.png","120030":"cloud_15.png","120032":"cloud_15.png","123300":"cloud_15.png","123302":"cloud_15.png","110300":"cloud_13.png","110302":"cloud_13.png","120100":"cloud_13.png","120102":"cloud_13.png","120200":"cloud_13.png","120202":"cloud_13.png","120300":"cloud_13.png","120302":"cloud_13.png","110301":"cloud_17.png","120101":"cloud_17.png","120201":"cloud_17.png","120301":"cloud_17.png","111000":"cloud_8.png","111002":"cloud_8.png","122000":"cloud_8.png","122002":"cloud_8.png","111001":"sun_10.png","122001":"sun_10.png","113000":"sun_7.png","113002":"sun_7.png","113001":"sun_8.png","121001":"sun_8.png","123001":"sun_8.png","120000":"sun_4.png","120002":"sun_4.png","121000":"sun_7.png","121002":"sun_7.png","123000":"sun_7.png","123002":"sun_7.png","200000":"moon_1.png","210000":"sun_3.png","210002":"moon_3.png","220000":"moon_3.png","220002":"moon_3.png","210001":"moon_9.png","220001":"moon_9.png","210010":"moon_13.png","210012":"moon_13.png","210030":"moon_13.png","210032":"moon_13.png","220010":"moon_13.png","220012":"moon_13.png","220020":"moon_13.png","220022":"moon_13.png","220030":"moon_13.png","220032":"moon_13.png","210011":"moon_11.png","210031":"moon_11.png","211101":"moon_11.png","213301":"moon_11.png","220011":"moon_11.png","220021":"moon_11.png","220031":"moon_11.png","221101":"moon_11.png","222201":"moon_11.png","223301":"moon_11.png","210100":"moon_13.png","210102":"moon_13.png","210300":"moon_13.png","210302":"moon_13.png","220100":"moon_13.png","220102":"moon_13.png","220200":"moon_13.png","220202":"moon_13.png","220300":"moon_13.png","220302":"moon_13.png","210101":"moon_10.png","210301":"moon_10.png","220101":"moon_10.png","220201":"moon_10.png","220301":"moon_10.png","211000":"moon_8.png","211002":"moon_8.png","222000":"moon_8.png","222002":"moon_8.png","211001":"moon_10.png","222001":"moon_10.png","211100":"moon_11.png","211102":"moon_11.png","213300":"moon_11.png","213302":"moon_11.png","221100":"moon_11.png","221102":"moon_11.png","223300":"moon_11.png","223302":"moon_11.png","213000":"moon_7.png","213002":"moon_7.png","221000":"moon_7.png","221002":"moon_7.png","213001":"moon_8.png","221001":"moon_8.png","223001":"moon_8.png","222200":"moon_8.png","222202":"moon_8.png","223000":"moon_7.png","223002":"moon_7.png","320000":"cloud_4.png","320002":"cloud_4.png","330000":"cloud_4.png","330002":"cloud_4.png","320001":"cloud_10.png","330001":"cloud_10.png","320010":"cloud_11.png","320012":"cloud_11.png","320020":"cloud_11.png","320022":"cloud_11.png","330010":"cloud_11.png","330012":"cloud_11.png","330020":"cloud_11.png","330022":"cloud_11.png","330030":"cloud_11.png","330032":"cloud_11.png","330010":"cloud_11.png","320011":"cloud_8.png","320021":"cloud_8.png","320031":"cloud_8.png","320101":"cloud_8.png","320201":"cloud_8.png","320301":"cloud_8.png","321101":"cloud_8.png","322201":"cloud_8.png","323001":"cloud_8.png","323301":"cloud_8.png","330011":"cloud_8.png","330021":"cloud_8.png","330031":"cloud_8.png","330011":"cloud_8.png","330101":"cloud_8.png","330201":"cloud_8.png","330301":"cloud_8.png","330201":"cloud_8.png","331001":"cloud_8.png","331101":"cloud_8.png","332201":"cloud_8.png","333001":"cloud_8.png","333301":"cloud_8.png","320030":"cloud_11.png","320032":"cloud_11.png","321100":"cloud_11.png","321102":"cloud_11.png","323300":"cloud_11.png","323302":"cloud_11.png","331100":"cloud_11.png","331102":"cloud_11.png","333300":"cloud_11.png","333302":"cloud_11.png","320100":"cloud_11.png","320102":"cloud_11.png","320200":"cloud_11.png","320202":"cloud_11.png","320300":"cloud_11.png","320302":"cloud_11.png","330100":"cloud_11.png","330102":"cloud_11.png","330200":"cloud_11.png","330202":"cloud_11.png","330300":"cloud_11.png","330302":"cloud_11.png","330200":"cloud_11.png","300204":"cloud_11.png","321000":"cloud_8.png","321002":"cloud_8.png","322000":"cloud_8.png","322002":"cloud_8.png","332000":"cloud_8.png","332002":"cloud_8.png","321001":"cloud_10.png","322001":"cloud_10.png","332001":"cloud_10.png","322200":"cloud_7.png","322202":"cloud_7.png","332200":"cloud_7.png","332202":"cloud_7.png","323000":"cloud_7.png","323002":"cloud_7.png","333000":"cloud_7.png","333002":"cloud_7.png","331000":"cloud_8.png","331002":"cloud_8.png","300003":"cloud_6.png","300004":"wind.png","300002":"blank.png","300005":"blank.png"}'
+
+        providers:
+            type: str
+            cache: 'on'
+            indego_attr_name: 'providers'
+            indego_attr_type: 'str'
+            indego_parse_2_attr: yes
+            initial_value: '{"26217"  :"E-Plus","26210"  :"DB Netz AG","26205"  :"E-Plus","26277"  :"E-Plus","26203"  :"E-Plus","26212"  :"E-Plus","26220"  :"E-Plus","26214"  :"Group 3G UMTS","26243"  :"Lycamobile","26213"  :"Mobilcom","26208"  :"O2","26211"  :"O2","26207"  :"O2","26206"  :"T-mobile/Telekom","26201"  :"T-mobile/Telekom","26216"  :"Telogic/ViStream","26202"  :"Vodafone D2","26242"  :"Vodafone D2","26209"  :"Vodafone D2","26204"  :"Vodafone D2"}'
+
+        mowertype:
+            type: str
+            cache: 'on'
+            indego_attr_name: 'mowertype'
+            indego_parse_2_attr: yes
+            indego_attr_type: 'str'
+            initial_value: '{"3600HA2300":"1000,1","3600HA2301":"1200,1","3600HA2302":"1100,1","3600HA2303":"13C,1","3600HA2304":"10C,1","3600HB0100":"350,2","3600HB0101":"400,2"}'
+# Ende
+
+        active_mode:
+            type: num
+            cache: 'on'
+            visu_acl: rw
+            indego_plugin_handled: true
+
+            kalender:
+                type: bool
+                visu_acl: rw
+                indego_function_4_visu : '_handle_active_mode'
+
+            aus:
+                type: bool
+                visu_acl: rw
+                indego_function_4_visu : '_handle_active_mode'
+
+            smart:
+                type: bool
+                visu_acl: rw
+                indego_function_4_visu : '_handle_active_mode'
+
+            uzsu:
+                type: num
+                visu_acl: rw
+                enforce_updates: 'yes'
+                indego_plugin_handled: true
+
+                schaltuhr:
+                    type: dict
+                    enforce_updates: 'yes'
+                    uzsu_item: indego.active_mode.uzsu
+                    visu_acl: rw
+                    cache: 'yes'
+                    indego_function_4_visu : '_handle_active_mode'
+                    
+                    active:
+                        type: bool
+                        enforce_updates: 'yes'
+                        cache: 'yes'
+                        visu_acl: rw
+                        indego_plugin_handled: true
+
+                calendar_list:
+                    type: dict
+                    visu_acl: rw
+                    indego_plugin_handled : true
+
+        show_uzsu_popup:
+            type: bool
+            visu_acl: rw
+            initial_value: false
+            indego_plugin_handled : true
+            autotimer: 1 = False
+
+        update_active_mode:
+            type: bool
+            visu_acl: rw
+            initial_value: false
+            indego_plugin_handled: true
+
+        online:
+            type: bool
+            visu_acl: rw
+
+        stateCode:
+            type: num
+            visu_acl: rw
+
+        laststateCode:
+            type: num
+            visu_acl: rw
+
+        state_str:
+            type: str
+            visu_acl: rw
+
+        stateError:
+            type: num
+            visu_acl: rw
+
+        config_change:
+            type: bool
+            indego_add_key: config_change
+
+        mow_trig:
+            type: bool
+            indego_add_key: mow_trig
+
+        stateLevel:
+            type: num
+            visu_acl: rw
+
+        docked:
+            type: bool
+            visu_acl: rw
+            database: 'yes'
+
+        moving:
+            type: bool
+            visu_acl: rw
+            database: 'yes'
+
+        pause:
+            type: bool
+            visu_acl: rw
+            database: 'yes'
+
+        help:
+            type: bool
+            visu_acl: rw
+            database: 'yes'
+
+        mowedPercent:
+            type: num
+            visu_acl: rw
+            cache: 'on'
+            database: 'yes'
+
+        mowedPercent_soll:
+            type: num
+            visu_acl: rw
+            database: 'yes'
+            cache: 'on'
+            initial_value: 100
+
+        mapSvgCacheDate:
+            type: foo
+            visu_acl: rw
+            cache: 'on'
+
+        mapUpdateAvailable:
+            type: bool
+            visu_acl: rw
+
+        mowedDate:
+            type: foo
+            visu_acl: rw
+            cache: 'on'
+
+        xPos:
+            type: num
+            visu_acl: rw
+
+        yPos:
+            type: num
+            visu_acl: rw
+
+        svg_xPos:
+            type: num
+            visu_acl: rw
+
+        svg_yPos:
+            type: num
+            visu_acl: rw
+
+        mowmode:
+            type: num
+            visu_acl: rw
+
+        next_time:
+            type: foo
+            visu_acl: rw
+            cache: 'on'
+
+        last_time:
+            type: foo
+            visu_acl: rw
+            cache: 'on'
+
+        runtimeTotalOperationMins:
+            type: num
+            database: 'yes'
+
+            dhm:
+                type: str
+                visu_acl: rw
+
+        runtimeTotalChargeMins:
+            type: num
+            database: 'yes'
+
+            dhm:
+                type: str
+                visu_acl: rw
+
+        runtimeSessionOperationMins:
+            type: num
+            visu_acl: rw
+            database: 'yes'
+
+        runtimeSessionChargeMins:
+            type: num
+            visu_acl: rw
+            database: 'yes'
+
+        SMART:
+            type: bool
+            visu_acl: rw
+            indego_smart: 'yes'
+            cache: 'on'
+
+        MOW:
+            type: bool
+            visu_acl: rw
+            indego_command: '{"state":"mow"}'
+            autotimer: 5 = False
+
+        PAUSE:
+            type: bool
+            visu_acl: rw
+            indego_command: '{"state":"pause"}'
+            autotimer: 5 = False
+
+        RETURN:
+            type: bool
+            visu_acl: rw
+            indego_command: '{"state":"returnToDock"}'
+            autotimer: 5 = False
+
+        alm_sn:
+            type: num
+            visu_acl: rw
+
+        alm_name:
+            type: str
+            visu_acl: rw
+            initial_value: '---'
+
+        service_counter:
+            type: num
+            visu_acl: rw
+
+            dhm:
+                type: str
+                visu_acl: rw
+
+        needs_service:
+            type: bool
+            visu_acl: rw
+
+        alm_mode:
+            type: str
+            visu_acl: rw
+            indego_function_4_all: '_handle_alm_mode'
+
+        alm_mode.str:
+            type: str
+            visu_acl: rw
+
+        bareToolnumber:
+            type: str
+            visu_acl: rw
+
+        alm_firmware_version:
+            type: str
+            visu_acl: rw
+            cache: 'on'
+
+            before:
+                type: str
+                visu_acl: rw
+                cache: 'on'
+
+            changed:
+                type: foo
+                visu_acl: rw
+                cache: 'on'
+
+        calendar:
+            type: dict
+            visu_acl: rw
+
+        calendar_list:
+            type: dict
+            visu_acl: rw
+            indego_function_4_visu : '_handle_calendar_list'
+
+        calendar_sel_cal:
+            type: num
+            visu_acl: rw
+
+        calendar_result:
+            type: str
+            visu_acl: rw
+            # initial_value: '---'
+            autotimer: 70 = ''
+
+        calendar_save:
+            type: bool
+            visu_acl: rw
+            autotimer: 185 = False
+            indego_function_4_all: '_handle_store_cals'
+
+        calendar_predictive:
+            type: dict
+            visu_acl: rw
+
+        calendar_predictive_list:
+            type: dict
+            visu_acl: rw
+            indego_function_4_visu : '_handle_calendar_list'
+
+        calendar_predictive_sel_cal:
+            type: num
+            visu_acl: rw
+
+        calendar_predictive_result:
+            type: str
+            visu_acl: rw
+            # initial_value: '---'
+            autotimer: 70 = ''
+
+        calendar_predictive_save:
+            type: bool
+            visu_acl: rw
+            autotimer: 185 = False
+            indego_function_4_all: '_handle_store_cals'
+
+        weather:
+
+            int_0:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+            int_1:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+            int_2:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+            int_3:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_4:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_5:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_6:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_7:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_8:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+            int_9:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_10:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_11:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_12:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_13:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_14:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_15:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_16:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_17:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_18:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+            int_19:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+            int_20:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+            int_21:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw                             
+
+            int_22:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+            int_23:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+            int_24:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw                    
+
+            int_25:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+            int_26:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+            int_27:
+
+                wwsymbol_mg2008:
+                    type: num
+                    cache: 'on'
+
+                dateTime:
+                    type: foo
+                    cache: 'on'
+
+                tt:
+                    type: num
+                    cache: 'on'
+
+                rrr:
+                    type: num
+                    cache: 'on'
+
+                prrr:
+                    type: num
+                    cache: 'on'
+
+                intervalLength:
+                    type: num
+                    cache: 'on'
+
+                picture:
+                    type: str
+                    cache: 'on'
+                    visu_acl: rw
+
+
+
+            day_0:
+
+                tx:
+                    type: num
+                    cache: 'on'
+
+                wochentag:
+                    type: str
+                    cache: 'on'
+
+                tn:
+                    type: num
+                    cache: 'on'
+
+            day_1:
+
+                tx:
+                    type: num
+                    cache: 'on'
+
+                wochentag:
+                    type: str
+                    cache: 'on'
+
+                tn:
+                    type: num
+                    cache: 'on'
+
+            day_2:
+
+                tx:
+                    type: num
+                    cache: 'on'
+
+                wochentag:
+                    type: str
+                    cache: 'on'
+
+                tn:
+                    type: num
+                    cache: 'on'
+
+            day_3:
+
+                tx:
+                    type: num
+                    cache: 'on'
+
+                wochentag:
+                    type: str
+                    cache: 'on'
+
+                tn:
+                    type: num
+                    cache: 'on'
+
+            day_4:
+
+                tx:
+                    type: num
+                    cache: 'on'
+
+                wochentag:
+                    type: str
+                    cache: 'on'
+
+                tn:
+                    type: num
+                    cache: 'on'
+
+            day_5:
+
+                tx:
+                    type: num
+                    cache: 'on'
+
+                wochentag:
+                    type: str
+                    cache: 'on'
+
+                tn:
+                    type: num
+                    cache: 'on'                    
+
+            day_6:
+
+                tx:
+                    type: num
+                    cache: 'on'
+
+                wochentag:
+                    type: str
+                    cache: 'on'
+
+                tn:
+                    type: num
+                    cache: 'on'
+
+
+        operatingInfo:
+
+            hmiKeys:
+                type : num
+                cache: 'on'
+
+            garden:
+
+                charge: 
+                    type : num
+                    database: 'yes'
+                    cache: 'on'
+                last_mow: 
+                    type : num
+                    database: 'yes'
+                    cache: 'on'
+                runtime: 
+                    type : num
+                    database: 'yes'
+                    cache: 'on'
+                id: 
+                    type : num
+                    cache: 'on'
+                size: 
+                    type : num
+                    cache: 'on'
+                inner_bounds: 
+                    type : num
+                    cache: 'on'
+                name: 
+                    type : num
+                    cache: 'on'
+                stops: 
+                    type : num
+                    database: 'yes'
+                    cache: 'on'
+                bumps: 
+                    type : num
+                    database: 'yes'
+                    cache: 'on'
+                cuts: 
+                    type : num
+                    database: 'yes'
+                    cache: 'on'
+                map_cell_size:
+                    type: num
+                    database: 'yes'
+                    cache: 'on'                    
+
+                signal_id: 
+                    type : num
+
+            runtime:
+
+                total:
+
+                    charge:
+                        type : num
+                        database: 'yes'
+                        cache: 'on'
+
+                    operate:
+                        type : num
+                        database: 'yes'
+                        cache: 'on'
+
+                session:
+
+                    charge:
+                        type : num
+                        database: 'yes'
+                        cache: 'on'
+                    operate:
+                        type : num
+                        database: 'yes'
+                        cache: 'on'
+
+            battery:
+
+                voltage:
+                    type : num
+                    database: 'yes'
+                    cache: 'on'
+
+                cycles: 
+                    type : num
+                    database: 'yes'
+                    cache: 'on'
+
+                battery_temp:
+                    type : num
+                    database: 'yes'
+                    cache: 'on'
+
+                discharge:
+                    type : num
+                    database: 'yes'
+                    cache: 'on'
+
+                percent:
+                    type : num
+                    database: 'yes'
+                    cache: 'on'
+
+                ambient_temp:
+                    type : num
+                    database: 'yes'
+                    cache: 'on'
+
+        network:
+
+            mcc:
+                type: num
+                database: 'yes'
+                cache: 'on'
+                
+            mnc:
+                type: num
+                database: 'yes'
+                cache: 'on'
+
+            rssi:
+                type: num
+                database: 'yes'
+                cache: 'on'   
+
+            currMode:
+                type: str
+                database: 'yes'
+                cache: 'on'  
+
+            configMode:
+                type: str
+                database: 'yes'
+                cache: 'on'
+
+            steeredRssi:
+                type: num
+                database: 'yes'
+                cache: 'on'   
+
+            networkCount:
+                type: num
+                database: 'yes'
+                cache: 'on'   
+
+            networks:
+                type: list
+                database: 'yes'
+                cache: 'on'
+        smartmowsetup:
+            type: dict
+            visu_acl: rw
+            cache: 'on'
+
+        location:
+            type: dict
+            visu_acl: rw
+            cache: 'on'
+
+            latitude:
+                type: str
+                visu_acl: rw
+                cache: 'on'
+
+            longitude:
+                type: str
+                visu_acl: rw
+                cache: 'on'
+
+            timezone:
+                type: str
+                visu_acl: rw
+                cache: 'on'
+

@@ -31,17 +31,17 @@ plugin_translations:
         de: 'Wollen Sie das Senden wirklich umschalten?'
         en: 'Do you really want to change the sending state?'
         fr: "Changer le stade de l'emitteur?"
-    'Uebersicht':       {'de': 'Uebersicht', 'en': 'Overview', 'fr': "vue d'ensemble"}
+    'Uebersicht':       {'de': 'Übersicht', 'en': 'Overview', 'fr': "vue d'ensemble"}
     'Wollen Sie ein Lerntelegramm schicken?':
         de: 'Wollen Sie ein Lerntelegramm schicken?'
         en: 'Do you really want to send a lern telegram?'
-        fr: "Voulez-vous emettre un message Ã programmer?"
+        fr: "Voulez-vous emettre un message à programmer?"
     'Wollen Sie den UTE Modus umschalten?':
         de: 'Wollen Sie den UTE Modus umschalten?'
         en: 'Do you really want to toggle the UTE mode?'
         fr: "Confirmez de changer le mode UTE"
     'Neu hinzu':
-        de: 'Neu hinzufuegen' 
+        de: 'Neu hinzufügen' 
         en: 'Add devie'
         fr: 'Ajouter'
     'Unbekannte Sensor ID':

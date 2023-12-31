@@ -16,6 +16,7 @@ plugin:
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
+    startorder: early              # set start priority of plugin (early/normal/late)
     classname: Database            # class containing the plugin
 
 parameters:

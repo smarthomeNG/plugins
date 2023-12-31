@@ -66,15 +66,15 @@ MESSAGE_TAG_DEST          = '[DEST]'
 
 class Telegram(SmartPlugin):
 
-    PLUGIN_VERSION = "1.7.0"
+    PLUGIN_VERSION = "1.7.1"
 
     _items = []               # all items using attribute ``telegram_message``
     _items_info = {}          # dict used whith the info-command: key = attribute_value, val= item_list telegram_info
     _items_text_message = []  # items in which the text message is written ITEM_ATTR_TEXT
-    _items_control = {}        # dict used whith the control-command: 
+    _items_control = {}        # dict used whith the control-command:
     _chat_ids_item = {}       # an item with a dict of chat_id and write access
     _waitAnswer = None        # wait a specific answer Yes/No - or num (change_item)
-    
+
 
     def __init__(self, sh):
         """
@@ -274,7 +274,7 @@ class Telegram(SmartPlugin):
             timeout = 20
             min = None
             max = None
-            
+
             par_list = attr.split(',')  # Parameter from attr example: 'name:test, changeType:toggle, question:wirklich umnschalten?'
             for par in par_list:
                 k,v = par.split(':')
@@ -290,12 +290,12 @@ class Telegram(SmartPlugin):
                     min = v
                 if 'max' in k:
                     max = v
-            
+
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(f"parse control-item: {item} with command: {key}")
-            
+
             dicCtl = {'name': key, 'type': changeType, 'item': item, 'question': question, 'timeout': timeout, 'min': min, 'max': max}
-            
+
             if key not in self._items_control:
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug(f"Append a new control-item '{item}' to command '{key}'")
@@ -305,7 +305,7 @@ class Telegram(SmartPlugin):
                 # add a handler for each control-attribute
                 self._updater.dispatcher.add_handler(CommandHandler(key, self.cHandler_control_attr))
             return self.update_item
-        
+
         return None
 
     def is_valid_command(self, cmd):
@@ -327,7 +327,7 @@ class Telegram(SmartPlugin):
         """
         if caller != self.get_fullname():
             self.logger.info(f"update item: {item.id()}")
-            
+
         if self.has_iattr(item.conf, ITEM_ATTR_CHAT_IDS):
             if self._chat_ids_item:
                 self.logger.info(f"Item: {item.id()} declares chat_id for telegram plugin which are already defined, will be overwritten!")
@@ -557,9 +557,9 @@ class Telegram(SmartPlugin):
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(f"write the content (text) of the message in an SH-item for update={update}, chat_id={update.message.chat.id} and context={dir(context)}")
         if self.has_write_access_right(update.message.chat.id):
-            
+
                 try:
-                    if self._waitAnswer is None:    # keine Antwort erwartet (control-Item/question)  
+                    if self._waitAnswer is None:    # keine Antwort erwartet (control-Item/question)
                         if self.logger.isEnabledFor(logging.DEBUG):
                             self.logger.debug(f"update.message.from_user.name={update.message.from_user.name}")
                         text = update.message.from_user.name + ": "
@@ -764,7 +764,7 @@ class Telegram(SmartPlugin):
                 tmp_msg = f"could not trigger logic {logicname} due to error {e}"
                 self.logger.warning(tmp_msg)
                 self._bot.sendMessage(chat_id=update.message.chat.id, text=tmp_msg)
-                
+
     def cHandler_control(self, update, context):
         """
         /control: Change values of items with specific attribute
@@ -777,7 +777,7 @@ class Telegram(SmartPlugin):
                 self.list_items_control(update.message.chat.id)
             else:
                 context.bot.send_message(chat_id=update.message.chat.id, text=self.translate("No items have attribute telegram_control!"), reply_markup={"keyboard": self.create_control_reply_markup()})
-            
+
     def cHandler_control_attr(self, update, context):
         """
         /xx change value from registered items
@@ -791,8 +791,8 @@ class Telegram(SmartPlugin):
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug(f"control-command: name:{c_key} dictCtl:{dicCtl}")
                 self.change_item(update=update, context=context, name=c_key, dicCtl=dicCtl)
-            else:    
-                self._bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("unknown control-command %s") % (c_key))               
+            else:
+                self._bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("unknown control-command %s") % (c_key))
 
     # helper functions
     def list_items(self, chat_id):
@@ -850,7 +850,7 @@ class Telegram(SmartPlugin):
         button_list = []
         for key, value in sorted(self._items_control.items()):
             button_list.append("/"+key)
-            
+
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(f"button_list: {button_list}")
         header = ["/help"]
@@ -859,8 +859,8 @@ class Telegram(SmartPlugin):
         keyboard = self.build_menu(button_list, n_cols=3, header_buttons=header)
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(f"keyboard: {keyboard}")
-        return keyboard     
-        
+        return keyboard
+
     def build_menu(self, buttons, n_cols, header_buttons=None, footer_buttons=None):
         """
         create a bot-menu
@@ -871,7 +871,7 @@ class Telegram(SmartPlugin):
         if footer_buttons:
             menu.append(footer_buttons)
         return menu
-        
+
     def list_items_control(self, chat_id):
         """
         Show registered items and value with specific attribute ITEM_ATTR_CONTROL
@@ -890,7 +890,7 @@ class Telegram(SmartPlugin):
         else:
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(f"Chat with id {chat_id} has no right to list items with attribute {ITEM_ATTR_CONTROL}")
-        
+
     def change_item(self, update, context, name, dicCtl):
         """
         util to change a item-value
@@ -979,7 +979,7 @@ class Telegram(SmartPlugin):
         if not text:
             text = self.translate("no items found with the attribute %s") % ITEM_ATTR_CONTROL
             self._bot.sendMessage(chat_id=chat_id, text=text)
-    
+
     def telegram_change_item_timeout(self, **kwargs):
         update = None
         context = None

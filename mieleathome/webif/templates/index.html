@@ -1,0 +1,286 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 5000 %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+function handleUpdatedData(response, dataSet = null) {
+    if (dataSet === 'devices_info' || dataSet === null) {
+        var objResponse = JSON.parse(response);
+        for (var Entry in objResponse) {
+            switch (Entry) {
+                case 'Device': {
+                    var myTest = objResponse['Device']
+                    myTest = JSON.stringify(myTest, null, 2)
+                    myCodeMirrorDevice.setValue(myTest);
+                    break;
+                }
+                case 'Action': {
+                    var myTest = objResponse['Action']
+                    myTest = JSON.stringify(myTest, null, 2)
+                    myCodeMirrorAction.setValue(myTest);
+                    break;
+                }
+                case 'last_Event': {
+                    shngInsertText('id_last_event_time', objResponse[Entry]);
+                    break;
+                }
+                case 'last_Ping': {
+                    shngInsertText('id_last_ping_time', objResponse[Entry]);
+                    break;
+                }
+
+            }
+
+        }
+
+    }
+}
+</script>
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover"  style="font-size:12px">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>client_id</strong></td>
+			<td class="py-1">{{ p.client_id }}</td>
+			<td class="py-1" width="80px"></td>
+			<td class="py-1"><strong>client_secret</strong></td>
+			<td class="py-1">{{ p.client_secret }}</td>
+			<td class="py-1" width="80px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>access_token</strong></td>
+			<td class="py-1">{{ p.AccessToken }}</td>
+			<td></td>
+			<td class="py-1"><strong>refresh_token</strong></td>
+			<td class="py-1">{{ p.RefreshToken }}</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>valid from</strong></td>
+			<td class="py-1">{{ p.ValidFrom }}</td>
+			<td></td>
+			<td class="py-1"><strong>valid through</strong></td>
+			<td class="py-1">{{ p.ValidThrough }}</td>
+			<td class="py-1">{{ p.ValidFor }} {{ _('d') }}</td>
+		</tr>
+        		<tr>
+			<td class="py-1"><strong>Country</strong></td>
+			<td class="py-1">{{ p.country }}</td>
+			<td></td>
+			<td class="py-1"><strong>Cycle</strong></td>
+			<td class="py-1">{{ p._cycle }} {{ _('s') }}</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+	<div>
+		<button id="btn1" class="btn btn-shng btn-sm" name="scan" onclick="shngPost('', {learn: 'on'})"><i class="fas fa-question"></i>&nbsp;&nbsp;&nbsp;{{ _('nach Devices suchen') }}&nbsp;</button>
+	</div>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 3 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 1 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% block bodytab1 %}
+<div class="container-fluid m-2">
+	
+    <div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+		<div class="col-sm-12">
+
+			<form action="" method="post">
+			<table class="table table-striped table-hover pluginList">
+				<thead>
+					<tr class="shng_heading">
+						<th class="py-1">{{ _('Item') }}</th>
+						<th class="py-1">{{ _('Type') }}</th>
+                        <th class="py-1">{{ _('Value') }}</th>
+					</tr>
+				</thead>
+				<tbody>
+				{% for item in p.miele_items %}
+                    <tr>
+                        <td class="py-1">{{ item._path }}</td>
+                        <td class="py-1">{{ item._type }}</td>
+                        <td class="py-1">{{ item._value }}</td>
+                    </tr>
+        {% endfor %}
+				</tbody>
+			</table>
+			</form>
+		</div>
+	</div>
+    
+</div>
+{% endblock bodytab1 %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong> " %}
+{% block bodytab2 %}
+<div class="container-fluid m-2">
+	
+    <div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+		<div class="col-sm-12">
+
+			<form action="" method="post">
+			<table class="table table-striped table-hover pluginList">
+				<thead>
+					<tr class="shng_heading">
+						<th class="py-1">{{ _('Device ID') }}</th>
+                        <th class="py-1">{{ _('linked Item') }}</th>
+                        <th class="py-1">{{ _('Device Type') }}</th>
+                        <th class="py-1">{{ _('Model') }}</th>
+					</tr>
+				</thead>
+				<tbody>
+				{% for item in p.miele_devices_raw %}
+                    <tr>
+                        <td class="py-1">{{ item.DeviceID }}</td>
+                        <td class="py-1">{{ p.miele_devices_by_deviceID[item.DeviceID]}}</td>
+                        <td class="py-1">{{ item.DeviceTyp }}</td>
+                        <td class="py-1">{{ item.DeviceModel }}</td>                        
+                    </tr>
+                {% endfor %}
+				</tbody>
+			</table>
+			</form>
+		</div>
+	</div>
+    
+</div>
+{% endblock bodytab2 %}
+
+
+<!--
+	Content block for the third tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{% set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
+
+	It has to be defined before (and outside) the block bodytab3
+-->
+{% set tab3title = "<strong>Event-Informations</strong> " %}
+{% block bodytab3 %}
+<div class="container-fluid m-2">
+    <div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+		<div class="col-sm-12">
+			<table class="table table-striped table-hover pluginList">
+
+				<tr class="shng_heading">
+					<td  style="width:50%; text-align:center">
+					Last Event Update : <p id="id_last_event_time"> {{ p.last_event_time }} </p>
+					</td>
+					<td  style="width:50%; text-align:center">
+					Last Ping : <p id="id_last_ping_time"> {{ p.last_ping_time }} </p>
+					</td>				
+				</tr>
+
+				<tr>
+					<td class="py-1" style="width:50%; text-align:center"> Device-Event</td>
+					<td class="py-1" style="width:50%; text-align:center"> Action-Event</td>
+				</tr>
+				<tr style="height:400px">
+				  <td>
+  				  <textarea style="width: 100%;height:400px" size="8"  id="last_event_device" name="last_event_device"></textarea>
+				  </td>
+ 				  <td>
+            <textarea style="width: 100%;height:400px" size="8"  id="last_event_action" name="last_event_action"></textarea> 				  
+ 				    
+				  </td>
+				</tr>
+			</table>
+		</div>
+	</div>
+</div>
+
+<script>
+     var rulers = [];
+     for (var i = 1; i <= 100; i++) {
+        rulers.push({color: '#eee', column: i * 4, lineStyle: "dashed"});
+     }
+
+     var myCodeMirrorDevice = CodeMirror.fromTextArea(document.getElementById("last_event_device"), {
+        lineNumbers: true,
+        lineSeparator: '\n',
+        indentUnit: 4,
+        rulers: rulers,
+        lineWrapping: false,
+        indentWithTabs: false,
+        mode: "yaml"
+
+     });
+     
+     var myCodeMirrorAction = CodeMirror.fromTextArea(document.getElementById("last_event_action"), {
+        lineNumbers: true,
+        lineSeparator: '\n',
+        indentUnit: 4,
+        rulers: rulers,
+        lineWrapping: false,
+        indentWithTabs: false,
+        mode: "yaml"
+
+     });     
+     
+     function resizeCodeMirrors() {
+        if (!myCodeMirrorPayload.getOption("fullScreen")) {
+            var browserHeight = $( window ).height();
+            offsetTop = $('.CodeMirror').offset().top;
+            myCodeMirrorPayload.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) -300 + browserHeight)+ 'px';
+            myCodeMirrorPayload.refresh();
+        }
+      }
+
+     window.addEventListener("resize", function(){resizeCodeMirror(myCodeMirrorAction, 60);resizeCodeMirror(myCodeMirrorDevice,60) }, false);
+     resizeCodeMirror(myCodeMirrorDevice, 60);
+     resizeCodeMirror(myCodeMirrorAction, 60);
+     
+
+</script
+
+{% endblock bodytab3 %}
+
+
+<!--
+	Content block for the fourth tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{% set tab4title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
+
+	It has to be defined before (and outside) the block bodytab4
+-->
+{% block bodytab4 %}
+{% endblock bodytab4 %}

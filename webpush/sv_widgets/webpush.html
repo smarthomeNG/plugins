@@ -1,0 +1,31 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @author      gruberth
+* @copyright   2018 - 2022
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+
+/**
+ * Displays the basic webpush configs to subscribe to notifications
+ *
+ * @param {id=''} unique id for this widget
+ * @param {item(list)=[]} a gad/item for grouplist
+ * @param {item(txt)=''} a gad/item with the public Key of the server
+ * @param {item(txt)=''} a gad/item for the communication with the server
+ * @param {text='Übernehmen'} the text on the button on default operation
+ */
+{% macro config(id, gad_grouplist, gad_publickey, gad_fromclient, buttontxt) %}
+<div id="{{ uid(page, id) }}"
+    style="width: 100%;"
+    data-widget="webpush.config"
+    data-buttontext="{{ buttontxt|default('Übernehmen') }}"
+    data-item="{{ gad_grouplist|default([]) }}, {{ gad_publickey|default('') }}, {{ gad_fromclient|default('') }}">
+    <div id="webpush_config_checkboxdiv"></div>
+    <a id="webpush_config_submitbutton"
+        class="ui-btn ui-midi ui-corner-all ui-btn-inline ui-shadow">
+        Loading
+    </a>
+</div>
+{% endmacro %}

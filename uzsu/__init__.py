@@ -91,12 +91,7 @@ import copy
 import html
 import json
 from .webif import WebInterface
-
-try:
-    from scipy import interpolate
-    REQUIRED_PACKAGE_IMPORTED = True
-except Exception:
-    REQUIRED_PACKAGE_IMPORTED = False
+from scipy import interpolate
 
 ITEM_TAG = ['uzsu_item']
 
@@ -133,9 +128,6 @@ class UZSU(SmartPlugin):
         self._itpl = {}
         self.init_webinterface(WebInterface)
         self.logger.info("Init with timezone {}".format(self._timezone))
-        if not REQUIRED_PACKAGE_IMPORTED:
-            self.logger.warning("Unable to import Python package 'scipy' which is necessary for interpolation.")
-            self._init_complete = False
 
     def run(self):
         """
@@ -677,10 +669,7 @@ class UZSU(SmartPlugin):
                 self.logger.info("Updated item {} on startup with value {} from time {}".format(
                     item, _initvalue, datetime.fromtimestamp(_inittime/1000.0)))
             _itemtype = self._items[item]['interpolation'].get('itemtype')
-            if cond2 and not REQUIRED_PACKAGE_IMPORTED:
-                self.logger.warning("Interpolation is set to {} but scipy not installed. Ignoring interpolation".format(
-                    _interpolation))
-            elif cond2 and _interval < 1:
+            if cond2 and _interval < 1:
                 self.logger.warning("Interpolation is set to {} but interval is {}. Ignoring interpolation".format(
                     _interpolation, _interval))
             elif cond2 and _itemtype not in ['num']:
