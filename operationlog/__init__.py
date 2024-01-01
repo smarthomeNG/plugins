@@ -134,13 +134,9 @@ class OperationLog(SmartPlugin, AbLogger):
                 except Exception as e:
                     self.logger.warning("OperationLog {}: problem reading cache: {}".format(self._path, e))
 
-        # give some info to the user via webinterface
-        self.init_webinterface()
-
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("init {} done".format(__name__))
         self._init_complete = True
-
 
     def update_logfilename(self):
         if self.__date == datetime.datetime.today() and self.__fname is not None:
