@@ -92,13 +92,13 @@ class OperationLog(SmartPlugin, AbLogger):
         self._cachefile = None
         self.__myLogger = None
         self._logcache = None
-        
+
         self._item_conf = {}
         self._logic_conf = {}
         self.__date = None
         self.__fname = None
 
-        # 
+        #
         info_txt_cache = ", caching active" if self._cache else ""
 
         # additional logger given from plugin.yaml section "logger"
@@ -106,7 +106,7 @@ class OperationLog(SmartPlugin, AbLogger):
             self.additional_logger = logging.getLogger(self.additional_logger_name)
         else:
             self.additional_logger = None
-        
+
         if self.additional_logger:
             info_additional_logger_log = ", logging to {}".format(self.additional_logger_name)
         else:
@@ -121,11 +121,21 @@ class OperationLog(SmartPlugin, AbLogger):
         # Cache
         #############################################################
         if self._cache is True:
-            self._cachefile = self.get_sh()._cache_dir + self._path
+            cache_directory = os.path.join(self.get_sh().get_vardir(), 'log'+os.path.sep, 'cache'+os.path.sep)
+            old_cache_file = os.path.join(self.get_sh().get_vardir(), 'cache'+os.path.sep, self._path)
+
+            self._cachefile = os.path.join(cache_directory, self._path)
+            if not os.path.isdir(cache_directory):
+                os.makedirs(cache_directory)
+            if os.path.isfile(old_cache_file):
+                os.rename(old_cache_file, self._cachefile)
+                if self.logger.isEnabledFor(logging.DEBUG):
+                    self.logger.debug("OperationLog {}: moved cache from {} to {}".format(self.name, old_cache_file, self._cachefile))
             try:
                 self.__last_change, self._logcache = _cache_read(self._cachefile, self.shtime.tzinfo())
                 self.load(self._logcache)
-                self.logger.debug("OperationLog {}: read cache: {}".format(self.name, self._logcache))
+                if self.logger.isEnabledFor(logging.DEBUG):
+                    self.logger.debug("OperationLog {}: read cache: {}".format(self.name, self._logcache))
             except Exception:
                 try:
                     _cache_write(self.logger, self._cachefile, self._log.export(int(self._maxlen)))
@@ -384,7 +394,7 @@ class OperationLog(SmartPlugin, AbLogger):
             olog_txt = self._logic_conf[logic.name]['olog_txt']
             olog_eval = self._logic_conf[logic.name]['olog_eval']
             eval_res = [eval(expr) for expr in olog_eval]
-            logvalues = [olog_txt.format(*eval_res, **{'plugin' : self, 'logic' : logic, 'by' : by, 'source' : source, 'dest' : dest})] 
+            logvalues = [olog_txt.format(*eval_res, **{'plugin' : self, 'logic' : logic, 'by' : by, 'source' : source, 'dest' : dest})]
             self.log(logvalues, 'INFO' if 'olog_level' not in logic.conf else logic.conf['olog_level'])
 
     def log(self, logvalues, level='INFO'):
@@ -404,7 +414,7 @@ class OperationLog(SmartPlugin, AbLogger):
                     values_txt = map(str, logvalues)
                     log.append(' '.join(values_txt))
             self._log.add(log)
-            # consider to write the log entry to 
+            # consider to write the log entry to
             if self._logtofile:
                 self.update_logfilename()
                 self.__myLogger.info('{}: {}', log[2], ''.join(log[3:]))
