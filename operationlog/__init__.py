@@ -44,7 +44,7 @@ class OperationLog(SmartPlugin, AbLogger):
     _log = None
     _items = {}
 
-    PLUGIN_VERSION = "1.3.5"
+    PLUGIN_VERSION = "1.3.6"
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)
