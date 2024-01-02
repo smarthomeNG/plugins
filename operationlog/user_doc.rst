@@ -113,6 +113,7 @@ dieses Attribut Limits und weitere Regeln wie Filter etc. zu deklarieren.
             'exclude': '.exclude_values',
             'itemvalue': '.text'
             }"
+        log_change: memory-items
 
         exclude_values:
             type: list
@@ -311,7 +312,7 @@ Item Log Beispiele
 
 .. hint::
 
-  Das Loglevel NONE sorgt dafür, dass äquivalent zum datalog Plugin Einträge ohne 
+  Das Loglevel NONE sorgt dafür, dass äquivalent zum datalog Plugin Einträge ohne
   standardmäßigem Zeit- und Logleveleintrag erstellt werden.
 
 logics.yaml
