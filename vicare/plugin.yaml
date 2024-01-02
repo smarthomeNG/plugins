@@ -114,8 +114,7 @@ plugin_functions: NONE
 logic_parameters: NONE
 
 item_structs:
-
-heizung:
+    heizung:
         serial:
             name: serial number
             type: str
@@ -292,3 +291,4 @@ heizung:
             vicare_rx_key: device.messages.errors.raw
             vicare_path: ['entries','value']
             visu_acl: ro
+

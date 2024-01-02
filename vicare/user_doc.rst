@@ -1,9 +1,9 @@
 .. index:: Plugins; vicare
 .. index:: vicare
 
-==========
+======
 vicare
-==========
+======
 
 .. image:: webif/static/img/plugin_logo.png
    :alt: plugin logo

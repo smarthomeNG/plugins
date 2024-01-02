@@ -38,7 +38,7 @@ AUTHORIZE_URL = 'https://iam.viessmann.com/idp/v3/authorize'
 TOKEN_URL = 'https://iam.viessmann.com/idp/v3/token'
 
 class Vicare(SmartPlugin):
-    PLUGIN_VERSION = '1.9.1'
+    PLUGIN_VERSION = '1.9.2'
 
     def __init__(self, sh):
         """
@@ -223,10 +223,11 @@ class Vicare(SmartPlugin):
     def refresh_accessToken(self): 
         # Refreshes the accessToken validity by using the refresh token. Works up to 180 days.
         # Procedure is described on: https://documentation.viessmann.com/static/authentication
+        # Return True on success and False otherwise
 
         if self.refreshToken == '':
             self.logger.error(f"No refresh token available. Aborting.")
-            return
+            return False
 
         self.logger.debug(f"Refreshing accessToken...")
         headers = {'Content-Type': 'application/x-www-form-urlencoded'}
@@ -238,13 +239,17 @@ class Vicare(SmartPlugin):
             response = self.session.post(TOKEN_URL, headers = headers, data = data, verify=False, timeout=4)
         except Exception as e:
             self.logger.warning(f"Exception occurred during refresh token request: {e}")
+            return False
 
-        if response is not None and response.status_code == 200:
+        if response is None:
+            return False
+
+        if response.status_code == 200:
             self.logger.info(f"Refresh token request successfull")
         else:
             self.logger.warning(f"Refresh token request was unsuccessfull. Status code: {response.status_code}")
             self.logger.warning(f"Refresh token request was unsuccessfull. Response: {response.text}")
-            return
+            return False
         
         responseJson = response.json()
         if 'access_token' in responseJson :
@@ -254,8 +259,10 @@ class Vicare(SmartPlugin):
             param_dict = {"accessToken": str(self.accessToken)}
             self.update_config_section(param_dict)
             self.logger.debug(f"Successfully saved accessToken in plugin.yaml")
+            return True
         else:
             self.logger.error(f"refreshToken: Response did not contain an access token!")
+            return False
 
     def retrieve_accessToken(self, code):
         # pass code from login procedure, see browser argument on redirected page:        
@@ -334,9 +341,9 @@ class Vicare(SmartPlugin):
         # Token refresh mechanism:   
         self.count_to_renew = self.count_to_renew + 1
         if self.count_to_renew >= self.fixed_cylces_to_renew:
-            self.count_to_renew = 0
             self.logger.debug(f"Refreshing token...")
-            self.refresh_accessToken()
+            if self.refresh_accessToken() == True:
+                self.count_to_renew = 0
 #        else:
 #            self.logger.debug(f"{self.fixed_cylces_to_renew - self.count_to_renew} remaining cycles to refresh token.")
 
