@@ -98,6 +98,9 @@ class Resol(SmartPlugin):
         self.logger.info("2) Connecting socket")
         try:
             self.sock.connect((self._ip, self._port))
+        except socket.timeout as e:
+            self.logger.warning("Timeout exception during socket connect: %s" % str(e))
+            return
         except Exception as e:
             self.logger.error("Exception during socket connect: %s" % str(e))
             return
