@@ -95,8 +95,8 @@ for result in results:
         line_string += '<div style="background-color: #fff; width: 120px; ">%s %s</div></td></tr>' % (datetime.fromtimestamp(result['time']).strftime("%H:%M"),calculated_delay) #calculated_delay)
         html_string += line_string
         i = i + 1
-        if i == 7:
-            break
+    if i == 7:
+        break
 
 html_string += '</table>'
 sh.general.travel_info.mvg_station.search.result(html_string)
