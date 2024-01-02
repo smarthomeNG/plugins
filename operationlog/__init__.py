@@ -204,26 +204,27 @@ class OperationLog(SmartPlugin, AbLogger):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if 'olog' in item.conf and item.conf['olog'] == self.name:
-            self._item_conf[item.id()] = {}
+            id = item.property.path
+            self._item_conf[id] = {}
 
             # set these as default in any case. default is to log
-            self._item_conf[item.id()]['olog_rules'] = {}
-            self._item_conf[item.id()]['olog_rules']['lowlim'] = None
-            self._item_conf[item.id()]['olog_rules']['highlim'] = None
-            self._item_conf[item.id()]['olog_rules']['*'] = 'value'
+            self._item_conf[id]['olog_rules'] = {}
+            self._item_conf[id]['olog_rules']['lowlim'] = None
+            self._item_conf[id]['olog_rules']['highlim'] = None
+            self._item_conf[id]['olog_rules']['*'] = 'value'
 
             if 'olog_txt' in item.conf:
                 olog_txt = item.conf['olog_txt']
-                self._item_conf[item.id()]['olog_eval'] = []
-                eval_parse = self.parse_eval("item.conf, item {}".format(item.id()), olog_txt)
-                self._item_conf[item.id()]['olog_txt'] = eval_parse['olog_txt']
-                self._item_conf[item.id()]['olog_eval'] = eval_parse['olog_eval']
-                if len(self._item_conf[item.id()]['olog_eval']) != 0:
-                    self.logger.info('Item: {}, olog evaluating: {}'.format(item.id(), self._item_conf[item.id()]['olog_eval']))
+                self._item_conf[id]['olog_eval'] = []
+                eval_parse = self.parse_eval("item.conf, item {}".format(id), olog_txt)
+                self._item_conf[id]['olog_txt'] = eval_parse['olog_txt']
+                self._item_conf[id]['olog_eval'] = eval_parse['olog_eval']
+                if len(self._item_conf[id]['olog_eval']) != 0:
+                    self.logger.info('Item: {}, olog evaluating: {}'.format(id, self._item_conf[id]['olog_eval']))
 
             if 'olog_rules' in item.conf:
                 # we have explicit rules, remove default 'all'
-                self._item_conf[item.id()]['olog_rules']['*'] = None
+                self._item_conf[id]['olog_rules']['*'] = None
                 olog_rules = item.conf['olog_rules']
                 if isinstance(olog_rules, str):
                     try:
@@ -252,7 +253,7 @@ class OperationLog(SmartPlugin, AbLogger):
                                 self._item_conf[item.id()]['olog_rules']["*"] = 'value'
                     self._item_conf[item.id()]['olog_rules'][key] = value
 
-            self.logger.info('Item: {}, olog rules: {}'.format(item.id(), self._item_conf[item.id()]['olog_rules']))
+            self.logger.info('Item: {}, olog rules: {}'.format(id, self._item_conf[id]['olog_rules']))
             return self.update_item
         else:
             return None
@@ -356,17 +357,17 @@ class OperationLog(SmartPlugin, AbLogger):
                                     if self._item_conf[item.id()]['olog_rules']['highlim'] is not None and item() >= str(self._item_conf[item.id()]['olog_rules']['highlim']):
                                         return
                             try:
-                                mvalue = self._item_conf[item.id()]['olog_rules'][item()]
+                                mvalue = self._item_conf[id]['olog_rules'][item()]
                             except KeyError:
                                 mvalue = item()
-                                if self._item_conf[item.id()]['olog_rules']["*"] is None:
+                                if self._item_conf[id]['olog_rules']["*"] is None:
                                     return
-                        self._item_conf[item.id()]['olog_eval_res'] = []
-                        for expr in self._item_conf[item.id()]['olog_eval']:
-                            self._item_conf[item.id()]['olog_eval_res'].append(eval(expr))
+                        self._item_conf[id]['olog_eval_res'] = []
+                        for expr in self._item_conf[id]['olog_eval']:
+                            self._item_conf[id]['olog_eval_res'].append(eval(expr))
                         try:
                             pname = str(item.return_parent())
-                            pid = item.return_parent().id()
+                            pid = item.return_parent().property.path
                         except Exception:
                             pname = ''
                             pid = ''
@@ -382,7 +383,7 @@ class OperationLog(SmartPlugin, AbLogger):
                                                                                   'highlim': self._item_conf[item.id()]['olog_rules']['highlim']})
                         logvalues = [logtxt]
                     else:
-                        logvalues = [item.id(), '=', item()]
+                        logvalues = [id, '=', item()]
                 else:
                     logvalues = []
                     for it in self._items:
