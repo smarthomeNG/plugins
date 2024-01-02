@@ -292,6 +292,19 @@ Item Log Beispiele
            olog_txt: Item with name {name} has lowlim={lowlim} <= value={value} < highlim={highlim}, the value {eval='increased' if sh.foo.bar4() > sh.foo.bar4.prev_value() else 'decreased'} by {eval=round(abs(sh.foo.bar4() - sh.foo.bar4.prev_value()), 3)}
            olog_level: info
 
+       bar5:
+           type: num
+           name: Bar5
+           remark: logs the values in olog_txt without any timestamp and log level, same as datalog plugin
+           olog: mylogname1
+           olog_txt: {time};{item};{value}
+           olog_level: none
+
+.. hint::
+
+  Das Loglevel NONE sorgt dafür, dass äquivalent zum datalog Plugin Einträge ohne 
+  standardmäßigem Zeit- und Logleveleintrag erstellt werden.
+
 logics.yaml
 -----------
 

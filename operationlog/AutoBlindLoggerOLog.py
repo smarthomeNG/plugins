@@ -145,7 +145,10 @@ class AbLogger():
         if level <= AbLogger.__loglevel:
             indent = "\t" * self.__indentlevel
             text = text.format(*args)
-            logtext = "{0}{1} {2}\r\n".format(datetime.datetime.now(), indent, text)
+            if level == 0:
+                logtext = "{0}\r\n".format(text)
+            else:
+                logtext = "{0}{1} {2}\r\n".format(datetime.datetime.now(), indent, text)
             with open(self.__filename, mode="a", encoding="utf-8") as f:
                 f.write(logtext)
             # JT
@@ -157,6 +160,12 @@ class AbLogger():
         self.__indentlevel = 0
         text += " "
         self.log(1, text.ljust(80, "="))
+
+    # log with level=none
+    # @param text text to log
+    # @param *args parameters for text
+    def none(self, text, *args):
+        self.log(0, text, *args)
 
     # log with level=info
     # @param text text to log

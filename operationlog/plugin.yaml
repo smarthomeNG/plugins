@@ -141,9 +141,18 @@ item_attributes:
             - INFO
             - WARNING
             - ERROR
+            - NONE
         description:
-            de: 'Gibt den Log-Level an (DEBUG, INFO, WARNING, ERROR)'
-            en: 'Specifies the log level (DEBUG, INFO, WARNING, ERROR)'
+            de: >
+                Gibt den Log-Level an (DEBUG, INFO, WARNING, ERROR, NONE).
+                NONE bedeutet, dass kein Zeitstempel und Loglevel in die Datei geschrieben
+                wird (äquivalent zum datalog Plugin), für Memory und zusätzliches
+                Log wird der Loglevel auf INFO gesetzt.
+            en: >
+                Specifies the log level (DEBUG, INFO, WARNING, ERROR, NONE)
+                NONE means, there is no timestamp and log level written to the file
+                (as with the datalog plugin). However, for memory and additional
+                log files, the INFO level is used.
     olog_rules:
         type: str
         description:
@@ -172,9 +181,10 @@ logic_parameters:
           - INFO
           - WARNING
           - ERROR
+          - NONE
         description:
-            de: 'Gibt den Log-Level an (DEBUG, INFO, WARNING, ERROR)'
-            en: 'Specifies the log level (DEBUG, INFO, WARNING, ERROR)'
+            de: 'Gibt den Log-Level an (DEBUG, INFO, WARNING, ERROR, NONE)'
+            en: 'Specifies the log level (DEBUG, INFO, WARNING, ERROR, NONE)'
 
 plugin_functions: NONE
     # Definition of function interface of the plugin

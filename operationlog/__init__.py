@@ -410,7 +410,7 @@ class OperationLog(SmartPlugin, AbLogger):
                 elif name == 'thread':
                     log.append(threading.current_thread().name)
                 elif name == 'level':
-                    log.append(level)
+                    log.append("INFO" if level == "NONE" else level)
                 else:
                     values_txt = map(str, logvalues)
                     log.append(' '.join(values_txt))
@@ -418,7 +418,10 @@ class OperationLog(SmartPlugin, AbLogger):
             # consider to write the log entry to
             if self._logtofile:
                 self.update_logfilename()
-                self.__myLogger.info('{}: {}', log[2], ''.join(log[3:]))
+                if level == "NONE":
+                    self.__myLogger.none('{}', ''.join(log[3:]))
+                else:
+                    self.__myLogger.info('{}: {}', log[2], ''.join(log[3:]))
 
             if self._cache is True:
                 try:
@@ -427,6 +430,8 @@ class OperationLog(SmartPlugin, AbLogger):
                     self.logger.warning("OperationLog {}: could not update cache {}".format(self._path, e))
 
             if self.additional_logger:
+                if level == "NONE":
+                    level = "INFO"
                 self.additional_logger.log(logging.getLevelName(level), ' '.join(map(str, logvalues)))
 
 
