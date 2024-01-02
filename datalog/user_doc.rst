@@ -16,6 +16,72 @@ Plugin zum Auslagern der Itemdaten in Dateien auf dem Dateisystem. Es kann verwe
 um verschiedene Logs und Protokollmuster zu konfigurieren und diese den
 Items zuzuweisen.
 
+.. important::
+
+    Die Funktionalität des Plugins ist zu großen Teilen auch über entsprechende Konfiguration der
+    ``etc/logging.yaml`` Datei sowie durch Nutzen des ``log_change`` Itemattributs abbildbar.
+    Alternativ kann das operationlog Plugin genutzt werden.
+
+Ersatz durch Bordmittel
+=======================
+
+Details zum Loghandler sind unter :doc:`Logging Handler </referenz/logging/logging_handler>`
+zu finden. Informationen zum Loggen bei Itemänderungen findet man unter
+:doc:`log_change </referenz/items/standard_attribute/log_change>`.
+
+Es können beim Nutzen des ShngTimedRotatingFileHandler wie beim datalog Plugin Platzhalter zur Benennung der Dateien genutzt werden: {year}, {month}, {day}, {hour}, {stamp}. Allerdings funktioniert aktuell das Rotieren der Dateinamen nicht wie gewünscht. Wenn diese Funktionalität wichtig ist, kann das operationlog Plugin genutzt werden.
+
+Beispiel
+--------
+
+Das Logging wird in der Datei ``etc/logging.yaml`` wie folgt konfiguriert.
+
+.. code-block:: yaml
+
+    # etc/logging.yaml
+    formatters:
+        datalog:
+            format: '%(message)s'
+
+    handlers:
+        csv:
+            class: logging.handlers.TimedRotatingFileHandler
+            formatter: datalog
+            filename: ./var/log/{item}-{year}-{month}-{day}.csv
+            encoding: utf8
+
+        txt:
+            class: logging.handlers.TimedRotatingFileHandler
+            formatter: datalog
+            filename: ./var/log/datalog.txt
+            encoding: utf8
+
+    loggers:
+        items.log_multi:
+            handlers: [csv, txt]
+        items.log_csv:
+            handlers: [csv]
+        items.log_txt:
+            handlers: [txt]
+
+Nun können mehrere Items über die entsprechenden Attribute in das jeweilige Log schreiben.
+
+.. code-block:: yaml
+
+    #items/item.yaml
+    some:
+        item1:
+            type: str
+            datalog: default
+        item2:
+            type: num
+            datalog:
+              - default
+              - custom
+        item3:
+            type: num
+            datalog: custom
+
 Konfiguration
 =============
 
