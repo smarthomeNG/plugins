@@ -9,8 +9,8 @@
 *
 */
 {% macro status(id, item) %}
-	{% import "basic.html" as basic %}
-	{% import "indego_widget.html" as indego %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/indego_widget.html" : "indego_widget.html" as indego %}
         
 
     /** # Get general Informations if files are existing ----------------------- */
