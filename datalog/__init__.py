@@ -40,6 +40,7 @@ class DataLog(SmartPlugin):
     _buffer_lock = None
 
     def __init__(self, smarthome, *args, **kwargs):
+        super().__init__()
         self.path = self.get_parameter_value('path')
         self.logger = logging.getLogger(__name__)
 
