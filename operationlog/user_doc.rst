@@ -11,7 +11,7 @@ operationlog
    :height: 300px
    :scale: 50 %
    :align: left
-   
+
 Das OperationLog-Plugin kann genutzt werden, um Logs zu erzeugen. Diese können im Cache, im RAM und in Dateien gespeichert und durch andere Items oder Plugins angesprochen werden. Weiterhin können sie z.B. in der SmartVISU vom Standardwidget **status.log** angezeigt werden.
 
 .. important::
@@ -174,7 +174,7 @@ Es wird jeden Tag eine neue Logdatei erzeugt und die letzten 50 Einträge werden
 
 Die Einträge des zweiten Logs werden nicht im RAM gehalten und nicht in den Cache geschrieben, sondern nur in die Datei ``var/log/yearly_log-mylogname2-yyyy.log`` geschrieben.
 
-Die Logdateien können frei benannt werden. Die Schlüsselwörter ``{name}``\ , ``{year}``\ , ``{month}`` und ``{day}`` werden durch den jeweiligen Namen bzw. die jeweilige Zeit ersetzt. Bei jedem Schreibvorgang in die Logdatei wird der Dateiname geprüft und bei Bedarf eine neue Datei erzeugt.
+Die Logdateien können frei benannt werden. Die Schlüsselwörter ``{name}``, ``{year}``, ``{month}`` und ``{day}`` werden durch den jeweiligen Namen bzw. die jeweilige Zeit ersetzt. Bei jedem Schreibvorgang in die Logdatei wird der Dateiname geprüft und bei Bedarf eine neue Datei erzeugt.
 
 Wenn die Daten auch in einen Systemlogger von SmartHomeNG geschrieben werden sollen, kann dieser unter ``logger`` angegeben werden.
 
@@ -205,7 +205,8 @@ In ``olog_rules`` kann eine Liste von Parametern angegeben werden, die einem Ite
   Durch den yaml-Parser werden Angaben wie ``True:text1`` und ``False:text2`` (beachte Großschreibung) den bool-Werten `true` und `false` zugeordnet. Wenn das Item vom Typ `str` ist und der Text "True" oder "False" für die jeweilige Regel verwendet werden soll, muss er in Anführungszeichen gesetzt werden: ``"True:text1"`` bzw. ``"False:text2"``
   Umgekehrt werden auch bei einem bool-Item die Angaben ``true:text1`` und ``false:text2`` (beachte Kleinschreibung) nicht als bool-Werte erkannt und führen daher bei Änderung des Items nicht zu einem Logeintrag.
 
-Die zu loggenden Werte können begrenzt werden, indem die Angaben ``lowlimit:<niedrigster Wert>`` und ``highlimit:<höchster Wert>`` verwendet werden, siehe auch untenstehendes Beispiel. Ein Logeintrag wird erzeugt, wenn ``lowlim`` <= item value < ``highlim``.
+Die zu loggenden Werte können begrenzt werden, indem die Angaben ``lowlimit:<niedrigster Wert>`` und ``highlimit:<höchster Wert>`` verwendet werden, siehe auch untenstehendes Beispiel. Ein Logeintrag wird erzeugt, wenn lowlimit <= item value < highlimit. Aus Kompatibilitätsgründen sind auch die
+Einträge ``lowlim`` und ``highlim`` möglich.
 Der auszugebende Text kann mit dem Parameter ``olog_txt`` festgelegt werden. Die folgenden vordefinierten Schlüsselwörter können dabei verwendet werden:
 
 .. list-table::
@@ -223,13 +224,21 @@ Der auszugebende Text kann mit dem Parameter ``olog_txt`` festgelegt werden. Die
      - Zeit seit der letzten Änderung des Items
    * - ``{pname}``
      - das Attribut ``name`` des Parent-Items
-   * - ``{id}``
+   * - ``{id} / {item}``
      - die ID des Items
    * - ``{pid}``
      - die ID des Parent-Items
-   * - ``{lowlim}``
+   * - ``{time}``
+     - die aktuelle Uhrzeit im Format %H:%M:%S
+   * - ``{date}``
+     - das aktuele Datum im Format %d.%m.%Y
+   * - ``{now}``
+     - aktuelle Zeit, wie sie von shtime.now zurück käme (YYYY-MM-DD HH:MM:SS.ssssss+TZ)
+   * - ``{stamp}``
+     - der aktuelle Unix Zeitstempel
+   * - ``{lowlimit} / {lowlim}``
      - unterer Grenzwert für Logeinträge
-   * - ``{highlim}``
+   * - ``{highlimit} / {highlim}``
      - oberer Grenzwert für Logeinträge
 
 
@@ -287,9 +296,9 @@ Item Log Beispiele
            name: Bar4
            olog: mylogname1
            olog_rules:
-             - lowlim:-1.0
-             - highlim:10.0
-           olog_txt: Item with name {name} has lowlim={lowlim} <= value={value} < highlim={highlim}, the value {eval='increased' if sh.foo.bar4() > sh.foo.bar4.prev_value() else 'decreased'} by {eval=round(abs(sh.foo.bar4() - sh.foo.bar4.prev_value()), 3)}
+             - lowlimit:-1.0
+             - highlimit:10.0
+           olog_txt: Item with name {name} has lowlimit={lowlimit} <= value={value} < highlimit={highlimit}, the value {eval='increased' if sh.foo.bar4() > sh.foo.bar4.prev_value() else 'decreased'} by {eval=round(abs(sh.foo.bar4() - sh.foo.bar4.prev_value()), 3)}
            olog_level: info
 
        bar5:

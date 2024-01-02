@@ -211,6 +211,8 @@ class OperationLog(SmartPlugin, AbLogger):
             self._item_conf[id]['olog_rules'] = {}
             self._item_conf[id]['olog_rules']['lowlim'] = None
             self._item_conf[id]['olog_rules']['highlim'] = None
+            self._item_conf[id]['olog_rules']['lowlimit'] = None
+            self._item_conf[id]['olog_rules']['highlimit'] = None
             self._item_conf[id]['olog_rules']['*'] = 'value'
 
             if 'olog_txt' in item.conf:
@@ -249,9 +251,9 @@ class OperationLog(SmartPlugin, AbLogger):
                                 key = float(key_txt)
                         except:
                             key = key_txt
-                            if key_txt in ['lowlim', 'highlim']:
-                                self._item_conf[item.id()]['olog_rules']["*"] = 'value'
-                    self._item_conf[item.id()]['olog_rules'][key] = value
+                            if key_txt in ['lowlim', 'highlim', 'lowlimit', 'highlimit']:
+                                self._item_conf[id]['olog_rules']["*"] = 'value'
+                    self._item_conf[id]['olog_rules'][key] = value
 
             self.logger.info('Item: {}, olog rules: {}'.format(id, self._item_conf[id]['olog_rules']))
             return self.update_item
@@ -339,23 +341,32 @@ class OperationLog(SmartPlugin, AbLogger):
             # this plugin does not change any item thus the check for caller is not really necessary
             if item.conf['olog'] == self.name:
                 if len(self._items) == 0:
-                    if item.id() in self._item_conf and 'olog_txt' in self._item_conf[item.id()]:
-                        mvalue = item()
-                        if 'olog_rules' in self._item_conf[item.id()]:
-                            if 'lowlim' in self._item_conf[item.id()]['olog_rules']:
-                                if item.type() == 'num':
-                                    if self._item_conf[item.id()]['olog_rules']['lowlim'] is not None and item() < float(self._item_conf[item.id()]['olog_rules']['lowlim']):
-                                        return
-                                elif item.type() == 'str':
-                                    if self._item_conf[item.id()]['olog_rules']['lowlim'] is not None and item() < str(self._item_conf[item.id()]['olog_rules']['lowlim']):
-                                        return
-                            if 'highlim' in self._item_conf[item.id()]['olog_rules']:
-                                if item.type() == 'num':
-                                    if self._item_conf[item.id()]['olog_rules']['highlim'] is not None and item() >= float(self._item_conf[item.id()]['olog_rules']['highlim']):
-                                        return
-                                elif item.type() == 'str':
-                                    if self._item_conf[item.id()]['olog_rules']['highlim'] is not None and item() >= str(self._item_conf[item.id()]['olog_rules']['highlim']):
-                                        return
+                    id = item.property.path
+                    if id in self._item_conf and 'olog_txt' in self._item_conf[id]:
+                        mvalue = item.property.value
+                        if 'olog_rules' in self._item_conf[id]:
+                            if item.type() == 'num':
+                                lowlimit = self._item_conf[id]['olog_rules']['lowlimit']
+                                lowlim = self._item_conf[id]['olog_rules']['lowlim']
+                                highlimit = self._item_conf[id]['olog_rules']['highlimit']
+                                highlim = self._item_conf[id]['olog_rules']['highlim']
+                                if lowlimit is not None and item() < float(lowlimit):
+                                    return
+                                elif lowlim is not None and item() < float(lowlim):
+                                    return
+                                if highlimit is not None and item() >= float(highlimit):
+                                    return
+                                elif highlim is not None and item() >= float(highlim):
+                                    return
+                            elif item.type() == 'str':
+                                if lowlimit is not None and item() < str(lowlimit):
+                                    return
+                                elif lowlim is not None and item() < str(lowlim):
+                                    return
+                                if highlimit is not None and item() >= str(highlimit):
+                                    return
+                                elif highlim is not None and item() >= str(highlim):
+                                    return
                             try:
                                 mvalue = self._item_conf[id]['olog_rules'][item()]
                             except KeyError:
@@ -371,16 +382,28 @@ class OperationLog(SmartPlugin, AbLogger):
                         except Exception:
                             pname = ''
                             pid = ''
-                        logtxt = self._item_conf[item.id()]['olog_txt'].format(*self._item_conf[item.id()]['olog_eval_res'],
+                        time = shtime.now().strftime("%H:%M:%S")
+                        date = shtime.now().strftime("%d.%m.%Y")
+                        stamp = shtime.now().timestamp()
+                        now = str(shtime.now())
+
+                        logtxt = self._item_conf[id]['olog_txt'].format(*self._item_conf[id]['olog_eval_res'],
                                                                                **{'value': item(),
                                                                                   'mvalue': mvalue,
                                                                                   'name': str(item),
                                                                                   'age': round(item.prev_age(), 2),
                                                                                   'pname': pname,
-                                                                                  'id': item.id(),
+                                                                                  'id': id,
+                                                                                  'item': id,
+                                                                                  'time': time,
+                                                                                  'date': date,
+                                                                                  'stamp': stamp,
+                                                                                  'now': now,
                                                                                   'pid': pid,
-                                                                                  'lowlim': self._item_conf[item.id()]['olog_rules']['lowlim'],
-                                                                                  'highlim': self._item_conf[item.id()]['olog_rules']['highlim']})
+                                                                                  'lowlimit': self._item_conf[id]['olog_rules']['lowlimit'],
+                                                                                  'highlimit': self._item_conf[id]['olog_rules']['highlimit'],
+                                                                                  'lowlim': self._item_conf[id]['olog_rules']['lowlim'],
+                                                                                  'highlim': self._item_conf[id]['olog_rules']['highlim']})
                         logvalues = [logtxt]
                     else:
                         logvalues = [id, '=', item()]
