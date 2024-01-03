@@ -65,6 +65,7 @@ Das Logging wird in der Datei ``etc/logging.yaml`` wie folgt konfiguriert.
             handlers: [txt]
 
 Nun können mehrere Items über die entsprechenden Attribute in das jeweilige Log schreiben.
+Dank ``cycle`` und ``enforce_change`` Attribute ist auch ein regelmäßiges Schreiben möglich.
 
 .. code-block:: yaml
 
@@ -72,15 +73,23 @@ Nun können mehrere Items über die entsprechenden Attribute in das jeweilige Lo
     some:
         item1:
             type: str
-            datalog: default
+            log_change: log_csv
+            log_text: '{time};{id};{value}'
         item2:
             type: num
-            datalog:
-              - default
-              - custom
+            log_change: log_multi
+            log_text: '{id} is {value}'
         item3:
             type: num
-            datalog: custom
+            log_change: log_txt
+            cycle: 30
+            enforce_change: true
+
+Da die Logrotation mit Datum-spezifischen Dateinamen aktuell nicht wie erwartet
+funktioniert, ist die skizzierte Vorgehensweise nur bei standardmäßigen Dateinamen
+sinnvoll. Möchte man die Logdateien mit Platzhaltern wie beispielsweise {day}, etc.
+benennen, empfiehlt es sich, auf das operationlog Plugin zurückzugreifen
+und für verschiedene Patterns einzelne ``struct`` zu nutzen.
 
 Konfiguration
 =============
