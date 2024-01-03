@@ -7,7 +7,7 @@ plugin:
         en: 'Logging of data in another log aside from default one'
     maintainer: ohinckel
     tester: 'bmxp'                 # Who tests this plugin?
-    state: ready
+    state: deprecated
     keywords: log data             # keywords, where applicable
 
 # Following entries are for Smart-Plugins:
