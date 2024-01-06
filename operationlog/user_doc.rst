@@ -16,7 +16,7 @@ Das OperationLog-Plugin kann genutzt werden, um Logs zu erzeugen. Diese können 
 
 .. important::
 
-    Die Funktionalität des Plugins ist zu großen Teilen auch über entsprechende Konfiguration der
+    Die Funktionalität des Plugins ist auch über entsprechende Konfiguration der
     ``etc/logging.yaml`` Datei sowie durch Nutzen des ``log_change`` Itemattributs abbildbar.
 
 Ersatz durch Bordmittel
@@ -26,16 +26,19 @@ Details zum Memory und Datei Loghandler sind unter :doc:`Logging Handler </refer
 zu finden. Informationen zum Loggen bei Itemänderungen findet man unter
 :doc:`log_change </referenz/items/standard_attribute/log_change>`.
 
-Es können beim Nutzen des ShngTimedRotatingFileHandler wie beim operationlog Plugin Platzhalter zur Benennung der Dateien
-genutzt werden: {year}, {month}, {day}, {hour}, {stamp}. Allerdings funktioniert aktuell das Rotieren der Dateinamen nicht wie
-gewünscht. Wenn diese Funktionalität wichtig ist, muss weiterhin das operationlog oder datalog Plugin genutzt werden.
+Es können beim Nutzen des ``DateTimeRotatingFileHandler`` wie beim operationlog
+Plugin Platzhalter zur Benennung der Dateien
+genutzt werden: {year}, {month}, {day}, {hour}, {intstamp}, {stamp}. Bei jeder
+Logrotation werden wie gewohnt ältere Dateien gelöscht (je nach Konfiguration) und
+das neue Log wird auf Basis der aktuellen Uhrzeit benannt.
 
 Beispiel Logik
 --------------
 
 In diesem Beispiel werden sämtliche Aufrufe des Loggers in der Logik ex_logging
-in das Memorylog namens memory_info und in eine Datei namens smarthome-warnings.log geschrieben.
-Letzteres wird jeden Tag erneuert und 7 Tage aufbewahrt.
+in das Memorylog namens memory_info und in eine Datei geschrieben.
+Letztere wird jede Stunde erneuert und 7 Stunden aufbewahrt. Der Name der Datei
+resultiert aus der Konfiguration mittels Platzhaltern oder Standard-Zeitstempel.
 
 Die Logs werden in der Datei ``etc/logging.yaml`` wie folgt konfiguriert:
 
@@ -50,19 +53,17 @@ Die Logs werden in der Datei ``etc/logging.yaml`` wie folgt konfiguriert:
             level: INFO
             cache: True
 
-		shng_warnings_file:
-			(): lib.log.ShngTimedRotatingFileHandler
-			formatter: shng_simple
-			level: NOTICE
-			utc: false
-			when: midnight
-			backupCount: 7
-			filename: ./var/log/smarthome-warnings.log
-			encoding: utf8
+    		data_file:
+    			(): lib.log.DateTimeRotatingFileHandler
+    			formatter: shng_simple
+    			when: 'H'
+    			backupCount: 7
+    			filename: ./var/log/data-{year}-{month}-{day}_at_{hour}.log
+    			encoding: utf8
 
     loggers:
         logics.ex_logging:
-            handlers: [memory_info, shng_warnings_file]
+            handlers: [memory_info, data_file]
             level: INFO
 
 Die Logeinträge werden aus der Logik ``logics/<logikname>.py`` wie folgt erstellt:
