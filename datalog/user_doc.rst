@@ -18,9 +18,9 @@ Items zuzuweisen.
 
 .. important::
 
-    Die Funktionalität des Plugins ist zu großen Teilen auch über entsprechende Konfiguration der
+    Die Funktionalität des Plugins ist auch über entsprechende Konfiguration der
     ``etc/logging.yaml`` Datei sowie durch Nutzen des ``log_change`` Itemattributs abbildbar.
-    Alternativ kann das operationlog Plugin genutzt werden.
+
 
 Ersatz durch Bordmittel
 =======================
@@ -29,7 +29,7 @@ Details zum Loghandler sind unter :doc:`Logging Handler </referenz/logging/loggi
 zu finden. Informationen zum Loggen bei Itemänderungen findet man unter
 :doc:`log_change </referenz/items/standard_attribute/log_change>`.
 
-Es können beim Nutzen des ShngTimedRotatingFileHandler wie beim datalog Plugin Platzhalter zur Benennung der Dateien genutzt werden: {year}, {month}, {day}, {hour}, {stamp}. Allerdings funktioniert aktuell das Rotieren der Dateinamen nicht wie gewünscht. Wenn diese Funktionalität wichtig ist, kann das operationlog Plugin genutzt werden.
+Es können beim Nutzen des ``DateTimeRotatingFileHandler`` wie beim datalog Plugin Platzhalter zur Benennung der Dateien genutzt werden: {year}, {month}, {day}, {hour}, {stamp}.
 
 Beispiel
 --------
@@ -45,13 +45,13 @@ Das Logging wird in der Datei ``etc/logging.yaml`` wie folgt konfiguriert.
 
     handlers:
         csv:
-            class: logging.handlers.TimedRotatingFileHandler
+            (): lib.log.DateTimeRotatingFileHandler
             formatter: datalog
-            filename: ./var/log/{item}-{year}-{month}-{day}.csv
+            filename: ./var/log/data-{year}-{month:02}-{day:02}.csv
             encoding: utf8
 
         txt:
-            class: logging.handlers.TimedRotatingFileHandler
+            (): lib.log.ShngTimedRotatingFileHandler
             formatter: datalog
             filename: ./var/log/datalog.txt
             encoding: utf8
@@ -85,11 +85,6 @@ Dank ``cycle`` und ``enforce_change`` Attribute ist auch ein regelmäßiges Schr
             cycle: 30
             enforce_change: true
 
-Da die Logrotation mit Datum-spezifischen Dateinamen aktuell nicht wie erwartet
-funktioniert, ist die skizzierte Vorgehensweise nur bei standardmäßigen Dateinamen
-sinnvoll. Möchte man die Logdateien mit Platzhaltern wie beispielsweise {day}, etc.
-benennen, empfiehlt es sich, auf das operationlog Plugin zurückzugreifen
-und für verschiedene Patterns einzelne ``struct`` zu nutzen.
 
 Konfiguration
 =============
