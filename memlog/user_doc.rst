@@ -18,8 +18,7 @@ zur Verfügung, bei der die Logeinträge im Arbeitsspeicher abgelegt werden.
 
 .. important::
 
-    Die Funktionalität des Plugins ist auch über entsprechende Konfiguration der
-    ``etc/logging.yaml`` Datei sowie durch Nutzen des ``log_change`` Itemattributs abbildbar.
+    Das Plugin ist als "deprecated" abgekündigt. Ersatz der Funktionalität ist im nächsten Absatz beschrieben.
 
 Ersatz durch Bordmittel
 =======================
