@@ -16,8 +16,7 @@ Das OperationLog-Plugin kann genutzt werden, um Logs zu erzeugen. Diese können 
 
 .. important::
 
-    Die Funktionalität des Plugins ist auch über entsprechende Konfiguration der
-    ``etc/logging.yaml`` Datei sowie durch Nutzen des ``log_change`` Itemattributs abbildbar.
+    Das Plugin ist als "deprecated" abgekündigt. Ersatz ist im nächsten Abschnitt beschrieben.
 
 Ersatz durch Bordmittel
 =======================
