@@ -30,10 +30,10 @@ from lib.model.smartplugin import SmartPlugin
 
 class MemLog(SmartPlugin):
 
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.1'
 
     def __init__(self, sh, *args, **kwargs):
-
+        super().__init__()
         self.name = self.get_parameter_value('name')
         self.mappings = self.get_parameter_value('mappings')
         self.items = self.get_parameter_value('items')
@@ -139,4 +139,3 @@ class MemLog(SmartPlugin):
                     logvalues = logvalues[1:]
 
             self._log.add(log)
-
