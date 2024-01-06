@@ -29,7 +29,7 @@ Wenn der Daemon lokal installiert ist, sollte die Datei ``/etc/apcupsd/apcupsd.c
    NISIP 127.0.0.1
 
 Unterstützte Geräte
--------------------
+===================
 
 Sollte mit allen APC UPS Geräten funktionieren, die den apcupsd unterstützen. Getestet wurde nur mit einer **smartUPS**.
 
@@ -40,20 +40,8 @@ Konfiguration
 Die Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
 unter :doc:`/plugins_doc/config/apcups` beschrieben.
 
-
-plugin.yaml
------------
-
-Zu den Informationen, welche Parameter in der ../etc/plugin.yaml konfiguriert werden können bzw. müssen, bitte
-bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/apcups>` lesen, die aus
-den Metadaten der plugin.yaml erzeugt wurde (siehe oben).
-
 items.yaml
 ----------
-
-Zu den Informationen, welche Attribute in der Item Konfiguration verwendet werden können bzw. müssen, bitte
-bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/apcups>` lesen, die aus
-den Metadaten der plugin.yaml erzeugt wurde (siehe oben).
 
 Es gibt nur ein einziges Attribut ``apcups``. Die Namen für den Statusabruf können über den Befehl ``apcaccess`` auf der Kommandozeile
 abgerufen werden. Damit wird eine Liste der Art ``Statusname : Wert`` angezeigt.
@@ -115,34 +103,18 @@ Der Wert der dem ``apcups`` Item Attribut als Parameter übergeben wird ist dies
    END APC  : 2017-11-02 08:00:39 +0100
 
 Das Plugin führt eine automatische Typumwandlung durch entsprechend dem verwendeten Item Typ.
-Bei der Umwandlung in einen numerischen Wert wird nach dem ersten Leerzeichen abgeschnitten und dann konvertiert.
-Aus ``235 Volt`` wird also ``235``
-
-logic.yaml
-----------
-
-Zu den Informationen, welche Konfigurationsmöglichkeiten für Logiken bestehen, bitte
-bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/apcups>` lesen, die aus
-den Metadaten der plugin.yaml erzeugt wurde (siehe oben).
-
-Funktionen
-----------
-
-Zu den Informationen, welche Funktionen das Plugin bereitstellt (z.B. zur Nutzung in Logiken), bitte
-bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/apcups>` lesen, die aus
-den Metadaten der plugin.yaml erzeugt wurde (siehe oben).
-
+Bei der Umwandlung in einen numerischen Wert wird nach dem ersten Leerzeichen abgeschnitten und dann konvertiert. Aus ``235 Volt`` wird also ``235``.
 
 Beispiele
 =========
 
 Schlüssel auslesen
-~~~~~~~~~~~~~~~~~~
+------------------
 
 Das folgende Beispiel liest die Schlüssel **LINEV**, **STATUS** und
 **TIMELEFT** und gibt deren Werte zurück.
 
-.. code:: yaml
+.. code-block:: yaml
 
    # items/apcups.yaml
    serverroom:
@@ -168,7 +140,7 @@ Das folgende Beispiel liest die Schlüssel **LINEV**, **STATUS** und
 **type** hängt von den Werten ab.
 
 Status Report Fields
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 Laut `APC <http://apcupsd.org/manual/manual.html#configuration-examples>`_)
 ist die Bedeutung der Variablen wie folgt:
