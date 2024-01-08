@@ -21,7 +21,7 @@ require_once const_path.'version-info.php';
  */
 
 {% macro config_info(id, gad_model, gad_webif, gad_enigma, gad_image, gad_dhcp, gad_ip, gad_gw, gad_mask, gad_mac) %}
-	{% import "basic.html" as basic %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
 	{% set uid = uid(page, id) %}
 
 	<div id="{{ uid }}">
@@ -54,7 +54,7 @@ require_once const_path.'version-info.php';
  */
 
 {% macro config_info2(id, gad_box) %}
-	{% import "basic.html" as basic %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
 	{% set uid = uid(page, id) %}
 
 	<div id="{{ uid }}">
@@ -88,7 +88,7 @@ require_once const_path.'version-info.php';
  */
 
 {% macro status_info(id, gad_standby, gad_servicename, gad_eventtitle, gad_eventdesc, gad_vwidth, gad_vheight, gad_vpid, gad_apid) %}
-	{% import "basic.html" as basic %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
 	{% set uid = uid(page, id) %}
 
 	<div id="{{ uid }}">
@@ -120,7 +120,7 @@ require_once const_path.'version-info.php';
  */
 
 {% macro status_info2(id, gad_box) %}
-	{% import "basic.html" as basic %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
 	{% set uid = uid(page, id) %}
 
 	<div id="{{ uid }}">
@@ -152,7 +152,7 @@ require_once const_path.'version-info.php';
  */
 
 {% macro status_channel(id, gad_box) %}
-	{% import "basic.html" as basic %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
 	{% set uid = uid(page, id) %}
 
 	<div id="{{ uid }}">
@@ -178,7 +178,7 @@ require_once const_path.'version-info.php';
  */
 
 {% macro remote2(id, gad_boxremote, gad_size, alternative) %}
-	{% import "basic.html" as basic %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
 	{% set uid = uid(page, id) %}
 
 	{% if config_version == 2.9 %}

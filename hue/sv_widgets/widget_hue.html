@@ -12,7 +12,7 @@
  *
  */
 {% macro control(id,g_power,g_reach,g_r,g_g,g_b,g_alert,g_effect,g_bri,g_sat,g_hue) %}
-{% import "basic.html" as basic %}
+{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
 
 <table height="90%" width="90%" align="center">
 	<tr>
@@ -76,7 +76,7 @@
  *
  */
 {% macro control_group(id,g_power,g_alert,g_effect,g_bri,g_sat,g_hue) %}
-{% import "basic.html" as basic %}
+{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
 
 <table height="90%" width="90%" align="center">
 	<tr>

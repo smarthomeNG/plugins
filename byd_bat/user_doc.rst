@@ -20,10 +20,12 @@ Die Grunddaten werden alle 60 Sekunden aktualisiert. Die Diagnosedaten werden be
 
 Die Spannungen und Temperaturen in den Modulen werden mit Hilfe von Heatmaps dargestellt. Diese werden im Web Interface angezeigt. Zusätzlich können diese Bilder auch in ein weiteres Verzeichnis kopiert werden (z.Bsp. für smartvisu).
 
-Das Pflugin benoetigt nur ein Item mit der folgenden Deklaration:
+Das Plugin benoetigt nur ein Item mit der folgenden Deklaration:
 
-byd:
-    struct: byd_bat.byd_struct
+.. code-block:: yaml
+
+    byd:
+        struct: byd_bat.byd_struct
 
 Alle verfügbaren Daten werden im Struct 'byd_struct' bereitgestellt. Diverse Parameter besitzen bereits die Eigenschaft 'database: init', so dass die Daten für die Visualisierung bereitgestellt werden.
 
@@ -52,28 +54,8 @@ Bitte Debug-Daten (level: DEBUG) von noch nicht getesteten BYD Energiespeichern 
 Konfiguration
 =============
 
-plugin.yaml
------------
+Detaillierte Information sind :doc:`/plugins_doc/config/byd_bat` zu entnehmen.
 
-Zu den Informationen, welche Parameter in der ../etc/plugin.yaml konfiguriert werden können bzw. müssen, bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/byd_bat>` lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
-
-items.yaml
-----------
-
-Zu den Informationen, welche Attribute in der Item Konfiguration verwendet werden können bzw. müssen, bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/byd_bat>` lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
-
-logic.yaml
-----------
-
-Zu den Informationen, welche Konfigurationsmöglichkeiten für Logiken bestehen, bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/byd_bat>` lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
-
-Funktionen
-----------
-
-Zu den Informationen, welche Funktionen das Plugin bereitstellt (z.B. zur Nutzung in Logiken), bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/byd_bat>` lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 Web Interface
 =============

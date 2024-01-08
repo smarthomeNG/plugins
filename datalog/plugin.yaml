@@ -7,12 +7,11 @@ plugin:
         en: 'Logging of data in another log aside from default one'
     maintainer: ohinckel
     tester: 'bmxp'                 # Who tests this plugin?
-    state: ready
+    state: deprecated
     keywords: log data             # keywords, where applicable
-    documentation: https://github.com/smarthomeNG/plugins/blob/develop/datalog/README.md        # url of documentation (wiki) page
 
 # Following entries are for Smart-Plugins:
-    version: 1.5.1                 # Plugin version
+    version: 1.5.2                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
@@ -94,4 +93,3 @@ logic_parameters: NONE
 
 plugin_functions: NONE
     # Definition of function interface of the plugin
-

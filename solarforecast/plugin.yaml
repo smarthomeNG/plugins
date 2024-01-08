@@ -24,6 +24,8 @@ parameters:
         type: num
         mandatory: False
         default: 0.0
+        valid_min: -90
+        valid_max: 90
         description:
             de: '(Optional) Breitengrad der Solaranlage in dezimalen Grad'
             en: '(Optional) Latitude of solar system in decimal degree. Otherwise taken from smarthome config.'
@@ -31,12 +33,16 @@ parameters:
         type: num
         mandatory: False
         default: 0.0
+        valid_min: -180
+        valid_max: 180
         description:
             de: '(Optional) Längengrad der Solaranlage in dezimalen Grad. '
             en: '(Optional) Longitude of solar system in decimal degree. Otherwise taken from smarthome config.'
     declination:
         type: num
         mandatory: True
+        valid_min: 0
+        valid_max: 90
         description:
             de: 'Deklinationswinkel Solaranlage in Grad'
             en: 'Panel declination in degree'
@@ -51,6 +57,7 @@ parameters:
     kwp:
         type: num
         mandatory: True
+        valid_min: 0
         description:
             de: 'Leistung der Solaranlage in kW Peak'
             en: 'Power of solar system in kw peak'
