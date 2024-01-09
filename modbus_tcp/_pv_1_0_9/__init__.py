@@ -35,7 +35,17 @@ from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.payload import BinaryPayloadBuilder
 
-from pymodbus.client.tcp import ModbusTcpClient
+# pymodbus library from https://github.com/riptideio/pymodbus
+from pymodbus.version import version
+
+pymodbus_baseversion = int(version.short().split('.')[0])
+
+if pymodbus_baseversion > 2:
+    # for newer versions of pymodbus
+    from pymodbus.client.tcp import ModbusTcpClient
+else:
+    # for older versions of pymodbus
+    from pymodbus.client.sync import ModbusTcpClient
 
 AttrAddress = 'modBusAddress'
 AttrType = 'modBusDataType'
@@ -53,7 +63,7 @@ class modbus_tcp(SmartPlugin):
     devices.
     """
 
-    PLUGIN_VERSION = '1.0.10'
+    PLUGIN_VERSION = '1.0.9'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -162,18 +172,18 @@ class modbus_tcp(SmartPlugin):
             if self.has_iattr(item.conf, AttrWordOrder):
                 wordOrder = self.get_iattr_value(item.conf, AttrWordOrder)
             if byteOrder == 'Endian.Big':  # Von String in Endian-Konstante "umwandeln"
-                byteOrder = Endian.BIG
+                byteOrder = Endian.Big
             elif byteOrder == 'Endian.Little':
-                byteOrder = Endian.LITTLE
+                byteOrder = Endian.Little
             else:
-                byteOrder = Endian.BIG
+                byteOrder = Endian.Big
                 self.logger.warning("Invalid byte order -> default(Endian.Big) is used")
             if wordOrder == 'Endian.Big':  # Von String in Endian-Konstante "umwandeln"
-                wordOrder = Endian.BIG
+                wordOrder = Endian.Big
             elif wordOrder == 'Endian.Little':
-                wordOrder = Endian.LITTLE
+                wordOrder = Endian.Little
             else:
-                wordOrder = Endian.BIG
+                wordOrder = Endian.Big
                 self.logger.warning("Invalid byte order -> default(Endian.Big) is used")
 
             regPara = {'regAddr': regAddr, 'slaveUnit': slaveUnit, 'dataType': dataType, 'factor': factor,
@@ -449,13 +459,25 @@ class modbus_tcp(SmartPlugin):
 
         # self.logger.debug(f"read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}")
         if objectType == 'Coil':
-            result = self._Mclient.read_coils(address, registerCount, slave=slaveUnit)
+            if pymodbus_baseversion > 2:
+                result = self._Mclient.read_coils(address, registerCount, slave=slaveUnit)
+            else:
+                result = self._Mclient.read_coils(address, registerCount, unit=slaveUnit)
         elif objectType == 'DiscreteInput':
-            result = self._Mclient.read_discrete_inputs(address, registerCount, slave=slaveUnit)
+            if pymodbus_baseversion > 2:
+                result = self._Mclient.read_discrete_inputs(address, registerCount, slave=slaveUnit)
+            else:
+                result = self._Mclient.read_discrete_inputs(address, registerCount, unit=slaveUnit)
         elif objectType == 'InputRegister':
-            result = self._Mclient.read_input_registers(address, registerCount, slave=slaveUnit)
+            if pymodbus_baseversion > 2:
+                result = self._Mclient.read_input_registers(address, registerCount, slave=slaveUnit)
+            else:
+                result = self._Mclient.read_input_registers(address, registerCount, unit=slaveUnit)
         elif objectType == 'HoldingRegister':
-            result = self._Mclient.read_holding_registers(address, registerCount, slave=slaveUnit)
+            if pymodbus_baseversion > 2:
+                result = self._Mclient.read_holding_registers(address, registerCount, slave=slaveUnit)
+            else:
+                result = self._Mclient.read_holding_registers(address, registerCount, unit=slaveUnit)
         else:
             self.logger.error(f"{AttrObjectType} not supported: {objectType}")
             return None
