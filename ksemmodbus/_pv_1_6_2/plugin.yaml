@@ -1,0 +1,80 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zur Anbindung von einem Kostal Smart Energy Meter über Modbus an SmartHomeNG'
+        en: 'Plugin to connect your Kostal Smart Energy Meter via modbus with SmartHomeNG'
+    maintainer: Thomas Hengsberg (thengsty)
+    tester:
+    state: develop                  # change to ready when done with development
+    documentation:
+    support:
+
+    version: 1.6.2                  # Plugin version
+    sh_minversion: 1.6              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: unknown
+    classname: Ksemmodbus         # class containing the plugin
+
+parameters:
+    ksem_ip:
+        type: str
+        default: ''
+        description:
+            de: 'IP Adresse des Kostal Smart Energy Meter'
+            en: 'IP address of the Kostal Smart Energy Meter'
+    modbus_port:
+        type: str
+        default: ''
+        description:
+            de: 'Modbus Port'
+            en: 'Modbus port'
+    update_cycle:
+        type: num
+        default: 20
+        description:
+            de: 'Update Zyklus in Sekunden'
+            en: 'Update cycle in seconds'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    ksem_0:
+        type: num
+    ksem_2:
+        type: num
+    ksem_4:
+        type: num
+    ksem_6:
+        type: num
+    ksem_16:
+        type: num
+    ksem_18:
+        type: num
+    ksem_24:
+        type: num
+    ksem_512:
+        type: num
+    ksem_516:
+        type: num
+    ksem_520:
+        type: num
+    ksem_524:
+        type: num
+    ksem_544:
+        type: num
+    ksem_548:
+        type: num
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    #item_structs: NONE
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+    #plugin_functions: NONE
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+    #logic_parameters: NONE
