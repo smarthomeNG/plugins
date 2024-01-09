@@ -1,0 +1,274 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zur Anbindung von einem Kostal Wechselrichter über Modbus an SmartHomeNG'
+        en: 'Plugin to connect your Kostal inverter via modbus with SmartHomeNG'
+    maintainer: Thomas Hengsberg (thengsty)
+    tester:
+    state: develop                  # change to ready when done with development
+#    keywords: iot xyz
+    documentation:
+    support:
+
+    version: 1.6.2                  # Plugin version
+    sh_minversion: 1.6              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.6              # minimum Python version to use this plugin
+#    py_maxversion:                 # maximum Python version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: unknown
+    classname: Kostalmodbus         # class containing the plugin
+
+parameters:
+    inverter_ip:
+        type: str
+        default: ''
+        description:
+            de: 'IP Adresse des Wechselrichters'
+            en: 'IP address of the inverter'
+    modbus_port:
+        type: str
+        default: ''
+        description:
+            de: 'Modbus Port'
+            en: 'Modbus port'
+    update_cycle:
+        type: num
+        default: 20
+        description:
+            de: 'Update Zyklus in Sekunden'
+            en: 'Update cycle in seconds'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    
+    kostal_06:
+        type: str
+    kostal_14:
+        type: str
+    kostal_30:
+        type: num
+    kostal_32:
+        type: num
+    kostal_34:
+        type: num
+    kostal_36:
+        type: num
+    kostal_38:
+        type: str
+    kostal_46:
+        type: str
+    kostal_54:
+        type: num
+    kostal_56:
+        type: num
+    kostal_98:
+        type: num
+    kostal_100:
+        type: num
+    kostal_104:
+        type: num
+    kostal_106:
+        type: num
+    kostal_108:
+        type: num
+    kostal_110:
+        type: num
+    kostal_112:
+        type: num
+    kostal_114:
+        type: num
+    kostal_116:
+        type: num
+    kostal_118:
+        type: num
+    kostal_120:
+        type: num
+    kostal_122:
+        type: num
+    kostal_124:
+        type: num
+    kostal_144:
+        type: num
+    kostal_150:
+        type: num
+    kostal_152:
+        type: num
+    kostal_154:
+        type: num
+    kostal_156:
+        type: num
+    kostal_158:
+        type: num
+    kostal_160:
+        type: num
+    kostal_162:
+        type: num
+    kostal_164:
+        type: num
+    kostal_166:
+        type: num
+    kostal_168:
+        type: num
+    kostal_170:
+        type: num
+    kostal_172:
+        type: num
+    kostal_174:
+        type: num
+    kostal_178:
+        type: num
+    kostal_190:
+        type: num
+    kostal_194:
+        type: num
+    kostal_200:
+        type: num
+    kostal_202:
+        type: num
+    kostal_208:
+        type: num
+    kostal_210:
+        type: num
+    kostal_214:
+        type: num
+    kostal_216:
+        type: num
+    kostal_218:
+        type: num
+    kostal_220:
+        type: num
+    kostal_222:
+        type: num
+    kostal_224:
+        type: num
+    kostal_226:
+        type: num
+    kostal_228:
+        type: num
+    kostal_230:
+        type: num
+    kostal_232:
+        type: num
+    kostal_234:
+        type: num
+    kostal_236:
+        type: num
+    kostal_238:
+        type: num
+    kostal_240:
+        type: num
+    kostal_242:
+        type: num
+    kostal_244:
+        type: num
+    kostal_246:
+        type: num
+    kostal_248:
+        type: num
+    kostal_250:
+        type: num
+    kostal_252:
+        type: num
+    kostal_254:
+        type: num
+    kostal_256:
+        type: num
+    kostal_258:
+        type: num
+    kostal_260:
+        type: num
+    kostal_266:
+        type: num
+    kostal_268:
+        type: num
+    kostal_270:
+        type: num
+    kostal_276:
+        type: num
+    kostal_278:
+        type: num
+    kostal_280:
+        type: num
+    kostal_286:
+        type: num
+    kostal_320:
+        type: num
+    kostal_322:
+        type: num
+    kostal_324:
+        type: num
+    kostal_326:
+        type: num
+    kostal_384:
+        type: str
+    kostal_420:
+        type: str
+    kostal_428:
+        type: str
+    kostal_436:
+        type: str
+    kostal_446:
+        type: str
+    kostal_454:
+        type: str
+    kostal_512:
+        type: num
+    kostal_514:
+        type: num
+    kostal_515:
+        type: num
+    kostal_517:
+        type: str
+    kostal_525:
+        type: num
+    kostal_529:
+        type: num
+    kostal_531:
+        type: num
+    kostal_535:
+        type: str
+    kostal_559:
+        type: str
+    kostal_575:
+        type: num
+    kostal_577:
+        type: num
+    kostal_582:
+        type: num
+    kostal_586:
+        type: num
+    kostal_588:
+        type: num
+    kostal_768:
+        type: str
+    kostal_800:
+        type: str
+    kostal_1056:
+        type: num
+    kostal_1058:
+        type: num
+    kostal_1060:
+        type: num
+    kostal_1062:
+        type: num
+    kostal_1064:
+        type: num
+    kostal_1066:
+        type: num
+
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    #item_structs: NONE
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+    #plugin_functions: NONE
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+    #logic_parameters: NONE
+
