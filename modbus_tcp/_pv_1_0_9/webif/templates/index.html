@@ -1,0 +1,198 @@
+{% extends "base_plugin.html" %}
+{% block pluginscripts %}
+<script>
+    $(document).ready( function () {
+			$(window).trigger('datatables_defaults');
+			try
+				{
+					$(window).trigger('datatables_defaults');
+					$('#table_read').DataTable( {"searching": true, "lengthChange": false, "info": false, "paging": false} );
+                    $('#table_write').DataTable( {"searching": true, "lengthChange": false, "info": false, "paging": false} );
+				}
+			catch (e)
+				{
+					console.log("Datatable JS not loaded, showing standard table without reorder option " + e)
+				}
+    });
+</script>
+{% endblock pluginscripts %}
+{% set logo_frame = false %}
+{% set use_bodytabs = false %}
+{% set tabcount = 1 %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+
+		<tr>
+            <td class="py-1">
+                {% if p.connected %}
+                <img src="static/img/lamp_green.png" alt="{{ _('connectwd') }}" style="width: 17px;padding-bottom: 3px;"/>
+                {% else %}
+                <img src="static/img/lamp_red.png" alt="{{ _('not connected') }}" style="width: 17px;padding-bottom: 3px;"/>
+                {% endif %}
+                <strong>{{ _('Connected') }}</strong>
+            </td>
+			<td class="py-1"><strong>{{ _('Host : Port') }}</strong></td>
+			<td class="py-1">{{ p._host }} : {{ p._port }} </td>
+		</tr>
+        <tr>
+            <td class="py-1"><strong>{{ _('') }}</strong></td>
+			<td class="py-1"><strong>{{ _('global slave unit') }}</strong></td>
+			<td class="py-1">{{ p._slaveUnit }}</td>
+		</tr>
+        <tr>
+            <td class="py-1"><strong>{{ _('') }}</strong></td>
+			<td class="py-1"><strong>{{ _('pol_device / cycle-time [seconds]') }}</strong></td>
+			<td class="py-1">{{ p._cycle }}</td>
+		</tr>
+        <tr>
+            {% if 'last_dt' in p._pollStatus %}	
+            <td class="py-1"><strong>{{ _('') }}</strong></td>
+			<td class="py-1"><strong>{{ _('last_read (readed registers)') }}</strong></td>
+			<td class="py-1">{{ p._pollStatus.last_dt.strftime('%d.%m.%Y %H:%M:%S %Z') }} ({{ p._pollStatus.regCount }})</td>
+            {% endif %}
+		</tr>
+		
+	</tbody>
+</table>
+{% endblock %}
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+	<form action="" method="post">
+	<button id="btn1" class="btn btn-shng btn-sm" name="learn" type="submit" value="on"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;Mach was&nbsp;</button>
+	</form>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 1 %}
+{% endif %}
+
+{% set tab1title = "<strong>registers to read</strong> (" ~ p._regToRead|length ~ ")" %}
+{% block bodytab1 %}
+
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+    <div class="col-sm-12" style="margin-top: 10px;">
+		<table class="table table-striped table-hover pluginList display" id="table_read">
+            <thead>
+                <tr>
+                     <th> {{ _('ObjectType') }}</th>
+                     <th> {{ _('Address') }}</th>
+                    {% if p._slaveUnitRegisterDependend %}
+                    <th> {{ _('Unit') }}</th>
+                    {% endif %}
+                    <th> {{ _('Value') }}</th>
+                    <th> {{ _('Item') }}</th>
+                    <th> {{ _('DataType') }}</th>
+                    <th> {{ _('last_read') }}</th>
+                    <th> {{ _('prev_read') }}</th>
+                    <th> {{ _('prev_value') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+            
+            {% for item in p._regToRead %}
+                    <tr>
+                        <td class="py-1">{{ p._regToRead[item].objectType }}</td>
+                        <td class="py-1">{{ p._regToRead[item].regAddr }}</td>
+                        {% if p._slaveUnitRegisterDependend %}
+                        <td class="py-1">{{ p._regToRead[item].slaveUnit }}</td>
+                        {% endif %}
+                        <td class="py-1">{{ p._regToRead[item].value }}</td>
+                        <td class="py-1">{{ p._regToRead[item].item }}</td>
+                        <td class="py-1">{{ p._regToRead[item].dataType }}</td>
+                        
+                        {% if 'read_dt' in p._regToRead[item] %}	
+                        <td class="py-1">{{ p._regToRead[item].read_dt.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+                        {% else %}
+                        <td class="py-1"></td>
+                        {% endif %}
+                        {% if 'last_read_dt' in p._regToRead[item] %}	
+                        <td class="py-1">{{ p._regToRead[item].last_read_dt.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+                        {% else %}
+                        <td class="py-1"></td>
+                        {% endif %}
+                        <td class="py-1">{{ p._regToRead[item].last_value }}</td>
+
+                    </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% set tab2title = "<strong>registers to write</strong> (" ~ p._regToWrite|length ~ ")" %}
+{% block bodytab2 %}
+
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+    <div class="col-sm-12" style="margin-top: 10px;">
+		<table class="table table-striped table-hover pluginList display" id="table_write">
+            <thead>
+                <tr>
+                     <th> {{ _('ObjectType') }}</th>
+                     <th> {{ _('Address') }}</th>
+                    {% if p._slaveUnitRegisterDependend %}
+                    <th> {{ _('Unit') }}</th>
+                    {% endif %}
+                    <th> {{ _('Value') }}</th>
+                    <th> {{ _('Item') }}</th>
+                    <th> {{ _('DataType') }}</th>
+                    <th> {{ _('last_write') }}</th>
+                    <th> {{ _('prev_write') }}</th>
+                    <th> {{ _('prev_value') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+            
+            {% for item in p._regToWrite %}
+                    <tr>
+                        <td class="py-1">{{ p._regToWrite[item].objectType }}</td>
+                        <td class="py-1">{{ p._regToWrite[item].regAddr }}</td>
+                        {% if p._slaveUnitRegisterDependend %}
+                        <td class="py-1">{{ p._regToWrite[item].slaveUnit }}</td>
+                        {% endif %}
+                        {% if 'write_value' in p._regToWrite[item] %}
+                        <td class="py-1">{{ p._regToWrite[item].write_value }}</td>
+                        {% else %}
+                        <td class="py-1"></td>
+                        {% endif %}
+                        <td class="py-1">{{ p._regToWrite[item].item }}</td>
+                        <td class="py-1">{{ p._regToWrite[item].dataType }}</td>
+                        
+                        {% if 'write_dt' in p._regToWrite[item] %}	
+                        <td class="py-1">{{ p._regToWrite[item].write_dt.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+                        {% else %}
+                        <td class="py-1"></td>
+                        {% endif %}
+                        {% if 'last_write_dt' in p._regToWrite[item] %}	
+                        <td class="py-1">{{ p._regToWrite[item].last_write_dt.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+                        {% else %}
+                        <td class="py-1"></td>
+                        {% endif %}
+                        <td class="py-1">{{ p._regToWrite[item].last_write_value }}</td>
+
+                    </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+
+
+

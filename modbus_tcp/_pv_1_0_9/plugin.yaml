@@ -5,13 +5,13 @@ plugin:
     description:
         de: 'Plugin zur Geräte-Anbindung über ModBus an SmartHomeNG'
         en: 'Plugin to connect via modbus with SmartHomeNG'
-    maintainer: ivande, Cannon
+    maintainer: ivande
     tester: NONE                   # Who tests this plugin?
     state: ready
     keywords: modbus_tcp modbus smartmeter inverter heatpump
     #documentation: http://smarthomeng.de/user/plugins/modbus_tcp/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1154368-einbindung-von-modbus-tcp
-    version: 1.0.10                # Plugin version
+    version: 1.0.9                 # Plugin version
     sh_minversion: 1.8             # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6
