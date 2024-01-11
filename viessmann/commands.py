@@ -503,12 +503,12 @@ commands = {
             'Outdoor_Fanspeed':       {'read': True, 'write': False, 'opcode': '1a52', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}},     # getSpdFanOut -- Outdoor Fanspeed
             'Status_Fanspeed':        {'read': True, 'write': False, 'opcode': '1a53', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}},     # getSpdFan -- Geschwindigkeit Luefter
             'Kompressor_Freq':        {'read': True, 'write': False, 'opcode': '1a54', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}},     # getSpdKomp -- Compressor Frequency
-            'SollLeistungVerdichter': {'read': True, 'write': False, 'opcode': '5030', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}},     # getPwrSollVerdichter -- Diagnose - Anlagenuebersicht: Soll-Leistung Verdichter 1 (0..100)
+            'SollLeistung_Verdichter': {'read': True, 'write': False, 'opcode': '5030', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}},     # getPwrSollVerdichter -- Diagnose - Anlagenuebersicht: Soll-Leistung Verdichter 1 (0..100)
         },
         'Pumpen': {
-            'Sekundaer':              {'read': True, 'write': False, 'opcode': '0484', 'reply_pattern': '*', 'item_type': 'bool', 'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}, 'lookup': 'returnstatus'},     # getStatusSekP -- Diagnose - Anlagenuebersicht: Sekundaerpumpe 1 (0..1)
-            'Heizkreis':              {'read': True, 'write': False, 'opcode': '048d', 'reply_pattern': '*', 'item_type': 'bool', 'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}, 'lookup': 'returnstatus'},     # getStatusPumpe -- Information - Heizkreis HK1: Heizkreispumpe (0..1)
-            'Zirkulation':            {'read': True, 'write': False, 'opcode': '0490', 'reply_pattern': '*', 'item_type': 'bool', 'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}, 'lookup': 'returnstatus'},     # getStatusPumpeZirk -- Information - Warmwasser: Zirkulationspumpe (0..1)
+            'Sekundaer':              {'read': True, 'write': False, 'opcode': '0484', 'reply_pattern': '*', 'item_type': 'bool', 'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}},     # getStatusSekP -- Diagnose - Anlagenuebersicht: Sekundaerpumpe 1 (0..1)
+            'Heizkreis':              {'read': True, 'write': False, 'opcode': '048d', 'reply_pattern': '*', 'item_type': 'bool', 'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}},     # getStatusPumpe -- Information - Heizkreis HK1: Heizkreispumpe (0..1)
+            'Zirkulation':            {'read': True, 'write': False, 'opcode': '0490', 'reply_pattern': '*', 'item_type': 'bool', 'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}},     # getStatusPumpeZirk -- Information - Warmwasser: Zirkulationspumpe (0..1)
         },
         'Heizkreis': {
             'Temperatur': {
@@ -518,12 +518,12 @@ commands = {
                     'Soll_Party':     {'read': True, 'write': False, 'opcode': '2022', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 10, 'signed': True, 'len': 2}},     # getTempRaumSollParty -- Bedienung HK1 - Heizkreis 1: Party Solltemperatur (10..30)
                 },
                 'Vorlauf': {
-                    'Ist':            {'read': True, 'write': False, 'opcode': '0105', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 10, 'signed': True, 'len': 2}},     # getTempSekVL -- Information - Heizkreis HK1: Vorlauftemperatur Sekundaer 1 (0..95)
+                    'Ist':            {'read': True, 'write': False, 'opcode': '0105', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 10, 'signed': True, 'len': 2}, 'item_attrs': {'cycle': 45}},     # getTempSekVL -- Information - Heizkreis HK1: Vorlauftemperatur Sekundaer 1 (0..95)
                     'Soll':           {'read': True, 'write': False, 'opcode': '1800', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 10, 'signed': True, 'len': 2}},     # getTempVLSoll -- Diagnose - Heizkreis HK1: Vorlaufsolltemperatur HK1 (0..95)
                     'Mittel':         {'read': True, 'write': False, 'opcode': '16b2', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 10, 'signed': True, 'len': 2}},     # getTempSekVLMittel -- Statistik - Energiebilanz: mittlere sek. Vorlauftemperatur (0..95)
                 },
                 'Ruecklauf': {
-                    'Ist':            {'read': True, 'write': False, 'opcode': '0106', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 10, 'signed': True, 'len': 2}},     # getTempSekRL -- Diagnose - Anlagenuebersicht: Ruecklauftemperatur Sekundaer 1 (0..95)
+                    'Ist':            {'read': True, 'write': False, 'opcode': '0106', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 10, 'signed': True, 'len': 2}, 'item_attrs': {'cycle': 45}},     # getTempSekRL -- Diagnose - Anlagenuebersicht: Ruecklauftemperatur Sekundaer 1 (0..95)
                     'Mittel':         {'read': True, 'write': False, 'opcode': '16b3', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 10, 'signed': True, 'len': 2}},     # getTempSekRLMittel -- Statistik - Energiebilanz: mittlere sek.Temperatur RL1 (0..95)
                 },
             },
@@ -533,24 +533,24 @@ commands = {
             },
         },
         'Warmwasser': {
-            'Ist':                    {'read': True, 'write': False, 'opcode': '010d', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 10, 'signed': True, 'len': 2}},     # getTempWWIstOben -- Information - Warmwasser: Warmwassertemperatur oben (0..95)
+            'Ist':                    {'read': True, 'write': False, 'opcode': '010d', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 10, 'signed': True, 'len': 2}, 'item_attrs': {'cycle': 45}},     # getTempWWIstOben -- Information - Warmwasser: Warmwassertemperatur oben (0..95)
             'Soll':                   {'read': True, 'write': True,  'opcode': '6000', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 10, 'signed': True, 'len': 2}, 'cmd_settings': {'force_min': 10, 'force_max': 60}},     # getTempWWSoll -- Bedienung WW - Betriebsdaten WW: Warmwassersolltemperatur (10..60 (95))
-            'Ventil':                 {'read': True, 'write': False, 'opcode': '0494', 'reply_pattern': '*', 'item_type': 'bool', 'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}, 'lookup': 'returnstatus'},     # getStatusVentilWW -- Diagnose - Waermepumpe: 3-W-Ventil Heizen WW1 (0 (Heizen)..1 (WW))
+            'Ventil':                 {'read': True, 'write': False, 'opcode': '0494', 'reply_pattern': '*', 'item_type': 'bool', 'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 1}},     # getStatusVentilWW -- Diagnose - Waermepumpe: 3-W-Ventil Heizen WW1 (0 (Heizen)..1 (WW))
         },
-        'Statistik': {
+        'Statistik': {'item_attrs': {'cycle': 600},
             # Statistiken / Laufzeiten
             'Einschaltungen': {
                 'Sekundaer':          {'read': True, 'write': False, 'opcode': '0504', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 4}},     # getAnzQuelleSek -- Statistik - Schaltzyklen Anlage: Einschaltungen Sekundaerquelle (?)
                 'Heizstab1':          {'read': True, 'write': False, 'opcode': '0508', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 4}},     # getAnzHeizstabSt1 -- Statistik - Schaltzyklen Anlage: Einschaltungen Heizstab Stufe 1 (?)
                 'Heizstab2':          {'read': True, 'write': False, 'opcode': '0509', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 4}},     # getAnzHeizstabSt2 -- Statistik - Schaltzyklen Anlage: Einschaltungen Heizstab Stufe 2 (?)
-                'HK':                 {'read': True, 'write': False, 'opcode': '050d', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 4}},     # getAnzHK -- Statistik - Schaltzyklen Anlage: Einschaltungen Heizkreis (?)
+                'Heizkreis':                 {'read': True, 'write': False, 'opcode': '050d', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 4}},     # getAnzHK -- Statistik - Schaltzyklen Anlage: Einschaltungen Heizkreis (?)
             },
             'Laufzeiten': {
-                'Sekundaerpumpe':     {'read': True, 'write': False, 'opcode': '0584', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 3600, 'len': 4}},     # getLZPumpeSek -- Statistik - Betriebsstunden Anlage: Betriebsstunden Sekundaerpumpe (?)
+                'Sekundaer':     {'read': True, 'write': False, 'opcode': '0584', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 3600, 'len': 4}},     # getLZPumpeSek -- Statistik - Betriebsstunden Anlage: Betriebsstunden Sekundaerpumpe (?)
                 'Heizstab1':          {'read': True, 'write': False, 'opcode': '0588', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 3600, 'len': 4}},     # getLZHeizstabSt1 -- Statistik - Betriebsstunden Anlage: Betriebsstunden Heizstab Stufe 1 (?)
                 'Heizstab2':          {'read': True, 'write': False, 'opcode': '0589', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 3600, 'len': 4}},     # getLZHeizstabSt2 -- Statistik - Betriebsstunden Anlage: Betriebsstunden Heizstab Stufe 2 (?)
-                'PumpeHK':            {'read': True, 'write': False, 'opcode': '058d', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 3600, 'len': 4}},     # getLZPumpe -- Statistik - Betriebsstunden Anlage: Betriebsstunden Pumpe HK1 (0..1150000)
-                'WWVentil':           {'read': True, 'write': False, 'opcode': '0594', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 3600, 'len': 4}},     # getLZVentilWW -- Statistik - Betriebsstunden Anlage: Betriebsstunden Warmwasserventil (?)
+                'Heizkreis':            {'read': True, 'write': False, 'opcode': '058d', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 3600, 'len': 4}},     # getLZPumpe -- Statistik - Betriebsstunden Anlage: Betriebsstunden Pumpe HK1 (0..1150000)
+                'Ventil':           {'read': True, 'write': False, 'opcode': '0594', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'mult': 3600, 'len': 4}},     # getLZVentilWW -- Statistik - Betriebsstunden Anlage: Betriebsstunden Warmwasserventil (?)
                 'VerdichterStufe1':   {'read': True, 'write': False, 'opcode': '1620', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 4}},     # getLZVerdSt1 -- Statistik - Betriebsstunden Anlage: Betriebsstunden Verdichter auf Stufe 1 (?)
                 'VerdichterStufe2':   {'read': True, 'write': False, 'opcode': '1622', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 4}},     # getLZVerdSt2 -- Statistik - Betriebsstunden Anlage: Betriebsstunden Verdichter auf Stufe 2 (?)
                 'VerdichterStufe3':   {'read': True, 'write': False, 'opcode': '1624', 'reply_pattern': '*', 'item_type': 'num',  'dev_datatype': 'V', 'params': {'value': 'VAL', 'len': 4}},     # getLZVerdSt3 -- Statistik - Betriebsstunden Anlage: Betriebsstunden Verdichter auf Stufe 3 (?)
