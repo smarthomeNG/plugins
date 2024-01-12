@@ -45,8 +45,8 @@
 			<td class="py-1"><strong>Gerätemodell</strong></td>
 			<td class="py-1">{{ p.modelId }} ({{ p.deviceType }})</td>
 			<td class="py-1" width="50px"></td>
-			<td class="py-1"><strong>-</strong></td>
-			<td class="py-1">-</td>
+			<td class="py-1"><strong>Onlinestatus</strong></td>
+			<td class="py-1">{% if p.onlineStatus %}{{ _('Online') }}{% else %}{{ _('Offline') }}{% endif %}</td>
 		</tr>
 	</tbody>
 </table>

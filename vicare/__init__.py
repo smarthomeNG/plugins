@@ -68,6 +68,7 @@ class Vicare(SmartPlugin):
         self.deviceType = 'unknown'
         self.modelId = 'unknown'
         self.authRequestUrl = ''
+        self.onlineStatue = False
         self._rx_items = []                                  # list of rx items that are updated by this plugin
         self._tx_items = []                                  # list of tx items that can trigger control actions, e.g. setting temperature.
         self.verbose = False
@@ -528,7 +529,7 @@ class Vicare(SmartPlugin):
             self.logger.debug(f"pollFeatures request successfull")
         else:
             self.logger.warning(f"pollFeatures request was unsuccessfull. Status code: {response.status_code}")
-            self.logger.warning(f"pollFeatures Debug response: {response.text}")
+            self.logger.warning(f"pollFeatures Debug response: {response}, response.text: {response.text}")
             return
     
         if response.json() is not None:
@@ -544,76 +545,76 @@ class Vicare(SmartPlugin):
 
     def decodeFeatures(self, featureList, log_features = False):
         nr_features = len(featureList)
-        onlineStatus = nr_features > 0
-        if nr_features == 0:
-            self.logger.debug(f"decodeFeatures, feature list is empty. Aborting")
-            return
-
-        for i in range(0,nr_features):
-            #self.logger.debug(f"Extracting feature {i+1}")
-            properties = None
-            featureItem = featureList[i]
-            isEnabled = False
-            if 'isEnabled' in featureItem:
-                isEnabled = featureItem['isEnabled']
-                if isEnabled and log_features:
-                    self.logger.info(f"Feature: {i+1} isEnabled: {isEnabled}")
-            if 'uri' in featureItem:
-                uri = featureItem['uri']
-                if isEnabled and log_features:
-                    self.logger.info(f"uri: {uri}")
-            if 'feature' in featureItem:
-                feature = featureItem['feature']
-                if isEnabled and log_features:
-                    self.logger.info(f"feature: {feature}")                    
-            if 'isReady' in featureItem:
-                isReady = featureItem['isReady']
-                if isEnabled and log_features:
-                    self.logger.info(f"isReady: {isReady}")
-            if 'commands' in featureItem:
-                commands = featureItem['commands']
-                if not commands == {}:
+        self.onlineStatus = nr_features > 0
+        
+        if nr_features >= 0:
+            for i in range(0,nr_features):
+                #self.logger.debug(f"Extracting feature {i+1}")
+                properties = None
+                featureItem = featureList[i]
+                isEnabled = False
+                if 'isEnabled' in featureItem:
+                    isEnabled = featureItem['isEnabled']
                     if isEnabled and log_features:
-                        self.logger.info(f"Available commands: {commands}")
-            if 'properties' in featureItem:
-                properties = featureItem['properties']
-                if not properties == {}:
+                        self.logger.info(f"Feature: {i+1} isEnabled: {isEnabled}")
+                if 'uri' in featureItem:
+                    uri = featureItem['uri']
                     if isEnabled and log_features:
-                        self.logger.info(f"Available properties: {properties}")
+                        self.logger.info(f"uri: {uri}")
+                if 'feature' in featureItem:
+                    feature = featureItem['feature']
+                    if isEnabled and log_features:
+                        self.logger.info(f"feature: {feature}")                    
+                if 'isReady' in featureItem:
+                    isReady = featureItem['isReady']
+                    if isEnabled and log_features:
+                        self.logger.info(f"isReady: {isReady}")
+                if 'commands' in featureItem:
+                    commands = featureItem['commands']
+                    if not commands == {}:
+                        if isEnabled and log_features:
+                            self.logger.info(f"Available commands: {commands}")
+                if 'properties' in featureItem:
+                    properties = featureItem['properties']
+                    if not properties == {}:
+                        if isEnabled and log_features:
+                            self.logger.info(f"Available properties: {properties}")
 
-            #Copy feature data in viessmann items:
-            for item in self._rx_items:
-                if (item.conf['vicare_rx_key'] == feature):
-                    self.logger.debug(f"Vicare Item found for feature: {feature}. Updating")
-                    if isEnabled and isReady and self.has_iattr(item.conf, 'vicare_path') and properties:
-                        path = item.conf['vicare_path']
-                        length_path = len(path)
-                        #self.logger.debug(f"Item vicare path with {length_path} entries: {path}")
+                #Copy feature data in viessmann items:
+                for item in self._rx_items:
+                    if (item.conf['vicare_rx_key'] == feature):
+                        self.logger.debug(f"Vicare Item found for feature: {feature}. Updating")
+                        if isEnabled and isReady and self.has_iattr(item.conf, 'vicare_path') and properties:
+                            path = item.conf['vicare_path']
+                            length_path = len(path)
+                            #self.logger.debug(f"Item vicare path with {length_path} entries: {path}")
 
-                        try:
-                            value = properties[path[0]]
-                        except Exception as e:
-                            self.logger.error(f"Exception occured in path for item {item}: {e}")
-                        else:
-                            for k in range(1,length_path):
-                                try:
-                                    value = value[path[k]]
-                                except Exception as e:
-                                    self.logger.error(f"Exception occured in path loop for item {item}: {e}")
-                                    value = None
+                            try:
+                                value = properties[path[0]]
+                            except Exception as e:
+                                self.logger.error(f"Exception occured in path for item {item}: {e}")
+                            else:
+                                for k in range(1,length_path):
+                                    try:
+                                        value = value[path[k]]
+                                    except Exception as e:
+                                        self.logger.error(f"Exception occured in path loop for item {item}: {e}")
+                                        value = None
                                 
-                                #self.logger.debug(f"Debug k={k}, value: {value}")
-                            item(value, self.get_shortname())
-                    elif not self.has_iattr(item.conf, 'vicare_path'):
-                        self.logger.warning(f"Rx Item {item} is missing the attribute vicare_path.")
-                    else:
-                        self.logger.warning(f"Vicare Item found for feature: {feature} but not marked as usable (enabled:{isEnabled}, ready:{isReady}, properties:{properties}, vicare_path:{self.has_iattr(item.conf, 'vicare_path')})")
+                                    #self.logger.debug(f"Debug k={k}, value: {value}")
+                                item(value, self.get_shortname())
+                        elif not self.has_iattr(item.conf, 'vicare_path'):
+                            self.logger.warning(f"Rx Item {item} is missing the attribute vicare_path.")
+                        else:
+                            self.logger.warning(f"Vicare Item found for feature: {feature} but not marked as usable (enabled:{isEnabled}, ready:{isReady}, properties:{properties}, vicare_path:{self.has_iattr(item.conf, 'vicare_path')})")
+        else:
+            self.logger.debug(f"decodeFeatures, feature list is empty.")
 
         # Copy global data in viessmann items:
         for item in self._rx_items:
             rx_key = item.conf['vicare_rx_key']
             if rx_key == 'onlineStatus':
-                item(onlineStatus, self.get_shortname())
+                item(self.onlineStatus, self.get_shortname())
                 break
 
   
