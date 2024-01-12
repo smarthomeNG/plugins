@@ -184,7 +184,20 @@
 			<tr>
 				<td></td>
 				<td id="{{ item }}_orphan_path">{{ item }}</td>
-			    <td id="{{ item }}_orphan_time">{% if language == 'en' %}{{ p.db_lastchange(item).strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ p.db_lastchange(item).strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
+			    <td id="{{ item }}_orphan_time">
+				{% if language == 'en' %}
+					{% if p.db_lastchange(item) is none %}
+						{{ _('Wert invalide') }}
+					{% else %}
+						{{ p.db_lastchange(item).strftime('%m/%d/%Y %H:%M:%S') }}
+					{% endif %}
+				{% else %}
+					{% if p.db_lastchange(item) is none %}
+						{{ _('Wert invalide') }}
+					{% else %}
+						{{ p.db_lastchange(item).strftime('%d.%m.%Y %H:%M:%S') }}
+					{% endif %}
+				{% endif %}</td>
 				<td id="{{ item }}_orphan_type">{{ _(p.db_itemtype(item)) }}</td>
 				<td id="{{ item }}_orphan_id">{{ p.id(item, create=False) }}</td>
 				{%  if p.count_logentries %}

@@ -491,7 +491,6 @@ class Database(SmartPlugin):
         This is a public function of the plugin
 
         :param item: Item to get the ID for
-        :param cur: A database cursor object if available (optional)
 
         :return: id of the item within the database
         :rtype: int | None
@@ -512,6 +511,8 @@ class Database(SmartPlugin):
 
         id = int(row[COL_ITEM_ID])
         last_change = row[COL_ITEM_TIME]
+        if last_change is None:
+            return None
         return self._datetime(last_change)
 
 

@@ -97,7 +97,7 @@ item_attributes:
     # Definition of item attributes defined by this plugin
     database:
         type: str
-        valid_list_ci: ['', 'yes', 'init', 'true']
+        valid_list_ci: ['', 'no', 'yes', 'init', 'init2', 'true']
         duplicate_use: True
         description:
             de: "Wenn auf 'yes' oder 'true' gesetzt, werden die Werte des Items in die Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert des Items aus der Datenbank gelesen."
