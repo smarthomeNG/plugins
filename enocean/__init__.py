@@ -37,7 +37,7 @@ from .protocol.constants import PACKET, PACKET_TYPE, COMMON_COMMAND, SMART_ACK, 
 
 class EnOcean(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.0"
+    PLUGIN_VERSION = "1.4.1"
 
     
     def __init__(self, sh):
