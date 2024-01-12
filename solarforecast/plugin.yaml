@@ -12,7 +12,7 @@ plugin:
 #    documentation:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1842817-support-thread-f%C3%BCr-das-solarforecast-plugin
 
-    version: 1.9.3                  # Plugin version
+    version: 1.9.4                  # Plugin version
     sh_minversion: 1.8.0            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True            # plugin supports multi instance

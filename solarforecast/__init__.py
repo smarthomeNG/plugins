@@ -32,7 +32,7 @@ import datetime
 
 
 class Solarforecast(SmartPlugin):
-    PLUGIN_VERSION = '1.9.3'
+    PLUGIN_VERSION = '1.9.4'
 
     def __init__(self, sh):
         """
@@ -124,6 +124,9 @@ class Solarforecast(SmartPlugin):
                 headers={'content-type': 'application/json'}, timeout=10, verify=False)
         
 #            self.logger.debug(f"Session request response: {sessionrequest_response.text}")
+        except requests.exceptions.Timeout as e:
+            self.logger.warning(f"Timeout exception during get command: {str(e)}")
+            return 
         except Exception as e:
             self.logger.error(f"Exception during get command: {str(e)}")
             return
