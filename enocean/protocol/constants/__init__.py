@@ -4,30 +4,30 @@
 from enum import IntEnum
 
 ################################
-### --- Packet Sync Byte --- ###
+### --- Packet Generic --- ###
 ################################
-PACKET_SYNC_BYTE              = 0x55   # PACKET SYNC BYTE
-
-SENT_RADIO_PACKET              = 0xFF
-SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
+class PACKET(IntEnum):
+    PACKET_SYNC_BYTE               = 0x55   # PACKET SYNC BYTE
+    SENT_RADIO_PACKET              = 0xFF
+    SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
 
 
 # EnOcean_Equipment_Profiles_EEP_V2.61_public.pdf / 8
 class RORG(IntEnum):
-    UNDEFINED = 0x00
-    RPS = 0xF6
-    BS1 = 0xD5
-    BS4 = 0xA5
-    VLD = 0xD2
-    MSC = 0xD1
-    ADT = 0xA6
-    SM_LRN_REQ = 0xC6
-    SM_LRN_ANS = 0xC7
-    SM_REC = 0xA7
-    SYS_EX = 0xC5
-    SEC = 0x30
-    SEC_ENCAPS = 0x31
-    UTE = 0xD4
+    UNDEFINED   = 0x00
+    RPS         = 0xF6
+    BS1         = 0xD5
+    BS4         = 0xA5
+    VLD         = 0xD2
+    MSC         = 0xD1
+    ADT         = 0xA6
+    SM_LRN_REQ  = 0xC6
+    SM_LRN_ANS  = 0xC7
+    SM_REC      = 0xA7
+    SYS_EX      = 0xC5
+    SEC         = 0x30
+    SEC_ENCAPS  = 0x31
+    UTE         = 0xD4
 
 
 
@@ -146,6 +146,6 @@ class SMART_ACK(IntEnum):
 
 # Results for message parsing
 class PARSE_RESULT(IntEnum):
-    OK = 0x00
-    INCOMPLETE = 0x01
-    CRC_MISMATCH = 0x03
+    OK              = 0x00
+    INCOMPLETE      = 0x01
+    CRC_MISMATCH    = 0x03
