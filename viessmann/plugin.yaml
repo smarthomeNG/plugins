@@ -35,6 +35,11 @@ parameters:
         -   KW
         description: Kommunikationsprotokoll der Heizung
 
+    cycle:
+        type: num
+        default: 30
+        description: Intervall für regelmäßiges Lesen
+
     suspend_item:
         type: str
         default: ''
@@ -76,12 +81,19 @@ item_attributes:
             de: Weist das Item der angegebenen Gruppe zum gesammelten Lesen zu. Gruppe kann int oder str sein, mehrere Gruppen können als Liste angegeben werden.
             en: Assigns the item to the given group for collective reading. Groups can be int or str, multiple groups can be provided as a list.
 
+    viess_read_cyclic:
+        type: bool
+
+        description:
+            de: Konfiguriert regelmäßiges Lesen mit dem plugin-weiten Intervall
+            en: Configures cyclic reading using the plugin-wide interval
+
     viess_read_cycle:
         type: num
 
         description:
-            de: Konfiguriert ein Intervall in Sekunden für regelmäßiges Lesen
-            en: Configures a interval in seconds for cyclic read actions
+            de: Konfiguriert ein individuelles Intervall in Sekunden für regelmäßiges Lesen
+            en: Configures an individual interval in seconds for cyclic read actions
 
     viess_read_initial:
         type: bool
@@ -3672,7 +3684,6 @@ item_structs:
                 type: bool
                 enforce_updates: true
                 viess_read_group_trigger@instance: Allgemein
-                viess_read_cycle@instance: 45
 
             temperatur:
 
@@ -3855,7 +3866,7 @@ item_structs:
                         -   Heizkreis
                         -   Heizkreis.Temperatur
                         -   Heizkreis.Temperatur.Vorlauf
-                        viess_read_cycle@instance: 45
+                        viess_read_cyclic@instance: true
 
                     soll:
                         type: num
@@ -3896,7 +3907,7 @@ item_structs:
                         -   Heizkreis
                         -   Heizkreis.Temperatur
                         -   Heizkreis.Temperatur.Ruecklauf
-                        viess_read_cycle@instance: 45
+                        viess_read_cyclic@instance: true
 
                     mittel:
                         type: num
@@ -3951,7 +3962,7 @@ item_structs:
                 viess_read_group@instance:
                 -   V200WO1C
                 -   Warmwasser
-                viess_read_cycle@instance: 45
+                viess_read_cyclic@instance: true
 
             soll:
                 type: num

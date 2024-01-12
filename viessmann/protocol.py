@@ -291,14 +291,16 @@ class SDPProtocolViessmann(SDPProtocol):
                         self._error_count += 1
                         if self._error_count >= 5:
                             self.logger.warning('encountered 5 invalid chunks in sequence, maybe communication was lost, forcing re-initialize')
-                            self._initialized = False
+                            self._close()
+                            sleep(2)
+                            self._open()
                     else:
                         response_packet.extend(chunk)
                         self._error_count = 0
                         return self._parse_response(response_packet)
                 else:
                     self.logger.error(f'received 0 bytes chunk - ignoring response_packet, chunk was {chunk}')
-            elif self._protocol == 'KW':
+            elif self._viess_proto == 'KW':
                 self.logger.debug(f'received {len(chunk)} bytes chunk of response as hexstring {self._bytes2hexstring(chunk)} and as bytes {chunk}')
                 if len(chunk) != 0:
                     response_packet.extend(chunk)
