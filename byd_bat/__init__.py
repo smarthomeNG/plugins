@@ -71,6 +71,8 @@
 #               - Logdaten werden speziell fuer Visualisierung aufbereitet 'visu/...'
 #               - Diverse Anpassungen in der Code-Struktur
 #
+# V0.1.0 240113 - Release
+#
 # -----------------------------------------------------------------------
 #
 # Als Basis fuer die Implementierung wurde u.a. folgende Quelle verwendet:
@@ -520,7 +522,7 @@ class byd_bat(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '0.0.8'
+    PLUGIN_VERSION = '0.1.0'
     ALLOW_MULTIINSTANCE = False
     
     def __init__(self,sh):
