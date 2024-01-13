@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
 
-def calc_crc8(msg, crc = 0):
-    for i in msg:
-        crc = CRC.CRC_TABLE[crc ^ i]
-    return crc
-
 class CRC():
 
-    calc_crc8 = staticmethod(calc_crc8)
+    @staticmethod
+    def calc_crc8(msg, crc = 0):
+        for i in msg:
+            crc = CRC.CRC_TABLE[crc ^ i]
+        return crc
 
     CRC_TABLE = (
     0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15,
