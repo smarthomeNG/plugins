@@ -33,7 +33,7 @@ from lib.model.smartplugin import *
 from .webif import WebInterface
 # get CRC class
 from .protocol.crc8 import CRC
-from .protocol.constants import PACKET, PACKET_TYPE, COMMON_COMMAND, SMART_ACK, EVENT
+from .protocol.constants import PACKET, PACKET_TYPE, COMMON_COMMAND, SMART_ACK, EVENT, RETURN_CODE, RORG
 
 class EnOcean(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
@@ -229,14 +229,13 @@ class EnOcean(SmartPlugin):
         logger_debug = self.logger.isEnabledFor(logging.DEBUG)
         if logger_debug:
             self.logger.debug("Call function << _process_packet_type_response >>")
-        RETURN_CODES = ['OK', 'ERROR', 'NOT SUPPORTED', 'WRONG PARAM', 'OPERATION DENIED']
         if (self._last_cmd_code == PACKET.SENT_RADIO_PACKET) and (len(data) == 1):
             if logger_debug:
-                self.logger.debug(f"Sending command returned code = {RETURN_CODES[data[0]]}")
+                self.logger.debug(f"Sending command returned code = {RETURN_CODE(data[0])}")
         elif (self._last_packet_type == PACKET_TYPE.COMMON_COMMAND) and (self._last_cmd_code == COMMON_COMMAND.CO_WR_RESET) and (len(data) == 1):
-            self.logger.info(f"Reset returned code = {RETURN_CODES[data[0]]}")
+            self.logger.info(f"Reset returned code = {RETURN_CODE(data[0])}")
         elif (self._last_packet_type == PACKET_TYPE.COMMON_COMMAND) and (self._last_cmd_code == COMMON_COMMAND.CO_WR_LEARNMODE) and (len(data) == 1):
-            self.logger.info(f"Write LearnMode returned code = {RETURN_CODES[data[0]]}")
+            self.logger.info(f"Write LearnMode returned code = {RETURN_CODE(data[0])}")
         elif (self._last_packet_type == PACKET_TYPE.COMMON_COMMAND) and (self._last_cmd_code == COMMON_COMMAND.CO_RD_VERSION):
             if (data[0] == 0) and (len(data) == 33):
                 self.logger.info("Chip ID = 0x{} / Chip Version = 0x{}".format(''.join(['%02x' % b for b in data[9:13]]), ''.join(['%02x' % b for b in data[13:17]])))
@@ -244,7 +243,7 @@ class EnOcean(SmartPlugin):
             elif (data[0] == 0) and (len(data) == 0):
                 self.logger.error("Reading version: No answer")
             else:
-                self.logger.error(f"Reading version returned code = {RETURN_CODES[data[0]]}, length = {len(data)}")
+                self.logger.error(f"Reading version returned code = {RETURN_CODE(data[0])}, length = {len(data)}")
         elif (self._last_packet_type == PACKET_TYPE.COMMON_COMMAND) and (self._last_cmd_code == COMMON_COMMAND.CO_RD_IDBASE):
             if (data[0] == 0) and (len(data) == 5):
                 self.logger.info("Base ID = 0x{}".format(''.join(['%02x' % b for b in data[1:5]])))
@@ -256,7 +255,7 @@ class EnOcean(SmartPlugin):
             elif (data[0] == 0) and (len(data) == 0):
                 self.logger.error("Reading Base ID: No answer")
             else:
-                self.logger.error(f"Reading Base ID returned code = {RETURN_CODES[data[0]]} and {len(data)} bytes")
+                self.logger.error(f"Reading Base ID returned code = {RETURN_CODE(data[0])} and {len(data)} bytes")
         elif (self._last_packet_type == PACKET_TYPE.COMMON_COMMAND) and (self._last_cmd_code == COMMON_COMMAND.CO_WR_BIST):
             if (data[0] == 0) and (len(data) == 2):
                 if (data[1] == 0):
@@ -266,7 +265,7 @@ class EnOcean(SmartPlugin):
             elif (data[0] == 0) and (len(data) == 0):
                 self.logger.error("Doing built in self test: No answer")
             else:
-                self.logger.error(f"Doing built in self test returned code = {RETURN_CODES[data[0]]}")
+                self.logger.error(f"Doing built in self test returned code = {RETURN_CODE(data[0])}")
         elif (self._last_packet_type == PACKET_TYPE.COMMON_COMMAND) and (self._last_cmd_code == COMMON_COMMAND.CO_RD_LEARNMODE):
             if (data[0] == 0) and (len(data) == 2):
                 self.logger.info("Reading LearnMode = 0x{}".format(''.join(['%02x' % b for b in data[1]])))
@@ -284,14 +283,14 @@ class EnOcean(SmartPlugin):
             else:
                 self.logger.error("Reading NUMSECUREDEVICES: Unknown error")
         elif (self._last_packet_type == PACKET_TYPE.SMART_ACK_COMMAND) and (self._last_cmd_code == SMART_ACK.SA_WR_LEARNMODE):
-            self.logger.info(f"Setting SmartAck mode returned code = {RETURN_CODES[data[0]]}")
+            self.logger.info(f"Setting SmartAck mode returned code = {RETURN_CODE(data[0])}")
         elif (self._last_packet_type == PACKET_TYPE.SMART_ACK_COMMAND) and (self._last_cmd_code == SMART_ACK.SA_RD_LEARNEDCLIENTS):
             if (data[0] == 0):
                 self.logger.info(f"Number of smart acknowledge mailboxes = {int((len(data)-1)/9)}")
             else:
-                self.logger.error(f"Requesting SmartAck mailboxes returned code = {RETURN_CODES[data[0]]}")
+                self.logger.error(f"Requesting SmartAck mailboxes returned code = {RETURN_CODE(data[0])}")
         else:
-            self.logger.error("Processing unexpected response with return code = {} / data = [{}] / optional = [{}]".format(RETURN_CODES[data[0]], ', '.join(['0x%02x' % b for b in data]), ', '.join(['0x%02x' % b for b in optional])))
+            self.logger.error("Processing unexpected response with return code = {} / data = [{}] / optional = [{}]".format(RETURN_CODE(data[0]), ', '.join(['0x%02x' % b for b in data]), ', '.join(['0x%02x' % b for b in optional])))
         self._response_lock.acquire()
         self._response_lock.notify()
         self._response_lock.release()
@@ -670,7 +669,7 @@ class EnOcean(SmartPlugin):
     def send_learn_protocol(self, id_offset=0, device=10):
         self.logger.debug("enocean: call function << send_learn_protocol >>")
         # define RORG
-        rorg = 0xA5
+        rorg = RORG.BS4
         
         # check offset range between 0 and 127
         if (id_offset < 0) or (id_offset > 127):

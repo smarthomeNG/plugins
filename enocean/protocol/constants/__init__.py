@@ -37,7 +37,7 @@ class RORG(IntEnum):
 class PACKET_TYPE(IntEnum):
     RESERVED           = 0x00
     RADIO              = 0x01   # RADIO ERP1
-    RADIO_ERP1         = 0x01   # RADIO ERP1
+    RADIO_ERP1         = 0x01   # RADIO ERP1 => Kept for backwards compatibility reasons, for example custom packet. Generation shouldn't be affected...
     RESPONSE           = 0x02   # RESPONSE
     RADIO_SUB_TEL      = 0x03   # RADIO_SUB_TEL
     EVENT              = 0x04   # EVENT
@@ -142,6 +142,15 @@ class SMART_ACK(IntEnum):
     SA_RD_LEARNEDCLIENTS   = 0x06          # Get Smart Ack learned sensors / mailboxes
     SA_WR_RECLAIMS         = 0x07          # Set number of reclaim attempts
     SA_WR_POSTMASTER       = 0x08          # Activate/Deactivate Post master functionality
+
+
+# EnOceanSerialProtocol3.pdf / 18
+class RETURN_CODE(IntEnum):
+    OK                  = 0x00
+    ERROR               = 0x01
+    NOT_SUPPORTED       = 0x02
+    WRONG_PARAM         = 0x03
+    OPERATION_DENIED    = 0x04
 
 
 # Results for message parsing
