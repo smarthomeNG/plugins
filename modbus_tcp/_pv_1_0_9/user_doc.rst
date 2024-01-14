@@ -164,8 +164,6 @@ siehe auch example.yaml
 
 Changelog
 ---------
-V1.0.10	Mindestversion für pymodbus ist nun 3.5.2
-
 V1.0.9  
 
 V1.0.8  Neuere Pymodbus Versionen können nun verwendet werden.
