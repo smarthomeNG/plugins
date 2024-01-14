@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2023       Matthias Manhart             smarthome@beathis.ch
+#  Copyright 2024       Matthias Manhart             smarthome@beathis.ch
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -73,6 +73,9 @@
 #
 # V0.1.0 240113 - Release
 #
+# V0.1.1 240114 - Neue Items 'info/last_state','info/last_diag','info/last_log'
+#               - Dummy-Plot-Dateien werden in 'imgpath' nicht mehr erstellt
+#
 # -----------------------------------------------------------------------
 #
 # Als Basis fuer die Implementierung wurde u.a. folgende Quelle verwendet:
@@ -109,7 +112,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from decimal import Decimal,ROUND_DOWN
 
-import random    # only for internal test [TEST]
+#import random    # only for internal test [TEST]
 
 byd_ip_default = "192.168.16.254"
 
@@ -607,6 +610,44 @@ class byd_bat(SmartPlugin):
         self.byd_module_vmax = byd_module_vmax
         self.byd_module_vava = byd_module_vava
         self.byd_module_vdif = byd_module_vdif
+
+        # State
+        self.byd_current = 0
+        self.byd_power = 0
+        self.byd_power_charge = 0
+        self.byd_power_discharge = 0
+        self.byd_soc = 0
+        self.byd_soh = 0
+        self.byd_temp_bat = 0
+        self.byd_temp_max = 0
+        self.byd_temp_min = 0
+        self.byd_volt_bat = 0
+        self.byd_volt_diff = 0
+        self.byd_volt_max = 0
+        self.byd_volt_min = 0
+        self.byd_volt_out = 0
+        self.byd_charge_total = 0
+        self.byd_discharge_total = 0
+        self.byd_eta = 0
+        
+        # System
+        self.byd_bms = ""
+        self.byd_bmu = ""
+        self.byd_bmu_a = ""
+        self.byd_bmu_b = ""
+        self.byd_batt_str = ""
+        self.byd_error_nr = 0
+        self.byd_error_str = ""
+        self.byd_application = ""
+        self.byd_inv_str = ""
+        self.byd_modules = 0
+        self.byd_bms_qty = 0
+        self.byd_capacity_total = 0
+        self.byd_param_t = ""
+        self.byd_serial = ""
+        
+        self.last_homedata = self.now_str()
+        self.last_diagdata = self.now_str()
         
         self.byd_diag_soc = []
         self.byd_diag_soh = []
@@ -673,9 +714,6 @@ class byd_bat(SmartPlugin):
             a.append(0)
           self.byd_temp_cell.append(a)
           
-        self.last_homedata = self.now_str()
-        self.last_diagdata = self.now_str()
-        
         self.plt_file_del()
         
         # Log-Verzeichnis erstellen
@@ -908,7 +946,7 @@ class byd_bat(SmartPlugin):
                 self.byd_root.info.connection(False)
                 client.close()
                 return
-              self.decode_nop(data,x)
+              self.decode_nop(data,x,MESSAGE_9_L)  # Laenge von MESSAGE_9 ist nicht bekannt - daher kein Abbruch hier
               time.sleep(2)
   
               # 10.Befehl senden (wie Befehl 3)
@@ -996,6 +1034,8 @@ class byd_bat(SmartPlugin):
               self.byd_root.info.connection(False)
               client.close()
               return
+            else:
+              self.byd_root.info.last_log(self.now_str())
                   
         client.close()
 
@@ -2310,6 +2350,7 @@ class byd_bat(SmartPlugin):
         device.system.serial(self.byd_serial)
         
         self.last_homedata = self.now_str()  # Speichert Zeitpunkt als String
+        device.info.last_state(self.last_homedata)
 
         return
         
@@ -2325,6 +2366,7 @@ class byd_bat(SmartPlugin):
           self.diagdata_save_one(device.diagnosis.tower3,3)
     
         self.last_diagdata = self.now_str()  # Speichert Zeitpunkt als String
+        device.info.last_diag(self.last_diagdata)
         
         return
 
@@ -2703,45 +2745,46 @@ class byd_bat(SmartPlugin):
 
         return
         
-    def plt_file_del_single(self,fn):
+    def plt_file_del_single(self,fn,dummy):
         # Loescht eine vorhandene Datei 'fn' und erstellt eine leere Datei.
         if os.path.exists(fn) == True:
           os.remove(fn)
-        self.create_dummy_png(fn)
+        if dummy == True:
+          self.create_dummy_png(fn)
         return
         
     def plt_file_del(self):
         # Loescht alle Plot-Dateien
         
         # Spannungs-Plots
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(1) + byd_fname_ext)
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(2) + byd_fname_ext)
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(3) + byd_fname_ext)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(1) + byd_fname_ext,True)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(2) + byd_fname_ext,True)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(3) + byd_fname_ext,True)
 
         if len(self.bpath) != byd_path_empty:
-          self.plt_file_del_single(self.bpath + byd_fname_volt + str(1) + byd_fname_ext)
-          self.plt_file_del_single(self.bpath + byd_fname_volt + str(2) + byd_fname_ext)
-          self.plt_file_del_single(self.bpath + byd_fname_volt + str(3) + byd_fname_ext)
+          self.plt_file_del_single(self.bpath + byd_fname_volt + str(1) + byd_fname_ext,False)
+          self.plt_file_del_single(self.bpath + byd_fname_volt + str(2) + byd_fname_ext,False)
+          self.plt_file_del_single(self.bpath + byd_fname_volt + str(3) + byd_fname_ext,False)
     
         # Spannungs-Plots
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt2 + str(1) + byd_fname_ext)
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt2 + str(2) + byd_fname_ext)
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt2 + str(3) + byd_fname_ext)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt2 + str(1) + byd_fname_ext,True)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt2 + str(2) + byd_fname_ext,True)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt2 + str(3) + byd_fname_ext,True)
 
         if len(self.bpath) != byd_path_empty:
-          self.plt_file_del_single(self.bpath + byd_fname_volt2 + str(1) + byd_fname_ext)
-          self.plt_file_del_single(self.bpath + byd_fname_volt2 + str(2) + byd_fname_ext)
-          self.plt_file_del_single(self.bpath + byd_fname_volt2 + str(3) + byd_fname_ext)
+          self.plt_file_del_single(self.bpath + byd_fname_volt2 + str(1) + byd_fname_ext,False)
+          self.plt_file_del_single(self.bpath + byd_fname_volt2 + str(2) + byd_fname_ext,False)
+          self.plt_file_del_single(self.bpath + byd_fname_volt2 + str(3) + byd_fname_ext,False)
     
         # Temperatur-Plots
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(1) + byd_fname_ext)
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(2) + byd_fname_ext)
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(3) + byd_fname_ext)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(1) + byd_fname_ext,True)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(2) + byd_fname_ext,True)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(3) + byd_fname_ext,True)
 
         if len(self.bpath) != byd_path_empty:
-          self.plt_file_del_single(self.bpath + byd_fname_temp + str(1) + byd_fname_ext)
-          self.plt_file_del_single(self.bpath + byd_fname_temp + str(2) + byd_fname_ext)
-          self.plt_file_del_single(self.bpath + byd_fname_temp + str(3) + byd_fname_ext)
+          self.plt_file_del_single(self.bpath + byd_fname_temp + str(1) + byd_fname_ext,False)
+          self.plt_file_del_single(self.bpath + byd_fname_temp + str(2) + byd_fname_ext,False)
+          self.plt_file_del_single(self.bpath + byd_fname_temp + str(3) + byd_fname_ext,False)
     
         return
 
