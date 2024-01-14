@@ -4,23 +4,22 @@
 #  Copyright 2018-      Martin Sinn                         m.sinn@gmx.de
 #  Copyright 2012-2013  KNX-User-Forum e.V.     http://knx-user-forum.de/
 #########################################################################
-#  This file is part of SmartHomeNG.
-#  https://www.smarthomeNG.de
-#  https://knx-user-forum.de/forum/supportforen/smarthome-py
+#  This file is part of SmartHomeNG.py.
+#  Visit:  https://github.com/smarthomeNG/
+#          https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  SmartHomeNG is free software: you can redistribute it and/or modify
+#  SmartHomeNG.py is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHomeNG is distributed in the hope that it will be useful,
+#  SmartHomeNG.py is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
-#
+#  along with SmartHomeNG.py. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import logging
@@ -37,7 +36,7 @@ class eBus(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.5.1'
 
     _items = []
 
@@ -58,9 +57,6 @@ class eBus(SmartPlugin):
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
         """
-
-        # Call init code of parent class (SmartPlugin)
-        super().__init__()
 
         logger = logging.getLogger(__name__)   # remove for shNG v1.6
         self.host = self.get_parameter_value('host')
@@ -99,7 +95,7 @@ class eBus(SmartPlugin):
         """
         self.logger.debug("Run method called".format(self.get_fullname()))
         self.alive = True
-        self.scheduler_add(self.get_fullname(), self.refresh, prio=5, cycle=self._cycle, offset=2)
+        self.scheduler_add('eBusd', self.refresh, prio=5, cycle=self._cycle, offset=2)
 
 
     def refresh(self):
@@ -117,7 +113,7 @@ class eBus(SmartPlugin):
             value = self.request(request)
             #if reading fails (i.e. at broadcast-commands) the value will not be updated
             if 'command not found' not in str(value) and value is not None:
-                item(value, self.get_fullname(), 'refresh')
+                item(value, 'eBus', 'refresh')
             if not self.alive:
                 break
 
@@ -130,13 +126,8 @@ class eBus(SmartPlugin):
         :type request: str
         """
         if not self.connected:
-            self.logger.info("eBusd not connected, try to connect")
-            self.connect()
-
-        if not self.connected:
-            self.logger.info("eBusd not connected, giving up")
+            self.logger.info("eBusd not connected")
             return
-
         self._lock.acquire()
         try:
             self._sock.send(request.encode())
@@ -174,7 +165,7 @@ class eBus(SmartPlugin):
         except Exception as e:
             self._connection_attempts -= 1
             if self._connection_attempts <= 0:
-                self.logger.error('eBus: could not connect to ebusd at {0}:{1}: {2}'.format(self.host, self.port, e))
+                self.logger.error('eBus:	could not connect to ebusd at {0}:{1}: {2}'.format(self.host, self.port, e))
                 self._connection_attempts = self._connection_errorlog
             self._lock.release()
             return
@@ -207,7 +198,6 @@ class eBus(SmartPlugin):
         """
         self.logger.debug("Stop method called".format(self.get_fullname()))
         self.close()
-        self.scheduler_remove(self.get_fullname())
         self.alive = False
 
 
@@ -219,7 +209,7 @@ class eBus(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        if caller != self.get_fullname():
+        if caller != 'eBus':
             value = str(int(item()))
             cmd = item.conf['ebus_cmd']
             request = "write -c " + cmd + " " + value + "\n"
