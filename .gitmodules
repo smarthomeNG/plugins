@@ -1,0 +1,3 @@
+[submodule "roombapysh/roombapy"]
+	path = roombapysh/roombapy
+	url = https://github.com/Pacifica15/roombapy.git
