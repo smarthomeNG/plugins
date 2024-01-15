@@ -75,6 +75,11 @@
 #
 # V0.1.1 240114 - Neue Items 'info/last_state','info/last_diag','info/last_log'
 #               - Dummy-Plot-Dateien werden in 'imgpath' nicht mehr erstellt
+#               - Fehler korrigiert (self.decode_nop(data,x,MESSAGE_9_L))
+#
+# V0.1.2 2401xx - Balkendiagramm Balancing Farbe geaendert auf gruen
+#               - Plot Spannung im Titel Details zu den Daten ergaenzt
+#               - Balkendiagramm Legende mit Farbcodes ergaenzt
 #
 # -----------------------------------------------------------------------
 #
@@ -105,6 +110,7 @@ import time
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from matplotlib.lines import Line2D
 import numpy as np
 import os
 import json
@@ -222,22 +228,22 @@ EVT_MSG_1   = "010305A8004104D6"                   # request log-data
 EVT_MSG_1_L  = 135
 
 byd_errors = [
-  "High Temperature Charging (Cells)",
-  "Low Temperature Charging (Cells)",
-  "Over Current Discharging",
-  "Over Current Charging",
-  "Main circuit Failure",
-  "Short Current Alarm",
-  "Cells Imbalance",
-  "Current Sensor Failure",
-  "Battery Over Voltage",
-  "Battery Under Voltage",
-  "Cell Over Voltage",
-  "Cell Under Voltage",
-  "Voltage Sensor Failure",
-  "Temperature Sensor Failure",
-  "High Temperature Discharging (Cells)",
-  "Low Temperature Discharging (Cells)"
+  "High Temperature Charging (Cells)",             #  0
+  "Low Temperature Charging (Cells)",              #  1
+  "Over Current Discharging",                      #  2
+  "Over Current Charging",                         #  3
+  "Main circuit Failure",                          #  4
+  "Short Current Alarm",                           #  5
+  "Cells Imbalance",                               #  6
+  "Current Sensor Failure",                        #  7
+  "Battery Over Voltage",                          #  8
+  "Battery Under Voltage",                         #  9
+  "Cell Over Voltage",                             # 10
+  "Cell Under Voltage",                            # 11
+  "Voltage Sensor Failure",                        # 12
+  "Temperature Sensor Failure",                    # 13
+  "High Temperature Discharging (Cells)",          # 14
+  "Low Temperature Discharging (Cells)"            # 15
 ]
 
 # Liste der Wechselrichter (entnommen aus Be_Connect)
@@ -2553,6 +2559,9 @@ class byd_bat(SmartPlugin):
         # Modulnamen fuer X-Achse
         for jj in range(0,self.byd_modules):
           nn.append("M"+str(jj+1))
+        # Daten fuer Titel zusammensetzen
+        delta = (ymax - ymin) * 1000.0 
+        title_data = " (SOC=" + f"{self.byd_diag_soc[x]:.1f}" + "% min=" + f"{ymin:.3f}" + "V max=" + f"{ymax:.3f}" + "V delta=" + f"{delta:.0f}" + "mV)"
           
         # Berechne bestimmte Parameter fuer die optimale Darstellung
         width = 1.0 / (self.byd_volt_n + 1)
@@ -2581,7 +2590,7 @@ class byd_bat(SmartPlugin):
             elif ii == ymaxl[jj]:
               b[jj].set_color('#c505ff')       # 'violett'
           if balance_n > 0:
-            plt.bar(xx+x1,ba[ii],width,color='#0000ff',zorder=4)  # 'blau'
+            plt.bar(xx+x1,ba[ii],width,color='#1cfc03',zorder=4)  # 'giftgruen'
           x1 = x1 + ddd
           
         plt.ylim(y0,y1)
@@ -2595,7 +2604,19 @@ class byd_bat(SmartPlugin):
         ax.spines['top'].set_color('white')
         ax.spines['right'].set_color('white')
         ax.spines['left'].set_color('white')
-        ax.set_title("Turm " + str(x) + " - Spannungen [V]" + " (" + self.now_str() + ")",size=10,color='white')
+        ax.set_title("Turm " + str(x) + " - Spannungen [V]" + " (" + self.now_str() + ")" + title_data,size=10,color='white')
+        if balance_n > 0:
+          n_col = 3
+          custom_lines = [Line2D([0], [0],color='#05b4ff',lw=4),
+                          Line2D([0], [0],color='#c505ff',lw=4),
+                          Line2D([0], [0],color='#1cfc03',lw=4)]
+          legend_text = ['Min','Max','Balancing']
+        else:
+          n_col = 2
+          custom_lines = [Line2D([0], [0],color='#05b4ff',lw=4),
+                          Line2D([0], [0],color='#c505ff',lw=4)]
+          legend_text = ['Min','Max']
+        ax.legend(custom_lines,legend_text,fancybox=True,framealpha=0.0,labelcolor='white',fontsize=9,ncol=n_col)
         
         fig.tight_layout()
         if len(self.bpath) != byd_path_empty:
@@ -2668,7 +2689,7 @@ class byd_bat(SmartPlugin):
               ax.add_patch(patches.Rectangle((-0.5+j,-0.5+i),1,1,edgecolor='red',fill=False,lw=2))
             k = k + 1
 
-        ax.set_title("Turm " + str(x) + " - Spannungen [V]" + " (" + self.now_str() + ")",size=10,color='white')
+        ax.set_title("Turm " + str(x) + " - Spannungen [V]" + " (" + self.now_str() + ")" + title_data,size=10,color='white')
         
         fig.tight_layout()
         if len(self.bpath) != byd_path_empty:
