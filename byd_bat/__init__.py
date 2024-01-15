@@ -73,11 +73,10 @@
 #
 # V0.1.0 240113 - Release
 #
-# V0.1.1 240114 - Neue Items 'info/last_state','info/last_diag','info/last_log'
+# V0.1.1 240115 - Neue Items 'info/last_state','info/last_diag','info/last_log'
 #               - Dummy-Plot-Dateien werden in 'imgpath' nicht mehr erstellt
 #               - Fehler korrigiert (self.decode_nop(data,x,MESSAGE_9_L))
-#
-# V0.1.2 2401xx - Balkendiagramm Balancing Farbe geaendert auf gruen
+#               - Balkendiagramm Balancing Farbe geaendert auf gruen
 #               - Plot Spannung im Titel Details zu den Daten ergaenzt
 #               - Balkendiagramm Legende mit Farbcodes ergaenzt
 #
