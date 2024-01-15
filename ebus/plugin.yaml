@@ -3,17 +3,17 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: >
-            Unterstützt eBus Heizungen (z.B. Vailant, Wolf, Kromschroeder)
+        de: 'Unterstützt eBus Heizungen (z.B. Vailant, Wolf, Kromschroeder)
             Dieses Plugin verbindet sich zu einem ebusd Deamon (https://ebusd.de/), 
             welcher mit einer eBus Heizung kommuniziert.
             Voraussetzungen: Ein ebusd Deamon läuft auf dem Netzwerk.
             Anmerkung: Der ebusd benötigt ein ebus-Interface um mit ihm zu kommunizieren.
-        en: >
-            Supports eBus heating systems (e.g. Vailant, Wolf, Kromschroeder)
+            '
+        en: 'Supports eBus heating systems (e.g. Vailant, Wolf, Kromschroeder)
             The plugin connects to a ebusd damon (https://ebusd.de/) 
             which is communicating with eBus heatings. 
             Requirements: running ebusd deamon on the network (note: ebusd also requires an ebus-interface)
+            '
     maintainer: '? (msinn)'
     tester: android, z1marco
     state: ready
