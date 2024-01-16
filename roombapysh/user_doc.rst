@@ -61,13 +61,10 @@ Installation
 Konfiguration
 =============
 
-Die Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
-unter :doc:`/plugins_doc/config/sample` beschrieben.
+Die Plugin Parameter, die Informationen zur Item-spezifischen Konfiguration des Plugins und zur Logik-spezifischen
+Konfiguration sind unter :doc:`/plugins_doc/config/roombapysh` beschrieben.
 
-plugin.yaml
------------
-
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Dort findet sich auch die Dokumentation zu Funktionen, die das Plugin evtl. bereit stellt.
 
 
 items.yaml
@@ -226,20 +223,6 @@ Die Datei liegt auch im Plugin-Verzeichnis (Harry.yaml).
                type: str
                roombapysh: 'lastCommand_initiator'
 
-
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
-
-logic.yaml
-----------
-
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
-
-Funktionen
-----------
-
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 
 Beispiele
