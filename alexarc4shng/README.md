@@ -14,9 +14,9 @@ The plugin gives the possibilty to control an Alexa-Echo-Device remote by smartH
 In the API-URL and in the json-payload you have to replace the real values from the Alexa-Webinterface with the following placeholders. For testing functions its not really neccessary to use the placeholders.
 
 This plugin for smarthomeNG is mainly based on the informations of
-[Lötzimmer](https://blog.loetzimmer.de/2017/10/amazon-alexa-hort-auf-die-shell-echo.html) ,[Apollon77](https://github.com/Apollon77/alexa-remote) and the  [openhab2](https://community.openhab.org/t/released-openhab2-amazon-echo-control-binding-controlling-alexa-from-openhab2/37844)
+Lötzimmer (https://blog.loetzimmer.de/2017/10/amazon-alexa-hort-auf-die-shell-echo.html) ,Apollon77 (https://github.com/Apollon77/alexa-remote) and the  openhab2 (https://community.openhab.org/t/released-openhab2-amazon-echo-control-binding-controlling-alexa-from-openhab2/37844)
 
-Special thanks to Jonofe from the [Edomi-Forum](https://knx-user-forum.de/forum/projektforen/edomi/1240964-alexa-smarthome-skill-payload-version-3) who spent a nigth and half an evenning to support me with SSML.
+Special thanks to Jonofe from the Edomi-Forum (https://knx-user-forum.de/forum/projektforen/edomi/1240964-alexa-smarthome-skill-payload-version-3) who spent a nigth and half an evenning to support me with SSML.
 #### !! So many thanks for the very good research and development in the past !!
 
 ## table of content
@@ -400,7 +400,7 @@ By click on one device the device will be selected as acutal device for tests.
 
 ## Command-Handling
 
-The Web-Interface gives help to define new Command-Lets. How you get the informations for new Commands see [section New Commands](#newCommand)
+The Web-Interface gives help to define new Command-Lets. How you get the informations for new Commands see section New Commands
 
 Here you can define new Command-Lets, test them, save and delete them.
 You can check the JSON-Structure of you payload.
