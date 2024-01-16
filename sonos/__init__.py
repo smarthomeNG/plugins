@@ -184,7 +184,7 @@ def renew_error_callback(exception):  # events_twisted: failure
     # Redundant, as the exception will be logged by the events module
     self.logger.error(msg)
 
-    # ToDo possible improvement: Do not do periodic renew but do prober disposal on renew failure here instead. sub.renew(requested_timeout=10)
+    # ToDo possible improvement: Do not do periodic renew but do propper disposal on renew failure here instead. sub.renew(requested_timeout=10)
 
 
 class SubscriptionHandler(object):
@@ -266,31 +266,34 @@ class SubscriptionHandler(object):
                 # try to unsubscribe first
                 try:
                     self._event.unsubscribe()
+                    self.logger.info(f"Event {self._endpoint} unsubscribed")
                 except Exception as e:
                     self.logger.warning(f"Exception in unsubscribe(): {e}")
-                self._signal.set()
-                if self._thread:
-                    self.logger.dbglow("Preparing to terminate thread")
-                    if debug:
-                        self.logger.dbghigh(f"unsubscribe(): Preparing to terminate thread for endpoint {self._endpoint}")
-                    self._thread.join(timeout=4)
-                    if debug:
-                        self.logger.dbghigh(f"unsubscribe(): Thread joined for endpoint {self._endpoint}")
-
-                    if not self._thread.is_alive(): 
-                        self.logger.dbglow("Thread killed for enpoint {self._endpoint}")
-                        if debug:
-                            self.logger.dbghigh(f"Thread killed for endpoint {self._endpoint}")
-
-                    else:
-                        self.logger.warning("unsubscibe(): Error, thread is still alive after termination (join timed-out)")
-                    self._thread = None
-                self.logger.info(f"Event {self._endpoint} unsubscribed and thread terminated")
-                if debug:
-                    self.logger.dbghigh(f"unsubscribe(): Event {self._endpoint} unsubscribed and thread terminated")
             else:
                 if debug: 
-                    self.logger.warning(f"unsubscribe(): {self._endpoint}: self._event not valid")
+                    self.logger.warning(f"unsubscribe(): Endpoint: {self._endpoint}, Thread: {self._threadName}, self._event not valid")
+            
+            self._signal.set()
+            if self._thread:
+                self.logger.dbglow("Preparing to terminate thread")
+                if debug:
+                    self.logger.dbghigh(f"unsubscribe(): Preparing to terminate thread for endpoint {self._endpoint}")
+                self._thread.join(timeout=4)
+                if debug:
+                    self.logger.dbghigh(f"unsubscribe(): Thread joined for endpoint {self._endpoint}")
+
+                if not self._thread.is_alive(): 
+                    self.logger.dbglow("Thread killed for enpoint {self._endpoint}")
+                    if debug:
+                        self.logger.dbghigh(f"Thread killed for endpoint {self._endpoint}")
+                else:
+                    self.logger.warning("unsubscibe(): Error, thread is still alive after termination (join timed-out)")
+                self._thread = None
+                self.logger.info(f"Event {self._endpoint} thread terminated")
+
+                if debug:
+                    self.logger.dbghigh(f"unsubscribe(): Event {self._endpoint} unsubscribed and thread terminated")
+            
         if debug:
             self.logger.dbghigh(f"unsubscribe(): {self._endpoint}: lock released")
 
@@ -704,7 +707,7 @@ class Speaker(object):
 
         self.logger.dbghigh(f"_av_transport_event: {self.uid}: av transport event handler active.")
         while not sub_handler.signal.wait(1):
-            self.logger.dbgmed(f"_av_transport_event: {self.uid}: start try")
+#            self.logger.dbglow(f"_av_transport_event: {self.uid}: start try")
 
             try:
                 event = sub_handler.event.events.get(timeout=0.5)
@@ -857,7 +860,7 @@ class Speaker(object):
 
     def _check_property(self):
         if not self.is_initialized:
-            self.logger.warning(f"Speaker '{self.uid}' is not initialized.")
+            self.logger.warning(f"Checkproperty: Speaker '{self.uid}' is not initialized.")
             return False
         if not self.coordinator:
             self.logger.warning(f"Speaker '{self.uid}': coordinator is empty")
@@ -2674,7 +2677,7 @@ class Speaker(object):
             if not tag.duration:
                 self.logger.error("TinyTag duration is none.")
             else:
-                duration = round(tag.duration) + duration_offset
+                duration = tag.duration + duration_offset
                 self.logger.debug(f"TTS track duration: {duration}s, TTS track duration offset: {duration_offset}s")
                 file_name = quote(os.path.split(file_path)[1])
                 snippet_url = f"{webservice_url}/{file_name}"
@@ -2994,7 +2997,7 @@ class Sonos(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = "1.8.4"
+    PLUGIN_VERSION = "1.8.5"
 
     def __init__(self, sh):
         """Initializes the plugin."""
