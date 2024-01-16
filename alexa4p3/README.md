@@ -4,7 +4,7 @@ Alexa4PayloadV3
 
 ## Table of Content
 
-1. Generell]
+1. Generell
 2. Change Log
 3. Requrirements<br>
    Einrichtung Amazon-Skill / Lambda-Funktion<sup><span style="color:red"> **Neu**</sup></span>
@@ -21,9 +21,9 @@ Alexa4PayloadV3
 14. Alexa-ContactSensor
 15. Alexa-ColorController
 16. Alexa-RangeController <sup><span style="color:red"> **Neu**</sup></span>
-17. Alexa-ColorTemperaturController](#ColorTemperaturController) <sup><span style="color:red"> **Neu**</sup></span>
-18. Alexa-PlaybackController](#PlaybackController) <sup><span style="color:red"> **Neu**</sup></span>
-19. Web-Interface](#webinterface) <sup><span style="color:red"> **Neu**</sup></span>
+17. Alexa-ColorTemperaturController <sup><span style="color:red"> **Neu**</sup></span>
+18. Alexa-PlaybackController <sup><span style="color:red"> **Neu**</sup></span>
+19. Web-Interface <sup><span style="color:red"> **Neu**</sup></span>
 
 
 
@@ -1030,7 +1030,7 @@ Default-Wert ist : RGB
 Die Helligkeit wird bei Farbwechsel unverändert beibehalten. Bei HSB-Werten wird der ursprüngliche Wert gepuffert und als aktueller Wert wieder an das Item übergeben.
 
 Zum Wechseln der Helligkeit einen BrightnessController hinzufügen
-Details siehe [BrightnessController](#BrightnessController)
+Details siehe BrightnessController
 Beispiel Konfiguration (wobei R_Wert, G_Wert, B_Wert für die Gruppenadressen stehen :
 <pre><code>
 %YAML 1.1
