@@ -2,16 +2,16 @@
 
 ## Table of Content
 
-1. Generell
-2. Credits
-3. Change Log<sup><span style="color:red"> **Neu**</sup></span>
-4. Konfiguration<sup><span style="color:blue"> **Update**</sup></span>
-5. Web-Interface
-6. Logik-Trigger
-7. öffentlich Funktionen (API)
-8. Gartenkarte "pimpen"
-9. Nutzung der Original Bosch-Mäher-Symbole
-10. Die Bosch-Api 4.0.1 - behind the scenes
+1. [Generell](#generell)
+2. [Credits](#credits)
+3. [Change Log](#changelog)<sup><span style="color:red"> **Neu**</sup></span>
+4. [Konfiguration](#konfiguration)<sup><span style="color:blue"> **Update**</sup></span>
+5. [Web-Interface](#webinterface)
+6. [Logik-Trigger](#logiktrigger)
+7. [öffentlich Funktionen (API)](#api)
+8. [Gartenkarte "pimpen"](#gardenmap)
+9. [Nutzung der Original Bosch-Mäher-Symbole](#boschpics)
+10. [Die Bosch-Api 4.0.1 - behind the scenes](#boschapi)
 
 ## Generell<a name="generell"/></a>
 
@@ -194,7 +194,7 @@ Es können auf dieser Seite zusätzlich Vektoren eingefügt werden welche die Ga
 Hier kann die Location auf den Bosch-Servern gespeichert werden.
 Es müssen Längen/Breitengrad angegeben werden. Wenn noch keine Koordinaten in den Items gespeichert sind werden
 die Long/Lat von shNG vorgeschlagen.
-Sieh auch hier: gardenmap
+[Sieh auch hier](#gardenmap) 
 
 
 Es können hier bis zu 4 Trigger für Stati gewählt werden. 999999 - kein Status gewählt.
@@ -317,7 +317,7 @@ sh.Indego4shNG.send_command('{"state":"returnToDock"}','Logic')
 Die Gartenkarte wird vom Bosch-Server heruntergeladen und als Item für die Visu verwendet.
 Die Datei wird als Vorlage zum Erweitern unter dem angegebenen Pfad gespeichert ( vgl. ```img_pfad``` im Konfig-Teil).
 
-Man kann die Karte als Vorlage in einem Online-Tool (#https://editor.method.ac/) als Vorlage laden.
+Man kann die Karte als Vorlage in einem [Online-Tool](#https://editor.method.ac/) als Vorlage laden.
 Es werden dann einfach die zusätzlichen Vektoren eingezeichnet oder via "File / Import Image" hinzugeladen.
 
 Man kann die veränderte Karte auch lokal zwischenspeichern.
