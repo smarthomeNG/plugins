@@ -12,13 +12,13 @@ aufgebaut.
 
 ## table of content
 
-1. [Change Log](#changelog)
-2. [Aktivierung des Zugriffs für 3rd party-Apps](#activate)
-3. [Einstellungen in der plugin.yaml](#plugin_yaml)
-4. [Ermittln der Device-ID´s](#device_id)
-5. [Items definieren](#create_items)
-6. [Darstellung in der VISU](#visu)
-7. [known issues](#issues)
+1. Change Log
+2. Aktivierung des Zugriffs für 3rd party-Apps
+3. Einstellungen in der plugin.yaml
+4. Ermittln der Device-ID´s
+5. Items definieren
+6. Darstellung in der VISU
+7. known issues
 
 ## ChangeLog<a name="changelog"/>
 
