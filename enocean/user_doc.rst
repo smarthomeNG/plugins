@@ -395,8 +395,8 @@ Beispiele für eine Item.yaml mit verschiedenen Enocean Sensoren und Aktoren:
             short_800ms_directly_to_knx:
                 type: bool
                 enocean_rx_key: AI
-                enocean_rocker_action: **toggle**
-                enocean_rocker_sequence: released **within** 0.8
+                enocean_rocker_action: '**toggle**'
+                enocean_rocker_sequence: 'released **within** 0.8'
                 knx_dpt: 1
                 knx_send: 3/0/60
 
@@ -404,7 +404,7 @@ Beispiele für eine Item.yaml mit verschiedenen Enocean Sensoren und Aktoren:
                 type: bool
                 enocean_rx_key: AI
                 enocean_rocker_action: toggle
-                enocean_rocker_sequence: released **after** 0.8
+                enocean_rocker_sequence: 'released **after** 0.8'
                 knx_dpt: 1
                 knx_send: 3/0/61
 
@@ -412,8 +412,8 @@ Beispiele für eine Item.yaml mit verschiedenen Enocean Sensoren und Aktoren:
                 type: bool
                 enforce_updates: true
                 enocean_rx_key: AI
-                enocean_rocker_action: **set**
-                enocean_rocker_sequence: **released within 0.4, pressed within 0.4**
+                enocean_rocker_action: '**set**'
+                enocean_rocker_sequence: '**released within 0.4, pressed within 0.4**'
                 knx_dpt: 1
                 knx_send: 3/0/62
 
