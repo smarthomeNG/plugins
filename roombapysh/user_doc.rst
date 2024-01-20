@@ -1,9 +1,9 @@
 .. index:: Plugins; roombapysh
 .. index:: roombapysh
 
-======
+======================
 Roomba für SmartHomeNG
-======
+======================
 
 Dieses Plugin ermöglicht die Einbindung von iRobot Roomba Staubsaugrobotern.
 Das Plugin basiert auf https://github.com/pschmitt/roombapy (ein Fork von https://github.com/NickWaterton/Roomba980-Python) für die Kommunikation.
@@ -53,20 +53,18 @@ Installation
 
     Vor der Inbetriebnahme des Plugins bitte paho-mqtt und orjson installieren.
 
-.. code-block::
+.. code-block:: bash
+
     pip3 install paho-mqtt
     pip3 install orjson
 
 Konfiguration
 =============
 
-Die Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
-unter :doc:`/plugins_doc/config/sample` beschrieben.
+Die Plugin Parameter, die Informationen zur Item-spezifischen Konfiguration des Plugins und zur Logik-spezifischen
+Konfiguration sind unter :doc:`/plugins_doc/config/roombapysh` beschrieben.
 
-plugin.yaml
------------
-
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Dort findet sich auch die Dokumentation zu Funktionen, die das Plugin evtl. bereit stellt.
 
 
 items.yaml
@@ -76,6 +74,7 @@ Hier ein Beispiel einer vollständigen Konfiguration von Items.
 Die Datei liegt auch im Plugin-Verzeichnis (Harry.yaml).
 
 .. code-block:: yaml
+
     # Harry.yaml
     Harry:
        connect:
@@ -225,27 +224,14 @@ Die Datei liegt auch im Plugin-Verzeichnis (Harry.yaml).
                roombapysh: 'lastCommand_initiator'
 
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
-
-logic.yaml
-----------
-
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
-
-Funktionen
-----------
-
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
 
 Beispiele
 =========
 
 Beispiel, wie in der smartVisu der Status des Roomba als Icon angezeigt werden kann:
 
-.. code-block:: yaml
+.. code-block:: jinja
+
     {{ basic.symbol('', ['Harry.Status'], '', ['scene_robo_vac_cleaner.svg','text_question_mark.svg','scene_robo_vac_cleaner_charging.svg','scene_robo_vac_cleaner_charging.svg','scene_robo_vac_cleaner_active.svg','scene_robo_vac_cleaner_paused.svg','scene_robo_vac_cleaner_dock.svg','scene_robo_vac_cleaner_attention.svg'], [0,1,2,3,4,5,6,7], '', ['#766','#f00','#ff0','#0f0','#0f0','#ff0','#0f0','#f00'],'','','midi') }}
 
 Ein Beispiel, wie eine komplette smartVisu Seite aussehen könnte liegt als roomba.html im Plugin-Verzeichnis

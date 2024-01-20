@@ -236,6 +236,7 @@ class SoCo(_SocoSingletonBase):
         is_soundbar
         is_satellite
         has_satellites
+        sub_crossover
         sub_enabled
         sub_gain
         is_subwoofer
@@ -510,7 +511,14 @@ class SoCo(_SocoSingletonBase):
 
         Only provides reliable results when called on the soundbar
         or subwoofer devices if configured in a home theater setup.
+
+        Sonos Amp devices support a directly-connected 3rd party subwoofer
+        connected over RCA. This property is always enabled for those devices.
         """
+        model_name = self.speaker_info["model_name"].lower()
+        if model_name.endswith("sonos amp"):
+            return True
+
         self.zone_group_state.poll(self)
         channel_map = self._channel_map or self._ht_sat_chan_map
         if not channel_map:
@@ -1071,6 +1079,46 @@ class SoCo(_SocoSingletonBase):
                 ("InstanceID", 0),
                 ("EQType", "SurroundEnable"),
                 ("DesiredValue", int(enable)),
+            ]
+        )
+
+    @property
+    def sub_crossover(self):
+        """int: Reports the current subwoofer crossover frequency in Hz.
+
+        Only supported on Amp devices.
+        """
+        model_name = self.speaker_info["model_name"].lower()
+        if not model_name.endswith("sonos amp"):
+            return None
+
+        response = self.renderingControl.GetEQ(
+            [("InstanceID", 0), ("EQType", "SubCrossover")]
+        )
+        return int(response["CurrentValue"])
+
+    @sub_crossover.setter
+    def sub_crossover(self, frequency):
+        """Set the subwoofer crossover frequency. Only supported on Amp devices.
+
+        :param frequency: Desired subwoofer crossover frequency in Hz
+        :type frequency: int
+        """
+        model_name = self.speaker_info["model_name"].lower()
+        if not model_name.endswith("sonos amp"):
+            message = "Subwoofer crossover not supported on this device."
+            raise NotSupportedException(message)
+
+        if not 50 <= frequency <= 110:
+            raise ValueError(
+                "Invalid value, must be integer between 50 and 110 inclusive"
+            )
+
+        self.renderingControl.SetEQ(
+            [
+                ("InstanceID", 0),
+                ("EQType", "SubCrossover"),
+                ("DesiredValue", int(frequency)),
             ]
         )
 

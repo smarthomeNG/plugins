@@ -3,17 +3,24 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Unterstützt eBus Heizungen (z.B. Vailant, Wolf, Kromschroeder) - Dieses Plugin verbindet sich zu einem ebusd Deamon (http://www.cometvisu.de/wiki/Ebusd), welcher mit einer eBus Heizung kommuniziert. Voraussetzungen: Ein ebusd Deamon läuft auf dem Netzwerk. (Anmerkung: Der ebusd benötigt ein ebus-Interface um mit ihm zu kommunizieren.'
-        en: 'Supports eBus heating systems (e.g. Vailant, Wolf, Kromschroeder) - The plugin connects to a ebusd damon (http://www.cometvisu.de/wiki/Ebusd) which is communicating with eBus heatings. Requirements: running ebusd deamon on the network (note: ebusd also requires an ebus-interface)'
+        de: 'Unterstützt eBus Heizungen (z.B. Vailant, Wolf, Kromschroeder)
+            Dieses Plugin verbindet sich zu einem ebusd Deamon (https://ebusd.de/), 
+            welcher mit einer eBus Heizung kommuniziert.
+            Voraussetzungen: Ein ebusd Deamon läuft auf dem Netzwerk.
+            Anmerkung: Der ebusd benötigt ein ebus-Interface um mit ihm zu kommunizieren.
+            '
+        en: 'Supports eBus heating systems (e.g. Vailant, Wolf, Kromschroeder)
+            The plugin connects to a ebusd damon (https://ebusd.de/) 
+            which is communicating with eBus heatings. 
+            Requirements: running ebusd deamon on the network (note: ebusd also requires an ebus-interface)
+            '
     maintainer: '? (msinn)'
-    tester: Sandman60
+    tester: android, z1marco
     state: ready
-#    keywords: kwd1 kwd2            # keywords, where applicable
-#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1925957
 
 # Following entries are for Smart-Plugins:
-    version: 1.5.0                 # Plugin version
+    version: 1.6.0                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
     #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False
