@@ -1,1 +1,1 @@
-rrdtool>=0.1.15
+rrdtool>=0.1.16
