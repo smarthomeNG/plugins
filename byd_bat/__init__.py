@@ -80,7 +80,7 @@
 #               - Plot Spannung im Titel Details zu den Daten ergaenzt
 #               - Balkendiagramm Legende mit Farbcodes ergaenzt
 #
-# V0.1.2 240120 - Logdaten Verarbeitung ergaenzt (BMS 20)
+# V0.1.2 240120 - Logdaten Verarbeitung ergaenzt (BMS 9,20)
 #
 # -----------------------------------------------------------------------
 #
@@ -1796,74 +1796,81 @@ class byd_bat(SmartPlugin):
             x = data[13]
             s1 = s1 + "SOH:" + f"{x:d}" + "%" + byd_log_str_sep
           else:
-            s1 = self.logdatabms2str(ld,False,False) 
+            s1 = self.logdatabms2str(ld,False) 
 
         elif ld[byd_log_codex] == 3:                                                               # Timing Record (3)
           if bmu == False:
-            s1 = self.logdatabms2str(ld,False,False)
+            s1 = self.logdatabms2str(ld,False)
           else:
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
         
         elif ld[byd_log_codex] == 4:                                                               # Start Charging(4)
           if bmu == False:
-            s1 = self.logdatabms2str(ld,False,False) 
+            s1 = self.logdatabms2str(ld,False) 
           else:
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
         
         elif ld[byd_log_codex] == 5:                                                               # Stop Charging(5)
           if bmu == False:
-            s1 = self.logdatabms2str(ld,False,False) 
+            s1 = self.logdatabms2str(ld,False) 
           else:
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
         
         elif ld[byd_log_codex] == 6:                                                               # Start DisCharging (6)
           if bmu == False:
-            s1 = self.logdatabms2str(ld,False,False) 
+            s1 = self.logdatabms2str(ld,False) 
           else:
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
         
         elif ld[byd_log_codex] == 7:                                                               # Stop DisCharging (7)
           if bmu == False:
-            s1 = self.logdatabms2str(ld,False,False) 
+            s1 = self.logdatabms2str(ld,False) 
           else:
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
         
         elif ld[byd_log_codex] == 8:                                                               # SOC calibration rough (8)
           if bmu == False:
-            s1 = self.logdatabms2str(ld,False,False) 
+            s1 = self.logdatabms2str(ld,False) 
+          else:
+            s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
+            unknown = True
+        
+        elif ld[byd_log_codex] == 9:                                                               # SOC calibration fine (8)
+          if bmu == False:
+            s1 = self.logdatabms2str(ld,False) 
           else:
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
         
         elif ld[byd_log_codex] == 10:                                                              # SOC calibration Stop (10)
           if bmu == False:
-            s1 = self.logdatabms2str(ld,False,False) 
+            s1 = self.logdatabms2str(ld,False) 
           else:
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
         
         elif ld[byd_log_codex] == 13:                                                              # Receive PreCharge Command (13)
           if bmu == False:
-            s1 = self.logdatabms2str(ld,False,False) 
+            s1 = self.logdatabms2str(ld,False) 
           else:
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
         
         elif ld[byd_log_codex] == 14:                                                              # PreCharge Successful (14)
           if bmu == False:
-            s1 = self.logdatabms2str(ld,False,False) 
+            s1 = self.logdatabms2str(ld,False) 
           else:
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
         
         elif ld[byd_log_codex] == 16:                                                              # Start end SOC calibration (16)
           if bmu == False:
-            s1 = self.logdatabms2str(ld,False,False) 
+            s1 = self.logdatabms2str(ld,False) 
           else:
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
@@ -1901,21 +1908,21 @@ class byd_bat(SmartPlugin):
         
         elif ld[byd_log_codex] == 19:                                                              # Address Registered (19)
           if bmu == False:
-            s1 = self.logdatabms2str(ld,False,False) 
+            s1 = self.logdatabms2str(ld,False) 
           else:
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
         
         elif ld[byd_log_codex] == 20:                                                              # System Functional Safety Fault (20)
           if bmu == False:
-            s1 = self.logdatabms2str(ld,False,True) 
+            s1 = self.logdatabms2str(ld,False) 
           else:
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
         
         elif ld[byd_log_codex] == 21:                                                              # Events additional info (21)
           if bmu == False:
-            s1 = self.logdatabms2str(ld,True,False) 
+            s1 = self.logdatabms2str(ld,True) 
           else:
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
@@ -2159,13 +2166,11 @@ class byd_bat(SmartPlugin):
     
         return s1
         
-    def logdatabms2str(self,ld,cnr,l20):
+    def logdatabms2str(self,ld,cnr):
         # Erzeugt den String fuer den Standard-BMS-Log-Eintrag.
         # ld = Log-Eintrag
         # cnr = True  -> Byte 17-21 Zellennummern
         #       False -> Byte 17-22 normale Bedeutung
-        # l20 = True  -> System Functional Safety Fault (20) Byte 9+10 Serial port
-        #       False -> normal
         co = ld[byd_log_codex]
         data = ld[byd_log_data]
         s1 = ""
