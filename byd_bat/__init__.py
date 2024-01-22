@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2023       Matthias Manhart             smarthome@beathis.ch
+#  Copyright 2024       Matthias Manhart             smarthome@beathis.ch
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -73,6 +73,15 @@
 #
 # V0.1.0 240113 - Release
 #
+# V0.1.1 240115 - Neue Items 'info/last_state','info/last_diag','info/last_log'
+#               - Dummy-Plot-Dateien werden in 'imgpath' nicht mehr erstellt
+#               - Fehler korrigiert (self.decode_nop(data,x,MESSAGE_9_L))
+#               - Balkendiagramm Balancing Farbe geaendert auf gruen
+#               - Plot Spannung im Titel Details zu den Daten ergaenzt
+#               - Balkendiagramm Legende mit Farbcodes ergaenzt
+#
+# V0.1.2 240120 - Logdaten Verarbeitung ergaenzt (BMS 9,20)
+#
 # -----------------------------------------------------------------------
 #
 # Als Basis fuer die Implementierung wurde u.a. folgende Quelle verwendet:
@@ -102,6 +111,7 @@ import time
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from matplotlib.lines import Line2D
 import numpy as np
 import os
 import json
@@ -109,7 +119,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from decimal import Decimal,ROUND_DOWN
 
-import random    # only for internal test [TEST]
+#import random    # only for internal test [TEST]
 
 byd_ip_default = "192.168.16.254"
 
@@ -219,22 +229,22 @@ EVT_MSG_1   = "010305A8004104D6"                   # request log-data
 EVT_MSG_1_L  = 135
 
 byd_errors = [
-  "High Temperature Charging (Cells)",
-  "Low Temperature Charging (Cells)",
-  "Over Current Discharging",
-  "Over Current Charging",
-  "Main circuit Failure",
-  "Short Current Alarm",
-  "Cells Imbalance",
-  "Current Sensor Failure",
-  "Battery Over Voltage",
-  "Battery Under Voltage",
-  "Cell Over Voltage",
-  "Cell Under Voltage",
-  "Voltage Sensor Failure",
-  "Temperature Sensor Failure",
-  "High Temperature Discharging (Cells)",
-  "Low Temperature Discharging (Cells)"
+  "High Temperature Charging (Cells)",             #  0
+  "Low Temperature Charging (Cells)",              #  1
+  "Over Current Discharging",                      #  2
+  "Over Current Charging",                         #  3
+  "Main circuit Failure",                          #  4
+  "Short Current Alarm",                           #  5
+  "Cells Imbalance",                               #  6
+  "Current Sensor Failure",                        #  7
+  "Battery Over Voltage",                          #  8
+  "Battery Under Voltage",                         #  9
+  "Cell Over Voltage",                             # 10
+  "Cell Under Voltage",                            # 11
+  "Voltage Sensor Failure",                        # 12
+  "Temperature Sensor Failure",                    # 13
+  "High Temperature Discharging (Cells)",          # 14
+  "Low Temperature Discharging (Cells)"            # 15
 ]
 
 # Liste der Wechselrichter (entnommen aus Be_Connect)
@@ -522,7 +532,7 @@ class byd_bat(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '0.1.0'
+    PLUGIN_VERSION = '0.1.2'
     ALLOW_MULTIINSTANCE = False
     
     def __init__(self,sh):
@@ -607,6 +617,44 @@ class byd_bat(SmartPlugin):
         self.byd_module_vmax = byd_module_vmax
         self.byd_module_vava = byd_module_vava
         self.byd_module_vdif = byd_module_vdif
+
+        # State
+        self.byd_current = 0
+        self.byd_power = 0
+        self.byd_power_charge = 0
+        self.byd_power_discharge = 0
+        self.byd_soc = 0
+        self.byd_soh = 0
+        self.byd_temp_bat = 0
+        self.byd_temp_max = 0
+        self.byd_temp_min = 0
+        self.byd_volt_bat = 0
+        self.byd_volt_diff = 0
+        self.byd_volt_max = 0
+        self.byd_volt_min = 0
+        self.byd_volt_out = 0
+        self.byd_charge_total = 0
+        self.byd_discharge_total = 0
+        self.byd_eta = 0
+        
+        # System
+        self.byd_bms = ""
+        self.byd_bmu = ""
+        self.byd_bmu_a = ""
+        self.byd_bmu_b = ""
+        self.byd_batt_str = ""
+        self.byd_error_nr = 0
+        self.byd_error_str = ""
+        self.byd_application = ""
+        self.byd_inv_str = ""
+        self.byd_modules = 0
+        self.byd_bms_qty = 0
+        self.byd_capacity_total = 0
+        self.byd_param_t = ""
+        self.byd_serial = ""
+        
+        self.last_homedata = self.now_str()
+        self.last_diagdata = self.now_str()
         
         self.byd_diag_soc = []
         self.byd_diag_soh = []
@@ -673,9 +721,6 @@ class byd_bat(SmartPlugin):
             a.append(0)
           self.byd_temp_cell.append(a)
           
-        self.last_homedata = self.now_str()
-        self.last_diagdata = self.now_str()
-        
         self.plt_file_del()
         
         # Log-Verzeichnis erstellen
@@ -908,7 +953,7 @@ class byd_bat(SmartPlugin):
                 self.byd_root.info.connection(False)
                 client.close()
                 return
-              self.decode_nop(data,x)
+              self.decode_nop(data,x,MESSAGE_9_L)  # Laenge von MESSAGE_9 ist nicht bekannt - daher kein Abbruch hier
               time.sleep(2)
   
               # 10.Befehl senden (wie Befehl 3)
@@ -996,6 +1041,8 @@ class byd_bat(SmartPlugin):
               self.byd_root.info.connection(False)
               client.close()
               return
+            else:
+              self.byd_root.info.last_log(self.now_str())
                   
         client.close()
 
@@ -1030,11 +1077,11 @@ class byd_bat(SmartPlugin):
           self.byd_bmu = self.byd_bmu_b + "-B"
 
         # Anzahl Tuerme und Anzahl Module pro Turm
-        self.byd_bms_qty = data[36] // 0x10                                                    # Byte 36 Bit 4-7
+        self.byd_bms_qty = data[36] // 0x10                                                    # Byte 36 Bit 4-7 (Anzahl Tuerme)
         if (self.byd_bms_qty == 0) or (self.byd_bms_qty > byd_towers_max):
           self.byd_bms_qty = 1
         self.byd_modules = data[36] % 0x10                                                     # Byte 36 Bit 0-3  (Anzahl Module)
-        self.byd_batt_type_snr = data[5]
+        self.byd_batt_type_snr = data[5]                                                       # Byte 5 (LVS Batterietyp Unterscheidung)
         
         # Application
         if data[38] == 0:                                                                      # Byte 38
@@ -1793,6 +1840,13 @@ class byd_bat(SmartPlugin):
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
         
+        elif ld[byd_log_codex] == 9:                                                               # SOC calibration fine (8)
+          if bmu == False:
+            s1 = self.logdatabms2str(ld,False) 
+          else:
+            s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
+            unknown = True
+        
         elif ld[byd_log_codex] == 10:                                                              # SOC calibration Stop (10)
           if bmu == False:
             s1 = self.logdatabms2str(ld,False) 
@@ -1853,6 +1907,13 @@ class byd_bat(SmartPlugin):
             unknown = True
         
         elif ld[byd_log_codex] == 19:                                                              # Address Registered (19)
+          if bmu == False:
+            s1 = self.logdatabms2str(ld,False) 
+          else:
+            s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
+            unknown = True
+        
+        elif ld[byd_log_codex] == 20:                                                              # System Functional Safety Fault (20)
           if bmu == False:
             s1 = self.logdatabms2str(ld,False) 
           else:
@@ -2107,9 +2168,17 @@ class byd_bat(SmartPlugin):
         
     def logdatabms2str(self,ld,cnr):
         # Erzeugt den String fuer den Standard-BMS-Log-Eintrag.
+        # ld = Log-Eintrag
+        # cnr = True  -> Byte 17-21 Zellennummern
+        #       False -> Byte 17-22 normale Bedeutung
+        co = ld[byd_log_codex]
         data = ld[byd_log_data]
         s1 = ""
-        y = int(data[1] * 0x100 + data[0])
+        # Warnungen (3x16Bit)
+        y1 = int(data[1] * 0x100 + data[0])
+        y2 = int(data[3] * 0x100 + data[2])
+        y3 = int(data[5] * 0x100 + data[4])
+        y = y1 | y2 | y3                      # Bitweise Oder
         if y > 0:
           s2 = "Warning:"
           for i in range(0,16):  # 0..15
@@ -2121,6 +2190,7 @@ class byd_bat(SmartPlugin):
           s1 = s1 + s2 + byd_log_str_sep
         else:
           s1 = s1 + "No Warning" + byd_log_str_sep
+        # Fehler
         y = int(data[7] * 0x100 + data[6])
         if y > 0:
           s2 = "Fault:"
@@ -2131,6 +2201,7 @@ class byd_bat(SmartPlugin):
               s2 = s2 + byd_log_bms_failures[i]
             y = int(y / 2)
           s1 = s1 + s2 + byd_log_str_sep
+        # Status
         y = int(data[8])
         if y > 0:
           s2 = ""
@@ -2147,33 +2218,56 @@ class byd_bat(SmartPlugin):
             y = int(y / 2)
           s1 = s1 + s2 + byd_log_str_sep
         x = data[9]
-        s1 = s1 + "SOC:" + f"{x:d}" + "%" + byd_log_str_sep
+        if co == 9:
+          # Battery Idling
+          s1 = s1 + "Battery Idling:" + f"{x:d}" + "%" + byd_log_str_sep
+        elif co == 20:
+          # BMU serial port
+          s1 = s1 + "BMU serial port:V" + f"{x:d}" + byd_log_str_sep
+        else:
+          # SOC
+          s1 = s1 + "SOC:" + f"{x:d}" + "%" + byd_log_str_sep
         x = data[10]
-        s1 = s1 + "SOH:" + f"{x:d}" + "%" + byd_log_str_sep
+        if co == 9:
+          # SOC
+          s1 = s1 + "Target SOC:" + f"{x:d}" + "%" + byd_log_str_sep
+        elif co == 20:
+          # BMS serial port
+          s1 = s1 + "BMS serial port:V" + f"{x:d}" + byd_log_str_sep
+        else:
+          # SOH
+          s1 = s1 + "SOH:" + f"{x:d}" + "%" + byd_log_str_sep
+        # Spannung Batterie
         x = self.buf2int16USx(data,11)  / 10.0
         s1 = s1 + "Bat_V:" + f"{x:.1f}" + "V" + byd_log_str_sep
+        # Spannung Ausgang
         x = self.buf2int16USx(data,13)  / 10.0
         s1 = s1 + "Output_V:" + f"{x:.1f}" + "V" + byd_log_str_sep
+        # Strom
         x = self.buf2int16SIx(data,15)  / 10.0
         s1 = s1 + "Current:" + f"{x:.1f}" + "A" + byd_log_str_sep
+        # Zellenspannung max
         if cnr == False:
           x = self.buf2int16USx(data,17)
           s1 = s1 + "Cell_Max_V:" + f"{x:d}" + "mV" + byd_log_str_sep
         else:
           x = data[17]
           s1 = s1 + "Cell_Max_V:No" + f"{x:d}" + byd_log_str_sep
+        # Zellenspannung min
         if cnr == False:
           x = self.buf2int16USx(data,19)
           s1 = s1 + "Cell_Min_V:" + f"{x:d}" + "mV" + byd_log_str_sep
         else:
           x = data[18]
           s1 = s1 + "Cell_Min_V:No" + f"{x:d}" + byd_log_str_sep
+        # Temperatur max
         if cnr == False:
           x = data[21]
           s1 = s1 + "Cell_Max_T:" + f"{x:d}" + byd_log_degree + byd_log_str_sep
         else:
           x = data[19]
           s1 = s1 + "Cell_Max_T:No" + f"{x:d}" + byd_log_str_sep
+        # Temperatur min
         if cnr == False:
           x = data[22]
           s1 = s1 + "Cell_Min_T:" + f"{x:d}" + byd_log_degree + byd_log_str_sep
@@ -2310,6 +2404,7 @@ class byd_bat(SmartPlugin):
         device.system.serial(self.byd_serial)
         
         self.last_homedata = self.now_str()  # Speichert Zeitpunkt als String
+        device.info.last_state(self.last_homedata)
 
         return
         
@@ -2325,6 +2420,7 @@ class byd_bat(SmartPlugin):
           self.diagdata_save_one(device.diagnosis.tower3,3)
     
         self.last_diagdata = self.now_str()  # Speichert Zeitpunkt als String
+        device.info.last_diag(self.last_diagdata)
         
         return
 
@@ -2511,6 +2607,9 @@ class byd_bat(SmartPlugin):
         # Modulnamen fuer X-Achse
         for jj in range(0,self.byd_modules):
           nn.append("M"+str(jj+1))
+        # Daten fuer Titel zusammensetzen
+        delta = (ymax - ymin) * 1000.0 
+        title_data = " (SOC=" + f"{self.byd_diag_soc[x]:.1f}" + "% min=" + f"{ymin:.3f}" + "V max=" + f"{ymax:.3f}" + "V delta=" + f"{delta:.0f}" + "mV)"
           
         # Berechne bestimmte Parameter fuer die optimale Darstellung
         width = 1.0 / (self.byd_volt_n + 1)
@@ -2539,7 +2638,7 @@ class byd_bat(SmartPlugin):
             elif ii == ymaxl[jj]:
               b[jj].set_color('#c505ff')       # 'violett'
           if balance_n > 0:
-            plt.bar(xx+x1,ba[ii],width,color='#0000ff',zorder=4)  # 'blau'
+            plt.bar(xx+x1,ba[ii],width,color='#1cfc03',zorder=4)  # 'giftgruen'
           x1 = x1 + ddd
           
         plt.ylim(y0,y1)
@@ -2553,7 +2652,19 @@ class byd_bat(SmartPlugin):
         ax.spines['top'].set_color('white')
         ax.spines['right'].set_color('white')
         ax.spines['left'].set_color('white')
-        ax.set_title("Turm " + str(x) + " - Spannungen [V]" + " (" + self.now_str() + ")",size=10,color='white')
+        ax.set_title("Turm " + str(x) + " - Spannungen [V]" + " (" + self.now_str() + ")" + title_data,size=10,color='white')
+        if balance_n > 0:
+          n_col = 3
+          custom_lines = [Line2D([0], [0],color='#05b4ff',lw=4),
+                          Line2D([0], [0],color='#c505ff',lw=4),
+                          Line2D([0], [0],color='#1cfc03',lw=4)]
+          legend_text = ['Min','Max','Balancing']
+        else:
+          n_col = 2
+          custom_lines = [Line2D([0], [0],color='#05b4ff',lw=4),
+                          Line2D([0], [0],color='#c505ff',lw=4)]
+          legend_text = ['Min','Max']
+        ax.legend(custom_lines,legend_text,fancybox=True,framealpha=0.0,labelcolor='white',fontsize=9,ncol=n_col)
         
         fig.tight_layout()
         if len(self.bpath) != byd_path_empty:
@@ -2626,7 +2737,7 @@ class byd_bat(SmartPlugin):
               ax.add_patch(patches.Rectangle((-0.5+j,-0.5+i),1,1,edgecolor='red',fill=False,lw=2))
             k = k + 1
 
-        ax.set_title("Turm " + str(x) + " - Spannungen [V]" + " (" + self.now_str() + ")",size=10,color='white')
+        ax.set_title("Turm " + str(x) + " - Spannungen [V]" + " (" + self.now_str() + ")" + title_data,size=10,color='white')
         
         fig.tight_layout()
         if len(self.bpath) != byd_path_empty:
@@ -2703,45 +2814,46 @@ class byd_bat(SmartPlugin):
 
         return
         
-    def plt_file_del_single(self,fn):
+    def plt_file_del_single(self,fn,dummy):
         # Loescht eine vorhandene Datei 'fn' und erstellt eine leere Datei.
         if os.path.exists(fn) == True:
           os.remove(fn)
-        self.create_dummy_png(fn)
+        if dummy == True:
+          self.create_dummy_png(fn)
         return
         
     def plt_file_del(self):
         # Loescht alle Plot-Dateien
         
         # Spannungs-Plots
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(1) + byd_fname_ext)
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(2) + byd_fname_ext)
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(3) + byd_fname_ext)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(1) + byd_fname_ext,True)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(2) + byd_fname_ext,True)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt + str(3) + byd_fname_ext,True)
 
         if len(self.bpath) != byd_path_empty:
-          self.plt_file_del_single(self.bpath + byd_fname_volt + str(1) + byd_fname_ext)
-          self.plt_file_del_single(self.bpath + byd_fname_volt + str(2) + byd_fname_ext)
-          self.plt_file_del_single(self.bpath + byd_fname_volt + str(3) + byd_fname_ext)
+          self.plt_file_del_single(self.bpath + byd_fname_volt + str(1) + byd_fname_ext,False)
+          self.plt_file_del_single(self.bpath + byd_fname_volt + str(2) + byd_fname_ext,False)
+          self.plt_file_del_single(self.bpath + byd_fname_volt + str(3) + byd_fname_ext,False)
     
         # Spannungs-Plots
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt2 + str(1) + byd_fname_ext)
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt2 + str(2) + byd_fname_ext)
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt2 + str(3) + byd_fname_ext)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt2 + str(1) + byd_fname_ext,True)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt2 + str(2) + byd_fname_ext,True)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_volt2 + str(3) + byd_fname_ext,True)
 
         if len(self.bpath) != byd_path_empty:
-          self.plt_file_del_single(self.bpath + byd_fname_volt2 + str(1) + byd_fname_ext)
-          self.plt_file_del_single(self.bpath + byd_fname_volt2 + str(2) + byd_fname_ext)
-          self.plt_file_del_single(self.bpath + byd_fname_volt2 + str(3) + byd_fname_ext)
+          self.plt_file_del_single(self.bpath + byd_fname_volt2 + str(1) + byd_fname_ext,False)
+          self.plt_file_del_single(self.bpath + byd_fname_volt2 + str(2) + byd_fname_ext,False)
+          self.plt_file_del_single(self.bpath + byd_fname_volt2 + str(3) + byd_fname_ext,False)
     
         # Temperatur-Plots
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(1) + byd_fname_ext)
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(2) + byd_fname_ext)
-        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(3) + byd_fname_ext)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(1) + byd_fname_ext,True)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(2) + byd_fname_ext,True)
+        self.plt_file_del_single(self.get_plugin_dir() + byd_webif_img + byd_fname_temp + str(3) + byd_fname_ext,True)
 
         if len(self.bpath) != byd_path_empty:
-          self.plt_file_del_single(self.bpath + byd_fname_temp + str(1) + byd_fname_ext)
-          self.plt_file_del_single(self.bpath + byd_fname_temp + str(2) + byd_fname_ext)
-          self.plt_file_del_single(self.bpath + byd_fname_temp + str(3) + byd_fname_ext)
+          self.plt_file_del_single(self.bpath + byd_fname_temp + str(1) + byd_fname_ext,False)
+          self.plt_file_del_single(self.bpath + byd_fname_temp + str(2) + byd_fname_ext,False)
+          self.plt_file_del_single(self.bpath + byd_fname_temp + str(3) + byd_fname_ext,False)
     
         return
 

@@ -8,14 +8,14 @@ plugin:
     maintainer: Matthias Manhart
     tester: Matthias Manhart
     state: develop                  # change to ready when done with development
-#    keywords: iot xyz
+    keywords: byd battery
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1886748-support-thread-f%C3%BCr-das-byd-batterie-plugin
 
-    version: 0.1.0                  # Plugin version (must match the version specified in __init__.py)
+    version: 0.1.2                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.9              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    py_minversion: 3.9             # minimum Python version to use for this plugin
+    py_minversion: 3.9              # minimum Python version to use for this plugin
 #    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: false           # plugin supports multi instance
     restartable: true
@@ -87,6 +87,21 @@ item_structs:
                 initial_value: false
                 enforce_updates: true
                 visu_acl: ro
+                
+            last_state:              # Date/time of last state update
+                type: str
+                visu_acl: ro
+                cache: true
+                
+            last_diag:               # Date/time of last dignostics update
+                type: str
+                visu_acl: ro
+                cache: true
+                
+            last_log:                # Date/time of last log data update
+                type: str
+                visu_acl: ro
+                cache: true
                 
         enable_connection:           # true -> communication enabled, false -> communication disabled (other software can access BYD unit)
             type: bool
