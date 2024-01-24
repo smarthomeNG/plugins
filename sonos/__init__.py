@@ -2741,7 +2741,7 @@ class Speaker(object):
         else:
             file_path = utils.get_tts_local_file_path(local_webservice_path, tts, tts_language)
 
-            # only do a tts call if file not exists
+            # only do a tts call if file does not exist
             if not os.path.exists(file_path):
                 tts = gTTS(tts, lang=tts_language)
                 try:
@@ -3165,6 +3165,66 @@ class Sonos(SmartPlugin):
             if item not in self.item_list:
                 self.item_list.append(item)
             return self._handle_dpt3
+
+    def play_alert_all_speakers(self, alert_uri, speaker_list = [], alert_volume=20, alert_duration=0, fade_back=False):
+        """
+        Demo function using soco.snapshot across multiple Sonos players.
+        
+        Args:
+            alert_uri (str): uri that Sonos can play as an alert
+            speaker_list (list): List of applicable speaker names, if empty, all speakers are used
+            alert_volume (int): volume level for playing alert (0 tp 100)
+            alert_duration (int): length of alert (if zero then length of track)
+            fade_back (bool): on reinstating the zones fade up the sound?
+        """
+        filtered_zones = []
+        if len(speaker_list) > 0:
+            self.logger.debug(f"play_alert_all_speakers: Only apply for these speakers {speaker_list}")
+            for zone in self.zones:
+                if zone.player_name in speaker_list:
+                    self.logger.debug(f"play_alert: adding {zone.player_name} to filter list")
+                    filtered_zones.append(zone)
+        else:
+            filtered_zones = self.zones
+
+        # Use soco.snapshot to capture current state of each zone to allow restore
+        for zone in filtered_zones:
+            zone.snap = Snapshot(zone)
+            try:
+                zone.snap.snapshot()
+            except Exception as e:
+                self.logger.error(f"Exception occured during snapshot of {zone.player_name}: {e}")
+            else:
+                self.logger.warning(f"Debug: snapshot of zone: {zone.player_name}")
+
+        # prepare all zones for playing the alert
+        for zone in filtered_zones:
+            # Each Sonos group has one coordinator only these can play, pause, etc.
+            if zone.is_coordinator:
+                if not zone.is_playing_tv:  # can't pause TV - so don't try!
+                    # pause music for each coordinators if playing
+                    trans_state = zone.get_current_transport_info()
+                    if trans_state["current_transport_state"] == "PLAYING":
+                        zone.pause()
+
+            # For every Sonos player set volume and mute for every zone
+            zone.volume = alert_volume
+            zone.mute = False
+
+        # play the sound (uri) on each sonos coordinator
+        self.logger.warning(f"will play {alert_uri} on all coordinators")
+        for zone in filtered_zones:
+            if zone.is_coordinator:
+                zone.play_uri(uri=alert_uri, title="Sonos Alert")
+
+        # wait for alert_duration
+        time.sleep(alert_duration)
+
+        # restore each zone to previous state
+        for zone in filtered_zones:
+            self.logger.warning(f"Debug: restoring {zone.player_name}")
+            zone.snap.restore(fade=fade_back)
+
 
     def _handle_dpt3(self, item, caller=None, source=None, dest=None):
         if caller != self.get_shortname():

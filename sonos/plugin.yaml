@@ -898,6 +898,37 @@ item_structs:
         initial_value: True
         sonos_attrib: snippet_fade_in
 
-plugin_functions: NONE
+plugin_functions:
+    play_all:
+        type: foo
+        description:
+            de: 'Spiel eine URL auf allen Speakern, oder einer Untermenge, ab'
+            en: 'Plays a uri on all or a subamount of speakers'
+        parameters:
+            alert_uri:
+                type: str
+                description:
+                    de: "URL die Sonos abspielen soll"
+                    en: "uri that Sonos can play as an alert"
+            speaker_list:
+                type: list
+                description:
+                    de: "Liste mit Speaker Namen, auf denen der Sound abgespielt werden soll"
+                    en: "List of applicable speaker names, if empty, all speakers are used"
+            alert_volume:
+                type: int
+                description:
+                    de: "Volumenlevel (0-100)"
+                    en: "volume level for playing alert (0 tp 100)"
+            alert_duration:
+                type: int
+                description:
+                    de: "Länge der Ansage in Sekunden (wenn 0, dann gleich Tracklänge)"
+                    en: "Length in [s] of alert (if zero then length of track)"
+            fade_back:
+                type: bool
+                description:
+                    de: "auf True setzen, um den Sound nach der Ansage ansteigen zu lassen"
+                    en: "Set to True for fading up the sound after the alert"
 
 logic_parameters: NONE
