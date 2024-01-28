@@ -33,6 +33,10 @@ import errno
 from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
 
+from lib.shtime import Shtime
+shtime = Shtime.get_instance()
+
+
 from . import algorithms
 from .webif import WebInterface
 
