@@ -3,29 +3,14 @@
 <script>
     $(document).ready( function () {
 			$(window).trigger('datatables_defaults');
-      /* get pagelength from http module or plugin. */
-      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-        resize = true;
-        webif_pagelength = -1;
-      }
-      else {
-        resize = false;
-      }
-      console.log("Webif page length " + webif_pagelength + ", pageResize: " + resize);
 
 			try
 				{
-					tableout = $('#table_out').DataTable( {pageLength: webif_pagelength,
-          pageResize: resize} );
-					tablein = $('#table_in').DataTable( {pageLength: webif_pagelength,
-          pageResize: resize} );
-          tablecontrol = $('#table_control').DataTable( {pageLength: webif_pagelength,
-          pageResize: resize} );
-          tablecontrol = $('#table_chatids').DataTable( {pageLength: webif_pagelength,
-          pageResize: resize} );
-          tablecontrol = $('#table_info').DataTable( {pageLength: webif_pagelength,
-          pageResize: resize} );
+					tableout = $('#table_out').DataTable( {} );
+					tablein = $('#table_in').DataTable( {} );
+          tablecontrol = $('#table_control').DataTable( {} );
+          tablecontrol = $('#table_chatids').DataTable( {} );
+          tablecontrol = $('#table_info').DataTable( {} );
 				}
 			catch (e)
 				{
@@ -42,16 +27,16 @@
 	<tbody>
 		<tr>
 			<td class="py-1"><strong>{{ _('Long Polling Timeout') }}</strong></td>
-			<td class="py-1">{{ p._long_polling_timeout ~ _(' Sekunden')}}</td>
+			<td class="py-1">{{ p._long_polling_timeout ~ ' ' ~ _('seconds')}}</td>
 			<td class="py-1" width="50px"></td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>{{ _('Willkommensnachricht') }}</strong></td>
+			<td class="py-1"><strong>{{ _('Welcome message') }}</strong></td>
 			<td class="py-1">{{ p._welcome_msg }}</td>
 			<td class="py-1" width="50px"></td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>{{ _('Ende Nachricht') }}</strong></td>
+			<td class="py-1"><strong>{{ _('plugin stop message') }}</strong></td>
 			<td class="py-1">{{ p._bye_msg }}</td>
 			<td class="py-1" width="50px"></td>
 		</tr>
@@ -62,7 +47,7 @@
 <!--
 	Define the number of tabs for the body of the web interface (1 - 3)
 -->
-{% set tabcount = 4 %}
+{% set tabcount = 5 %}
 
 <!--
 	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
@@ -77,129 +62,131 @@
 -->
 {% set tab1title = "<strong>Output Items</strong>"%}
 {% block bodytab1 %}
-<div class="container-fluid m-2 table-resize">
-		<table class="dataTableAdditional" id="table_out">
-			<thead>
-				<tr class="shng_heading"><th></th>
-					<th>{{ _('Pfad') }}</th>
-					<th>{{ _('Typ') }}</th>
-					<th>{{ _('Wert') }}</th>
-					<th>{{ _('Letztes Update') }}</th>
-					<th>{{ _('Letzter Change') }}</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for item in p._items %}
-					<tr id="{{ loop.index }}_click"><td></td>
-						<td class="py-1">{{ item.property.path }}</td>
-						<td class="py-1">{{ item.property.type }}</td>
-						<td class="py-1">{{ item() }}</td>
-						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-					</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-</div>
+    <table class="dataTableAdditional" id="table_out">
+        <thead>
+            <tr class="shng_heading"><th></th>
+                <th>{{ _('Pfad') }}</th>
+                <th>{{ _('Typ') }}</th>
+                <th>{{ _('Wert') }}</th>
+                <th>{{ _('Letztes Update') }}</th>
+                <th>{{ _('Letzter Change') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in p._items %}
+                <tr id="{{ loop.index }}_click"><td></td>
+                    <td class="py-1">{{ item.property.path }}</td>
+                    <td class="py-1">{{ item.property.type }}</td>
+                    <td class="py-1">{{ item() }}</td>
+                    <td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock bodytab1 %}
 
+<!--
+	Content block for the 2. tab of the Webinterface
+-->
 {% set tab2title = "<strong>Input Items</strong>"%}
 {% block bodytab2 %}
-<div class="container-fluid m-2 table-resize">
-		<table class="dataTableAdditional" id="table_in">
-			<thead>
-				<tr class="shng_heading"><th></th>
-					<th>{{ _('Pfad') }}</th>
-					<th>{{ _('Typ') }}</th>
-					<th>{{ _('Wert') }}</th>
-					<th>{{ _('Letztes Update') }}</th>
-					<th>{{ _('Letzter Change') }}</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for item in p._items_text_message %}
-					<tr id="{{ loop.index }}_click"><td></td>
-						<td class="py-1">{{ item.property.path }}</td>
-						<td class="py-1">{{ item.property.type }}</td>
-						<td class="py-1">{{ item() }}</td>
-						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-					</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-</div>
+    <table class="dataTableAdditional" id="table_in">
+        <thead>
+            <tr class="shng_heading"><th></th>
+                <th>{{ _('Pfad') }}</th>
+                <th>{{ _('Typ') }}</th>
+                <th>{{ _('Wert') }}</th>
+                <th>{{ _('Letztes Update') }}</th>
+                <th>{{ _('Letzter Change') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in p._items_text_message %}
+                <tr id="{{ loop.index }}_click"><td></td>
+                    <td class="py-1">{{ item.property.path }}</td>
+                    <td class="py-1">{{ item.property.type }}</td>
+                    <td class="py-1">{{ item() }}</td>
+                    <td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock bodytab2 %}
-{% set tab3title = "<strong>Telegram Control</strong>"%}
-{% block bodytab3 %}
-<div class="container-fluid m-2 table-resize">
-		<table class="dataTableAdditional" id="table_control">
-			<thead>
-				<tr class="shng_heading"><th></th>
-					<th>{{ _('Control') }}</th>
-          <th>{{ _('Pfad') }}</th>
-					<th>{{ _('Typ') }}</th>
-					<th>{{ _('Wert') }}</th>
-					<th>{{ _('Letzter Change') }}</th>
-          <th>{{ _('letzter Wert') }}</th>
-			</thead>
-			<tbody>
-				{% for key in p._items_control %}
-          <tr id="{{ loop.index }}_click"><td></td>
-            <td class="py-1">{{ key }}</td>
-            <td class="py-1">{{ p._items_control[key].item.property.path }}</td>
-						<td class="py-1">{{ p._items_control[key].item.property.type }}</td>
-						<td class="py-1">{{ p._items_control[key].item() }}</td>
-						<td class="py-1">{{ p._items_control[key].item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-            <td class="py-1">{{ p._items_control[key].item.property.last_value }}</td>
-					</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-</div>
-{% endblock bodytab3 %}
-
 
 <!--
-	Content block for the second tab of the Webinterface
+	Content block for the 3. tab of the Webinterface
+-->
+{% set tab3title = "<strong>Telegram Control</strong>"%}
+{% block bodytab3 %}
+    <table class="dataTableAdditional" id="table_control">
+        <thead>
+            <tr class="shng_heading"><th></th>
+                <th>{{ _('Control') }}</th>
+      <th>{{ _('Pfad') }}</th>
+                <th>{{ _('Typ') }}</th>
+                <th>{{ _('Wert') }}</th>
+                <th>{{ _('Letzter Change') }}</th>
+      <th>{{ _('letzter Wert') }}</th>
+        </thead>
+        <tbody>
+            {% for key in p._items_control %}
+      <tr id="{{ loop.index }}_click"><td></td>
+        <td class="py-1">{{ key }}</td>
+        <td class="py-1">{{ p._items_control[key].item.property.path }}</td>
+                    <td class="py-1">{{ p._items_control[key].item.property.type }}</td>
+                    <td class="py-1">{{ p._items_control[key].item() }}</td>
+                    <td class="py-1">{{ p._items_control[key].item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+        <td class="py-1">{{ p._items_control[key].item.property.last_value }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock bodytab3 %}
+
+<!--
+	Content block for the 4. tab of the Webinterface
 -->
 {% set tab4title = "<strong>Telegram Infos</strong>" %}
 {% block bodytab4 %}
-<strong>Chat-IDs</strong>
-<div class="container-fluid m-2 table-resize">
-		<table class="dataTableAdditional" id="table_chatids">
-			<thead>
-				<tr class="shng_heading"><th></th>
-					<th>{{ _('Registrierte Chat-ID') }}</th>
-					<th>{{ _('Zugriff') }}</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for key in p._chat_ids_item() %}
-					<tr id="{{ loop.index }}_click"><td></td>
-						<td class="py-1">{{ key }}</td>
-						<td class="py-1">{{ p._chat_ids_item()[key] }}</td>
-					</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-
-<strong>Telegram Infos</strong>
-		<table class="dataTableAdditional" id="table_info">
-			<thead>
-				<tr class="shng_heading"><th></th>
-					<th>{{ _('Info') }}</th>
-					<th>{{ _('Info-Items') }}</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for key in p._items_info %}
-					<tr id="{{ loop.index }}_click"><td></td>
-						<td class="py-1">{{ key }}</td>
-						<td class="py-1">{{ p._items_info[key] }}</td>
-					</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-	</div>
+    <table class="dataTableAdditional" id="table_info">
+        <thead>
+            <tr class="shng_heading"><th></th>
+                <th>{{ _('Info') }}</th>
+                <th>{{ _('Info-Items') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key in p._items_info %}
+                <tr id="{{ loop.index }}_click"><td></td>
+                    <td class="py-1">{{ key }}</td>
+                    <td class="py-1">{{ p._items_info[key] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock bodytab4 %}
+
+<!--
+	Content block for the 5. tab of the Webinterface
+-->
+{% set tab5title = "<strong>Chat-IDs</strong>" %}
+{% block bodytab5 %}
+    <table class="dataTableAdditional" id="table_chatids">
+        <thead>
+            <tr class="shng_heading"><th></th>
+                <th>{{ _('Registrierte Chat-ID') }}</th>
+                <th>{{ _('Zugriff') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key in p._chat_ids_item() %}
+                <tr id="{{ loop.index }}_click"><td></td>
+                    <td class="py-1">{{ key }}</td>
+                    <td class="py-1">{{ p._chat_ids_item()[key] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock bodytab5 %}

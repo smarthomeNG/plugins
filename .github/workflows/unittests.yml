@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.7', '3.8', '3.9', '3.10', '3.11' ]
+        python-version: [ '3.7', '3.8', '3.9', '3.10', '3.11', '3.12' ]
     name: Python ${{ matrix.python-version }}
     steps:
       - name: Setup OS (Ubuntu)
@@ -42,15 +42,19 @@ jobs:
           echo github.pull_request.base.ref  '${{ github.pull_request.base.ref }}'
           echo steps.extract_branch.outputs.branch '${{ steps.extract_branch.outputs.branch }}'
 
-      - name: Checkout core from branch '${{ steps.extract_branch.outputs.branch }}' (for push)
-        if: github.event_name != 'pull_request'
+      - name: Check if branch '${{ steps.extract_branch.outputs.branch }}' exists in smarthomeNG/smarthome
+        run: echo "code=$(git ls-remote --exit-code --heads https://github.com/smarthomeNG/smarthome ${{ steps.extract_branch.outputs.branch }} > /dev/null; echo $? )" >>$GITHUB_OUTPUT
+        id: shng_branch_check
+
+      - name: Checkout core from branch '${{ steps.extract_branch.outputs.branch }}' (for push on known smarthomeNG/smarthome branch)
+        if: github.event_name != 'pull_request' && steps.shng_branch_check.outputs.code == '0'
         uses: actions/checkout@v3
         with:
           repository: smarthomeNG/smarthome
           ref: ${{ steps.extract_branch.outputs.branch }}
 
-      - name: Checkout core from branch 'develop' (for pull request)
-        if: github.event_name == 'pull_request'
+      - name: Checkout core from branch 'develop' (for pull request or push on unknown smarthomeNG/smarthome branch)
+        if: github.event_name == 'pull_request' || steps.shng_branch_check.outputs.code == '2'
         uses: actions/checkout@v3
         with:
           repository: smarthomeNG/smarthome
@@ -59,7 +63,7 @@ jobs:
       - name: Checkout plugins from branch '${{steps.extract_branch.outputs.branch}}'
         uses: actions/checkout@v3
         with:
-          repository: smarthomeNG/plugins
+          repository: ${{ github.repository_owner }}/plugins
           ref: ${{steps.extract_branch.outputs.branch}}
           path: plugins
 
@@ -70,6 +74,8 @@ jobs:
           architecture: x64
       - run: python3 -m pip install --upgrade pip
 
+      - name: Install setuptools (needed for Python 3.12)
+        run: pip install setuptools
       - name: Install requirements for unit testing
         run: pip install -r tests/requirements.txt
       - name: Build Requirements for SmartHomeNG

@@ -21,12 +21,12 @@
 #
 #########################################################################
 
-import logging
 from lib.model.smartplugin import SmartPlugin
-from lib.utils import Utils
-import urllib.request, json
+import urllib.request
+import json
 import time
 import re
+
 
 class Kostal(SmartPlugin):
     """
@@ -37,36 +37,36 @@ class Kostal(SmartPlugin):
     """
     ALLOW_MULTIINSTANCE = True
 
-    PLUGIN_VERSION = "1.3.2"
+    PLUGIN_VERSION = "1.3.3"
 
     _key2json = {
-       'operation_status' : 16780032,
-       'dctot_w' : 33556736,
-       'dc1_v' : 33555202,
-       'dc1_a' : 33555201,
-       'dc1_w' : 33555203,
-       'dc2_v' : 33555458,
-       'dc2_a' : 33555457,
-       'dc2_w' : 33555459,
-       'dc3_v' : 33555714,
-       'dc3_a' : 33555713,
-       'dc3_w' : 33555715,
-       'actot_w' : 67109120,
-       'actot_Hz' : 67110400,
-       'actot_cos' : 67110656,
-       'actot_limitation' : 67110144,
-       'ac1_v' : 67109378,
-       'ac1_a' : 67109377,
-       'ac1_w' : 67109379,
-       'ac2_v' : 67109634,
-       'ac2_a' : 67109633,
-       'ac2_w' : 67109635,
-       'ac3_v' : 67109890,
-       'ac3_a' : 67109889,
-       'ac3_w' : 67109891,
-       'yield_day_kwh' : 251658754,
-       'yield_tot_kwh' : 251658753,
-       'operationtime_h' : 251658496
+        'operation_status': 16780032,
+        'dctot_w': 33556736,
+        'dc1_v': 33555202,
+        'dc1_a': 33555201,
+        'dc1_w': 33555203,
+        'dc2_v': 33555458,
+        'dc2_a': 33555457,
+        'dc2_w': 33555459,
+        'dc3_v': 33555714,
+        'dc3_a': 33555713,
+        'dc3_w': 33555715,
+        'actot_w': 67109120,
+        'actot_Hz': 67110400,
+        'actot_cos': 67110656,
+        'actot_limitation': 67110144,
+        'ac1_v': 67109378,
+        'ac1_a': 67109377,
+        'ac1_w': 67109379,
+        'ac2_v': 67109634,
+        'ac2_a': 67109633,
+        'ac2_w': 67109635,
+        'ac3_v': 67109890,
+        'ac3_a': 67109889,
+        'ac3_w': 67109891,
+        'yield_day_kwh': 251658754,
+        'yield_tot_kwh': 251658753,
+        'operationtime_h': 251658496
     }
     _key2td = {
         'actot_w': 9,
@@ -105,25 +105,19 @@ class Kostal(SmartPlugin):
         'l3_watt': 'ac3_w'
     }
 
-    def __init__(self, sh, ip, user="pvserver", passwd="pvwr",cycle=300, datastructure="html"):
-        self._sh = sh
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, sh, **kwargs):
+        self.ip = self.get_parameter_value('ip')
+        self.user = self.get_parameter_value('user')
+        self.passwd = self.get_parameter_value('passwd')
+        self.cycle = self.get_parameter_value('cycle')
+        self.datastructure_param = self.get_parameter_value('datastructure')
         self.logger.info('Init Kostal plugin')
-        self.user = user
-        self.passwd = passwd
-        self.cycle = int(cycle)
         self._items = {}
-        if Utils.is_ip(ip):
-            self.ip = ip
-        else:
-            self.logger.error(str(ip) + " is not a valid IP")
-        if datastructure == "html":
+        if self.datastructure_param == "html":
             self._keytable = self._key2td
-            #self.datastructure = "html"
             self.datastructure = self._html
         else:
             self._keytable = self._key2json
-            #self.datastructure = "json"
             self.datastructure = self._json
 
     def run(self):
@@ -132,13 +126,14 @@ class Kostal(SmartPlugin):
         """
         self.logger.debug("run method Kostal called")
         self.alive = True
-        self._sh.scheduler.add('Kostal', self._refresh, cycle=self.cycle)
+        self.scheduler_add('Kostal', self._refresh, cycle=self.cycle)
 
     def stop(self):
         """
         Stop method for the plugin
         """
         self.logger.debug("stop method Kostal called")
+        self.scheduler_remove('Kostal')
         self.alive = False
 
     def parse_item(self, item):
@@ -155,21 +150,8 @@ class Kostal(SmartPlugin):
             self._items[setting] = item
             return self.update_item
 
-    def parse_logic(self, logic):
-        pass
-
-    def update_item(self, item, caller=None, source=None, dest=None):
-        """
-        Write items values
-        :param item: item to be updated towards the plugin
-        :param caller: if given it represents the callers name
-        :param source: if given it represents the source
-        :param dest: if given it represents the dest
-        """
-        pass
-
     def _html(self):
-        #HTML-OLD-Coding
+        # HTML-OLD-Coding
         try:
             data = self._sh.tools.fetch_url(
                 'http://' + self.ip + '/', self.user, self.passwd, timeout=2).decode()
@@ -189,18 +171,18 @@ class Kostal(SmartPlugin):
             return
 
     def _json(self):
-        #NEW-JSON-Coding
+        # NEW-JSON-Coding
         try:
             # generate url; fetching only needed elements
             kostalurl = 'http://' + self.ip + '/api/dxs.json?sessionid=SmartHomeNG'
             for item in self._items:
                 value = self._keytable[item]
-                kostalurl +='&dxsEntries=' + str(value)
+                kostalurl += '&dxsEntries=' + str(value)
             with urllib.request.urlopen(kostalurl) as url:
                 data = json.loads(url.read().decode())
                 for values in data['dxsEntries']:
                     kostal_key = str(list(self._keytable.keys())[list(self._keytable.values()).index(values['dxsId'])])
-                    value=values['value']
+                    value = values['value']
                     if kostal_key == "operation_status":
                         self.logger.debug("operation_status" + str(value))
                         if str(value) == "0":
@@ -214,16 +196,18 @@ class Kostal(SmartPlugin):
                         else:
                             value = "unknown"
                     if kostal_key == "yield_day_kwh":
-                            value = value / 1000
+                        value = float(value) / 1000
                     if kostal_key in self._items:
                         self._items[kostal_key](value)
-                        self.logger.debug("items[" + str(kostal_key) +"] = " +str(value))
+                        self.logger.debug("items[" + str(kostal_key) + "] = " + str(value))
         except Exception as e:
             self.logger.error(
                 'could not retrieve data from {0}: {1}'.format(self.ip, e))
             return
 
     def _refresh(self):
+        if not self.alive:
+            return
         start = time.time()
         # run the working methods
         self.datastructure()

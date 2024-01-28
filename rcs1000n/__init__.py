@@ -117,11 +117,11 @@ class RCS1000N(SmartPlugin):
 				try:
 					# create Brennenstuhl RCS1000N object 
 					obj = cRcSocketSwitch.RCS1000N(self._gpio)
+				except Exception as err:
+					self.logger.error('Error: during instantiation of object: {}'.format(err))
+				else:
 					# prepare and send values
 					obj.send(*values)
-				except Exception as err:
-					self.logger.error('Error: during instantiation of object or during send to device: {}'.format(err))
-				else:
 					self.logger.info('Info: setting Device {} with SystemCode {} to {}'.format(ButtonCode, SystemCode, value))
 				finally:
 					# give the transmitter time to complete sending of the command (but not more than 10s)

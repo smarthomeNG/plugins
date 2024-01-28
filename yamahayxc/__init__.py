@@ -320,7 +320,8 @@ class YamahaYXC(SmartPlugin):
         if state is None:
             return
         state2 = self._submit_payload(yamaha_host, self._build_cmd_get_play_state())
-        state.update(state2)
+        state2.update(state)
+        state = state2
 
         # retrieving only single items from device is not possible
         # so just get everything and update sh.py items

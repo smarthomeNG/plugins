@@ -109,7 +109,6 @@ class OpenWeatherMap(SmartPlugin):
         self._units = self.get_parameter_value('units')
         self._api_version = self.get_parameter_value('api_version')
 
-
         softfail_mode_precipitation = self.get_parameter_value('softfail_precipitation')
         softfail_mode_wind_gust = self.get_parameter_value('softfail_wind_gust')
 

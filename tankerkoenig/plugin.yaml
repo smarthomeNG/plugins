@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins_doc/config/tankerkoenig.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/938924-benzinpreis-plugin
     keywords: petrol station, fuel prices, petrol prices
-    version: 2.0.1                 # Plugin version
+    version: 2.0.4                 # Plugin version
     sh_minversion: 1.9             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion:                 # minimum Python version to use for this plugin

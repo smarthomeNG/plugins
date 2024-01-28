@@ -27,64 +27,90 @@ from . import StateEngineDefaults
 
 class SeLogger:
 
-    # Set global log level
-    # loglevel: current loglevel
-    @staticmethod
-    def set_loglevel(loglevel):
-        try:
-            SeLogger.__loglevel = int(loglevel)
-        except ValueError:
-            SeLogger.__loglevel = 0
-            logger = StateEngineDefaults.logger
-            logger.error("Loglevel has to be an int number!")
+    @property
+    def default_log_level(self):
+        return SeLogger.__default_log_level.get()
 
-    # Set log directory
-    # logdirectory: Target directory for StateEngine log files
+    @default_log_level.setter
+    def default_log_level(self, value):
+        SeLogger.__default_log_level = value
+
+    @property
+    def startup_log_level(self):
+        return SeLogger.__startup_log_level.get()
+
+    @startup_log_level.setter
+    def startup_log_level(self, value):
+        SeLogger.__startup_log_level = value
+
+    @property
+    def log_maxage(self):
+        return SeLogger.__log_maxage.get()
+
+    @log_maxage.setter
+    def log_maxage(self, value):
+        try:
+            SeLogger.__log_maxage = int(value)
+        except ValueError:
+            SeLogger.__log_maxage = 0
+            logger = StateEngineDefaults.logger
+            logger.error("The maximum age of the log files has to be an int number.")
+
+    @property
+    def log_level_as_num(self):
+        return self.__log_level_as_num
+
+    @log_level_as_num.setter
+    def log_level_as_num(self, value):
+        self.__log_level_as_num = value
+
+    @property
+    def name(self):
+        return self.__name
+
+    @property
+    def log_directory(self):
+        return SeLogger.__log_directory
+
+    @log_directory.setter
+    def log_directory(self, value):
+        SeLogger.__log_directory = value
+
     @staticmethod
-    def set_logdirectory(logdirectory):
-        SeLogger.__logdirectory = logdirectory
+    def init(sh):
+        SeLogger.__sh = sh
 
     # Create log directory
     # logdirectory: Target directory for StateEngine log files
     @staticmethod
-    def create_logdirectory(base, log_directory):
+    def manage_logdirectory(base, log_directory, create=True):
         if log_directory[0] != "/":
             if base[-1] != "/":
                 base += "/"
             log_directory = base + log_directory
-        if not os.path.exists(log_directory):
+        if create is True and not os.path.isdir(log_directory):
             os.makedirs(log_directory)
         return log_directory
 
-    # Set max age for log files
-    # logmaxage: Maximum age for log files (days)
-    @staticmethod
-    def set_logmaxage(logmaxage):
-        try:
-            SeLogger.__logmaxage = int(logmaxage)
-        except ValueError:
-            SeLogger.__logmaxage = 0
-            logger = StateEngineDefaults.logger
-            logger.error("The maximum age of the log files has to be an int number.")
 
     # Remove old log files (by scheduler)
     @staticmethod
     def remove_old_logfiles():
-        if SeLogger.__logmaxage == 0:
+        if SeLogger.log_maxage.get() == 0 or not os.path.isdir(str(SeLogger.log_directory)):
             return
         logger = StateEngineDefaults.logger
-        logger.info("Removing logfiles older than {0} days".format(SeLogger.__logmaxage))
+        logger.info("Removing logfiles older than {0} days".format(SeLogger.log_maxage))
         count_success = 0
         count_error = 0
         now = datetime.datetime.now()
-        for file in os.listdir(SeLogger.__logdirectory):
+        for file in os.listdir(str(SeLogger.log_directory)):
             if file.endswith(".log"):
                 try:
-                    abs_file = os.path.join(SeLogger.__logdirectory, file)
+                    abs_file = os.path.join(str(SeLogger.log_directory), file)
                     stat = os.stat(abs_file)
                     mtime = datetime.datetime.fromtimestamp(stat.st_mtime)
                     age_in_days = (now - mtime).total_seconds() / 86400.0
-                    if age_in_days > SeLogger.__logmaxage:
+                    if age_in_days > SeLogger.log_maxage.get():
                         os.unlink(abs_file)
                         count_success += 1
                 except Exception as ex:
@@ -96,38 +122,33 @@ class SeLogger:
     # Return SeLogger instance for given item
     # item: item for which the detailed log is
     @staticmethod
-    def create(item):
-        return SeLogger(item)
+    def create(item, manual=False):
+        return SeLogger(item, manual)
 
     # Constructor
     # item: item for which the detailed log is (used as part of file name)
-    def __init__(self, item):
-        self.logger = StateEngineDefaults.se_logger
+    def __init__(self, item, manual=False):
+        self.logger = logging.getLogger('stateengine.{}'.format(item.property.path))
+        self.__name = 'stateengine.{}'.format(item.property.path)
         self.__section = item.property.path.replace(".", "_").replace("/", "")
         self.__indentlevel = 0
-        self.__loglevel = StateEngineDefaults.log_level
-        self.__logmaxage = StateEngineDefaults.log_maxage
+        if manual:
+            self.__log_level_as_num = 2
+        else:
+            self.__log_level_as_num = 0
+        self.__logmaxage = None
         self.__date = None
         self.__logerror = False
         self.__filename = ""
         self.update_logfile()
 
-    # override log level for specific items by using se_log_level attribute
-    def override_loglevel(self, loglevel, item=None):
-        self.__loglevel = loglevel.get()
-        if self.__loglevel != StateEngineDefaults.log_level:
-            self.logger.info("Loglevel for item {0} got individually set to {1}.".format(item.property.path, self.__loglevel))
-
-    # get current log level of abitem
-    def get_loglevel(self):
-        return self.__loglevel
 
     # Update name logfile if required
     def update_logfile(self):
         if self.__date == datetime.datetime.today() and self.__filename is not None:
             return
         self.__date = str(datetime.date.today())
-        self.__filename = str(SeLogger.__logdirectory + self.__date + '-' + self.__section + ".log")
+        self.__filename = f"{SeLogger.log_directory}{self.__date}-{self.__section}.log"
 
     # Increase indentation level
     # by: number of levels to increase
@@ -147,9 +168,10 @@ class SeLogger:
     # text: text to log
     def log(self, level, text, *args):
         # Section given: Check level
-        if level <= self.__loglevel:
+        if level <= self.__log_level_as_num:
             indent = "\t" * self.__indentlevel
-            text = text.format(*args)
+            if args:
+                text = text.format(*args)
             logtext = "{0}{1} {2}\r\n".format(datetime.datetime.now(), indent, text)
             try:
                 with open(self.__filename, mode="a", encoding="utf-8") as f:
@@ -175,7 +197,9 @@ class SeLogger:
         self.log(1, text, *args)
         indent = "\t" * self.__indentlevel
         text = '{}{}'.format(indent, text)
-        self.logger.info(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.info(text)
 
     # log with level=debug
     # text: text to log
@@ -184,7 +208,9 @@ class SeLogger:
         self.log(2, text, *args)
         indent = "\t" * self.__indentlevel
         text = '{}{}'.format(indent, text)
-        self.logger.debug(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.debug(text)
 
     # log with level=develop
     # text: text to log
@@ -193,7 +219,9 @@ class SeLogger:
         self.log(3, "DEV: " + text, *args)
         indent = "\t" * self.__indentlevel
         text = '{}{}'.format(indent, text)
-        self.logger.log(StateEngineDefaults.VERBOSE, text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.log(StateEngineDefaults.VERBOSE, text)
 
     # log warning (always to main smarthome.py log)
     # text: text to log
@@ -203,7 +231,9 @@ class SeLogger:
         self.log(1, "WARNING: " + text, *args)
         indent = "\t" * self.__indentlevel
         text = '{}{}'.format(indent, text)
-        self.logger.warning(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.warning(text)
 
     # log error (always to main smarthome.py log)
     # text: text to log
@@ -213,7 +243,9 @@ class SeLogger:
         self.log(1, "ERROR: " + text, *args)
         indent = "\t" * self.__indentlevel
         text = '{}{}'.format(indent, text)
-        self.logger.error(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.error(text)
 
     # log exception (always to main smarthome.py log'
     # msg: message to log
@@ -267,27 +299,35 @@ class SeLoggerDummy:
     # @param text text to log
     # @param *args parameters for text
     def info(self, text, *args):
-        self.logger.info(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.info(text)
 
     # log with level=debug (always to main smarthomeNG log)
     # text: text to log
     # *args: parameters for text
     def debug(self, text, *args):
-        self.logger.debug(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.debug(text)
 
     # log warning (always to main smarthomeNG log)
     # text: text to log
     # *args: parameters for text
     # noinspection PyMethodMayBeStatic
     def warning(self, text, *args):
-        self.logger.warning(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.warning(text)
 
     # log error (always to main smarthomeNG log)
     # text: text to log
     # *args: parameters for text
     # noinspection PyMethodMayBeStatic
     def error(self, text, *args):
-        self.logger.error(text.format(*args))
+        if args:
+            text = text.format(*args)
+        self.logger.error(text)
 
     # log exception (always to main smarthomeNG log)
     # msg: message to log

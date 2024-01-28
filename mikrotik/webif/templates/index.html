@@ -1,0 +1,490 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 5000 %}
+
+<!-- set update_params if you need to provide additional parameters for the auto-update function-->
+{% set update_params = item_id %}
+
+<!-- if you don't need any buttons in the header, disable them completely-->
+{% set buttons = true %}
+
+<!-- if you don't need any auto-refresh elements in the header, disable them-->
+{% set autorefresh_buttons = true %}
+
+<!-- if you don't need the reload_button in the header, disable it-->
+{% set reload_button = true %}
+
+<!-- if you don't need the close in the header, disable it-->
+{% set close_button = false %}
+
+<!-- for some situations it might be useful to know the number of datatable rows shown on the current page.
+Activate that function if needed, otherwise just remove the line to increase performance -->
+{% set row_count = true %}
+
+<!-- if new values should be retrieved using automatic page update right in the beginning and on page changes -->
+{% set initial_update = false %}
+
+<!--
+	Additional styles go into this block. Examples are for datatables
+-->
+{% block pluginstyles %}
+<style>
+	table th.value {
+		width: 100px;
+	}
+	/*
+	These are used for highligt effect in web interface when a value changes. If you don't want to overwrite the
+	default color, you can remove the entries here as the classes are already defined in smarthomeng.css
+	*/
+	.shng_effect_highlight {
+		background-color: #FFFFE0;
+	}
+	.shng_effect_standard {
+		background-color: none;
+	}
+
+	.clickable {
+      cursor: pointer;
+    }
+
+	.editable-cell {
+		position: relative;
+	}
+
+	.editable-value {
+		display: inline-block;
+	}
+
+	.editable-buttons {
+		position: absolute;
+		top: 0;
+		right: 0;
+	}
+
+	.editing .editable-value {
+		display: none;
+	}
+
+	.editing .editable-buttons {
+		display: block;
+	}
+
+</style>
+{% endblock pluginstyles %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		/*
+		Parameters for shngInsertText:
+		0: mandatory, ID of the HTML element, e.g. the table cell
+		1: mandatory, Value to be written - taken from the objResponse dict
+		2: optional, If element of parameter 0 is in a (data)table, the ID of the table has to be put here
+		3: optional, If you want a visual highlight effect when a value changes, provide the duration in seconds.
+		shngInsertText (item+'_value', objResponse[item]['value'], 'maintable', 5);
+		*/
+		if (dataSet === null) {
+			var objResponse = JSON.parse(response);
+			// comment: "WiFI AP trunk"defaultname: "ether1"disabled: "false"id: 1name: "ether1"poe: "auto-on"pvid: "1"running: "true"speed: "1Gbps"
+			objResponse.forEach(function (interface) {
+				// Port enabled / disabled
+				if (interface.disabled == 'true') {
+					shngInsertText(
+						interface.name + '_disabled',
+						'<i class="fas fa-toggle-off fa-lg" style="color:red;" onclick="setPortActiveState(\'' + interface.name + '\', true);"></i>',
+						'interfacestable',
+						5
+					);
+				} else {
+					shngInsertText(
+						interface.name + '_disabled',
+						'<i class="fas fa-toggle-on fa-lg" style="color: green;" onclick="setPortActiveState(\'' + interface.name + '\', false);"></i>',
+						'interfacestable',
+						5
+					);
+				}
+
+				// POE of port enabled / disabled
+				if (interface.poe == 'auto-on') {
+					shngInsertText(
+						interface.name + '_poe',
+						'<i class="fas fa-power-off" style="color: green;" onclick="setPortPOEState(\'' + interface.name + '\', false);"></i>',
+						'interfacestable',
+						5
+					);
+				} else if (interface.poe == 'off') {
+					shngInsertText(
+						interface.name + '_poe',
+						'<i class="fas fa-power-off" style="color:red;" onclick="setPortPOEState(\'' + interface.name + '\', true);"></i>',
+						'interfacestable',
+						5
+					);
+				} else {
+					shngInsertText(interface.name + '_poe', interface.poe, 'interfacestable', 5);
+				}
+
+				// Port currently active / inactive
+				if (interface.running == 'true') {
+					shngInsertText(interface.name + '_running','<i class="fas fa-play fa-rotate-270" style="color: green;"></i>','interfacestable', 5);
+				} else {
+					shngInsertText(interface.name + '_running','<i class="fas fa-play fa-rotate-90" style="color: red;"></i>','interfacestable', 5);
+				}
+
+			});
+		}
+	}
+
+	function setPortActiveState(port, status) {
+		console.log('Changing active state of port ' + port + ' to ' + status);
+		$.ajax({
+			type: 'POST',
+			url: 'set_port_enabled',
+			data: {port, status},
+			success: function(result) {
+				if(result == 'OK') {
+					if (status === false) {
+						shngInsertText(
+							port + '_disabled',
+							'<i class="fas fa-toggle-off fa-lg" style="color:red;" onclick="setPortActiveState(\'' + port + '\', true);"></i>',
+							'interfacestable',
+							5
+						);
+					} else {
+						shngInsertText(
+							port + '_disabled',
+							'<i class="fas fa-toggle-on fa-lg" style="color: green;" onclick="setPortActiveState(\'' + port + '\', false);"></i>',
+							'interfacestable',
+							5
+						);
+					}
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error(error);
+			}
+			});
+	}
+
+	function setPortPOEState(port, status) {
+		console.log('Changing POE state of port ' + port + ' to ' + status);
+		$.ajax({
+			type: 'POST',
+			url: 'set_port_poe',
+			data: {port, status},
+			success: function(result) {
+				if(result == 'OK') {
+					if (status === true) {
+						shngInsertText(
+							port + '_poe',
+							'<i class="fas fa-power-off" style="color: green;" onclick="setPortPOEState(\'' + port + '\', false);"></i>',
+							'interfacestable',
+							5
+						);
+					} else {
+						shngInsertText(
+							port + '_poe',
+							'<i class="fas fa-power-off" style="color:red;" onclick="setPortPOEState(\'' + port + '\', true);"></i>',
+							'interfacestable',
+							5
+						);
+					}
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error(error);
+			}
+			});
+	}
+
+	// Attach click event listeners to the save and cancel buttons
+	function saveComment(port) {
+		var cell = $(this).closest('.editable-cell');
+		var value = cell.find('.editable-value').text().trim();
+		console.log('SAVE');
+		// Send AJAX request to save the value...
+	}
+
+	function cancelComment(port) {
+		var cell = $(this).closest('.editable-cell');
+		var value = cell.data('original-value');
+		cell.find('.editable-value').text(value);
+		cell.removeClass('editing');
+		console.log('CANCEL');
+	}
+
+	// Attach event listener to the editable cell to enable editing
+	function editComment(port) {
+		console.log('EDITING');
+		var cell = $(this);
+		var value = cell.find('.editable-value').text().trim();
+		cell.data('original-value', value);
+		cell.addClass('editing');
+	}
+
+</script>
+<!--
+	This part is used to implement datatable JS for the tables. It allows resorting tables by column, etc.
+	For each table you have to implement the code part $('#<table_id>').DataTable(..); where the <table_id> matches the id of a table tag
+-->
+<script>
+    $(document).ready( function () {
+		/*
+		loading defaults from /modules/http/webif/gstatic/datatables/datatables.defaults.js
+		You can copy that file, put it in your plugin directory, rename the "bind" function and
+		trigger that function here instead of datatables_defaults if you want to change the behaviour.
+		Of course you can also overwrite defaults by putting the option declarations in {} below.
+		*/
+		$(window).trigger('datatables_defaults');
+		{% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+		if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+			resize = true;
+			webif_pagelength = -1;
+			console.log('Activating automatic table resize ' + webif_pagelength);
+		}
+		else {
+			resize = false;
+		}
+		try {
+			maintable = $('#maintable').DataTable( {
+				columnDefs: [
+					{
+						targets: 1, // Id column
+						className: "value"
+					},
+					{
+						targets: [2],
+						className: "value"
+					}
+				].concat($.fn.dataTable.defaults.columnDefs),
+				pageLength: webif_pagelength,
+				pageResize: resize
+			});
+
+			interfacestable = $('#interfacestable').DataTable( {
+				columnDefs: [
+					{
+						targets: 1, // Id column
+						width: "50px"
+					},
+					{
+						targets: [8, 9], // Enabled and POE columns
+						className: 'clickable'
+					}
+				].concat($.fn.dataTable.defaults.columnDefs),
+				pageLength: webif_pagelength,
+				pageResize: resize
+			});
+		}
+		catch (e) {
+			console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
+		}
+	});
+</script>
+<!--
+This is an example on how to update the page refresh method. You can set the dataSet, update interval, special parameters or (de)activate the auto refresh
+In the example the update is deactivated on the 12th of December 2022 (what might make no sense at all)
+<script>
+  var today = new Date();
+  var today_date = String(today.getDate()) + String(today.getMonth() + 1) + today.getFullYear();
+  let test_date = "12122022";
+  if (today_date === test_date)
+      window.refresh.update({dataSet:'test', update_params:'specialitem', update_interval: 2000, update_active:false});
+  </script>
+-->
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<!-- add a style="min-width:..px;" if you want to define a minimum width for responsive behaviour -->
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Host') }}</strong></td>
+			<td class="py-1">{{ p._device.host }}:{{ p._device.port }} {% if p._device.use_ssl == True %}(TLS){% endif %}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Model') }}</strong></td>
+			<td class="py-1">{{ p._model }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Identity') }}</strong></td>
+			<td class="py-1">{{ p._identity }}</td>
+			<td></td>
+			<td class="py-1"><strong>{{ _('Serial number') }}</strong></td>
+			<td class="py-1">{{ p._serial }}</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('API username') }}</strong></td>
+			<td class="py-1">{{ p._device.username }}</td>
+			<td></td>
+			<td class="py-1"><strong>{{ _('RouterOS version') }}</strong></td>
+			<td class="py-1">{{ p._osversion }}</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+	<div>
+		<button id="btn1" class="btn btn-shng btn-sm" name="scan" onclick="shngPost('', {learn: 'on'})"><i class="fas fa-question"></i>&nbsp;&nbsp;&nbsp;{{ _('nach Devices suchen') }}&nbsp;</button>
+	</div>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 6)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 1 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ _('Items') ~ "</strong> (" ~ item_count ~ ")" %}
+{% block bodytab1 %}
+
+	<!-- set id accordingly -->
+	<table id="maintable" class="dataTableAdditional">
+		<thead>
+			<tr>
+        <!-- You HAVE to add an empty th here for correct implementation of the responsive plugin -->
+        <th></th>
+			  <th>{{ _('Item') }}</th>
+			  <th class="value">{{ _('Port') }}</th>
+			  <th class="value">{{ _('Parameter') }}</th>
+			  <th class="value">{{ _('Wert') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for item in p._items %}
+				<tr>
+          <!-- You HAVE to add an empty td here for correct implementation of the responsive plugin -->
+          			<td></td>
+
+				  	<td class="py-1" id="{{ item._path }}">{{ item._path }}</td>
+					<td class="py-1" id="{{ item.conf.port }}">{{ p.get_iattr_value(item.conf, 'mikrotik_port') }}</td>
+					<td class="py-1" id="{{ item.conf.function }}">{{ p.get_iattr_value(item.conf, 'mikrotik_parameter') }}</td>
+				  	<td class="py-1" id="{{ item._path }}_value">
+						{% if p.get_iattr_value(item.conf, 'mikrotik_parameter') == 'active' %}
+							{% if item() == True %}
+								<i class="fas fa-play fa-rotate-270" style="color: green;"></i>
+							{% else %}
+								<i class="fas fa-play fa-rotate-90" style="color: red;"></i>
+							{% endif %}
+						{% elif p.get_iattr_value(item.conf, 'mikrotik_parameter') == 'enabled' %}
+							{% if item() == True %}
+								<i class="fas fa-toggle-on fa-lg" style="color: green;"></i>
+							{% else %}
+								<i class="fas fa-toggle-off fa-lg" style="color:red;"></i>
+							{% endif %}
+						{% elif p.get_iattr_value(item.conf, 'mikrotik_parameter') == 'poe' %}
+							{% if item() == True %}
+								<i class="fas fa-power-off" style="color: green;"></i>
+							{% else %}
+								<i class="fas fa-power-off" style="color:red;"></i>
+							{% endif %}
+						{% else %}
+							{{ item() }}
+						{% endif %}
+					</td>
+
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+{% endblock bodytab1 %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>" ~ _('Port list') ~ "</strong> (" ~ len(p._interfaces) ~ ")" %}
+{% block bodytab2 %}
+
+	<!-- set id accordingly -->
+	<table id="interfacestable" class="dataTableAdditional">
+		<thead>
+			<tr>
+			<!-- You HAVE to add an empty th here for correct implementation of the responsive plugin -->
+			<th></th>
+				<th>{{ _('Id') }}</th>
+				<th>{{ _('Name') }}</th>
+				<th>{{ _('Default name') }}</th>
+				<th>{{ _('Comment') }}</th>
+				<th>{{ _('Speed') }}</th>
+				<th>{{ _('PVID') }}</th>
+				<th>{{ _('Up') }}</th>
+				<th>{{ _('Enabled') }}</th>
+				<th>{{ _('POE Enabled') }}</th>
+
+			</tr>
+		</thead>
+		<tbody>
+			{% for interface in p._interfaces %}
+				<tr>
+					<!-- You HAVE to add an empty td here for correct implementation of the responsive plugin -->
+					<td></td>
+					<td class="py-1" id="{{ interface.name }}_id">{{ interface.id }}</td>
+					<td class="py-1" id="{{ interface.name }}_name">{{ interface.name }}</td>
+					<td class="py-1" id="{{ interface.name }}_defaultname">{{ interface.defaultname }}</td>
+					<!--<td class="py-1" id="{{ interface.name }}_comment">{{ interface.comment }}</td>-->
+ 					<td class="py-1 editable-cell" id="{{ interface.name }}_comment">
+						<span class="editable-value">{{ interface.comment }}</span>
+<!-- 						<span class="editable-buttons">
+							<button class="btn-save"><i class="fa fa-save"></i></button>
+							<button class="btn-cancel"><i class="fa fa-times"></i></button>
+						</span> -->
+					</td>
+
+					<td class="py-1" id="{{ interface.name }}_speed">{{ interface.speed }}</td>
+					<td class="py-1" id="{{ interface.name }}_pvid">{{ interface.pvid }}</td>
+					<td class="py-1" id="{{ interface.name }}_running">
+						{% if interface.running == 'true' %}
+							<i class="fas fa-play fa-rotate-270" style="color: green;"></i>
+						{% else %}
+							<i class="fas fa-play fa-rotate-90" style="color: red;"></i>
+						{% endif %}
+					</td>
+					<td class="py-1" id="{{ interface.name }}_disabled">
+						{% if interface.disabled == 'false' %}
+							<i class="fas fa-toggle-on fa-lg" style="color: green;" onclick="setPortActiveState('{{ interface.name }}', false);"></i>
+						{% else %}
+							<i class="fas fa-toggle-off fa-lg" style="color:red;" onclick="setPortActiveState('{{ interface.name }}', true);"></i>
+						{% endif %}
+					</td>
+					<td class="py-1" id="{{ interface.name }}_poe">
+						{% if interface.poe == 'auto-on' %}
+							<i class="fas fa-power-off" style="color: green;" onclick="setPortPOEState('{{ interface.name }}', false);"></i>
+						{% elif interface.poe == 'off' %}
+							<i class="fas fa-power-off" style="color:red;" onclick="setPortPOEState('{{ interface.name }}', true);"></i>
+						{% else %}
+							-
+						{% endif %}
+					</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endblock bodytab2 %}

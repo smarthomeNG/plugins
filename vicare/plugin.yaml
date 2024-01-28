@@ -1,0 +1,294 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                  # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zur Anbindung an das Viessmann Backend an SmartHomeNG'
+        en: 'Plugin to connect the Viessmann backend with SmartHomeNG'
+    maintainer: aschwith 
+    tester: 'n/a'
+    state: develop
+    keywords: Viessmann, ViCare, Vitocontrol
+    #documentation: 
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1916122-support-thread-f%C3%BCr-das-viessmann-plugin
+
+    version: 1.9.1                  # Plugin version
+    sh_minversion: 1.9.0            # minimum shNG version to use this plugin
+    #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: True
+    classname: Vicare               # class containing the plugin
+
+parameters:
+
+    clientID:
+        type: str
+        mandatory: True
+        description:
+            de: "Client ID (via Viessmann Developper API Portal generiert)"
+            en: "Client id (generated via Viessmann developper api portal)"
+
+    redirectUrl:
+        type: str
+        mandatory: True
+        description:
+            de: "Redirect Url (via Viessmann Developper API Portal angelegt)"
+            en: "Redirect uri (defined via Viessmann Developper API Portal)"
+
+    accessToken:
+        type: str
+        gui_type: readonly 
+        description:
+            de: "Token (beim Oauth2 Verfahren generiert)"
+            en: "Token (generated during the Oauth2 procedure)"
+
+    refreshToken:
+        type: str
+        gui_type: readonly 
+        description:
+            de: "Refresh token (beim Oauth2 Verfahren generiert)"
+            en: "Refresh token (generated during the Oauth2 procedure)"
+
+    
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    vicare_tx_key:
+        type: str
+        description:
+            de: 'Key für das Senden von Kommandos an das Viessmann Backend'
+            en: 'Key for sending commands to the Viessmann backend'
+        valid_list:
+        - 'heating.circuits.1.operating.programs.normal'
+        - 'heating.circuits.1.operating.programs.reduced'
+        - 'heating.dhw.temperature.main'
+        - 'heating.dhw.operating.modes.active'
+        - 'heating.circuits.1.operating.modes.active'
+
+    vicare_tx_path:
+        type: list
+        description:
+            de: 'Array mit Einträgen zum Pfad des Sendekommandos im Feature command'
+            en: 'Array of entries to find command in json response'
+
+    vicare_rx_key:
+        type: str
+        description:
+            de: 'Key für den Empfang von Statusinformationen aus dem Viessmann Backend'
+            en: 'Key for receiving status informations from the Viessmann backend'
+        valid_list:
+        - 'boilerSerial'
+        - 'onlineStatus'
+        - 'heating.circuits.1.sensors.temperature.supply'
+        - 'heating.circuits.1.operating.programs.active'
+        - 'heating.circuits.1.operating.modes.heating'
+        - 'heating.circuits.1.operating.modes.active'
+        - 'heating.gas.consumption.total'
+        - 'heating.circuits.1.operating.programs.comfort'
+        - 'heating.circuits.1.operating.programs.normal'
+        - 'heating.circuits.1.operating.programs.reduced'
+        - 'heating.circuits.1.circulation.pump'
+        - 'heating.operating.programs.holiday'
+        - 'heating.dhw'
+        - 'heating.dhw.temperature.main'
+        - 'heating.dhw.oneTimeCharge'
+        - 'heating.dhw.operating.modes.active'
+        - 'heating.dhw.sensors.temperature.dhwCylinder'
+        - 'heating.dhw.sensors.temperature.hotWaterStorage'
+        - 'heating.boiler.sensors.temperature.commonSupply'
+        - 'heating.boiler.temperature'
+        - 'heating.sensors.temperature.outside'
+        - 'heating.power.consumption.summary.heating'
+        - 'heating.power.consumption.total'
+        - 'device.messages.errors.raw'
+
+    vicare_path:
+        type: list
+        description:
+            de: 'Array mit Pfad zur Eigenschaft in Feature property'
+            en: 'Array of entries with path to find respective property in json response'
+
+
+plugin_functions: NONE 
+
+logic_parameters: NONE
+
+item_structs:
+    heizung:
+        serial:
+            name: serial number
+            type: str
+            vicare_rx_key: boilerSerial
+            visu_acl: ro
+
+        online_status:
+            name: online status
+            type: bool
+            vicare_rx_key: onlineStatus
+            visu_acl: ro
+            initial_value: False
+
+        heating_set_temperature_comfort:
+            name: set temperature comfort
+            type: num
+            vicare_rx_key: heating.circuits.1.operating.programs.comfort
+            vicare_path: ['temperature','value']
+            visu_acl: ro
+
+        heating_set_temperature_normal:
+            name: set temperature normal
+            type: num
+            vicare_rx_key: heating.circuits.1.operating.programs.normal
+            vicare_path: ['temperature','value']
+            vicare_tx_key: heating.circuits.1.operating.programs.normal
+            vicare_tx_path: ['setTemperature','params','targetTemperature']
+            visu_acl: rw
+
+        heating_set_temperature_reduced:
+            name: heating set temperature reduced
+            type: num
+            vicare_rx_key: heating.circuits.1.operating.programs.reduced
+            vicare_path: ['temperature','value']
+            vicare_tx_key: heating.circuits.1.operating.programs.reduced
+            vicare_tx_path: ['setTemperature','params','targetTemperature']
+            visu_acl: rw
+
+        heating_ruecklauf_temperature:
+            name: Heizung Rücklauftemperatur
+            type: num
+            vicare_rx_key: heating.circuits.1.sensors.temperature.supply
+            vicare_path: ['value','value']
+            visu_acl: ro
+      
+        heating_mode:
+            name: Heizmodus
+            type: bool
+            vicare_rx_key: heating.circuits.1.operating.modes.heating
+            vicare_path: ['active','value']
+            visu_acl: ro
+
+        heating_circulation_pump:
+            name: Heizmodus, z.B. on
+            type: str
+            vicare_rx_key: heating.circuits.1.circulation.pump
+            vicare_path: ['status','value']
+            visu_acl: ro
+
+        heating_mode_str:
+            name: Heizmodus, (heating or standby)
+            type: str
+            vicare_rx_key: heating.circuits.1.operating.modes.active
+            vicare_path: ['value','value']
+            vicare_tx_key: heating.circuits.1.operating.modes.active
+            vicare_tx_path: ['setMode','params', 'mode']
+            visu_acl: ro
+
+        heating_program:
+            name: Heizprogramm, z.B. holiday, normal
+            type: str
+            vicare_rx_key: heating.circuits.1.operating.programs.active
+            vicare_path: ['value','value']
+            visu_acl: ro
+
+        hw_mode:
+            name: Warmwasser Modus (balanced or off)
+            type: str
+            vicare_rx_key: heating.dhw.operating.modes.active
+            vicare_path: ['value','value']
+            vicare_tx_key: heating.dhw.operating.modes.active
+            vicare_tx_path: ['setMode','params', 'mode']
+            visu_acl: ro
+
+        hw_active:
+            name: Warmwasser Aktiv
+            type: bool
+            vicare_rx_key: heating.dhw
+            vicare_path: ['active','value']
+            visu_acl: ro
+
+        hw_status:
+            name: Warmwasser Status
+            type: str
+            vicare_rx_key: heating.dhw
+            vicare_path: ['status','value']
+            visu_acl: ro
+
+        hw_set_temperature:
+            name: Warmwasser Solltemperatur normal
+            type: num
+            vicare_rx_key: heating.dhw.temperature.main
+            vicare_path: ['value','value']
+            vicare_tx_key: heating.dhw.temperature.main
+            vicare_tx_path: ['setTargetTemperature','params','temperature']
+            visu_acl: rw
+
+        hw_einmalaufladung:
+            name: Heisswasser Einmalaufladung
+            type: bool
+            vicare_rx_key: heating.dhw.oneTimeCharge
+            vicare_path: ['active','value']
+            visu_acl: ro
+
+        sensor_hw_cylinder:
+            name: Sensor Warmwasser Zylinder, Celsius
+            type: num
+            vicare_rx_key: heating.dhw.sensors.temperature.dhwCylinder
+            vicare_path: ['value','value']
+            visu_acl: ro
+
+        sensor_hw_storage:
+            name: Sensor Warmwasser Storage, Celsius
+            type: num
+            vicare_rx_key: heating.dhw.sensors.temperature.hotWaterStorage
+            vicare_path: ['value','value']
+            visu_acl: ro
+
+        sensor_boiler_common_supply:
+            name: Sensor boiler common supply, Celsius
+            type: num
+            vicare_rx_key: heating.boiler.sensors.temperature.commonSupply
+            vicare_path: ['value','value']
+            visu_acl: ro
+
+        heating_boiler_temperature:
+            name: Heizung Boiler Temperatur, Celsius
+            type: num
+            vicare_rx_key: heating.boiler.temperature
+            vicare_path: ['value','value']
+            visu_acl: ro
+
+        sensor_outside:
+            name: Außensensor, Celsius
+            type: num
+            vicare_rx_key: heating.sensors.temperature.outside
+            vicare_path: ['value','value']
+            visu_acl: ro
+
+        gas_consumption_year:
+            name: Gasverbrauch, Jahr
+            type: num
+            vicare_rx_key: heating.gas.consumption.total
+            vicare_path: ['year','value', 0]
+            visu_acl: ro
+
+        heating_power_consumption_year:
+            name: Stromverbrauch Heizung in kWh, Jahr
+            type: num
+            vicare_rx_key: heating.power.consumption.summary.heating
+            vicare_path: ['currentYear','value']
+            visu_acl: ro
+
+        heating_power_consumption_total_year:
+            name: Stromverbrauch Heizung Warmwasser in kWh, Jahr
+            type: num
+            vicare_rx_key: heating.power.consumption.total
+            vicare_path: ['year','value', 0]
+            visu_acl: ro
+
+        device_error_messages:
+            name: Array Fehlermeldungen
+            type: list
+            vicare_rx_key: device.messages.errors.raw
+            vicare_path: ['entries','value']
+            visu_acl: ro
+

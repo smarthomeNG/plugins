@@ -1,14 +1,8 @@
-{% extends "base.html" %}
+{% extends "base_plugin.html" %}
 
 {% set logo_frame = false %}
 
 {% block pluginscripts %}
-<!-- scripts here -->
-{% endblock pluginscripts %}
-
-
-{% block content -%}
-
 <script>
 var te_python;
 var cmPython;
@@ -37,28 +31,48 @@ function getexecution() {
     console.log('Execution of code is done');
 };
 
-function get_filelist() {
-    console.log("getting list of files ...");
+function get_filelist(order) {
+    console.log("getting list of files with order " + order);
     $.get('get_filelist', {}, function(data){
-		$('#filelist').empty();
-		var lines;
-		lines = data.split(/\r\n|\n\r|\n|\r/);
-		for (line in lines) {
-			$('#filelist').append(new Option(lines[line], lines[line]));
-		};
-		var size;
-		if (max_script_entries == 0) { size = 0; }
-		else if (lines.length > max_script_entries) { size = max_script_entries; }
-		else { size = lines.length; };
-		console.log("Size: ",size);
-		$('#filelist').attr('size',size);
-        console.log('Data:'+data);
+  		$('#filelist').empty();
+  		var lines;
+      data = JSON.parse(data);
+      if (order == 'alpha-asc')
+  		  lines = data.sort();
+      else if (order == 'alpha-desc')
+  		  lines = data.sort().reverse();
+      else if (order == 'time-desc')
+  		  lines = data.reverse();
+      else
+        lines = data;
+      for (line in lines) {
+        $('#filelist').append(new Option(lines[line], lines[line]));
+      };
+      $('#filelist > option').each(function(){
+          if ($(this).attr('value').indexOf('examples/') == 0)
+            $(this).addClass('example_file');
+      });
+  		var size;
+  		if (max_script_entries == 0) { size = 0; }
+  		else if (lines.length > max_script_entries) { size = max_script_entries; }
+  		else { size = lines.length; };
+      console.log("Size: " + size);
+      console.log('Data: ' + data);
+      $('#filelist').attr('size',size);
     });
 };
 
 function selectFile(selectObject) {
 	var value = selectObject.value;
 	$('#savefilename').val(value);
+  const del_button = document.querySelector('#deletefile');
+  const load_button = document.querySelector('#loadfilename');
+  load_button.removeAttribute("disabled");
+  if (value.startsWith("examples/"))
+    del_button.setAttribute("disabled", "disabled");
+  else
+    del_button.removeAttribute("disabled");
+
 	console.log("selected ",value);
 };
 
@@ -87,7 +101,7 @@ function savetofile() {
 	console.log('save to file'+filenametosave);
 	$.get('save_code', { filename: filenametosave, code: cmPython.doc.getValue()}, function(result) {
 		console.log('Result:'+result);
-        get_filelist();
+        get_filelist(getCookie('sort_order'));
 	});
 
 };
@@ -97,46 +111,93 @@ function deletefile() {
 	console.log('file to delete'+filenametodelete);
 	$.get('delete_file', { filename: filenametodelete}, function(result) {
 		console.log('Result:'+result);
-        get_filelist();
+    const save_input = document.querySelector('#savefilename');
+    const del_button = document.querySelector('#deletefile');
+    del_button.setAttribute("disabled", "disabled");
+    save_input.value="";
+    get_filelist(getCookie('sort_order'));
 	});
 
 };
 
 function get_Dict(cmPython) {
-    $.ajax({
-        url: "get_autocomplete",
-        method: "GET",
-        dataType: "json",
-        success: function(myDict) {
-            console.log("got Autocomplete")
-            myAutocomplete = [];
-            for (i = 0; i < myDict.items.length; i++) {
-                if (myDict.items[i] != "." && myDict.items != "..") {
-                    myAutocomplete.push({
-                        text: myDict.items[i],
-                        displayText: myDict.items[i] + " | Item"
-                    });
-                }
-            }
-            for (i = 0; i < myDict.plugins.length; i++) {
-                if (myDict.plugins[i] != "." && myDict.plugins != "..") {
-                    myAutocomplete.push({
-                        text: myDict.plugins[i],
-                        displayText: myDict.plugins[i] + " | Plugin"
-                    });
-                }
-            }
-            registerAutocompleteHelper('autocompleteHint', myAutocomplete);
-            console.log('Stored entries to Autocomplete dict')
-            CodeMirror.commands.autocomplete_items = function(cmPython) {
-                CodeMirror.showHint(cmPython, CodeMirror.hint.autocompleteHint);
-            }
-        },
-        error: function(result) {
-            console.log("Error while receiving Autocomplete")
+  return new window.Promise(function (resolve, reject) {
+    function successCallback(response) {
+        resolve(response);
+    }
 
-        }
-    });
+    function errorCallback(response) {
+        reject(response);
+    }
+
+    function fetch_autocomplete() {
+      CodeMirror.commands.autocomplete_items = function() {
+      };
+      $.ajax({
+          url: "get_autocomplete",
+          method: "GET",
+          async: true,
+          dataType: "json",
+          success: function(myDict) {
+            console.log("Initializing Autocomplete");
+            let worker = new Worker(
+                `data:text/javascript,
+                function createAutocomplete(myDict){
+                  myAutocomplete = [];
+                  for (i = 0; i < myDict.items.length; i++) {
+                      if (myDict.items[i] != "." && myDict.items != "..") {
+                          myAutocomplete.push({
+                              text: myDict.items[i],
+                              displayText: myDict.items[i] + " | Item"
+                          });
+                      }
+                  }
+                  for (i = 0; i < myDict.plugins.length; i++) {
+                      if (myDict.plugins[i] != "." && myDict.plugins != "..") {
+                          myAutocomplete.push({
+                              text: myDict.plugins[i],
+                              displayText: myDict.plugins[i] + " | Plugin"
+                          });
+                      }
+                  }
+                  return myAutocomplete;
+                }
+                onmessage = function(event){
+                    let myDict = event.data;
+                    let result = createAutocomplete(myDict);
+                    postMessage(result);
+                };
+                `
+            );
+
+            worker.onmessage = function(event){
+              myAutocomplete = event.data;
+              registerAutocompleteHelper('autocompleteHint', myAutocomplete);
+              console.log('Stored ' + myAutocomplete.length + ' entries to Autocomplete dict.');
+              CodeMirror.commands.autocomplete_items = function(cmPython) {
+                  CodeMirror.showHint(cmPython, CodeMirror.hint.autocompleteHint);
+              }
+            };
+
+            worker.postMessage(myDict);
+
+          },
+          error: function(result) {
+              console.log("Error while receiving Autocomplete")
+
+          }
+      }).done(successCallback).fail(errorCallback);
+    }
+    fetch_autocomplete();
+  });
+}
+
+function autocompleteSuccess(response) {
+    console.log("Filling autocomplete dict... This might take some time!");
+}
+
+function autocompleteError(error) {
+    console.warn(error);
 }
 
 
@@ -191,8 +252,47 @@ function registerAutocompleteHelper(name, curDict) {
 
 
 $(document).ready(function(){
-    te_python = document.getElementById('pycodetext');
-    te_resulttext = document.getElementById('resulttext');
+    const load_button = document.querySelector('#loadfilename');
+    const del_button = document.querySelector('#deletefile');
+    load_button.setAttribute("disabled", "disabled");
+    del_button.setAttribute("disabled", "disabled");
+    const te_python = document.getElementById('pycodetext');
+    const te_resulttext = document.getElementById('resulttext');
+    const alpha_asc = document.getElementById('alpha-asc');
+    const alpha_desc = document.getElementById('alpha-desc');
+    const time_asc = document.getElementById('time-asc');
+    const time_desc = document.getElementById('time-desc');
+    try {
+      const tooltipList = ['Sort by alphabet ascending', 'Sort by alphabet descending', 'Sort by creationtime ascending', 'Sort by creationtime descending'];
+      createTooltips(tooltipList);
+    }
+    catch (e) {}
+    alpha_asc.addEventListener('click', function() {
+        alpha_desc.classList.remove('active');
+        time_asc.classList.remove('active');
+        time_desc.classList.remove('active');
+        this.classList.add('active');});
+    alpha_desc.addEventListener('click', function() {
+        alpha_asc.classList.remove('active');
+        time_asc.classList.remove('active');
+        time_desc.classList.remove('active');
+        this.classList.add('active');});
+    time_asc.addEventListener('click', function() {
+        alpha_desc.classList.remove('active');
+        alpha_asc.classList.remove('active');
+        time_desc.classList.remove('active');
+        this.classList.add('active');});
+    time_desc.addEventListener('click', function() {
+        alpha_desc.classList.remove('active');
+        alpha_asc.classList.remove('active');
+        time_asc.classList.remove('active');
+        this.classList.add('active');});
+    order = getCookie('sort_order');
+    if (order == '')
+      order = 'time-desc';
+    console.log("Sort Order on Load: " + order);
+    button = document.getElementById(order);
+    button.click();
     cmPython = CodeMirror(te_python, {
         mode: "python",
         lineNumbers: true,
@@ -229,7 +329,8 @@ $(document).ready(function(){
 	 };
 
     });
-    get_Dict(cmPython);
+
+    get_Dict(cmPython).then(autocompleteSuccess).catch(autocompleteError);
 
     cmPython.refresh();
 
@@ -238,9 +339,10 @@ $(document).ready(function(){
     });
 	cmResult.refresh();
 
-	get_filelist();
 });
 </script>
+{% endblock pluginscripts %}
+{% block pluginstyles %}
 <style>
 body {
 	margin: 0!important;
@@ -323,7 +425,25 @@ button#loadfilename {
     display: block;
     width: 100%;
 }
+input.sort {
+  width: 20px;
+  height: 20px;
+  border: none;
+  padding: 0;
+  margin-left: 20px;
+  margin-bottom: -5px;
+}
+.active {
+  border: none;
+  filter: invert(8%) sepia(100%) saturate(6481%) hue-rotate(246deg) brightness(102%) contrast(143%);
+}
+.example_file {
+  font-style: italic;
+  color: grey;
+}
 </style>
+{% endblock pluginstyles %}
+{% block content -%}
 
 <div id="app">
 	<header>
@@ -358,12 +478,13 @@ button#loadfilename {
 					{% endif %}
 					<h6>{{ _('Plugin') }} &nbsp; &nbsp; : <span id="webif_plugin_state">{% if p.alive %}{{ _('Aktiv') }}{% else %}{{ _('Gestoppt') }}{% endif %}</span></h6>
 				</div>
-				<div class="col-sm">
+				<div class="col-sm"><div>
 				<label for="filelist">{{ _('Gespeicherte Skripte') }}</label>
+        <input type= "image" id="alpha-asc" class="sort button-tooltip" onclick="setCookie('sort_order', 'alpha-asc', 36500, window.pluginname);get_filelist('alpha-asc')" src="/gstatic/img/sort-alpha-asc.svg" />
+        <input type= "image" id="alpha-desc" class="sort button-tooltip" onclick="setCookie('sort_order', 'alpha-desc', 36500, window.pluginname);get_filelist('alpha-desc')" src="/gstatic/img/sort-alpha-desc.svg" />
+        <input type= "image" id="time-asc" class="sort button-tooltip" onclick="setCookie('sort_order', 'time-asc', 36500, window.pluginname);get_filelist('time-asc')" src="/gstatic/img/sort-time-asc.svg" />
+        <input type= "image" id="time-desc" class="sort button-tooltip" onclick="setCookie('sort_order', 'time-desc', 36500, window.pluginname);get_filelist('time-desc')" src="/gstatic/img/sort-time-desc.svg" /></div>
 					<select style="width: 100%" id="filelist" size=10 onchange="selectFile(this)" ondblclick="doubleclickFile(this)">
-					<option value="Test 1">Test 1</option>
-					<option value="Test 2">Test 2</option>
-					<option value="Test 3">Test 3</option>
 					</select>
 					<button onclick="btnloadfromfile(this)" id="loadfilename" type="button">{{ _('aus Datei laden') }}</button>
 				</div>
@@ -380,14 +501,14 @@ button#loadfilename {
 		</div>
 	</header>
 	<main>
-		<div class="container-fluid m-3">
-			<label for="pycodetext">{{ _('Python Code') }}</label><br>
+		<div class="container-fluid" style="margin-top: 10px">
+			<label>{{ _('Python Code') }}</label><br>
 			<div id="pycodetext"></div>
 		</div>
 	</main>
 	<footer>
-		<div class="container-fluid m-3">
-			<label for="resulttext">{{ _('Ergebnis') }}</label><br>
+		<div class="container-fluid" style="margin-top: 10px">
+			<label>{{ _('Ergebnis') }}</label><br>
 			<div id="resulttext" placeholder="Ergebnisse erscheinen hier"></div>
 		</div>
 	</footer>

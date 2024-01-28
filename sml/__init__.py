@@ -20,7 +20,6 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 import time
 import re
 import serial
@@ -32,31 +31,32 @@ import builtins
 
 from lib.model.smartplugin import SmartPlugin
 
+
 class Sml(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '1.0.1'
 
     _v1_start = b'\x1b\x1b\x1b\x1b\x01\x01\x01\x01'
     _v1_end = b'\x1b\x1b\x1b\x1b\x1a'
     _units = {  # Blue book @ http://www.dlms.com/documentation/overviewexcerptsofthedlmsuacolouredbooks/index.html
-       1 : 'a',    2 : 'mo',    3 : 'wk',  4 : 'd',    5 : 'h',     6 : 'min.',  7 : 's',     8 : '°',     9 : '°C',    10 : 'currency',
-      11 : 'm',   12 : 'm/s',  13 : 'm³', 14 : 'm³',  15 : 'm³/h', 16 : 'm³/h', 17 : 'm³/d', 18 : 'm³/d', 19 : 'l',     20 : 'kg',
-      21 : 'N',   22 : 'Nm',   23 : 'Pa', 24 : 'bar', 25 : 'J',    26 : 'J/h',  27 : 'W',    28 : 'VA',   29 : 'var',   30 : 'Wh',
-      31 : 'WAh', 32 : 'varh', 33 : 'A',  34 : 'C',   35 : 'V',    36 : 'V/m',  37 : 'F',    38 : 'Ω',    39 : 'Ωm²/h', 40 : 'Wb',
-      41 : 'T',   42 : 'A/m',  43 : 'H',  44 : 'Hz',  45 : 'Rac',  46 : 'Rre',  47 : 'Rap',  48 : 'V²h',  49 : 'A²h',   50 : 'kg/s',
-      51 : 'Smho'
+         1: 'a',    2: 'mo',    3: 'wk',  4: 'd',    5: 'h',     6: 'min.',  7: 's',     8: '°',     9: '°C',    10: 'currency',
+        11: 'm',   12: 'm/s',  13: 'm³', 14: 'm³',  15: 'm³/h', 16: 'm³/h', 17: 'm³/d', 18: 'm³/d', 19: 'l',     20: 'kg',
+        21: 'N',   22: 'Nm',   23: 'Pa', 24: 'bar', 25: 'J',    26: 'J/h',  27: 'W',    28: 'VA',   29: 'var',   30: 'Wh',
+        31: 'WAh', 32: 'varh', 33: 'A',  34: 'C',   35: 'V',    36: 'V/m',  37: 'F',    38: 'Ω',    39: 'Ωm²/h', 40: 'Wb',
+        41: 'T',   42: 'A/m',  43: 'H',  44: 'Hz',  45: 'Rac',  46: 'Rre',  47: 'Rap',  48: 'V²h',  49: 'A²h',   50: 'kg/s',
+        51: 'Smho'
     }
     _devices = {
-      'smart-meter-gateway-com-1' : 'hex'
+        'smart-meter-gateway-com-1': 'hex'
     }
 
-    def __init__(self, smarthome, host=None, port=0, serialport=None, device="raw", cycle=300):
-        self._sh = smarthome
-        self.host = host
-        self.port = int(port)
-        self.serialport = serialport
-        self.cycle = cycle
+    def __init__(self, sh, **kwargs):
+        self.host = self.get_parameter_value('host')
+        self.port = self.get_parameter_value('port')
+        self.serialport = self.get_parameter_value('serialport')
+        self.cycle = self.get_parameter_value('cycle')
+        self.device = self.get_parameter_value('device')
         self.connected = False
         self._serial = None
         self._sock = None
@@ -64,25 +64,25 @@ class Sml(SmartPlugin):
         self._dataoffset = 0
         self._items = {}
         self._lock = threading.Lock()
-        self.logger = logging.getLogger(__name__)
 
-        if device in self._devices:
-          device = self._devices[device]
+        if self.device in self._devices:
+            self.device = self._devices[self.device]
 
-        if device == "hex":
+        if self.device == "hex":
             self._prepare = self._prepareHex
-        elif device == "raw":
+        elif self.device == "raw":
             self._prepare = self._prepareRaw
         else:
-            self.logger.warning("Device type \"{}\" not supported - defaulting to \"raw\"".format(device))
+            self.logger.warning("Device type \"{}\" not supported - defaulting to \"raw\"".format(self.device))
             self._prepare = self._prepareRaw
 
     def run(self):
         self.alive = True
-        self._sh.scheduler.add('Sml', self._refresh, cycle=self.cycle)
+        self.scheduler_add('Sml', self._refresh, cycle=self.cycle)
 
     def stop(self):
         self.alive = False
+        self.scheduler_remove('Sml')
         self.disconnect()
 
     def parse_item(self, item):
@@ -98,16 +98,8 @@ class Sml(SmartPlugin):
             return self.update_item
         return None
 
-    def parse_logic(self, logic):
-        pass
-
-    def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != 'Sml':
-            pass
-
     def connect(self):
         self._lock.acquire()
-        target = None
         try:
             if self.serialport is not None:
                 self._target = 'serial://{}'.format(self.serialport)
@@ -164,9 +156,9 @@ class Sml(SmartPlugin):
                         raise e
 
         return b''.join(total)
-        
+
     def _refresh(self):
-        if self.connected:
+        if self.connected and self.alive:
             start = time.time()
             retry = 5
             data = None
@@ -183,8 +175,8 @@ class Sml(SmartPlugin):
                             if start_pos != -1 and end_pos == -1:
                                 data = data[:start_pos]
                             elif start_pos != -1 and end_pos != -1:
-                                chunk = data[start_pos:end_pos+len(self._v1_end)+3]
-                                self.logger.debug('Found chunk at {} - {} ({} bytes):{}'.format(start_pos, end_pos, end_pos-start_pos, ''.join(' {:02x}'.format(x) for x in chunk)))
+                                chunk = data[start_pos:end_pos + len(self._v1_end) + 3]
+                                self.logger.debug('Found chunk at {} - {} ({} bytes):{}'.format(start_pos, end_pos, end_pos - start_pos, ''.join(' {:02x}'.format(x) for x in chunk)))
                                 chunk_crc_str = '{:02X}{:02X}'.format(chunk[-2], chunk[-1])
                                 chunk_crc_calc = self._crc16(chunk[:-2])
                                 chunk_crc_calc_str = '{:02X}{:02X}'.format((chunk_crc_calc >> 8) & 0xff, chunk_crc_calc & 0xff)
@@ -236,27 +228,27 @@ class Sml(SmartPlugin):
         packetsize = 7
         self.logger.debug('Data ({} bytes):{}'.format(len(data), ''.join(' {:02x}'.format(x) for x in data)))
         self._dataoffset = 0
-        while self._dataoffset < builtins.len(data)-packetsize:
+        while self._dataoffset < builtins.len(data) - packetsize:
 
             # Find SML_ListEntry starting with 0x77 0x07 and OBIS code end with 0xFF
-            if data[self._dataoffset] == 0x77 and data[self._dataoffset+1] == 0x07 and data[self._dataoffset+packetsize] == 0xff:
+            if data[self._dataoffset] == 0x77 and data[self._dataoffset + 1] == 0x07 and data[self._dataoffset + packetsize] == 0xff:
                 packetstart = self._dataoffset
                 self._dataoffset += 1
                 try:
                     entry = {
-                      'objName'   : self._read_entity(data),
-                      'status'    : self._read_entity(data),
-                      'valTime'   : self._read_entity(data),
-                      'unit'      : self._read_entity(data),
-                      'scaler'    : self._read_entity(data),
-                      'value'     : self._read_entity(data),
-                      'signature' : self._read_entity(data)
+                        'objName': self._read_entity(data),
+                        'status': self._read_entity(data),
+                        'valTime': self._read_entity(data),
+                        'unit': self._read_entity(data),
+                        'scaler': self._read_entity(data),
+                        'value': self._read_entity(data),
+                        'signature': self._read_entity(data)
                     }
 
                     # add additional calculated fields
                     entry['obis'] = '{}-{}:{}.{}.{}*{}'.format(entry['objName'][0], entry['objName'][1], entry['objName'][2], entry['objName'][3], entry['objName'][4], entry['objName'][5])
                     entry['valueReal'] = entry['value'] * 10 ** entry['scaler'] if entry['scaler'] is not None else entry['value']
-                    entry['unitName'] = self._units[entry['unit']] if entry['unit'] != None and entry['unit'] in self._units else None
+                    entry['unitName'] = self._units[entry['unit']] if entry['unit'] is not None and entry['unit'] in self._units else None
 
                     values[entry['obis']] = entry
                 except Exception as e:
@@ -269,8 +261,8 @@ class Sml(SmartPlugin):
 
     def _read_entity(self, data):
         upack = {
-          5 : { 1 : '>b', 2 : '>h', 4 : '>i', 8 : '>q' },  # int
-          6 : { 1 : '>B', 2 : '>H', 4 : '>I', 8 : '>Q' }   # uint
+            5: {1: '>b', 2: '>h', 4: '>i', 8: '>q'},  # int
+            6: {1: '>B', 2: '>H', 4: '>I', 8: '>Q'}   # uint
         }
 
         result = None
@@ -296,23 +288,23 @@ class Sml(SmartPlugin):
             self._parse_error('Tried to read {} bytes, but only have {}', [len, builtins.len(data) - self._dataoffset], data, self._dataoffset, packetstart)
 
         elif type == 0:    # octet string
-            result = data[self._dataoffset:self._dataoffset+len]
+            result = data[self._dataoffset:self._dataoffset + len]
 
         elif type == 5 or type == 6:  # int or uint
-            d = data[self._dataoffset:self._dataoffset+len]
+            d = data[self._dataoffset:self._dataoffset + len]
 
             ulen = len
             if ulen not in upack[type]:  # extend to next greather unpack unit
-              while ulen not in upack[type]:
-                d = b'\x00' + d
-                ulen += 1
+                while ulen not in upack[type]:
+                    d = b'\x00' + d
+                    ulen += 1
 
             result = struct.unpack(upack[type][ulen], d)[0]
 
         elif type == 7:  # list
             result = []
             self._dataoffset += 1
-            for i in range(0, len + 1):
+            for _ in range(0, len + 1):
                 result.append(self._read_entity(data))
             return result
 
@@ -326,7 +318,7 @@ class Sml(SmartPlugin):
     def _parse_error(self, msg, msgargs, data, dataoffset, packetstart):
         position = dataoffset - packetstart
         databytes = ''
-        for i, b in enumerate(data[packetstart:packetstart+64]):
+        for i, b in enumerate(data[packetstart:packetstart + 64]):
             databytes = databytes + ' {}{:02x}{}'.format(
                 '' if i != position - 1 else '<',
                 b,
@@ -348,24 +340,23 @@ class Sml(SmartPlugin):
         data = re.sub("[^a-f0-9]", " ", data)
         data = re.sub("( +[a-f0-9]|[a-f0-9] +)", "", data)
         data = data.encode()
-        return bytes(''.join(chr(int(data[i:i+2], 16)) for i in range(0, len(data), 2)), "iso8859-1")
+        return bytes(''.join(chr(int(data[i:i + 2], 16)) for i in range(0, len(data), 2)), "iso8859-1")
 
     def _crc16(self, data):
-      crc = 0xffff
+        crc = 0xffff
 
-      p = 0;
-      while p < len(data):
-        c = 0xff & data[p]
-        p = p + 1
+        p = 0
+        while p < len(data):
+            c = 0xff & data[p]
+            p = p + 1
 
-        for i in range(0, 8):
-          if ((crc & 0x0001) ^ (c & 0x0001)):
-            crc = (crc >> 1) ^ 0x8408
-          else:
-            crc = crc >> 1
-          c = c >> 1
+            for i in range(0, 8):
+                if ((crc & 0x0001) ^ (c & 0x0001)):
+                    crc = (crc >> 1) ^ 0x8408
+                else:
+                    crc = crc >> 1
+                c = c >> 1
 
-      crc = ~crc & 0xffff
+        crc = ~crc & 0xffff
 
-      return ((crc << 8) | ((crc >> 8) & 0xff)) & 0xffff
-
+        return ((crc << 8) | ((crc >> 8) & 0xff)) & 0xffff

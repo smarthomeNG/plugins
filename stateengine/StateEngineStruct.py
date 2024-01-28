@@ -19,9 +19,7 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 from . import StateEngineTools
-from . import StateEngineFunctions
 import collections.abc
-#import copy
 from lib.item import Items
 
 
@@ -72,7 +70,7 @@ class SeStruct(StateEngineTools.SeItemChild):
         self.convert()
 
     def __repr__(self):
-        return "SeStruct {}".format(self.struct_path, self._conf)
+        return "SeStruct {}".format(self.struct_path)
 
     @staticmethod
     # Usage: dict_get(mydict, 'some.deeply.nested.value', 'my default')
@@ -97,7 +95,9 @@ class SeStruct(StateEngineTools.SeItemChild):
             self._struct_rest = struct_rest
             self.get()
         except Exception as ex:
-            raise Exception("Struct {0} conversion error: {1}".format(self.struct_path, ex))
+            _issue = "Conversion error: {}".format(ex)
+            self._abitem.update_issues('struct', {self.struct_path: {'issue': _issue}})
+            raise Exception("Struct {} {}".format(self.struct_path, _issue))
 
     def get(self):
         raise NotImplementedError("Class {} doesn't implement get()".format(self.__class__.__name__))
@@ -113,14 +113,16 @@ class SeStructMain(SeStruct):
         #self._log_debug("Struct path {} for {}", self.struct_path, __class__.__name__)
 
     def __repr__(self):
-        return "SeStructMain {}".format(self.struct_path, self._conf)
+        return "SeStructMain {}".format(self.struct_path)
 
     def create_parent(self):
         try:
             parent = SeStructParent(self._abitem, self.struct_path, self._global_struct)
             self._parent_struct = parent
         except Exception as ex:
-            raise Exception("Struct {0} create parent error: {1}".format(self.struct_path, ex))
+            _issue = "Create parent error: {}".format(ex)
+            self._abitem.update_issues('struct', {self.struct_path: {'issue': _issue}})
+            raise Exception("Struct {} {}".format(self.struct_path, _issue))
 
     def return_parent(self):
         return self._parent_struct
@@ -136,14 +138,17 @@ class SeStructMain(SeStruct):
                 c = SeStructChild(self._abitem, '{}.{}'.format(self.struct_path, c), self._global_struct)
                 self._children_structs.append(c)
         except Exception as ex:
-            raise Exception("Struct {0} create children error: {1}".format(self.struct_path, ex))
+            _issue = "Create children error: {}".format(ex)
+            self._abitem.update_issues('struct', {self.struct_path: {'issue': _issue}})
+            raise Exception("Struct {} {}".format(self.struct_path, _issue))
         self.valid_se_use = _se_ok
 
     def return_children(self):
         return self._children_structs
 
     def get(self):
-        _temp_dict = self.dict_get(self._global_struct.get(self._struct) or {}, self._struct_rest, self._global_struct.get(self._struct) or {})
+        _temp_dict = self.dict_get(self._global_struct.get(self._struct) or {}, self._struct_rest,
+                                   self._global_struct.get(self._struct) or {})
         self._full_conf = _temp_dict
         try:
             _temp_dict = collections.OrderedDict(
@@ -155,9 +160,13 @@ class SeStructMain(SeStruct):
                 self.create_children()
                 self.valid_se_use = True if "se_use" in self._full_conf else self.valid_se_use
             else:
-                self._log_error("Item '{}' does not exist in struct {}", self._struct_rest, self._struct)
-        except Exception as e:
-            self._log_error("Problem getting struct {}: {}", self._conf, e)
+                _issue = "Item '{}' does not exist".format( self._struct_rest)
+                self._abitem.update_issues('struct', {self.struct_path: {'issue': _issue}})
+                self._log_error("{} in struct {}", _issue, self._struct)
+        except Exception as ex:
+            _issue = "Problem getting struct {}".format(ex)
+            self._abitem.update_issues('struct', {self.struct_path: {'issue': _issue}})
+            self._log_error("Problem getting struct {}: {}", self._conf, ex)
             self._conf = {}
 
 
@@ -171,7 +180,7 @@ class SeStructChild(SeStruct):
         #self._log_debug("Struct path {} for {}", self.struct_path, __class__.__name__)
 
     def __repr__(self):
-        return "SeStructChild {}".format(self.struct_path, self._conf)
+        return "SeStructChild {}".format(self.struct_path)
 
     def get(self):
         try:

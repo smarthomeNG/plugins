@@ -30,10 +30,10 @@ from .robot import Robot
 
 
 class Neato(SmartPlugin):
-    PLUGIN_VERSION = '1.6.8'
+    PLUGIN_VERSION = '1.6.9'
     robot = 'None'
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
         Initalizes the plugin.
 
@@ -61,7 +61,6 @@ class Neato(SmartPlugin):
 
     def setClientIDHash(self, hash):
         return self.robot.setClientIDHash(hash)
-
 
     def run(self):
         self.logger.debug("Run method called")
@@ -140,6 +139,9 @@ class Neato(SmartPlugin):
         response = self.robot.robot_command("start", boundary_id, map_id)
         return self.check_command_response(response)
 
+    def get_known_mapId(self):
+        self.logger.info(f"MapID is {self.robot.mapId}")
+        return self.robot.mapId
 
     # returns boundaryIds (clean zones) for given mapID
     # returns True on success and False otherwise
@@ -150,7 +152,6 @@ class Neato(SmartPlugin):
     def dismiss_current_alert(self):
         response = self.robot.robot_command("dismiss_current_alert")
         return self.check_command_response(response)
-
 
     # enable cleaning schedule
     # returns True on success and False otherwise

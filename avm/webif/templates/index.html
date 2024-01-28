@@ -177,7 +177,11 @@
     {% set tab4title = "hidden" %} 
 {% endif %}
 
-{% set tab5title = _("<strong>"'AVM Log-Einträge'"</strong>") %}
+{% if p.fritz_home or p.fritz_device %}
+    {% set tab5title = _("<strong>"'AVM Log-Einträge'"</strong>") %}
+{% else %}
+    {% set tab5title = "hidden" %}
+{% endif %}
 
 {% if not maintenance %}
     {% set tab6title = _("<strong>"'AVM Plugin-API'"</strong>") %}
@@ -198,53 +202,62 @@
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
-			<td class="py-1">
+			<td class="py-1" width=33%>
                 {% if p.fritz_device  %}
-                <img src="static/img/lamp_green.png" alt="{{ _('Gerät verfügbar') }}" style="width: 17px;padding-bottom: 3px;"/>
+                    <img src="static/img/lamp_green.png" alt="{{ _('Gerät verfügbar') }}" style="width: 17px;padding-bottom: 3px;"/>
                 {% else %}
-                <img src="static/img/lamp_red.png" alt="{{ _('Gerät nicht verfügbar') }}" style="width: 17px;padding-bottom: 3px;"/>
+                    <img src="static/img/lamp_red.png" alt="{{ _('Gerät nicht verfügbar') }}" style="width: 17px;padding-bottom: 3px;"/>
                 {% endif %}
-                <strong>{{ _('Verbunden') }}</strong>
+                <strong>{{ _('FritzDevice') }}</strong>
             </td>
 			<td class="py-1">
-                {% if p.fritz_device  %}
-                    {{ _('Ja') }}{% if p.fritz_device.ssl %}, SSL{% endif %}
+                <strong>{{ _('Host: ') }}
+                {% if p.fritz_device.is_fritzbox() %}
+                    {{ _('Fritz!Box') }}
+                {% elif p.fritz_device.is_repeater() %}
+                    {{ _('Fritz!Repeater') }}
                 {% else %}
-                     {{ _('Nein') }}
+                    {{ _('-') }}
                 {% endif %}
+                </strong>
+                <a class="text-shng" href="http://{{ p.fritz_device.host }}" target="_blank">{{ p.fritz_device.host }}</a>
             </td>
-			<td class="py-1"><strong>{{ _('Benutzer') }}</strong></td>
-			<td class="py-1">{{ p.get_parameter_value_for_display('username') }}</td>
+			<td class="py-1">
+                <strong>{{ _('Benutzer: ') }}</strong>
+                {{ p.get_parameter_value_for_display('username') }}
+            </td>
 		</tr>
 		<tr>
+            <td class="py-1" width=33%>
+                {% if p.fritz_home  %}
+                    <img src="static/img/lamp_green.png" alt="{{ _('AHA verfügbar') }}" style="width: 17px;padding-bottom: 3px;"/>
+                {% else %}
+                    <img src="static/img/lamp_red.png" alt="{{ _('AHA nicht verfügbar') }}" style="width: 17px;padding-bottom: 3px;"/>
+                {% endif %}
+                <strong>{{ _('FritzHome') }}</strong>
+            </td>
+            <td class="py-1"></td>
 			<td class="py-1">
+                <strong>{{ _('Passwort: ') }}</strong>
+                {{ p.get_parameter_value_for_display('password') }}
+            </td>
+		</tr>
+		<tr>
+            <td class="py-1">
                 {% if p.monitoring_service and p.monitoring_service._listen_active %}
                     <img src="static/img/lamp_green.png" alt="{{ _('Call Monitor verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
+                {% elif p.monitoring_service and not p.monitoring_service._listen_active %}
+                    <img src="static/img/lamp_amber.png" alt="{{ _('Call Monitor nicht verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
                 {% else %}
-                    <img src="static/img/lamp_red.png" alt="{{ _('Call Monitor nicht verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
+                    <img src="static/img/lamp_red.png" alt="{{ _('Call Monitor nicht aktiv') }}" style="width: 17px;padding-bottom: 3px;"/>
                 {% endif %}
                 <strong>{{ _('Call Monitor') }}</strong>
             </td>
+            <td class="py-1"></td>
 			<td class="py-1">
-                {% if p._monitoring_service  %}{{ _('Ja') }}{% if not p._monitoring_service._listen_active %}, {{ _('nicht verbunden') }}{% endif %}{% else %}{{ _('Nein') }}{% endif %}</td>
-			<td class="py-1"><strong>{{ _('Passwort') }}</strong></td>
-			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}</td>
-		</tr>
-		<tr>
-			<td class="py-1">
-                <strong>{{ _('Host') }}
-                {% if p.fritz_device.is_fritzbox() %}
-                    {{ _(' is Fritz!Box') }}
-                {% elif p.fritz_device.is_repeater() %}
-                    {{ _(' is Fritz!Repeater') }}
-                {% else %}
-                    {{ _(' -') }}
-                {% endif %}
-                </strong>
+                <strong>{{ _('Port: ') }}</strong>
+                {{ p.fritz_device.port }} {% if p.fritz_device.ssl %}(HTTPS){% endif %}
             </td>
-			<td class="py-1"><a class="text-shng" href="http://{{ p.fritz_device.host }}" target="_blank">{{ p.fritz_device.host }}</a></td>
-			<td class="py-1"><strong>{{ _('Port') }}</strong></td>
-			<td class="py-1">{{ p.fritz_device.port }} {% if p.fritz_device.ssl %}(HTTPS){% endif %}</td>
 		</tr>
 	</tbody>
 </table>
@@ -276,14 +289,22 @@
     <tbody>
         {% if tr064_items %}
             {% for item in tr064_items %}
-                {% set item_config = p.fritz_device.items[item] %}
+                {% set item_config = p.get_item_config(item) %}
                 <tr>
                     <td></td>
                     <td class="py-1">{{ item.id() }}</td>
                     <td class="py-1">{{ item.property.type }}</td>
-                    <td class="py-1">{{ item_config[0] }}</td>
-                    <td class="py-1" style="text-align: right">{{ item_config[2] }}</td>
-                    <td class="py-1" id="{{ item.id() }}_tr064_value">{{ item.property.value }}</td>
+                    <td class="py-1">{{ item_config['avm_data_type'] }}</td>
+                    <td class="py-1" style="text-align: right">{{ item_config['avm_data_cycle'] }}</td>
+                    <td class="py-1" id="{{ item.id() }}_tr064_value">
+                        {% if item.property.value == True or item.property.value == False %}
+                            {{ item.property.value|lower }}
+                        {% elif item.property.value|int != 0 %}
+                            {{ item.property.value|int }}
+                        {% else %}
+                            {{ item.property.value }}
+                        {% endif %}
+                        </td>
                     <td class="py-1" id="{{ item.id() }}_tr064_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     <td class="py-1" id="{{ item.id() }}_tr064_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 </tr>
@@ -311,14 +332,22 @@
     <tbody>
         {% if aha_items %}
             {% for item in aha_items %}
-                {% set item_config = p.fritz_home.items[item] %}
+                {% set item_config = p.get_item_config(item) %}
                 <tr>
                     <td></td>
                     <td class="py-1">{{ item.id() }}</td>
                     <td class="py-1">{{ item.property.type }}</td>
-                    <td class="py-1">{{ item_config[0] }}</td>
-                    <td class="py-1" style="text-align: right">{{ item_config[2] }}</td>
-                    <td class="py-1" id="{{ item.id() }}_aha_value">{{ item.property.value }}</td>
+                    <td class="py-1">{{ item_config['avm_data_type'] }}</td>
+                    <td class="py-1" style="text-align: right">{{ item_config['avm_data_cycle'] }}</td>
+                    <td class="py-1" id="{{ item.id() }}_aha_value">
+                        {% if item.property.value == True or item.property.value == False %}
+                            {{ item.property.value|lower }}
+                        {% elif item.property.value|int != 0 %}
+                            {{ item.property.value|int }}
+                        {% else %}
+                            {{ item.property.value }}
+                        {% endif %}
+                    </td>
                     <td class="py-1" id="{{ item.id() }}_aha_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     <td class="py-1" id="{{ item.id() }}_aha_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 </tr>
@@ -384,7 +413,15 @@
                     <td class="py-1">{{ item_id }}</td>
                     <td class="py-1">{{ item.property.type }}</td>
                     <td class="py-1">{{ item.conf[instance_key]}}</td>
-                    <td class="py-1" id="{{ item_id }}_call_value">{{ item.property.value }}</td>
+                    <td class="py-1" id="{{ item_id }}_call_value">
+                        {% if item.property.value == True or item.property.value == False %}
+                            {{ item.property.value|lower }}
+                        {% elif item.property.value|int != 0 %}
+                            {{ item.property.value|int }}
+                        {% else %}
+                            {{ item.property.value }}
+                        {% endif %}
+                    </td>
                     <td class="py-1" id="{{ item_id }}_call_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     <td class="py-1" id="{{ item_id }}_call_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 </tr>
@@ -418,7 +455,13 @@
                             {{ logentry[2] }}
                         </a>
                     </td>
-                    <td class="py-1">{{ _('cat_'+logentry[3]|string) }}</td>
+                    <td class="py-1">
+                        {% if logentry[3] != "-" %}
+                            {{ _('cat_'+logentry[3]|string) }}
+                        {% else %}
+                            {{ '-' }}
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
         {% endif %}
@@ -478,19 +521,19 @@
                 <tr>
                     <td></td>
                     <td class="py-1">{{ "01 TR064 Items @ Fritz_Device" }}</td>
-                    <td class="py-1">{{ p.fritz_device.items }}</td>
+                    <td class="py-1">{{ p.fritz_device.item_list() }}</td>
                 </tr>
                 <tr>
                     <td></td>
                     <td class="py-1">{{ "02 TR064 Blacklisted Items @ Fritz_Device " }}</td>
-                    <td class="py-1" id="tr064_blacklisted">{{ p.fritz_device.get_tr064_items_blacklisted() }}</td>
+                    <td class="py-1" id="tr064_blacklisted">{{ p.get_tr064_items_blacklisted() }}</td>
                 </tr>
                 {% endif %}
                 {% if p.fritz_home %}
                 <tr>
                     <td></td>
                     <td class="py-1">{{ "03 AHA Items @ Fritz_Home" }}</td>
-                    <td class="py-1">{{ p.fritz_home.items }}</td>
+                    <td class="py-1">{{ p.fritz_home.item_list() }}</td>
                 </tr>
                 <tr>
                     <td></td>

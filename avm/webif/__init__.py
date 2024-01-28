@@ -61,23 +61,26 @@ class WebInterface(SmartPluginWebIf):
         """
 
         if self.plugin.fritz_device:
-            tr064_items = self.plugin.fritz_device.item_list()
+            tr064_items = self.plugin.get_tr064_items()
             tr064_item_count = len(tr064_items)
         else:
             tr064_items = None
             tr064_item_count = None
 
         if self.plugin.fritz_home:
-            aha_items = self.plugin.fritz_home.item_list()
+            aha_items = self.plugin.get_aha_items()
             aha_item_count = len(aha_items)
-            logentries = self.plugin.get_device_log_from_lua_separated()
+            logentries = self.plugin.fritz_home.get_device_log_from_lua_separated()
         else:
             aha_items = None
             aha_item_count = None
-            logentries = None
+            if self.plugin.fritz_device:
+                logentries = self.plugin.fritz_device.get_device_log_from_tr064_separated()
+            else:
+                logentries = None
 
         if self.plugin.monitoring_service:
-            call_monitor_items = self.plugin.monitoring_service.item_list()
+            call_monitor_items = self.plugin.get_monitor_items()
             call_monitor_item_count = len(call_monitor_items)
         else:
             call_monitor_items = None
@@ -116,7 +119,7 @@ class WebInterface(SmartPluginWebIf):
             data = dict()
             if self.plugin.monitoring_service:
                 data['call_monitor'] = {}
-                for item in self.plugin.monitoring_service.item_list():
+                for item in self.plugin.get_monitor_items():
                     data['call_monitor'][item.id()] = {}
                     data['call_monitor'][item.id()]['value'] = item()
                     data['call_monitor'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
@@ -124,16 +127,16 @@ class WebInterface(SmartPluginWebIf):
 
             if self.plugin.fritz_device:
                 data['tr064_items'] = {}
-                for item in self.plugin.fritz_device.item_list():
+                for item in self.plugin.get_tr064_items():
                     data['tr064_items'][item.id()] = {}
                     data['tr064_items'][item.id()]['value'] = item()
                     data['tr064_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                     data['tr064_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
-                data['tr064_items_blacklistet'] = self.plugin.fritz_device.get_tr064_items_blacklisted()
+                data['tr064_items_blacklistet'] = self.plugin.get_tr064_items_blacklisted()
 
             if self.plugin.fritz_home:
                 data['aha_items'] = {}
-                for item in self.plugin.fritz_home.item_list():
+                for item in self.plugin.get_aha_items():
                     data['aha_items'][item.id()] = {}
                     data['aha_items'][item.id()]['value'] = item()
                     data['aha_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
@@ -157,4 +160,4 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     def reset_item_blacklist(self):
-        self.plugin.fritz_device.reset_item_blacklist()
+        self.plugin.reset_item_blacklist()

@@ -376,7 +376,7 @@
 
 {% block bodytab3 %}
 <div class="container-fluid m-2 table-resize">
-{% if p.has_energy_sensor %}
+{% if p.has_energy_sensor() %}
     <caption><h3><strong>ENERGY SENSORS</strong></h3></caption>
     <table id="energytable">
         <thead>
@@ -422,7 +422,7 @@
     </br>
 {% endif %}
 
-{% if p.has_env_sensor %}
+{% if p.has_env_sensor() %}
     <caption><h3><strong>ENVIRONMENTAL SENSORS</strong></h3></caption>
     <table id="environtable">
         <thead>
@@ -436,7 +436,7 @@
             </tr>
         </thead>
         <tbody>
-            {% if p.has_ds18b20_sensor %}
+            {% if p.has_ds18b20_sensor() %}
                 {% for device in p.tasmota_devices %}
                     {% if p.tasmota_devices[device]['sensors'] %}
                         {% if p.tasmota_devices[device]['sensors']['DS18B20'] %}
@@ -452,7 +452,7 @@
                     {% endif %}
                 {% endfor %}
             {% endif %}
-            {% if p.has_am2301_sensor or p.has_sht3x_sensor%}
+            {% if p.has_am2301_sensor() or p.has_sht3x_sensor() %}
                 {% for device in p.tasmota_devices %}
                     {% if p.tasmota_devices[device]['sensors'] %}
                         {% if p.tasmota_devices[device]['sensors']['AM2301'] %}
@@ -484,7 +484,7 @@
     </br>
 {% endif %}
 
-{% if p.has_other_sensor %}
+{% if p.has_other_sensor() %}
     <caption><h3><strong>OTHER SENSORS</strong></h3></caption>
     <table id="othersensortable">
         <thead>
@@ -510,7 +510,7 @@
     </table>
 {% endif %}
 
-{% if p.has_lights %}
+{% if p.has_lights() %}
     <caption><h3><strong>LIGHTS</strong></h3></caption>
     <table id="lightstable">
         <thead>
@@ -528,24 +528,22 @@
             </tr>
         </thead>
         <tbody>
-            {% if p.has_lights %}
-                {% for device in p.tasmota_devices %}
-                    {% if p.tasmota_devices[device]['lights'] %}
-                        <tr>
-                            <td></td>
-                            <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
-                            <td class="py-1" id="{{ device }}hsb">{{ p.tasmota_devices[device]['lights'].hsb }}.</td>
-                            <td class="py-1" id="{{ device }}dimmer">{{ p.tasmota_devices[device]['lights'].dimmer }}.</td>
-                            <td class="py-1" id="{{ device }}color">{{ p.tasmota_devices[device]['lights'].color }}.</td>
-                            <td class="py-1" id="{{ device }}ct">{{ p.tasmota_devices[device]['lights'].ct }}.</td>
-                            <td class="py-1" id="{{ device }}scheme">{{ p.tasmota_devices[device]['lights'].scheme }}.</td>
-                            <td class="py-1" id="{{ device }}fade">{{ p.tasmota_devices[device]['lights'].fade }}.</td>
-                            <td class="py-1" id="{{ device }}speed">{{ p.tasmota_devices[device]['lights'].speed }}.</td>
-                            <td class="py-1" id="{{ device }}ledtable">{{ p.tasmota_devices[device]['lights'].ledtable }}.</td>
-                        </tr>
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
+            {% for device in p.tasmota_devices %}
+                {% if p.tasmota_devices[device]['lights'] %}
+                    <tr>
+                        <td></td>
+                        <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+                        <td class="py-1" id="{{ device }}hsb">{{ p.tasmota_devices[device]['lights'].hsb }}.</td>
+                        <td class="py-1" id="{{ device }}dimmer">{{ p.tasmota_devices[device]['lights'].dimmer }}.</td>
+                        <td class="py-1" id="{{ device }}color">{{ p.tasmota_devices[device]['lights'].color }}.</td>
+                        <td class="py-1" id="{{ device }}ct">{{ p.tasmota_devices[device]['lights'].ct }}.</td>
+                        <td class="py-1" id="{{ device }}scheme">{{ p.tasmota_devices[device]['lights'].scheme }}.</td>
+                        <td class="py-1" id="{{ device }}fade">{{ p.tasmota_devices[device]['lights'].fade }}.</td>
+                        <td class="py-1" id="{{ device }}speed">{{ p.tasmota_devices[device]['lights'].speed }}.</td>
+                        <td class="py-1" id="{{ device }}ledtable">{{ p.tasmota_devices[device]['lights'].ledtable }}.</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
         </tbody>
     </table>
     
@@ -553,7 +551,7 @@
     </br>
 {% endif %}
 
-{% if p.has_rf %}
+{% if p.has_rf() %}
     <caption><h3><strong>RF</strong></h3></caption>
     <table id="rftable">
         <thead>
@@ -566,19 +564,17 @@
             </tr>
         </thead>
         <tbody>
-            {% if p.has_rf %}
-                {% for device in p.tasmota_devices %}
-                    {% if p.tasmota_devices[device]['rf'] %}
-                        <tr>
-                            <td></td>
-                            <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
-                            <td class="py-1" id="{{ device }}rf_received">{{ p.tasmota_devices[device]['rf'].rf_received }}</td>
-                            <td class="py-1" id="{{ device }}rf_send_result">{{ p.tasmota_devices[device]['rf'].rf_send_result }}</td>
-                            <td class="py-1" id="{{ device }}rfkey_result">{{ p.tasmota_devices[device]['rf'].rfkey_result }}</td>
-                        </tr>
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
+            {% for device in p.tasmota_devices %}
+                {% if p.tasmota_devices[device]['rf'] %}
+                    <tr>
+                        <td></td>
+                        <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+                        <td class="py-1" id="{{ device }}rf_received">{{ p.tasmota_devices[device]['rf'].rf_received }}</td>
+                        <td class="py-1" id="{{ device }}rf_send_result">{{ p.tasmota_devices[device]['rf'].rf_send_result }}</td>
+                        <td class="py-1" id="{{ device }}rfkey_result">{{ p.tasmota_devices[device]['rf'].rfkey_result }}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
         </tbody>
     </table>
 
@@ -700,27 +696,6 @@
 
 
 {% block bodytab6 %}
-<!--
-<div class="container-fluid m-2">
-    <table id="" class="table table-striped table-hover pluginList">
-        <thead>
-            <tr class="shng_heading">
-                <th>{{ _('Tasmota Device') }}</th>
-                <th>{{ _('Tasmota Device Details') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for device in p.tasmota_objects_dict %}
-                <tr>
-                    <td>{{ device }}</td>
-                    <td>{{ p.tasmota_objects_dict[device] }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
--->
-
 <div class="container-fluid m-2">
     <table id="" class="table table-striped table-hover pluginList">
         <thead>
@@ -736,18 +711,34 @@
                     <td>{{ p.tasmota_devices[device] }}</td>
                 </tr>
             {% endfor %}
-            <tr>
-                <td>{{ 'DEVICE_DICT_1' }}</td>
-                <td>{{ p.DEVICE_DICT_1 }}</td>
-            </tr>
-            <tr>
-                <td>{{ 'DEVICE_DICT_2' }}</td>
-                <td>{{ p.DEVICE_DICT_2 }}</td>
-            </tr>
-
         </tbody>
     </table>
 </div>
+
+</br>
+</br>
+
+<div class="container-fluid m-2">
+    <table id="" class="table table-striped table-hover pluginList">
+        <thead>
+            <tr class="shng_heading">
+                <th>{{ _('Tasmota Items') }}</th>
+                <th>{{ _('Tasmota Item Config') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in p.get_item_list() %}
+                <tr>
+                    <td>{{ item }}</td>
+                    <td>{{ p.get_item_config(item) }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</br>
+</br>
 
 <div class="container-fluid m-2">
     <table id="" class="table table-striped table-hover pluginList">

@@ -20,6 +20,7 @@
 #########################################################################
 from . import StateEngineConditionSet
 from . import StateEngineTools
+
 from collections import OrderedDict
 
 
@@ -42,6 +43,9 @@ class SeConditionSets(StateEngineTools.SeItemChild):
     def __repr__(self):
         return "{}".format(self.get())
 
+    def reset(self):
+        self.__condition_sets = OrderedDict()
+
     # Return number of condition sets in list
     def count(self):
         return len(self.__condition_sets)
@@ -61,7 +65,10 @@ class SeConditionSets(StateEngineTools.SeItemChild):
         if name not in self.__condition_sets:
             self.__condition_sets[name] = StateEngineConditionSet.SeConditionSet(self._abitem, name, item)
         # Update this condition set
+        self._log_develop("Starting update of condition '{0}'.", name)
         self.__condition_sets[name].update(item, grandparent_item)
+        self._log_develop("Finished update of condition '{0}'.", name)
+        return self.__condition_sets[name].unused_attributes, self.__condition_sets[name].used_attributes
 
     # Check the condition sets, optimize and complete them
     # item_state: item to read from
@@ -79,12 +86,12 @@ class SeConditionSets(StateEngineTools.SeItemChild):
 
     # check if one of the conditions sets in the list is matching.
     # returns: True = one condition set is matching or no condition sets are defined, False: no condition set matching
-    def one_conditionset_matching(self):
+    def one_conditionset_matching(self, state):
         if self.count() == 0:
             self._log_debug("No condition sets defined -> matching")
             return True
         for name in self.__condition_sets:
-            if self.__condition_sets[name].all_conditions_matching():
+            if self.__condition_sets[name].all_conditions_matching(state):
                 return True
 
         return False

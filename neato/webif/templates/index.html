@@ -157,7 +157,7 @@
 {% if codeRequestSuccessfull %}
 	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
 		<strong>{{ _('Vorwerk Validierungscode') }}</strong><br/>
-		{{ _('Anfrage an Vorwerk gesendet. Bitte Emailpostfach ueberpruefen.') }}
+		{{ _('Anfrage an Vorwerk gesendet. Bitte Emailpostfach überprüfen.') }}
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
@@ -166,7 +166,7 @@
 {% if codeRequestSuccessfull == False%}
 	<div class="mb-2 alert alert-warning alert-dismissible fade show" role="alert">
 		<strong>{{ _('Vorwerk Validierungscode') }}</strong><br/>
-		{{ _('Fehler bei Anfrage an Vorwerk. Siehe Logfile fuer Details.') }}
+		{{ _('Fehler bei Anfrage an Vorwerk. Siehe Logfile für Details.') }}
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
@@ -184,7 +184,7 @@
 {% if configWriteSuccessfull == False %}
 	<div class="mb-2 alert alert-warning alert-dismissible fade show" role="alert">
 		<strong>{{ _('Token speichern') }}</strong><br/>
-		{{ _('Fehler beim Speichern des Tokens in plugin.yaml. Siehe Logfile fuer Details.') }}
+		{{ _('Fehler beim Speichern des Tokens in plugin.yaml. Siehe Logfile für Details.') }}
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
@@ -192,8 +192,8 @@
 {% endif %}
 {% if resetAlarmsSuccessfull %}
 	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
-		<strong>{{ _('Alarme loeschen') }}</strong><br/>
-		{{ _('Alarme geloescht') }}
+		<strong>{{ _('Alarme löschen') }}</strong><br/>
+		{{ _('Alarme gelöscht') }}
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
@@ -201,8 +201,8 @@
 {% endif %}
 {% if boundaryListSuccessfull %}
 	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
-		<strong>{{ _('List Boundaries (Raume)') }}</strong><br/>
-		{{ _('Verfuegbare Boundary IDs (Raeume) ins Logfile geschrieben.') }}
+		<strong>{{ _('List Boundaries (Räume)') }}</strong><br/>
+		{{ _('Verfügbare Boundary IDs (Räume) ins Logfile geschrieben.') }}
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
@@ -210,8 +210,8 @@
 {% endif %}
 {% if boundaryListSuccessfull == False %}
 	<div class="mb-2 alert alert-warning alert-dismissible fade show" role="alert">
-		<strong>{{ _('List Boundaries (Raeume)') }}</strong><br/>
-		{{ _('Fehler beim Listen der verfuegbaren Boundary IDs (Raeume). Siehe Logfile fuer Details.') }}
+		<strong>{{ _('List Boundaries (Räume)') }}</strong><br/>
+		{{ _('Fehler beim Listen der verfügbaren Boundary IDs (Räume). Siehe Logfile für Details.') }}
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
@@ -231,7 +231,7 @@
 	<div class="col-md-11 mb-3">
 		<div class="row">
 			<div class="col-md-3 mb-3">
-				{{ _('1) Vorwerk account Email ueberpruefen') }}:
+				{{ _('1) Vorwerk account Email überprüfen') }}:
 			</div>
 			<div class="col-md-3 mb-3">
 				<input type="email" class="form-control mb-1" id="input-email" value= {{ p.accountEmail() }} readonly placeholder="{{ _('Account Email') }}" maxlength="32" style="width: 300px;">
@@ -256,7 +256,7 @@
 		<div class="row">
 		<td style="min-width:190px;" style="padding-top:15px;">
 			<div class="col-md-3 mb-3">
-				{{ _('2) Diese oder andere gueltige ClientID eingeben') }}:
+				{{ _('2) Diese oder andere gültige ClientID eingeben') }}:
 			</div>
 			<div class="col-md-3 mb-3">
 				<input type="text" class="form-control mb-1" id="input-hash" value = {{ p.clientIDHash() }} 
@@ -328,23 +328,23 @@
 		<div class="row">
 			<td style="min-width:190px;" style="padding-top:15px;">
 			<div class="col-md-6 mb-3">
-			{{ _('Alarme im Backend loeschen') }}
+			{{ _('Alarme im Backend löschen') }}
 			</div>
 			<div class="col-md-6 mb-3">
-				<button type="button" class="btn btn-shng btn-sm" onclick="clearAlarmsCommand()" title= "{{ _('Loescht Fehlermeldungen, wie z.B. Staubbehaelter leeren.') }}">{{ _('Alarme loeschen') }}</button>
+				<button type="button" class="btn btn-shng btn-sm" onclick="clearAlarmsCommand()" title= "{{ _('Löscht Fehlermeldungen, wie z.B. Staubbehälter leeren.') }}">{{ _('Alarme löschen') }}</button>
 			</div>
 		</div>
 		<div class="row">
 			<td style="min-width:190px;" style="padding-top:15px;">
 			<div class="col-md-3 mb-3">
-			{{ _('Verfuegbare Boundary IDs (Raeume) ins Log schreiben') }}
+			{{ _('Verfügbare Boundary IDs (Räume) ins Log schreiben') }}
 			</div>
 			<div class="col-md-3 mb-3">
-				<input type="text" class="form-control mb-1" id="input-mapid" placeholder="{{ _('Hier Map ID eintragen') }}" maxlength="25" style="width: 300px;">
+				<input type="text" class="form-control mb-1" id="input-mapid" placeholder="{{ _('Hier Map ID eintragen') }}" {% if p.get_known_mapId() %} value = {{ p.get_known_mapId() }} {% endif %}
+ 				maxlength="25" style="width: 300px;">
 			</div>
-
 			<div class="col-md-6 mb-3">
-				<button type="button" class="btn btn-shng btn-sm" onclick="listAvailableMaps()" title= "{{ _('Schreibt die verfuegbaren Raeume ins Logfile') }}">{{ _('Liste Raeume') }}</button>
+				<button type="button" class="btn btn-shng btn-sm" onclick="listAvailableMaps()" title= "{{ _('Schreibt die verfügbaren Räume ins Logfile') }}">{{ _('Liste Räume') }}</button>
 			</div>
 		</div>
 	</div>

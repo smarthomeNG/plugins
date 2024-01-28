@@ -1,0 +1,1091 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin fuer die Anzeige von Daten von BYD Batterien'
+        en: 'Plugin to display data from BYD batteries'
+    maintainer: Matthias Manhart
+    tester: Matthias Manhart
+    state: develop                  # change to ready when done with development
+    keywords: byd battery
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1886748-support-thread-f%C3%BCr-das-byd-batterie-plugin
+
+    version: 0.1.2                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.9              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.9              # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: false           # plugin supports multi instance
+    restartable: true
+    classname: byd_bat              # class containing the plugin
+
+parameters:
+
+    ip:
+        type: ip
+        default: '192.168.16.254'
+        description:
+            de: "IP-Adresse der BYD Batterie (Master)"
+            en: "IP address of the BYD battery (master)"
+
+    imgpath:
+        type: str
+        default: ''
+        description:
+            de: "Pfad fuer Heatmap-Bilder (z.Bsp. fuer smartvisu)"
+            en: "Path for heatmap images (e.g. for smartvisu)"
+            
+    diag_cycle:
+        type: num
+        default: 300
+        description:
+            de: "Abfrage-Zyklus fuer die Diagnosedaten (>=60s)"
+            en: "Query cycle for diagnostic data (>=60s)"
+            
+    log_data:
+        type: bool
+        default: false
+        description:
+            de: "Abfrage der Log-Daten"
+            en: "get the log data"        
+
+    log_age:
+        type: num
+        default: 365
+        description:
+            de: "Aufbewahrungsdauer der Log-Dateien in Tagen (0=kein Löschen)"
+            en: "Retention period of the log files in days (0=no deletion)"
+            
+item_attributes:
+
+    byd_root:                        # only used internally - do not use for own items !
+        type: bool
+        mandatory: true
+        description:
+            de: 'Root-Flag fuer das Plugin'
+            en: 'Root-Flag for plugin'
+
+    byd_para:
+        type: bool 
+        default: off
+        description:
+            de: 'Interner Parameter'
+            en: 'Internal parameter'
+
+item_structs:
+
+    byd_struct:
+    
+        byd_root: true               # Must stay here - used by the plugin internally - do not remove !
+        
+        info:
+        
+            connection:              # Shows connection status of plugin to battery
+                type: bool
+                initial_value: false
+                enforce_updates: true
+                visu_acl: ro
+                
+            last_state:              # Date/time of last state update
+                type: str
+                visu_acl: ro
+                cache: true
+                
+            last_diag:               # Date/time of last dignostics update
+                type: str
+                visu_acl: ro
+                cache: true
+                
+            last_log:                # Date/time of last log data update
+                type: str
+                visu_acl: ro
+                cache: true
+                
+        enable_connection:           # true -> communication enabled, false -> communication disabled (other software can access BYD unit)
+            type: bool
+            initial_value: true
+            enforce_updates: true
+            visu_acl: rw
+            byd_para: true
+
+        state:                       # State of the BYD system (1 or more towers)
+        
+            current:                 # [A] Charge / Discharge Current
+                type: num
+                visu_acl: ro
+                database: init
+                
+            power:                   # [W] Power (+ discharge / - charge battery)
+                type: num
+                visu_acl: ro
+                database: init
+                
+            power_charge:            # [W] Power charging
+                type: num
+                visu_acl: ro
+                database: init
+                
+            power_discharge:         # [W] Power discharging
+                type: num
+                visu_acl: ro
+                database: init
+                
+            soc:                     # [%] SOC (State of Charge)
+                type: num
+                visu_acl: ro
+                database: init
+                
+            soh:                     # [%] SOH (State of Health)
+                type: num
+                visu_acl: ro
+                database: init
+                
+            tempbatt:                # [°C] Battery Temperature
+                type: num
+                visu_acl: ro
+                database: init
+                
+            tempmax:                 # [°C] Max Cell Temp
+                type: num
+                visu_acl: ro
+                database: init
+                
+            tempmin:                 # [°C] Min Cell Temp
+                type: num
+                visu_acl: ro
+                database: init
+                
+            voltbatt:                # [V] Battery Voltage
+                type: num
+                visu_acl: ro
+                database: init
+                
+            voltdiff:                # [V] Max - Min Cell Voltage
+                type: num
+                visu_acl: ro
+                database: init
+                
+            voltmax:                 # [V] Max Cell Voltage
+                type: num
+                visu_acl: ro
+                database: init
+                
+            voltmin:                 # [V] Min Cell Voltage
+                type: num
+                visu_acl: ro
+                database: init
+                
+            voltout:                 # [V] Output Voltage
+                type: num
+                visu_acl: ro
+                database: init
+                
+            charge_total:            # [kWh] Total charge
+                type: num
+                visu_acl: ro
+                database: init
+                
+            discharge_total:         # [kWh] Total discharge
+                type: num
+                visu_acl: ro
+                database: init
+                
+            eta:                     # [%] ETA (Efficiency)
+                type: num
+                visu_acl: ro
+                database: init
+                
+        system:                      # Informations about the BYD system
+        
+            bms:                     # Firmware BMS Battery Management System
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            bmu:                     # Firmware BMU Battery Management Unit
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            bmubanka:                # Firmware BMU-BankA
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            bmubankb:                # Firmware BMU-BankB
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            batttype:                # Battery Type
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            errornum:                # Error (numeric)
+                type: num
+                cache: true
+                visu_acl: ro
+                
+            errorstr:                # Error (string)
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            grid:                    # Parameter Table
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            invtype:                 # Inverter Type
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            modules:                 # Modules (count per tower)
+                type: num
+                cache: true
+                visu_acl: ro
+                
+            bmsqty:                  # Towers (count)
+                type: num
+                cache: true
+                visu_acl: ro
+                
+            capacity_total:          # Total capacitiy (all modules) [kWh]
+                type: num
+                cache: true
+                visu_acl: ro
+                
+            paramt:                  # Firmware BMU (?)
+                type: str
+                cache: true
+                visu_acl: ro
+                
+            serial:                  # Serial number (master)
+                type: str
+                cache: true
+                visu_acl: ro
+                
+        diagnosis:
+        
+            tower1:
+            
+                soc:                 # [%] SOC
+                    type: num
+                    visu_acl: ro
+                    database: init
+                    
+                soh:                 # [%] SOH
+                    type: num
+                    visu_acl: ro
+                    database: init
+                    
+                bat_voltag:          # Battery Voltage [V]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                v_out:               # Voltage Out [V]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                current:             # Current [A] (+ discharge / - charge battery)
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                volt_diff:           # Voltage difference (Max-Min) [mV]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                volt_max:
+                
+                    volt:            # max voltage [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of max voltage
+                        type: num
+                        visu_acl: ro
+                        database: init
+        
+                volt_min:
+                
+                    volt:            # min voltage [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of min voltage
+                        type: num
+                        visu_acl: ro
+                        database: init
+    
+                temp_max:
+                
+                    temp:            # max temperature [°C]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of max temperature
+                        type: num
+                        visu_acl: ro
+                        database: init
+        
+                temp_min:
+                
+                    temp:            # min temperature [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of min temperature
+                        type: num
+                        visu_acl: ro
+                        database: init
+                        
+                charge_total:    # [kWh] Total charge
+                    type: num
+                    visu_acl: ro
+                    database: init
+                
+                discharge_total: # [kWh] Total discharge
+                    type: num
+                    visu_acl: ro
+                    database: init
+                
+                balancing:           # Data about the balancing of this tower
+                
+                    active:          # true -> 1 or more cells balancing, false -> no cell balancing
+                        type: bool
+                        visu_acl: ro
+                        database: init
+
+                    number:          # number of cells currently balancing
+                        type: num
+                        visu_acl: ro
+                        database: init
+                        
+                state:               # State of the tower
+                
+                    raw:             # State of the tower (16 Bit, see byd_stat_tower in __init__.py)
+                        type: num
+                        visu_acl: ro
+                        database: init
+                        
+                    str:             # State as text (english)
+                        type: str
+                        visu_acl: ro
+                        
+                modules:                         # Data for each module of the tower
+                    m1:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m2:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m3:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m4:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m5:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m6:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m7:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m8:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    
+            tower2:
+            
+                soc:                 # [%] SOC
+                    type: num
+                    visu_acl: ro
+                    database: init
+                    
+                soh:                 # [%] SOH
+                    type: num
+                    visu_acl: ro
+                    database: init
+                    
+                bat_voltag:          # Battery Voltage [V]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                v_out:               # Voltage Out [V]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                current:             # Current [A] (+ discharge / - charge battery)
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                volt_diff:           # Voltage difference (Max-Min) [mV]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                volt_max:
+                
+                    volt:            # max voltage [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of max voltage
+                        type: num
+                        visu_acl: ro
+                        database: init
+        
+                volt_min:
+                
+                    volt:            # min voltage [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of min voltage
+                        type: num
+                        visu_acl: ro
+                        database: init
+    
+                temp_max:
+                
+                    temp:            # max temperature [°C]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of max temperature
+                        type: num
+                        visu_acl: ro
+                        database: init
+        
+                temp_min:
+                
+                    temp:            # min temperature [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of min temperature
+                        type: num
+                        visu_acl: ro
+                        database: init
+                
+                charge_total:    # [kWh] Total charge
+                    type: num
+                    visu_acl: ro
+                    database: init
+                
+                discharge_total: # [kWh] Total discharge
+                    type: num
+                    visu_acl: ro
+                    database: init
+                
+                balancing:           # Data about the balancing of this tower
+                
+                    active:          # true -> 1 or more cells balancing, false -> no cell balancing
+                        type: bool
+                        visu_acl: ro
+                        database: init
+
+                    number:          # number of cells currently balancing
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                state:               # State of the tower
+                
+                    raw:             # State of the tower (16 Bit, see byd_stat_tower in __init__.py)
+                        type: num
+                        visu_acl: ro
+                        database: init
+                        
+                    str:             # State as text (english)
+                        type: str
+                        visu_acl: ro
+                    
+                modules:                         # Data for each module of the tower
+                    m1:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m2:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m3:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m4:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m5:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m6:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m7:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m8:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+
+            tower3:
+            
+                soc:                 # [%] SOC
+                    type: num
+                    visu_acl: ro
+                    database: init
+                    
+                soh:                 # [%] SOH
+                    type: num
+                    visu_acl: ro
+                    database: init
+                    
+                bat_voltag:          # Battery Voltage [V]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                v_out:               # Voltage Out [V]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                current:             # Current [A] (+ discharge / - charge battery)
+                    type: num
+                    visu_acl: ro
+                    database: init
+                    
+                volt_diff:           # Voltage difference (Max-Min) [mV]
+                    type: num
+                    visu_acl: ro
+                    database: init
+        
+                volt_max:
+                
+                    volt:            # max voltage [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of max voltage
+                        type: num
+                        visu_acl: ro
+                        database: init
+        
+                volt_min:
+                
+                    volt:            # min voltage [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of min voltage
+                        type: num
+                        visu_acl: ro
+                        database: init
+    
+                temp_max:
+                
+                    temp:            # max temperature [°C]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of max temperature
+                        type: num
+                        visu_acl: ro
+                        database: init
+        
+                temp_min:
+                
+                    temp:            # min temperature [V]
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                    cell:            # cell number of min temperature
+                        type: num
+                        visu_acl: ro
+                        database: init
+                
+                charge_total:    # [kWh] Total charge
+                    type: num
+                    visu_acl: ro
+                    database: init
+                
+                discharge_total: # [kWh] Total discharge
+                    type: num
+                    visu_acl: ro
+                    database: init
+                
+                balancing:           # Data about the balancing of this tower
+                
+                    active:          # true -> 1 or more cells balancing, false -> no cell balancing
+                        type: bool
+                        visu_acl: ro
+                        database: init
+
+                    number:          # number of cells currently balancing
+                        type: num
+                        visu_acl: ro
+                        database: init
+                    
+                state:               # State of the tower
+                
+                    raw:             # State of the tower (16 Bit, see byd_stat_tower in __init__.py)
+                        type: num
+                        visu_acl: ro
+                        database: init
+                        
+                    str:             # State as text (english)
+                        type: str
+                        visu_acl: ro
+                    
+                modules:                         # Data for each module of the tower
+                    m1:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m2:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m3:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m4:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m5:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m6:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m7:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                    m8:
+                        v_min:                   # min voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_max:                   # max voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_av:                    # average voltage [V]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+                        v_diff:                  # voltage difference (min-max) [mV]
+                            type: num
+                            visu_acl: ro
+                            cache: true
+
+        visu:                        # Items for the visualisation (e.g. smartVISU)
+        
+            bmu_log:                 # Logd data from BMU
+            
+                log_html:            # HTML table with Log-Data (smartVISU: basic.print)
+                
+                    type: str
+                    visu_acl: ro
+                    cache: true
+            
+                log_jsonlist:        # Json list with Log-Data (smartVISU: status.activelist)
+                
+                    type: list
+                    initial_value: []
+                    visu_acl: ro
+                    cache: true
+            
+            tower1_log:              # Log data frm BMS Tower 1
+            
+                log_html:            # HTML table with Log-Data (smartVISU: basic.print)
+                
+                    type: str
+                    visu_acl: ro
+                    cache: true
+            
+                log_jsonlist:        # Json list with Log-Data (smartVISU: status.activelist)
+                
+                    type: list
+                    initial_value: []
+                    visu_acl: ro
+                    cache: true
+            
+            tower2_log:              # Log data frm BMS Tower 2
+            
+                log_html:            # HTML table with Log-Data (smartVISU: basic.print)
+                
+                    type: str
+                    visu_acl: ro
+                    cache: true
+            
+                log_jsonlist:        # Json list with Log-Data (smartVISU: status.activelist)
+                
+                    type: list
+                    initial_value: []
+                    visu_acl: ro
+                    cache: true
+            
+            tower3_log:              # Log data frm BMS Tower 3
+            
+                log_html:            # HTML table with Log-Data (smartVISU: basic.print)
+                
+                    type: str
+                    visu_acl: ro
+                    cache: true
+            
+                log_jsonlist:        # Json list with Log-Data (smartVISU: status.activelist)
+                
+                    type: list
+                    initial_value: []
+                    visu_acl: ro
+                    cache: true
+            
+logic_parameters: NONE
+
+plugin_functions: NONE

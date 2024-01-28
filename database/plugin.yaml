@@ -11,7 +11,7 @@ plugin:
     keywords: database
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
-    version: 1.6.9                 # Plugin version
+    version: 1.6.12                # Plugin version
     sh_minversion: 1.9.3.2         # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -97,7 +97,7 @@ item_attributes:
     # Definition of item attributes defined by this plugin
     database:
         type: str
-        valid_list_ci: ['', 'yes', 'init', 'true']
+        valid_list_ci: ['', 'no', 'yes', 'init', 'init2', 'true']
         duplicate_use: True
         description:
             de: "Wenn auf 'yes' oder 'true' gesetzt, werden die Werte des Items in die Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert des Items aus der Datenbank gelesen."

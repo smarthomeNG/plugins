@@ -45,7 +45,8 @@ from .svinstallwidgets import SmartVisuInstallWidgets
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.8.10"
+
+    PLUGIN_VERSION="1.8.14"
     ALLOW_MULTIINSTANCE = True
 
     visu_definition = None
@@ -80,7 +81,8 @@ class SmartVisu(SmartPlugin):
         #self.protocol_over_reverseproxy = self.get_parameter_value('protocol_over_reverseproxy')
 
         self.smartvisu_version = self.get_smartvisu_version()
-        if self.smartvisu_version == '':
+        # don't complain if dir not given
+        if self.smartvisu_dir and self.smartvisu_version == '':
             self.logger.error("Could not determine smartVISU version!")
         self.smartvisu_is_configured = self.sv_is_configured()
         self.logger.info(f"sv version={self.smartvisu_version}, sv_is_configured={self.smartvisu_is_configured}")
@@ -124,7 +126,8 @@ class SmartVisu(SmartPlugin):
 
     def run(self):
         self.alive = True
-        if self.smartvisu_dir != '':
+        # skip directory handling if all relevant handling options are disabled
+        if self.smartvisu_dir and (self._generate_pages or self._handle_widgets or self._create_masteritem_file):
             if not os.path.isdir(os.path.join(self.smartvisu_dir, 'pages')):
                 self.logger.error("Could not find valid smartVISU directory: {}".format(self.smartvisu_dir))
             else:
@@ -181,6 +184,7 @@ class SmartVisu(SmartPlugin):
         item.expand_relativepathes('sv_widget2', "'", "'")
         item.expand_relativepathes('sv_nav_aside', "'", "'")
         item.expand_relativepathes('sv_nav_aside2', "'", "'")
+        self.add_item(item)
 
 
     def parse_logic(self, logic):
@@ -421,7 +425,8 @@ class SmartVisu(SmartPlugin):
             dirname = self.read_from_sv_configini('pages')
             result = (dirname != '')
         else:
-            self.logger.warning("Could not determine version of smartVISU in configured directory {self.smartvisu_dir}")
+            if self.smartvisu_dir:
+                self.logger.warning(f"Could not determine version of smartVISU in configured directory {self.smartvisu_dir}")
             result = False
 
         return result

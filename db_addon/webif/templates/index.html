@@ -36,6 +36,9 @@
   table th.last {
     width: 150px;
   }
+    table th.aktion {
+    width: 100px;
+  }
   table th.dict {
     width: 150px;
   }
@@ -45,17 +48,80 @@
   table th.content {
     width: 500px;
   }
+  table td.active_item {
+    max-width: 250px;
+    width: 200px;
+    min-width:150px!important;
+  }
   .shng_effect_highlight {
     background-color: #FFFFE0;
   }
   .shng_effect_standard {
     background-color: none;
   }
+  button.actionbutton {
+    width: 32px;
+  }
 </style>
 {% endblock pluginstyles %}
 
 <!-- Additional script tag for plugin specific javascript code go into this block -->
 {% block pluginscripts %}
+<script>
+  function togglePlayPause(id, suspended) {
+    const escapedId = $.escapeSelector(id);
+    const buttonElement = $("#" + escapedId);
+    const icon = buttonElement.find('i');
+    recalcElement = $("#" + escapedId.replace(/_button_playpause$/, "_button_recalc"));
+
+    if (suspended == "true") {
+      // Change to pause icon
+      recalcElement.prop("disabled", true);
+      if (id.startsWith("plugin"))
+        buttonElement.val(id.replace(/_button_playpause$/, "") + ":suspend_plugin_calculation,False");
+      else
+        buttonElement.val(id.replace(/_button_playpause$/, "") + ":suspend_item_calculation,False");
+      icon.removeClass('fa-play').addClass('fa-pause');
+      buttonElement.attr('title', "{{ _('Berechnung aktivieren') }}");
+      buttonElement.removeClass("btn btn-outline-success").addClass("btn actionbutton btn-outline-dark");
+    } else {
+      // Change to play icon
+      if (id.startsWith("plugin"))
+        buttonElement.val(id.replace(/_button_playpause$/, "") + ":suspend_plugin_calculation,True");
+      else
+        buttonElement.val(id.replace(/_button_playpause$/, "") + ":suspend_item_calculation,True");
+      recalcElement.prop("disabled", false);
+      icon.removeClass('fa-pause').addClass('fa-play');
+      buttonElement.attr('title', "{{ _('Berechnung deaktivieren') }}");
+      buttonElement.removeClass("btn actionbutton btn-outline-dark").addClass("btn btn-outline-success");
+    }
+
+    // Your additional logic here
+  }
+
+  function updateButton(buttonElement, success) {
+      const originalHTML = buttonElement.html();
+      if (success == "btn-success")
+        buttonElement
+          .prop("disabled", true)
+          .html('<i class="fas fa-check"></i>')
+          .addClass(success);
+      else
+        buttonElement
+          .prop("disabled", true)
+          .html('<i class="fas fa-times"></i>')
+          .addClass(success);
+
+      // After 2 seconds, revert the button to its original state
+      setTimeout(function() {
+        buttonElement
+          .prop("disabled", false)
+          .html(originalHTML)
+          .removeClass(success);
+      }, 2000);
+  }
+</script>
+
 <script>
 	function handleUpdatedData(response, dataSet=null) {
 		if (dataSet === 'devices_info' || dataSet === null) {
@@ -69,48 +135,73 @@
                     value.substring(0, length - 3) + " ..." :
                     value;
 
-                shngInsertText(item+'_value', new_value, 'maintable', 5);
+                shngInsertText(item+'_value', Math.round(new_value, 2), 'maintable', 5);
                 shngInsertText(item+'_last_update', objResponse['items'][item]['last_update'], 'maintable');
                 shngInsertText(item+'_last_change', objResponse['items'][item]['last_change'], 'maintable');
             }
-            $('#maintable').DataTable().draw(false);
-            item_count = String(objResponse['queue_length']) + ' Items';
-            shngInsertText('queue_length', item_count, null, 2);
-            shngInsertText('active_queue_item', objResponse['active_queue_item'], null, 2);
 
-      if (objResponse['plugin_suspended'] === false) {
-				document.getElementById('play').classList = 'btn btn-success btn-sm';
-                document.getElementById('play').disabled = true;
-                document.getElementById('pause').classList = 'btn btn-outline-danger btn-sm';
-                document.getElementById('pause').disabled = false;
-			}
-			else {
-				document.getElementById('play').classList = 'btn btn-outline-success btn-sm';
-                document.getElementById('play').disabled = false;
-                document.getElementById('pause').classList = 'btn btn-danger btn-sm';
-                document.getElementById('pause').disabled = true;
-			}
+            item_count = String(objResponse['queue_length']) + ' Items';
+            if (objResponse['queue_length'] == 0)
+              recalc_button(false);
+            else {
+              recalc_button(true);
+            }
+            shngInsertText('queue_length', item_count);
+            shngInsertText('active_queue_item', objResponse['active_queue_item']);
+
+        togglePlayPause("plugin_button_playpause", objResponse['plugin_suspended'].toString());
 		}
+
+      if ($("#logging").length > 0){
+        document.getElementById('debug_parse').checked = objResponse['debug_log']['parse'];
+        document.getElementById('debug_execute').checked = objResponse['debug_log']['execute'];
+        document.getElementById('debug_ondemand').checked = objResponse['debug_log']['ondemand'];
+        document.getElementById('debug_onchange').checked = objResponse['debug_log']['onchange'];
+        document.getElementById('debug_prepare').checked = objResponse['debug_log']['prepare'];
+        document.getElementById('debug_sql').checked = objResponse['debug_log']['sql'];
+      }
 	}
 </script>
 
 <script>
     $(document).ready( function () {
-			$(window).trigger('datatables_defaults');
-      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-        resize = true;
-        webif_pagelength = -1;
-		  console.log('Activating automatic table resize');
-      }
-      else {
-        resize = false;
-      }
 
+      // Handler für Formular - das "submit"-Element (Senden) wird abgefangen
+      $("#button_pressed").submit(function(e) {
+
+        // keine HTML-Aktion ausführen (z.B. Formular senden)
+        e.preventDefault();
+        let value = $("#button").val();
+        const id = $("#button_id").val();
+        const escapedId = $.escapeSelector(id);
+        const buttonElement = $("#" + escapedId);
+        console.log('Sending db_addon command for ' + value);
+        // die Kennung des gedrückten Buttons per AJAX senden
+        $.post('submit', {item: value}, function(data) {
+          console.log("Return value from plugin: id=" + id + ", data=" + data);
+          if (id.endsWith("_playpause"))
+            togglePlayPause(id, data.toString());
+          else {
+            if (data === "true")
+              updateButton(buttonElement, "btn-success");
+            else
+              updateButton(buttonElement, "btn-danger");
+          }
+
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+          // Error callback
+          console.error("AJAX request failed:", textStatus, errorThrown);
+          updateButton(buttonElement, "btn-danger");
+        });
+        return false ;
+      });
+
+	  $(window).trigger('datatables_defaults');
       try {
         maintable = $('#maintable').DataTable( {
-          pageLength: webif_pagelength,
           columnDefs: [
+          { responsivePriority: 1, targets: 1 },
+        { responsivePriority: 2, targets: -1 },
           {
             title: '',
             targets: [0], "className": ""
@@ -136,7 +227,7 @@
             targets: [5], "className": "init"
           },
           {
-            title: '{{ _('Wert') }}', 
+            title: '{{ _('Wert') }}',
             targets: [6], "className": "truncate value"
           },
           {
@@ -146,8 +237,12 @@
           {
             title: '{{ _('Letzter Change') }}',
             targets: [8], "className": "last"
-          }].concat($.fn.dataTable.defaults.columnDefs),
-          pageResize: resize});
+          },
+          {
+            title: '{{ _('Aktionen') }}',
+            targets: [9], "className": "aktion"
+          }].concat($.fn.dataTable.defaults.columnDefs)});
+
         {% if maintenance %}
           mtable2 = $('#mtable2').DataTable( {
             columnDefs: [
@@ -162,77 +257,104 @@
             {
               title: '{{ _('content') }}',
               targets: [2], "className": "content"
-            }].concat($.fn.dataTable.defaults.columnDefs),
-            pageLength: webif_pagelength,
-            pageResize: resize});
+            }].concat($.fn.dataTable.defaults.columnDefs)});
         {% endif %}
       }
       catch (e) {
         console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
       }
-      if ({{ suspended }} == false) {
-        document.getElementById('play').classList = 'btn btn-success btn-sm';
-        document.getElementById('play').disabled = true;
-        document.getElementById('pause').classList = 'btn btn-outline-danger btn-sm';
-        document.getElementById('pause').disabled = false;
-      }
-      else {
-        document.getElementById('play').classList = 'btn btn-outline-success btn-sm';
-        document.getElementById('play').disabled = false;
-        document.getElementById('pause').classList = 'btn btn-danger btn-sm';
-        document.getElementById('pause').disabled = true;
-      }
+
     });
 </script>
 
 <script>
-  function reply_click(button_value)
+  function recalc_button(onoff)
   {
-      if (button_value == 0) {
-        if (confirm('{{ _('Plugins pausieren?') }}')) { jQuery.get('suspend'); }
-      }
-      if (button_value == 1) {
-        if (confirm('{{ _('Plugin fortsetzen?') }}')) { jQuery.get('activate'); }
-      }
+    const recalc_button = document.querySelector('#recalc_icon');
+    if (onoff == true) {
+      //recalc_button.setAttribute("disabled", "disabled");
+      recalc_button.classList.add('fa-1x');
+      recalc_button.classList.add('fa-spin');
+    }
+    else {
+      //recalc_button.removeAttribute("disabled");
+      recalc_button.classList.remove('fa-1x');
+      recalc_button.classList.remove('fa-spin');
+    }
   }
 </script>
+
+<script>
+  function checkbox(log, value)
+  {
+    console.log('debug_log_option_'+log+'_'+value)
+    jQuery.get('debug_log_option_'+log+'_'+value)
+  }
+</script>
+
 {% endblock pluginscripts %}
 
 
 {% block headtable %}
-
-<table class="table table-striped table-hover">
+<table class="table table-striped table-hover" style="min-width:600px;">
 	<tbody>
 		<tr>
 			<td class="py-1" width="150px"><strong>{{ _('Verbunden') }}</strong></td>
-			<td class="py-1">{% if p._db._connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1" width="500px">{% if p._db._connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
 			<td class="py-1" width="150px"><strong>{{ _('Treiber') }}</strong></td>
 			<td class="py-1">{{ p.db_driver }}</td>
 			<td class="py-1" width="150px"><strong>{{ _('Startup Delay') }}</strong></td>
 			<td class="py-1">{{ (p.startup_run_delay) }}s</td>
 		</tr>
 		{% set first = True %}
-		{% for key, value in p._db._params.items() %}
-			{% if loop.index % 4 == 0 %}
-				<tr>
-				{% endif %}
-					{% if key != "passwd" %}
-					    <td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{{ value }}</td>
-					{% else %}
-					    <td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{% for letter in value %}*{% endfor %}</td>
-					{% endif %}
-					{% if loop.index % 3 > 0 and loop.last %}
-						<td class="py-1" colspan="{{ loop.index % 3 }}"></td>
-					{% endif %}
-				{% if loop.index % 4 == 0 and not first %}
-				</tr>
-			{% endif %}
-        {% endfor %}
+        {% if p._db %}
+            {% for key, value in p._db._params.items() %}
+                {% if loop.index % 4 == 0 %}
+                    <tr>
+                    {% endif %}
+                        {% if key != "passwd" %}
+                            <td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{{ value }}</td>
+                        {% else %}
+                            <td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{% for letter in value %}*{% endfor %}</td>
+                        {% endif %}
+                        {% if loop.index % 3 > 0 and loop.last %}
+                            <td class="py-1" colspan="{{ loop.index % 3 }}"></td>
+                        {% endif %}
+                    {% if loop.index % 4 == 0 and not first %}
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
         <tr>
-            <td class="py-1" width="150px"><strong>{{ _('Item in Berechnung') }}</strong></td>
-            <td class="py-1" id="active_queue_item">{{ p.active_queue_item }}</td>
-            <td class="py-1" width="150px"><strong>{{ _('Arbeitsvorrat') }}</strong></td>
-            <td class="py-1" id="queue_length" colspan="3">{{ p.queue_backlog }} {{ _('Items') }} </td>
+            <td class="py-1"><strong>{{ _('Item in Berechnung') }}</strong></td>
+            <td class="py-1 active_item truncate" id="active_queue_item">{{ p.active_queue_item }}</td>
+            <td class="py-1"><strong>{{ _('Arbeitsvorrat') }}</strong></td>
+            <td class="py-1" id="queue_length">{{ p.queue_backlog }} {{ _('Items') }} </td>
+            <td class="py-1"><strong>{{ _('LogLevel') }}</strong></td>
+            <td class="py-1">
+                {{ p.log_level }}
+                {% if p.log_level == 10 %}
+                    {{'    ||     ' }}
+                    <div id="logging" class="form-check form-check-inline">
+                        <input type="checkbox" id="debug_parse" name="debug_parse" value="parse" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für parse_item">
+                    </div>
+                    <div id="logging" class="form-check form-check-inline">
+                        <input type="checkbox" id="debug_execute" name="debug_execute" value="execute" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für execute_items">
+                    </div>
+                    <div id="logging" class="form-check form-check-inline">
+                      <input type="checkbox" id="debug_ondemand" name="debug_ondemand" value="ondemand" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für on_demand">
+                    </div>
+                    <div id="logging" class="form-check form-check-inline">
+                        <input type="checkbox" id="debug_onchange" name="debug_onchange" value="parse" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für on_change">
+                    </div>
+                    <div id="logging" class="form-check form-check-inline">
+                        <input type="checkbox" id="debug_prepare" name="debug_prepare" value="execute" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für prepare">
+                    </div>
+                    <div id="logging" class="form-check form-check-inline">
+                      <input type="checkbox" id="debug_sql" name="debug_sql" value="sql" oninput="checkbox(this.value, this.checked);" title="(De)Aktivieren des debug-logging für sql">
+                    </div>
+                {% endif %}
+            </td>
         </tr>
 	</tbody>
 </table>
@@ -242,25 +364,23 @@
 <!-- Additional buttons for the web interface (if any are needed) - displayed below the headtable-section -->
 {% block buttons %}
 	<div>
-        <button id="recalc" type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Neuberechnung aller Items auslösen?') }}')) { jQuery.get('recalc_all'); }" title="Ausführen einer Neuberechnung aller Items"><i class="fas fa-redo"></i></button>
+        <button id="recalc" type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Neuberechnung aller Items auslösen?') }}')) { jQuery.get('recalc_all');recalc_button(true); }" title="Ausführen einer Neuberechnung aller Items"><i class="fas fa-redo" id="recalc_icon"></i></button>
         <button id="clear_queue" type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Berechnungslauf abbrechen?') }}')) { jQuery.get('clear_queue'); }" title="Abbrechen des aktuellen Berechnungslaufes"><i class="fas fa-times"></i></button>
 		<button id="clear_cache" type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Leeren aller cache_dicts auslösen?') }}')) { jQuery.get('clean_cache_dicts'); }" title="Löschen alle Cache-Daten des Plugins"><i class="fas fa-trash"></i></button>
-        <div class="btn-group btn-group-toggle">
-            <button id="play" type="button" class="btn btn-shng btn-sm" onclick="reply_click(this.value)" value=1 title="Aktiviert die Berechnungen des Plugin"><i class="fas fa-play"></i></button>
-            <button id="pause" type="button" class="btn btn-shng btn-sm" onclick="reply_click(this.value)" value=0 title="Pausiert die Berechnungen des Plugin"><i class="fas fa-pause"></i></button>
-        </div>
+        <button id="plugin_button_playpause" type="button" class="btn actionbutton btn-sm btn-outline-dark" title="wait" onclick="$('#button_id').val(this.id);$('#button').val(this.value);$('#button_pressed').submit();"><i class="fas"></i></button>
+            <script>togglePlayPause("plugin_button_playpause", '{{ p.suspended | lower }}')</script>
 	</div>
+    <form id="button_pressed" action="" method="post">
+    <input type="hidden" id="button" name="button" value="" />
+    <input type="hidden" id="button_id" name="button_id" value="">
+</form>
 {% endblock %}
 
 <!-- Define the number of tabs for the body of the web interface (1 - 6) -->
 {% set tabcount = 3 %}
 
 {% set tab1title = "<strong>" ~ plugin_shortname ~ " Items</strong> (" ~ item_count ~ ")" %}
-{% if maintenance %}
-    {% set tab2title = "<strong>" ~ plugin_shortname ~ " Maintenance</strong>" %}
-{% else %}
-    {% set tab2title = "hidden" %}
-{% endif %}
+{% set tab2title = "<strong>" ~ plugin_shortname ~ " Maintenance</strong>" %}
 {% set tab3title = "<strong>" ~ plugin_shortname ~ " API/Doku</strong>" %}
 
 <!-- Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3) -->
@@ -283,13 +403,23 @@
                 <td class="py-1">{{ p.get_item_config(item._path)['db_addon_fct'] }}</td>
                 <td class="py-1" style="text-align: center">{{ _(p.get_item_config(item)['cycle']|string) }}</td>
                 <td class="py-1" style="text-align: center">{% if p.get_item_config(item)['startup'] %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
-                <td class="py-1" id="{{ item._path }}_value" style="text-align: right">{{ item._value | float }}</td>
-                <td class="py-1" id="{{ item._path }}_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                <td class="py-1" id="{{ item._path }}_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                <td class="py-1" id="{{ item._path }}_value" style="text-align: right">&nbsp;</td>
+                <td class="py-1" id="{{ item._path }}_last_update" style="text-align: center">&nbsp;</td>
+                <td class="py-1" id="{{ item._path }}_last_change" style="text-align: center">&nbsp;</td>
+                <td>
+                    <button id="{{ item.property.path }}_button_recalc" type="button" class="btn actionbutton btn-shng btn-sm" title="{{ _('Neuberechnung') }}" onclick="$('#button_id').val(this.id);$('#button').val('{{ item.property.path }}:recalc_item');$('#button_pressed').submit();"><i class="fas fa-redo"></i></button>
+                    <button id="{{ item.property.path }}_button_cache_del" type="button" class="btn actionbutton btn-outline-danger btn-sm" title="{{ _('Wertecache löschen') }}" onclick="$('#button_id').val(this.id);$('#button').val('{{ item.property.path }}:clean_item_cache');$('#button_pressed').submit();"><i class="fas fa-trash"></i></button>
+                    <button id="{{ item.property.path }}_button_playpause" type="button" class="btn actionbutton btn-sm btn-outline-dark" title="wait" onclick="$('#button_id').val(this.id);$('#button').val(this.value);$('#button_pressed').submit();"><i class="fas"></i></button>
+                      <script>togglePlayPause("{{ item.property.path }}_button_playpause", '{{ p.get_item_config(item._path)['suspended'] | lower }}')</script>
+                </td>
             </tr>
          {% endfor %}
     </tbody>
 </table>
+<form id="button_pressed" action="" method="post">
+  <input type="hidden" id="button" name="button" value="" />
+  <input type="hidden" id="button_id" name="button_id" value="">
+</form>
 {% endblock bodytab1 %}
 
 
@@ -299,11 +429,15 @@
     <tbody>
         <tr><td></td>
             <td class="py-1">{{ _('00_items') }}</td>
-            <td class="py-1">{{ p.get_item_path_list('database_addon', True) }}</td>
+            <td class="py-1">{{ p._all_items() }}</td>
+        </tr>
+        <tr><td></td>
+            <td class="py-1">{{ _('01_ondemand_items') }}</td>
+            <td class="py-1">{{ p._ondemand_items() }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('02_admin_items') }}</td>
-            <td class="py-1">{{ p.get_item_path_list('database_addon', 'admin') }}</td>
+            <td class="py-1">{{ p._admin_items() }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('10_daily_items') }}</td>
@@ -372,18 +506,6 @@
         <tr><td></td>
             <td class="py-1">{{ _('27_vorjahresendwert_dict') }}</td>
             <td class="py-1">{{ p.previous_values['year'] }}</td>
-        </tr>
-        <tr><td></td>
-            <td class="py-1">{{ _('get_item_list') }}</td>
-            <td class="py-1">{{ p.get_item_list('database_addon', True) }}</td>
-        </tr>
-        <tr><td></td>
-            <td class="py-1">{{ _('_plg_item_dict') }}</td>
-            <td class="py-1">{{ p._plg_item_dict }}</td>
-        </tr>
-        <tr><td></td>
-            <td class="py-1">{{ _('work_item_queue_thread') }}</td>
-            <td class="py-1">{% if p.work_item_queue_thread != None %}{{ p.work_item_queue_thread.is_alive() }}{% endif %}</td>
         </tr>
     </tbody>
 </table>

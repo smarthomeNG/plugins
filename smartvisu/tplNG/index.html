@@ -12,26 +12,9 @@
 
 {% block sidebar %}
 
-	{% import "lib.html" as lib %}
 	{{ lib.updatecheck() }}
 
-	{% import "clock.html" as clock %}
-	{{ clock.digiclock('clock') }}
-
-	<div class="center">
-		{{ now|smartdate('l') }}, {{ now|smartdate() }}
-	</div>
-
-	<hr>
-
-	{% import "weather.html" as weather %}
-	{{ weather.current('weather') }}
-
-	<hr>
-
-	{{ weather.forecastweek('weather_forecast') }}
-
-	<hr>
+	{% include 'infoblock.html' %}
 
 {% endblock %}
 

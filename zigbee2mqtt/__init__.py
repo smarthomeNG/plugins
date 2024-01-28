@@ -2,6 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2021-      Michael Wenzel              wenzel_michael@web.de
+#  Copyright 2023-      Sebastian Helms             morg @ knx-Forum
 #########################################################################
 #  This file is part of SmartHomeNG.
 #
@@ -23,110 +24,121 @@
 #########################################################################
 
 from datetime import datetime
-import logging
+import json
 
-from lib.model.mqttplugin import *
-from lib.utils import Utils
+from lib.model.mqttplugin import MqttPlugin
+
+from .rgbxy import Converter
 from .webif import WebInterface
+
+Z2M_TOPIC = 'z2m_topic'
+Z2M_ATTR = 'z2m_attr'
+Z2M_RO = 'z2m_readonly'
+Z2M_WO = 'z2m_writeonly'
+Z2M_BVAL = 'z2m_bool_values'
+MSEP = '#'
+
+HANDLE_IN_PREFIX = '_handle_in_'
+HANDLE_OUT_PREFIX = '_handle_out_'
+HANDLE_DEV = 'dev_'
+HANDLE_ATTR = 'attr_'
 
 
 class Zigbee2Mqtt(MqttPlugin):
-    """
-    Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
-    """
+    """ Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items """
 
-    PLUGIN_VERSION = '1.1.2'
+    PLUGIN_VERSION = '2.0.0'
 
-    def __init__(self, sh):
-        """
-        Initializes the plugin.
-        """
+    def __init__(self, sh, **kwargs):
+        """ Initializes the plugin. """
 
         # Call init code of parent class (MqttPlugin)
         super().__init__()
-        if not self._init_complete:
-            return
 
-        self.logger.info('Init Zigbee2Mqtt Plugin')
-
-        # Enable / Disable debug log generation depending on log level
-        if self.logger.isEnabledFor(logging.DEBUG):
-            self.debug_log = True
-        else:
-            self.debug_log = False
+        self.logger.info(f'Init {self.get_shortname()} plugin {self.PLUGIN_VERSION}')
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        self.topic_level1 = self.get_parameter_value('base_topic').lower()
+        self.z2m_base = self.get_parameter_value('base_topic').lower()
         self.cycle = self.get_parameter_value('poll_period')
         self.read_at_init = self.get_parameter_value('read_at_init')
-        self.webif_pagelength = self.get_parameter_value('webif_pagelength')
+        self._z2m_gui = self.get_parameter_value('z2m_gui')
 
-        # Initialization code goes here
-        self.zigbee2mqtt_devices = {}  # to hold device information for web interface; contains data of all found devices
-        self.zigbee2mqtt_plugin_devices = {}  # to hold device information for web interface; contains data of all devices addressed in items
-        self.zigbee2mqtt_items = []  # to hold item information for web interface; contains list of all items
+        # bool_values is only good if used internally, because MQTT data is 
+        # usually sent in JSON. So just make this easy...
+        self.bool_values = [False, True]
+
+        self._items_read = []
+        self._items_write = []
+        self._devices = {'bridge': {}}
+        # {
+        #   'dev1': {
+        #       'lastseen': <timestamp>,
+        #       'meta': {[...]},  # really needed anymore?
+        #       'data': {[...]},
+        #       'exposes': {[...]},
+        #       'scenes': {'name1': id1, 'name2': id2, [...]},
+        #       'attr1': {
+        #           'item': item1,
+        #           'read': bool,
+        #           'write': bool,
+        #           'bool_values': ['OFF', 'ON'],
+        #           'value': ...
+        #       },
+        #       'attr2': ...
+        #   },
+        #   'dev2': ...
+        # }
 
         # Add subscription to get bridge announces
-        self.add_zigbee2mqtt_subscription(self.topic_level1, 'bridge', 'devices', '', '', 'list', callback=self.on_mqtt_announce)
-        self.add_zigbee2mqtt_subscription(self.topic_level1, 'bridge', 'state', '', '', 'bool', bool_values=['offline', 'online'], callback=self.on_mqtt_announce)
-        self.add_zigbee2mqtt_subscription(self.topic_level1, 'bridge', 'info', '', '', 'dict', callback=self.on_mqtt_announce)
-        self.add_zigbee2mqtt_subscription(self.topic_level1, 'bridge', 'log', '', '', 'dict', callback=self.on_mqtt_announce)
-        self.add_zigbee2mqtt_subscription(self.topic_level1, 'bridge', 'extensions', '', '', 'list', callback=self.on_mqtt_announce)
-        self.add_zigbee2mqtt_subscription(self.topic_level1, 'bridge', 'config', '', '', 'dict', callback=self.on_mqtt_announce)
-        self.add_zigbee2mqtt_subscription(self.topic_level1, 'bridge', 'groups', '', '', 'list', callback=self.on_mqtt_announce)
-        self.add_zigbee2mqtt_subscription(self.topic_level1, 'bridge', 'response', '', '', 'dict', callback=self.on_mqtt_announce)
+        bridge_subs = [
+            ['devices', 'list'],
+            ['state', 'str'],
+            ['info', 'dict'],
+            ['log', 'dict'],
+            ['extensions', 'list'],
+            ['config', 'dict'],
+            ['groups', 'list'],
+            ['response', 'dict']
+        ]
+        for attr, dtype in bridge_subs:
+            self.add_z2m_subscription('bridge', attr, '', '', dtype, callback=self.on_mqtt_msg)
 
         # Add subscription to get device announces
-        self.add_zigbee2mqtt_subscription(self.topic_level1, '+', '', '', '', 'dict', callback=self.on_mqtt_announce)
+        self.add_z2m_subscription('+', '', '', '', 'dict', callback=self.on_mqtt_msg)
 
-        self.local_ip = ''
-        self.alive = None
-
-        # if plugin should start even without web interface
+        # try to load webif
         self.init_webinterface(WebInterface)
-        return
-
-        # ToDo: Verarbeiten der bridge_devices bridge/log/device
 
     def run(self):
-        """
-        Run method for the plugin
-        """
+        """ Run method for the plugin """
 
         self.logger.debug("Run method called")
 
-        # get local ip
-        self.local_ip = Utils.get_local_ipv4_address()
-        self.logger.info(f"local ip adress is {self.local_ip}")
+        self.alive = True
 
         # start subscription to all topics
         self.start_subscriptions()
 
-        self.scheduler_add('poll_bridge', self.poll_bridge, cycle=self.cycle)
-        self.publish_zigbee2mqtt_topic(self.topic_level1, 'bridge', 'config', 'devices', 'get', '')
+        self.scheduler_add('z2m_cycle', self.poll_bridge, cycle=self.cycle)
+        self.publish_z2m_topic('bridge', 'config', 'devices', 'get')
 
         if self.read_at_init:
-            self.publish_zigbee2mqtt_topic(self.topic_level1, 'bridge', 'request', 'restart', '', '')
-
-        self.alive = True
+            self.publish_z2m_topic('bridge', 'request', 'restart')
 
         try:
-            self._get_current_status_of_all_devices_linked_to_items()
+            self._read_all_data()
         except Exception:
             pass
 
     def stop(self):
-        """
-        Stop method for the plugin
-        """
+        """ Stop method for the plugin """
 
         self.alive = False
         self.logger.debug("Stop method called")
-        self.scheduler_remove('poll_bridge')
+        self.scheduler_remove('z2m_c')
 
         # stop subscription to all topics
         self.stop_subscriptions()
-        return
 
     def parse_item(self, item):
         """
@@ -142,32 +154,94 @@ class Zigbee2Mqtt(MqttPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
 
-        if self.has_iattr(item.conf, 'zigbee2mqtt_attr'):
-            if self.debug_log:
-                self.logger.debug(f"parsing item: {item.id()}")
+        # remove this block when its included in smartplugin.py,
+        # replace with super().parse_item(item)
+        # check for suspend item
+        if item.property.path == self._suspend_item_path:
+            self.logger.debug(f'suspend item {item.property.path} registered')
+            self._suspend_item = item
+            self.add_item(item, updating=True)
+            return self.update_item
+        # end block
 
-            zigbee2mqtt_attr = self.get_iattr_value(item.conf, 'zigbee2mqtt_attr').lower()
-            topic_level2 = self._get_zigbee2mqtt_topic_from_item(item)
+        if self.has_iattr(item.conf, Z2M_ATTR):
+            self.logger.debug(f"parsing item: {item}")
 
-            if not topic_level2:
+            device = self._get_z2m_topic_from_item(item)
+            if not device:
+                self.logger.warning(f"parsed item {item} has no {Z2M_TOPIC} set, ignoring")
                 return
 
-            if not self.zigbee2mqtt_plugin_devices.get(topic_level2):
-                self.zigbee2mqtt_plugin_devices[topic_level2] = {}
-                self.zigbee2mqtt_plugin_devices[topic_level2]['connected_to_item'] = False
-                self.zigbee2mqtt_plugin_devices[topic_level2]['connected_items'] = {}
+            attr = self.get_iattr_value(item.conf, Z2M_ATTR).lower()
 
-            self.zigbee2mqtt_plugin_devices[topic_level2]['connected_to_item'] = True
-            self.zigbee2mqtt_plugin_devices[topic_level2]['connected_items']['item_' + zigbee2mqtt_attr] = item
-            if zigbee2mqtt_attr == 'online':
-                self.zigbee2mqtt_plugin_devices[topic_level2]['online'] = False
-            # append to list used for web interface
-            if item not in self.zigbee2mqtt_items:
-                self.zigbee2mqtt_items.append(item)
+            if item.type() == 'bool':
+                bval = self.get_iattr_value(item.conf, Z2M_BVAL)
+                if bval == []:
+                    bval = None
+                if bval is None or type(bval) is not list:
+                    bval = self.bool_values
 
-            return self.update_item
+            # invert read-only/write-only logic to allow read/write
+            write = not self.get_iattr_value(item.conf, Z2M_RO, False)
+            read = not self.get_iattr_value(item.conf, Z2M_WO, False) or not write
 
-    def update_item(self, item, caller=None, source=None, dest=None):
+            if device not in self._devices:
+                self._devices[device] = {}
+
+            if attr not in self._devices[device]:
+                self._devices[device][attr] = {}
+
+            data = {
+                'value': None,
+                'item': item,
+                'read': read,
+                'write': write,
+            }
+            if item.type() == 'bool':
+                data['bool_values'] = bval
+
+            self._devices[device][attr].update(data)
+
+            if read and item not in self._items_read:
+                self._items_read.append(item)
+            if write and item not in self._items_write:
+                self._items_write.append(item)
+
+            # use new smartplugin method of registering items
+            # <dev>#<attr> needed as mapping, as device or attr
+            # by themselves are not unique
+            self.add_item(item, {}, device + MSEP + attr, write)
+            if write:
+                return self.update_item
+
+    def remove_item(self, item):
+        if item not in self._plg_item_dict:
+            return
+
+        mapping = self.get_item_mapping(item)
+        if mapping:
+            device, attr = mapping.split(MSEP)
+
+            # remove references in plugin-internal storage
+            try:
+                del self._devices[device][attr]
+            except KeyError:
+                pass
+            if not self._devices[device]:
+                del self._devices[device]
+
+        try:
+            self._items_read.remove(item)
+        except ValueError:
+            pass
+        try:
+            self._items_write.remove(item)
+        except ValueError:
+            pass
+
+        super().remove_item(item)
+
+    def update_item(self, item, caller='', source=None, dest=None):
         """
         Item has been updated
 
@@ -176,505 +250,592 @@ class Zigbee2Mqtt(MqttPlugin):
         :param source:  if given it represents the source
         :param dest:    if given it represents the dest
         """
+        self.logger.debug(f"update_item: {item} called by {caller} and source {source}")
 
-        if self.debug_log:
-            self.logger.debug(f"update_item: {item.id()} called by {caller} and source {source}")
+        if self.alive and not self.suspended and not caller.startswith(self.get_shortname()):
 
-        if self.alive and self.get_shortname() not in caller:
-            # code to execute if the plugin is not stopped  AND only, if the item has not been changed for this plugin
+            if item in self._items_write:
 
-            # get zigbee2mqtt attributes of caller item
-            topic_level2 = self.get_iattr_value(item.conf, 'zigbee2mqtt_topic')
-            topic_level2 = self._handle_hex_in_topic_level2(topic_level2, item)
+                mapping = self.get_item_mapping(item)
+                if not mapping:
+                    self.logger.error(f"update_item called for item {item}, but no z2m associations are stored. This shouldn't happen...")
+                    return
 
-            zigbee2mqtt_attr = self.get_iattr_value(item.conf, 'zigbee2mqtt_attr')
+                self.logger.info(f"update_item: {item}, item has been changed outside of this plugin in {caller} with value {item()}")
 
-            if zigbee2mqtt_attr in ['bridge_permit_join', 'bridge_health_check', 'bridge_restart', 'bridge_networkmap_raw', 'device_remove',
-                                    'device_ota_update_check', 'device_ota_update_update', 'device_configure', 'device_options', 'device_rename',
-                                    'device_bind', 'device_unbind', 'device_configure_reporting', 'state', 'color_temp', 'brightness', 'hue', 'saturation']:
+                device, attr = mapping.split(MSEP)
 
-                self.logger.info(f"update_item: {item.id()}, item has been changed in SmartHomeNG outside of this plugin in {caller} with value {item()}")
+                # make access easier and code more readable
+                _device = self._devices[device]
+                _attr = _device[attr]
+
+                # pre-set values
+                topic_3 = 'set'
+                topic_4 = topic_5 = ''
                 payload = None
-                bool_values = None
-                topic_level3 = topic_level4 = topic_level5 = ''
+                bool_values = _attr.get('bool_values')
+                if bool_values is None:
+                    bool_values = self.bool_values
+                scenes = _device.get('scenes')
+                value = item()
 
-                if zigbee2mqtt_attr == 'bridge_permit_join':
-                    topic_level3 = 'request'
-                    topic_level4 = 'permit_join'
-                    payload = item()
-                    bool_values = ['false', 'true']
-                elif zigbee2mqtt_attr == 'bridge_health_check':
-                    topic_level3 = 'request'
-                    topic_level4 = 'health_check'
-                    payload = ''
-                elif zigbee2mqtt_attr == 'bridge_restart':
-                    topic_level3 = 'request'
-                    topic_level4 = 'restart'
-                    payload = ''
-                elif zigbee2mqtt_attr == 'bridge_networkmap_raw':
-                    topic_level3 = 'request'
-                    topic_level4 = 'networkmap'
-                    payload = 'raw'
-                elif zigbee2mqtt_attr == 'device_remove':
-                    topic_level3 = 'request'
-                    topic_level4 = 'device'
-                    topic_level5 = 'remove'
-                    payload = str(item())
-                # elif zigbee2mqtt_attr == 'device_ota_update_check':
-                # topic_level3 = 'request'
-                # topic_level4 = 'device'
-                # payload = 'raw'
-                # bool_values = None
-                # elif zigbee2mqtt_attr == 'device_ota_update_update':
-                # topic_level3 = 'request'
-                # topic_level4 = 'device'
-                # payload = 'raw'
-                # bool_values = None
-                elif zigbee2mqtt_attr == 'device_configure':
-                    topic_level3 = 'request'
-                    topic_level4 = 'device'
-                    topic_level5 = 'configure'
-                    payload = str(item())
-                elif zigbee2mqtt_attr == 'device_options':
-                    topic_level3 = 'request'
-                    topic_level4 = 'device'
-                    topic_level5 = 'options'
-                    payload = str(item())
-                elif zigbee2mqtt_attr == 'device_rename':
-                    topic_level3 = 'request'
-                    topic_level4 = 'device'
-                    topic_level5 = 'rename'
-                    payload = str(item())
-                elif zigbee2mqtt_attr == 'state':
-                    topic_level3 = 'set'
-                    payload = '{' + f'"state" : "{self._bool2str(item(), 1)}"' + '}'
-                elif zigbee2mqtt_attr == 'brightness':
-                    topic_level3 = 'set'
-                    value = int(round(item() * 255 / 100, 0))  # Umrechnung von 0-100% in 0-254
-                    if value < 0 or value > 255:
-                        self.logger.warning(f'commanded value for brightness not within allowed range; set to next valid value')
-                        value = 0 if value < 0 else 255
-                    payload = '{' + f'"brightness" : "{value}"' + '}'
-                elif zigbee2mqtt_attr == 'color_temp':
-                    topic_level3 = 'set'
-                    value = int(round(1000000 / item(), 0))
-                    # mired scale
-                    if value < 150 or value > 500:
-                        self.logger.warning(f' commanded value for brightness not within allowed range; set to next valid value')
-                        value = 150 if value < 150 else 500
-                    payload = '{' + f'"color_temp" : "{value}"' + '}'
-                elif zigbee2mqtt_attr == 'hue':
-                    topic_level3 = 'set'
-                    hue = item()
-                    saturation_item = self.zigbee2mqtt_plugin_devices[topic_level2]['connected_items']['item_saturation']
-                    saturation = saturation_item()
-                    if hue < 0 or hue > 359:
-                        self.logger.warning(f'commanded value for hue not within allowed range; set to next valid value')
-                        hue = 0 if hue < 0 else 359
-                    payload = '{"color":{' + f'"hue":{hue}, "saturation":{saturation}' + '}}'
-                elif zigbee2mqtt_attr == 'saturation':
-                    topic_level3 = 'set'
-                    saturation = item()
-                    hue_item = self.zigbee2mqtt_plugin_devices[topic_level2]['connected_items']['item_hue']
-                    hue = hue_item()
-                    if saturation < 0 or saturation > 100:
-                        self.logger.warning(f'commanded value for hue not within allowed range; set to next valid value')
-                        saturation = 0 if saturation < 0 else 100
-                    payload = '{"color":{' + f'"hue":{hue}, "saturation":{saturation}' + '}}'
-                else:
-                    self.logger.warning(f"update_item: {item.id()}, attribut {zigbee2mqtt_attr} not implemented yet (by {caller})")
+                # apply bool_values if present and applicable
+                if bool_values and isinstance(value, bool):
+                    value = bool_values[value]
 
-                if payload is not None:
-                    self.publish_zigbee2mqtt_topic(self.topic_level1, topic_level2, topic_level3, topic_level4, topic_level5, payload, item, bool_values=bool_values)
+                # replace scene with index
+                if attr == 'scene_recall' and scenes:
+                    try:
+                        value = scenes[value]
+                    except KeyError:
+                        self.logger.warning(f'scene {value} not defined for {device}')
+                        return
+
+                # check device handler
+                if hasattr(self, HANDLE_OUT_PREFIX + HANDLE_DEV + device):
+                    attr, value, topic_3, topic_4, topic_5, abort = getattr(self, HANDLE_OUT_PREFIX + HANDLE_DEV + device)(item, value, topic_3, topic_4, topic_5, device, attr)
+                    if abort:
+                        self.logger.debug(f'processing of item {item} stopped due to abort statement from handler {HANDLE_OUT_PREFIX + HANDLE_DEV + device}')
+                        return
+
+                # check attribute handler
+                if hasattr(self, HANDLE_OUT_PREFIX + HANDLE_ATTR + attr):
+                    attr, value, topic_3, topic_4, topic_5, abort = getattr(self, HANDLE_OUT_PREFIX + HANDLE_ATTR + attr)(item, value, topic_3, topic_4, topic_5, device, attr)
+                    if abort:
+                        self.logger.debug(f'processing of item {item} stopped due to abort statement from handler {HANDLE_OUT_PREFIX + HANDLE_ATTR + attr}')
+                        return
+
+                # create payload
+                if value is not None:
+                    payload = json.dumps({
+                        attr: value
+                    })
                 else:
-                    self.logger.warning(f"update_item: {item.id()}, no value/payload defined (by {caller})")
+                    payload = None
+
+                self.publish_z2m_topic(device, topic_3, topic_4, topic_5, payload, item, bool_values=bool_values)
             else:
-                self.logger.warning(f"update_item: {item.id()}, trying to change item in SmartHomeNG that is readonly (by {caller})")
+                self.logger.warning(f"update_item: {item}, trying to change item in SmartHomeNG that is readonly (by {caller})")
 
     def poll_bridge(self):
-        """
-        Polls for health state of the bridge
-        """
+        """ Polls for health state of the bridge """
 
-        self.logger.info("poll_bridge: Checking online and health status of bridge")
-        self.publish_zigbee2mqtt_topic(self.topic_level1, 'bridge', 'request', 'health_check', '', '')
+        self.logger.info("poll_bridge: Checking health status of bridge")
+        self.publish_z2m_topic('bridge', 'request', 'health_check')
 
-        for topic_level2 in self.zigbee2mqtt_plugin_devices:
-            if self.zigbee2mqtt_plugin_devices[topic_level2].get('online') is True and self.zigbee2mqtt_plugin_devices[topic_level2].get('online_timeout') is True:
-                if self.zigbee2mqtt_plugin_devices[topic_level2]['online_timeout'] < datetime.now():
-                    self.zigbee2mqtt_plugin_devices[topic_level2]['online'] = False
-                    self._set_item_value(topic_level2, 'item_online', False, 'poll_device')
-                    self.logger.info(f"poll_device: {topic_level2} is not online any more - online_timeout={self.zigbee2mqtt_plugin_devices[topic_level2]['online_timeout']}, now={datetime.now()}")
+    def add_z2m_subscription(self, device: str, topic_3: str, topic_4: str, topic_5: str, payload_type: str, bool_values=None, item=None, callback=None):
+        """ build the topic in zigbee2mqtt style and add the subscription to mqtt """
 
-    def add_zigbee2mqtt_subscription(self, topic_level1: str, topic_level2: str, topic_level3: str, topic_level4: str, topic_level5: str, payload_type: str, bool_values: list = None, item=None, callback=None):
-        """
-        build the topic in zigbee2mqtt style and add the subscription to mqtt
-
-        :param topic_level1:    basetopic of topic to subscribe to
-        :param topic_level2:    unique part of topic to subscribe to
-        :param topic_level3:    level3 of topic to subscribe to
-        :param topic_level4:    level4 of topic to subscribe to
-        :param topic_level5:    level5 of topic to subscribe to
-        :param payload_type:    payload type of the topic (for this subscription to the topic)
-        :param bool_values:     bool values (for this subscription to the topic)
-        :param item:            item that should receive the payload as value. Used by the standard handler (if no callback function is specified)
-        :param callback:        a plugin can provide an own callback function, if special handling of the payload is needed
-        :return:                None
-        """
-
-        tpc = self._build_topic_str(topic_level1, topic_level2, topic_level3, topic_level4, topic_level5)
+        tpc = self._build_topic_str(device, topic_3, topic_4, topic_5)
         self.add_subscription(tpc, payload_type, bool_values=bool_values, callback=callback)
 
-    def publish_zigbee2mqtt_topic(self, topic_level1: str, topic_level2: str, topic_level3: str, topic_level4: str, topic_level5: str, payload, item=None, qos: int = None, retain: bool = False, bool_values: list = None):
-        """
-        build the topic in zigbee2mqtt style and publish to mqtt
+    def publish_z2m_topic(self, device: str, topic_3: str = '', topic_4: str = '', topic_5: str = '', payload='', item=None, qos: int = 0, retain: bool = False, bool_values=None):
+        """ build the topic in zigbee2mqtt style and publish to mqtt """
 
-        :param topic_level1:    basetopic of topic to publish
-        :param topic_level2:    unique part of topic to publish; ZigbeeDevice
-        :param topic_level3:    level3 of topic to publish
-        :param topic_level4:    level4 of topic to publish
-        :param topic_level5:    level5 of topic to publish
-        :param payload:         payload to publish
-        :param item:            item (if relevant)
-        :param qos:             qos for this message (optional)
-        :param retain:          retain flag for this message (optional)
-        :param bool_values:     bool values (for publishing this topic, optional)
-        :return:                None
-        """
-
-        tpc = self._build_topic_str(topic_level1, topic_level2, topic_level3, topic_level4, topic_level5)
-        # self.logger.debug(f"Publish to topic <{tpc}> with payload <{payload}>")
+        tpc = self._build_topic_str(device, topic_3, topic_4, topic_5)
         self.publish_topic(tpc, payload, item, qos, retain, bool_values)
 
-    def on_mqtt_announce(self, topic: str, payload, qos=None, retain=None):
+    def on_mqtt_msg(self, topic: str, payload, qos=None, retain=None):
         """
         Callback function to handle received messages
 
         :param topic:           mqtt topic
         :param payload:         mqtt message payload
-        :param qos:             qos for this message (optional)
-        :param retain:          retain flag for this message (optional)
+        :param qos:             qos for this message (unused)
+        :param retain:          retain flag for this message (unused)
         """
 
-        wrk = topic.split('/')
-        topic_level1 = wrk[0]
-        topic_level2 = wrk[1]
-        topic_level3 = ''
-        topic_level4 = ''
-        topic_level5 = ''
-        if len(wrk) > 2:
-            topic_level3 = wrk[2]
-            if len(wrk) > 3:
-                topic_level4 = wrk[3]
-                if len(wrk) > 4:
-                    topic_level5 = wrk[4]
+        z2m_base, device, topic_3, topic_4, topic_5, *_ = (topic + '////').split('/')
+        self.logger.debug(f"received mqtt msg: z2m_base={z2m_base}, device={device}, topic_3={topic_3}, topic_4={topic_4}, topic_5={topic_5}, payload={payload}")
 
-        if self.debug_log:
-            self.logger.debug(f"on_mqtt_announce: topic_level1={topic_level1}, topic_level2={topic_level2}, topic_level3={topic_level3}, topic_level4={topic_level4}, topic_level5={topic_level5}, payload={payload}")
+        if z2m_base != self.z2m_base:
+            self.logger.error(f'received mqtt msg with wrong base topic {topic}. Please report')
+            return
 
-        # Handle data from bridge
-        if topic_level2 == 'bridge':
-            if topic_level3 == 'state':
-                # Payloads are 'online' and 'offline'; equal to LWT
-                if self.debug_log:
-                    self.logger.debug(f"LWT: detail: {topic_level3} datetime: {datetime.now()} payload: {payload}")
-                if topic_level2 not in self.zigbee2mqtt_plugin_devices:
-                    self.zigbee2mqtt_plugin_devices[topic_level2] = {}
-                self.zigbee2mqtt_plugin_devices[topic_level2]['online'] = bool(payload)
-
-            elif topic_level3 == 'response':
-                if topic_level4 == 'health_check':
-                    # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=response, topic_level4=health_check, topic_level5=, payload={'data': {'healthy': True}, 'status': 'ok'}
-                    if type(payload) is dict:
-                        self.zigbee2mqtt_plugin_devices[topic_level2]['health_status'] = payload
-                        self.zigbee2mqtt_plugin_devices[topic_level2]['online'] = bool(payload['data']['healthy'])
-                    else:
-                        if self.debug_log:
-                            self.logger.debug(f"(Received payload {payload} on topic {topic} is not of type dict")
-
-                elif topic_level4 == 'permit_join':
-                    # {"data":{"value":true},"status":"ok"}
-                    if type(payload) is dict:
-                        self.zigbee2mqtt_plugin_devices[topic_level2]['permit_join'] = payload
-                        self.zigbee2mqtt_plugin_devices[topic_level2]['online'] = True
-                    else:
-                        if self.debug_log:
-                            self.logger.debug(f"(Received payload {payload} on topic {topic} is not of type dict")
-
-                elif topic_level4 == 'networkmap':
-                    # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=None, topic_level4=networkmap, topic_level5=None, payload={'data': {'routes': False, 'type': 'raw', 'value': {'links': [{'depth': 1, 'linkquality': 5, 'lqi': 5, 'relationship': 1, 'routes': [], 'source': {'ieeeAddr': '0x588e81fffe28dec5', 'networkAddress': 39405}, 'sourceIeeeAddr': '0x588e81fffe28dec5', 'sourceNwkAddr': 39405, 'target': {'ieeeAddr': '0x00124b001cd4bbf0', 'networkAddress': 0}, 'targetIeeeAddr': '0x00124b001cd4bbf0'}, {'depth': 1, 'linkquality': 155, 'lqi': 155, 'relationship': 1, 'routes': [], 'source': {'ieeeAddr': '0x00124b00231e45b8', 'networkAddress': 18841}, 'sourceIeeeAddr': '0x00124b00231e45b8', 'sourceNwkAddr': 18841, 'target': {'ieeeAddr': '0x00124b001cd4bbf0', 'networkAddress': 0}, 'targetIeeeAddr': '0x00124b001cd4bbf0'}, {'depth': 1, 'linkquality': 1, 'lqi': 1, 'relationship': 1, 'routes': [], 'source': {'ieeeAddr': '0x00158d00067a0c2d', 'networkAddress': 60244}, 'sourceIeeeAddr': '0x00158d00067a0c2d', 'sourceNwkAddr': 60244, 'target': {'ieeeAddr': '0x00124b001cd4bbf0', 'networkAddress': 0}, 'targetIeeeAddr': '0x00124b001cd4bbf0'}], 'nodes': [{'definition': None, 'failed': [], 'friendlyName': 'Coordinator', 'ieeeAddr': '0x00124b001cd4bbf0', 'lastSeen': None, 'networkAddress': 0, 'type': 'Coordinator'}, {'definition': {'description': 'TRADFRI open/close remote', 'model': 'E1766', 'supports': 'battery, action, linkquality', 'vendor': 'IKEA'}, 'friendlyName': 'TRADFRI E1766_01', 'ieeeAddr': '0x588e81fffe28dec5', 'lastSeen': 1618408062253, 'manufacturerName': 'IKEA of Sweden', 'modelID': 'TRADFRI open/close remote', 'networkAddress': 39405, 'type': 'EndDevice'}, {'definition': {'description': 'Temperature and humidity sensor', 'model': 'SNZB-02', 'supports': 'battery, temperature, humidity, voltage, linkquality', 'vendor': 'SONOFF'}, 'friendlyName': 'SNZB02_01', 'ieeeAddr': '0x00124b00231e45b8', 'lastSeen': 1618407530272, 'manufacturerName': 'eWeLink', 'modelID': 'TH01', 'networkAddress': 18841, 'type': 'EndDevice'}, {'definition': {'description': 'Aqara vibration sensor', 'model': 'DJT11LM', 'supports': 'battery, action, strength, sensitivity, voltage, linkquality', 'vendor': 'Xiaomi'}, 'friendlyName': 'DJT11LM_01', 'ieeeAddr': '0x00158d00067a0c2d', 'lastSeen': 1618383303863, 'manufacturerName': 'LUMI', 'modelID': 'lumi.vibration.aq1', 'networkAddress': 60244, 'type': 'EndDevice'}]}}, 'status': 'ok', 'transaction': 'q15of-1'}
-                    if type(payload) is dict:
-                        self.zigbee2mqtt_plugin_devices[topic_level2]['networkmap'] = payload
-                        self.zigbee2mqtt_plugin_devices[topic_level2]['online'] = True
-                    else:
-                        if self.debug_log:
-                            self.logger.debug(f"(Received payload {payload} on topic {topic} is not of type dict")
-
-            elif topic_level3 == 'config':
-                if topic_level4 == '':
-                    # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=config, topic_level4=, topic_level5=, payload={'commit': 'abd8a09', 'coordinator': {'meta': {'maintrel': 3, 'majorrel': 2, 'minorrel': 6, 'product': 0, 'revision': 20201127, 'transportrev': 2}, 'type': 'zStack12'}, 'log_level': 'info', 'network': {'channel': 11, 'extendedPanID': '0xdddddddddddddddd', 'panID': 6754}, 'permit_join': False, 'version': '1.18.2'}
-                    if type(payload) is dict:
-                        self.zigbee2mqtt_plugin_devices[topic_level2]['config'] = payload
-                    else:
-                        if self.debug_log:
-                            self.logger.debug(f"(Received payload {payload} on topic {topic} is not of type dict")
-
-                elif topic_level4 == 'devices':
-                    # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=config, topic_level4=devices, topic_level5=, payload=[{'dateCode': '20201127', 'friendly_name': 'Coordinator', 'ieeeAddr': '0x00124b001cd4bbf0', 'lastSeen': 1618861562211, 'networkAddress': 0, 'softwareBuildID': 'zStack12', 'type': 'Coordinator'}, {'dateCode': '20190311', 'description': 'TRADFRI open/close remote', 'friendly_name': 'TRADFRI E1766_01', 'hardwareVersion': 1, 'ieeeAddr': '0x588e81fffe28dec5', 'lastSeen': 1618511300581, 'manufacturerID': 4476, 'manufacturerName': 'IKEA of Sweden', 'model': 'E1766', 'modelID': 'TRADFRI open/close remote', 'networkAddress': 39405, 'powerSource': 'Battery', 'softwareBuildID': '2.2.010', 'type': 'EndDevice', 'vendor': 'IKEA'}, {'dateCode': '20201026', 'description': 'Temperature and humidity sensor', 'friendly_name': 'SNZB02_01', 'hardwareVersion': 1, 'ieeeAddr': '0x00124b00231e45b8', 'lastSeen': 1618861025534, 'manufacturerID': 0, 'manufacturerName': 'eWeLink', 'model': 'SNZB-02', 'modelID': 'TH01', 'networkAddress': 18841, 'powerSource': 'Battery', 'type': 'EndDevice', 'vendor': 'SONOFF'}, {'description': 'Aqara vibration sensor', 'friendly_name': 'DJT11LM_01', 'ieeeAddr': '0x00158d00067a0c2d', 'lastSeen': 1618383303863, 'manufacturerID': 4151, 'manufacturerName': 'LUMI', 'model': 'DJT11LM', 'modelID': 'lumi.vibration.aq1', 'networkAddress': 60244, 'powerSource': 'Battery', 'type': 'EndDevice', 'vendor': 'Xiaomi'}]
-                    if type(payload) is list:
-                        self._get_zigbee_meta_data(payload)
-
-            elif topic_level3 == 'log':
-                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={"message":[{"dateCode":"20201127","friendly_name":"Coordinator","ieeeAddr":"0x00124b001cd4bbf0","lastSeen":1617961599543,"networkAddress":0,"softwareBuildID":"zStack12","type":"Coordinator"},{"dateCode":"20190311","description":"TRADFRI open/close remote","friendly_name":"TRADFRI E1766_01","hardwareVersion":1,"ieeeAddr":"0x588e81fffe28dec5","lastSeen":1617873345111,"manufacturerID":4476,"manufacturerName":"IKEA of Sweden","model":"E1766","modelID":"TRADFRI open/close remote","networkAddress":39405,"powerSource":"Battery","softwareBuildID":"2.2.010","type":"EndDevice","vendor":"IKEA"},{"dateCode":"20201026","description":"Temperature and humidity sensor","friendly_name":"SNZB02_01","hardwareVersion":1,"ieeeAddr":"0x00124b00231e45b8","lastSeen":1617961176234,"manufacturerID":0,"manufacturerName":"eWeLink","model":"SNZB-02","modelID":"TH01","networkAddress":18841,"powerSource":"Battery","type":"EndDevice","vendor":"SONOFF"}],"type":"devices"}'
-                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={'message': {'friendly_name': '0x00158d00067a0c2d'}, 'type': 'device_connected'}
-                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={'message': 'Publish \'set\' \'sensitivity\' to \'DJT11LM_01\' failed: \'Error: Write 0x00158d00067a0c2d/1 genBasic({"65293":{"value":21,"type":32}}, {"timeout":35000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":4447,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Data request failed with error: \'MAC transaction expired\' (240))\'', 'meta': {'friendly_name': 'DJT11LM_01'}, 'type': 'zigbee_publish_error'}
-                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={'message': 'announce', 'meta': {'friendly_name': 'DJT11LM_01'}, 'type': 'device_announced'}
-                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={'message': {'cluster': 'genOnOff', 'from': 'TRADFRI E1766_01', 'to': 'default_bind_group'}, 'type': 'device_bind_failed'}
-                if isinstance(payload, dict) and 'message' in payload and 'type' in payload:
-                    message = payload['message']
-                    message_type = payload['type']
-                    if message_type == 'devices' and isinstance(message, list):
-                        self._get_zigbee_meta_data(message)
-
-            elif topic_level3 == 'info':
-                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=info, topic_level4=, topic_level5=, payload={'commit': 'abd8a09', 'config': {'advanced': {'adapter_concurrent': None, 'adapter_delay': None, 'availability_blacklist': [], 'availability_blocklist': [], 'availability_passlist': [], 'availability_timeout': 0, 'availability_whitelist': [], 'cache_state': True, 'cache_state_persistent': True, 'cache_state_send_on_startup': True, 'channel': 11, 'elapsed': False, 'ext_pan_id': [221, 221, 221, 221, 221, 221, 221, 221], 'homeassistant_discovery_topic': 'homeassistant', 'homeassistant_legacy_triggers': True, 'homeassistant_status_topic': 'hass/status', 'last_seen': 'disable', 'legacy_api': True, 'log_directory': '/opt/zigbee2mqtt/data/log/%TIMESTAMP%', 'log_file': 'log.txt', 'log_level': 'info', 'log_output': ['console', 'file'], 'log_rotation': True, 'log_syslog': {}, 'pan_id': 6754, 'report': False, 'soft_reset_timeout': 0, 'timestamp_format': 'YYYY-MM-DD HH:mm:ss'}, 'ban': [], 'blocklist': [], 'device_options': {}, 'devices': {'0x00124b00231e45b8': {'friendly_name': 'SNZB02_01'}, '0x00158d00067a0c2d': {'friendly_name': 'DJT11LM_01'}, '0x588e81fffe28dec5': {'friendly_name': 'TRADFRI E1766_01'}}, 'experimental': {'output': 'json'}, 'external_converters': [], 'frontend': {'host': '0.0.0.0', 'port': 8082}, 'groups': {}, 'homeassistant': False, 'map_options': {'graphviz': {'colors': {'fill': {'coordinator': '#e04e5d', 'enddevice': '#fff8ce', 'router': '#4ea3e0'}, 'font': {'coordinator': '#ffffff', 'enddevice': '#000000', 'router': '#ffffff'}, 'line': {'active': '#009900', 'inactive': '#994444'}}}}, 'mqtt': {'base_topic': 'zigbee2mqtt', 'force_disable_retain': False, 'include_device_information': True, 'keepalive': 60, 'reject_unauthorized': True, 'server': 'mqtt://localhost:1883', 'version': 4}, 'ota': {'disable_automatic_update_check': True, 'update_check_interval': 1440}, 'passlist': [], 'permit_join': False, 'serial': {'disable_led': False, 'port': '/dev/ttyACM0'}, 'whitelist': []}, 'config_schema': {'definitions': {'device': {'properties': {'debounce': {'description': 'Debounces messages of this device', 'title': 'Debounce', 'type': 'number'}, 'debounce_ignore': {'description': 'Protects unique payload values of specified payload properties from overriding within debounce time', 'examples': ['action'], 'items': {'type': 'string'}, 'title': 'Ignore debounce', 'type': 'array'}, 'filtered_attributes': {'description': 'Allows to prevent certain attributes from being published', 'examples': ['temperature', 'battery', 'action'], 'items': {'type': 'string'}, 'title': 'Filtered attributes', 'type': 'array'}, 'friendly_name': {'description': 'Used in the MQTT topic of a device. By default this is the device ID', 'readOnly': True, 'title': 'Friendly name', 'type': 'string'}, 'optimistic': {'description': 'Publish optimistic state after set (default true)', 'title': 'Optimistic', 'type': 'boolean'}, 'qos': {'descritption': 'QoS level for MQTT messages of this device', 'title': 'QoS', 'type': 'number'}, 'retain': {'description': 'Retain MQTT messages of this device', 'title': 'Retain', 'type': 'boolean'}, 'retention': {'description': 'Sets the MQTT Message Expiry in seconds, Make sure to set mqtt.version to 5', 'title': 'Retention', 'type': 'number'}}, 'required': ['friendly_name'], 'type': 'object'}, 'group': {'properties': {'devices': {'items': {'type': 'string'}, 'type': 'array'}, 'filtered_attributes': {'items': {'type': 'string'}, 'type': 'array'}, 'friendly_name': {'type': 'string'}, 'optimistic': {'type': 'boolean'}, 'qos': {'type': 'number'}, 'retain': {'type': 'boolean'}}, 'required': ['friendly_name'], 'type': 'object'}}, 'properties': {'advanced': {'properties': {'adapter_concurrent': {'description': 'Adapter concurrency (e.g. 2 for CC2531 or 16 for CC26X2R1) (default: null, uses recommended value)', 'requiresRestart': True, 'title': 'Adapter concurrency', 'type': ['number', 'null']}, 'adapter_delay': {'description': 'Adapter delay', 'requiresRestart': True, 'title': 'Adapter delay', 'type': ['number', 'null']}, 'availability_blacklist': {'items': {'type': 'string'}, 'readOnly': True, 'requiresRestart': True, 'title': 'Availability blacklist (deprecated, use availability_blocklist)', 'type': 'array'}, 'availability_blocklist': {'description': 'Prevent devices from being checked for availability', 'items': {'type': 'string'}, 'requiresRestart': True, 'title': 'Availability Blocklist', 'type': 'array'}, 'availability_passlist': {'description': 'Only enable availability check for certain devices', 'items': {'type': 'string'}, 'requiresRestart': True, 'title': 'Availability passlist', 'type': 'array'}, 'availability_timeout': {'default': 0, 'description': 'Availability timeout in seconds when enabled, devices will be checked if they are still online. Only AC powered routers are checked for availability', 'minimum': 0, 'requiresRestart': True, 'title': 'Availability Timeout', 'type': 'number'}, 'availability_whitelist': {'items': {'type': 'string'}, 'readOnly': True, 'requiresRestart': True, 'title': 'Availability whitelist (deprecated, use passlist)', 'type': 'array'}, 'baudrate': {'description': 'Baudrate for serial port, default: 115200 for Z-Stack, 38400 for Deconz', 'examples': [38400, 115200], 'requiresRestart': True, 'title': 'Baudrate', 'type': 'number'}, 'cache_state': {'default': True, 'description': 'MQTT message payload will contain all attributes, not only changed ones. Has to be true when integrating via Home Assistant', 'title': 'Cache state', 'type': 'boolean'}, 'cache_state_persistent': {'default': True, 'description': 'Persist cached state, only used when cache_state: true', 'title': 'Persist cache state', 'type': 'boolean'}, 'cache_state_send_on_startup': {'default': True, 'description': 'Send cached state on startup, only used when cache_state: true', 'title': 'Send cached state on startup', 'type': 'boolean'}, 'channel': {'default': 11, 'description': 'Zigbee channel, changing requires repairing all devices! (Note: use a ZLL channel: 11, 15, 20, or 25 to avoid Problems)', 'examples': [11, 15, 20, 25], 'maximum': 26, 'minimum': 11, 'requiresRestart': True, 'title': 'ZigBee channel', 'type': 'number'}, 'elapsed': {'default': False, 'description': 'Add an elapsed attribute to MQTT messages, contains milliseconds since the previous msg', 'title': 'Elapsed', 'type': 'boolean'}, 'ext_pan_id': {'description': 'Zigbee extended pan ID, changing requires repairing all devices!', 'items': {'type': 'number'}, 'requiresRestart': True, 'title': 'Ext Pan ID', 'type': 'array'}, 'homeassistant_discovery_topic': {'description': 'Home Assistant discovery topic', 'examples': ['homeassistant'], 'requiresRestart': True, 'title': 'Homeassistant discovery topic', 'type': 'string'}, 'homeassistant_legacy_triggers': {'default': True, 'description': "Home Assistant legacy triggers, when enabled Zigbee2mqt will send an empty 'action' or 'click' after one has been send. A 'sensor_action' and 'sensor_click' will be discoverd", 'title': 'Home Assistant legacy triggers', 'type': 'boolean'}, 'homeassistant_status_topic': {'description': 'Home Assistant status topic', 'examples': ['homeassistant/status'], 'requiresRestart': True, 'title': 'Home Assistant status topic', 'type': 'string'}, 'ikea_ota_use_test_url': {'default': False, 'description': 'Use IKEA TRADFRI OTA test server, see OTA updates documentation', 'requiresRestart': True, 'title': 'IKEA TRADFRI OTA use test url', 'type': 'boolean'}, 'last_seen': {'default': 'disable', 'description': 'Add a last_seen attribute to MQTT messages, contains date/time of last Zigbee message', 'enum': ['disable', 'ISO_8601', 'ISO_8601_local', 'epoch'], 'title': 'Last seen', 'type': 'string'}, 'legacy_api': {'default': True, 'description': 'Disables the legacy api (false = disable)', 'requiresRestart': True, 'title': 'Legacy API', 'type': 'boolean'}, 'log_directory': {'description': 'Location of log directory', 'examples': ['data/log/%TIMESTAMP%'], 'requiresRestart': True, 'title': 'Log directory', 'type': 'string'}, 'log_file': {'default': 'log.txt', 'description': 'Log file name, can also contain timestamp', 'examples': ['zigbee2mqtt_%TIMESTAMP%.log'], 'requiresRestart': True, 'title': 'Log file', 'type': 'string'}, 'log_level': {'default': 'info', 'description': 'Logging level', 'enum': ['info', 'warn', 'error', 'debug'], 'title': 'Log level', 'type': 'string'}, 'log_output': {'description': 'Output location of the log, leave empty to supress logging', 'items': {'enum': ['console', 'file', 'syslog'], 'type': 'string'}, 'requiresRestart': True, 'title': 'Log output', 'type': 'array'}, 'log_rotation': {'default': True, 'description': 'Log rotation', 'requiresRestart': True, 'title': 'Log rotation', 'type': 'boolean'}, 'log_syslog': {'properties': {'app_name': {'default': 'Zigbee2MQTT', 'description': 'The name of the application (Default: Zigbee2MQTT).', 'title': 'Localhost', 'type': 'string'}, 'eol': {'default': '/n', 'description': 'The end of line character to be added to the end of the message (Default: Message without modifications).', 'title': 'eol', 'type': 'string'}, 'host': {'default': 'localhost', 'description': 'The host running syslogd, defaults to localhost.', 'title': 'Host', 'type': 'string'}, 'localhost': {'default': 'localhost', 'description': 'Host to indicate that log messages are coming from (Default: localhost).', 'title': 'Localhost', 'type': 'string'}, 'path': {'default': '/dev/log', 'description': 'The path to the syslog dgram socket (i.e. /dev/log or /var/run/syslog for OS X).', 'examples': ['/dev/log', '/var/run/syslog'], 'title': 'Path', 'type': 'string'}, 'pid': {'default': 'process.pid', 'description': 'PID of the process that log messages are coming from (Default process.pid).', 'title': 'PID', 'type': 'string'}, 'port': {'default': 123, 'description': "The port on the host that syslog is running on, defaults to syslogd's default port.", 'title': 'Port', 'type': 'number'}, 'protocol': {'default': 'tcp4', 'description': 'The network protocol to log over (e.g. tcp4, udp4, tls4, unix, unix-connect, etc).', 'examples': ['tcp4', 'udp4', 'tls4', 'unix', 'unix-connect'], 'title': 'Protocol', 'type': 'string'}, 'type': {'default': '5424', 'description': 'The type of the syslog protocol to use (Default: BSD, also valid: 5424).', 'title': 'Type', 'type': 'string'}}, 'title': 'syslog', 'type': 'object'}, 'network_key': {'description': 'Network encryption key, changing requires repairing all devices!', 'oneOf': [{'title': 'Network key(string)', 'type': 'string'}, {'items': {'type': 'number'}, 'title': 'Network key(array)', 'type': 'array'}], 'requiresRestart': True, 'title': 'Network key'}, 'pan_id': {'description': 'ZigBee pan ID, changing requires repairing all devices!', 'oneOf': [{'title': 'Pan ID (string)', 'type': 'string'}, {'title': 'Pan ID (number)', 'type': 'number'}], 'requiresRestart': True, 'title': 'Pan ID'}, 'report': {'description': 'Enables report feature (deprecated)', 'readOnly': True, 'requiresRestart': True, 'title': 'Reporting', 'type': 'boolean'}, 'rtscts': {'description': 'RTS / CTS Hardware Flow Control for serial port', 'requiresRestart': True, 'title': 'RTS / CTS', 'type': 'boolean'}, 'soft_reset_timeout': {'description': 'Soft reset ZNP after timeout', 'minimum': 0, 'readOnly': True, 'requiresRestart': True, 'title': 'Soft reset timeout (deprecated)', 'type': 'number'}, 'timestamp_format': {'description': 'Log timestamp format', 'examples': ['YYYY-MM-DD HH:mm:ss'], 'requiresRestart': True, 'title': 'Timestamp format', 'type': 'string'}}, 'title': 'Advanced', 'type': 'object'}, 'ban': {'items': {'type': 'string'}, 'readOnly': True, 'requiresRestart': True, 'title': 'Ban (deprecated, use blocklist)', 'type': 'array'}, 'blocklist': {'description': 'Block devices from the network (by ieeeAddr)', 'items': {'type': 'string'}, 'requiresRestart': True, 'title': 'Blocklist', 'type': 'array'}, 'device_options': {'type': 'object'}, 'devices': {'patternProperties': {'^.*$': {'$ref': '#/definitions/device'}}, 'propertyNames': {'pattern': '^0x[\\d\\w]{16}$'}, 'type': 'object'}, 'experimental': {'properties': {'output': {'description': 'Examples when \'state\' of a device is published json: topic: \'zigbee2mqtt/my_bulb\' payload \'{"state": "ON"}\' attribute: topic \'zigbee2mqtt/my_bulb/state\' payload \'ON\' attribute_and_json: both json and attribute (see above)', 'enum': ['attribute_and_json', 'attribute', 'json'], 'title': 'MQTT output type', 'type': 'string'}, 'transmit_power': {'description': 'Transmit power of adapter, only available for Z-Stack (CC253*/CC2652/CC1352) adapters, CC2652 = 5dbm, CC1352 max is = 20dbm (5dbm default)', 'requiresRestart': True, 'title': 'Transmit power', 'type': ['number', 'null']}}, 'title': 'Experimental', 'type': 'object'}, 'external_converters': {'description': 'You can define external converters to e.g. add support for a DiY device', 'examples': ['DIYRuZ_FreePad.js'], 'items': {'type': 'string'}, 'requiresRestart': True, 'title': 'External converters', 'type': 'array'}, 'frontend': {'properties': {'auth_token': {'description': 'Enables authentication, disabled by default', 'requiresRestart': True, 'title': 'Auth token', 'type': ['string', 'null']}, 'host': {'default': ' 0.0.0.0', 'description': 'Frontend binding host', 'requiresRestart': True, 'title': 'Bind host', 'type': 'string'}, 'port': {'default': 8080, 'description': 'Frontend binding port', 'requiresRestart': True, 'title': 'Port', 'type': 'number'}}, 'title': 'Frontend', 'type': 'object'}, 'groups': {'patternProperties': {'^.*$': {'$ref': '#/definitions/group'}}, 'propertyNames': {'pattern': '^[\\w].*$'}, 'type': 'object'}, 'homeassistant': {'default': False, 'description': 'Home Assistant integration (MQTT discovery)', 'title': 'Home Assistant integration', 'type': 'boolean'}, 'map_options': {'properties': {'graphviz': {'properties': {'colors': {'properties': {'fill': {'properties': {'coordinator': {'type': 'string'}, 'enddevice': {'type': 'string'}, 'router': {'type': 'string'}}, 'type': 'object'}, 'font': {'properties': {'coordinator': {'type': 'string'}, 'enddevice': {'type': 'string'}, 'router': {'type': 'string'}}, 'type': 'object'}, 'line': {'properties': {'active': {'type': 'string'}, 'inactive': {'type': 'string'}}, 'type': 'object'}}, 'type': 'object'}}, 'type': 'object'}}, 'title': 'Networkmap', 'type': 'object'}, 'mqtt': {'properties': {'base_topic': {'description': 'MQTT base topic for Zigbee2MQTT MQTT messages', 'examples': ['zigbee2mqtt'], 'requiresRestart': True, 'title': 'Base topic', 'type': 'string'}, 'ca': {'description': 'Absolute path to SSL/TLS certificate of CA used to sign server and client certificates', 'examples': ['/etc/ssl/mqtt-ca.crt'], 'requiresRestart': True, 'title': 'Certificate authority', 'type': 'string'}, 'cert': {'description': 'Absolute path to SSL/TLS certificate for client-authentication', 'examples': ['/etc/ssl/mqtt-client.crt'], 'requiresRestart': True, 'title': 'SSL/TLS certificate', 'type': 'string'}, 'client_id': {'description': 'MQTT client ID', 'examples': ['MY_CLIENT_ID'], 'requiresRestart': True, 'title': 'Client ID', 'type': 'string'}, 'force_disable_retain': {'default': False, 'description': "Disable retain for all send messages. ONLY enable if you MQTT broker doesn't support retained message (e.g. AWS IoT core, Azure IoT Hub, Google Cloud IoT core, IBM Watson IoT Platform). Enabling will break the Home Assistant integration", 'requiresRestart': True, 'title': 'Force disable retain', 'type': 'boolean'}, 'include_device_information': {'default': False, 'description': 'Include device information to mqtt messages', 'title': 'Include device information', 'type': 'boolean'}, 'keepalive': {'default': 60, 'description': 'MQTT keepalive in second', 'requiresRestart': True, 'title': 'Keepalive', 'type': 'number'}, 'key': {'description': 'Absolute path to SSL/TLS key for client-authentication', 'examples': ['/etc/ssl/mqtt-client.key'], 'requiresRestart': True, 'title': 'SSL/TLS key', 'type': 'string'}, 'password': {'description': 'MQTT server authentication password', 'examples': ['ILOVEPELMENI'], 'requiresRestart': True, 'title': 'Password', 'type': 'string'}, 'reject_unauthorized': {'default': True, 'description': 'Disable self-signed SSL certificate', 'requiresRestart': True, 'title': 'Reject unauthorized', 'type': 'boolean'}, 'server': {'description': 'MQTT server URL (use mqtts:// for SSL/TLS connection)', 'examples': ['mqtt://localhost:1883'], 'requiresRestart': True, 'title': 'MQTT server', 'type': 'string'}, 'user': {'description': 'MQTT server authentication user', 'examples': ['johnnysilverhand'], 'requiresRestart': True, 'title': 'User', 'type': 'string'}, 'version': {'default': 4, 'description': 'MQTT protocol version', 'examples': [4, 5], 'requiresRestart': True, 'title': 'Version', 'type': ['number', 'null']}}, 'required': ['base_topic', 'server'], 'title': 'MQTT', 'type': 'object'}, 'ota': {'properties': {'disable_automatic_update_check': {'default': False, 'description': 'Zigbee devices may request a firmware update, and do so frequently, causing Zigbee2MQTT to reach out to third party servers. If you disable these device initiated checks, you can still initiate a firmware update check manually.', 'title': 'Disable automatic update check', 'type': 'boolean'}, 'update_check_interval': {'default': 1440, 'description': 'Your device may request a check for a new firmware update. This value determines how frequently third party servers may actually be contacted to look for firmware updates. The value is set in minutes, and the default is 1 day.', 'title': 'Update check interval', 'type': 'number'}}, 'title': 'OTA updates', 'type': 'object'}, 'passlist': {'description': 'Allow only certain devices to join the network (by ieeeAddr). Note that all devices not on the passlist will be removed from the network!', 'items': {'type': 'string'}, 'requiresRestart': True, 'title': 'Passlist', 'type': 'array'}, 'permit_join': {'default': False, 'description': 'Allow new devices to join (re-applied at restart)', 'title': 'Permit join', 'type': 'boolean'}, 'serial': {'properties': {'adapter': {'description': 'Adapter type, not needed unless you are experiencing problems', 'enum': ['deconz', 'zstack', 'zigate', 'ezsp'], 'requiresRestart': True, 'title': 'Adapter', 'type': ['string', 'null']}, 'disable_led': {'default': False, 'description': 'Disable LED of the adapter if supported', 'requiresRestart': True, 'title': 'Disable led', 'type': 'boolean'}, 'port': {'description': 'Location of the adapter. To autodetect the port, set null', 'examples': ['/dev/ttyACM0'], 'requiresRestart': True, 'title': 'Port', 'type': ['string', 'null']}}, 'title': 'Serial', 'type': 'object'}, 'whitelist': {'items': {'type': 'string'}, 'readOnly': True, 'requiresRestart': True, 'title': 'Whitelist (deprecated, use passlist)', 'type': 'array'}}, 'required': ['mqtt'], 'type': 'object'}, 'coordinator': {'meta': {'maintrel': 3, 'majorrel': 2, 'minorrel': 6, 'product': 0, 'revision': 20201127, 'transportrev': 2}, 'type': 'zStack12'}, 'log_level': 'info', 'network': {'channel': 11, 'extended_pan_id': '0xdddddddddddddddd', 'pan_id': 6754}, 'permit_join': False, 'restart_required': False, 'version': '1.18.2'}
-                if topic_level4 == '':
-                    if type(payload) is dict:
-                        self.zigbee2mqtt_plugin_devices[topic_level2]['info'] = payload
-                        self.zigbee2mqtt_plugin_devices[topic_level2]['online'] = True
-                    else:
-                        if self.debug_log:
-                            self.logger.debug(f"(Received payload {payload} on topic {topic} is not of type dict")
-
-            elif topic_level3 == 'event':
-                # {"type":"device_joined","data":{"friendly_name":"0x90fd9ffffe6494fc","ieee_address":"0x90fd9ffffe6494fc"}}
-                # {"type":"device_announce","data":{"friendly_name":"0x90fd9ffffe6494fc","ieee_address":"0x90fd9ffffe6494fc"}}
-                # {"type":"device_interview","data":{"friendly_name":"0x90fd9ffffe6494fc","status":"started","ieee_address":"0x90fd9ffffe6494fc"}}
-                # {"type":"device_interview","data":{"friendly_name":"0x90fd9ffffe6494fc","status":"successful","ieee_address":"0x90fd9ffffe6494fc","supported":true,"definition":{"model":"LED1624G9","vendor":"IKEA","description":"TRADFRI LED bulb E14/E26/E27 600 lumen, dimmable, color, opal white"}}}
-                # {"type":"device_interview","data":{"friendly_name":"0x90fd9ffffe6494fc","status":"failed","ieee_address":"0x90fd9ffffe6494fc"}}
-                # {"type":"device_leave","data":{"ieee_address":"0x90fd9ffffe6494fc"}}
-                if topic_level4 == '':
-                    # event_type = payload.get('type')
-                    if self.debug_log:
-                        self.logger.debug(f"event info message not implemented yet.")
-
-            elif topic_level3 == 'devices':
-                if self.debug_log:
-                    self.logger.debug(f"zigbee2mqtt/bridge/devices not implemented yet. Raw msg was: {payload}.")
-
-                # if isinstance(payload, list):
-                #     for entry in payload:
-                #
-                #         friendly_name = entry['friendly_name']
-                #         exposes = entry['definition']['exposes']
-
+        # check / call handlers
+        if hasattr(self, HANDLE_IN_PREFIX + HANDLE_DEV + device):
+            result = getattr(self, HANDLE_IN_PREFIX + HANDLE_DEV + device)(device, topic_3, topic_4, topic_5, payload, qos, retain)
+            if not isinstance(result, dict):
+                if result:
+                    return
             else:
-                if self.debug_log:
-                    self.logger.debug(f"Function type message not implemented yet.")
+                payload = result
 
-        # Handle Data from connected devices
-        elif (topic_level3 + topic_level4 + topic_level5) == '':
-            # topic_level1=zigbee2mqtt, topic_level2=SNZB02_01, topic_level3=, topic_level4=, topic_level5=, payload '{"battery":100,"device":{"applicationVersion":5,"dateCode":"20201026","friendlyName":"SNZB02_01","hardwareVersion":1,"ieeeAddr":"0x00124b00231e45b8","manufacturerID":0,"manufacturerName":"eWeLink","model":"SNZB-02","networkAddress":18841,"powerSource":"Battery","type":"EndDevice","zclVersion":1},"humidity":45.12,"linkquality":157,"temperature":16.26,"voltage":3200}'
-            # topic_level1=zigbee2mqtt, topic_level2=TRADFRI E1766_01, topic_level3=, topic_level4=, topic_level5=, payload={'battery': 74, 'device': {'applicationVersion': 33, 'dateCode': '20190311', 'friendlyName': 'TRADFRI E1766_01', 'hardwareVersion': 1, 'ieeeAddr': '0x588e81fffe28dec5', 'manufacturerID': 4476, 'manufacturerName': 'IKEA of Sweden', 'model': 'E1766', 'networkAddress': 39405, 'powerSource': 'Battery', 'softwareBuildID': '2.2.010', 'stackVersion': 98, 'type': 'EndDevice', 'zclVersion': 3}, 'linkquality': 141}
-            # topic_level1=zigbee2mqtt, topic_level2=LEDVANCE_E27_TW_01, topic_level3=, topic_level4=, topic_level5=, payload={'brightness': 254, 'color': {'x': 0.4599, 'y': 0.4106}, 'color_mode': 'color_temp', 'color_temp': 370, 'color_temp_startup': 65535, 'last_seen': 1632943562477, 'linkquality': 39, 'state': 'ON', 'update': {'state': 'idle'}, 'update_available': False}
-            # topic_level1=zigbee2mqtt, topic_level2=0xf0d1b800001574df, topic_level3=, topic_level4=, topic_level5=, payload={'brightness': 166, 'color': {'hue': 296, 'saturation': 69}, 'color_mode': 'hs', 'color_temp': 405, 'last_seen': 1638183778409, 'linkquality': 159, 'state': 'ON', 'update': {'state': 'idle'}, 'update_available': False}
+        if not isinstance(payload, dict):
+            return
 
-            if type(payload) is dict:
-                # Wenn Geräte zur Laufzeit des Plugins hinzugefügt werden, werden diese im dict ergänzt
-                if not self.zigbee2mqtt_devices.get(topic_level2):
-                    self.zigbee2mqtt_devices[topic_level2] = {}
-                    self.logger.info(f"New device discovered: {topic_level2}")
+        # Wenn Geräte zur Laufzeit des Plugins hinzugefügt werden, werden diese im dict ergänzt
+        if device not in self._devices:
+            self._devices[device] = {}
+            self.logger.info(f"New device discovered: {device}")
 
-                # Korrekturen in der Payload
+        # Korrekturen in der Payload
 
-                # Umbenennen des Key 'friendlyName' in 'friendly_name', damit er identisch zu denen aus Log Topic und Config Topic ist
-                if 'device' in payload:
-                    meta = payload['device']
-                    if 'friendlyName' in meta:
-                        meta['friendly_name'] = meta.pop('friendlyName')
-                    del payload['device']
+        # Umbenennen des Key 'friendlyName' in 'friendly_name', damit er identisch zu denen aus Log Topic und Config Topic ist
+        if 'device' in payload:
+            meta = payload['device']
+            if 'friendlyName' in meta:
+                meta['friendly_name'] = meta.pop('friendlyName')
+            del payload['device']
 
-                    if not self.zigbee2mqtt_devices[topic_level2].get('meta'):
-                        self.zigbee2mqtt_devices[topic_level2]['meta'] = {}
-                    self.zigbee2mqtt_devices[topic_level2]['meta'].update(meta)
+            if 'meta' not in self._devices[device]:
+                self._devices[device]['meta'] = {}
+            self._devices[device]['meta'].update(meta)
 
-                # Korrektur des Lastseen
-                if 'last_seen' in payload:
-                    last_seen = payload['last_seen']
-                    if isinstance(last_seen, int):
-                        payload.update({'last_seen': datetime.fromtimestamp(last_seen / 1000)})
-                    elif isinstance(last_seen, str):
-                        try:
-                            payload.update({'last_seen': datetime.strptime(last_seen, "%Y-%m-%dT%H:%M:%S.%fZ").replace(microsecond=0)})
-                        except Exception as e:
-                            if self.debug_log:
-                                self.logger.debug(f"Error {e} occurred during decoding of last_seen using format '%Y-%m-%dT%H:%M:%S.%fZ'.")
-                            try:
-                                payload.update({'last_seen': datetime.strptime(last_seen, "%Y-%m-%dT%H:%M:%SZ")})
-                            except Exception as e:
-                                if self.debug_log:
-                                    self.logger.debug(f"Error {e} occurred during decoding of last_seen using format '%Y-%m-%dT%H:%M:%SZ'.")
-
-                # Korrektur der Brightness von 0-254 auf 0-100%
-                if 'brightness' in payload:
+        # Korrektur des Lastseen
+        if 'last_seen' in payload:
+            last_seen = payload['last_seen']
+            if isinstance(last_seen, int):
+                payload.update({'last_seen': datetime.fromtimestamp(last_seen / 1000)})
+            elif isinstance(last_seen, str):
+                try:
+                    payload.update({'last_seen': datetime.strptime(last_seen, "%Y-%m-%dT%H:%M:%S.%fZ").replace(microsecond=0)})
+                except Exception:
                     try:
-                        payload.update({'brightness': int(round(payload['brightness'] * 100 / 255, 0))})
+                        payload.update({'last_seen': datetime.strptime(last_seen, "%Y-%m-%dT%H:%M:%SZ")})
                     except Exception as e:
-                        if self.debug_log:
-                            self.logger.debug(f"Error {e} occurred during decoding of brightness.")
+                        self.logger.debug(f"Error {e} occurred during decoding of last_seen using format '%Y-%m-%dT%H:%M:%SZ'.")
 
-                # Korrektur der Farbtemperatur von "mired scale" (Reziproke Megakelvin) auf Kelvin
-                if 'color_temp' in payload:
-                    try:
-                        payload.update({'color_temp': int(round(10000 / int(payload['color_temp']), 0)) * 100})
-                    except Exception as e:
-                        if self.debug_log:
-                            self.logger.debug(f"Error {e} occurred during decoding of color_temp.")
+        if 'data' not in self._devices[device]:
+            self._devices[device]['data'] = {}
+        self._devices[device]['data'].update(payload)
 
-                # Verarbeitung von Farbdaten
-                if 'color_mode' in payload and 'color' in payload:
-                    color_mode = payload['color_mode']
-                    color = payload.pop('color')
+        # Setzen des Itemwertes
+        for attr in payload:
+            if attr in self._devices[device]:
+                item = self._devices[device][attr].get('item')
+                src = self.get_shortname() + ':' + device
 
-                    if color_mode == 'hs':
-                        payload['hue'] = color['hue']
-                        payload['saturation'] = color['saturation']
+                # check handlers
+                if hasattr(self, HANDLE_IN_PREFIX + HANDLE_ATTR + attr):
+                    if getattr(self, HANDLE_IN_PREFIX + HANDLE_ATTR + attr)(device, attr, payload, item):
+                        continue
 
-                    if color_mode == 'xy':
-                        payload['color_x'] = color['x']
-                        payload['color_y'] = color['y']
+                value = payload[attr]
+                self._devices[device][attr]['value'] = value
+                self.logger.debug(f"attribute: {attr}, value: {value}, item: {item}")
 
-                if not self.zigbee2mqtt_devices[topic_level2].get('data'):
-                    self.zigbee2mqtt_devices[topic_level2]['data'] = {}
-                self.zigbee2mqtt_devices[topic_level2]['data'].update(payload)
+                if item is not None:
+                    item(value, src)
+                    self.logger.info(f"{device}: Item '{item}' set to value {value}")
+                else:
+                    self.logger.info(f"{device}: No item for attribute '{attr}' defined to set to {value}")
 
-                # Setzen des Itemwertes
-                if topic_level2 in list(self.zigbee2mqtt_plugin_devices.keys()):
-                    if self.debug_log:
-                        self.logger.debug(f"Item to be checked for update and to be updated")
-                    for element in payload:
-                        itemtype = f"item_{element}"
-                        value = payload[element]
-                        item = self.zigbee2mqtt_plugin_devices[topic_level2]['connected_items'].get(itemtype, None)
-                        src = self.get_shortname() + ':' + topic_level2
-                        if self.debug_log:
-                            self.logger.debug(f"element: {element}, itemtype: {itemtype}, value: {value}, item: {item}")
+    def _build_topic_str(self, device: str, topic_3: str, topic_4: str, topic_5: str) -> str:
+        """ Build the mqtt topic as string """
+        return "/".join(filter(None, (self.z2m_base, device, topic_3, topic_4, topic_5)))
 
-                        if item is not None:
-                            item(value, src)
-                            self.logger.info(f"{topic_level2}: Item '{item.id()}' set to value {value}")
-                        else:
-                            self.logger.info(f"{topic_level2}: No item for itemtype '{itemtype}' defined to set to {value}")
-
-        # self.zigbee2mqtt_plugin_devices[topic_level2]['online_timeout'] = datetime.now()+timedelta(seconds=self._cycle+5)
-
-    @staticmethod
-    def _build_topic_str(topic_level1: str, topic_level2: str, topic_level3: str, topic_level4: str, topic_level5: str) -> str:
-        """
-        Build the mqtt topic as string
-
-        :param topic_level1:    base topic of topic to publish
-        :param topic_level2:    unique part of topic to publish
-        :param topic_level3:    level3 of topic to publish
-        :param topic_level4:    level4 of topic to publish
-        :param topic_level5:    level5 of topic to publish
-        """
-
-        tpc = f"{topic_level1}/{topic_level2}"
-        if topic_level3 != '':
-            tpc = f"{tpc}/{topic_level3}"
-            if topic_level4 != '':
-                tpc = f"{tpc}/{topic_level4}"
-                if topic_level5 != '':
-                    tpc = f"{tpc}/{topic_level5}"
-        return tpc
-
-    def _get_zigbee_meta_data(self, device_data: list):
+    def _get_device_data(self, device_data: list, is_group=False):
         """
         Extract the Zigbee Meta-Data for a certain device out of the device_data
 
         :param device_data:     Payload of the bridge config message
+        :param is_group:        indicates wether device is a real device or a group
         """
-
+        # device_data is list of dicts
         for element in device_data:
             if type(element) is dict:
                 device = element.get('friendly_name')
                 if device:
                     if 'lastSeen' in element:
                         element.update({'lastSeen': datetime.fromtimestamp(element['lastSeen'] / 1000)})
-                    if not self.zigbee2mqtt_devices.get(device):
-                        self.zigbee2mqtt_devices[device] = {}
-                    if not self.zigbee2mqtt_devices[device].get('meta'):
-                        self.zigbee2mqtt_devices[device]['meta'] = {}
-                    self.zigbee2mqtt_devices[device]['meta'].update(element)
+
+                    # create device entry if needed
+                    if device not in self._devices:
+                        self._devices[device] = {'isgroup': is_group}
+
+                    # easier to read
+                    _device = self._devices[device]
+
+                    # scenes in devices
+                    try:
+                        for endpoint in element['endpoints']:
+                            if element['endpoints'][endpoint].get('scenes'):
+                                _device['scenes'] = {
+                                    name: id for id, name in (x.values() for x in element['endpoints'][endpoint]['scenes'])
+                                }
+                    except KeyError:
+                        pass
+
+                    # scenes in groups
+                    if element.get('scenes'):
+                        _device['scenes'] = {
+                            name: id for id, name in (scene.values() for scene in element['scenes'])
+                        }
+
+                    # put list of scene names in scenelist item
+                    # key "scenelist" only present if attr/device requested in item tree
+                    if _device.get('scenelist'):
+                        try:
+                            scenelist = list(_device['scenes'].keys())
+                            _device['scenelist']['item'](scenelist)
+                        except (KeyError, ValueError, TypeError):
+                            pass
+
+                    # TODO: possibly remove after further parsing
+                    # just copy meta
+                    if 'meta' not in _device:
+                        _device['meta'] = {}
+                    _device['meta'].update(element)
+
+                    # TODO: parse meta and extract valid values for attrs
+
+                    self.logger.info(f'Imported {"group" if is_group else "device"} {device}')
             else:
-                if self.debug_log:
-                    self.logger.debug(f"(Received payload {device_data} is not of type dict")
+                self.logger.debug(f"(Received payload {device_data} is not of type dict")
 
-    @staticmethod
-    def _bool2str(bool_value: bool, typus: int) -> str:
-        """
-        Turns bool value to string
+    def _read_all_data(self):
+        """ Try to get current status of all devices linked to items """
 
-        :param bool_value:      bool value
-        :param typus:           type of string the bool_value will be transferred to
-        :return:                string containing bool expression
-        """
+        for device in self._devices:
+            for attr in self._devices[device]:
+                a = self._devices[device][attr]
+                if a.get('read', False) and a.get('item') is not None:
+                    self.publish_z2m_topic(device, attr, 'get')
 
-        if type(bool_value) is bool:
-            if typus == 1:
-                result = 'ON' if bool_value is True else 'OFF'
-            elif typus == 2:
-                result = 'an' if bool_value is True else 'aus'
-            elif typus == 3:
-                result = 'ja' if bool_value is True else 'nein'
-            else:
-                result = 'typus noch nicht definiert'
-        else:
-            result = 'Wert ist nicht vom Type bool'
-        return result
+    def _get_z2m_topic_from_item(self, item) -> str:
+        """ Get z2m_topic for given item search from given item in parent direction """
 
-    def _get_current_status_of_all_devices_linked_to_items(self):
-        """
-        Try to get current status of all devices linked to items; Works only if value es exposed
-        """
-
-        for device in self.zigbee2mqtt_plugin_devices:
-            attribut = (list(self.zigbee2mqtt_plugin_devices[device]['connected_items'].keys())[0])[5:]
-            payload = '{"' + str(attribut) + '" : ""}'
-            self.publish_zigbee2mqtt_topic(self.topic_level1, str(device), 'get', '', '', payload)
-
-    def _handle_hex_in_topic_level2(self, topic_level2: str, item) -> str:
-        """
-        check if zigbee device short name has been used without parentheses; if so this will be normally parsed to a number and therefore mismatch with defintion
-        """
-
-        try:
-            topic_level2 = int(topic_level2)
-            self.logger.warning(f"Probably for item {item.id()} the IEEE Adress has been used for item attribute 'zigbee2mqtt_topic'. Trying to make that work but it will cause exceptions. To prevent this, the short name need to be defined as string by using parentheses")
-            topic_level2 = str(hex(topic_level2))
-        except Exception:
-            pass
-        return topic_level2
-
-    def _get_zigbee2mqtt_topic_from_item(self, item) -> str:
-        """
-        Get zigbee2mqtt_topic for given item search from given item in parent direction
-        """
-
-        zigbee2mqtt_topic = None
-
+        topic = ''
         lookup_item = item
-        for i in range(3):
-            zigbee2mqtt_topic = self.get_iattr_value(lookup_item.conf, 'zigbee2mqtt_topic')
-            if zigbee2mqtt_topic is not None:
+        for _ in range(3):
+            topic = self.get_iattr_value(lookup_item.conf, Z2M_TOPIC)
+            if topic:
                 break
             else:
                 lookup_item = lookup_item.return_parent()
 
-        if zigbee2mqtt_topic is None:
-            self.logger.error('zigbee2mqtt_topic is not defined or instance not given')
-        else:
-            zigbee2mqtt_topic = self._handle_hex_in_topic_level2(zigbee2mqtt_topic, item)
+        return topic
 
-        return zigbee2mqtt_topic
+#
+# special handlers for devices / attributes
+#
+# handlers_in:  activated if values come in from mqtt
+#
+# def handle_in_dev_<device>(self, device: str, topic_3: str = "", topic_4: str = "", topic_5: str = "", payload={}, qos=None, retain=None)
+# def handle_in_attr_<attr>(self, device: str, attr: str, payload={}, item=None)
+#
+# return True: stop further processing
+# return False/None: continue processing (possibly with changed payload)
+# return <dict>: continue with returned dict as new payload
+#
+
+    def _handle_in_dev_bridge(self, device: str, topic_3: str = "", topic_4: str = "", topic_5: str = "", payload={}, qos=None, retain=None):
+        """ handle device topics for "bridge" """
+
+        # catch AssertionError
+        try:
+            # easier to read
+            _bridge = self._devices[device]
+
+            if topic_3 == 'state':
+                try:
+                    data = json.loads(payload)
+                except json.JSONDecodeError:
+                    data = {'state': payload}
+                return {'online': bool(['offline', 'online'].index(data.get(topic_3)))}
+
+            elif topic_3 in ('config', 'info'):
+                assert isinstance(payload, dict), 'dict'
+                _bridge[topic_3] = payload
+                payload['online'] = True
+
+                if payload.get('restart_required', None) is True:
+                    self.publish_z2m_topic('bridge', 'request', 'restart')
+
+            elif topic_3 == 'response' and topic_4 in ('health_check', 'permit_join', 'networkmap'):
+                # permit_join: {"data":{"value":true},"status":"ok"}
+                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=None, topic_level4=networkmap, topic_level5=None, payload={'data': {'routes': False, 'type': 'raw', 'value': {'links': [{'depth': 1, 'linkquality': 5, 'lqi': 5, 'relationship': 1, 'routes': [], 'source': {'ieeeAddr': '0x588e81fffe28dec5', 'networkAddress': 39405}, 'sourceIeeeAddr': '0x588e81fffe28dec5', 'sourceNwkAddr': 39405, 'target': {'ieeeAddr': '0x00124b001cd4bbf0', 'networkAddress': 0}, 'targetIeeeAddr': '0x00124b001cd4bbf0'}, {'depth': 1, 'linkquality': 155, 'lqi': 155, 'relationship': 1, 'routes': [], 'source': {'ieeeAddr': '0x00124b00231e45b8', 'networkAddress': 18841}, 'sourceIeeeAddr': '0x00124b00231e45b8', 'sourceNwkAddr': 18841, 'target': {'ieeeAddr': '0x00124b001cd4bbf0', 'networkAddress': 0}, 'targetIeeeAddr': '0x00124b001cd4bbf0'}, {'depth': 1, 'linkquality': 1, 'lqi': 1, 'relationship': 1, 'routes': [], 'source': {'ieeeAddr': '0x00158d00067a0c2d', 'networkAddress': 60244}, 'sourceIeeeAddr': '0x00158d00067a0c2d', 'sourceNwkAddr': 60244, 'target': {'ieeeAddr': '0x00124b001cd4bbf0', 'networkAddress': 0}, 'targetIeeeAddr': '0x00124b001cd4bbf0'}], 'nodes': [{'definition': None, 'failed': [], 'friendlyName': 'Coordinator', 'ieeeAddr': '0x00124b001cd4bbf0', 'lastSeen': None, 'networkAddress': 0, 'type': 'Coordinator'}, {'definition': {'description': 'TRADFRI open/close remote', 'model': 'E1766', 'supports': 'battery, action, linkquality', 'vendor': 'IKEA'}, 'friendlyName': 'TRADFRI E1766_01', 'ieeeAddr': '0x588e81fffe28dec5', 'lastSeen': 1618408062253, 'manufacturerName': 'IKEA of Sweden', 'modelID': 'TRADFRI open/close remote', 'networkAddress': 39405, 'type': 'EndDevice'}, {'definition': {'description': 'Temperature and humidity sensor', 'model': 'SNZB-02', 'supports': 'battery, temperature, humidity, voltage, linkquality', 'vendor': 'SONOFF'}, 'friendlyName': 'SNZB02_01', 'ieeeAddr': '0x00124b00231e45b8', 'lastSeen': 1618407530272, 'manufacturerName': 'eWeLink', 'modelID': 'TH01', 'networkAddress': 18841, 'type': 'EndDevice'}, {'definition': {'description': 'Aqara vibration sensor', 'model': 'DJT11LM', 'supports': 'battery, action, strength, sensitivity, voltage, linkquality', 'vendor': 'Xiaomi'}, 'friendlyName': 'DJT11LM_01', 'ieeeAddr': '0x00158d00067a0c2d', 'lastSeen': 1618383303863, 'manufacturerName': 'LUMI', 'modelID': 'lumi.vibration.aq1', 'networkAddress': 60244, 'type': 'EndDevice'}]}}, 'status': 'ok', 'transaction': 'q15of-1'}
+                assert isinstance(payload, dict), 'dict'
+                _bridge[topic_4] = payload
+                payload['online'] = True
+
+                if topic_4 == 'health_check':
+                    # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=response, topic_level4=health_check, topic_level5=, payload={'data': {'healthy': True}, 'status': 'ok'}
+                    payload['online'] = bool(payload['data']['healthy'])
+
+            elif topic_3 == 'devices' or topic_3 == 'groups':
+                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=config, topic_level4=devices, topic_level5=, payload=[{'dateCode': '20201127', 'friendly_name': 'Coordinator', 'ieeeAddr': '0x00124b001cd4bbf0', 'lastSeen': 1618861562211, 'networkAddress': 0, 'softwareBuildID': 'zStack12', 'type': 'Coordinator'}, {'dateCode': '20190311', 'description': 'TRADFRI open/close remote', 'friendly_name': 'TRADFRI E1766_01', 'hardwareVersion': 1, 'ieeeAddr': '0x588e81fffe28dec5', 'lastSeen': 1618511300581, 'manufacturerID': 4476, 'manufacturerName': 'IKEA of Sweden', 'model': 'E1766', 'modelID': 'TRADFRI open/close remote', 'networkAddress': 39405, 'powerSource': 'Battery', 'softwareBuildID': '2.2.010', 'type': 'EndDevice', 'vendor': 'IKEA'}, {'dateCode': '20201026', 'description': 'Temperature and humidity sensor', 'friendly_name': 'SNZB02_01', 'hardwareVersion': 1, 'ieeeAddr': '0x00124b00231e45b8', 'lastSeen': 1618861025534, 'manufacturerID': 0, 'manufacturerName': 'eWeLink', 'model': 'SNZB-02', 'modelID': 'TH01', 'networkAddress': 18841, 'powerSource': 'Battery', 'type': 'EndDevice', 'vendor': 'SONOFF'}, {'description': 'Aqara vibration sensor', 'friendly_name': 'DJT11LM_01', 'ieeeAddr': '0x00158d00067a0c2d', 'lastSeen': 1618383303863, 'manufacturerID': 4151, 'manufacturerName': 'LUMI', 'model': 'DJT11LM', 'modelID': 'lumi.vibration.aq1', 'networkAddress': 60244, 'powerSource': 'Battery', 'type': 'EndDevice', 'vendor': 'Xiaomi'}]
+                assert isinstance(payload, list), 'list'
+                self._get_device_data(payload, topic_4 == 'groups')
+
+                for entry in payload:
+                    friendly_name = entry.get('friendly_name')
+                    if friendly_name in self._devices:
+                        try:
+                            self._devices[friendly_name]['exposes'] = entry['definition']['exposes']
+                        except (KeyError, TypeError):
+                            pass
+
+                return {topic_3: payload}
+
+            elif topic_3 == 'log':
+                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={"message":[{"dateCode":"20201127","friendly_name":"Coordinator","ieeeAddr":"0x00124b001cd4bbf0","lastSeen":1617961599543,"networkAddress":0,"softwareBuildID":"zStack12","type":"Coordinator"},{"dateCode":"20190311","description":"TRADFRI open/close remote","friendly_name":"TRADFRI E1766_01","hardwareVersion":1,"ieeeAddr":"0x588e81fffe28dec5","lastSeen":1617873345111,"manufacturerID":4476,"manufacturerName":"IKEA of Sweden","model":"E1766","modelID":"TRADFRI open/close remote","networkAddress":39405,"powerSource":"Battery","softwareBuildID":"2.2.010","type":"EndDevice","vendor":"IKEA"},{"dateCode":"20201026","description":"Temperature and humidity sensor","friendly_name":"SNZB02_01","hardwareVersion":1,"ieeeAddr":"0x00124b00231e45b8","lastSeen":1617961176234,"manufacturerID":0,"manufacturerName":"eWeLink","model":"SNZB-02","modelID":"TH01","networkAddress":18841,"powerSource":"Battery","type":"EndDevice","vendor":"SONOFF"}],"type":"devices"}'
+                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={'message': {'friendly_name': '0x00158d00067a0c2d'}, 'type': 'device_connected'}
+                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={'message': 'Publish \'set\' \'sensitivity\' to \'DJT11LM_01\' failed: \'Error: Write 0x00158d00067a0c2d/1 genBasic({"65293":{"value":21,"type":32}}, {"timeout":35000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":4447,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Data request failed with error: \'MAC transaction expired\' (240))\'', 'meta': {'friendly_name': 'DJT11LM_01'}, 'type': 'zigbee_publish_error'}
+                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={'message': 'announce', 'meta': {'friendly_name': 'DJT11LM_01'}, 'type': 'device_announced'}
+                # topic_level1=zigbee2mqtt, topic_level2=bridge, topic_level3=log, topic_level4=, topic_level5=, payload={'message': {'cluster': 'genOnOff', 'from': 'TRADFRI E1766_01', 'to': 'default_bind_group'}, 'type': 'device_bind_failed'}
+                assert isinstance(payload, dict), 'dict'
+                if 'message' in payload and payload.get('type') == 'devices':
+                    self._get_device_data(payload['message'])
+
+            else:
+                self.logger.debug(f"Function type message bridge/{topic_3}/{topic_4} not implemented yet.")
+        except AssertionError as e:
+            self.logger.debug(f'Response format not of type {e}, ignoring data')
+
+    def _handle_in_attr_color(self, device: str, attr: str, payload={}, item=None):
+        """ automatically sync rgb items """
+        if item is not None:
+            col = payload['color']
+            if 'x' in col and 'y' in col and 'brightness' in payload:
+                r, g, b = self._color_xy_to_rgb(color=col, brightness=payload['brightness'] / 254)
+                try:
+                    items_default = True
+                    item_r = item.r
+                    item_g = item.g
+                    item_b = item.b
+                except AttributeError:
+                    items_default = False
+
+                try:
+                    items_custom = True
+                    # try to get user-specified items to override default
+                    item_r = self._devices[device]['color_r']['item']
+                    item_g = self._devices[device]['color_g']['item']
+                    item_b = self._devices[device]['color_b']['item']
+                except (AttributeError, KeyError):
+                    items_custom = False
+
+                if not items_default and not items_custom:
+                    return
+
+                try:
+                    item_r(r, self.get_shortname())
+                    item_g(g, self.get_shortname())
+                    item_b(b, self.get_shortname())
+                except Exception as e:
+                    self.logger.warning(f'Trying to set rgb color values for color item {item}, but appropriate subitems ({item_r}, {item_g}, {item_b}) missing: {e}')
+
+                try:
+                    target = self._devices[device]['color_rgb']['item']
+                except (AttributeError, KeyError):
+                    return
+                target(f'{r:x}{g:x}{b:x}', self.get_shortname())
+
+    def _handle_in_attr_brightness(self, device: str, attr: str, payload={}, item=None):
+        """ automatically set brightness percent """
+        if item is not None:
+            target = None
+            try:
+                target = item.percent
+            except AttributeError:
+                pass
+
+            try:
+                target = self._devices[device]['brightness_percent']['item']
+            except (AttributeError, KeyError):
+                pass
+
+            if target is not None:
+                target(payload['brightness'] / 2.54, self.get_shortname())
+
+    def _handle_in_attr_color_temp(self, device: str, attr: str, payload={}, item=None):
+        """ automatically set color temp in kelvin """
+        if item is not None:
+            target = None
+            try:
+                target = item.kelvin
+            except AttributeError:
+                pass
+
+            try:
+                target = self._devices[device]['color_temp_kelvin']['item']
+            except (AttributeError, KeyError):
+                pass
+
+            if target is not None:
+                target(int(1000000 / payload['color_temp']), self.get_shortname())
+
+#
+# handlers out: activated when values are sent out from shng
+#
+# def _handle_out_<device/attr>(self, item, value, topic_3, topic_4, topic_5, device, attr):
+#     return value, topic_3, topic_4, topic_5, abort
+#
+
+    def _handle_out_dev_bridge(self, item, value, topic_3, topic_4, topic_5, device, attr):
+        # statically defined cmds for interaction with z2m-gateway
+        # independent from connected devices
+        bridge_cmds = {
+            'permit_join': {'setval': 'VAL', 'attr': 'value', 't5': ''},
+            'health_check': {'t5': ''},
+            'restart': {'setval': None, 't5': ''},
+            'networkmap': {'setval': 'raw', 't5': 'remove'},
+            'device_remove': {'setval': 'STR', 't5': ''},
+            'device_configure': {'setval': 'STR', 't5': ''},
+            'device_options': {'setval': 'STR', 't5': ''},
+            'device_rename': {'setval': 'STR', 't5': ''}
+        }
+
+        if attr in bridge_cmds:
+            topic_3 = 'request'
+            topic_4 = attr
+            topic_5 = bridge_cmds[attr]['t5']
+            payload = ''
+            if attr.startswith('device_'):
+                topic_4, topic_5 = attr.split('_')
+            sv = bridge_cmds[attr].get('setval', '')
+            if sv == 'VAL':
+                payload = value
+            if sv == 'STR':
+                payload = str(value)
+            elif sv == 'PATH':
+                payload = item.property.path
+            elif sv is None:
+                payload = None
+            if 'attr' in bridge_cmds[attr]:
+                attr = bridge_cmds[attr]['attr']
+
+            value = payload
+
+        return attr, value, topic_3, topic_4, topic_5, False
+
+    def _handle_out_attr_color_r(self, item, value, topic_3, topic_4, topic_5, device, attr):
+        try:
+            self._color_sync_from_rgb(self._devices[device]['state']['item'])
+        except Exception as e:
+            self.logger.debug(f'problem calling color sync: {e}')
+        return attr, value, topic_3, topic_4, topic_5, True
+
+    def _handle_out_attr_color_g(self, item, value, topic_3, topic_4, topic_5, device, attr):
+        try:
+            self._color_sync_from_rgb(self._devices[device]['state']['item'])
+        except Exception as e:
+            self.logger.debug(f'problem calling color sync: {e}')
+        return attr, value, topic_3, topic_4, topic_5, True
+
+    def _handle_out_attr_color_b(self, item, value, topic_3, topic_4, topic_5, device, attr):
+        try:
+            self._color_sync_from_rgb(self._devices[device]['state']['item'])
+        except Exception as e:
+            self.logger.debug(f'problem calling color sync: {e}')
+        return attr, value, topic_3, topic_4, topic_5, True
+
+    def _handle_out_attr_brightness_percent(self, item, value, topic_3, topic_4, topic_5, device, attr):
+        brightness = value * 2.54
+        try:
+            self._devices[device]['brightness']['item'](brightness)
+        except (KeyError, AttributeError):
+            pass
+        return attr, value, topic_3, topic_4, topic_5, True
+
+    def _handle_out_attr_color_temp_kelvin(self, item, value, topic_3, topic_4, topic_5, device, attr):
+        kelvin = int(1000000 / value)
+        try:
+            self._devices[device]['color_temp']['item'](kelvin)
+        except (KeyError, AttributeError):
+            pass
+        return attr, value, topic_3, topic_4, topic_5, True
+
+    def _handle_out_attr_color_rgb(self, item, value, topic_3, topic_4, topic_5, device, attr):
+        if item is not None:
+            try:
+                col = {}
+                rgb = item()
+                col['r'] = int(rgb[0:2], 16)
+                col['g'] = int(rgb[2:4], 16)
+                col['b'] = int(rgb[4:6], 16)
+
+                for color in ('r', 'g', 'b'):
+                    target = None
+                    try:
+                        target = getattr(item.return_parent(), color)
+                    except AttributeError:
+                        pass
+
+                    try:
+                        target = self._devices[device]['color_' + color]['item']
+                    except (AttributeError, KeyError):
+                        pass
+
+                    if target is not None:
+                        target(col[color], self.get_shortname())
+
+                self._color_sync_from_rgb(self._devices[device]['state']['item'])
+
+            except Exception as e:
+                self.logger.debug(f'problem calling color sync: {e}')
+
+        return attr, value, topic_3, topic_4, topic_5, True
+
+#
+# Attention - color conversions xy/rgb:
+# due to - probably - rounding differences, this ist not a true
+# 1:1 conversion. Use at your own discretion...
+#
+
+    def _color_xy_to_rgb(self, color={}, x=None, y=None, brightness=1):
+        if color:
+            x = color.get('x')
+            y = color.get('y')
+        c = Converter()
+        return c.xy_to_rgb(x, y, brightness)
+
+    def _color_rgb_to_xy(self, r, g, b):
+        c = Converter()
+        return c.rgb_to_xyb(r, g, b)
+
+    def _color_sync_to_rgb(self, item, source=''):
+        """ sync xy color to rgb, needs struct items """
+        self._item_color_xy_to_rgb(item.color, item.brightness, item.color.r, item.color.g, item.color.b, source)
+
+    def _color_sync_from_rgb(self, item, source='', rgb=''):
+        """ sync rgb color to xy, needs struct items """
+        self._item_color_rgb_to_xy(item.color.r, item.color.g, item.color.b, item.color, item.brightness, source)
+
+    def _item_color_xy_to_rgb(self, item_xy, item_brightness, item_r, item_g, item_b, source=''):
+        """ convert xy and brightness item data to rgb and assign """
+        try:
+            x = item_xy()['x']
+            y = item_xy()['y']
+        except (ValueError, TypeError, KeyError):
+            self.logger.warning(f"Item {item_xy} doesn't contain a valid {{'x': x, 'y': y}} color definition: {item_xy()}")
+            return
+
+        try:
+            bright = item_brightness()
+            if bright < 0 or bright > 254:
+                raise TypeError
+            bright /= 254
+        except (ValueError, TypeError):
+            self.logger.warning(f"Item {item_brightness} doesn't contain a valid brightness value: {item_brightness()}")
+            return
+
+        r, g, b = self._color_xy_to_rgb(x=x, y=y, brightness=bright)
+
+        try:
+            item_r(r, source)
+            item_g(g, source)
+            item_b(b, source)
+        except (ValueError, TypeError):
+            self.logger.warning(f"Error on assigning rgb values {r},{g},{b} to items {item_r}, {item_g}, {item_b}")
+
+    def _item_color_rgb_to_xy(self, item_r, item_g, item_b, item_xy, item_brightness, source=''):
+        """ convert r, g, b items data to xy and brightness and assign """
+        try:
+            r = item_r()
+            g = item_g()
+            b = item_b()
+        except (ValueError, TypeError):
+            self.logger.warning(f"Error on getting rgb values from items {item_r}, {item_g}, {item_b}")
+            return
+
+        x, y, bright = self._color_rgb_to_xy(r, g, b)
+
+        try:
+            item_xy({'x': x, 'y': y}, source)
+            item_brightness(bright * 254, source)
+        except (ValueError, TypeError):
+            self.logger.warning(f"Error on assigning values {x},{y}, {bright} to items {item_xy} and {item_brightness}")
+            return

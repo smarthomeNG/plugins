@@ -43,7 +43,7 @@ lock = False
 
 
 class Nuki(SmartPlugin):
-    PLUGIN_VERSION = "1.6.1"
+    PLUGIN_VERSION = "1.6.3"
 
     def __init__(self, sh, *args, **kwargs):
 
@@ -103,14 +103,13 @@ class Nuki(SmartPlugin):
         self._clear_callbacks()
         self.scheduler_add(__name__, self._scheduler_job, prio=3, cron=None, cycle=300, value=None,
                            offset=None, next=None)
-
+        self._register_callback()
         self.alive = True
 
     def _scheduler_job(self):
         # will also be executed at start
         self._get_paired_nukis()
-        self._register_callback()
-        self._get_nuki_status()
+        self._get_nuki_status_via_list()
 
     def stop(self):
         self.alive = False
@@ -161,10 +160,38 @@ class Nuki(SmartPlugin):
                 if response is not None:
                     if response['success']:
                         # self._get_nuki_status()
-                        self.logger.info(
+                        self.logger.debug(
                             "Plugin '{0}': update item: {1}".format(self.get_shortname(), item.property.path))
+                        # immediatly update lock state via list, to e.g. the status information that lock is locking
+                    self._get_nuki_status_via_list()
                 else:
                     self.logger.error("Plugin '{}': no response.".format(self.get_shortname()))
+
+    @staticmethod
+    def update_lock_state_via_list(nuki_id, nuki_data):
+        nuki_battery = None
+        nuki_state = None
+        nuki_doorstate = None
+
+        lock_state=nuki_data['lastKnownState']
+
+        if 'state' in lock_state:
+            nuki_state = lock_state['state']
+        if 'doorsensorState' in lock_state:
+            nuki_doorstate = lock_state['doorsensorState']
+        if 'batteryCritical' in lock_state:
+            nuki_battery = 0 if not lock_state['batteryCritical'] else 1
+
+        for item, key in nuki_event_items.items():
+            if key == nuki_id:
+                item(nuki_state, 'NUKI')
+        for item, key in nuki_door_items.items():
+            if key == nuki_id:
+                item(nuki_doorstate, 'NUKI')
+        for item, key in nuki_battery_items.items():
+            if key == nuki_id:
+                item(nuki_battery, 'NUKI')
+
 
     @staticmethod
     def update_lock_state(nuki_id, lock_state):
@@ -243,6 +270,20 @@ class Nuki(SmartPlugin):
             self.logger.warning(
                 "Plugin '{}': No callback ip set. Automatic Nuki lock status updates not available.".format
                 (self.get_shortname()))
+
+    def _get_nuki_status_via_list(self):
+        self.logger.info("Plugin '{}': Getting Nuki status ...".format
+                         (self.get_shortname()))
+
+        response = self._api_call(self._base_url, endpoint='list', token=self._token,
+                                      no_wait=self._noWait)
+        if response is None:
+            self.logger.info("Plugin '{}': Getting Nuki status ... Response is None.".format(self.get_shortname()))
+            return
+        for nuki_id in paired_nukis:
+            for nuki_data in response:
+                if nuki_data['nukiId'] == int(nuki_id):
+                    Nuki.update_lock_state_via_list(nuki_id, nuki_data)
 
     def _get_nuki_status(self):
         self.logger.info("Plugin '{}': Getting Nuki status ...".format
@@ -387,7 +428,6 @@ class NukiWebServiceInterface:
             self.plugin.logger.debug(
                 "Plugin '{pluginname}' - NukiWebServiceInterface: Status Smartlock: ID: {nuki_id} Status: {state_name}".
                 format(pluginname=self.plugin.get_shortname(), nuki_id=nuki_id, state_name=state_name))
-
             Nuki.update_lock_state(nuki_id, input_json)
         except Exception as err:
             self.plugin.logger.error(

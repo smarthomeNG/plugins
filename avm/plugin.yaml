@@ -1,10 +1,10 @@
 # Metadata for the plugin
 plugin:
     # Global plugin attributes
-    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Ansteuerung von AVM FRITZ!Boxen, WLAN-Repeatern, DECT Steckdosen, etc.'
-        en: 'Get and send data from/to AVM devices such as the FRITZ!Box, Wifi Repeaters or DECT sockets.'
+        de: Ansteuerung von AVM FRITZ!Boxen, WLAN-Repeatern, DECT Steckdosen, etc.
+        en: Get and send data from/to AVM devices such as the FRITZ!Box, Wifi Repeaters or DECT sockets.
     maintainer: sisamiwe
     tester: psilo, onkelandy, aschwith, bmx
     state: develop                  # change to ready when done with development
@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/avm/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
-    version: 2.0.2                  # Plugin version (must match the version specified in __init__.py)
+    version: 2.2.1                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.8              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -27,305 +27,508 @@ parameters:
         type: str
         default: ''
         description:
-            de: '(optional) Nutzername für den Login. Kann für manche Features benötigt werden! (Speziell für Fritz!OS 7 ist die Konfiguration der Fritz!Box auf `Anmeldung mit FRITZ!Box-Benutzernamen und Kennwort` notwendig'
-            en: '(optional) Login information (user). Can be needed to use some features of the AVM device. (Specially for Firtz!OS 7 the Fritz!Box should be configured for login with username and password'
+            de: (optional) Nutzername für den Login. Kann für manche Features benötigt werden! (Speziell für Fritz!OS 7 ist die Konfiguration der Fritz!Box auf `Anmeldung mit FRITZ!Box-Benutzernamen und
+                Kennwort` notwendig
+            en: (optional) Login information (user). Can be needed to use some features of the AVM device. (Specially for Fritz!OS 7 the Fritz!Box should be configured for login with username and password
     password:
         type: str
         default: ''
         hide: true
         description:
-            de: '(optional) Passwort für den Login. Wird in der Regel immer benötigt und aus Sicherheitsgründen empfohlen.'
-            en: '(optional) Password for login. Is normally always needed and recommended due to security reasons'
+            de: (optional) Passwort für den Login. Wird in der Regel immer benötigt und aus Sicherheitsgründen empfohlen.
+            en: (optional) Password for login. Is normally always needed and recommended due to security reasons
     host:
         type: str
-        default: 'fritz.box'
+        mandatory: true
         description:
-            de: '(optional) Hostname oder IP-Adresse des FritzDevice.'
-            en: '(optional) Hostname or ip address of the FritzDevice.'
+            de: Hostname oder IP-Adresse des FritzDevice.
+            en: Hostname or ip address of the FritzDevice.
     port:
         type: int
         default: 49443
         description:
-            de: '(optional) Port des FritzDevice, normalerweise 49443 für https oder 49000 für http'
-            en: '(optional) Port of the FritzDevice, typically 49443 for https or 49000 for http'
+            de: (optional) Port des FritzDevice, normalerweise 49443 für https oder 49000 für http
+            en: (optional) Port of the FritzDevice, typically 49443 for https or 49000 for http
     cycle:
         type: int
         default: 300
         description:
-            de: '(optional) Zeit zwischen zwei Runs. Default ist 300 Sekunden.'
-            en: '(optional) Time period between two update cycles. Default is 300 seconds.'
+            de: (optional) Zeit zwischen zwei Runs. Default ist 300 Sekunden.
+            en: (optional) Time period between two update cycles. Default is 300 seconds.
     ssl:
         type: bool
         default: true
         description:
-            de: '(optional) Mit True wird das FritzDevice via https, mit False via http angesprochen.'
-            en: '(optional) True will add "https", False "http" to the URLs in the plugin.'
+            de: (optional) Mit True wird das FritzDevice via https, mit False via http angesprochen.
+            en: (optional) True will add "https", False "http" to the URLs in the plugin.
     verify:
         type: bool
         default: false
         description:
-            de: '(optional) Schaltet die Zertifikate-Prüfung an oder aus. Normalerweise False.'
-            en: '(optional) Turns certificate verification on or off. Typically False'
+            de: (optional) Schaltet die Zertifikate-Prüfung an oder aus. Normalerweise False.
+            en: (optional) Turns certificate verification on or off. Typically False
     call_monitor:
         type: bool
         default: false
         description:
-            de: '(optional) Aktiviert oder deaktiviert den MonitoringService, welcher auf den Call Monitor des FritzDevice verbindet. Der Call Monitor muss über ein verbundenes Telefon via #96*5* aktiviert sein.'
-            en: '(optional) Activates or deactivates the MonitoringService, which connects to the FritzDevice`s call monitor. The call monitor has to be activated before by a connected telephone via calling #96*5*'
+            de: (optional) Aktiviert oder deaktiviert den MonitoringService, welcher auf den Call Monitor des FritzDevice verbindet. Der Call Monitor muss über ein verbundenes Telefon via '#96*5*' aktiviert
+                sein.
+            en: (optional) Activates or deactivates the MonitoringService, which connects to the FritzDevice`s call monitor. The call monitor has to be activated before by a connected telephone via calling
+                ''#96*5*'
     call_monitor_incoming_filter:
         type: str
         default: ''
         description:
-            de: '(optional) Filter, auf welche eigenen Rufnummern (oder Teile davon) der Callmonitor reagieren soll. Ist der Filter leer, werden alle eigenen Rufnummern überwacht. Wird ein Filterstring bspw. "12234" angegeben, werden nur die eigenen Anschlussnummern, die "12234" enthalten, vom CallMonitor verarbeitet.'
-            en: '(optional) Filter, for which numbers (or part of the number) of own telephone connection the Callmonitor should react.'
+            de: (optional) Filter, auf welche eigenen Rufnummern (oder Teile davon) der Callmonitor reagieren soll. Ist der Filter leer, werden alle eigenen Rufnummern überwacht. Wird ein Filterstring bspw.
+                "12234" angegeben, werden nur die eigenen Anschlussnummern, die "12234" enthalten, vom CallMonitor verarbeitet.
+            en: (optional) Filter, for which numbers (or part of the number) of own telephone connection the Callmonitor should react.
     avm_home_automation:
         type: bool
         default: false
         description:
-            de: '(optional) Aktiviert oder deaktiviert den Zugriff auf AVM Smarthome Geräte mit dem AHA HTTP Interface.'
-            en: '(optional) Activates or deactivates access to AVM smarthome devices via AHA HTTP interface'
+            de: (optional) Aktiviert oder deaktiviert den Zugriff auf AVM Smarthome Geräte mit dem AHA HTTP Interface.
+            en: (optional) Activates or deactivates access to AVM smarthome devices via AHA HTTP interface
     log_entry_count:
         type: int
         default: 200
         description:
-            de: '(optional) Anzahl der Log-Messages, die verarbeitet/bereitgestellt werden. 0 = alle'
-            en: '(optional) Amount of Log-Messages, witch will be displayed. 0 = all'
+            de: (optional) Anzahl der Log-Messages, die verarbeitet/bereitgestellt werden. 0 = alle
+            en: (optional) Amount of Log-Messages, witch will be displayed. 0 = all
     tr064_item_blacklist:
         type: bool
-        default: False
+        default: false
         description:
-            de: '(optional) Wenn aktiv, werden TR064 Items, deren Abfrageergebnis 2x zu einen Fehler geführt hat, blacklisted und anschließend nicht mehr abgefragt.'
-            en: '(optional) If active, TR064 Items for which data polling resulted in errors, will be blacklisted and excluded from update cycle'
+            de: (optional) Wenn aktiv, werden TR064 Items, deren Abfrageergebnis 2x zu einen Fehler geführt hat, blacklisted und anschließend nicht mehr abgefragt.
+            en: (optional) If active, TR064 Items for which data polling resulted in errors, will be blacklisted and excluded from update cycle
 
 item_attributes:
     # Definition of item attributes defined by this plugin
     avm_data_type:
         type: str
-        mandatory: True
+        mandatory: true
         description:
-            de: 'AVM Datentyp des jeweiligen Items.'
-            en: 'AVM Data Type of the respective item.'
+            de: AVM Datentyp des jeweiligen Items.
+            en: AVM Data Type of the respective item.
         valid_list:
-        # Fritzdevice Attribute
-          - 'uptime'                                  # r/o       num     Laufzeit des Fritzdevice in Sekunden
-          - 'serial_number'                           # r/o       str     Serialnummer des Fritzdevice
-          - 'software_version'                        # r/o       str     Software Version
-          - 'hardware_version'                        # r/o       str     Hardware Version
-        # Myfritz Attribute                                     
-          - 'myfritz_status'                          # r/o       bool    MyFritz Status
-        # Call Monitor Attribute                                
-          - 'monitor_trigger'                         # r/o       bool      Monitortrigger
-          - 'is_call_incoming'                        # r/o       bool      Eingehender Anruf erkannt
-          - 'call_duration_incoming'                  # r/o       num       Dauer des eingehenden Anrufs
-          - 'last_caller_incoming'                    # r/o       str       Letzter Anrufer
-          - 'last_number_incoming'                    # r/o       str       Nummer des letzten eingehenden Anrufes
-          - 'last_called_number_incoming'             # r/o       str       Angerufene Nummer des letzten eingehenden Anrufs
-          - 'last_call_date_incoming'                 # r/o       str       Zeitpunkt des letzten eingehenden Anrufs
-          - 'call_event_incoming'                     # r/o       str       Status des letzten eingehenden Anrufs
-          - 'is_call_outgoing'                        # r/o       bool      Ausgehender Anruf erkannt
-          - 'call_duration_outgoing'                  # r/o       num       Dauer des ausgehenden Anrufs
-          - 'last_caller_outgoing'                    # r/o       str       Letzter angerufener Kontakt    
-          - 'last_number_outgoing'                    # r/o       str       Letzte angerufene Nummer   
-          - 'last_called_number_outgoing'             # r/o       str       Letzter verwendete Telefonnummer für ausgehenden Anruf
-          - 'last_call_date_outgoing'                 # r/o       str       Zeitpunkt des letzten ausgehenden Anrufs
-          - 'call_event_outgoing'                     # r/o       str       Status des letzten ausgehenden Anrufs
-          - 'call_direction'                          # r/o       str       Richtung des letzten Anrufes
-          - 'call_event'                              # r/o       str       Status des letzten Anrufes
-        # TAM Attribute                      Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm_tam_index'
-          - 'tam'                                     # r/w       bool      TAM an/aus
-          - 'tam_name'                                # r/o       str       Name des TAM
-          - 'tam_old_message_number'                  # r/o       num       Anzahl der alten Nachrichten
-          - 'tam_new_message_number'                  # r/o       num       Anzahl der neuen Nachrichten
-          - 'tam_total_message_number'                # r/o       num       Gesamtanzahl der Nachrichten
-        # WAN Attribute                             
-          - 'wan_connection_status'                   # r/o       str       WAN Verbindungsstatus
-          - 'wan_connection_error'                    # r/o       str       WAN Verbindungsfehler
-          - 'wan_is_connected'                        # r/o       bool      WAN Verbindung aktiv
-          - 'wan_uptime'                              # r/o       str       WAN Verbindungszeit
-          - 'wan_ip'                                  # r/o       str       WAN IP Adresse
-          - 'wan_upstream'                            # r/o       num       WAN Upstream Datenmenge
-          - 'wan_downstream'                          # r/o       num       WAN Downstream Datenmenge
-          - 'wan_total_packets_sent'                  # r/o       num       WAN Verbindung-Anzahl insgesamt versendeter Pakete
-          - 'wan_total_packets_received'              # r/o       num       WAN Verbindung-Anzahl insgesamt empfangener Pakete
-          - 'wan_current_packets_sent'                # r/o       num       WAN Verbindung-Anzahl aktuell versendeter Pakete
-          - 'wan_current_packets_received'            # r/o       num       WAN Verbindung-Anzahl aktuell empfangener Pakete
-          - 'wan_total_bytes_sent'                    # r/o       num       WAN Verbindung-Anzahl insgesamt versendeter Bytes
-          - 'wan_total_bytes_received'                # r/o       num       WAN Verbindung-Anzahl insgesamt empfangener Bytes
-          - 'wan_current_bytes_sent'                  # r/o       num       WAN Verbindung-Anzahl aktuelle Bitrate Senden
-          - 'wan_current_bytes_received'              # r/o       num       WAN Verbindung-Anzahl aktuelle Bitrate Empfangen
-          - 'wan_link'                                # r/o       bool      WAN Link
-        # WLAN Config Attribute              Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm_wlan_index'
-          - 'wlanconfig'                              # r/w       bool      WLAN An/Aus
-          - 'wlanconfig_ssid'                         # r/o       str       WLAN SSID
-          - 'wlan_guest_time_remaining'               # r/o       num       Verbleibende Zeit, bis zum automatischen Abschalten des Gäste-WLAN
-          - 'wlan_associates'                         # r/o       num       Anzahl der verbundenen Geräte im jeweiligen WLAN
-          - 'wps_active'                              # r/w       bool      Schaltet WPS für das entsprechende WlAN an / aus
-          - 'wps_status'                              # r/o       str       WPS Status des entsprechenden WlAN
-          - 'wps_mode'                                # r/o       str       WPS Modus des entsprechenden WlAN
-        # WLAN Attribute
-          - 'wlan_total_associates'                   # r/o       num       Anzahl der verbundenen Geräte im WLAN
-        # Host Attribute                     Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm_mac'           
-          - 'network_device'                          # r/o       bool      Verbindungsstatus // Defines Network device via MAC-Adresse
-          - 'device_ip'                               # r/o       str       Geräte-IP (Muss Child von 'network_device' sein)           
-          - 'device_connection_type'                  # r/o       str       Verbindungstyp (Muss Child von 'network_device' sein)       
-          - 'device_hostname'                         # r/o       str       Gerätename (Muss Child von 'network_device' sein)           
-          - 'connection_status'                       # r/o       bool      Verbindungsstatus (Muss Child von 'network_device' sein)
-        # Hosts Attribute
-          - 'hosts_count'                             #r/o        num       Anzahl der Hosts
-          - 'hosts_info'                              #r/o        dict      Informationen über die Hosts
-          - 'mesh_topology'                           #r/o        dict      Topologie des Mesh
-        # Smarthome Attribute (Deprecated avm data types. Please use alternative AHA interface type)
-          - 'aha_device'                              # r/w       bool      Steckdose schalten; siehe "switch_state"
-          - 'hkr_device'                              # r/o       str       Status des HKR (OPEN; CLOSED; TEMP)
-          - 'set_temperature'                         # r/o       num       siehe "target_temperature"
-          - 'temperature'                             # r/o       num       siehe "current_temperature"
-          - 'set_temperature_reduced'                 # r/o       num       siehe "temperature_reduced"
-          - 'set_temperature_comfort'                 # r/o       num       siehe "temperature_comfort"
-          - 'firmware_version'                        # r/o       str       siehe "fw_version"
-        # Deflections                        Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm_deflection_index'    
-          - 'number_of_deflections'                   # r/o       num       Anzahl der eingestellten Rufumleitungen
-          - 'deflection_details'                      # r/o       dict      Details zur Rufumleitung (als dict); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item
-          - 'deflections_details'                     # r/o       dict      Details zu allen Rufumleitung (als dict)
-          - 'deflection_enable'                       # r/w       bool      Rufumleitung Status an/aus; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-          - 'deflection_type'                         # r/o       str       Type der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-          - 'deflection_number'                       # r/o       str       Telefonnummer, die umgeleitet wird; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-          - 'deflection_to_number'                    # r/o       str       Zielrufnummer der Umleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-          - 'deflection_mode'                         # r/o       str       Modus der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-          - 'deflection_outgoing'                     # r/o       str       Outgoing der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-          - 'deflection_phonebook_id'                 # r/o       str       Phonebook_ID der Zielrufnummer (Only valid if Type==fromPB); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-        # AHA Interface attributes           Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm_tam_ain'
-          - 'device_id'                               # r/o       str       Geräte -ID                                    
-          - 'manufacturer'                            # r/o       str       Hersteller                                    
-          - 'product_name'                            # r/o       str       Produktname                                   
-          - 'fw_version'                              # r/o       str       Firmware Version                              
-          - 'connected'                               # r/o       bool      Verbindungsstatus                             
-          - 'device_name'                             # r/o       str       Gerätename                                    
-          - 'tx_busy'                                 # r/o       bool      Verbindung aktiv                              
-          - 'device_functions'                        # r/o       list      Im Gerät vorhandene Funktionen                
-                                                      
-          - 'set_target_temperature'                  # w/o       num       Soll-Temperatur Setzen                          
-          - 'target_temperature'                      # r/w       num       Soll-Temperatur (Status und Setzen)             
-          - 'current_temperature'                     # r/o       num       Ist-Temperatur                                  
-          - 'temperature_reduced'                     # r/o       num       Eingestellte reduzierte Temperatur              
-          - 'temperature_comfort'                     # r/o       num       Eingestellte Komfort-Temperatur                 
-          - 'temperature_offset'                      # r/o       num       Eingestellter Temperatur-Offset                 
-          - 'set_window_open'                         # w/o       bool      "Window Open" Funktionen Setzen                 
-          - 'window_open'                             # r/w       bool      "Window Open" Funktion (Status und Setzen)      
-          - 'windowopenactiveendtime'                 # r/o       num       Zeitliches Ende der "Window Open" Funktion      
-          - 'set_hkr_boost'                           # w/o       bool      "Boost" Funktion Setzen                         
-          - 'hkr_boost'                               # r/w       bool      "Boost" Funktion (Status aund Setzen)           
-          - 'boost_active'                            # r/o       bool      Status der "Boost" Funktion                     deprecated
-          - 'boostactiveendtime'                      # r/o       num       Zeitliches Ende der "Boost" Funktion            
-          - 'summer_active'                           # r/o       bool      Status der "Sommer" Funktion                    
-          - 'holiday_active'                          # r/o       bool      Status der "Holiday" Funktion                   
-          - 'battery_low'                             # r/o       bool      "Battery low" Status                            
-          - 'battery_level'                           # r/o       num       Batterie-Status in %                            
-          - 'lock'                                    # r/o       bool      Tastensperre über UI/API aktiv                  
-          - 'device_lock'                             # r/o       bool      Tastensperre direkt am Gerät ein                
-          - 'errorcode'                               # r/o       num       Fehlercodes die der HKR liefert                 
-                                                      
-          - 'set_simpleonoff'                         # w/o       bool      Gerät/Aktor/Lampe an-/ausschalten               
-          - 'simpleonoff'                             # w/r       bool      Gerät/Aktor/Lampe (Status und Setzen)
-                                                      
-          - 'set_level'                               # w/o       num       Level/Niveau von 0 bis 255 Setzen               
-          - 'level'                                   # w/r       num       Level/Niveau von 0 bis 255 (Setzen & Status)
-          - 'set_levelpercentage'                     # w/o       num       Level/Niveau von 0% bis 100% Setzen             
-          - 'levelpercentage'                         # w/r       num       Level/Niveau von 0% bis 100% (Setzen & Status)
-          -
-          - 'set_hue'                                 # w/o       num       Hue Setzen                                      
-          - 'hue'                                     # w/r       num       Hue (Status und Setzen)
-          - 'set_saturation'                          # w/o       num       Saturation Setzen                               
-          - 'saturation'                              # w/r       num       Saturation (Status und Setzen)
-          - 'set_colortemperature'                    # w/o       num       Farbtemperatur Setzen                           
-          - 'colortemperature'                        # w/r       num       Farbtemperatur (Status und Setzen)
-          - 'unmapped_hue'                            # w/r       num       Hue (Status und Setzen)
-          - 'unmapped_saturation'                     # w/r       num       Saturation (Status und Setzen)
-          - 'color_mode'                              # r/o       num       Aktueller Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)
-          - 'supported_color_mode'                    # r/o       num       Unterstützer Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)
-          - 'fullcolorsupport'                        # r/o       bool      Lampe unterstützt setunmappedcolor
-          - 'mapped'                                  # r/o       bool      von den Colordefaults abweichend zugeordneter HueSaturation-Wert gesetzt
-
-          - 'switch_state'                            # r/w       bool      Schaltzustand Steckdose (Status und Setzen)     
-          - 'switch_mode'                             # r/o       str       Zeitschaltung oder manuell schalten
-          - 'switch_toggle'                           # w/o       bool      Schaltzustand umschalten (toggle)               
-                                                      
-          - 'power'                                   # r/o       num       Leistung in W (Aktualisierung alle 2 min)       
-          - 'energy'                                  # r/o       num       absoluter Verbrauch seit Inbetriebnahme in Wh
-          - 'voltage'                                 # r/o       num       Spannung in V (Aktualisierung alle 2 min)       
-                                                      
-          - 'humidity'                                # r/o       num       Relative Luftfeuchtigkeit in % (FD440)
-
-          - 'alert_state'                             # r/o       bool      letzter übermittelter Alarmzustand
-
-          - 'blind_mode'                              # r/o       str       automatische Zeitschaltung oder manuell fahren
-          - 'endpositionsset'                         # r/o       bool      ist die Endlage für das Rollo konfiguriert
-
+        # NOTE: valid_list is automatically created by using item_attributes_master.py
+            # tr064 Attributes
+              # tr064-fritz_device Attributes
+            - uptime                                    # ro   num  
+            - serial_number                             # ro   str  
+            - software_version                          # ro   str  
+            - hardware_version                          # ro   str  
+            - manufacturer                              # ro   str  
+            - product_class                             # ro   str  
+            - manufacturer_oui                          # ro   str  
+            - model_name                                # ro   str  
+            - description                               # ro   str  
+            - device_log                                # ro   str  
+            - security_port                             # ro   str  
+            - reboot                                    # wo   bool 
+              # tr064-myfritz Attributes
+            - myfritz_status                            # ro   bool 
+              # tr064-call_monitor Attributes
+            - call_direction                            # ro   str  
+            - call_event                                # ro   str  
+            - monitor_trigger                           # ro   bool 
+            - is_call_incoming                          # ro   bool 
+            - last_caller_incoming                      # ro   str  
+            - last_call_date_incoming                   # ro   str  
+            - call_event_incoming                       # ro   str  
+            - last_number_incoming                      # ro   str  
+            - last_called_number_incoming               # ro   str  
+            - is_call_outgoing                          # ro   bool 
+            - last_caller_outgoing                      # ro   str  
+            - last_call_date_outgoing                   # ro   str  
+            - call_event_outgoing                       # ro   str  
+            - last_number_outgoing                      # ro   str  
+            - last_called_number_outgoing               # ro   str  
+            - call_duration_incoming                    # ro   num  
+            - call_duration_outgoing                    # ro   num  
+              # tr064-tam Attributes
+            - tam                                       # rw   bool 
+            - tam_name                                  # ro   str  
+            - tam_new_message_number                    # ro   num  
+            - tam_old_message_number                    # ro   num  
+            - tam_total_message_number                  # ro   num  
+              # tr064-wan Attributes
+            - wan_connection_status                     # ro   str  
+            - wan_connection_error                      # ro   str  
+            - wan_is_connected                          # ro   bool 
+            - wan_uptime                                # ro   str  
+            - wan_ip                                    # ro   str  
+            - wan_upstream                              # ro   num  
+            - wan_downstream                            # ro   num  
+            - wan_total_packets_sent                    # ro   num  
+            - wan_total_packets_received                # ro   num  
+            - wan_current_packets_sent                  # ro   num  
+            - wan_current_packets_received              # ro   num  
+            - wan_total_bytes_sent                      # ro   num  
+            - wan_total_bytes_received                  # ro   num  
+            - wan_current_bytes_sent                    # ro   num  
+            - wan_current_bytes_received                # ro   num  
+            - wan_link                                  # ro   bool 
+              # tr064-wlan_config Attributes
+            - wlanconfig                                # rw   bool 
+            - wlanconfig_ssid                           # ro   str  
+            - wlan_guest_time_remaining                 # ro   num  
+            - wlan_associates                           # ro   num  
+            - wps_active                                # rw   bool 
+            - wps_status                                # ro   str  
+            - wps_mode                                  # ro   str  
+              # tr064-wlan Attributes
+            - wlan_total_associates                     # ro   num  
+              # tr064-host Attributes
+            - hosts_count                               # ro   num  
+            - hosts_info                                # ro   dict 
+            - mesh_topology                             # ro   dict 
+            - number_of_hosts                           # ro   num  
+            - hosts_url                                 # ro   str  
+            - mesh_url                                  # ro   str  
+            - network_device                            # ro   bool 
+            - device_ip                                 # ro   str  
+            - device_connection_type                    # ro   str  
+            - device_hostname                           # ro   str  
+            - connection_status                         # ro   bool 
+            - is_host_active                            # ro   bool 
+            - host_info                                 # ro   str  
+              # tr064-deflection Attributes
+            - number_of_deflections                     # ro   num  
+            - deflections_details                       # ro   dict 
+            - deflection_details                        # ro   dict 
+            - deflection_enable                         # rw   bool 
+            - deflection_type                           # ro   str  
+            - deflection_number                         # ro   str  
+            - deflection_to_number                      # ro   str  
+            - deflection_mode                           # ro   str  
+            - deflection_outgoing                       # ro   str  
+            - deflection_phonebook_id                   # ro   str  
+              # tr064-homeauto Attributes
+            - aha_device                                # rw   bool 
+            - hkr_device                                # ro   str  
+            - set_temperature                           # ro   num  
+            - temperature                               # ro   num  
+            - set_temperature_reduced                   # ro   num  
+            - set_temperature_comfort                   # ro   num  
+            - firmware_version                          # ro   str  
+            # aha Attributes
+              # aha-device Attributes
+            - device_id                                 # ro   str  
+            - manufacturer                              # ro   str  
+            - product_name                              # ro   str  
+            - fw_version                                # ro   str  
+            - connected                                 # ro   bool 
+            - device_name                               # ro   str  
+            - tx_busy                                   # ro   bool 
+            - device_functions                          # ro   list 
+              # aha-hkr Attributes
+            - set_target_temperature                    # wo   num  
+            - target_temperature                        # rw   num  
+            - current_temperature                       # ro   num  
+            - temperature_reduced                       # ro   num  
+            - temperature_comfort                       # ro   num  
+            - temperature_offset                        # ro   num  
+            - set_window_open                           # wo   bool 
+            - window_open                               # rw   bool 
+            - windowopenactiveendtime                   # ro   num  
+            - set_hkr_boost                             # wo   bool 
+            - hkr_boost                                 # rw   bool 
+            - boost_active                              # ro   bool 
+            - boostactiveendtime                        # ro   num  
+            - summer_active                             # ro   bool 
+            - holiday_active                            # ro   bool 
+            - battery_low                               # ro   bool 
+            - battery_level                             # ro   num  
+            - lock                                      # ro   bool 
+            - device_lock                               # ro   bool 
+            - errorcode                                 # ro   num  
+              # aha-simpleonoff Attributes
+            - set_simpleonoff                           # wo   bool 
+            - simpleonoff                               # rw   bool 
+              # aha-level Attributes
+            - set_level                                 # wo   num  
+            - level                                     # rw   num  
+            - set_levelpercentage                       # wo   num  
+            - levelpercentage                           # rw   num  
+              # aha-color Attributes
+            - set_hue                                   # wo   num  
+            - hue                                       # rw   num  
+            - set_saturation                            # wo   num  
+            - saturation                                # rw   num  
+            - set_colortemperature                      # wo   num  
+            - colortemperature                          # rw   num  
+            - unmapped_hue                              # rw   num  
+            - unmapped_saturation                       # rw   num  
+            - color                                     # rw   list 
+            - hsv                                       # rw   list 
+            - color_mode                                # ro   num  
+            - supported_color_mode                      # ro   num  
+            - fullcolorsupport                          # ro   bool 
+            - mapped                                    # ro   bool 
+              # aha-switch Attributes
+            - switch_state                              # rw   bool 
+            - switch_mode                               # ro   str  
+            - switch_toggle                             # wo   bool 
+              # aha-powermeter Attributes
+            - power                                     # ro   num  
+            - energy                                    # ro   num  
+            - voltage                                   # ro   num  
+              # aha-humidity Attributes
+            - humidity                                  # ro   num  
+              # aha-alarm Attributes
+            - alert_state                               # ro   bool 
+              # aha-blind Attributes
+            - blind_mode                                # ro   str  
+            - endpositionsset                           # ro   bool 
+              # aha-device Attributes
+            - statistics_temp                           # ro   list 
+            - statistics_hum                            # ro   list 
+            - statistics_voltage                        # ro   list 
+            - statistics_power                          # ro   list 
+            - statistics_energy                         # ro   list 
+        valid_list_description:
+        # NOTE: valid_list_description is automatically created by using item_attributes_master.py
+            # tr064 Attributes
+              # tr064-fritz_device Attributes
+            - Laufzeit des Fritzdevice in Sekunden
+            - Serialnummer des Fritzdevice
+            - Software Version
+            - Hardware Version
+            - Hersteller
+            - Produktklasse
+            - Hersteller OUI
+            - Modellname
+            - Modellbeschreibung
+            - Geräte Log
+            - Security Port
+            - Startet das Gerät neu
+              # tr064-myfritz Attributes
+            - MyFritz Status (an/aus)
+              # tr064-call_monitor Attributes
+            - Richtung des letzten Anrufes
+            - Status des letzten Anrufes
+            - Monitortrigger
+            - Eingehender Anruf erkannt
+            - Letzter Anrufer
+            - Zeitpunkt des letzten eingehenden Anrufs
+            - Status des letzten eingehenden Anrufs
+            - Nummer des letzten eingehenden Anrufes
+            - Angerufene Nummer des letzten eingehenden Anrufs
+            - Ausgehender Anruf erkannt
+            - Letzter angerufener Kontakt
+            - Zeitpunkt des letzten ausgehenden Anrufs
+            - Status des letzten ausgehenden Anrufs
+            - Nummer des letzten ausgehenden Anrufes
+            - Letzte verwendete Telefonnummer für ausgehenden Anruf
+            - Dauer des eingehenden Anrufs
+            - Dauer des ausgehenden Anrufs
+              # tr064-tam Attributes
+            - TAM an/aus
+            - Name des TAM
+            - Anzahl der alten Nachrichten
+            - Anzahl der neuen Nachrichten
+            - Gesamtanzahl der Nachrichten
+              # tr064-wan Attributes
+            - WAN Verbindungsstatus
+            - WAN Verbindungsfehler
+            - WAN Verbindung aktiv
+            - WAN Verbindungszeit
+            - WAN IP Adresse
+            - WAN Upstream Datenmenge
+            - WAN Downstream Datenmenge
+            - WAN Verbindung-Anzahl insgesamt versendeter Pakete
+            - WAN Verbindung-Anzahl insgesamt empfangener Pakete
+            - WAN Verbindung-Anzahl aktuell versendeter Pakete
+            - WAN Verbindung-Anzahl aktuell empfangener Pakete
+            - WAN Verbindung-Anzahl insgesamt versendeter Bytes
+            - WAN Verbindung-Anzahl insgesamt empfangener Bytes
+            - WAN Verbindung-Anzahl aktuelle Bitrate Senden
+            - WAN Verbindung-Anzahl aktuelle Bitrate Empfangen
+            - WAN Link
+              # tr064-wlan_config Attributes
+            - WLAN An/Aus
+            - WLAN SSID
+            - Verbleibende Zeit, bis zum automatischen Abschalten des Gäste-WLAN
+            - Anzahl der verbundenen Geräte im jeweiligen WLAN
+            - Schaltet WPS für das entsprechende WlAN an / aus
+            - WPS Status des entsprechenden WlAN
+            - WPS Modus des entsprechenden WlAN
+              # tr064-wlan Attributes
+            - Anzahl der verbundenen Geräte im WLAN
+              # tr064-host Attributes
+            - Anzahl der Hosts
+            - Informationen über die Hosts
+            - Topologie des Mesh
+            - Anzahl der verbundenen Hosts (Muss Child von "network_device" sein)
+            - URL zu Hosts (Muss Child von "network_device" sein)
+            - URL zum Mesh (Muss Child von "network_device" sein)
+            - Verbindungsstatus des Gerätes // Defines Network device via MAC-Adresse
+            - Geräte-IP (Muss Child von "network_device" sein)
+            - Verbindungstyp (Muss Child von "network_device" sein)
+            - Gerätename (Muss Child von "network_device" sein
+            - Verbindungsstatus (Muss Child von "network_device" sein)
+            - Host aktiv? (Muss Child von "network_device" sein)
+            - Informationen zum Host (Muss Child von "network_device" sein)
+              # tr064-deflection Attributes
+            - Anzahl der eingestellten Rufumleitungen
+            - Details zu allen Rufumleitung (als dict)
+            - Details zur Rufumleitung (als dict); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item
+            - Rufumleitung Status an/aus; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+            - Type der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+            - Telefonnummer, die umgeleitet wird; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+            - Zielrufnummer der Umleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+            - Modus der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+            - Outgoing der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+            - Phonebook_ID der Zielrufnummer (Only valid if Type==fromPB); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+              # tr064-homeauto Attributes
+            - Steckdose schalten; siehe "switch_state"
+            - Status des HKR (OPEN; CLOSED; TEMP)
+            - siehe "target_temperature"
+            - siehe "current_temperature"
+            - siehe "temperature_reduced"
+            - siehe "temperature_comfort"
+            - siehe "fw_version"
+            # aha Attributes
+              # aha-device Attributes
+            - Geräte -ID
+            - Hersteller
+            - Produktname
+            - Firmware Version
+            - Verbindungsstatus
+            - Gerätename
+            - Verbindung aktiv
+            - Im Gerät vorhandene Funktionen
+              # aha-hkr Attributes
+            - Soll-Temperatur Setzen
+            - Soll-Temperatur (Status und Setzen)
+            - Ist-Temperatur
+            - Eingestellte reduzierte Temperatur
+            - Eingestellte Komfort-Temperatur
+            - Eingestellter Temperatur-Offset
+            - Window-Open-Funktion (Setzen)
+            - Window-Open-Funktion (Status und Setzen)
+            - Zeitliches Ende der "Window Open" Funktion
+            - Boost-Funktion (Setzen)
+            - Boost-Funktion (Status und Setzen)
+            - Status der "Boost" Funktion
+            - Zeitliches Ende der Boost Funktion
+            - Status der "Sommer" Funktion
+            - Status der "Holiday" Funktion
+            - Battery-low Status
+            - Batterie-Status in %
+            - Tastensperre über UI/API aktiv
+            - Tastensperre direkt am Gerät ein
+            - Fehlercodes die der HKR liefert
+              # aha-simpleonoff Attributes
+            - Gerät/Aktor/Lampe an-/ausschalten
+            - Gerät/Aktor/Lampe (Status und Setzen)
+              # aha-level Attributes
+            - Level/Niveau von 0 bis 255 (Setzen)
+            - Level/Niveau von 0 bis 255 (Setzen & Status)
+            - Level/Niveau in Prozent von 0% bis 100% (Setzen)
+            - Level/Niveau in Prozent von 0% bis 100% (Setzen & Status)
+              # aha-color Attributes
+            - Hue mit Wertebereich von 0° bis 359° (Setzen)
+            - Hue mit Wertebereich von 0° bis 359° (Status und Setzen)
+            - Saturation mit Wertebereich von 0 bis 255 (Setzen)
+            - Saturation mit Wertebereich von 0 bis 255 (Status und Setzen)
+            - Farbtemperatur mit Wertebereich von 2700K bis 6500K (Setzen)
+            - Farbtemperatur mit Wertebereich von 2700K bis 6500K (Status und Setzen)
+            - Hue mit Wertebereich von 0° bis 359° (Status und Setzen)
+            - Saturation mit Wertebereich von 0 bis 255 (Status und Setzen)
+            - Farbwerte als Liste [Hue, Saturation] (Status und Setzen)
+            - Farbwerte und Helligkeit als Liste [Hue (0-359), Saturation (0-255), Level (0-255)] (Status und Setzen)
+            - Aktueller Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)
+            - Unterstützer Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)
+            - Lampe unterstützt setunmappedcolor
+            - von den Colordefaults abweichend zugeordneter HueSaturation-Wert gesetzt
+              # aha-switch Attributes
+            - Schaltzustand Steckdose (Status und Setzen)
+            - Zeitschaltung oder manuell schalten
+            - Schaltzustand umschalten (toggle)
+              # aha-powermeter Attributes
+            - Leistung in W (Aktualisierung alle 2 min)
+            - absoluter Verbrauch seit Inbetriebnahme in Wh
+            - Spannung in V (Aktualisierung alle 2 min)
+              # aha-humidity Attributes
+            - Relative Luftfeuchtigkeit in % (FD440)
+              # aha-alarm Attributes
+            - letzter übermittelter Alarmzustand
+              # aha-blind Attributes
+            - automatische Zeitschaltung oder manuell fahren
+            - ist die Endlage für das Rollo konfiguriert
+              # aha-device Attributes
+            - Wertestatistik für Temperatur
+            - Wertestatistik für Feuchtigkeit
+            - Wertestatistik für Spannung
+            - Wertestatistik für Leistung
+            - Wertestatistik für Energie
     avm_incoming_allowed:
         type: str
-        mandatory: False
+        mandatory: false
         description:
-            de: '(optional) Definition der erlaubten eingehenden Rufnummer in Items vom avm_data_type `monitor_trigger`.'
-            en: '(optional) Definition of the allowed incoming number. Only in items of avm_data_type `monitor_trigger`.'
+            de: (optional) Definition der erlaubten eingehenden Rufnummer in Items vom avm_data_type `monitor_trigger`.
+            en: (optional) Definition of the allowed incoming number. Only in items of avm_data_type `monitor_trigger`.
 
     avm_target_number:
         type: str
-        mandatory: False
+        mandatory: false
         description:
-            de: '(optional) Definition der erlaubten angerufenen Rufnummer in Items vom avm_data_type `monitor_trigger`.'
-            en: '(optional) Definition of the allowed called number. Only in items of avm_data_type `monitor_trigger`.'
+            de: (optional) Definition der erlaubten angerufenen Rufnummer in Items vom avm_data_type `monitor_trigger`.
+            en: (optional) Definition of the allowed called number. Only in items of avm_data_type `monitor_trigger`.
 
     avm_wlan_index:
         type: int
         description:
-            de: '(optional) Definition des Wlans ueber index: (1: 2.4Ghz, 2: 5Ghz, 3: Gaeste).'
-            en: '(optional) Definition of WiFi via index: (1: 2.4GHz, 2: 5GHz, 3: Guest)'
+            de: '(optional) Definition des Wlans über index (1: 2.4Ghz, 2: 5Ghz, 3: Gäste)'
+            en: '(optional) Definition of WiFi via index (1: 2.4GHz, 2: 5GHz, 3: Guest)'
         valid_min: 1
         valid_max: 3
 
     avm_mac:
         type: mac
-        mandatory: False
+        mandatory: false
         description:
-            de: '(optional) Definition der MAC Adresse für Items vom avm_data_type `network_device`. Nur für diese Items mandatory!'
-            en: '(optional) Definition of the MAC address for items of avm_data_type `network_device`. Only mandatory for these items!'
+            de: (optional) Definition der MAC Adresse für Items vom avm_data_type `network_device`. Nur für diese Items mandatory!
+            en: (optional) Definition of the MAC address for items of avm_data_type `network_device`. Only mandatory for these items!
 
     avm_ain:
         type: str
-        mandatory: False
+        mandatory: false
         description:
-            de: "(optional) Definition der AktorIdentifikationsNummer (AIN) Items vom avm_data_types für `AHA-Interface`. Nur für diese Items mandatory!"
-            en: "(optional) Definition of the ActorIdentificationNumber (AIN) for items of avm_data_types `AHA-Interface`. Only mandatory for these items!"
+            de: (optional) Definition der AktorIdentifikationsNummer (AIN) Items vom avm_data_types für `AHA-Interface`. Nur für diese Items mandatory!
+            en: (optional) Definition of the ActorIdentificationNumber (AIN) for items of avm_data_types `AHA-Interface`. Only mandatory for these items!
 
     avm_tam_index:
         type: int
-        mandatory: False
+        mandatory: false
         description:
-            de: '(optional) Index für den Anrufbeantworter, normalerweise für den ersten eine "1". Es werden bis zu 5 Anrufbeantworter vom Gerät unterstützt.'
-            en: '(optional) Index für the answering machine, normally a "1" for the first one. Supported are up to 5 answering machines.'
+            de: (optional) Index für den Anrufbeantworter, normalerweise für den ersten eine "1". Es werden bis zu 5 Anrufbeantworter vom GerÃ¤t unterstützt.
+            en: (optional) Index for the answering machine, normally a "1" for the first one. Supported are up to 5 answering machines.
         valid_min: 1
         valid_max: 5
 
     avm_deflection_index:
         type: int
-        mandatory: False
+        mandatory: false
         description:
-            de: '(optional) Index für die Rufumleitung, normalerweise für die erste eine "1".'
-            en: '(optional) Index deflection, normally a "1" for the first one.'
+            de: (optional) Index für die Rufumleitung, normalerweise für die erste eine "1".
+            en: (optional) Index deflection, normally a "1" for the first one.
         valid_min: 1
         valid_max: 32
 
     avm_read_after_write:
         type: int
         description:
-            de: '(optional) Konfiguriert eine Verzögerung in Sekunden nachdem ein Lesekommando nach einem Schreibkommando gesendet wird.'
-            en: '(optional) Configures delay in seconds to issue a read command after write command'
+            de: (optional) Konfiguriert eine Verzögerung in Sekunden nachdem ein Lesekommando nach einem Schreibkommando gesendet wird.
+            en: (optional) Configures delay in seconds to issue a read command after write command
 
     avm_data_cycle:
         type: int
-        mandatory: False
+        mandatory: false
         description:
-            de: 'Poll-Zyklus des AVM Datentypes des jeweiligen Items. 0-Nur beim Initialisieren Lesen; 10+ - Zyklisch Lesen'
-            en: 'Poll cycle of AVM Data Type of the respective item. 0-Just read at init; 10+ - cyclic reading'
+            de: Poll-Zyklus des AVM Datentyps des jeweiligen Items. 0-Nur beim Initialisieren Lesen; 10+ - Zyklisch Lesen
+            en: Poll cycle of AVM Data Type of the respective item. 0-Just read at init; 10+ - cyclic reading
 
 item_structs:
     info:
@@ -512,13 +715,13 @@ item_structs:
             visu_acl: ro
             avm_data_type@instance: wan_total_bytes_received
         current_bytes_sent:
-          type: num
-          visu_acl: ro
-          avm_data_type@instance: wan_current_bytes_sent
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: wan_current_bytes_sent
         current_bytes_receive:
-          type: num
-          visu_acl: ro
-          avm_data_type@instance: wan_current_bytes_received
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: wan_current_bytes_received
         link:
             type: bool
             visu_acl: ro
@@ -541,10 +744,10 @@ item_structs:
             avm_data_type@instance: wlanconfig_ssid
             avm_wlan_index@instance: 1
         wlan_1_associates:
-          type: num
-          visu_acl: ro
-          avm_data_type@instance: wlan_associates
-          avm_wlan_index@instance: 1
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: wlan_associates
+            avm_wlan_index@instance: 1
         wlan_2:
             type: bool
             visu_acl: rw
@@ -557,10 +760,10 @@ item_structs:
             avm_data_type@instance: wlanconfig_ssid
             avm_wlan_index@instance: 2
         wlan_2_associates:
-          type: num
-          visu_acl: ro
-          avm_data_type@instance: wlan_associates
-          avm_wlan_index@instance: 2
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: wlan_associates
+            avm_wlan_index@instance: 2
         wlan_gast:
             type: bool
             visu_acl: rw
@@ -573,10 +776,10 @@ item_structs:
             avm_data_type@instance: wlanconfig_ssid
             avm_wlan_index@instance: 3
         wlan_gast_associates:
-          type: num
-          visu_acl: ro
-          avm_data_type@instance: wlan_associates
-          avm_wlan_index@instance: 3
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: wlan_associates
+            avm_wlan_index@instance: 3
         wlan_gast_tr:
             type: num
             visu_acl: rw
@@ -684,9 +887,9 @@ item_structs:
             type: num
 
     aha_humidity_sensor:
-      humidity:
-        avm_data_type@instance: humidity
-        type: num
+        humidity:
+            avm_data_type@instance: humidity
+            type: num
 
     aha_alert:
         state:
@@ -698,8 +901,8 @@ item_structs:
             avm_data_type@instance: switch_state
             type: bool
         switch_mode:
-          avm_data_type@instance: switch_mode
-          type: str
+            avm_data_type@instance: switch_mode
+            type: str
         switch_toggle:
             avm_data_type@instance: switch_toggle
             type: bool
@@ -725,12 +928,12 @@ item_structs:
             type: num
 
     aha_blind:
-      blind_mode:
-        avm_data_type@instance: blind_mode
-        type: str
-      endpositionsset:
-        avm_data_type@instance: endpositionsset
-        type: bool
+        blind_mode:
+            avm_data_type@instance: blind_mode
+            type: str
+        endpositionsset:
+            avm_data_type@instance: endpositionsset
+            type: bool
 
     aha_on_off:
         on_off:
@@ -746,33 +949,33 @@ item_structs:
             type: num
 
     aha_color:
-      color_mode:
-        avm_data_type@instance: color_mode
-        type: num
-      supported_color_mode:
-        avm_data_type@instance: supported_color_mode
-        type: num
-      fullcolorsupport:
-        avm_data_type@instance: fullcolorsupport
-        type: bool
-      mapped:
-        avm_data_type@instance: mapped
-        type: bool
-      hue:
-        avm_data_type@instance: hue
-        type: num
-      saturation:
-        avm_data_type@instance: saturation
-        type: num
-      unmapped_hue:
-        avm_data_type@instance: unmapped_hue
-        type: bool
-      unmapped_saturation:
-        avm_data_type@instance: unmapped_saturation
-        type: bool
-      colortemperature:
-        avm_data_type@instance: colortemperature
-        type: num
+        color_mode:
+            avm_data_type@instance: color_mode
+            type: num
+        supported_color_mode:
+            avm_data_type@instance: supported_color_mode
+            type: num
+        fullcolorsupport:
+            avm_data_type@instance: fullcolorsupport
+            type: bool
+        mapped:
+            avm_data_type@instance: mapped
+            type: bool
+        hue:
+            avm_data_type@instance: hue
+            type: num
+        saturation:
+            avm_data_type@instance: saturation
+            type: num
+        unmapped_hue:
+            avm_data_type@instance: unmapped_hue
+            type: bool
+        unmapped_saturation:
+            avm_data_type@instance: unmapped_saturation
+            type: bool
+        colortemperature:
+            avm_data_type@instance: colortemperature
+            type: num
 
 #item_attribute_prefixes:
     # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
@@ -783,246 +986,268 @@ plugin_functions:
     cancel_call:
         type: void
         description:
-            de: "Beendet einen aktiven Anruf."
-            en: "Cancels an active call."
+            de: Beendet einen aktiven Anruf.
+            en: Cancels an active call.
         parameters:
         # This function has no parameters
 
     get_call_origin:
         type: str
         description:
-            de: "Gib den Namen des Telefons zurück, das aktuell als 'call origin' gesetzt ist."
-            en: "Gets the phone name, currently set as 'call origin'."
+            de: Gib den Namen des Telefons zurück, das aktuell als 'call origin' gesetzt ist.
+            en: Gets the phone name, currently set as 'call origin'.
         parameters:
         # This function has no parameters
 
     get_calllist:
         type: list(dict(str))
         description:
-            de: "Ermittelt ein Array mit dicts aller Einträge der Anrufliste (Attribute 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date',' Duration' (einige optional))."
-            en: "Returns an array of dicts with all calllist entries (attributes 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date', 'Duration' (some optional))."
+            de: Ermittelt ein Array mit dicts aller Einträge der Anrufliste (Attribute 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date',' Duration' (einige
+                optional)).
+            en: Returns an array of dicts with all calllist entries (attributes 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date', 'Duration' (some optional)).
         parameters:
             filter_incoming:
                 type: str
                 default: ''
                 description:
-                    de: "Filter, um nur die Anrufe zu erhalten, die zu einer bestimmten angerufenen Nummer gehören."
-                    en: "Filter to filter calls to a specific destination phone number."
+                    de: Filter, um nur die Anrufe zu erhalten, die zu einer bestimmten angerufenen Nummer gehÃƒÂ¶ren.
+                    en: Filter to filter calls to a specific destination phone number.
             phonebook_id:
                 type: int
                 default: 0
                 description:
-                    de: "ID des Telefonbuchs, in dem nachgeschlagen werden soll."
-                    en: "ID of the phone book, in which numbers should be looked up."
+                    de: ID des Telefonbuchs, in dem nachgeschlagen werden soll.
+                    en: ID of the phone book, in which numbers should be looked up.
 
     get_contact_name_by_phone_number:
         type: str
         description:
-            de: "Durchsucht das Telefonbuch mit einer (vollständigen) Telefonnummer nach Kontakten. Falls kein Name gefunden wird, wird die Telefonnummer zurückgeliefert."
-            en: "Searches the phonebook for a contact by a given (complete) phone number. In case no name is found, the phone number is returned."
+            de: Durchsucht das Telefonbuch mit einer (vollständigen) Telefonnummer nach Kontakten. Falls kein Name gefunden wird, wird die Telefonnummer zurückgeliefert.
+            en: Searches the phonebook for a contact by a given (complete) phone number. In case no name is found, the phone number is returned.
         parameters:
             phone_number:
                 type: str
                 description:
-                    de: "Vollständige Telefonnummer"
-                    en: "Complete phone number"
+                    de: Vollständige Telefonnummer
+                    en: Complete phone number
             phonebook_id:
                 type: int
                 default: 0
                 description:
-                    de: "ID des Telefonbuchs, in dem nachgeschlagen werden soll."
-                    en: "ID of the phone book, in which numbers should be looked up."
+                    de: ID des Telefonbuchs, in dem nachgeschlagen werden soll.
+                    en: ID of the phone book, in which numbers should be looked up.
 
     get_device_log_from_lua:
         type: list(list(str))
         description:
-            de: "Ermittelt die Logeinträge auf dem Gerät über die LUA Schnittstelle /query.lua?mq_log=logger:status/log."
-            en: "Gets the log entries on the device via the LUA interface /query.lua?mq_log=logger:status/log."
+            de: Ermittelt die Logeinträge auf dem Gerät über die LUA Schnittstelle /query.lua?mq_log=logger:status/log.
+            en: Gets the log entries on the device via the LUA interface /query.lua?mq_log=logger:status/log.
         parameters:
         # This function has no parameters
 
     get_device_log_from_tr064:
         type: list(str)
         description:
-            de: "Ermittelt die Logeinträge auf dem Gerät über die TR-064 Schnittstelle."
-            en: "Gets the log entries on the device via the TR-064 interface."
+            de: Ermittelt die Logeinträge auf dem Gerät über die TR-064 Schnittstelle.
+            en: Gets the log entries on the device via the TR-064 interface.
         parameters:
         # This function has no parameters
 
     get_host_details:
         type: dict(str)
         description:
-            de: "Ermittelt die Informationen zu einem Host an einem angegebenen Index."
-            en: "Gets the information of a hosts at a specific index."
+            de: Ermittelt die Informationen zu einem Host an einem angegebenen Index.
+            en: Gets the information of a hosts at a specific index.
         parameters:
             index:
                 type: int
                 description:
-                    de: "Index"
-                    en: "Index"
+                    de: Index
+                    en: Index
 
     get_hosts:
         type: list(dict(str))
         description:
-            de: "Ermittelt ein Array mit den Namen aller verbundener Hosts."
-            en: "Gets the name of all connected hosts as an array."
+            de: Ermittelt ein Array mit den Namen aller verbundener Hosts.
+            en: Gets the name of all connected hosts as an array.
         parameters:
             only_active:
                 type: bool
                 description:
-                    de: "True, wenn nur aktuell aktive Hosts zurückgegeben werden sollen."
-                    en: "True, if only active hosts shall be returned."
+                    de: True, wenn nur aktuell aktive Hosts zurückgegeben werden sollen.
+                    en: True, if only active hosts shall be returned.
 
     get_phone_name:
         type: str
         description:
-            de: "Gibt den Namen eines Telefons an einem Index zurück. Der zurückgegebene Wert kann in 'set_call_origin' verwendet werden."
-            en: "Get the phone name at a specific index. The returend value can be used as phone_name for set_call_origin."
+            de: Gibt den Namen eines Telefons an einem Index zurück. Der zurückgegebene Wert kann in 'set_call_origin' verwendet werden.
+            en: Get the phone name at a specific index. The returned value can be used as phone_name for set_call_origin.
         parameters:
             index:
                 type: int
                 description:
-                    de: "Index"
-                    en: "Index"
+                    de: Index
+                    en: Index
 
     get_phone_numbers_by_name:
         type: dict(dict(str))
         description:
-            de: "Durchsucht das Telefonbuch mit einem Namen nach nach Kontakten und liefert die zugehörigen Telefonnummern."
-            en: "Searches the phonebook for a contact by a given name and returns the corresponding phone numbers."
+            de: Durchsucht das Telefonbuch mit einem Namen nach nach Kontakten und liefert die zugehörigen Telefonnummern.
+            en: Searches the phonebook for a contact by a given name and returns the corresponding phone numbers.
         parameters:
             name:
                 type: str
                 description:
-                    de: "Anteiliger oder vollständiger Name des Kontakts."
-                    en: "Partial or full name of the contact."
+                    de: Anteiliger oder vollständiger Name des Kontakts.
+                    en: Partial or full name of the contact.
             phonebook_id:
                 type: int
                 default: 0
                 description:
-                    de: "ID des Telefonbuchs, in dem nachgeschlagen werden soll."
-                    en: "ID of the phone book, in which numbers should be looked up."
+                    de: ID des Telefonbuchs, in dem nachgeschlagen werden soll.
+                    en: ID of the phone book, in which numbers should be looked up.
 
     is_host_active:
         type: bool
         description:
-            de: "Prüft, ob eine MAC Adresse auf dem Gerät aktiv ist. Das kann bspw. für die Umsetzung einer Präsenzerkennung genutzt werden."
-            en: "Checks if a MAC address is active on the FritzDevice, e.g. the status can be used for simple presence detection."
+            de: Prüft, ob eine MAC Adresse auf dem Gerät aktiv ist. Das kann bspw. für die Umsetzung einer Präsenzerkennung genutzt werden.
+            en: Checks if a MAC address is active on the FritzDevice, e.g. the status can be used for simple presence detection.
         parameters:
             mac_address:
                 type: mac
                 description:
-                    de: "MAC Adresse"
-                    en: "MAC address"
+                    de: MAC Adresse
+                    en: MAC address
 
     reboot:
         type: void
         description:
-            de: "Startet das Gerät neu."
-            en: "Reboots the device."
+            de: Startet das Gerät neu.
+            en: Reboots the device.
 
     reconnect:
         type: void
         description:
-            de: "Verbindet das Gerät neu mit dem WAN (Wide Area Network)."
-            en: "Reconnects the device to the WAN (Wide Area Network)."
+            de: Verbindet das Gerät neu mit dem WAN (Wide Area Network).
+            en: Reconnects the device to the WAN (Wide Area Network).
 
     set_call_origin:
         type: void
         description:
-            de: "Setzt den 'call origin', bspw. vor dem Aufruf von 'start_call'."
-            en: "Sets the 'call origin', e.g. before running 'start_call'."
+            de: Setzt den 'call origin', bspw. vor dem Aufruf von 'start_call'.
+            en: Sets the 'call origin', e.g. before running 'start_call'.
         parameters:
             phone_name:
                 type: mac
                 description:
-                    de: "Identifikator des Telefons, dass als 'call origin' gesetzt werden soll. bspw. zwei Sterne gefolgt von '610' für ein internes Gerät."
-                    en: "Full phone identifier, could be e.g. two asterisk followed by '610' for an internal device."
+                    de: Identifikator des Telefons, dass als 'call origin' gesetzt werden soll. bspw. zwei Sterne gefolgt von '610' für ein internes Gerät.
+                    en: Full phone identifier, could be e.g. two asterisk followed by '610' for an internal device.
 
     start_call:
         type: void
         description:
-            de: "Startet einen Anruf an eine übergebene Telefonnummer (intern oder extern)."
-            en: "Starts a call for a given phone number (internal or external)."
+            de: Startet einen Anruf an eine übergebene Telefonnummer (intern oder extern).
+            en: Starts a call for a given phone number (internal or external).
         parameters:
             phone_number:
                 type: str
                 description:
-                    de: "Vollständige Telefonnummer, die angerufen werden soll."
-                    en: "Full phone number to call"
+                    de: Vollständige Telefonnummer, die angerufen werden soll.
+                    en: Full phone number to call
 
     wol:
         type: void
         description:
-            de: "Sendet einen WOL (WakeOnLAN) Befehl an eine MAC Adresse."
-            en: "Sends a WOL (WakeOnLAN) command to a MAC address."
+            de: Sendet einen WOL (WakeOnLAN) Befehl an eine MAC Adresse.
+            en: Sends a WOL (WakeOnLAN) command to a MAC address.
         parameters:
             mac_address:
                 type: mac
                 description:
-                    de: "MAC Adresse"
-                    en: "MAC address"
+                    de: MAC Adresse
+                    en: MAC address
 
     get_number_of_deflections:
         type: bool
         description:
-            de: "Liefert die Anzahl der Rufumleitungen zurück."
-            en: "Returns Number of set deflections."
+            de: Liefert die Anzahl der Rufumleitungen zurück.
+            en: Returns Number of set deflections.
         parameters:
         # This function has no parameters
 
     get_deflection:
         type: bool
         description:
-            de: "Liefert die Details der Rufumleitung der angegebenen ID zurück (Default-ID = 0)"
-            en: "Returns details of deflection with given deflection_id (default id = 0)"
+            de: Liefert die Details der Rufumleitung der angegebenen ID zurück (Default-ID = 0)
+            en: Returns details of deflection with given deflection_id (default id = 0)
         parameters:
             deflection_id:
                 type: int
                 description:
-                    de: "Identifikator der abzufragenden Rufumleitung."
-                    en: "Identifier of deflection."
+                    de: Identifikator der abzufragenden Rufumleitung.
+                    en: Identifier of deflection.
 
     get_deflections:
         type: bool
         description:
-            de: "Liefert die Details aller Rufumleitungen zurück."
-            en: "Returns details of all deflections."
+            de: Liefert die Details aller Rufumleitungen zurück.
+            en: Returns details of all deflections.
         parameters:
         # This function has no parameters
 
     set_deflection_enable:
         type: bool
         description:
-            de: "Schaltet die Rufumleitung mit angegebener ID an oder aus."
-            en: "Enables or disables deflection with given ID."
+            de: Schaltet die Rufumleitung mit angegebener ID an oder aus.
+            en: Enables or disables deflection with given ID.
         parameters:
             deflection_id:
                 type: int
                 description:
-                    de: "Identifikator der abzufragenden Rufumleitung."
-                    en: "identifier of deflection."
+                    de: Identifikator der abzufragenden Rufumleitung.
+                    en: identifier of deflection.
             enable:
                 type: bool
                 description:
-                    de: "An / Aus"
-                    en: "Enable / Disable"
+                    de: An / Aus
+                    en: Enable / Disable
 
     get_mesh_topology:
-      type: dict
-      description:
-        de: "Liefert die Mesh-Topologie als Dictionary"
-        en: "Lists mesh topology as dict"
-      parameters:
+        type: dict
+        description:
+            de: Liefert die Mesh-Topologie als Dictionary
+            en: Lists mesh topology as dict
+        parameters:
       # This function has no parameters
 
     get_hosts_dict:
-      type: dict
-      description:
-        de: "Liefert Informationen aller Hosts als Dictionary"
-        en: "Lists information of all hosts as dict"
-      parameters:
-      # This function has no parameters
+        type: dict
+        description:
+            de: Liefert Informationen aller Hosts als Dictionary
+            en: Lists information of all hosts as dict
+        parameters:
+            only_active:
+                type: bool
+                description:
+                    de: True, wenn nur aktuell aktive Hosts zurückgegeben werden sollen.
+                    en: True, if only active hosts shall be returned.
+
+    get_hosts_list:
+        type: list(dict)
+        description:
+            de: Liefert Informationen gefilterte Information zu den verbundenen Hosts als Array
+            en: Lists information of filtered hosts as array
+        parameters:
+            identifier_list:
+                type: list
+                description:
+                    de: "Liste von Identifiers des Hosts, die zurückgegeben werden sollen; (möglich: 'Index', 'IPAddress', 'MACAddress', 'HostName', 'FriendyName')"
+                    en: "list of identifiers of host, which will be returned; (valid: 'Index', 'IPAddress', 'MACAddress', 'HostName', 'FriendyName')"
+            filter_dict:
+                type: dict
+                description:
+                    de: "Dict von Filtern, für welche die Host-Identifier zurückgegeben werden sollen (bspw: filter={'Active': False} gibt alle nicht-aktiven Host zurück)"
+                    en: "dict of filters, for which hosts (identifiers) will be returned (e.g. filter={'Active': False} will return all non-active hosts)"
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)

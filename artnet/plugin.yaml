@@ -11,7 +11,7 @@ plugin:
     keywords: dmx
 #   documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 
-    version: 1.6.0                 # Plugin version
+    version: 1.6.1                 # Plugin version
     sh_minversion: 1.5.1           # minimum shNG version to use this plugin
 #   sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
@@ -54,7 +54,7 @@ parameters:
             de: 'Gibt das Art-Net Sub-Net an'
             en: 'Specifies the Art-Net Sub-Net to use'
         valid_min: 0
-        valid_max: 15 
+        valid_max: 15
     artnet_universe:
         type: int
         default: 0
@@ -85,7 +85,7 @@ item_attributes:
 
 logic_parameters: NONE
 
-plugin_functions: 
+plugin_functions:
     send_single_value:
         type: void
         description:

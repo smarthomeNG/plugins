@@ -5,19 +5,19 @@ plugin:
     description:
         de: 'Plugin zur Steuerung von Geräten, die mit einem Zigbee Gateway mit der Zigbee2MQTT Firmware versehen sind. Die Kommunikation erfolgt über das MQTT Module von SmartHomeNG.'
         en: 'Plugin to control devices which are linked to Zigbee Gateway equipped with Zigbee2MQTT firmware. Communication is handled through the MQTT module of SmartHomeNG.'
-    maintainer: Michael Wenzel
-    tester: Michael Wenzel         # Who tests this plugin?
+    maintainer: Sebastian Helms
+    tester: Sebastian Helms        # Who tests this plugin?
     state: develop                 # change to ready when done with development
     keywords: iot
     documentation: ''
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1856775-support-thread-f%C3%BCr-das-zigbee2mqtt-plugin
 
-    version: 1.1.2                 # Plugin version
-    sh_minversion: 1.8.2           # minimum shNG version to use this plugin
+    version: 2.0.0                 # Plugin version
+    sh_minversion: 1.9.5.6         # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.8             # minimum Python version to use for this plugin
     multi_instance: True           # plugin supports multi instance
-    restartable: unknown
+    restartable: True
     classname: Zigbee2Mqtt         # class containing the plugin
 
 parameters:
@@ -26,17 +26,17 @@ parameters:
         type: str
         default: 'zigbee2mqtt'
         description:
-            de: TopicLevel_1 um mit dem ZigBee2MQTT Gateway zu kommunizieren (%topic%)
-            en: TopicLevel_1 to be used to communicate with the ZigBee2MQTT Gateway (%topic%)
+            de: Topic, um mit dem ZigBee2MQTT-Gateway zu kommunizieren (%topic%)
+            en: Base topic for communicating with the ZigBee2MQTT gateway (%topic%)
 
     poll_period:
         type: int
-        default: 300
+        default: 900
         valid_min: 10
         valid_max: 3600
         description:
-            de: Zeitabstand in Sekunden in dem das Gateway Infos liefer soll
-            en: Timeperiod in seconds in which the Gateway shall send information
+            de: Zeitabstand in Sekunden, in dem der Status des Gateway abgefragt wird
+            en: Interval in seconds to poll the gateway status
 
     read_at_init:
         type: bool
@@ -45,74 +45,330 @@ parameters:
             de: Einlesen aller Werte beim Start
             en: Read all values at init
 
+    suspend_item:
+        type: str
+        default: ''
+        description:
+            de: Pfad zum Suspend-Item
+            en: Path to suspend item
+
+    z2m_gui:
+        type: str
+        default: 'localhost:8080'
+        description:
+            de: Web-Adresse des zigbee2mqtt-Web-GUI (Standard localhost:8080)
+            en: Web address of the zigbee2mqtt-web-GUI (default localhost:8080)
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
-    zigbee2mqtt_topic:
+    z2m_topic:
         type: str
-        mandatory: true
         description:
-            de: TopicLevel_2 um mit dem ZigBee2MQTT Gateway zu kommunizieren; entspricht dem Friendly_Name oder Short_Name des Zigbee-Gerätes
-            en: TopicLevel_2 to be used to communicate with the ZigBee2MQTT Gateway
+            de: Name des anzusprechenden Gerätes, entweder die Seriennummer ('0xdeadbeef') oder der friendly_name
+            en: Name of the device to be addressed, either the serial number ('0xdeadbeef') or the friendly_name
 
-    zigbee2mqtt_attr:
+    z2m_attr:
         type: str
-        mandatory: true
         description:
-            de: "Zu lesendes/schreibendes Attribut des ZigBee2MQTT Devices. Achtung: Nicht jedes Attribut ist auf allen Device-Typen vorhanden."
-            en: "Attribute of ZigBee2MQTT device that shall be read/written. Note: Not every attribute is available on all device types"
-        valid_list_ci:
-            - online
-            - bridge_permit_join
-            - bridge_health_check
-            - bridge_restart
-            - bridge_networkmap_raw
-            - device_remove
-            # - device_ota_update_check
-            # - device_ota_update_update
-            - device_configure
-            - device_options
-            - device_rename
-            # - device_bind
-            # - device_unbind
-            - device_configure_reporting
-            - temperature
-            - humidity
-            - battery
-            - battery_low
-            - linkquality
-            - action
-            - vibration
-            - action_group
-            - voltage
-            - angle
-            - angle_x
-            - angle_x_absolute
-            - angle_y
-            - angle_y_absolute
-            - angle_z
-            - strength
-            - last_seen
-            - tamper
-            - sensitivity
-            - contact
-            - brightness                            # Helligkeit in % [0-100]
-            - color_temp                            # Farbtemperatur in Kelvin
-            - state
-            - hue
-            - saturation
-            - color_x
-            - color_y
-            - color_mode
+            de: "Zu lesendes/schreibendes Attribut des ZigBee2MQTT Devices"
+            en: "Attribute of ZigBee2MQTT device that shall be read/written"
 
-        valid_list_description:
-            de:
-              - "<noch kein Attribut gewählt>"
-              - "Online Status des Zigbee Devices -> bool, r/o"
+    z2m_readonly:
+        type: bool
+        description:
+            de: "Attribut wird nur gelesen"
+            en: "Attribute can only be read"
 
-item_structs: NONE
-    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    z2m_writeonly:
+        type: bool
+        description:
+            de: "Attribut wird nur geschrieben. Wenn z2m_readonly auch gesetzt ist, hat readonly Vorrang"
+            en: "Attribute can only be written. Will be overridden by z2m_readonly"
 
+    z2m_bool_values:
+        type: list
+        description:
+            de: Ersetzungwerte für bool-Werte (z.B. ['OFF', 'ON'])
+            en: substitution values for bool items (e.g. ['OFF', 'ON'])
+
+
+item_structs:
+    dimmer:
+        action:
+            type: str
+            z2m_topic: ..:.
+            z2m_attr: action
+            enforce_updates: true
+
+        battery:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: battery
+
+        duration:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: action_duration
+
+        last_seen:
+            type: foo
+            z2m_topic: ..:.
+            z2m_attr: last_seen
+
+        linkquality:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: linkquality
+
+        on:
+            type: bool
+            eval: True if sh...action() == 'on_press' else (False if sh...action() in ('on_press_release', 'on_hold_release') else None)
+            eval_trigger: ..action
+
+            hold:
+                type: bool
+                eval: True if sh....action() == 'on_hold' else (False if sh....action() == 'on_hold_release' else None)
+                eval_trigger: ...action
+
+        off:
+            type: bool
+            eval: True if sh...action() == 'off_press' else (False if sh...action() in ('off_press_release', 'off_hold_release') else None)
+            eval_trigger: ..action
+
+            hold:
+                type: bool
+                eval: True if sh....action() == 'off_hold' else (False if sh....action() == 'off_hold_release' else None)
+                eval_trigger: ...action
+
+        up:
+            type: bool
+            eval: True if sh...action() == 'up_press' else (False if sh...action() in ('up_press_release', 'up_hold_release') else None)
+            eval_trigger: ..action
+
+            hold:
+                type: bool
+                eval: True if sh....action() == 'up_hold' else (False if sh....action() == 'up_hold_release' else None)
+                eval_trigger: ...action
+
+        down:
+            type: bool
+            eval: True if sh...action() == 'down_press' else (False if sh...action() in ('down_press_release', 'down_hold_release') else None)
+            eval_trigger: ..action
+
+            hold:
+                type: bool
+                eval: True if sh....action() == 'down_hold' else (False if sh....action() == 'down_hold_release' else None)
+                eval_trigger: ...action
+
+    light_white_ambient_group:
+        type: bool
+        z2m_attr: state
+        z2m_bool_values: ['OFF', 'ON']
+
+        brightness:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: brightness
+
+            percent:
+                type: num
+                z2m_topic: ..:.
+                z2m_attr: brightness_percent
+
+        color_temp:
+            type: num
+            remark: 153..454, coolest, cool, neutral, warm, warmest
+            z2m_topic: ..:.
+            z2m_attr: color_temp
+            
+            kelvin:
+                type: num
+                z2m_topic: ..:.
+                z2m_attr: color_temp_kelvin
+
+        color_mode:
+            type: str
+            z2m_topic: ..:.
+            z2m_attr: color_mode
+
+        scene:
+            type: str
+            enforce_updates: true
+            z2m_topic: ..:.
+            z2m_attr: scene_recall
+            z2m_readonly: false
+            z2m_writeonly: true
+
+        scenes:
+            type: list
+            z2m_topic: ..:.
+            z2m_attr: scenelist
+            z2m_readonly: true
+            z2m_writeonly: false
+
+        color_startup:
+            type: num
+            remark: 153..454, coolest, cool, neutral, warm, warmest, previous
+            z2m_topic: ..:.
+            z2m_attr: color_temp_startup
+
+        last_seen:
+            type: foo
+            z2m_topic: ..:.
+            z2m_attr: last_seen
+
+    light_white_ambient:
+        struct: zigbee2mqtt.light_white_ambient_group
+
+        linkquality:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: linkquality
+
+        update:
+            type: dict
+            z2m_topic: ..:.
+            z2m_attr: update
+
+            installed_version:
+                type: num
+                eval: sh...()['installed_version']
+                eval_trigger: ..
+                
+            latest_version:
+                type: num
+                eval: sh...()['latest_version']
+                eval_trigger: ..
+
+            state:
+                type: str
+                eval: sh...()['state']
+                eval_trigger: ..
+
+    light_rgb_group:
+        struct: zigbee2mqtt.light_white_ambient_group
+
+        color:
+            type: dict
+            z2m_topic: ..:.
+            z2m_attr: color
+
+            r:
+                type: num
+                z2m_topic: ..:.
+                z2m_attr: color_r
+
+            g:
+                type: num
+                z2m_topic: ..:.
+                z2m_attr: color_g
+
+            b:
+                type: num
+                z2m_topic: ..:.
+                z2m_attr: color_b
+
+            rgb:
+                type: str
+                z2m_topic: ..:.
+                z2m_attr: color_rgb
+
+        color_startup:
+            type: dict
+            z2m_topic: ..:.
+            z2m_attr: color_temp_startup
+
+    light_rgb:
+        struct: zigbee2mqtt.light_rgb_group
+
+        linkquality:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: linkquality
+
+        update:
+            type: dict
+            z2m_topic: ..:.
+            z2m_attr: update
+
+            installed_version:
+                type: num
+                eval: sh...()['installed_version']
+                eval_trigger: ..
+                
+            latest_version:
+                type: num
+                eval: sh...()['latest_version']
+                eval_trigger: ..
+
+            state:
+                type: str
+                eval: sh...()['state']
+                eval_trigger: ..
+
+    bridge:
+        z2m_topic: bridge
+
+        online:
+            type: bool
+            z2m_topic: ..:.
+            z2m_attr: online
+            z2m_readonly: true
+
+        config:
+            type: dict
+            z2m_topic: ..:.
+            z2m_attr: config
+            z2m_readonly: true
+
+        coordinator:
+            type: dict
+            z2m_topic: ..:.
+            z2m_attr: coordinator
+            z2m_readonly: true
+
+        config_schema:
+            type: dict
+            z2m_topic: ..:.
+            z2m_attr: config_schema
+            z2m_readonly: true
+
+        network:
+            type: dict
+            z2m_topic: ..:.
+            z2m_attr: network
+            z2m_readonly: true
+
+        permit_join:
+            type: bool
+            z2m_topic: ..:.
+            z2m_attr: permit_join
+            z2m_bool_values: [false, true]
+
+        restart:
+            type: bool
+            z2m_topic: ..:.
+            z2m_attr: restart
+            z2m_bool_values: [false, true]
+            z2m_writeonly: true
+            autotimer: 1=False
+
+        version:
+            type: str
+            z2m_topic: ..:.
+            z2m_attr: version
+
+        devices:
+            type: list
+            z2m_topic: ..:.
+            z2m_attr: devices
+
+        groups:
+            type: list
+            z2m_topic: ..:.
+            z2m_attr: groups
+
+        
 plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
 

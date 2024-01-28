@@ -30,7 +30,7 @@ import json
 
 class Pushover(SmartPlugin):
 
-    PLUGIN_VERSION = "1.6.1"
+    PLUGIN_VERSION = "1.6.2"
 
     _url = "https://api.pushover.net/1/messages.json"
 
@@ -49,7 +49,7 @@ class Pushover(SmartPlugin):
     def stop(self):
         self.alive = False
 
-    def __call__(self, title=None, message='', priority=None, retry=None, expire=None, sound=None, url=None, url_title=None, device=None, userKey=None, apiKey=None, attachment=None):
+    def __call__(self, title=None, message='', priority=None, retry=None, expire=None, ttl=None, sound=None, url=None, url_title=None, device=None, userKey=None, apiKey=None, attachment=None):
         data = {}
 
         data['timestamp'] = int(time.time())
@@ -92,6 +92,9 @@ class Pushover(SmartPlugin):
 
             else:
                 self.logger.error("Pushover message priority need to be a number between -2 and 2!")
+
+        if ttl:
+            data['ttl'] = ttl
 
         if sound:
             data['sound'] = sound

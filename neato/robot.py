@@ -44,6 +44,7 @@ class Robot:
         self.navigationMode = ''
         self.spotWidth = ''
         self.spotHeight = ''
+        self.mapId = 'unknown'
 
         # Meta
         self.name = ""
@@ -149,7 +150,7 @@ class Robot:
         responseJson = start_cleaning_response.json()
         self.logger.debug("Debug: send command response: {0}".format(start_cleaning_response.text))
         if log_message:
-            self.logger.info("Requested Info: {0}".format(start_cleaning_response.text))
+            self.logger.warning("INFO: Requested Info: {0}".format(start_cleaning_response.text))
 
         if 'result' in responseJson:
             if str(responseJson['result']) == 'ok':
@@ -158,13 +159,13 @@ class Robot:
                 self.logger.warning(f"Command returned {str(responseJson['result'])}: Retry starting with non-persistent-map")
                 return self.robot_command(command = 'start_non-persistent-map')
             else:
-                self.logger.error("Sending command {command} failed. Result: {0}".format(str(responseJson['result']) ))
-                self.logger.error("Debug: send command response: {0}".format(start_cleaning_response.text))
+                self.logger.error(f"Sending command {command} failed. Result: {str(responseJson['result'])}")
+                self.logger.error(f"Debug: send command response: {start_cleaning_response.text}")
         else:
             if 'message' in responseJson:
-                self.logger.error("Sending command {command} failed. Message: {0}".format(str(responseJson['message'])))
+                self.logger.error(f"Sending command {command} failed. Message: {str(responseJson['message'])}")
             if 'error' in responseJson:
-                self.logger.error("Sending command {command} failed. Error: {0}".format(str(responseJson['error'])))
+                self.logger.error(f"Sending command {command} failed. Error: {str(responseJson['error'])}")
 
         # - NOT on Charge BASE
         return start_cleaning_response
@@ -201,7 +202,12 @@ class Robot:
                                                                      'Date': self.__get_current_date(),
                                                                      'Accept': 'application/vnd.neato.nucleo.v1',
                                                                      'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout, verify=self._verifySSL )
- 
+        except requests.exceptions.ConnectionError as e:
+            self.logger.warning("Robot: This test works!: %s" % str(e))
+            return 'error'
+        except requests.exceptions.Timeout as e:
+            self.logger.warning("Robot: Timeout exception during cloud state request: %s" % str(e))
+            return 'error'
         except Exception as e:
             self.logger.error("Robot: Exception during cloud state request: %s" % str(e))
             return 'error'
@@ -286,6 +292,8 @@ class Robot:
             self.navigationMode = response['cleaning']['navigationMode']
             self.spotWidth = response['cleaning']['spotWidth']
             self.spotHeight = response['cleaning']['spotHeight']
+            if 'mapId' in response['cleaning']:
+                self.mapId = response['cleaning']['mapId']
 
         return response
 
@@ -362,7 +370,7 @@ class Robot:
         try:
             locale.setlocale(locale.LC_TIME, 'en_US.utf8')
         except locale.Error as e:
-            self.logger.error("Robot: Locale setting Error. Please install locale en_US.utf8: "+e)
+            self.logger.error("Robot: Locale setting error. Please install locale en_US.utf8: "+e)
             return None
         date = time.strftime('%a, %d %b %Y %H:%M:%S', time.gmtime()) + ' GMT'
         locale.setlocale(locale.LC_TIME, saved_locale)

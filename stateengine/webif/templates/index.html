@@ -27,27 +27,10 @@ function mainpage() {
 }
 </script>
 <script>
-$("a").click(function() {
-    var value = $(this).data("value");
-    Console.debug(value);
-});
-</script>
-<script>
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
-    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-    if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-      resize = true;
-      webif_pagelength = -1;
-    }
-    else {
-      resize = false;
-    }
-    console.log("Using page length from http module/plugin " + webif_pagelength + ", pageResize: " + resize);
-
 		try {
       table = $('#maintable').DataTable( {
-        pageLength: webif_pagelength,
         order: [[1, 'asc']],
         columnDefs: [
         { responsivePriority: 1, targets: 1 },
@@ -57,12 +40,12 @@ $("a").click(function() {
         { width: '15%', targets: 2 },
         { className: "item", targets: 1 },
         { className: "state", targets: 2 },
-        { className: "conditionset", targets: 3 },
-        { className: "visu", targets: 4 },
-        { className: "loglevel", targets: 5 },
-        { className: "states", targets: 6 }
-        ].concat($.fn.dataTable.defaults.columnDefs),
-        pageResize: resize});
+        { className: "released", targets: 3 },
+        { className: "conditionset", targets: 4 },
+        { className: "visu", targets: 5 },
+        { className: "loglevel", targets: 6 },
+        { className: "states", targets: 7 }
+        ].concat($.fn.dataTable.defaults.columnDefs)});
 		}
 		catch (e) {
 			console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
@@ -78,6 +61,8 @@ $("a").click(function() {
 			for (item in objResponse) {
         shngInsertText (item+'_laststate', objResponse[item]['laststate'], 'maintable', 10);
         shngInsertText (item+'_lastconditionset', objResponse[item]['lastconditionset'], 'maintable', 10);
+        shngInsertText (item+'_log_level', objResponse[item]['log_level'], 'maintable', 10);
+        shngInsertText (item+'_can_be_released_by', objResponse[item]['laststate_releasedby'], 'maintable', 10);
 			}
 		}
 	}
@@ -93,7 +78,7 @@ $("a").click(function() {
 <table class="table table-striped table-hover">
   <tbody>
     <tr>
-      <td class="py-1"><strong>{{ _('Log Level') }}</strong></td>
+      <td class="py-1"><strong>{{ _('Standard Log Level') }}</strong></td>
       <td class="py-1">{{ p.get_parameter_value_for_display('log_level') }}</td>
       <td class="py-1"><strong>{{ _('Log Verzeichnis') }}</strong></td>
       <td class="py-1">{{ p.get_parameter_value_for_display('log_directory') }}</td>
@@ -107,8 +92,14 @@ $("a").click(function() {
     <tr>
       <td class="py-1"><strong>{{ _('Items') }}</strong></td>
       <td class="py-1">{{ item_count }}</td>
-      <td class="py-1"></td>
-      <td class="py-1"></td>
+      <td class="py-1"><strong>{{ _('Logs löschen nach') }}</strong></td>
+      <td class="py-1">{{ p.get_parameter_value_for_display('log_maxage') }}
+        {% if p.get_parameter_value_for_display('log_maxage') == 1 %}
+          {{ _('Tag') }}
+        {% else %}
+          {{ _('Tagen') }}
+        {% endif %}
+      </td>
     </tr>
   </tbody>
 </table>
@@ -119,13 +110,16 @@ $("a").click(function() {
 <div class="container-fluid m-2 table-resize">
   <div class="mb-2">
     {{ _('Die folgenden Items verfügen über ein StateEngine Item') }}.
-    <strong>{{ _('Klick auf das Lupensymbol öffnet die Visualisierung!') }}</strong>
+    {% if p.vis_enabled %}
+      <strong>{{ _('Klick auf das Lupensymbol öffnet die Visualisierung!') }}</strong>
+    {% endif %}
   </div>
   <table id="maintable">
     <thead>
     <tr><th></th>
       <th>{{ _('SE Item') }}</th>
       <th>{{ _('aktueller Zustand') }}</th>
+      <th>{{ _('potenzieller Release') }}</th>
       <th>{{ _('aktuelles Bedingungsset') }}</th>
       <th>Visu</th>
       <th>{{ _('Log Level') }}</th>
@@ -136,13 +130,20 @@ $("a").click(function() {
     {% for item in p.get_items() %}
     <tr><td></td>
         <td class="py-1">{{ item }}</td>
-        <td class="py-1" id="{{ item }}_laststate">{{ item.laststate_name }}</td>
+        <td class="py-1" id="{{ item }}_laststate">{% if item.laststate_name in ["", None] %}-{% else %}{{ item.laststate_name }}{% endif %}</td>
+        <td class="py-1" id="{{ item }}_can_be_released_by">{% if item.laststate_releasedby in [[], None] %}-{% else %}{{ item.laststate_releasedby }}{% endif %}</td>
         <td class="py-1" id="{{ item }}_lastconditionset">
-          {% if item.lastconditionset_name == "" %}-{% else %}{{ item.lastconditionset_name }}{% endif %}</td>
+          {% if item.lastconditionset_name in ["", None] %}-{% else %}{{ item.lastconditionset_name }}{% endif %}</td>
         <td>
-          <button type="button" class="btn btn-shng btn-sm" title="{{ _('Detailvisualisierung') }}" onclick="location.href='?action=get_graph&abitem={{ item }}';"><i class="fas fa-search"></i></button></td>
-        <td class="py-1">{{ item.log_level }}</td>
+          {% if p.vis_enabled %}
+            <button type="button" class="btn btn-shng btn-sm" title="{{ _('Detailvisualisierung') }}" onclick="location.href='?action=get_graph&abitem={{ item }}';"><i class="fas fa-search"></i></button>
+          {% else %}
+            <span title="{{ _('KeineVisualisierung') }}"><i class="fas fa-times-circle"></i></span>
+          {% endif %}
+        </td>
+        <td class="py-1" id="{{ item }}_log_level">{{ item.logger.log_level_as_num }}</td>
         <td class="py-1">{% for cond in item.webif_infos.keys() %}{% if not p.itemsApi.return_item(cond) == None %}{% if loop.index > 1 %},{% endif %}{{ p.itemsApi.return_item(cond)._name.split('.')[-1] }}{% endif %}{% endfor %}</td>
+
 
       </tr>
 

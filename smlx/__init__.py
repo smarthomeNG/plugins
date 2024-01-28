@@ -2,7 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2012-2014 Oliver Hinckel                  github@ollisnet.de
-#  Copyright 2018-2022 Bernd Meiners                Bernd.Meiners@mail.de
+#  Copyright 2018-2024 Bernd Meiners                Bernd.Meiners@mail.de
 #  Copyright 2022- Michael Wenzel                   wenzel_michael@web.de
 #########################################################################
 #
@@ -33,6 +33,10 @@ import errno
 from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
 
+from lib.shtime import Shtime
+shtime = Shtime.get_instance()
+
+
 from . import algorithms
 from .webif import WebInterface
 
@@ -55,7 +59,7 @@ class Smlx(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.7'
+    PLUGIN_VERSION = '1.1.8'
 
     # Lookup table for smartmeter names to data format
     _devices = {
@@ -70,7 +74,33 @@ class Smlx(SmartPlugin):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
+        #load parameters from config
+        self.load_parameters()
+        
+        self.connected = False
+        self.alive = False
+        self._serial = None
+        self._sock = None
+        self._target = None
+        self._dataoffset = 0
+        self._items = {}
+        self._item_dict = {}
+        self._lock = threading.Lock()
+        self._parse_lock = threading.Lock()
+
+        self.init_webinterface(WebInterface)
+
+    def load_parameters(self):
         self.cycle = self.get_parameter_value('cycle')
+        if self.cycle == 0:
+            self.cycle = None
+
+        self.crontab  = self.get_parameter_value('crontab')  # the more complex way to specify the device query frequency
+        if self.crontab == '':
+            self.crontab = None
+        if not (self.cycle or self.crontab):
+            self.logger.error(f"{self.get_fullname()}: no update cycle or crontab set. The smartmeter will not be queried automatically")
+
         self.host = self.get_parameter_value('host')                        # None
         self.port = self.get_parameter_value('port')                        # 0
         self.serialport = self.get_parameter_value('serialport')            # None
@@ -87,17 +117,6 @@ class Smlx(SmartPlugin):
         self.xor_out = self.get_parameter_value('xor_out')                  # 0xffff
         self.swap_crc_bytes = self.get_parameter_value('swap_crc_bytes')    # False
 
-        self.connected = False
-        self.alive = False
-        self._serial = None
-        self._sock = None
-        self._target = None
-        self._dataoffset = 0
-        self._items = {}
-        self._item_dict = {}
-        self._lock = threading.Lock()
-        self._parse_lock = threading.Lock()
-
         if device in self._devices:
             device = self._devices[device]
 
@@ -111,24 +130,32 @@ class Smlx(SmartPlugin):
 
         self.logger.debug(f"Using CRC params poly={self.poly}, reflect_in={self.reflect_in}, xor_in={self.xor_in}, reflect_out={self.reflect_out}, xor_out={self.xor_out}, swap_crc_bytes={self.swap_crc_bytes}")
 
-        self.init_webinterface(WebInterface)
 
     def run(self):
         """
         Run method for the plugin
         """
         self.logger.debug(f"Plugin '{self.get_fullname()}': run method called")
-        # Setup scheduler for device poll loop
-        self.scheduler_add(SML_SCHEDULER_NAME, self.poll_device, cycle=self.cycle)
-
+        self.load_parameters()
         self.alive = True
+
+        # Setup scheduler for device poll loop
+        if self.cycle or self.crontab:
+            if self.crontab:
+                next = None # adhere to the crontab
+            else:
+                # no crontab given so we might just query immediately
+                next = shtime.now()
+            self.scheduler_add(self.get_fullname(), self.poll_device, prio=5, cycle=self.cycle, cron=self.crontab, next=next)
+        self.logger.debug(f"Plugin '{self.get_fullname()}': run method finished")
+
 
     def stop(self):
         """
         Stop method for the plugin
         """
         self.logger.debug(f"Plugin '{self.get_fullname()}': stop method called")
-        self.scheduler_remove(SML_SCHEDULER_NAME)
+        self.scheduler_remove(self.get_fullname())
         self.alive = False
         self.disconnect()
 
@@ -168,7 +195,7 @@ class Smlx(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        if caller != self.get_shortname():
+        if caller != self.get_fullname():
             # Code to execute, only if the item has not been changed by this plugin:
             self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
             pass

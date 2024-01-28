@@ -7,17 +7,17 @@ plugin:
         en: 'integration of the iRobot Roomba vacuum cleaner series 900'
     maintainer: 'Zapfen83'
     tester: '?'
-    state: ready
+    state: development
     keywords: irobot roomba             # keywords, where applicable
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
 # Following entries are for Smart-Plugins:
-    version: 1.0.1                 # Plugin version
-    sh_minversion: 1.5             # minimum shNG version to use this plugin
+    version: 1.0.2                 # Plugin version
+    sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False
-    restartable: unknown
+    multi_instance: false
+    restartable: true
     classname: ROOMBA_980              # class containing the plugin
 
 parameters:
@@ -25,28 +25,28 @@ parameters:
 
   adress:
     type: str
-    default: True
+    default: true
     description:
       de: "Die IP Adresse des roomba Staubsaugers"
       en: "The IP address of the roomba vacuum cleaner"
 
   blid:
     type: str
-    default: True
+    default: true
     description:
       de: "Die blid des roomba Staubsaugers -> kann mit der getpassword.py ausgelesen werden"
       en: "The blid of the roomba vacuum cleaner -> use getpassword.py to get it"
 
   roombaPassword:
     type: str
-    default: True
+    default: true
     description:
       de: "Das Passwort des roomba Staubsaugers -> kann mit der getpassword.py ausgelesen werden"
       en: "The password of the roomba vacuum cleaner -> use getpassword.py to get it"
 
   cycle:
     type: num
-    default: False
+    default: false
     description:
       de: "update des items alle x Sekunden, default wert 900"
       en: "update the state item every x secounds, default is 900"

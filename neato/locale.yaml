@@ -6,21 +6,21 @@ plugin_translations:
 
     # Alternative format for translations of longer texts:
     'Vorwerk Explanation':
-        de: 'Schritt fuer Schritt Anleitung zur Generierung eines Oauth2 Tokens fuer Vorwerk API, kompatibel zur MyKobold APP.'
+        de: 'Schritt für Schritt Anleitung zur Generierung eines Oauth2 Tokens für Vorwerk API, kompatibel zur MyKobold APP.'
         en: 'Step by Step manual for generating an OAuth2 token for Vorwerk API, compatible with new MyKobold APP.'
     'Anzahl Roboter':
         de: '='
         en: 'Number Robots'
-    'Alarme loeschen':
+    'Alarme löschen':
         de: '='
         en: 'Reset alarms'
-    'Alarme geloescht':
+    'Alarme gelöscht':
         de: '='
         en: 'Alarms cleared'
-    'Loescht Fehlermeldungen, wie z.B. Staubbehaelter leeren.':
+    'Löscht Fehlermeldungen, wie z.B. Staubbehälter leeren.':
         de: '='
         en: 'Resets error messages like for example dustbin full'
-    '1) Vorwerk account Email ueberpruefen':
+    '1) Vorwerk account Email überprüfen':
         de: '='
         en: 'Doublecheck Vorwerk account email'
     '6) Token in plugin.yaml kopieren':
@@ -35,7 +35,7 @@ plugin_translations:
     '3) Vorwerk Code anfragen':
         de: '='
         en: 'Request Vowerk code'
-    '2) Diese oder andere gueltige ClientID eingeben':
+    '2) Diese oder andere gültige ClientID eingeben':
         de: '='
         en: 'Use this or insert other valid ClientID'
     'Code anfragen':
@@ -59,16 +59,16 @@ plugin_translations:
     'Hier Map ID eintragen':
         de: '='
         en: 'Insert map ID here'
-    'Schreibt die verfuegbaren Raeume ins Logfile':
+    'Schreibt die verfügbaren Raeume ins Logfile':
         de: '='
         en: 'Writes available rooms into logfile'
-    'Liste Raeume':
+    'Liste Räume':
         de: '='
         en: 'List rooms'
-    'Alarme im Backend loeschen':
+    'Alarme im Backend löschen':
         de: '='
         en: 'Reset alarms in backend'
-    'Verfuegbare Boundary IDs (Raeume) ins Log schreiben':
+    'Verfügbare Boundary IDs (Räume) ins Log schreiben':
         de: '='
         en: 'Write available boundary IDs (rooms) into logfile'
 

@@ -1,0 +1,204 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 0 %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+
+	function generateURLCommand() {
+		if (confirm('{{ _('Wollen Sie eine URL zur Freischaltung generieren?') }}')) {
+			window.location.href='?action=generateURL';
+		}
+		return false;
+	}
+	
+	function requestTokenCommand() {
+		codeInputField = $('#input-code');
+		window.location.href='?action=requestToken&code=' + codeInputField.val();
+		
+		return false;
+	}
+
+
+</script>
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>ClientID</strong></td>
+			<td class="py-1">{{ p.clientID }}-</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Anzahl Devices') }}</strong></td>
+			<td class="py-1">{{ p.nr_devices }}</td>
+
+		</tr>
+		<tr>
+			<td class="py-1"><strong>Gerätemodell</strong></td>
+			<td class="py-1">{{ p.modelId }} ({{ p.deviceType }})</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>Onlinestatus</strong></td>
+			<td class="py-1">{% if p.onlineStatus %}{{ _('Online') }}{% else %}{{ _('Offline') }}{% endif %}</td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+
+{% set start_tab = 1 %}
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~_('Mit Vicare verbinden')~ "</strong>" %}
+
+
+{% block bodytab1 %}
+
+{% if generateURLSuccessfull %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('URL Generierung') }}</strong><br/>
+		{{ _('URL erzeugt. Bitte Code in Browserzeile kopieren.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+{% if generateURLSuccessfull == False%}
+	<div class="mb-2 alert alert-warning alert-dismissible fade show" role="alert">
+		<strong>{{ _('URL Generierung') }}</strong><br/>
+		{{ _('Fehler beim Erzeugen der URL. Siehe Logfile für Details.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+{% if tokenRequestCompleted %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Token') }}</strong><br/>
+		{{ _('Token erhalten und persistent in plugin.yaml gespeichert.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+{% if tokenRequestCompleted == False%}
+	<div class="mb-2 alert alert-warning alert-dismissible fade show" role="alert">
+		<strong>{{ _('Token') }}</strong><br/>
+		{{ _('Fehler beim Anfragen des Tokens. Siehe Logfile für Details.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+
+<div class="container-fluid m-2">
+	{{ _('Viessmann Explanation') }}
+</div>
+
+<div class="row">
+	<div class="col-md-11 mb-3">
+		<div class="row">
+			<div class="col-md-3 mb-3">
+				1) {{  _('URL für Authentifizierung') }}:
+			</div>
+			<div class="col-md-3 mb-3">
+				<input type="text" class="form-control mb-1" id="input-ip" title="{{ _('Wird einmalig generiert') }}" readonly value="{{ p.authRequestUrl }}" placeholder="{{ _('URL generieren drücken') }}" maxlength="32" style="width: 300px;">
+			</div>
+			<div class="col-md-4 mb-3">
+				<button type="button" class="btn btn-shng btn-sm" title="{{ _('URL generieren') }}" onclick="generateURLCommand();">{{ _('URL generieren') }}</button>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-6 mb-3">
+				2) {{ _('URL in Browser kopieren und login durchführen. Anschließend innerhalb von 20 Sekunden den in der URL enthaltenen Code unter 3) einfügen und unter 4) den Token abrufen.') }}:
+			</div>
+		</div>
+
+		<div class="row">
+		<td style="min-width:190px;" style="padding-top:15px;">
+			<div class="col-md-3 mb-3">
+				3) {{ _('Einmaligen Freischaltcode eingeben') }}:
+			</div>
+			<div class="col-md-3 mb-3">
+				<input type="text" class="form-control mb-1" id="input-code" placeholder="{{ _('Hier den Code eintragen') }}" style="width: 300px;"
+				title="{{ _('Einmalcode ist in der Adresszeile des Browsers enthalten') }}">
+			</div>
+		</div>
+		<div class="row">
+		<td style="min-width:190px;" style="padding-top:15px;">
+			<div class="col-md-6 mb-3">
+				4) {{ _('AccessToken abrufen') }}:
+			</div>
+			<div class="col-md-6 mb-3">
+				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Abrufen') }}" onclick="requestTokenCommand();">{{ _('Abrufen') }}</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+{% endblock bodytab1 %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab2title = "<strong>" ~_('Featureliste')~ "</strong>" %}
+{% block bodytab2 %}
+<div class="mb-2">
+	{{ _('Die folgenden Features sind verfügbar') }}, Gesamtanzahl {{ p.featureListJson|length }}, nur aktive (enabled) Features werden angezeigt.
+</div>
+<table class="table table-striped table-hover pluginList">
+	<thead>
+	<tr>
+		<th>{{ _('Feature') }}</th>
+		<th>{{ _('enabled') }}</th>
+		<th>{{ _('Properties') }}</th>
+		<th>{{ _('Commands') }}</th>
+		<th>{{ _('ready') }}</th>
+	</tr>
+	</thead>
+	{% for item in p.featureListJson %}
+		{% if item['isEnabled'] == True %}
+			<tr>
+				<td class="py-1">{{ item['feature'] }}</td>
+				<td class="py-1">{{ item['isEnabled'] }} </td>
+				<td class="py-1">{{ item['properties'] }} </td>
+				<td class="py-1">{{ item['commands'] }}</td>
+				<td class="py-1">{{ item['isReady'] }}</td>
+			</tr>
+		{% endif %}
+	{% endfor %}
+</table>
+
+{% endblock bodytab2 %}
+
+
+
+
+

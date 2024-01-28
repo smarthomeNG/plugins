@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/tasmota/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1520293-support-thread-für-das-tasmota-plugin
 
-    version: 1.4.0                 # Plugin version
+    version: 1.5.2                 # Plugin version
     sh_minversion: 1.9.3           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion:                # minimum Python version to use for this plugin
@@ -52,71 +52,6 @@ item_attributes:
         description:
             de: "Zu lesendes/schreibendes Attribut des Tasmota Devices. Achtung: Nicht jedes Attribut ist auf allen Device-Typen vorhanden."
             en: "Attribute of Tasmota device that shall be read/written. Note: Not every attribute is available on all device types"
-        valid_list:
-            - relay
-            - online
-            - voltage
-            - current
-            - power
-            - power_total
-            - power_yesterday
-            - power_today
-            - temp
-            - hum
-            - dewpoint
-            - hsb
-            - white
-            - ct
-            - dimmer
-            - rf_recv
-            - rf_send
-            - rf_key_send
-            - rf_key_recv
-            - rf_key
-            - zb_permit_join
-            - zb_forget
-            - zb_ping
-            - power_total
-            - power_today
-            - power_yesterday
-            - analog_temp
-            - analog_temp1
-            - analog_a0
-            - analog_range
-            - esp32_temp
-        valid_list_description:
-            de:
-              - "Schalten des Relais -> bool, r/w"
-              - "Online Status des Tasmota Devices -> bool, r/o"
-              - "Spannung in Volt bei Tasmota Devices mit ENERGY Sensor -> num, r/o"
-              - "Strom in Ampere bei Tasmota Devices mit ENERGY Sensor -> num, r/o"
-              - "Leistung in Watt bei Tasmota Devices mit ENERGY Sensor -> num, r/o"
-              - "Verbrauch (gesamt) in kWh bei Tasmota Devices mit ENERGY Sensor -> num, r/o"
-              - "Verbrauch (gestern) in kWh bei Tasmota Devices mit ENERGY Sensor -> num, r/o"
-              - "Verbrauch (heute) in kWh bei Tasmota Devices mit ENERGY Sensor -> num, r/o"
-              - "Temperatur in °C bei Tasmota Devices mit TEMP Sensor (DS18B20, AM2301) -> num, r/o"
-              - "Luftfeuchtigkeit in %rH bei Tasmota Devices mit HUM Sensor (AM2301) -> num, r/o"
-              - "Taupunkt in °C bei Tasmota Devices mit HUM und TEMP Sensor (AM2301) -> num, r/o"
-              - "Hue, Saturation, Brightness (HSB) bei RGBW Tasmota Devices (H801) -> list, r/w"
-              - "Color Temperature in Kelvin bei RGBW Tasmota Devices (H801) -> num, r/w"
-              - "Color Temperature in Kelvin bei RGBW Tasmota Devices (H801) -> num, r/w"
-              - "Dimmwert in % Tasmota Devices -> num, r/w"
-              - "Empfangene RF Daten bei Tasmota Device mit RF Sendemöglichkeit (SONOFF RF Bridge) -> dict, r/o"
-              - "Zu sendende RF Daten bei Tasmota Device mit RF Sendemöglichkeit (SONOFF RF Bridge) -> dict {'RfSync': 12220, 'RfLow': 440, 'RfHigh': 1210, 'RfCode':'#F06104'}, r/w"
-              - "Zu sendender RF-Key Tasmota Device mit RF Sendemöglichkeit (SONOFF RF Bridge) -> num [1-16], r/w"
-              - "Zu empfangender RF-Key Tasmota Device mit RF Sendemöglichkeit (SONOFF RF Bridge) -> num [1-16], r/w"
-              - 'RF Key'
-              - "Schaltet das Pairing an der ZigBee Bridge ein/aus -> bool, r/w"
-              - "Löscht das Zigbee-Gerät aus dem Item Wert aus der Liste bekannter Geräte in der Zigbee-Bridge -> str, r/w"
-              - "Sendet ein Ping zum Zigbee-Gerät aus dem Item Wert -> str, r/w"
-              - "Gemessener Gesamtenergieverbrauch"
-              - "Gemessener Energieverbrauch heute"
-              - "Gemessener Energieverbrauch gestern"
-              - "Temperatur am Analogeingang"
-              - "Temperatur am Analogeingang1"
-              - "ADC-Eingang eines ESPs"
-              - "ADC-Eingang eines ESPs"
-              - "Temperatur des ESP32"
 
     tasmota_relay:
         type: int
@@ -129,9 +64,8 @@ item_attributes:
 
     tasmota_rf_details:
         type: str
-        default: 1
         description:
-            de: "Nummer des auszulösenden RF Keys im Tasmota Device=Aktion bei Empfang"
+            de: "Nummer des auszulösenden RF Keys im Tasmota Device und Aktion bei Empfang als String; bspw: '16=true' - Bei Empfang des Key16, setze Item auf True"
             en: "Number of rf keys to be used for sending command"
 
     tasmota_zb_device:
@@ -151,100 +85,6 @@ item_attributes:
         description:
             de: "Schlüssel der Json-Dict, der vom Zigbee-Device bereitgestellt wird; Key aus dem dict des tasmota_zb_device"
             en: "Dict Key of provided data; can be seen in Plugin WebIF"
-        valid_list_ci:
-          - device
-          - power
-          - dimmer
-          - hue
-          - sat
-          - ct
-          - ct_k
-          - temperature
-          - humidity
-          - reachable
-          - batterypercentage
-          - batterylastseenepoch
-          - lastseen
-          - lastseenepoch
-          - linkquality
-          - ieeeaddr
-          - modelid
-          - manufacturer
-          - colormode
-          - zonestatus
-          - contact
-          - movement
-          - colortempstepup
-          - colortempstepdown
-          - dimmerstepup
-          - dimmerstepdown
-          - dimmermove
-          - aqaravibrationmode
-          - aqaravibration505
-          - batteryvoltage
-          - shutterclose
-          - shutteropen
-          - endpoint
-          - huemove
-          - 0300!0a
-          - 0300!01
-          - 0300!03
-          - 0300!4c
-          - 0006!00
-          - 0006!01
-          - 0008!01
-          - 0008!02
-          - 0008!03
-          - 0008!04
-          - 0008!05
-
-        valid_list_description:
-          de:
-            - "Geräte_ID Kurzform                      -> str,  r/o"
-            - "Schalter                     true/false -> bool, r/w"
-            - "Helligkeit                        0-100 -> num,  r/w"
-            - "Farbwert                          0-360 -> num,  r/w"
-            - "Sättigung                         0-100 -> num,  r/w"
-            - "Farbtemperatur (mired scale),   150-500 -> num,  r/w"
-            - "Farbtemperatur (Kelvin),      2000-6700 -> num,  r/w"
-            - "Temperatur                              -> num,  r/o"
-            - "Feuchtigkeit                            -> num,  r/o"
-            - "Erreichbarkeit                          -> bool, r/o"
-            - "Batteriefüllung in %                    -> num,  r/o"
-            - "Letzte Batteriemeldung                  -> datetime, r/o"
-            - "Letzter Kontakt vor xx Sekunden         -> num,  r/o"
-            - "Letzter Kontakt                         -> datetime,  r/o"
-            - "Verbindungsqualität                     -> num,  r/o"
-            - "IEEE-Adresse                            -> str,  r/o"
-            - "Model-ID                                -> str,  r/o"
-            - "Hersteller                              -> str,  r/o"
-            - "Farbmodus                               -> num,  r/o"
-            - "Zonenstatus                             -> num,  r/o"
-            - "Kontakt                                 -> bool, r/o"
-            - "Bewegung                                -> bool, r/o"
-            - "Farbtemperatur +"
-            - "Farbtemperatur -"
-            - "Dimmer +"
-            - "Dimmer -"
-            - "Dimmer"
-            - "aqaravibrationmode"
-            - "aqaravibration505"
-            - "Batteriespannung"
-            - "Rollo schließen"
-            - "Rollo öffnen"
-            - "Endlage erreicht"
-            - "Farbbewegung Hue"
-            - "0300!0a"
-            - "0300!01"
-            - "0300!03"
-            - "0300!4c"
-            - "0006!00"
-            - "0006!01"
-            - "0008!01"
-            - "0008!02"
-            - "0008!03"
-            - "0008!04"
-            - "0008!05"
 
     tasmota_zb_cluster:
       type: bool

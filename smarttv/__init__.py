@@ -19,7 +19,6 @@
 #  along with SmartHomeNG.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import logging
 import socket
 import time
 import base64
@@ -27,21 +26,22 @@ from websocket import create_connection
 from lib.model.smartplugin import SmartPlugin
 from uuid import getnode as getmac
 
+
 class SmartTV(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.3.2"
+    PLUGIN_VERSION = "1.3.3"
 
-    def __init__(self, smarthome, host, port=55000, tv_version='classic', delay=1):
-        self.logger = logging.getLogger(__name__)
-        self._sh = smarthome
-        self._host = host
-        self._port = int(port)
-        self._delay = delay
-        if tv_version not in ['samsung_m_series', 'classic']:
+    def __init__(self, sh, **kwargs):
+        self._tv_version = self.get_parameter_value('tv_version')
+        self._host = self.get_parameter_value('host')
+        self._port = self.get_parameter_value('port')
+        self._delay = self.get_parameter_value('delay')
+        if self._tv_version not in ['samsung_m_series', 'classic']:
             self.logger.error('No valid tv_version attribute specified to plugin')
-        self._tv_version = tv_version
-        self.logger.debug("Smart TV plugin for {0} SmartTV device initalized".format(tv_version))
+            self._init_complete = False
+        else:
+            self.logger.debug("Smart TV plugin for {0} SmartTV device initalized".format(self._tv_version))
 
     def push_samsung_m_series(self, key):
         """
@@ -68,7 +68,7 @@ class SmartTV(SmartPlugin):
             self.logger.debug("Connected to {0}:{1}".format(self._host, self._port))
         except Exception:
             self.logger.warning("Could not connect to %s:%s, to send key: %s." %
-                           (self._host, self._port, key))
+                                (self._host, self._port, key))
             return
 
         src = s.getsockname()[0]            # ip of remote
@@ -140,6 +140,8 @@ class SmartTV(SmartPlugin):
             return None
 
     def update_item(self, item, caller=None, source=None, dest=None):
+        if not self.alive:
+            return
         val = item()
         if isinstance(val, str):
             if val.startswith('KEY_'):

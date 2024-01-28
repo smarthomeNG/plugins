@@ -20,6 +20,7 @@
 #########################################################################
 from . import StateEngineAction
 from . import StateEngineTools
+
 import ast
 import threading
 import queue
@@ -27,14 +28,6 @@ import queue
 
 # Class representing a list of actions
 class SeActions(StateEngineTools.SeItemChild):
-    @property
-    def dict_actions(self):
-        result = {}
-        for name in self.__actions:
-            self._abitem._initactionname = name
-            result.update({name: self.__actions[name].get()})
-            self._abitem._initactionname = None
-        return result
 
     # Initialize the set of actions
     # abitem: parent SeItem instance
@@ -56,6 +49,21 @@ class SeActions(StateEngineTools.SeItemChild):
     def __repr__(self):
         return "SeActions, count {}".format(self.count())
 
+    def dict_actions(self, type, state):
+        result = {}
+        for name in self.__actions:
+            self._abitem._initactionname = name
+            result.update({name: self.__actions[name].get()})
+            try:
+                result[name].update({'actionstatus': self._abitem.webif_infos[state][type][name].get('actionstatus')})
+            except Exception:
+                pass
+            self._abitem._initactionname = None
+        return result
+
+    def reset(self):
+        self.__actions = {}
+
     # Return number of actions in list
     def count(self):
         return len(self.__actions)
@@ -67,6 +75,7 @@ class SeActions(StateEngineTools.SeItemChild):
         # Split attribute in function and action name
         func, name = StateEngineTools.partition_strip(attribute, "_")
         _count = 0
+        _issue = None
         try:
             if func == "se_delay":
                 # set delay
@@ -74,84 +83,155 @@ class SeActions(StateEngineTools.SeItemChild):
                     # If we do not have the action yet (delay-attribute before action-attribute), ...
                     self.__unassigned_delays[name] = value
                 else:
-                    self.__actions[name].update_delay(value)
-                return
+                    _issue = self.__actions[name].update_delay(value)
+                return _count, _issue
             elif func == "se_instanteval":
                 # set instant calculation
                 if name not in self.__actions:
                     # If we do not have the action yet (repeat-attribute before action-attribute), ...
                     self.__unassigned_instantevals[name] = value
                 else:
-                    self.__actions[name].update_instanteval(value)
-                return
+                    _issue = self.__actions[name].update_instanteval(value)
+                return _count, _issue
             elif func == "se_repeat":
                 # set repeat
                 if name not in self.__actions:
                     # If we do not have the action yet (repeat-attribute before action-attribute), ...
                     self.__unassigned_repeats[name] = value
                 else:
-                    self.__actions[name].update_repeat(value)
-                return
+                    _issue = self.__actions[name].update_repeat(value)
+                return _count, _issue
             elif func == "se_conditionset":
                 # set conditionset
                 if name not in self.__actions:
                     # If we do not have the action yet (conditionset-attribute before action-attribute), ...
                     self.__unassigned_conditionsets[name] = value
                 else:
-                    self.__actions[name].update_conditionsets(value)
-                return
+                    _issue = self.__actions[name].update_conditionset(value)
+                return _count, _issue
             elif func == "se_previousconditionset":
                 # set conditionset
                 if name not in self.__actions:
                     # If we do not have the action yet (conditionset-attribute before action-attribute), ...
                     self.__unassigned_previousconditionsets[name] = value
                 else:
-                    self.__actions[name].update_previousconditionsets(value)
-                return
+                    _issue = self.__actions[name].update_previousconditionset(value)
+                return _count, _issue
             elif func == "se_previousstate_conditionset":
                 # set conditionset
                 if name not in self.__actions:
                     # If we do not have the action yet (conditionset-attribute before action-attribute), ...
                     self.__unassigned_previousstate_conditionsets[name] = value
                 else:
-                    self.__actions[name].update_previousstate_conditionsets(value)
-                return
+                    _issue = self.__actions[name].update_previousstate_conditionset(value)
+                return _count, _issue
             elif func == "se_mode":
                 # set remove mode
+                _issue_list = []
                 if name not in self.__actions:
                     # If we do not have the action yet (mode-attribute before action-attribute), ...
                     self.__unassigned_modes[name] = value
                 else:
-                    self.__actions[name].update_modes(value)
-                return
+                    _val, _issue = self.__actions[name].update_mode(value)
+                    if _issue:
+                        _issue_list.append(_issue)
+                    _issue, _action = self.__check_mode_setting(name, _val, self.__actions[name].function, self.__actions[name])
+                    if _issue:
+                        _issue_list.append(_issue)
+                    if _action:
+                        self.__actions[name] = _action
+                return _count, _issue_list
             elif func == "se_order":
                 # set order
                 if name not in self.__actions:
                     # If we do not have the action yet (order-attribute before action-attribute), ...
                     self.__unassigned_orders[name] = value
                 else:
-                    self.__actions[name].update_order(value)
-                return
+                    _issue = self.__actions[name].update_order(value)
+                return _count, _issue
             elif func == "se_action":  # and name not in self.__actions:
-                self.__handle_combined_action_attribute(name, value)
+                _issue = self.__handle_combined_action_attribute(name, value)
                 _count += 1
-            elif self.__ensure_action_exists(func, name):
-                # update action
-                self.__actions[name].update(value)
-                _count += 1
+            else:
+                _issue_list = []
+                _ensure_action, _issue = self.__ensure_action_exists(func, name)
+                if _issue:
+                    _issue_list.append(_issue)
+                if _ensure_action:
+                    # update action
+                    _issue = self.__actions[name].update(value)
+                    if _issue:
+                        _issue_list.append(_issue)
+                    _count += 1
+                _issue = StateEngineTools.flatten_list(_issue_list)
         except ValueError as ex:
             if name in self.__actions:
                 del self.__actions[name]
+            _issue = {name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': self.__actions[name].function}]}}
             self._log_warning("Ignoring action {0} because: {1}", attribute, ex)
-        return _count
+        return _count, _issue
+
+    def __check_force_setting(self, name, value, function):
+        _issue = None
+        _returnfunction = function
+        if value is not None:
+            # Parameter force is supported only for type "set" and type "force"
+            if function not in ["set", "force"]:
+                _issue = {
+                    name: {'issue': ['Parameter force not supported for this function'],
+                           'attribute': 'force', 'issueorigin': [{'state': 'unknown', 'action': function}]}}
+                _issue = "Parameter 'force' not supported for this function"
+                self._log_warning("Attribute 'se_action_{0}': Parameter 'force' not supported "
+                                  "for function '{1}'", name, function)
+            elif value and function == "set":
+                # Convert type "set" with force=True to type "force"
+                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'set' to 'force', "
+                               "because parameter 'force' is 'True'!", name)
+                _returnfunction = "force"
+            elif not value and function == "force":
+                # Convert type "force" with force=False to type "set"
+                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'force' to 'set', "
+                               "because parameter 'force' is 'False'!", name)
+                _returnfunction = "set"
+        return _issue, _returnfunction
+    def __check_mode_setting(self, name, value, function, action):
+        if value is not None:
+            possible_mode_list = ['first', 'last', 'all']
+            _issue = None
+            # Parameter mode is supported only for type "remove"
+            if not "remove" in function:
+                _issue = {name: {'issue': ['Parameter mode not supported for this function'], 'attribute': 'mode',
+                                 'issueorigin': [{'state': 'unknown', 'action': function}]}}
+                self._log_warning("Attribute 'se_action_{0}': Parameter 'mode' not supported for function '{1}'",
+                                  name, function)
+            elif function in ["remove", "remove all from list"]:
+                # Convert type "remove" with mode to specific remove type
+                if value in possible_mode_list:
+                    if value == "all":
+                        action = StateEngineAction.SeActionRemoveAllItem(self._abitem, name)
+                    elif value == "first":
+                        action = StateEngineAction.SeActionRemoveFirstItem(self._abitem, name)
+                    elif value == "last":
+                        action = StateEngineAction.SeActionRemoveLastItem(self._abitem, name)
+                    self._log_info("Attribute 'se_action_{0}': Function 'remove' changed to '{1}'", name, value)
+                else:
+                    _issue = {
+                        name: {'issue': ['Parameter {} not allowed for mode!'.format(value)], 'attribute': 'mode',
+                               'issueorigin': [{'state': 'unknown', 'action': function}]}}
+                    self._log_warning(
+                        "Attribute 'se_action_{0}': Parameter '{1}' for 'mode' is wrong - can only be {2}",
+                        name, value, possible_mode_list)
+            return _issue, action
+        return None, None
 
     # ensure that action exists and create if missing
     # func: action function
     # name: action name
     def __ensure_action_exists(self, func, name):
         # Check if action exists
+        _issue = None
         if name in self.__actions:
-            return True
+            return True, _issue
 
         # Create action depending on function
         if func == "se_set":
@@ -175,41 +255,61 @@ class SeActions(StateEngineTools.SeItemChild):
         elif func == "se_removelast":
             action = StateEngineAction.SeActionRemoveLastItem(self._abitem, name)
         else:
-            return False
+            return False, _issue
+        _issue_list = []
         if name in self.__unassigned_delays:
-            action.update_delay(self.__unassigned_delays[name])
+            _issue = action.update_delay(self.__unassigned_delays[name])
+            if _issue:
+                _issue_list.append(_issue)
             del self.__unassigned_delays[name]
 
         if name in self.__unassigned_instantevals:
-            action.update_instanteval(self.__unassigned_instantevals[name])
+            _issue = action.update_instanteval(self.__unassigned_instantevals[name])
+            if _issue:
+                _issue_list.append(_issue)
             del self.__unassigned_instantevals[name]
 
         if name in self.__unassigned_repeats:
-            action.update_repeat(self.__unassigned_repeats[name])
+            _issue = action.update_repeat(self.__unassigned_repeats[name])
+            if _issue:
+                _issue_list.append(_issue)
             del self.__unassigned_repeats[name]
 
         if name in self.__unassigned_modes:
-            action.update_modes(self.__unassigned_modes[name])
+            _val, _issue = action.update_mode(self.__unassigned_modes[name])
+            if _issue:
+                _issue_list.append(_issue)
+            _issue, action = self.__check_mode_setting(name, _val, func.replace("se_", ""), action)
+            if _issue:
+                _issue_list.append(_issue)
             del self.__unassigned_modes[name]
 
         if name in self.__unassigned_orders:
-            action.update_order(self.__unassigned_orders[name])
+            _issue = action.update_order(self.__unassigned_orders[name])
+            if _issue:
+                _issue_list.append(_issue)
             del self.__unassigned_orders[name]
 
         if name in self.__unassigned_conditionsets:
-            action.update_conditionsets(self.__unassigned_conditionsets[name])
+            _issue = action.update_conditionset(self.__unassigned_conditionsets[name])
+            if _issue:
+                _issue_list.append(_issue)
             del self.__unassigned_conditionsets[name]
 
         if name in self.__unassigned_previousconditionsets:
-            action.update_previousconditionsets(self.__unassigned_previousconditionsets[name])
+            _issue = action.update_previousconditionset(self.__unassigned_previousconditionsets[name])
+            if _issue:
+                _issue_list.append(_issue)
             del self.__unassigned_previousconditionsets[name]
 
         if name in self.__unassigned_previousstate_conditionsets:
-            action.update_previousconditionsets(self.__unassigned_previousstate_conditionsets[name])
+            _issue = action.update_previousconditionset(self.__unassigned_previousstate_conditionsets[name])
+            if _issue:
+                _issue_list.append(_issue)
             del self.__unassigned_previousstate_conditionsets[name]
 
         self.__actions[name] = action
-        return True
+        return True, _issue_list
 
     def __handle_combined_action_attribute(self, name, value_list):
         # value_list needs to be string or list
@@ -235,7 +335,7 @@ class SeActions(StateEngineTools.SeItemChild):
             else:
                 parameter[key] = val
         parameter['action'] = name
-
+        _issue_list = []
         # function given and valid?
         if parameter['function'] is None:
             raise ValueError("Attribute 'se_action_{0}: Parameter 'function' must be set!".format(name))
@@ -244,64 +344,55 @@ class SeActions(StateEngineTools.SeItemChild):
             raise ValueError("Attribute 'se_action_{0}: Invalid value '{1}' for parameter "
                              "'function'!".format(name, parameter['function']))
 
-        # handle force
-        if parameter['force'] is not None:
-            # Parameter force is supported only for type "set" and type "force"
-            if parameter['function'] != "set" and parameter['function'] != "force":
-                self._log_warning("Attribute 'se_action_{0}': Parameter 'force' not supported "
-                                  "for function '{1}'", name, parameter['function'])
-            elif parameter['force'] and parameter['function'] == "set":
-                # Convert type "set" with force=True to type "force"
-                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'set' to 'force', "
-                               "because parameter 'force' is 'True'!", name)
-                parameter['function'] = "force"
-            elif not parameter['force'] and parameter['function'] == "force":
-                # Convert type "force" with force=False to type "set"
-                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'force' to 'set', "
-                               "because parameter 'force' is 'False'!", name)
-                parameter['function'] = "set"
-
-        possible_mode_list = ['first', 'last', 'all']
-        if parameter['mode'] is not None:
-            # Parameter mode is supported only for type "remove"
-            if parameter['function'] != "remove":
-                self._log_warning("Attribute 'se_action_{0}': Parameter 'mode' not supported for function '{1}'",
-                                  name, parameter['function'])
-            elif parameter['mode'] and parameter['function'] == "remove":
-                # Convert type "remove" with mode to specific remove type
-                if parameter['mode'] in possible_mode_list:
-                    parameter['function'] = "remove{}".format(parameter['mode'])
-                    self._log_info("Attribute 'se_action_{0}': Function 'remove' changed to '{1}'", name, parameter['function'])
-                else:
-                    parameter['function'] = "remove"
-                    self._log_info("Attribute 'se_action_{0}': Parameter '{1}' for 'mode' is wrong - can only be {2}",
-                                   name, parameter['mode'], possible_mode_list)
-
+        _issue = None
+        _issue, parameter['function'] = self.__check_force_setting(name, parameter['force'], parameter['function'])
+        if _issue:
+            _issue_list.append(_issue)
+        _issue, _action = self.__check_mode_setting(name, parameter['mode'], parameter['function'], parameter['action'])
+        if _issue:
+            _issue_list.append(_issue)
+        if _action:
+            self.__actions[name] = _action
         # create action based on function
         exists = False
         try:
             if parameter['function'] == "set":
-                if self.__ensure_action_exists("se_set", name):
+                _action_exists, _issue = self.__ensure_action_exists("se_set", name)
+                if _issue:
+                    _issue_list.append(_issue)
+                if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'to')
                     self.__actions[name].update(parameter['to'])
                     exists = True
             elif parameter['function'] == "force":
-                if self.__ensure_action_exists("se_force", name):
+                _action_exists, _issue = self.__ensure_action_exists("se_force", name)
+                if _issue:
+                    _issue_list.append(_issue)
+                if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'to')
                     self.__actions[name].update(parameter['to'])
                     exists = True
             elif parameter['function'] == "run":
-                if self.__ensure_action_exists("se_run", name):
+                _action_exists, _issue = self.__ensure_action_exists("se_run", name)
+                if _issue:
+                    _issue_list.append(_issue)
+                if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'eval')
                     self.__actions[name].update(parameter['eval'])
                     exists = True
             elif parameter['function'] == "byattr":
-                if self.__ensure_action_exists("se_byattr", name):
+                _action_exists, _issue = self.__ensure_action_exists("se_byattr", name)
+                if _issue:
+                    _issue_list.append(_issue)
+                if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'attribute')
                     self.__actions[name].update(parameter['attribute'])
                     exists = True
             elif parameter['function'] == "trigger":
-                if self.__ensure_action_exists("se_trigger", name):
+                _action_exists, _issue = self.__ensure_action_exists("se_trigger", name)
+                if _issue:
+                    _issue_list.append(_issue)
+                if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'logic')
                     if 'value' in parameter and parameter['value'] is not None:
                         self.__actions[name].update(parameter['logic'] + ':' + parameter['value'])
@@ -309,59 +400,102 @@ class SeActions(StateEngineTools.SeItemChild):
                         self.__actions[name].update(parameter['logic'])
                     exists = True
             elif parameter['function'] == "special":
-                if self.__ensure_action_exists("se_special", name):
+                _action_exists, _issue = self.__ensure_action_exists("se_special", name)
+                if _issue:
+                    _issue_list.append(_issue)
+                if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
                     exists = True
             elif parameter['function'] == "add":
-                if self.__ensure_action_exists("se_add", name):
+                _action_exists, _issue = self.__ensure_action_exists("se_add", name)
+                if _issue:
+                    _issue_list.append(_issue)
+                if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
                     exists = True
             elif parameter['function'] == "remove":
-                if self.__ensure_action_exists("se_remove", name):
+                _action_exists, _issue = self.__ensure_action_exists("se_remove", name)
+                if _issue:
+                    _issue_list.append(_issue)
+                if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
                     exists = True
             elif parameter['function'] == "removeall":
-                if self.__ensure_action_exists("se_removeall", name):
+                _action_exists, _issue = self.__ensure_action_exists("se_removeall", name)
+                if _issue:
+                    _issue_list.append(_issue)
+                if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
                     exists = True
             elif parameter['function'] == "removefirst":
-                if self.__ensure_action_exists("se_removefirst", name):
+                _action_exists, _issue = self.__ensure_action_exists("se_removefirst", name)
+                if _issue:
+                    _issue_list.append(_issue)
+                if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
                     exists = True
             elif parameter['function'] == "removelast":
-                if self.__ensure_action_exists("se_removelast", name):
+                _action_exists, _issue = self.__ensure_action_exists("se_removelast", name)
+                if _issue:
+                    _issue_list.append(_issue)
+                if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
                     exists = True
+
         except ValueError as ex:
             exists = False
             if name in self.__actions:
                 del self.__actions[name]
+            _issue = {name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': parameter['function']}]}}
+            _issue_list.append(_issue)
             self._log_warning("Ignoring action {0} because: {1}", name, ex)
 
         # add additional parameters
         if exists:
             if parameter['instanteval'] is not None:
-                self.__actions[name].update_instanteval(parameter['instanteval'])
+                _issue = self.__actions[name].update_instanteval(parameter['instanteval'])
+                if _issue:
+                    _issue_list.append(_issue)
             if parameter['repeat'] is not None:
-                self.__actions[name].update_repeat(parameter['repeat'])
+                _issue = self.__actions[name].update_repeat(parameter['repeat'])
+                if _issue:
+                    _issue_list.append(_issue)
             if parameter['delay'] != 0:
-                self.__actions[name].update_delay(parameter['delay'])
+                _issue = self.__actions[name].update_delay(parameter['delay'])
+                if _issue:
+                    _issue_list.append(_issue)
             if parameter['order'] is not None:
-                self.__actions[name].update_order(parameter['order'])
+                _issue = self.__actions[name].update_order(parameter['order'])
+                if _issue:
+                    _issue_list.append(_issue)
             if parameter['conditionset'] is not None:
-                self.__actions[name].update_conditionsets(parameter['conditionset'])
+                _issue = self.__actions[name].update_conditionset(parameter['conditionset'])
+                if _issue:
+                    _issue_list.append(_issue)
             if parameter['previousconditionset'] is not None:
-                self.__actions[name].update_previousconditionsets(parameter['previousconditionset'])
+                _issue = self.__actions[name].update_previousconditionset(parameter['previousconditionset'])
+                if _issue:
+                    _issue_list.append(_issue)
             if parameter['previousstate_conditionset'] is not None:
-                self.__actions[name].update_previousstate_conditionsets(parameter['previousstate_conditionset'])
+                _issue = self.__actions[name].update_previousstate_conditionset(parameter['previousstate_conditionset'])
+                if _issue:
+                    _issue_list.append(_issue)
             if parameter['mode'] is not None:
-                self.__actions[name].update_modes(parameter['mode'])
+                _val, _issue = self.__actions[name].update_mode(parameter['mode'])
+                if _issue:
+                    _issue_list.append(_issue)
+                _issue, _action = self.__check_mode_setting(name, _val, parameter['function'], self.__actions[name])
+                if _issue:
+                    _issue_list.append(_issue)
+                if _action:
+                    self.__actions[name] = _action
+        return _issue_list
 
     # noinspection PyMethodMayBeStatic
     def __raise_missing_parameter_error(self, parameter, param_name):
@@ -372,11 +506,14 @@ class SeActions(StateEngineTools.SeItemChild):
     # Check the actions optimize and complete them
     # item_state: item to read from
     def complete(self, item_state, evals_items=None):
+        _status = {}
         for name in self.__actions:
             try:
-                self.__actions[name].complete(item_state, evals_items)
+                _status.update(self.__actions[name].complete(item_state, evals_items))
             except ValueError as ex:
+                _status.update({name: {'issue': ex, 'issueorigin': {'state': item_state.property.path, 'action': 'unknown'}}})
                 raise ValueError("State '{0}', Action '{1}': {2}".format(item_state.property.path, name, ex))
+        return _status
 
     def set(self, value):
         for name in self.__actions:
@@ -390,12 +527,14 @@ class SeActions(StateEngineTools.SeItemChild):
     # item_allow_repeat: Is repeating actions generally allowed for the item?
     # state: state item triggering the action
     # additional_actions: SeActions-Instance containing actions which should be executed, too
-    def execute(self, is_repeat: bool, allow_item_repeat: bool, state: str, additional_actions=None):
+    def execute(self, is_repeat: bool, allow_item_repeat: bool, state, additional_actions=None):
         actions = []
         for name in self.__actions:
+            self._log_develop("Append action {}", self.__actions[name])
             actions.append((self.__actions[name].get_order(), self.__actions[name]))
         if additional_actions is not None:
             for name in additional_actions.__actions:
+                self._log_develop("Append additional action {}", additional_actions.__actions[name])
                 actions.append((additional_actions.__actions[name].get_order(), additional_actions.__actions[name]))
         for order, action in sorted(actions, key=lambda x: x[0]):
             self.__queue.put([action, is_repeat, allow_item_repeat, state])

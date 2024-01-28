@@ -1,0 +1,367 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 5000 %}
+
+<!-- set update_params if you need to provide additional parameters for the auto-update function-->
+<!-- {% set update_params = item_id %}-->
+
+<!-- if you don't need any buttons in the header, disable them completely-->
+{% set buttons = true %}
+
+<!-- if you don't need any auto-refresh elements in the header, disable them-->
+{% set autorefresh_buttons = false %}
+
+<!-- if you don't need the reload_button in the header, disable it-->
+{% set reload_button = false %}
+
+<!-- if you don't need the close in the header, disable it-->
+{% set close_button = true %}
+
+<!-- for some situations it might be useful to know the number of datatable rows shown on the current page.
+Activate that function if needed, otherwise just remove the line to increase performance -->
+{% set row_count = true %}
+
+<!-- if new values should be retrieved using automatic page update right in the beginning and on page changes -->
+{% set initial_update = true %}
+
+<!--
+	Additional styles go into this block. Examples are for datatables
+-->
+{% block pluginstyles %}
+<style>
+  table th.value {
+    width: 100px;
+  }
+  /*
+  These are used for highligt effect in web interface when a value changes. If you don't want to overwrite the
+  default color, you can remove the entries here as the classes are already defined in smarthomeng.css
+  */
+  .shng_effect_highlight {
+    background-color: #FFFFE0;
+  }
+  .shng_effect_standard {
+    background-color: none;
+  }
+  .container {
+    margin-left: 0!important;
+    margin-right: 0!important;
+  }
+</style>
+{% endblock pluginstyles %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+      
+      shngInsertText('batttype',objResponse['batttype']);
+      shngInsertText('bydip',objResponse['bydip']);
+      shngInsertText('soc',objResponse['soc']);
+      shngInsertText('capacity_total',objResponse['capacity_total']);
+      shngInsertText('power_charge',objResponse['power_charge']);
+      shngInsertText('power_discharge',objResponse['power_discharge']);
+      shngInsertText('last_homedata',objResponse['last_homedata']);
+      shngInsertText('last_diagdata',objResponse['last_diagdata']);
+      shngInsertText('imppath',objResponse['imppath']);
+      document.getElementById('connection').checked = objResponse['connection'];
+
+      shngInsertText('r1_table',objResponse['r1_table']);
+      shngInsertText('r2_table',objResponse['r2_table']);
+      shngInsertText('r3_table',objResponse['r3_table']);
+      shngInsertText('r4_table',objResponse['r4_table']);
+      shngInsertText('r5_table',objResponse['r5_table']);
+            
+      var source = 'static/img/bydvt1.png',
+          timestamp = (new Date()).getTime(),
+          newUrl = source + '?_=' + timestamp;
+      document.getElementById("bydvt1").src = newUrl;
+      var source = 'static/img/bydvt2.png',
+          timestamp = (new Date()).getTime(),
+          newUrl = source + '?_=' + timestamp;
+      document.getElementById("bydvt2").src = newUrl;
+      var source = 'static/img/bydvt3.png',
+          timestamp = (new Date()).getTime(),
+          newUrl = source + '?_=' + timestamp;
+      document.getElementById("bydvt3").src = newUrl;
+      
+      var source = 'static/img/bydvbt1.png',
+          timestamp = (new Date()).getTime(),
+          newUrl = source + '?_=' + timestamp;
+      document.getElementById("bydvbt1").src = newUrl;
+      var source = 'static/img/bydvbt2.png',
+          timestamp = (new Date()).getTime(),
+          newUrl = source + '?_=' + timestamp;
+      document.getElementById("bydvbt2").src = newUrl;
+      var source = 'static/img/bydvbt3.png',
+          timestamp = (new Date()).getTime(),
+          newUrl = source + '?_=' + timestamp;
+      document.getElementById("bydvbt3").src = newUrl;
+      
+      var source = 'static/img/bydtt1.png',
+          timestamp = (new Date()).getTime(),
+          newUrl = source + '?_=' + timestamp;
+      document.getElementById("bydtt1").src = newUrl;
+      var source = 'static/img/bydtt2.png',
+          timestamp = (new Date()).getTime(),
+          newUrl = source + '?_=' + timestamp;
+      document.getElementById("bydtt2").src = newUrl;
+      var source = 'static/img/bydtt3.png',
+          timestamp = (new Date()).getTime(),
+          newUrl = source + '?_=' + timestamp;
+      document.getElementById("bydtt3").src = newUrl;
+      
+		}
+	}
+</script>
+<!--
+	This part is used to implement datatable JS for the tables. It allows resorting tables by column, etc.
+	For each table you have to implement the code part $('#<table_id>').DataTable(..); where the <table_id> matches the id of a table tag
+-->
+<script>
+    $(document).ready( function () {
+		/*
+		loading defaults from /modules/http/webif/gstatic/datatables/datatables.defaults.js
+		You can copy that file, put it in your plugin directory, rename the "bind" function and
+		trigger that function here instead of datatables_defaults if you want to change the behaviour.
+		Of course you can also overwrite defaults by putting the option declarations in {} below.
+		*/
+		$(window).trigger('datatables_defaults');
+		{% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+		if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+			resize = true;
+			webif_pagelength = -1;
+			console.log('Activating automatic table resize ' + webif_pagelength);
+		}
+		else {
+			resize = false;
+		}
+		try {
+			/*
+			Copy this part for every datatable on your page. Adjust options if necessary.
+			pageLength and pageResize should be included as they are to adjust it based on the plugin settings
+			*/
+			maintable = $('#maintable').DataTable( {
+			  /* If you want to define your own columnDefs options (e.g. for hiding a column by default), use the concat function shown here.
+			  */
+			  columnDefs: [{ "targets": [2], "className": "value"}].concat($.fn.dataTable.defaults.columnDefs),
+			  pageLength: webif_pagelength,
+			  pageResize: resize});
+		}
+		catch (e) {
+			console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
+		}
+	});
+</script>
+
+<script>
+  function checkbox(value)
+  {
+    console.log('debug_log_option_'+'_'+value)
+    jQuery.get('byd_connection'+'_'+value)
+  }
+</script>
+
+<!-- 
+<script>
+  window.refresh.update({dataSet:'',update_params:'',update_interval: 5000,update_active:true});
+</script>
+ -->
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<!-- add a style="min-width:..px;" if you want to define a minimum width for responsive behaviour -->
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Batterietyp') }}:</strong></td>
+			<td id="batttype" class="py-1">{{ _('Laden') }} ...</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>BYD IP:</strong></td>
+			<td id="bydip" class="py-1"></td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Batterieladung') }}:</strong></td>
+			<td id="soc" class="py-1"></td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Gesamtkapazität') }}:</strong></td>
+			<td id="capacity_total" class="py-1"></td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Ladeleistung') }}:</strong></td>
+			<td id="power_charge" class="py-1"></td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Entladeleistung') }}:</strong></td>
+			<td id="power_discharge" class="py-1"></td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Basisdaten') }}:</strong></td>
+			<td id="last_homedata" class="py-1"></td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Diagnosedaten') }}:</strong></td>
+			<td id="last_diagdata" class="py-1"></td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==1 %}
+	<div>
+    <input type="checkbox" id="connection" name="connection" oninput="checkbox(this.checked);" title={{ _('Verbindung') }}>&nbsp;{{ _('Verbindung') }}&nbsp;</input>
+	</div>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 6)
+-->
+{% set tabcount = 5 %}
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 1 %}
+{% endif %}
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>"+_('BYD Home')+"</strong>" %}
+{% block bodytab1 %}
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <p></p>
+      <table><tr><td id="r1_table">{{ _('Laden') }} ...</td></tr></table>
+    </div>
+    <div class="col">
+      <p></p>
+      <table><tr><td id="r2_table"></td></tr></table>
+    </div>
+  </div>
+</div>
+{% endblock bodytab1 %}
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>"+_('BYD Diagnose')+"</strong>" %}
+{% block bodytab2 %}
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <p></p>
+      <table><tr><td id="r3_table">{{ _('Laden') }} ...</td></tr></table>
+    </div>
+    <div class="col">
+      <p></p>
+      <table><tr><td id="r4_table"></td></tr></table>
+    </div>
+  </div>
+</div>
+{% endblock bodytab2 %}
+
+<!--
+	Content block for the third tab of the Webinterface
+-->
+{% set tab3title = "<strong>"+_('BYD Spannungen')+"</strong>" %}
+{% block bodytab3 %}
+<table style="background-color:#000000;">
+  <tr>
+    <td><img id="bydvt1" alt="Turm 1 nicht vorhanden" src="static/img/bydvt1.png"></td>
+  </tr>
+  <tr>
+    <td><img id="bydvbt1" alt="Turm 1 nicht vorhanden" src="static/img/bydvbt1.png"></td>
+  </tr>
+  <tr>
+    <td><img id="bydvt2" alt="Turm 2 nicht vorhanden" src="static/img/bydvt2.png"></td>
+  </tr>
+  <tr>
+    <td><img id="bydvbt2" alt="Turm 2 nicht vorhanden" src="static/img/bydvbt2.png"></td>
+  </tr>
+  <tr>
+    <td><img id="bydvt3" alt="Turm 3 nicht vorhanden" src="static/img/bydvt3.png"></td>
+  </tr>
+  <tr>
+    <td><img id="bydvbt3" alt="Turm 3 nicht vorhanden" src="static/img/bydvbt3.png"></td>
+  </tr>
+</table>
+{% endblock bodytab3 %}
+</table>
+
+<!--
+	Content block for the fourth tab of the Webinterface
+-->
+{% set tab4title = "<strong>"+_('BYD Temperaturen')+"</strong>" %}
+{% block bodytab4 %}
+<p></p>
+<table style="background-color:#000000;">
+  <tr>
+    <td><img id="bydtt1" alt="Turm 1 nicht vorhanden" src="static/img/bydtt1.png"></td>
+  </tr>
+  <tr>
+    <td><img id="bydtt2" alt="Turm 2 nicht vorhanden" src="static/img/bydtt2.png"></td>
+  </tr>
+  <tr>
+    <td><img id="bydtt3" alt="Turm 3 nicht vorhanden" src="static/img/bydtt3.png"></td>
+  </tr>
+</table>
+{% endblock bodytab4 %}
+
+<!--
+	Content block for the fourth tab of the Webinterface
+-->
+{% set tab5title = "<strong>"+_('BYD Log-Daten')+"</strong>" %}
+{% block bodytab5 %}
+<p></p>
+<table><tr><td id="r5_table">{{ _('Laden') }} ...</td></tr></table>
+<!--
+<p><strong>BMU</strong></p>
+<p></p>
+<table>
+  <tr>
+    <td id="log_html" class="py-1"></td>
+  </tr>
+</table>
+<p></p>
+<p><strong>{{ _('Turm') }} 1 BMS</strong></p>
+<p></p>
+<table>
+  <tr>
+    <td id="t1_log_html" class="py-1"></td>
+  </tr>
+</table>
+<p></p>
+<p><strong>{{ _('Turm') }} 2 BMS</strong></p>
+<p></p>
+<table>
+  <tr>
+    <td id="t2_log_html" class="py-1"></td>
+  </tr>
+</table>
+<p></p>
+<p><strong>{{ _('Turm') }} 3 BMS</strong></p>
+<p></p>
+<table>
+  <tr>
+    <td id="t3_log_html" class="py-1"></td>
+  </tr>
+</table>
+-->
+{% endblock bodytab5 %}

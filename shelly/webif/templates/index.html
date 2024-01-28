@@ -1,14 +1,248 @@
 {% extends "base_plugin.html" %}
 
 {% set logo_frame = false %}
+{% set bordered_tab = true %}
 
 <!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
-{% set update_interval = 2000 %}
+{% set update_interval = 5000 %}
+{% set reload_button = true %}
+
+{% block pluginstyles %}
+<style>
+  .type {
+    width: 50px;
+  }
+  .value {
+      text-align:right;
+	  width: 100px;
+  }
+  .sensor {
+    width: 160px;
+  }
+  .not_discovered {
+    color:indianred;
+  }
+  .sensor_blue {
+    width: 160px;
+    color:blue;
+  }
+  .deviceclass {
+    width: 130px;
+  }
+  .devicetype {
+    width: 130px;
+  }
+  .change_update {
+    width: 150px;
+  }
+  .bool {
+    width: 70px;
+  }
+  .keys {
+    min-width: 240px;
+  }
+</style>
+{% endblock pluginstyles %}
 
 <!--
 	Additional script tag for plugin specific javascript code go into this block
 -->
 {% block pluginscripts %}
+<script>
+  $(document).ready( function () {
+    $(window).trigger('datatables_defaults');
+    try {
+      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+        resize = true;
+        webif_pagelength = -1;
+		  console.log('Activating automatic table resize');
+      }
+      else {
+        resize = false;
+      }
+    }
+    catch (e) {
+		webif_pagelength = 100;
+		resize = false;
+		console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+	}
+	try {
+		itemtable = $('#itemtable').DataTable( {
+			columnDefs: [
+				{
+					title: "{{ _('Item') }}",
+					targets: [1]
+				},
+				{
+					title: "{{ _('Typ') }}",
+					targets: [2], "className": "type"
+				},
+				{
+					title: "{{ _('Wert') }}",
+					targets: [3], "className": "value dt-head-right"
+				},
+				{
+					title: "{{ _('Devicetype') }}",
+					targets: [4], "className": "shelly_type"
+		  		},
+				{
+					title: "{{ _('Shelly ID') }}",
+					targets: [5], "className": "shelly_id"
+		  		},
+				{
+					title: "{{ _('Letztes Update') }}",
+					targets: [6], "className": "change_update"
+				},
+				{
+					title: "{{ _('Letzte Änderung') }}",
+					targets: [7], "className": "change_update"
+				}
+			].concat($.fn.dataTable.defaults.columnDefs),
+			pageLength: webif_pagelength,
+			pageResize: resize});
+
+		devicetable = $('#devicetable').DataTable( {
+			columnDefs: [
+				{
+					title: "{{ _('Device') }}",
+					targets: [1], "className": "deviceid",
+			        render: function ( data, type, row, meta ) {
+            			return '<a href="http://' +  data + '" target="_blank">'+data+'</a>';
+        			}
+				},
+				{
+					title: "{{ _('Devicetype') }}",
+					targets: [2], "className": "devicetype"
+				},
+				{
+					title: "{{ _('API') }}",
+					targets: [3], "className": "deviceapi"
+				},
+				{
+					title: "{{ _('Online') }}",
+					targets: [4], "className": "devicetype"
+				},
+				{
+					title: "{{ _('Mac Adresse') }}",
+					targets: [5], "className": "devicemac"
+				},
+				{
+					title: "{{ _('IP Adresse') }}",
+					targets: [6], "className": "deviceip",
+			        render: function ( data, type, row, meta ) {
+            			return '<a href="http://' +  data + '" target="_blank">'+data+'</a>';
+        			}
+				},
+				{
+					title: "{{ _('FW Version') }}",
+					targets: [7], "className": "devicefw"
+				},
+				{
+					title: "{{ _('neue FW verfügbar') }}",
+					targets: [8], "className": "devicefw"
+				},
+				{
+					title: "{{ _('rssi') }}",
+					targets: [9], "className": "devicerssi"
+				},
+				{
+					title: "{{ _('List Attributes') }}",
+					targets: [10], "className": "devicelistattrs"
+				},
+				{
+					title: "{{ _('Items konfiguriert') }}",
+					targets: [11], "className": "bool"
+				}
+			].concat($.fn.dataTable.defaults.columnDefs),
+			pageLength: webif_pagelength,
+			pageResize: resize});
+		}
+		catch (e) {
+			console.warn("Datatable Javascript not loaded: " +e);
+    }
+
+  });
+</script>
+
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+
+			// Update item table
+			let sensorcount = 0
+			let iodevicecount = 0
+			let ibuttoncount = 0
+			itemtable.clear();
+
+			let items = objResponse['items'];
+			for (item in items) {
+				let item_id = items[item]['path'];
+				let item_type = items[item]['type'];
+				let item_value = items[item]['value'];
+				let shelly_type = items[item]['shelly_type'];
+				let shelly_id = items[item]['shelly_id'];
+				let last_update = items[item]['last_update'];
+				let last_change = items[item]['last_change'];
+
+				let newRow = itemtable.row.add( [ null, item_id, item_type, item_value, shelly_type, shelly_id, last_update, last_change ] ).draw(false).node();
+			}
+			itemtable.draw(false);
+
+			// Update deivce table
+			devicetable.clear();
+			let devices = objResponse['devices'];
+			for (device in devices) {
+				let deviceid = devices[device]['shelly_id'];
+				let devicetype = devices[device]['shelly_type'];
+				let devicegen = devices[device]['shelly_gen'];
+				let deviceonline = devices[device]['shelly_online'];
+				let devicemac = devices[device]['shelly_mac'];
+				let deviceip = devices[device]['shelly_ip'];
+				let devicefw = devices[device]['shelly_fw'];
+				let devicenewfw = devices[device]['shelly_newfw'];
+				let devicerssi = devices[device]['shelly_rssi'];
+				let devicelistattrs = devices[device]['list_attrs'];
+
+				let items_defined = devices[device]['items_defined'];
+				if (items_defined == 0) {
+					items_defined = "{{ _('Nein') }}"
+				}
+				let newRow = devicetable.row.add( [ null, deviceid, devicetype, devicegen, deviceonline, devicemac, deviceip, devicefw, devicenewfw, devicerssi, devicelistattrs, items_defined] ).draw(false).node();
+			}
+
+			shngInsertText ('devicecount', objResponse['devices'].length);
+			devicetable.draw(false);
+
+			shngInsertText ('broker_uptime', objResponse['broker']['broker_uptime']);
+
+			shngInsertText ('version', objResponse['broker']['broker_info']['version']);
+			shngInsertText ('active_clients', objResponse['broker']['broker_info']['active_clients']);
+			shngInsertText ('subscriptions', objResponse['broker']['broker_info']['subscriptions']);
+			shngInsertText ('stored_messages', objResponse['broker']['broker_info']['stored_messages']);
+			shngInsertText ('retained_messages', objResponse['broker']['broker_info']['retained_messages']);
+
+			shngInsertText ('msg_rcv_1min', objResponse['broker']['broker_info']['msg_rcv_1min']);
+			shngInsertText ('msg_rcv_5min', objResponse['broker']['broker_info']['msg_rcv_5min']);
+			shngInsertText ('msg_rcv_15min', objResponse['broker']['broker_info']['msg_rcv_15min']);
+			shngInsertText ('msg_snt_1min', objResponse['broker']['broker_info']['msg_snt_1min']);
+			shngInsertText ('msg_snt_5min', objResponse['broker']['broker_info']['msg_snt_5min']);
+			shngInsertText ('msg_snt_15min', objResponse['broker']['broker_info']['msg_snt_15min']);
+		}
+
+	}
+</script>
+
+{% endblock pluginscripts %}
+
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+<!--
+{ % block pluginscripts % }
 <script>
 	function handleUpdatedData(response, dataSet=null) {
 		if (dataSet === 'devices_info' || dataSet === null) {
@@ -37,8 +271,8 @@
 		}
 	}
 </script>
-{% endblock pluginscripts %}
-
+{ % endblock pluginscripts % }
+-->
 
 {% block headtable %}
 	<table class="table table-striped table-hover">
@@ -99,69 +333,27 @@
 <!--
 	Content block for the first tab of the Webinterface
 -->
-{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong>" %}
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong>" ~ " " ~ _(('Items')) ~ "</strong> (<span id=itemcountX>" ~ p.get_item_list()|length ~ "</span>)"%}
 {% block bodytab1 %}
-<table class="table table-striped table-hover pluginList">
-	<thead>
-	<tr>
-		<th>{{ _('Item') }}</th>
-		<th>{{ _('Typ') }}</th>
-		<th>{{ _('Wert') }}</th>
-		<th>{{ _('Shelly Device') }}</th>
-		<th>{{ _('Shelly ID') }}</th>
-		<th>{{ _('Relais') }}</th>
-		<th>{{ _('Letztes Update') }}</th>
-		<th>{{ _('Letzter Change') }}</th>
-	</tr>
-	</thead>
-	{% for item in p.shelly_items %}
-		<tr>
-			<td class="py-1">{{ item._path }}</td>
-			<td class="py-1">{{ item._type }}</td>
-			<td id="{{ item.id() }}_value" class="py-1">{{ item() }}</td>
-			<td class="py-1">{{ p.get_iattr_value(item.conf, 'shelly_type') }}</td>
-			<td class="py-1">{{ p.get_iattr_value(item.conf, 'shelly_id') }}</td>
+<script>
+	shngGetUpdatedData();
+</script>
+<div class="container-fluid table-resize" style="margin-top: 6px">
+	<table id="itemtable"></table>
+</div>
+{% endblock bodytab1 %}
 
-			<td class="py-1">{% if p.shelly_relay %}{{ p.get_iattr_value(item.conf, 'shelly_relay') }}{% else %}0{% endif %}</td>
-			<td id="{{ item.id() }}_last_update" class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-			<td id="{{ item.id() }}_last_change" class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-		</tr>
-	{% endfor %}
-</table>
-{% endblock %}
 
 
 <!--
 	Content block for the second tab of the Webinterface
 -->
-{% set tab2title = "<strong>" ~ p.get_shortname() ~ " Devices</strong>" %}
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Devices') ~ "</strong> (<span id=devicecount>" ~ p.discovered_devices()|length ~ "</span>)" %}
 {% block bodytab2 %}
-<table class="table table-striped table-hover pluginList">
-	<thead>
-	<tr>
-		<th>{{ _('Shelly ID') }}</th>
-		<th>{{ _('Online') }}</th>
-		<th>{{ _('Mac Adresse') }}</th>
-		<th>{{ _('IP Adresse') }}</th>
-		<th>{{ _('Firmware Version') }}</th>
-		<th>{{ _('neue Firmware') }}</th>
-		<th>{{ _('konfiguriert') }}</th>
-	</tr>
-	</thead>
-	{% for device in p.shelly_devices %}
-		<tr>
-			<td class="py-1"><a class="text-shng" href="http://{{ p.shelly_devices[device].ip }}" target="_blank">{{ device }}</a></td>
-			<td class="py-1">{{ p.shelly_devices[device].online }}</td>
-			<td class="py-1">{{ p.shelly_devices[device].mac }}</td>
-			<td class="py-1">{{ p.shelly_devices[device].ip }}</td>
-			<td class="py-1">{{ p.shelly_devices[device].fw_ver }}</td>
-			<td class="py-1">{{ p.shelly_devices[device].new_fw }}</td>
-
-			<td class="py-1">{{ p.shelly_devices[device].connected_to_item }}</td>
-		</tr>
-	{% endfor %}
-</table>
-{% endblock %}
+<div class="container-fluid table-resize" style="margin-top: 6px">
+	<table id="devicetable"></table>
+</div>
+{% endblock bodytab2 %}
 
 
 <!--
@@ -169,111 +361,88 @@
 -->
 {% set tab3title = "<strong>" ~ " Broker Information</strong>" %}
 {% block bodytab3 %}
-<table class="table table-striped table-hover pluginList">
-	<tr>
-		<td class="py-1"><strong>{{ 'Broker Version' }}</strong></td>
-		<td id="version" class="py-1">{{ p._broker.version }}</td>
-		<td class="py-1">{{ connection_result }}</td>
-<!--
-        <td width="500"></td>
--->
-	</tr>
-	<tr>
-		<td class="py-1"><strong>{{ 'Active Clients' }}</strong></td>
-		<td id="active_clients" class="py-1">{{ p._broker.active_clients }}</td>
-        <td></td>
-	</tr>
-	<tr>
-		<td class="py-1"><strong>{{ 'Subscriptions' }}</strong></td>
-		<td id="subscriptions" class="py-1">{{ p._broker.subscriptions }}</td>
-        <td></td>
-	</tr>
-	<tr>
-		<td class="py-1"><strong>{{ 'Messages stored' }}</strong></td>
-		<td id="stored_messages" class="py-1">{{ p._broker.stored_messages }}</td>
-        <td></td>
-	</tr>
-	<tr>
-		<td class="py-1"><strong>{{ 'Retained Messages' }}</strong></td>
-		<td id="retained_messages" class="py-1">{{ p._broker.retained_messages }}</td>
-        <td></td>
-	</tr>
+<div style="margin: 10px;">
+	<table class="table table-striped table-hover pluginList" style="margin-right: 40px" >
+		<tr>
+			<td class="py-1" style="width: 300px;"><strong>{{ 'Broker Version' }}</strong></td>
+			<td id="version" class="py-1">{{ p._broker.version }}</td>
+			<td class="py-1">{{ connection_result }}</td>
+	<!--
+			<td width="500"></td>
+	-->
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ 'Anzahl activer Clients' }}</strong></td>
+			<td id="active_clients" class="py-1">{{ p._broker.active_clients }}</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ 'Aktive Subscriptions' }}</strong></td>
+			<td id="subscriptions" class="py-1">{{ p._broker.subscriptions }}</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ 'gespeicherte Messages' }}</strong></td>
+			<td id="stored_messages" class="py-1">{{ p._broker.stored_messages }}</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ 'Retained Messages' }}</strong></td>
+			<td id="retained_messages" class="py-1">{{ p._broker.retained_messages }}</td>
+			<td></td>
+		</tr>
+		{% if p.broker_monitoring %}
+		<tr>
+			<td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Laufzeit') }}</strong></td>
+			<td id="broker_uptime" class="py-1">{{ p.broker_uptime() }}</td>
+			<td width="500"></td>
+		</tr>
+		<tr>
+			<td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
+		</tr>
+		{% endif %}
+	</table>
+
 	{% if p.broker_monitoring %}
-	<tr>
-		<td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
-	</tr>
-	<tr>
-		<td class="py-1"><strong>{{ _('Laufzeit') }}</strong></td>
-		<td id="broker_uptime" class="py-1">{{ p.broker_uptime() }}</td>
-        <td width="500"></td>
-	</tr>
-	<tr>
-		<td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
-	</tr>
+	<table class="table table-striped table-hover pluginList">
+		<thead>
+			<th class="py-1">{{ _('Message Durchsatz') }}</th>
+			<th class="py-1">{{ _('letzte Minute') }}</th>
+			<th class="py-1">{{ _('letzte 5 Min.') }}</th>
+			<th class="py-1">{{ _('letzte 15 Min.') }}</th>
+			<th width="500"></th>
+		</thead>
+		<tr>
+			<td class="py-1">{{ _('Durchschnittlich Messages je Minute empfangen') }}</td>
+			<td id="msg_rcv_1min" class="py-1">{{ p._broker.msg_rcv_1min }}</td>
+			<td id="msg_rcv_5min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_rcv_5min }}</td>
+			<td id="msg_rcv_15min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_rcv_15min }}</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1">{{ _('Durchschnittlich Messages je Minute gesendet') }}</td>
+			<td id="msg_snt_1min" class="py-1">{{ p._broker.msg_snt_1min }}</td>
+			<td id="msg_snt_5min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_snt_5min }}</td>
+			<td id="msg_snt_15min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_snt_15min }}</td>
+			<td></td>
+		</tr>
+	</table>
 	{% endif %}
-</table>
+</div>
+{% endblock bodytab3 %}
 
-{% if p.broker_monitoring %}
-<table class="table table-striped table-hover pluginList">
-	<thead>
-		<th class="py-1">{{ _('Message Durchsatz') }}</th>
-		<th class="py-1">{{ _('letzte Minute') }}</th>
-		<th class="py-1">{{ _('letzte 5 Min.') }}</th>
-		<th class="py-1">{{ _('letzte 15 Min.') }}</th>
-		<th width="500"></th>
-	</thead>
-	<tr>
-		<td class="py-1">{{ _('Durchschnittlich Messages je Minute empfangen') }}</td>
-		<td id="msg_rcv_1min" class="py-1">{{ p._broker.msg_rcv_1min }}</td>
-		<td id="msg_rcv_5min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_rcv_5min }}</td>
-		<td id="msg_rcv_15min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_rcv_15min }}</td>
-		<td></td>
-	</tr>
-	<tr>
-		<td class="py-1">{{ _('Durchschnittlich Messages je Minute gesendet') }}</td>
-		<td id="msg_snt_1min" class="py-1">{{ p._broker.msg_snt_1min }}</td>
-		<td id="msg_snt_5min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_snt_5min }}</td>
-		<td id="msg_snt_15min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_snt_15min }}</td>
-		<td></td>
-	</tr>
-</table>
-{% endif %}
-
-{% endblock %}
-msg_rcv_1min
 
 <!--
 	Content block for the fourth tab of the Webinterface
 	If wanted, a title for the tab can be defined as:
-		{  % set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+		{  % set tab4title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
 
 	It has to be defined before (and outside) the block bodytab3
 -->
 {% block bodytab4 %}
-<table class="table table-striped table-hover pluginList">
-	<thead>
-	<tr>
-		<th>Item</th>
-		<th>Typ</th>
-		<th>Wert</th>
-		<th>Topic In</th>
-		<th>Letztes Update</th>
-		<th>Letzter Change</th>
-	</tr>
-	</thead>
-	{% for item in items %}
-		{% if p.has_iattr(item.conf, 'mqtt_topic_in') or p.has_iattr(item.conf, 'mqtt_topic_out') %}
-			<tr>
-				<td class="py-1">{{ item._path }}</td>
-				<td class="py-1">{{ item._type }}</td>
-				<td class="py-1">{{ item() }}</td>
-				<td class="py-1">{% if p.has_iattr(item.conf, 'mqtt_topic_in') %}{{ p.get_iattr_value(item.conf, 'mqtt_topic_in') }}{% endif %}</td>
-				<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-				<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-			</tr>
-		{% endif %}
-	{% endfor %}
-</table>
 {% endblock %}
 
 

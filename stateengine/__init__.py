@@ -26,6 +26,7 @@ from . import StateEngineDefaults
 from . import StateEngineTools
 from . import StateEngineCliCommands
 from . import StateEngineFunctions
+from . import StateEngineValue
 from . import StateEngineWebif
 from . import StateEngineStructs
 import logging
@@ -34,12 +35,20 @@ import copy
 from lib.model.smartplugin import *
 from lib.item import Items
 from .webif import WebInterface
+from datetime import datetime
+
+try:
+    import pydotplus
+    VIS_ENABLED = True
+except Exception:
+    VIS_ENABLED = False
+
 
 logging.addLevelName(StateEngineDefaults.VERBOSE, 'DEVELOP')
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.9.5'
+    PLUGIN_VERSION = '2.0.0'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
@@ -52,36 +61,59 @@ class StateEngine(SmartPlugin):
         self.__sh = sh
         self.alive = False
         self.__cli = None
+        self.vis_enabled = self._test_visualization()
+        if not self.vis_enabled:
+            self.logger.warning(f'StateEngine is missing the PyDotPlus package, WebIf visualization is disabled')
         self.init_webinterface(WebInterface)
-        self.__log_directory = self.get_parameter_value("log_directory")
+        self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
         try:
             log_level = self.get_parameter_value("log_level")
-            StateEngineDefaults.log_level = log_level
-            log_directory = self.__log_directory
+            startup_log_level = self.get_parameter_value("startup_log_level")
+            log_directory = self.get_parameter_value("log_directory")
+            log_maxage = self.get_parameter_value("log_maxage")
+            log_level_value = StateEngineValue.SeValue(self, "Log Level", False, "num")
+            log_level_value.set(log_level)
+            SeLogger.log_level = log_level_value
+            startup_log_level_value = StateEngineValue.SeValue(self, "Startup Log Level", False, "num")
+            startup_log_level_value.set(startup_log_level)
+            SeLogger.startup_log_level = startup_log_level_value
+            log_maxage_value = StateEngineValue.SeValue(self, "Log MaxAge", False, "num")
+            log_maxage_value.set(log_maxage)
+            SeLogger.log_maxage = log_maxage_value
+            default_log_level_value = StateEngineValue.SeValue(self, "Default Log Level", False, "num")
+            default_log_level_value.set(log_level)
+            SeLogger.default_log_level = default_log_level_value
+            self.logger.info("Set default log level to {}, Startup log level to {}.".format(SeLogger.log_level, SeLogger.startup_log_level))
             self.logger.info("Init StateEngine (log_level={0}, log_directory={1})".format(log_level, log_directory))
             StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
-            StateEngineDefaults.suspend_time = self.get_parameter_value("suspend_time_default")
-            StateEngineDefaults.instant_leaveaction = self.get_parameter_value("instant_leaveaction")
+            suspend_time = self.get_parameter_value("suspend_time_default")
+            suspend_time_value = StateEngineValue.SeValue(self, "Default Suspend Time", False, "num")
+            suspend_time_value.set(suspend_time)
+            StateEngineDefaults.suspend_time = suspend_time_value
+            default_instant_leaveaction = self.get_parameter_value("instant_leaveaction")
+            self.__default_instant_leaveaction = StateEngineValue.SeValue(self, "Default Instant Leave Action", False, "bool")
+            self.__default_instant_leaveaction.set(default_instant_leaveaction)
+
             StateEngineDefaults.suntracking_offset = self.get_parameter_value("lamella_offset")
             StateEngineDefaults.lamella_open_value = self.get_parameter_value("lamella_open_value")
+            StateEngineDefaults.plugin_identification = self.get_fullname()
+            StateEngineDefaults.plugin_version = self.PLUGIN_VERSION
             StateEngineDefaults.write_to_log(self.logger)
-            self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
-            StateEngineCurrent.init(self.get_sh())
 
+            StateEngineCurrent.init(self.get_sh())
             base = self.get_sh().get_basedir()
-            log_directory = SeLogger.create_logdirectory(base, log_directory)
+            log_directory = SeLogger.manage_logdirectory(base, log_directory, False)
+            SeLogger.log_directory = log_directory
 
             if log_level > 0:
                 text = "StateEngine extended logging is active. Logging to '{0}' with log level {1}."
                 self.logger.info(text.format(log_directory, log_level))
-            log_maxage = self.get_parameter_value("log_maxage")
+
+
             if log_maxage > 0:
                 self.logger.info("StateEngine extended log files will be deleted after {0} days.".format(log_maxage))
-                SeLogger.set_logmaxage(log_maxage)
                 cron = ['init', '30 0 * *']
                 self.scheduler_add('StateEngine: Remove old logfiles', SeLogger.remove_old_logfiles, cron=cron, offset=0)
-            SeLogger.set_loglevel(log_level)
-            SeLogger.set_logdirectory(log_directory)
 
         except Exception as ex:
             self._init_complete = False
@@ -96,13 +128,14 @@ class StateEngine(SmartPlugin):
             item.expand_relativepathes('se_item_*', '', '')
         except Exception:
             pass
+        try:
+            item.expand_relativepathes('se_status_*', '', '')
+        except Exception:
+            pass
         if self.has_iattr(item.conf, "se_manual_include") or self.has_iattr(item.conf, "se_manual_exclude"):
             item._eval = "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.id() + "', caller, source)"
         elif self.has_iattr(item.conf, "se_manual_invert"):
             item._eval = "not sh." + item.id() + "()"
-        if self.has_iattr(item.conf, "se_log_level"):
-            base = self.get_sh().get_basedir()
-            SeLogger.create_logdirectory(base, self.__log_directory)
         return None
 
     # Initialization of plugin
@@ -115,6 +148,10 @@ class StateEngine(SmartPlugin):
                 try:
                     abitem = StateEngineItem.SeItem(self.get_sh(), item, self)
                     abitem.ab_alive = True
+                    abitem.update_leave_action(self.__default_instant_leaveaction)
+                    abitem.write_to_log()
+                    abitem.show_issues_summary()
+                    abitem.startup()
                     self._items[abitem.id] = abitem
                 except ValueError as ex:
                     self.logger.error("Problem with Item: {0}: {1}".format(item.property.path, ex))
@@ -194,18 +231,51 @@ class StateEngine(SmartPlugin):
         try:
             if graphtype == 'link':
                 return '<a href="static/img/visualisations/{}.svg"><img src="static/img/vis.png" width="30"></a>'.format(abitem)
-            else:
+            elif abitem.firstrun is None:
                 webif.drawgraph(vis_file)
-                return '<object type="image/svg+xml" data="static/img/visualisations/{0}.svg"\
-                        style="max-width: 100%; height: auto; width: auto\9; ">\
-                        <iframe src="static/img/visualisations/{0}.svg">\
-                        <img src="static/img/visualisations/{0}.svg"\
-                        style="max-width: 100%; height: auto; width: auto\9; ">\
-                        </iframe></object>'.format(abitem)
+                try:
+                    change_timestamp = os.path.getmtime(vis_file)
+                    change_datetime = datetime.fromtimestamp(change_timestamp)
+                    formatted_date = change_datetime.strftime('%H:%M:%S, %d. %B')
+                except Exception:
+                    formatted_date = "Unbekannt"
+                return f'<div style="margin-bottom:15px;">{self.translate("Letzte Aktualisierung:")} {formatted_date}<br></div>\
+                        <object type="image/svg+xml" data="static/img/visualisations/{abitem}.svg"\
+                        style="max-width: 100%; height: auto; width: auto;" id="visu_object">\
+                        <iframe src="static/img/visualisations/{abitem}.svg">\
+                        <img src="static/img/visualisations/{abitem}.svg"\
+                        style="max-width: 100%; height: auto; width: auto;">\
+                        </iframe></object>'
+            else:
+                return ''
+        except pydotplus.graphviz.InvocationException as ex:
+           self.logger.error("Problem getting graph for {}. Error: {}".format(abitem, ex))
+           return '<h4>Can not show visualization. Most likely GraphViz is not installed.</h4> ' \
+                  'Current issue: ' + str(ex) + '<br/>'\
+                  'Please make sure <a href="https://graphviz.org/download/" target="_new">' \
+                  'graphviz</a> is installed.<br/>' \
+                  'On Windows add install path to your environment path AND run dot -c. ' \
+                  'Additionally copy dot.exe to fdp.exe!'
         except Exception as ex:
-            self.logger.error("Problem getting graph for {}. Error: {}".format(abitem, ex))
-            return '<h4>Can not show visualization. Most likely GraphViz is missing.</h4> ' \
-                   'Please download and install <a href="https://graphviz.org/download/" target="_new">' \
-                   'https://graphviz.org/download/</a><br/>' \
-                   'on Windows add install path to your environment path AND run dot -c.' \
-                   'Additionally copy dot.exe to fdp.exe!'
+            self.logger.error("Problem getting graph for {}. Unspecified Error: {}".format(abitem, ex))
+            return '<h4>Can not show visualization.</h4> ' \
+                   'Current issue: ' + str(ex) + '<br/>'
+
+
+    def _test_visualization(self):
+        if not VIS_ENABLED:
+            return False
+
+        img_path = self.path_join(self.get_plugin_dir(), 'webif/static/img/visualisations/se_test')
+        graph = pydotplus.Dot('StateEngine', graph_type='digraph', splines='false',
+                                     overlap='scale', compound='false', imagepath=img_path)
+        graph.set_node_defaults(color='lightgray', style='filled', shape='box',
+                                       fontname='Helvetica', fontsize='10')
+        graph.set_edge_defaults(color='darkgray', style='filled', shape='box',
+                                       fontname='Helvetica', fontsize='10')
+
+        try:
+            result = graph.write_svg(img_path, prog='fdp')
+        except pydotplus.graphviz.InvocationException:
+            return False
+        return True

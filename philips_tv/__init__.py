@@ -38,11 +38,11 @@ from requests.auth import HTTPDigestAuth
 
 
 class Philips_TV(SmartPlugin):
-    PLUGIN_VERSION = '1.9.1'
+    PLUGIN_VERSION = '1.9.2'
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
-        Initalizes the plugin.
+        Initializes the plugin.
 
         """
 
@@ -133,6 +133,48 @@ class Philips_TV(SmartPlugin):
                         body = '{"key": "Standby"}'
                         #self.logger.debug("Sending poweroff command")
                         self.post("input/key", body=body, verbose=self.verbose, err_count=0)
+                elif tx_key == 'AMBILIGHT_STATE':
+                    if item() == False:
+                        body = '{"power": "Off"}'
+                        #self.logger.debug("Sending ambilight off command")
+                        self.post("ambilight/power", body=body, verbose=self.verbose, err_count=0)
+                    else:
+                        body = '{"power": "On"}'
+                        #self.logger.debug("Sending ambilight on command")
+                        self.post("ambilight/power", body=body, verbose=self.verbose, err_count=0)
+                elif tx_key == 'AMBILIGHT_HUE':
+                    # Information: The Philips API expects color to be defined in the HSV (=HSB) space.
+                    # Important: Range for H,S,V in this API is [0-255,0-255,0-255]
+                    
+                    if not isinstance(item(), list):
+                        self.logger.error(f"HSV item {item.property.name} must be of type list. Aborting.")
+                        return
+
+                    if not len(item()) >= 3:
+                        self.logger.error(f"HSV item {item.property.name} must be of type list with three entries (H,S,V). Aborting.")
+                        return
+
+                    hue = item()[0]
+                    saturation = item()[1]
+                    brightness = item()[2]
+                    #self.logger.debug(f"Preparing HSV command from list item with HSV: {hue},{saturation},{brightness}")
+
+                    if (hue is None) or (saturation is None) or (brightness is None):
+                        self.logger.error(f"Cannot find all neccessary list entries for hue command (hue, saturation and brightness). Aborting.")
+                        return
+
+                    # Switch ambilight off for HSV = 0,0,0 with regular off command because API does not switch off via HSV = 0,0,0:
+                    if (hue == 0) and (saturation == 0) and (brightness == 0):
+                        body = '{"power": "Off"}'
+                        self.logger.debug("Sending ambilight off command")
+                        self.post("ambilight/power", body=body, verbose=self.verbose, err_count=0)
+                        return
+
+                    body = {"styleName": "FOLLOW_COLOR", "isExpert": "true", "algorithm": "MANUAL_HUE", "colorSettings": {"color": {"hue": hue,"saturation": saturation,"brightness": brightness},"colorDelta": {"hue": 0,"saturation": 0,"brightness": 0},"speed": 255}}
+                    # convert to JSON string:
+                    bodyJson = json.dumps(body)
+                    #self.logger.debug(f"Sending hue command with body: {bodyJson}")
+                    self.post("ambilight/currentconfiguration", body=bodyJson, verbose=self.verbose, err_count=0)
                 else:
                     self.logger.error(f"Unknown tx key: {tx_key}")
         pass
@@ -140,11 +182,15 @@ class Philips_TV(SmartPlugin):
     def poll_device(self):
         #self.logger.debug("Polling philips device")
 
-        error_msg    = None
-        volume       = None
-        muted        = None 
-        powerstate   = None
-        channel_name = None
+        error_msg       = None
+        volume          = None
+        muted           = None 
+        powerstate      = None
+        channel_name    = None
+        ambilight_state = None           # 'On','Off'
+        hue             = 0              # range 0-255
+        saturation      = 0              # range 0-255
+        brightness      = 0              # range 0-255
 
         value = self.get("audio/volume", verbose=self.verbose, err_count=0, print_response=False)
         #self.logger.debug(f"Response: {value}")
@@ -175,7 +221,7 @@ class Philips_TV(SmartPlugin):
             return
  
         value = self.get("activities/current", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug(f"Response: {value}")
+        self.logger.debug(f"Response activities/current: {value}")
         value_json = json.loads(value)
         if value_json is not None:
             if 'component' in value_json:
@@ -195,30 +241,25 @@ class Philips_TV(SmartPlugin):
         #        recordingList = value_json["recordings"]
         #        self.logger.debug(f"{len(recordingList)} recordings available")
 
-        #does not work:
-        #value = self.get("activities", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug(f"Response Activities: {value}")
+        # does not work: TV replies with unknown command
+        # value = self.get("activities", verbose=self.verbose, err_count=0, print_response=False)
+        
+        # does not work: TV replies with unknown command
+        # value = self.get("channeldb/tv/favoritelLists/all", verbose=self.verbose, err_count=0, print_response=False)
 
-
-        # does not work:
-        #value = self.get("channeldb/tv/favoritelLists/all", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug(f"Response Favorite: {value}")
-
-        # does not work:
-        #value = self.get("channeldb/tv/favoritelLists/all", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug(f"Response Favorite list: {value}")
-
+        # does not work: TV replies with unknown command
+        # value = self.get("channeldb/tv/favoritelLists/all", verbose=self.verbose, err_count=0, print_response=False)
 
         # works: lists all tv channels:
-        #value = self.get("channeldb/tv/channelLists/all", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug(f"Response: {value}")
+        # value = self.get("channeldb/tv/channelLists/all", verbose=self.verbose, err_count=0, print_response=False)
+        # self.logger.debug(f"Response: {value}")
 
-        # does not work:
-        #value = self.get("applications/current", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug(f"Response apps current: {value}".format())
-
-        #does not work
-        #value = self.get("sources/current", verbose=self.verbose, err_count=0, print_response=False)
+        # does not work: TV replies with unknown command
+        # value = self.get("applications/current", verbose=self.verbose, err_count=0, print_response=False)
+        
+        # does not work: TV replies with unknown command
+        # value = self.get("sources/current", verbose=self.verbose, err_count=0, print_response=False)
+        
 
         # works: lists all apps
         #value = self.get("applications", verbose=self.verbose, err_count=0, print_response=False)
@@ -256,6 +297,39 @@ class Philips_TV(SmartPlugin):
                     channel_name = channel_json["name"]
                     #self.logger.debug(f"Channel name is: {channel_name}")
 
+        if not self.alive:
+            return
+
+        # read ambilight status:
+        value = self.get("ambilight/power", verbose=self.verbose, err_count=0, print_response=False)
+        #self.logger.debug(f"Response ambilightstatus: {value}")
+        value_json = json.loads(value)
+        if value_json is not None:
+            if 'power' in value_json:
+                ambilight_state = value_json["power"]
+                #self.logger.debug(f"ambilight_state is: {ambilight_state}")
+
+        if not self.alive:
+            return
+
+        value = self.get("ambilight/currentconfiguration", verbose=self.verbose, err_count=0, print_response=False)
+        #self.logger.debug(f"Response ambilightconfiguration: {value}")
+        value_json = json.loads(value)
+        if value_json is not None:
+            if 'colorSettings' in value_json:
+                colorSettings_json = value_json["colorSettings"]
+                if 'color' in colorSettings_json:
+                    color_json = colorSettings_json["color"]
+                    if 'hue' in color_json:
+                        hue = color_json["hue"]
+                    if 'saturation' in color_json:
+                        saturation = color_json["saturation"]
+                    if 'brightness' in color_json:
+                        brightness = color_json["brightness"]
+                    #self.logger.debug(f"Debug extracted hue: {hue}, {saturation}, {brightness}")
+
+        if not self.alive:
+            return
 
         # copy information into smarthomeNG items:
         for item in self._rx_items:
@@ -271,7 +345,10 @@ class Philips_TV(SmartPlugin):
                 item(str(powerstate), self.get_shortname())
             elif (channel_name is not None) and item.conf['philips_tv_rx_key'].upper() == 'CHANNEL':
                 item(str(channel_name), self.get_shortname())
-
+            elif (ambilight_state is not None) and item.conf['philips_tv_rx_key'].upper() == 'AMBILIGHT_STATE':
+                item(bool(ambilight_state == 'On'), self.get_shortname())
+            elif (brightness is not None) and item.conf['philips_tv_rx_key'].upper() == 'AMBILIGHT_HUE':
+                item([int(hue), int(saturation), int(brightness)], self.get_shortname())
         pass
 
     # creates signature

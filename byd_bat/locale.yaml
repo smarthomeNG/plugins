@@ -1,0 +1,62 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'BYD Home':                           {'de': '=', 'en': 'BYD Home'}
+    'BYD Diagnose':                       {'de': '=', 'en': 'BYD Diagnostics'}
+    'BYD Spannungen':                     {'de': '=', 'en': 'BYD Voltages'}
+    'BYD Temperaturen':                   {'de': '=', 'en': 'BYD Temperatures'}
+    'BYD Log-Daten':                      {'de': '=', 'en': 'BYD Log data'}
+
+    'Verbindung':                         {'de': '=', 'en': 'Connection'}
+
+    'Laden':                              {'de': '=', 'en': 'Loading'}
+    'Gesamtkapazität':                    {'de': '=', 'en': 'Total capacity'}
+    'Batterieladung':                     {'de': '=', 'en': 'Battery charge'}
+    'Ladeleistung':                       {'de': '=', 'en': 'Charging power'}
+    'Entladeleistung':                    {'de': '=', 'en': 'Discharge power'}
+    'Bilder-Pfad':                        {'de': '=', 'en': 'Image path'}
+    'Basisdaten':                         {'de': '=', 'en': 'Basic values'}
+    'Diagnosedaten':                      {'de': '=', 'en': 'Diagnostic values'}
+    
+    'Leistung':                           {'de': '=', 'en': 'Power'}
+    'Spannung Ausgang':                   {'de': '=', 'en': 'Voltage output'}
+    'Strom Ausgang':                      {'de': '=', 'en': 'Current output'}
+    'Spannung Batterie':                  {'de': '=', 'en': 'Voltage battery'}
+    'Spannung Batteriezellen max':        {'de': '=', 'en': 'Voltage battery cell max'}
+    'Spannung Batteriezellen min':        {'de': '=', 'en': 'Voltage battery cell min'}
+    'Spannung Batteriezellen Differenz':  {'de': '=', 'en': 'Voltage battery cell delta'}
+    'Temperatur Batterie':                {'de': '=', 'en': 'Temperature battery'}
+    'Temperatur Batterie max':            {'de': '=', 'en': 'Temperature battery max'}
+    'Temperatur Batterie min':            {'de': '=', 'en': 'Temperature battery min'}
+
+    'Wechselrichter':                     {'de': '=', 'en': 'Inverter'}
+    'Batterietyp':                        {'de': '=', 'en': 'Battery type'}
+    'Seriennummer':                       {'de': '=', 'en': 'Serial number'}
+    'Türme':                              {'de': '=', 'en': 'Towers'}
+    'Module pro Turm':                    {'de': '=', 'en': 'Modules per tower'}
+    'Parameter':                          {'de': '=', 'en': 'Parameter'}
+    'Fehler':                             {'de': '=', 'en': 'Error'}
+    
+    'Turm':                               {'de': '=', 'en': 'Tower'}
+    'Batteriespannung':                   {'de': '=', 'en': 'Batteryvoltage'}
+    'Spannung Out':                       {'de': '=', 'en': 'Voltage Out'}
+    'Strom':                              {'de': '=', 'en': 'Current'}
+    'Spannung max (Zelle)':               {'de': '=', 'en': 'Voltage max (cell)'}
+    'Spannung min (Zelle)':               {'de': '=', 'en': 'Voltage min (cell)'}
+    'Spannung Differenz':                 {'de': '=', 'en': 'Voltage difference'}
+    'Temperatur max (Zelle)':             {'de': '=', 'en': 'Temperature max (cell)'}
+    'Temperatur min (Zelle)':             {'de': '=', 'en': 'Temperature min (cell)'}
+    'Balancing Anzahl Zellen':            {'de': '=', 'en': 'Balancing number of cells'}
+    'Status':                             {'de': '=', 'en': 'State'}
+    'Laden total':                        {'de': '=', 'en': 'Charge total'}
+    'Entladen total':                     {'de': '=', 'en': 'Discharge total'}
+    'Wirkungsgrad':                       {'de': '=', 'en': 'Efficiency'}
+
+    'Spannung minimal':                   {'de': '=', 'en': 'Voltage min'}
+    'Spannung maximal':                   {'de': '=', 'en': 'Voltage max'}
+    'Spannung Durchschnitt':              {'de': '=', 'en': 'Voltage average'}
+
+    # Alternative format for translations of longer texts:
+    'Hier kommt der Inhalt des Webinterfaces hin.':
+        de: '='
+        en: 'Here goes the content of the web interface.'

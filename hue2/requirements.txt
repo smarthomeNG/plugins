@@ -3,4 +3,18 @@ qhue
 # zeroconf below v0.27, because newer versions need intensive testing and actual version has dropped support for Python 3.6
 #zeroconf<=0.26.3
 #Zeroconf >= 0.28 for testing (to resolve conflict with appletv plugin)
-zeroconf<=0.28.3
+#zeroconf<=0.28.3
+
+#zeroconf>0.28.3,<=0.31  # funktioniert anscheinend
+# gibt folgenden Console output:
+#  ?gleiche? Version von zeroconf: consolidated = , further = >0.28.3, used by ["plugin 'hue2'"]
+
+#zeroconf>=0.32,<0.33  # 0.32.1 funktioniert anscheinend
+#zeroconf>=0.33,<0.38  # 0.37 funktioniert anscheinend
+#zeroconf>=0.38,<0.39  # 0.38.7 funktioniert anscheinend (nicht ganz -> Warnung im Log: )
+# 2023-05-19  11:50:15 WARNING  lib.smarthome          The following threads have not been terminated properly by their plugins (please report to the plugin's author):
+# 2023-05-19  11:50:15 WARNING  lib.smarthome          -Thread: zeroconf-ServiceBrowser-_hue._tcp-29820, still alive
+# 2023-05-19  11:50:15 WARNING  lib.smarthome          -Thread: zeroconf-ServiceBrowser-_hue._tcp-29871, still alive
+# 2023-05-19  11:50:15 WARNING  lib.smarthome          -Thread: zeroconf-ServiceBrowser-_hue._tcp-29916, still alive
+
+zeroconf<=0.52.0

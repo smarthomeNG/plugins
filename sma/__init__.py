@@ -11,38 +11,36 @@
 #
 #  SMA-Plugin for SmartHomeNG.   https://github.com/smarthomeNG//
 #
-#	License: Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)
-#	http://creativecommons.org/licenses/by-nc-sa/3.0/
+#  License: Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)
+#  http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
-#	You are free:
-#		to Share — to copy, distribute and transmit the work
-#		to Remix — to adapt the work
-#	Under the following conditions:
-#	Attribution:
-#		You must attribute the work in the manner specified by the author or licensor
-#		(but not in any way that suggests that they endorse you or your use of the work).
-#	Noncommercial:
-#		You may not use this work for commercial purposes.
-#	Share Alike:
-#		If you alter, transform, or build upon this work, you may distribute the resulting work
-#		only under the same or similar license to this one.
+#  You are free:
+#        to Share — to copy, distribute and transmit the work
+#        to Remix — to adapt the work
+#  Under the following conditions:
+#     Attribution:
+#        You must attribute the work in the manner specified by the author or licensor
+#        (but not in any way that suggests that they endorse you or your use of the work).
+#    Noncommercial:
+#        You may not use this work for commercial purposes.
+#    Share Alike:
+#        If you alter, transform, or build upon this work, you may distribute the resulting work
+#        only under the same or similar license to this one.
 #
 # DISCLAIMER:
-#	A user of this plugin acknowledges that he or she is receiving this
-#	software on an "as is" basis and the user is not relying on the accuracy
-#	or functionality of the software for any purpose. The user further
-#	acknowledges that any use of this software will be at his own risk
-#	and the copyright owner accepts no responsibility whatsoever arising from
-#	the use or application of the software.
+#    A user of this plugin acknowledges that he or she is receiving this
+#    software on an "as is" basis and the user is not relying on the accuracy
+#    or functionality of the software for any purpose. The user further
+#    acknowledges that any use of this software will be at his own risk
+#    and the copyright owner accepts no responsibility whatsoever arising from
+#    the use or application of the software.
 #########################################################################
 
-import logging
 import threading
 import time
 import socket
 from datetime import datetime
 from dateutil import tz
-import itertools
 
 from lib.model.smartplugin import SmartPlugin
 
@@ -185,19 +183,18 @@ name_to_id = {'STATUS': 0x214801,
 
 class SMA(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.1"
+    PLUGIN_VERSION = "1.3.2"
 
-    def __init__(self, smarthome, bt_addr, password="0000", update_cycle="60", allowed_timedelta="10"):
-        self.logger = logging.getLogger(__name__)
-        self._sh = smarthome
-        self._update_cycle = int(update_cycle)
+    def __init__(self, sh, **kwargs):
+        # TODO: self._own_bt_addr setzen
+        self._inv_bt_addr = self.get_parameter_value('bt_addr')
+        self._inv_password = self.get_parameter_value('password')
+        self._update_cycle = self.get_parameter_value('update_cycle')
+        self._allowed_timedelta = self.get_parameter_value('allowed_timedelta')
         self._fields = {}
         self._requests = []
         self._cmd_lock = threading.Lock()
         self._reply_lock = threading.Condition()
-        self._inv_bt_addr = bt_addr
-        self._inv_password = password
-        self._allowed_timedelta = int(allowed_timedelta)
         self._inv_last_read_timestamp_utc = 0
         self._inv_serial = 0
         self._own_bt_addr_le = bytearray(BCAST_ADDR)
@@ -209,7 +206,7 @@ class SMA(SmartPlugin):
             raise Exception("Python socket module does not support Bluetooth - see README.md how to install")
 
     def _update_values(self):
-        #logger.warning("sma: signal strength = {}%%".format(self._inv_get_bt_signal_strength()))
+        # logger.warning("sma: signal strength = {}%%".format(self._inv_get_bt_signal_strength()))
         self._cmd_lock.acquire()
         try:
             for request in self._requests:
@@ -224,7 +221,7 @@ class SMA(SmartPlugin):
                 self._reply_lock.release()
             if ('LAST_UPDATE' in self._fields) and not (self._inv_last_read_timestamp_utc == 0):
                 self._inv_last_read_datetime = datetime.fromtimestamp(self._inv_last_read_timestamp_utc, tz.tzlocal())
-                #self._inv_last_read_str = self._inv_last_read_datetime.strftime("%d.%m.%Y %H:%M:%S")
+                # self._inv_last_read_str = self._inv_last_read_datetime.strftime("%d.%m.%Y %H:%M:%S")
                 self._inv_last_read_str = self._inv_last_read_datetime.strftime("%d.%m. %H:%M  ")
                 for item in self._fields['LAST_UPDATE']['items']:
                     item(self._inv_last_read_str, 'SMA', self._inv_serial)
@@ -241,7 +238,7 @@ class SMA(SmartPlugin):
             self._plugin_active = self._plugin_active_item()
         # "or self._is_connected" ensures the connection will be closed before terminating
         while self.alive or self._is_connected:
-            #self.logger.warning("sma: state self._is_connected = {} / self._plugin_active = {} / self.alive = {}".format(self._is_connected, self._plugin_active, self.alive))
+            # self.logger.warning("sma: state self._is_connected = {} / self._plugin_active = {} / self.alive = {}".format(self._is_connected, self._plugin_active, self.alive))
 
             # connect to inverter if active but not connected
             if self._plugin_active and not self._is_connected:
@@ -318,7 +315,7 @@ class SMA(SmartPlugin):
                 if not self.alive:
                     break
                 if msg is None:
-                    #self.logger.debug("sma: no msg...")
+                    # self.logger.debug("sma: no msg...")
                     continue
                 if len(msg) >= 60:
                     i = 41
@@ -331,16 +328,16 @@ class SMA(SmartPlugin):
                             if lri not in lris:
                                 self.logger.info("sma: unknown lri={:#06x} / cls={:#02x} / dataType={:#02x} - trying to continue".format(lri, cls, dataType))
                                 if (dataType == 0x00) or (dataType == 0x40):
-                                   i += 28
+                                    i += 28
                                 elif (dataType == 0x08) or (dataType == 0x10):
-                                   i += 40
+                                    i += 40
                                 else:
                                     self.logger.error("sma: rx - unknown datatype {:#02x}".format(dataType))
                                     raise
                                 continue
                             else:
                                 timestamp_utc = int.from_bytes(msg[i + 4:i + 8], byteorder='little')
-                                value = eval(lri_evals[lris[lri][0]], dict(msg=msg,i=i,attribute_to_text=attribute_to_text))
+                                value = eval(lri_evals[lris[lri][0]], dict(msg=msg, i=i, attribute_to_text=attribute_to_text))
                                 i += lris[lri][1]
                                 self.logger.debug("sma: lri={:#06x} / cls={:#02x} / timestamp={} / value={}".format(lri, cls, timestamp_utc, value))
                                 if full_id in self._fields:
@@ -477,6 +474,7 @@ class SMA(SmartPlugin):
         # remove escape characters
         i = 0
         while True:
+            # TODO: if this works - fine, seems not to be standard Python 3?
             if smanet2_msg[i] == 0x7d:
                 smanet2_msg[i + 1] ^= 0x20
                 del(smanet2_msg[i])
@@ -493,6 +491,7 @@ class SMA(SmartPlugin):
 
     def _recv_smanet1_msg_with_cmdcode(self, cmdcodes_expected=[0x0001]):
         retries = 3
+        msg = None
         while self.alive:
             retries -= 1
             if retries == 0:
@@ -522,7 +521,7 @@ class SMA(SmartPlugin):
         # set length fields
         msg[1:3] = len(msg).to_bytes(2, byteorder='little')
         msg[3] = msg[1] ^ msg[2] ^ 0x7e
-        #print("tx: len={} / data=[{}]".format(len(msg), ' '.join(['0x%02x' % b for b in msg])))
+        # print("tx: len={} / data=[{}]".format(len(msg), ' '.join(['0x%02x' % b for b in msg])))
         self._btsocket.send(msg)
 
     def _calc_crc16(self, msg):
@@ -530,7 +529,7 @@ class SMA(SmartPlugin):
         for i in msg:
             crc = (crc >> 8) ^ FCSTAB[(crc ^ i) & 0xFF]
         crc ^= 0xFFFF
-        #print("crc16 = {:x}".format(crc))
+        # print("crc16 = {:x}".format(crc))
         return crc
 
     def _inv_connect(self):
@@ -653,7 +652,7 @@ class SMA(SmartPlugin):
         msg += SMANET2_HDR + bytes([0x09, 0xA0]) + BCAST_ADDR + bytes([0x00, 0x00]) + self._inv_bt_addr_le + bytes([0x00] + [0x00] + [0, 0, 0, 0]) + (self._send_count | 0x8000).to_bytes(2, byteorder='little')
         msg += request_set[0].to_bytes(4, byteorder='little') + request_set[1].to_bytes(4, byteorder='little') + request_set[2].to_bytes(4, byteorder='little')
         # send msg to inverter
-        #self.logger.debug("sma: requesting {:#06x}-{:#06x}...".format(request_set[1], request_set[2]))
+        # self.logger.debug("sma: requesting {:#06x}-{:#06x}...".format(request_set[1], request_set[2]))
         self._send_msg(msg)
 
     def _inv_set_time(self):
@@ -666,7 +665,7 @@ class SMA(SmartPlugin):
         msg += SMANET2_HDR + bytes([0x10, 0xA0]) + BCAST_ADDR + bytes([0x00, 0x00]) + self._inv_bt_addr_le + bytes([0x00] + [0x00] + [0, 0, 0, 0]) + (self._send_count | 0x8000).to_bytes(2, byteorder='little')
         msg += int(0xF000020A).to_bytes(4, byteorder='little') + int(0x00236D00).to_bytes(4, byteorder='little') + int(0x00236D00).to_bytes(4, byteorder='little') + int(0x00236D00).to_bytes(4, byteorder='little')
         local_time = int(time.time()).to_bytes(4, byteorder='little')
-        msg += local_time + local_time + local_time + round((datetime.now()-datetime.utcnow()).total_seconds()).to_bytes(4, byteorder='little') + local_time + bytes([0x01, 0x00, 0x00, 0x00])
+        msg += local_time + local_time + local_time + round((datetime.now() - datetime.utcnow()).total_seconds()).to_bytes(4, byteorder='little') + local_time + bytes([0x01, 0x00, 0x00, 0x00])
 #        msg += local_time + local_time + local_time + time.localtime().tm_gmtoff.to_bytes(4, byteorder='little') + local_time + bytes([0x01, 0x00, 0x00, 0x00])
         # send msg to inverter
         self._send_msg(msg)

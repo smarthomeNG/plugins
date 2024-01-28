@@ -23,7 +23,6 @@
 import serial
 import os
 import sys
-import logging
 import struct
 import time
 import threading
@@ -166,10 +165,10 @@ SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
 
 class EnOcean(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.8"
+    PLUGIN_VERSION = "1.4.0"
 
     
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
         Initalizes the plugin.
 
@@ -180,7 +179,6 @@ class EnOcean(SmartPlugin):
 
         self._sh = sh
         self.port = self.get_parameter_value("serialport")
-        self.logger = logging.getLogger(__name__)
         tx_id = self.get_parameter_value("tx_id")
         if (len(tx_id) < 8):
             self.tx_id = 0
@@ -189,7 +187,7 @@ class EnOcean(SmartPlugin):
             self.tx_id = int(tx_id, 16)
             self.logger.info(f"Stick TX ID configured via plugin.conf to: {tx_id}")
         self._log_unknown_msg = self.get_parameter_value("log_unknown_messages")
-        self._tcm = serial.Serial(self.port, 57600, timeout=1.5)
+        self._tcm = None
         self._cmd_lock = threading.Lock()
         self._response_lock = threading.Condition()
         self._rx_items = {}
@@ -443,7 +441,18 @@ class EnOcean(SmartPlugin):
             self.logger.debug("Call function << run >>")
         self.alive = True
         self.UTE_listen = False
-        #self.learn_id = 0
+        
+        # open serial or serial2TCP device:
+        try:
+            self._tcm = serial.serial_for_url(self.port, 57600, timeout=1.5)
+        except Exception as e:
+            self._tcm = None
+            self._init_complete = False
+            self.logger.error(f"Exception occurred during serial open: {e}")
+            return
+        else:
+            self.logger.info(f"Serial port successfully opened at port {self.port}")
+
         t = threading.Thread(target=self._startup, name="enocean-startup")
         # if you need to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
@@ -451,61 +460,76 @@ class EnOcean(SmartPlugin):
         t.start()
         msg = []
         while self.alive:
-            readin = self._tcm.read(1000)
-            if readin:
-                msg += readin
-                if logger_debug:
-                    self.logger.debug("Data received")
-                # check if header is complete (6bytes including sync)
-                # 0x55 (SYNC) + 4bytes (HEADER) + 1byte(HEADER-CRC)
-                while (len(msg) >= 6):
-                    #check header for CRC
-                    if (msg[0] == PACKET_SYNC_BYTE) and (self._calc_crc8(msg[1:5]) == msg[5]):
-                        # header bytes: sync; length of data (2); optional length; packet type; crc
-                        data_length = (msg[1] << 8) + msg[2]
-                        opt_length = msg[3]
-                        packet_type = msg[4]
-                        msg_length = data_length + opt_length + 7
-                        if logger_debug:
-                            self.logger.debug("Received header with data_length = {} / opt_length = 0x{:02x} / type = {}".format(data_length, opt_length, packet_type))
-
-                        # break if msg is not yet complete:
-                        if (len(msg) < msg_length):
-                            break
-
-                        # msg complete
-                        if (self._calc_crc8(msg[6:msg_length - 1]) == msg[msg_length - 1]):
+            try:
+                readin = self._tcm.read(1000)
+            except Exception as e:
+                self.logger.error(f"Exception during tcm read occurred: {e}")
+                break
+            else:
+                if readin:
+                    msg += readin
+                    if logger_debug:
+                        self.logger.debug("Data received")
+                    # check if header is complete (6bytes including sync)
+                    # 0x55 (SYNC) + 4bytes (HEADER) + 1byte(HEADER-CRC)
+                    while (len(msg) >= 6):
+                        #check header for CRC
+                        if (msg[0] == PACKET_SYNC_BYTE) and (self._calc_crc8(msg[1:5]) == msg[5]):
+                            # header bytes: sync; length of data (2); optional length; packet type; crc
+                            data_length = (msg[1] << 8) + msg[2]
+                            opt_length = msg[3]
+                            packet_type = msg[4]
+                            msg_length = data_length + opt_length + 7
                             if logger_debug:
-                                self.logger.debug("Accepted package with type = 0x{:02x} / len = {} / data = [{}]!".format(packet_type, msg_length, ', '.join(['0x%02x' % b for b in msg])))
-                            data = msg[6:msg_length - (opt_length + 1)]
-                            optional = msg[(6 + data_length):msg_length - 1]
-                            if (packet_type == PACKET_TYPE_RADIO):
-                                self._process_packet_type_radio(data, optional)
-                            elif (packet_type == PACKET_TYPE_SMART_ACK_COMMAND):
-                                self._process_packet_type_smart_ack_command(data, optional)
-                            elif (packet_type == PACKET_TYPE_RESPONSE):
-                                self._process_packet_type_response(data, optional)
-                            elif (packet_type == PACKET_TYPE_EVENT):
-                                self._process_packet_type_event(data, optional)
+                                self.logger.debug("Received header with data_length = {} / opt_length = 0x{:02x} / type = {}".format(data_length, opt_length, packet_type))
+
+                            # break if msg is not yet complete:
+                            if (len(msg) < msg_length):
+                                break
+
+                            # msg complete
+                            if (self._calc_crc8(msg[6:msg_length - 1]) == msg[msg_length - 1]):
+                                if logger_debug:
+                                    self.logger.debug("Accepted package with type = 0x{:02x} / len = {} / data = [{}]!".format(packet_type, msg_length, ', '.join(['0x%02x' % b for b in msg])))
+                                data = msg[6:msg_length - (opt_length + 1)]
+                                optional = msg[(6 + data_length):msg_length - 1]
+                                if (packet_type == PACKET_TYPE_RADIO):
+                                    self._process_packet_type_radio(data, optional)
+                                elif (packet_type == PACKET_TYPE_SMART_ACK_COMMAND):
+                                    self._process_packet_type_smart_ack_command(data, optional)
+                                elif (packet_type == PACKET_TYPE_RESPONSE):
+                                    self._process_packet_type_response(data, optional)
+                                elif (packet_type == PACKET_TYPE_EVENT):
+                                    self._process_packet_type_event(data, optional)
+                                else:
+                                    self.logger.error("Received packet with unknown type = 0x{:02x} - len = {} / data = [{}]".format(packet_type, msg_length, ', '.join(['0x%02x' % b for b in msg])))
                             else:
-                                self.logger.error("Received packet with unknown type = 0x{:02x} - len = {} / data = [{}]".format(packet_type, msg_length, ', '.join(['0x%02x' % b for b in msg])))
+                                self.logger.error("Crc error - dumping packet with type = 0x{:02x} / len = {} / data = [{}]!".format(packet_type, msg_length, ', '.join(['0x%02x' % b for b in msg])))
+                            msg = msg[msg_length:]
                         else:
-                            self.logger.error("Crc error - dumping packet with type = 0x{:02x} / len = {} / data = [{}]!".format(packet_type, msg_length, ', '.join(['0x%02x' % b for b in msg])))
-                        msg = msg[msg_length:]
-                    else:
-                        #self.logger.warning("Consuming [0x{:02x}] from input buffer!".format(msg[0]))
-                        msg.pop(0)
-        self._tcm.close()
+                            #self.logger.warning("Consuming [0x{:02x}] from input buffer!".format(msg[0]))
+                            msg.pop(0)
+        try:
+            self._tcm.close()
+        except Exception as e:
+            self.logger.error(f"Exception during tcm close occured: {e}")
+        else:
+            self.logger.info(f"Enocean serial device closed")
         self.logger.info("Run method stopped")
 
     def stop(self):
         self.logger.debug("Call function << stop >>")
-        self.alive = False
-        
+        self.alive = False        
 
     def get_tx_id_as_hex(self):
         hexstring = "{:08X}".format(self.tx_id)
         return hexstring
+
+    def get_serial_status_as_string(self):
+        if (self._tcm and self._tcm.is_open):
+            return "open"
+        else:
+            return "not connected"
 
     def get_log_unknown_msg(self):
         return self._log_unknown_msg
@@ -698,7 +722,34 @@ class EnOcean(SmartPlugin):
         packet += bytes(data + optional)
         packet += bytes([self._calc_crc8(packet[6:])])
         self.logger.info("Sending packet with len = {} / data = [{}]!".format(len(packet), ', '.join(['0x%02x' % b for b in packet])))
-        self._tcm.write(packet)
+        
+        # Send out serial data:
+        if not (self._tcm and self._tcm.is_open):
+            self.logger.debug("Trying serial reinit")
+            try:
+                self._tcm = serial.serial_for_url(self.port, 57600, timeout=1.5)
+            except Exception as e:
+                self._tcm = None
+                self.logger.error(f"Exception occurred during serial reinit: {e}")
+            else:
+                self.logger.debug("Serial reinit successful")
+        if self._tcm:
+            try:
+                self._tcm.write(packet)
+            except Exception as e:
+                self.logger.error(f"Exception during tcm write occurred: {e}")
+                self.logger.debug("Trying serial reinit after failed write")
+                try:
+                    self._tcm = serial.serial_for_url(self.port, 57600, timeout=1.5)
+                except Exception as e:
+                    self._tcm = None
+                    self.logger.error(f"Exception occurred during serial reinit after failed write: {e}")
+                else:
+                    self.logger.debug("Serial reinit successful after failed write")
+                    try:
+                        self._tcm.write(packet)
+                    except Exception as e:
+                        self.logger.error(f"Exception occurred during tcm write after successful serial reinit: {e}")
 
     def _send_smart_ack_command(self, _code, data=[]):
         #self.logger.debug("enocean: call function << _send_smart_ack_command >>")

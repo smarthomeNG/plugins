@@ -1,3 +1,4 @@
+
 /**
  * Create a namespace for the application.
  */
@@ -30,12 +31,12 @@ Code.loadBlocks = function() {
   request.done(function(response)
   {
    	//alert('LoadBlocks - Request success: ' + response);
-    var xml = Blockly.Xml.textToDom(response);
+    var xml = Blockly.utils.xml.textToDom(response);
     Blockly.Xml.domToWorkspace(xml, Code.workspace);
     //Code.workspace.clear();
     Code.renderContent()
   });
-  request.fail(function(jqXHR, txtStat) 
+  request.fail(function(jqXHR, txtStat)
   {alert('LoadBlocks - Request failed: ' + txtStat);});
 };
 
@@ -46,7 +47,7 @@ Code.loadBlocks = function() {
 Code.renderContent = function() {
 	//if (Code.selected == 'python') {
 		var content = document.getElementById('content_python');
-		pycode = Blockly.Python.workspaceToCode(Code.workspace);
+		var pycode = Blockly.Python.workspaceToCode(Code.workspace);
 		content.textContent = pycode;
 		if (typeof prettyPrintOne == 'function') {
 		  pycode = content.innerHTML;
@@ -70,13 +71,13 @@ Code.wait = function (ms){
 Code.saveBlocks = function() {
   var logicname = "";
   var topblock = Code.workspace.getTopBlocks()[0];
+
   if (topblock.data == "sh_logic_main") {
       logicname = Code.workspace.getTopBlocks()[0].getFieldValue('LOGIC_NAME')
   };
-  //Code.workspace;
   var pycode = Blockly.Python.workspaceToCode(Code.workspace);
   var xmldom = Blockly.Xml.workspaceToDom(Code.workspace);
-  var xmltxt = Blockly.Xml.domToText(xmldom);
+  var xmltxt = Blockly.utils.xml.domToText(xmldom);
 
   $.ajax({  url: "blockly_save_logic",
             type: "POST",
@@ -113,8 +114,8 @@ Code.init = function() {
 		var bBox = Code.getBBox_(container);
 		for (var i = 0; i < Code.TABS_.length; i++) {
 			var el = document.getElementById('content_' + Code.TABS_[i]);
-			el.style.top = bBox.y + 'px';
-			el.style.left = bBox.x + 'px';
+			el.style.top = bBox.y- $('#resize_wrapper').offset().top + 'px';
+			//el.style.left = bBox.x + 'px';
 			// Height and width need to be set, read back, then set again to
 			// compensate for scrollbars.
 			el.style.height = bBox.height + 'px';
@@ -130,10 +131,10 @@ Code.init = function() {
 		}
 	};
 	window.addEventListener('resize', onresize, false);
-	
+
 	var toolboxtxt = document.getElementById('toolbox').outerHTML;
-	var toolboxXml = Blockly.Xml.textToDom(toolboxtxt);
-	
+	var toolboxXml = Blockly.utils.xml.textToDom(toolboxtxt);
+
 	Code.workspace = Blockly.inject('content_blocks',
 	  {grid:
 	      {spacing: 25,
@@ -147,18 +148,18 @@ Code.init = function() {
 	       {controls: true,
 	        wheel: true}
 	  });
-	
+
 	//window.setTimeout(Code.loadBlocks, 0);
 	Code.loadBlocks();
-	
+
 	Code.tabClick(Code.selected);
-	
+
 	Code.bindClick('tab_blocks', function(name_) {return function() {Code.tabClick(name_);};}('blocks'));
 	Code.bindClick('tab_python', function(name_) {return function() {Code.tabClick(name_);};}('python'));
-	
+
 	onresize();
 	Blockly.svgResize(Code.workspace);
-	
+
 	// Lazy-load the syntax-highlighting.
 	Code.importPrettify();
 	window.setTimeout(Code.importPrettify, 1);
@@ -251,4 +252,3 @@ Code.getBBox_ = function(element) {
  *  Init on window load
  * */
 window.addEventListener('load', Code.init);
-

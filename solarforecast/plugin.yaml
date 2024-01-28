@@ -6,48 +6,58 @@ plugin:
         de: 'Plugin zur Anbindung an eine Web-basierte Solaretragsvorhersage'
         en: 'Plugin to connect to a web-based solar forecast service'
     maintainer: Alexander Schwithal (aschwith)
-    tester: henfri
+    tester: henfri, Haiphong
     state: develop                  # change to ready when done with development
     keywords: solar.forecast, solar
 #    documentation:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1842817-support-thread-f%C3%BCr-das-solarforecast-plugin
 
-    version: 1.9.1                  # Plugin version
+    version: 1.9.4                  # Plugin version
     sh_minversion: 1.8.0            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False           # plugin supports multi instance
+    multi_instance: True            # plugin supports multi instance
     restartable: unknown
     classname: Solarforecast        # class containing the plugin
-
 
 parameters:
     latitude:
         type: num
-        mandatory: True
+        mandatory: False
+        default: 0.0
+        valid_min: -90
+        valid_max: 90
         description:
-            de: 'Breitengrad der Solaranlage in dezimalen Grad'
-            en: 'Latitude of solar system in decimal degree'
+            de: '(Optional) Breitengrad der Solaranlage in dezimalen Grad'
+            en: '(Optional) Latitude of solar system in decimal degree. Otherwise taken from smarthome config.'
     longitude:
         type: num
-        mandatory: True
+        mandatory: False
+        default: 0.0
+        valid_min: -180
+        valid_max: 180
         description:
-            de: 'Laengengrad der Solaranlage in dezimalen Grad'
-            en: 'Longitude of solar system in decimal degree'
+            de: '(Optional) Längengrad der Solaranlage in dezimalen Grad. '
+            en: '(Optional) Longitude of solar system in decimal degree. Otherwise taken from smarthome config.'
     declination:
         type: num
         mandatory: True
+        valid_min: 0
+        valid_max: 90
         description:
-            de: 'Declinationswinkel Solaranlage in Grad'
+            de: 'Deklinationswinkel Solaranlage in Grad'
             en: 'Panel declination in degree'
     azimuth:
         type: num
         mandatory: True
+        valid_min: -180
+        valid_max: 180
         description:
-            de: 'Azimutwinkel der Panelausrichtung. 0 Grad enstspricht Sueden'
-            en: 'Azimuth angle of panel direction. 0 degree is equivalent to southern direction'
+            de: 'Azimutwinkel der Panelausrichtung (-180 bis 180 Grad). 0 Grad entspricht Süden'
+            en: 'Azimuth angle of panel direction (-180 to 180 degrees). 0 degree is equivalent to southern direction'
     kwp:
         type: num
         mandatory: True
+        valid_min: 0
         description:
             de: 'Leistung der Solaranlage in kW Peak'
             en: 'Power of solar system in kw peak'
@@ -60,7 +70,7 @@ parameters:
             de: ['solar.forecast']
             en: ['solar.forecast']
         description:
-            de: 'Webservice fuer Vorhersage'
+            de: 'Webservice für Vorhersage'
             en: 'Webservice for forecast'
 
 
@@ -70,18 +80,18 @@ item_attributes:
         type: str
         description:
             de: 'Solarforecast Attribute:
-                 Vorhersage Leistung morgen
-                 Vorhersage Leistung heute
+                 Vorhersage Energie in Wh morgen
+                 Vorhersage Energie in Wh heute
                  Datum morgen
                  Datum heute'
             en: 'Solarforecast attributes:
-                 Forecast power tomorrow
-                 Forecast power today
+                 Forecast energy in Wh tomorrow
+                 Forecast energy in Wh today
                  Date tomorrow
                  Date today'
         valid_list:
-          - power_tomorrow
-          - power_today
+          - energy_tomorrow
+          - energy_today
           - date_tomorrow
           - date_today
 

@@ -1,0 +1,148 @@
+# Harry.yaml
+Harry:
+    connect:
+        type: bool
+        roombapysh: 'connect'
+        visu_acl: rw
+        autotimer: 7200 = False
+    Status:
+        type: num
+        roombapysh: 'status'
+    IsConnected:
+        type: bool
+        roombapysh: 'connected'
+    ClientError:
+        type: str
+        roombapysh: 'client_error'
+    MissionError:
+        type: num
+        roombapysh: 'error_code'
+    MissionErrorMessage:
+        type: str
+        roombapysh: 'error_message'
+    Mission_State:
+        type: str
+        roombapysh: 'mission_state'
+    Name:
+        type: str
+        roombapysh: 'name'
+
+    start:
+        type: bool
+        roombapysh: 'start'
+        visu_acl: rw
+        autotimer: 2 = False
+    pause:
+        type: bool
+        roombapysh: 'pause'
+        visu_acl: rw
+        autotimer: 2 = False
+    resume:
+        type: bool
+        roombapysh: 'resume'
+        visu_acl: rw
+        autotimer: 2 = False
+    stop:
+        type: bool
+        roombapysh: 'stop'
+        visu_acl: rw
+        autotimer: 2 = False
+    dock:
+        type: bool
+        roombapysh: 'dock'
+        visu_acl: rw
+        autotimer: 2 = False
+    reset:
+        type: bool
+        roombapysh: 'reset'
+        visu_acl: rw
+        autotimer: 120 = False
+    evac:
+        type: bool
+        roombapysh: 'evac'
+        visu_acl: rw
+        autotimer: 120 = False
+    locate:
+        type: bool
+        roombapysh: 'locate'
+        visu_acl: rw
+        autotimer: 1 = False
+
+    Battery:
+        type: num
+        roombapysh: 'status_batterie'
+    Battery_Cycles:
+        type: num
+        roombapysh: 'bat_cCount'
+
+    Bin:
+        Present:
+            type: bool
+            roombapysh: 'bin_present'
+        Full:
+            type: bool
+            roombapysh: 'bin_full'
+            
+    Dock_Known:
+        type: bool
+        roombapysh: 'dock_known'
+
+    MissionStatus:
+        Cycle:
+            type: str
+            roombapysh: 'MissionStatus_cycle'
+        Phase:
+            type: str
+            roombapysh: 'MissionStatus_phase'
+        Error:
+            type: num
+            roombapysh: 'MissionStatus_error'
+        StartTime:
+            type: num
+            roombapysh: 'MissionStatus_startTime'
+        ExpireTime:
+            type: num
+            roombapysh: 'MissionStatus_expireTime'
+        Initiator:
+            type: str
+            roombapysh: 'MissionStatus_initiator'
+        RunTime:
+            type: str
+            roombapysh: 'MissionStatus_runTime'
+       
+    Runs:
+        Cliffs:
+            type: num
+            roombapysh: 'run_nCliffs'
+        Panics:
+            type: num
+            roombapysh: 'run_nPanics'
+        Scrubs:
+            type: num
+            roombapysh: 'run_nScrubs'
+        Time:
+            type: str
+            roombapysh: 'run_time'
+        
+    Missions:
+        Total:
+            type: num
+            roombapysh: 'mission_total'
+        OK:
+            type: num
+            roombapysh: 'mission_OK'
+        Err:
+            type: num
+            roombapysh: 'mission_err'
+
+    LastCommand:
+        Command:
+            type: str
+            roombapysh: 'lastCommand_command'
+        time:
+            type: num
+            roombapysh: 'lastCommand_time'
+        initiator:
+            type: str
+            roombapysh: 'lastCommand_initiator'
+

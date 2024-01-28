@@ -18,33 +18,24 @@
 <script>
     $(document).ready( function () {
 		$(window).trigger('datatables_defaults');
-		{% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-		if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-			resize = true;
-			webif_pagelength = -1;
-		console.log('Activating automatic table resize');
-		}
-		else {
-			resize = false;
-		}
 		try {
 			{% if p.init.get_items('zone0')|length>0 %}
-			$('#zone0').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+			$('#zone0').DataTable( {} );
 			{% endif %}
 			$('#querylog').DataTable( {responsive: false, order: [[0, 'desc']], columnDefs: [{ "width": "300px", "targets": 0 }].concat($.fn.dataTable.defaults.columnDefs)} );
 			$('#commandlog').DataTable( {responsive: false, order: [[0, 'desc']], columnDefs: [{ "width": "300px", "targets": 0 }].concat($.fn.dataTable.defaults.columnDefs)} );
 			$('#buffer').DataTable( {responsive: false, order: [[0, 'desc']], columnDefs: [{ "width": "300px", "targets": 0 }].concat($.fn.dataTable.defaults.columnDefs)} );
 			{% if p.init.get_items('zone0')|length>0 %}
-			$('#zone1').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+			$('#zone1').DataTable( {} );
 			{% endif %}
 			{% if p.init.get_items('zone0')|length>0 %}
-			$('#zone2').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+			$('#zone2').DataTable( {} );
 			{% endif %}
 			{% if p.init.get_items('zone0')|length>0 %}
-			$('#zone3').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+			$('#zone3').DataTable( {} );
 			{% endif %}
 			{% if p.init.get_items('zone0')|length>0 %}
-			$('#zone4').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+			$('#zone4').DataTable( {} );
 			{% endif %}
 		}
 		catch (e) {

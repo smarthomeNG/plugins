@@ -58,8 +58,12 @@ class SmlPacketReader:
 class TestSmlBase(unittest.TestCase):
 
     def plugin(self):
+        import os
+        print(f"cwd={os.getcwd()}")
+
         self.sh = MockSmartHome()
         plugin = Sml(self.sh)
+        plugin.alive = True
         plugin.connect()
         plugin.data = SmlPacketReader()
         plugin._serial = plugin.data

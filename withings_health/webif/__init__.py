@@ -105,11 +105,17 @@ class WebInterface(SmartPluginWebIf):
                 self.plugin._client = None
 
         tmpl = self.tplenv.get_template('index.html')
+        try:
+            token_expiry_val = datetime.datetime.fromtimestamp(
+                self.plugin.get_item('token_expiry').property.value, tz=self.plugin.shtime.tzinfo())
+        except Exception as e:
+            self.logger.error("Please integrate the plugin struct to make the plugin work correctly.")
+            token_expiry_val = 0
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None, item_count=len(self.plugin.get_items()),
                            plugin_info=self.plugin.get_info(), tabcount=2, callback_url=self.plugin.get_callback_url(),
                            tab1title="Withings Health Items (%s)" % len(self.plugin.get_items()),
                            tab2title="OAuth2 Data", authorize_url=self._auth.get_authorize_url(),
-                           p=self.plugin, token_expiry=datetime.datetime.fromtimestamp(self.plugin.get_item(
-                'token_expiry')(), tz=self.plugin.shtime.tzinfo()), now=self.plugin.shtime.now(), code=code,
+                           p=self.plugin, token_expiry=token_expiry_val,
+                           now=self.plugin.shtime.now(), code=code,
                            state=state, reload=reload, language=self.plugin.get_sh().get_defaultlanguage())

@@ -7,16 +7,16 @@ plugin:
         en: 'Read data from powermeter device using SML protocol'
     maintainer: ohinckel
     tester: '?'                    # Who tests this plugin?
-    state: ready
+    state: deprecated
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins_doc/config/sml.html
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.0.0                 # Plugin version
-    sh_minversion: 1.1             # minimum shNG version to use this plugin
+    version: 1.0.1                 # Plugin version
+    sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: True           # plugin supports multi instance
-    restartable: unknown
+    multi_instance: true           # plugin supports multi instance
+    restartable: true
     classname: Sml                 # class containing the plugin
 
 parameters:

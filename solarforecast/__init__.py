@@ -32,9 +32,9 @@ import datetime
 
 
 class Solarforecast(SmartPlugin):
-    PLUGIN_VERSION = '1.9.1'
+    PLUGIN_VERSION = '1.9.4'
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
         Initalizes the plugin.
 
@@ -48,8 +48,14 @@ class Solarforecast(SmartPlugin):
         self.session = requests.Session()
         
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        self.latitude  = self.get_parameter_value('latitude')
-        self.longitude = self.get_parameter_value('longitude')
+        if self.get_parameter_value('latitude') != 0 and self.get_parameter_value('longitude') != 0:
+            self.latitude = self.get_parameter_value('latitude')
+            self.longitude = self.get_parameter_value('longitude')
+        else:
+            self.logger.debug("__init__: latitude and longitude not provided, using shng system values instead.")
+            self.latitude = self.get_sh()._lat
+            self.longitude = self.get_sh()._lon
+
         self.declination = self.get_parameter_value('declination')
         self.azimuth = self.get_parameter_value('azimuth')
         self.kwp = self.get_parameter_value('kwp')
@@ -118,24 +124,28 @@ class Solarforecast(SmartPlugin):
                 headers={'content-type': 'application/json'}, timeout=10, verify=False)
         
 #            self.logger.debug(f"Session request response: {sessionrequest_response.text}")
+        except requests.exceptions.Timeout as e:
+            self.logger.warning(f"Timeout exception during get command: {str(e)}")
+            return 
         except Exception as e:
             self.logger.error(f"Exception during get command: {str(e)}")
             return
 
         statusCode = sessionrequest_response.status_code
         if statusCode == 200:
+            self.logger.debug("Sending session request command successful")
             pass
-            #self.logger.debug("Sending session request command successful")
         else:
             self.logger.error(f"Server error: {statusCode}")
             return 
 
         responseJson = sessionrequest_response.json()
+        self.logger.debug(f"Json response: {responseJson}")
         
         # Decode Json data:        
         wattHoursToday = None
         wattHoursTomorrow = None
-        today = self._sh.now().date()
+        today = self._sh.shtime.now().date()
         tomorrow = today + datetime.timedelta(days=1)
         self.last_update = today
 
@@ -144,27 +154,27 @@ class Solarforecast(SmartPlugin):
                 resultJson = responseJson['result']
                 if 'watt_hours_day' in resultJson:
                     wattHoursJson = resultJson['watt_hours_day']
-#                   self.logger.debug(f"wattHourJson: {wattHoursJson}")
+ #                   self.logger.debug(f"wattHourJson: {wattHoursJson}")
         
                     if str(today) in wattHoursJson:
                         wattHoursToday = float(wattHoursJson[str(today)])
                     if str(tomorrow) in wattHoursJson:
                         wattHoursTomorrow = float(wattHoursJson[str(tomorrow)])
-#                    self.logger.debug(f"Ertrag today {wattHoursToday/1000} kWh, tomorrow: {wattHoursTomorrow/1000} kwH")
+#                   self.logger.debug(f"Ertrag today {wattHoursToday/1000} kWh, tomorrow: {wattHoursTomorrow/1000} kwH")
 
 
         for attribute, matchStringItems in self._items.items():
 
-#            if not self.alive:
-#                return
+            if not self.alive:
+                return
 
 #            self.logger.warning("DEBUG: attribute: {0}, matchStringItems: {1}".format(attribute, matchStringItems))
 
             value = None
 
-            if attribute == 'power_today':
+            if attribute == 'energy_today':
                 value = wattHoursToday
-            elif attribute == 'power_tomorrow':
+            elif attribute == 'energy_tomorrow':
                 value = wattHoursTomorrow
             elif attribute == 'date_today':
                 value = str(today)
@@ -175,7 +185,7 @@ class Solarforecast(SmartPlugin):
             if value is not None:
                 for sameMatchStringItem in matchStringItems:
                     sameMatchStringItem(value, self.get_shortname() )
-#                    self.logger.debug('_update: Value "{0}" written to item {1}'.format(value, sameMatchStringItem))
+                    self.logger.debug('_update: Value "{0}" written to item {1}'.format(value, sameMatchStringItem))
         pass
 
     def get_items(self):

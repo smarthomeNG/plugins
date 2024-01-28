@@ -26,10 +26,11 @@ from lib.model.smartplugin import SmartPlugin
 import requests
 
 class InfluxDB(SmartPlugin):
-    PLUGIN_VERSION = "1.0.2"
+    PLUGIN_VERSION = "1.0.3"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, smarthome):
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init InfluxDB')
 

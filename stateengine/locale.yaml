@@ -6,10 +6,24 @@ plugin_translations:
     'Zustände':                                                     {'de': '=', 'en': 'States'}
     'aktueller Zustand':                                            {'de': '=', 'en': 'current state'}
     'aktuelles Bedingungsset':                                      {'de': '=', 'en': 'current conditionset'}
+    'Standard Log Level':                                           {'de': '=', 'en': 'Default Log Level'}
     'Log Level':                                                    {'de': '=', 'en': '='}
     'Log Verzeichnis':                                              {'de': '=', 'en': 'Log Folder'}
+    'Logs löschen nach':                                            {'de': '=', 'en': 'Delete logs after'}
+    'Tagen':                                                        {'de': '=', 'en': 'days'}
+    'Tag':                                                          {'de': '=', 'en': 'day'}
     'Startverzögerung':                                             {'de': '=', 'en': 'Startup Delay'}
     'Suspend Dauer':                                                {'de': '=', 'en': 'Suspend Duration'}
     'Items':                                                        {'de': '=', 'en': '='}
     'SE Item':                                                      {'de': '=', 'en': '='}
     'Detailvisualisierung':                                         {'de': '=', 'en': 'Detailed Visualization'}
+    'KeineVisualisierung':                                          {'de': 'Visualisierung nicht verfügbar', 'en': 'Visualization not available'}
+    'Zoom +':                                                       {'de': '=', 'en': '='}
+    'Zoom -':                                                       {'de': '=', 'en': '='}
+    'Zoom Reset':                                                   {'de': '=', 'en': '='}
+    'Zoom/Pan aktiv':                                               {'de': '=', 'en': 'Zoom/Pan active'}
+    'Klicken zum Öffnen des SVG Files':                             {'de': '=', 'en': 'Click to open the SVG file'}
+    'ist noch nicht initialisiert.':                                {'de': '=', 'en': 'is not initialized yet.'}
+    'Die erste Evaluierung ist geplant für:':                       {'de': '=', 'en': 'The first evaluation is planned for:'}
+    'Letzte Aktualisierung:':                                       {'de': '=', 'en': 'Last Update:'}
+    'Potenziell Released':                                          {'de': '=', 'en': 'Potential Released'}

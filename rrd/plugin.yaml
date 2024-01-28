@@ -38,8 +38,21 @@ item_attributes:
         type: str
         valid_list: ['', 'yes', 'init']
         description:
-            de: "Wenn auf 'yes' gesetzt, werden die Werte des Items in die rrd Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert aus rrd gelesen."
-            en: "This attribute enables the database logging when set (just use value 'yes'). If value 'init' is used, an item will be initalized from rrd after SmartHomeNG is restarted."
+            de: >
+                Wenn auf 'yes' gesetzt, werden die Werte des Items in die rrd Datenbank geschrieben. 
+                Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert aus rrd gelesen.
+                
+                Wenn für dieses Item ebenfalls ein Attribut 'sqlite' oder 'database' gesetzt ist, 
+                so ist die Wahrscheinlichkeit groß, das eines der Plugins nicht funktioniert.
+                Um dieses Problem zum umgehen kann das Attribut 'rrd_no_series' gesetzt werden.
+                
+            en: >
+                This attribute enables the database logging when set (just use value 'yes'). 
+                If value 'init' is used, an item will be initalized from rrd after SmartHomeNG is restarted.
+                
+                If this same item has the attribute ‘sqlite’ or ‘database’ it is likely
+                that one of the plugins will not work. To prevent this problem there is
+                the attribute ``rrd_no_series``
 
     rrd_step:
         type: int
@@ -59,13 +72,17 @@ item_attributes:
         valid_list: ['', 'gauge', 'counter' ]
         description:
             de: "Gibt die Art der Datenreihe in der Datenbank an: gauge für Temperaturen, counter für Zähler"
-            en: "Set the type of data samples in rrd: gauge for temperatures etc. and counter for continuous smartmeter readings"
+            en: >
+                Set the type of data source. Default ist ``gauge``. \* ``gauge`` -
+                should be used for things like temperatures. \* ``counter`` - should be
+                used for continuous incrementing counters like the Powermeter (kWh),
+                watercounter (m^3), pellets (kg).
 
     rrd_ds_name:
         type: str
         description:
             de: 'Alternativen Datenquellennamen festlegen. Wird dieser Name festgelegt, so wird nicht der Item Name für den Datenquellennamen verwendet'
-            en: 'alternative data source name. If set then the item`s name will not be used for data source but this name instead.'
+            en: 'Alternative data source name. If set then the item`s name will not be used for data source but this name instead.'
             
     rrd_min:
         type: bool

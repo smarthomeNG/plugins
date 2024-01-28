@@ -5,14 +5,14 @@ plugin:
     description:
         de: 'Ansteuerung von Teufel Raumfeld Geräten via Raumserver und NodeRED'
         en: 'Control Teufel Raumfeld devices via Raumserver and NodeRED'
-    maintainer: greentux
+    maintainer: nobody
     tester: nobody                  # Who tests this plugin?
     state: develop                  # change to ready when done with development
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1927851
 
-    version: 1.5.1                  # Plugin version
+    version: 1.5.2                  # Plugin version
     sh_minversion: 1.5              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance

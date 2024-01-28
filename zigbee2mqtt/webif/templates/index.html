@@ -168,7 +168,7 @@
             <td class="py-1">{{ p.broker_config.qos }}</td>
             <td class="py-1">{{ webif_pagelength }}</td>
             <td class="py-1"><strong>{{_('Zigbee2Mqtt')}}</strong></td>
-            <td class="py-1"><a class="text-shng" href="http://{{ p.local_ip }}:8082" target="_blank">{{ 'GUI' }}</a></td>
+            <td class="py-1"><a class="text-shng" href="http://{{ p._z2m_gui }}" target="_blank">{{ 'GUI' }}</a></td>
             <td class="py-1"></td>
         </tr>
     </tbody>
@@ -193,6 +193,7 @@
     <table id="itemtable" class="table_1 table-striped table-hover pluginList display">
         <thead>
             <tr>
+                <th></th>
                 <th>{{ _('Item') }}</th>
                 <th>{{ _('Typ') }}</th>
                 <th style="text-align: right">{{ _('Wert') }}</th>
@@ -205,7 +206,8 @@
             {% for item in items %}
                 {% set item_id = item.id() %}
                 <tr>
-                    <td class="py-1">{{ item_id }}</td>
+                    <td class="py-1"></td>
+                    <td class="py-1">{{ item.property.path }}</td>
                     <td class="py-1">{{ item.property.type }}</td>
                     <td class="py-1" id="{{ item_id }}_value" style="text-align: right">{{ item()}}</td>
                     <td class="py-1">{{ p.get_iattr_value(item.conf, 'zigbee2mqtt_topic') }}</td>
@@ -238,16 +240,16 @@
             </tr>
         </thead>
         <tbody>
-            {% for device in p.zigbee2mqtt_devices %}
-                {% if p.zigbee2mqtt_devices[device]['meta'] %}
+            {% for device in p._devices %}
+                {% if p._devices[device]['meta'] %}
                 <tr>
                     <td class="py-1">{{ loop.index }}</td>
                     <td class="py-1">{{ device }}</td>
-                    <td class="py-1">{{ p.zigbee2mqtt_devices[device]['meta']['ieeeAddr'] }}</td>
-                    <td class="py-1">{{ p.zigbee2mqtt_devices[device]['meta']['vendor'] }}</td>
-                    <td class="py-1">{{ p.zigbee2mqtt_devices[device]['meta']['model'] }}</td>
-                    <td class="py-1">{{ p.zigbee2mqtt_devices[device]['meta']['description'] }}</td>
-                    <td class="py-1">{{ p.zigbee2mqtt_devices[device]['meta']['modelID'] }}</td>
+                    <td class="py-1">{{ p._devices[device]['meta']['ieee_address'] }}</td>
+                    <td class="py-1">{{ p._devices[device]['meta']['manufacturer'] }}</td>
+                    <td class="py-1">{{ p._devices[device]['meta']['model'] }}</td>
+                    <td class="py-1">{{ p._devices[device]['meta']['description'] }}</td>
+                    <td class="py-1">{{ p._devices[device]['meta']['model_id'] }}</td>
                     <td class="py-1" id="{{ device }}_last_seen">{{ _('Init...') }}</td>
                     <td class="py-1" id="{{ device }}_lqi">{{ _('Init...') }}</td>
                     <td class="py-1" id="{{ device }}_data">{{ _('Init...') }}</td>

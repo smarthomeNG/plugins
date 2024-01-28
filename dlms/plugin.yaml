@@ -9,10 +9,10 @@ plugin:
     tester: NONE                   # Who tests this plugin?
     state: ready
     keywords: dlms obis smartmeter
-    documentation: http://smarthomeng.de/user/plugins/dlms/user_doc.html
+    #documentation: http://smarthomeng.de/user/plugins/dlms/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1002464-support-thread-für-dlms-plugin
 
-    version: 1.9.4                 # Plugin version
+    version: 1.9.5                 # Plugin version
     sh_minversion: 1.8             # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6             # minimum Python version to use for this plugin, due to f-strings

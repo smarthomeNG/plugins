@@ -7,15 +7,14 @@ plugin:
         en: 'Connects to the telegram messenger service'
     maintainer: gamade, ivan73, bmxp
     state: ready
-    tester: NONE
+    tester: onkelandy
     keywords: telegram chat messenger photo
-    documentation: http://smarthomeng.de/user/plugins/telegram/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1548691-support-thread-für-das-telegram-plugin
 
-    version: 1.7.1                  # Plugin version
-    sh_minversion: 1.8              # minimum shNG version to use this plugin
+    version: 2.0.1                  # Plugin version
+    sh_minversion: 1.9.5            # minimum shNG version to use this plugin
     # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    py_minversion: 3.6              # minimum Python version to use for this plugin
+    # py_minversion: 3.6            # minimum Python version to use for this plugin
     # py_maxversion:                # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: True            # plugin supports multi instance
     restartable: True
@@ -41,22 +40,36 @@ parameters:
         # 2 minutes should be long enough to avoid problems with too many connections to telegram server
         default: 120
         description:
-            de: 'Zeit nachdem eine neue Verbindung zum Telegram Server aufgebaut um Updates zu holen'
-            en: 'Time after a new link to telegram server will be established to get updates'
+            de: 'Zeit (Sekunden) nachdem eine neue Verbindung zum Telegram Server aufgebaut um Updates zu holen'
+            en: 'Time (seconds) after a new link to telegram server will be established to get updates'
+
+    resend_delay:
+        type: num
+        default: 60
+        description:
+            de: 'Zeit (Sekunden) nachdem eine neuer Sendeversuch unternommen wird'
+            en: 'Time (seconds) after which a new sending attempt is made'
+
+    resend_attemps:
+        type: num
+        default: 10
+        description:
+            de: 'Nach dieser Anzahl an Sendeversuchen erfolgt keine Sendeversuch mehr'
+            en: 'After this number of sending attempts, no further sending attempts will be made'
 
     welcome_msg:
         type: str
         default: 'SmarthomeNG Telegram Plugin is up and running'
         description:
-            de: 'Willkommensnachricht, wird an alle vertrauenswürdigen Clients beim Start des Plugins gesendet. Ist der Wert leer, wird keine Willkommensnachricht gesendet.'
-            en: 'Welcome message, will be sent to all trusted chat clients at plugin start. An empty value indicates that no welcome message is sent.'
+            de: 'Willkommensnachricht, wird an auswählbare vertrauenswürdigen Clients beim Start des Plugins gesendet. Ist der Wert leer, wird keine Willkommensnachricht gesendet.'
+            en: 'Welcome message, will be sent to selectable trusted chat clients at plugin start. An empty value indicates that no welcome message is sent.'
 
     bye_msg:
         type: str
         default: 'SmartHomeNG Telegram Plugin stops'
         description:
-            de: 'Endenachricht, wird an alle vertrauenswürdigen Clients beim Stop des Plugins gesendet.  Ist der Wert leer, wird keine Endenachricht gesendet.'
-            en: 'Bye message, will be sent to all trusted chat clients at plugin stop.  An empty value indicates that no by message is sent.'
+            de: 'Endenachricht, wird an auswählbare vertrauenswürdigen Clients beim Stop des Plugins gesendet.  Ist der Wert leer, wird keine Endenachricht gesendet.'
+            en: 'Bye message, will be sent to selectable trusted chat clients at plugin stop.  An empty value indicates that no by message is sent.'
 
     no_access_msg:
         type: str
@@ -133,7 +146,7 @@ item_attributes:
     telegram_control:
         type: str
         description:
-            de: 'Item schreiben per Telegram Keyboard. Der Wert des Attributes (mit mehreren Paramtern) bestimmt das Telegram Keyboard Kommando'
+            de: 'Item schreiben per Telegram Keyboard. Den Wert des Attributes (mit mehreren Paramtern) bestimmt das Telegram Keyboard Kommando'
             en: 'Write items with telegram keyboard. The value of the attribute (with parameters) defines the telegram keyboard command'
 
 logic_parameters: NONE

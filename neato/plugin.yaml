@@ -12,7 +12,7 @@ plugin:
     documentation: https://github.com/smarthomeng/plugins/blob/develop/neato/README.md
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1417295-support-thread-plugin-neato
 
-    version: 1.6.8                  # Plugin version
+    version: 1.6.9                  # Plugin version
     sh_minversion: 1.8.0            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -98,9 +98,53 @@ item_attributes:
           - command_startAvailable
           - clean_room
 
-item_structs: NONE
-    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
-    #item_structs: NONE
+item_structs:
+    Neato:
+        Name:
+        type: str
+        neato_attribute: 'name'
+        visu_acl: ro
+    State:
+        type: str
+        value: 'offline'
+        neato_attribute: 'state'
+        visu_acl: ro
+    StateAction:
+        type: str
+        neato_attribute: 'state_action'
+        visu_acl: ro
+    Command:
+        type: num
+        neato_attribute: 'command'
+        visu_acl: rw
+    IsDocked:
+        value: False
+        type: bool
+        neato_attribute: 'is_docked'
+        visu_acl: ro
+    IsScheduleEnabled:
+        value: False
+        type: bool
+        neato_attribute: 'is_schedule_enabled'
+        visu_acl: rw
+    IsCharging:
+        value: False
+        type: bool
+        neato_attribute: 'is_charging'
+        visu_acl: ro
+    ChargePercentage:
+        type: num
+        neato_attribute: 'charge_percentage'
+        visu_acl: ro
+    GoToBaseAvailable:
+        type: bool
+        value: False
+        neato_attribute: 'command_goToBaseAvailable'
+        visu_acl: ro
+    Alert:
+        type: str
+        neato_attribute: 'alert'
+        visu_acl: ro
 
 plugin_functions:
     enable_schedule:

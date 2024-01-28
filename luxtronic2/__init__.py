@@ -30,6 +30,25 @@ import time
 
 from lib.model.smartplugin import SmartPlugin
 
+MODES = {
+    0: 'Heizbetrieb',
+    1: 'Keine Anforderung',
+    2: 'Netz- Einschaltverzoegerung',
+    3: 'SSP Zeit',
+    4: 'Sperrzeit',
+    5: 'Brauchwasser',
+    6: 'Estrich Programm',
+    7: 'Abtauen',
+    8: 'Pumpenvorlauf',
+    9: 'Thermische Desinfektion',
+    10: 'Kuehlbetrieb',
+    12: 'Schwimmbad',
+    13: 'Heizen Ext.',
+    14: 'Brauchwasser Ext.',
+    16: 'Durchflussueberwachung',
+    17: 'ZWE Betrieb'
+}
+
 
 class luxex(Exception):
     pass
@@ -39,7 +58,7 @@ class LuxBase(SmartPlugin):
 
     # ATTENTION: This is NOT the SmartPlugin class of the plugin!!!
 
-    def __init__(self, host, port=8888):
+    def __init__(self, host, port=8888, **kwargs):
         self.logger = logging.getLogger(__name__)
         self.host = host
         self.port = int(port)
@@ -233,7 +252,7 @@ class LuxBase(SmartPlugin):
 class Luxtronic2(LuxBase):
 
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.3.2'
+    PLUGIN_VERSION = '1.3.3'
 
     _parameter = {}
     _attribute = {}
@@ -241,21 +260,22 @@ class Luxtronic2(LuxBase):
     _decoded = {}
     alive = True
 
-    def __init__(self, smarthome, host, port=8888, cycle=300):
-        LuxBase.__init__(self, host, port)
-        self._sh = smarthome
-        self._cycle = int(cycle)
+    def __init__(self, sh, **kwargs):
+        self._is_connected = False
+        self._cycle = self.get_parameter_value('cycle')
+        LuxBase.__init__(self, self.get_parameter_value('host'), self.get_parameter_value('port'))
         self.connect()
 
     def run(self):
         self.alive = True
-        self._sh.scheduler.add('Luxtronic2', self._refresh, cycle=self._cycle)
+        self.scheduler_add('Luxtronic2', self._refresh, cycle=self._cycle)
 
     def stop(self):
         self.alive = False
+        self.scheduler_remove('Luxtronic2')
 
     def _refresh(self):
-        if not self.is_connected:
+        if not self.is_connected or not self.alive:
             return
         start = time.time()
         if len(self._parameter) > 0:
@@ -285,54 +305,8 @@ class Luxtronic2(LuxBase):
 
     def _decode(self, identifier, value):
         if identifier == 119:
-            if value == 0:
-                return 'Heizbetrieb'
-            if value == 1:
-                return 'Keine Anforderung'
-            if value == 2:
-                return 'Netz- Einschaltverzoegerung'
-            if value == 3:
-                return 'SSP Zeit'
-            if value == 4:
-                return 'Sperrzeit'
-            if value == 5:
-                return 'Brauchwasser'
-            if value == 6:
-                return 'Estrich Programm'
-            if value == 7:
-                return 'Abtauen'
-            if value == 8:
-                return 'Pumpenvorlauf'
-            if value == 9:
-                return 'Thermische Desinfektion'
-            if value == 10:
-                return 'Kuehlbetrieb'
-            if value == 12:
-                return 'Schwimmbad'
-            if value == 13:
-                return 'Heizen Ext.'
-            if value == 14:
-                return 'Brauchwasser Ext.'
-            if value == 16:
-                return 'Durchflussueberwachung'
-            if value == 17:
-                return 'ZWE Betrieb'
-            return '???'
-        if identifier == 10:
-            return float(value) / 10
-        if identifier == 11:
-            return float(value) / 10
-        if identifier == 12:
-            return float(value) / 10
-        if identifier == 15:
-            return float(value) / 10
-        if identifier == 19:
-            return float(value) / 10
-        if identifier == 20:
-            return float(value) / 10
-        if identifier == 151:
-            return float(value) / 10
-        if identifier == 152:
+            return MODES.get(value, '???')
+        if identifier in (10, 11, 12, 15, 19, 20, 151, 152):
             return float(value) / 10
         return value
 
@@ -356,11 +330,12 @@ class Luxtronic2(LuxBase):
             return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != 'Luxtronic2':
+        if caller != 'Luxtronic2' and self.alive:
             self.set_param(self.get_iattr_value(item.conf, 'lux2_p'), item())
 
 
 def main():
+    lux = None
     try:
         lux = LuxBase('192.168.178.25')
         lux.connect()
@@ -388,6 +363,7 @@ def main():
     finally:
         if lux:
             lux.close()
+
 
 if __name__ == "__main__":
     sys.exit(main())

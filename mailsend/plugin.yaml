@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.4.1                 # Plugin version
+    version: 1.4.2                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -23,7 +23,8 @@ plugin:
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
     host:
-        type: ip
+        #type: ip
+        type: str
         description:
             de: 'Adresse des SMTP Hosts'
             en: 'Address of SMTP host'
@@ -34,8 +35,8 @@ parameters:
         valid_min: 0
         valid_max: 65535
         description:
-            de: 'Port des SMTP service (bitte 25 nutzen, fals tls deaktiviert wird)'
-            en: 'Port used by SMTP service (use 25 if tls is set to False)'
+            de: 'Port des SMTP service - Alternative gebräuchliche Ports sind 2525, 465 (smtp over SSL) und 25 (nur ohne tls)'
+            en: 'Port used by SMTP service - Commonly used alternative ports are 2525, 465 (smtp over SSL) und 25 (only without tls)'
 
     tls:
         type: bool
@@ -48,7 +49,7 @@ parameters:
         type: str
         default: ''
         description:
-            de: 'Absender-Adresse der eMails (mail@example.com)'
+            de: 'Absenderadresse der eMails (mail@example.com)'
             en: 'Sender address of the emails (mail@example.com)'
 
     username:
@@ -82,7 +83,7 @@ plugin_functions:
                 type: str
                 description:
                     de: "Empfänger der eMail (admin@smart.home)"
-                    en: "Receipient of email (admin@smart.home)"
+                    en: "Recipient of email (admin@smart.home)"
             subject:
                 type: foo
                 description:

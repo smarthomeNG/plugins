@@ -28,7 +28,7 @@ Blockly.Blocks['shtools_logger'] = {
     this.setTooltip('');
   }
 };
-Blockly.Python['shtools_logger'] = function(block) {
+python.pythonGenerator.forBlock['shtools_logger'] = function(block) {
   var loglevel = block.getFieldValue('LOGLEVEL').toLowerCase();
   var logtext =  Blockly.Python.valueToCode(block, 'LOGTEXT', Blockly.Python.ORDER_NONE) || '\'\'';
   var code = "logger." + loglevel + "(" + logtext + ")\n";
@@ -54,7 +54,7 @@ Blockly.Blocks['shtools_dewpoint'] = {
     this.setTooltip('');
   }
 };
-Blockly.Python['shtools_dewpoint'] = function(block) {
+python.pythonGenerator.forBlock['shtools_dewpoint'] = function(block) {
   var value_hum = Blockly.Python.valueToCode(block, 'HUM', Blockly.Python.ORDER_ATOMIC);
   var value_temp = Blockly.Python.valueToCode(block, 'TEMP', Blockly.Python.ORDER_ATOMIC);
   var code = 'sh.tools.dewpoint(' + value_temp + ', ' + value_hum + ')';
@@ -78,7 +78,7 @@ Blockly.Blocks['shtools_fetchurl'] = {
     this.setTooltip('');
   }
 };
-Blockly.Python['shtools_fetchurl'] = function(block) {
+python.pythonGenerator.forBlock['shtools_fetchurl'] = function(block) {
   var text_url = block.getFieldValue('URL');
   var code = 'sh.tools.fetch_url("' + text_url + '")' ;
   // TODO: Change ORDER_NONE to the correct strength.
@@ -104,7 +104,7 @@ Blockly.Blocks['shtools_fetchurl2'] = {
     this.setTooltip('');
   }
 };
-Blockly.Python['shtools_fetchurl2'] = function(block) {
+python.pythonGenerator.forBlock['shtools_fetchurl2'] = function(block) {
   var text_url = block.getFieldValue('URL');
   var text_user = block.getFieldValue('USER');
   var text_password = block.getFieldValue('PASSWORD');
@@ -112,4 +112,3 @@ Blockly.Python['shtools_fetchurl2'] = function(block) {
   // TODO: Change ORDER_NONE to the correct strength.
   return [code, Blockly.Python.ORDER_NONE];
 };
-
