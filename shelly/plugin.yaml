@@ -12,7 +12,7 @@ plugin:
 #    documentation: http://smarthomeng.de/user/plugins/mqtt2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1451853-support-thread-für-das-shelly-plugin
 
-    version: 1.8.1                 # Plugin version
+    version: 1.8.2                 # Plugin version
     sh_minversion: 1.9.5.6         # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -89,7 +89,7 @@ item_attributes:
 #            - energy_by_minute
         description:
             de: "Zu lesendes/schreibendes Attribut des Shelly Devices. Achtung: Nicht jedes Attribut ist auf allen Device-Typen vorhanden."
-            en: "Attribute of Shelly devcie that shall be read/written. Note: Not every attribute is available on all device types"
+            en: "Attribute of Shelly device that shall be read/written. Note: Not every attribute is available on all device types"
 
     shelly_relay:
         type: str
