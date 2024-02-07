@@ -12,7 +12,7 @@ plugin:
     #documentation: 
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1916122-support-thread-f%C3%BCr-das-viessmann-plugin
 
-    version: 1.9.1                  # Plugin version
+    version: 1.9.3                  # Plugin version
     sh_minversion: 1.9.0            # minimum shNG version to use this plugin
     #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -84,6 +84,8 @@ item_attributes:
         - 'heating.circuits.1.operating.modes.heating'
         - 'heating.circuits.1.operating.modes.active'
         - 'heating.gas.consumption.total'
+        - 'heating.gas.consumption.summary.dhw'
+        - 'heating.gas.consumption.summary.heating'
         - 'heating.circuits.1.operating.programs.comfort'
         - 'heating.circuits.1.operating.programs.normal'
         - 'heating.circuits.1.operating.programs.reduced'

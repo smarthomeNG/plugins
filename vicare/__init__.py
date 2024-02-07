@@ -38,7 +38,7 @@ AUTHORIZE_URL = 'https://iam.viessmann.com/idp/v3/authorize'
 TOKEN_URL = 'https://iam.viessmann.com/idp/v3/token'
 
 class Vicare(SmartPlugin):
-    PLUGIN_VERSION = '1.9.2'
+    PLUGIN_VERSION = '1.9.3'
 
     def __init__(self, sh):
         """
@@ -63,7 +63,8 @@ class Vicare(SmartPlugin):
         self.installationId = ''                             # installation ID, unique for the whole viessmann installation
         self.gatewaySerial = ''
         self.deviceId = ''
-        self.featureListJson = {}
+        self.featureListJson = {}                            # List of all available features as Json
+        self.deviceListJson = {}                             # List of all available devices as Json
         self.nr_devices = 0                                  # Number of devices
         self.deviceType = 'unknown'
         self.modelId = 'unknown'
@@ -364,7 +365,6 @@ class Vicare(SmartPlugin):
         self.decodeFeatures(self.featureListJson, log_features = False)
 
 
-
     def pollUrlInterface(self, url): 
         headers={}
         headers['Authorization'] = f"Bearer {self.accessToken}"
@@ -393,7 +393,7 @@ class Vicare(SmartPlugin):
         if response is None:
             return
         if response.status_code == 200:
-            self.logger.debug(f"pollINstallationId request successfull")
+            self.logger.debug(f"pollInstallationId request successfull")
         else:
             self.logger.warning(f"pollInstallationId request was unsuccessfull. Status code: {response.status_code}, Text: {response.text}")
             return
@@ -460,7 +460,7 @@ class Vicare(SmartPlugin):
         if response is None:
             return
         if response.status_code == 200:
-            self.logger.debug(f"pollDevices request successfull")
+            self.logger.debug(f"pollDevices request successfull: {response.text}")
         else:
             self.logger.warning(f"pollDevices request was unsuccessfull. Status code: {response.status_code}")
             return
@@ -472,32 +472,43 @@ class Vicare(SmartPlugin):
                 return
 
             if 'data' in responseJson:
+                self.deviceListJson = responseJson['data']
                 dataJson = responseJson['data']
-                #self.logger.warning(f"Debug dataJson: {dataJson}")
-                #self.logger.warning(f"Debug dataJson[0]: {dataJson[0]}")
 
                 self.nr_devices = len(dataJson)
+                index_of_device = 0
                 if self.nr_devices > 1:
-                    self.logger.debug(f"pollDevices: {self.nr_devices} devices found but only the first is decoded.")
+                    self.logger.info(f"pollDevices: Found {self.nr_devices} devices.")
+                    found_valid_serial = False
+                    # Determine device of interest by picking the first device having a valid boiler serial number:
+                    for i in range(0,self.nr_devices):
+                        if 'boilerSerial' in dataJson[i] and (dataJson[i]['boilerSerial'] is not None):
+                            found_valid_serial = True
+                            index_of_device = i
+                            self.logger.info(f"pollDevices: Decoding device with index {index_of_device} and boiler serial number:{dataJson[i]['boilerSerial']}")
+                
+                    if found_valid_serial == False:
+                        self.logger.error(f"pollDevices: No device with valid boiler serial number found. Perhaps plugin has to be extended for additional device types. Aborting decoding.")
+                        return
 
-                dataJson_0 = dataJson[0]
+                dataJson_device = dataJson[index_of_device]
 
                 boilerSerial = None
                               
-                if 'id' in dataJson_0:
-                    self.deviceId = dataJson_0['id']
+                if 'id' in dataJson_device :
+                    self.deviceId = dataJson_device ['id']
                     self.logger.info(f"DeviceId is {self.deviceId}")
-                if 'boilerSerial' in dataJson_0:
-                    boilerSerial = dataJson_0['boilerSerial']
+                if 'boilerSerial' in dataJson_device :
+                    boilerSerial = dataJson_device ['boilerSerial']
                     self.logger.info(f"BoilerSerial is {boilerSerial}")
-                if 'modelId' in dataJson_0:
-                    self.modelId = dataJson_0['modelId']
+                if 'modelId' in dataJson_device :
+                    self.modelId = dataJson_device ['modelId']
                     self.logger.info(f"modelId is {self.modelId}")
-                if 'status' in dataJson_0:
-                    status = dataJson_0['status']
+                if 'status' in dataJson_device :
+                    status = dataJson_device ['status']
                     self.logger.info(f"Status is {status}")
-                if 'deviceType' in dataJson_0:
-                    self.deviceType = dataJson_0['deviceType']
+                if 'deviceType' in dataJson_device :
+                    self.deviceType = dataJson_device ['deviceType']
                     self.logger.info(f"deviceType is {self.deviceType}")
 
                 # Copy data in viessmann items:
@@ -507,6 +518,9 @@ class Vicare(SmartPlugin):
                     if rx_key == 'boilerSerial':
                         if boilerSerial:
                             item(boilerSerial, self.get_shortname())
+            else:
+                # No data available in response
+                self.deviceListJson = {}
 
     def pollFeatures(self):
         self.featureListJson = {}
@@ -526,7 +540,7 @@ class Vicare(SmartPlugin):
         if response is None:
             return
         if response.status_code == 200:
-            self.logger.debug(f"pollFeatures request successfull")
+            self.logger.debug(f"pollFeatures: request successfull, response: {response.text}")
         else:
             self.logger.warning(f"pollFeatures request was unsuccessfull. Status code: {response.status_code}")
             self.logger.warning(f"pollFeatures Debug response: {response}, response.text: {response.text}")
@@ -542,6 +556,10 @@ class Vicare(SmartPlugin):
                 self.featureListJson = responseJson['data']
                 nr_features = len(self.featureListJson)
                 self.logger.info(f"Found {nr_features} features")
+        
+        if len(self.featureListJson) == 0:
+            self.logger.warning(f"pollFeature: No Features found")
+
 
     def decodeFeatures(self, featureList, log_features = False):
         nr_features = len(featureList)
