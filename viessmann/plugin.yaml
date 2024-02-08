@@ -8,8 +8,8 @@ plugin:
     maintainer: Morg
     state: develop
     keywords: iot device sdp
-    version: 1.3.0
-    sh_minversion: 1.9.3.1
+    version: 2.0.0
+    sh_minversion: 1.9.5.1  # 1.10.0.1
     py_minversion: 3.6
     multi_instance: false
     restartable: true

@@ -9,7 +9,7 @@ import datetime
 
 
 # V = Viessmann, generic numeric type
-class DT_V(DT.Datatype):
+class DT_Number(DT.Datatype):
     def get_send_data(self, data, **kwargs):
         if data is None:
             return None
@@ -39,7 +39,7 @@ class DT_V(DT.Datatype):
 
 
 # S = serial
-class DT_S(DT_V):
+class DT_Serial(DT_Number):
     def get_send_data(self, data, **kwargs):
         raise RuntimeError('write of serial number not possible')
 
@@ -53,7 +53,7 @@ class DT_S(DT_V):
 
 
 # T = time
-class DT_T(DT_V):
+class DT_Time(DT_Number):
     def get_send_data(self, data, **kwargs):
         try:
             datestring = dateutil.parser.isoparse(data).strftime('%Y%m%d%w%H%M%S')
@@ -70,13 +70,13 @@ class DT_T(DT_V):
 
 
 # D = date
-class DT_D(DT_T):
+class DT_Date(DT_Time):
     def get_shng_data(self, data, type=None, **kwargs):
         return datetime.strptime(data.hex(), '%Y%m%d%W%H%M%S').date().isoformat()
 
 
 # C = control timer (?)
-class DT_C(DT_V):
+class DT_Control(DT_Number):
     def get_send_data(self, data, **kwargs):
         try:
             times = ''
@@ -95,7 +95,7 @@ class DT_C(DT_V):
 
 
 # H = hex
-class DT_H(DT_V):
+class DT_Hex(DT_Number):
     def get_send_data(self, data, **kwargs):
         if isinstance(data, str):
             try:

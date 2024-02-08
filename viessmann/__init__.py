@@ -43,7 +43,7 @@ else:
     from .protocol import SDPProtocolViessmann
 
 from lib.model.sdp.globals import PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_PROTOCOL
-from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
+from lib.model.smartdeviceplugin import SDPResultError, SmartDevicePlugin, Standalone
 
 
 if not SDP_standalone:
@@ -55,7 +55,7 @@ class viessmann(SmartDevicePlugin):
 
     Standalone mode is automatic device type discovery
     """
-    PLUGIN_VERSION = '1.3.0'
+    PLUGIN_VERSION = '2.0.0'
 
     def _set_device_defaults(self):
 
@@ -107,14 +107,17 @@ class viessmann(SmartDevicePlugin):
         """
         addr = addr.lower()
 
-        commandname = self._commands.get_command_from_reply(addr)
+        commandname = self._commands.get_commands_from_reply(addr)
         if commandname is None:
             self.logger.debug(f'Address {addr} not defined in commandset, aborting')
-            return None
+            return
 
+        commandname = commandname[0]
         self.logger.debug(f'Attempting to read address {addr} for command {commandname}')
-
-        return self.send_command(commandname)
+        try:
+            return self.send_command(commandname, return_result=True)
+        except SDPResultError:
+            pass
 
     def read_temp_addr(self, addr, length=1, mult=0, signed=False):
         """
@@ -135,21 +138,21 @@ class viessmann(SmartDevicePlugin):
         addr = addr.lower()
         if len(addr) != 4:              # addresses are 2 bytes
             self.logger.warning(f'temp address: address not 4 digits long: {addr}')
-            return None
+            return
 
         for c in addr:                  # addresses are hex strings
             if c not in '0123456789abcdef':
                 self.logger.warning(f'temp address: address digit "{c}" is not hex char')
-                return None
+                return
 
         if length < 1 or length > 32:          # empiritistical choice
             self.logger.warning(f'temp address: len is not > 0 and < 33: {len}')
-            return None
+            return
 
         # addr already known?
-        cmd = self._commands.get_command_from_reply(addr)
+        cmd = self._commands.get_commands_from_reply(addr)
         if cmd:
-            self.logger.info(f'temp address {addr} already known for command {cmd}')
+            self.logger.info(f'temp address {addr} already known for command {cmd[0]}')
         else:
             # create temp commandset
             cmd = 'temp_cmd'
@@ -184,11 +187,14 @@ class viessmann(SmartDevicePlugin):
         commandname = self._commands.get_command_from_reply(addr)
         if commandname is None:
             self.logger.debug(f'Address {addr} not defined in commandset, aborting')
-            return None
+            return
 
         self.logger.debug(f'Attempting to write address {addr} with value {value} for command {commandname}')
 
-        return self.send_command(commandname, value)
+        try:
+            return self.send_command(commandname, value, return_result=True)
+        except SDPResultError:
+            return
 
     def get_device_type(self, protocol):
 
@@ -212,7 +218,7 @@ class viessmann(SmartDevicePlugin):
             err = e
         if not res:
             self.logger.info(f'Connection to {serialport} failed. Please check connection. {err if err else ""}')
-            return None
+            return
 
         res = None
         try:
@@ -238,7 +244,7 @@ class viessmann(SmartDevicePlugin):
         if self._result is not None:
             return self._result
         else:
-            return None
+            return
 
     def _cb_standalone(self, command, value, by):
         self._result = value

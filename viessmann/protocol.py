@@ -63,7 +63,6 @@ class SDPProtocolViessmann(SDPProtocol):
 
         # set class properties
         self._is_connected = False
-        self._error_count = 0
         self._lock = threading.Lock()
         self._is_initialized = False
         self._data_received_callback = data_received_callback
@@ -288,15 +287,12 @@ class SDPProtocolViessmann(SDPProtocol):
                         self._initialized = False
                     elif chunk[:1] != self._int2bytes(self._controlset['acknowledge'], 1):
                         self.logger.error(f'received invalid chunk, not starting with ACK, response was {chunk}')
-                        self._error_count += 1
-                        if self._error_count >= 5:
-                            self.logger.warning('encountered 5 invalid chunks in sequence, maybe communication was lost, forcing re-initialize')
-                            self._close()
-                            sleep(2)
-                            self._open()
+                        self.logger.warning('encountered invalid chunk, maybe communication was lost, forcing re-initialize')
+                        self._close()
+                        sleep(1)
+                        self._open()
                     else:
                         response_packet.extend(chunk)
-                        self._error_count = 0
                         return self._parse_response(response_packet)
                 else:
                     self.logger.error(f'received 0 bytes chunk - ignoring response_packet, chunk was {chunk}')

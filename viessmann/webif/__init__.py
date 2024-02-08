@@ -54,6 +54,7 @@ class WebInterface(SmartPluginWebIf):
         self.webif_dir = webif_dir
         self.plugin = plugin
         self.items = Items.get_instance()
+        self._last_read = {'last': {'addr': None, 'val': None, 'cmd': None}}
 
         self.tplenv = self.init_template_environment()
 
@@ -70,86 +71,61 @@ class WebInterface(SmartPluginWebIf):
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
 
         plgitems = []
-        for item in self.items.return_items():
-            if any(elem in item.property.attributes for elem in ITEM_ATTRS):
-                plgitems.append(item)
+        for item in self.plugin._plg_item_dict:
+            if item != self.plugin._suspend_item_path and not item.endswith('.read'):
+                plgitems.append(self.plugin._plg_item_dict[item]['item'])
+
+#                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
+#                           cmds=self.cmdset,
+#                           units=sorted(list(self.plugin._unitset.keys())),
+#                           last_read_addr=self._last_read['last']['addr'],
+#                           last_read_value=self._last_read['last']['val'],
+#                           last_read_cmd=self._last_read['last']['cmd']
 
         return tmpl.render(p=self.plugin,
-                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
-                           item_count=0,
-                           plgitems=plgitems,
+                           items=sorted(plgitems, key=lambda k: str.lower(k.property.path)),
+                           cmds=self.plugin._commands.get_commandlist(),
                            running=self.plugin.alive,
-                           lookups=self.plugin._commands._lookups)
+                           lookups=self.plugin._commands._lookups,
+                           units=self.plugin._commands.get_dtlist(),
+                           last_read_addr=self._last_read['last']['addr'],
+                           last_read_value=self._last_read['last']['val'],
+                           last_read_cmd=self._last_read['last']['cmd'])
 
     @cherrypy.expose
-    def submit(self, button=None, param=None):
-        """
+    def submit(self, button='', addr='', unit='', length='', clear=False):
+        '''
         Submit handler for Ajax
-        """
-        if button is not None:
+        '''
+        if button:
 
-            notify = None
+            read_val = self.plugin.read_addr(button)
+            if read_val is None:
+                self.logger.debug(f'Error trying to read addr {button} submitted by WebIf')
+                read_val = 'Fehler beim Lesen'
+            else:
+                try:
+                    read_cmd = self.plugin._commands.get_commands_from_reply(button)[0]
+                except Exception:
+                    read_cmd = '(unknown)'
+                if read_cmd is not None:
+                    self._last_read[button] = {'addr': button, 'cmd': read_cmd, 'val': read_val}
+                    self._last_read['last'] = self._last_read[button]
 
-            if '#' in button:
+        elif addr is not None and unit is not None and length.isnumeric():
 
-                # run/stop command
-                cmd, __, dev = button.partition('#')
-                device = self.plugin.get_device(dev)
-                if device:
-                    if cmd == 'run':
-                        self.logger.info(f'Webinterface starting device {dev}')
-                        device.start()
-                    elif cmd == 'stop':
-                        self.logger.info(f'Webinterface stopping device {dev}')
-                        device.stop()
-            elif '.' in button:
+            read_val = self.plugin.read_temp_addr(addr, int(length), unit)
+            if read_val is None:
+                self.logger.debug(f'Error trying to read custom addr {button} submitted by WebIf')
+                read_val = 'Fehler beim Lesen'
+            else:
+                self._last_read[addr] = {'addr': addr, 'cmd': f'custom ({addr})', 'val': read_val}
+                self._last_read['last'] = self._last_read[addr]
 
-                # set device arg - but only when stopped
-                dev, __, arg = button.partition('.')
-                if param is not None:
-                    param = sanitize_param(param)
-                    try:
-                        self.logger.info(f'Webinterface setting param {arg} of device {dev} to {param}')
-                        self.plugin._devices[dev]['params'][arg] = param
-                        self.plugin._update_device_params(dev)
-                        notify = dev + '-' + arg + '-notify'
-                    except Exception as e:
-                        self.logger.info(f'Webinterface failed to set param {arg} of device {dev} to {param} with error {e}')
+        elif clear:
+            for addr in self._last_read:
+                self._last_read[addr]['val'] = ''
+            self._last_read['last'] = {'addr': None, 'val': '', 'cmd': ''}
 
-            # # possibly prepare data for returning
-            # read_cmd = self.plugin._commandname_by_commandcode(button)
-            # if read_cmd is not None:
-            #     self._last_read[button] = {'addr': button, 'cmd': read_cmd, 'val': read_val}
-            #     self._last_read['last'] = self._last_read[button]
-
-            data = {'running': {dev: self.plugin._devices[dev]['device'].alive for dev in self.plugin._devices}, 'notify': notify}
-
-        # # possibly return data to WebIf
         cherrypy.response.headers['Content-Type'] = 'application/json'
-        return json.dumps(data).encode('utf-8')
-
-    @cherrypy.expose
-    def get_data_html(self, dataSet=None):
-        """
-        Return data to update the webpage
-
-        For the standard update mechanism of the web interface, the dataSet to return the data for is None
-
-        :param dataSet: Dataset for which the data should be returned (standard: None)
-        :return: dict with the data needed to update the web page.
-        """
-        if dataSet is None:
-            # get the new data
-            # data = {}
-            pass
-
-            # data['item'] = {}
-            # for i in self.plugin.items:
-            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
-            #
-            # return it as json the the web page
-            # try:
-            #     return json.dumps(data)
-            # except Exception as e:
-            #     self.logger.error('get_data_html exception: {}'.format(e))
-        return {}
+        return json.dumps(self._last_read).encode('utf-8')
