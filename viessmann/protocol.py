@@ -336,7 +336,10 @@ class SDPProtocolViessmann(SDPProtocol):
             checksum = self._calc_checksum(response[1:len(response) - 1])  # first, cut first byte (ACK) and last byte (checksum) and then calculate checksum
             received_checksum = response[len(response) - 1]
             if received_checksum != checksum:
-                self.logger.error(f'calculated checksum {checksum} does not match received checksum of {received_checksum}! Ignoring reponse')
+                self.logger.error(f'calculated checksum {checksum} does not match received checksum of {received_checksum}! Ignoring reponse, cycling connection')
+                self._close()
+                sleep(1)
+                self._open()
                 return None
 
             # Extract command/address, valuebytes and valuebytecount out of response
