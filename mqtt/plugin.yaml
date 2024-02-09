@@ -14,7 +14,7 @@ plugin:
     version: 2.0.5                 # Plugin version
     sh_minversion: 1.7             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: True           # plugin supports multi instance
+    multi_instance: True           # since the plugin connects to the mqtt module, multi instance makes no sense
     restartable: unknown
     classname: Mqtt2               # class containing the plugin
 

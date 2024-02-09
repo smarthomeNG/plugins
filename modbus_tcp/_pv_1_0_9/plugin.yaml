@@ -1,0 +1,134 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: gateway
+    description:
+        de: 'Plugin zur Geräte-Anbindung über ModBus an SmartHomeNG'
+        en: 'Plugin to connect via modbus with SmartHomeNG'
+    maintainer: ivande
+    tester: NONE                   # Who tests this plugin?
+    state: ready
+    keywords: modbus_tcp modbus smartmeter inverter heatpump
+    #documentation: http://smarthomeng.de/user/plugins/modbus_tcp/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1154368-einbindung-von-modbus-tcp
+    version: 1.0.9                 # Plugin version
+    sh_minversion: 1.8             # minimum shNG version to use this plugin
+    #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.6
+    # py_maxversion:               # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: True           # plugin supports multi instance
+    restartable: unknown
+    classname: modbus_tcp          # class containing the plugin
+
+parameters:
+    host:
+        type: ipv4
+        description:
+            de: 'IP Adresse des Modbus-Geraetes'
+            en: 'IP address from the modbus-device'
+
+    port:
+        type: int
+        valid_min: 0
+        valid_max: 65535
+        description:
+            de: 'modbus Port'
+            en: 'modbus port'
+
+    cycle:
+        type: int
+        default: 300
+        valid_min: 0
+        description:
+            de: 'Update Zyklus in Sekunden. Wenn der Wert 0 ist, wird keine Abfrage über cycle ausgeführt'
+            en: 'Update cycle in seconds. If value is 0 then noch query will be made by means of cycle'
+
+    crontab:
+        type: str
+        description:
+            de: 'Update mit Festlegung via Crontab'
+            en: 'Update by means of a crontab'
+
+    slaveUnit:
+        type: num
+        default: 1
+        description:
+            de: 'Slave-Addresse der zu lesenden Modbus-Einheit'
+            en: 'slave-address of the Modbus-Unit to read'
+
+item_attributes:
+    modBusObjectType:
+        type: str
+        default: 'HoldingRegister'
+        description:
+            de: 'Auswahl welcher Objekt-Type gelesen werden soll'
+            en: 'Selection of which object type should be read '
+        valid_list:
+            - 'Coil'
+            - 'DiscreteInput'
+            - 'InputRegister'
+            - 'HoldingRegister'
+
+    modBusAddress:
+        type: num
+        description:
+            de: 'Register Adresse welche gelesen werden soll'
+            en: 'register address to read'
+
+    modBusUnit:
+        type: num
+        default: 1  # als default wird die slaveUnit aus der plugin-Konfig verwendet
+        description:
+            de: 'Slave-Addresse der zu lesenden Modbus-Einheit (Unit aus der plugin-Konfig wird überschrieben)'
+            en: 'slave-address of the Modbus-Unit to read - (Value from plugin config will be overwritten)'
+
+    modBusDataType:
+        type: str
+        default: 'uint16'
+        description:
+            de: 'Datentyp vom zu lesenden Register (bit, int16 uint16 int32 uint32 float32 string16 stringNN)'
+            en: 'datatype from register to read (bit, int16 uint16 int32 uint32 float32 string16 stringNN)'
+
+    modBusDirection:
+        type: str
+        default: 'read'
+        description:
+            de: 'Datenrichtung'
+            en: 'data direction'
+        valid_list:
+            - 'read'
+            - 'read_write'
+            - 'write'
+
+    modBusByteOrder:
+        type: str
+        default: 'Endian.Big'
+        description:
+            de: 'Endian.Big oder Endian.Little'
+            en: 'Endian.Big or Endian.Little'
+        valid_list:
+            - 'Endian.Big'
+            - 'Endian.Little'
+
+    modBusWordOrder:
+        type: str
+        default: 'Endian.Big'
+        description:
+            de: 'Endian.Big oder Endian.Little'
+            en: 'Endian.Big or Endian.Little'
+        valid_list:
+            - 'Endian.Big'
+            - 'Endian.Little'
+
+    modBusFactor:
+        type: num
+        default: 1
+        description:
+            de: 'Faktor mit dem der gelesene Register-Wert multipliziert wird'
+            en: 'Factor by which the read register value is multiplied'
+
+item_structs: NONE
+
+plugin_functions: NONE
+
+logic_parameters: NONE

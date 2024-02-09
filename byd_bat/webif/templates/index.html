@@ -61,69 +61,23 @@ Activate that function if needed, otherwise just remove the line to increase per
 		if (dataSet === 'devices_info' || dataSet === null) {
 			var objResponse = JSON.parse(response);
       
+      shngInsertText('batttype',objResponse['batttype']);
       shngInsertText('bydip',objResponse['bydip']);
-      shngInsertText('imppath',objResponse['imppath']);
+      shngInsertText('soc',objResponse['soc']);
+      shngInsertText('capacity_total',objResponse['capacity_total']);
+      shngInsertText('power_charge',objResponse['power_charge']);
+      shngInsertText('power_discharge',objResponse['power_discharge']);
       shngInsertText('last_homedata',objResponse['last_homedata']);
       shngInsertText('last_diagdata',objResponse['last_diagdata']);
+      shngInsertText('imppath',objResponse['imppath']);
+      document.getElementById('connection').checked = objResponse['connection'];
 
-      shngInsertText('current',objResponse['current']);
-      shngInsertText('power',objResponse['power']);
-      shngInsertText('power_charge',objResponse['power_charge']);
-      shngInsertText('power_charge2',objResponse['power_charge']);
-      shngInsertText('power_discharge',objResponse['power_discharge']);
-      shngInsertText('power_discharge2',objResponse['power_discharge']);
-      shngInsertText('soc',objResponse['soc']);
-      shngInsertText('soc2',objResponse['soc']);
-      shngInsertText('soh',objResponse['soh']);
-      shngInsertText('tempbatt',objResponse['tempbatt']);
-      shngInsertText('tempmax',objResponse['tempmax']);
-      shngInsertText('tempmin',objResponse['tempmin']);
-      shngInsertText('voltbatt',objResponse['voltbatt']);
-      shngInsertText('voltdiff',objResponse['voltdiff']);
-      shngInsertText('voltmax',objResponse['voltmax']);
-      shngInsertText('voltmin',objResponse['voltmin']);
-      shngInsertText('voltout',objResponse['voltout']);
-
-      shngInsertText('bms',objResponse['bms']);
-      shngInsertText('bmu',objResponse['bmu']);
-      shngInsertText('bmubanka',objResponse['bmubanka']);
-      shngInsertText('bmubankb',objResponse['bmubankb']);
-      shngInsertText('batttype',objResponse['batttype']);
-      shngInsertText('batttype2',objResponse['batttype']);
-      shngInsertText('errorstr',objResponse['errorstr']);
-      shngInsertText('grid',objResponse['grid']);
-      shngInsertText('invtype',objResponse['invtype']);
-      shngInsertText('modules',objResponse['modules']);
-      shngInsertText('bmsqty',objResponse['bmsqty']);
-      shngInsertText('capacity_total',objResponse['capacity_total']);
-      shngInsertText('paramt',objResponse['paramt']);
-      shngInsertText('serial',objResponse['serial']);
-
-      shngInsertText('t1_soc',objResponse['t1_soc']);
-      shngInsertText('t1_bat_voltag',objResponse['t1_bat_voltag']);
-      shngInsertText('t1_v_out',objResponse['t1_v_out']);
-      shngInsertText('t1_current',objResponse['t1_current']);
-      shngInsertText('t1_volt_max',objResponse['t1_volt_max']);
-      shngInsertText('t1_volt_min',objResponse['t1_volt_min']);
-      shngInsertText('t1_temp_max',objResponse['t1_temp_max']);
-      shngInsertText('t1_temp_min',objResponse['t1_temp_min']);
-      shngInsertText('t2_soc',objResponse['t2_soc']);
-      shngInsertText('t2_bat_voltag',objResponse['t2_bat_voltag']);
-      shngInsertText('t2_v_out',objResponse['t2_v_out']);
-      shngInsertText('t2_current',objResponse['t2_current']);
-      shngInsertText('t2_volt_max',objResponse['t2_volt_max']);
-      shngInsertText('t2_volt_min',objResponse['t2_volt_min']);
-      shngInsertText('t2_temp_max',objResponse['t2_temp_max']);
-      shngInsertText('t2_temp_min',objResponse['t2_temp_min']);
-      shngInsertText('t3_soc',objResponse['t3_soc']);
-      shngInsertText('t3_bat_voltag',objResponse['t3_bat_voltag']);
-      shngInsertText('t3_v_out',objResponse['t3_v_out']);
-      shngInsertText('t3_current',objResponse['t3_current']);
-      shngInsertText('t3_volt_max',objResponse['t3_volt_max']);
-      shngInsertText('t3_volt_min',objResponse['t3_volt_min']);
-      shngInsertText('t3_temp_max',objResponse['t3_temp_max']);
-      shngInsertText('t3_temp_min',objResponse['t3_temp_min']);
-      
+      shngInsertText('r1_table',objResponse['r1_table']);
+      shngInsertText('r2_table',objResponse['r2_table']);
+      shngInsertText('r3_table',objResponse['r3_table']);
+      shngInsertText('r4_table',objResponse['r4_table']);
+      shngInsertText('r5_table',objResponse['r5_table']);
+            
       var source = 'static/img/bydvt1.png',
           timestamp = (new Date()).getTime(),
           newUrl = source + '?_=' + timestamp;
@@ -136,6 +90,20 @@ Activate that function if needed, otherwise just remove the line to increase per
           timestamp = (new Date()).getTime(),
           newUrl = source + '?_=' + timestamp;
       document.getElementById("bydvt3").src = newUrl;
+      
+      var source = 'static/img/bydvbt1.png',
+          timestamp = (new Date()).getTime(),
+          newUrl = source + '?_=' + timestamp;
+      document.getElementById("bydvbt1").src = newUrl;
+      var source = 'static/img/bydvbt2.png',
+          timestamp = (new Date()).getTime(),
+          newUrl = source + '?_=' + timestamp;
+      document.getElementById("bydvbt2").src = newUrl;
+      var source = 'static/img/bydvbt3.png',
+          timestamp = (new Date()).getTime(),
+          newUrl = source + '?_=' + timestamp;
+      document.getElementById("bydvbt3").src = newUrl;
+      
       var source = 'static/img/bydtt1.png',
           timestamp = (new Date()).getTime(),
           newUrl = source + '?_=' + timestamp;
@@ -191,6 +159,15 @@ Activate that function if needed, otherwise just remove the line to increase per
 		}
 	});
 </script>
+
+<script>
+  function checkbox(value)
+  {
+    console.log('debug_log_option_'+'_'+value)
+    jQuery.get('byd_connection'+'_'+value)
+  }
+</script>
+
 <!-- 
 <script>
   window.refresh.update({dataSet:'',update_params:'',update_interval: 5000,update_active:true});
@@ -243,9 +220,9 @@ Activate that function if needed, otherwise just remove the line to increase per
 	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
 -->
 {% block buttons %}
-{% if 1==2 %}
+{% if 1==1 %}
 	<div>
-		<button id="btn1" class="btn btn-shng btn-sm" name="scan" onclick="shngPost('', {learn: 'on'})"><i class="fas fa-question"></i>&nbsp;&nbsp;&nbsp;{{ _('nach Devices suchen') }}&nbsp;</button>
+    <input type="checkbox" id="connection" name="connection" oninput="checkbox(this.checked);" title={{ _('Verbindung') }}>&nbsp;{{ _('Verbindung') }}&nbsp;</input>
 	</div>
 {% endif %}
 {% endblock %}
@@ -253,7 +230,7 @@ Activate that function if needed, otherwise just remove the line to increase per
 <!--
 	Define the number of tabs for the body of the web interface (1 - 6)
 -->
-{% set tabcount = 4 %}
+{% set tabcount = 5 %}
 
 <!--
 	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
@@ -269,196 +246,34 @@ Activate that function if needed, otherwise just remove the line to increase per
 {% block bodytab1 %}
 <div class="container">
   <div class="row">
-  <div class="col">
-  <p></p>
-  <table id="byd_diag_home" border="1">
-	  <tbody>
-      <tr>
-        <td class="py-1"><strong>SOC:</strong></td>
-        <td id="soc2" class="py-1" style="text-align: right">{{ _('Laden') }} ...</td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>SOH:</strong></td>
-        <td id="soh" class="py-1" style="text-align: right"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Leistung') }}:</strong></td>
-        <td id="power" class="py-1" style="text-align: right"></td>
-      </tr>
-      <tr>
-		  	<td class="py-1"><strong>{{ _('Ladeleistung') }}:</strong></td>
-	  		<td id="power_charge2" class="py-1" style="text-align: right"></td>
-      </tr>
-      <tr>
-	  		<td class="py-1"><strong>{{ _('Entladeleistung') }}:</strong></td>
-	  		<td id="power_discharge2" class="py-1" style="text-align: right"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Spannung Ausgang') }}:</strong></td>
-        <td id="voltout" class="py-1" style="text-align: right"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Strom Ausgang') }}:</strong></td>
-        <td id="current" class="py-1" style="text-align: right"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Spannung Batterie') }}:</strong></td>
-        <td id="voltbatt" class="py-1" style="text-align: right"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Spannung Batteriezellen max') }}:</strong></td>
-        <td id="voltmax" class="py-1" style="text-align: right"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Spannung Batteriezellen min') }}:</strong></td>
-        <td id="voltmin" class="py-1" style="text-align: right"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Spannung Batteriezellen Differenz') }}:</strong></td>
-        <td id="voltdiff" class="py-1" style="text-align: right"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Temperatur Batterie') }}:</strong></td>
-        <td id="tempbatt" class="py-1" style="text-align: right"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Temperatur Batterie max') }}:</strong></td>
-        <td id="tempmax" class="py-1" style="text-align: right"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Temperatur Batterie min') }}:</strong></td>
-        <td id="tempmin" class="py-1" style="text-align: right"></td>
-      </tr>
-	  </tbody>
-  </table>
-  </div>
-  <div class="col">
-  <p></p>
-  <table id="byd_diag_home" border="1">
-	  <tbody>
-      <tr>
-        <td class="py-1"><strong>{{ _('Wechselrichter') }}:</strong></td>
-        <td id="invtype" class="py-1">{{ _('Laden') }} ...</td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Batterietyp') }}:</strong></td>
-        <td id="batttype2" class="py-1"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Seriennummer') }}:</strong></td>
-        <td id="serial" class="py-1"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Türme') }}:</strong></td>
-        <td id="bmsqty" class="py-1"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Module pro Turm') }}:</strong></td>
-        <td id="modules" class="py-1"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Parameter') }}:</strong></td>
-        <td id="grid" class="py-1"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Fehler') }}:</strong></td>
-        <td id="errorstr" class="py-1"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>BMS:</strong></td>
-        <td id="bms" class="py-1"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>BMU:</strong></td>
-        <td id="bmu" class="py-1"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>BMU A:</strong></td>
-        <td id="bmubanka" class="py-1"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>BMU B:</strong></td>
-        <td id="bmubankb" class="py-1"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>P/T:</strong></td>
-        <td id="paramt" class="py-1"></td>
-      </tr>
-	  </tbody>
-  </table>
-  </div>
+    <div class="col">
+      <p></p>
+      <table><tr><td id="r1_table">{{ _('Laden') }} ...</td></tr></table>
+    </div>
+    <div class="col">
+      <p></p>
+      <table><tr><td id="r2_table"></td></tr></table>
+    </div>
   </div>
 </div>
 {% endblock bodytab1 %}
-
 
 <!--
 	Content block for the second tab of the Webinterface
 -->
 {% set tab2title = "<strong>"+_('BYD Diagnose')+"</strong>" %}
 {% block bodytab2 %}
-<div>
-  <p></p>
-  <table id="byd_diag_table" border="1">
-    <thead>
-      <tr>
-        <th class="py-1" width=40%></th>
-        <th class="py-1" style="text-align: center" width=20%>Turm 1</th>
-        <th class="py-1" style="text-align: center" width=20%>Turm 2</th>
-        <th class="py-1" style="text-align: center" width=20%>Turm 3</th>
-      </tr>
-    </thead>
-	  <tbody>
-      <tr>
-        <td class="py-1"><strong>SOC:</strong></td>
-        <td id="t1_soc" class="py-1" style="text-align: center"></td>
-        <td id="t2_soc" class="py-1" style="text-align: center"></td>
-        <td id="t3_soc" class="py-1" style="text-align: center"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Batteriespannung') }}:</strong></td>
-        <td id="t1_bat_voltag" class="py-1" style="text-align: center"></td>
-        <td id="t2_bat_voltag" class="py-1" style="text-align: center"></td>
-        <td id="t3_bat_voltag" class="py-1" style="text-align: center"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Spannung Out') }}:</strong></td>
-        <td id="t1_v_out" class="py-1" style="text-align: center"></td>
-        <td id="t2_v_out" class="py-1" style="text-align: center"></td>
-        <td id="t3_v_out" class="py-1" style="text-align: center"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Strom') }}:</strong></td>
-        <td id="t1_current" class="py-1" style="text-align: center"></td>
-        <td id="t2_current" class="py-1" style="text-align: center"></td>
-        <td id="t3_current" class="py-1" style="text-align: center"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Spannung max (Zelle)') }}:</strong></td>
-        <td id="t1_volt_max" class="py-1" style="text-align: center"></td>
-        <td id="t2_volt_max" class="py-1" style="text-align: center"></td>
-        <td id="t3_volt_max" class="py-1" style="text-align: center"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Spannung min (Zelle)') }}:</strong></td>
-        <td id="t1_volt_min" class="py-1" style="text-align: center"></td>
-        <td id="t2_volt_min" class="py-1" style="text-align: center"></td>
-        <td id="t3_volt_min" class="py-1" style="text-align: center"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Temperatur max (Zelle)') }}:</strong></td>
-        <td id="t1_temp_max" class="py-1" style="text-align: center"></td>
-        <td id="t2_temp_max" class="py-1" style="text-align: center"></td>
-        <td id="t3_temp_max" class="py-1" style="text-align: center"></td>
-      </tr>
-      <tr>
-        <td class="py-1"><strong>{{ _('Temperatur min (Zelle)') }}:</strong></td>
-        <td id="t1_temp_min" class="py-1" style="text-align: center"></td>
-        <td id="t2_temp_min" class="py-1" style="text-align: center"></td>
-        <td id="t3_temp_min" class="py-1" style="text-align: center"></td>
-      </tr>
-	  </tbody>
-  </table>
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <p></p>
+      <table><tr><td id="r3_table">{{ _('Laden') }} ...</td></tr></table>
+    </div>
+    <div class="col">
+      <p></p>
+      <table><tr><td id="r4_table"></td></tr></table>
+    </div>
+  </div>
 </div>
 {% endblock bodytab2 %}
 
@@ -472,10 +287,19 @@ Activate that function if needed, otherwise just remove the line to increase per
     <td><img id="bydvt1" alt="Turm 1 nicht vorhanden" src="static/img/bydvt1.png"></td>
   </tr>
   <tr>
+    <td><img id="bydvbt1" alt="Turm 1 nicht vorhanden" src="static/img/bydvbt1.png"></td>
+  </tr>
+  <tr>
     <td><img id="bydvt2" alt="Turm 2 nicht vorhanden" src="static/img/bydvt2.png"></td>
   </tr>
   <tr>
+    <td><img id="bydvbt2" alt="Turm 2 nicht vorhanden" src="static/img/bydvbt2.png"></td>
+  </tr>
+  <tr>
     <td><img id="bydvt3" alt="Turm 3 nicht vorhanden" src="static/img/bydvt3.png"></td>
+  </tr>
+  <tr>
+    <td><img id="bydvbt3" alt="Turm 3 nicht vorhanden" src="static/img/bydvbt3.png"></td>
   </tr>
 </table>
 {% endblock bodytab3 %}
@@ -486,6 +310,7 @@ Activate that function if needed, otherwise just remove the line to increase per
 -->
 {% set tab4title = "<strong>"+_('BYD Temperaturen')+"</strong>" %}
 {% block bodytab4 %}
+<p></p>
 <table style="background-color:#000000;">
   <tr>
     <td><img id="bydtt1" alt="Turm 1 nicht vorhanden" src="static/img/bydtt1.png"></td>
@@ -498,3 +323,45 @@ Activate that function if needed, otherwise just remove the line to increase per
   </tr>
 </table>
 {% endblock bodytab4 %}
+
+<!--
+	Content block for the fourth tab of the Webinterface
+-->
+{% set tab5title = "<strong>"+_('BYD Log-Daten')+"</strong>" %}
+{% block bodytab5 %}
+<p></p>
+<table><tr><td id="r5_table">{{ _('Laden') }} ...</td></tr></table>
+<!--
+<p><strong>BMU</strong></p>
+<p></p>
+<table>
+  <tr>
+    <td id="log_html" class="py-1"></td>
+  </tr>
+</table>
+<p></p>
+<p><strong>{{ _('Turm') }} 1 BMS</strong></p>
+<p></p>
+<table>
+  <tr>
+    <td id="t1_log_html" class="py-1"></td>
+  </tr>
+</table>
+<p></p>
+<p><strong>{{ _('Turm') }} 2 BMS</strong></p>
+<p></p>
+<table>
+  <tr>
+    <td id="t2_log_html" class="py-1"></td>
+  </tr>
+</table>
+<p></p>
+<p><strong>{{ _('Turm') }} 3 BMS</strong></p>
+<p></p>
+<table>
+  <tr>
+    <td id="t3_log_html" class="py-1"></td>
+  </tr>
+</table>
+-->
+{% endblock bodytab5 %}

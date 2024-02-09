@@ -184,7 +184,7 @@ def renew_error_callback(exception):  # events_twisted: failure
     # Redundant, as the exception will be logged by the events module
     self.logger.error(msg)
 
-    # ToDo possible improvement: Do not do periodic renew but do prober disposal on renew failure here instead. sub.renew(requested_timeout=10)
+    # ToDo possible improvement: Do not do periodic renew but do propper disposal on renew failure here instead. sub.renew(requested_timeout=10)
 
 
 class SubscriptionHandler(object):
@@ -266,31 +266,34 @@ class SubscriptionHandler(object):
                 # try to unsubscribe first
                 try:
                     self._event.unsubscribe()
+                    self.logger.info(f"Event {self._endpoint} unsubscribed")
                 except Exception as e:
                     self.logger.warning(f"Exception in unsubscribe(): {e}")
-                self._signal.set()
-                if self._thread:
-                    self.logger.dbglow("Preparing to terminate thread")
-                    if debug:
-                        self.logger.dbghigh(f"unsubscribe(): Preparing to terminate thread for endpoint {self._endpoint}")
-                    self._thread.join(timeout=4)
-                    if debug:
-                        self.logger.dbghigh(f"unsubscribe(): Thread joined for endpoint {self._endpoint}")
-
-                    if not self._thread.is_alive(): 
-                        self.logger.dbglow("Thread killed for enpoint {self._endpoint}")
-                        if debug:
-                            self.logger.dbghigh(f"Thread killed for endpoint {self._endpoint}")
-
-                    else:
-                        self.logger.warning("unsubscibe(): Error, thread is still alive after termination (join timed-out)")
-                    self._thread = None
-                self.logger.info(f"Event {self._endpoint} unsubscribed and thread terminated")
-                if debug:
-                    self.logger.dbghigh(f"unsubscribe(): Event {self._endpoint} unsubscribed and thread terminated")
             else:
                 if debug: 
-                    self.logger.warning(f"unsubscribe(): {self._endpoint}: self._event not valid")
+                    self.logger.warning(f"unsubscribe(): Endpoint: {self._endpoint}, Thread: {self._threadName}, self._event not valid")
+            
+            self._signal.set()
+            if self._thread:
+                self.logger.dbglow("Preparing to terminate thread")
+                if debug:
+                    self.logger.dbghigh(f"unsubscribe(): Preparing to terminate thread for endpoint {self._endpoint}")
+                self._thread.join(timeout=4)
+                if debug:
+                    self.logger.dbghigh(f"unsubscribe(): Thread joined for endpoint {self._endpoint}")
+
+                if not self._thread.is_alive(): 
+                    self.logger.dbglow("Thread killed for enpoint {self._endpoint}")
+                    if debug:
+                        self.logger.dbghigh(f"Thread killed for endpoint {self._endpoint}")
+                else:
+                    self.logger.warning("unsubscibe(): Error, thread is still alive after termination (join timed-out)")
+                self._thread = None
+                self.logger.info(f"Event {self._endpoint} thread terminated")
+
+                if debug:
+                    self.logger.dbghigh(f"unsubscribe(): Event {self._endpoint} unsubscribed and thread terminated")
+            
         if debug:
             self.logger.dbghigh(f"unsubscribe(): {self._endpoint}: lock released")
 
@@ -704,7 +707,7 @@ class Speaker(object):
 
         self.logger.dbghigh(f"_av_transport_event: {self.uid}: av transport event handler active.")
         while not sub_handler.signal.wait(1):
-            self.logger.dbgmed(f"_av_transport_event: {self.uid}: start try")
+#            self.logger.dbglow(f"_av_transport_event: {self.uid}: start try")
 
             try:
                 event = sub_handler.event.events.get(timeout=0.5)
@@ -857,7 +860,7 @@ class Speaker(object):
 
     def _check_property(self):
         if not self.is_initialized:
-            self.logger.warning(f"Speaker '{self.uid}' is not initialized.")
+            self.logger.warning(f"Checkproperty: Speaker '{self.uid}' is not initialized.")
             return False
         if not self.coordinator:
             self.logger.warning(f"Speaker '{self.uid}': coordinator is empty")
@@ -2674,7 +2677,7 @@ class Speaker(object):
             if not tag.duration:
                 self.logger.error("TinyTag duration is none.")
             else:
-                duration = round(tag.duration) + duration_offset
+                duration = tag.duration + duration_offset
                 self.logger.debug(f"TTS track duration: {duration}s, TTS track duration offset: {duration_offset}s")
                 file_name = quote(os.path.split(file_path)[1])
                 snippet_url = f"{webservice_url}/{file_name}"
@@ -2738,7 +2741,7 @@ class Speaker(object):
         else:
             file_path = utils.get_tts_local_file_path(local_webservice_path, tts, tts_language)
 
-            # only do a tts call if file not exists
+            # only do a tts call if file does not exist
             if not os.path.exists(file_path):
                 tts = gTTS(tts, lang=tts_language)
                 try:
@@ -2994,7 +2997,7 @@ class Sonos(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = "1.8.4"
+    PLUGIN_VERSION = "1.8.5"
 
     def __init__(self, sh):
         """Initializes the plugin."""
@@ -3162,6 +3165,66 @@ class Sonos(SmartPlugin):
             if item not in self.item_list:
                 self.item_list.append(item)
             return self._handle_dpt3
+
+    def play_alert_all_speakers(self, alert_uri, speaker_list = [], alert_volume=20, alert_duration=0, fade_back=False):
+        """
+        Demo function using soco.snapshot across multiple Sonos players.
+        
+        Args:
+            alert_uri (str): uri that Sonos can play as an alert
+            speaker_list (list): List of applicable speaker names, if empty, all speakers are used
+            alert_volume (int): volume level for playing alert (0 tp 100)
+            alert_duration (int): length of alert (if zero then length of track)
+            fade_back (bool): on reinstating the zones fade up the sound?
+        """
+        filtered_zones = []
+        if len(speaker_list) > 0:
+            self.logger.debug(f"play_alert_all_speakers: Only apply for these speakers {speaker_list}")
+            for zone in self.zones:
+                if zone.player_name in speaker_list:
+                    self.logger.debug(f"play_alert: adding {zone.player_name} to filter list")
+                    filtered_zones.append(zone)
+        else:
+            filtered_zones = self.zones
+
+        # Use soco.snapshot to capture current state of each zone to allow restore
+        for zone in filtered_zones:
+            zone.snap = Snapshot(zone)
+            try:
+                zone.snap.snapshot()
+            except Exception as e:
+                self.logger.error(f"Exception occured during snapshot of {zone.player_name}: {e}")
+            else:
+                self.logger.warning(f"Debug: snapshot of zone: {zone.player_name}")
+
+        # prepare all zones for playing the alert
+        for zone in filtered_zones:
+            # Each Sonos group has one coordinator only these can play, pause, etc.
+            if zone.is_coordinator:
+                if not zone.is_playing_tv:  # can't pause TV - so don't try!
+                    # pause music for each coordinators if playing
+                    trans_state = zone.get_current_transport_info()
+                    if trans_state["current_transport_state"] == "PLAYING":
+                        zone.pause()
+
+            # For every Sonos player set volume and mute for every zone
+            zone.volume = alert_volume
+            zone.mute = False
+
+        # play the sound (uri) on each sonos coordinator
+        self.logger.warning(f"will play {alert_uri} on all coordinators")
+        for zone in filtered_zones:
+            if zone.is_coordinator:
+                zone.play_uri(uri=alert_uri, title="Sonos Alert")
+
+        # wait for alert_duration
+        time.sleep(alert_duration)
+
+        # restore each zone to previous state
+        for zone in filtered_zones:
+            self.logger.warning(f"Debug: restoring {zone.player_name}")
+            zone.snap.restore(fade=fade_back)
+
 
     def _handle_dpt3(self, item, caller=None, source=None, dest=None):
         if caller != self.get_shortname():

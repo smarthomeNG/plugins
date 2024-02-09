@@ -1,0 +1,133 @@
+{% extends "sh_base.html" %}
+
+{% block content %}
+
+	<div class="preblock">
+	</div>
+
+	<div class="block">
+		<div class="ui-bar-c ui-li-divider ui-corner-top">Status Roomba</div>
+		<div class="ui-fixed ui-body-a ui-corner-bottom">
+			<table width=100%>
+				<tr>
+					<td align=center rowspan="8">
+						{{ basic.symbol('', ['Harry.Status'], '', ['scene_robo_vac_cleaner.svg','text_question_mark.svg','scene_robo_vac_cleaner_charging.svg','scene_robo_vac_cleaner_charging.svg','scene_robo_vac_cleaner_active.svg','scene_robo_vac_cleaner_paused.svg','scene_robo_vac_cleaner_dock.svg','scene_robo_vac_cleaner_attention.svg'], [0,1,2,3,4,5,6,7], '', ['#766','#f00','#ff0','#0f0','#0f0','#ff0','#0f0','#f00'],'','','midi') }}
+					</td>
+					<td align=left>Batterie:</td>
+					<td align=left>
+						{{ basic.symbol('', ['Harry.IsConnected','Harry.Battery'], '', icon.battery('','','Harry.Battery','0','100'), [0,10,40], '> VAR1==0 ? -1 : VAR2', ['#444','#f00','#ff0','#0f0'],'') }}
+						{{ basic.print('', ['Harry.IsConnected','Harry.Battery'], '%', 'VAR1==0 ? -1 : VAR2', [0,10,40], ['hidden','#f00','#ff0','#0f0']) }}
+					</td>
+				</tr>
+				<tr>
+					<td align=left>Status:</td>
+					<td align=left>
+						<span id="color1"> {{ basic.print('','Harry.Mission_State')}}</td> </span>
+						{{ basic.print('', 'Harry.IsConnected', 'script', '$("#color1").css("color", (VAR1 == 0) ? "#444" : "icon0")') }}
+				</tr>
+				<tr>
+					<td align=left>Mission:</td>
+					<td align=left>
+						<span id="color2"> {{ basic.print('','Harry.MissionStatus.Cycle')}} / {{ basic.print('','Harry.MissionStatus.Phase')}}</td> </span>
+						{{ basic.print('', 'Harry.IsConnected', 'script', '$("#color2").css("color", (VAR1 == 0) ? "#444" : "icon0")') }}
+					</td>
+					
+				</tr>
+				<tr>
+					<td align=left>Fehler:</td>
+					<td align=left>
+						<span id="color2a"> {{ basic.print('','Harry.MissionErrorMessage')}}</td> </span>
+						{{ basic.print('', 'Harry.IsConnected', 'script', '$("#color2a").css("color", (VAR1 == 0) ? "#444" : "icon0")') }}
+					</td>
+					
+				</tr>
+				<tr>
+					<td align=left>Start:</td>
+					<td align=left>
+						{{ basic.print('','Harry.MissionStatus.StartTime','short','','1000',['hidden','icon0'])}}
+						{{ basic.print('','Harry.MissionStatus.Initiator','text')}} 
+					</td>
+					
+				</tr>
+				<tr>
+				<tr>
+					<td align=left>Laufzeit:</td>
+					<td align=left>
+						{{ basic.print('','Harry.MissionStatus.RunTime','text')}}
+					</td>
+					
+				</tr>
+				<tr>
+					<td align=left>Staubbehälter:</td>
+					<td align=left>
+						<span id="color4"> {{ basic.symbol('','Harry.Bin.Full',['OK','Voll - bitte leeren!'],'',[0,1],'',['icon0','#f00'])}} </span>
+						{{ basic.print('', 'Harry.IsConnected', 'script', '$("#color4").css("color", (VAR1 == 0) ? "#444" : "icon0")') }}
+					</td>
+					
+				</tr>
+				<tr>
+					<td align=center rowspan="7" style="border-top: thin solid;">
+						{{ basic.symbol('', 'Harry.IsConnected', '', ['jquery_alert.svg','jquery_info.svg'], [0,1], '', ['#ff0','#0f0','#999'],'')}}
+						{{ basic.symbol('', 'Harry.IsConnected', ['getrennt - kein Statusupdate','verbunden'], '', [0,1], '', ['#ff0','#0f0','#999'],'')}}
+					</td>
+					<td align=left style="border-top: thin solid;">Anzahl Missionen: </td>
+					<td align=left style="border-top: thin solid;">{{ basic.print('','Harry.Missions.Total')}}</td>
+				</tr>
+				<tr>
+					<td align=left>Erfolgreich:  </td>
+					<td align=left>{{ basic.print('','Harry.Missions.OK')}}</td>
+				</tr>
+				<tr>
+					<td align=left>Schmutzereignisse:  </td>
+					<td align=left>{{ basic.print('','Harry.Runs.Scrubs')}}</td>
+				</tr>
+				<tr>
+					<td align=left>Cliffs/Panics:  </td>
+					<td align=left>{{ basic.print('','Harry.Runs.Cliffs')}} / {{ basic.print('','Harry.Runs.Panics')}}</td>
+				</tr>
+				<tr>
+					<td align=left>Gesamtzeit:  </td>
+					<td align=left>{{ basic.print('','Harry.Runs.Time','text')}} h</td>
+				</tr>
+				<tr>
+					<td align=left>Ladezyklen:  </td>
+					<td align=left>{{ basic.print('','Harry.Battery_Cycles')}}</td>
+				</tr>
+				<tr>
+					<td align=left>Letzter Befehl:</td>
+					<td align=left>
+						{{ basic.print('','Harry.LastCommand.time','short','',1000,['hidden','icon0'])}} {{ basic.print('','Harry.LastCommand.initiator','text')}} {{ basic.print('','Harry.LastCommand.Command','text')}}
+					</td>
+				</tr>
+			</table>
+			<br>
+		</div>
+	</div>
+	<div class="block">
+		<div class="ui-bar-c ui-li-divider ui-corner-top">Roomba Befehle</div>
+		<div class="ui-fixed ui-body-a ui-corner-bottom">
+			<div data-role="controlgroup" data-type="horizontal">
+				{{ basic.stateswitch('', 'Harry.start', 'midi', 1, basic.symbol('', 'Harry.IsConnected', '', 'audio_play.svg', [0,1], '', ['#444','icon0']), '') }}
+				{{ basic.stateswitch('', 'Harry.pause', 'midi', 1, basic.symbol('', 'Harry.IsConnected', '', 'audio_pause.svg', [0,1], '', ['#444','icon0']), '') }}
+				{{ basic.stateswitch('', 'Harry.resume', 'midi', 1, basic.symbol('', 'Harry.IsConnected', '', 'audio_ff.svg', [0,1], '', ['#444','icon0']), '') }}
+				{{ basic.stateswitch('', 'Harry.stop', 'midi', 1, basic.symbol('', 'Harry.IsConnected', '', 'audio_stop.svg', [0,1], '', ['#444','icon0']), '') }}
+				{{ basic.stateswitch('', 'Harry.dock', 'midi', 1, basic.symbol('', 'Harry.IsConnected', '', 'scene_robo_vac_cleaner_dock.svg', [0,1], '', ['#444','icon0']), '') }}
+			</div>
+		</div>
+	</div>
+	<div class="block">
+		<div class="ui-bar-c ui-li-divider ui-corner-top">Roomba Verbindung</div>
+		<div class="ui-fixed ui-body-a ui-corner-bottom">
+			<table width=100%>
+				<tr>
+					<td align=center>
+						{{ basic.stateswitch('', 'Harry.connect', 'midi', [0,1], ['control_on_off.svg','control_standby.svg'], ['-verbinden-','-trennen-'], 'icon0', '') }}
+					</td>
+					<td align=left>Client-Status: {{ basic.print('', 'Harry.ClientError', 'text', '', '', '') }}</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+
+{% endblock %}
+

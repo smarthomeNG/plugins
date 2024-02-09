@@ -22,20 +22,18 @@
 #########################################################################
 
 import logging
-import MVGLive
-
+from mvg import MvgApi
 from lib.model.smartplugin import SmartPlugin
 
 class MVG_Live(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.1"
+    PLUGIN_VERSION = "1.6.0"
 
     def __init__(self, sh, *args, **kwargs):
         """
         Initializes the plugin
         """
         self.logger = logging.getLogger(__name__)
-        self._mvg_live = MVGLive.MVGLive()
 
     def run(self):
         self.alive = True
@@ -43,5 +41,15 @@ class MVG_Live(SmartPlugin):
     def stop(self):
         self.alive = False
 
-    def get_station_departures(self, station, timeoffset=0, entries=10, ubahn=True, tram=True, bus=True, sbahn=True):
-        return self._mvg_live.getlivedata(station, timeoffset, entries, ubahn, tram, bus, sbahn)
+    def get_station(self, station):
+        mvg_station = MvgApi.station(station)
+        if mvg_station:
+            return mvg_station
+
+    def get_station_departures(self, station):
+        mvg_station = self.get_station(station)
+        if mvg_station:
+            mvgapi = MvgApi(mvg_station['id'])
+            return mvgapi.departures()
+        else:
+            logger.error("Station %s does not exist."%station)

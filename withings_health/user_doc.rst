@@ -13,7 +13,7 @@ withings_health
    :align: left
 
 Dieses Plugin ermöglicht den Abruf von Daten aus der Withings (ehemals Nokia)
-`Health API (https://developer.withings.com/api)`_. Derzeit bietet es nur
+`Health API <https://developer.withings.com/api>`_. Derzeit bietet es nur
 Unterstützung für den "Withings WS-50 Smart Body Analyzer", eine WLAN-fähige Waage.
 
 
@@ -22,9 +22,9 @@ Vorbereitung
 
 Dieses Plugin benötigt die withings-api.
 
-Sie müssen sich unter `Withings Account (https://account.withings.com/)`_ registrieren und im Dashboard
-eine Applikation anlegen. Der Name ist frei wählbar, die (lokale) Callback-URL wird über die Weboberfläche des Plugins angezeigt: <http://<IP>:<Webinterface-Port>/plugin/withings_health.
-Wenn Sie sich bei der `Withings App (https://app.withings.com/)`_ einloggen, kann die achtstellige Zahl
+Sie müssen sich unter `Withings Account <https://account.withings.com/>`_ registrieren und im Dashboard
+eine Applikation anlegen. Der Name ist frei wählbar, die (lokale) Callback-URL wird über die Weboberfläche des Plugins angezeigt: http://<IP>:<Webinterface-Port>/plugin/withings_health.
+Wenn Sie sich bei der `Withings App <https://app.withings.com/>`_ einloggen, kann die achtstellige Zahl
 in der URL ausgelesen und in der Pluginkonfiguration als user_id angegeben werden.
 
 Weiters muss das Plugin struct mittles ``struct: withings_health.body`` eingebunden werden.

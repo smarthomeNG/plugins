@@ -116,8 +116,8 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 			<td class="py-1"><strong>Verbunden</strong></td>
 			<td class="py-1">{% if p.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
 			<td></td>
-			<td class="py-1"><strong>Zykluszeit</strong></td>
-			<td class="py-1">{{ p.cycle }}s</td>
+			<td class="py-1"><strong>Abfrageintervall</strong></td>
+			<td class="py-1">{% if p.cycle %}{{ p.cycle }}s{% endif %}{% if p.crontab %}{{ p.crontab }}{% endif %}</td>
 			<td></td>
 		</tr>
 	</tbody>

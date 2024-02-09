@@ -51,7 +51,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.11'
+    PLUGIN_VERSION = '1.6.12'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -491,7 +491,6 @@ class Database(SmartPlugin):
         This is a public function of the plugin
 
         :param item: Item to get the ID for
-        :param cur: A database cursor object if available (optional)
 
         :return: id of the item within the database
         :rtype: int | None
@@ -512,6 +511,8 @@ class Database(SmartPlugin):
 
         id = int(row[COL_ITEM_ID])
         last_change = row[COL_ITEM_TIME]
+        if last_change is None:
+            return None
         return self._datetime(last_change)
 
 
@@ -1075,7 +1076,7 @@ class Database(SmartPlugin):
 
         :return: data structure in the form needed by the websocket plugin return it to the visu
         """
-        #self.logger.warning("_series: item={}, func={}, start={}, end={}, count={}".format(item, func, start, end, count))
+        #self.logger.debug("_series: item={}, func={}, start={}, end={}, count={}".format(item, func, start, end, count))
         init = not update
         if sid is None:
             sid = item + '|' + func + '|' + str(start) + '|' + str(end) + '|' + str(count)
@@ -1084,7 +1085,10 @@ class Database(SmartPlugin):
             'avg': 'MIN(time), ' + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
             'avg.order': 'ORDER BY time ASC',
             'integrate': 'MIN(time), SUM(val_num * duration)',
-            'differentiate': 'MIN(time), (val_num - LAG(val_num,1, -1)) / duration',
+            'diff': 'MIN(time), (val_num - LAG(val_num,1) OVER (ORDER BY val_num))',
+            'duration': 'MIN(time), duration',
+            # differentiate (d/dt) is scaled to match the conversion from d/dt (kWh) = kWh: time is in ms, val_num in kWh, therefore scale by 1000ms and 3600s/h to obtain the result in kW:
+            'differentiate': 'MIN(time), (val_num - LAG(val_num,1) OVER (ORDER BY val_num)) / ( (time - LAG(time,1) OVER (ORDER BY val_num)) / (3600 * 1000) )',
             'count': 'MIN(time), SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'countall': 'MIN(time), COUNT(*)',
             'min': 'MIN(time), MIN(val_num)',
@@ -1103,22 +1107,26 @@ class Database(SmartPlugin):
         group = 'GROUP BY ROUND(time / :step)' if func + '.group' not in queries else queries[func + '.group']
         logs = self._fetch_log(item, queries[func], start, end, step=step, count=count, group=group, order=order)
         tuples = logs['tuples']
-        if tuples:
-            if logs['istart'] > tuples[0][0]:
-                tuples[0] = (logs['istart'], tuples[0][1])
-            if end != 'now':
-                tuples.append((logs['iend'], tuples[-1][1]))
-        else:
-            tuples = []
-        item_change = self._timestamp(logs['item'].last_change())
-        if item_change < logs['iend']:
-            value = float(logs['item']())
-            if item_change < logs['istart']:
-                tuples.append((logs['istart'], value))
-            elif init:
-                tuples.append((item_change, value))
-            if init:
-                tuples.append((logs['iend'], value))
+
+        # Append tuples by addition values (not for func differentiate)
+        if func != 'differentiate':
+
+            if tuples:
+                if logs['istart'] > tuples[0][0]:
+                    tuples[0] = (logs['istart'], tuples[0][1])
+                if end != 'now':
+                    tuples.append((logs['iend'], tuples[-1][1]))
+            else:
+                tuples = []
+            item_change = self._timestamp(logs['item'].last_change())
+            if item_change < logs['iend']:
+                value = float(logs['item']())
+                if item_change < logs['istart']:
+                    tuples.append((logs['istart'], value))
+                elif init:
+                    tuples.append((item_change, value))
+                if init:
+                    tuples.append((logs['iend'], value))
 
         if expression['finalizer']:
             tuples = self._finalize(expression['finalizer'], tuples)
@@ -1129,14 +1137,14 @@ class Database(SmartPlugin):
                        'step': logs['step'], 'sid': sid},
             'update': self.shtime.now() + datetime.timedelta(seconds=int(logs['step'] / 1000))
         }
-        #self.logger.warning("_series: result={}".format(result))
+        #self.logger.debug("_series: result={}".format(result))
+
         return result
 
 
     def _single(self, func, start, end='now', item=None):
         """
-        As far as it has been checked, this method is never called.
-        It is attached to the item object but no other plugin is known that calls this method.
+        This function is not used by any other plugin but can be used in logics
 
         :param func:
         :param start:
@@ -1148,11 +1156,11 @@ class Database(SmartPlugin):
         queries = {
             'avg': self._precision_query('AVG(val_num * duration) / AVG(duration)'),
             'integrate': 'SUM(val_num * duration)',
-            'differentiate': 'val_num - LAG(val_num) / duration',
             'count': 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'countall': 'COUNT(*)',
             'min': 'MIN(val_num)',
             'max': 'MAX(val_num)',
+            'diff': 'MAX(val_num) - MIN(val_num)',
             'on': self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
             'sum': 'SUM(val_num)',
             'raw': 'val_num',

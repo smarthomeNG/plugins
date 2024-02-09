@@ -43,7 +43,7 @@ class Raumfeld_ng(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.5.1'
+    PLUGIN_VERSION = '1.5.2'
 
     def __init__(self, sh):
         """

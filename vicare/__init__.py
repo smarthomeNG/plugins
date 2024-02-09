@@ -38,7 +38,7 @@ AUTHORIZE_URL = 'https://iam.viessmann.com/idp/v3/authorize'
 TOKEN_URL = 'https://iam.viessmann.com/idp/v3/token'
 
 class Vicare(SmartPlugin):
-    PLUGIN_VERSION = '1.9.1'
+    PLUGIN_VERSION = '1.9.3'
 
     def __init__(self, sh):
         """
@@ -63,11 +63,13 @@ class Vicare(SmartPlugin):
         self.installationId = ''                             # installation ID, unique for the whole viessmann installation
         self.gatewaySerial = ''
         self.deviceId = ''
-        self.featureListJson = {}
+        self.featureListJson = {}                            # List of all available features as Json
+        self.deviceListJson = {}                             # List of all available devices as Json
         self.nr_devices = 0                                  # Number of devices
         self.deviceType = 'unknown'
         self.modelId = 'unknown'
         self.authRequestUrl = ''
+        self.onlineStatue = False
         self._rx_items = []                                  # list of rx items that are updated by this plugin
         self._tx_items = []                                  # list of tx items that can trigger control actions, e.g. setting temperature.
         self.verbose = False
@@ -223,10 +225,11 @@ class Vicare(SmartPlugin):
     def refresh_accessToken(self): 
         # Refreshes the accessToken validity by using the refresh token. Works up to 180 days.
         # Procedure is described on: https://documentation.viessmann.com/static/authentication
+        # Return True on success and False otherwise
 
         if self.refreshToken == '':
             self.logger.error(f"No refresh token available. Aborting.")
-            return
+            return False
 
         self.logger.debug(f"Refreshing accessToken...")
         headers = {'Content-Type': 'application/x-www-form-urlencoded'}
@@ -238,13 +241,17 @@ class Vicare(SmartPlugin):
             response = self.session.post(TOKEN_URL, headers = headers, data = data, verify=False, timeout=4)
         except Exception as e:
             self.logger.warning(f"Exception occurred during refresh token request: {e}")
+            return False
 
-        if response is not None and response.status_code == 200:
+        if response is None:
+            return False
+
+        if response.status_code == 200:
             self.logger.info(f"Refresh token request successfull")
         else:
             self.logger.warning(f"Refresh token request was unsuccessfull. Status code: {response.status_code}")
             self.logger.warning(f"Refresh token request was unsuccessfull. Response: {response.text}")
-            return
+            return False
         
         responseJson = response.json()
         if 'access_token' in responseJson :
@@ -254,8 +261,10 @@ class Vicare(SmartPlugin):
             param_dict = {"accessToken": str(self.accessToken)}
             self.update_config_section(param_dict)
             self.logger.debug(f"Successfully saved accessToken in plugin.yaml")
+            return True
         else:
             self.logger.error(f"refreshToken: Response did not contain an access token!")
+            return False
 
     def retrieve_accessToken(self, code):
         # pass code from login procedure, see browser argument on redirected page:        
@@ -334,9 +343,9 @@ class Vicare(SmartPlugin):
         # Token refresh mechanism:   
         self.count_to_renew = self.count_to_renew + 1
         if self.count_to_renew >= self.fixed_cylces_to_renew:
-            self.count_to_renew = 0
             self.logger.debug(f"Refreshing token...")
-            self.refresh_accessToken()
+            if self.refresh_accessToken() == True:
+                self.count_to_renew = 0
 #        else:
 #            self.logger.debug(f"{self.fixed_cylces_to_renew - self.count_to_renew} remaining cycles to refresh token.")
 
@@ -354,7 +363,6 @@ class Vicare(SmartPlugin):
         # Poll data from backend:
         self.pollFeatures()
         self.decodeFeatures(self.featureListJson, log_features = False)
-
 
 
     def pollUrlInterface(self, url): 
@@ -385,7 +393,7 @@ class Vicare(SmartPlugin):
         if response is None:
             return
         if response.status_code == 200:
-            self.logger.debug(f"pollINstallationId request successfull")
+            self.logger.debug(f"pollInstallationId request successfull")
         else:
             self.logger.warning(f"pollInstallationId request was unsuccessfull. Status code: {response.status_code}, Text: {response.text}")
             return
@@ -452,7 +460,7 @@ class Vicare(SmartPlugin):
         if response is None:
             return
         if response.status_code == 200:
-            self.logger.debug(f"pollDevices request successfull")
+            self.logger.debug(f"pollDevices request successfull: {response.text}")
         else:
             self.logger.warning(f"pollDevices request was unsuccessfull. Status code: {response.status_code}")
             return
@@ -464,32 +472,43 @@ class Vicare(SmartPlugin):
                 return
 
             if 'data' in responseJson:
+                self.deviceListJson = responseJson['data']
                 dataJson = responseJson['data']
-                #self.logger.warning(f"Debug dataJson: {dataJson}")
-                #self.logger.warning(f"Debug dataJson[0]: {dataJson[0]}")
 
                 self.nr_devices = len(dataJson)
+                index_of_device = 0
                 if self.nr_devices > 1:
-                    self.logger.debug(f"pollDevices: {self.nr_devices} devices found but only the first is decoded.")
+                    self.logger.info(f"pollDevices: Found {self.nr_devices} devices.")
+                    found_valid_serial = False
+                    # Determine device of interest by picking the first device having a valid boiler serial number:
+                    for i in range(0,self.nr_devices):
+                        if 'boilerSerial' in dataJson[i] and (dataJson[i]['boilerSerial'] is not None):
+                            found_valid_serial = True
+                            index_of_device = i
+                            self.logger.info(f"pollDevices: Decoding device with index {index_of_device} and boiler serial number:{dataJson[i]['boilerSerial']}")
+                
+                    if found_valid_serial == False:
+                        self.logger.error(f"pollDevices: No device with valid boiler serial number found. Perhaps plugin has to be extended for additional device types. Aborting decoding.")
+                        return
 
-                dataJson_0 = dataJson[0]
+                dataJson_device = dataJson[index_of_device]
 
                 boilerSerial = None
                               
-                if 'id' in dataJson_0:
-                    self.deviceId = dataJson_0['id']
+                if 'id' in dataJson_device :
+                    self.deviceId = dataJson_device ['id']
                     self.logger.info(f"DeviceId is {self.deviceId}")
-                if 'boilerSerial' in dataJson_0:
-                    boilerSerial = dataJson_0['boilerSerial']
+                if 'boilerSerial' in dataJson_device :
+                    boilerSerial = dataJson_device ['boilerSerial']
                     self.logger.info(f"BoilerSerial is {boilerSerial}")
-                if 'modelId' in dataJson_0:
-                    self.modelId = dataJson_0['modelId']
+                if 'modelId' in dataJson_device :
+                    self.modelId = dataJson_device ['modelId']
                     self.logger.info(f"modelId is {self.modelId}")
-                if 'status' in dataJson_0:
-                    status = dataJson_0['status']
+                if 'status' in dataJson_device :
+                    status = dataJson_device ['status']
                     self.logger.info(f"Status is {status}")
-                if 'deviceType' in dataJson_0:
-                    self.deviceType = dataJson_0['deviceType']
+                if 'deviceType' in dataJson_device :
+                    self.deviceType = dataJson_device ['deviceType']
                     self.logger.info(f"deviceType is {self.deviceType}")
 
                 # Copy data in viessmann items:
@@ -499,6 +518,9 @@ class Vicare(SmartPlugin):
                     if rx_key == 'boilerSerial':
                         if boilerSerial:
                             item(boilerSerial, self.get_shortname())
+            else:
+                # No data available in response
+                self.deviceListJson = {}
 
     def pollFeatures(self):
         self.featureListJson = {}
@@ -518,10 +540,10 @@ class Vicare(SmartPlugin):
         if response is None:
             return
         if response.status_code == 200:
-            self.logger.debug(f"pollFeatures request successfull")
+            self.logger.debug(f"pollFeatures: request successfull, response: {response.text}")
         else:
             self.logger.warning(f"pollFeatures request was unsuccessfull. Status code: {response.status_code}")
-            self.logger.warning(f"pollFeatures Debug response: {response.text}")
+            self.logger.warning(f"pollFeatures Debug response: {response}, response.text: {response.text}")
             return
     
         if response.json() is not None:
@@ -534,79 +556,83 @@ class Vicare(SmartPlugin):
                 self.featureListJson = responseJson['data']
                 nr_features = len(self.featureListJson)
                 self.logger.info(f"Found {nr_features} features")
+        
+        if len(self.featureListJson) == 0:
+            self.logger.warning(f"pollFeature: No Features found")
+
 
     def decodeFeatures(self, featureList, log_features = False):
         nr_features = len(featureList)
-        onlineStatus = nr_features > 0
-        if nr_features == 0:
-            self.logger.debug(f"decodeFeatures, feature list is empty. Aborting")
-            return
-
-        for i in range(0,nr_features):
-            #self.logger.debug(f"Extracting feature {i+1}")
-            properties = None
-            featureItem = featureList[i]
-            isEnabled = False
-            if 'isEnabled' in featureItem:
-                isEnabled = featureItem['isEnabled']
-                if isEnabled and log_features:
-                    self.logger.info(f"Feature: {i+1} isEnabled: {isEnabled}")
-            if 'uri' in featureItem:
-                uri = featureItem['uri']
-                if isEnabled and log_features:
-                    self.logger.info(f"uri: {uri}")
-            if 'feature' in featureItem:
-                feature = featureItem['feature']
-                if isEnabled and log_features:
-                    self.logger.info(f"feature: {feature}")                    
-            if 'isReady' in featureItem:
-                isReady = featureItem['isReady']
-                if isEnabled and log_features:
-                    self.logger.info(f"isReady: {isReady}")
-            if 'commands' in featureItem:
-                commands = featureItem['commands']
-                if not commands == {}:
+        self.onlineStatus = nr_features > 0
+        
+        if nr_features >= 0:
+            for i in range(0,nr_features):
+                #self.logger.debug(f"Extracting feature {i+1}")
+                properties = None
+                featureItem = featureList[i]
+                isEnabled = False
+                if 'isEnabled' in featureItem:
+                    isEnabled = featureItem['isEnabled']
                     if isEnabled and log_features:
-                        self.logger.info(f"Available commands: {commands}")
-            if 'properties' in featureItem:
-                properties = featureItem['properties']
-                if not properties == {}:
+                        self.logger.info(f"Feature: {i+1} isEnabled: {isEnabled}")
+                if 'uri' in featureItem:
+                    uri = featureItem['uri']
                     if isEnabled and log_features:
-                        self.logger.info(f"Available properties: {properties}")
+                        self.logger.info(f"uri: {uri}")
+                if 'feature' in featureItem:
+                    feature = featureItem['feature']
+                    if isEnabled and log_features:
+                        self.logger.info(f"feature: {feature}")                    
+                if 'isReady' in featureItem:
+                    isReady = featureItem['isReady']
+                    if isEnabled and log_features:
+                        self.logger.info(f"isReady: {isReady}")
+                if 'commands' in featureItem:
+                    commands = featureItem['commands']
+                    if not commands == {}:
+                        if isEnabled and log_features:
+                            self.logger.info(f"Available commands: {commands}")
+                if 'properties' in featureItem:
+                    properties = featureItem['properties']
+                    if not properties == {}:
+                        if isEnabled and log_features:
+                            self.logger.info(f"Available properties: {properties}")
 
-            #Copy feature data in viessmann items:
-            for item in self._rx_items:
-                if (item.conf['vicare_rx_key'] == feature):
-                    self.logger.debug(f"Vicare Item found for feature: {feature}. Updating")
-                    if isEnabled and isReady and self.has_iattr(item.conf, 'vicare_path') and properties:
-                        path = item.conf['vicare_path']
-                        length_path = len(path)
-                        #self.logger.debug(f"Item vicare path with {length_path} entries: {path}")
+                #Copy feature data in viessmann items:
+                for item in self._rx_items:
+                    if (item.conf['vicare_rx_key'] == feature):
+                        self.logger.debug(f"Vicare Item found for feature: {feature}. Updating")
+                        if isEnabled and isReady and self.has_iattr(item.conf, 'vicare_path') and properties:
+                            path = item.conf['vicare_path']
+                            length_path = len(path)
+                            #self.logger.debug(f"Item vicare path with {length_path} entries: {path}")
 
-                        try:
-                            value = properties[path[0]]
-                        except Exception as e:
-                            self.logger.error(f"Exception occured in path for item {item}: {e}")
-                        else:
-                            for k in range(1,length_path):
-                                try:
-                                    value = value[path[k]]
-                                except Exception as e:
-                                    self.logger.error(f"Exception occured in path loop for item {item}: {e}")
-                                    value = None
+                            try:
+                                value = properties[path[0]]
+                            except Exception as e:
+                                self.logger.error(f"Exception occured in path for item {item}: {e}")
+                            else:
+                                for k in range(1,length_path):
+                                    try:
+                                        value = value[path[k]]
+                                    except Exception as e:
+                                        self.logger.error(f"Exception occured in path loop for item {item}: {e}")
+                                        value = None
                                 
-                                #self.logger.debug(f"Debug k={k}, value: {value}")
-                            item(value, self.get_shortname())
-                    elif not self.has_iattr(item.conf, 'vicare_path'):
-                        self.logger.warning(f"Rx Item {item} is missing the attribute vicare_path.")
-                    else:
-                        self.logger.warning(f"Vicare Item found for feature: {feature} but not marked as usable (enabled:{isEnabled}, ready:{isReady}, properties:{properties}, vicare_path:{self.has_iattr(item.conf, 'vicare_path')})")
+                                    #self.logger.debug(f"Debug k={k}, value: {value}")
+                                item(value, self.get_shortname())
+                        elif not self.has_iattr(item.conf, 'vicare_path'):
+                            self.logger.warning(f"Rx Item {item} is missing the attribute vicare_path.")
+                        else:
+                            self.logger.warning(f"Vicare Item found for feature: {feature} but not marked as usable (enabled:{isEnabled}, ready:{isReady}, properties:{properties}, vicare_path:{self.has_iattr(item.conf, 'vicare_path')})")
+        else:
+            self.logger.debug(f"decodeFeatures, feature list is empty.")
 
         # Copy global data in viessmann items:
         for item in self._rx_items:
             rx_key = item.conf['vicare_rx_key']
             if rx_key == 'onlineStatus':
-                item(onlineStatus, self.get_shortname())
+                item(self.onlineStatus, self.get_shortname())
                 break
 
   

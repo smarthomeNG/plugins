@@ -44,7 +44,7 @@ class OperationLog(SmartPlugin, AbLogger):
     _log = None
     _items = {}
 
-    PLUGIN_VERSION = "1.3.5"
+    PLUGIN_VERSION = "1.3.6"
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)
@@ -92,13 +92,13 @@ class OperationLog(SmartPlugin, AbLogger):
         self._cachefile = None
         self.__myLogger = None
         self._logcache = None
-        
+
         self._item_conf = {}
         self._logic_conf = {}
         self.__date = None
         self.__fname = None
 
-        # 
+        #
         info_txt_cache = ", caching active" if self._cache else ""
 
         # additional logger given from plugin.yaml section "logger"
@@ -106,7 +106,7 @@ class OperationLog(SmartPlugin, AbLogger):
             self.additional_logger = logging.getLogger(self.additional_logger_name)
         else:
             self.additional_logger = None
-        
+
         if self.additional_logger:
             info_additional_logger_log = ", logging to {}".format(self.additional_logger_name)
         else:
@@ -121,11 +121,21 @@ class OperationLog(SmartPlugin, AbLogger):
         # Cache
         #############################################################
         if self._cache is True:
-            self._cachefile = self.get_sh()._cache_dir + self._path
+            cache_directory = os.path.join(self.get_sh().get_vardir(), 'log'+os.path.sep, 'cache'+os.path.sep)
+            old_cache_file = os.path.join(self.get_sh().get_vardir(), 'cache'+os.path.sep, self._path)
+
+            self._cachefile = os.path.join(cache_directory, self._path)
+            if not os.path.isdir(cache_directory):
+                os.makedirs(cache_directory)
+            if os.path.isfile(old_cache_file):
+                os.rename(old_cache_file, self._cachefile)
+                if self.logger.isEnabledFor(logging.DEBUG):
+                    self.logger.debug("OperationLog {}: moved cache from {} to {}".format(self.name, old_cache_file, self._cachefile))
             try:
                 self.__last_change, self._logcache = _cache_read(self._cachefile, self.shtime.tzinfo())
                 self.load(self._logcache)
-                self.logger.debug("OperationLog {}: read cache: {}".format(self.name, self._logcache))
+                if self.logger.isEnabledFor(logging.DEBUG):
+                    self.logger.debug("OperationLog {}: read cache: {}".format(self.name, self._logcache))
             except Exception:
                 try:
                     _cache_write(self.logger, self._cachefile, self._log.export(int(self._maxlen)))
@@ -134,13 +144,9 @@ class OperationLog(SmartPlugin, AbLogger):
                 except Exception as e:
                     self.logger.warning("OperationLog {}: problem reading cache: {}".format(self._path, e))
 
-        # give some info to the user via webinterface
-        self.init_webinterface()
-
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("init {} done".format(__name__))
         self._init_complete = True
-
 
     def update_logfilename(self):
         if self.__date == datetime.datetime.today() and self.__fname is not None:
@@ -198,26 +204,29 @@ class OperationLog(SmartPlugin, AbLogger):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if 'olog' in item.conf and item.conf['olog'] == self.name:
-            self._item_conf[item.id()] = {}
+            id = item.property.path
+            self._item_conf[id] = {}
 
             # set these as default in any case. default is to log
-            self._item_conf[item.id()]['olog_rules'] = {}
-            self._item_conf[item.id()]['olog_rules']['lowlim'] = None
-            self._item_conf[item.id()]['olog_rules']['highlim'] = None
-            self._item_conf[item.id()]['olog_rules']['*'] = 'value'
+            self._item_conf[id]['olog_rules'] = {}
+            self._item_conf[id]['olog_rules']['lowlim'] = None
+            self._item_conf[id]['olog_rules']['highlim'] = None
+            self._item_conf[id]['olog_rules']['lowlimit'] = None
+            self._item_conf[id]['olog_rules']['highlimit'] = None
+            self._item_conf[id]['olog_rules']['*'] = 'value'
 
             if 'olog_txt' in item.conf:
                 olog_txt = item.conf['olog_txt']
-                self._item_conf[item.id()]['olog_eval'] = []
-                eval_parse = self.parse_eval("item.conf, item {}".format(item.id()), olog_txt)
-                self._item_conf[item.id()]['olog_txt'] = eval_parse['olog_txt']
-                self._item_conf[item.id()]['olog_eval'] = eval_parse['olog_eval']
-                if len(self._item_conf[item.id()]['olog_eval']) != 0:
-                    self.logger.info('Item: {}, olog evaluating: {}'.format(item.id(), self._item_conf[item.id()]['olog_eval']))
+                self._item_conf[id]['olog_eval'] = []
+                eval_parse = self.parse_eval("item.conf, item {}".format(id), olog_txt)
+                self._item_conf[id]['olog_txt'] = eval_parse['olog_txt']
+                self._item_conf[id]['olog_eval'] = eval_parse['olog_eval']
+                if len(self._item_conf[id]['olog_eval']) != 0:
+                    self.logger.info('Item: {}, olog evaluating: {}'.format(id, self._item_conf[id]['olog_eval']))
 
             if 'olog_rules' in item.conf:
                 # we have explicit rules, remove default 'all'
-                self._item_conf[item.id()]['olog_rules']['*'] = None
+                self._item_conf[id]['olog_rules']['*'] = None
                 olog_rules = item.conf['olog_rules']
                 if isinstance(olog_rules, str):
                     try:
@@ -242,11 +251,11 @@ class OperationLog(SmartPlugin, AbLogger):
                                 key = float(key_txt)
                         except:
                             key = key_txt
-                            if key_txt in ['lowlim', 'highlim']:
-                                self._item_conf[item.id()]['olog_rules']["*"] = 'value'
-                    self._item_conf[item.id()]['olog_rules'][key] = value
+                            if key_txt in ['lowlim', 'highlim', 'lowlimit', 'highlimit']:
+                                self._item_conf[id]['olog_rules']["*"] = 'value'
+                    self._item_conf[id]['olog_rules'][key] = value
 
-            self.logger.info('Item: {}, olog rules: {}'.format(item.id(), self._item_conf[item.id()]['olog_rules']))
+            self.logger.info('Item: {}, olog rules: {}'.format(id, self._item_conf[id]['olog_rules']))
             return self.update_item
         else:
             return None
@@ -332,51 +341,72 @@ class OperationLog(SmartPlugin, AbLogger):
             # this plugin does not change any item thus the check for caller is not really necessary
             if item.conf['olog'] == self.name:
                 if len(self._items) == 0:
-                    if item.id() in self._item_conf and 'olog_txt' in self._item_conf[item.id()]:
-                        mvalue = item()
-                        if 'olog_rules' in self._item_conf[item.id()]:
-                            if 'lowlim' in self._item_conf[item.id()]['olog_rules']:
-                                if item.type() == 'num':
-                                    if self._item_conf[item.id()]['olog_rules']['lowlim'] is not None and item() < float(self._item_conf[item.id()]['olog_rules']['lowlim']):
-                                        return
-                                elif item.type() == 'str':
-                                    if self._item_conf[item.id()]['olog_rules']['lowlim'] is not None and item() < str(self._item_conf[item.id()]['olog_rules']['lowlim']):
-                                        return
-                            if 'highlim' in self._item_conf[item.id()]['olog_rules']:
-                                if item.type() == 'num':
-                                    if self._item_conf[item.id()]['olog_rules']['highlim'] is not None and item() >= float(self._item_conf[item.id()]['olog_rules']['highlim']):
-                                        return
-                                elif item.type() == 'str':
-                                    if self._item_conf[item.id()]['olog_rules']['highlim'] is not None and item() >= str(self._item_conf[item.id()]['olog_rules']['highlim']):
-                                        return
+                    id = item.property.path
+                    if id in self._item_conf and 'olog_txt' in self._item_conf[id]:
+                        mvalue = item.property.value
+                        if 'olog_rules' in self._item_conf[id]:
+                            if item.type() == 'num':
+                                lowlimit = self._item_conf[id]['olog_rules']['lowlimit']
+                                lowlim = self._item_conf[id]['olog_rules']['lowlim']
+                                highlimit = self._item_conf[id]['olog_rules']['highlimit']
+                                highlim = self._item_conf[id]['olog_rules']['highlim']
+                                if lowlimit is not None and item() < float(lowlimit):
+                                    return
+                                elif lowlim is not None and item() < float(lowlim):
+                                    return
+                                if highlimit is not None and item() >= float(highlimit):
+                                    return
+                                elif highlim is not None and item() >= float(highlim):
+                                    return
+                            elif item.type() == 'str':
+                                if lowlimit is not None and item() < str(lowlimit):
+                                    return
+                                elif lowlim is not None and item() < str(lowlim):
+                                    return
+                                if highlimit is not None and item() >= str(highlimit):
+                                    return
+                                elif highlim is not None and item() >= str(highlim):
+                                    return
                             try:
-                                mvalue = self._item_conf[item.id()]['olog_rules'][item()]
+                                mvalue = self._item_conf[id]['olog_rules'][item()]
                             except KeyError:
                                 mvalue = item()
-                                if self._item_conf[item.id()]['olog_rules']["*"] is None:
+                                if self._item_conf[id]['olog_rules']["*"] is None:
                                     return
-                        self._item_conf[item.id()]['olog_eval_res'] = []
-                        for expr in self._item_conf[item.id()]['olog_eval']:
-                            self._item_conf[item.id()]['olog_eval_res'].append(eval(expr))
+                        self._item_conf[id]['olog_eval_res'] = []
+                        for expr in self._item_conf[id]['olog_eval']:
+                            self._item_conf[id]['olog_eval_res'].append(eval(expr))
                         try:
                             pname = str(item.return_parent())
-                            pid = item.return_parent().id()
+                            pid = item.return_parent().property.path
                         except Exception:
                             pname = ''
                             pid = ''
-                        logtxt = self._item_conf[item.id()]['olog_txt'].format(*self._item_conf[item.id()]['olog_eval_res'],
+                        time = shtime.now().strftime("%H:%M:%S")
+                        date = shtime.now().strftime("%d.%m.%Y")
+                        stamp = shtime.now().timestamp()
+                        now = str(shtime.now())
+
+                        logtxt = self._item_conf[id]['olog_txt'].format(*self._item_conf[id]['olog_eval_res'],
                                                                                **{'value': item(),
                                                                                   'mvalue': mvalue,
                                                                                   'name': str(item),
                                                                                   'age': round(item.prev_age(), 2),
                                                                                   'pname': pname,
-                                                                                  'id': item.id(),
+                                                                                  'id': id,
+                                                                                  'item': id,
+                                                                                  'time': time,
+                                                                                  'date': date,
+                                                                                  'stamp': stamp,
+                                                                                  'now': now,
                                                                                   'pid': pid,
-                                                                                  'lowlim': self._item_conf[item.id()]['olog_rules']['lowlim'],
-                                                                                  'highlim': self._item_conf[item.id()]['olog_rules']['highlim']})
+                                                                                  'lowlimit': self._item_conf[id]['olog_rules']['lowlimit'],
+                                                                                  'highlimit': self._item_conf[id]['olog_rules']['highlimit'],
+                                                                                  'lowlim': self._item_conf[id]['olog_rules']['lowlim'],
+                                                                                  'highlim': self._item_conf[id]['olog_rules']['highlim']})
                         logvalues = [logtxt]
                     else:
-                        logvalues = [item.id(), '=', item()]
+                        logvalues = [id, '=', item()]
                 else:
                     logvalues = []
                     for it in self._items:
@@ -388,7 +418,7 @@ class OperationLog(SmartPlugin, AbLogger):
             olog_txt = self._logic_conf[logic.name]['olog_txt']
             olog_eval = self._logic_conf[logic.name]['olog_eval']
             eval_res = [eval(expr) for expr in olog_eval]
-            logvalues = [olog_txt.format(*eval_res, **{'plugin' : self, 'logic' : logic, 'by' : by, 'source' : source, 'dest' : dest})] 
+            logvalues = [olog_txt.format(*eval_res, **{'plugin' : self, 'logic' : logic, 'by' : by, 'source' : source, 'dest' : dest})]
             self.log(logvalues, 'INFO' if 'olog_level' not in logic.conf else logic.conf['olog_level'])
 
     def log(self, logvalues, level='INFO'):
@@ -403,15 +433,18 @@ class OperationLog(SmartPlugin, AbLogger):
                 elif name == 'thread':
                     log.append(threading.current_thread().name)
                 elif name == 'level':
-                    log.append(level)
+                    log.append("INFO" if level == "NONE" else level)
                 else:
                     values_txt = map(str, logvalues)
                     log.append(' '.join(values_txt))
             self._log.add(log)
-            # consider to write the log entry to 
+            # consider to write the log entry to
             if self._logtofile:
                 self.update_logfilename()
-                self.__myLogger.info('{}: {}', log[2], ''.join(log[3:]))
+                if level == "NONE":
+                    self.__myLogger.none('{}', ''.join(log[3:]))
+                else:
+                    self.__myLogger.info('{}: {}', log[2], ''.join(log[3:]))
 
             if self._cache is True:
                 try:
@@ -420,48 +453,10 @@ class OperationLog(SmartPlugin, AbLogger):
                     self.logger.warning("OperationLog {}: could not update cache {}".format(self._path, e))
 
             if self.additional_logger:
+                if level == "NONE":
+                    level = "INFO"
                 self.additional_logger.log(logging.getLevelName(level), ' '.join(map(str, logvalues)))
 
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
-            return False
-
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
 
 
 #####################################################################
@@ -490,69 +485,3 @@ def _cache_write(logger, filename, value):
             pickle.dump(value, f)
     except IOError:
         logger.warning("Could not write to {}".format(filename))
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-        self.items = Items.get_instance()
-
-    @cherrypy.expose
-    def index(self, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
-
-
-    @cherrypy.expose
-    def get_data_html(self, dataSet=None):
-        """
-        Return data to update the webpage
-
-        For the standard update mechanism of the web interface, the dataSet to return the data for is None
-
-        :param dataSet: Dataset for which the data should be returned (standard: None)
-        :return: dict with the data needed to update the web page.
-        """
-        if dataSet is None:
-            # get the new data
-            data = {}
-
-            # data['item'] = {}
-            # for i in self.plugin.items:
-            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
-            #
-            # return it as json the the web page
-            # try:
-            #     return json.dumps(data)
-            # except Exception as e:
-            #     self.logger.error("get_data_html exception: {}".format(e))
-        return {}
-

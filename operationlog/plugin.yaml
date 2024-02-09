@@ -11,11 +11,10 @@ plugin:
         en: 'Implementation of additional logs'
     maintainer: 'bmxp'
     tester: Sandman60, onkelandy, Morg
-    keywords: Operation logging SmartVISU DEBUG CRITICAL INFO WARNING
-    state: ready
-    documentation: https://www.smarthomeng.de/user/plugins/operationlog/user_doc.html
+    keywords: Operation logging SmartVISU
+    state: deprecated
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1496323-support-thread-für-operationlog-plugin
-    version: 1.3.5                 # Plugin version
+    version: 1.3.6                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
     # sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: false          # plugin supports multi instance
@@ -142,9 +141,18 @@ item_attributes:
             - INFO
             - WARNING
             - ERROR
+            - NONE
         description:
-            de: 'Gibt den Log-Level an (DEBUG, INFO, WARNING, ERROR)'
-            en: 'Specifies the log level (DEBUG, INFO, WARNING, ERROR)'
+            de: >
+                Gibt den Log-Level an (DEBUG, INFO, WARNING, ERROR, NONE).
+                NONE bedeutet, dass kein Zeitstempel und Loglevel in die Datei geschrieben
+                wird (äquivalent zum datalog Plugin), für Memory und zusätzliches
+                Log wird der Loglevel auf INFO gesetzt.
+            en: >
+                Specifies the log level (DEBUG, INFO, WARNING, ERROR, NONE)
+                NONE means, there is no timestamp and log level written to the file
+                (as with the datalog plugin). However, for memory and additional
+                log files, the INFO level is used.
     olog_rules:
         type: str
         description:
@@ -173,9 +181,10 @@ logic_parameters:
           - INFO
           - WARNING
           - ERROR
+          - NONE
         description:
-            de: 'Gibt den Log-Level an (DEBUG, INFO, WARNING, ERROR)'
-            en: 'Specifies the log level (DEBUG, INFO, WARNING, ERROR)'
+            de: 'Gibt den Log-Level an (DEBUG, INFO, WARNING, ERROR, NONE)'
+            en: 'Specifies the log level (DEBUG, INFO, WARNING, ERROR, NONE)'
 
 plugin_functions: NONE
     # Definition of function interface of the plugin

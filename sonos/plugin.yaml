@@ -12,7 +12,7 @@ plugin:
   documentation: https://github.com/smarthomeNG/plugins/blob/master/sonos/README.md
   support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung
 
-  version: 1.8.4                 # Plugin version
+  version: 1.8.5                 # Plugin version
   sh_minversion: 1.5.1           # minimum shNG version to use this plugin
   py_minversion: 3.8             # minimum Python version to use for this plugin
   multi_instance: False          # plugin supports multi instance
@@ -898,6 +898,37 @@ item_structs:
         initial_value: True
         sonos_attrib: snippet_fade_in
 
-plugin_functions: NONE
+plugin_functions:
+    play_all:
+        type: foo
+        description:
+            de: 'Spiel eine URL auf allen Speakern, oder einer Untermenge, ab'
+            en: 'Plays a uri on all or a subamount of speakers'
+        parameters:
+            alert_uri:
+                type: str
+                description:
+                    de: "URL die Sonos abspielen soll"
+                    en: "uri that Sonos can play as an alert"
+            speaker_list:
+                type: list
+                description:
+                    de: "Liste mit Speaker Namen, auf denen der Sound abgespielt werden soll"
+                    en: "List of applicable speaker names, if empty, all speakers are used"
+            alert_volume:
+                type: int
+                description:
+                    de: "Volumenlevel (0-100)"
+                    en: "volume level for playing alert (0 tp 100)"
+            alert_duration:
+                type: int
+                description:
+                    de: "Länge der Ansage in Sekunden (wenn 0, dann gleich Tracklänge)"
+                    en: "Length in [s] of alert (if zero then length of track)"
+            fade_back:
+                type: bool
+                description:
+                    de: "auf True setzen, um den Sound nach der Ansage ansteigen zu lassen"
+                    en: "Set to True for fading up the sound after the alert"
 
 logic_parameters: NONE

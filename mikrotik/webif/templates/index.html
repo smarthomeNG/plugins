@@ -96,16 +96,16 @@ Activate that function if needed, otherwise just remove the line to increase per
 				// Port enabled / disabled
 				if (interface.disabled == 'true') {
 					shngInsertText(
-						interface.name + '_disabled', 
-						'<i class="fas fa-toggle-off fa-lg" style="color:red;" onclick="setPortActiveState(\'' + interface.name + '\', true);"></i>', 
-						'interfacestable', 
+						interface.name + '_disabled',
+						'<i class="fas fa-toggle-off fa-lg" style="color:red;" onclick="setPortActiveState(\'' + interface.name + '\', true);"></i>',
+						'interfacestable',
 						5
 					);
 				} else {
 					shngInsertText(
-						interface.name + '_disabled', 
-						'<i class="fas fa-toggle-on fa-lg" style="color: green;" onclick="setPortActiveState(\'' + interface.name + '\', false);"></i>', 
-						'interfacestable', 
+						interface.name + '_disabled',
+						'<i class="fas fa-toggle-on fa-lg" style="color: green;" onclick="setPortActiveState(\'' + interface.name + '\', false);"></i>',
+						'interfacestable',
 						5
 					);
 				}
@@ -113,16 +113,16 @@ Activate that function if needed, otherwise just remove the line to increase per
 				// POE of port enabled / disabled
 				if (interface.poe == 'auto-on') {
 					shngInsertText(
-						interface.name + '_poe', 
-						'<i class="fas fa-power-off" style="color: green;" onclick="setPortPOEState(\'' + interface.name + '\', false);"></i>', 
-						'interfacestable', 
+						interface.name + '_poe',
+						'<i class="fas fa-power-off" style="color: green;" onclick="setPortPOEState(\'' + interface.name + '\', false);"></i>',
+						'interfacestable',
 						5
 					);
 				} else if (interface.poe == 'off') {
 					shngInsertText(
-						interface.name + '_poe', 
-						'<i class="fas fa-power-off" style="color:red;" onclick="setPortPOEState(\'' + interface.name + '\', true);"></i>', 
-						'interfacestable', 
+						interface.name + '_poe',
+						'<i class="fas fa-power-off" style="color:red;" onclick="setPortPOEState(\'' + interface.name + '\', true);"></i>',
+						'interfacestable',
 						5
 					);
 				} else {
@@ -150,16 +150,16 @@ Activate that function if needed, otherwise just remove the line to increase per
 				if(result == 'OK') {
 					if (status === false) {
 						shngInsertText(
-							port + '_disabled', 
-							'<i class="fas fa-toggle-off fa-lg" style="color:red;" onclick="setPortActiveState(\'' + port + '\', true);"></i>', 
-							'interfacestable', 
+							port + '_disabled',
+							'<i class="fas fa-toggle-off fa-lg" style="color:red;" onclick="setPortActiveState(\'' + port + '\', true);"></i>',
+							'interfacestable',
 							5
 						);
 					} else {
 						shngInsertText(
-							port + '_disabled', 
-							'<i class="fas fa-toggle-on fa-lg" style="color: green;" onclick="setPortActiveState(\'' + port + '\', false);"></i>', 
-							'interfacestable', 
+							port + '_disabled',
+							'<i class="fas fa-toggle-on fa-lg" style="color: green;" onclick="setPortActiveState(\'' + port + '\', false);"></i>',
+							'interfacestable',
 							5
 						);
 					}
@@ -181,16 +181,16 @@ Activate that function if needed, otherwise just remove the line to increase per
 				if(result == 'OK') {
 					if (status === true) {
 						shngInsertText(
-							port + '_poe', 
-							'<i class="fas fa-power-off" style="color: green;" onclick="setPortPOEState(\'' + port + '\', false);"></i>', 
-							'interfacestable', 
+							port + '_poe',
+							'<i class="fas fa-power-off" style="color: green;" onclick="setPortPOEState(\'' + port + '\', false);"></i>',
+							'interfacestable',
 							5
 						);
 					} else {
 						shngInsertText(
-							port + '_poe', 
-							'<i class="fas fa-power-off" style="color:red;" onclick="setPortPOEState(\'' + port + '\', true);"></i>', 
-							'interfacestable', 
+							port + '_poe',
+							'<i class="fas fa-power-off" style="color:red;" onclick="setPortPOEState(\'' + port + '\', true);"></i>',
+							'interfacestable',
 							5
 						);
 					}
@@ -253,12 +253,12 @@ Activate that function if needed, otherwise just remove the line to increase per
 		try {
 			maintable = $('#maintable').DataTable( {
 				columnDefs: [
-					{ 
+					{
 						targets: 1, // Id column
 						className: "value"
 					},
-					{ 
-						targets: [2], 
+					{
+						targets: [2],
 						className: "value"
 					}
 				].concat($.fn.dataTable.defaults.columnDefs),
@@ -268,9 +268,9 @@ Activate that function if needed, otherwise just remove the line to increase per
 
 			interfacestable = $('#interfacestable').DataTable( {
 				columnDefs: [
-					{ 
+					{
 						targets: 1, // Id column
-						width: "50px"  
+						width: "50px"
 					},
 					{
 						targets: [8, 9], // Enabled and POE columns
@@ -363,10 +363,6 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 -->
 {% set tab1title = "<strong>" ~ _('Items') ~ "</strong> (" ~ item_count ~ ")" %}
 {% block bodytab1 %}
-  <!-- remove this div if not needed -->
-  <div class="mb-2">
-    {{ _('Hier kommt der Inhalt des Webinterfaces hin.') }} (optional)
-  </div>
 
 	<!-- set id accordingly -->
 	<table id="maintable" class="dataTableAdditional">
@@ -385,7 +381,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 				<tr>
           <!-- You HAVE to add an empty td here for correct implementation of the responsive plugin -->
           			<td></td>
-					  filterMikrotikValues
+
 				  	<td class="py-1" id="{{ item._path }}">{{ item._path }}</td>
 					<td class="py-1" id="{{ item.conf.port }}">{{ p.get_iattr_value(item.conf, 'mikrotik_port') }}</td>
 					<td class="py-1" id="{{ item.conf.function }}">{{ p.get_iattr_value(item.conf, 'mikrotik_parameter') }}</td>
@@ -417,10 +413,6 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 			{% endfor %}
 		</tbody>
 	</table>
-  <!-- remove this div if not needed -->
-  <div class="mb-2">
-    Etwaige Informationen unterhalb der Tabelle (optional)
-  </div>
 
 {% endblock bodytab1 %}
 
@@ -430,10 +422,6 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 -->
 {% set tab2title = "<strong>" ~ _('Port list') ~ "</strong> (" ~ len(p._interfaces) ~ ")" %}
 {% block bodytab2 %}
-	<!-- remove this div if not needed -->
-	<div class="mb-2">
-		{{ _('Hier kommt der Inhalt des Webinterfaces hin.') }} (optional)
-	</div>
 
 	<!-- set id accordingly -->
 	<table id="interfacestable" class="dataTableAdditional">
@@ -479,7 +467,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 							<i class="fas fa-play fa-rotate-90" style="color: red;"></i>
 						{% endif %}
 					</td>
-					<td class="py-1" id="{{ interface.name }}_disabled">				
+					<td class="py-1" id="{{ interface.name }}_disabled">
 						{% if interface.disabled == 'false' %}
 							<i class="fas fa-toggle-on fa-lg" style="color: green;" onclick="setPortActiveState('{{ interface.name }}', false);"></i>
 						{% else %}
@@ -499,10 +487,4 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 			{% endfor %}
 		</tbody>
 	</table>
-	<!-- remove this div if not needed -->
-	<div class="mb-2">
-		Etwaige Informationen unterhalb der Tabelle (optional)
-	</div>
 {% endblock bodytab2 %}
-
-

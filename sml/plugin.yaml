@@ -7,7 +7,7 @@ plugin:
         en: 'Read data from powermeter device using SML protocol'
     maintainer: ohinckel
     tester: '?'                    # Who tests this plugin?
-    state: ready
+    state: deprecated
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins_doc/config/sml.html
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py

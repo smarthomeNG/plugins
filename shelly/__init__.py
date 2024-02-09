@@ -39,7 +39,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.8.1'
+    PLUGIN_VERSION = '1.8.2'
 
 
     def __init__(self, sh):
@@ -307,9 +307,13 @@ class Shelly(MqttPlugin):
             elif config_data.get('gen', None) == '2':
                 # Handle Gen2 device
                 self.request_gen2_switch(config_data['shelly_id'], config_data['shelly_group'], item())
+            elif config_data.get('gen', None) == '3':
+                # Handle Gen3 device (in the same way as for gen 2 devices)
+                self.request_gen2_switch(config_data['shelly_id'], config_data['shelly_group'], item())
+
             else:
                 shelly_id = self.get_iattr_value(item.conf, 'shelly_id')
-                self.logger.notice(f"Device with id {shelly_id} was not discovered yet (for {item.id()}")
+                self.logger.warning(f"Device with id {shelly_id} was not discovered yet (for {item.id()}")
 
 
     def update_Gen1_from_item(self, item, config_data):
@@ -509,10 +513,10 @@ class Shelly(MqttPlugin):
             # get the given part of the mac address (complete mac address is not given in config for Gen1 devices)
             parts = shelly_id.split('-')
             item_mapping = parts[-1:][0].lower() + mapping
-        elif device_data.get('gen', '?') == '2':
+        elif device_data.get('gen', '?') == '2' or device_data.get('gen', '?') == '3':
             item_mapping = self.shelly_devices[shelly_id]['mac'] + mapping
         else:
-            self.logger.warning(f"update_items_from_status: Unknown API version of {shelly_id} - group={group}, attr={attr}, value={value}, source={source}")
+            self.logger.warning(f"update_items_from_status: Unknown API version (gen{device_data.get('gen', '?')}) of {shelly_id} - group={group}, attr={attr}, value={value}, source={source}")
             return
 
         if self.shelly_devices[shelly_id]['list_attrs']:
@@ -577,7 +581,7 @@ class Shelly(MqttPlugin):
                 if not already_discovered:
                     self.logger.info(f"Discovered new Shelly Gen1 device with id '{shelly_id}'")
 
-            elif self.shelly_devices[shelly_id]['gen'] == '2':
+            elif (self.shelly_devices[shelly_id]['gen'] == '2') or (self.shelly_devices[shelly_id]['gen'] == '3'):
                 self.shelly_devices[shelly_id]['mac'] = payload['mac'].lower()
                 self.shelly_devices[shelly_id]['ip'] = ''
                 self.shelly_devices[shelly_id]['new_fw'] = '?'
@@ -594,7 +598,8 @@ class Shelly(MqttPlugin):
 
             else:
                 if not already_discovered:
-                    self.logger.notice(f"Discovered new Shelly device with unknown API version (id '{shelly_id}') - Gen={self.shelly_devices[shelly_id]['gen']}")
+                    self.logger.warning(f"Discovered new Shelly device with unknown API version (id '{shelly_id}') - Gen={self.shelly_devices[shelly_id]['gen']}")
+                    return
 
             self.shelly_devices[shelly_id]['connected_to_item'] = self.shelly_devices[shelly_id].get('connected_to_item', False)
 
@@ -769,7 +774,7 @@ class Shelly(MqttPlugin):
 
     def handle_gen2_device_status(self, shelly_id, group, status):
         """
-        Handle ststus information for switches
+        Handle status information for switches
 
         :param shelly_id:
         :param status_type:

@@ -22,7 +22,7 @@ import telnetlib
 from lib.model.smartplugin import SmartPlugin
 
 class NUT(SmartPlugin):
-  PLUGIN_VERSION = '1.3.3'
+  PLUGIN_VERSION = '1.3.4'
   ALLOW_MULTIINSTANCE = True
 
   def __init__(self, sh):
@@ -45,7 +45,7 @@ class NUT(SmartPlugin):
     self.logger.info('NUT Plugin initialized')
 
   def run(self):
-    self._sh.scheduler.add('poll_nut_device', self._read_ups, prio = 5, cycle = self._cycle)
+    self.scheduler_add('poll_nut_device', self._read_ups, prio = 5, cycle = self._cycle)
     self.alive = True
 
   def stop(self):

@@ -1,9 +1,9 @@
 .. index:: Plugins; vicare
 .. index:: vicare
 
-==========
+======
 vicare
-==========
+======
 
 .. image:: webif/static/img/plugin_logo.png
    :alt: plugin logo
@@ -23,7 +23,7 @@ Konfiguration
 Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/vicare` beschrieben.
 Die Kopplung zwischen Plugin und Viessmann Backend erfolgt über das OAuth2 Verfahren. Das Webinterface führt Schritt für Schritt durch den Anmeldeprozess. Die Authentifizierung muss einmal via 
 Webinterface durchgeführt werden. Nach Abschluss erhält man einen access Token und einen refresh Token. Beide werden persistent in der plugin.yaml gespeichert. Mit Hilfe des refresh Tokens generiert 
-das Plugin bei jedem Neustart einen neuen accessToken. Der refresh Token ist 180 Tage gültig, d.g. die manuelle Authentifizierung muss alle 180 Tage einmal durchgeführt werden. Dies ist eine Vorgabe der Viessmann API.
+das Plugin bei jedem Neustart einen neuen accessToken. Der refresh Token ist 180 Tage gültig, d.h. die manuelle Authentifizierung muss alle 180 Tage einmal durchgeführt werden. Dies ist eine Vorgabe der Viessmann API.
 
 Requirements
 =============
