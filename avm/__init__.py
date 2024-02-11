@@ -113,7 +113,7 @@ class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = '2.2.1'
+    PLUGIN_VERSION = '2.2.2'
 
     # ToDo: FritzHome.handle_updated_item: implement 'saturation'
     # ToDo: FritzHome.handle_updated_item: implement 'unmapped_hue'
@@ -2140,7 +2140,7 @@ class FritzHome:
         def get_sid():
             """
             Generator to provide the sid two times in case the first try failed.
-            This can happen on an invalide or expired sid. In this case the sid gets regenerated for the second try.
+            This can happen on an invalid or expired sid. In this case the sid is regenerated for the second try.
             """
             yield self._sid
             self.login()
@@ -2160,12 +2160,14 @@ class FritzHome:
                         msg = "HTTP request timed out."
                     self.logger.info(msg)
                     raise FritzHttpTimeoutError(msg)
-
-                if response.status_code == 200:
-                    content_type = response.headers.get('content-type')
-                    if 'json' in content_type:
-                        return content_type, response.json()
-                    return content_type, response.text
+                except Exception as e:
+                    self.logger.warning(f"Exception occurred in session get: {e}")
+                else:
+                    if response.status_code == 200:
+                        content_type = response.headers.get('content-type')
+                        if 'json' in content_type:
+                            return content_type, response.json()
+                        return content_type, response.text
 
         if response.status_code == 403:
             msg = f"{response.status_code!r} Forbidden: 'Session-ID ungültig oder Benutzer nicht autorisiert'"
