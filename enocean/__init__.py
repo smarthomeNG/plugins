@@ -31,141 +31,13 @@ from . import eep_parser
 from . import prepare_packet_data
 from lib.model.smartplugin import *
 from .webif import WebInterface
-
-FCSTAB = [
-    0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15,
-    0x38, 0x3f, 0x36, 0x31, 0x24, 0x23, 0x2a, 0x2d,
-    0x70, 0x77, 0x7e, 0x79, 0x6c, 0x6b, 0x62, 0x65,
-    0x48, 0x4f, 0x46, 0x41, 0x54, 0x53, 0x5a, 0x5d,
-    0xe0, 0xe7, 0xee, 0xe9, 0xfc, 0xfb, 0xf2, 0xf5,
-    0xd8, 0xdf, 0xd6, 0xd1, 0xc4, 0xc3, 0xca, 0xcd,
-    0x90, 0x97, 0x9e, 0x99, 0x8c, 0x8b, 0x82, 0x85,
-    0xa8, 0xaf, 0xa6, 0xa1, 0xb4, 0xb3, 0xba, 0xbd,
-    0xc7, 0xc0, 0xc9, 0xce, 0xdb, 0xdc, 0xd5, 0xd2,
-    0xff, 0xf8, 0xf1, 0xf6, 0xe3, 0xe4, 0xed, 0xea,
-    0xb7, 0xb0, 0xb9, 0xbe, 0xab, 0xac, 0xa5, 0xa2,
-    0x8f, 0x88, 0x81, 0x86, 0x93, 0x94, 0x9d, 0x9a,
-    0x27, 0x20, 0x29, 0x2e, 0x3b, 0x3c, 0x35, 0x32,
-    0x1f, 0x18, 0x11, 0x16, 0x03, 0x04, 0x0d, 0x0a,
-    0x57, 0x50, 0x59, 0x5e, 0x4b, 0x4c, 0x45, 0x42,
-    0x6f, 0x68, 0x61, 0x66, 0x73, 0x74, 0x7d, 0x7a,
-    0x89, 0x8e, 0x87, 0x80, 0x95, 0x92, 0x9b, 0x9c,
-    0xb1, 0xb6, 0xbf, 0xb8, 0xad, 0xaa, 0xa3, 0xa4,
-    0xf9, 0xfe, 0xf7, 0xf0, 0xe5, 0xe2, 0xeb, 0xec,
-    0xc1, 0xc6, 0xcf, 0xc8, 0xdd, 0xda, 0xd3, 0xd4,
-    0x69, 0x6e, 0x67, 0x60, 0x75, 0x72, 0x7b, 0x7c,
-    0x51, 0x56, 0x5f, 0x58, 0x4d, 0x4a, 0x43, 0x44,
-    0x19, 0x1e, 0x17, 0x10, 0x05, 0x02, 0x0b, 0x0c,
-    0x21, 0x26, 0x2f, 0x28, 0x3d, 0x3a, 0x33, 0x34,
-    0x4e, 0x49, 0x40, 0x47, 0x52, 0x55, 0x5c, 0x5b,
-    0x76, 0x71, 0x78, 0x7f, 0x6A, 0x6d, 0x64, 0x63,
-    0x3e, 0x39, 0x30, 0x37, 0x22, 0x25, 0x2c, 0x2b,
-    0x06, 0x01, 0x08, 0x0f, 0x1a, 0x1d, 0x14, 0x13,
-    0xae, 0xa9, 0xa0, 0xa7, 0xb2, 0xb5, 0xbc, 0xbb,
-    0x96, 0x91, 0x98, 0x9f, 0x8a, 0x8D, 0x84, 0x83,
-    0xde, 0xd9, 0xd0, 0xd7, 0xc2, 0xc5, 0xcc, 0xcb,
-    0xe6, 0xe1, 0xe8, 0xef, 0xfa, 0xfd, 0xf4, 0xf3
-    ]
-
-################################
-### --- Packet Sync Byte --- ###
-################################
-PACKET_SYNC_BYTE              = 0x55   # PACKET SYNC BYTE
-
-
-############################
-### --- Packet Types --- ###
-############################
-
-PACKET_TYPE_RADIO             = 0x01   # RADIO ERP1
-PACKET_TYPE_RESPONSE          = 0x02   # RESPONSE
-PACKET_TYPE_RADIO_SUB_TEL     = 0x03   # RADIO_SUB_TEL
-PACKET_TYPE_EVENT             = 0x04   # EVENT
-PACKET_TYPE_COMMON_COMMAND    = 0x05   # COMMON COMMAND
-PACKET_TYPE_SMART_ACK_COMMAND = 0x06   # SMART ACK COMMAND
-PACKET_REMOTE_MAN_COMMAND     = 0x07   # REMOTE MANAGEMENT COMMAND
-PACKET_TYPE_RADIO_MESSAGE     = 0x09   # RADIO MESSAGE
-PACKET_TYPE_RADIO_ERP2        = 0x0A   # RADIO ERP2
-PACKET_TYPE_RADIO_802_15_4    = 0x10   # RADIO_802_15_4
-PACKET_TYPE_COMMAND_2_4       = 0x11   # COMMAND_2_4
-
-
-############################################
-### --- List of Common Command Codes --- ###
-############################################
-
-CO_WR_SLEEP                     = 0x01     # Order to enter in energy saving mode
-CO_WR_RESET                     = 0x02     # Order to reset the device
-CO_RD_VERSION                   = 0x03     # Read the device (SW) version /(HW) version, chip ID etc.
-CO_RD_SYS_LOG                   = 0x04     # Read system log from device databank
-CO_WR_SYS_LOG                   = 0x05     # Reset System log from device databank
-CO_WR_BIST                      = 0x06     # Perform built in self test
-CO_WR_IDBASE                    = 0x07     # Write ID range base number
-CO_RD_IDBASE                    = 0x08     # Read ID range base number
-CO_WR_REPEATER                  = 0x09     # Write Repeater Level off,1,2
-CO_RD_REPEATER                  = 0x0A     # Read Repeater Level off,1,2
-CO_WR_FILTER_ADD                = 0x0B     # Add filter to filter list
-CO_WR_FILTER_DEL                = 0x0C     # Delete filter from filter list
-CO_WR_FILTER_DEL_ALL            = 0x0D     # Delete all filter
-CO_WR_FILTER_ENABLE             = 0x0E     # Enable/Disable supplied filters
-CO_RD_FILTER                    = 0x0F     # Read supplied filters
-CO_WR_WAIT_MATURITY             = 0x10     # Waiting till end of maturity time before received radio telegrams will transmitted
-CO_WR_SUBTEL                    = 0x11     # Enable/Disable transmitting additional subtelegram info
-CO_WR_MEM                       = 0x12     # Write x bytes of the Flash, XRAM, RAM0 …
-CO_RD_MEM                       = 0x13     # Read x bytes of the Flash, XRAM, RAM0 ….
-CO_RD_MEM_ADDRESS               = 0x14     # Feedback about the used address and length of the configarea and the Smart Ack Table
-CO_RD_SECURITY                  = 0x15     # Read own security information (level, key)
-CO_WR_SECURITY                  = 0x16     # Write own security information (level, key)
-CO_WR_LEARNMODE                 = 0x17     # Function: Enables or disables learn mode of Controller.
-CO_RD_LEARNMODE                 = 0x18     # Function: Reads the learn-mode state of Controller.
-CO_WR_SECUREDEVICE_ADD          = 0x19     # Add a secure device
-CO_WR_SECUREDEVICE_DEL          = 0x1A     # Delete a secure device
-CO_RD_SECUREDEVICE_BY_INDEX     = 0x1B     # Read secure device by index
-CO_WR_MODE                      = 0x1C     # Sets the gateway transceiver mode
-CO_RD_NUMSECUREDEVICES          = 0x1D     # Read number of taught in secure devices
-CO_RD_SECUREDEVICE_BY_ID        = 0x1E     # Read secure device by ID
-CO_WR_SECUREDEVICE_ADD_PSK      = 0x1F     # Add Pre-shared key for inbound secure device
-CO_WR_SECUREDEVICE_SENDTEACHIN  = 0x20     # Send secure Teach-In message
-CO_WR_TEMPORARY_RLC_WINDOW      = 0x21     # Set the temporary rolling-code window for every taught-in devic
-CO_RD_SECUREDEVICE_PSK          = 0x22     # Read PSK
-CO_RD_DUTYCYCLE_LIMIT           = 0x23     # Read parameters of actual duty cycle limit
-CO_SET_BAUDRATE                 = 0x24     # Modifies the baud rate of the EnOcean device
-CO_GET_FREQUENCY_INFO           = 0x25     # Reads Frequency and protocol of the Device
-CO_GET_STEPCODE                 = 0x27     # Reads Hardware Step code and Revision of the Device
-
-
-###################################
-### --- List of Event Codes --- ###
-###################################
-
-SA_RECLAIM_NOT_SUCCESSFUL  = 0x01      # Informs the backbone of a Smart Ack Client to not successful reclaim.
-SA_CONFIRM_LEARN           = 0x02      # Used for SMACK to confirm/discard learn in/out
-SA_LEARN_ACK               = 0x03      # Inform backbone about result of learn request
-CO_READY                   = 0x04      # Inform backbone about the readiness for operation
-CO_EVENT_SECUREDEVICES     = 0x05      # Informs about a secure device
-CO_DUTYCYCLE_LIMIT         = 0x06      # Informs about duty cycle limit
-CO_TRANSMIT_FAILED         = 0x07      # Informs that the device was not able to send a telegram.
-
-
-###########################################
-###  --- Smart Acknowledge Defines: --- ###
-###########################################
-
-SA_WR_LEARNMODE        = 0x01          # Set/Reset Smart Ack learn mode
-SA_RD_LEARNMODE        = 0x02          # Get Smart Ack learn mode state
-SA_WR_LEARNCONFIRM     = 0x03          # Used for Smart Ack to add or delete a mailbox of a client
-SA_WR_CLIENTLEARNRQ    = 0x04          # Send Smart Ack Learn request (Client)
-SA_WR_RESET            = 0x05          # Send reset command to a Smart Ack client
-SA_RD_LEARNEDCLIENTS   = 0x06          # Get Smart Ack learned sensors / mailboxes
-SA_WR_RECLAIMS         = 0x07          # Set number of reclaim attempts
-SA_WR_POSTMASTER       = 0x08          # Activate/Deactivate Post master functionality
-
-SENT_RADIO_PACKET              = 0xFF
-SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
+# get CRC class
+from .protocol.crc8 import CRC
+from .protocol.constants import PACKET, PACKET_TYPE, COMMON_COMMAND, SMART_ACK, EVENT, RETURN_CODE, RORG
 
 class EnOcean(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.0"
+    PLUGIN_VERSION = "1.4.1"
 
     
     def __init__(self, sh):
@@ -232,19 +104,19 @@ class EnOcean(SmartPlugin):
         if logger_debug:
             self.logger.debug("enocean: call function << _process_packet_type_event >>")
         event_code = data[0]
-        if(event_code == SA_RECLAIM_NOT_SUCCESSFUL):
+        if(event_code == EVENT.SA_RECLAIM_NOT_SUCCESSFUL):
             self.logger.error("enocean: SA reclaim was not successful")
-        elif(event_code == SA_CONFIRM_LEARN):
+        elif(event_code == EVENT.SA_CONFIRM_LEARN):
             self.logger.info("enocean: Requesting how to handle confirm/discard learn in/out")
-        elif(event_code == SA_LEARN_ACK):
+        elif(event_code == EVENT.SA_LEARN_ACK):
             self.logger.info("enocean: SA lern acknowledged")
-        elif(event_code == CO_READY):
+        elif(event_code == EVENT.CO_READY):
             self.logger.info("enocean: Controller is ready for operation")
-        elif(event_code == CO_TRANSMIT_FAILED):
+        elif(event_code == EVENT.CO_TRANSMIT_FAILED):
             self.logger.error("enocean: Telegram transmission failed")
-        elif(event_code == CO_DUTYCYCLE_LIMIT):
+        elif(event_code == EVENT.CO_DUTYCYCLE_LIMIT):
             self.logger.warning("enocean: Duty cycle limit reached")
-        elif(event_code == CO_EVENT_SECUREDEVICES):
+        elif(event_code == EVENT.CO_EVENT_SECUREDEVICES):
             self.logger.info("enocean: secure device event packet received")
         else:
             self.logger.warning("enocean: unknown event packet received")
@@ -357,23 +229,22 @@ class EnOcean(SmartPlugin):
         logger_debug = self.logger.isEnabledFor(logging.DEBUG)
         if logger_debug:
             self.logger.debug("Call function << _process_packet_type_response >>")
-        RETURN_CODES = ['OK', 'ERROR', 'NOT SUPPORTED', 'WRONG PARAM', 'OPERATION DENIED']
-        if (self._last_cmd_code == SENT_RADIO_PACKET) and (len(data) == 1):
+        if (self._last_cmd_code == PACKET.SENT_RADIO_PACKET) and (len(data) == 1):
             if logger_debug:
-                self.logger.debug(f"Sending command returned code = {RETURN_CODES[data[0]]}")
-        elif (self._last_packet_type == PACKET_TYPE_COMMON_COMMAND) and (self._last_cmd_code == CO_WR_RESET) and (len(data) == 1):
-            self.logger.info(f"Reset returned code = {RETURN_CODES[data[0]]}")
-        elif (self._last_packet_type == PACKET_TYPE_COMMON_COMMAND) and (self._last_cmd_code == CO_WR_LEARNMODE) and (len(data) == 1):
-            self.logger.info(f"Write LearnMode returned code = {RETURN_CODES[data[0]]}")
-        elif (self._last_packet_type == PACKET_TYPE_COMMON_COMMAND) and (self._last_cmd_code == CO_RD_VERSION):
+                self.logger.debug(f"Sending command returned code = {RETURN_CODE(data[0])}")
+        elif (self._last_packet_type == PACKET_TYPE.COMMON_COMMAND) and (self._last_cmd_code == COMMON_COMMAND.CO_WR_RESET) and (len(data) == 1):
+            self.logger.info(f"Reset returned code = {RETURN_CODE(data[0])}")
+        elif (self._last_packet_type == PACKET_TYPE.COMMON_COMMAND) and (self._last_cmd_code == COMMON_COMMAND.CO_WR_LEARNMODE) and (len(data) == 1):
+            self.logger.info(f"Write LearnMode returned code = {RETURN_CODE(data[0])}")
+        elif (self._last_packet_type == PACKET_TYPE.COMMON_COMMAND) and (self._last_cmd_code == COMMON_COMMAND.CO_RD_VERSION):
             if (data[0] == 0) and (len(data) == 33):
                 self.logger.info("Chip ID = 0x{} / Chip Version = 0x{}".format(''.join(['%02x' % b for b in data[9:13]]), ''.join(['%02x' % b for b in data[13:17]])))
                 self.logger.info("APP version = {} / API version = {} / App description = {}".format('.'.join(['%d' % b for b in data[1:5]]), '.'.join(['%d' % b for b in data[5:9]]), ''.join(['%c' % b for b in data[17:33]])))
             elif (data[0] == 0) and (len(data) == 0):
                 self.logger.error("Reading version: No answer")
             else:
-                self.logger.error(f"Reading version returned code = {RETURN_CODES[data[0]]}, length = {len(data)}")
-        elif (self._last_packet_type == PACKET_TYPE_COMMON_COMMAND) and (self._last_cmd_code == CO_RD_IDBASE):
+                self.logger.error(f"Reading version returned code = {RETURN_CODE(data[0])}, length = {len(data)}")
+        elif (self._last_packet_type == PACKET_TYPE.COMMON_COMMAND) and (self._last_cmd_code == COMMON_COMMAND.CO_RD_IDBASE):
             if (data[0] == 0) and (len(data) == 5):
                 self.logger.info("Base ID = 0x{}".format(''.join(['%02x' % b for b in data[1:5]])))
                 if (self.tx_id == 0):
@@ -384,8 +255,8 @@ class EnOcean(SmartPlugin):
             elif (data[0] == 0) and (len(data) == 0):
                 self.logger.error("Reading Base ID: No answer")
             else:
-                self.logger.error(f"Reading Base ID returned code = {RETURN_CODES[data[0]]} and {len(data)} bytes")
-        elif (self._last_packet_type == PACKET_TYPE_COMMON_COMMAND) and (self._last_cmd_code == CO_WR_BIST):
+                self.logger.error(f"Reading Base ID returned code = {RETURN_CODE(data[0])} and {len(data)} bytes")
+        elif (self._last_packet_type == PACKET_TYPE.COMMON_COMMAND) and (self._last_cmd_code == COMMON_COMMAND.CO_WR_BIST):
             if (data[0] == 0) and (len(data) == 2):
                 if (data[1] == 0):
                     self.logger.info("Built in self test result: All OK")
@@ -394,15 +265,15 @@ class EnOcean(SmartPlugin):
             elif (data[0] == 0) and (len(data) == 0):
                 self.logger.error("Doing built in self test: No answer")
             else:
-                self.logger.error(f"Doing built in self test returned code = {RETURN_CODES[data[0]]}")
-        elif (self._last_packet_type == PACKET_TYPE_COMMON_COMMAND) and (self._last_cmd_code == CO_RD_LEARNMODE):
+                self.logger.error(f"Doing built in self test returned code = {RETURN_CODE(data[0])}")
+        elif (self._last_packet_type == PACKET_TYPE.COMMON_COMMAND) and (self._last_cmd_code == COMMON_COMMAND.CO_RD_LEARNMODE):
             if (data[0] == 0) and (len(data) == 2):
                 self.logger.info("Reading LearnMode = 0x{}".format(''.join(['%02x' % b for b in data[1]])))
                 if (len(optional) == 1):
                     self.logger.info("enocean: learn channel = {}".format(optional[0]))
             elif (data[0] == 0) and (len(data) == 0):
                 self.logger.error("Reading LearnMode: No answer")
-        elif (self._last_packet_type == PACKET_TYPE_COMMON_COMMAND) and (self._last_cmd_code == CO_RD_NUMSECUREDEVICES):
+        elif (self._last_packet_type == PACKET_TYPE.COMMON_COMMAND) and (self._last_cmd_code == COMMON_COMMAND.CO_RD_NUMSECUREDEVICES):
             if (data[0] == 0) and (len(data) == 2):
                 self.logger.info("Number of taught in devices = 0x{}".format(''.join(['%02x' % b for b in data[1]])))
             elif (data[0] == 0) and (len(data) == 0):
@@ -411,15 +282,15 @@ class EnOcean(SmartPlugin):
                 self.logger.error("Reading NUMSECUREDEVICES: Command not supported")
             else:
                 self.logger.error("Reading NUMSECUREDEVICES: Unknown error")
-        elif (self._last_packet_type == PACKET_TYPE_SMART_ACK_COMMAND) and (self._last_cmd_code == SA_WR_LEARNMODE):
-            self.logger.info(f"Setting SmartAck mode returned code = {RETURN_CODES[data[0]]}")
-        elif (self._last_packet_type == PACKET_TYPE_SMART_ACK_COMMAND) and (self._last_cmd_code == SA_RD_LEARNEDCLIENTS):
+        elif (self._last_packet_type == PACKET_TYPE.SMART_ACK_COMMAND) and (self._last_cmd_code == SMART_ACK.SA_WR_LEARNMODE):
+            self.logger.info(f"Setting SmartAck mode returned code = {RETURN_CODE(data[0])}")
+        elif (self._last_packet_type == PACKET_TYPE.SMART_ACK_COMMAND) and (self._last_cmd_code == SMART_ACK.SA_RD_LEARNEDCLIENTS):
             if (data[0] == 0):
                 self.logger.info(f"Number of smart acknowledge mailboxes = {int((len(data)-1)/9)}")
             else:
-                self.logger.error(f"Requesting SmartAck mailboxes returned code = {RETURN_CODES[data[0]]}")
+                self.logger.error(f"Requesting SmartAck mailboxes returned code = {RETURN_CODE(data[0])}")
         else:
-            self.logger.error("Processing unexpected response with return code = {} / data = [{}] / optional = [{}]".format(RETURN_CODES[data[0]], ', '.join(['0x%02x' % b for b in data]), ', '.join(['0x%02x' % b for b in optional])))
+            self.logger.error("Processing unexpected response with return code = {} / data = [{}] / optional = [{}]".format(RETURN_CODE(data[0]), ', '.join(['0x%02x' % b for b in data]), ', '.join(['0x%02x' % b for b in optional])))
         self._response_lock.acquire()
         self._response_lock.notify()
         self._response_lock.release()
@@ -428,11 +299,11 @@ class EnOcean(SmartPlugin):
         self.logger.debug("Call function << _startup >>")
         # request one time information
         self.logger.info("Resetting device")
-        self._send_common_command(CO_WR_RESET)
+        self._send_common_command(COMMON_COMMAND.CO_WR_RESET)
         self.logger.info("Requesting id-base")
-        self._send_common_command(CO_RD_IDBASE)
+        self._send_common_command(COMMON_COMMAND.CO_RD_IDBASE)
         self.logger.info("Requesting version information")
-        self._send_common_command(CO_RD_VERSION)
+        self._send_common_command(COMMON_COMMAND.CO_RD_VERSION)
         self.logger.debug("Ending connect-thread")
 
     def run(self):
@@ -474,7 +345,7 @@ class EnOcean(SmartPlugin):
                     # 0x55 (SYNC) + 4bytes (HEADER) + 1byte(HEADER-CRC)
                     while (len(msg) >= 6):
                         #check header for CRC
-                        if (msg[0] == PACKET_SYNC_BYTE) and (self._calc_crc8(msg[1:5]) == msg[5]):
+                        if (msg[0] == PACKET.PACKET_SYNC_BYTE) and (CRC.calc_crc8(msg[1:5]) == msg[5]):
                             # header bytes: sync; length of data (2); optional length; packet type; crc
                             data_length = (msg[1] << 8) + msg[2]
                             opt_length = msg[3]
@@ -488,18 +359,18 @@ class EnOcean(SmartPlugin):
                                 break
 
                             # msg complete
-                            if (self._calc_crc8(msg[6:msg_length - 1]) == msg[msg_length - 1]):
+                            if (CRC.calc_crc8(msg[6:msg_length - 1]) == msg[msg_length - 1]):
                                 if logger_debug:
                                     self.logger.debug("Accepted package with type = 0x{:02x} / len = {} / data = [{}]!".format(packet_type, msg_length, ', '.join(['0x%02x' % b for b in msg])))
                                 data = msg[6:msg_length - (opt_length + 1)]
                                 optional = msg[(6 + data_length):msg_length - 1]
-                                if (packet_type == PACKET_TYPE_RADIO):
+                                if (packet_type == PACKET_TYPE.RADIO):
                                     self._process_packet_type_radio(data, optional)
-                                elif (packet_type == PACKET_TYPE_SMART_ACK_COMMAND):
+                                elif (packet_type == PACKET_TYPE.SMART_ACK_COMMAND):
                                     self._process_packet_type_smart_ack_command(data, optional)
-                                elif (packet_type == PACKET_TYPE_RESPONSE):
+                                elif (packet_type == PACKET_TYPE.RESPONSE):
                                     self._process_packet_type_response(data, optional)
-                                elif (packet_type == PACKET_TYPE_EVENT):
+                                elif (packet_type == PACKET_TYPE.EVENT):
                                     self._process_packet_type_event(data, optional)
                                 else:
                                     self.logger.error("Received packet with unknown type = 0x{:02x} - len = {} / data = [{}]".format(packet_type, msg_length, ', '.join(['0x%02x' % b for b in msg])))
@@ -652,21 +523,21 @@ class EnOcean(SmartPlugin):
 
     def read_num_securedivices(self):
         self.logger.debug("Call function << read_num_securedivices >>")
-        self._send_common_command(CO_RD_NUMSECUREDEVICES)
+        self._send_common_command(COMMON_COMMAND.CO_RD_NUMSECUREDEVICES)
         self.logger.info("Read number of secured devices")
 
 
         # Request all taught in smart acknowledge devices that have a mailbox
     def get_smart_ack_devices(self):
         self.logger.debug("Call function << get_smart_ack_devices >>")
-        self._send_smart_ack_command(SA_RD_LEARNEDCLIENTS)
+        self._send_smart_ack_command(SMART_ACK.SA_RD_LEARNEDCLIENTS)
         self.logger.info("Requesting all available smart acknowledge mailboxes")
 
 
     def reset_stick(self):
         self.logger.debug("Call function << reset_stick >>")
         self.logger.info("Resetting device")
-        self._send_common_command(CO_WR_RESET)
+        self._send_common_command(COMMON_COMMAND.CO_WR_RESET)
 
     def block_external_out_messages(self, block=True):
         self.logger.debug("enocean: call function << block_external_out_messages >>")
@@ -699,11 +570,11 @@ class EnOcean(SmartPlugin):
 
     def send_bit(self):
         self.logger.info("Trigger Built-In Self Test telegram")
-        self._send_common_command(CO_WR_BIST)
+        self._send_common_command(COMMON_COMMAND.CO_WR_BIST)
 
     def version(self):
         self.logger.info("Request stick version")
-        self._send_common_command(CO_RD_VERSION)
+        self._send_common_command(COMMON_COMMAND.CO_RD_VERSION)
 
     def _send_packet(self, packet_type, data=[], optional=[]):
         #self.logger.debug("enocean: call function << _send_packet >>")
@@ -716,11 +587,11 @@ class EnOcean(SmartPlugin):
             self.logger.error(f"Data too long ({length_data} bytes, 65535 allowed)")
             return None
 
-        packet = bytearray([PACKET_SYNC_BYTE])
+        packet = bytearray([PACKET.PACKET_SYNC_BYTE])
         packet += length_data.to_bytes(2, byteorder='big') + bytes([length_optional, packet_type])
-        packet += bytes([self._calc_crc8(packet[1:5])])
+        packet += bytes([CRC.calc_crc8(packet[1:5])])
         packet += bytes(data + optional)
-        packet += bytes([self._calc_crc8(packet[6:])])
+        packet += bytes([CRC.calc_crc8(packet[6:])])
         self.logger.info("Sending packet with len = {} / data = [{}]!".format(len(packet), ', '.join(['0x%02x' % b for b in packet])))
         
         # Send out serial data:
@@ -755,8 +626,8 @@ class EnOcean(SmartPlugin):
         #self.logger.debug("enocean: call function << _send_smart_ack_command >>")
         self._cmd_lock.acquire()
         self._last_cmd_code = _code
-        self._last_packet_type = PACKET_TYPE_SMART_ACK_COMMAND
-        self._send_packet(PACKET_TYPE_SMART_ACK_COMMAND, [_code] + data)
+        self._last_packet_type = PACKET_TYPE.SMART_ACK_COMMAND
+        self._send_packet(PACKET_TYPE.SMART_ACK_COMMAND, [_code] + data)
         self._response_lock.acquire()
         # wait 5sec for response
         self._response_lock.wait(5)
@@ -767,8 +638,8 @@ class EnOcean(SmartPlugin):
         #self.logger.debug("Call function << _send_common_command >>")
         self._cmd_lock.acquire()
         self._last_cmd_code = _code
-        self._last_packet_type = PACKET_TYPE_COMMON_COMMAND
-        self._send_packet(PACKET_TYPE_COMMON_COMMAND, [_code] + data, optional)
+        self._last_packet_type = PACKET_TYPE.COMMON_COMMAND
+        self._send_packet(PACKET_TYPE.COMMON_COMMAND, [_code] + data, optional)
         self._response_lock.acquire()
         # wait 5sec for response
         self._response_lock.wait(5)
@@ -781,8 +652,8 @@ class EnOcean(SmartPlugin):
             self.logger.error(f"Invalid base ID offset range. (Is {id_offset}, must be [0 127])")
             return
         self._cmd_lock.acquire()
-        self._last_cmd_code = SENT_RADIO_PACKET
-        self._send_packet(PACKET_TYPE_RADIO, [_code] + data + list((self.tx_id + id_offset).to_bytes(4, byteorder='big')) + [0x00], optional)
+        self._last_cmd_code = PACKET.SENT_RADIO_PACKET
+        self._send_packet(PACKET_TYPE.RADIO, [_code] + data + list((self.tx_id + id_offset).to_bytes(4, byteorder='big')) + [0x00], optional)
         self._response_lock.acquire()
         # wait 1sec for response
         self._response_lock.wait(1)
@@ -798,7 +669,7 @@ class EnOcean(SmartPlugin):
     def send_learn_protocol(self, id_offset=0, device=10):
         self.logger.debug("enocean: call function << send_learn_protocol >>")
         # define RORG
-        rorg = 0xA5
+        rorg = RORG.BS4
         
         # check offset range between 0 and 127
         if (id_offset < 0) or (id_offset > 127):
@@ -850,11 +721,11 @@ class EnOcean(SmartPlugin):
     def enter_learn_mode(self, onoff=1):
         self.logger.debug("Call function << enter_learn_mode >>")
         if (onoff == 1):
-            self._send_common_command(CO_WR_LEARNMODE, [0x01, 0x00, 0x00, 0x00, 0x00],[0xFF])
+            self._send_common_command(COMMON_COMMAND.CO_WR_LEARNMODE, [0x01, 0x00, 0x00, 0x00, 0x00],[0xFF])
             self.logger.info("Entering learning mode")
             return None
         else:
-            self._send_common_command(CO_WR_LEARNMODE, [0x00, 0x00, 0x00, 0x00, 0x00],[0xFF])
+            self._send_common_command(COMMON_COMMAND.CO_WR_LEARNMODE, [0x00, 0x00, 0x00, 0x00, 0x00],[0xFF])
             self.logger.info("Leaving learning mode")
             return None
 
@@ -863,30 +734,14 @@ class EnOcean(SmartPlugin):
     def set_smart_ack_learn_mode(self, onoff=1):
         self.logger.debug("Call function << set_smart_ack_learn_mode >>")
         if (onoff == 1):
-            self._send_smart_ack_command(SA_WR_LEARNMODE, [0x01, 0x00, 0x00, 0x00, 0x00, 0x00])
+            self._send_smart_ack_command(SMART_ACK.SA_WR_LEARNMODE, [0x01, 0x00, 0x00, 0x00, 0x00, 0x00])
             self.logger.info("Enabling smart acknowledge learning mode")
             return None
         else:
-            self._send_smart_ack_command(SA_WR_LEARNMODE, [0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+            self._send_smart_ack_command(SMART_ACK.SA_WR_LEARNMODE, [0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
             self.logger.info("Disabling smart acknowledge learning mode")
             return None
 
 ##################################################
 ### --- END - Definitions of Learn Methods --- ###
 ##################################################
-
-
-#################################
-### --- START - Calc CRC8 --- ###
-#################################
-    def _calc_crc8(self, msg, crc=0):
-        #self.logger.debug("enocean: call function << _calc_crc8 >>")
-        for i in msg:
-            crc = FCSTAB[crc ^ i]
-        return crc
-
-###############################
-### --- END - Calc CRC8 --- ###
-###############################
-
-
