@@ -71,7 +71,7 @@ class WebInterface(SmartPluginWebIf):
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
                            plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(),
-                           items=sorted([i for i in self.plugin.get_item_list()], key=lambda x: x.path().lower()),
+                           items=sorted([i for i in self.plugin.get_item_list()], key=lambda x: x.property.path.lower()),
                            item_count=len(self.plugin.get_item_list()),
                            p=self.plugin,
                            webif_pagelength=pagelength,

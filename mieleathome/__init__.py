@@ -379,22 +379,22 @@ class mieleathome(SmartPlugin):
         """
         if self.has_iattr(item.conf, 'miele_deviceid'):
             self.logger.debug("parse item: {}".format(item))
-            self.miele_devices_by_deviceID[item.conf['miele_deviceid']] = item.path()
-            self.miele_devices_by_item[item.path()] = item.conf['miele_deviceid']
+            self.miele_devices_by_deviceID[item.conf['miele_deviceid']] = item.property.path
+            self.miele_devices_by_item[item.property.path] = item.conf['miele_deviceid']
             if not item in self.miele_items:
                     self.miele_items.append(item)
             return self.update_item
         
         if self.has_iattr(item.conf, 'miele_command'):
             self.logger.debug("parse item: {}".format(item))
-            self.miele_device_by_action[item.path()] = ''
+            self.miele_device_by_action[item.property.path] = ''
             if not item in self.miele_items:
                     self.miele_items.append(item)
             return self.update_item
         
         if self.has_iattr(item.conf, 'miele_parse_item'):
             self.logger.debug("parse item: {}".format(item))
-            self.miele_parsed_item[item.path()] = ''
+            self.miele_parsed_item[item.property.path] = ''
             if not item in self.miele_items:
                     self.miele_items.append(item)
             return self.update_item    
@@ -433,14 +433,14 @@ class mieleathome(SmartPlugin):
                 self.logger.debug("update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item,
                                                                                                                                caller, source, dest))
             if self.has_iattr(item.conf, 'miele_command') and item() == True:
-                deviceId = self.miele_device_by_action[item.path()]
+                deviceId = self.miele_device_by_action[item.property.path]
                 myPayload = json.loads(item.conf['miele_command'])
                 self.putCommand2Device(deviceId, myPayload)
                 myPayload = self._getActions4Device(deviceId)
                 self._parseAction4Device(myPayload, deviceId)
                 
             if self.has_iattr(item.conf, 'miele_command') and 'targetTemperature' in item.conf['miele_command']:
-                deviceId = self.miele_device_by_action[item.path()]
+                deviceId = self.miele_device_by_action[item.property.path]
                 myPayload = item.conf['miele_command'].replace("%1",str(item()))
                 myPayload = json.loads(myPayload)
                 self.putCommand2Device(deviceId, myPayload)
@@ -452,8 +452,8 @@ class mieleathome(SmartPlugin):
         if self.alive :
             if self.has_iattr(item.conf, 'miele_parse_item'):
                 self._getMainItem4parseItem()
-                myMainItem = self.miele_parsed_item[item.path()]
-                if 'targetTemperature' in item.path() and 'actions' in item.path():
+                myMainItem = self.miele_parsed_item[item.property.path]
+                if 'targetTemperature' in item.property.path and 'actions' in item.property.path:
                     myValues = item()
                     for entry in myValues:
                         myZone = entry['zone']
@@ -473,7 +473,7 @@ class mieleathome(SmartPlugin):
                         myItem = self.items.return_item(myTargetItem)
                         if (myItem != None):
                             myItem(myTextArray,self.get_shortname())
-                if 'targetTemperature' in item.path() and 'state' in item.path():
+                if 'targetTemperature' in item.property.path and 'state' in item.property.path:
                     myValues = item()
                     myZone = 0
                     for entry in myValues:
@@ -486,7 +486,7 @@ class mieleathome(SmartPlugin):
                         myItem = self.items.return_item(myTargetItem)
                         if (myItem != None):
                             myItem(entry['unit'],self.get_shortname())
-                if 'temperature' in item.path() and 'state' in item.path():
+                if 'temperature' in item.property.path and 'state' in item.property.path:
                     myValues = item()
                     myZone = 0
                     for entry in myValues:

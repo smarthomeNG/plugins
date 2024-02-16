@@ -829,7 +829,7 @@ class OpenWeatherMap(SmartPlugin):
                 self._request_weather = True
             elif owm_ms.startswith('uvi_'):
                 self.logger.warning(
-                    f"{item.path()} The UVI API is deprecated - if you intend to query the current UV-index, use 'current/uvi' instead")
+                    f"{item.property.path} The UVI API is deprecated - if you intend to query the current UV-index, use 'current/uvi' instead")
                 self._request_uvi = True
             elif owm_ms.startswith('forecast'):
                 self._request_forecast = True

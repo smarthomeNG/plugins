@@ -96,7 +96,7 @@ class UniFiControllerClientModel():
         self._items.append(item)
 
     def append_item_issue(self, item, issue, level):
-        ipath = item.path()
+        ipath = item.property.path
         if not self._items_with_issues.__contains__(ipath):
             self._items_with_issues[ipath] = UniFiItemIssue(ipath)
 
@@ -364,21 +364,21 @@ class UniFiControllerClient(SmartPlugin):
             self._model.append_item_issue(item, "1: "+msg, 1)
 
         if enable_logging:
-            self.logger.info(msg + " in item " + item.path())
+            self.logger.info(msg + " in item " + item.property.path)
 
     def _log_item_warning(self, item, msg: str, enable_logging=True):
         self._model.append_item_issue(item, "3: "+msg, 3)
         if enable_logging:
-            self.logger.warning(msg + " in item " + item.path())
+            self.logger.warning(msg + " in item " + item.property.path)
 
     def _log_item_error(self, item, msg: str, enable_logging=True):
         self._model.append_item_issue(item, "4: " + msg, 4)
         if enable_logging:
-            self.logger.error(msg + " in item " + item.path())
+            self.logger.error(msg + " in item " + item.property.path)
 
     def _mac_check(self, item, item_type: str, leaf_item=None):
         if not Utils.is_mac(self.get_iattr_value(item.conf, item_type)):
-            self._log_item_error(item, "invalid {} attribute provided from {}".format(item_type, item.path()))
+            self._log_item_error(item, "invalid {} attribute provided from {}".format(item_type, item.property.path))
             return False
         return True
 
@@ -394,9 +394,9 @@ class UniFiControllerClient(SmartPlugin):
                 if not check is None:
                     if not check(item, item_type, leaf_item):
                         return None
-                if not (item.path() == leaf_item.path()):
+                if not (item.property.path == leaf_item.property.path):
                     self._log_item_info(leaf_item, "{} attribute provided from {}".format(
-                        item_type, item.path()), enable_logging)
+                        item_type, item.property.path), enable_logging)
                 return self.get_iattr_value(item.conf, item_type)
         except AttributeError:
             self._log_item_warning(leaf_item, "No {} attribute provided".format(item_type), enable_logging)
@@ -416,9 +416,9 @@ class UniFiControllerClient(SmartPlugin):
                     if not check is None:
                         if not check(item, item_type, leaf_item):
                             return None
-                    if not (item.path() == leaf_item.path()):
+                    if not (item.property.path == leaf_item.property.path):
                         self._log_item_info(leaf_item, "{} attribute provided from {} ".format(
-                            item_type, item.path()), enable_logging)
+                            item_type, item.property.path), enable_logging)
 
                     return self.get_iattr_value(item.conf, item_type)
             except AttributeError:

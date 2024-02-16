@@ -208,7 +208,7 @@ class Hue2(SmartPlugin):
                     conf_data['hue2_reference_light_id'] = self.get_iattr_value(item.conf, 'hue2_reference_light_id')
 
             conf_data['item'] = item
-            self.plugin_items[item.path()] = conf_data
+            self.plugin_items[item.property.path] = conf_data
             if conf_data['resource'] == 'sensor':
                 # ensure that the scheduler for sensors will be started if items use sensor data
                 self.sensor_items_configured = True

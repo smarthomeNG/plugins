@@ -115,15 +115,15 @@ class Timmy(SmartPlugin):
             target_item = self.get_iattr_value(
                 item.conf, 'timmy_delay_target_item')
 
-            scheduler_name = f"delay-{item.path()}"
+            scheduler_name = f"delay-{item.property.path}"
             self.scheduler_add(
                 scheduler_name, self.__perform_last_intent, value=None)
             self.__delay_scheduler_names.append(scheduler_name)
 
             self._model.append_delay_item(
-                item.path(), target_item, on_seconds, off_seconds)
+                item.property.path, target_item, on_seconds, off_seconds)
             self.logger.debug(
-                f"parsed item '{item.path()}' targeting '{target_item}' on: {on_seconds}s / off: {off_seconds}s")
+                f"parsed item '{item.property.path}' targeting '{target_item}' on: {on_seconds}s / off: {off_seconds}s")
             return self.__update_item_trigger_delay
         elif self.has_iattr(item.conf, 'timmy_blink_target'):
             item.expand_relativepathes('timmy_blink_target', '', '')
@@ -150,18 +150,18 @@ class Timmy(SmartPlugin):
 
             if len(blink_cycles) != len(blink_pattern):
                 self.logger.error(
-                    f"{item.path()} - length of timmy_blink_cycles ({len(blink_cycles)} entries) must match length of timmy_blink_pattern ({len(blink_pattern)} entries)")
+                    f"{item.property.path} - length of timmy_blink_cycles ({len(blink_cycles)} entries) must match length of timmy_blink_pattern ({len(blink_pattern)} entries)")
                 return
 
-            scheduler_name = f"blink-{item.path()}"
+            scheduler_name = f"blink-{item.property.path}"
             self.scheduler_add(
                 scheduler_name, self.__perform_blink, offset=0, value=None)
             self.__blink_scheduler_names.append(scheduler_name)
 
             self._model.append_blink_item(
-                item.path(), target_item, blink_pattern, blink_cycles, blink_loops)
+                item.property.path, target_item, blink_pattern, blink_cycles, blink_loops)
             self.logger.debug(
-                f"parsed item '{item.path()}' targeting '{target_item}', {'infinite' if blink_loops == 0 else blink_loops} times, pattern: {blink_pattern}, cycles: {blink_cycles}")
+                f"parsed item '{item.property.path}' targeting '{target_item}', {'infinite' if blink_loops == 0 else blink_loops} times, pattern: {blink_pattern}, cycles: {blink_cycles}")
             return self.__update_item_trigger_blink
 
     def parse_logic(self, logic):
@@ -228,14 +228,14 @@ class Timmy(SmartPlugin):
         :param dest: if given it represents the dest
         """
         if self.alive and caller != self.get_shortname():
-            blink_model = self._model.get_blink_model_for_item(item.path())
+            blink_model = self._model.get_blink_model_for_item(item.property.path)
             blink_model.enabled = item()
             targetted_item = self._shng_items.return_item(
                 blink_model.target_item)
             if blink_model.enabled:
                 blink_model.return_to = targetted_item()
             self.scheduler_change(
-                f"blink-{item.path()}", next=self.now(), value={"source_item_path": item.path()})
+                f"blink-{item.property.path}", next=self.now(), value={"source_item_path": item.property.path})
 
     def __update_item_trigger_delay(self, item, caller=None, source=None, dest=None):
         """
@@ -251,7 +251,7 @@ class Timmy(SmartPlugin):
         :param dest: if given it represents the dest
         """
         if self.alive and caller != self.get_shortname():
-            delay_model = self._model.get_delay_for_item(item.path())
+            delay_model = self._model.get_delay_for_item(item.property.path)
             delay_model.intended_target_state = item.property.value
             delay_model.intent_pending = True
 
@@ -267,19 +267,19 @@ class Timmy(SmartPlugin):
                 if delay_model.delay_on == 0:
                     self.logger.debug(
                         f"Switching {delay_model.target_item} on immediately")
-                    self.__perform_last_intent(item.path())
+                    self.__perform_last_intent(item.property.path)
                 else:
                     next_time = self.schedule_delayed_trigger_in(
-                        delay_model.delay_on, item.path())
+                        delay_model.delay_on, item.property.path)
                     self.logger.debug(
                         f"Launching delay_on for {delay_model.target_item}, to be on in {delay_model.delay_on}s, which is at {next_time}")
             else:
                 if delay_model.delay_off == 0:
                     self.logger.debug(
                         f"Switching {delay_model.target_item} off immediately")
-                    self.__perform_last_intent(item.path())
+                    self.__perform_last_intent(item.property.path)
                 else:
                     next_time = self.schedule_delayed_trigger_in(
-                        delay_model.delay_off, item.path())
+                        delay_model.delay_off, item.property.path)
                     self.logger.debug(
                         f"Launching delay_off for {delay_model.target_item}, to be off in {delay_model.delay_off}s, which is at {next_time}")
