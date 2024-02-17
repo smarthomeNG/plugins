@@ -158,10 +158,10 @@ class Raumfeld_ng(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        self.logger.info("item has been updated and sent to raumfeld: {}".format(item.id()))
+        self.logger.info("item has been updated and sent to raumfeld: {}".format(item.property.path))
         if self.alive and caller != self.get_shortname():
             # code to execute, only if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
             urlaction = []
             # all items which interact with this plugin have to have the "rf_attr"
             if self.has_iattr(item.conf, 'rf_attr'):

@@ -39,7 +39,7 @@ from lib.item import Items
 from lib.item.item import Item
 
 def repair_item(sh, item):
-    path = item.id()
+    path = item.property.path
     path_elems = path.split('.')
     ref = sh
 

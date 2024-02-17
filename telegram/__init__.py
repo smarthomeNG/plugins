@@ -332,7 +332,7 @@ class Telegram(SmartPlugin):
         """
         if self.has_iattr(item.conf, ITEM_ATTR_CHAT_IDS):
             if self._chat_ids_item:
-                self.logger.warning(f"Item: {item.id()} declares chat_id for telegram plugin which are already defined, aborting!")
+                self.logger.warning(f"Item: {item.property.path} declares chat_id for telegram plugin which are already defined, aborting!")
             else:
                 self._chat_ids_item = item
 
@@ -367,7 +367,7 @@ class Telegram(SmartPlugin):
 
         if self.has_iattr(item.conf, ITEM_ATTR_TEXT):
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug(f"parse item: {item.id()}")
+                self.logger.debug(f"parse item: {item.property.path}")
             value = self.get_iattr_value(item.conf, ITEM_ATTR_TEXT)
             if value in ['true', 'True', '1']:
                 self._items_text_message.append(item)
@@ -376,7 +376,7 @@ class Telegram(SmartPlugin):
         if self.has_iattr(item.conf, ITEM_ATTR_CONTROL):
             attr = self.get_iattr_value(item.conf, ITEM_ATTR_CONTROL)
 
-            key = item.id()     # default
+            key = item.property.path     # default
             changeType = 'toggle'
             question = ''
             timeout = 20
@@ -434,17 +434,17 @@ class Telegram(SmartPlugin):
         Called each time an item changed in SmartHomeNG
         """
         if caller != self.get_fullname():
-            self.logger.info(f"update item: {item.id()}")
+            self.logger.info(f"update item: {item.property.path}")
 
         if self.has_iattr(item.conf, ITEM_ATTR_CHAT_IDS):
             if self._chat_ids_item:
-                self.logger.info(f"Item: {item.id()} declares chat_id for telegram plugin which are already defined, will be overwritten!")
+                self.logger.info(f"Item: {item.property.path} declares chat_id for telegram plugin which are already defined, will be overwritten!")
             self._chat_ids_item = item
 
         if self.has_iattr(item.conf, ITEM_ATTR_MESSAGE):
             msg_txt_tmpl = self.get_iattr_value(item.conf, ITEM_ATTR_MESSAGE)
 
-            item_id = item.id()
+            item_id = item.property.path
             if item.property.type == 'bool':
                 item_value = item()
                 item_value = '1' if item_value is True else '0' if item_value is False else None
@@ -728,7 +728,7 @@ class Telegram(SmartPlugin):
                         text += update.message.text                             # add the message.text
                         for item in self._items_text_message:
                             if self.logger.isEnabledFor(logging.DEBUG):
-                                self.logger.debug(f"write item: {item.id()} value: {text}")
+                                self.logger.debug(f"write item: {item.property.path} value: {text}")
                             item(text, caller=self.get_fullname())      # write text to SH-item
                     else:   # Antwort von control-Item/question wird erwartet
                         text = update.message.text
@@ -966,9 +966,9 @@ class Telegram(SmartPlugin):
         text = ""
         for item in self._items:
             if item.type():
-                text += f"{item.id()} = {item()}\n"
+                text += f"{item.property.path} = {item()}\n"
             else:
-                text += f"{item.id()}\n"
+                text += f"{item.property.path}\n"
         if not text:
             text = "no items found with the attribute:" + ITEM_ATTR_MESSAGE
         return text
@@ -980,9 +980,9 @@ class Telegram(SmartPlugin):
         text = ""
         for item in self._items_info[key]:
             if item.type():
-                text += f"{item.id()} = {item()}\n"
+                text += f"{item.property.path} = {item()}\n"
             else:
-                text += f"{item.id()}\n"
+                text += f"{item.property.path}\n"
         if not text:
             text = self.translate("no items found with the attribute %s") % ITEM_ATTR_INFO
         return text

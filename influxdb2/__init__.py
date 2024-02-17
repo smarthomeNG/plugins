@@ -149,7 +149,7 @@ class InfluxDB2(SmartPlugin):
 
 
             #if item.type() not in ['num', 'bool']:
-            #    self.logger.error(f"Item {item.id()} has type {item.type()}, only 'num' and 'bool' are supported by influxdb2")
+            #    self.logger.error(f"Item {item.property.path} has type {item.type()}, only 'num' and 'bool' are supported by influxdb2")
             #    return
 
             config_data = {}
@@ -291,7 +291,7 @@ class InfluxDB2(SmartPlugin):
         entry, but if multiple items should receive data from the same device (or command), the list can have more than
         one entry.
 
-        :param item_path: Path of the item (item.property.path / item.id())
+        :param item_path: Path of the item (item.property.path / item.property.path)
         :param config_data_dict: Dictionary with the plugin-specific configuration information for the item
         :param device_command: String identifing the origin (source/kind) of received data
         :type item_path: str
@@ -322,7 +322,7 @@ class InfluxDB2(SmartPlugin):
         """
         Remove configuration data for an item (and remove the item from the device_command's list
 
-        :param item_path: Path of the item (item.property.path / item.id()) to remove
+        :param item_path: Path of the item (item.property.path / item.property.path) to remove
         :type item_path: str
 
         :return: True, if the information has been removed
@@ -344,7 +344,7 @@ class InfluxDB2(SmartPlugin):
         """
         Returns the plugin-specific configuration information for the given item_path
 
-        :param item_path: Path of the item (item.property.path / item.id()) to get config info for
+        :param item_path: Path of the item (item.property.path / item.property.path) to get config info for
         :type item_path: str
 
         :return: dict with the configuration information for the given item_path

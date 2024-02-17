@@ -121,7 +121,7 @@ class AppleTV(SmartPlugin):
         """
 
         if self.has_iattr(item.conf, 'appletv'):
-            self.logger.debug("parse item: {}".format(item.id()))
+            self.logger.debug("parse item: {}".format(item.property.path))
             _item = self.get_iattr_value(item.conf, 'appletv')
             # Add items to internal array
             if not _item in self._items:

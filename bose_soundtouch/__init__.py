@@ -178,7 +178,7 @@ class BoseSoundtouch(SmartPlugin):
         """
         if caller != self.get_shortname():
             # code to execute, only if the item has not been changed by this this plugin:
-            self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.property.path))
 
             if self.has_iattr(item.conf, self.ITEM_ACTION_ATTR):
                 action = self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR)

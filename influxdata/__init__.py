@@ -66,13 +66,13 @@ class InfluxData(SmartPlugin):
     def parse_item(self, item):
         if self.influx_keyword in item.conf:
             if item.type() not in ['num', 'bool']:
-                self.logger.debug("InfluxData: only supports 'num' and 'bool' as types. Item: {} ".format(item.id()))
+                self.logger.debug("InfluxData: only supports 'num' and 'bool' as types. Item: {} ".format(item.property.path))
                 return
             self._items.append(item)
             return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        message = "{},caller={},source={},dest={} value={}".format(item.id(), self.cleanstring(caller), source, dest, float(item()))
+        message = "{},caller={},source={},dest={} value={}".format(item.property.path, self.cleanstring(caller), source, dest, float(item()))
         self.udp(message)
         return None
 

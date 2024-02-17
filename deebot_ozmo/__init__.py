@@ -181,7 +181,7 @@ class DeebotOzmo(SmartPlugin):
         """
 
         if self.has_iattr(item.conf, 'deebot_ozmo'):
-            #self.logger.debug(f"parse item: {item.id()}")
+            #self.logger.debug(f"parse item: {item.property.path}")
             _item = self.get_iattr_value(item.conf, 'deebot_ozmo')
             # Add items to internal array
             if not _item in self._items:

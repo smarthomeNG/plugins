@@ -174,7 +174,7 @@ class BeoNetlink(SmartPlugin):
                 self._attrib_current_number += 1
                 beo_item_key = beo_id + '_' + beo_status.lower() + '_' + str(self._attrib_current_number).zfill(3)
                 self.beo_items[beo_item_key] = item
-                self.logger.debug("beo_item_key: {}, item: {}".format(beo_item_key, item.id()))
+                self.logger.debug("beo_item_key: {}, item: {}".format(beo_item_key, item.property.path))
 
             if beo_command:
                 return self.update_item
@@ -202,12 +202,12 @@ class BeoNetlink(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        self.logger.debug("update_item: {}".format(item.id()))
+        self.logger.debug("update_item: {}".format(item.property.path))
 
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
 
             if self.has_iattr(item.conf, 'beo_id'):
                 self.logger.debug("update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item, caller, source, dest))
@@ -296,8 +296,8 @@ class BeoNetlink(SmartPlugin):
 
                 else:
                     deviceinfo = self.beodevices.beodeviceinfo[beo_id].get(beo_status, None)
-                #self.logger.info(f"poll_device: item={item.id()}, beo_id={beo_id}, beo_status={beo_status}, self.beodevices.beodeviceinfo[beo_id]={self.beodevices.beodeviceinfo[beo_id]}")
-                #self.logger.info(f"poll_device: item={item.id()}, deviceinfo={deviceinfo}")
+                #self.logger.info(f"poll_device: item={item.property.path}, beo_id={beo_id}, beo_status={beo_status}, self.beodevices.beodeviceinfo[beo_id]={self.beodevices.beodeviceinfo[beo_id]}")
+                #self.logger.info(f"poll_device: item={item.property.path}, deviceinfo={deviceinfo}")
                 if isinstance(deviceinfo, tuple):
                     if item._type == 'num':
                         beo_value = deviceinfo[1]
@@ -307,9 +307,9 @@ class BeoNetlink(SmartPlugin):
                     beo_value = deviceinfo
 
                 if item() == beo_value:
-                    self.logger.debug("update_deviceinfo: Updated item {} with beo-{} {}".format(item.id(), beo_status, beo_value))
+                    self.logger.debug("update_deviceinfo: Updated item {} with beo-{} {}".format(item.property.path, beo_status, beo_value))
                 else:
-                    self.logger.info("update_deviceinfo: Changed item {} with beo-{} {}".format(item.id(), beo_status, beo_value))
+                    self.logger.info("update_deviceinfo: Changed item {} with beo-{} {}".format(item.property.path, beo_status, beo_value))
                 item(beo_value, self.get_shortname())
                 self._update_item_values(item, beo_value)
             else:
@@ -344,14 +344,14 @@ class BeoNetlink(SmartPlugin):
         :param item:
         :param payload:
         """
-        if not self._item_values.get(item.id()):
-            self._item_values[item.id()] = {}
+        if not self._item_values.get(item.property.path):
+            self._item_values[item.property.path] = {}
         if isinstance(payload, bool):
-            self._item_values[item.id()]['value'] = str(payload)
+            self._item_values[item.property.path]['value'] = str(payload)
         else:
-            self._item_values[item.id()]['value'] = payload
-        self._item_values[item.id()]['last_update'] = item.last_update().strftime('%d.%m.%Y %H:%M:%S')
-        self._item_values[item.id()]['last_change'] = item.last_change().strftime('%d.%m.%Y %H:%M:%S')
+            self._item_values[item.property.path]['value'] = payload
+        self._item_values[item.property.path]['last_update'] = item.last_update().strftime('%d.%m.%Y %H:%M:%S')
+        self._item_values[item.property.path]['last_change'] = item.last_change().strftime('%d.%m.%Y %H:%M:%S')
         return
 
 

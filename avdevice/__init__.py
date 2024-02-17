@@ -282,12 +282,12 @@ class AVDevice(SmartPlugin):
         :param item:
         :param payload:
         """
-        if not self._item_values.get(item.id()):
-            self._item_values[item.id()] = {}
+        if not self._item_values.get(item.property.path):
+            self._item_values[item.property.path] = {}
         if isinstance(payload, bool):
-            self._item_values[item.id()]['value'] = str(payload)
+            self._item_values[item.property.path]['value'] = str(payload)
         else:
-            self._item_values[item.id()]['value'] = payload
+            self._item_values[item.property.path]['value'] = payload
         return
 
     # Store actual value to a temporary dict for resetting purposes

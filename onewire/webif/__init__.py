@@ -96,7 +96,7 @@ class WebInterface(SmartPluginWebIf):
             for item in self.plugin.get_item_list():
                 item_config = self.plugin.get_item_config(item)
                 value_dict = {}
-                value_dict['path'] = item.id()
+                value_dict['path'] = item.property.path
                 value_dict['type'] = item.type()
                 value_dict['not_discovered'] = (item_config['bus'] == '')
                 value_dict['sensor_addr'] = item_config['sensor_addr']

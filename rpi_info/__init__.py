@@ -156,9 +156,9 @@ class RPi_Info(SmartPlugin):
         self._cyclic_update_active = True
 
         for item in self._item_dict:
-            # self.logger.debug(f"poll_device: handle item {item.id()}")
+            # self.logger.debug(f"poll_device: handle item {item.property.path}")
             value = eval(f"self.{self.get_iattr_value(item.conf, 'rpiinfo_func')}()")
-            # self.logger.info(f"poll_device: {value=} for item {item.id()} will be set.")
+            # self.logger.info(f"poll_device: {value=} for item {item.property.path} will be set.")
             item(value, self.get_shortname())
 
         # release lock

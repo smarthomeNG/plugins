@@ -445,7 +445,7 @@ class Husky2(SmartPlugin):
             # and only, if the item has not been changed by this this plugin:
             item_value = "{0}".format(item())
             self.logger.info(
-                "Update item: {0}, item has been changed outside this plugin to value={1}".format(item.id(),
+                "Update item: {0}, item has been changed outside this plugin to value={1}".format(item.property.path,
                                                                                                   item_value))
             if self.has_iattr(item.conf, self.ITEM_CONTROL):
                 self.logger.debug(

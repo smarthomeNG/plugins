@@ -127,7 +127,7 @@ class RRD(SmartPlugin):
         if self.has_iattr(item.conf,'rrd_ds_name'):
             dbname = self.get_iattr_value(item.conf, 'rrd_ds_name')
         if not dbname:
-            dbname = item.id()
+            dbname = item.property.path
         rrdb = self._rrd_dir + dbname + '.rrd'
 
         rrd_min = False
@@ -150,15 +150,15 @@ class RRD(SmartPlugin):
             no_series = self.get_iattr_value(item.conf,'rrd_no_series')
 
         if no_series:
-            self.logger.warning("Attribute rrd_no_series is set to True, no data series will be provided for item {}".format(item.id()))
+            self.logger.warning("Attribute rrd_no_series is set to True, no data series will be provided for item {}".format(item.property.path))
         else:
-            item.series = functools.partial(self._series, item=item.id())
-            item.db = functools.partial(self._single, item=item.id())
+            item.series = functools.partial(self._series, item=item.property.path)
+            item.db = functools.partial(self._single, item=item.property.path)
 
-        self._rrds[item.id()] = {'item': item, 'id': item.id(), 'rrdb': rrdb, 'max': rrd_max, 'min': rrd_min, 'step': rrd_step, 'type': rrd_type}
+        self._rrds[item.property.path] = {'item': item, 'id': item.property.path, 'rrdb': rrdb, 'max': rrd_max, 'min': rrd_min, 'step': rrd_step, 'type': rrd_type}
 
         if self.get_iattr_value(item.conf, 'rrd') == 'init':
-            last = self._single('last', '5d', item=item.id())
+            last = self._single('last', '5d', item=item.property.path)
             if last is not None:
                 item.set(last, 'RRDtool')
 

@@ -93,7 +93,7 @@ class WebInterface(SmartPluginWebIf):
             # get the new data
             data = {'response': self.plugin._responseStr, 'items': {}}
             for item in self.plugin.get_item_list('lirc', True):
-                data['items'].update({item.id(): {'last_update': item.property.last_update.strftime('%d.%m.%Y %H:%M:%S'), 'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')}})
+                data['items'].update({item.property.path: {'last_update': item.property.last_update.strftime('%d.%m.%Y %H:%M:%S'), 'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')}})
             try:
                 return json.dumps(data)
             except Exception as e:

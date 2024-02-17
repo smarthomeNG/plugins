@@ -160,7 +160,7 @@ class Tasmota(MqttPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, 'tasmota_topic'):
-            self.logger.debug(f"parsing item: {item.id()}")
+            self.logger.debug(f"parsing item: {item.property.path}")
 
             tasmota_topic = self.get_iattr_value(item.conf, 'tasmota_topic')
             tasmota_attr = self.get_iattr_value(item.conf, 'tasmota_attr')
@@ -216,7 +216,7 @@ class Tasmota(MqttPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        self.logger.debug(f"update_item: {item.id()}")
+        self.logger.debug(f"update_item: {item.property.path}")
 
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped  AND only, if the item has not been changed by this this plugin:
@@ -227,7 +227,7 @@ class Tasmota(MqttPlugin):
             tasmota_relay = self.get_iattr_value(item.conf, 'tasmota_relay')
 
             if tasmota_attr in ['relay', 'hsb', 'rf_send', 'rf_key_send']:
-                self.logger.info(f"update_item: {item.id()}, item has been changed in SmartHomeNG outside of this plugin in {caller} with value {item()}")
+                self.logger.info(f"update_item: {item.property.path}, item has been changed in SmartHomeNG outside of this plugin in {caller} with value {item()}")
                 value = None
                 
                 if tasmota_attr == 'relay':
@@ -293,7 +293,7 @@ class Tasmota(MqttPlugin):
                     self.publish_tasmota_topic('cmnd', topic, detail, value, item, bool_values=bool_values)
 
             else:
-                self.logger.warning(f"update_item: {item.id()}, trying to change item in SmartHomeNG that is readonly in tasmota device (by {caller})")
+                self.logger.warning(f"update_item: {item.property.path}, trying to change item in SmartHomeNG that is readonly in tasmota device (by {caller})")
 
     def poll_device(self):
         """
@@ -654,7 +654,7 @@ class Tasmota(MqttPlugin):
 
         if item is not None:
             item(value, self.get_shortname(), src)
-            self.logger.info(f"{tasmota_topic}: Item '{item.id()}' set to value {value}{topic}")
+            self.logger.info(f"{tasmota_topic}: Item '{item.property.path}' set to value {value}{topic}")
         else:
             self.logger.info(f"{tasmota_topic}: No item for '{itemtype}' defined to set to {value}{topic}")
         return

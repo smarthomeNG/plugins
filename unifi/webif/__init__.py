@@ -94,7 +94,7 @@ class WebInterface(SmartPluginWebIf):
         if dataSet is None:
             data = {'items': {}, 'requests': 0}
             for item in self.plugin._model.get_items():
-                data['items'].update({item.id(): {'value': str(item.property.value), 'last_update': item.property.last_update.strftime('%d.%m.%Y %H:%M:%S'), 'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')}})
+                data['items'].update({item.property.path: {'value': str(item.property.value), 'last_update': item.property.last_update.strftime('%d.%m.%Y %H:%M:%S'), 'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')}})
             data['requests'] = self.plugin._model.get_total_number_of_requests_to_controller()
             try:
                 return json.dumps(data)

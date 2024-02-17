@@ -177,11 +177,11 @@ class Husky(SmartPlugin):
         self.logger.debug("found {0} operation data items. Setting initial activity time from item".format(len(self._items_opdata)))
         for item in self._items_opdata:
 
-            item_id = item.id()
+            item_id = item.property.path
             item_value = "{0}".format(item())
 
             key = item.conf[self.ITEM_OPDATA] # husky_operation = MOVING 
-            self.logger.debug("set activity {0} from item {1} to value {2}".format(key, item.id(), item_value))
+            self.logger.debug("set activity {0} from item {1} to value {2}".format(key, item.property.path, item_value))
             self.mymower.set_mower_activity_time(key, item_value)
 
 
@@ -280,7 +280,7 @@ class Husky(SmartPlugin):
         if caller != self.get_shortname():
             # code to execute, only if the item has not been changed by this this plugin:
             item_value = "{0}".format(item())
-            self.logger.info("Update item: {0}, item has been changed outside this plugin to value={1}".format(item.id(), item_value))
+            self.logger.info("Update item: {0}, item has been changed outside this plugin to value={1}".format(item.property.path, item_value))
             if self.has_iattr(item.conf, self.ITEM_CONTROL):
                 self.logger.debug("update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item, caller, source, dest))
                 cmd = self.get_iattr_value(item.conf, self.ITEM_CONTROL).lower()
@@ -346,11 +346,11 @@ class Husky(SmartPlugin):
             self.logger.debug("found {0} state items to update".format(len(self._items_state)))
             for item in self._items_state:
 
-                item_id = item.id()
+                item_id = item.property.path
                 item_value = "{0}".format(item())
 
                 key = item.conf[self.ITEM_STATE] # husky_state = activity
-                self.logger.debug("update item {0} of type {1} and key {2}".format(item.id(), item.type(), key))
+                self.logger.debug("update item {0} of type {1} and key {2}".format(item.property.path, item.type(), key))
                 value = {
                     'connection'      : self.mymower.last_status().is_connected,
                     'activity'        : self.mymower.last_status().get_activity,
@@ -379,11 +379,11 @@ class Husky(SmartPlugin):
             self.logger.debug("found {0} operation data items to update".format(len(self._items_opdata)))
             for item in self._items_opdata:
 
-                item_id = item.id()
+                item_id = item.property.path
                 item_value = "{0}".format(item())
 
                 key = item.conf[self.ITEM_OPDATA] # husky_state = activity
-                self.logger.debug("update item {0} of type {1} and key {2}".format(item.id(), item.type(), key))
+                self.logger.debug("update item {0} of type {1} and key {2}".format(item.property.path, item.type(), key))
 
                 value = self.mymower.get_mower_activity_time(key)
                 self.logger.debug("update item: set {0} to {1}".format(key, value))

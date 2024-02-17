@@ -261,7 +261,7 @@ class SeEval(StateEngineTools.SeItemChild):
                 self._eval_lock.release()
                 raise ValueError(text.format(suspend_item_id))
             self._log_debug("Suspend item is {0}", suspend_item.property.path)
-            suspend_over = suspend_item.age()
+            suspend_over = suspend_item.property.last_change_age
             self._log_debug("Current suspend age: {0}", suspend_over)
             suspend_remaining = suspend_time - suspend_over
             self._log_debug("Remaining suspend time: {0}", suspend_remaining)

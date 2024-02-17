@@ -139,20 +139,20 @@ class OperationLog(AbLogger, SmartPlugin):
 
     def parse_item(self, item):
         if 'olog' in item.conf and item.conf['olog'] == self.name:
-            self._item_conf[item.id()] = {}
+            self._item_conf[item.property.path] = {}
             if 'olog_txt' in item.conf or 'olog_rules' in item.conf:
-                self._item_conf[item.id()]['olog_rules'] = {}
-                self._item_conf[item.id()]['olog_rules']['lowlim'] = None
-                self._item_conf[item.id()]['olog_rules']['highlim'] = None
-                self._item_conf[item.id()]['olog_rules']['*'] = None
+                self._item_conf[item.property.path]['olog_rules'] = {}
+                self._item_conf[item.property.path]['olog_rules']['lowlim'] = None
+                self._item_conf[item.property.path]['olog_rules']['highlim'] = None
+                self._item_conf[item.property.path]['olog_rules']['*'] = None
             if 'olog_txt' in item.conf:
                 olog_txt = item.conf['olog_txt']
-                self._item_conf[item.id()]['olog_eval'] = []
-                eval_parse = self.parse_eval("item.conf, item {}".format(item.id()), olog_txt)
-                self._item_conf[item.id()]['olog_txt'] = eval_parse['olog_txt']
-                self._item_conf[item.id()]['olog_eval'] = eval_parse['olog_eval']
-                if len(self._item_conf[item.id()]['olog_eval']) != 0:
-                    self.logger.info('Item: {}, olog evaluating: {}'.format(item.id(), self._item_conf[item.id()]['olog_eval']))
+                self._item_conf[item.property.path]['olog_eval'] = []
+                eval_parse = self.parse_eval("item.conf, item {}".format(item.property.path), olog_txt)
+                self._item_conf[item.property.path]['olog_txt'] = eval_parse['olog_txt']
+                self._item_conf[item.property.path]['olog_eval'] = eval_parse['olog_eval']
+                if len(self._item_conf[item.property.path]['olog_eval']) != 0:
+                    self.logger.info('Item: {}, olog evaluating: {}'.format(item.property.path, self._item_conf[item.property.path]['olog_eval']))
             if 'olog_rules' in item.conf:
                 olog_rules = item.conf['olog_rules']
                 if isinstance(olog_rules, str):
@@ -172,10 +172,10 @@ class OperationLog(AbLogger, SmartPlugin):
                         except:
                             key = key_txt
                             if key_txt in ['lowlim', 'highlim']:
-                                self._item_conf[item.id()]['olog_rules']["*"] = 'value'
-                    self._item_conf[item.id()]['olog_rules'][key] = value
-                if len(self._item_conf[item.id()]['olog_rules']) != 0:
-                    self.logger.info('Item: {}, olog rules: {}'.format(item.id(), self._item_conf[item.id()]['olog_rules']))
+                                self._item_conf[item.property.path]['olog_rules']["*"] = 'value'
+                    self._item_conf[item.property.path]['olog_rules'][key] = value
+                if len(self._item_conf[item.property.path]['olog_rules']) != 0:
+                    self.logger.info('Item: {}, olog rules: {}'.format(item.property.path, self._item_conf[item.property.path]['olog_rules']))
             return self.update_item
         else:
             return None
@@ -241,46 +241,46 @@ class OperationLog(AbLogger, SmartPlugin):
         if caller != 'OperationLog':
             if item.conf['olog'] == self.name:
                 if len(self._items) == 0:
-                    if item.id() in self._item_conf and 'olog_txt' in self._item_conf[item.id()]:
+                    if item.property.path in self._item_conf and 'olog_txt' in self._item_conf[item.property.path]:
                         mvalue = item()
-                        if 'olog_rules' in self._item_conf[item.id()]:
-                            if 'lowlim' in self._item_conf[item.id()]['olog_rules']:
+                        if 'olog_rules' in self._item_conf[item.property.path]:
+                            if 'lowlim' in self._item_conf[item.property.path]['olog_rules']:
                                 if item.type() == 'num':
-                                    if self._item_conf[item.id()]['olog_rules']['lowlim'] is not None and item() < float(self._item_conf[item.id()]['olog_rules']['lowlim']):
+                                    if self._item_conf[item.property.path]['olog_rules']['lowlim'] is not None and item() < float(self._item_conf[item.property.path]['olog_rules']['lowlim']):
                                         return
                                 elif item.type() == 'str':
-                                    if self._item_conf[item.id()]['olog_rules']['lowlim'] is not None and item() < str(self._item_conf[item.id()]['olog_rules']['lowlim']):
+                                    if self._item_conf[item.property.path]['olog_rules']['lowlim'] is not None and item() < str(self._item_conf[item.property.path]['olog_rules']['lowlim']):
                                         return
-                            if 'highlim' in self._item_conf[item.id()]['olog_rules']:
+                            if 'highlim' in self._item_conf[item.property.path]['olog_rules']:
                                 if item.type() == 'num':
-                                    if self._item_conf[item.id()]['olog_rules']['highlim'] is not None and item() >= float(self._item_conf[item.id()]['olog_rules']['highlim']):
+                                    if self._item_conf[item.property.path]['olog_rules']['highlim'] is not None and item() >= float(self._item_conf[item.property.path]['olog_rules']['highlim']):
                                         return
                                 elif item.type() == 'str':
-                                    if self._item_conf[item.id()]['olog_rules']['highlim'] is not None and item() >= str(self._item_conf[item.id()]['olog_rules']['highlim']):
+                                    if self._item_conf[item.property.path]['olog_rules']['highlim'] is not None and item() >= str(self._item_conf[item.property.path]['olog_rules']['highlim']):
                                         return
                             try:
-                                mvalue = self._item_conf[item.id()]['olog_rules'][item()]
+                                mvalue = self._item_conf[item.property.path]['olog_rules'][item()]
                             except KeyError:
                                 mvalue = item()
-                                if self._item_conf[item.id()]['olog_rules']["*"] is None:
+                                if self._item_conf[item.property.path]['olog_rules']["*"] is None:
                                     return
                         sh = self._sh
-                        self._item_conf[item.id()]['olog_eval_res'] = []
-                        for expr in self._item_conf[item.id()]['olog_eval']:
-                            self._item_conf[item.id()]['olog_eval_res'].append(eval(expr))
-                        logtxt = self._item_conf[item.id()]['olog_txt'].format(*self._item_conf[item.id()]['olog_eval_res'],
+                        self._item_conf[item.property.path]['olog_eval_res'] = []
+                        for expr in self._item_conf[item.property.path]['olog_eval']:
+                            self._item_conf[item.property.path]['olog_eval_res'].append(eval(expr))
+                        logtxt = self._item_conf[item.property.path]['olog_txt'].format(*self._item_conf[item.property.path]['olog_eval_res'],
                                                                                **{'value': item(),
                                                                                   'mvalue': mvalue,
                                                                                   'name': str(item),
                                                                                   'age': round(item.prev_age(), 2),
                                                                                   'pname': str(item.return_parent()),
-                                                                                  'id': item.id(),
+                                                                                  'id': item.property.path,
                                                                                   'pid': item.return_parent().id(),
-                                                                                  'lowlim': self._item_conf[item.id()]['olog_rules']['lowlim'],
-                                                                                  'highlim': self._item_conf[item.id()]['olog_rules']['highlim']})
+                                                                                  'lowlim': self._item_conf[item.property.path]['olog_rules']['lowlim'],
+                                                                                  'highlim': self._item_conf[item.property.path]['olog_rules']['highlim']})
                         logvalues = [logtxt]
                     else:
-                        logvalues = [item.id(), '=', item()]
+                        logvalues = [item.property.path, '=', item()]
                 else:
                     logvalues = []
                     for it in self._items:

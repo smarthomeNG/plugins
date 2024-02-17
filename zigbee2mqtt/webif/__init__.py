@@ -71,7 +71,7 @@ class WebInterface(SmartPluginWebIf):
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
                            plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(),
-                           items=sorted([i for i in self.plugin.get_item_list()], key=lambda x: x.path().lower()),
+                           items=sorted([i for i in self.plugin.get_item_list()], key=lambda x: x.property.path.lower()),
                            item_count=len(self.plugin.get_item_list()),
                            p=self.plugin,
                            webif_pagelength=pagelength,
@@ -96,10 +96,10 @@ class WebInterface(SmartPluginWebIf):
 
             data['item_values'] = {}
             for item in self.plugin.get_item_list():
-                data['item_values'][item.id()] = {}
-                data['item_values'][item.id()]['value'] = item.property.value
-                data['item_values'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                data['item_values'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                data['item_values'][item.property.path] = {}
+                data['item_values'][item.property.path]['value'] = item.property.value
+                data['item_values'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data['item_values'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
             data['device_values'] = {}
             for device in self.plugin._devices:

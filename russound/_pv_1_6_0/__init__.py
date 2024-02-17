@@ -178,7 +178,7 @@ class Russound(SmartPlugin,lib.connection.Client):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin (caller={}, source={}, dest={})".format(item.id(),caller, source, dest))
+            self.logger.info("Update item: {}, item has been changed outside this plugin (caller={}, source={}, dest={})".format(item.property.path,caller, source, dest))
 
             if self.has_iattr(item.conf, 'rus_path'):
                 path = self.get_iattr_value(item.conf, 'rus_path')

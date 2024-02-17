@@ -147,7 +147,7 @@ class Asterisk(SmartPlugin):
         :param dest: if given it represents the dest
         """
         if self.alive and caller != self.get_shortname():
-            self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.property.path))
             if self.has_iattr(item.conf, Asterisk.DB):
                 value = item()
                 if isinstance(value, bool):

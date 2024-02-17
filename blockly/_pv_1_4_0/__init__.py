@@ -139,7 +139,7 @@ class Blockly(SmartPlugin):
         # valid any more 
         # # todo here: change 'plugin' to the plugin name
         # if caller != 'plugin':  
-        #    logger.info("update item: {0}".format(item.id()))
+        #    logger.info("update item: {0}".format(item.property.path))
 
 
     def init_webinterface(self):

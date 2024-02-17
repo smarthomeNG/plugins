@@ -102,10 +102,10 @@ class WebInterface(SmartPluginWebIf):
 
             data['items'] = {}
             for item in self.plugin.item_list:
-                data['items'][item.id()] = {}
-                data['items'][item.id()]['value'] = item.property.value
-                data['items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                data['items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                data['items'][item.property.path] = {}
+                data['items'][item.property.path]['value'] = item.property.value
+                data['items'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data['items'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
             try:
                 return json.dumps(data, default=str)
             except Exception as e:

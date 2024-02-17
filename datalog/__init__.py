@@ -108,17 +108,17 @@ class DataLog(SmartPlugin):
             found = False
             for log in logs:
                 if log not in self.filepatterns:
-                    self.logger.debug('Unknown log "{}" for item {}'.format(log, item.id()))
+                    self.logger.debug('Unknown log "{}" for item {}'.format(log, item.property.path))
                     return None
 
                 if log not in self._buffer:
                     self._buffer[log] = []
 
-                if item.id() not in self._items:
-                    self._items[item.id()] = []
+                if item.property.path not in self._items:
+                    self._items[item.property.path] = []
 
-                if log not in self._items[item.id()]:
-                   self._items[item.id()].append(log)
+                if log not in self._items[item.property.path]:
+                   self._items[item.property.path].append(log)
                    found = True
 
             if found:
@@ -133,9 +133,9 @@ class DataLog(SmartPlugin):
         if caller != 'DataLog':
             pass
 
-        if item.id() in self._items:
-            for log in self._items[item.id()]:
-                self._buffer[log].append({ 'time' : shtime.now(), 'item' : item.id(), 'value' : item() })
+        if item.property.path in self._items:
+            for log in self._items[item.property.path]:
+                self._buffer[log].append({ 'time' : shtime.now(), 'item' : item.property.path, 'value' : item() })
 
     def _dump(self):
         data = {}

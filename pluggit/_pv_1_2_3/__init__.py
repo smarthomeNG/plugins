@@ -178,7 +178,7 @@ class Pluggit(SmartPlugin):
             if self.has_iattr(item.conf, 'pluggit_send'):
                 command = self.get_iattr_value(item.conf, 'pluggit_send')
                 value = item()
-                self.logger.info("Pluggit: {0} set {1} to {2} for {3}".format(caller, command, value, item.id()))
+                self.logger.info("Pluggit: {0} set {1} to {2} for {3}".format(caller, command, value, item.property.path))
                 if (command == 'prmDateTimeSet') and (isinstance(value, int)):
                     self._setDateTime(value)
                 if (command == 'prmRamIdxUnitMode') and (isinstance(value, int)):

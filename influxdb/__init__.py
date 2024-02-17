@@ -55,10 +55,10 @@ class InfluxDB(SmartPlugin):
 
     def parse_item(self, item):
         if self.keyword in item.conf or 'influxdb_name' in item.conf or 'influxdb_tags' in item.conf or 'influxdb_fields' in item.conf:
-            self.logger.debug("InfluxDB: enabling item {} ...".format(item.id()))
+            self.logger.debug("InfluxDB: enabling item {} ...".format(item.property.path))
 
             if item.type() not in ['num', 'bool']:
-                self.logger.error("InfluxDB: item {} has invalid type {}, only 'num' and 'bool' are supported".format(item.id(), item.type()))
+                self.logger.error("InfluxDB: item {} has invalid type {}, only 'num' and 'bool' are supported".format(item.property.path, item.type()))
                 return
 
             # explicitly specified instead of fallback to item's ID
@@ -66,7 +66,7 @@ class InfluxDB(SmartPlugin):
 
             config = {
                 'name_is_specified': name_is_specified,
-                'name': item.conf['influxdb_name'] if name_is_specified else item.id(),
+                'name': item.conf['influxdb_name'] if name_is_specified else item.property.path,
                 'tags': {},
                 'fields': {},
                 'value_field': item.conf['influxdb_value_field'] if 'influxdb_value_field' in item.conf else self.value_field
@@ -77,7 +77,7 @@ class InfluxDB(SmartPlugin):
                 try:
                     config['tags'] = json.loads( tags_json.replace("'", "\"") )
                 except Exception as e:
-                    self.logger.error("InfluxDB: item {} has invalid tags {}, parsing JSON failed with: {}".format(item.id(), tags_json, e))
+                    self.logger.error("InfluxDB: item {} has invalid tags {}, parsing JSON failed with: {}".format(item.property.path, tags_json, e))
                     return
 
             if 'influxdb_fields' in item.conf:
@@ -85,18 +85,18 @@ class InfluxDB(SmartPlugin):
                 try:
                     config['fields'] = json.loads( fields_json.replace("'", "\"") )
                 except Exception as e:
-                    self.logger.error("InfluxDB: item {} has invalid fields {}, parsing JSON failed with: {}".format(item.id(), fields_json, e))
+                    self.logger.error("InfluxDB: item {} has invalid fields {}, parsing JSON failed with: {}".format(item.property.path, fields_json, e))
                     return
 
-            self.logger.debug("InfluxDB: item {} config: {}".format(item.id(), config))
+            self.logger.debug("InfluxDB: item {} config: {}".format(item.property.path, config))
 
-            self.item_config[ item.id() ] = config
+            self.item_config[ item.property.path ] = config
 
-            self.logger.info("InfluxDB: logging item {} as {}".format(item.id(), config['name']))
+            self.logger.info("InfluxDB: logging item {} as {}".format(item.property.path, config['name']))
             return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        config = self.item_config[ item.id() ]
+        config = self.item_config[ item.property.path ]
         name = config['name']
 
         tags = {
@@ -110,7 +110,7 @@ class InfluxDB(SmartPlugin):
         # if a name has been specified, additionally store item's ID
         # (if no name has been specified, the name is already the item's ID as a fallback)
         if config['name_is_specified']:
-            tags['item'] = item.id()
+            tags['item'] = item.property.path
 
         fields = {}
         fields.update( self.fields ) # + plugin.conf fields

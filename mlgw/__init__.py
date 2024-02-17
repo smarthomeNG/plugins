@@ -947,7 +947,7 @@ class Mlgw(SmartPlugin):
                 except:
                     self.logger.error("update_channel: {0}".format(item) + " - mlgw_mln is not numeric")
                     return None
-            self.logger.warning("update channel: {0}".format(item.id())+", value="+ str(item()) +", (MLN="+str(mln)+")")   # info
+            self.logger.warning("update channel: {0}".format(item.property.path)+", value="+ str(item()) +", (MLN="+str(mln)+")")   # info
             channel = item()
             wrk = channel
             if wrk // 100 != 0:
@@ -992,7 +992,7 @@ class Mlgw(SmartPlugin):
                 cmd = item.conf['_mlgw_cmd']
             elif item._type == 'num':
                 cmd = item()
-            self.logger.warning("update item: {0}".format(item.id())+", value="+ str(item()) +", (MLN="+str(mln)+", cmd="+str(cmd)+")")   # info
+            self.logger.warning("update item: {0}".format(item.property.path)+", value="+ str(item()) +", (MLN="+str(mln)+", cmd="+str(cmd)+")")   # info
 
             if cmd != None:
                 self._mlgwbase.SendBeo4Command( mln, 0x00, cmd )
