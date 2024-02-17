@@ -215,7 +215,7 @@ class SmartVisuGenerator:
             if isinstance(item.conf['sv_widget'], list):
                 self.logger.warning("room: sv_widget: IsList")
                 for widget in item.conf['sv_widget']:
-                    widgets += self.parse_tpl(widgetblocktemplate, [('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('item.name', str(item)), ("'item", "'" + item.id())])
+                    widgets += self.parse_tpl(widgetblocktemplate, [('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('item.name', str(item)), ("'item", "'" + item.property.path)])
             else:
                 widget = self.get_attribute('sv_widget', item)
                 name1 = self.get_attribute('sv_name1', item)
@@ -226,10 +226,10 @@ class SmartVisuGenerator:
 
                 widget2 = self.get_attribute('sv_widget2', item)
                 if widget2 == '':
-                    widgets += self.parse_tpl(widgetblocktemplate, [('{{ visu_name }}', str(name1)), ('{{ blocksize }}', str(blocksize)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('item.name', str(item)), ("'item", "'" + item.id())])
+                    widgets += self.parse_tpl(widgetblocktemplate, [('{{ visu_name }}', str(name1)), ('{{ blocksize }}', str(blocksize)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('item.name', str(item)), ("'item", "'" + item.property.path)])
                 else:
                     name2 = self.get_attribute('sv_name2', item)
-                    widgets += self.parse_tpl(widgetblocktemplate2, [('{{ visu_name }}', str(name1)), ('{{ visu_name2 }}', str(name2)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('{{ visu_widget2 }}', widget2), ('item.name', str(item)), ("'item", "'" + item.id())])
+                    widgets += self.parse_tpl(widgetblocktemplate2, [('{{ visu_name }}', str(name1)), ('{{ visu_name2 }}', str(name2)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('{{ visu_widget2 }}', widget2), ('item.name', str(item)), ("'item", "'" + item.property.path)])
 
             if room.conf['sv_page'] == 'room':
                 r = self.parse_tpl('room.html', [('{{ visu_name }}', str(room)), ('{{ visu_widgets }}', widgets), ('{{ visu_img }}', rimg), ('{{ visu_heading }}', heading)])
@@ -258,7 +258,7 @@ class SmartVisuGenerator:
                 cat_lis += self.parse_tpl('navi_sep.html', [('{{ name }}', str(item))])
                 continue
             elif ((item.conf['sv_page'] == 'overview') or (item.conf['sv_page'] == 'cat_overview')) and (not 'sv_overview' in item.conf):
-                self.logger.error("missing sv_overview for {0}".format(item.id()))
+                self.logger.error("missing sv_overview for {0}".format(item.property.path))
                 continue
 
             r = self.room(item)
@@ -280,14 +280,14 @@ class SmartVisuGenerator:
             else:
                 nav_aside2 = ''
             if (item.conf['sv_page'] == 'category') or (item.conf['sv_page'] == 'cat_overview'):
-                cat_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])
+                cat_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.property.path), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.property.path)])
             elif item.conf['sv_page'] == 'room':
-                nav_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])
+                nav_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.property.path), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.property.path)])
             elif item.conf['sv_page'] == 'overview':
-                nav_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])
+                nav_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.property.path), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.property.path)])
             elif item.conf['sv_page'] == 'room_lite':
-                lite_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])
-            self.write_parseresult(item.id()+'.html', r)
+                lite_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.property.path), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.property.path)])
+            self.write_parseresult(item.property.path+'.html', r)
 
 
         nav = self.parse_tpl('navigation.html', [('{{ visu_navis }}', nav_lis)])

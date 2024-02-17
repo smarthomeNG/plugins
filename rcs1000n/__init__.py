@@ -86,12 +86,12 @@ class RCS1000N(SmartPlugin):
 				if systemcode_ok and buttoncode_ok:
 					return self.update_item
 				else:
-					self.logger.warning('Warning: Item {} is NOT correctly configured!. Item will be ignored by rcSwitch_python plugin'.format(item.id()))
+					self.logger.warning('Warning: Item {} is NOT correctly configured!. Item will be ignored by rcSwitch_python plugin'.format(item.property.path))
 			else:
-				self.logger.warning('Warning: attribute <rcs_ButtonCode> for {} missing. Item will be ignored by rcSwitch_python plugin'.format(item.id()))
+				self.logger.warning('Warning: attribute <rcs_ButtonCode> for {} missing. Item will be ignored by rcSwitch_python plugin'.format(item.property.path))
 				return None
 		elif self.has_iattr(item.conf, 'rcs_ButtonCode'): 
-			self.logger.warning('Warning: attribute <rcs_SystemCode> for {} missing. Item will be ignored by RCswitch plugin'.format(item.id()))
+			self.logger.warning('Warning: attribute <rcs_SystemCode> for {} missing. Item will be ignored by RCswitch plugin'.format(item.property.path))
 			return None
 		else:
 			return None
@@ -107,7 +107,7 @@ class RCS1000N(SmartPlugin):
 				SystemCode = self.get_iattr_value(item.conf, 'rcs_SystemCode')
 				ButtonCode = self.get_iattr_value(item.conf, 'rcs_ButtonCode')
 
-			self.logger.info(f"update_item was called with item {item.id()} from caller {caller}, source {source} and dest {dest}")
+			self.logger.info(f"update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}")
 			# prepare parameters
 			value = int(item())
 			values = (SystemCode, ButtonCode, value)

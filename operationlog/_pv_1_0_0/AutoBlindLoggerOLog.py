@@ -105,7 +105,7 @@ class AbLogger:
     # item: item for which the detailed log is (used as part of file name)
     def __init__(self, item):
         try:
-            self.__section = item.id().replace(".", "_").replace("/", "")
+            self.__section = item.property.path.replace(".", "_").replace("/", "")
         except (AttributeError, TypeError):
             # parameter is no item, use as text instead
             self.__section = str(item).replace(".", "_").replace("/", "")

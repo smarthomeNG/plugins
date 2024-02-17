@@ -293,7 +293,7 @@ class milight():
     # update
     def update_item(self, item, caller=None, source=None, dest=None):
         if caller != 'milight':
-            logger.info("miLight update item: {0}".format(item.id()))
+            logger.info("miLight update item: {0}".format(item.property.path))
 
             if 'milight_sw' in item.conf:
                 for channel in item.conf['milight_sw']:

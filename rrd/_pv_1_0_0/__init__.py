@@ -71,7 +71,7 @@ class RRD():
     def parse_item(self, item):
         if 'rrd' not in item.conf:
             return
-        rrdb = self._rrd_dir + item.id() + '.rrd'
+        rrdb = self._rrd_dir + item.property.path + '.rrd'
         rrd_min = False
         rrd_max = False
         rrd_type = 'GAUGE'
@@ -85,12 +85,12 @@ class RRD():
                 rrd_type = 'COUNTER'
         if 'rrd_step' in item.conf:
             rrd_step = int(item.conf['rrd_step'])
-        item.series = functools.partial(self._series, item=item.id())
-        item.db = functools.partial(self._single, item=item.id())
-        self._rrds[item.id()] = {'item': item, 'id': item.id(), 'rrdb': rrdb, 'max': rrd_max, 'min': rrd_min, 'step': rrd_step, 'type': rrd_type}
+        item.series = functools.partial(self._series, item=item.property.path)
+        item.db = functools.partial(self._single, item=item.property.path)
+        self._rrds[item.property.path] = {'item': item, 'id': item.property.path, 'rrdb': rrdb, 'max': rrd_max, 'min': rrd_min, 'step': rrd_step, 'type': rrd_type}
 
         if item.conf['rrd'] == 'init':
-            last = self._single('last', '5d', item=item.id())
+            last = self._single('last', '5d', item=item.property.path)
             if last is not None:
                 item.set(last, 'RRDtool')
 

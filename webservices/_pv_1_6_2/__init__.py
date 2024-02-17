@@ -250,7 +250,7 @@ class WebServiceInterface:
                                  'name': item._name,
                                  'type': item.type(),
                                  'value': value,
-                                 'age': item.age(),
+                                 'age': item.property.last_change_age,
                                  'last_update': str(item.last_update()),
                                  'last_change': str(item.last_change()),
                                  'changed_by': changed_by,

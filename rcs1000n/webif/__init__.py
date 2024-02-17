@@ -76,9 +76,9 @@ class WebInterface(SmartPluginWebIf):
         # get list of items with the attribute rc_SystemCode
         plgin_items = []
         for item in self.items.find_items('rcs_SystemCode'):
-                myitem = self.items.return_item(item.id())
+                myitem = self.items.return_item(item.property.path)
                 i = {}
-                i['path'] = item.id()
+                i['path'] = item.property.path
                 i['SystemCode'] = myitem.property.rcs_SystemCode
                 i['ButtonCode'] = myitem.property.rcs_ButtonCode
                 i['value'] = item()

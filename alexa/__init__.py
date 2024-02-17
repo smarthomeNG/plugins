@@ -63,10 +63,10 @@ class Alexa(SmartPlugin):
         action_names = None
         if 'alexa_actions' in item.conf:
             action_names = list( map(str.strip, item.conf['alexa_actions'].split(' ')) )
-            self.logger.debug("Alexa: {}-actions = {}".format(item.id(), action_names))
+            self.logger.debug("Alexa: {}-actions = {}".format(item.property.path, action_names))
             for action_name in action_names:
                 if action_name and self.actions.by_name(action_name) is None:
-                    self.logger.error("Alexa: invalid alexa action '{}' specified in item {}, ignoring item".format(action_name, item.id()))
+                    self.logger.error("Alexa: invalid alexa action '{}' specified in item {}, ignoring item".format(action_name, item.property.path))
                     return None
 
         # friendly name
@@ -85,7 +85,7 @@ class Alexa(SmartPlugin):
 
         # skip this item if no device could be determined
         if device_id:
-            self.logger.debug("Alexa: {}-device = {}".format(item.id(), device_id))
+            self.logger.debug("Alexa: {}-device = {}".format(item.property.path, device_id))
         else:
             return None # skip this item
 
@@ -98,28 +98,28 @@ class Alexa(SmartPlugin):
         # types
         if 'alexa_types' in item.conf:
             device.types = list( map(str.strip, item.conf['alexa_types'].split(' ')) )
-            self.logger.debug("Alexa: {}-types = {}".format(item.id(), device.types))
+            self.logger.debug("Alexa: {}-types = {}".format(item.property.path, device.types))
 
         # friendly name
         if name and (not device.name or name_is_explicit):
-            self.logger.debug("Alexa: {}-name = {}".format(item.id(), name))
+            self.logger.debug("Alexa: {}-name = {}".format(item.property.path, name))
             if device.name and device.name != name:
-                self.logger.warning("Alexa: item {} is changing device-name of {} from '{}' to '{}'".format(item.id(), device_id, device.name, name))
+                self.logger.warning("Alexa: item {} is changing device-name of {} from '{}' to '{}'".format(item.property.path, device_id, device.name, name))
             device.name = name
 
         # friendly description
         if 'alexa_description' in item.conf:
             descr = item.conf['alexa_description']
-            self.logger.debug("Alexa: {}-description = {}".format(item.id(), descr))
+            self.logger.debug("Alexa: {}-description = {}".format(item.property.path, descr))
             if device.description and device.description != descr:
-                self.logger.warning("Alexa: item {} is changing device-description of {} from '{}' to '{}'".format(item.id(), device_id, device.description, descr))
+                self.logger.warning("Alexa: item {} is changing device-description of {} from '{}' to '{}'".format(item.property.path, device_id, device.description, descr))
             device.description = descr
 
         # alias names
         if 'alexa_alias' in item.conf:
             alias_names = list( map(str.strip, item.conf['alexa_alias'].split(',')) )
             for alias_name in alias_names:
-                self.logger.debug("Alexa: {}-alias = {}".format(item.id(), alias_name))
+                self.logger.debug("Alexa: {}-alias = {}".format(item.property.path, alias_name))
                 device.alias.append(alias_name)
 
         # value-range
@@ -128,20 +128,20 @@ class Alexa(SmartPlugin):
             item_min = float( item_min_raw.strip() )
             item_max = float( item_max_raw.strip() )
             item.alexa_range = (item_min, item_max)
-            self.logger.debug("Alexa: {}-range = {}".format(item.id(), item.alexa_range))
+            self.logger.debug("Alexa: {}-range = {}".format(item.property.path, item.alexa_range))
 
         # special turn on/off values
         if 'alexa_item_turn_on' in item.conf or 'alexa_item_turn_off' in item.conf:
             turn_on  = item.conf['alexa_item_turn_on']  if 'alexa_item_turn_on'  in item.conf else True
             turn_off = item.conf['alexa_item_turn_off'] if 'alexa_item_turn_off' in item.conf else False
             item.alexa_range = (turn_on, turn_off)
-            self.logger.debug("Alexa: {}-range = {}".format(item.id(), item.alexa_range))
+            self.logger.debug("Alexa: {}-range = {}".format(item.property.path, item.alexa_range))
 
         # register item-actions with the device
         if action_names:
             for action_name in action_names:
                 device.register(action_name, item)
-            self.logger.info("Alexa: {} supports {} as device {}".format(item.id(), action_names, device_id, device.supported_actions()))
+            self.logger.info("Alexa: {} supports {} as device {}".format(item.property.path, action_names, device_id, device.supported_actions()))
 
         return None
 

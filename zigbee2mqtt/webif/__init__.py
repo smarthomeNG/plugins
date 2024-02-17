@@ -96,10 +96,10 @@ class WebInterface(SmartPluginWebIf):
 
             data['item_values'] = {}
             for item in self.plugin.get_item_list():
-                data['item_values'][item.id()] = {}
-                data['item_values'][item.id()]['value'] = item.property.value
-                data['item_values'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                data['item_values'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                data['item_values'][item.property.path] = {}
+                data['item_values'][item.property.path]['value'] = item.property.value
+                data['item_values'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data['item_values'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
             data['device_values'] = {}
             for device in self.plugin._devices:

@@ -281,7 +281,7 @@ class Indego4shNG(SmartPlugin):
         if caller != self.get_shortname() and caller != 'Autotimer' and caller != 'Logic':
             
             # code to execute, only if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
             
             # Update-Hander for Items changed by Visu
     

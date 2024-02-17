@@ -17,7 +17,7 @@ def set_target_temp(self, payload):
     for item in items:
         item_range = self.item_range(item, DEFAULT_RANGE)
         item_new = clamp_temp(target_temp, item_range)
-        self.logger.info("Alexa: setTargetTemperature({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa: setTargetTemperature({}, {:.1f})".format(item.property.path, item_new))
         item( item_new )
 
     new_temp = items[0]() if items else 0
@@ -51,7 +51,7 @@ def incr_target_temp(self, payload):
         item_range = self.item_range(item, DEFAULT_RANGE)
         item_now = item()
         item_new = clamp_temp(item_now + delta_temp, item_range)
-        self.logger.info("Alexa: incrementTargetTemperature({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa: incrementTargetTemperature({}, {:.1f})".format(item.property.path, item_new))
         item( item_new )
 
     new_temp = items[0]() if items else 0
@@ -85,7 +85,7 @@ def decr_target_temp(self, payload):
         item_range = self.item_range(item, DEFAULT_RANGE)
         item_now = item()
         item_new = clamp_temp(item_now - delta_temp, item_range)
-        self.logger.info("Alexa: decrementTargetTemperature({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa: decrementTargetTemperature({}, {:.1f})".format(item.property.path, item_new))
         item( item_new )
 
     new_temp = items[0]() if items else 0

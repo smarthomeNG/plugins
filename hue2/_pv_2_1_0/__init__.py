@@ -241,10 +241,10 @@ class Hue2(SmartPlugin):
 
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("update_item: {} has been changed by caller {} outside this plugin".format(item.id(), caller))
+            self.logger.info("update_item: {} has been changed by caller {} outside this plugin".format(item.property.path, caller))
 
-            if item.id() in self.plugin_items:
-                plugin_item = self.plugin_items[item.id()]
+            if item.property.path in self.plugin_items:
+                plugin_item = self.plugin_items[item.property.path]
                 if plugin_item['resource'] == 'light':
                     self.update_light_from_item(plugin_item, item())
                 elif plugin_item['resource'] == 'scene':

@@ -427,7 +427,7 @@ class mieleathome(SmartPlugin):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed inside this plugin".format(item.id()))
+            self.logger.info("Update item: {}, item has been changed inside this plugin".format(item.property.path))
 
             if self.has_iattr(item.conf, 'foo_itemtag'):
                 self.logger.debug("update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item,

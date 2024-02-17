@@ -631,14 +631,14 @@ class OneWire(SmartPlugin):
         if not self.has_iattr(item.conf, 'ow_addr'):
             return
         if not self.has_iattr(item.conf, 'ow_sensor'):
-            self.logger.warning(f"parse_item: No ow_sensor for {item.id()} defined")
+            self.logger.warning(f"parse_item: No ow_sensor for {item.property.path} defined")
             return
 
         addr = self.get_iattr_value(item.conf,'ow_addr')
         key = self.get_iattr_value(item.conf,'ow_sensor')
         config_data['sensor_addr'] = addr
         config_data['sensor_key'] = key
-        self.logger.debug(f"parse_item: ow_sensor '{key}' with ow_addr '{addr}' for item '{item.id()}' defined")
+        self.logger.debug(f"parse_item: ow_sensor '{key}' with ow_addr '{addr}' for item '{item.property.path}' defined")
 
         # check the compliance with regular sensor address definitions
         while True:
@@ -667,7 +667,7 @@ class OneWire(SmartPlugin):
             table = self._ibuttons
             config_data['deviceclass'] = 'iButton'
         elif key == 'BM':
-            self._ibutton_masters[addr] = item.id()
+            self._ibutton_masters[addr] = item.property.path
             config_data['deviceclass'] = 'iButton master'
             self.add_item(item, mapping=addr+'-'+key, config_data_dict=config_data)
             return
@@ -677,7 +677,7 @@ class OneWire(SmartPlugin):
 
         if key not in self._supported:  # unknown key
             path = '/' + addr + '/' + key
-            self.logger.info(f"parse_item: unknown sensor specified for {item.id()} using path: {path}")
+            self.logger.info(f"parse_item: unknown sensor specified for {item.property.path} using path: {path}")
         else:
             path = None
             if key == 'VOC':
@@ -701,7 +701,7 @@ class OneWire(SmartPlugin):
         if caller != self.get_shortname():
             try:
                 # code to execute, only if the item has not been changed by this plugin:
-                self.logger.debug(f"update_item: update item: {item.id()}, item has been changed outside this plugin")
+                self.logger.debug(f"update_item: update item: {item.property.path}, item has been changed outside this plugin")
                 self.owbase.write(item._ow_path['path'], self._flip[item()])
             except Exception as e:
                 self.logger.warning(f"update_item: problem setting output {item._ow_path['path']}: {e}")

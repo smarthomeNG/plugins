@@ -130,12 +130,12 @@ class Telegram(SmartPlugin):
     # called each time an item changes.
     def update_item(self, item, caller=None, source=None, dest=None):
         if caller != 'smarthome-telegram':
-            self.logger.info("update item: {0}".format(item.id()))
+            self.logger.info("update item: {0}".format(item.property.path))
 
         if ITEM_ATTR_MESSAGE in item.conf:
             msg_txt_tmpl = item.conf[ITEM_ATTR_MESSAGE]
 
-            item_id = item.id()
+            item_id = item.property.path
             item_value = "{0}".format(item())
 
             # TODO: ITEM_ATTR_MATCHREGEX
@@ -304,9 +304,9 @@ class Telegram(SmartPlugin):
         text = ""
         for item in self._items:
             if item.type():
-                text += "{0} = {1}\n".format(item.id(), item())
+                text += "{0} = {1}\n".format(item.property.path, item())
             else:
-                text += "{0}\n".format(item.id())
+                text += "{0}\n".format(item.property.path)
 
         # self._bot.sendMessage(self._chat_id, "<b>bold</b> and <i>italic</i>", parse_mode='HTML')
         # self._bot.sendMessage(self._chat_id, "|ABC|DEF|\n|abc|def|", parse_mode='Markdown')
@@ -318,9 +318,9 @@ class Telegram(SmartPlugin):
         text = ""
         for item in self._items_info[key]:
             if item.type():
-                text += "{0} = {1}\n".format(item.id(), item())
+                text += "{0} = {1}\n".format(item.property.path, item())
             else:
-                text += "{0}\n".format(item.id())
+                text += "{0}\n".format(item.property.path)
         self._bot.sendMessage(chat_id, text)
         
     # 

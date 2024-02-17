@@ -113,7 +113,7 @@ class SQL(SmartPlugin):
         self.scheduler_add('SQLite Maintain', self._maintain, cron='2 3 * *', prio=5)
 
     def remove_orphans(self):
-        current_items = [item.id() for item in self._buffer]
+        current_items = [item.property.path for item in self._buffer]
         db_items = self._fetchall("SELECT _item FROM num GROUP BY _item;")
         if db_items:
             for item in db_items:
@@ -139,14 +139,14 @@ class SQL(SmartPlugin):
     def parse_item(self, item):
         if 'sqlite' in item.conf:
             if item.type() not in ['num', 'bool']:
-                self.logger.warning("SQLite: only supports 'num' and 'bool' as types. Item: {} ".format(item.id()))
+                self.logger.warning("SQLite: only supports 'num' and 'bool' as types. Item: {} ".format(item.property.path))
                 return
-            cache = self._fetchone("SELECT _start,_value from cache WHERE _item = '{}'".format(item.id()))
+            cache = self._fetchone("SELECT _start,_value from cache WHERE _item = '{}'".format(item.property.path))
             if cache is not None:
                 last_change, value = cache
                 item._sqlite_last = last_change
                 last_change = self._datetime(last_change)
-                prev_change = self._fetchone("SELECT _start from num WHERE _item = '{}' ORDER BY _start DESC LIMIT 1".format(item.id()))
+                prev_change = self._fetchone("SELECT _start from num WHERE _item = '{}' ORDER BY _start DESC LIMIT 1".format(item.property.path))
                 if prev_change is not None:
                     prev_change = self._datetime(prev_change[0])
                     item.set(value, 'SQLite', prev_change=prev_change, last_change=last_change)
@@ -154,10 +154,10 @@ class SQL(SmartPlugin):
 #                last_change = self._timestamp(self._sh.now())
                 last_change = self._timestamp(self.shtime.now())
                 item._sqlite_last = last_change
-                self._execute("INSERT OR IGNORE INTO cache VALUES('{}',{},{})".format(item.id(), last_change, float(item())))
+                self._execute("INSERT OR IGNORE INTO cache VALUES('{}',{},{})".format(item.property.path, last_change, float(item())))
             self._buffer[item] = []
-            item.series = functools.partial(self._series, item=item.id())
-            item.db = functools.partial(self._single, item=item.id())
+            item.series = functools.partial(self._series, item=item.property.path)
+            item.db = functools.partial(self._single, item=item.property.path)
             return self.update_item
         else:
             return None
@@ -189,7 +189,7 @@ class SQL(SmartPlugin):
         if _end - item._sqlite_last > self._buffer_time:
             self._insert(item)
         # update cache with current value
-        self._execute("UPDATE OR IGNORE cache SET _start={}, _value={} WHERE _item='{}';".format(_end, float(item()), item.id()))
+        self._execute("UPDATE OR IGNORE cache SET _start={}, _value={} WHERE _item='{}';".format(_end, float(item()), item.property.path))
 
     def _datetime(self, ts):
 #        return datetime.datetime.fromtimestamp(ts / 1000, self._sh.tzinfo())
@@ -268,7 +268,7 @@ class SQL(SmartPlugin):
         try:
             if tlen == 1:
                 _start, _dur, _avg, _on = tuples[0]
-                insert = (_start, item.id(), _dur, _avg, _avg, _avg, _on)
+                insert = (_start, item.property.path, _dur, _avg, _avg, _avg, _on)
             elif tlen > 1:
                 _vals = []
                 _dur = 0
@@ -280,13 +280,13 @@ class SQL(SmartPlugin):
                     _avg += __dur * __avg
                     _on += __dur * __on
                     _dur += __dur
-                insert = (_start, item.id(), _dur, _avg / _dur, min(_vals), max(_vals), _on / _dur)
+                insert = (_start, item.property.path, _dur, _avg / _dur, min(_vals), max(_vals), _on / _dur)
             else:  # no tuples
                 return
             self._fdb.execute("INSERT INTO num VALUES (?,?,?,?,?,?,?);", insert)
             self._fdb.commit()
         except Exception as e:
-            self.logger.warning("SQLite: problem updating {}: {}".format(item.id(), e))
+            self.logger.warning("SQLite: problem updating {}: {}".format(item.property.path, e))
         finally:
             self._fdb_lock.release()
 

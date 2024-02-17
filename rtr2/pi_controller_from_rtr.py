@@ -58,9 +58,9 @@ def pi_controller(self, c):
             item = self._items.return_item(i)
             if item():
                 if self._items.return_item(self._controller[c]['actuatorItem'])() > 0:
-                    self.logger.info("rtr: controller {0} currently deactivated, because of item {1}".format(c, item.id()))
+                    self.logger.info("rtr: controller {0} currently deactivated, because of item {1}".format(c, item.property.path))
                 self._items.return_item(self._controller[c]['actuatorItem'])(0)
-                self.logger.debug("{0} | skipped because of item {1}".format(c, item.id()))
+                self.logger.debug("{0} | skipped because of item {1}".format(c, item.property.path))
                 return
 
     # calculate scanning time

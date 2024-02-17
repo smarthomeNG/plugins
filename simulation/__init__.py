@@ -115,7 +115,7 @@ class Simulation(SmartPlugin):
             day = now.day
             self.file.write(now.strftime('%a;%H:%M:%S'))
             self.file.write(';')
-            self.file.write(item.id())
+            self.file.write(item.property.path)
             self.file.write(';')
             self.file.write('{}'.format(item()))
             self.file.write(';')
@@ -123,7 +123,7 @@ class Simulation(SmartPlugin):
             self.file.write('\n')
             self.file.flush()
             self._message_item(
-                'Last event recorded: {}<br>{}   {}'.format(now.strftime('%H:%M:%S'), item.id(), item(), 'Simulation'))
+                'Last event recorded: {}<br>{}   {}'.format(now.strftime('%H:%M:%S'), item.property.path, item(), 'Simulation'))
             return None
         if (item.conf['sim'] == 'control') and (caller != 'Simulation'):
             self.state_selector[self.state(), self.control()](self)

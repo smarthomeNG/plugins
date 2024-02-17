@@ -810,7 +810,7 @@ class OpenWeatherMap(SmartPlugin):
         if owm_raw:
             for ds_key in self._data_sources:
                 if owm_raw == ds_key:
-                    self._raw_items[item.id()] = (ds_key, item)
+                    self._raw_items[item.property.path] = (ds_key, item)
                     return
             self.logger.warn(f"Unmatched owm_raw_file name '{owm_raw}'")
             return
@@ -823,7 +823,7 @@ class OpenWeatherMap(SmartPlugin):
                 owm_ms = owm_ms.replace('///', '/')
                 owm_ms = owm_ms.replace('//', '/')
 
-            self._items[item.id()] = (owm_ms, item)
+            self._items[item.property.path] = (owm_ms, item)
 
             if owm_ms in self._origins_weather:
                 self._request_weather = True

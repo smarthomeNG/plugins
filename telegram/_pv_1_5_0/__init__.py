@@ -209,12 +209,12 @@ class Telegram(SmartPlugin):
     # called each time an item changes.
     def update_item(self, item, caller=None, source=None, dest=None):
         if caller != 'smarthome-telegram':
-            self.logger.info("update item: {0}".format(item.id()))
+            self.logger.info("update item: {0}".format(item.property.path))
 
         if ITEM_ATTR_MESSAGE in item.conf:
             msg_txt_tmpl = item.conf[ITEM_ATTR_MESSAGE]
 
-            item_id = item.id()
+            item_id = item.property.path
             item_value = "{0}".format(item())
             
             if ITEM_ATTR_MATCHREGEX in item.conf:
@@ -293,7 +293,7 @@ class Telegram(SmartPlugin):
         text = update.message.from_user.name + ": "     # add username
         text += update.message.text                     # add the message.text
         for item in self._items_text_message:
-            self.logger.debug("write item: {0} value: {1}".format(item.id(), text))
+            self.logger.debug("write item: {0} value: {1}".format(item.property.path, text))
             item(text)                                  # write text to SH-item
 
     # /time: return server time
@@ -360,9 +360,9 @@ class Telegram(SmartPlugin):
         text = ""
         for item in self._items:
             if item.type():
-                text += "{0} = {1}\n".format(item.id(), item())
+                text += "{0} = {1}\n".format(item.property.path, item())
             else:
-                text += "{0}\n".format(item.id())
+                text += "{0}\n".format(item.property.path)
         if not text:
             text = "no items found with the attribute:" + ITEM_ATTR_MESSAGE
         self._bot.sendMessage(chat_id=chat_id, text=text)
@@ -372,9 +372,9 @@ class Telegram(SmartPlugin):
         text = ""
         for item in self._items_info[key]:
             if item.type():
-                text += "{0} = {1}\n".format(item.id(), item())
+                text += "{0} = {1}\n".format(item.property.path, item())
             else:
-                text += "{0}\n".format(item.id())
+                text += "{0}\n".format(item.property.path)
         if not text:
             text = self.translate("no items found with the attribute %s") % ITEM_ATTR_INFO
         self._bot.sendMessage(chat_id=chat_id, text=text)

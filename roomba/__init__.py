@@ -204,7 +204,7 @@ class Roomba(SmartPlugin):
         """
         if caller != self.get_shortname():
             # code to execute, only if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
 
             if item():
                 if self.has_iattr(item.conf, 'roomba_cmd'):
