@@ -23,7 +23,8 @@
 		</tr>
         <tr>
             <td class="py-1"><strong>{{  _('Erkannte Nuki IDs') }}</strong></td>
-            <td class="py-1" colspan="3">{% for item in paired_nukis %}{{ item }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+            <td class="py-1" colspan="2">{% for item in paired_nukis %}{{ item }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+            <td class="py-1"><strong>{{ _('API Request Lock') }}</strong>: {{ p._lock }}</td>
         </tr>
 	</tbody>
 </table>

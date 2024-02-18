@@ -39,11 +39,9 @@ nuki_event_items = {}
 nuki_door_items = {}
 nuki_battery_items = {}
 paired_nukis = []
-lock = False
-
 
 class Nuki(SmartPlugin):
-    PLUGIN_VERSION = "1.6.3"
+    PLUGIN_VERSION = "1.6.4"
 
     def __init__(self, sh, *args, **kwargs):
 
@@ -52,8 +50,6 @@ class Nuki(SmartPlugin):
         global nuki_action_items
         global nuki_door_items
         global nuki_battery_items
-        global lock
-        global request_queue
 
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
@@ -61,7 +57,7 @@ class Nuki(SmartPlugin):
         self._base_url = self.get_parameter_value('protocol') + '://' + self.get_parameter_value(
             'bridge_ip') + ":" + str(self.get_parameter_value('bridge_port')) + '/'
         self._token = self.get_parameter_value('bridge_api_token')
-
+        self._lock = False
         self._action = ''
         self._noWait = self.get_parameter_value('no_wait')
         self.items = Items.get_instance()
@@ -154,7 +150,9 @@ class Nuki(SmartPlugin):
                         "Plugin '{pluginname}': action {action} not in list of possible actions.".format(
                             pluginname=self.get_shortname(), action=action))
                     return
-
+                self.logger.debug(
+                    "Plugin '{pluginname}': _api_call from update_item.".format(
+                        pluginname=self.get_shortname()))
                 response = self._api_call(self._base_url, nuki_id=nuki_action_items[item], endpoint='lockAction',
                                           action=action, token=self._token, no_wait=self._noWait)
                 if response is not None:
@@ -162,13 +160,12 @@ class Nuki(SmartPlugin):
                         # self._get_nuki_status()
                         self.logger.debug(
                             "Plugin '{0}': update item: {1}".format(self.get_shortname(), item.property.path))
-                        # immediatly update lock state via list, to e.g. the status information that lock is locking
+                        # immediately update lock state via list, to e.g. the status information that lock is locking
                     self._get_nuki_status_via_list()
                 else:
                     self.logger.error("Plugin '{}': no response.".format(self.get_shortname()))
 
-    @staticmethod
-    def update_lock_state_via_list(nuki_id, nuki_data):
+    def update_lock_state_via_list(self, nuki_id, nuki_data):
         nuki_battery = None
         nuki_state = None
         nuki_doorstate = None
@@ -182,19 +179,22 @@ class Nuki(SmartPlugin):
         if 'batteryCritical' in lock_state:
             nuki_battery = 0 if not lock_state['batteryCritical'] else 1
 
+
         for item, key in nuki_event_items.items():
             if key == nuki_id:
+                self.logger.debug("Plugin '{0}': update item: {1}".format(self.get_shortname(), item.property.path))
                 item(nuki_state, 'NUKI')
         for item, key in nuki_door_items.items():
             if key == nuki_id:
+                self.logger.debug("Plugin '{0}': update item: {1}".format(self.get_shortname(), item.property.path))
                 item(nuki_doorstate, 'NUKI')
         for item, key in nuki_battery_items.items():
             if key == nuki_id:
+                self.logger.debug("Plugin '{0}': update item: {1}".format(self.get_shortname(), item.property.path))
                 item(nuki_battery, 'NUKI')
 
 
-    @staticmethod
-    def update_lock_state(nuki_id, lock_state):
+    def update_lock_state(self, nuki_id, lock_state):
 
         nuki_battery = None
         nuki_state = None
@@ -209,12 +209,15 @@ class Nuki(SmartPlugin):
 
         for item, key in nuki_event_items.items():
             if key == nuki_id:
+                self.logger.debug("Plugin '{0}': update item: {1}".format(self.get_shortname(), item.property.path))
                 item(nuki_state, 'NUKI')
         for item, key in nuki_door_items.items():
             if key == nuki_id:
+                self.logger.debug("Plugin '{0}': update item: {1}".format(self.get_shortname(), item.property.path))
                 item(nuki_doorstate, 'NUKI')
         for item, key in nuki_battery_items.items():
             if key == nuki_id:
+                self.logger.debug("Plugin '{0}': update item: {1}".format(self.get_shortname(), item.property.path))
                 item(nuki_battery, 'NUKI')
 
     def _get_paired_nukis(self):
@@ -283,7 +286,7 @@ class Nuki(SmartPlugin):
         for nuki_id in paired_nukis:
             for nuki_data in response:
                 if nuki_data['nukiId'] == int(nuki_id):
-                    Nuki.update_lock_state_via_list(nuki_id, nuki_data)
+                    self.update_lock_state_via_list(nuki_id, nuki_data)
 
     def _get_nuki_status(self):
         self.logger.info("Plugin '{}': Getting Nuki status ...".format
@@ -294,15 +297,16 @@ class Nuki(SmartPlugin):
             if response is None:
                 self.logger.info("Plugin '{}': Getting Nuki status ... Response is None.".format(self.get_shortname()))
                 return
-            Nuki.update_lock_state(nuki_id, response)
+            self.update_lock_state(nuki_id, response)
 
     def _api_call(self, base_url, endpoint=None, nuki_id=None, token=None, action=None, no_wait=None, callback_url=None,
                   id=None):
-        global lock
-        while lock:
+
+        while self._lock:
             time.sleep(0.1)
+            self.logger.debug("Plugin '{}': Waiting for lock to release...".format(self.get_shortname()))
         try:
-            lock = True
+            self._lock = True
             self.logger.debug("Plugin '{}': Lock set.".format(self.get_shortname()))
             payload = {}
             if nuki_id is not None:
@@ -324,13 +328,14 @@ class Nuki(SmartPlugin):
                                                                                               payload))
             response = requests.get(url=urllib.parse.urljoin(base_url, endpoint), params=payload)
             self.logger.debug("Plugin '{}': finishing API Call to Nuki Bridge at {}.".format(self.get_shortname(), url))
-            response.raise_for_status()
+            self.logger.debug("Plugin '{}': response.raise_for_status: {}".format(self.get_shortname(), response.raise_for_status()))
             return json.loads(response.text)
         except Exception as ex:
             self.logger.error(ex)
         finally:
-            lock = False
-            self.logger.debug("Plugin '{}': Lock removed.".format(self.get_shortname()))
+            self._lock = False
+            self.logger.debug("Plugin '{"
+                              "}': Lock removed.".format(self.get_shortname()))
 
     def get_event_items(self):
         return nuki_event_items
@@ -428,7 +433,7 @@ class NukiWebServiceInterface:
             self.plugin.logger.debug(
                 "Plugin '{pluginname}' - NukiWebServiceInterface: Status Smartlock: ID: {nuki_id} Status: {state_name}".
                 format(pluginname=self.plugin.get_shortname(), nuki_id=nuki_id, state_name=state_name))
-            Nuki.update_lock_state(nuki_id, input_json)
+            self.plugin.update_lock_state(nuki_id, input_json)
         except Exception as err:
             self.plugin.logger.error(
                 "Plugin '{}' - NukiWebServiceInterface: Error parsing nuki response!\nError: {}".format(

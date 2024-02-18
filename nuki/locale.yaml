@@ -23,6 +23,7 @@ plugin_translations:
     'lockAndGoWithUnlatch':  {'de': 'Lock And Go mit Entriegeln', 'en': 'Lock And Go with unlatch'}
     'Possible Lock States':  {'de': 'Mögliche Zustände des Schlosses', 'en': '='}
     'uncalibrated':  {'de': 'unkalibriert', 'en': '='}
+    'API Request Lock':  {'de': '=', 'en': '='}
     'locked':  {'de': 'verschlossen', 'en': '='}
     'unlocking':  {'de': 'aufschließend', 'en': '='}
     'unlocked':  {'de': 'unverschlossen', 'en': '='}
