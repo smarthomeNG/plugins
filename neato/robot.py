@@ -203,7 +203,7 @@ class Robot:
                                                                      'Accept': 'application/vnd.neato.nucleo.v1',
                                                                      'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout, verify=self._verifySSL )
         except requests.exceptions.ConnectionError as e:
-            self.logger.warning("Robot: This test works!: %s" % str(e))
+            self.logger.warning("Robot: Connection error: %s" % str(e))
             return 'error'
         except requests.exceptions.Timeout as e:
             self.logger.warning("Robot: Timeout exception during cloud state request: %s" % str(e))
