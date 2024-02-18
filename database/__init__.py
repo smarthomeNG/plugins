@@ -221,7 +221,7 @@ class Database(SmartPlugin):
             self.logger.debug(item.conf)
             self._buffer_insert(item, [])
             item.series = functools.partial(self._series, item=item.property.path)  # Zur Nutzung im Websocket Plugin
-            item.db = functools.partial(self._single, item=item.property.path)      # Nie genutzt??? -> Doch
+            item.db = functools.partial(self._single, item=item.property.path)      # Zur Nutzung ueber Funktionen in Logiken
             item.dbplugin = self                                           # genutzt zum Zugriff auf die Plugin Instanz z.B. durch Logiken
             if self._db_initialized and self.get_iattr_value(item.conf, 'database').lower() == 'init':
                 if not self._db.lock(5):
