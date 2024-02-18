@@ -1433,12 +1433,13 @@ class Speaker(object):
             for member in self._zone_group_members:
                 self.logger.dbglow(f"****zone_group_members: {member=}")
                 if member is not self:
-                    try:
-                        self.logger.dbghigh(f"zone_group_members(): Unsubscribe av event for uid '{self.uid}' in fct zone_group_members")
-                        member.av_subscription.unsubscribe()
-                    except Exception as e:
-                        self.logger.warning(f"Unsubscribe av event for uid '{self.uid}' in fct zone_group_members caused error {e}")
-                        pass
+                    if member.av_subscription is not None:
+                        try:
+                            self.logger.dbghigh(f"zone_group_members(): Unsubscribe av event for uid '{self.uid}' in fct zone_group_members")
+                            member.av_subscription.unsubscribe()
+                        except Exception as e:
+                            self.logger.warning(f"Unsubscribe av event for uid '{self.uid}' in fct zone_group_members caused exception {e}")
+                            pass
                 else:
                     # Register AV event for coordinator speakers: 
                     #self.logger.dbglow(f"Un/Subscribe av event for uid '{self.uid}' in fct zone_group_members")
@@ -3828,6 +3829,8 @@ class Sonos(SmartPlugin):
         """
         Return zone/speaker name per uid
         """
+        if self.zones is None:
+            return 'not found'
 
         for zone in self.zones:
             if (zone._uid is None) or (uid is None):
@@ -3836,12 +3839,13 @@ class Sonos(SmartPlugin):
                 return zone._player_name
 
     @property
-    def get_rechable_zones(self):
+    def get_reachable_zones(self):
         valid_zones = []
         for zone in self.zones:
             try:
                 uid = zone.uid
-            except:
+            except Exception as e:
+                self.logger.warning(f"DEBUG get_reachable_zones: Exception: {e}")
                 pass
             else:
                 valid_zones.append(zone)
