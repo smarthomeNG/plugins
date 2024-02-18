@@ -170,7 +170,7 @@ class EnOcean(SmartPlugin):
     
     def __init__(self, sh):
         """
-        Initalizes the plugin.
+        Initializes the plugin.
 
         """
 
@@ -182,7 +182,7 @@ class EnOcean(SmartPlugin):
         tx_id = self.get_parameter_value("tx_id")
         if (len(tx_id) < 8):
             self.tx_id = 0
-            self.logger.warning('enocean: No valid enocean stick ID configured. Transmitting is not supported')
+            self.logger.warning('No valid enocean stick ID configured. Transmitting is not supported')
         else:
             self.tx_id = int(tx_id, 16)
             self.logger.info(f"Stick TX ID configured via plugin.conf to: {tx_id}")
@@ -207,7 +207,7 @@ class EnOcean(SmartPlugin):
     def eval_telegram(self, sender_id, data, opt):
         logger_debug = self.logger.isEnabledFor(logging.DEBUG)
         if logger_debug:
-            self.logger.debug("enocean: call function << eval_telegram >>")
+            self.logger.debug("Call function << eval_telegram >>")
         for item in self._items:
             # validate id for item id:
             if item.conf['enocean_id'] == sender_id:
@@ -225,34 +225,34 @@ class EnOcean(SmartPlugin):
                             if logger_debug:
                                 self.logger.debug(f"Resulting value: {value} for {item}")
                             if value:  # not sure about this
-                                item(value, 'EnOcean', 'RADIO')
+                                item(value, self.get_shortname(), 'RADIO')
 
     def _process_packet_type_event(self, data, optional):
         logger_debug = self.logger.isEnabledFor(logging.DEBUG)
         if logger_debug:
-            self.logger.debug("enocean: call function << _process_packet_type_event >>")
+            self.logger.debug("call function << _process_packet_type_event >>")
         event_code = data[0]
         if(event_code == SA_RECLAIM_NOT_SUCCESSFUL):
-            self.logger.error("enocean: SA reclaim was not successful")
+            self.logger.error("SA reclaim was not successful")
         elif(event_code == SA_CONFIRM_LEARN):
-            self.logger.info("enocean: Requesting how to handle confirm/discard learn in/out")
+            self.logger.info("Requesting how to handle confirm/discard learn in/out")
         elif(event_code == SA_LEARN_ACK):
-            self.logger.info("enocean: SA lern acknowledged")
+            self.logger.info("SA lern acknowledged")
         elif(event_code == CO_READY):
-            self.logger.info("enocean: Controller is ready for operation")
+            self.logger.info("Controller is ready for operation")
         elif(event_code == CO_TRANSMIT_FAILED):
-            self.logger.error("enocean: Telegram transmission failed")
+            self.logger.error("Telegram transmission failed")
         elif(event_code == CO_DUTYCYCLE_LIMIT):
-            self.logger.warning("enocean: Duty cycle limit reached")
+            self.logger.warning("Duty cycle limit reached")
         elif(event_code == CO_EVENT_SECUREDEVICES):
-            self.logger.info("enocean: secure device event packet received")
+            self.logger.info("Secure device event packet received")
         else:
-            self.logger.warning("enocean: unknown event packet received")
+            self.logger.warning("Unknown event packet received")
 
     def _rocker_sequence(self, item, sender_id, sequence):
         logger_debug = self.logger.isEnabledFor(logging.DEBUG)
         if logger_debug:
-            self.logger.debug("enocean: call function << _rocker_sequence >>")
+            self.logger.debug("Call function << _rocker_sequence >>")
         try:
             for step in sequence:
                 event, relation, delay = step.split()             
@@ -272,7 +272,7 @@ class EnOcean(SmartPlugin):
                     value = False
                 elif item.conf['enocean_rocker_action'].upper() == "TOGGLE":
                     value = not item()
-            item(value, 'EnOcean', "{:08X}".format(sender_id))
+            item(value, self.get_shortname(), "{:08X}".format(sender_id))
         except Exception as e:
             self.logger.error(f'Error handling enocean_rocker_sequence \"{sequence}\" - {e}'.format(sequence, e))        
 
@@ -338,7 +338,7 @@ class EnOcean(SmartPlugin):
                                 except Exception as e:
                                     self.logger.error(f"Error handling enocean_rocker_sequence: {e}")
                             else:
-                                item(results[rx_key], 'EnOcean', "{:08X}".format(sender_id))
+                                item(results[rx_key], self.get_shortname(), "{:08X}".format(sender_id))
         elif (sender_id <= self.tx_id + 127) and (sender_id >= self.tx_id):
             if logger_debug:
                 self.logger.debug("Received repeated enocean stick message")
@@ -399,7 +399,7 @@ class EnOcean(SmartPlugin):
             if (data[0] == 0) and (len(data) == 2):
                 self.logger.info("Reading LearnMode = 0x{}".format(''.join(['%02x' % b for b in data[1]])))
                 if (len(optional) == 1):
-                    self.logger.info("enocean: learn channel = {}".format(optional[0]))
+                    self.logger.info("Learn channel = {}".format(optional[0]))
             elif (data[0] == 0) and (len(data) == 0):
                 self.logger.error("Reading LearnMode: No answer")
         elif (self._last_packet_type == PACKET_TYPE_COMMON_COMMAND) and (self._last_cmd_code == CO_RD_NUMSECUREDEVICES):
@@ -538,7 +538,7 @@ class EnOcean(SmartPlugin):
         self._log_unknown_msg = not self._log_unknown_msg
     
     def _send_UTE_response(self, data, optional):
-        self.logger.debug("enocean: call function << _send_UTE_response >>")
+        self.logger.debug("Call function << _send_UTE_response >>")
         choice = data[0]
         payload = data[1:-5]
         #sender_id = int.from_bytes(data[-5:-1], byteorder='big', signed=False)
@@ -626,7 +626,10 @@ class EnOcean(SmartPlugin):
         logger_debug = self.logger.isEnabledFor(logging.DEBUG)
         if logger_debug:
             self.logger.debug("Call function << update_item >>")
-        if caller != 'EnOcean':
+
+        #self.logger.warning(f"Debug: update item: caller: {caller}, shortname: {self.get_shortname()}, item: {item.id()}")
+        if caller != self.get_shortname():
+
             if logger_debug:
                 self.logger.debug(f'Item << {item} >> updated externally.')
             if self._block_ext_out_msg:
@@ -648,7 +651,7 @@ class EnOcean(SmartPlugin):
                     self.logger.error(f'tx_eep {tx_eep} is not a string value')
             else:
                 if logger_debug:
-                    self.logger.debug(f'enocean: item << {item} >>has no tx_eep value')
+                    self.logger.debug(f'Item << {item} >>has no tx_eep value')
 
     def read_num_securedivices(self):
         self.logger.debug("Call function << read_num_securedivices >>")
@@ -669,7 +672,7 @@ class EnOcean(SmartPlugin):
         self._send_common_command(CO_WR_RESET)
 
     def block_external_out_messages(self, block=True):
-        self.logger.debug("enocean: call function << block_external_out_messages >>")
+        self.logger.debug("Call function << block_external_out_messages >>")
         if block:
             self.logger.info("Blocking of external out messages activated")
             self._block_ext_out_msg = True
@@ -689,9 +692,9 @@ class EnOcean(SmartPlugin):
             self._block_ext_out_msg = False
 
     def toggle_UTE_mode(self,id_offset=0):
-        self.logger.debug("enocean: toggle UTE mode")
+        self.logger.debug("Toggle UTE mode")
         if self.UTE_listen == True:
-            self.logger.info("enocean: UTE mode deactivated")
+            self.logger.info("UTE mode deactivated")
             self.UTE_listen = False
         elif (id_offset is not None) and not (id_offset == 0):
             self.start_UTE_learnmode(id_offset)
@@ -706,7 +709,7 @@ class EnOcean(SmartPlugin):
         self._send_common_command(CO_RD_VERSION)
 
     def _send_packet(self, packet_type, data=[], optional=[]):
-        #self.logger.debug("enocean: call function << _send_packet >>")
+        #self.logger.debug("Call function << _send_packet >>")
         length_optional = len(optional)
         if length_optional > 255:
             self.logger.error(f"Optional too long ({length_optional} bytes, 255 allowed)")
@@ -752,7 +755,7 @@ class EnOcean(SmartPlugin):
                         self.logger.error(f"Exception occurred during tcm write after successful serial reinit: {e}")
 
     def _send_smart_ack_command(self, _code, data=[]):
-        #self.logger.debug("enocean: call function << _send_smart_ack_command >>")
+        #self.logger.debug("Call function << _send_smart_ack_command >>")
         self._cmd_lock.acquire()
         self._last_cmd_code = _code
         self._last_packet_type = PACKET_TYPE_SMART_ACK_COMMAND
@@ -796,7 +799,7 @@ class EnOcean(SmartPlugin):
 ### --- START - Definitions of Learn Methods --- ###
 ####################################################
     def send_learn_protocol(self, id_offset=0, device=10):
-        self.logger.debug("enocean: call function << send_learn_protocol >>")
+        self.logger.debug("Call function << send_learn_protocol >>")
         # define RORG
         rorg = 0xA5
         
@@ -808,20 +811,20 @@ class EnOcean(SmartPlugin):
         elif (device == 10):
             # Prepare Data for Eltako switch FSR61, Eltako FSVA-230V
             payload = [0xE0, 0x40, 0x0D, 0x80]
-            self.logger.info('enocean: sending learn telegram for switch command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            self.logger.info('Sending learn telegram for switch command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
         # device range 20 - 29 --> Learn protocol for dim actuators
         elif (device == 20):
             # Only for Eltako FSUD-230V
             payload = [0x02, 0x00, 0x00, 0x00]
-            self.logger.info('enocean: sending learn telegram for dim command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            self.logger.info('Sending learn telegram for dim command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
         elif (device == 21):
             # For Eltako FHK61SSR dim device (EEP A5-38-08)
             payload = [0xE0, 0x40, 0x0D, 0x80]
-            self.logger.info('enocean: sending learn telegram for dim command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            self.logger.info('Sending learn telegram for dim command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
         elif (device == 22):
             # For Eltako FRGBW71L RGB dim devices (EEP 07-3F-7F)
             payload = [0xFF, 0xF8, 0x0D, 0x87]
-            self.logger.info('enocean: sending learn telegram for rgbw dim command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            self.logger.info('Sending learn telegram for rgbw dim command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
         # device range 30 - 39 --> Learn protocol for radiator valves
         elif (device == 30):
             # Radiator Valve
@@ -880,7 +883,7 @@ class EnOcean(SmartPlugin):
 ### --- START - Calc CRC8 --- ###
 #################################
     def _calc_crc8(self, msg, crc=0):
-        #self.logger.debug("enocean: call function << _calc_crc8 >>")
+        #self.logger.debug("Call function << _calc_crc8 >>")
         for i in msg:
             crc = FCSTAB[crc ^ i]
         return crc
