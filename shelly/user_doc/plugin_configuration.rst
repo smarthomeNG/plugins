@@ -117,7 +117,7 @@ Ermitteln der unterstützten Status Attribute
 Um die Attribute zu ermitteln, die ein Shelly Device sendet (also Attribute, die einen Status des Devices übermitteln),
 muss folgendermaßen vorgegangen werden:
 
-- Ein Item konfigurieren, welches nur die folgenden zwei Attribute bsitzt:
+- Ein Item konfigurieren, welches nur die folgenden zwei Attribute besitzt:
 
 .. code-block:: yaml
 
@@ -128,11 +128,11 @@ muss folgendermaßen vorgegangen werden:
 Außerdem muß der Logger **plugins.shelly** auf den Level INFO konfiguriert werden. Anschließend werden dann die
 Attribute, wenn sie vom Shelly Device gesendet werden, in das **smarthome-details.log** geschrieben.
 Die Logeinträge enthalten den Namen des Attributes, optional den Namen der Gruppe und den Typ, den das SmartHomeNG Item
-haben muß. Falls der Typ **num** ist, wird als Zusatzinfo geloggt, ob der vom Device gelieferte Wert in Integer oder
+haben muß. Falls der Typ **num** ist, wird als Zusatzinfo geloggt, ob der vom Device gelieferte Wert ein Integer oder
 ein Float Wert ist.
 
-Das kann einige Zeit in Anspruch nehmen, da die Devices nicht ständig alle Attribute senden und einige Batterie
-betriebene Devices zum Teil mehrere Stunden schweigen (z.B.Shelly Plus H&T), oder wie der Shelly Button1 nur senden,
+Das kann einige Zeit in Anspruch nehmen, da die Devices nicht ständig alle Attribute senden und einige batteriebetriebene
+Devices zum Teil mehrere Stunden schweigen (z.B.Shelly Plus H&T), oder wie der Shelly Button1 nur senden,
 wenn der Button gedrückt wird.
 
 Einige Devices senden den Status eines Attributes auch nur bei einer Änderung des Zustandes

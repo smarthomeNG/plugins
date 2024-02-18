@@ -298,7 +298,12 @@ class Shelly(MqttPlugin):
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
             config_data = self.get_item_config(item)
-            device_data = self.shelly_devices.get(config_data['shelly_id'], None)
+            try:
+                device_data = self.shelly_devices.get(config_data['shelly_id'], None)
+            except:
+                self.logger.warning(f"update_item: Exception occurred. Shelly ID not known yet. Cannot update item {item.id()}")
+                return
+
             self.logger.dbghigh(f"update_item: '{item.property.path}' setting device to '{item()}' - config_data={config_data} - device_data={device_data}")
 
             if config_data.get('gen', None) == '1':
