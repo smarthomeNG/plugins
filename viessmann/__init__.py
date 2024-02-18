@@ -265,7 +265,7 @@ class Viessmann(SmartPlugin):
         :param dest: if given it represents the dest
         '''
         if self.alive and caller != self.get_shortname():
-            self.logger.info(f'Update item: {item.id()}, item has been changed outside this plugin')
+            self.logger.info(f'Update item: {item.property.path}, item has been changed outside this plugin')
             self.logger.debug(f'update_item was called with item {item} from caller {caller}, source {source} and dest {dest}')
 
             if self.has_iattr(item.conf, 'viess_send'):

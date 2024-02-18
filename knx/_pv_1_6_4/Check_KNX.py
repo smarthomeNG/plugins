@@ -130,7 +130,7 @@ if os.path.isfile(esf):
     
     max_len_id = 0
     for item in sh.return_items():
-        len_id = len(item.id())
+        len_id = len(item.property.path)
         if len_id > max_len_id:
             max_len_id = len_id
     
@@ -146,7 +146,7 @@ if os.path.isfile(esf):
     item_ga = {}
     
     for item in sh.return_items():
-        item_prefix = fmtStrg.format(item.id())
+        item_prefix = fmtStrg.format(item.property.path)
         item_prefix += "{1}{0:>10}".format(item.type(), sep)
             
         if "knx_dpt" in item.conf:
@@ -169,7 +169,7 @@ if os.path.isfile(esf):
                                 ets_name = " in ETS unbekannt"
 
                             to_add = {
-                                'item_path':item.id(),
+                                'item_path':item.property.path,
                                 'item_type':item.type(),
                                 'dpt':item.conf["knx_dpt"],
                                 'bind_type':ct}
@@ -194,7 +194,7 @@ if os.path.isfile(esf):
                             ets_name = " in ETS unbekannt"
 
                         to_add = {
-                            'item_path':item.id(),
+                            'item_path':item.property.path,
                             'item_type':item.type(),
                             'dpt':item.conf["knx_dpt"],
                             'bind_type':ct}

@@ -94,7 +94,7 @@ class Sml(SmartPlugin):
             if prop not in self._items[obis]:
                 self._items[obis][prop] = []
             self._items[obis][prop].append(item)
-            self.logger.debug('attach {} {} {}'.format(item.id(), obis, prop))
+            self.logger.debug('attach {} {} {}'.format(item.property.path, obis, prop))
             return self.update_item
         return None
 

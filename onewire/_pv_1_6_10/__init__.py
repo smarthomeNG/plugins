@@ -272,7 +272,7 @@ class OneWire(SmartPlugin):
                     path = self._ios[addr][key]['path']
                     if path is None:
                         if debugLog:
-                            self.logger.debug("1-Wire: path not found for {0}".format(item.id()))
+                            self.logger.debug("1-Wire: path not found for {0}".format(item.property.path))
                         continue
                     try:
                         # the following can take a while so if in the meantime the plugin should stop we can abort this process here
@@ -375,7 +375,7 @@ class OneWire(SmartPlugin):
                 path = self._sensors[addr][key]['path']
                 if path is None:
                     if debugLog:
-                        self.logger.debug("1-Wire: path not found for {0}".format(item.id()))
+                        self.logger.debug("1-Wire: path not found for {0}".format(item.property.path))
                     continue
                 try:
                     value = self.owbase.read('/uncached' + path).decode()
@@ -559,13 +559,13 @@ class OneWire(SmartPlugin):
             return
         if not self.has_iattr(item.conf, 'ow_sensor'):
             if warningLog:
-                self.logger.warning("1-Wire: No ow_sensor for {0} defined".format(item.id()))
+                self.logger.warning("1-Wire: No ow_sensor for {0} defined".format(item.property.path))
             return
             
         addr = self.get_iattr_value(item.conf,'ow_addr')
         key = self.get_iattr_value(item.conf,'ow_sensor')
         if debugLog:
-            self.logger.debug("1-Wire: ow_sensor '{1}' with ow_addr '{2}' for item '{0}' defined".format(item.id(), key, addr))
+            self.logger.debug("1-Wire: ow_sensor '{1}' with ow_addr '{2}' for item '{0}' defined".format(item.property.path, key, addr))
 
         # check the compliance with regular sensor address definitions
         while True:
@@ -595,7 +595,7 @@ class OneWire(SmartPlugin):
         elif key == 'B':
             table = self._ibuttons
         elif key == 'BM':
-            self._ibutton_masters[addr] = item.id()
+            self._ibutton_masters[addr] = item.property.path
             return
         else:
             table = self._sensors
@@ -603,7 +603,7 @@ class OneWire(SmartPlugin):
         if key not in self._supported:  # unknown key
             path = '/' + addr + '/' + key
             if self.logger.isEnabledFor(logging.INFO):
-                self.logger.info("1-Wire: unknown sensor specified for {0} using path: {1}".format(item.id(), path))
+                self.logger.info("1-Wire: unknown sensor specified for {0} using path: {1}".format(item.property.path, path))
         else:
             path = None
             if key == 'VOC':
@@ -625,7 +625,7 @@ class OneWire(SmartPlugin):
         if caller != self.get_shortname():
             try:
                 # code to execute, only if the item has not been changed by this plugin:
-                self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.id()))
+                self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.property.path))
                 self.owbase.write(item._ow_path['path'], self._flip[item()])
             except Exception as e:
                 self.logger.warning("1-Wire: problem setting output {0}: {1}".format(item._ow_path['path'], e))

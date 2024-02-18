@@ -194,7 +194,7 @@ class Sml2(SmartPlugin):
                 self._items[obis][prop] = []
             self._items[obis][prop].append(item)
             self._item_dict[item] = (obis, prop)
-            self.logger.debug(f'Attach {item.id()} with {obis=} and {prop=}')
+            self.logger.debug(f'Attach {item.property.path} with {obis=} and {prop=}')
         return None
 
     def parse_logic(self, logic):
@@ -215,7 +215,7 @@ class Sml2(SmartPlugin):
         """
         if caller != self.get_shortname():
             # Code to execute, only if the item has not been changed by this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
             pass
 
     def connect(self):

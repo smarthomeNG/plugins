@@ -162,7 +162,7 @@ class Tasmota(MqttPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, 'tasmota_topic'):
-            self.logger.debug(f"parsing item: {item.id()}")
+            self.logger.debug(f"parsing item: {item.property.path}")
 
             tasmota_topic = self.get_iattr_value(item.conf, 'tasmota_topic')
             tasmota_attr = self.get_iattr_value(item.conf, 'tasmota_attr')
@@ -173,7 +173,7 @@ class Tasmota(MqttPlugin):
                 try:
                     tasmota_zb_device = int(tasmota_zb_device)
                     self.logger.warning(
-                        f"Probably for item {item.id()} the device short name as been used for attribute 'tasmota_zb_device'. Trying to make that work but it will cause exceptions. To prevent this, the short name need to be defined as string by using parentheses")
+                        f"Probably for item {item.property.path} the device short name as been used for attribute 'tasmota_zb_device'. Trying to make that work but it will cause exceptions. To prevent this, the short name need to be defined as string by using parentheses")
                     tasmota_zb_device = str(hex(tasmota_zb_device))
                     tasmota_zb_device = tasmota_zb_device[0:2] + tasmota_zb_device[2:len(tasmota_zb_device)].upper()
                 except Exception:
@@ -238,7 +238,7 @@ class Tasmota(MqttPlugin):
         :param dest:    if given it represents the dest
         :param dest:    str
         """
-        self.logger.debug(f"update_item: {item.id()}")
+        self.logger.debug(f"update_item: {item.property.path}")
 
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped  AND only, if the item has not been changed by this this plugin:
@@ -257,7 +257,7 @@ class Tasmota(MqttPlugin):
 
             if tasmota_attr in ['relay', 'hsb', 'white', 'ct', 'rf_send', 'rf_key_send', 'zb_permit_join']:
                 self.logger.info(
-                    f"update_item: {item.id()}, item has been changed in SmartHomeNG outside of this plugin in {caller} with value {item()}")
+                    f"update_item: {item.property.path}, item has been changed in SmartHomeNG outside of this plugin in {caller} with value {item()}")
                 value = None
                 bool_values = None
                 if tasmota_attr == 'relay':
@@ -366,7 +366,7 @@ class Tasmota(MqttPlugin):
 
             elif tasmota_zb_attr in ['power', 'hue', 'sat', 'ct', 'dimmer']:
                 self.logger.info(
-                    f"update_item: {item.id()}, item has been changed in SmartHomeNG outside of this plugin in {caller} with value {item()}")
+                    f"update_item: {item.property.path}, item has been changed in SmartHomeNG outside of this plugin in {caller} with value {item()}")
                 payload = {}
                 bool_values = None
                 # Topic: cmnd/<your_device_topic>/ZbSend  //  Payload: {"Device":"0x0A22","Send":{"Power":0}}
@@ -421,7 +421,7 @@ class Tasmota(MqttPlugin):
 
             else:
                 self.logger.warning(
-                    f"update_item: {item.id()}, trying to change item in SmartHomeNG that is read only in tasmota device (by {caller})")
+                    f"update_item: {item.property.path}, trying to change item in SmartHomeNG that is read only in tasmota device (by {caller})")
 
     def poll_device(self):
         """
@@ -811,7 +811,7 @@ class Tasmota(MqttPlugin):
                 if item is not None:
                     item(value, self.get_shortname(), src)
                     self.logger.info(
-                        f"{tasmota_topic}: Item '{item.id()}' via itemtype '{itemtype} set to value {value} provided by {src} '.")
+                        f"{tasmota_topic}: Item '{item.property.path}' via itemtype '{itemtype} set to value {value} provided by {src} '.")
                 else:
                     self.logger.info(
                         f"{tasmota_topic}: No item for itemtype '{itemtype}' defined to set to {value} provided by {src}.")

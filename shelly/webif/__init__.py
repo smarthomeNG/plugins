@@ -93,7 +93,7 @@ class WebInterface(MqttPluginWebIf):
             item_list = []
             for item in self.plugin.get_item_list():
                 value_dict = {}
-                value_dict['path'] = item.id()
+                value_dict['path'] = item.property.path
                 value_dict['type'] = item.type()
                 value_dict['shelly_type'] = self.plugin.get_shelly_device_from_item( item ).get('app', '')
                 value_dict['shelly_id']  = self.plugin.get_iattr_value(item.conf, 'shelly_id')

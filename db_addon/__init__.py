@@ -409,11 +409,11 @@ class DatabaseAddOn(SmartPlugin):
                 required_params = []
 
             if required_params is None:
-                self.logger.warning(f"For calculating '{db_addon_fct}' at Item '{item.path()}' no mandatory parameters given.")
+                self.logger.warning(f"For calculating '{db_addon_fct}' at Item '{item.property.path}' no mandatory parameters given.")
                 return
 
             if required_params and None in required_params:
-                self.logger.warning(f"For calculating '{db_addon_fct}' at Item '{item.path()}' not all mandatory parameters given. Definitions are: {func=}, {timeframe=}, {timedelta=}, {start=}, {end=}, {group=}, {group2=}, {data_con_func=}")
+                self.logger.warning(f"For calculating '{db_addon_fct}' at Item '{item.property.path}' not all mandatory parameters given. Definitions are: {func=}, {timeframe=}, {timedelta=}, {start=}, {end=}, {group=}, {group2=}, {data_con_func=}")
                 return
 
             # create dict and reduce dict to keys with value != None
@@ -478,7 +478,7 @@ class DatabaseAddOn(SmartPlugin):
                 possible_params = ['start', 'end', 'group', 'group2', 'ignore_value_list', 'use_oldest_entry']
 
             if required_params and not any(param in db_addon_params for param in required_params):
-                self.logger.warning(f"Item '{item.path()}' with {db_addon_fct=} ignored, since not all mandatory parameters in {db_addon_params=} are given. Item will be ignored.")
+                self.logger.warning(f"Item '{item.property.path}' with {db_addon_fct=} ignored, since not all mandatory parameters in {db_addon_params=} are given. Item will be ignored.")
                 return
 
             # reduce dict to possible keys + required_params
@@ -499,10 +499,10 @@ class DatabaseAddOn(SmartPlugin):
             for i in range(3):
                 if self.has_iattr(_lookup_item.conf, 'db_addon_database_item'):
                     if self.debug_log.parse:
-                        self.logger.debug(f"Attribut 'db_addon_database_item' for item='{item.path()}' has been found {i} level above item at '{_lookup_item.path()}'.")
+                        self.logger.debug(f"Attribut 'db_addon_database_item' for item='{item.property.path}' has been found {i} level above item at '{_lookup_item.property.path}'.")
                     _database_item_path = self.get_iattr_value(_lookup_item.conf, 'db_addon_database_item')
                     if self.debug_log.parse:
-                        self.logger.debug(f"{_database_item_path=}, {_lookup_item.path()}")
+                        self.logger.debug(f"{_database_item_path=}, {_lookup_item.property.path}")
                     return _database_item_path, _lookup_item
                 else:
                     _lookup_item = _lookup_item.return_parent()
@@ -519,7 +519,7 @@ class DatabaseAddOn(SmartPlugin):
             for i in range(2):
                 if self.has_iattr(_lookup_item.conf, self.item_attribute_search_str):
                     if self.debug_log.parse:
-                        self.logger.debug(f"Attribut '{self.item_attribute_search_str}' for item='{item.path()}'  has been found {i + 1} level above item at '{_lookup_item.path()}'.")
+                        self.logger.debug(f"Attribut '{self.item_attribute_search_str}' for item='{item.property.path}'  has been found {i + 1} level above item at '{_lookup_item.property.path}'.")
                     return _lookup_item
                 else:
                     _lookup_item = _lookup_item.return_parent()
@@ -571,7 +571,7 @@ class DatabaseAddOn(SmartPlugin):
                         max_values[op].append(value)
 
             if self.debug_log.parse:
-                self.logger.debug(f"Summarized 'ignore_value_list' for item {item.path()}: {db_addon_ignore_value_list_formatted}")
+                self.logger.debug(f"Summarized 'ignore_value_list' for item {item.property.path}: {db_addon_ignore_value_list_formatted}")
 
             if not db_addon_ignore_value_list_formatted:
                 return
@@ -580,7 +580,7 @@ class DatabaseAddOn(SmartPlugin):
                 return db_addon_ignore_value_list_formatted
 
             if self.debug_log.parse:
-                self.logger.debug(f"Optimizing 'ignore_value_list' for item {item.path()} active.")
+                self.logger.debug(f"Optimizing 'ignore_value_list' for item {item.property.path} active.")
 
             # find low
             lower_value_list = max_values['<'] + max_values['<=']
@@ -611,7 +611,7 @@ class DatabaseAddOn(SmartPlugin):
                         db_addon_ignore_value_list_optimized.append(f'!= {v}')
 
             if self.debug_log.parse:
-                self.logger.debug(f"Optimized 'ignore_value_list' for item {item.path()}: {db_addon_ignore_value_list_optimized}")
+                self.logger.debug(f"Optimized 'ignore_value_list' for item {item.property.path}: {db_addon_ignore_value_list_optimized}")
 
             return db_addon_ignore_value_list_optimized
 
@@ -619,7 +619,7 @@ class DatabaseAddOn(SmartPlugin):
         if self.has_iattr(item.conf, 'db_addon_fct'):
 
             if self.debug_log.parse:
-                self.logger.debug(f"parse item: {item.path()} due to 'db_addon_fct'")
+                self.logger.debug(f"parse item: {item.property.path} due to 'db_addon_fct'")
 
             # get db_addon_fct attribute value
             db_addon_fct = self.get_iattr_value(item.conf, 'db_addon_fct').lower()
@@ -645,7 +645,7 @@ class DatabaseAddOn(SmartPlugin):
             db_addon_ignore_value_list = self.get_iattr_value(database_item_definition_item.conf, 'db_addon_ignore_value_list')  # ['> 0', '< 35']
             db_addon_ignore_value = self.get_iattr_value(database_item_definition_item.conf, 'db_addon_ignore_value')  # num
             if database_item is None:
-                self.logger.warning(f"No database item found for item={item.path()}: Item ignored. Maybe you should check instance of database plugin.")
+                self.logger.warning(f"No database item found for item={item.property.path}: Item ignored. Maybe you should check instance of database plugin.")
                 return
             else:
                 if self.debug_log.parse:
@@ -658,12 +658,12 @@ class DatabaseAddOn(SmartPlugin):
             if db_addon_ignore_value:
                 db_addon_ignore_value_list.append(f"!= {db_addon_ignore_value}")
 
-            if any(x in str(item.path()) for x in self.ignore_0):
+            if any(x in str(item.property.path) for x in self.ignore_0):
                 db_addon_ignore_value_list.append("!= 0")
 
             if self.value_filter:
                 for entry in list(self.value_filter.keys()):
-                    if entry in str(item.path()):
+                    if entry in str(item.property.path):
                         db_addon_ignore_value_list.extend(self.value_filter[entry])
 
             if db_addon_ignore_value_list:
@@ -677,11 +677,11 @@ class DatabaseAddOn(SmartPlugin):
             if isinstance(database_item, str):
                 item_config_data_dict.update({'database_item_path': True})
             else:
-                database_item = database_item.path()
+                database_item = database_item.property.path
 
             # do logging
             if self.debug_log.parse:
-                self.logger.debug(f"Item={item.path()} added with db_addon_fct={db_addon_fct} and database_item={database_item}")
+                self.logger.debug(f"Item={item.property.path} added with db_addon_fct={db_addon_fct} and database_item={database_item}")
 
             # add type (onchange or ondemand) to item dict
             item_config_data_dict.update({'on': item_attribute_dict['on']})
@@ -702,7 +702,7 @@ class DatabaseAddOn(SmartPlugin):
 
             # do logging
             if self.debug_log.parse:
-                self.logger.debug(f"Item '{item.path()}' added to be run {item_config_data_dict['cycle']}.")
+                self.logger.debug(f"Item '{item.property.path}' added to be run {item_config_data_dict['cycle']}.")
 
             # create item config for item to be run on startup
             if db_addon_startup or item_attribute_dict['cat'] == 'gen':
@@ -716,20 +716,20 @@ class DatabaseAddOn(SmartPlugin):
         # handle all items with db_addon_info
         elif self.has_iattr(item.conf, 'db_addon_info'):
             if self.debug_log.parse:
-                self.logger.debug(f"parse item={item.path()} due to used item attribute 'db_addon_info'")
+                self.logger.debug(f"parse item={item.property.path} due to used item attribute 'db_addon_info'")
             self.add_item(item, config_data_dict={'db_addon': 'info', 'db_addon_fct': f"info_{self.get_iattr_value(item.conf, 'db_addon_info').lower()}", 'database_item': None, 'startup': True})
 
         # handle all items with db_addon_admin
         elif self.has_iattr(item.conf, 'db_addon_admin'):
             if self.debug_log.parse:
-                self.logger.debug(f"parse item={item.path()} due to used item attribute 'db_addon_admin'")
+                self.logger.debug(f"parse item={item.property.path} due to used item attribute 'db_addon_admin'")
             self.add_item(item, config_data_dict={'db_addon': 'admin', 'db_addon_fct': f"admin_{self.get_iattr_value(item.conf, 'db_addon_admin').lower()}", 'database_item': None})
             return self.update_item
 
         # Reference to 'update_item' für alle Items mit Attribut 'database', um die on_change Items zu berechnen
         elif self.has_iattr(item.conf, self.item_attribute_search_str) and has_db_addon_item():
             if self.debug_log.parse:
-                self.logger.debug(f"reference to update_item for item={item.path()} will be set due to onchange")
+                self.logger.debug(f"reference to update_item for item={item.property.path} will be set due to onchange")
             self.add_item(item, config_data_dict={'db_addon': 'database'})
             return self.update_item
 
@@ -753,7 +753,7 @@ class DatabaseAddOn(SmartPlugin):
                 if self.suspended:
                     self.logger.info(f"Plugin is suspended. No updated will be processed.")
                 else:
-                    self.logger.debug(f" Updated Item {item.path()} with value {item()} will be put to queue in approx. {self.onchange_delay_time}s resp. after startup.")
+                    self.logger.debug(f" Updated Item {item.property.path} with value {item()} will be put to queue in approx. {self.onchange_delay_time}s resp. after startup.")
                     self.update_item_delay_deque.append([item, item(), int(time.time() + self.onchange_delay_time)])
 
             # handle admin items
@@ -857,7 +857,7 @@ class DatabaseAddOn(SmartPlugin):
         def clean_items_1(d):
             n_d = {}
             for item in d:
-                n_d[item.path()] = d[item]
+                n_d[item.property.path] = d[item]
             return n_d
 
         def clean_items_2(d):
@@ -865,7 +865,7 @@ class DatabaseAddOn(SmartPlugin):
             for timeframe in d:
                 n_d[timeframe] = {}
                 for item in d[timeframe]:
-                    n_d[timeframe][item.path()] = d[timeframe][item]
+                    n_d[timeframe][item.property.path] = d[timeframe][item]
             return n_d
 
         self._save_pickle({'current_values': clean_items_2(self.current_values),
@@ -1009,12 +1009,12 @@ class DatabaseAddOn(SmartPlugin):
             else:
                 if isinstance(queue_entry, tuple):
                     item, value = queue_entry
-                    self.logger.info(f"# {self.item_queue.qsize() + 1} item(s) to do. || 'onchange' item={item.path()} with {value=} will be processed.")
-                    self.active_queue_item = str(item.path())
+                    self.logger.info(f"# {self.item_queue.qsize() + 1} item(s) to do. || 'onchange' item={item.property.path} with {value=} will be processed.")
+                    self.active_queue_item = str(item.property.path)
                     self.handle_onchange(item, value)
                 else:
-                    self.logger.info(f"# {self.item_queue.qsize() + 1} item(s) to do. || 'on-demand' item={queue_entry.path()} will be processed.")
-                    self.active_queue_item = str(queue_entry.path())
+                    self.logger.info(f"# {self.item_queue.qsize() + 1} item(s) to do. || 'on-demand' item={queue_entry.property.path} will be processed.")
+                    self.active_queue_item = str(queue_entry.property.path)
                     self.handle_ondemand(queue_entry)
 
     def work_update_item_delay_deque(self):
@@ -1024,7 +1024,7 @@ class DatabaseAddOn(SmartPlugin):
             update_time = self.update_item_delay_deque[0][2]
             if update_time <= int(time.time()):
                 [item, value, *_] = self.update_item_delay_deque.popleft()
-                self.logger.info(f"+ Updated item '{item.path()}' with value {item()} is now due to be put to queue for processing. {self.item_queue.qsize() + 1} items to do.")
+                self.logger.info(f"+ Updated item '{item.property.path}' with value {item()} is now due to be put to queue for processing. {self.item_queue.qsize() + 1} items to do.")
                 self.item_queue.put((item, value))
             else:
                 self.logger.debug(f"Remaining {len(self.update_item_delay_deque)} items in deque are not due, yet.")
@@ -1040,7 +1040,7 @@ class DatabaseAddOn(SmartPlugin):
         # get parameters
         item_config = self.get_item_config(item)
         if self.debug_log.ondemand:
-            self.logger.debug(f"Item={item.path()} with {item_config=}")
+            self.logger.debug(f"Item={item.property.path} with {item_config=}")
         db_addon_fct = item_config['db_addon_fct']
         database_item = item_config['database_item']
         query_params = item_config.get('query_params')
@@ -1058,7 +1058,7 @@ class DatabaseAddOn(SmartPlugin):
             result = self._handle_verbrauch(params)
 
             if result and result < 0:
-                self.logger.info(f"Result of item {item.path()} with {db_addon_fct=} was negative. Something seems to be wrong.")
+                self.logger.info(f"Result of item {item.property.path} with {db_addon_fct=} was negative. Something seems to be wrong.")
 
         # handle 'serie_verbrauch'
         elif db_addon_fct in SERIE_ATTRIBUTES_VERBRAUCH:
@@ -1113,14 +1113,14 @@ class DatabaseAddOn(SmartPlugin):
 
         # log result
         if self.debug_log.ondemand:
-            self.logger.debug(f"result is {result} for item '{item.path()}' with '{db_addon_fct=}'")
+            self.logger.debug(f"result is {result} for item '{item.property.path}' with '{db_addon_fct=}'")
 
         if result is None:
             self.logger.info(f"  Result was None; No item value will be set.")
             return
 
         # set item value and put data into plugin_item_dict
-        self.logger.info(f"  Item value for '{item.path()}' will be set to {result}")
+        self.logger.info(f"  Item value for '{item.property.path}' will be set to {result}")
         item_config = self.get_item_config(item)
         item_config.update({'value': result})
         item(result, self.get_shortname())
@@ -1138,7 +1138,7 @@ class DatabaseAddOn(SmartPlugin):
             init = False
 
             if self.debug_log.onchange:
-                self.logger.debug(f"'minmax' Item={updated_item.path()} with {func=} and {timeframe=} detected. Check for update of cache_dicts {cache_dict=} and item value.")
+                self.logger.debug(f"'minmax' Item={updated_item.property.path} with {func=} and {timeframe=} detected. Check for update of cache_dicts {cache_dict=} and item value.")
 
             # make sure, that database item is in cache dict
             if database_item not in cache_dict:
@@ -1148,14 +1148,14 @@ class DatabaseAddOn(SmartPlugin):
             cached_value = cache_dict[database_item].get(func)
             if cached_value is None:
                 if self.debug_log.onchange:
-                    self.logger.debug(f"{func} value for {timeframe=} of item={updated_item.path()} not in cache dict. Query database.")
+                    self.logger.debug(f"{func} value for {timeframe=} of item={updated_item.property.path} not in cache dict. Query database.")
 
                 query_params = {'func': func, 'database_item': database_item, 'timeframe': timeframe, 'start': 0, 'end': 0, 'ignore_value_list': ignore_value_list, 'use_oldest_entry': True}
                 cached_value = self._query_item(**query_params)[0][1]
 
                 if cached_value is None:
                     if self.debug_log.onchange:
-                        self.logger.debug(f"{func} value for {timeframe=} of item={updated_item.path()} not available in database. Abort calculation.")
+                        self.logger.debug(f"{func} value for {timeframe=} of item={updated_item.property.path} not available in database. Abort calculation.")
                     return
 
                 init = True
@@ -1163,7 +1163,7 @@ class DatabaseAddOn(SmartPlugin):
             # if value not given
             if init:
                 if self.debug_log.onchange:
-                    self.logger.debug(f"initial {func} value for {timeframe=} of item={item.path()} with will be set to {cached_value}")
+                    self.logger.debug(f"initial {func} value for {timeframe=} of item={item.property.path} with will be set to {cached_value}")
                 cache_dict[database_item][func] = cached_value
                 return cached_value
 
@@ -1190,25 +1190,25 @@ class DatabaseAddOn(SmartPlugin):
             cache_dict = self.previous_values[timeframe]
 
             if self.debug_log.onchange:
-                self.logger.debug(f"'verbrauch' item {updated_item.path()} with {func=} and {value=} detected. Check for update of cache_dicts {cache_dict=} and item value.")
+                self.logger.debug(f"'verbrauch' item {updated_item.property.path} with {func=} and {value=} detected. Check for update of cache_dicts {cache_dict=} and item value.")
 
             # get _cached_value for value at end of last period; if not already cached, create cache
             cached_value = cache_dict.get(database_item)
             if cached_value is None:
                 if self.debug_log.onchange:
-                    self.logger.debug(f"Most recent value for last {timeframe=} of item={updated_item.path()} not in cache dict. Query database.")
+                    self.logger.debug(f"Most recent value for last {timeframe=} of item={updated_item.property.path} not in cache dict. Query database.")
 
                 # try to get most recent value of last timeframe, assuming that this is the value at end of last timeframe
                 query_params = {'database_item': database_item, 'timeframe': timeframe, 'start': 1, 'end': 1, 'ignore_value_list': ignore_value_list, 'use_oldest_entry': True}
                 cached_value = self._handle_zaehlerstand(query_params)
 
                 if cached_value is None:
-                    self.logger.info(f"Most recent value for last {timeframe} of item={updated_item.path()} not available in database. Abort calculation.")
+                    self.logger.info(f"Most recent value for last {timeframe} of item={updated_item.property.path} not available in database. Abort calculation.")
                     return
 
                 cache_dict[database_item] = cached_value
                 if self.debug_log.onchange:
-                    self.logger.debug(f"Value for Item={updated_item.path()} at end of last {timeframe} not in cache dict. Value={cached_value} has been added.")
+                    self.logger.debug(f"Value for Item={updated_item.property.path} at end of last {timeframe} not in cache dict. Value={cached_value} has been added.")
 
             # calculate value, set item value, put data into plugin_item_dict
             _new_value = value - cached_value
@@ -1221,7 +1221,7 @@ class DatabaseAddOn(SmartPlugin):
                 return result[0][1]
 
         if self.debug_log.onchange:
-            self.logger.debug(f"called with updated_item={updated_item.path()} and value={value}.")
+            self.logger.debug(f"called with updated_item={updated_item.property.path} and value={value}.")
 
         relevant_item_list = set(self.get_item_list('database_item', updated_item)) & set(self.get_item_list('on', 'change'))
 
@@ -1231,7 +1231,7 @@ class DatabaseAddOn(SmartPlugin):
         for item in relevant_item_list:
             item_config = self.get_item_config(item)
             if self.debug_log.onchange:
-                self.logger.debug(f"Item={item.path()} with {item_config=}")
+                self.logger.debug(f"Item={item.property.path} with {item_config=}")
             db_addon_fct = item_config['db_addon_fct']
             database_item = item_config['database_item']
             timeframe = item_config['query_params']['timeframe']
@@ -1260,7 +1260,7 @@ class DatabaseAddOn(SmartPlugin):
             if new_value is None:
                 continue
 
-            self.logger.info(f"  Item value for '{item.path()}' with func={func} will be set to {new_value}")
+            self.logger.info(f"  Item value for '{item.property.path}' with func={func} will be set to {new_value}")
             item_config = self.get_item_config(item)
             item_config.update({'value': new_value})
             item(new_value, self.get_shortname())
@@ -1273,7 +1273,7 @@ class DatabaseAddOn(SmartPlugin):
             database_item = self.items.return_item(database_item_path)
 
             if database_item is None:
-                self.logger.warning(f"Database-Item for Item with config item path for Database-Item {database_item_path!r} not found. Item '{item.path()}' will be removed from plugin.")
+                self.logger.warning(f"Database-Item for Item with config item path for Database-Item {database_item_path!r} not found. Item '{item.property.path}' will be removed from plugin.")
                 self.remove_item(item)
             else:
                 item_config.update({'database_item': database_item})
@@ -1949,7 +1949,7 @@ class DatabaseAddOn(SmartPlugin):
         if not year or year == 'current':
             year = today.year
         elif not self._valid_year(year):
-            self.logger.error(f"Year for item={database_item.path()} was {year}. This is not a valid year. Aborting...")
+            self.logger.error(f"Year for item={database_item.property.path} was {year}. This is not a valid year. Aborting...")
             return
 
         # define start_date, end_date
@@ -1961,12 +1961,12 @@ class DatabaseAddOn(SmartPlugin):
             start_date = datetime.date(int(year), int(month), 1)
             end_date = start_date + relativedelta(months=+1) - datetime.timedelta(days=1)
         else:
-            self.logger.error(f"Month for item={database_item.path()} was {month}. This is not a valid month. Aborting...")
+            self.logger.error(f"Month for item={database_item.property.path} was {month}. This is not a valid month. Aborting...")
             return
 
         # check start_date
         if start_date > today:
-            self.logger.info(f"Start time for query of item={database_item.path()} is in future. Aborting...")
+            self.logger.info(f"Start time for query of item={database_item.property.path} is in future. Aborting...")
             return
 
         # define start / end
@@ -1975,7 +1975,7 @@ class DatabaseAddOn(SmartPlugin):
 
         # check end
         if start < end:
-            self.logger.error(f"End time for query of item={database_item.path()} is before start time. Aborting...")
+            self.logger.error(f"End time for query of item={database_item.property.path} is before start time. Aborting...")
             return
             
         # get raw data as list
@@ -2069,7 +2069,7 @@ class DatabaseAddOn(SmartPlugin):
             return _value_list
 
         if self.debug_log.prepare:
-            self.logger.debug(f'called with database_item={database_item.path()}, {timeframe=}, {start=}, {end=}, {ignore_value_list=}, {data_con_func=}')
+            self.logger.debug(f'called with database_item={database_item.property.path}, {timeframe=}, {start=}, {end=}, {ignore_value_list=}, {data_con_func=}')
 
         if data_con_func not in ('min', 'max', 'avg', 'minmax', 'first', 'avg_day', 'avg_hour', 'minmax_day', 'minmax_hour', 'first_day', 'first_hour', 'first_hour_avg_day', 'avg_hour_avg_day', 'min_hour', 'min_day', 'max_hour', 'max_day'):
             self.logger.warning(f"defined {data_con_func=} for _prepare_value_list unknown. Need to be 'avg', 'minmax', 'first', 'avg_day', 'avg_hour', 'minmax_day', 'minmax_hour', 'first_day','first_hour', 'first_hour_avg_day' or 'avg_hour_avg_day'. Aborting...")
@@ -2096,7 +2096,7 @@ class DatabaseAddOn(SmartPlugin):
             raw_data = self._query_item(**_query_params)
 
             if raw_data == [[None, None]] or raw_data == [[0, 0]]:
-                self.logger.info(f"no valid data from database query for item={database_item.path()} received during _prepare_value_list. Aborting...")
+                self.logger.info(f"no valid data from database query for item={database_item.property.path} received during _prepare_value_list. Aborting...")
                 return
 
             if cache:
@@ -2225,7 +2225,7 @@ class DatabaseAddOn(SmartPlugin):
                 self.item_cache[item]['oldest_log'] = oldest_log
 
         if self.debug_log.prepare:
-            self.logger.debug(f"_get_oldest_log for item={item.path()} = {oldest_log}")
+            self.logger.debug(f"_get_oldest_log for item={item.property.path} = {oldest_log}")
 
         return oldest_log
 
@@ -2250,7 +2250,7 @@ class DatabaseAddOn(SmartPlugin):
                 oldest_log = self._get_oldest_log(item)
                 if oldest_log is None:
                     validity = True
-                    self.logger.error(f"oldest_log for item={item.path()} could not be read; value is set to -999999999")
+                    self.logger.error(f"oldest_log for item={item.property.path} could not be read; value is set to -999999999")
                 oldest_entry = self._read_log_timestamp(item_id, oldest_log)
                 i += 1
                 if isinstance(oldest_entry, list) and isinstance(oldest_entry[0], tuple) and len(oldest_entry[0]) >= 4:
@@ -2261,10 +2261,10 @@ class DatabaseAddOn(SmartPlugin):
                     validity = True
                 elif i == 10:
                     validity = True
-                    self.logger.error(f"oldest_value for item={item.path()} could not be read; value is set to -999999999")
+                    self.logger.error(f"oldest_value for item={item.property.path} could not be read; value is set to -999999999")
 
         if self.debug_log.prepare:
-            self.logger.debug(f"_get_oldest_value for item={item.path()} = {_oldest_value}")
+            self.logger.debug(f"_get_oldest_value for item={item.property.path} = {_oldest_value}")
 
         return _oldest_value
 
@@ -2279,7 +2279,7 @@ class DatabaseAddOn(SmartPlugin):
         _item_id = self.item_cache.get(item, {}).get('id', None)
 
         if _item_id is None:
-            row = self._read_item_table(item_path=str(item.path()))
+            row = self._read_item_table(item_path=str(item.property.path))
             if row and len(row) > 0:
                 _item_id = int(row[0])
                 if item not in self.item_cache:
@@ -2324,7 +2324,7 @@ class DatabaseAddOn(SmartPlugin):
         """
 
         if self.debug_log.prepare:
-            self.logger.debug(f"  called with {func=}, item={database_item.path()}, {timeframe=}, {start=}, {end=}, {group=}, {group2=}, {ignore_value_list=}, {use_oldest_entry=}")
+            self.logger.debug(f"  called with {func=}, item={database_item.property.path}, {timeframe=}, {start=}, {end=}, {group=}, {group2=}, {ignore_value_list=}, {use_oldest_entry=}")
 
         # set default result
         error_result = [[None, None]]
@@ -2332,7 +2332,7 @@ class DatabaseAddOn(SmartPlugin):
 
         # check correctness of timeframe
         if timeframe not in ALLOWED_QUERY_TIMEFRAMES:
-            self.logger.error(f"Requested {timeframe=} for item={database_item.path()} not defined; Need to be 'year' or 'month' or 'week' or 'day' or 'hour''. Query cancelled.")
+            self.logger.error(f"Requested {timeframe=} for item={database_item.property.path} not defined; Need to be 'year' or 'month' or 'week' or 'day' or 'hour''. Query cancelled.")
             return error_result
 
         # define start and end of query as timestamp in microseconds
@@ -2347,13 +2347,13 @@ class DatabaseAddOn(SmartPlugin):
         if ts_end is None or ts_start > ts_end:
             if self.debug_log.prepare:
                 self.logger.debug(f"{ts_start=}, {ts_end=}")
-            self.logger.warning(f"Requested {start=} for item={database_item.path()} is not valid since {start=} > {end=} or end not given. Query cancelled.")
+            self.logger.warning(f"Requested {start=} for item={database_item.property.path} is not valid since {start=} > {end=} or end not given. Query cancelled.")
             return error_result
 
         # define item_id
         item_id = self._get_itemid(database_item)
         if not item_id:
-            self.logger.error(f"DB ItemId for item={database_item.path()} not found. Query cancelled.")
+            self.logger.error(f"DB ItemId for item={database_item.property.path} not found. Query cancelled.")
             return error_result
 
         if self.debug_log.prepare:
@@ -2361,15 +2361,15 @@ class DatabaseAddOn(SmartPlugin):
 
         # check if values for end time and start time are in database
         if ts_end < oldest_log:  # (Abfrage abbrechen, wenn Endzeitpunkt in UNIX-timestamp der Abfrage kleiner (und damit jünger) ist, als der UNIX-timestamp des ältesten Eintrages)
-            self.logger.info(f"  Requested end time timestamp={ts_end}/{self._timestamp_to_timestring(ts_end)} of query for item={database_item.path()} is prior to oldest entry with timestamp={oldest_log}/{self._timestamp_to_timestring(oldest_log)}. Query cancelled.")
+            self.logger.info(f"  Requested end time timestamp={ts_end}/{self._timestamp_to_timestring(ts_end)} of query for item={database_item.property.path} is prior to oldest entry with timestamp={oldest_log}/{self._timestamp_to_timestring(oldest_log)}. Query cancelled.")
             return error_result
 
         if ts_start < oldest_log:
             if self.use_oldest_entry or use_oldest_entry:
-                self.logger.info(f"  Requested start time timestamp={ts_start}/{self._timestamp_to_timestring(ts_start)} of query for item={database_item.path()} is prior to oldest entry with timestamp={oldest_log}/{self._timestamp_to_timestring(oldest_log)}. Oldest available entry will be used.")
+                self.logger.info(f"  Requested start time timestamp={ts_start}/{self._timestamp_to_timestring(ts_start)} of query for item={database_item.property.path} is prior to oldest entry with timestamp={oldest_log}/{self._timestamp_to_timestring(oldest_log)}. Oldest available entry will be used.")
                 ts_start = oldest_log
             else:
-                self.logger.info(f"  Requested start time timestamp={ts_start}/{self._timestamp_to_timestring(ts_start)} of query for item={database_item.path()} is prior to oldest entry with timestamp={oldest_log}/{self._timestamp_to_timestring(oldest_log)}. Query cancelled.")
+                self.logger.info(f"  Requested start time timestamp={ts_start}/{self._timestamp_to_timestring(ts_start)} of query for item={database_item.property.path} is prior to oldest entry with timestamp={oldest_log}/{self._timestamp_to_timestring(oldest_log)}. Query cancelled.")
                 return error_result
 
         # prepare and do query
@@ -2381,11 +2381,11 @@ class DatabaseAddOn(SmartPlugin):
 
         # post process query_result
         if query_result is None:
-            self.logger.error(f"Error occurred during '_query_log_timestamp' of item={database_item.path()}. Aborting...")
+            self.logger.error(f"Error occurred during '_query_log_timestamp' of item={database_item.property.path}. Aborting...")
             return error_result
 
         if len(query_result) == 0:
-            self.logger.info(f"  No values for item={database_item.path()} in requested timeframe between {ts_start}/{self._timestamp_to_timestring(ts_start)} and {ts_end}/{self._timestamp_to_timestring(ts_end)} in database found.")
+            self.logger.info(f"  No values for item={database_item.property.path} in requested timeframe between {ts_start}/{self._timestamp_to_timestring(ts_start)} and {ts_end}/{self._timestamp_to_timestring(ts_end)} in database found.")
             return nodata_result
 
         result = []
@@ -2397,10 +2397,10 @@ class DatabaseAddOn(SmartPlugin):
                 result.append([timestamp, value])
 
         if self.debug_log.prepare:
-            self.logger.debug(f"  value for item={database_item.path()} with {query_params=}: {result}")
+            self.logger.debug(f"  value for item={database_item.property.path} with {query_params=}: {result}")
 
         if not result:
-            self.logger.info(f"  No values for item={database_item.path()} in requested timeframe between {ts_start}/{self._timestamp_to_timestring(ts_start)} and {ts_end}/{self._timestamp_to_timestring(ts_end)} in database found.")
+            self.logger.info(f"  No values for item={database_item.property.path} in requested timeframe between {ts_start}/{self._timestamp_to_timestring(ts_start)} and {ts_end}/{self._timestamp_to_timestring(ts_end)} in database found.")
             return nodata_result
 
         return result

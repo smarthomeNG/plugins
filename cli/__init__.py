@@ -555,7 +555,7 @@ class CLICommands:
         """
         if not parameter:
             for item in self.sh:
-                handler.push("{0}\n".format(item.id()))
+                handler.push("{0}\n".format(item.property.path))
         else:
             if match:
                 items = self.plugin.items.match_items(parameter)
@@ -567,9 +567,9 @@ class CLICommands:
                 for item in items:
                     if hasattr(item, 'id'):
                         if item.type():
-                            handler.push("{0} = {1}\n".format(item.id(), item()))
+                            handler.push("{0} = {1}\n".format(item.property.path, item()))
                         else:
-                            handler.push("{}\n".format(item.id()))
+                            handler.push("{}\n".format(item.property.path))
                         if childs:
                             for child in item:
                                 self._cli_ls_int(handler, child.id())
@@ -592,11 +592,11 @@ class CLICommands:
             for item in items:
                 # noinspection PyProtectedMember
                 if hasattr(item, 'id') and item._type:
-                    handler.push("Item {} ".format(item.id()))
+                    handler.push("Item {} ".format(item.property.path))
                     handler.push("{\n")
                     handler.push("  type: {}\n".format(item.type()))
                     handler.push("  value: {}\n".format(item()))
-                    handler.push("  age: {}\n".format(item.age()))
+                    handler.push("  age: {}\n".format(item.property.last_change_age))
                     handler.push("  last_change: {}\n".format(item.last_change()))
                     handler.push("  changed_by: {}\n".format(item.changed_by()))
                     handler.push("  previous_value: {}\n".format(item.prev_value()))
@@ -680,9 +680,9 @@ class CLICommands:
 #        handler.push(wrk)
         for item in self.plugin.items.return_items():
             if item.type():
-                handler.push("{0} = {1}\n".format(item.id(), item()))
+                handler.push("{0} = {1}\n".format(item.property.path, item()))
             else:
-                handler.push("{0}\n".format(item.id()))
+                handler.push("{0}\n".format(item.property.path))
         wrk = "{} Items".format(self.plugin.items.item_count())
         wrk = '-' * len(wrk) + '\n' + wrk + '\n'
         handler.push(wrk)

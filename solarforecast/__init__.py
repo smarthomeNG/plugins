@@ -100,7 +100,7 @@ class Solarforecast(SmartPlugin):
             if not self.get_iattr_value(item.conf, 'solarforecast_attribute') in self._items:
                 self._items[self.get_iattr_value(item.conf, 'solarforecast_attribute')] = []
             self._items[self.get_iattr_value(item.conf, 'solarforecast_attribute')].append(item)
-#            self.logger.debug(f"Appending item {item.id()}")
+#            self.logger.debug(f"Appending item {item.property.path}")
 
 
     def parse_logic(self, logic):

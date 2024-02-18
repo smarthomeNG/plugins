@@ -120,27 +120,27 @@ class WebInterface(SmartPluginWebIf):
             if self.plugin.monitoring_service:
                 data['call_monitor'] = {}
                 for item in self.plugin.get_monitor_items():
-                    data['call_monitor'][item.id()] = {}
-                    data['call_monitor'][item.id()]['value'] = item()
-                    data['call_monitor'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                    data['call_monitor'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                    data['call_monitor'][item.property.path] = {}
+                    data['call_monitor'][item.property.path]['value'] = item()
+                    data['call_monitor'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                    data['call_monitor'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
             if self.plugin.fritz_device:
                 data['tr064_items'] = {}
                 for item in self.plugin.get_tr064_items():
-                    data['tr064_items'][item.id()] = {}
-                    data['tr064_items'][item.id()]['value'] = item()
-                    data['tr064_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                    data['tr064_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                    data['tr064_items'][item.property.path] = {}
+                    data['tr064_items'][item.property.path]['value'] = item()
+                    data['tr064_items'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                    data['tr064_items'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
                 data['tr064_items_blacklistet'] = self.plugin.get_tr064_items_blacklisted()
 
             if self.plugin.fritz_home:
                 data['aha_items'] = {}
                 for item in self.plugin.get_aha_items():
-                    data['aha_items'][item.id()] = {}
-                    data['aha_items'][item.id()]['value'] = item()
-                    data['aha_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                    data['aha_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                    data['aha_items'][item.property.path] = {}
+                    data['aha_items'][item.property.path]['value'] = item()
+                    data['aha_items'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                    data['aha_items'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
                 data['aha_last_request'] = self.plugin.fritz_home.last_request
 
             data['maintenance'] = True if self.plugin.log_level <= 20 else False

@@ -109,26 +109,26 @@ class WebInterface(SmartPluginWebIf):
                 if self.call_monitor_items:
                     data['call_monitor'] = {}
                     for item in self.call_monitor_items:
-                        data['call_monitor'][item.id()] = {}
-                        data['call_monitor'][item.id()]['value'] = item()
-                        data['call_monitor'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                        data['call_monitor'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                        data['call_monitor'][item.property.path] = {}
+                        data['call_monitor'][item.property.path]['value'] = item()
+                        data['call_monitor'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                        data['call_monitor'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
             if self.plugin.get_fritz_device().get_items():
                 data['avm_items'] = {}
                 for item in self.plugin.get_fritz_device().get_items():
-                    data['avm_items'][item.id()] = {}
-                    data['avm_items'][item.id()]['value'] = item()
-                    data['avm_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                    data['avm_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                    data['avm_items'][item.property.path] = {}
+                    data['avm_items'][item.property.path]['value'] = item()
+                    data['avm_items'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                    data['avm_items'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
             if self.plugin.get_fritz_device().get_smarthome_items():
                 data['avm_smarthome_items'] = {}
                 for item in self.plugin.get_fritz_device().get_smarthome_items():
-                    data['avm_smarthome_items'][item.id()] = {}
-                    data['avm_smarthome_items'][item.id()]['value'] = item()
-                    data['avm_smarthome_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                    data['avm_smarthome_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                    data['avm_smarthome_items'][item.property.path] = {}
+                    data['avm_smarthome_items'][item.property.path]['value'] = item()
+                    data['avm_smarthome_items'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                    data['avm_smarthome_items'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
             try:
                 return json.dumps(data, default=str)

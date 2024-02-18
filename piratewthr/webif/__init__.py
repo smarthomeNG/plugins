@@ -125,7 +125,7 @@ class WebInterface(SmartPluginWebIf):
             for item in self.plugin.get_item_list():
                 item_config = self.plugin.get_item_config(item)
                 value_dict = {}
-                value_dict['path'] = item.id()
+                value_dict['path'] = item.property.path
                 value_dict['type'] = item.type()
                 value_dict['matchstring'] = self.plugin.get_item_mapping(item)
                 value_dict['value'] = item()

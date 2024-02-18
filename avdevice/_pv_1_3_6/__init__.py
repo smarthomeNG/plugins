@@ -1156,7 +1156,7 @@ class AVDevice(SmartPlugin):
                             grouptotal = {'a': 0, 'b': 0, 'c': 0, 'd': 0}
                             additional_zone = entry['Zone']
                             try:
-                                for additional in self._dependencies['Slave_item'][additional_zone][dependitem.id()]:
+                                for additional in self._dependencies['Slave_item'][additional_zone][dependitem.property.path]:
                                     dependitem = additional['Item']
                                     dependvalue = dependitem()
                                     expectedvalue = additional['Dependvalue']
@@ -2180,7 +2180,7 @@ class AVDevice(SmartPlugin):
                                         responsecommand, _ = CreateResponse(commandinfo, '', '', self._name,
                                                                             self._specialparse).response_standard()
                                         appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3],
-                                                                             responsecommand, item.id())
+                                                                             responsecommand, item.property.path)
                                         cond1 = appendcommand not in self._query_commands
                                         cond2 = appendcommand not in self._special_commands['Display']['Command']
                                         if appendcommand in self._send_commands:
@@ -2213,7 +2213,7 @@ class AVDevice(SmartPlugin):
                                     commandinfo = self._functions['zone{}'.format(zone)][command]
                                     replacedresponse, _ = CreateResponse(commandinfo, '', '', self._name,
                                                                          self._specialparse).response_standard()
-                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
+                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.property.path)
                                     cond1 = appendcommand not in self._query_commands
                                     cond2 = appendcommand not in self._special_commands['Display']['Command']
                                     if appendcommand in self._send_commands:
@@ -2247,9 +2247,9 @@ class AVDevice(SmartPlugin):
                                     try:
                                         reverseitem = self._items['zone{}'.format(zone)][command.replace('+', '-', 1)].get('Item')
                                     except Exception:
-                                        reverseitem = item.id()
+                                        reverseitem = item.property.path
 
-                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
+                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.property.path)
                                     reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, reverseitem)
 
                                     self.logger.log(VERBOSE2,
@@ -2299,9 +2299,9 @@ class AVDevice(SmartPlugin):
                                     try:
                                         reverseitem = self._items['zone{}'.format(zone)][command.replace('-', '+', 1)].get('Item')
                                     except Exception:
-                                        reverseitem = item.id()
+                                        reverseitem = item.property.path
 
-                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
+                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.property.path)
                                     reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, reverseitem)
 
                                     self.logger.log(VERBOSE2,
@@ -2343,8 +2343,8 @@ class AVDevice(SmartPlugin):
                                     replacedresponse, replacedreverse = CreateResponse(
                                         commandinfo, reverseinfo, '', self._name, self._specialparse).response_on()
 
-                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
-                                    reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, item.id())
+                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.property.path)
+                                    reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, item.property.path)
 
                                     self.logger.log(VERBOSE2,
                                                     "Updating Item {}: Appendcommand on: {}, Reversecommand: {}, Send Commands: {}".format(
@@ -2408,8 +2408,8 @@ class AVDevice(SmartPlugin):
                                     replacedresponse, replacedreverse = CreateResponse(
                                         commandinfo, reverseinfo, '', self._name, self._specialparse).response_off()
 
-                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
-                                    reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, item.id())
+                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.property.path)
+                                    reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, item.property.path)
 
                                     self.logger.log(VERBOSE1,
                                                     "Updating Item {}: Appendcommand off: {}. Reversecommand: {} Send Commands: {}".format(
@@ -2538,7 +2538,7 @@ class AVDevice(SmartPlugin):
                                                     poweritem = self._items['zone0'][powerinfo[1]].get('Item')
                                                 appendcommand = '{},{},{};{}'.format(powerinfo[2], powerinfo[3],
                                                                                      replacedresponse,
-                                                                                     poweritem.id())
+                                                                                     poweritem.property.path)
                                                 self._send_commands.insert(0, appendcommand)
                                                 self._sendingcommand = appendcommand
                                                 self.logger.debug(
@@ -2567,7 +2567,7 @@ class AVDevice(SmartPlugin):
 
                                 if not self._send_commands == [] and setting is True:
                                     appendcommand = '{},{},{};{}'.format(command_re, commandinfo[3], response,
-                                                                         item.id())
+                                                                         item.property.path)
                                     setting = False
                                     appending = _replace_setcommand(commandinfo, self._send_commands, appendcommand, value, 'append')
                                     removefromkeeping = _replace_setcommand(commandinfo, self._keep_commands, appendcommand, value, 'keep')
@@ -2597,7 +2597,7 @@ class AVDevice(SmartPlugin):
                                                                 self._name, zone, commandinfo[2], item, command_re))
                                 elif setting is True:
                                     appendcommand = '{},{},{};{}'.format(command_re, commandinfo[3], response,
-                                                                         item.id())
+                                                                         item.property.path)
                                     removefromkeeping = _replace_setcommand(commandinfo, self._keep_commands, appendcommand, value, 'keep')
                                     for i in removefromkeeping:
                                         self.logger.log(VERBOSE1,

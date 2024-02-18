@@ -27,7 +27,7 @@ def set_percentage(self, payload):
     for item in items:
         item_range = self.item_range(item, DEFAULT_RANGE)
         item_new = calc_percentage(new_percentage, item_range)
-        self.logger.info("Alexa: setPercentage({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa: setPercentage({}, {:.1f})".format(item.property.path, item_new))
         item( item_new )
 
     return self.respond()
@@ -44,7 +44,7 @@ def incr_percentage(self, payload):
         percentage_now = what_percentage(item_now, item_range)
         percentage_new = clamp_percentage(percentage_now + percentage_delta, item_range)
         item_new = calc_percentage(percentage_new, item_range)
-        self.logger.info("Alexa: incrementPercentage({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa: incrementPercentage({}, {:.1f})".format(item.property.path, item_new))
         item( item_new )
 
     return self.respond()
@@ -61,7 +61,7 @@ def decr_percentage(self, payload):
         percentage_now = what_percentage(item_now, item_range)
         percentage_new = clamp_percentage(percentage_now - percentage_delta, item_range)
         item_new = calc_percentage(percentage_new, item_range)
-        self.logger.info("Alexa: decrementPercentage({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa: decrementPercentage({}, {:.1f})".format(item.property.path, item_new))
         item( item_new )
 
     return self.respond()

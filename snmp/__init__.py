@@ -112,13 +112,13 @@ class Snmp(SmartPlugin):
         oid = self.get_iattr_value(item.conf, 'snmp_oid')
 
         if not self.has_iattr(item.conf, 'snmp_prop'):
-            self.logger.warning("SNMP: No snmp_prop for {0} defined, set to standard".format(item.id()))
+            self.logger.warning("SNMP: No snmp_prop for {0} defined, set to standard".format(item.property.path))
             prop = 'std'
         else:
             prop = self.get_iattr_value(item.conf, 'snmp_prop').lower()
 
         if prop not in self._supported:
-            self.logger.info("Unknown properties specified for {0}".format(item.id()))
+            self.logger.info("Unknown properties specified for {0}".format(item.property.path))
 
         if oid in self._items:
             self.logger.debug("Set dict[{}][{}] as item:{}".format(oid, prop, item))
@@ -272,7 +272,7 @@ class Snmp(SmartPlugin):
         if caller != self.get_shortname():
             try:
                 # code to execute, only if the item has not been changed by this plugin:
-                self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.id()))
+                self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.property.path))
             except Exception as e:
                 self.logger.warning("Problem setting output {0}: {1}".format(item._ow_path['path'], e))
 

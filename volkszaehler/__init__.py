@@ -120,7 +120,7 @@ class Volkszaehler(SmartPlugin):
     
         if caller != self.get_shortname():
             # code to execute, only if the item has not been changed by this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
 
             if self.has_iattr(item.conf, 'vz_uuid'):
                 self.logger.debug("update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item, caller, source, dest))

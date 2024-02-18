@@ -128,7 +128,7 @@ class TextDisplay(SmartPlugin):
                 content_source_path=content_source_path,
                 content_source=lambda: self._shng_items.return_item(
                     content_source_path)(),
-                is_relevant_path=item.path(),
+                is_relevant_path=item.property.path,
                 is_relevant=lambda: item()
             )
             return self.update_item_message_source_relevance
@@ -144,7 +144,7 @@ class TextDisplay(SmartPlugin):
                 item.conf, 'text_display_cycle_time')
             if cycle_time == None:
                 cycle_time = 3
-            sink_item_path = item.path()
+            sink_item_path = item.property.path
 
             self.logger.debug(
                 f"{sink_item_path} shall be sink for rings {source_rings}, with default {default_value}, cycle-time {cycle_time}s")
@@ -200,9 +200,9 @@ class TextDisplay(SmartPlugin):
         """
         if self.alive and caller != self.get_shortname():
             if item.property.value and item.property.value != item.property.last_value:
-                self._model.update_source_relevance(item.path())
+                self._model.update_source_relevance(item.property.path)
                 ring_name = self._model.get_ring_for_relevance_item(
-                    item.path())
+                    item.property.path)
                 sink_items = self._model.get_sink_item_paths_for_ring(
                     ring_name)
                 for sink_item_path in sink_items:

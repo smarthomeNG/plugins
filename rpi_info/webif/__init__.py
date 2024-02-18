@@ -102,10 +102,10 @@ class WebInterface(SmartPluginWebIf):
 
             data['items'] = {}
             for item in self.plugin.item_list:
-                data['items'][item.id()] = {}
-                data['items'][item.id()]['value'] = item.property.value
-                data['items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                data['items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                data['items'][item.property.path] = {}
+                data['items'][item.property.path]['value'] = item.property.value
+                data['items'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data['items'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
             data['plugin_suspended'] = self.plugin.suspended
             data['maintenance'] = True if self.plugin.log_level <= 20 else False
             try:

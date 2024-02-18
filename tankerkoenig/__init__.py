@@ -130,7 +130,7 @@ class TankerKoenig(SmartPlugin):
                     self.station_ids.append(station_id)
 
         if self.has_iattr(item.conf, 'tankerkoenig_admin'):
-            self.logger.debug(f"parse item: {item.id()}")
+            self.logger.debug(f"parse item: {item.property.path}")
             tankerkoenig_admin = self.get_iattr_value(item.conf, 'tankerkoenig_admin')
             if tankerkoenig_admin == 'update':
                 return self.update_item

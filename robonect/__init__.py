@@ -184,7 +184,7 @@ class Robonect(MqttPlugin):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
 
             mqtt_id = self.get_iattr_value(item.conf, 'robonect_data_type')
             topic = '%s/%s' % (self._topic_prefix, mqtt_id)

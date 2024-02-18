@@ -3091,11 +3091,11 @@ class Sonos(SmartPlugin):
         uid = None
 
         if self.has_iattr(item.conf, 'sonos_recv') or self.has_iattr(item.conf, 'sonos_send'):
-            self.logger.debug(f"parse item: {item.id()}")
+            self.logger.debug(f"parse item: {item.property.path}")
             # get uid from parent item
             uid = self._resolve_uid(item)
             if not uid:
-                self.logger.error(f"No uid found for {item.id()}.")
+                self.logger.error(f"No uid found for {item.property.path}.")
                 return
 
         if self.has_iattr(item.conf, 'sonos_recv'):
@@ -3107,7 +3107,7 @@ class Sonos(SmartPlugin):
             list_name = f"{item_attribute}_items"
             try:
                 attr = getattr(sonos_speaker[uid], list_name)
-                self.logger.debug(f"Adding item {item.id()} to {uid}: list {list_name}")
+                self.logger.debug(f"Adding item {item.property.path} to {uid}: list {list_name}")
                 attr.append(item)
                 if item not in self.item_list:
                     self.item_list.append(item)
@@ -3115,7 +3115,7 @@ class Sonos(SmartPlugin):
                 self.logger.warning(f"No item list available for sonos_cmd '{item_attribute}'.")
 
         if self.has_iattr(item.conf, 'sonos_send'):
-            self.logger.debug(f"Item {item.id()} registered to 'sonos_send' commands.")
+            self.logger.debug(f"Item {item.property.path} registered to 'sonos_send' commands.")
             if item not in self.item_list:
                 self.item_list.append(item)
             return self.update_item
@@ -3686,7 +3686,7 @@ class Sonos(SmartPlugin):
                     break
 
         if uid == '':
-            self.logger.warning(f"Could not resolve sonos_uid for item {item.id()}")
+            self.logger.warning(f"Could not resolve sonos_uid for item {item.property.path}")
 
         return uid
 

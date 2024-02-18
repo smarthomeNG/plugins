@@ -124,10 +124,10 @@ class Alexa4P3(SmartPlugin):
         action_names = None
         if 'alexa_actions' in item.conf:
             action_names = list( map(str.strip, item.conf['alexa_actions'].split(' ')) )
-            self.logger.debug("Alexa: {}-actions = {}".format(item.id(), action_names))
+            self.logger.debug("Alexa: {}-actions = {}".format(item.property.path, action_names))
             for action_name in action_names:
                 if action_name and self.actions.by_name(action_name) is None:
-                    self.logger.error("Alexa: invalid alexa action '{}' specified in item {}, ignoring item".format(action_name, item.id()))
+                    self.logger.error("Alexa: invalid alexa action '{}' specified in item {}, ignoring item".format(action_name, item.property.path))
                     return None
                 actAction = self.actions.by_name(action_name)
                 if actAction.payload_version == "3":
@@ -152,7 +152,7 @@ class Alexa4P3(SmartPlugin):
 
         # skip this item if no device could be determined
         if device_id:
-            self.logger.debug("Alexa: {}-device = {}".format(item.id(), device_id))
+            self.logger.debug("Alexa: {}-device = {}".format(item.property.path, device_id))
         else:
             return None # skip this item
 
@@ -165,28 +165,28 @@ class Alexa4P3(SmartPlugin):
         # types
         if 'alexa_types' in item.conf:
             device.types = list( map(str.strip, item.conf['alexa_types'].split(' ')) )
-            self.logger.debug("Alexa: {}-types = {}".format(item.id(), device.types))
+            self.logger.debug("Alexa: {}-types = {}".format(item.property.path, device.types))
 
         # friendly name
         if name and (not device.name or name_is_explicit):
-            self.logger.debug("Alexa: {}-name = {}".format(item.id(), name))
+            self.logger.debug("Alexa: {}-name = {}".format(item.property.path, name))
             if device.name and device.name != name:
-                self.logger.warning("Alexa: item {} is changing device-name of {} from '{}' to '{}'".format(item.id(), device_id, device.name, name))
+                self.logger.warning("Alexa: item {} is changing device-name of {} from '{}' to '{}'".format(item.property.path, device_id, device.name, name))
             device.name = name
 
         # friendly description
         if 'alexa_description' in item.conf:
             descr = item.conf['alexa_description']
-            self.logger.debug("Alexa: {}-description = {}".format(item.id(), descr))
+            self.logger.debug("Alexa: {}-description = {}".format(item.property.path, descr))
             if device.description and device.description != descr:
-                self.logger.warning("Alexa: item {} is changing device-description of {} from '{}' to '{}'".format(item.id(), device_id, device.description, descr))
+                self.logger.warning("Alexa: item {} is changing device-description of {} from '{}' to '{}'".format(item.property.path, device_id, device.description, descr))
             device.description = descr
 
         # alias names
         if 'alexa_alias' in item.conf:
             alias_names = list( map(str.strip, item.conf['alexa_alias'].split(',')) )
             for alias_name in alias_names:
-                self.logger.debug("Alexa: {}-alias = {}".format(item.id(), alias_name))
+                self.logger.debug("Alexa: {}-alias = {}".format(item.property.path, alias_name))
                 device.alias.append(alias_name)
 
         # value-range
@@ -195,32 +195,32 @@ class Alexa4P3(SmartPlugin):
             item_min = float( item_min_raw.strip() )
             item_max = float( item_max_raw.strip() )
             item.alexa_range = (item_min, item_max)
-            self.logger.debug("Alexa: {}-range = {}".format(item.id(), item.alexa_range))
+            self.logger.debug("Alexa: {}-range = {}".format(item.property.path, item.alexa_range))
 
         # special turn on/off values
         if 'alexa_item_turn_on' in item.conf or 'alexa_item_turn_off' in item.conf:
             turn_on  = item.conf['alexa_item_turn_on']  if 'alexa_item_turn_on'  in item.conf else True
             turn_off = item.conf['alexa_item_turn_off'] if 'alexa_item_turn_off' in item.conf else False
             item.alexa_range = (turn_on, turn_off)
-            self.logger.debug("Alexa: {}-range = {}".format(item.id(), item.alexa_range))
+            self.logger.debug("Alexa: {}-range = {}".format(item.property.path, item.alexa_range))
         
         # special ColorValue Type for RGB-devices
         if 'alexa_color_value_type' in item.conf:
             alexa_color_value_type = item.conf['alexa_color_value_type']
             device.alexa_color_value_type = alexa_color_value_type
-            self.logger.debug("Alexa4P3: {}-ColorValueType = {}".format(item.id(), device.alexa_color_value_type))
+            self.logger.debug("Alexa4P3: {}-ColorValueType = {}".format(item.property.path, device.alexa_color_value_type))
         
         # special Alexa_Instance for RangeController
         if 'alexa_range_delta' in item.conf:
             alexa_range_delta = item.conf['alexa_range_delta']
             device.alexa_range_delta = alexa_range_delta
-            self.logger.debug("Alexa4P3: {}-Alexa_Range_Delta = {}".format(item.id(), device.alexa_range_delta))
+            self.logger.debug("Alexa4P3: {}-Alexa_Range_Delta = {}".format(item.property.path, device.alexa_range_delta))
         
         # special Alexa_Instance for ColorTemperaturController
         if 'alexa_color_temp_delta' in item.conf:
             alexa_color_temp_delta = item.conf['alexa_color_temp_delta']
             item.alexa_color_temp_delta = alexa_color_temp_delta
-            self.logger.debug("Alexa4P3: {}-Alexa_ColorTemp_Delta = {}".format(item.id(), item.alexa_color_temp_delta))
+            self.logger.debug("Alexa4P3: {}-Alexa_ColorTemp_Delta = {}".format(item.property.path, item.alexa_color_temp_delta))
             
             
         #===============================================
@@ -238,7 +238,7 @@ class Alexa4P3(SmartPlugin):
                     camera_uri = item.conf[myStream]
                     camera_uri = json.loads(camera_uri)
                     device.camera_setting[myStream] =  camera_uri
-                    self.logger.debug("Alexa4P3: {}-added Camera-Streams = {}".format(item.id(), camera_uri))
+                    self.logger.debug("Alexa4P3: {}-added Camera-Streams = {}".format(item.property.path, camera_uri))
                     if 'alexa_csc_proxy_uri' in item.conf:
                         # Create a proxied URL for this Stream
                         myCam = str(uuid.uuid4().hex)
@@ -247,34 +247,34 @@ class Alexa4P3(SmartPlugin):
                         myNewEntry='alexa_proxy_url-{}'.format(i)
                         item.conf[myNewEntry]=myProxiedurl
                 except Exception as e:
-                    self.logger.debug("Alexa4P3: {}-wrong Stream Settings = {}".format(item.id(), camera_uri))
+                    self.logger.debug("Alexa4P3: {}-wrong Stream Settings = {}".format(item.property.path, camera_uri))
             i +=1    
         
         if 'alexa_proxy_credentials' in item.conf:
             alexa_proxy_credentials = item.conf['alexa_proxy_credentials']
             device.alexa_proxy_credentials = alexa_proxy_credentials
-            self.logger.debug("Alexa4P3: {}-Proxy-Credentials = {}".format(item.id(), device.alexa_proxy_credentials))
+            self.logger.debug("Alexa4P3: {}-Proxy-Credentials = {}".format(item.property.path, device.alexa_proxy_credentials))
 
         if 'alexa_csc_uri' in item.conf:
             camera_uri = item.conf['alexa_csc_uri']
             device.camera_uri = json.loads(camera_uri)
-            self.logger.debug("Alexa4P3: {}-Camera-Uri = {}".format(item.id(), device.camera_uri))
+            self.logger.debug("Alexa4P3: {}-Camera-Uri = {}".format(item.property.path, device.camera_uri))
             
         
         if 'alexa_auth_cred' in item.conf:
             alexa_auth_cred = item.conf['alexa_auth_cred']
             device.alexa_auth_cred = alexa_auth_cred
-            self.logger.debug("Alexa4P3: {}-Camera-Auth = {}".format(item.id(), device.alexa_auth_cred))
+            self.logger.debug("Alexa4P3: {}-Camera-Auth = {}".format(item.property.path, device.alexa_auth_cred))
             
         if 'alexa_camera_imageUri' in item.conf:
             alexa_camera_imageUri = item.conf['alexa_camera_imageUri']
             device.camera_imageUri = alexa_camera_imageUri
-            self.logger.debug("Alexa4P3: {}-Camera-Image-Uri = {}".format(item.id(), device.camera_imageUri))
+            self.logger.debug("Alexa4P3: {}-Camera-Image-Uri = {}".format(item.property.path, device.camera_imageUri))
         
         if 'alexa_cam_modifiers' in item.conf:
             alexa_cam_modifiers = item.conf['alexa_cam_modifiers']
             device.camera_imageUri = alexa_cam_modifiers
-            self.logger.debug("Alexa4P3: {}-Camera-Stream-Modifiers = {}".format(item.id(), device.alexa_cam_modifiers))
+            self.logger.debug("Alexa4P3: {}-Camera-Stream-Modifiers = {}".format(item.property.path, device.alexa_cam_modifiers))
         
         # ---- Ende CamerStreamController    
         
@@ -283,32 +283,32 @@ class Alexa4P3(SmartPlugin):
         if 'alexa_thermo_config' in item.conf:
             thermo_config = item.conf['alexa_thermo_config']
             device.thermo_config =item.conf['alexa_thermo_config']
-            self.logger.debug("Alexa4P3: {}-Thermo-Config = {}".format(item.id(), device.thermo_config))
+            self.logger.debug("Alexa4P3: {}-Thermo-Config = {}".format(item.property.path, device.thermo_config))
         # Icon for Alexa-App - default = SWITCH
         if 'alexa_icon' in item.conf:
             icon = item.conf['alexa_icon']
             if not icon in str(device.icon):
                 device.icon.append(icon)
-                self.logger.debug("Alexa4P3: {}-added alexa_icon = {}".format(item.id(), device.icon))
+                self.logger.debug("Alexa4P3: {}-added alexa_icon = {}".format(item.property.path, device.icon))
         # allows to get status of ITEM, default = false
         if 'alexa_retrievable' in item.conf:
             retrievable = item.conf['alexa_retrievable']
             device.retrievable = retrievable
-            self.logger.debug("Alexa4P3: {}-alexa_retrievable = {}".format(item.id(), device.retrievable))
+            self.logger.debug("Alexa4P3: {}-alexa_retrievable = {}".format(item.property.path, device.retrievable))
         
         
         if 'alexa_proactivelyReported' in item.conf:
             proactivelyReported = item.conf['alexa_proactivelyReported']
             device.proactivelyReported = proactivelyReported
-            self.logger.debug("Alexa4P3: {}-alexa_proactivelyReported = {}".format(item.id(), device.proactivelyReported))
+            self.logger.debug("Alexa4P3: {}-alexa_proactivelyReported = {}".format(item.property.path, device.proactivelyReported))
         
             
         # register item-actions with the device
         if action_names:
             for action_name in action_names:
                 device.register(action_name, item)
-            self.logger.info("Alexa: {} supports {} as device {}".format(item.id(), action_names, device_id, device.supported_actions()))
-            self._proto.addEntry('INFO   ', "Alexa: {} supports {} as device {}".format(item.id(), action_names, device_id, device.supported_actions()))
+            self.logger.info("Alexa: {} supports {} as device {}".format(item.property.path, action_names, device_id, device.supported_actions()))
+            self._proto.addEntry('INFO   ', "Alexa: {} supports {} as device {}".format(item.property.path, action_names, device_id, device.supported_actions()))
 
         return None
 

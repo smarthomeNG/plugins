@@ -432,7 +432,7 @@ class Yamaha(SmartPlugin):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
 
             yamaha_cmd = self.get_iattr_value(item.conf, 'yamaha_cmd')
             yamaha_host = self._lookup_host(item)

@@ -149,7 +149,7 @@ class WebSocket(SmartPlugin):
                 return
             else:
                 acl = 'ro'
-        self.websocket.visu_items[item.id()] = {'acl': acl, 'item': item}
+        self.websocket.visu_items[item.property.path] = {'acl': acl, 'item': item}
         return self.update_item
 
     def parse_logic(self, logic):
@@ -170,8 +170,8 @@ class WebSocket(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        self.logger.debug("Plugin '{}' update_item called for item {}, Source {}, Caller {}, Dest {}".format(self.get_shortname(), item.id(),source, caller, dest))
-        self.websocket.update_item(item.id(), item(), source)
+        self.logger.debug("Plugin '{}' update_item called for item {}, Source {}, Caller {}, Dest {}".format(self.get_shortname(), item.property.path,source, caller, dest))
+        self.websocket.update_item(item.property.path, item(), source)
         return
 
     def init_webinterface(self):

@@ -319,7 +319,7 @@ class Network(SmartPlugin):
                 item = self.special_listeners[dest]['items'][entry]['item']
                 if lacl:
                     if source not in lacl:
-                        self.logger.error("Item {0} acl doesn't permit triggering from {1}.".format(item.id(), source))
+                        self.logger.error("Item {0} acl doesn't permit triggering from {1}.".format(item.property.path, source))
                         return False
                 elif gacl:
                     if source not in gacl:
@@ -379,7 +379,7 @@ class Network(SmartPlugin):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
 
             if self.has_iattr(item.conf, NW_UDP_SEND):
                 # nw_udp_send: "11.11.11.11:7777=command: itemvalue"    ## sends an UDP packet with 'command: ' and the current item value as payload

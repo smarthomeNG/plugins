@@ -117,7 +117,7 @@ class Neato(SmartPlugin):
                 if item._value in val_to_command:
                     self.robot.robot_command(val_to_command[item._value])
                 else:
-                    self.logger.warning("Update item: {}, item has no command equivalent for value '{}'".format(item.id(),item() ))
+                    self.logger.warning("Update item: {}, item has no command equivalent for value '{}'".format(item.property.path,item() ))
 
             elif self.get_iattr_value(item.conf, 'neato_attribute') == 'is_schedule_enabled':
                 if item._value == True:

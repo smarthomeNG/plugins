@@ -117,13 +117,13 @@ class Rpi1Wire(SmartPlugin):
         count_item = self.sysitems.get('count')
         if count_item is not None:
             count_item(int(len(self._sensordata)), self.get_shortname())
-            self.logger.debug(f"Item <{count_item.id()}> set to <{int(len(self._sensordata))}>.")
+            self.logger.debug(f"Item <{count_item.property.path}> set to <{int(len(self._sensordata))}>.")
 
         list_item = self.sysitems.get('list')
         if list_item is not None:
             sensor_list = ", ".join(list(self._sensordata.keys()))
             list_item(sensor_list, self.get_shortname())
-            self.logger.debug(f"Item <{list_item.id()}> set to <{sensor_list}>.")
+            self.logger.debug(f"Item <{list_item.property.path}> set to <{sensor_list}>.")
 
     def stop(self):
         """
@@ -147,14 +147,14 @@ class Rpi1Wire(SmartPlugin):
         """
 
         if self.has_iattr(item.conf, 'rpi1wire_sys'):
-            self.logger.info(f"parse item: {item.id()}")
+            self.logger.info(f"parse item: {item.property.path}")
             rpi1wire_sys = self.get_iattr_value(item.conf, 'rpi1wire_sys')
             self.sysitems[rpi1wire_sys] = item
             if rpi1wire_sys == 'update':
                 return self.update_item
 
         elif self.has_iattr(item.conf, 'rpi1wire_id'):
-            self.logger.info(f"parse item: {item.id()}")
+            self.logger.info(f"parse item: {item.property.path}")
             addr = self.get_iattr_value(item.conf, 'rpi1wire_id')
             self.sensoritems[addr] = item
 
@@ -180,7 +180,7 @@ class Rpi1Wire(SmartPlugin):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info(f"Update item: <{item.id()}>, item has been changed outside this plugin")
+            self.logger.info(f"Update item: <{item.property.path}>, item has been changed outside this plugin")
             self.logger.info("Re-read of 1wire data from dictonary has been initiated.")
             self.update_sensors()
             return None
@@ -195,11 +195,11 @@ class Rpi1Wire(SmartPlugin):
             if value_dict is not None:
                 value = value_dict.get('value')
                 sensortype = value_dict.get('sensortype')
-                self.logger.debug(f"For Item <{item.id()}> the value <{value}> for sensortype <{sensortype}> will be set.")
+                self.logger.debug(f"For Item <{item.property.path}> the value <{value}> for sensortype <{sensortype}> will be set.")
                 if item is not None:
                     item(value, self.get_shortname())
             else:
-                self.logger.warning(f"For Item <{item.id()}> no sensordata are available. Sensor probably not connected.")
+                self.logger.warning(f"For Item <{item.property.path}> no sensordata are available. Sensor probably not connected.")
 
     def get_sensors(self):
         """
@@ -284,7 +284,7 @@ class Rpi1Wire(SmartPlugin):
         update_item = self.sysitems.get('update')
         if update_item is not None:
             update_item(False, self.get_shortname())
-            self.logger.debug(f"Update of data and items done; Item <{update_item.id()}> set to <False>")
+            self.logger.debug(f"Update of data and items done; Item <{update_item.property.path}> set to <False>")
         self.update = False
         
     def _is_raspberrypi(self):

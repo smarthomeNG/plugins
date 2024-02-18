@@ -125,7 +125,7 @@ class Shelly(MqttPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, 'shelly_id'):
-            self.logger.debug("parsing item: {0}".format(item.id()))
+            self.logger.debug("parsing item: {0}".format(item.property.path))
 
             shelly_macid = self.get_iattr_value(item.conf, 'shelly_id').upper()
             shelly_type = self.get_iattr_value(item.conf, 'shelly_type').lower()
@@ -223,12 +223,12 @@ class Shelly(MqttPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        self.logger.debug("update_item: {}".format(item.id()))
+        self.logger.debug("update_item: {}".format(item.property.path))
 
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("update_item: {}, item has been changed in SmartHomeNG outside of this plugin in {}".format(item.id(), caller))
+            self.logger.info("update_item: {}, item has been changed in SmartHomeNG outside of this plugin in {}".format(item.property.path, caller))
 
             # publish topic with new relay state
             shelly_id = self.get_iattr_value(item.conf, 'shelly_id').upper()

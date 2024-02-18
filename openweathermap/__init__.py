@@ -810,7 +810,7 @@ class OpenWeatherMap(SmartPlugin):
         if owm_raw:
             for ds_key in self._data_sources:
                 if owm_raw == ds_key:
-                    self._raw_items[item.id()] = (ds_key, item)
+                    self._raw_items[item.property.path] = (ds_key, item)
                     return
             self.logger.warn(f"Unmatched owm_raw_file name '{owm_raw}'")
             return
@@ -823,13 +823,13 @@ class OpenWeatherMap(SmartPlugin):
                 owm_ms = owm_ms.replace('///', '/')
                 owm_ms = owm_ms.replace('//', '/')
 
-            self._items[item.id()] = (owm_ms, item)
+            self._items[item.property.path] = (owm_ms, item)
 
             if owm_ms in self._origins_weather:
                 self._request_weather = True
             elif owm_ms.startswith('uvi_'):
                 self.logger.warning(
-                    f"{item.path()} The UVI API is deprecated - if you intend to query the current UV-index, use 'current/uvi' instead")
+                    f"{item.property.path} The UVI API is deprecated - if you intend to query the current UV-index, use 'current/uvi' instead")
                 self._request_uvi = True
             elif owm_ms.startswith('forecast'):
                 self._request_forecast = True

@@ -120,7 +120,7 @@ class AlexaRequestHandler(BaseHTTPRequestHandler):
             appliance = {
                 'actions': device.supported_actions(),
                 'additionalApplianceDetails': {
-                    'item{}'.format(idx+1) : item.id() for idx, item in enumerate(device.backed_items())
+                    'item{}'.format(idx+1) : item.property.path for idx, item in enumerate(device.backed_items())
                 },
                 'applianceId': device.id,
                 'friendlyDescription': device.description,

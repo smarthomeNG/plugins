@@ -249,7 +249,7 @@ class Rtr2(SmartPlugin):
         :param dest: if given it represents the dest
         """
         if self.alive and caller != self.get_shortname():
-            #self.logger.warning(f"update_item: item={item.id()} - value={item()}")
+            #self.logger.warning(f"update_item: item={item.property.path} - value={item()}")
             rtr_id = self.get_iattr_value(item.conf, 'rtr2_id')
             rtr_func = self.get_iattr_value(item.conf, 'rtr2_function')
             self._rtr[rtr_id].set_mode(rtr_func, item())

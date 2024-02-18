@@ -284,7 +284,7 @@ class AVM(SmartPlugin):
 
             if ain_device:
                 # deprecated warning for attribute 'ain'
-                self.logger.warning(f"Item {item.path()} uses deprecated 'ain' attribute. Please consider to switch to 'avm_ain'.")
+                self.logger.warning(f"Item {item.property.path} uses deprecated 'ain' attribute. Please consider to switch to 'avm_ain'.")
             else:
                 lookup_item = item
                 for i in range(2):
@@ -296,7 +296,7 @@ class AVM(SmartPlugin):
                         lookup_item = lookup_item.return_parent()
 
             if ain_device is None:
-                self.logger.error(f'Device AIN for {item.path()} is not defined or instance not given')
+                self.logger.error(f'Device AIN for {item.property.path} is not defined or instance not given')
                 return None
 
             return ain_device
@@ -320,7 +320,7 @@ class AVM(SmartPlugin):
                 wlan_index = int(wlan_index) - 1
                 if not 0 <= wlan_index <= 2:
                     wlan_index = None
-                    self.logger.warning(f"Attribute 'avm_wlan_index' for item {item.path()} not in valid range 1-3.")
+                    self.logger.warning(f"Attribute 'avm_wlan_index' for item {item.property.path} not in valid range 1-3.")
 
             return wlan_index
 
@@ -343,7 +343,7 @@ class AVM(SmartPlugin):
                 tam_index = int(tam_index) - 1
                 if not 0 <= tam_index <= 4:
                     tam_index = None
-                    self.logger.warning(f"Attribute 'avm_tam_index' for item {item.path()} not in valid range 1-5.")
+                    self.logger.warning(f"Attribute 'avm_tam_index' for item {item.property.path} not in valid range 1-5.")
 
             return tam_index
 
@@ -366,7 +366,7 @@ class AVM(SmartPlugin):
                 deflection_index = int(deflection_index) - 1
                 if not 0 <= deflection_index <= 31:
                     deflection_index = None
-                    self.logger.warning(f"Attribute 'avm_deflection_index' for item {item.path()} not in valid range 1-5.")
+                    self.logger.warning(f"Attribute 'avm_deflection_index' for item {item.property.path} not in valid range 1-5.")
 
             return deflection_index
 
@@ -390,11 +390,11 @@ class AVM(SmartPlugin):
         def get_aha_index() -> bool:
             index = _get_item_ain()
             if index:
-                self.logger.debug(f"Item {item.path()} with avm device attribute and defined avm_ain={index} found; append to list.")
+                self.logger.debug(f"Item {item.property.path} with avm device attribute and defined avm_ain={index} found; append to list.")
                 item_config.update({'interface': 'aha', 'index': index})
                 return True
             else:
-                self.logger.warning(f"Item {item.path()} with avm attribute found, but 'avm_ain' is not defined; Item will be ignored.")
+                self.logger.warning(f"Item {item.property.path} with avm attribute found, but 'avm_ain' is not defined; Item will be ignored.")
                 return False
 
         def get_tr064_index() -> bool:
@@ -403,36 +403,36 @@ class AVM(SmartPlugin):
             if avm_data_type in WLAN_CONFIG_ATTRIBUTES:
                 index = _get_wlan_index()
                 if index is not None:
-                    self.logger.debug(f"Item {item.path()} with avm device attribute {avm_data_type!r} and defined 'avm_wlan_index' with {index!r} found; append to list.")
+                    self.logger.debug(f"Item {item.property.path} with avm device attribute {avm_data_type!r} and defined 'avm_wlan_index' with {index!r} found; append to list.")
                 else:
-                    self.logger.warning(f"Item {item.path()} with avm attribute {avm_data_type!r} found, but 'avm_wlan_index' is not defined; Item will be ignored.")
+                    self.logger.warning(f"Item {item.property.path} with avm attribute {avm_data_type!r} found, but 'avm_wlan_index' is not defined; Item will be ignored.")
                     return False
 
             # handle network_device / host child related items
             elif avm_data_type in HOST_ATTRIBUTES_CHILD:
                 index = _get_mac()
                 if index is not None:
-                    self.logger.debug(f"Item {item.path()} with avm device attribute {avm_data_type!r} and defined 'avm_mac' with {index!r} found; append to list.")
+                    self.logger.debug(f"Item {item.property.path} with avm device attribute {avm_data_type!r} and defined 'avm_mac' with {index!r} found; append to list.")
                 else:
-                    self.logger.warning(f"Item {item.path()} with avm attribute {avm_data_type!r} found, but 'avm_mac' is not defined; Item will be ignored.")
+                    self.logger.warning(f"Item {item.property.path} with avm attribute {avm_data_type!r} found, but 'avm_mac' is not defined; Item will be ignored.")
                     return False
 
             # handle tam related items
             elif avm_data_type in TAM_ATTRIBUTES:
                 index = _get_tam_index()
                 if index is not None:
-                    self.logger.debug(f"Item {item.path()} with avm device attribute {avm_data_type!r} and defined 'avm_tam_index' with {index!r} found; append to list.")
+                    self.logger.debug(f"Item {item.property.path} with avm device attribute {avm_data_type!r} and defined 'avm_tam_index' with {index!r} found; append to list.")
                 else:
-                    self.logger.warning(f"Item {item.path()} with avm attribute {avm_data_type!r} found, but 'avm_tam_index' is not defined; Item will be ignored.")
+                    self.logger.warning(f"Item {item.property.path} with avm attribute {avm_data_type!r} found, but 'avm_tam_index' is not defined; Item will be ignored.")
                     return False
 
             # handle deflection related items
             elif avm_data_type in DEFLECTION_ATTRIBUTES:
                 index = _get_deflection_index()
                 if index is not None:
-                    self.logger.debug(f"Item {item.path()} with avm device attribute {avm_data_type!r} and defined 'avm_tam_index' with {index!r} found; append to list.")
+                    self.logger.debug(f"Item {item.property.path} with avm device attribute {avm_data_type!r} and defined 'avm_tam_index' with {index!r} found; append to list.")
                 else:
-                    self.logger.warning(f"Item {item.path()} with avm attribute {avm_data_type!r} found, but 'avm_tam_index' is not defined; Item will be ignored.")
+                    self.logger.warning(f"Item {item.property.path} with avm attribute {avm_data_type!r} found, but 'avm_tam_index' is not defined; Item will be ignored.")
                     return False
 
             item_config.update({'interface': 'tr064', 'index': index, 'error_count': 0})
@@ -454,7 +454,7 @@ class AVM(SmartPlugin):
                 avm_target_number = self.get_iattr_value(item.conf, 'avm_target_number')
 
                 if not avm_incoming_allowed or not avm_target_number:
-                    self.logger.error(f"For Trigger-item={item.path()} both 'avm_incoming_allowed' and 'avm_target_number' must be specified as attributes. Item will be ignored.")
+                    self.logger.error(f"For Trigger-item={item.property.path} both 'avm_incoming_allowed' and 'avm_target_number' must be specified as attributes. Item will be ignored.")
                     return False
                 else:
                     monitor_item_type = 'trigger'
@@ -541,19 +541,19 @@ class AVM(SmartPlugin):
             # get avm_data_type
             avm_data_type = self.get_iattr_value(item.conf, 'avm_data_type')
 
-            self.logger.info(f"Updated item: {item.path()} with avm_data_type={avm_data_type} item has been changed outside this plugin from caller={caller}")
+            self.logger.info(f"Updated item: {item.property.path} with avm_data_type={avm_data_type} item has been changed outside this plugin from caller={caller}")
 
             readafterwrite = 0
             if self.has_iattr(item.conf, 'avm_read_after_write'):
                 readafterwrite = self.get_iattr_value(item.conf, 'avm_read_after_write')
                 if self.debug_log:
-                    self.logger.debug(f'Attempting read after write for item: {item.path()}, avm_data_type: {avm_data_type}, delay: {readafterwrite}s')
+                    self.logger.debug(f'Attempting read after write for item: {item.property.path}, avm_data_type: {avm_data_type}, delay: {readafterwrite}s')
 
             # handle items updated by tr-064 interface
             if avm_data_type in TR064_RW_ATTRIBUTES:
                 if self.fritz_device:
                     if self.debug_log:
-                        self.logger.debug(f"Updated item={item.path()} with avm_data_type={avm_data_type} identified as part of 'TR064_ATTRIBUTES'")
+                        self.logger.debug(f"Updated item={item.property.path} with avm_data_type={avm_data_type} identified as part of 'TR064_ATTRIBUTES'")
                     self.fritz_device.handle_updated_item(item, avm_data_type, readafterwrite)
                 else:
                     self.logger.warning(f"AVM TR064 Interface not activated or not available. Update for {avm_data_type} will not be executed.")
@@ -562,7 +562,7 @@ class AVM(SmartPlugin):
             elif avm_data_type in AHA_RW_ATTRIBUTES + AHA_WO_ATTRIBUTES:
                 if self.fritz_home:
                     if self.debug_log:
-                        self.logger.debug(f"Updated item={item.path()} with avm_data_type={avm_data_type} identified as part of 'AHA_ATTRIBUTES'")
+                        self.logger.debug(f"Updated item={item.property.path} with avm_data_type={avm_data_type} identified as part of 'AHA_ATTRIBUTES'")
                     self.fritz_home.handle_updated_item(item, avm_data_type, readafterwrite)
                 else:
                     self.logger.warning(f"AVM Homeautomation Interface not activated or not available. Update for {avm_data_type} will not be executed.")
@@ -810,7 +810,7 @@ class FritzDevice:
 
         # do logging
         if self.debug_log:
-            self.logger.debug(f"Item {item.path()} with avm_data_type={avm_data_type} has changed for index {index}; New value={to_be_set_value}")
+            self.logger.debug(f"Item {item.property.path} with avm_data_type={avm_data_type} has changed for index {index}; New value={to_be_set_value}")
 
         # call setting method
         cmd, args, wlan_index = _dispatcher[avm_data_type]
@@ -826,7 +826,7 @@ class FritzDevice:
         """read the new item value and compares with to_be_set_value, update item to confirm correct value"""
         # do logging
         if self.debug_log:
-            self.logger.debug(f"_readafterwrite called with: item={item.path()}, avm_data_type={avm_data_type}, index={_index}; delay={delay}, to_be_set_value={to_be_set_value}")
+            self.logger.debug(f"_readafterwrite called with: item={item.property.path}, avm_data_type={avm_data_type}, index={_index}; delay={delay}, to_be_set_value={to_be_set_value}")
 
         # sleep
         time.sleep(delay)
@@ -839,10 +839,10 @@ class FritzDevice:
 
         # do logging
         if current_value != to_be_set_value:
-            self.logger.warning(f"Setting AVM Device defined in Item={item.path()} with avm_data_type={avm_data_type} to value={to_be_set_value} FAILED!")
+            self.logger.warning(f"Setting AVM Device defined in Item={item.property.path} with avm_data_type={avm_data_type} to value={to_be_set_value} FAILED!")
         else:
             if self.debug_log:
-                self.logger.debug(f"Setting AVM Device defined in Item={item.path()} with avm_data_type={avm_data_type} to value={to_be_set_value} successful!")
+                self.logger.debug(f"Setting AVM Device defined in Item={item.property.path} with avm_data_type={avm_data_type} to value={to_be_set_value} successful!")
 
     def _build_url(self) -> str:
         """
@@ -945,31 +945,31 @@ class FritzDevice:
 
             # check if item is blacklisted
             if error_count >= ERROR_COUNT_TO_BE_BLACKLISTED:
-                self.logger.info(f"Item {item.path()} is blacklisted due to exceptions in former update cycles. Item will be ignored.")
+                self.logger.info(f"Item {item.property.path} is blacklisted due to exceptions in former update cycles. Item will be ignored.")
                 continue
 
             # read items with cycle == 0 just at init
             if cycle == 0 and not read_all:
-                self.logger.debug(f"Item {item.path()} just read at init. No further update.")
+                self.logger.debug(f"Item {item.property.path} just read at init. No further update.")
                 continue
 
             # check if item is already due
             if next_time > current_time and not read_all:
-                self.logger.debug(f"Item {item.path()} is not due yet.")
+                self.logger.debug(f"Item {item.property.path} is not due yet.")
                 continue
 
             # check, if client_igd exists when avm_data_type startswith 'wan_current' are due
             if avm_data_type.startswith('wan_current') and self.client_igd is None:
-                self.logger.debug(f"Skipping item {item.path()} with avm_data_type 'wan_current' since not client für IGD is available.")
+                self.logger.debug(f"Skipping item {item.property.path} with avm_data_type 'wan_current' since not client für IGD is available.")
                 continue
 
-            self.logger.debug(f"Item={item.path()} with avm_data_type={avm_data_type} and index={index} will be updated")
+            self.logger.debug(f"Item={item.property.path} with avm_data_type={avm_data_type} and index={index} will be updated")
 
             # get data and set item value
             item_count += 1
             if not self._update_item_value(item, avm_data_type, index) and self.use_tr064_blacklist:
                 error_count += 1
-                self.logger.debug(f"{item.path()} caused error. New error_count: {error_count}. Item will be blacklisted after more than 2 errors.")
+                self.logger.debug(f"{item.property.path} caused error. New error_count: {error_count}. Item will be blacklisted after more than 2 errors.")
                 item_config.update({'error_count': error_count})
 
             # set next due date
@@ -1982,15 +1982,15 @@ class FritzHome:
 
             # Just read items with cycle == 0 at init
             if not read_all and not cycle:
-                # self.logger.debug(f"Item={item.path()} just read at init. No further update.")
+                # self.logger.debug(f"Item={item.property.path} just read at init. No further update.")
                 continue
 
             # check if item is already due
             if next_time > update_time:
-                # self.logger.debug(f"Item={item.path()} is not due, yet.")
+                # self.logger.debug(f"Item={item.property.path} is not due, yet.")
                 continue
 
-            self.logger.debug(f"Item={item.path()} with avm_data_type={avm_data_type} and ain={ain} will be updated")
+            self.logger.debug(f"Item={item.property.path} with avm_data_type={avm_data_type} and ain={ain} will be updated")
 
             # Attributes that are write-only commands with no corresponding read commands are excluded from status updates via update black list:
             update_black_list = ALL_ATTRIBUTES_WRITEONLY
@@ -2006,7 +2006,7 @@ class FritzHome:
             item_count += 1
             value = getattr(self.get_devices_as_dict().get(ain), avm_data_type, None)
             if value is None:
-                self.logger.debug(f'Value for attribute={avm_data_type} at device with AIN={ain} to set Item={item.path()} is not available/None.')
+                self.logger.debug(f'Value for attribute={avm_data_type} at device with AIN={ain} to set Item={item.property.path} is not available/None.')
                 continue
 
             # set item
@@ -2034,7 +2034,7 @@ class FritzHome:
             item_config = self._plugin_instance.get_item_config(item)
             avm_data_type = item_config['avm_data_type']
 
-            self.logger.debug(f"Item={item.path()} with avm_data_type={avm_data_type} and ain={ain} will be updated")
+            self.logger.debug(f"Item={item.property.path} with avm_data_type={avm_data_type} and ain={ain} will be updated")
 
             # Attributes that are write-only commands with no corresponding read commands are excluded from status updates via update black list:
             if avm_data_type in ALL_ATTRIBUTES_WRITEONLY:
@@ -2048,7 +2048,7 @@ class FritzHome:
             # get value
             value = getattr(self.get_devices_as_dict().get(ain), avm_data_type, None)
             if value is None:
-                self.logger.debug(f'Value for attribute={avm_data_type} at device with AIN={ain} to set Item={item.path()} is not available/None.')
+                self.logger.debug(f'Value for attribute={avm_data_type} at device with AIN={ain} to set Item={item.property.path} is not available/None.')
                 continue
 
             # set item
@@ -2059,7 +2059,7 @@ class FritzHome:
         Updated Item will be processed and value communicated to AVM Device
         """
 
-        self.logger.debug(f"handle_updated_item: item={item.path()}, {avm_data_type=}, value={item()}, {readafterwrite=}")
+        self.logger.debug(f"handle_updated_item: item={item.property.path}, {avm_data_type=}, value={item()}, {readafterwrite=}")
 
         # define set method per avm_data_type // all avm_data_types of AHA_WO_ATTRIBUTES + AHA_RW_ATTRIBUTES must be defined here
         _dispatcher = {'window_open':         (self.set_window_open, {'seconds': item()}, self.get_window_open),
@@ -2114,10 +2114,10 @@ class FritzHome:
             else:
                 item(set_value, self._plugin_instance.get_fullname())
                 if set_value != to_be_set_value:
-                    self.logger.warning(f"Setting AVM Device defined in Item={item.path()} with avm_data_type={avm_data_type} to value={to_be_set_value} FAILED!")
+                    self.logger.warning(f"Setting AVM Device defined in Item={item.property.path} with avm_data_type={avm_data_type} to value={to_be_set_value} FAILED!")
                 else:
                     if self.debug_log:
-                        self.logger.debug(f"Setting AVM Device defined in Item={item.path()} with avm_data_type={avm_data_type} to value={to_be_set_value} successful!")
+                        self.logger.debug(f"Setting AVM Device defined in Item={item.property.path} with avm_data_type={avm_data_type} to value={to_be_set_value} successful!")
 
     def item_list(self):
         return self._plugin_instance.get_aha_items()

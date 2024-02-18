@@ -151,20 +151,20 @@ class AVM_smarthome(SmartPlugin):
         """
         
         if self.has_iattr(item.conf, 'avm_smarthome_data') or self.has_iattr(item.conf, 'avm_ain'):
-            self.logger.debug(f"parsing item: {item.id()}")
+            self.logger.debug(f"parsing item: {item.property.path}")
                 
             datatype = self.get_iattr_value(item.conf, 'avm_smarthome_data')
             ain = self.get_iattr_value(item.conf, 'avm_ain')
             
             if ain is not None:
-                self.logger.debug(f" Item {item.id()} with avm_ain attribut found; append to list")
+                self.logger.debug(f" Item {item.property.path} with avm_ain attribut found; append to list")
                 self._ain_items.append(item)
             else:
                 parent_item = item.return_parent()
                 ain = self.get_iattr_value(parent_item.conf, 'avm_ain')
                 
             if datatype is not None:
-                self.logger.debug(f" Item {item.id()} with avm_smarthome_data attribut found; append to list")
+                self.logger.debug(f" Item {item.property.path} with avm_smarthome_data attribut found; append to list")
                 self.avm_smarthome_items.append(item)
                 
             if not self.avm_smarthome_devices.get(ain):
@@ -211,7 +211,7 @@ class AVM_smarthome(SmartPlugin):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
             
             if self.get_iattr_value(item.conf, 'avm_smarthome_data') == 'set_temperature':
                 self.logger.debug("update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item, caller, source, dest))
@@ -329,14 +329,14 @@ class AVM_smarthome(SmartPlugin):
         for item in self._ain_items:
             if self.has_iattr(item.conf, 'avm_ain'):
                 item_ain = self.get_iattr_value(item.conf, 'avm_ain')
-                self.logger.debug(f" Item {item.id()} with defined avm_ain attribut {item_ain}")
+                self.logger.debug(f" Item {item.property.path} with defined avm_ain attribut {item_ain}")
 
                 device = self._device_dict[item_ain]
                 
                 if self.has_iattr(item.conf, 'avm_smarthome_data'):
                     self._set_item_value(item, device)
                 else:
-                    self.logger.debug(f" No attribut 'avm_smarthome_data' found on item {item.id()}; checking child items")
+                    self.logger.debug(f" No attribut 'avm_smarthome_data' found on item {item.property.path}; checking child items")
                     for child in item.return_children():
                         self.logger.debug(f" Child item {child.id()} processed and checked for attribut 'avm_smarthome_data' ")
                         if self.has_iattr(child.conf, 'avm_smarthome_data'):

@@ -145,7 +145,7 @@ class Rpi1Wire(SmartPlugin):
                 return None
 
         if not self.has_iattr(item.conf, 'rpi1wire_unit'):
-            self.logger.warning("rpi1wire_unit for {0} not defined".format(item.id()))
+            self.logger.warning("rpi1wire_unit for {0} not defined".format(item.property.path))
             return None
 
         not_found = False
@@ -192,7 +192,7 @@ class Rpi1Wire(SmartPlugin):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
 
             if self.has_iattr(item.conf, 'rpi1wire_update'):
                 self.logger.info("rpi1wire_update wurde angefordert")
@@ -201,7 +201,7 @@ class Rpi1Wire(SmartPlugin):
 
         # ToDo: Do we need the following? two lines?
         if caller != 'plugin':
-            self.logger.info("update item: {0}".format(item.id()))
+            self.logger.info("update item: {0}".format(item.property.path))
 
 
     def update_values(self):

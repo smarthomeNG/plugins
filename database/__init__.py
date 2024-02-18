@@ -208,27 +208,27 @@ class Database(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, 'database'):
-            self._webdata.update({item.id(): {}})
+            self._webdata.update({item.property.path: {}})
             self._handled_items.append(item)
             if self.has_iattr(item.conf, 'database_maxage'):
                 maxage = self.get_iattr_value(item.conf, 'database_maxage')
                 if float(maxage) > 0:
                     #if self.get_iattr_value(item.conf, 'database') == 'init':
-                    #    self.logger.warning(f"Item {item.id()} configured with database_maxage and init could lead to no values in DB for initialization.")
+                    #    self.logger.warning(f"Item {item.property.path} configured with database_maxage and init could lead to no values in DB for initialization.")
 
                     self._items_with_maxage.append(item)
 
             self.logger.debug(item.conf)
             self._buffer_insert(item, [])
-            item.series = functools.partial(self._series, item=item.id())  # Zur Nutzung im Websocket Plugin
-            item.db = functools.partial(self._single, item=item.id())      # Nie genutzt??? -> Doch
+            item.series = functools.partial(self._series, item=item.property.path)  # Zur Nutzung im Websocket Plugin
+            item.db = functools.partial(self._single, item=item.property.path)      # Nie genutzt??? -> Doch
             item.dbplugin = self                                           # genutzt zum Zugriff auf die Plugin Instanz z.B. durch Logiken
             if self._db_initialized and self.get_iattr_value(item.conf, 'database').lower() == 'init':
                 if not self._db.lock(5):
-                    self.logger.error("Can not acquire lock for database to read value for item {}".format(item.id()))
+                    self.logger.error("Can not acquire lock for database to read value for item {}".format(item.property.path))
                     return
                 cur = self._db.cursor()
-                cache = self.readItem(str(item.id()), cur=cur)
+                cache = self.readItem(str(item.property.path), cur=cur)
                 if cache is not None:
                     try:
                         value = self._item_value_tuple_rev(item.type(), cache[COL_ITEM_VAL_STR:COL_ITEM_VAL_BOOL + 1])
@@ -237,28 +237,28 @@ class Database(SmartPlugin):
                                                      {'id': cache[COL_ITEM_ID]}, cur=cur)
                         if (value is not None) and (prev_change is not None) and (prev_change[0] is not None):
                             # Add item specific debugging here:
-                            #if item.id() == 'xyz':
-                            #    self.logger.debug(f"Parse item: ItemID: {item.id()}: {value}, {self._datetime(prev_change[0])}, {last_change}")
-                            self._webdata[item.id()].update({'last_change': last_change.isoformat()})
-                            self._webdata[item.id()].update({'value': value})
-                            self._webdata[item.id()].update({'type': item.property.type})
+                            #if item.property.path == 'xyz':
+                            #    self.logger.debug(f"Parse item: ItemID: {item.property.path}: {value}, {self._datetime(prev_change[0])}, {last_change}")
+                            self._webdata[item.property.path].update({'last_change': last_change.isoformat()})
+                            self._webdata[item.property.path].update({'value': value})
+                            self._webdata[item.property.path].update({'type': item.property.type})
                             item.set(value, 'Database', source='DBInit', prev_change=self._datetime(prev_change[0]), last_change=last_change)
                         else:
-                            self.logger.warning(f"Debug init for item {item.id()}: {value}, {prev_change}, {prev_change[0]}")
+                            self.logger.warning(f"Debug init for item {item.property.path}: {value}, {prev_change}, {prev_change[0]}")
                         if value is not None and self.get_iattr_value(item.conf, 'database_acl') is not None and self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro':
-                            #self.logger.debug(f"DEBUG: Parse item, doing buffer insert for ItemID: {item.id()}: {value}, databse_acl {self.get_iattr_value(item.conf, 'database_acl').lower()}")
+                            #self.logger.debug(f"DEBUG: Parse item, doing buffer insert for ItemID: {item.property.path}: {value}, databse_acl {self.get_iattr_value(item.conf, 'database_acl').lower()}")
                             self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
                     except Exception as e:
-                        self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
+                        self.logger.error("Reading cache value from database for {} failed: {}".format(item.property.path, e))
                 else:
-                    self.logger.notice(f"No cached value available in database for item {item.id()}")
+                    self.logger.notice(f"No cached value available in database for item {item.property.path}")
                 cur.close()
                 self._db.release()
             elif self.get_iattr_value(item.conf, 'database').lower() == 'init':
-                self.logger.warning("Db not initialized. Cannot read database value for item {}".format(item.id()))
+                self.logger.warning("Db not initialized. Cannot read database value for item {}".format(item.property.path))
             else:
-                self._webdata[item.id()].update({'value': item.property.value})
-                self._webdata[item.id()].update({'type': item.property.type})
+                self._webdata[item.property.path].update({'value': item.property.value})
+                self._webdata[item.property.path].update({'type': item.property.type})
 
             return self.update_item
         else:
@@ -293,8 +293,8 @@ class Database(SmartPlugin):
 
         # Uncomment to enable item specific debugging:
         #if item.property.path.startswith('test.'):
-        #if item.id() == 'xyz':
-        #    self.logger.warning(f"Debug: updateItem, ItemID: {item.id()}: {item()}, {caller}, {dest}")
+        #if item.property.path == 'xyz':
+        #    self.logger.warning(f"Debug: updateItem, ItemID: {item.property.path}: {item()}, {caller}, {dest}")
         #    debug_item = True
 
         #Determine if item is read/write or read-only:
@@ -426,7 +426,7 @@ class Database(SmartPlugin):
         """
 
         try:
-            item_path = str(item.id())
+            item_path = str(item.property.path)
         except:
             item_path = item
         try:
@@ -436,7 +436,7 @@ class Database(SmartPlugin):
             id = None
 
         if id is None and create == True:
-            id = [self.insertItem(item.id(), cur)]
+            id = [self.insertItem(item.property.path, cur)]
 
         if (id is None) or (COL_ITEM_ID >= len(id)) :
             return None
@@ -456,7 +456,7 @@ class Database(SmartPlugin):
         """
 
         try:
-            item_path = str(item.id())
+            item_path = str(item.property.path)
         except:
             item_path = item
         try:
@@ -497,7 +497,7 @@ class Database(SmartPlugin):
         """
 
         try:
-            item_path = str(item.id())
+            item_path = str(item.property.path)
         except:
             item_path = item
         try:
@@ -917,7 +917,7 @@ class Database(SmartPlugin):
         self.orphanitemlist = []
         self.orphanlist = []
 
-        items = [item.id() for item in self._buffer]
+        items = [item.property.path for item in self._buffer]
         try: 
             cur = self._db_maint.cursor()
         except Exception as e:
@@ -1416,10 +1416,10 @@ class Database(SmartPlugin):
                     end = changed
                     val = item()
                     try:
-                        self._webdata[item.id()].update({'value': val})
-                        self._webdata[item.id()].update({'type': item.property.type})
+                        self._webdata[item.property.path].update({'value': val})
+                        self._webdata[item.property.path].update({'type': item.property.type})
                     except Exception as e:
-                        self.logger.warning("Problem webdata value update {}: {}".format(item.id(), e))
+                        self.logger.warning("Problem webdata value update {}: {}".format(item.property.path, e))
 
                     # When finalizing (e.g. plugin shutdown) add current value to item and log
                     if finalize:
@@ -1434,7 +1434,7 @@ class Database(SmartPlugin):
                         if self.get_iattr_value(item.conf, 'database_write_on_shutdown') == False:
                             self.logger.debug(f"DEBUG _dump: Blocking rewrite to DB for item {item} with value {val}")
 
-                            #if item.id() == 'xyz':
+                            #if item.property.path == 'xyz':
                             #    self.logger.warning(f"DEBUG _dump: update debug item with start {start}, val {val}, changed {changed}")
 
                             _update = (start, val, changed)
@@ -1454,7 +1454,7 @@ class Database(SmartPlugin):
                     id = self.id(item, cur=cur)
 
                     # Dump tuples
-                    self.logger.debug('Dumping {}/{} with {} values'.format(item.id(), id, len(tuples)))
+                    self.logger.debug('Dumping {}/{} with {} values'.format(item.property.path, id, len(tuples)))
 
                     for t in tuples:
                         if len(self.readLog(id, t[0], cur)):
@@ -1469,7 +1469,7 @@ class Database(SmartPlugin):
 
                     self._db.commit()
                 except Exception as e:
-                    self.logger.warning("Problem dumping {}: {}".format(item.id(), e))
+                    self.logger.warning("Problem dumping {}: {}".format(item.property.path, e))
                     try:
                         self._db.rollback()
                     except Exception as er:
@@ -1618,7 +1618,7 @@ class Database(SmartPlugin):
         # update the logCount for the item
         logcount = self.readLogCount(item_id)
         self._item_logcount[item_id] = logcount
-        self._webdata[item.id()].update({'logcount': logcount})
+        self._webdata[item.property.path].update({'logcount': logcount})
 
         return
 
@@ -1657,8 +1657,8 @@ class Database(SmartPlugin):
             logcount = self.readLogCount(item_id)
             self._item_logcount[item_id] = logcount
             self._items_total_entries += logcount
-            self._webdata[item.id()].update({'logcount': logcount})
-            #self._webdata[item.id()].update({'logcount': f"{logcount:,}".replace(',', '.')})
+            self._webdata[item.property.path].update({'logcount': logcount})
+            #self._webdata[item.property.path].update({'logcount': f"{logcount:,}".replace(',', '.')})
 
         self._items_still_counting = False
         return

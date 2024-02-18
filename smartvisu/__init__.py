@@ -356,11 +356,11 @@ class SmartVisu(SmartPlugin):
                 usage[dep_widget] += 1
             if self.list_deprecated_warnings:
                 if level == 'deprecated':
-                    self.logger.warning("Deprecated widget used in item {} '{}': '{}'".format(item.id(), widget_name, dep_widget))
+                    self.logger.warning("Deprecated widget used in item {} '{}': '{}'".format(item.property.path, widget_name, dep_widget))
                 elif level == 'removed':
-                    self.logger.error("Removed widget used in item {} '{}': '{}'".format(item.id(), widget_name, dep_widget))
+                    self.logger.error("Removed widget used in item {} '{}': '{}'".format(item.property.path, widget_name, dep_widget))
                 else:
-                    self.logger.error("Plugin-widget that needs update is used in item {} '{}': '{}'".format(item.id(), widget_name, dep_widget))
+                    self.logger.error("Plugin-widget that needs update is used in item {} '{}': '{}'".format(item.property.path, widget_name, dep_widget))
         return
 
 

@@ -182,7 +182,7 @@ class Smlx(SmartPlugin):
             if prop not in self._items[obis]:
                 self._items[obis][prop] = []
             self._items[obis][prop].append(item)
-            self.logger.debug('Attach {} {} {}'.format(item.id(), obis, prop))
+            self.logger.debug('Attach {} {} {}'.format(item.property.path, obis, prop))
             return self.update_item
         return None
 
@@ -204,7 +204,7 @@ class Smlx(SmartPlugin):
         """
         if caller != self.get_shortname():
             # Code to execute, only if the item has not been changed by this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
             pass
 
     def connect(self):

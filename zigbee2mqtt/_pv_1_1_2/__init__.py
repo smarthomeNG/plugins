@@ -144,7 +144,7 @@ class Zigbee2Mqtt(MqttPlugin):
 
         if self.has_iattr(item.conf, 'zigbee2mqtt_attr'):
             if self.debug_log:
-                self.logger.debug(f"parsing item: {item.id()}")
+                self.logger.debug(f"parsing item: {item.property.path}")
 
             zigbee2mqtt_attr = self.get_iattr_value(item.conf, 'zigbee2mqtt_attr').lower()
             topic_level2 = self._get_zigbee2mqtt_topic_from_item(item)
@@ -178,7 +178,7 @@ class Zigbee2Mqtt(MqttPlugin):
         """
 
         if self.debug_log:
-            self.logger.debug(f"update_item: {item.id()} called by {caller} and source {source}")
+            self.logger.debug(f"update_item: {item.property.path} called by {caller} and source {source}")
 
         if self.alive and self.get_shortname() not in caller:
             # code to execute if the plugin is not stopped  AND only, if the item has not been changed for this plugin
@@ -193,7 +193,7 @@ class Zigbee2Mqtt(MqttPlugin):
                                     'device_ota_update_check', 'device_ota_update_update', 'device_configure', 'device_options', 'device_rename',
                                     'device_bind', 'device_unbind', 'device_configure_reporting', 'state', 'color_temp', 'brightness', 'hue', 'saturation']:
 
-                self.logger.info(f"update_item: {item.id()}, item has been changed in SmartHomeNG outside of this plugin in {caller} with value {item()}")
+                self.logger.info(f"update_item: {item.property.path}, item has been changed in SmartHomeNG outside of this plugin in {caller} with value {item()}")
                 payload = None
                 bool_values = None
                 topic_level3 = topic_level4 = topic_level5 = ''
@@ -282,14 +282,14 @@ class Zigbee2Mqtt(MqttPlugin):
                         saturation = 0 if saturation < 0 else 100
                     payload = '{"color":{' + f'"hue":{hue}, "saturation":{saturation}' + '}}'
                 else:
-                    self.logger.warning(f"update_item: {item.id()}, attribut {zigbee2mqtt_attr} not implemented yet (by {caller})")
+                    self.logger.warning(f"update_item: {item.property.path}, attribut {zigbee2mqtt_attr} not implemented yet (by {caller})")
 
                 if payload is not None:
                     self.publish_zigbee2mqtt_topic(self.topic_level1, topic_level2, topic_level3, topic_level4, topic_level5, payload, item, bool_values=bool_values)
                 else:
-                    self.logger.warning(f"update_item: {item.id()}, no value/payload defined (by {caller})")
+                    self.logger.warning(f"update_item: {item.property.path}, no value/payload defined (by {caller})")
             else:
-                self.logger.warning(f"update_item: {item.id()}, trying to change item in SmartHomeNG that is readonly (by {caller})")
+                self.logger.warning(f"update_item: {item.property.path}, trying to change item in SmartHomeNG that is readonly (by {caller})")
 
     def poll_bridge(self):
         """
@@ -562,7 +562,7 @@ class Zigbee2Mqtt(MqttPlugin):
 
                         if item is not None:
                             item(value, src)
-                            self.logger.info(f"{topic_level2}: Item '{item.id()}' set to value {value}")
+                            self.logger.info(f"{topic_level2}: Item '{item.property.path}' set to value {value}")
                         else:
                             self.logger.info(f"{topic_level2}: No item for itemtype '{itemtype}' defined to set to {value}")
 
@@ -651,7 +651,7 @@ class Zigbee2Mqtt(MqttPlugin):
 
         try:
             topic_level2 = int(topic_level2)
-            self.logger.warning(f"Probably for item {item.id()} the IEEE Adress has been used for item attribute 'zigbee2mqtt_topic'. Trying to make that work but it will cause exceptions. To prevent this, the short name need to be defined as string by using parentheses")
+            self.logger.warning(f"Probably for item {item.property.path} the IEEE Adress has been used for item attribute 'zigbee2mqtt_topic'. Trying to make that work but it will cause exceptions. To prevent this, the short name need to be defined as string by using parentheses")
             topic_level2 = str(hex(topic_level2))
         except Exception:
             pass

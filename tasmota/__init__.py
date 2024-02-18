@@ -167,7 +167,7 @@ class Tasmota(MqttPlugin):
 
         if self.has_iattr(item.conf, 'tasmota_topic'):
             tasmota_topic = self.get_iattr_value(item.conf, 'tasmota_topic')
-            self.logger.info(f"parsing item: {item.path()} with tasmota_topic={tasmota_topic}")
+            self.logger.info(f"parsing item: {item.property.path} with tasmota_topic={tasmota_topic}")
 
             tasmota_attr = self.get_iattr_value(item.conf, 'tasmota_attr')
             tasmota_relay = self.get_iattr_value(item.conf, 'tasmota_relay')
@@ -180,7 +180,7 @@ class Tasmota(MqttPlugin):
 
             # handle tasmota
             if tasmota_attr:
-                self.logger.info(f"Item={item.path()} identified for Tasmota with tasmota_attr={tasmota_attr}")
+                self.logger.info(f"Item={item.property.path} identified for Tasmota with tasmota_attr={tasmota_attr}")
                 tasmota_attr = tasmota_attr.lower()
 
                 if tasmota_rf_details and '=' in tasmota_rf_details:
@@ -202,7 +202,7 @@ class Tasmota(MqttPlugin):
 
             # handle tasmota zigbee
             elif tasmota_zb_device and tasmota_zb_attr:
-                self.logger.info(f"Item={item.path()} identified for Tasmota Zigbee with tasmota_zb_device={tasmota_zb_device} and tasmota_zb_attr={tasmota_zb_attr}")
+                self.logger.info(f"Item={item.property.path} identified for Tasmota Zigbee with tasmota_zb_device={tasmota_zb_device} and tasmota_zb_attr={tasmota_zb_attr}")
                 tasmota_zb_attr = tasmota_zb_attr.lower()
 
                 # check if zigbee device short name has been used without parentheses; if so this will be normally parsed to a number and therefore mismatch with definition
@@ -211,7 +211,7 @@ class Tasmota(MqttPlugin):
                 except ValueError:
                     pass
                 else:
-                    self.logger.warning(f"Probably for item {item.path()} the device short name as been used for attribute 'tasmota_zb_device'. Trying to make that work but it will cause exceptions. To prevent this, the short name need to be defined as string by using parentheses")
+                    self.logger.warning(f"Probably for item {item.property.path} the device short name as been used for attribute 'tasmota_zb_device'. Trying to make that work but it will cause exceptions. To prevent this, the short name need to be defined as string by using parentheses")
                     tasmota_zb_device = str(hex(tasmota_zb_device))
                     tasmota_zb_device = tasmota_zb_device[0:2] + tasmota_zb_device[2:len(tasmota_zb_device)].upper()
 
@@ -221,7 +221,7 @@ class Tasmota(MqttPlugin):
 
             # handle tasmota zigbee groups
             elif tasmota_zb_group and tasmota_zb_attr:
-                self.logger.info(f"Item={item.path()} identified for Tasmota Zigbee with tasmota_zb_group={tasmota_zb_group} and tasmota_zb_attr={tasmota_zb_attr}")
+                self.logger.info(f"Item={item.property.path} identified for Tasmota Zigbee with tasmota_zb_group={tasmota_zb_group} and tasmota_zb_attr={tasmota_zb_attr}")
                 tasmota_zb_attr = tasmota_zb_attr.lower()
 
                 # define item_config
@@ -230,7 +230,7 @@ class Tasmota(MqttPlugin):
 
             # handle tasmota smartmeter
             elif tasmota_sml_device and tasmota_sml_attr:
-                self.logger.info(f"Item={item.path()} identified for Tasmota SML with tasmota_sml_device={tasmota_sml_device} and tasmota_sml_attr={tasmota_sml_attr}")
+                self.logger.info(f"Item={item.property.path} identified for Tasmota SML with tasmota_sml_device={tasmota_sml_device} and tasmota_sml_attr={tasmota_sml_attr}")
                 tasmota_sml_attr = tasmota_sml_attr.lower()
 
                 item_mapping = f'{tasmota_topic}.{tasmota_sml_device}.{tasmota_sml_attr}'
@@ -240,7 +240,7 @@ class Tasmota(MqttPlugin):
 
             # handle everything else
             else:
-                self.logger.info(f"Definition of attributes for item={item.path()} incomplete. Item will be ignored.")
+                self.logger.info(f"Definition of attributes for item={item.property.path} incomplete. Item will be ignored.")
                 return
 
             # setup dict for new device
@@ -257,7 +257,7 @@ class Tasmota(MqttPlugin):
             return self.update_item
 
         elif self.has_iattr(item.conf, 'tasmota_admin'):
-            self.logger.debug(f"parsing item: {item.path()} for tasmota admin attribute")
+            self.logger.debug(f"parsing item: {item.property.path} for tasmota admin attribute")
 
             return self.update_item
 
@@ -296,7 +296,7 @@ class Tasmota(MqttPlugin):
 
             # handle tasmota_attr
             elif tasmota_attr and tasmota_attr in self.TASMOTA_ATTR_R_W:
-                self.logger.info(f"update_item: {item.path()}, item has been changed in SmartHomeNG outside of this plugin in {caller} with value {item()}")
+                self.logger.info(f"update_item: {item.property.path}, item has been changed in SmartHomeNG outside of this plugin in {caller} with value {item()}")
 
                 value = item()
                 link = {
@@ -394,7 +394,7 @@ class Tasmota(MqttPlugin):
             elif tasmota_zb_attr:
                 tasmota_zb_attr = tasmota_zb_attr.lower()
 
-                self.logger.info(f"update_item: item={item.path()} with tasmota_zb_attr={tasmota_zb_attr} has been changed from {caller} with value={item()}")
+                self.logger.info(f"update_item: item={item.property.path} with tasmota_zb_attr={tasmota_zb_attr} has been changed from {caller} with value={item()}")
                 self.logger.info(f"update_item: tasmota_zb_device={tasmota_zb_device}; tasmota_zb_group={tasmota_zb_group}")
 
                 if tasmota_zb_attr not in self.TASMOTA_ZB_ATTR_R_W:
@@ -444,7 +444,7 @@ class Tasmota(MqttPlugin):
                 self.publish_tasmota_topic('cmnd', tasmota_topic, detail, payload, item, bool_values=bool_values)
 
             else:
-                self.logger.warning(f"update_item: {item.path()}, trying to change item in SmartHomeNG that is read only in tasmota device (by {caller})")
+                self.logger.warning(f"update_item: {item.property.path}, trying to change item in SmartHomeNG that is read only in tasmota device (by {caller})")
 
     ############################################################
     #   Callbacks
@@ -1578,7 +1578,7 @@ class Tasmota(MqttPlugin):
                     return
 
             # set item value
-            self.logger.info(f"Item '{item.path()}' via item_type '{item_type}' set to value '{value}' provided by '{src}'.")
+            self.logger.info(f"Item '{item.property.path}' via item_type '{item_type}' set to value '{value}' provided by '{src}'.")
             item(value, self.get_shortname(), src)
 
     def _handle_new_discovered_device(self, tasmota_topic: str):

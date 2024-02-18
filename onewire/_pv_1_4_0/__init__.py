@@ -316,7 +316,7 @@ class OneWire(OwBase):
                 item = self._ios[addr][key]['item']
                 path = self._ios[addr][key]['path']
                 if path is None:
-                    self.logger.debug("1-Wire: path not found for {0}".format(item.id()))
+                    self.logger.debug("1-Wire: path not found for {0}".format(item.property.path))
                     continue
                 try:
                     if key == 'B':
@@ -384,7 +384,7 @@ class OneWire(OwBase):
                 item = self._sensors[addr][key]['item']
                 path = self._sensors[addr][key]['path']
                 if path is None:
-                    self.logger.info("1-Wire: path not found for {0}".format(item.id()))
+                    self.logger.info("1-Wire: path not found for {0}".format(item.property.path))
                     continue
                 try:
                     value = self.read('/uncached' + path).decode()
@@ -469,7 +469,7 @@ class OneWire(OwBase):
         if 'ow_addr' not in item.conf:
             return
         if 'ow_sensor' not in item.conf:
-            self.logger.warning("1-Wire: No ow_sensor for {0} defined".format(item.id()))
+            self.logger.warning("1-Wire: No ow_sensor for {0} defined".format(item.property.path))
             return
         addr = item.conf['ow_addr']
         key = item.conf['ow_sensor']
@@ -480,13 +480,13 @@ class OneWire(OwBase):
         elif key == 'B':
             table = self._ibuttons
         elif key == 'BM':
-            self._ibutton_masters[addr] = item.id()
+            self._ibutton_masters[addr] = item.property.path
             return
         else:
             table = self._sensors
         if key not in self._supported:  # unknown key
             path = '/' + addr + '/' + key
-            self.logger.info("1-Wire: unknown sensor specified for {0} using path: {1}".format(item.id(), path))
+            self.logger.info("1-Wire: unknown sensor specified for {0} using path: {1}".format(item.property.path, path))
         else:
             path = None
             if key == 'VOC':

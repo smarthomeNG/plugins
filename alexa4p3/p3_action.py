@@ -84,7 +84,7 @@ def SetColorTemperature(self, directive):
     for item in items:
         percent_new = kelvin_2_percent(new_kelvin, item.alexa_range)
         item_new = int(percent_new/100.0*255.0)
-        self.logger.info("Alexa P3: SetColorTemperature({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: SetColorTemperature({}, {:.1f})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )            # in 0-255 
         self.response_Value = None
         self.response_Value = int(new_kelvin)
@@ -110,7 +110,7 @@ def IncreaseColorTemperature(self, directive):
         item_new = int(percent_new/100.0*255.0)
         item( item_new, "alexa4p3" )
         
-        self.logger.info("Alexa P3: IncreaseColorTemperature({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: IncreaseColorTemperature({}, {:.1f})".format(item.property.path, item_new))
         
         self.response_Value = None
         self.response_Value = int(new_kelvin)
@@ -136,7 +136,7 @@ def DecreaseColorTemperature(self, directive):
         item_new = int(percent_new/100.0*255.0)
         item( item_new, "alexa4p3" )
         
-        self.logger.info("Alexa P3: DecreaseColorTemperature({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: DecreaseColorTemperature({}, {:.1f})".format(item.property.path, item_new))
         
         self.response_Value = None
         self.response_Value = int(new_kelvin)
@@ -158,7 +158,7 @@ def AdjustRangeValue(self, directive):
         percentage_now = what_percentage(item_now, item_range)
         percentage_new = clamp_percentage(percentage_now + percentage_delta, item_range)
         item_new = calc_percentage(percentage_new, item_range)
-        self.logger.info("Alexa P3: AdjustRangeValue({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: AdjustRangeValue({}, {:.1f})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = int(percentage_new)
@@ -176,7 +176,7 @@ def SetRangeValue(self, directive):
         item_range = self.item_range(item, DEFAULT_RANGE)
         item_new = calc_percentage(new_percentage, item_range)
         self._proto.addEntry('INFO   ','Changed item :{} from {} to {}'.format(item.property.name,oldValue,newValue))
-        self.logger.info("Alexa P3: SetRangeValue({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: SetRangeValue({}, {:.1f})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = int(new_percentage)
@@ -208,7 +208,7 @@ def SetThermostatMode(self, directive):
     
     item_new = myModeList[new_Mode]
     for item in items:
-        self.logger.info("Alexa: SetThermostatMode({}, {})".format(item.id(), item_new))
+        self.logger.info("Alexa: SetThermostatMode({}, {})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
     
     #new_temp = items[0]() if items else 0
@@ -228,7 +228,7 @@ def AdjustTargetTemperature(self, directive):
     for item in items:
         item_range = self.item_range(item, DEFAULT_TEMP_RANGE)
         item_new = clamp_temp(previous_temp + delta_temp, item_range)
-        self.logger.info("Alexa: AdjustTargetTemperature({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa: AdjustTargetTemperature({}, {:.1f})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
 
     new_temp = items[0]() if items else 0
@@ -252,7 +252,7 @@ def SetTargetTemperature(self, directive):
     for item in items:
         item_range = self.item_range(item, DEFAULT_TEMP_RANGE)
         item_new = clamp_temp(target_temp, item_range)
-        self.logger.info("Alexa: SetTargetTemperature({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa: SetTargetTemperature({}, {:.1f})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
 
     new_temp = items[0]() if items else 0
@@ -275,7 +275,7 @@ def TurnOn(self, directive):
     items = self.items(device_id)
     for item in items:
         on, off = self.item_range(item, DEFAULT_RANGE_LOGIC)
-        self.logger.info("Alexa: turnOn({}, {})".format(item.id(), on))
+        self.logger.info("Alexa: turnOn({}, {})".format(item.property.path, on))
         if on != None:
             item( on, "alexa4p3" )
             self.response_Value = 'ON'            
@@ -290,7 +290,7 @@ def TurnOff(self, directive):
 
     for item in items:
         on, off = self.item_range(item, DEFAULT_RANGE_LOGIC)
-        self.logger.info("Alexa: turnOff({}, {})".format(item.id(), off))
+        self.logger.info("Alexa: turnOff({}, {})".format(item.property.path, off))
         if off != None:
             item( off, "alexa4p3" )
             self.response_Value = 'OFF'
@@ -306,7 +306,7 @@ def Lock(self, directive):
 
     for item in items:
         on, off = self.item_range(item, DEFAULT_RANGE_LOGIC)
-        self.logger.info("Alexa: Lock({}, {})".format(item.id(), on))
+        self.logger.info("Alexa: Lock({}, {})".format(item.property.path, on))
         if on != None:
             item( on, "alexa4p3" )
             self.response_Value = None
@@ -321,7 +321,7 @@ def Unlock(self, directive):
 
     for item in items:
         on, off = self.item_range(item, DEFAULT_RANGE_LOGIC)
-        self.logger.info("Alexa: Unlock({}, {})".format(item.id(), off))
+        self.logger.info("Alexa: Unlock({}, {})".format(item.property.path, off))
         if off != None:
             item( on, "alexa4p3" )
             self.response_Value = None
@@ -345,7 +345,7 @@ def AdjustBrightness(self, directive):
         percentage_now = what_percentage(item_now, item_range)
         percentage_new = clamp_percentage(percentage_now + percentage_delta, item_range)
         item_new = calc_percentage(percentage_new, item_range)
-        self.logger.info("Alexa P3: AdjustBrightness({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: AdjustBrightness({}, {:.1f})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = int(percentage_new)
@@ -361,7 +361,7 @@ def SetBrightness(self, directive):
     for item in items:
         item_range = self.item_range(item, DEFAULT_RANGE)
         item_new = calc_percentage(new_percentage, item_range)
-        self.logger.info("Alexa P3: SetBrightness({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: SetBrightness({}, {:.1f})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = int(new_percentage)
@@ -385,7 +385,7 @@ def AdjustPercentage(self, directive):
         percentage_now = what_percentage(item_now, item_range)
         percentage_new = clamp_percentage(percentage_now + percentage_delta, item_range)
         item_new = calc_percentage(percentage_new, item_range)
-        self.logger.info("Alexa P3: AdjustPercentage({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: AdjustPercentage({}, {:.1f})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = int(percentage_new)
@@ -401,7 +401,7 @@ def SetPercentage(self, directive):
     for item in items:
         item_range = self.item_range(item, DEFAULT_RANGE)
         item_new = calc_percentage(new_percentage, item_range)
-        self.logger.info("Alexa P3: SetPercentage({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: SetPercentage({}, {:.1f})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = int(new_percentage)
@@ -424,7 +424,7 @@ def AdjustPowerLevel(self, directive):
         percentage_now = what_percentage(item_now, item_range)
         percentage_new = clamp_percentage(percentage_now + percentage_delta, item_range)
         item_new = calc_percentage(percentage_new, item_range)
-        self.logger.info("Alexa P3: AdjustPowerLevel({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: AdjustPowerLevel({}, {:.1f})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = int(percentage_new)
@@ -440,7 +440,7 @@ def SetPowerLevel(self, directive):
     for item in items:
         item_range = self.item_range(item, DEFAULT_RANGE)
         item_new = calc_percentage(new_percentage, item_range)
-        self.logger.info("Alexa P3: SetPowerLevel({}, {:.1f})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: SetPowerLevel({}, {:.1f})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = int(new_percentage)
@@ -459,7 +459,7 @@ def Activate(self, directive):
     for item in items:
         on, off = self.item_range(item, DEFAULT_RANGE_LOGIC)
         item_new = on                           # Should be the No. of the Scene
-        self.logger.info("Alexa P3: Activate Scene ({}, {})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: Activate Scene ({}, {})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = item_new
@@ -474,7 +474,7 @@ def Play(self, directive):
     items = self.items(device_id)
     for item in items:
         item_new = 1                   
-        self.logger.info("Alexa P3: PBC Play received ({}, {})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: PBC Play received ({}, {})".format(item.property.path, item_new))
         item( item_new )
         self.response_Value = None
         self.response_Value = item_new
@@ -487,7 +487,7 @@ def Stop(self, directive):
     items = self.items(device_id)
     for item in items:
         item_new = 1                   
-        self.logger.info("Alexa P3: PBC Stop received ({}, {})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: PBC Stop received ({}, {})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = item_new
@@ -500,7 +500,7 @@ def FastForward(self, directive):
     items = self.items(device_id)
     for item in items:
         item_new = 1                   
-        self.logger.info("Alexa P3: PBC FastForward received ({}, {})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: PBC FastForward received ({}, {})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = item_new
@@ -513,7 +513,7 @@ def Next(self, directive):
     items = self.items(device_id)
     for item in items:
         item_new = 1                   
-        self.logger.info("Alexa P3: PBC Next received ({}, {})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: PBC Next received ({}, {})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = item_new
@@ -526,7 +526,7 @@ def Pause(self, directive):
     items = self.items(device_id)
     for item in items:
         item_new = 1                   
-        self.logger.info("Alexa P3: PBC Pause received ({}, {})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: PBC Pause received ({}, {})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = item_new
@@ -539,7 +539,7 @@ def Previous(self, directive):
     items = self.items(device_id)
     for item in items:
         item_new = 1                   
-        self.logger.info("Alexa P3: PBC Previous received ({}, {})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: PBC Previous received ({}, {})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = item_new
@@ -552,7 +552,7 @@ def Rewind(self, directive):
     items = self.items(device_id)
     for item in items:
         item_new = 1                   
-        self.logger.info("Alexa P3: PBC Rewind received ({}, {})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: PBC Rewind received ({}, {})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = item_new
@@ -565,7 +565,7 @@ def StartOver(self, directive):
     items = self.items(device_id)
     for item in items:
         item_new = 1                   
-        self.logger.info("Alexa P3: PBC StartOver received ({}, {})".format(item.id(), item_new))
+        self.logger.info("Alexa P3: PBC StartOver received ({}, {})".format(item.property.path, item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
         self.response_Value = item_new
@@ -580,7 +580,7 @@ def InitializeCameraStreams(self, directive):
     device_id = directive['endpoint']['endpointId']
     items = self.items(device_id)
     for item in items:
-        self.logger.info("Alexa P3: CameraStream Init ({})".format(item.id()))
+        self.logger.info("Alexa P3: CameraStream Init ({})".format(item.property.path))
         response_Value = None
         AlexaItem = self.devices.get(device_id)
         response_Value = p3tools.CreateStreamPayLoad(AlexaItem)
@@ -618,7 +618,7 @@ def SetColor(self, directive):
     try:
         r,g,b = p3tools.hsv_to_rgb(new_hue,new_saturation,new_brightness)
     except Exception as err:
-        self.logger.error("Alexa P3: SetColor Calculate to RGB failed ({}, {})".format(item.id(), err))
+        self.logger.error("Alexa P3: SetColor Calculate to RGB failed ({}, {})".format(item.property.path, err))
     
     retValue=[]
     retValue.append(r)
@@ -647,7 +647,7 @@ def SetColor(self, directive):
                 else:
                     retValue.append(new_brightness)
             
-        self.logger.info("Alexa P3: SetColor ({}, {})".format(item.id(), str(retValue)))
+        self.logger.info("Alexa P3: SetColor ({}, {})".format(item.property.path, str(retValue)))
         item( retValue, "alexa4p3" )
         self.response_Value = None
         self.response_Value = directive['payload']['color']

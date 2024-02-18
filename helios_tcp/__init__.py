@@ -215,7 +215,7 @@ class HeliosTCP(SmartPlugin):
         try:
             item(varprop["type"](result), self.get_shortname())
         except ValueError:
-            self.logger.warning("Helios TCP: Could not assign {0} to item {1}".format(varprop["type"](result), item.id()))
+            self.logger.warning("Helios TCP: Could not assign {0} to item {1}".format(varprop["type"](result), item.property.path))
             return
 
 
