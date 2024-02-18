@@ -146,7 +146,7 @@ class WebInterface(SmartPluginWebIf):
                 value_dict['type'] = item.property.type
                 if ('visu_acl' in item.conf):
                     value_dict['acl'] = item.conf.get('visu_acl')
-                value_dict['value'] = item.property.value
+                value_dict['value'] = str(item.property.value)
                 value_dict['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                 value_dict['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
                 item_dict[item.property.path] = value_dict
@@ -176,15 +176,17 @@ class WebInterface(SmartPluginWebIf):
                     plglogics.append(self.logics.get_logic_info(logic))
 
             result = {'items': item_dict, 'clients': client_list, 'logics': plglogics}
-            self.logger.error(result)
-            # send result to wen interface
+            #self.logger.error(result)
+            # send result to web interface
             try:
                 data = json.dumps(result)
+            except Exception as e:
+                self.logger.error(f"get_data_html exception: {e}")
+                self.logger.error(result)
+            else:
                 if data:
                     return data
                 else:
                     return None
-            except Exception as e:
-                self.logger.error(f"get_data_html exception: {e}")
 
         return {}
