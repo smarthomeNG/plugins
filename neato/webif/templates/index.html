@@ -96,7 +96,7 @@
 	<tbody>
 		<tr>
 			<td class="py-1"><strong>Neato/Vorwerk Backend</strong></td>
-			<td class="py-1">{% if p.numberRobots() %}{{ _('Online') }}{% else %}{{ _('Offline') }}{% endif %}</td>
+			<td class="py-1">{% if p.backendOnline() %}{{ _('Online') }}{% else %}{{ _('Offline') }}{% endif %}</td>
 			<td class="py-1" width="50px"></td>
 			<td class="py-1"><strong>{{ _('Anzahl Roboter') }}</strong></td>
 			<td class="py-1">{{ p.numberRobots() }}</td>

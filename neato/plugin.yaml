@@ -97,6 +97,7 @@ item_attributes:
           - command_goToBaseAvailable
           - command_startAvailable
           - clean_room
+          - online_status
 
 item_structs:
     Neato:

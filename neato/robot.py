@@ -35,7 +35,7 @@ class Robot:
         self._token = token
         self._clientIDHash = 'KY4YbVAvtgB7lp8vIbWQ7zLk3hssZlhR'
         self._numberRobots = 0
-
+        self._backendOnline = False
 
         # Cleaning
         self.category = ''
@@ -188,6 +188,7 @@ class Robot:
 
         if self.__secretKey == '':
             self.logger.warning("Robot: Still no valid secret key. Aborting update fct.")
+            self._backendOnline = False
             return 'error'
 
         #self.logger.debug("Returned secret key is {0}".format(self.__secretKey))
@@ -204,17 +205,21 @@ class Robot:
                                                                      'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout, verify=self._verifySSL )
         except requests.exceptions.ConnectionError as e:
             self.logger.warning("Robot: Connection error: %s" % str(e))
+            self._backendOnline = False
             return 'error'
         except requests.exceptions.Timeout as e:
             self.logger.warning("Robot: Timeout exception during cloud state request: %s" % str(e))
+            self._backendOnline = False
             return 'error'
         except Exception as e:
             self.logger.error("Robot: Exception during cloud state request: %s" % str(e))
+            self._backendOnline = False
             return 'error'
 
         statusCode = robot_cloud_state_response.status_code
         if statusCode == 200:
             self.logger.debug("Sending cloud state request successful")
+            self._backendOnline = True
         elif statusCode == 403:
             self.logger.debug("Sending cloud state request returned: Forbidden. Aquire new session key.")
         elif statusCode == 404:
