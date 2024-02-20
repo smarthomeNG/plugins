@@ -24,7 +24,7 @@
 #########################################################################
 
 import logging
-
+import threading
 
 from pyhomematic import HMConnection
 
@@ -129,6 +129,8 @@ class Homematic(SmartPlugin):
             self.hmip.start()
         except:
             self.logger.error("{}: Unable to start HomeMaticIP object".format(self.get_fullname()))
+        # set the name of the thread that got created by pyhomematic to something meaningfull
+        self.hmip._server.name = 'plugins.' + self.get_fullname() + '.ip.server'
 
         if self.connected:
             # TO DO: sleep besser lösen!

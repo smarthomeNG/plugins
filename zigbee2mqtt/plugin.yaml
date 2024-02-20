@@ -93,7 +93,16 @@ item_attributes:
 
 
 item_structs:
+    lqi:
+        linkquality:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: linkquality
+
     dimmer:
+        description: default Philips Hue dimmer
+        struct: zigbee2mqtt.lqi
+
         action:
             type: str
             z2m_topic: ..:.
@@ -114,11 +123,6 @@ item_structs:
             type: foo
             z2m_topic: ..:.
             z2m_attr: last_seen
-
-        linkquality:
-            type: num
-            z2m_topic: ..:.
-            z2m_attr: linkquality
 
         on:
             type: bool
@@ -161,6 +165,7 @@ item_structs:
                 eval_trigger: ...action
 
     light_white_ambient_group:
+        description: control a group of white ambient lights
         type: bool
         z2m_attr: state
         z2m_bool_values: ['OFF', 'ON']
@@ -218,12 +223,10 @@ item_structs:
             z2m_attr: last_seen
 
     light_white_ambient:
-        struct: zigbee2mqtt.light_white_ambient_group
-
-        linkquality:
-            type: num
-            z2m_topic: ..:.
-            z2m_attr: linkquality
+        description: control a single white ambient light
+        struct:
+            - zigbee2mqtt.light_white_ambient_group
+            - zigbee2mqtt.lqi
 
         update:
             type: dict
@@ -246,6 +249,7 @@ item_structs:
                 eval_trigger: ..
 
     light_rgb_group:
+        description: control a group of rgb lights
         struct: zigbee2mqtt.light_white_ambient_group
 
         color:
@@ -279,12 +283,10 @@ item_structs:
             z2m_attr: color_temp_startup
 
     light_rgb:
-        struct: zigbee2mqtt.light_rgb_group
-
-        linkquality:
-            type: num
-            z2m_topic: ..:.
-            z2m_attr: linkquality
+        description: control a single rgb light
+        struct:
+            - zigbee2mqtt.light_rgb_group
+            - zigbee2mqtt.lqi
 
         update:
             type: dict
@@ -307,6 +309,7 @@ item_structs:
                 eval_trigger: ..
 
     bridge:
+        description: access to the ZigBee2MQTT "bridge" server
         z2m_topic: bridge
 
         online:
@@ -368,7 +371,98 @@ item_structs:
             z2m_topic: ..:.
             z2m_attr: groups
 
-        
+    socket_generic:
+        description: generic zigbee socket
+        struct: zigbee2mqtt.lqi
+
+        state:
+            type: bool
+            z2m_topic: ..:.
+            z2m_attr: state
+            z2m_bool_values: ['OFF', 'ON']
+
+    socket_tuya:
+        description: TuYa TS011F socket
+        struct: zigbee2mqtt.socket_generic
+
+        power:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: power
+
+        energy:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: energy
+
+    doorsensor_generic:
+        description: generic door/window sensor
+        struct: zigbee2mqtt.lqi
+
+        contact:
+            type: bool
+            z2m_topic: ..:.
+            z2m_attr: contact
+
+    doorsensor_tuya:
+        description: TuYa TS0203 door sensor
+        struct: zigbee2mqtt.doorsensor_generic
+
+        battery:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: battery
+
+        low_battery:
+            type: bool
+            z2m_topic: ..:.
+            z2m_attr: battery_low
+
+    lightsensor_xiaomi:
+        description: Xiaomi T1 GZCGQ11LM light sensor
+        struct: zigbee2mqtt.lqi
+
+        illuminance:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: illuminance
+
+        illuminance_lux:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: illuminance_lux
+
+        detection_period:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: detection_period
+
+        device_temperature:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: device_temperature
+
+        power_outage_count:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: power_outage_count
+
+        voltage:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: voltage
+
+        state:
+            type: num  # this needs to be tested, possibly adjusted (bool?)
+            z2m_topic: ..:.
+            z2m_attr: state
+
+        battery:
+            type: num
+            z2m_topic: ..:.
+            z2m_attr: battery
+
+
 plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
 
