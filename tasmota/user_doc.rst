@@ -12,6 +12,7 @@ bitte die Dokumentation des jeweiligen Devices zu Rate ziehen.
 
 Unterstützte Funktionen sind:
     * Relays eines Tasmota Devices (bis zu 4)
+    * Tasten eines Tasmota Devices (bis zu 4)
     * DS18B20 Temperatursensoren
     * AM2301 Sensoren für Temperatur und Luftfeuchte
     * SHT3X Sensoren für Temperatur und Luftfeuchte
@@ -127,6 +128,7 @@ Bekannte tasmota-Attribute
 Die folgenden Attribute (Werte für das Item-Attribut ``tasmota-attr``) sind bisher bekannt und unterstützt:
 
     * "relay": Schalten des Relais -> bool, r/w
+    * "button": Drücken einer Taste -> str, r/o
     * "online": Online Status des Tasmota Devices -> bool, r/o
     * "voltage": Spannung in Volt bei Tasmota Devices mit ENERGY Sensor -> num, r/o
     * "current": Strom in Ampere bei Tasmota Devices mit ENERGY Sensor -> num, r/o
