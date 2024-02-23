@@ -11,7 +11,7 @@ plugin:
     keywords: robonect, lawnmower, gardena, husqvarna, automower
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1515205-support-thread
-    version: 1.0.4                  # Plugin version (must match the version specified in __init__.py)
+    version: 1.0.5                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.6              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use this plugin
@@ -235,7 +235,7 @@ item_structs:
                     type: bool
                     robonect_data_type: remotestart_visible
                     robonect_remote_index: 1
-                path:
+                rstart_path:
                     type: num
                     robonect_data_type: remotestart_path
                     robonect_remote_index: 1
@@ -256,7 +256,7 @@ item_structs:
                     type: bool
                     robonect_data_type: remotestart_visible
                     robonect_remote_index: 2
-                path:
+                rstart_path:
                     type: num
                     robonect_data_type: remotestart_path
                     robonect_remote_index: 2
