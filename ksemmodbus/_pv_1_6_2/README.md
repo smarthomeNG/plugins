@@ -1,21 +1,24 @@
 # Modbus Plugin for Kostal Smart Energy Meter
 
-#### Version 1.6.3
+#### Version 1.6.2
 
 This plugin connects your Kostal Smart Energy Meter (https://www.kostal-solar-electric.com/) via ModBus with SmarthomeNG.
 - read out all Smart Meter data
 
-
 ## Change history
 
-- support for pymodbus 2 dropped
+- work with newer versions of pymodbus too 
+
+### Changes Since version 1.x.x
+
+- No Changes so far
 
 
 ### Requirements needed software
 
-* Python >= 3.8
+* Python > 3.5
 * pip install pymodbus
-* SmarthomeNG >= 1.8.0
+* SmarthomeNG >= 1.6.0
 
 ## Configuration
 
