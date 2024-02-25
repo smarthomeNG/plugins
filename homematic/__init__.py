@@ -237,7 +237,7 @@ class Homematic(SmartPlugin):
                 hm_node = None
 
             # store item and device information for plugin instance
-            self.hm_items.append( [str(item), item, hm_address, hm_channel, hm_function, hm_node, dev_type] )
+            self.hm_items.append( [str(item.id()), item, hm_address, hm_channel, hm_function, hm_node, dev_type] )
 
             # Initialize item from HomeMatic
             if dev is not None:
