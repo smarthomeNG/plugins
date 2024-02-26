@@ -146,7 +146,7 @@ class WebInterface(SmartPluginWebIf):
         t = t + '<tr><td class="py-1"><strong>' + 'BMU' + ':</strong></td>' + '<td class="py-1" style="text-align: right">' + self.plugin.byd_bms + '</td>' + '</tr>'
         t = t + '<tr><td class="py-1"><strong>' + 'BMU A' + ':</strong></td>' + '<td class="py-1" style="text-align: right">' + self.plugin.byd_bmu_a + '</td>' + '</tr>'
         t = t + '<tr><td class="py-1"><strong>' + 'BMU B' + ':</strong></td>' + '<td class="py-1" style="text-align: right">' + self.plugin.byd_bmu_b + '</td>' + '</tr>'
-        t = t + '<tr><td class="py-1"><strong>' + 'P/T' + ':</strong></td>' + '<td class="py-1" style="text-align: right">' + self.plugin.byd_param_t + '</td>' + '</tr>'
+        t = t + '<tr><td class="py-1"><strong>' + self.translate("Parameter-Tabelle") + ':</strong></td>' + '<td class="py-1" style="text-align: right">' + self.plugin.byd_param_t + '</td>' + '</tr>'
         t = t + '</tbody></table>'
         data['r2_table'] = t
         
@@ -190,16 +190,22 @@ class WebInterface(SmartPluginWebIf):
         
         t = '<p><strong>' + self.translate("Turm") + ' 1 BMS</strong></p><p></p>'
         t = t + self.table_diag_details(1)
+        if not isinstance(self.plugin.byd_diag_state_str[1],str):
+          self.plugin.byd_diag_state_str[1] = "-"
         t = t + '<p>' + self.translate("Status") + ': ' + self.plugin.byd_diag_state_str[1] + ' (0x' + f'{self.plugin.byd_diag_state[1]:04x}' + ')</p>'
         if self.plugin.byd_bms_qty > 1:
           t = t + '<p></p>'
           t = t + '<p><strong>' + self.translate("Turm") + ' 2 BMS</strong></p>'
-          t = t + self.table_diag_details[2]
+          t = t + self.table_diag_details(2)
+          if not isinstance(self.plugin.byd_diag_state_str[2],str):
+            self.plugin.byd_diag_state_str[2] = "-"
           t = t + '<p>' + self.translate("Status") + ': ' + self.plugin.byd_diag_state_str[2] + ' (0x' + f'{self.plugin.byd_diag_state[2]:04x}' + ')</p>'
           if self.plugin.byd_bms_qty > 2:
             t = t + '<p></p>'
             t = t + '<p><strong>' + self.translate("Turm") + ' 3 BMS</strong></p>'
-            t = t + self.table_diag_details[3]
+            t = t + self.table_diag_details(3)
+            if not isinstance(self.plugin.byd_diag_state_str[3],str):
+              self.plugin.byd_diag_state_str[3] = "-"
             t = t + '<p>' + self.translate("Status") + ': ' + self.plugin.byd_diag_state_str[3] + ' (0x' + f'{self.plugin.byd_diag_state[3]:04x}' + ')</p>'
         data['r4_table'] = t
 
