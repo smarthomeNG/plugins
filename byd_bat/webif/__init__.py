@@ -209,11 +209,12 @@ class WebInterface(SmartPluginWebIf):
             t = t + '<p>' + self.translate("Status") + ': ' + self.plugin.byd_diag_state_str[3] + ' (0x' + f'{self.plugin.byd_diag_state[3]:04x}' + ')</p>'
         data['r4_table'] = t
 
-        # 5.Register "BYD Logdaten"
-        t = '<p><strong>BMU</strong></p><p></p>'
-        t = t + self.plugin.byd_bmu_log_html
-        t = t + '<p></p>'
-        t = t + '<p><strong>' + self.translate("Turm") + ' 1 BMS</strong></p>'
+        # 5.Register "BMU Logdaten"
+        t = self.plugin.byd_bmu_log_html
+        data['r5_table'] = t
+
+        # 6.Register "BMS Logdaten"
+        t = '<p><strong>' + self.translate("Turm") + ' 1 BMS</strong></p>'
         t = t + self.plugin.byd_diag_bms_log_html[1]
         if self.plugin.byd_bms_qty > 1:
           t = t + '<p></p>'
@@ -223,7 +224,7 @@ class WebInterface(SmartPluginWebIf):
             t = t + '<p></p>'
             t = t + '<p><strong>' + self.translate("Turm") + ' 3 BMS</strong></p>'
             t = t + self.plugin.byd_diag_bms_log_html[3]
-        data['r5_table'] = t
+        data['r6_table'] = t
 
 #        self.logger.warning("done done")
         
