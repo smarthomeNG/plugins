@@ -1,11 +1,11 @@
 # translations for the web interface
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'BYD Home':                           {'de': '=', 'en': 'BYD Home'}
-    'BYD Diagnose':                       {'de': '=', 'en': 'BYD Diagnostics'}
-    'BYD Spannungen':                     {'de': '=', 'en': 'BYD Voltages'}
-    'BYD Temperaturen':                   {'de': '=', 'en': 'BYD Temperatures'}
-    'BYD Log-Daten':                      {'de': '=', 'en': 'BYD Log data'}
+    'Home':                               {'de': '=', 'en': 'Home'}
+    'Diagnose':                           {'de': '=', 'en': 'Diagnostics'}
+    'Spannungen':                         {'de': '=', 'en': 'Voltages'}
+    'Temperaturen':                       {'de': '=', 'en': 'Temperatures'}
+    'Log-Daten':                          {'de': '=', 'en': 'Log data'}
 
     'Verbindung':                         {'de': '=', 'en': 'Connection'}
 
