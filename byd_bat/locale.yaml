@@ -36,6 +36,7 @@ plugin_translations:
     'Module pro Turm':                    {'de': '=', 'en': 'Modules per tower'}
     'Parameter':                          {'de': '=', 'en': 'Parameter'}
     'Fehler':                             {'de': '=', 'en': 'Error'}
+    'Parameter-Tabelle':                  {'de': '=', 'en': 'Parameter table'}
     
     'Turm':                               {'de': '=', 'en': 'Tower'}
     'Batteriespannung':                   {'de': '=', 'en': 'Batteryvoltage'}
