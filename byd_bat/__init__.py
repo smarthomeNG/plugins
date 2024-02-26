@@ -82,6 +82,11 @@
 #
 # V0.1.2 240120 - Logdaten Verarbeitung ergaenzt (BMS 9,20)
 #
+# V0.1.3 240226 - Plot Titel Leistung ergaenzt
+#               - log_info-Meldungen angepasst
+#               - Fehler in 'webif/__init__.py' korrigiert
+#               - Webinterface Log-Daten aufgetrennt in 2 Tab (BMU/BMS)
+#
 # -----------------------------------------------------------------------
 #
 # Als Basis fuer die Implementierung wurde u.a. folgende Quelle verwendet:
@@ -532,7 +537,7 @@ class byd_bat(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '0.1.2'
+    PLUGIN_VERSION = '0.1.3'
     ALLOW_MULTIINSTANCE = False
     
     def __init__(self,sh):
@@ -562,10 +567,10 @@ class byd_bat(SmartPlugin):
         if self.get_parameter_value('imgpath') != '':
           self.bpath = self.get_parameter_value('imgpath')
           if self.bpath is None:
-            self.log_info("path is None")
+            self.log_debug("path is None")
             self.bpath = byd_path_empty
         else:
-          self.log_info("no path defined")
+          self.log_debug("no path defined")
           self.bpath = byd_path_empty
         
         if self.get_parameter_value('diag_cycle') != '':
@@ -573,7 +578,7 @@ class byd_bat(SmartPlugin):
           if self.diag_cycle is None:
             self.diag_cycle = byd_sample_diag
         else:
-          self.log_info("no diag_cycle defined => use default '" + str(byd_sample_diag) + "s'")
+          self.log_debug("no diag_cycle defined => use default '" + str(byd_sample_diag) + "s'")
           self.diag_cycle = byd_sample_diag
         if self.diag_cycle < byd_sample_basics:
           self.diag_cycle = byd_sample_basics
@@ -583,7 +588,7 @@ class byd_bat(SmartPlugin):
           if self.log_data is None:
             self.log_data = False
         else:
-          self.log_info("log_data not defined => log_data=false")
+          self.log_debug("log_data not defined => log_data=false")
           self.log_data = False
         
         if self.get_parameter_value('log_age') != '':
@@ -591,7 +596,7 @@ class byd_bat(SmartPlugin):
           if self.log_age is None:
             self.log_age = 365
         else:
-          self.log_info("no log_age defined => use default '" + str(365) + "s'")
+          self.log_debug("no log_age defined => use default '" + str(365) + "s'")
           self.log_age = 365
         if self.log_age < 0:
           self.log_age = 0
@@ -611,6 +616,7 @@ class byd_bat(SmartPlugin):
         self.last_log_secs = 9999                   # erzwingt beim ersten Aufruf das Abfragen der Log-Daten
         
         self.byd_root_found = False
+        self.byd_root_found_log = False
         
         self.byd_towers_max = byd_towers_max
         self.byd_module_vmin = byd_module_vmin
@@ -789,7 +795,7 @@ class byd_bat(SmartPlugin):
             pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        # Wird aufgerufen, wenn ein Item mit dem Attribut 'mmgarden' geaendert wird
+        # Wird aufgerufen, wenn ein Item mit dem Attribut 'byd_para' geaendert wird
 
         self.log_debug("update_auto_item path=" + item.property.path + " name=" + item.property.name + " v=" + str(item()))
         
@@ -811,7 +817,9 @@ class byd_bat(SmartPlugin):
         # Wird alle 'self._cycle' aufgerufen
         
         if self.byd_root_found is False:
-          self.log_debug("BYD not root found - please define root item with structure 'byd_struct'")
+          if self.byd_root_found_log == False:
+            self.log_info("BYD no root found - please define root item with structure 'byd_struct'")
+            self.byd_root_found_log = True
           return
         
         if self.byd_root.enable_connection() is False:
@@ -1998,7 +2006,7 @@ class byd_bat(SmartPlugin):
             s1 = "not implemented yet (" + bytearray(ld[byd_log_data]).hex() + ")"
             unknown = True
           
-        elif ld[byd_log_codex] == 38:                                                              # SOP Info
+        elif ld[byd_log_codex] == 38:                                                              # SOP Info (38)
           if bmu == True:
             x = self.buf2int16US(data,0)  / 10.0
             s1 = s1 + "Charge Max. Current:" + f"{x:.1f}" + "A" + byd_log_str_sep
@@ -2609,7 +2617,7 @@ class byd_bat(SmartPlugin):
           nn.append("M"+str(jj+1))
         # Daten fuer Titel zusammensetzen
         delta = (ymax - ymin) * 1000.0 
-        title_data = " (SOC=" + f"{self.byd_diag_soc[x]:.1f}" + "% min=" + f"{ymin:.3f}" + "V max=" + f"{ymax:.3f}" + "V delta=" + f"{delta:.0f}" + "mV)"
+        title_data = " (SOC=" + f"{self.byd_diag_soc[x]:.1f}" + "% P=" + f"{self.byd_power:.1f}" + "W min=" + f"{ymin:.3f}" + "V max=" + f"{ymax:.3f}" + "V delta=" + f"{delta:.0f}" + "mV)"
           
         # Berechne bestimmte Parameter fuer die optimale Darstellung
         width = 1.0 / (self.byd_volt_n + 1)
