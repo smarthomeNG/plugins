@@ -28,6 +28,7 @@ import json
 import requests
 import cherrypy
 import time
+import threading
 from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf
 from lib.item import Items
 from bin.smarthome import VERSION
@@ -57,7 +58,6 @@ class Nuki(SmartPlugin):
         self._base_url = self.get_parameter_value('protocol') + '://' + self.get_parameter_value(
             'bridge_ip') + ":" + str(self.get_parameter_value('bridge_port')) + '/'
         self._token = self.get_parameter_value('bridge_api_token')
-        self._lock = False
         self._action = ''
         self._noWait = self.get_parameter_value('no_wait')
         self.items = Items.get_instance()
@@ -65,6 +65,7 @@ class Nuki(SmartPlugin):
         if not self.init_webinterfaces():
             self._init_complete = False
 
+        self._nuki_lock = threading.Lock()
         self._callback_ip = self.mod_http.get_local_ip_address()  # get_parameter_value('bridge_callback_ip')
         self._callback_port = self.mod_http.get_local_servicesport()  # get_parameter_value('bridge_callback_port')
 
@@ -301,13 +302,12 @@ class Nuki(SmartPlugin):
 
     def _api_call(self, base_url, endpoint=None, nuki_id=None, token=None, action=None, no_wait=None, callback_url=None,
                   id=None):
-
-        while self._lock:
+        while self._nuki_lock.locked():
             time.sleep(0.1)
             self.logger.debug("Plugin '{}': Waiting for lock to release...".format(self.get_shortname()))
+        self._nuki_lock.acquire()
+        self.logger.debug("Plugin '{}': Lock set.".format(self.get_shortname()))
         try:
-            self._lock = True
-            self.logger.debug("Plugin '{}': Lock set.".format(self.get_shortname()))
             payload = {}
             if nuki_id is not None:
                 payload['nukiID'] = nuki_id
@@ -326,14 +326,14 @@ class Nuki(SmartPlugin):
             self.logger.debug(
                 "Plugin '{}': starting API Call to Nuki Bridge at {} with payload {}.".format(self.get_shortname(), url,
                                                                                               payload))
-            response = requests.get(url=urllib.parse.urljoin(base_url, endpoint), params=payload)
+            response = requests.get(url=urllib.parse.urljoin(base_url, endpoint), params=payload, timeout=120)
             self.logger.debug("Plugin '{}': finishing API Call to Nuki Bridge at {}.".format(self.get_shortname(), url))
             self.logger.debug("Plugin '{}': response.raise_for_status: {}".format(self.get_shortname(), response.raise_for_status()))
             return json.loads(response.text)
         except Exception as ex:
             self.logger.error(ex)
         finally:
-            self._lock = False
+            self._nuki_lock.release()
             self.logger.debug("Plugin '{"
                               "}': Lock removed.".format(self.get_shortname()))
 
