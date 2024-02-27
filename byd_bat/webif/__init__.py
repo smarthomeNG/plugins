@@ -246,11 +246,16 @@ class WebInterface(SmartPluginWebIf):
         return s
         
     def table_diag_details(self,xx):
+        # Erzeugt die Tabelle mit den Details zu den Spannungen im Tab 'Diagnose' fuer den Turm 'xx' fuer alle Module.
+        if self.plugin.byd_modules == 0:
+          return "-"
         t = '<table id="byd_diag_table2" border="1">'
+        # Kopfzeile mit allen Modulen erstellen.
         t = t + '<tr>''<td>' + '' + '</td>'
         for i in range(0,self.plugin.byd_modules):
           t = t + '<td class="py-1" style="text-align: center"><strong>' + 'M' + str(i+1) + '</strong></td>'
         t = t + '</tr>'
+        # Datenzeilen erstellen.
         t = t + self.table_diag_details_row(self.translate("Spannung minimal") + ' [V]',xx,self.plugin.byd_module_vmin,3)
         t = t + self.table_diag_details_row(self.translate("Spannung maximal") + ' [V]',xx,self.plugin.byd_module_vmax,3)
         t = t + self.table_diag_details_row(self.translate("Spannung Durchschnitt") + ' [V]',xx,self.plugin.byd_module_vava,3)
@@ -259,6 +264,7 @@ class WebInterface(SmartPluginWebIf):
         return t
         
     def table_diag_details_row(self,txt,xx,vi,nn):
+        # Erzeugt eine Zeile in der Tabelle mit den Details im Turm 'xx'
         t = '<tr>'
         t = t + '<td class="py-1">' + txt + '</td>'
         for i in range(0,self.plugin.byd_modules):
