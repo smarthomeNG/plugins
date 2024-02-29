@@ -136,10 +136,14 @@ class UZSU(SmartPlugin):
         self.scheduler_add('uzsu_sunupdate', self._update_all_suns,
                            value={'caller': 'Scheduler:UZSU'}, cron=self._suncalculation_cron)
         self.logger.info("Adding sun update schedule for midnight")
-
+        _invaliditems = []
         for item in self._items:
             self._add_dicts(item)
-            self._items[item]['interpolation']['itemtype'] = self._add_type(item)
+            itemtype = self._get_type(item)
+            if itemtype is None:
+                _invaliditems.append(item)
+                continue
+            self._items[item]['interpolation']['itemtype'] = itemtype
             self._lastvalues[item] = None
             self._webdata['items'][item.property.path].update({'lastvalue': '-'})
             self._update_item(item, 'UZSU Plugin', 'run')
@@ -147,6 +151,8 @@ class UZSU(SmartPlugin):
             cond2 = self._items[item].get('list')
             if cond1 and cond2:
                 self._update_count['todo'] = self._update_count.get('todo', 0) + 1
+        for i in _invaliditems:
+            self._items.pop(i)
         self.logger.debug(f'Going to update {self._update_count["todo"]} items from {list(self._items.keys())}')
 
         for item in self._items:
@@ -491,7 +497,8 @@ class UZSU(SmartPlugin):
         :param source:  if given it represents the source
         :param dest:    if given it represents the dest
         """
-        cond = (not caller == 'UZSU Plugin') or source == 'logic'
+        itemtype = self._get_type(item)
+        cond = itemtype is not None and ((not caller == 'UZSU Plugin') or source == 'logic')
         self.logger.debug(f'Update Item {item}, Caller {caller}, Source {source}, Dest {dest}. Will update: {cond}')
         if not source == 'create_rrule':
             self._check_rruleandplanned(item)
