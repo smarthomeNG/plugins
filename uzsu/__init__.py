@@ -101,7 +101,7 @@ class UZSU(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = "2.0.0"      # item buffer for all uzsu enabled items
+    PLUGIN_VERSION = "2.0.1"      # item buffer for all uzsu enabled items
 
     def __init__(self, smarthome):
         """
