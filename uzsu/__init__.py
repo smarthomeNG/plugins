@@ -844,8 +844,8 @@ class UZSU(SmartPlugin):
                 if next is None:
                     return None, None
                 self._itpl[item][next.timestamp() * 1000.0] = value
-                rstr = str(rrule).replace('\n', ';')
-                self.logger.debug(f'Looking for {timescan} series-related time. Found rrule: {rstr} with start-time {entry["series"]["timeSeriesMin"]}')
+                rstr = str(entry['rrule']).replace('\n', ';')
+                self.logger.debug(f'{item}: Looking for {timescan} series-related time. Found rrule: {rstr} with start-time {entry["series"]["timeSeriesMin"]}')
 
             cond_today = False if next is None else next.date() == today.date()
             cond_yesterday = False if next is None else next.date() - timedelta(days=1) == yesterday.date()
