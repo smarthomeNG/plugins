@@ -101,7 +101,7 @@ class UZSU(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = "2.0.0"      # item buffer for all uzsu enabled items
+    PLUGIN_VERSION = "2.0.1"      # item buffer for all uzsu enabled items
 
     def __init__(self, smarthome):
         """
@@ -136,10 +136,14 @@ class UZSU(SmartPlugin):
         self.scheduler_add('uzsu_sunupdate', self._update_all_suns,
                            value={'caller': 'Scheduler:UZSU'}, cron=self._suncalculation_cron)
         self.logger.info("Adding sun update schedule for midnight")
-
+        _invaliditems = []
         for item in self._items:
             self._add_dicts(item)
-            self._items[item]['interpolation']['itemtype'] = self._add_type(item)
+            itemtype = self._get_type(item)
+            if itemtype is None:
+                _invaliditems.append(item)
+                continue
+            self._items[item]['interpolation']['itemtype'] = itemtype
             self._lastvalues[item] = None
             self._webdata['items'][item.property.path].update({'lastvalue': '-'})
             self._update_item(item, 'UZSU Plugin', 'run')
@@ -147,6 +151,8 @@ class UZSU(SmartPlugin):
             cond2 = self._items[item].get('list')
             if cond1 and cond2:
                 self._update_count['todo'] = self._update_count.get('todo', 0) + 1
+        for i in _invaliditems:
+            self._items.pop(i)
         self.logger.debug(f'Going to update {self._update_count["todo"]} items from {list(self._items.keys())}')
 
         for item in self._items:
@@ -244,13 +250,14 @@ class UZSU(SmartPlugin):
         elif entry.get('calculated'):
             self.logger.debug(f'Sun calculation {entryvalue} entry not updated for item {item} with value {entry["calculated"]}')
 
-    def _add_type(self, item):
+    def _get_type(self, item):
         """
-        Adding the type of the item that is changed by the uzsu to the item dict
+        Getting the type of the item that is changed by the uzsu (to add to the item dict)
         :param item:    uzsu item
         :type item:     item
         :return:        The item type of the item that is changed
         """
+        self.logger.debug(f"Getting type of {item}")
         _itemforuzsu = self.get_iattr_value(item.conf, ITEM_TAG[0])
         try:
             _uzsuitem = self.itemsApi.return_item(_itemforuzsu)
@@ -265,10 +272,8 @@ class UZSU(SmartPlugin):
             except Exception:
                 _itemtype = 'foo' if _uzsuitem else None
             if _itemtype is None:
-                # TODO: this is apparently wrong, as existence of the item was
-                # established in the previous try/except block. What does this
-                # error actually indicate?
-                self.logger.warning(f'Item to be set by uzsu "{_itemforuzsu}" does not exist. Error: {err}')
+                # If there is a problem when initializing uzsuitem, e.g. initial_value is wrong type...
+                self.logger.warning(f'Item to be set by uzsu "{_itemforuzsu}" does not exist, type is None. Error: {err}')
             else:
                 self.logger.warning(f'Item to be set by uzsu "{_itemforuzsu}" does not have a type attribute. Error: {err}')
         return _itemtype
@@ -491,7 +496,8 @@ class UZSU(SmartPlugin):
         :param source:  if given it represents the source
         :param dest:    if given it represents the dest
         """
-        cond = (not caller == 'UZSU Plugin') or source == 'logic'
+        itemtype = self._get_type(item)
+        cond = itemtype is not None and ((not caller == 'UZSU Plugin') or source == 'logic')
         self.logger.debug(f'Update Item {item}, Caller {caller}, Source {source}, Dest {dest}. Will update: {cond}')
         if not source == 'create_rrule':
             self._check_rruleandplanned(item)
@@ -501,7 +507,7 @@ class UZSU(SmartPlugin):
         self._add_dicts(item)
         if not self._items[item]['interpolation'].get('itemtype') or \
                 self._items[item]['interpolation']['itemtype'] == 'none':
-            self._items[item]['interpolation']['itemtype'] = self._add_type(item)
+            self._items[item]['interpolation']['itemtype'] = itemtype
         if cond and self._items[item].get('active') is False and not source == 'update_sun':
             self._lastvalues[item] = None
             self._webdata['items'][item.property.path].update({'lastvalue': '-'})
@@ -605,7 +611,7 @@ class UZSU(SmartPlugin):
         self._add_dicts(item)
         if not self._items[item]['interpolation'].get('itemtype') or \
                 self._items[item]['interpolation']['itemtype'] == 'none':
-            self._items[item]['interpolation']['itemtype'] = self._add_type(item)
+            self._items[item]['interpolation']['itemtype'] = self._get_type(item)
         if self._items[item].get('interpolation') is None:
             self.logger.error("Something is wrong with your UZSU item. You most likely use a wrong smartVISU widget version! Use the latest device.uzsu SV 2.9. or higher If you write your uzsu dict directly please use the format given in the documentation: https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html and include the interpolation array correctly!")
             return
@@ -745,6 +751,7 @@ class UZSU(SmartPlugin):
         :param caller:      defines the caller of the method. If it's name is dry_run just
                             simulate getting time even if entry is not active
         """
+        self.logger.debug(f"{item}: Checking entry {entry}")
         try:
             time = entry['time']
         except Exception:
@@ -778,20 +785,20 @@ class UZSU(SmartPlugin):
                         rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(
                             weekbefore, parser.parse(time.strip()).time()))
                         rstr = str(rrule).replace('\n', ';')
-                        self.logger.debug(f"Created rrule: '{rstr}'' for time:'{time}'")
+                        self.logger.debug(f"{item}: Created rrule: '{rstr}'' for time:'{time}'")
                     except ValueError:
-                        self.logger.debug(f"Could not create a rrule from rrule: '{entry['rrule']}' and time:'{time}'")
+                        self.logger.debug(f"{item}: Could not create rrule from rrule: '{entry['rrule']}' and time:'{time}'")
                         if 'sun' in time:
                             rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(
                                 weekbefore, self._sun(datetime.combine(weekbefore.date(),
                                                                        datetime.min.time()).replace(tzinfo=self._timezone),
                                                       time, timescan).time()))
                             rstr = str(rrule).replace('\n', ';')
-                            self.logger.debug(f'Looking for {timescan} sun-related time. Found rrule: {rstr}')
+                            self.logger.debug(f'{item}: Looking for {timescan} sun-related time. Found rrule: {rstr}')
                         else:
                             rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(weekbefore, datetime.min.time()))
                             rstr = str(rrule).replace('\n', ';')
-                            self.logger.debug(f'Looking for {timescan} time. Found rrule: {rstr}')
+                            self.logger.debug(f'{item}: Looking for {timescan} time. Found rrule: {rstr}')
                 dt = datetime.now()
                 while self.alive:
                     dt = rrule.before(dt) if timescan == 'previous' else rrule.after(dt)
@@ -802,7 +809,7 @@ class UZSU(SmartPlugin):
                         next = self._sun(datetime.combine(dt.date(),
                                                           datetime.min.time()).replace(tzinfo=self._timezone),
                                          time, timescan)
-                        self.logger.debug(f'Result parsing time (rrule) {time}: {next}')
+                        self.logger.debug(f'{item}: Result parsing time (rrule) {time}: {next}')
                         if entryindex is not None and timescan == 'next':
                             self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
                     else:
@@ -811,32 +818,32 @@ class UZSU(SmartPlugin):
                     if next and next.date() == dt.date():
                         self._itpl[item][next.timestamp() * 1000.0] = value
                         if next - timedelta(seconds=1) > datetime.now().replace(tzinfo=self._timezone):
-                            self.logger.debug(f'Return from rrule {timescan}: {next}, value {value}.')
+                            self.logger.debug(f'{item}: Return from rrule {timescan}: {next}, value {value}.')
                             return next, value
                         else:
-                            self.logger.debug(f"Not returning {timescan} rrule {next} because it's in the past.")
+                            self.logger.debug(f"{item}: Not returning {timescan} rrule {next} because it's in the past.")
             if 'sun' in time and 'series' not in time:
                 next = self._sun(datetime.combine(today, datetime.min.time()).replace(
                     tzinfo=self._timezone), time, timescan)
                 cond_future = next > datetime.now(self._timezone)
                 if cond_future:
-                    self.logger.debug(f'Result parsing time today (sun) {time}: {next}')
+                    self.logger.debug(f'{item}: Result parsing time today (sun) {time}: {next}')
                     if entryindex is not None:
                         self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
                 else:
                     self._itpl[item][next.timestamp() * 1000.0] = value
-                    self.logger.debug(f'Include previous today (sun): {next}, value {value} for interpolation.')
+                    self.logger.debug(f'{item}: Include previous today (sun): {next}, value {value} for interpolation.')
                     if entryindex:
                         self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
                     next = self._sun(datetime.combine(tomorrow, datetime.min.time()).replace(
                         tzinfo=self._timezone), time, timescan)
-                    self.logger.debug(f'Result parsing time tomorrow (sun) {time}: {next}')
+                    self.logger.debug(f'{item}: Result parsing time tomorrow (sun) {time}: {next}')
             elif 'series' not in time:
                 next = datetime.combine(today, parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
                 cond_future = next > datetime.now(self._timezone)
                 if not cond_future:
                     self._itpl[item][next.timestamp() * 1000.0] = value
-                    self.logger.debug(f'Include {timescan} today: {next}, value {value} for interpolation.')
+                    self.logger.debug(f'{item}: Include {timescan} today: {next}, value {value} for interpolation.')
                     next = datetime.combine(tomorrow, parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
             if 'series' in time:
                 # Get next Time for Series
@@ -844,8 +851,8 @@ class UZSU(SmartPlugin):
                 if next is None:
                     return None, None
                 self._itpl[item][next.timestamp() * 1000.0] = value
-                rstr = str(rrule).replace('\n', ';')
-                self.logger.debug(f'Looking for {timescan} series-related time. Found rrule: {rstr} with start-time {entry["series"]["timeSeriesMin"]}')
+                rstr = str(entry['rrule']).replace('\n', ';')
+                self.logger.debug(f'{item}: Looking for {timescan} series-related time. Found rrule: {rstr} with start-time {entry["series"]["timeSeriesMin"]}')
 
             cond_today = False if next is None else next.date() == today.date()
             cond_yesterday = False if next is None else next.date() - timedelta(days=1) == yesterday.date()
@@ -855,23 +862,23 @@ class UZSU(SmartPlugin):
             cond_previous_yesterday = False if next is None else next - timedelta(days=1) < datetime.now(self._timezone)
             if next and cond_today and cond_next:
                 self._itpl[item][next.timestamp() * 1000.0] = value
-                self.logger.debug(f'Return next today: {next}, value {value}')
+                self.logger.debug(f'{item}: Return next today: {next}, value {value}')
                 return next, value
             if next and cond_tomorrow and cond_next:
                 self._itpl[item][next.timestamp() * 1000.0] = value
-                self.logger.debug(f'Return next tomorrow: {next}, value {value}')
+                self.logger.debug(f'{item}: Return next tomorrow: {next}, value {value}')
                 return next, value
             if 'series' in time and next and cond_next:
-                self.logger.debug(f'Return next for series: {next}, value {value}')
+                self.logger.debug(f'{item}: Return next for series: {next}, value {value}')
                 return next, value
             if next and cond_today and cond_previous_today:
                 self._itpl[item][(next - timedelta(seconds=1)).timestamp() * 1000.0] = value
-                self.logger.debug(f'Not returning previous today {next} because it‘s in the past.')
+                self.logger.debug(f'{item}: Not returning previous today {next} because it‘s in the past.')
             if next and cond_yesterday and cond_previous_yesterday:
                 self._itpl[item][(next - timedelta(days=1)).timestamp() * 1000.0] = value
-                self.logger.debug(f'Not returning previous yesterday {next} because it‘s in the past.')
+                self.logger.debug(f'{item}: Not returning previous yesterday {next} because it‘s in the past.')
         except Exception as e:
-            self.logger.error(f'Error "{time}" parsing time: {e}')
+            self.logger.error(f'{item}: Error "{time}" parsing time: {e}')
         return None, None
 
     def _series_calculate(self, item, caller=None, source=None):
