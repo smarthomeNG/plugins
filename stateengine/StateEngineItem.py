@@ -209,7 +209,6 @@ class SeItem:
         if isinstance(_returnvalue, list) and len(_returnvalue) == 1:
             _returnvalue = _returnvalue[0]
         self.__logger.log_level_as_num = 2
-        self.__logger.header("")
 
         _startup_log_level = SeLogger.startup_log_level.get()
 
@@ -217,6 +216,7 @@ class SeItem:
             base = self.__sh.get_basedir()
             SeLogger.manage_logdirectory(base, SeLogger.log_directory, True)
         self.__logger.log_level_as_num = _startup_log_level
+        self.__logger.header("")
         self.__logger.info("Set log level to startup log level {}", _startup_log_level)
 
         if isinstance(_returnvalue, list) and len(_returnvalue) > 1:
