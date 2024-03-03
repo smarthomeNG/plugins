@@ -16,7 +16,8 @@ plugin:
     sh_minversion: 1.4             # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     #py_minversion: 3.6            # minimum Python version to use for this plugin
-    #py_maxversion: 3.9             # maximum Python version to use for this plugin (leave empty if latest)
+    py_maxversion: 3.11            # maximum Python version to use for this plugin (leave empty if latest)
+    py_versioncomment: "Die aktuellste Version (2.6.0, released August 2022) des benötigten Packages 'pyjq' ist nicht kompatibel mit Python 3.12"
     restartable: True
     multi_instance: True           # plugin supports multi instance
     classname: JSONREAD            # class containing the plugin
