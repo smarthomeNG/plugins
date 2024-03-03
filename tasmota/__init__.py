@@ -171,6 +171,7 @@ class Tasmota(MqttPlugin):
 
             tasmota_attr = self.get_iattr_value(item.conf, 'tasmota_attr')
             tasmota_relay = self.get_iattr_value(item.conf, 'tasmota_relay')
+            tasmota_button = self.get_iattr_value(item.conf, 'tasmota_button')
             tasmota_rf_details = self.get_iattr_value(item.conf, 'tasmota_rf_details')
             tasmota_zb_device = self.get_iattr_value(item.conf, 'tasmota_zb_device')
             tasmota_zb_group = self.get_iattr_value(item.conf, 'tasmota_zb_group')
@@ -192,6 +193,10 @@ class Tasmota(MqttPlugin):
                     if not tasmota_relay:
                         tasmota_relay = 1
                     item_mapping = f'{tasmota_topic}.{tasmota_attr}.{tasmota_relay}'
+                elif tasmota_attr == 'button':
+                    if not tasmota_button:
+                        tasmota_button = 1
+                    item_mapping = f'{tasmota_topic}.{tasmota_attr}.{tasmota_button}'
                 elif tasmota_attr == 'rf_key' and tasmota_rf_details:
                     item_mapping = f'{tasmota_topic}.{tasmota_attr}.{tasmota_rf_details}'
                 else:
@@ -282,6 +287,7 @@ class Tasmota(MqttPlugin):
             tasmota_topic = self.get_iattr_value(item.conf, 'tasmota_topic')
             tasmota_attr = self.get_iattr_value(item.conf, 'tasmota_attr')
             tasmota_relay = self.get_iattr_value(item.conf, 'tasmota_relay')
+            tasmota_button = self.get_iattr_value(item.conf, 'tasmota_button')
             tasmota_rf_details = self.get_iattr_value(item.conf, 'tasmota_rf_details')
             tasmota_zb_device = self.get_iattr_value(item.conf, 'tasmota_zb_device')
             tasmota_zb_group = self.get_iattr_value(item.conf, 'tasmota_zb_group')
@@ -335,6 +341,10 @@ class Tasmota(MqttPlugin):
                 if tasmota_attr == 'relay':
                     if tasmota_relay:
                         detail = f"{detail}{tasmota_relay}"
+
+                elif tasmota_attr == 'button':
+                    if tasmota_button:
+                        detail = f"{detail}{tasmota_button}"
 
                 elif tasmota_attr == 'hsb':
                     if not len(value) == 3:
@@ -920,6 +930,11 @@ class Tasmota(MqttPlugin):
                     self.logger.info(f"Received Message contains UptimeSec information.")
                     self._handle_uptime_sec(tasmota_topic, payload['UptimeSec'])
 
+                # Handling of Button messages
+                if any(item.startswith("Button") for item in payload.keys()):
+                    self.logger.info(f"Received Message decoded as button message.")
+                    self._handle_button(tasmota_topic, info_topic, payload)
+
             elif info_topic == 'SENSOR':
                 self.logger.info(f"Received Message contains sensor information.")
                 self._handle_sensor(tasmota_topic, info_topic, payload)
@@ -1235,6 +1250,24 @@ class Tasmota(MqttPlugin):
             relay_index = 1 if len(power) == 5 else str(power[5:])
             item_relay = f'relay.{relay_index}'
             self._set_item_value(device, item_relay, power_dict[power], function)
+
+    def _handle_button(self, device: str, function: str, payload: dict) -> None:
+        """
+        Extracts Button action out of payload and updates plugin dict
+
+        :param device:          Device, the Button information shall be handled (equals tasmota_topic)
+        :param function:        Function of Device (equals info_topic)
+        :param payload:         MQTT message payload
+
+        """
+        # payload = {'Button1': {'Action': 'SINGLE'}}
+
+        button_dict = {key: val for key, val in payload.items() if key.startswith('Button')}
+        self.tasmota_devices[device]['button'].update(button_dict)
+        for button in button_dict:
+            button_index = 1 if len(button) == 6 else str(button[6:])
+            item_button = f'button.{button_index}'
+            self._set_item_value(device, item_button, button_dict[button].get('Action',None), function)
 
     def _handle_module(self, device: str, payload: dict) -> None:
         """
@@ -1653,6 +1686,7 @@ class Tasmota(MqttPlugin):
                 'rf': {},
                 'sensors': {},
                 'relais': {},
+                'button': {},
                 'zigbee': {},
                 'sml': {},
                 }
@@ -1755,6 +1789,12 @@ class Tasmota(MqttPlugin):
     def has_relais(self):
         for tasmota_topic in self.tasmota_devices:
             if self.tasmota_devices[tasmota_topic]['relais']:
+                return True
+        return False
+
+    def has_button(self):
+        for tasmota_topic in self.tasmota_devices:
+            if self.tasmota_devices[tasmota_topic]['button']:
                 return True
         return False
 

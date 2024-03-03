@@ -139,7 +139,12 @@ class Solarforecast(SmartPlugin):
             self.logger.error(f"Server error: {statusCode}")
             return 
 
-        responseJson = sessionrequest_response.json()
+        try:
+            responseJson = sessionrequest_response.json()
+        except Exception as e:
+            self.logger.error(f"Exception during json decoding: {str(e)}")
+            return
+
         self.logger.debug(f"Json response: {responseJson}")
         
         # Decode Json data:        

@@ -52,8 +52,8 @@ parameters:
         valid_min: -180
         valid_max: 180
         description:
-            de: 'Azimutwinkel der Panelausrichtung (-180 bis 180 Grad). 0 Grad entspricht Süden'
-            en: 'Azimuth angle of panel direction (-180 to 180 degrees). 0 degree is equivalent to southern direction'
+            de: 'Azimutwinkel der Panelausrichtung (-180 bis 180 Grad). 0 Grad entspricht Süden, (-180 = north, -90 = east, 0 = south, 90 = west, 180 = north)'
+            en: 'Azimuth angle of panel direction (-180 to 180 degrees). 0 degree is equivalent to southern direction, (-180 = north, -90 = east, 0 = south, 90 = west, 180 = north)'
     kwp:
         type: num
         mandatory: True
