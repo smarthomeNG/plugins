@@ -5,14 +5,14 @@ plugin:
     description:
         de: 'json Parser Plugin basierend auf jq'
         en: 'json parser plugin based on jq'
-    maintainer: Torsten Dreyer
-    tester: onkelandy
+    maintainer: onkelandy
+    tester: bmxp
     state: ready
     keywords: json jq
     documentation: http://smarthomeng.de/user/plugins_doc/config/not-yet.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/not-yet
 
-    version: 1.0.3                 # Plugin version
+    version: 1.0.4                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     #py_minversion: 3.6            # minimum Python version to use for this plugin
