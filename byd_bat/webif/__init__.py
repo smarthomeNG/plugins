@@ -41,6 +41,7 @@ import cherrypy
 import csv
 from jinja2 import Environment, FileSystemLoader
 
+
 class WebInterface(SmartPluginWebIf):
 
     def __init__(self,webif_dir,plugin):
@@ -103,7 +104,7 @@ class WebInterface(SmartPluginWebIf):
 #        self.logger.warning("c=" + str(self.plugin.byd_root.enable_connection()))
         data['connection'] = self.plugin.byd_root.enable_connection()
 
-        for xx in range(1,self.plugin.byd_towers_max+1):
+        for xx in range(1,self.plugin.byd_towers_max + 1):
           tx = 't' + str(xx) + '_'
           if xx <= self.plugin.byd_bms_qty:
             # Turm ist vorhanden
@@ -152,7 +153,7 @@ class WebInterface(SmartPluginWebIf):
         
         # 2.Register "BYD Diagnose"
         ds = []
-        for xx in range(1,self.plugin.byd_towers_max+1):
+        for xx in range(1,self.plugin.byd_towers_max + 1):
           ts = []
           if xx <= self.plugin.byd_bms_qty:
             # Turm ist vorhanden
@@ -253,7 +254,7 @@ class WebInterface(SmartPluginWebIf):
         # Kopfzeile mit allen Modulen erstellen.
         t = t + '<tr>''<td>' + '' + '</td>'
         for i in range(0,self.plugin.byd_modules):
-          t = t + '<td class="py-1" style="text-align: center"><strong>' + 'M' + str(i+1) + '</strong></td>'
+          t = t + '<td class="py-1" style="text-align: center"><strong>' + 'M' + str(i + 1) + '</strong></td>'
         t = t + '</tr>'
         # Datenzeilen erstellen.
         t = t + self.table_diag_details_row(self.translate("Spannung minimal") + ' [V]',xx,self.plugin.byd_module_vmin,3)
@@ -290,5 +291,3 @@ class WebInterface(SmartPluginWebIf):
         self.logger.warning("byd_connection_false")
         self.plugin.byd_root.enable_connection(False)
         return
-        
-        
