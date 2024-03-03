@@ -1,0 +1,367 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin fuer die Anzeige von Daten von V-Zug Geraeten'
+        en: 'Plugin to display data from V-Zug devices'
+    maintainer: Matthias Manhart
+    tester: Matthias Manhart
+    state: develop                  # Initial 'develop'. change to 'ready' when done with development
+    keywords: vzug v-zug
+#    documentation: ''              # An url to optional plugin doc - NOT the url to user_doc!!!
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 0.1.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.10             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.9              # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: true            # plugin supports multi instance
+    restartable: unknown
+    suspendable: true               # plugin can be suspended, must be implemented in code
+    classname: vzug                 # class containing the plugin
+
+parameters:
+
+    host:
+        type: str
+        mandatory: True
+        default: '192.168.0.100'
+        description:
+            de: "IP-Adresse des V-Zug Geraetes"
+            en: "IP address of the V-Zug device"
+
+    username:
+        type: str
+        mandatory: False
+        description:
+            de: "Username fuer die Anmeldung am V-Zug Geraet"
+            en: "Username to access the V-Zug device"
+
+    password:
+        type: str
+        mandatory: False
+        description:
+            de: "Passwort fuer die Anmeldung am V-Zug Geraet"
+            en: "Password to access the V-Zug device"
+
+    log_data:
+        type: bool
+        default: false
+        description:
+            de: "Erstellen der Log-Daten"
+            en: "Create the log data"        
+
+    log_age:
+        type: num
+        default: 365
+        description:
+            de: "Aufbewahrungsdauer der Log-Dateien in Tagen (0=kein Löschen)"
+            en: "Retention period of the log files in days (0=no deletion)"
+
+    save_raw:
+        type: bool
+        default: false
+        description:
+            de: "Speichert die Rohdaten der Kommunikation in einer Datei"
+            en: "Save raw data from the communication in a file"        
+            
+item_attributes:
+
+    vzug_root:
+        type: bool
+        mandatory: true
+        description:
+            de: 'Root-Flag fuer das Plugin'
+            en: 'Root-Flag for plugin'
+
+    vzug_parse_item:
+        type: bool
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des vzug-Plugins'
+            en: 'Internal function of the vzug plugin'            
+
+item_structs:
+
+    vzug_struct:
+    
+        vzug_root: true              # Must stay here - used by the plugin internally - do not remove !
+        
+        info:
+        
+            host:                    # host/ip of the device
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+
+            serial:                  # Serial number of the device
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+
+            uuid:                    # UUID of the device
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                
+            device_type:             # Type of device
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+
+            device_name:             # Device name
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+
+            device_short:            # Device short name
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+
+            model:                   # Model
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+
+            connection_type:         # Connection type
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+
+            api_version:             # API version
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+
+            software_version:        # Software version
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+
+            hardware_version:        # Hardware version
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+
+            is_firmware_update_available:  # Is firmware update available ?
+                type: bool
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+
+        state:
+    
+            connection:              # Shows connection status of plugin to V-Zug device (true -> ok)
+                type: bool
+                initial_value: false
+                enforce_updates: true
+                visu_acl: ro
+                vzug_parse_item: true
+                
+            last_connection:         # Date/time of last successful connection
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+
+            active:                  # Active/inactive status of device
+                type: bool
+                visu_acl: ro
+                vzug_parse_item: true
+                
+            status:                  # Status of the device
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                
+            info:                    # text description about status of the device (connection,active,program,...)
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                
+        program:
+                
+            name:                    # Current programm running in the device
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                
+            status:                  # Status of the program
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                
+            timed:                   # true -> start timed, see 'date_time_start'/'seconds_to_start'
+                type: bool
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                
+            duration:                # Duration of the program [min]
+                type: num
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                    
+            date_time_start:         # Date/time of the start of the program
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                    
+            seconds_to_start:        # seconds to the start of the program [s]
+                type: num
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                    
+            date_time_end:           # Date/time of the end of the program
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                    
+            seconds_to_end:          # seconds to the end of the program [s]
+                type: num
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                
+            power:                   # Power used in program [kWh], written at the end of the program into the database
+                type: num
+                visu_acl: ro
+                database: init
+                
+            water:                   # Power used in program [l], written at the end of the program into the database
+                type: num
+                visu_acl: ro
+                database: init
+                
+        pushmessages:
+        
+            html:                    # HTML table with push messages (smartVISU: basic.print)
+            
+                type: str
+                visu_acl: ro
+                cache: true
+        
+            jsonlist:                # Json list with push messages (smartVISU: status.activelist)
+            
+                type: list
+                initial_value: []
+                visu_acl: ro
+                cache: true
+                
+        power:                       # dryer, washing_machine
+        
+            consumption_total:       # Power consumption total [kWh]
+                type: num
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                    
+            consumption_avg:         # Power consumption avg [kWh]
+                type: num
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                    
+            consumption_lastprog:    # Power consumption of last program [kWh]
+                type: num
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                    
+        water:                       # washing_machine
+        
+            consumption_total:       # Water consumption total [l]
+                type: num
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                    
+            consumption_avg:         # Water consumption avg [l]
+                type: num
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                    
+            consumption_lastprog:    # Power consumption of last program [l]
+                type: num
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                    
+        washing_machine:             # data only for the washing machine
+        
+            optidos_active:          # Optidos active
+                type: bool
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                
+            optidos_a_status:        # Optidos A status
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+    
+            optidos_b_status:        # Optidos B status
+                type: str
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                
+        dishwasher:                  # data only for the dishwasher
+        
+            is_energy_saving:        # Energy saving
+                type: bool
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                
+            is_opti_start:           # Opti start
+                type: bool
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                
+            is_partialload:          # Partial loaded
+                type: bool
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                
+            is_rinse_plus:           # Rinse plus
+                type: bool
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+                
+            is_dry_plus:             # Dry plus
+                type: bool
+                visu_acl: ro
+                cache: true
+                vzug_parse_item: true
+    
+plugin_functions: NONE
+
+logic_parameters: NONE

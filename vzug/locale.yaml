@@ -1,0 +1,40 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Gerät':                           {'de': '=', 'en': 'Device'}
+    'Serienummer':                     {'de': '=', 'en': 'Serial number'}
+    'Typ':                             {'de': '=', 'en': 'Type'}
+    'Wert':                            {'de': '=', 'en': 'Value'}
+    'Verbindung':                      {'de': '=', 'en': 'Connection'}
+    'Software':                        {'de': '=', 'en': 'Software'}
+    'Hardware':                        {'de': '=', 'en': 'Hardware'}
+    'Eingeschaltet':                   {'de': '=', 'en': 'Power on'}
+    'Letztes Update':                  {'de': '=', 'en': 'Last update'}
+    'Items':                           {'de': '=', 'en': 'Items'}
+    'Meldungen':                       {'de': '=', 'en': 'Messages'}
+    'Laden':                           {'de': '=', 'en': 'Loading'}
+    'ein':                             {'de': '=', 'en': 'on'}
+    'aus':                             {'de': '=', 'en': 'off'}
+    'Standby':                         {'de': '=', 'en': 'Standby'}
+    'Information':                     {'de': '=', 'en': 'Information'}
+    'Firmware Update':                 {'de': '=', 'en': 'Firmware update'}
+    'verfügbar':                       {'de': '=', 'en': 'available'}
+    'nein':                            {'de': '=', 'en': 'no'}
+    'API Version':                     {'de': '=', 'en': 'API version'}
+    'Aktiv':                           {'de': '=', 'en': 'Active'}
+    'Status':                          {'de': '=', 'en': 'Status'}
+    'Programm':                        {'de': '=', 'en': 'Program'}
+    'Dauer':                           {'de': '=', 'en': 'Duration'}
+    'Start':                           {'de': '=', 'en': 'Start'}
+    'Ende':                            {'de': '=', 'en': 'End'}
+    'Phase':                           {'de': '=', 'en': 'Phase'}
+    'Energie':                         {'de': '=', 'en': 'Energy'}
+    'Wasser':                          {'de': '=', 'en': 'Water'}
+    'Verbrauch':                       {'de': '=', 'en': 'Consumption'}
+    'Durchschnitt':                    {'de': '=', 'en': 'Average'}
+    'Letztes Programm':                {'de': '=', 'en': 'Last program'}
+
+    # Alternative format for translations of longer texts:
+    'Hier kommt der Inhalt des Webinterfaces hin.':
+        de: '='
+        en: 'Here goes the content of the web interface.'

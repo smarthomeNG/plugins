@@ -1,0 +1,232 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 5000 %}
+
+<!-- if you don't need any buttons in the header, disable them completely -->
+{% set buttons = true %}
+
+<!-- if you don't need any auto-refresh elements in the header, disable them-->
+{% set autorefresh_buttons = false %}
+
+<!-- if you don't need the reload_button in the header, disable it-->
+{% set reload_button = true %}
+
+<!-- if you don't need the close in the header, disable it -->
+{% set close_button = true %}
+
+<!-- if new values should be retrieved using automatic page update right in the beginning and on page changes -->
+{% set initial_update = true %}
+
+<!--
+	Additional styles go into this block. Examples are for datatables
+-->
+{% block pluginstyles %}
+<style>
+  table th.value {
+    width: 100px;
+  }
+  /*
+  These are used for highligt effect in web interface when a value changes. If you don't want to overwrite the
+  default color, you can remove the entries here as the classes are already defined in smarthomeng.css
+  */
+  .shng_effect_highlight {
+    background-color: #FFFFE0;
+  }
+  .shng_effect_standard {
+    background-color: none;
+  }
+</style>
+{% endblock pluginstyles %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+      shngInsertText('model_desc', objResponse['model_desc']);
+      shngInsertText('uuid', objResponse['uuid']);
+      shngInsertText('device_type', objResponse['device_type']);
+      shngInsertText('connectiontype', objResponse['connectiontype']);
+      shngInsertText('serial', objResponse['serial']);
+      shngInsertText('host', objResponse['host']);
+      shngInsertText('softwareversion', objResponse['softwareversion']);
+      shngInsertText('hardwareversion', objResponse['hardwareversion']);
+      shngInsertText('connection', objResponse['connection']);
+      shngInsertText('id_last_connection', objResponse['last_connection']);
+      shngInsertText('r1_table', objResponse['r1_table']);
+      shngInsertText('r2_table', objResponse['r2_table']);
+      shngInsertText('r3_table', objResponse['r3_table']);
+      shngInsertText('msg_table', objResponse['msg_table']);
+		}
+	}
+</script>
+<!--
+	This part is used to implement datatable JS for the tables. It allows resorting tables by column, etc.
+	For each table you have to implement the code part $('#<table_id>').DataTable(..); where the <table_id> matches the id of a table tag
+-->
+<script>
+    $(document).ready( function () {
+		/*
+		loading defaults from /modules/http/webif/gstatic/datatables/datatables.defaults.js
+		You can copy that file, put it in your plugin directory, rename the "bind" function and
+		trigger that function here instead of datatables_defaults if you want to change the behaviour.
+		Of course you can also overwrite defaults by putting the option declarations in {} below.
+		*/
+		$(window).trigger('datatables_defaults');
+		try {
+			/*
+			Copy this part for every datatable on your page. Adjust options if necessary.
+			*/
+			maintable = $('#maintable').DataTable( {
+			  /* If you want to define your own columnDefs options (e.g. for hiding a column by default), use the concat function shown here.
+			  */
+			  columnDefs: [{ "targets": [2], "className": "value"}].concat($.fn.dataTable.defaults.columnDefs),
+			  });
+		}
+		catch (e) {
+			console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
+		}
+    /*
+    This part creates tooltips for buttons/inputs that have the class "button-tooltip"
+    */
+    const tooltipList = ['Nach Devices suchen'];
+    createTooltips(tooltipList);
+    /*
+    This part reads cookies for the attribute "sort_order" and activates the resepctive button after page load
+    */
+    order = getCookie('sort_order');
+    if (order == '')
+      order = 'time-desc';
+    const button = document.getElementById(order);
+    button.click();
+	});
+</script>
+{% endblock pluginscripts %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Gerät') }}:</strong></td>
+			<td id="model_desc"class="py-1">{{ _('Laden') }} ...</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>UUID:</strong></td>
+			<td id="uuid"class="py-1"></td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Typ') }}:</strong></td>
+			<td id="device_type"class="py-1"></td>
+			<td></td>
+			<td class="py-1"><strong>{{ _('Verbindung') }}:</strong></td>
+			<td id="connectiontype"class="py-1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Serienummer') }}:</strong></td>
+			<td id="serial"class="py-1"></td>
+			<td></td>
+			<td class="py-1"><strong>IP:</strong></td>
+			<td id="host"class="py-1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Software') }}:</strong></td>
+			<td id="softwareversion"class="py-1"></td>
+			<td></td>
+			<td class="py-1"><strong>{{ _('Hardware') }}:</strong></td>
+			<td id="hardwareversion"class="py-1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Eingeschaltet') }}:</strong></td>
+			<td id="connection" class="py-1"></td>
+			<td></td>
+			<td class="py-1"><strong>{{ _('Letztes Update') }}:</strong></td>
+			<td id="id_last_connection" class="py-1"></td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+{% block buttons %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 6)
+-->
+{% set tabcount = 4 %}
+{% set start_tab = 1 %}
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>"+_('Gerät')+"</strong>" %}
+{% block bodytab1 %}
+<p></p>
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <p></p>
+      <table><tr><td id="r1_table">{{ _('Laden') }} ...</td></tr></table>
+    </div>
+    <div class="col">
+      <p></p>
+      <table><tr><td id="r2_table"></td></tr></table>
+    </div>
+  </div>
+</div>
+{% endblock bodytab1 %}
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>"+_('Meldungen')+"</strong>" %}
+{% block bodytab2 %}
+<p></p>
+<table><tr><td id="msg_table">{{ _('Laden') }} ...</td></tr></table>
+{% endblock bodytab2 %}
+
+<!--
+	Content block for the third tab of the Webinterface
+-->
+{% set tab3title = "<strong>"+_('Verbrauch')+"</strong>" %}
+{% block bodytab3 %}
+<p></p>
+<table><tr><td id="r3_table">{{ _('Laden') }} ...</td></tr></table>
+{% endblock bodytab3 %}
+
+<!--
+	Content block for the fourth tab of the Webinterface
+-->
+{% set tab4title = "<strong>"+_('Items')+"</strong> (" ~ item_count ~ ")" %}
+{% block bodytab4 %}
+
+	<table class="table table-striped table-hover pluginList">
+		<thead>
+			<tr class="shng_heading">
+			  <th class="py-1">{{ _('Item') }}</th>
+		    <th class="py-1">{{ _('Typ') }}</th>
+			  <th class="py-1">{{ _('Wert') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for item in p.items %}
+				 <tr>
+				   <td class="py-1" id="{{ item._path }}">{{ item._path }}</td>
+			     <td class="py-1" id="{{ item._type }}">{{ item._type }}</td>
+				   <td class="py-1" id="{{ item._path }}_value">{{ item() }}</td>
+				 </tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+{% endblock bodytab4 %}
