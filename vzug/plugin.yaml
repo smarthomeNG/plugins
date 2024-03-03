@@ -10,7 +10,7 @@ plugin:
     state: develop                  # Initial 'develop'. change to 'ready' when done with development
     keywords: vzug v-zug
 #    documentation: ''              # An url to optional plugin doc - NOT the url to user_doc!!!
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1939655-support-thread-f%C3%BCr-das-v-zug-plugin
 
     version: 0.1.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.10             # minimum shNG version to use this plugin
