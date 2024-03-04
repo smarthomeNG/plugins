@@ -109,6 +109,13 @@ item_attributes:
             de: Änderung des Items werden an das Gerät gesendet
             en: Changes to this item will be sent to the device
 
+    viess_readafterwrite:
+        type: num
+
+        description:
+            de: Nach dem Schreiben des Items den Wert nach der angegebenen Anzahl von Sekunden automatisch neu vom Gerät laden
+            en: After writing this item, automatically re-read the value from the device after the given number of seconds
+
     viess_read_group_trigger:
         type: str
 
