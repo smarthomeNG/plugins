@@ -72,7 +72,7 @@ class viessmann(SmartDevicePlugin):
         """
         try to identify device
         """
-        print(f'dev_viessmann trying to identify device at {self._parameters.get("serialport", "unknown")}...')
+        print(f'Viessmann trying to identify device at {self._parameters.get("serialport", "unknown")}...')
         devs = self.get_lookup('devicetypes')
         if not devs:
             devs = {}
