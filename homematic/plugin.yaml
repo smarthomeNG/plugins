@@ -32,6 +32,22 @@ parameters:
             de: 'IP Adresse bzw. Hostname der HomeMatic CCU2 Zentrale'
             en: 'ip address or hostname of the HomeMatic CCU2 gateway'
 
+    proxyPort:
+       type: int
+       default: 0
+       valid_min: 0
+       description:
+           de: 'Port Nummer für eingehende Nachrichten von der HomeMatric CCU2 Zentrale'
+           en: 'port number for incoming messages from the HomeMatric CCU2 gateway'
+
+    proxyPort_hmip:
+       type: int
+       default: 0
+       valid_min: 0
+       description:
+           de: 'Port Nummer für eingehende Nachrichten von der HomeMatric CCU2 Zentrale für HomeMaticIP Geräte'
+           en: 'port number for incoming messages from the HomeMatric CCU2 gateway for HomeMaticIP Devices'
+
 #    port:
 #        type: int
 #        default: 2001
