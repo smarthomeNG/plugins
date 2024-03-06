@@ -91,13 +91,13 @@ class Homematic(SmartPlugin):
         # create HomeMatic object
         try:
             remotes={self.hm_id:{"ip": self.host, "port": self.port}} 
-            if(self.customCallbackHost)
+            if(self.customCallbackHost):
                 remotes={self.hm_id:{"ip": self.host, "port": self.port, "callbackip": self.callbackHost, "callbackport": self.callbackPort}} 
             self.hm = HMConnection(interface_id="myserver", autostart=False,
                                     eventcallback=self.eventcallback, systemcallback=self.systemcallback,
-                                    remote=remotes, localport=proxyPort, local=_hm.LOCAL)
+                                    remotes=remotes, localport=self.proxyPort, local="0.0.0.0")
         except:
-            self.logger.error("Unable to create HomeMatic object")
+            self.logger.error("Unable to create HomeMatic obxyject")
             self._init_complete = False
             return
 
@@ -110,11 +110,11 @@ class Homematic(SmartPlugin):
             # create HomeMaticIP object
             try:
                 remotes={self.hmip_id:{"ip": self.host, "port": self.port_hmip}}
-                if(self.customCallbackHost)
+                if(self.customCallbackHost):
                     remotes={self.hmip_id:{"ip": self.host, "port": self.port_hmip, "callbackip": self.callbackHost, "callbackport": self.callbackPort_hmip}}
-                 self.hmip = HMConnection(interface_id="myserver_ip", autostart=False,
+                self.hmip = HMConnection(interface_id="myserver_ip", autostart=False,
                                           eventcallback=self.eventcallback, systemcallback=self.systemcallback,
-                                          remotes=remotes, localport=proxyPort_hmip, local=_hm.LOCAL)
+                                          remotes=remotes, localport=self.proxyPort_hmip, local="0.0.0.0")
             except:
                 self.logger.error("Unable to create HomeMaticIP object")
 #                self._init_complete = False
