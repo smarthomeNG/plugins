@@ -1739,8 +1739,8 @@ class DatabaseAddOn(SmartPlugin):
         
         :param func: defines which temperature sum or count should be calculated
         :param database_item: item object or item_id for which the query should be done
-        :param year: year the kaeltesumme should be calculated for
-        :param month: month the kaeltesumme should be calculated for
+        :param year: year the temperature should be calculated for
+        :param month: month the temperature should be calculated for
         :param params: params to be used for executing function (see below)
         :return: temperature sum or day count
         
@@ -1952,6 +1952,8 @@ class DatabaseAddOn(SmartPlugin):
         elif not self._valid_year(year):
             self.logger.error(f"Year for item={database_item.property.path} was {year}. This is not a valid year. Aborting...")
             return
+        if func == 'kaeltesumme' and 1 <= today.month <= 9:
+            year -= 1
 
         # define start_date, end_date
         if month is None:
