@@ -97,7 +97,7 @@ class Homematic(SmartPlugin):
                                     eventcallback=self.eventcallback, systemcallback=self.systemcallback,
                                     remotes=remotes, localport=self.proxyPort, local="0.0.0.0")
         except:
-            self.logger.error("Unable to create HomeMatic obxyject")
+            self.logger.error("Unable to create HomeMatic object")
             self._init_complete = False
             return
 
