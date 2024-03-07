@@ -1787,9 +1787,10 @@ class DatabaseAddOn(SmartPlugin):
         def kaeltesumme() -> float:
             """Berechnung der Kältesumme durch Akkumulieren aller negativen Tagesdurchschnittstemperaturen im Abfragezeitraum
 
-            :return: value of waermesumme
+            :return: value of kaeltesumme
             """
-            
+
+            # akkumulieren alle Werte, kleiner 0
             ks = 0
             for entry in raw_data:
                 if entry[1] < 0:
@@ -2691,9 +2692,9 @@ class DatabaseAddOn(SmartPlugin):
                 _where = f'{_where}AND val_num {entry.strip()} '
 
         # set params
-        params = {'item_id': item_id, 'ts_start': ts_start}
-        if func != "next":
-            params.update({'ts_end': ts_end})
+        params = {'item_id': item_id, 'ts_start': ts_start, 'ts_end': ts_end}
+        if func == "next":
+            params.pop('ts_start', None)
 
         # assemble query
         query = f"SELECT {_select[func]}FROM {_db_table}WHERE {_where}{_group_by.get(group, '')}{_order.get(func, '')}{_limit.get(func, '')}{_table_alias.get(func, '')}{_group_by.get(group2, '')}".strip()
