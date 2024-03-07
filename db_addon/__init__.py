@@ -2641,7 +2641,7 @@ class DatabaseAddOn(SmartPlugin):
             'last':        'LIMIT 1 ',
         }
 
-        _where = "item_id = :item_id AND time < :ts_start " if func == "next" else "item_id = :item_id AND time BETWEEN :ts_start AND :ts_end "
+        _where = "item_id = :item_id AND time < :ts_end " if func == "next" else "item_id = :item_id AND time BETWEEN :ts_start AND :ts_end "
 
         _db_table = 'log '
 
