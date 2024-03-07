@@ -40,7 +40,7 @@ class Robonect(MqttPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
-    PLUGIN_VERSION = '1.0.5/'  # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.0.5'  # (must match the version specified in plugin.yaml)
     STATUS_TYPES = ['mower/status', 'mower/status/text', 'status_text_translated', 'mower/distance', 'mower/status/duration',
                     'mower/statistic/hours',
                     'mower/stopped', 'mower/mode', 'mower/mode/text', 'mode_text_translated', 'mower/battery/charge', 'blades_quality',
