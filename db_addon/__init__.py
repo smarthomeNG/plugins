@@ -62,7 +62,7 @@ class DatabaseAddOn(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.2.7'
+    PLUGIN_VERSION = '1.2.8'
 
     def __init__(self, sh):
         """
@@ -1885,10 +1885,10 @@ class DatabaseAddOn(SmartPlugin):
                     wgte += wgt
                 wgte_list.append([timestamp, int(round(wgte, 0))])
 
-                if result == 'series':
-                    return wgte_list
-                else:
-                    return int(round(wgte, 0))
+            if result == 'series':
+                return wgte_list
+            else:
+                return int(round(wgte, 0))
 
         def temperaturserie() -> list:
             """provide list of lists having timestamp and temperature(s) per day"""
