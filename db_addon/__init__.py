@@ -1833,19 +1833,22 @@ class DatabaseAddOn(SmartPlugin):
             return int(round(gts, 0))
 
         def wachstumsgradtage() -> Union[list, float, None]:
-            """Berechnet die Wachstumsgradtage noch 3 möglichen Methoden und gibt entweder den Gesamtwert oder eine Liste mit kumulierten Werten pro Tag zurück
+            """Berechnet die Wachstumsgradtage noch 2 möglichen Varianten und gibt entweder den Gesamtwert oder eine Liste mit kumulierten Werten pro Tag zurück
                 
-                variant 1: Berechnung des einfachen Durchschnitts
-                variant 2: modifizierte Berechnung des einfachen Durchschnitts.
-                variant 3: Zähle Tage, bei denen die Tagesmitteltemperatur oberhalb des Schwellenwertes lag
-                
+                variant 0: Berechnungsmethode "Berechnung des einfachen Durchschnitts" mit Vergleich des Durchschnitts der täglichen Minimal- und Maximaltemperatur mit Schwellenwert.
+                           Maximaltemperaturen werden bei 30 °C gekappt.
+                variant 1: Berechnungsmethode "modifizierte Berechnung des einfachen Durchschnitts" mit Vergleich des Durchschnitts der täglichen Minimal- und Maximaltemperatur mit Schwellenwert.
+                           Vor der Berechnung des Durchschnittes wird jede Temperatur, die den Schwellenwert unterschreitet, auf den Schwellenwert geändert.
+                           Maximaltemperaturen werden bei 30 °C gekappt.
+
                 result 'value': Rückgabe als Gesamtwert
                 result 'series: Rückgabe als Liste mit kumulierten Werten pro Tag zurück [['timestamp1', 'kumulierter Wert am Ende von Tag1'], ['timestamp2', ''kumulierter Wert am Ende von Tag2', [...], ...]
             """
-        
+
             # define defaults
             wgte = 0
             wgte_list = []
+            upper_limit = 30
             
             # get threshold and set to min 0
             threshold = params.get('threshold', 10)
@@ -1856,40 +1859,28 @@ class DatabaseAddOn(SmartPlugin):
             
             # get result type
             result = params.get('result', 'value')
-                
-            # Berechnung des einfachen Durchschnitts
+
+            # variant handling
             if variant == 0:
-                self.logger.info(f"Calculate 'Wachstumsgradtag' according to 'Berechnung des einfachen Durchschnitts'.")
-            # Die modifizierte Berechnung des einfachen Durchschnitts. // akkumuliere positive Differenz aus Mittelwert aus Tagesminimaltemperatur mit mind Schwellentemperatur und Tagesmaximaltemperatur limitiert auf 30°C und Schwellenwert
+                self.logger.info(f"Calculate 'Wachstumsgradtage' according to 'Berechnung des einfachen Durchschnitts'.")
+                min_val_c = 'min_val'
             elif variant == 1:
-                self.logger.info(f"Calculate 'Wachstumsgradtag' according to 'Modifizierte Berechnung des einfachen Durchschnitts'.")
-            # Zähle Tage, bei denen die Tagesmitteltemperatur oberhalb des Schwellenwertes lag
-            elif variant == 2:
-                self.logger.info(f"Calculate 'Wachstumsgradtag' according to 'Anzahl der Tage, bei denen die Tagesmitteltemperatur oberhalb des Schwellenwertes lag'.")
+                self.logger.info(f"Calculate 'Wachstumsgradtage' according to 'Modifizierte Berechnung des einfachen Durchschnitts'.")
+                min_val_c = 'max(threshold, min_val)'
             else:
-                self.logger.warning(f"Requested variant of 'Wachstumsgradtag' not defined. Aborting...")
+                self.logger.warning(f"Requested variant of 'Wachstumsgradtage' not defined. Aborting...")
                 return
 
+            # accumulate values
             for entry in raw_data:
                 timestamp, min_val, max_val = entry
-                
-                if variant == 0:
-                    wgt = (((min_val + min(30, max_val)) / 2) - threshold)
-                elif variant == 1:
-                    wgt = (((max(threshold, min_val) + min(30.0, max_val)) / 2) - threshold)
-                elif variant == 2:
-                    wgt = (((min_val + min(30, max_val)) / 2) - threshold)
-                else:
-                    wgt = None
-
-                if wgt and wgt > 0:
+                wgt = ((eval(min_val_c) + min(upper_limit, max_val)) / 2 ) - threshold
+                if wgt > 0:
                     wgte += wgt
                 wgte_list.append([timestamp, int(round(wgte, 0))])
 
-            if result == 'series':
-                return wgte_list
-            else:
-                return int(round(wgte, 0))
+            # return result
+            return wgte_list if result == 'series' else int(round(wgte, 0))
 
         def temperaturserie() -> list:
             """provide list of lists having timestamp and temperature(s) per day"""
