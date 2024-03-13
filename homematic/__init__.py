@@ -74,6 +74,13 @@ class Homematic(SmartPlugin):
         self.host = self.get_parameter_value('host')
 #        self.port = self.get_parameter_value('port')
 #        self.port_hmip = self.get_parameter_value('port_hmip')
+        self.proxyPort = self.get_parameter_value('proxyPort')
+        self.proxyPort_hmip = self.get_parameter_value('proxyPort_hmip')
+        self.customCallbackHost = self.get_parameter_value('customCallbackHost')
+        self.callbackHost = self.get_parameter_value('callbackHost')
+        self.callbackPort = self.get_parameter_value('callbackPort')
+        self.callbackPort_hmip = self.get_parameter_value('callbackPort_hmip')
+
         self.port = 2001
         self.port_hmip = 2010
 
@@ -83,10 +90,12 @@ class Homematic(SmartPlugin):
             self.hm_id += '_' + self.get_instance_name()
         # create HomeMatic object
         try:
-             self.hm = HMConnection(interface_id="myserver", autostart=False,
+            remotes={self.hm_id:{"ip": self.host, "port": self.port}} 
+            if(self.customCallbackHost):
+                remotes={self.hm_id:{"ip": self.host, "port": self.port, "callbackip": self.callbackHost, "callbackport": self.callbackPort}} 
+            self.hm = HMConnection(interface_id="myserver", autostart=False,
                                     eventcallback=self.eventcallback, systemcallback=self.systemcallback,
-                                    remotes={self.hm_id:{"ip": self.host, "port": self.port}})
-#                                    remotes={self.hm_id:{"ip": self.host, "port": self.port}, self.hmip_id:{"ip": self.host, "port": self.port_hmip}})
+                                    remotes=remotes, localport=self.proxyPort, local="0.0.0.0")
         except:
             self.logger.error("Unable to create HomeMatic object")
             self._init_complete = False
@@ -100,9 +109,12 @@ class Homematic(SmartPlugin):
                 self.hmip_id += '_' + self.get_instance_name()
             # create HomeMaticIP object
             try:
-                 self.hmip = HMConnection(interface_id="myserver_ip", autostart=False,
+                remotes={self.hmip_id:{"ip": self.host, "port": self.port_hmip}}
+                if(self.customCallbackHost):
+                    remotes={self.hmip_id:{"ip": self.host, "port": self.port_hmip, "callbackip": self.callbackHost, "callbackport": self.callbackPort_hmip}}
+                self.hmip = HMConnection(interface_id="myserver_ip", autostart=False,
                                           eventcallback=self.eventcallback, systemcallback=self.systemcallback,
-                                          remotes={self.hmip_id:{"ip": self.host, "port": self.port_hmip}})
+                                          remotes=remotes, localport=self.proxyPort_hmip, local="0.0.0.0")
             except:
                 self.logger.error("Unable to create HomeMaticIP object")
 #                self._init_complete = False
