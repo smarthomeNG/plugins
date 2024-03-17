@@ -62,7 +62,7 @@ class DatabaseAddOn(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.2.7'
+    PLUGIN_VERSION = '1.2.8'
 
     def __init__(self, sh):
         """
@@ -1739,8 +1739,8 @@ class DatabaseAddOn(SmartPlugin):
         
         :param func: defines which temperature sum or count should be calculated
         :param database_item: item object or item_id for which the query should be done
-        :param year: year the kaeltesumme should be calculated for
-        :param month: month the kaeltesumme should be calculated for
+        :param year: year the temperature should be calculated for
+        :param month: month the temperature should be calculated for
         :param params: params to be used for executing function (see below)
         :return: temperature sum or day count
         
@@ -1787,9 +1787,10 @@ class DatabaseAddOn(SmartPlugin):
         def kaeltesumme() -> float:
             """Berechnung der Kältesumme durch Akkumulieren aller negativen Tagesdurchschnittstemperaturen im Abfragezeitraum
 
-            :return: value of waermesumme
+            :return: value of kaeltesumme
             """
-            
+
+            # akkumulieren alle Werte, kleiner 0
             ks = 0
             for entry in raw_data:
                 if entry[1] < 0:
@@ -1832,19 +1833,22 @@ class DatabaseAddOn(SmartPlugin):
             return int(round(gts, 0))
 
         def wachstumsgradtage() -> Union[list, float, None]:
-            """Berechnet die Wachstumsgradtage noch 3 möglichen Methoden und gibt entweder den Gesamtwert oder eine Liste mit kumulierten Werten pro Tag zurück
+            """Berechnet die Wachstumsgradtage noch 2 möglichen Varianten und gibt entweder den Gesamtwert oder eine Liste mit kumulierten Werten pro Tag zurück
                 
-                variant 1: Berechnung des einfachen Durchschnitts
-                variant 2: modifizierte Berechnung des einfachen Durchschnitts.
-                variant 3: Zähle Tage, bei denen die Tagesmitteltemperatur oberhalb des Schwellenwertes lag
-                
+                variant 0: Berechnungsmethode "Berechnung des einfachen Durchschnitts" mit Vergleich des Durchschnitts der täglichen Minimal- und Maximaltemperatur mit Schwellenwert.
+                           Maximaltemperaturen werden bei 30 °C gekappt.
+                variant 1: Berechnungsmethode "modifizierte Berechnung des einfachen Durchschnitts" mit Vergleich des Durchschnitts der täglichen Minimal- und Maximaltemperatur mit Schwellenwert.
+                           Vor der Berechnung des Durchschnittes wird jede Temperatur, die den Schwellenwert unterschreitet, auf den Schwellenwert geändert.
+                           Maximaltemperaturen werden bei 30 °C gekappt.
+
                 result 'value': Rückgabe als Gesamtwert
                 result 'series: Rückgabe als Liste mit kumulierten Werten pro Tag zurück [['timestamp1', 'kumulierter Wert am Ende von Tag1'], ['timestamp2', ''kumulierter Wert am Ende von Tag2', [...], ...]
             """
-        
+
             # define defaults
             wgte = 0
             wgte_list = []
+            upper_limit = 30
             
             # get threshold and set to min 0
             threshold = params.get('threshold', 10)
@@ -1855,40 +1859,28 @@ class DatabaseAddOn(SmartPlugin):
             
             # get result type
             result = params.get('result', 'value')
-                
-            # Berechnung des einfachen Durchschnitts
+
+            # variant handling
             if variant == 0:
-                self.logger.info(f"Calculate 'Wachstumsgradtag' according to 'Berechnung des einfachen Durchschnitts'.")
-            # Die modifizierte Berechnung des einfachen Durchschnitts. // akkumuliere positive Differenz aus Mittelwert aus Tagesminimaltemperatur mit mind Schwellentemperatur und Tagesmaximaltemperatur limitiert auf 30°C und Schwellenwert
+                self.logger.info(f"Calculate 'Wachstumsgradtage' according to 'Berechnung des einfachen Durchschnitts'.")
+                min_val_c = 'min_val'
             elif variant == 1:
-                self.logger.info(f"Calculate 'Wachstumsgradtag' according to 'Modifizierte Berechnung des einfachen Durchschnitts'.")
-            # Zähle Tage, bei denen die Tagesmitteltemperatur oberhalb des Schwellenwertes lag
-            elif variant == 2:
-                self.logger.info(f"Calculate 'Wachstumsgradtag' according to 'Anzahl der Tage, bei denen die Tagesmitteltemperatur oberhalb des Schwellenwertes lag'.")
+                self.logger.info(f"Calculate 'Wachstumsgradtage' according to 'Modifizierte Berechnung des einfachen Durchschnitts'.")
+                min_val_c = 'max(threshold, min_val)'
             else:
-                self.logger.warning(f"Requested variant of 'Wachstumsgradtag' not defined. Aborting...")
+                self.logger.warning(f"Requested variant of 'Wachstumsgradtage' not defined. Aborting...")
                 return
 
+            # accumulate values
             for entry in raw_data:
                 timestamp, min_val, max_val = entry
-                
-                if variant == 0:
-                    wgt = (((min_val + min(30, max_val)) / 2) - threshold)
-                elif variant == 1:
-                    wgt = (((max(threshold, min_val) + min(30.0, max_val)) / 2) - threshold)
-                elif variant == 2:
-                    wgt = (((min_val + min(30, max_val)) / 2) - threshold)
-                else:
-                    wgt = None
-
-                if wgt and wgt > 0:
+                wgt = ((eval(min_val_c) + min(upper_limit, max_val)) / 2 ) - threshold
+                if wgt > 0:
                     wgte += wgt
                 wgte_list.append([timestamp, int(round(wgte, 0))])
 
-                if result == 'series':
-                    return wgte_list
-                else:
-                    return int(round(wgte, 0))
+            # return result
+            return wgte_list if result == 'series' else int(round(wgte, 0))
 
         def temperaturserie() -> list:
             """provide list of lists having timestamp and temperature(s) per day"""
@@ -1951,6 +1943,8 @@ class DatabaseAddOn(SmartPlugin):
         elif not self._valid_year(year):
             self.logger.error(f"Year for item={database_item.property.path} was {year}. This is not a valid year. Aborting...")
             return
+        if func == 'kaeltesumme' and 1 <= today.month <= 9:
+            year -= 1
 
         # define start_date, end_date
         if month is None:
@@ -2641,7 +2635,7 @@ class DatabaseAddOn(SmartPlugin):
             'last':        'LIMIT 1 ',
         }
 
-        _where = "item_id = :item_id AND time < :ts_start " if func == "next" else "item_id = :item_id AND time BETWEEN :ts_start AND :ts_end "
+        _where = "item_id = :item_id AND time < :ts_end " if func == "next" else "item_id = :item_id AND time BETWEEN :ts_start AND :ts_end "
 
         _db_table = 'log '
 
@@ -2691,9 +2685,9 @@ class DatabaseAddOn(SmartPlugin):
                 _where = f'{_where}AND val_num {entry.strip()} '
 
         # set params
-        params = {'item_id': item_id, 'ts_start': ts_start}
-        if func != "next":
-            params.update({'ts_end': ts_end})
+        params = {'item_id': item_id, 'ts_start': ts_start, 'ts_end': ts_end}
+        if func == "next":
+            params.pop('ts_start', None)
 
         # assemble query
         query = f"SELECT {_select[func]}FROM {_db_table}WHERE {_where}{_group_by.get(group, '')}{_order.get(func, '')}{_limit.get(func, '')}{_table_alias.get(func, '')}{_group_by.get(group2, '')}".strip()

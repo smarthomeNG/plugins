@@ -33,7 +33,7 @@ from bin.smarthome import VERSION
 
 
 class iCal(SmartPlugin):
-    PLUGIN_VERSION = "1.6.3"
+    PLUGIN_VERSION = "1.6.4"
     ALLOW_MULTIINSTANCE = False
     DAYS = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")
     FREQ = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
@@ -294,7 +294,7 @@ class iCal(SmartPlugin):
                     self.logger.info("Warning in parsing {0} no DTEND for UID: {1}. Setting DTEND from DTSTART".format(ics, event['UID']))
                     # Set end to start time:
                     event['DTEND'] = event['DTSTART']
-                    continue
+                    #continue
                 if 'RRULE' in event:
                     event['RRULE'] = self._parse_rrule(event, tzinfo)
                 if event['UID'] in events:
@@ -314,7 +314,7 @@ class iCal(SmartPlugin):
                     events[event['UID']] = event
                 del(event)
             elif 'event' in locals():
-                key, sep, val = line.partition(':')
+                key, val = line.rsplit(':', 1)
                 key, sep, par = key.partition(';')
                 key = key.upper()
                 # why does the folowing code overwrite the time zone info configured in smarthomeNG?

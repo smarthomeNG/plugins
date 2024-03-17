@@ -34,7 +34,7 @@ from .webif import WebInterface
 
 
 class JSONREAD(SmartPlugin):
-    PLUGIN_VERSION = "1.0.3"
+    PLUGIN_VERSION = "1.0.4"
 
     def __init__(self, sh):
         """
