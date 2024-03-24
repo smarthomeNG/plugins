@@ -317,6 +317,7 @@ class Hue2(SmartPlugin):
                 self.br.lights[plugin_item['id']]['state'](alert=value)
             elif plugin_item['function'] == 'effect':
                 self.br.lights[plugin_item['id']]['state'](effect=value)
+
         except qhue.qhue.QhueException as e:
             if self.bridge['modelid'] == 'deCONZ':
                 msg = f"qhue exception {e.message}"

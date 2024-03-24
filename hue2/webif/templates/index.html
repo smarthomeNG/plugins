@@ -107,7 +107,9 @@
 							<th class="py-1">{{ _('hue resource') }}</th>
 							<th class="py-1">{{ _('hue id') }}</th>
 							<th class="py-1">{{ _('hue function') }}</th>
-						<th class="py-1" width="100px"></th>
+							<th class="py-1">{{ _('Letztes Update') }}</th>
+							<th class="py-1">{{ _('Letzter Change') }}</th>
+							<th class="py-1" width="100px"></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -119,6 +121,13 @@
 								<td class="py-1">{{ items[i].resource }}</td>
 								<td class="py-1">{{ items[i].id }}</td>
 								<td class="py-1">{{ items[i].function }}</td>
+<!--
+								<td class="py-1">{ { items[i].item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+								<td class="py-1">{ { items[i].item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+-->
+								<td class="py-1">{{ items[i].item.last_update().strftime('%H:%M:%S') }}</td>
+								<td class="py-1">{{ items[i].item.last_change().strftime('%H:%M:%S') }}</td>
+
 								<td class="py-1"></td>
 							</tr>
 						{% endfor %}
