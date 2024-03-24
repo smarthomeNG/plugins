@@ -6,4 +6,5 @@ gtts
 # These packages are used by SoCo:
 ifaddr
 appdirs
-lxml<=4.9.4
+#lxml<=4.9.4
+lxml>=4.9.2,<=4.9.4
