@@ -245,12 +245,12 @@ class Telegram(SmartPlugin):
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("connect method end")
 
-    def error_handler(self, update, context):
+    def error_handler(self, error):
         """
         Just logs an error in case of a problem
         """
         try:
-            self.logger.error(f'Update {update} caused error {context.error}')
+            self.logger.error(f'Update caused error {error}')
         except Exception:
             pass
 
@@ -757,7 +757,7 @@ class Telegram(SmartPlugin):
                                 self.scheduler_remove('telegram_change_item_timeout')
                             dicCtlCopy = dicCtl.copy()
                             dicCtlCopy['question'] = ''
-                            self.change_item(update, context, dicCtlCopy['name'], dicCtlCopy)
+                            await self.change_item(update, context, dicCtlCopy['name'], dicCtlCopy)
                             self._waitAnswer = None
                             await self._bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard":self.create_control_reply_markup()})
                         elif dicCtl['type'] == 'num':
