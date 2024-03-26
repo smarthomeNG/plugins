@@ -164,6 +164,9 @@ siehe auch example.yaml
 
 Changelog
 ---------
+V1.0.11	Verbesserung Umwandlung Byte/Wordorder in Endian-Konstante
+        Fehler beim Schreiben von Register behoben
+
 V1.0.10	Mindestversion für pymodbus ist nun 3.5.2
 
 V1.0.9  
