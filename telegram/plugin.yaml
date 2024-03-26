@@ -11,7 +11,7 @@ plugin:
     keywords: telegram chat messenger photo
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1548691-support-thread-für-das-telegram-plugin
 
-    version: 2.0.1                  # Plugin version
+    version: 2.0.2                  # Plugin version
     sh_minversion: 1.9.5            # minimum shNG version to use this plugin
     # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     # py_minversion: 3.6            # minimum Python version to use for this plugin
