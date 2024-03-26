@@ -53,7 +53,7 @@ class modbus_tcp(SmartPlugin):
     devices.
     """
 
-    PLUGIN_VERSION = '1.0.10'
+    PLUGIN_VERSION = '1.0.11'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -133,8 +133,8 @@ class modbus_tcp(SmartPlugin):
             value = item()
             dataType = 'uint16'
             factor = 1
-            byteOrder = 'Endian.Big'
-            wordOrder = 'Endian.Big'
+            byteOrderStr = 'Endian.BIG'
+            wordOrderStr = 'Endian.BIG'
             slaveUnit = self._slaveUnit
             dataDirection = 'read'
 
@@ -158,24 +158,22 @@ class modbus_tcp(SmartPlugin):
             if self.has_iattr(item.conf, AttrFactor):
                 factor = float(self.get_iattr_value(item.conf, AttrFactor))
             if self.has_iattr(item.conf, AttrByteOrder):
-                byteOrder = self.get_iattr_value(item.conf, AttrByteOrder)
+                byteOrderStr = self.get_iattr_value(item.conf, AttrByteOrder)
             if self.has_iattr(item.conf, AttrWordOrder):
-                wordOrder = self.get_iattr_value(item.conf, AttrWordOrder)
-            if byteOrder == 'Endian.Big':  # Von String in Endian-Konstante "umwandeln"
+                wordOrderStr = self.get_iattr_value(item.conf, AttrWordOrder)
+            
+            try:    # den letzten Teil des Strings extrahieren, in Großbuchstaben und in Endian-Konstante wandeln
+                byteOrder = Endian[(str(byteOrderStr).split('.')[-1]).upper()]  
+            except Exception as e:
+                self.logger.warning(f"Invalid byteOrder -> default(Endian.BIG) is used. Error:{e}")
                 byteOrder = Endian.BIG
-            elif byteOrder == 'Endian.Little':
-                byteOrder = Endian.LITTLE
-            else:
-                byteOrder = Endian.BIG
-                self.logger.warning("Invalid byte order -> default(Endian.Big) is used")
-            if wordOrder == 'Endian.Big':  # Von String in Endian-Konstante "umwandeln"
+            
+            try:    # den letzten Teil des Strings extrahieren, in Großbuchstaben und in Endian-Konstante wandeln
+                wordOrder = Endian[(str(wordOrderStr).split('.')[-1]).upper()] 
+            except Exception as e:
+                self.logger.warning(f"Invalid byteOrder -> default(Endian.BIG) is used. Error:{e}")
                 wordOrder = Endian.BIG
-            elif wordOrder == 'Endian.Little':
-                wordOrder = Endian.LITTLE
-            else:
-                wordOrder = Endian.BIG
-                self.logger.warning("Invalid byte order -> default(Endian.Big) is used")
-
+            
             regPara = {'regAddr': regAddr, 'slaveUnit': slaveUnit, 'dataType': dataType, 'factor': factor,
                        'byteOrder': byteOrder,
                        'wordOrder': wordOrder, 'item': item, 'value': value, 'objectType': objectType,
@@ -391,10 +389,10 @@ class modbus_tcp(SmartPlugin):
             return None
 
         if objectType == 'Coil':
-            result = self._Mclient.write_coil(address, value, unit=slaveUnit)
+            result = self._Mclient.write_coil(address, value, slave=slaveUnit)
         elif objectType == 'HoldingRegister':
             registers = builder.to_registers()
-            result = self._Mclient.write_registers(address, registers, unit=slaveUnit)
+            result = self._Mclient.write_registers(address, registers, slave=slaveUnit)
         elif objectType == 'DiscreteInput':
             self.logger.warning(f"this object type cannot be written {objectType}:{address} slaveUnit:{slaveUnit}")
             return

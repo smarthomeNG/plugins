@@ -11,7 +11,7 @@ plugin:
     keywords: modbus_tcp modbus smartmeter inverter heatpump
     #documentation: http://smarthomeng.de/user/plugins/modbus_tcp/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1154368-einbindung-von-modbus-tcp
-    version: 1.0.10                # Plugin version
+    version: 1.0.11                # Plugin version
     sh_minversion: 1.8             # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6
@@ -102,23 +102,23 @@ item_attributes:
 
     modBusByteOrder:
         type: str
-        default: 'Endian.Big'
+        default: 'Endian.BIG'
         description:
-            de: 'Endian.Big oder Endian.Little'
-            en: 'Endian.Big or Endian.Little'
+            de: 'Endian.BIG oder Endian.LITTLE'
+            en: 'Endian.BIG or Endian.LITTLE'
         valid_list:
-            - 'Endian.Big'
-            - 'Endian.Little'
+            - 'Endian.BIG'
+            - 'Endian.LITTLE'
 
     modBusWordOrder:
         type: str
-        default: 'Endian.Big'
+        default: 'Endian.BIG'
         description:
-            de: 'Endian.Big oder Endian.Little'
-            en: 'Endian.Big or Endian.Little'
+            de: 'Endian.BIG oder Endian.LITTLE'
+            en: 'Endian.BIG or Endian.LITTLE'
         valid_list:
-            - 'Endian.Big'
-            - 'Endian.Little'
+            - 'Endian.BIG'
+            - 'Endian.LITTLE'
 
     modBusFactor:
         type: num
