@@ -599,6 +599,11 @@ dargestellt und die entsprechenden Aktionen ausgeführt.
     if msg != '':
         telegram_plugin.msg_broadcast(msg, message_chat_id, reply_markup, parse_mode)
 
+Changelog
+---------
+V2.0.2 Fehler beim Kommando ``/control`` behoben, Kommunikationsabbruch nach Natzwerkausfall
+V2.0.0 Umbau auf neues Telegram Paket (V20.2+) mit async 
+
 Web Interface
 =============
 
