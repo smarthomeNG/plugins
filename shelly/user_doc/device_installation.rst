@@ -30,7 +30,7 @@ Gen1 Devices einbinden
 - Mit dem Browser unter der neuen IP Adresse (http://shellyplug-s-xxxxxx) im lokalen WLAN verbinden
 
 Gen2/Gen3 Devices einbinden
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - In der Navigation links auf **Settings** klicken
 - Im Abschnitt 'Network Settings' auf **Wi-Fi** klicken
@@ -57,7 +57,7 @@ Update für Gen1 Devices
 - **UPDATE FIRMWARE** klicken
 
 Update für Gen2/Gen3 Devices
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - In der Navigation links auf **Settings** klicken
 - Im Abschnitt 'Device Settings' auf **Firmware** klicken
@@ -83,7 +83,7 @@ Für Gen1 Devices
    :class: screenshot
 
 Für Gen2/Gen3 Devices
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 - In der Navigation links auf **Settings** klicken
 - Im Abschnitt 'Connectivity' auf **MQTT** klicken
@@ -104,4 +104,3 @@ Für Gen2/Gen3 Devices
     anschließend nicht dem Broker.
 
 |
-
