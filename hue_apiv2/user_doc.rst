@@ -1,9 +1,9 @@
-.. index:: Plugins; hue2 (Philips Hue v2)
-.. index:: hue2 hue
+.. index:: Plugins; hue_apiv2
+.. index:: hue_apiv2 hue
 
-====
-hue2
-====
+=========
+hue_apiv2
+=========
 
 .. image:: webif/static/img/plugin_logo.png
    :alt: plugin logo
@@ -13,19 +13,46 @@ hue2
    :align: left
 
 
-Das Plugin unterstützt Philips Hue Bridges. Es ist eine komplette Neuentwicklung mit einem deutlich erweiterten
-Funktionsumfang gegenüber dem alten Hue Plugin.
+Das Plugin unterstützt Philips/Signify Hue Bridges. Es setzt auf dem API v2 von Philips auf und unterstützt daher
+nur die aktuellen Bridges der zweiten Generation (die Eckigen). Diese Bridges unterstützen zwar auch noch das API v1,
+allerdings soll laut Philips diese Unterstützung irgendwann enden. Neue Hue Features werden allerdings nur im API v2
+implementiert.
 
-Es unterstützt die zweite Generation der Philips Hue Bridges und bisher auch noch die Bridges der ersten Generation,
-die von Philips inzwischen retired wurden und keine Unterstützung durch Philips mehr erfahren.
+Wenn eine Philips Hue Bridge der ersten Generation (die Runden) angesprochen werden soll, muss das bisherige
+**Plugin hue2** verwendet werden. Diese Bridges sind von Philips inzwischen retired worden und werden keine
+Unterstützung durch Philips mehr erfahren.
 
+Das Hue API v2 enthält gegenüber dem API v1 eine Reihe von breaking Changes, so dass die Entwicklung eines neuen
+Plugin notwendig wurde, um das neue API zu unterstützen.
+
+Die wichtigsten Features/Änderungen beim API v2:
+
+- Aktive Meldung von Veränderungen durch die Bridge
+- https Verbindung statt http
+- neue (längere) Ids (z.B.: 2915002c-6c8f-4d9b-9134-6b1a8ded4be3)
+- Unterstützung mehrerer Lights in einem Device
+- Andere Ansteuerung von Szenen
+- Konzentration auf das Farbsystem xy
+- Keine Unterstützung für hue und sat Werte
+- Unterstützung von ct nur beim setzen von Werten (keine ct Werte von der Bridge)
+- Keine Untersützung von bri_inc
+- brightness Werte in Prozent (also 0 ... 100, nicht mehr 0 ... 255)
+- Keine Unterstützung durch die alten (runden) Bridges (und deCONZ)
+
+|
+
+Das Plugin ist noch nicht FeatureComplete.
+
+**Ab hie muss die Doku noch überarbeitet werden:**
+
+|
 
 Neue Features
 =============
 
 Das Plugin bietet im Vergleich zum **hue** Plugin zusätzlich folgende Features:
 
-- Die Authorisierung an der Hue Bridge ist in das Plugin integriert und erfolgt über das Webinferface des Plugins.
+- Die Authorisierung an der Hue Bride ist in das Plugin integriert und erfolgt über das Webinferface des Plugins.
 - Das Plugin hat eine Funktion um aktive Hue Bridges im lokalen Netzwerk zu finden.
 - Das Plugin unterstützt je Instanz im Gegensatz zum alten Plugin nur eine Bridge. Dafür ist es Multi-Instance fähig,
   so dass bei Einsatz mehrerer Bridges einfach mehrere Instanzen des Plugins konfiguriert werden können.
@@ -235,7 +262,7 @@ Um den Namen der Leuchte mit der Id 3 abzufragen, muss ein Item folgendermaßen 
 Web Interface
 =============
 
-Das hue2 Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die das Plugin nutzen
+Das hue_apiv2 Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die das Plugin nutzen
 übersichtlich dargestellt werden. Außerdem können Informationen zu den Devices angezeigt werden,
 die an der Hue Brigde angemeldet sind.
 
@@ -246,8 +273,8 @@ Aufruf des Webinterfaces
 Das Plugin kann aus der Admin GUI (von der Seite Plugins/Plugin Liste aus) aufgerufen werden. Dazu auf der Seite
 in der entsprechenden Zeile das Icon in der Spalte **Web Interface** anklicken.
 
-Außerdem kann das Webinterface direkt über ``http://smarthome.local:8383/plugin/hue2`` bzw.
-``http://smarthome.local:8383/plugin/hue2<Instanz>`` aufgerufen werden.
+Außerdem kann das Webinterface direkt über ``http://smarthome.local:8383/plugin/hue_apiv2`` bzw.
+``http://smarthome.local:8383/plugin/hue_apiv2<Instanz>`` aufgerufen werden.
 
 |
 
@@ -259,7 +286,7 @@ Folgende Informationen können im Webinterface angezeigt werden:
 Oben rechts werden allgemeine Parameter zum Plugin angezeigt. Die weiteren Informationen werden in den
 sechs Tabs des Webinterface angezeigt.
 
-Im ersten Tab werden die Items angezeigt, die das Hue Plugin nutzen:
+Im ersten Tab werden die Items angezeigt, die das Plugin nutzen:
 
 .. image:: assets/webif_tab1.jpg
    :class: screenshot
@@ -302,10 +329,18 @@ Im fünften Tab werden die Sensoren angezeigt, die in der Hue Bridge bekannt sin
 |
 |
 
-Auf dem sechten Reiter werden Informationen zur Hue Bridge angezeigt. Wenn weitere Anwendungen die Bridge nutzen,
-wird zusätzlich eine Liste der in der Bridge konfigurierten Benutzer/Apps angezeigt.
+Im sechsten Tab werden die Devices angezeigt, die in der Hue Bridge bekannt sind:
 
 .. image:: assets/webif_tab6.jpg
+   :class: screenshot
+
+|
+|
+
+Auf dem siebten Reiter werden Informationen zur Hue Bridge angezeigt. Wenn weitere Anwendungen die Bridge nutzen,
+wird zusätzlich eine Liste der in der Bridge konfigurierten Benutzer/Apps angezeigt.
+
+.. image:: assets/webif_tab7.jpg
    :class: screenshot
 
 |
