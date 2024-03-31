@@ -32,6 +32,51 @@ parameters:
             de: 'IP Adresse bzw. Hostname der HomeMatic CCU2 Zentrale'
             en: 'ip address or hostname of the HomeMatic CCU2 gateway'
 
+    proxyPort:
+       type: int
+       default: 0
+       valid_min: 0
+       description:
+           de: 'Port Nummer für eingehende Nachrichten von der HomeMatric CCU2 Zentrale'
+           en: 'port number for incoming messages from the HomeMatric CCU2 gateway'
+
+    proxyPort_hmip:
+       type: int
+       default: 0
+       valid_min: 0
+       description:
+           de: 'Port Nummer für eingehende Nachrichten von der HomeMatric CCU2 Zentrale für HomeMaticIP Geräte'
+           en: 'port number for incoming messages from the HomeMatric CCU2 gateway for HomeMaticIP Devices'
+
+    customCallbackHost:
+        type: bool
+        mandatory: False
+        description:
+            de: 'Legt fest, ob Callbacks umgeleitet werden soll (z.B. Docker Host), default FALSE'
+            en: 'determine if callbacks must be reditected (e.g. Docker Host), default FALSE'
+
+    callbackHost:
+        type: ip
+        default: '127.0.0.1'
+        description:
+            de: 'IP Adresse bzw. Hostname, an die die HomeMatric CCU2 Zentrale Nachrichten senden soll (z.B. Docker Host)'
+            en: 'ip address or hostname, to which the HomeMatric CCU2 gateway has to send messages (e.g. Docker Host)'
+
+    callbackPort:
+       type: int
+       default: 30000
+       valid_min: 0
+       description:
+           de: 'Port Nummer, an die die HomeMatric CCU2 Zentrale Nachrichten senden soll (z.B. Docker Host)'
+           en: 'port number, to which the HomeMatric CCU2 gateway has to send messages (e.g. Docker Host)'
+
+    callbackPort_hmip:
+       type: int
+       default: 30001
+       valid_min: 0
+       description:
+           de: 'Port Nummer, an die die HomeMatric CCU2 Zentrale Nachrichten senden soll (z.B. Docker Host) für HomeMaticIP Geräte'
+           en: 'port number, to which the HomeMatric CCU2 gateway has to send messages for HomeMaticIP Devices (e.g. Docker Host)'
 #    port:
 #        type: int
 #        default: 2001
