@@ -594,7 +594,7 @@ class AVM(SmartPlugin):
         return self.fritz_device.set_call_origin(phone_name)
 
     @NoAttributeError
-    def get_calllist(self):
+    def get_calllist(self, filter_incoming: str = ''):
         return self.fritz_device.get_calllist_from_cache()
 
     @NoAttributeError
@@ -607,7 +607,7 @@ class AVM(SmartPlugin):
 
     @NoAttributeError
     def get_contact_name_by_phone_number(self, phone_number: str = '', phonebook_id: int = 0):
-        return self.fritz_device.get_phone_numbers_by_name(phone_number, phonebook_id)
+        return self.fritz_device.get_contact_name_by_phone_number(phone_number, phonebook_id)
 
     @NoAttributeError
     def get_device_log_from_lua(self):
@@ -1381,7 +1381,7 @@ class FritzDevice:
         # phonebook_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=phonebook_id)['NewPhonebookURL']
         phonebook_url = to_str(self._poll_fritz_device('phonebook_url', phonebook_id, enforce_read=True))
         if not phonebook_url:
-            return ''
+            return phone_number
 
         phonebooks = request_response_to_xml(self._request(phonebook_url, self._timeout, self.verify))
         if phonebooks:
@@ -1395,7 +1395,7 @@ class FritzDevice:
         else:
             self.logger.error("Phonebook not available on the FritzDevice")
 
-        return ''
+        return phone_number
 
     def get_phone_numbers_by_name(self, name: str = '', phonebook_id: int = 0) -> dict:
         """Get phone number from phone book by contact"""
