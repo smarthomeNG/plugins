@@ -597,7 +597,7 @@ class AVM(SmartPlugin):
     def get_calllist(self, filter_incoming: str = ''):
         if filter_incoming :
             return self.fritz_device.get_calllist(filter_incoming)
-        else
+        else :
             return self.fritz_device.get_calllist_from_cache()
 
     @NoAttributeError
