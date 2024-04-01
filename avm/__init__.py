@@ -595,7 +595,10 @@ class AVM(SmartPlugin):
 
     @NoAttributeError
     def get_calllist(self, filter_incoming: str = ''):
-        return self.fritz_device.get_calllist_from_cache()
+        if filter_incoming :
+            return self.fritz_device.get_calllist(filter_incoming)
+        else
+            return self.fritz_device.get_calllist_from_cache()
 
     @NoAttributeError
     def get_phone_name(self, index: int = 1):
