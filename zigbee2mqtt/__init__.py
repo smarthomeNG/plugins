@@ -47,7 +47,7 @@ HANDLE_ATTR = 'attr_'
 class Zigbee2Mqtt(MqttPlugin):
     """ Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items """
 
-    PLUGIN_VERSION = '2.0.0'
+    PLUGIN_VERSION = '2.0.1'
 
     def __init__(self, sh, **kwargs):
         """ Initializes the plugin. """
@@ -58,7 +58,7 @@ class Zigbee2Mqtt(MqttPlugin):
         self.logger.info(f'Init {self.get_shortname()} plugin {self.PLUGIN_VERSION}')
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        self.z2m_base = self.get_parameter_value('base_topic').lower()
+        self.z2m_base = self.get_parameter_value('base_topic')
         self.cycle = self.get_parameter_value('poll_period')
         self.read_at_init = self.get_parameter_value('read_at_init')
         self._z2m_gui = self.get_parameter_value('z2m_gui')
@@ -172,7 +172,7 @@ class Zigbee2Mqtt(MqttPlugin):
                 self.logger.warning(f"parsed item {item} has no {Z2M_TOPIC} set, ignoring")
                 return
 
-            attr = self.get_iattr_value(item.conf, Z2M_ATTR).lower()
+            attr = self.get_iattr_value(item.conf, Z2M_ATTR)
 
             if item.type() == 'bool':
                 bval = self.get_iattr_value(item.conf, Z2M_BVAL)
