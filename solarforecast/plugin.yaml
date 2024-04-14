@@ -6,24 +6,22 @@ plugin:
         de: 'Plugin zur Anbindung an eine Web-basierte Solaretragsvorhersage'
         en: 'Plugin to connect to a web-based solar forecast service'
     maintainer: Alexander Schwithal (aschwith)
-    tester: henfri, Haiphong
-    state: develop                  # change to ready when done with development
+    tester: henfri, Haiphong, Morg42
+    state: development                  # change to ready when done with development
     keywords: solar.forecast, solar
 #    documentation:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1842817-support-thread-f%C3%BCr-das-solarforecast-plugin
 
-    version: 1.9.4                  # Plugin version
-    sh_minversion: 1.8.0            # minimum shNG version to use this plugin
+    version: 1.9.5                  # Plugin version
+    sh_minversion: 1.10.0            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: True            # plugin supports multi instance
-    restartable: unknown
+    multi_instance: true            # plugin supports multi instance
+    restartable: true
     classname: Solarforecast        # class containing the plugin
 
 parameters:
     latitude:
         type: num
-        mandatory: False
-        default: 0.0
         valid_min: -90
         valid_max: 90
         description:
@@ -31,8 +29,6 @@ parameters:
             en: '(Optional) Latitude of solar system in decimal degree. Otherwise taken from smarthome config.'
     longitude:
         type: num
-        mandatory: False
-        default: 0.0
         valid_min: -180
         valid_max: 180
         description:
@@ -40,7 +36,7 @@ parameters:
             en: '(Optional) Longitude of solar system in decimal degree. Otherwise taken from smarthome config.'
     declination:
         type: num
-        mandatory: True
+        mandatory: true
         valid_min: 0
         valid_max: 90
         description:
@@ -48,7 +44,7 @@ parameters:
             en: 'Panel declination in degree'
     azimuth:
         type: num
-        mandatory: True
+        mandatory: true
         valid_min: -180
         valid_max: 180
         description:
@@ -56,11 +52,12 @@ parameters:
             en: 'Azimuth angle of panel direction (-180 to 180 degrees). 0 degree is equivalent to southern direction, (-180 = north, -90 = east, 0 = south, 90 = west, 180 = north)'
     kwp:
         type: num
-        mandatory: True
+        mandatory: true
         valid_min: 0
         description:
             de: 'Leistung der Solaranlage in kW Peak'
             en: 'Power of solar system in kw peak'
+
     service:
         type: str
         default: 'solarforecast'
@@ -75,7 +72,6 @@ parameters:
 
 
 item_attributes:
-    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
     solarforecast_attribute:
         type: str
         description:
@@ -83,26 +79,621 @@ item_attributes:
                  Vorhersage Energie in Wh morgen
                  Vorhersage Energie in Wh heute
                  Datum morgen
-                 Datum heute'
+                 Datum heute
+                 stündliche Vorhersage und Leistungchecks'
             en: 'Solarforecast attributes:
                  Forecast energy in Wh tomorrow
                  Forecast energy in Wh today
                  Date tomorrow
-                 Date today'
+                 Date today
+                 Hourly forecast and power checks'
         valid_list:
           - energy_tomorrow
           - energy_today
           - date_tomorrow
           - date_today
+          - watts_hourly
 
-item_structs: NONE
-    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
-    #item_structs: NONE
+plugin_functions:
+    is_power_available:
+        description:
+            de: 'Prüft, ob die angegebene Leistung für die angegebene Zahl an Stunden voraussichtlich erreicht wird'
+            en: 'Checks if given power is estimated to be produces for the given number of hours'
+        type: bool
+        parameters:
+            power:
+                type: int
+                valid_min: 0
+                description:
+                    de: 'Geforderte Leistung in Watt'
+                    en: 'Requested power in watts'
+            hours:
+                type: int
+                default: 2
+                valid_min: 1
+                description:
+                    de: 'Geforderte Anzahl an Stunden ab jetzt bzw. der nächsten vollen Stunde'
+                    en: 'Requested number of hours from now respective from the next full hour'
 
-plugin_functions: NONE
+item_structs:
+    hourly:
+        type: dict
+        solarforecast_attribute: watts_hourly
+        enforce_updates: true
+
+        data_hour:
+            type: num
+            eval: sh...self.property.last_update.hour
+            eval_trigger: ..
+
+        hours:
+
+            h0:
+                remark: data for current hour (in reference to data_hour)
+                type: num
+                eval: sh....dict.get(sh....data_hour(), 0)
+                eval_trigger: ...
+
+                g5:
+                    remark: flag if produced solar power is estimated to be more than 500 watts
+                    type: bool
+                    eval: sh...() > 500
+                    eval_trigger: ..
+
+                g10:
+                    remark: flag if produced solar power is estimated to be more than 1000 watts
+                    type: bool
+                    eval: sh...() > 1000
+                    eval_trigger: ..
+
+                g15:
+                    remark: flag if produced solar power is estimated to be more than 1500 watts
+                    type: bool
+                    eval: sh...() > 1500
+                    eval_trigger: ..
+
+                g20:
+                    remark: flag if produced solar power is estimated to be more than 2000 watts
+                    type: bool
+                    eval: sh...() > 2000
+                    eval_trigger: ..
+
+                g25:
+                    remark: flag if produced solar power is estimated to be more than 2500 watts
+                    type: bool
+                    eval: sh...() > 2500
+                    eval_trigger: ..
+
+                g30:
+                    remark: flag if produced solar power is estimated to be more than 3000 watts
+                    type: bool
+                    eval: sh...() > 3000
+                    eval_trigger: ..
+
+                g35:
+                    remark: flag if produced solar power is estimated to be more than 3500 watts
+                    type: bool
+                    eval: sh...() > 3500
+                    eval_trigger: ..
+
+            h1:
+                remark: data for current hour + 1 (in reference to data_hour)
+                type: num
+                eval: sh....dict.get(sh....data_hour() + 1, 0)
+                eval_trigger: ...
+
+                g5:
+                    remark: flag if produced solar power is estimated to be more than 500 watts
+                    type: bool
+                    eval: sh...() > 500
+                    eval_trigger: ..
+
+                g10:
+                    remark: flag if produced solar power is estimated to be more than 1000 watts
+                    type: bool
+                    eval: sh...() > 1000
+                    eval_trigger: ..
+
+                g15:
+                    remark: flag if produced solar power is estimated to be more than 1500 watts
+                    type: bool
+                    eval: sh...() > 1500
+                    eval_trigger: ..
+
+                g20:
+                    remark: flag if produced solar power is estimated to be more than 2000 watts
+                    type: bool
+                    eval: sh...() > 2000
+                    eval_trigger: ..
+
+                g25:
+                    remark: flag if produced solar power is estimated to be more than 2500 watts
+                    type: bool
+                    eval: sh...() > 2500
+                    eval_trigger: ..
+
+                g30:
+                    remark: flag if produced solar power is estimated to be more than 3000 watts
+                    type: bool
+                    eval: sh...() > 3000
+                    eval_trigger: ..
+
+                g35:
+                    remark: flag if produced solar power is estimated to be more than 3500 watts
+                    type: bool
+                    eval: sh...() > 3500
+                    eval_trigger: ..
+
+            h2:
+                remark: data for current hour + 2 (in reference to data_hour)
+                type: num
+                eval: sh....dict.get(sh....data_hour() + 2, 0)
+                eval_trigger: ...
+
+                g5:
+                    remark: flag if produced solar power is estimated to be more than 500 watts
+                    type: bool
+                    eval: sh...() > 500
+                    eval_trigger: ..
+
+                g10:
+                    remark: flag if produced solar power is estimated to be more than 1000 watts
+                    type: bool
+                    eval: sh...() > 1000
+                    eval_trigger: ..
+
+                g15:
+                    remark: flag if produced solar power is estimated to be more than 1500 watts
+                    type: bool
+                    eval: sh...() > 1500
+                    eval_trigger: ..
+
+                g20:
+                    remark: flag if produced solar power is estimated to be more than 2000 watts
+                    type: bool
+                    eval: sh...() > 2000
+                    eval_trigger: ..
+
+                g25:
+                    remark: flag if produced solar power is estimated to be more than 2500 watts
+                    type: bool
+                    eval: sh...() > 2500
+                    eval_trigger: ..
+
+                g30:
+                    remark: flag if produced solar power is estimated to be more than 3000 watts
+                    type: bool
+                    eval: sh...() > 3000
+                    eval_trigger: ..
+
+                g35:
+                    remark: flag if produced solar power is estimated to be more than 3500 watts
+                    type: bool
+                    eval: sh...() > 3500
+                    eval_trigger: ..
+
+            h3:
+                remark: data for current hour + 3 (in reference to data_hour)
+                type: num
+                eval: sh....dict.get(sh....data_hour() + 3, 0)
+                eval_trigger: ...
+
+                g5:
+                    remark: flag if produced solar power is estimated to be more than 500 watts
+                    type: bool
+                    eval: sh...() > 500
+                    eval_trigger: ..
+
+                g10:
+                    remark: flag if produced solar power is estimated to be more than 1000 watts
+                    type: bool
+                    eval: sh...() > 1000
+                    eval_trigger: ..
+
+                g15:
+                    remark: flag if produced solar power is estimated to be more than 1500 watts
+                    type: bool
+                    eval: sh...() > 1500
+                    eval_trigger: ..
+
+                g20:
+                    remark: flag if produced solar power is estimated to be more than 2000 watts
+                    type: bool
+                    eval: sh...() > 2000
+                    eval_trigger: ..
+
+                g25:
+                    remark: flag if produced solar power is estimated to be more than 2500 watts
+                    type: bool
+                    eval: sh...() > 2500
+                    eval_trigger: ..
+
+                g30:
+                    remark: flag if produced solar power is estimated to be more than 3000 watts
+                    type: bool
+                    eval: sh...() > 3000
+                    eval_trigger: ..
+
+                g35:
+                    remark: flag if produced solar power is estimated to be more than 3500 watts
+                    type: bool
+                    eval: sh...() > 3500
+                    eval_trigger: ..
+
+            h4:
+                remark: data for current hour + 4 (in reference to data_hour)
+                type: num
+                eval: sh....dict.get(sh....data_hour() + 4, 0)
+                eval_trigger: ...
+
+                g5:
+                    remark: flag if produced solar power is estimated to be more than 500 watts
+                    type: bool
+                    eval: sh...() > 500
+                    eval_trigger: ..
+
+                g10:
+                    remark: flag if produced solar power is estimated to be more than 1000 watts
+                    type: bool
+                    eval: sh...() > 1000
+                    eval_trigger: ..
+
+                g15:
+                    remark: flag if produced solar power is estimated to be more than 1500 watts
+                    type: bool
+                    eval: sh...() > 1500
+                    eval_trigger: ..
+
+                g20:
+                    remark: flag if produced solar power is estimated to be more than 2000 watts
+                    type: bool
+                    eval: sh...() > 2000
+                    eval_trigger: ..
+
+                g25:
+                    remark: flag if produced solar power is estimated to be more than 2500 watts
+                    type: bool
+                    eval: sh...() > 2500
+                    eval_trigger: ..
+
+                g30:
+                    remark: flag if produced solar power is estimated to be more than 3000 watts
+                    type: bool
+                    eval: sh...() > 3000
+                    eval_trigger: ..
+
+                g35:
+                    remark: flag if produced solar power is estimated to be more than 3500 watts
+                    type: bool
+                    eval: sh...() > 3500
+                    eval_trigger: ..
+
+            h5:
+                remark: data for current hour + 5 (in reference to data_hour)
+                type: num
+                eval: sh....dict.get(sh....data_hour() + 5, 0)
+                eval_trigger: ...
+
+                g5:
+                    remark: flag if produced solar power is estimated to be more than 500 watts
+                    type: bool
+                    eval: sh...() > 500
+                    eval_trigger: ..
+
+                g10:
+                    remark: flag if produced solar power is estimated to be more than 1000 watts
+                    type: bool
+                    eval: sh...() > 1000
+                    eval_trigger: ..
+
+                g15:
+                    remark: flag if produced solar power is estimated to be more than 1500 watts
+                    type: bool
+                    eval: sh...() > 1500
+                    eval_trigger: ..
+
+                g20:
+                    remark: flag if produced solar power is estimated to be more than 2000 watts
+                    type: bool
+                    eval: sh...() > 2000
+                    eval_trigger: ..
+
+                g25:
+                    remark: flag if produced solar power is estimated to be more than 2500 watts
+                    type: bool
+                    eval: sh...() > 2500
+                    eval_trigger: ..
+
+                g30:
+                    remark: flag if produced solar power is estimated to be more than 3000 watts
+                    type: bool
+                    eval: sh...() > 3000
+                    eval_trigger: ..
+
+                g35:
+                    remark: flag if produced solar power is estimated to be more than 3500 watts
+                    type: bool
+                    eval: sh...() > 3500
+                    eval_trigger: ..
+
+            h6:
+                remark: data for current hour + 6 (in reference to data_hour)
+                type: num
+                eval: sh....dict.get(sh....data_hour() + 6, 0)
+                eval_trigger: ...
+
+                g5:
+                    remark: flag if produced solar power is estimated to be more than 500 watts
+                    type: bool
+                    eval: sh...() > 500
+                    eval_trigger: ..
+
+                g10:
+                    remark: flag if produced solar power is estimated to be more than 1000 watts
+                    type: bool
+                    eval: sh...() > 1000
+                    eval_trigger: ..
+
+                g15:
+                    remark: flag if produced solar power is estimated to be more than 1500 watts
+                    type: bool
+                    eval: sh...() > 1500
+                    eval_trigger: ..
+
+                g20:
+                    remark: flag if produced solar power is estimated to be more than 2000 watts
+                    type: bool
+                    eval: sh...() > 2000
+                    eval_trigger: ..
+
+                g25:
+                    remark: flag if produced solar power is estimated to be more than 2500 watts
+                    type: bool
+                    eval: sh...() > 2500
+                    eval_trigger: ..
+
+                g30:
+                    remark: flag if produced solar power is estimated to be more than 3000 watts
+                    type: bool
+                    eval: sh...() > 3000
+                    eval_trigger: ..
+
+                g35:
+                    remark: flag if produced solar power is estimated to be more than 3500 watts
+                    type: bool
+                    eval: sh...() > 3500
+                    eval_trigger: ..
+
+        power500:
+            remark: flag if power is estimated to be more than 500 watts
+
+            h1:
+                remark: flag if power is estimed to be more than 500 watts for the next 1 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g5() and sh....hours.h1.g5()
+                eval_trigger: ...
+
+            h2:
+                remark: flag if power is estimed to be more than 500 watts for the next 2 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g5() and sh....hours.h1.g5() and sh....hours.h2.g5()
+                eval_trigger: ...
+
+            h3:
+                remark: flag if power is estimed to be more than 500 watts for the next 3 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g5() and sh....hours.h1.g5() and sh....hours.h2.g5() and sh....hours.h3.g5()
+                eval_trigger: ...
+
+            h4:
+                remark: flag if power is estimed to be more than 500 watts for the next 4 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g5() and sh....hours.h1.g5() and sh....hours.h2.g5() and sh....hours.h3.g5() and sh....hours.h4.g5()
+                eval_trigger: ...
+
+            h5:
+                remark: flag if power is estimed to be more than 500 watts for the next 5 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g5() and sh....hours.h1.g5() and sh....hours.h2.g5() and sh....hours.h3.g5() and sh....hours.h4.g5() and sh....hours.h5.g5()
+                eval_trigger: ...
+
+        power1000:
+            remark: flag if power is estimated to be more than 1000 watts
+
+            h1:
+                remark: flag if power is estimed to be more than 1000 watts for the next 1 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g10() and sh....hours.h1.g10()
+                eval_trigger: ...
+
+            h2:
+                remark: flag if power is estimed to be more than 1000 watts for the next 2 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g10() and sh....hours.h1.g10() and sh....hours.h2.g10()
+                eval_trigger: ...
+
+            h3:
+                remark: flag if power is estimed to be more than 1000 watts for the next 3 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g10() and sh....hours.h1.g10() and sh....hours.h2.g10() and sh....hours.h3.g10()
+                eval_trigger: ...
+
+            h4:
+                remark: flag if power is estimed to be more than 1000 watts for the next 4 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g10() and sh....hours.h1.g10() and sh....hours.h2.g10() and sh....hours.h3.g10() and sh....hours.h4.g10()
+                eval_trigger: ...
+
+            h5:
+                remark: flag if power is estimed to be more than 1000 watts for the next 5 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g10() and sh....hours.h1.g10() and sh....hours.h2.g10() and sh....hours.h3.g10() and sh....hours.h4.g10() and sh....hours.h5.g10()
+                eval_trigger: ...
+
+        power1500:
+            remark: flag if power is estimated to be more than 1500 watts
+
+            h1:
+                remark: flag if power is estimed to be more than 1500 watts for the next 1 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g15() and sh....hours.h1.g15()
+                eval_trigger: ...
+
+            h2:
+                remark: flag if power is estimed to be more than 1500 watts for the next 2 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g15() and sh....hours.h1.g15() and sh....hours.h2.g15()
+                eval_trigger: ...
+
+            h3:
+                remark: flag if power is estimed to be more than 1500 watts for the next 3 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g15() and sh....hours.h1.g15() and sh....hours.h2.g15() and sh....hours.h3.g15()
+                eval_trigger: ...
+
+            h4:
+                remark: flag if power is estimed to be more than 1500 watts for the next 4 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g15() and sh....hours.h1.g15() and sh....hours.h2.g15() and sh....hours.h3.g15() and sh....hours.h4.g15()
+                eval_trigger: ...
+
+            h5:
+                remark: flag if power is estimed to be more than 1500 watts for the next 5 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g15() and sh....hours.h1.g15() and sh....hours.h2.g15() and sh....hours.h3.g15() and sh....hours.h4.g15() and sh....hours.h5.g15()
+                eval_trigger: ...
+
+        power2000:
+            remark: flag if power is estimated to be more than 2000 watts
+
+            h1:
+                remark: flag if power is estimed to be more than 2000 watts for the next 1 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g20() and sh....hours.h1.g20()
+                eval_trigger: ...
+
+            h2:
+                remark: flag if power is estimed to be more than 2000 watts for the next 2 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g20() and sh....hours.h1.g20() and sh....hours.h2.g20()
+                eval_trigger: ...
+
+            h3:
+                remark: flag if power is estimed to be more than 2000 watts for the next 3 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g20() and sh....hours.h1.g20() and sh....hours.h2.g20() and sh....hours.h3.g20()
+                eval_trigger: ...
+
+            h4:
+                remark: flag if power is estimed to be more than 2000 watts for the next 4 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g20() and sh....hours.h1.g20() and sh....hours.h2.g20() and sh....hours.h3.g20() and sh....hours.h4.g20()
+                eval_trigger: ...
+
+            h5:
+                remark: flag if power is estimed to be more than 2000 watts for the next 5 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g20() and sh....hours.h1.g20() and sh....hours.h2.g20() and sh....hours.h3.g20() and sh....hours.h4.g20() and sh....hours.h5.g20()
+                eval_trigger: ...
+
+        power2500:
+            remark: flag if power is estimated to be more than 2500 watts
+
+            h1:
+                remark: flag if power is estimed to be more than 2500 watts for the next 1 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g25() and sh....hours.h1.g25()
+                eval_trigger: ...
+
+            h2:
+                remark: flag if power is estimed to be more than 2500 watts for the next 2 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g25() and sh....hours.h1.g25() and sh....hours.h2.g25()
+                eval_trigger: ...
+
+            h3:
+                remark: flag if power is estimed to be more than 2500 watts for the next 3 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g25() and sh....hours.h1.g25() and sh....hours.h2.g25() and sh....hours.h3.g25()
+                eval_trigger: ...
+
+            h4:
+                remark: flag if power is estimed to be more than 2500 watts for the next 4 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g25() and sh....hours.h1.g25() and sh....hours.h2.g25() and sh....hours.h3.g25() and sh....hours.h4.g25()
+                eval_trigger: ...
+
+            h5:
+                remark: flag if power is estimed to be more than 2500 watts for the next 5 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g25() and sh....hours.h1.g25() and sh....hours.h2.g25() and sh....hours.h3.g25() and sh....hours.h4.g25() and sh....hours.h5.g25()
+                eval_trigger: ...
+
+        power3000:
+            remark: flag if power is estimated to be more than 3000 watts
+
+            h1:
+                remark: flag if power is estimed to be more than 3000 watts for the next 1 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g30() and sh....hours.h1.g30()
+                eval_trigger: ...
+
+            h2:
+                remark: flag if power is estimed to be more than 3000 watts for the next 2 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g30() and sh....hours.h1.g30() and sh....hours.h2.g30()
+                eval_trigger: ...
+
+            h3:
+                remark: flag if power is estimed to be more than 3000 watts for the next 3 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g30() and sh....hours.h1.g30() and sh....hours.h2.g30() and sh....hours.h3.g30()
+                eval_trigger: ...
+
+            h4:
+                remark: flag if power is estimed to be more than 3000 watts for the next 4 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g30() and sh....hours.h1.g30() and sh....hours.h2.g30() and sh....hours.h3.g30() and sh....hours.h4.g30()
+                eval_trigger: ...
+
+            h5:
+                remark: flag if power is estimed to be more than 3000 watts for the next 5 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g30() and sh....hours.h1.g30() and sh....hours.h2.g30() and sh....hours.h3.g30() and sh....hours.h4.g30() and sh....hours.h5.g30()
+                eval_trigger: ...
+
+        power3500:
+            remark: flag if power is estimated to be more than 3500 watts
+
+            h1:
+                remark: flag if power is estimed to be more than 3500 watts for the next 1 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g35() and sh....hours.h1.g35()
+                eval_trigger: ...
+
+            h2:
+                remark: flag if power is estimed to be more than 3500 watts for the next 2 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g35() and sh....hours.h1.g35() and sh....hours.h2.g35()
+                eval_trigger: ...
+
+            h3:
+                remark: flag if power is estimed to be more than 3500 watts for the next 3 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g35() and sh....hours.h1.g35() and sh....hours.h2.g35() and sh....hours.h3.g35()
+                eval_trigger: ...
+
+            h4:
+                remark: flag if power is estimed to be more than 3500 watts for the next 4 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g35() and sh....hours.h1.g35() and sh....hours.h2.g35() and sh....hours.h3.g35() and sh....hours.h4.g35()
+                eval_trigger: ...
+
+            h5:
+                remark: flag if power is estimed to be more than 3500 watts for the next 5 hours (in reference to data_hour)
+                type: bool
+                eval: sh....hours.h0.g35() and sh....hours.h1.g35() and sh....hours.h2.g35() and sh....hours.h3.g35() and sh....hours.h4.g35() and sh....hours.h5.g35()
+                eval_trigger: ...
 
 
 logic_parameters: NONE
-    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
-    #logic_parameters: NONE
-
