@@ -57,7 +57,7 @@
 960;Gesamt beförderte Luftmenge seit Filterwechsel;0;600000000;1;0;R;LU
 5164;Grobstaubfilter Betriebsart Filterüberwachung;1;3;1;0;R;LU
 5166;Grobstaubfilter Maximales Fördervolumen;100000;1000000;1;0;R;LU
-5154;Grobstaubfilter vorhanden?;0;1;0;0;R;LU
+5154;Grobstaubfilter vorhanden?;0;1;1;0;R;LU
 7002;Grobstaubfilter wechseln!;0;1;1;0;R;LU
 2000;History: Datum01;0;31249999;1;0;R;LU
 2002;History: Datum02;0;31249999;1;0;R;LU
@@ -252,7 +252,7 @@
 1274;EVU-Sperre Elektroheizstab aktiv;0;1;1;0;R;WP
 1272;EVU-Sperre Raumheizung aktiv;0;1;1;0;R;WP
 5036;Funktion BAD+;0;1;1;0;R/W;WP
-5492;Funktion HEIZUNG+;0;1;0;0;R/W;WP
+5492;Funktion HEIZUNG+;0;1;1;0;R/W;WP
 5000;Gerätetyp;1;90;1;0;R;WP
 2000;History: Datum 01;0;31249999;1;0;R;WP
 2002;History: Datum 02;0;31249999;1;0;R;WP
@@ -392,7 +392,7 @@
 5212;Uhrzeit;0;235959;1;0;R/W;WP
 5442;Uhrzeit und Datum verschicken;0;1;1;0;R;WP
 210;Verdampferregister;-28000;100000;100;1;R;WP
-5374;Verzögerung Brauchwassererheizung\\(10 min);0;1;0;0;R/W;WP
+5374;Verzögerung Brauchwassererheizung\\(10 min);0;1;1;0;R/W;WP
 1212;Vorübergehende Boilerübertemperatur;0;1;1;0;R;WP
 7006;Vorübergehende Boilerübertemperatur;0;1;1;0;R;WP
 1044;Wärmepumpe;0;1;1;0;R;WP

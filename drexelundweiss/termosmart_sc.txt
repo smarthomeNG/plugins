@@ -1,4 +1,4 @@
-﻿<Register>;<Description>;<min>;<max>;<divisor>;<comma>;<access>;<pcb>
+<Register>;<Description>;<min>;<max>;<divisor>;<comma>;<access>;<pcb>
 1328;Anforderung Wärmepumpe: Niedertemperatur-Heizkreis;0;1;1;0;R;WP
 1038;Anforderung: Brauchwasserheizung Elektoheizstab;0;1;1;0;R;WP
 1036;Anforderung: Brauchwasserheizung Wärmepumpe;0;1;1;0;R;WP
@@ -30,7 +30,7 @@
 1274;EVU-Sperre Elektroheizstab aktiv;0;1;1;0;R;WP
 1272;EVU-Sperre Raumheizung aktiv;0;1;1;0;R;WP
 5036;Funktion BAD+;0;1;1;0;R/W;WP
-5492;Funktion HEIZUNG+;0;1;0;0;R/W;WP
+5492;Funktion HEIZUNG+;0;1;1;0;R/W;WP
 5000;Gerätetyp;1;90;1;0;R;WP
 2000;History: Datum 01;0;31249999;1;0;R;WP
 2002;History: Datum 02;0;31249999;1;0;R;WP
@@ -166,7 +166,7 @@
 5212;Uhrzeit;0;235959;1;0;R/W;WP
 5442;Uhrzeit und Datum verschicken;0;1;1;0;R;WP
 210;Verdampferregister;-28000;100000;100;1;R;WP
-5374;Verzögerung Brauchwassererheizung\\(10 min);0;1;0;0;R/W;WP
+5374;Verzögerung Brauchwassererheizung\\(10 min);0;1;1;0;R/W;WP
 1212;Vorübergehende Boilerübertemperatur;0;1;1;0;R;WP
 7006;Vorübergehende Boilerübertemperatur;0;1;1;0;R;WP
 1044;Wärmepumpe;0;1;1;0;R;WP
