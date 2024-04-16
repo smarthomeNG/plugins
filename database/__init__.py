@@ -404,7 +404,7 @@ class Database(SmartPlugin):
             shutil.copy2(database_name, self._copy_database_name)
             self.logger.warning("Finished copying SQLite3 database file")
         except Exception as e:
-            self.logger.Error( f"Error copying SQLite3 database file: {e}")
+            self.logger.error( f"Error copying SQLite3 database file: {e}")
 
         param_dict = {"copy_database": False}
         self.update_config_section(param_dict)
