@@ -392,7 +392,7 @@ class Database(SmartPlugin):
 
         # get source and destination names
         try:
-            database_name = self._connect[0]
+            database_name = next((s for s in self._connect if s.startswith("database:")), '')
             database_name = database_name[9:].strip()
         except:
             database_name = ''
