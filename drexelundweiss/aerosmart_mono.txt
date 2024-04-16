@@ -51,7 +51,7 @@
 960;Gesamt beförderte Luftmenge seit Filterwechsel;0;600000000;1;0;R;LU
 5164;Grobstaubfilter Betriebsart Filterüberwachung;1;3;1;0;R;LU
 5166;Grobstaubfilter Maximales Fördervolumen;100000;1000000;1;0;R;LU
-5154;Grobstaubfilter vorhanden?;0;1;0;0;R;LU
+5154;Grobstaubfilter vorhanden?;0;1;1;0;R;LU
 7002;Grobstaubfilter wechseln!;0;1;1;0;R;LU
 2000;History: Datum01;0;31249999;1;0;R;LU
 2002;History: Datum02;0;31249999;1;0;R;LU
