@@ -404,7 +404,7 @@ class Database(SmartPlugin):
             shutil.copy2(database_name, self._copy_database_name)
             self.logger.warning("Finished copying SQLite3 database file")
         except Exception as e:
-            self.logger.Error( f"Error copying SQLite3 database file: {e}")
+            self.logger.error( f"Error copying SQLite3 database file: {e}")
 
         param_dict = {"copy_database": False}
         self.update_config_section(param_dict)
@@ -918,7 +918,7 @@ class Database(SmartPlugin):
         self.orphanlist = []
 
         items = [item.property.path for item in self._buffer]
-        try: 
+        try:
             cur = self._db_maint.cursor()
         except Exception as e:
             self.logger.error("Database build_orphan_list failed obtaining cursor: {}".format(e))
@@ -935,9 +935,9 @@ class Database(SmartPlugin):
                             self.orphanlist.append(item[COL_ITEM_NAME])
             except Exception as e:
                 self.logger.error("Database build_orphan_list failed: {}".format(e))
-        
+
             try:
-                if cur: 
+                if cur:
                     cur.close()
             except Exception as e:
                 self.logger.error("Database build_orphan_list failed closing cursor: {}".format(e))
