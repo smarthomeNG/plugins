@@ -220,30 +220,40 @@ class Telegram(SmartPlugin):
         """
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("connect method called")
-        try:
-            await self._application.initialize()
-            await self._application.start()
-            self._updater = self._application.updater
+        
+        # Infinite loop for establishing the connection
+        while True:
+            try:
+                await self._application.initialize()
+                await self._application.start()
+                self._updater = self._application.updater
 
-            q = await self._updater.start_polling(timeout=self._long_polling_timeout, error_callback=self.error_handler)
+                q = await self._updater.start_polling(timeout=self._long_polling_timeout, error_callback=self.error_handler)
 
-            if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug(f"started polling the updater, Queue is {q}")
-
-            self._bot = self._updater.bot
-            self.logger.info(f"Telegram bot is listening: {await self._updater.bot.getMe()}")
-            if self._welcome_msg:
                 if self.logger.isEnabledFor(logging.DEBUG):
-                    self.logger.debug(f"sent welcome message {self._welcome_msg}")
-                cids = [key for key, value in self._chat_ids_item().items() if value == 1]
-                self.msg_broadcast(self._welcome_msg, chat_id=cids)
+                    self.logger.debug(f"started polling the updater, Queue is {q}")
 
-        except TelegramError as e:
-            # catch Unauthorized errors due to an invalid token
-            self.logger.error(f"Unable to start up Telegram conversation. Maybe an invalid token? {e}")
-            return False
+                self._bot = self._updater.bot
+                self.logger.info(f"Telegram bot is listening: {await self._updater.bot.getMe()}")
+                if self._welcome_msg:
+                    if self.logger.isEnabledFor(logging.DEBUG):
+                        self.logger.debug(f"sent welcome message {self._welcome_msg}")
+                    cids = [key for key, value in self._chat_ids_item().items() if value == 1]
+                    self.msg_broadcast(self._welcome_msg, chat_id=cids)
+                
+                # If no exception occurred, break the loop and exit the function
+                break
+
+            except TelegramError as e:
+                # catch errors
+                self.logger.error(f"Unable to start up Telegram conversation. {e}")
+                
+                # Wait for 60 seconds before retrying
+                await asyncio.sleep(60)
+            
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("connect method end")
+
 
     def error_handler(self, error):
         """
