@@ -38,7 +38,7 @@ AUTHORIZE_URL = 'https://iam.viessmann.com/idp/v3/authorize'
 TOKEN_URL = 'https://iam.viessmann.com/idp/v3/token'
 
 class Vicare(SmartPlugin):
-    PLUGIN_VERSION = '1.9.3'
+    PLUGIN_VERSION = '1.9.4'
 
     def __init__(self, sh):
         """
@@ -543,7 +543,8 @@ class Vicare(SmartPlugin):
             self.logger.debug(f"pollFeatures: request successfull, response: {response.text}")
         else:
             self.logger.warning(f"pollFeatures request was unsuccessfull. Status code: {response.status_code}")
-            self.logger.warning(f"pollFeatures Debug response: {response}, response.text: {response.text}")
+            if not response.text == "":
+                self.logger.warning(f"pollFeatures Debug response: {response}, response.text: {response.text}")
             return
     
         if response.json() is not None:
@@ -732,11 +733,22 @@ class Vicare(SmartPlugin):
                self.logger.warning(f"controlItem: String value ({value}) is not in the list of allowed values ({enumList}). Aborting.")
                return
            else:
-               self.logger.warning(f"Debug SUCCES: Value is on postivie list.")
+               self.logger.warning(f"Debug SUCCES: Value is on positive list.")
 
-        jsonCommand = {tag: value}
+        # Some commands are sent without a value and only provide a url. 
+        # Therefore, only sent additional data for commands with valid (data) types.
+        jsonCommand = {}
+        if type is not None:
+            jsonCommand = {tag: value}
+        else:
+            # Items with no valid type would send the uri on every item state change. 
+            # Here, only allow commands to be sent on positive item values (== bool state True)
+            if not value:
+                self.logger.debug(f"controlItem: Supressing sending for command without additional data")
+                return
+            self.logger.debug(f"controlItem: Sending command without additional data because to data type is supported")
+
         data = json.dumps(jsonCommand)
-        
         self.logger.debug(f"Prepare control data: {data}")
         response = self.session.post(url, headers = headers, data = data, verify=False, timeout=4)
    

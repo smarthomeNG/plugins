@@ -12,7 +12,7 @@ plugin:
     #documentation: 
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1916122-support-thread-f%C3%BCr-das-viessmann-plugin
 
-    version: 1.9.3                  # Plugin version
+    version: 1.9.4                  # Plugin version
     sh_minversion: 1.9.0            # minimum shNG version to use this plugin
     #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -64,6 +64,7 @@ item_attributes:
         - 'heating.dhw.temperature.main'
         - 'heating.dhw.operating.modes.active'
         - 'heating.circuits.1.operating.modes.active'
+        - 'heating.dhw.oneTimeCharge'
 
     vicare_tx_path:
         type: list
@@ -230,6 +231,20 @@ item_structs:
             vicare_rx_key: heating.dhw.oneTimeCharge
             vicare_path: ['active','value']
             visu_acl: ro
+
+            activate:
+                type: bool
+                enforce_updates: True
+                vicare_tx_key: heating.dhw.oneTimeCharge
+                vicare_tx_path: ['activate']
+                visu_acl: rw
+
+            deactivate:
+                type: bool
+                enforce_updates: True
+                vicare_tx_key: heating.dhw.oneTimeCharge
+                vicare_tx_path: ['deactivate']
+                visu_acl: rw
 
         sensor_hw_cylinder:
             name: Sensor Warmwasser Zylinder, Celsius
