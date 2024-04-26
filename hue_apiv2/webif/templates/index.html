@@ -505,26 +505,31 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 	<tbody>
 		<tr>
 			<td class="py-1"><strong>Bridge Serial</strong></td>
-			<td class="py-1">{{ p.v2bridge.bridge_id }}</td>
+			{% if w.bridge_is_configured() %}
+				<td class="py-1">{{ p.bridge_ip }}</td>
+			{% else %}
+				<td class="py-1">{{ _('nicht konfiguriert') }}</td>
+
+			{% endif %}
 			<td class="py-1" width="50px"></td>
-			<td class="py-1"><strong>Leuchten Zyklus</strong></td>
-			<td class="py-1">{% if p.light_items_configured == true %}{{ p._cycle_lights }} {{ _('Sek.') }}{% else %}-{% endif %}</td>
+			<td class="py-1"><strong>-</strong></td>
+			<td class="py-1">-</td>
 			<td class="py-1" width="10px"></td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>Bridge IP</strong></td>
-			<td class="py-1">{% if bridge.username == undeffined %}-{% else %}{{ p.bridge.ip }}{% endif %}</td>
+			<td class="py-1">{% if bridge.username == undeffined or not w.bridge_is_configured() %}{{ _('nicht konfiguriert') }}{% else %}{{ p.bridge.ip }}{% endif %}</td>
 			<td></td>
-			<td class="py-1"><strong>Sensor Zyklus</strong></td>
-			<td class="py-1">{% if p.sensor_items_configured == true %}{{ p._cycle_sensors }} {{ _('Sek.') }}{% else %}-{% endif %}</td>
+			<td class="py-1"><strong>-</strong></td>
+			<td class="py-1">-</td>
 			<td></td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>Anwendungsschlüssel</strong></td>
-			<td class="py-1">{% if bridge.username == undeffined %}-{% else %}{{ _('konfiguriert') }}{% endif %}</td>
+			<td class="py-1">{% if bridge.username == undeffined or not w.bridge_is_configured() %}{{ _('nicht konfiguriert') }}{% else %}{{ _('konfiguriert') }}{% endif %}</td>
 			<td></td>
-			<td class="py-1"><strong>Bridge Zyklus</strong></td>
-			<td class="py-1">{{ p._cycle_bridge }} {{ _('Sek.') }}</td>
+			<td class="py-1"><strong>-</strong></td>
+			<td class="py-1">-</td>
 			<td></td>
 		</tr>
 	</tbody>
@@ -554,10 +559,10 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 	{% set start_tab = 2 %}
 {% endif %}
 {% if (item_count == 0) and (bridge_lights|length == 0) %}
-	{ % set start_tab = 6 % }
+	{% set start_tab = 6 %}
 {% endif %}
-{% if bridge_count == 0 %}
-	{ % set start_tab = 7 % }
+{% if not w.bridge_is_configured() %}
+	{% set start_tab = 7 %}
 {% endif %}
 
 <!--
@@ -578,7 +583,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 
 	It has to be defined before (and outside) the block bodytab2
 -->
-{% set tab2title = "<strong>" ~ _('Leuchten') ~ "</strong> (" ~ bridge_lights|length ~ ")" %}
+{% set tab2title = "<strong>" ~ _('Leuchten') ~ "</strong> (" ~ w.get_lightsdata()|length ~ ")" %}
 {% block bodytab2 %}
 	<div class="container-fluid table-resize" style="margin-top: 6px">
 		<table id="lightstable"></table>
@@ -593,7 +598,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 
 	It has to be defined before (and outside) the block bodytab3
 -->
-{% set tab3title = "<strong>" ~ _('Szenen') ~ "</strong> (" ~ bridge_scenes|length ~ ")" %}
+{% set tab3title = "<strong>" ~ _('Szenen') ~ "</strong> (" ~ w.get_scenesdata()|length ~ ")" %}
 {% block bodytab3 %}
 	<div class="container-fluid table-resize" style="margin-top: 6px">
 		<table id="scenestable"></table>
@@ -608,7 +613,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 
 	It has to be defined before (and outside) the block bodytab4
 -->
-{% set tab4title = "<strong>" ~ _('Gruppen') ~ "</strong> (" ~ bridge_groups|length ~ ")" %}
+{% set tab4title = "<strong>" ~ _('Gruppen') ~ "</strong> (" ~ w.get_groupsdata()|length ~ ")" %}
 {% block bodytab4 %}
 	<div class="container-fluid table-resize" style="margin-top: 6px">
 		<table id="groupstable"></table>
@@ -623,7 +628,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 
 	It has to be defined before (and outside) the block bodytab5
 -->
-{% set tab5title = "<strong>" ~ _('Sensoren') ~ "</strong> (" ~ bridge_sensors|length ~ ")" %}
+{% set tab5title = "<strong>" ~ _('Sensoren') ~ "</strong> (" ~ w.get_sensorsdata()|length ~ ")" %}
 {% block bodytab5 %}
 	<div class="container-fluid table-resize" style="margin-top: 6px">
 		<table id="sensorstable"></table>
@@ -652,17 +657,19 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 
 	It has to be defined before (and outside) the block bodytab6
 -->
-{% set tab6title = "<strong>" ~ _('Devices') ~ "</strong> (" ~ bridge_devices|length ~ ")" %}
+<!-- { % set tab6title = "<strong>" ~ _('Devices') ~ "</strong> (" ~ bridge_devices|length ~ ")" % } -->
+{% set tab6title = "<strong>" ~ _('Devices') ~ "</strong> (" ~ w.get_devicesdata()|length ~ ")" %}
 {% block bodytab6 %}
 	<div class="container-fluid table-resize" style="margin-top: 6px">
 		<table id="devicetable"></table>
 	</div>
 	{% if true %}
 		<br>
-		{% for device in bridge_devices %}
-			sensor: {{ bridge_devices[device] }} <br>
-			type.value: {{ bridge_devices[device]._full.type.value }} <br>
-			{% if bridge_devices[device]._full.type.value == 'button' %}
+		{% set bridge_devicesx = w.get_devicesdata() %}
+		{% for device in bridge_devicesx %}
+			sensor: {{ bridge_devicesx[device] }} <br>
+			type.value: {{ bridge_devicesx[device]._full.type.value }} <br>
+			{% if bridge_devicesx[device]._full.type.value == 'button' %}
 			{% endif %}
 			<br>
 		{% endfor %}
@@ -679,78 +686,84 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 -->
 {% set tab7title = "<strong>Hue Bridge</strong>" %}
 {% block bodytab7 %}
-	{% if discovered_bridges != [] %}
-	<div style="margin-left: 20px;">
-		<br>
-		<strong>{{ _('Gefundene Bridges') }}:</strong><br>
-	</div>
-	{%  endif %}
-	<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
-		<div class="col-sm-12">
-
-			{% if discovered_bridges != [] %}
-			<form action="" method="post">
-			<table class="table table-striped table-hover pluginList">
-				<thead>
-					<tr class="shng_heading">
-						<th class="py-1">{{ _('Serien-Nr.') }}</th>
-						<th class="py-1">{{ _('Hersteller') }}</th>
-						<th class="py-1">{{ _('Modell Name') }}</th>
-						<th class="py-1">{{ _('Modell Nr.') }}</th>
-						<th class="py-1">{{ _('Version') }}</th>
-						<th class="py-1">{{ _('') }}</th>
-						<th class="py-1">{{ _('API-Version') }}</th>
-						<th class="py-1">{{ _('Modell ID') }}</th>
-						<th class="py-1">{{ _('swversion') }}</th>
-						<th class="py-1">{{ _('IP') }}</th>
-						<th class="py-1">{{ _('Port') }}</th>
-<!--					<th class="py-1">{{ _('UDN') }}</th>  -->
-						<th class="py-1" width="200px"></th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for db in discovered_bridges %}
-						<tr id="{{ loop.index }}_clickip" style="cursor: pointer;">
-							<td class="py-1">{{ db.serialNumber }}</td>
-							<td class="py-1">{{ db.manufacturer }}</td>
-							<td class="py-1">{{ db.modelName }}</td>
-							<td class="py-1">{{ db.modelNumber }}</td>
-							<td class="py-1">{{ db.version }}</td>
-							<td class="py-1">{{ db.gatewayName }}</td>
-							<td class="py-1">{{ db.apiversion }}</td>
-							<td class="py-1">{{ db.modelid }}</td>
-							<td class="py-1">{{ db.swversion }}</td>
-							<td class="py-1">{{ db.ip }}</td>
-							<td class="py-1">{{ db.port }}</td>
-<!--						<td class="py-1">{{ db.UDN }}</td>  -->
-							<td class="py-1">
-								{% if bridge_count == 0 %}
-								<button id="btn1" class="btn btn-shng btn-sm" name="connect" type="submit" value="{{ db.serialNumber }}"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;{{ _('Verbinden') }}&nbsp;</button>
-								{% endif %}
-							</td>
-							<td class="py-1"></td>
-						</tr>
-					{% endfor %}
-				</tbody>
-			</table>
-			</form>
-			{% endif %}
-		</div>
-	</div>
-
-	<div style="margin-left: 20px;">
-		{% if bridge_count == 0 %}
-			<strong>{{ _('Es ist keine Bridge mit dieser Plugin Instanz verbunden.') }}</strong><br>
+	{% if p.discovered_bridges != [] and not w.bridge_is_configured() %}
+		<div style="margin-left: 20px;">
 			<br>
-			{{ _('Zum Verbinden den Knopf an der Hue Bridge drücken und anschließend in der Liste der gefundenen Bridges den Button "Verbinden" drücken.') }}<br>
+			<strong>{{ _('Gefundene Bridges') }}:</strong><br>
+		</div>
+		<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+			<div class="col-sm-12">
+
+				{% if p.discovered_bridges != [] %}
+				<form action="" method="post">
+				<table class="table table-striped table-hover pluginList">
+					<thead>
+						<tr class="shng_heading">
+							<th class="py-1">{{ _('Serien-Nr.') }}</th>
+							<th class="py-1">{{ _('Hersteller') }}</th>
+							<th class="py-1">{{ _('Modell Name') }}</th>
+							<th class="py-1">{{ _('Modell Nr.') }}</th>
+							<th class="py-1">{{ _('Version') }}</th>
+							<th class="py-1">{{ _('API-Version') }}</th>
+							<th class="py-1">{{ _('Modell ID') }}</th>
+							<th class="py-1">{{ _('swversion') }}</th>
+							<th class="py-1">{{ _('IP') }}</th>
+							<th class="py-1" width="200px"></th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for db in p.discovered_bridges %}
+							<tr id="{{ loop.index }}_clickip" style="cursor: pointer;">
+								<td class="py-1">{{ db.serialNumber }}</td>
+								<td class="py-1">{{ db.manufacturer }}</td>
+								<td class="py-1">{{ db.modelName }}</td>
+								<td class="py-1">{{ db.modelNumber }}</td>
+								<td class="py-1">{{ db.version }}</td>
+								<td class="py-1">{{ db.apiversion }}</td>
+								<td class="py-1">{{ db.modelid }}</td>
+								<td class="py-1">{{ db.swversion }}</td>
+								<td class="py-1">{{ db.ip }}</td>
+								<td class="py-1">
+									{% if db.version == 'v1' %}
+										{{ _('nicht unterstützt') }}
+									{% else %}
+										{% if not w.bridge_is_configured() %}
+											<button id="btn1" class="btn btn-shng btn-sm" name="connect" type="submit" value="{{ db.serialNumber }}"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;{{ _('Verbinden') }}&nbsp;</button>
+										{% elif db.ip == p.bridge_ip %}
+										{{ _('Konfigurierte Bridge') }}
+										{% endif %}
+									{% endif %}
+								</td>
+								<td class="py-1"></td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+				</form>
+				{% endif %}
+			</div>
+		</div>
+	{%  endif %}
+
+	<div style="margin-left: 20px;">
+		{% if not w.bridge_is_configured() %}
+			<br>
+			<strong>{{ _('Es ist keine Bridge mit dieser Plugin Instanz verbunden.') }}</strong><br>
+			{% if p.discovered_bridges != [] %}
+				<br>
+				{{ _('Zum Verbinden den <strong>Knopf an der Hue Bridge drücken</strong> und anschließend in der Liste der gefundenen Bridges den Button "Verbinden" drücken.') }}<br>
+				<br>
+				{{ _('Nach dem Klicken auf den Button <strong>Verbinden</strong> bitte auf <strong>Aktualisieren</strong> klicken, damit die Daten der verbundenen Bridge angezeigt werden.') }}<br>
+			{% endif %}
 		{% endif %}
 		<br>
 	</div>
 
-	{% if bridge_count > 0 %}
+	{% if w.bridge_is_configured() %}
 		<div style="margin-left: 20px;">
 			<strong>{{ _('Konfigurierte Bridge') }}:</strong><br>
 		</div>
+
 		<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
 			<div class="col-sm-12">
 
@@ -761,12 +774,11 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 							<th class="py-1">{{ _('Serien-Nr.') }}</th>
 							<th class="py-1">{{ _('Modell Name') }}</th>
 	<!--					<th class="py-1">{{ _('Modell Nr.') }}</th>  -->
-							<th class="py-1">{{ _('Version') }}</th>
+	<!--					<th class="py-1">{{ _('Version') }}</th>  -->
 							<th class="py-1">{{ _('') }}</th>
 							<th class="py-1">{{ _('API-Version') }}</th>
 							<th class="py-1">{{ _('Modell ID') }}</th>
 							<th class="py-1">{{ _('IP') }}</th>
-							<th class="py-1">{{ _('Port') }}</th>
 							<th class="py-1">{{ _('Anwendungsschlüssel') }}</th>
 							<th class="py-1" width="200px"></th>
 						</tr>
@@ -776,17 +788,16 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 		<!--
 							<tr id="{ { loop.index } }_clickip" style="cursor: pointer;">
 		-->
-						{% if bridge_count > 0 %}
+						{% if w.bridge_is_configured() %}
 							<tr style="cursor: pointer;">
-								<td class="py-1">{{ cb.serialNumber }}</td>
+								<td class="py-1">{{ bridge_config.bridgeid|lower }}</td>
 								<td class="py-1">{{ cb.modelName }}</td>
 	<!--						<td class="py-1">{{ cb.modelNumber }}</td>  -->
-								<td class="py-1">{{ cb.version }}</td>
+	<!--						<td class="py-1">{{ cb.version }}</td>  -->
 								<td class="py-1">{{ cb.gatewayName }}</td>
-								<td class="py-1">{{ cb.apiversion }}</td>
-								<td class="py-1">{{ cb.modelid }}</td>
-								<td class="py-1">{{ cb.ip }}</td>
-								<td class="py-1">{{ cb.port }}</td>
+								<td class="py-1">{{ bridge_config.apiversion }}</td>
+								<td class="py-1">{{ bridge_config.modelid }}</td>
+								<td class="py-1">{{ bridge_config.ipaddress }}</td>
 								<td class="py-1">{{ cb.username }}</td>
 								<td class="py-1">
 									<button id="btn1" class="btn btn-shng btn-sm" name="disconnect" type="submit" value="{{ cb.serialNumber }}"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;{{ _('Trennen') }}&nbsp;</button>
@@ -802,12 +813,81 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 	{% endif %}
 
 
-	{% if (bridge_count > 0) and False %}
+	{% if w.bridge_is_configured() and true %}
+		<div style="margin-left: 20px;">
+			<br>
+			<strong>{{ _('Bridge Konfiguration') }}:</strong><br>
+		</div>
+		<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+			<div class="col-sm-12">
+				<table class="table table-striped table-hover pluginList">
+					<thead>
+						<tr class="shng_heading">
+							<td class="py-1" colspan="2"><center>Bridge '{{ bridge_config.name }}'</center></td>
+							<td class="py-1"></td>
+							<td class="py-1" colspan="2"><center>{{ _('Internet Services') }}</center></td>
+							<td class="py-1"></td>
+							<td class="py-1" colspan="2"><center>{{ _('Portal Services') }}</center></td>
+							<td class="py-1"></td>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td class="py-1"><strong>{{ _('Zigbee Kanal') }}</strong></td>
+							<td class="py-1">{{ bridge_config.zigbeechannel }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('Internet') }}</strong></td>
+							<td class="py-1">{{ _(bridge_config.internetservices.internet) }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('angemeldet') }}</strong></td>
+							<td class="py-1">{{ w.ja_nein( bridge_config.portalstate.signedon ) }}</td>
+							<td class="py-1"></td>
+						</tr>
+						<tr>
+							<td class="py-1"><strong>{{ _('Software Version') }}</strong></td>
+							<td class="py-1">{{ bridge_config.swversion }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('Remote Access') }}</strong></td>
+							<td class="py-1">{{ _(bridge_config.internetservices.remoteaccess) }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('eingehend') }}</strong></td>
+							<td class="py-1">{{ w.ja_nein( bridge_config.portalstate.incoming ) }}</td>
+							<td class="py-1"></td>
+						</tr>
+						<tr>
+							<td class="py-1"><strong>{{ _('Datastore Version') }}</strong></td>
+							<td class="py-1">{{ bridge_config.datastoreversion }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('Zeit') }}</strong></td>
+							<td class="py-1">{{ _(bridge_config.internetservices.time) }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('ausgehend') }}</strong></td>
+							<td class="py-1">{{ w.ja_nein( bridge_config.portalstate.outgoing ) }}</td>
+							<td class="py-1"></td>
+						</tr>
+						<tr>
+							<td class="py-1"><strong>{{ _('Eingerichtete App-Keys') }}</strong></td>
+							<td class="py-1">{{ len(bridge_config.whitelist) }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('Software Update') }}</strong></td>
+							<td class="py-1">{{ _(bridge_config.internetservices.swupdate) }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('Kommunikation') }}</strong></td>
+							<td class="py-1">{{ _(bridge_config.portalstate.communication) }}</td>
+							<td class="py-1"></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	{% endif %}
+
+
+	{% if w.bridge_is_configured() and true %}
 		<div style="margin-left: 20px;">
 			<br>
 			<strong>{{ _('Konfigurierte Benutzer') }}:</strong><br>
 		</div>
-
 		<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
 			<div class="col-sm-12">
 
@@ -815,9 +895,6 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 				<table class="table table-striped table-hover pluginList">
 					<thead>
 						<tr class="shng_heading">
-							{% if bridge_config.apiversion < '1.31.0' %}
-								<th class="py-1">{{ _('Anwendungsschlüssel') }}</th>
-							{% endif %}
 							<th class="py-1">{{ _('Anwendung') }}</th>
 							<th class="py-1">{{ _('Letze Nutzung') }}</th>
 							<th class="py-1">{{ _('Erstellt') }}</th>
@@ -827,9 +904,6 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 					<tbody>
 						{% for u in bridge_config.whitelist %}
 							<tr id="{{ loop.index }}_clickip" style="cursor: pointer;">
-								{% if bridge_config.apiversion < '1.31.0' %}
-									<td class="py-1">{{ u }}</td>
-								{% endif %}
 								<td class="py-1">{{ bridge_config.whitelist[u].name }}</td>
 								<td class="py-1">{{ bridge_config.whitelist[u]['last use date'] }}</td>
 								<td class="py-1">{{ bridge_config.whitelist[u]['create date'] }}</td>

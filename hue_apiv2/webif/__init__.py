@@ -91,7 +91,7 @@ class WebInterface(SmartPluginWebIf):
     def get_lightsdata(self):
 
         result = {}
-        if self.plugin.v2bridge is None:
+        if self.plugin.v2bridge is None or self.plugin.bridge_ip == '0.0.0.0':
             return result
 
         devicedata = self.get_devicesdata()
@@ -99,13 +99,6 @@ class WebInterface(SmartPluginWebIf):
         #        self.logger.info(f"get_lightsdata() - Lights:")
         first = True
         for light in self.plugin.v2bridge.lights:
-            if first:
-                first = False
-                self.logger.info(f"get_lightsdata() - dir(light): {dir(light)}")
-                self.logger.info(f"- dir(light.mode): {dir(light.mode)}")
-                self.logger.info(f"- dir(light.color): {dir(light.color)}")
-                self.logger.info(f"- dir(light.color_temperature): {dir(light.color_temperature)}")
-                self.logger.info(f"- dir(light.powerup): {dir(light.powerup)}")
             value_dict = {}
             value_dict['_full'] = light
 
@@ -147,15 +140,14 @@ class WebInterface(SmartPluginWebIf):
             value_dict['type'] = light.type.value
 
             result[light.id] = value_dict
-            #            self.logger.info(f"- {light.id}: {lightdata['mode']}  -  {dir(lightdata['mode'])}")
-            self.logger.info(f"-> {light.id}: {value_dict}")
+            # self.logger.debug(f"-> {light.id}: {value_dict}")
 
         return result
 
     def get_scenesdata(self):
 
         result = {}
-        if self.plugin.v2bridge is None:
+        if self.plugin.v2bridge is None or self.plugin.bridge_ip == '0.0.0.0':
             return result
 
         for scene in self.plugin.v2bridge.scenes:
@@ -176,7 +168,7 @@ class WebInterface(SmartPluginWebIf):
     def get_groupsdata(self):
 
         result = {}
-        if self.plugin.v2bridge is None:
+        if self.plugin.v2bridge is None or self.plugin.bridge_ip == '0.0.0.0':
             return result
 
         for group in self.plugin.v2bridge.groups:
@@ -205,7 +197,7 @@ class WebInterface(SmartPluginWebIf):
     def get_sensorsdata(self):
 
         result = {}
-        if self.plugin.v2bridge is None:
+        if self.plugin.v2bridge is None or self.plugin.bridge_ip == '0.0.0.0':
             return result
 
         devicedata = self.get_devicesdata()
@@ -275,7 +267,7 @@ class WebInterface(SmartPluginWebIf):
     def get_devicesdata(self):
 
         result = {}
-        if self.plugin.v2bridge is None:
+        if self.plugin.v2bridge is None or self.plugin.bridge_ip == '0.0.0.0':
             return result
 
         for device in self.plugin.v2bridge.devices:
@@ -336,6 +328,11 @@ class WebInterface(SmartPluginWebIf):
         return value
 
 
+    def bridge_is_configured(self):
+
+        return self.plugin.bridge_ip != '0.0.0.0' and self.plugin.v2bridge is not None and self.plugin.v2bridge.host != '0.0.0.0'
+
+
     @cherrypy.expose
     def index(self, scan=None, connect=None, disconnect=None, reload=None):
         """
@@ -353,19 +350,16 @@ class WebInterface(SmartPluginWebIf):
             self.logger.info("Connect: connect={}".format(connect))
             for db in self.plugin.discovered_bridges:
                 if db['serialNumber'] == connect:
-                    user = self.plugin.create_new_username(db['ip'], db['port'])
+                    user = self.plugin.create_new_username(db['ip'])
                     if user != '':
                         self.plugin.bridge= db
                         self.plugin.bridge['username'] = user
-                        self.plugin.bridgeinfo = self.plugin.get_bridgeinfo()
+                        self.plugin.bridge_user = user
                         self.plugin.update_plugin_config()
 
         if disconnect is not None:
-            self.logger.info("Disconnect: disconnect={}".format(disconnect))
-            self.plugin.remove_username(self.plugin.bridge['ip'], self.plugin.bridge['port'], self.plugin.bridge['username'])
-            self.plugin.bridge = {}
-            self.plugin.bridgeinfo = {}
-            self.plugin.update_plugin_config()
+            self.plugin.disconnect_bridge()
+            self.plugin.discovered_bridges = self.plugin.discover_bridges()
 
         try:
             tmpl = self.tplenv.get_template('index.html')
@@ -374,24 +368,20 @@ class WebInterface(SmartPluginWebIf):
         else:
             # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
             #self.logger.notice(f"index: {self.plugin.get_parameter_value('webif_pagelength')}")
-            return tmpl.render(p=self.plugin,
+            return tmpl.render(p=self.plugin, w=self,
                                webif_pagelength=self.plugin.get_parameter_value('webif_pagelength'),
-                               #items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
-                               items=self.plugin.plugin_items,
                                item_count=len(self.plugin.plugin_items),
+
                                bridge=self.plugin.bridge,
-                               bridge_count=len(self.plugin.bridge),
-                               discovered_bridges=self.plugin.discovered_bridges,
 
 #                               bridge_devices=sorted(self.plugin.get_devicesdata().items(), key=lambda k: str.lower(k[1]['id_v1'])),
-                               bridge_devices=self.get_devicesdata(),
                                bridge_lights=self.get_lightsdata(),
                                bridge_groups=self.get_groupsdata(),
                                bridge_scenes=self.get_scenesdata(),
                                bridge_sensors=self.get_sensorsdata(),
 
-                               bridge_config=self.plugin.bridge_config,
-                               br_object=self.plugin.br)
+                               bridge_config=self.plugin.get_bridge_config()
+                               )
 
 
     @cherrypy.expose
