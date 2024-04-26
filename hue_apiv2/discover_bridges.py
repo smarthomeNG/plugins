@@ -22,6 +22,9 @@
 #
 #########################################################################
 
+import timeit
+import time
+
 import socket
 import requests
 import xmltodict
@@ -195,7 +198,7 @@ def discover_via_broker():
 #    Discover Hue bridges
 #
 
-def discover_bridges_by_method(mdns=True, upnp=True, broker=False, httponly=True):
+def discover_bridges_by_method_implementation(mdns=True, upnp=True, broker=False, httponly=True):
 
     global discovered_bridges
     discovered_bridges = {}
@@ -212,6 +215,18 @@ def discover_bridges_by_method(mdns=True, upnp=True, broker=False, httponly=True
             discovered_bridges[br_id] = discovered_bridges[br_id].replace(':443', ':80')
 
     return discovered_bridges
+
+
+def discover_bridges_by_method(mdns=True, upnp=True, broker=False, httponly=True):
+
+    start = time.time()
+    discovered_bridges= discover_bridges_by_method_implementation(mdns, upnp, broker, httponly)
+    end = time.time()
+    print('  Duration:', round(end-start, 2), "Sek." )
+    return discovered_bridges
+
+    #stmt = f"discover_bridges_by_method_implementation({mdns}, {upnp}, {broker}, {httponly})"
+    #print('  Duration:', timeit.timeit(stmt) )
 
 
 def discover_bridges(upnp=False, httponly=False):
@@ -243,47 +258,90 @@ def discover_bridges(upnp=False, httponly=False):
 
 def test_all_methods():
 
+    print("\nDiscover via broker:")
     discover_bridges_by_method(mdns=False, upnp=False, broker=True, httponly=False)
-    print("\nDiscover via broker")
     for br_id in discovered_bridges:
         print(f"  {br_id}: {discovered_bridges[br_id]}")
 
-    discover_bridges_by_method(mdns=False, upnp=False, broker=True, httponly=True)
     print("\nDiscover via broker (http-only):")
+    discover_bridges_by_method(mdns=False, upnp=False, broker=True, httponly=True)
     for br_id in discovered_bridges:
         print(f"  {br_id}: {discovered_bridges[br_id]}")
 
-    discover_bridges_by_method(upnp=False, broker=False, httponly=False)
     print("\nDiscover mDNS")
+    discover_bridges_by_method(upnp=False, broker=False, httponly=False)
     for br_id in discovered_bridges:
         print(f"  {br_id}: {discovered_bridges[br_id]}")
 
-    discover_bridges_by_method(upnp=False, broker=False)
     print("\nDiscover mDNS (http-only):")
+    discover_bridges_by_method(upnp=False, broker=False)
     for br_id in discovered_bridges:
         print(f"  {br_id}: {discovered_bridges[br_id]}")
 
     from ssdp import discover as ssdp_discover
 
-    discover_bridges_by_method(mdns=False, broker=False, httponly=False)
     print("\nDiscover upnp")
+    discover_bridges_by_method(mdns=False, broker=False, httponly=False)
     for br_id in discovered_bridges:
         print(f"  {br_id}: {discovered_bridges[br_id]}")
 
-    discover_bridges_by_method(mdns=False, broker=False)
     print("\nDiscover upnp (http-only):")
+    discover_bridges_by_method(mdns=False, broker=False)
     for br_id in discovered_bridges:
         print(f"  {br_id}: {discovered_bridges[br_id]}")
 
-    discover_bridges_by_method(broker=True)
     print("\nDiscover all:")
+    discover_bridges_by_method(broker=True)
     for br_id in discovered_bridges:
         print(f"  {br_id}: {discovered_bridges[br_id]}")
+
+    print("\nDiscover mDNS")
+    bridges = discover_bridges_by_method(upnp=False, broker=False, httponly=False)
+#    for br_id in discovered_bridges:
+#        print(f"  {br_id}: {discovered_bridges[br_id]}")
+
+    print("\nDiscover mDNS (http-only):")
+    bridges.update( discover_bridges_by_method(upnp=False, broker=False) )
+    for br_id in discovered_bridges:
+        print(f"  {br_id}: {bridges[br_id]}")
+
+
+def discover_broker():
+    print("\nDiscover via broker:")
+    bridges = discover_bridges_by_method(mdns=False, upnp=False, broker=True, httponly=False)
+    for br_id in bridges:
+        print(f"  {br_id}: {bridges[br_id]}")
+
+def discover_mdns():
+    print("\nDiscover mDNS")
+    bridges = discover_bridges_by_method(upnp=False, broker=False, httponly=False).copy()
+    for br_id in bridges:
+        print(f"  {br_id}: {bridges[br_id]}")
+    print("\nDiscover mDNS (http-only):")
+    bridges.update(discover_bridges_by_method(upnp=False, broker=False))
+    for br_id in bridges:
+        print(f"  {br_id}: {bridges[br_id]}")
+
+def discover_upnp():
+
+    print("\nDiscover upnp")
+    bridges = discover_bridges_by_method(mdns=False, broker=False, httponly=False)
+    for br_id in bridges:
+        print(f"  {br_id}: {bridges[br_id]}")
 
 
 if __name__ == '__main__':
 
-    my_discovered_bridges = discover_bridges(upnp=True, httponly=True)
-    print("\nDiscover all:")
-    for br_id in my_discovered_bridges:
-        print(f"  {br_id}: {my_discovered_bridges[br_id]}")
+    if False:
+        print("\nTest all methods:")
+        test_all_methods()
+    else:
+        discover_broker()
+        discover_mdns()
+        discover_upnp()
+
+        # my_discovered_bridges = discover_bridges(upnp=True, httponly=True)
+        # print("\nDiscover all:")
+        # for br_id in my_discovered_bridges:
+        #     print(f"  {br_id}: {my_discovered_bridges[br_id]}")
+        print()

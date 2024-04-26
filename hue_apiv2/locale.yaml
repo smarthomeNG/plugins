@@ -11,10 +11,15 @@ plugin_translations:
     'Modell Nr.':            {'de': '=', 'en': 'Model No'}
     'IP':                    {'de': '=', 'en': 'IP address'}
     'UDN':                   {'de': '=', 'en': '='}
+    'konfiguriert':          {'de': '=', 'en': 'configured'}
+    'nicht konfiguriert':    {'de': '=', 'en': 'Not configured'}
     'Konfigurierte Bridge':  {'de': '=', 'en': 'Configured Bridges'}
     'Anwendungsschlüssel':   {'de': '=', 'en': 'Application Key'}
     'True':                  {'de':'Ja', 'en': 'Yes'}
     'False':                 {'de':'Nein', 'en': 'No'}
+
+    'connected':             {'de': 'verbunden', 'en': '='}
+    'disconnected':          {'de': 'nicht verbunden', 'en': '='}
 
     # Alternative format for translations of longer texts:
     'Es ist keine Bridge mit dieser Plugin Instanz verbunden.':

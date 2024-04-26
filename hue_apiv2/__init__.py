@@ -59,13 +59,12 @@ class HueApiV2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '0.2.0'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '0.4.0'    # (must match the version specified in plugin.yaml)
 
     hue_sensor_state_values          = ['daylight', 'temperature', 'presence', 'lightlevel', 'status']
     hue_sensor_config_values         = ['reachable', 'battery', 'on', 'sunriseoffset', 'sunsetoffset']
 
     br = None               # Bridge object for communication with the bridge
-    bridge_config = {}
     bridge_scenes = {}
     bridge_sensors = {}
 
@@ -93,7 +92,6 @@ class HueApiV2(SmartPlugin):
         #self.bridge_type = self.get_parameter_value('bridge_type')
         self.bridge_serial = self.get_parameter_value('bridge_serial')
         self.bridge_ip = self.get_parameter_value('bridge_ip')
-        self.bridge_port = self.get_parameter_value('bridge_port')
         self.bridge_user = self.get_parameter_value('bridge_user')
 
         # polled for value changes by adding a scheduler entry in the run method of this plugin
@@ -101,43 +99,7 @@ class HueApiV2(SmartPlugin):
         self._default_transition_time = int(float(self.get_parameter_value('default_transitionTime'))*1000)
 
         self.discovered_bridges = []
-        self.bridge = self.get_bridge_desciption(self.bridge_ip, self.bridge_port)
-        if False and self.bridge == {}:
-            # discover hue bridges on the network
-            self.discovered_bridges = self.discover_bridges()
-
-            # self.bridge = self.get_parameter_value('bridge')
-            # self.get_bridgeinfo()
-            # self.logger.warning("Configured Bridge={}, type={}".format(self.bridge, type(self.bridge)))
-
-            if self.bridge_serial == '':
-                self.bridge = {}
-            else:
-                # if a bridge is configured
-                # find bridge using its serial number
-                self.bridge = self.get_data_from_discovered_bridges(self.bridge_serial)
-                if self.bridge.get('serialNumber', '') == '':
-                    self.logger.warning("Configured bridge {} is not in the list of discovered bridges, starting second discovery")
-                    self.discovered_bridges = self.discover_bridges()
-
-                    if self.bridge.get('serialNumber', '') == '':
-                        # if not discovered, use stored ip address
-                        self.bridge['ip'] = self.bridge_ip
-                        self.bridge['port'] = self.bridge_port
-                        self.bridge['serialNumber'] = self.bridge_serial
-                        self.logger.warning("Configured bridge {} is still not in the list of discovered bridges, trying with stored ip address {}:{}".format(self.bridge_serial, self.bridge_ip, self.bridge_port))
-
-                        api_config = self.get_api_config_of_bridge('http://'+self.bridge['ip']+':'+str(self.bridge['port'])+'/')
-                        self.bridge['datastoreversion'] = api_config.get('datastoreversion', '')
-                        self.bridge['apiversion'] = api_config.get('apiversion', '')
-                        self.bridge['swversion'] = api_config.get('swversion', '')
-                        self.bridge['modelid'] = api_config.get('modelid', '')
-
-
-        self.bridge['username'] = self.bridge_user
-        if self.bridge.get('ip', '') != self.bridge_ip:
-            # if ip address of bridge has changed, store new ip address in configuration data
-            self.update_plugin_config()
+        self.bridge = {}
 
         # dict to store information about items handled by this plugin
         self.plugin_items = {}
@@ -161,9 +123,15 @@ class HueApiV2(SmartPlugin):
 
         # self.alive = True     # if using asyncio, do not set self.alive here. Set it in the session coroutine
 
-#        while not self.alive:
-#            pass
-#        self.run_asyncio_coro(self.list_asyncio_tasks())
+        while not self.alive:
+            time.sleep(0.1)
+
+        if self.bridge_ip != '0.0.0.0':
+            self.bridge = self.get_bridge_desciption(self.bridge_ip)
+        self.bridge['username'] = self.bridge_user
+        if self.bridge.get('ip', '') != self.bridge_ip:
+            # if ip address of bridge has changed, store new ip address in configuration data
+            self.update_plugin_config()
 
         return
 
@@ -193,14 +161,18 @@ class HueApiV2(SmartPlugin):
         self.logger.notice("plugin_coro started")
 
         self.logger.debug("plugin_coro: Opening session")
+        self.logger.notice(f"plugin_coro: {self.bridge_ip=}")
 
-        host = '10.0.0.190'
-        appkey = 'uJLI9mXMgsPoV5g6FqKbKQwkKNdgjJmTcAv4SXYA'
-        #self.v2bridge = HueBridgeV2(host, appkey)
+        if self.bridge_ip == '0.0.0.0' or self.bridge_ip == '':
+            self.logger.notice(f"No bridge configured - waiting until bridge is configured..")
+            while self.bridge_ip == '0.0.0.0':
+                await asyncio.sleep(1)
+
+        self.logger.notice(f"Connecting to bridge {self.bridge_ip} / {self.bridge_user}")
         self.v2bridge = HueBridgeV2(self.bridge_ip, self.bridge_user)
 
         self.alive = True
-        self.logger.info("plugin_coro: Plugin is running (self.alive=True)")
+        self.logger.notice("plugin_coro: Plugin is running (self.alive=True)")
 
         async with self.v2bridge:
             self.logger.info(f"plugin_coro: Connected to bridge: {self.v2bridge.bridge_id}")
@@ -219,7 +191,7 @@ class HueApiV2(SmartPlugin):
             queue_item = await self.run_queue.get()
 
         self.alive = False
-        self.logger.info("plugin_coro: Plugin is stopped (self.alive=False)")
+        self.logger.notice("plugin_coro: Plugin is stopped (self.alive=False)")
 
         self.logger.debug("plugin_coro: Closing session")
         # husky2: await self.apiSession.close()
@@ -322,7 +294,7 @@ class HueApiV2(SmartPlugin):
         mapping_root = event_item.id + mapping_delimiter + event_item.type.value + mapping_delimiter
 
         if self.get_items_for_mapping(mapping_root + 'on') != []:
-            self.logger.notice(f"update_light_items_from_event: '{self._get_light_name(event_item.id)}' - {event_item}")
+            self.logger.info(f"update_light_items_from_event: '{self._get_light_name(event_item.id)}' - {event_item}")
 
         if initialize:
             self.update_items_with_mapping(event_item, mapping_root, 'name', self._get_light_name(event_item.id), initialize)
@@ -368,7 +340,10 @@ class HueApiV2(SmartPlugin):
         if initialize:
             self.update_items_with_mapping(event_item, mapping_root, 'name', self._get_device_name(event_item.owner.rid) )
 
-        last_event = event_item.button.last_event.value
+        try:
+            last_event = event_item.button.last_event.value
+        except Exception as ex:
+            last_event = ''
 
         #if mapping_root.startswith('2463dfc8-ee7f-4484-8901-3f5bbb319e4d'):
         #    self.logger.notice(f"update_button_items_from_event: Button1: {last_event}")
@@ -429,7 +404,7 @@ class HueApiV2(SmartPlugin):
         Initializing the item values with data from the hue bridge after connecting to in
         """
         self.logger.debug('initialize_items_from_bridge: Start')
-        self.logger.notice(f"initialize_items_from_bridge: v2bridge={dir(self.v2bridge)}")
+        #self.logger.notice(f"initialize_items_from_bridge: v2bridge={dir(self.v2bridge)}")
         #self.v2bridge.lights.initialize(None)
         for event_item in self.v2bridge.lights:
             self.update_light_items_from_event(event_item, initialize=True)
@@ -575,7 +550,7 @@ class HueApiV2(SmartPlugin):
             self.logger.info(f"update_item: '{item.property.path}' has been changed outside this plugin by caller '{self.callerinfo(caller, source)}'")
 
             config_data = self.get_item_config(item)
-            self.logger.notice(f"update_item: Sending '{item()}' of '{config_data['item']}' to bridge  ->  {config_data=}")
+            self.logger.info(f"update_item: Sending '{item()}' of '{config_data['item']}' to bridge  ->  {config_data=}")
 
             if config_data['resource'] == 'light':
                 self.update_light_from_item(config_data, item)
@@ -735,19 +710,6 @@ class HueApiV2(SmartPlugin):
         return
 
 
-    def get_api_config_of_bridge(self, urlbase):
-
-        url = urlbase + 'api/config'
-        api_config = {}
-        try:
-            r = requests.get(url)
-            if r.status_code == 200:
-                api_config = r.json()
-        except Exception as e:
-            self.logger.error(f"get_api_config_of_bridge: url='{url}' - Exception {e}")
-        return api_config
-
-
     def get_data_from_discovered_bridges(self, serialno):
         """
         Get data from discovered bridges for a given serial number
@@ -768,13 +730,6 @@ class HueApiV2(SmartPlugin):
                     result = db
                     break
 
-        if result != {}:
-            api_config = self.get_api_config_of_bridge(result.get('URLBase',''))
-            result['datastoreversion'] = api_config.get('datastoreversion', '')
-            result['apiversion'] = api_config.get('apiversion', '')
-            result['swversion'] = api_config.get('swversion', '')
-            result['modelid'] = api_config.get('modelid', '')
-
         return result
 
 
@@ -790,7 +745,6 @@ class HueApiV2(SmartPlugin):
         # device_value = ...
         #self.get_lights_info()
         if self.bridge.get('serialNumber','') == '':
-            self.bridge_config = {}
             self.bridge_scenes = {}
             self.bridge_sensors = {}
             return
@@ -801,11 +755,6 @@ class HueApiV2(SmartPlugin):
                         self.bridge_sensors = self.br.sensors()
                 except Exception as e:
                     self.logger.error(f"poll_bridge: Exception {e}")
-
-                try:
-                    self.bridge_config = self.br.config()
-                except Exception as e:
-                    self.logger.info(f"poll_bridge: Bridge-config not supported - Exception {e}")
 
                 try:
                     self.bridge_scenes = self.br.scenes()
@@ -944,8 +893,8 @@ class HueApiV2(SmartPlugin):
         conf_dict['bridge_serial'] = self.bridge.get('serialNumber','')
         conf_dict['bridge_user'] = self.bridge.get('username','')
         conf_dict['bridge_ip'] = self.bridge.get('ip','')
-        conf_dict['bridge_port'] = self.bridge.get('port','')
         self.update_config_section(conf_dict)
+        self.bridge_ip = conf_dict['bridge_ip']
         return
 
     # ============================================================================================
@@ -953,20 +902,17 @@ class HueApiV2(SmartPlugin):
     def get_bridgeinfo(self):
         if self.bridge.get('serialNumber','') == '':
             self.br = None
-            self.bridge_config = {}
             self.bridge_scenes = {}
             self.bridge_sensors = {}
             return
-        self.logger.info("get_bridgeinfo: self.bridge = {}".format(self.bridge))
+        self.logger.info(f"get_bridgeinfo: self.bridge = {self.bridge}")
         self.br = qhue.Bridge(self.bridge['ip']+':'+str(self.bridge['port']), self.bridge['username'])
         try:
-            self.bridge_config = self.br.config()
             self.bridge_scenes = self.br.scenes()
             self.bridge_sensors = self.br.sensors()
         except Exception as e:
             self.logger.error(f"Bridge '{self.bridge.get('serialNumber','')}' returned exception {e}")
             self.br = None
-            self.bridge_config = {}
             self.bridge_scenes = {}
             self.bridge_sensors = {}
             return False
@@ -974,26 +920,28 @@ class HueApiV2(SmartPlugin):
         return True
 
 
-    def get_bridge_desciption(self, ip, port):
+    def get_bridge_desciption(self, ip):
         """
         Get description of bridge
 
         :param ip:
         :param port:
         :return:
+
+        # TODO: Change from requests to aiohttp
         """
         br_info = {}
-
-        protocol = 'http'
-        if str(port) == '443':
-            protocol = 'https'
+        if ip == '0.0.0.0' or ip == '':
+            return br_info
 
         requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
-        r = requests.get(protocol + '://' + ip + ':' + str(port) + '/description.xml', verify=False)
+
+        r = requests.get('https://' + ip + '/description.xml', verify=False)
+        if r.status_code != 200:
+            r = requests.get('http://' + ip + '/description.xml', verify=False)
         if r.status_code == 200:
             xmldict = xmltodict.parse(r.text)
             br_info['ip'] = ip
-            br_info['port'] = str(port)
             br_info['friendlyName'] = str(xmldict['root']['device']['friendlyName'])
             br_info['manufacturer'] = str(xmldict['root']['device']['manufacturer'])
             br_info['manufacturerURL'] = str(xmldict['root']['device']['manufacturerURL'])
@@ -1013,8 +961,8 @@ class HueApiV2(SmartPlugin):
             else:
                 br_info['version'] = 'unknown'
 
-            # get API information
-            api_config = self.get_api_config_of_bridge(br_info['URLBase'])
+            # get config information (short info without app_key)
+            api_config = self.get_bridge_config(br_info['ip'])
             br_info['datastoreversion'] = api_config.get('datastoreversion', '')
             br_info['apiversion'] = api_config.get('apiversion', '')
             br_info['swversion'] = api_config.get('swversion', '')
@@ -1026,18 +974,18 @@ class HueApiV2(SmartPlugin):
     def discover_bridges(self):
         bridges = []
         try:
-            #discovered_bridges = discover_bridges(mdns=True, upnp=True, httponly=True)
-            discovered_bridges = discover_bridges(upnp=True, httponly=True)
+            discovered_bridges = discover_bridges(upnp=False)
+            #discovered_bridges = discover_bridges(upnp=True, httponly=True)
 
         except Exception as e:
             self.logger.error("discover_bridges: Exception in discover_bridges(): {}".format(e))
             discovered_bridges = {}
 
+        self.logger.info(f"discover_bridges: {discovered_bridges=}")
         for br in discovered_bridges:
             ip = discovered_bridges[br].split('/')[2].split(':')[0]
-            port = discovered_bridges[br].split('/')[2].split(':')[1]
-            br_info = self.get_bridge_desciption(ip, port)
-
+            br_info = self.get_bridge_desciption(ip)
+#            br_config = self.get_bridge_config(ip)
             bridges.append(br_info)
 
         for bridge in bridges:
@@ -1047,7 +995,7 @@ class HueApiV2(SmartPlugin):
 
     # --------------------------------------------------------------------------------------------
 
-    def create_new_username(self, ip, port, devicetype=None, timeout=5):
+    def create_new_username(self, ip, devicetype=None, timeout=5):
         """
         Helper function to generate a new anonymous username on a hue bridge
 
@@ -1064,62 +1012,114 @@ class HueApiV2(SmartPlugin):
             QhueException if something went wrong with username generation (for
                 example, if the bridge button wasn't pressed).
         """
-        api_url = "http://{}/api".format(ip+':'+port)
-        try:
-            # for qhue versions v2.0.0 and up
-            session = requests.Session()
-            res = qhue.qhue.Resource(api_url, session, timeout)
-        except:
-            # for qhue versions prior to v2.0.0
-            res = qhue.qhue.Resource(api_url, timeout)
-            res = qhue.qhue.Resource(api_url, timeout)
+        from aiohue import create_app_key
 
-        if devicetype is None:
-            devicetype = "SmartHomeNG#{}".format(getfqdn())
+        # api_key = await create_app_key(host, "authentication_example")
 
-        # raises QhueException if something went wrong
+        devicetype = "authentication_example"
+        devicetype = f"{self.get_fullname()}#{getfqdn()}"
+
+
         try:
-            response = res(devicetype=devicetype, http_method="post")
-        except Exception as e:
-            self.logger.warning("create_new_username: Exception {}".format(e))
+            app_key = self.run_asyncio_coro(create_app_key(ip, devicetype), return_exeption=True)
+        except Exception as ex:
+            self.logger.error(f"create_new_username: {ex}")
             return ''
-        else:
-            self.logger.info("create_new_username: Generated username = {}".format(response[0]["success"]["username"]))
-            return response[0]["success"]["username"]
+
+        self.logger.notice(f"app_key created '{app_key}'")
+
+        self.logger.info(f"create_new_username: Generated username = {app_key}")
+        return app_key
 
 
-    def remove_username(self, ip, port, username, timeout=5):
+    from aiohttp import ClientSession
+
+    async def get_config(self, host: str, app_key: str = None, websession: ClientSession | None = None ) -> dict:
         """
-        Remove the username/application key from the bridge
+        Get configuration of the Hue bridge and return it's whitelist.
 
-        This function works only up to api version 1.3.0 of the bridge. Afterwards Philips/Signify disbled
-        the removal of users through the api. It is now only possible through the portal (cloud serivce).
+        The link button on the bridge must be pressed before executing this call,
+        otherwise a LinkButtonNotPressed error will be raised.
 
-        :param ip:          ip address of the bridge
-        :param username:
-        :param timeout:     (optional, default=5) request timeout in seconds
-        :return:
-
-        Raises:
-            QhueException if something went wrong with username deletion
+        Parameters:
+            `host`: the hostname or IP-address of the bridge as string.
+            `device_type`: provide a name/type for your app for identification.
+            `websession`: optionally provide a aiohttp ClientSession.
         """
-        api_url = "http://{}/api/{}".format(ip+':'+port, username)
-        url = api_url + "/config/whitelist/{}".format(username)
-        self.logger.info("remove_username: url = {}".format(url))
-        res = qhue.qhue.Resource(url, timeout)
+        # https://developers.meethue.com/develop/hue-api/7-configuration-api/#72_get_configuration
+        # this can be used for both V1 and V2 bridges (for now).
 
-        devicetype = "SmartHomeNG#{}".format(getfqdn())
-
-        # raises QhueException if something went wrong
+        websession_provided = websession is not None
+        if websession is None:
+            from aiohttp import ClientSession
+            websession = ClientSession()
         try:
-            response = res(devicetype=devicetype, http_method="delete")
-        except Exception as e:
-            self.logger.error("remove_username: res-delete exception {}".format(e))
-            response = [{'error': str(e)}]
+            # try both https and http
+            for proto in ["https", "http"]:
+                try:
+                    if app_key is None:
+                        url = f"{proto}://{host}/api/config"
+                    else:
+                        url = f"{proto}://{host}/api/{app_key}/config"
+                    async with websession.get(url, ssl=False) as resp:
+                        resp.raise_for_status()
+                        result = await resp.json()
+                        if "error" in result:
+                            self.logger.error(f"get_config: {result=}")
+                            #raise_from_error(result["error"])
+                        return result
+                except Exception as exc:  # pylint: disable=broad-except
+                    self.logger.error(f"get_config: proto={proto}, exc={exc}")
+                    if proto == "http":
+                        raise exc
+        finally:
+            if not websession_provided:
+                await websession.close()
 
-        if not('success' in response[0]):
-            self.logger.warning("remove_username: Error removing username/application key {} - {}".format(username, response[0]))
+
+    def get_bridge_config(self, host: str = None) -> dict:
+
+
+        if host is None:
+            if self.v2bridge is None or self.bridge_ip == '0.0.0.0':
+                return {}
+            host = self.bridge_ip
+
+        if self.bridge_user == '':
+            user = None
         else:
-            self.logger.info("remove_username: username/application key {} removed".format(username))
+            user = self.bridge_user
 
+        try:
+            bridge_config = self.run_asyncio_coro(self.get_config(host, user), return_exeption=False)
+        except Exception as ex:
+            bridge_config = {}
+            self.logger.error(f"get_bridge_config: {ex}")
+        return bridge_config
+
+
+    def disconnect_bridge(self):
+        """
+        Disconnect the plugin from the bridge
+
+        :param disconnect:
+        :return:
+        """
+        if self.bridge_ip == '0.0.0.0':
+            # There is no bridge to disconnect from
+            return
+
+        self.logger.notice(f"Disconnect: Disconnecting bridge")
+        self.stop()
+        self.bridge_ip = '0.0.0.0'
+        #self.bridge_user = ''
+
+        self.logger.notice(f"get_bridgeinfo: self.bridge = {self.bridge}")
+
+        self.bridge = {}
+
+        # update the plugin section in ../etc/plugin.yaml
+        self.update_plugin_config()
+
+        self.run()
 
