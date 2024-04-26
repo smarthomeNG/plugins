@@ -46,9 +46,38 @@ Zeile das Icon in der Spalte **Web Interface** anklicken.
 
 Außerdem kann das Webinterface direkt über ``http://smarthome.local:8383/vicare`` aufgerufen werden.
 
-
-Beispiele
+Allgemein
 ---------
+In der Kopfzeile werden der Onlinestatus, die Anzahl der gefundenen Geräte, die ClientID und das Gerätemodell angezeigt. Aktuell untersützt das Gerät nur ein
+Heizgerät. Werden mehrere gefunden, wird aktuell das erste gültige Heizgerät ausgewählt.
 
-Folgende Informationen können im Webinterface angezeigt werden:
+
+Reiter
+------
+
+Unter dem Reiter **Mit Vicare verbinden** wird unter Anleitung der OAutch2 Authentifizierungsvorgang durchgeführt, damit das Plugin Zugang zur Viessmann API bekommt. 
+
+Unter dem Reiter **Featureliste** werden alle vom Gerät unterstützen Features angezeigt. Wenn ein Feature in der Spalte **Commands** einen Eintrag hat, kann das Feature schreibend verändert werden.
+Wenn das Feature nur einen Eintrag in der Spalte **Properties** hat, kann das Feature nur ausgelesen werden. 
+Die Spalte *Feature* gibt den Featurenamen an, der im Item Attribut ``vicare_rx_key`` (fürs Auslesen) oder `vicare_tx_key` (fürs Steuern) angegeben werden muss.
+
+Aus den unter **Properties** und **Commands** angezeigten Jsons werden die nötigen Item Attribute (`vicare_rx_key`, `vicare_path`) generisch abgeleitet.
+
+Beispiele:
+
+=========== =================================================================================================================================== =================================================
+Art                Json                                                                                                                               vicare_path / vicare_tx_path
+=========== =================================================================================================================================== =================================================
+
+Temperatur       Properties: {'value': {'type': 'number', 'value': 54.9, 'unit': 'celsius'}, 'status': {'type': 'string', 'value': 'connected'}}      ['value','value']
+
+Status           Properties: {'value': {'type': 'number', 'value': 54.9, 'unit': 'celsius'}, 'status': {'type': 'string', 'value': 'connected'}}      ['status','value']
+
+Modus		 Commands:   {'setTargetTemperature': {'uri': 'https://api.viessmann.com/xxxxxxxxx/commands/setTargetTemperature', 'name': 'setTargetTemperature', 'isExecutable': True, 'params': {'temperature': {'type': 'number', 'required': True, 'constraints': {'min': 10, 'efficientLowerBorder': 10, 'efficientUpperBorder': 60, 'max': 60, 'stepping': 1}}}}}             ['setTargetTemperature','params','temperature']
+
+=========== =================================================================================================================================== =================================================
+
+
+
+Unter dem Reiter **Deviceliste** werden alle im Viessmann Konto hinterlegten Geräte aufgelistet.
 
