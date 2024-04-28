@@ -117,7 +117,7 @@ plugin_functions: NONE
 logic_parameters: NONE
 
 item_structs:
-    heizung:
+    heizung_Vitodens_200:
         serial:
             name: serial number
             type: str
@@ -233,7 +233,7 @@ item_structs:
             visu_acl: ro
 
             activate:
-                # Helper item for sending enable command only
+                # Helper item for sending on command only
                 type: bool
                 enforce_updates: True
                 vicare_tx_key: heating.dhw.oneTimeCharge

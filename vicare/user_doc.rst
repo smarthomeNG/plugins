@@ -31,7 +31,10 @@ Requirements
 
 Supported Hardware
 ==================
-z.B. Vitodens 200-W
+z.B.
+Vitodens 200-W
+
+Vitocal 200S
 
 
 Web Interface
@@ -48,14 +51,16 @@ Außerdem kann das Webinterface direkt über ``http://smarthome.local:8383/vicar
 
 Allgemein
 ---------
-In der Kopfzeile werden der Onlinestatus, die Anzahl der gefundenen Geräte, die ClientID und das Gerätemodell angezeigt. Aktuell untersützt das Gerät nur ein
-Heizgerät. Werden mehrere gefunden, wird aktuell das erste gültige Heizgerät ausgewählt.
+In der Kopfzeile werden der Onlinestatus, die Anzahl der gefundenen Geräte, die ClientID und das Gerätemodell angezeigt. Aktuell unterstützt das Gerät nur das Auslesen eines
+Heizgeräts. Werden mehrere Geräte gefunden, wird aktuell das erste gültige Heizgerät ausgewählt.
 
 
 Reiter
 ------
 
 Unter dem Reiter **Mit Vicare verbinden** wird unter Anleitung der OAutch2 Authentifizierungsvorgang durchgeführt, damit das Plugin Zugang zur Viessmann API bekommt. 
+
+Unter dem Reiter **Geräteliste** werden alle mit dem Konto verknüpften Viessmann Geräte aufgelistet.
 
 Unter dem Reiter **Featureliste** werden alle vom Gerät unterstützen Features angezeigt. Wenn ein Feature in der Spalte **Commands** einen Eintrag hat, kann das Feature schreibend verändert werden.
 Wenn das Feature nur einen Eintrag in der Spalte **Properties** hat, kann das Feature nur ausgelesen werden. 
@@ -65,19 +70,16 @@ Aus den unter **Properties** und **Commands** angezeigten Jsons werden die nöti
 
 Beispiele:
 
-=========== =================================================================================================================================== =================================================
+=========== ===================================================================================================================================== ====================================================
 Art                Json                                                                                                                               vicare_path / vicare_tx_path
-=========== =================================================================================================================================== =================================================
+=========== ===================================================================================================================================== ====================================================
 
 Temperatur       Properties: {'value': {'type': 'number', 'value': 54.9, 'unit': 'celsius'}, 'status': {'type': 'string', 'value': 'connected'}}      ['value','value']
 
 Status           Properties: {'value': {'type': 'number', 'value': 54.9, 'unit': 'celsius'}, 'status': {'type': 'string', 'value': 'connected'}}      ['status','value']
 
-Modus		 Commands:   {'setTargetTemperature': {'uri': 'https://api.viessmann.com/xxxxxxxxx/commands/setTargetTemperature', 'name': 'setTargetTemperature', 'isExecutable': True, 'params': {'temperature': {'type': 'number', 'required': True, 'constraints': {'min': 10, 'efficientLowerBorder': 10, 'efficientUpperBorder': 60, 'max': 60, 'stepping': 1}}}}}             ['setTargetTemperature','params','temperature']
+Modus		 Commands:   {'setTargetTemperature': {'uri': 'https:...setTargetTemperature', 'params': {'temperature': {'type': 'number',.}}}}      ['setTargetTemperature','params','temperature']
 
-=========== =================================================================================================================================== =================================================
+=========== ===================================================================================================================================== ====================================================
 
-
-
-Unter dem Reiter **Deviceliste** werden alle im Viessmann Konto hinterlegten Geräte aufgelistet.
 
