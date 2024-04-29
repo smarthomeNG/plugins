@@ -278,23 +278,37 @@ class UZSU(SmartPlugin):
                 self.logger.warning(f'Item to be set by uzsu "{_itemforuzsu}" does not have a type attribute. Error: {err}')
         return _itemtype
 
-    def _logics_lastvalue(self, by=None, item=None):
+    def lastvalue(self, by=None, item=None):
         if self._items.get(item):
             lastvalue = self._lastvalues.get(item)
+            itempath = item.property.path
         else:
             lastvalue = None
+            itempath = None
         by_test = f' Queried by {by}' if by else ""
-        self.logger.debug(f'Last value of item {item} is: {lastvalue}.{by_test}')
+        self.logger.debug(f'Last value of item {itempath} is: {lastvalue}.{by_test}')
         return lastvalue
 
-    def _logics_resume(self, activevalue=True, item=None):
-        self._logics_activate(True, item)
-        lastvalue = self._logics_lastvalue(item)
+    def resume(self, activevalue=True, item=None):
+        if self._items.get(item) is None:
+            try:
+                self.logger.warning(f'Item {item.property.path} is no valid UZSU item!')
+            except:
+                self.logger.warning(f'Item {item} does not exist!')
+            return None
+        self.activate(True, item)
+        lastvalue = self.lastvalue(item)
         self._set(item=item, value=lastvalue, caller='logic')
         self.logger.info(f'Resuming item {item}: Activated and value set to {lastvalue}. Active value: {activevalue}')
         return lastvalue
 
-    def _logics_activate(self, activevalue=None, item=None):
+    def activate(self, activevalue=None, item=None):
+        if self._items.get(item) is None:
+            try:
+                self.logger.warning(f'Item {item.property.path} is no valid UZSU item!')
+            except:
+                self.logger.warning(f'Item {item} does not exist!')
+            return None
         if isinstance(activevalue, str):
             if activevalue.lower() in ['1', 'yes', 'true', 'on']:
                 activevalue = True
@@ -311,21 +325,36 @@ class UZSU(SmartPlugin):
         if activevalue is None:
             return self._items[item].get('active')
 
-    def _logics_interpolation(self, intpl_type=None, interval=None, backintime=None, item=None):
-        interval = self._interpolation_interval if interval is None else interval
+    def interpolation(self, intpl_type=None, interval=5, backintime=0, item=None):
+        if self._items.get(item) is None:
+            try:
+                self.logger.warning(f'Item {item.property.path} is no valid UZSU item!')
+            except:
+                self.logger.warning(f'Item {item} does not exist!')
+            return None
         backintime = self._backintime if backintime is None else backintime
         if intpl_type is None:
             return self._items[item].get('interpolation')
+        elif intpl_type.lower() not in ['none', 'linear', 'cubic']:
+            self.logger.warning(f'Item {item} interpolation can only be set to none, linear or cubic, not to {intpl_type}.')
+            return self._items[item].get('interpolation')
+
         else:
             self._items[item] = item()
             self._items[item]['interpolation']['type'] = str(intpl_type).lower()
             self._items[item]['interpolation']['interval'] = abs(int(interval))
-            self._items[item]['interpolation']['initage'] = int(backintime)
+            self._items[item]['interpolation']['initage'] = abs(int(backintime))
             self.logger.info(f'Item {item} interpolation is set via logic to: type={intpl_type}, interval={abs(interval)}, backintime={backintime}')
             self._update_item(item, 'UZSU Plugin', 'logic')
             return self._items[item].get('interpolation')
 
-    def _logics_clear(self, clear=False, item=None):
+    def clear(self, clear=False, item=None):
+        if self._items.get(item) is None:
+            try:
+                self.logger.warning(f'Item {item.property.path} is no valid UZSU item!')
+            except:
+                self.logger.warning(f'Item {item} does not exist!')
+            return None
         if isinstance(clear, str):
             if clear.lower() in ['1', 'yes', 'true', 'on']:
                 clear = True
@@ -340,7 +369,13 @@ class UZSU(SmartPlugin):
         else:
             return False
 
-    def _logics_itpl(self, clear=False, item=None):
+    def itpl(self, clear=False, item=None):
+        if self._items.get(item) is None:
+            try:
+                self.logger.warning(f'Item {item.property.path} is no valid UZSU item!')
+            except:
+                self.logger.warning(f'Item {item} does not exist!')
+            return None
         if isinstance(clear, str):
             if clear.lower() in ['1', 'yes', 'true', 'on']:
                 clear = True
@@ -352,7 +387,13 @@ class UZSU(SmartPlugin):
             self.logger.info(f'UZSU interpolation dict for item "{item}" is: {self._itpl[item]}')
             return self._itpl[item]
 
-    def _logics_planned(self, item=None):
+    def planned(self, item=None):
+        if self._items.get(item) is None:
+            try:
+                self.logger.warning(f'Item {item.property.path} is no valid UZSU item!')
+            except:
+                self.logger.warning(f'Item {item} does not exist!')
+            return None
         if self._planned.get(item) not in [None, {}, 'notinit'] and self._items[item].get('active') is True:
             self.logger.info(f"Item '{item}' is going to be set to {self._planned[item]['value']} at {self._planned[item]['next']}")
             self._webdata['items'][item.property.path].update(
@@ -417,13 +458,13 @@ class UZSU(SmartPlugin):
             item.expand_relativepathes(ITEM_TAG[0], '', '')
 
             # add functions for use in logics and webif
-            item.activate = functools.partial(self._logics_activate, item=item)
-            item.lastvalue = functools.partial(self._logics_lastvalue, item=item)
-            item.resume = functools.partial(self._logics_resume, item=item)
-            item.interpolation = functools.partial(self._logics_interpolation, item=item)
-            item.clear = functools.partial(self._logics_clear, item=item)
-            item.planned = functools.partial(self._logics_planned, item=item)
-            item.itpl = functools.partial(self._logics_itpl, item=item)
+            item.activate = functools.partial(self.activate, item=item)
+            item.lastvalue = functools.partial(self.lastvalue, item=item)
+            item.resume = functools.partial(self.resume, item=item)
+            item.interpolation = functools.partial(self.interpolation, item=item)
+            item.clear = functools.partial(self.clear, item=item)
+            item.planned = functools.partial(self.planned, item=item)
+            item.itpl = functools.partial(self.itpl, item=item)
 
             self._items[item] = item()
             if 'interpolation' in self._items[item]:
