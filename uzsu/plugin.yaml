@@ -184,13 +184,29 @@ plugin_functions:
             en: 'Query the next scheduled value and time. If no update is planned, e.g. if the UZSU item
                 is not active, the result is None, otherwise a dictionary containing entries for time and value.
                 '
+        parameters:
+            item:
+                type: foo
+                description:
+                    de: "Das Item-Objekt"
+                    en: "An item object"
 
     resume:
         type: foo
         description:
             de: 'Fortsetzen der UZSU Evaluierung: Aktivieren des Items und Setzen des zuletzt festgelegten Wertes.'
             en: 'Resuming the UZSU evaluation: activating the item and setting the last defined value.'
-
+        parameters:
+            activevalue:
+                type: bool
+                description:
+                    de: "True, um die UZSU fortzusetzen; False, um sie zu pausieren"
+                    en: "True to resume the UZSU, false to pause"
+            item:
+                type: foo
+                description:
+                    de: "Das Item-Objekt"
+                    en: "An item object"
     lastvalue:
         type: foo
         description:
@@ -203,7 +219,11 @@ plugin_functions:
                 description:
                     de: 'Für eine entsprechende Info im Logfile kann hier z.B. der Itemname, der den Wert abruft eingetragen werden'
                     en: 'For respective info in the log file you can choose to put the item name that queries the value.'
-
+            item:
+                type: foo
+                description:
+                    de: "Das Item-Objekt"
+                    en: "An item object"
     clear:
         type: bool
         description:
@@ -211,63 +231,128 @@ plugin_functions:
             en: 'Using this function with the parameter True clears the UZSU.'
         description_long:
             de: 'Löschen der UZSU Einträge eines Items.\n
-                - Leer: nichts ausführen\n
+                - Leer/False: nichts ausführen\n
                 - True: löschen\n
                 '
             en: 'Delete the UZSU entries of an item.\n
-                - Empty: do nothing\n
+                - Empty/False: do nothing\n
                 - True: delete\n
                 '
-
+        parameters:
+            clear:
+                type: bool
+                description:
+                    de: "True, um die UZSU Einträge zu löschen."
+                    en: "True to clear the UZSU entries."
+            item:
+                type: foo
+                description:
+                    de: "Das Item-Objekt"
+                    en: "An item object"
+    itpl:
+        type: dict
+        description:
+            de: 'Zum Debuggen der Interpolationsfunktion.'
+            en: 'For debugging the internal interpolation function.'
+        description_long:
+            de: 'Löschen oder Abrufen der internen Interpolationswerte.\n
+                - Leer/False: Internes Dictionary mit Interpolationswerten\n
+                - True: löschen\n
+                '
+            en: 'Delete or query internal interpolation values.\n
+                - Empty/False: Internal dictionary of interpolation values\n
+                - True: delete\n
+                '
+        parameters:
+            clear:
+                type: bool
+                default: False
+                description:
+                    de: "Löschen oder nicht"
+                    en: "Delete or do not delete"
+            item:
+                type: foo
+                description:
+                    de: "Das Item-Objekt"
+                    en: "An item object"
     activate:
         type: bool
         description:
-            de: 'Abfrage oder Setzen, ob die uzsu aktiv ist oder nicht.'
-            en: 'query or set whether the uzsu is set active or not.'
-        description_long:
-            de: 'Abfrage oder Setzen, ob die uzsu aktiv ist oder nicht.\n
-                - Leer: Abfrage\n
-                - True: aktivieren\n
-                - False: deaktivieren\n
-                '
-            en: 'Query or set whether the uzsu is set active or not.\n
-                - Empty: query\n
-                - True: activate\n
-                - False: deactivate\n
-                '
-
+            de: 'Abfrage oder Setzen, ob die UZSU aktiv ist oder nicht.'
+            en: 'query or set whether the UZSU is set active or not.'
+        parameters:
+            activevalue:
+                type: foo
+                description:
+                    de: "Abfragen oder Setzen des UZSU Status"
+                    en: "Query or set UZSU active state"
+                valid_list:
+                    - None
+                    - True
+                    - False
+                valid_list_description:
+                    de:
+                        - Abfrage
+                        - Aktivieren
+                        - Deaktivieren
+                    en:
+                        - Query
+                        - Activate
+                        - Deactivate
+                valid_list_item_type:
+                    - foo
+                    - bool
+                    - bool
+            item:
+                type: foo
+                description:
+                    de: "Das Item-Objekt"
+                    en: "An item object"
     interpolation:
         type: dict
         description:
-            de: 'Abfrage (leerer Parameter) oder Setzen der Interpolationseinstellungen'
-            en: 'Query (empty parameter) or set the interpolation settings'
+            de: 'Abfrage oder Setzen der Interpolationseinstellungen'
+            en: 'Query or set the interpolation settings'
         parameters:
-            'type':
-                type: str
-                default: none
+            intpl_type:
+                type: foo
+                default: None
                 description:
-                    de: 'Interpolationstyp: linear/none/cubic'
-                    en: 'interpolation type: linear/none/cubic'
-                description_long:
-                    de: 'Interpolationstyp:\n
-                        - linear: konstant gleiche Zwischenberechnung\n
-                        - cubic: Spline-Interpolation mit verzögertem Start und sanftem Verlangsamen\n
-                        - none: keine Interpolation\n
-                        '
-                    en: 'interpolation type:\n
-                        - linear: constant interpolation\n
-                        - cubic: splinte interpolation with ease in and out\n
-                        - none: no interpolation\n
-                        '
+                    de: 'Interpolationstyp'
+                    en: 'interpolation type'
+                valid_list:
+                    - None
+                    - 'linear'
+                    - 'cubic'
+                    - 'none'
+                valid_list_description:
+                    de:
+                        - Abfrage
+                        - konstant gleiche Zwischenberechnung
+                        - Spline-Interpolation mit verzögertem Start und sanftem Verlangsamen
+                        - keine Interpolation
+                    en:
+                        - Query
+                        - constant interpolation
+                        - spline interpolation with ease in and out
+                        - no interpolation
+                valid_list_item_type:
+                    - foo
+                    - str
+                    - str
+                    - str
+
             interval:
                 type: int
                 default: 5
+                valid_min: 1
                 description:
                     de: 'Intervall in Minuten, in dem der interpolierte Wert aktualisiert werden soll'
                     en: 'Interval in minutes to re-calculate the interpolated value'
             backintime:
                 type: int
                 default: 0
+                valid_min: 0
                 description:
                     de: 'Maximales Alter eines UZSU Eintrags in Minuten, um beim Plugin-Start versäumte Einträge nachzuholen.'
                     en: 'maximum age of an uzsu entry in minutes to be catched up at the plugin start'
