@@ -119,6 +119,7 @@ item_structs:
             uzsu_item: ..
             cache: True
             visu_acl: rw
+            enforce_updates: True
 
             last:
                 remark: The last set value if UZSU is active
@@ -142,6 +143,28 @@ item_structs:
                       - ...
                     on_change: .. = value
                     crontab: init = 0
+            next:
+                remark: The next value and time
+                type: dict
+                visu_acl: ro
+                eval: sh...planned()
+                eval_trigger: ..
+
+                value:
+                    remark: The next value
+                    type: str
+                    visu_acl: ro
+                    eval: sh...property.value['value']
+                    eval_trigger: ..
+                    initial_value: '-'
+
+                time:
+                    remark: The next time
+                    type: str
+                    visu_acl: ro
+                    eval: sh...property.value['next']
+                    eval_trigger: ..
+                    initial_value: '-'
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
