@@ -505,7 +505,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 	<tbody>
 		<tr>
 			<td class="py-1"><strong>Bridge Serial</strong></td>
-			{% if w.bridge_is_configured() %}
+			{% if p.bridge_is_configured() %}
 				<td class="py-1">{{ p.bridge_ip }}</td>
 			{% else %}
 				<td class="py-1">{{ _('nicht konfiguriert') }}</td>
@@ -518,7 +518,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 		</tr>
 		<tr>
 			<td class="py-1"><strong>Bridge IP</strong></td>
-			<td class="py-1">{% if bridge.username == undeffined or not w.bridge_is_configured() %}{{ _('nicht konfiguriert') }}{% else %}{{ p.bridge.ip }}{% endif %}</td>
+			<td class="py-1">{% if bridge.username == undeffined or not p.bridge_is_configured() %}{{ _('nicht konfiguriert') }}{% else %}{{ p.bridge.ip }}{% endif %}</td>
 			<td></td>
 			<td class="py-1"><strong>-</strong></td>
 			<td class="py-1">-</td>
@@ -526,7 +526,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 		</tr>
 		<tr>
 			<td class="py-1"><strong>Anwendungsschlüssel</strong></td>
-			<td class="py-1">{% if bridge.username == undeffined or not w.bridge_is_configured() %}{{ _('nicht konfiguriert') }}{% else %}{{ _('konfiguriert') }}{% endif %}</td>
+			<td class="py-1">{% if bridge.username == undeffined or not p.bridge_is_configured() %}{{ _('nicht konfiguriert') }}{% else %}{{ _('konfiguriert') }}{% endif %}</td>
 			<td></td>
 			<td class="py-1"><strong>-</strong></td>
 			<td class="py-1">-</td>
@@ -541,9 +541,11 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
 -->
 {% block buttons %}
+	{% if not p.bridge_is_configured() %}
 	<form action="" method="post">
 		<button id="btn1" class="btn btn-shng btn-sm" name="scan" type="submit" value="on"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;{{ _('Bridge suchen') }}&nbsp;</button>
 	</form>
+	{% endif %}
 {% endblock %}
 
 <!--
@@ -561,7 +563,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 {% if (item_count == 0) and (bridge_lights|length == 0) %}
 	{% set start_tab = 6 %}
 {% endif %}
-{% if not w.bridge_is_configured() %}
+{% if not p.bridge_is_configured() %}
 	{% set start_tab = 7 %}
 {% endif %}
 
@@ -686,7 +688,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 -->
 {% set tab7title = "<strong>Hue Bridge</strong>" %}
 {% block bodytab7 %}
-	{% if p.discovered_bridges != [] and not w.bridge_is_configured() %}
+	{% if p.discovered_bridges != [] and not p.bridge_is_configured() %}
 		<div style="margin-left: 20px;">
 			<br>
 			<strong>{{ _('Gefundene Bridges') }}:</strong><br>
@@ -727,7 +729,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 									{% if db.version == 'v1' %}
 										{{ _('nicht unterstützt') }}
 									{% else %}
-										{% if not w.bridge_is_configured() %}
+										{% if not p.bridge_is_configured() %}
 											<button id="btn1" class="btn btn-shng btn-sm" name="connect" type="submit" value="{{ db.serialNumber }}"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;{{ _('Verbinden') }}&nbsp;</button>
 										{% elif db.ip == p.bridge_ip %}
 										{{ _('Konfigurierte Bridge') }}
@@ -746,7 +748,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 	{%  endif %}
 
 	<div style="margin-left: 20px;">
-		{% if not w.bridge_is_configured() %}
+		{% if not p.bridge_is_configured() %}
 			<br>
 			<strong>{{ _('Es ist keine Bridge mit dieser Plugin Instanz verbunden.') }}</strong><br>
 			{% if p.discovered_bridges != [] %}
@@ -759,7 +761,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 		<br>
 	</div>
 
-	{% if w.bridge_is_configured() %}
+	{% if p.bridge_is_configured() %}
 		<div style="margin-left: 20px;">
 			<strong>{{ _('Konfigurierte Bridge') }}:</strong><br>
 		</div>
@@ -788,7 +790,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 		<!--
 							<tr id="{ { loop.index } }_clickip" style="cursor: pointer;">
 		-->
-						{% if w.bridge_is_configured() %}
+						{% if p.bridge_is_configured() %}
 							<tr style="cursor: pointer;">
 								<td class="py-1">{{ bridge_config.bridgeid|lower }}</td>
 								<td class="py-1">{{ cb.modelName }}</td>
@@ -813,7 +815,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 	{% endif %}
 
 
-	{% if w.bridge_is_configured() and true %}
+	{% if p.bridge_is_configured() and true %}
 		<div style="margin-left: 20px;">
 			<br>
 			<strong>{{ _('Bridge Konfiguration') }}:</strong><br>
@@ -827,7 +829,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 							<td class="py-1"></td>
 							<td class="py-1" colspan="2"><center>{{ _('Internet Services') }}</center></td>
 							<td class="py-1"></td>
-							<td class="py-1" colspan="2"><center>{{ _('Portal Services') }}</center></td>
+							<td class="py-1" colspan="2"><center>{{ _('Portal State') }}</center></td>
 							<td class="py-1"></td>
 						</tr>
 					</thead>
@@ -883,7 +885,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 	{% endif %}
 
 
-	{% if w.bridge_is_configured() and true %}
+	{% if p.bridge_is_configured() and true %}
 		<div style="margin-left: 20px;">
 			<br>
 			<strong>{{ _('Konfigurierte Benutzer') }}:</strong><br>
