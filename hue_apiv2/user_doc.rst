@@ -18,7 +18,7 @@ nur die aktuellen Bridges der zweiten Generation (die Eckigen). Diese Bridges un
 allerdings soll laut Philips diese Unterstützung irgendwann enden. Neue Hue Features werden allerdings nur im API v2
 implementiert.
 
-Wenn eine Philips Hue Bridge der ersten Generation (die Runden) angesprochen werden soll, muss das bisherige
+Wenn eine Philips Hue Bridge der ersten Generation (die runden Bridges) angesprochen werden soll, muss das bisherige
 **Plugin hue2** verwendet werden. Diese Bridges sind von Philips inzwischen retired worden und werden keine
 Unterstützung durch Philips mehr erfahren.
 
@@ -111,7 +111,7 @@ Erweiterte Item Definitionen für oben genannten Leuchten-Typen:
 
 
 Ein Item für eine Hue Leuchte kann einfach folgendermaßen konfiguriert werden, indem nur die Id der zu
-steuernden Leuchts als ``hue2_id`` angegeben wird:
+steuernden Leuchts als ``hue_apiv2_id`` angegeben wird:
 
 .. code-block:: yaml
 
@@ -131,34 +131,34 @@ Das hat die selbe Wirkung, als hätte man ohne Struktur Template folgende Item-K
 
         name: Vorlage-Struktur für eine Hue Leuchte
         type: foo
-        hue2_resource: light
+        hue_apiv2_resource: light
 
         onoff:
             type: bool
-            hue2_resource: ..:.
-            hue2_id: ..:.
-            hue2_function: on
+            hue_apiv2_resource: ..:.
+            hue_apiv2_id: ..:.
+            hue_apiv2_function: on
 
         level:
             type: num
-            hue2_resource: ..:.
-            hue2_id: ..:.
-            hue2_function: bri
+            hue_apiv2_resource: ..:.
+            hue_apiv2_id: ..:.
+            hue_apiv2_function: bri
 
         xy:
             type: num
-            hue2_resource: ..:.
-            hue2_id: ..:.
-            hue2_function: xy
+            hue_apiv2_resource: ..:.
+            hue_apiv2_id: ..:.
+            hue_apiv2_function: xy
 
         ct:
             type: num
-            hue2_resource: ..:.
-            hue2_id: ..:.
-            hue2_function: ct
+            hue_apiv2_resource: ..:.
+            hue_apiv2_id: ..:.
+            hue_apiv2_function: ct
 
 
-Das Struktur Template **hue2.light_extended** definiert zusätzlich noch die Sub-Items ``light_name``, ``reachable``,
+Das Struktur Template **hue_apiv2.light_extended** definiert zusätzlich noch die Sub-Items ``light_name``, ``reachable``,
 ``colormode``, ``xy``, ``light_type``, ``modelid`` und ``swversion``. Die Sub-Items
 ``reachable``, ``colormode``, ``light_type``, ``modelid`` und ``swversion`` können nur aus der Bridge gelesen
 werden. Änderungen an dem Item werden von der Bridge ignoriert.

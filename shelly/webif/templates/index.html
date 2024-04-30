@@ -68,6 +68,19 @@
 		console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
 	}
 	try {
+			testtable = $('#testtable').DataTable( {
+				/* If you want to define your own columnDefs options (e.g. for hiding a column by default), use the concat function shown here.
+				*/
+				columnDefs: [
+				    {
+						title: "{{ _('Wert') }}",
+						"targets": [2], "className": "value"
+					}
+			    ].concat($.fn.dataTable.defaults.columnDefs),
+				pageLength: webif_pagelength,
+				pageResize: resize}
+			);
+
 		itemtable = $('#itemtable').DataTable( {
 			columnDefs: [
 				{
@@ -157,6 +170,7 @@
 			].concat($.fn.dataTable.defaults.columnDefs),
 			pageLength: webif_pagelength,
 			pageResize: resize});
+
 		}
 		catch (e) {
 			console.warn("Datatable Javascript not loaded: " +e);
@@ -353,6 +367,11 @@
 <div class="container-fluid table-resize" style="margin-top: 6px">
 	<table id="devicetable"></table>
 </div>
+----
+<div class="container-fluid table-resize" style="margin-top: 6px">
+	<table id="testtable"></table>
+</div>
+----
 {% endblock bodytab2 %}
 
 
