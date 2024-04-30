@@ -28,6 +28,7 @@ import cherrypy
 import datetime
 from lib.model.smartplugin import *
 from lib.shtime import Shtime
+from lib.utils import Utils
 from oauthlib.oauth2.rfc6749.errors import MissingTokenError
 from typing_extensions import Final
 from withings_api import AuthScope, WithingsApi, WithingsAuth
@@ -36,7 +37,7 @@ from .webif import WebInterface
 
 
 class WithingsHealth(SmartPlugin):
-    PLUGIN_VERSION = "1.8.3"
+    PLUGIN_VERSION = "1.8.4"
 
     def __init__(self, sh):
         super().__init__()
@@ -327,7 +328,7 @@ class WithingsHealth(SmartPlugin):
         return self._consumer_secret
 
     def get_callback_url(self):
-        ip = self.mod_http.get_local_ip_address()
+        ip = Utils.get_local_ipv4_address()
         port = self.mod_http.get_local_port()
         web_ifs = self.mod_http.get_webifs_for_plugin(self.get_shortname())
         for web_if in web_ifs:
