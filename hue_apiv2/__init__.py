@@ -761,7 +761,7 @@ class HueApiV2(SmartPlugin):
 
     def get_bridge_desciption(self, ip):
         """
-        Get description of bridge
+        Get description of bridge X
 
         :param ip:
         :param port:
