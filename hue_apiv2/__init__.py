@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2020-      Martin Sinn                         m.sinn@gmx.de
+#  Copyright 2024      Martin Sinn                         m.sinn@gmx.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -59,14 +59,11 @@ class HueApiV2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '0.4.0'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '0.6.0'    # (must match the version specified in plugin.yaml)
 
     hue_sensor_state_values          = ['daylight', 'temperature', 'presence', 'lightlevel', 'status']
-    hue_sensor_config_values         = ['reachable', 'battery', 'on', 'sunriseoffset', 'sunsetoffset']
 
     br = None               # Bridge object for communication with the bridge
-    bridge_scenes = {}
-    bridge_sensors = {}
 
     v2bridge = None
     devices = {}    # devices connected to the hue bridge
@@ -95,7 +92,6 @@ class HueApiV2(SmartPlugin):
         self.bridge_user = self.get_parameter_value('bridge_user')
 
         # polled for value changes by adding a scheduler entry in the run method of this plugin
-        self.sensor_items_configured = False   # If no sensor items are configured, the sensor-scheduler is not started
         self._default_transition_time = int(float(self.get_parameter_value('default_transitionTime'))*1000)
 
         self.discovered_bridges = []
@@ -106,6 +102,22 @@ class HueApiV2(SmartPlugin):
 
         self.init_webinterface(WebInterface)
 
+        return
+
+
+    def update_plugin_config(self):
+        """
+        Update the plugin configuration of this plugin in ../etc/plugin.yaml
+
+        Fill a dict with all the parameters that should be changed in the config file
+        and call the Method update_config_section()
+        """
+        conf_dict = {}
+        conf_dict['bridge_serial'] = self.bridge.get('serialNumber','')
+        conf_dict['bridge_user'] = self.bridge.get('username','')
+        conf_dict['bridge_ip'] = self.bridge.get('ip','')
+        self.update_config_section(conf_dict)
+        self.bridge_ip = conf_dict['bridge_ip']
         return
 
 
@@ -151,6 +163,14 @@ class HueApiV2(SmartPlugin):
 
     # ----------------------------------------------------------------------------------
 
+    def bridge_is_configured(self):
+
+        if self.bridge_ip == '0.0.0.0' or self.bridge_ip == '':
+            return False
+        return True
+        # return self.v2bridge is not None and self.v2bridge.host != '0.0.0.0'
+
+
     async def plugin_coro(self):
         """
         Coroutine for the session that communicates with the hue bridge
@@ -158,21 +178,22 @@ class HueApiV2(SmartPlugin):
         This coroutine opens the session to the hue bridge and
         only terminate, when the plugin ois stopped
         """
-        self.logger.notice("plugin_coro started")
+        self.logger.info("plugin_coro started")
 
         self.logger.debug("plugin_coro: Opening session")
-        self.logger.notice(f"plugin_coro: {self.bridge_ip=}")
 
-        if self.bridge_ip == '0.0.0.0' or self.bridge_ip == '':
+        if not self.bridge_is_configured():
             self.logger.notice(f"No bridge configured - waiting until bridge is configured..")
-            while self.bridge_ip == '0.0.0.0':
+            while not self.bridge_is_configured():
                 await asyncio.sleep(1)
+            self.logger.notice(f"Connecting to bridge {self.bridge_ip} / {self.bridge_user}")
+        else:
+            self.logger.info(f"Connecting to bridge {self.bridge_ip} / {self.bridge_user}")
 
-        self.logger.notice(f"Connecting to bridge {self.bridge_ip} / {self.bridge_user}")
         self.v2bridge = HueBridgeV2(self.bridge_ip, self.bridge_user)
 
         self.alive = True
-        self.logger.notice("plugin_coro: Plugin is running (self.alive=True)")
+        self.logger.info("plugin_coro: Plugin is running (self.alive=True)")
 
         async with self.v2bridge:
             self.logger.info(f"plugin_coro: Connected to bridge: {self.v2bridge.bridge_id}")
@@ -191,13 +212,13 @@ class HueApiV2(SmartPlugin):
             queue_item = await self.run_queue.get()
 
         self.alive = False
-        self.logger.notice("plugin_coro: Plugin is stopped (self.alive=False)")
+        self.logger.info("plugin_coro: Plugin is stopped (self.alive=False)")
 
         self.logger.debug("plugin_coro: Closing session")
         # husky2: await self.apiSession.close()
         #self.unsubscribe_function()
 
-        self.logger.notice("plugin_coro finished")
+        self.logger.info("plugin_coro finished")
         return
 
 
@@ -211,48 +232,25 @@ class HueApiV2(SmartPlugin):
             e_type = str(event_type.value)
         if e_type == 'update':
             if event_item.type.value == 'light':
-                self.update_light_items_from_event(event_item)
+                self.update_light_items_from_event(event_item, initialize)
             elif event_item.type.value == 'grouped_light':
-                self.update_group_items_from_event(event_item)
+                self.update_group_items_from_event(event_item, initialize)
             elif event_item.type.value == 'zigbee_connectivity':
-                lights = self.v2bridge.devices.get_lights(event_item.owner.rid)
-                if len(lights) > 0:
-                    for light in lights:
-                        mapping_root = light.id + mapping_delimiter + 'light' + mapping_delimiter
-                        self.update_items_with_mapping(light, mapping_root, 'reachable', str(event_item.status.value) == 'connected', initialize)
-                        self.update_items_with_mapping(light, mapping_root, 'connectivity', event_item.status.value, initialize)
-                    mapping_root = event_item.id + mapping_delimiter + 'sensor' + mapping_delimiter
-                    self.update_items_with_mapping(event_item, mapping_root, 'connectivity', event_item.status.value, initialize)
-                    self.update_items_with_mapping(event_item, mapping_root, 'reachable', str(event_item.status.value) == 'connected', initialize)
-                else:
-                    mapping_root = event_item.id + mapping_delimiter + 'sensor' + mapping_delimiter
-                    self.update_items_with_mapping(event_item, mapping_root, 'connectivity', event_item.status.value, initialize)
-                    self.update_items_with_mapping(event_item, mapping_root, 'reachable', str(event_item.status.value) == 'connected', initialize)
-
-                    device_name = self._get_device_name(event_item.owner.rid)
-                    status = event_item.status.value
-                    self.logger.notice(f"handle_event: '{event_item.type.value}' is unhandled  - device='{device_name}', {status=}  -  event={event_item}")
-                    device = self._get_device(event_item.owner.rid)
-                    self.logger.notice(f" - {device=}")
-                    sensors = self.v2bridge.devices.get_sensors(event_item.owner.rid)
-                    self.logger.notice(f" - {sensors=}")
-
+                self.update_items_from_zigbee_connectivity_event(event_item, initialize)
             elif event_item.type.value == 'button':
-                #device_name = self._get_device_name(event_item.owner.rid)
-                #control_id = event_item.metadata.control_id
-                #last_event = event_item.button.last_event.value
-                #sensor_id = event_item.id
-                #self.logger.notice(f"handle_event: '{event_item.type.value}' is handled  - device='{device_name}', id={control_id}, last_event={last_event}, sensor={sensor_id}  -  event={event_item}")
                 self.update_button_items_from_event(event_item, initialize=initialize)
             elif event_item.type.value == 'device_power':
                 self.update_devicepower_items_from_event(event_item, initialize=initialize)
             elif event_item.type.value == 'geofence_client':
                 pass
+            elif event_item.type.value == 'scene':
+                self.logger.notice(f"handle_event: Event-item type '{event_item.type.value}' is unhandled  -  scene '{event_item.metadata.name}'  -  event={event_item}")
             else:
-                self.logger.notice(f"handle_event: Eventtype '{event_item.type.value}' is unhandled  -  event={event_item}")
+                self.logger.notice(f"handle_event: Event-item type '{event_item.type.value}' is unhandled  -  event={event_item}")
         else:
             self.logger.notice(f"handle_event: Eventtype {event_type.value} is unhandled")
         return
+
 
     def _get_device(self, device_id):
         device = None
@@ -333,6 +331,57 @@ class HueApiV2(SmartPlugin):
         return
 
 
+    def update_items_from_zigbee_connectivity_event(self, event_item, initialize=False):
+
+        lights = self.v2bridge.devices.get_lights(event_item.owner.rid)
+        sensors = self.v2bridge.devices.get_sensors(event_item.owner.rid)
+        if len(lights) > 0:
+            for light in lights:
+                mapping_root = light.id + mapping_delimiter + 'light' + mapping_delimiter
+                self.update_items_with_mapping(light, mapping_root, 'reachable', str(event_item.status.value) == 'connected', initialize)
+                self.update_items_with_mapping(light, mapping_root, 'connectivity', event_item.status.value, initialize)
+            mapping_root = event_item.id + mapping_delimiter + 'sensor' + mapping_delimiter
+            self.update_items_with_mapping(event_item, mapping_root, 'connectivity', event_item.status.value, initialize)
+            self.update_items_with_mapping(event_item, mapping_root, 'reachable',
+                                           str(event_item.status.value) == 'connected', initialize)
+        elif len(sensors) > 0:
+            sensors = self.v2bridge.devices.get_sensors(event_item.owner.rid)
+            for sensor in sensors:
+                if sensor.type.value == 'button':
+                    mapping_root = sensor.id + mapping_delimiter + 'button' + mapping_delimiter
+                    self.update_items_with_mapping(event_item, mapping_root, 'connectivity', event_item.status.value, initialize)
+                    self.update_items_with_mapping(event_item, mapping_root, 'reachable', str(event_item.status.value) == 'connected', initialize)
+                    break
+            else:  # no button found
+                status = event_item.status.value
+                device = self._get_device(event_item.owner.rid)
+                device_name = self._get_device_name(event_item.owner.rid)
+                if device.product_data.product_archetype.value == 'bridge_v2':
+                    mapping_root = device.id + mapping_delimiter + 'bridge' + mapping_delimiter
+                    self.update_items_with_mapping(event_item, mapping_root, 'connectivity', event_item.status.value, initialize)
+                    self.update_items_with_mapping(event_item, mapping_root, 'reachable', str(event_item.status.value) == 'connected', initialize)
+                else:
+                    self.logger.notice(f"handle_event: '{event_item.type.value}' is unhandled - device '{device_name}', {status=}   -   event={event_item}")
+                    self.logger.notice(f" - device: {device.product_data.product_archetype.value=}  -  {device=}")
+                    self.logger.notice(f" - {sensors=}")
+
+        else:
+            # zigbee_connectivity for unknown device
+            mapping_root = event_item.id + mapping_delimiter + 'unknown' + mapping_delimiter
+            self.update_items_with_mapping(event_item, mapping_root, 'connectivity', event_item.status.value, initialize)
+            self.update_items_with_mapping(event_item, mapping_root, 'reachable', str(event_item.status.value) == 'connected', initialize)
+
+            device_name = self._get_device_name(event_item.owner.rid)
+            status = event_item.status.value
+            self.logger.notice(f"handle_event: '{event_item.type.value}' is unhandled - device '{device_name}', {status=}   -   event={event_item}")
+            device = self._get_device(event_item.owner.rid)
+            self.logger.notice(f" - {device=}")
+            sensors = self.v2bridge.devices.get_sensors(event_item.owner.rid)
+            self.logger.notice(f" - {sensors=}")
+
+        return
+
+
     def update_button_items_from_event(self, event_item, initialize=False):
 
         mapping_root = event_item.id + mapping_delimiter + event_item.type.value + mapping_delimiter
@@ -344,9 +393,6 @@ class HueApiV2(SmartPlugin):
             last_event = event_item.button.last_event.value
         except Exception as ex:
             last_event = ''
-
-        #if mapping_root.startswith('2463dfc8-ee7f-4484-8901-3f5bbb319e4d'):
-        #    self.logger.notice(f"update_button_items_from_event: Button1: {last_event}")
 
         self.update_items_with_mapping(event_item, mapping_root, 'event', last_event, initialize)
         if last_event == 'initial_press':
@@ -404,7 +450,6 @@ class HueApiV2(SmartPlugin):
         Initializing the item values with data from the hue bridge after connecting to in
         """
         self.logger.debug('initialize_items_from_bridge: Start')
-        #self.logger.notice(f"initialize_items_from_bridge: v2bridge={dir(self.v2bridge)}")
         #self.v2bridge.lights.initialize(None)
         for event_item in self.v2bridge.lights:
             self.update_light_items_from_event(event_item, initialize=True)
@@ -479,10 +524,6 @@ class HueApiV2(SmartPlugin):
             conf_data['item'] = item
             # store config in plugin_items
             self.plugin_items[item.property.path] = conf_data
-            # set flags to schedule updates for sensors, lights and groups
-            if conf_data['resource'] == 'sensor':
-                # ensure that the scheduler for sensors will be started if items use sensor data
-                self.sensor_items_configured = True
 
             if conf_data['resource'] == 'group':
                 # bridge updates are allways scheduled
@@ -576,14 +617,16 @@ class HueApiV2(SmartPlugin):
         if config_data['transition_time'] is not None:
             hue_transition_time = int(float(config_data['transition_time']) * 1000)
 
-        #self.logger.notice(f"update_light_from_item: function={config_data['function']}, hue_transition_time={hue_transition_time}, id={config_data['id']}")
         if config_data['function'] == 'on':
             if value:
                 self.run_asyncio_coro(self.v2bridge.lights.turn_on(config_data['id'], hue_transition_time))
             else:
                 self.run_asyncio_coro(self.v2bridge.lights.turn_off(config_data['id'], hue_transition_time))
         elif config_data['function'] == 'bri':
-            self.run_asyncio_coro(self.v2bridge.lights.set_brightness(config_data['id'], float(value), hue_transition_time))
+            if float(value) <= 100:
+                self.run_asyncio_coro(self.v2bridge.lights.set_brightness(config_data['id'], float(value), hue_transition_time))
+            else:
+                self.logger.error(f"{item.property.path}: Cant set brightness of light {config_data['id']} to {value} - out of range")
         elif config_data['function'] == 'xy' and isinstance(value, list) and len(value) == 2:
             self.run_asyncio_coro(self.v2bridge.lights.set_color(config_data['id'], value[0], value[1], hue_transition_time))
         elif config_data['function'] == 'ct':
@@ -605,6 +648,7 @@ class HueApiV2(SmartPlugin):
                     transition_time = int(float(transition_time)*1000)
                 self.run_asyncio_coro(self.v2bridge.lights.set_state(config_data['id'], on, bri, xy, ct, transition_time=transition_time))
         elif config_data['function'] == 'bri_inc':
+            # TODO: bri_inc implementieren
             self.logger.warning(f"Lights: {config_data['function']} not implemented")
         elif config_data['function'] == 'alert':
             self.logger.warning(f"Lights: {config_data['function']} not implemented")
@@ -681,23 +725,6 @@ class HueApiV2(SmartPlugin):
             # The following functions from the api v1 are not supported by the api v2:
             # - hue, sat, ct, name
             self.logger.notice(f"update_group_from_item: The function {config_data['function']} is not supported/implemented")
-###
-
-        return
-
-        try:
-            if plugin_item['function'] == 'activate_scene':
-                self.br.groups(plugin_item['id'], 'action', scene=value, transitiontime=hue_transition_time)
-            elif plugin_item['function'] == 'modify_scene':
-                 self.br.groups(plugin_item['id'], 'scenes', value['scene_id'], 'lights', value['light_id'], 'state', **(value['state']))
-
-        except qhue.qhue.QhueException as e:
-            msg = f"{e}"
-            msg = f"update_light_from_item: item {plugin_item['item'].id()} - function={plugin_item['function']} - '{msg}'"
-            if msg.find(' 201 ') >= 0:
-                self.logger.info(msg)
-            else:
-                self.logger.error(msg)
 
         return
 
@@ -732,193 +759,7 @@ class HueApiV2(SmartPlugin):
 
         return result
 
-
-    def poll_bridge(self):
-        """
-        Polls for updates of the device
-
-        This method is only needed, if the device (hardware/interface) does not propagate
-        changes on it's own, but has to be polled to get the actual status.
-        It is called by the scheduler which is set within run() method.
-        """
-        # # get the value from the device
-        # device_value = ...
-        #self.get_lights_info()
-        if self.bridge.get('serialNumber','') == '':
-            self.bridge_scenes = {}
-            self.bridge_sensors = {}
-            return
-        else:
-            if self.br is not None:
-                try:
-                    if not self.sensor_items_configured:
-                        self.bridge_sensors = self.br.sensors()
-                except Exception as e:
-                    self.logger.error(f"poll_bridge: Exception {e}")
-
-                try:
-                    self.bridge_scenes = self.br.scenes()
-                except Exception as e:
-                    self.logger.info(f"poll_bridge: Scenes not supported - Exception {e}")
-
-        # update items with polled data
-        src = self.get_instance_name()
-        if src == '':
-            src = None
-        for pi in self.plugin_items:
-            plugin_item = self.plugin_items[pi]
-            if plugin_item['resource'] == 'scene':
-                value = self._get_scene_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
-                if value is not None:
-                    plugin_item['item'](value, self.get_shortname(), src)
-            if plugin_item['resource'] == 'group':
-                if not "hue_apiv2_reference_light_id" in plugin_item:
-                    if plugin_item['function'] != 'dict' and plugin_item['function'] != 'modify_scene':
-                        if plugin_item['function'] == 'on':
-                            value = self._get_group_item_value(plugin_item['id'], 'any_on', plugin_item['item'].id())
-                        else:
-                            value = self._get_group_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
-                        if value is not None:
-                            plugin_item['item'](value, self.get_shortname(), src)
-        return
-
-
-    def poll_bridge_sensors(self):
-        """
-        Polls for updates of sensors of the device
-
-        This method is only needed, if the device (hardware/interface) does not propagate
-        changes on it's own, but has to be polled to get the actual status.
-        It is called by the scheduler which is set within run() method.
-        """
-        # get the value from the device: poll data from bridge
-        if self.bridge.get('serialNumber','') == '':
-            self.bridge_sensors = {}
-            return
-        else:
-            if self.br is not None:
-                try:
-                    self.bridge_sensors = self.br.sensors()
-                except Exception as e:
-                    self.logger.error(f"poll_bridge_sensors: Exception {e}")
-
-        # update items with polled data
-        src = self.get_instance_name()
-        if src == '':
-            src = None
-        for pi in self.plugin_items:
-            plugin_item = self.plugin_items[pi]
-            if  plugin_item['resource'] == 'sensor':
-                value = self._get_sensor_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
-                if value is not None:
-                    plugin_item['item'](value, self.get_shortname(), src)
-        return
-
-
-    def _get_group_item_value(self, group_id, function, item_path):
-        """
-        Update item that has hue_resource == 'group'
-        :param id:
-        :param function:
-        :return:
-        """
-        result = ''
-
-        return result
-
-
-    def _get_scene_item_value(self, scene_id, function, item_path):
-        """
-        Update item that has hue_resource == 'scene'
-        :param id:
-        :param function:
-        :return:
-        """
-        result = ''
-        try:
-            scene = self.bridge_scenes[scene_id]
-        except KeyError:
-            self.logger.error(f"poll_bridge: Scene '{scene_id}' not defined on bridge (item '{item_path}')")
-            return None
-
-        if function == 'name':
-            result = scene['name']
-        return result
-
-
-    def _get_sensor_item_value(self, sensor_id, function, item_path):
-        """
-        Update item that has hue_resource == 'sensor'
-        :param id:
-        :param function:
-        :return:
-        """
-        result = ''
-        try:
-            sensor = self.bridge_sensors[sensor_id]
-        except KeyError:
-            self.logger.error(f"poll_bridge_sensors: Sensor '{sensor_id}' not defined on bridge (item '{item_path}')")
-            return None
-        except Exception as e :
-            self.logger.exception(f"poll_bridge_sensors: Sensor '{sensor_id}' on bridge (item '{item_path}') - exception: {e}")
-            return None
-        if function in self.hue_sensor_state_values:
-            try:
-                result = sensor['state'][function]
-            except KeyError:
-                self.logger.warning(
-                    f"poll_bridge_sensors: Function {function} not supported by sensor '{sensor_id}' (item '{item_path}')")
-                result = ''
-        elif function in self.hue_sensor_config_values:
-            try:
-                result = sensor['config'][function]
-            except KeyError:
-                self.logger.warning(
-                    f"poll_bridge_sensors: Function {function} not supported by sensor '{sensor_id}' (item '{item_path}')")
-                result = ''
-        elif function == 'name':
-            result = sensor['name']
-        return result
-
-
-    def update_plugin_config(self):
-        """
-        Update the plugin configuration of this plugin in ../etc/plugin.yaml
-
-        Fill a dict with all the parameters that should be changed in the config file
-        and call the Method update_config_section()
-        """
-        conf_dict = {}
-        # conf_dict['bridge'] = self.bridge
-        conf_dict['bridge_serial'] = self.bridge.get('serialNumber','')
-        conf_dict['bridge_user'] = self.bridge.get('username','')
-        conf_dict['bridge_ip'] = self.bridge.get('ip','')
-        self.update_config_section(conf_dict)
-        self.bridge_ip = conf_dict['bridge_ip']
-        return
-
     # ============================================================================================
-
-    def get_bridgeinfo(self):
-        if self.bridge.get('serialNumber','') == '':
-            self.br = None
-            self.bridge_scenes = {}
-            self.bridge_sensors = {}
-            return
-        self.logger.info(f"get_bridgeinfo: self.bridge = {self.bridge}")
-        self.br = qhue.Bridge(self.bridge['ip']+':'+str(self.bridge['port']), self.bridge['username'])
-        try:
-            self.bridge_scenes = self.br.scenes()
-            self.bridge_sensors = self.br.sensors()
-        except Exception as e:
-            self.logger.error(f"Bridge '{self.bridge.get('serialNumber','')}' returned exception {e}")
-            self.br = None
-            self.bridge_scenes = {}
-            self.bridge_sensors = {}
-            return False
-
-        return True
-
 
     def get_bridge_desciption(self, ip):
         """
@@ -1081,7 +922,7 @@ class HueApiV2(SmartPlugin):
 
 
         if host is None:
-            if self.v2bridge is None or self.bridge_ip == '0.0.0.0':
+            if not self.bridge_is_configured():
                 return {}
             host = self.bridge_ip
 
@@ -1105,16 +946,15 @@ class HueApiV2(SmartPlugin):
         :param disconnect:
         :return:
         """
-        if self.bridge_ip == '0.0.0.0':
+        if not self.bridge_is_configured():
             # There is no bridge to disconnect from
             return
 
         self.logger.notice(f"Disconnect: Disconnecting bridge")
         self.stop()
         self.bridge_ip = '0.0.0.0'
-        #self.bridge_user = ''
 
-        self.logger.notice(f"get_bridgeinfo: self.bridge = {self.bridge}")
+        self.logger.notice(f"disconnect_bridge: self.bridge = {self.bridge}")
 
         self.bridge = {}
 

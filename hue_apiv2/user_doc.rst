@@ -41,24 +41,6 @@ Die wichtigsten Features/Änderungen beim API v2:
 
 |
 
-Das Plugin ist noch nicht FeatureComplete.
-
-**Ab hie muss die Doku noch überarbeitet werden:**
-
-|
-
-Neue Features
-=============
-
-Das Plugin bietet im Vergleich zum **hue** Plugin zusätzlich folgende Features:
-
-- Die Authorisierung an der Hue Bride ist in das Plugin integriert und erfolgt über das Webinferface des Plugins.
-- Das Plugin hat eine Funktion um aktive Hue Bridges im lokalen Netzwerk zu finden.
-- Das Plugin unterstützt je Instanz im Gegensatz zum alten Plugin nur eine Bridge. Dafür ist es Multi-Instance fähig,
-  so dass bei Einsatz mehrerer Bridges einfach mehrere Instanzen des Plugins konfiguriert werden können.
-- Zur Vereinfachten Einrichtung von Items liefert das Plugin Struktur Templates.
-- Funktionalitäten von Hue Gruppen werden großteils unterstützt.
-
 
 Plugin Instanz hinzufügen
 =========================
@@ -67,15 +49,19 @@ Da das Plugin ohne vorherige Konfiguration weiterer Parameter lauffähig ist, wi
 der Admin GUI auch gleich aktiviert und beim Neustart von SmartHomeNG geladen. Die Konfiguration erfolgt anschließend
 im Web Interface.
 
+Das Plugin unterstützt je Instanz nur eine Bridge. Dafür ist es Multi-Instance fähig, so dass bei Einsatz mehrerer
+Bridges einfach mehrere Instanzen des Plugins konfiguriert werden können.
+
 
 Konfiguration
 =============
 
 Die grundlegende Konfiguration des Plugins selbst, erfolgt durch das Web Interface des Plugins. Mit dem Web Interface
-kann die Verbindung zu einer Bridge hergestellt werden kann. Optionale weitere Einstellungen (z.B. Abfrage Zyklus)
-können über die Admin GUI vorgenommen werden. Diese Parameter und die Informationen zur Item-spezifischen
-Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/hue2` beschrieben.
+kann die Verbindung zu einer Bridge hergestellt werden kann. Optionale weitere Einstellungen
+(z.B. default_transitionTime) können über die Admin GUI vorgenommen werden. Diese Parameter und die Informationen
+zur Item-spezifischen Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/hue_apiv2` beschrieben.
 
+|
 
 Bridge verbinden
 ----------------
@@ -103,12 +89,6 @@ Konfiguration des Plugins wird automatisch gespeichert. (in der Konfigurationsda
 .. image:: assets/webif_connect_2.jpg
    :class: screenshot
 
-
-.. note::
-
-    Es wird auch bei einer neuen bisher nicht genutzten Bridge ein Sensor gefunden, da der **Daylight Sensor**
-    Bestandteil der Firmware der Hue Bridges ist.
-
 |
 
 Verwendung von structs
@@ -119,15 +99,18 @@ Leuchten Templates vom Plugin mitgeliefert.
 
 Grundsätzliche Item Definitionen für Leuchten:
 
-- **hue2.light** - Standard Definition für Philips Hue Leuchten
-- **hue2.light_ww** - Standard Definition für Philips Warmwhite Leuchten
-- **hue2.light_xy** - Standard Definition für Leuchten von Dritt-Anbietern, die kein **sat** und **hue** unterstützen, sondern nur **xy**
+- **hue_apiv2.light** - Standard Definition für Philips Hue Leuchten
+- **hue_apiv2.light_ww** - Standard Definition für Philips Warmwhite Leuchten
+- **hue_apiv2.light_xy** - Standard Definition für Leuchten, die kein **sat** und **hue** unterstützt, sondern nur **xy**
 
 Erweiterte Item Definitionen für oben genannten Leuchten-Typen:
 
-- **hue2.light_extended**
-- **hue2.light_ww_extended**
-- **hue2.light_xy_extended**
+- **hue_apiv2.light_extended**
+- **hue_apiv2.light_ww_extended**
+- **hue_apiv2.light_xy_extended**
+
+
+**Ab hier muss die Doku noch überarbeitet werden:**
 
 
 Ein Item für eine Hue Leuchte kann einfach folgendermaßen konfiguriert werden, indem nur die Id der zu

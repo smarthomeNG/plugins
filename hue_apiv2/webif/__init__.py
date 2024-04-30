@@ -328,11 +328,6 @@ class WebInterface(SmartPluginWebIf):
         return value
 
 
-    def bridge_is_configured(self):
-
-        return self.plugin.bridge_ip != '0.0.0.0' and self.plugin.v2bridge is not None and self.plugin.v2bridge.host != '0.0.0.0'
-
-
     @cherrypy.expose
     def index(self, scan=None, connect=None, disconnect=None, reload=None):
         """
