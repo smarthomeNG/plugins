@@ -8,17 +8,17 @@ plugin:
     maintainer: msinn
 #    tester:                         # Who tests this plugin?
     state: develop                    # change to ready when done with development
-#    keywords: iot xyz
+    keywords: philips hue signify
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586861-support-thread-für-das-hue2-plugin
 
-    version: 0.6.0                  # Plugin version (must match the version specified in __init__.py)
+    version: 0.6.5                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.10.0           # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
 #    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: True            # plugin supports multi instance
-    restartable: unknown
+    restartable: True
     configuration_needed: False     # False: The plugin will be enabled by the Admin GUI without configuration
     classname: HueApiV2             # class containing the plugin
 
@@ -62,18 +62,6 @@ parameters:
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
 
-    hue_apiv2_dpt3_dim:
-        type: bool
-        description:
-            de: "Aktiviert DPT3 dimmen"
-            en: "Enabled DPT3 dimming"
-
-    hue_apiv2_transition_time:
-        type: num
-        description:
-            de: "Zeit für Übergang (in sec)"
-            en: "Time for transition (in sec)"
-
     hue_apiv2_resource:
         type: str
         description:
@@ -86,13 +74,6 @@ item_attributes:
           - sensor
           - button
           - device_power
-
-    hue_apiv2_reference_light_id:
-        type: str
-        description:
-            de: "ID der des referenzwert gebenden Lichtes. Nur möglich wenn resource == group"
-            en: "ID of the light giving the reference value. Only possible if resource == group"
-
 
     hue_apiv2_id:
         type: str
@@ -206,6 +187,25 @@ item_attributes:
               - "True, if the button was pressed long -> bool, r/o (resource: button)"
               - "Power Status -> str, r/o (resource: device_power)"
               - "Battery level in percent -> num, r/o (resource: device_power)"
+
+    hue_apiv2_transition_time:
+        type: num
+        description:
+            de: "Zeit für Übergang (in sec)"
+            en: "Time for transition (in sec)"
+
+    hue_apiv2_dpt3_dim:
+        type: bool
+        description:
+            de: "Aktiviert DPT3 dimmen"
+            en: "Enabled DPT3 dimming"
+
+    hue_apiv2_reference_light_id:
+        type: str
+        description:
+            de: "ID der des referenzwert gebenden Lichtes. Nur möglich wenn resource == group"
+            en: "ID of the light giving the reference value. Only possible if resource == group"
+
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)

@@ -110,19 +110,16 @@ Erweiterte Item Definitionen für oben genannten Leuchten-Typen:
 - **hue_apiv2.light_xy_extended**
 
 
-**Ab hier muss die Doku noch überarbeitet werden:**
-
-
 Ein Item für eine Hue Leuchte kann einfach folgendermaßen konfiguriert werden, indem nur die Id der zu
 steuernden Leuchts als ``hue2_id`` angegeben wird:
 
 .. code-block:: yaml
 
     test_leuchte:
-        hue2_id: 3
-        struct: hue2.light
+        hue_apiv2_id: d299371e-098d-4836-9669-d8ad3b5043c0
+        struct: hue_apiv2.light
 
-Damit werden zum Item ``test_leuchte`` die Sub-Items ``onoff``, ``level``, ``hue``, ``sat`` und ``ct`` definiert
+Damit werden zum Item ``test_leuchte`` unter anderem die Sub-Items ``onoff``, ``level``, ``xy`` und ``ct`` definiert
 und passend konfiguriert.
 
 Das hat die selbe Wirkung, als hätte man ohne Struktur Template folgende Item-Konfiguration vorgenommen:
@@ -130,7 +127,7 @@ Das hat die selbe Wirkung, als hätte man ohne Struktur Template folgende Item-K
 .. code-block:: yaml
 
     test_leuchte:
-        hue2_id: 3
+        hue_apiv2_id: d299371e-098d-4836-9669-d8ad3b5043c0
 
         name: Vorlage-Struktur für eine Hue Leuchte
         type: foo
@@ -148,17 +145,11 @@ Das hat die selbe Wirkung, als hätte man ohne Struktur Template folgende Item-K
             hue2_id: ..:.
             hue2_function: bri
 
-        hue:
+        xy:
             type: num
             hue2_resource: ..:.
             hue2_id: ..:.
-            hue2_function: hue
-
-        sat:
-            type: num
-            hue2_resource: ..:.
-            hue2_id: ..:.
-            hue2_function: sat
+            hue2_function: xy
 
         ct:
             type: num
@@ -176,26 +167,21 @@ werden. Änderungen an dem Item werden von der Bridge ignoriert.
 Item Attribute
 --------------
 
-Das Plugin verwendet drei Item Attribute: ``hue2_resource``, ``hue2_id`` und ``hue2_function``.
+Das Plugin verwendet die Item Attribute: ``hue_apiv2_id``, ``hue_apiv2_resource``, ``hue_apiv2_function``
+und ``hue_apiv2_transition_time``.
 
-Mit ``hue2_resource`` wird festgelegt, auf welche Resource der Bridge zugegriffen werden soll: ``light``, ``group``,
-``scene`` oder ``sensor``.
+Mit ``hue_apiv2_resource`` wird festgelegt, auf welche Resource der Bridge zugegriffen werden soll: ``light``, ``group``,
+``scene``, ``sensor``, ``button`` oder ``device_power``.
 
-.. note::
-
-    Bisher sind nur die Resouce-Typen ``light``, ``group`` und ``sensor`` implementiert.
-
-Mit ``hue2_id`` wird festgelegt auf welche Resource des gewählten Typs zugegriffen werden soll. Die Id kann im
+Mit ``hue_apiv2_id`` wird festgelegt auf welche Resource des gewählten Typs zugegriffen werden soll. Die Id kann im
 Web Interface im Tab des entsprechenden Resource-Typs nachgesehen werden.
 
-Mit ``hue2_function`` wird festgelegt, welche Funktion der gewählten Resource abgefragt oder gesteuert werden soll.
+Mit ``hue_apiv2_function`` wird festgelegt, welche Funktion der gewählten Resource abgefragt oder gesteuert werden soll.
 Für den Resource-Typ ``light`` sind die folgenden Funktionen implementiert (einige erlauben nur die Abfrage):
 
     - ``on``
     - ``bri``
     - ``bri_inc``
-    - ``hue``
-    - ``sat``
     - ``ct``
     - ``dict``
     - ``name``
@@ -210,34 +196,21 @@ Für den Resource-Typ ``light`` sind die folgenden Funktionen implementiert (ein
     - ``alert``
     - ``effect``
 
-Für den Resource-Typ ``sensor`` sind die folgenden Funktionen implementiert, welche nur die Abfrage erlauben:
-
-    - ``daylight``
-    - ``temperature``
-    - ``presence``
-    - ``lightlevel``
-    - ``status``
-
-
 
 Die vollständige Übersicht über die unterstützen Funktionen und die Datentypen dazu kann auf der
-Seite :doc:`/plugins_doc/config/hue2` in der Beschreibung des Item Attributes ``hue2_function`` nachgelesen
+Seite :doc:`/plugins_doc/config/hue_apiv2` in der Beschreibung des Item Attributes ``hue_apiv2_function`` nachgelesen
 werden.
 
-.. note::
-
-    Pullrequest https://github.com/smarthomeNG/plugins/pull/590 implementierte zusätzliche für hue2_function die
-    zusätzlichen Optionen ``bri_inc`` und ``dict``, welche noch nicht vollständig dokumentiert sind.
-
-Um den Namen der Leuchte mit der Id 3 abzufragen, muss ein Item folgendermaßen konfiguriert werden:
+Um zum Beospiel den Namen der Leuchte mit der Id d299371e-098d-4836-9669-d8ad3b5043c0 abzufragen, muss ein Item
+folgendermaßen konfiguriert werden:
 
 .. code-block:: yaml
 
     leuchten_name:
         type: str
-        hue2_resource: light
-        hue2_id: 3
-        hue2_function: name
+        hue_apiv2_resource: light
+        hue_apiv2_id: d299371e-098d-4836-9669-d8ad3b5043c0
+        hue_apiv2_function: name
 
 
 |
@@ -257,7 +230,7 @@ Das Plugin kann aus der Admin GUI (von der Seite Plugins/Plugin Liste aus) aufge
 in der entsprechenden Zeile das Icon in der Spalte **Web Interface** anklicken.
 
 Außerdem kann das Webinterface direkt über ``http://smarthome.local:8383/plugin/hue_apiv2`` bzw.
-``http://smarthome.local:8383/plugin/hue_apiv2<Instanz>`` aufgerufen werden.
+``http://smarthome.local:8383/plugin/hue_apiv2_<Instanz>`` aufgerufen werden.
 
 |
 

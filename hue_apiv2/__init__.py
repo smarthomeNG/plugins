@@ -59,14 +59,11 @@ class HueApiV2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '0.6.0'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '0.6.5'    # (must match the version specified in plugin.yaml)
 
     hue_sensor_state_values          = ['daylight', 'temperature', 'presence', 'lightlevel', 'status']
 
-    br = None               # Bridge object for communication with the bridge
-
-    v2bridge = None
-    devices = {}    # devices connected to the hue bridge
+    v2bridge = None         # Bridge object for communication with the bridge
 
 
     def __init__(self, sh):
@@ -517,6 +514,7 @@ class HueApiV2(SmartPlugin):
             conf_data['id'] = self.get_iattr_value(item.conf, 'hue_apiv2_id')
             conf_data['resource'] = self.get_iattr_value(item.conf, 'hue_apiv2_resource')
             conf_data['function'] = self.get_iattr_value(item.conf, 'hue_apiv2_function')
+            # TODO: reference_light_id auf sinnhaftigkeit prüfen
             if self.has_iattr(item.conf, 'hue_apiv2_reference_light_id'):
                 if conf_data['resource'] == "group":
                     conf_data['hue_apiv2_reference_light_id'] = self.get_iattr_value(item.conf, 'hue_apiv2_reference_light_id')
