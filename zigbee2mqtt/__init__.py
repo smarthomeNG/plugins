@@ -27,6 +27,7 @@ from datetime import datetime
 import json
 
 from lib.model.mqttplugin import MqttPlugin
+from logging import DEBUG
 
 from .rgbxy import Converter
 from .webif import WebInterface
@@ -417,7 +418,13 @@ class Zigbee2Mqtt(MqttPlugin):
 
                 if item is not None:
                     item(value, src)
-                    self.logger.info(f"{device}: Item '{item}' set to value {value}")
+                    if device == 'bridge' and (isinstance(value, list) or isinstance(value, dict)):
+                        if self.logger.isEnabledFor(DEBUG):
+                            self.logger.debug(f"{device}: Item '{item}' set to value {value}")
+                        else:
+                            self.logger.info(f"{device}: Item '{item}' set to value {str(value)[:80]}[...] (enable debug log for full output)")
+                    else:
+                        self.logger.info(f"{device}: Item '{item}' set to value {value}")
                 else:
                     self.logger.info(f"{device}: No item for attribute '{attr}' defined to set to {value}")
 
