@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586861-support-thread-für-das-hue2-plugin
 
-    version: 0.6.5                  # Plugin version (must match the version specified in __init__.py)
+    version: 0.7.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.10.0           # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -73,6 +73,7 @@ item_attributes:
           - scene
           - sensor
           - button
+          - device
           - device_power
 
     hue_apiv2_id:
@@ -287,26 +288,11 @@ item_structs:
             hue_apiv2_id@instance: ..:.
             hue_apiv2_function@instance: bri
 
-        ct:
-            type: num
-            enforce_updates: True
+        alert:
+            type: str
             hue_apiv2_resource@instance: ..:.
             hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: ct
-
-        xy:
-            type: list
-            enforce_updates: True
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: xy
-
-        dict:
-            type: dict
-            enforce_updates: True
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: dict
+            hue_apiv2_function@instance: alert
 
 
     _light_basic:
@@ -384,23 +370,23 @@ item_structs:
             hue_apiv2_id@instance: ..:.
             hue_apiv2_function@instance: connectivity
 
-        lighttype:
-            type: str
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: type
-
-        modelid:
-            type: str
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: modelid
-
-        swversion:
-            type: str
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: swversion
+#        lighttype:
+#            type: str
+#            hue_apiv2_resource@instance: ..:.
+#            hue_apiv2_id@instance: ..:.
+#            hue_apiv2_function@instance: type
+#
+#        modelid:
+#            type: str
+#            hue_apiv2_resource@instance: ..:.
+#            hue_apiv2_id@instance: ..:.
+#            hue_apiv2_function@instance: modelid
+#
+#        swversion:
+#            type: str
+#            hue_apiv2_resource@instance: ..:.
+#            hue_apiv2_id@instance: ..:.
+#            hue_apiv2_function@instance: swversion
 
 
 
