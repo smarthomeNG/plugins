@@ -1,9 +1,9 @@
-.. index:: Plugins; hue_apiv2
-.. index:: hue_apiv2 hue
+.. index:: Plugins; hue3
+.. index:: hue3 hue
 
-=========
-hue_apiv2
-=========
+====
+hue3
+====
 
 .. image:: webif/static/img/plugin_logo.png
    :alt: plugin logo
@@ -59,7 +59,7 @@ Konfiguration
 Die grundlegende Konfiguration des Plugins selbst, erfolgt durch das Web Interface des Plugins. Mit dem Web Interface
 kann die Verbindung zu einer Bridge hergestellt werden kann. Optionale weitere Einstellungen
 (z.B. default_transitionTime) können über die Admin GUI vorgenommen werden. Diese Parameter und die Informationen
-zur Item-spezifischen Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/hue_apiv2` beschrieben.
+zur Item-spezifischen Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/hue3` beschrieben.
 
 |
 
@@ -99,25 +99,25 @@ Leuchten Templates vom Plugin mitgeliefert.
 
 Grundsätzliche Item Definitionen für Leuchten:
 
-- **hue_apiv2.light** - Standard Definition für Philips Hue Leuchten
-- **hue_apiv2.light_ww** - Standard Definition für Philips Warmwhite Leuchten
-- **hue_apiv2.light_xy** - Standard Definition für Leuchten, die kein **sat** und **hue** unterstützt, sondern nur **xy**
+- **hue3.light** - Standard Definition für Philips Hue Leuchten
+- **hue3.light_ww** - Standard Definition für Philips Warmwhite Leuchten
+- **hue3.light_xy** - Standard Definition für Leuchten, die kein **sat** und **hue** unterstützt, sondern nur **xy**
 
 Erweiterte Item Definitionen für oben genannten Leuchten-Typen:
 
-- **hue_apiv2.light_extended**
-- **hue_apiv2.light_ww_extended**
-- **hue_apiv2.light_xy_extended**
+- **hue3.light_extended**
+- **hue3.light_ww_extended**
+- **hue3.light_xy_extended**
 
 
 Ein Item für eine Hue Leuchte kann einfach folgendermaßen konfiguriert werden, indem nur die Id der zu
-steuernden Leuchts als ``hue_apiv2_id`` angegeben wird:
+steuernden Leuchts als ``hue3_id`` angegeben wird:
 
 .. code-block:: yaml
 
     test_leuchte:
-        hue_apiv2_id: d299371e-098d-4836-9669-d8ad3b5043c0
-        struct: hue_apiv2.light
+        hue3_id: d299371e-098d-4836-9669-d8ad3b5043c0
+        struct: hue3.light
 
 Damit werden zum Item ``test_leuchte`` unter anderem die Sub-Items ``onoff``, ``level``, ``xy`` und ``ct`` definiert
 und passend konfiguriert.
@@ -127,38 +127,38 @@ Das hat die selbe Wirkung, als hätte man ohne Struktur Template folgende Item-K
 .. code-block:: yaml
 
     test_leuchte:
-        hue_apiv2_id: d299371e-098d-4836-9669-d8ad3b5043c0
+        hue3_id: d299371e-098d-4836-9669-d8ad3b5043c0
 
         name: Vorlage-Struktur für eine Hue Leuchte
         type: foo
-        hue_apiv2_resource: light
+        hue3_resource: light
 
         onoff:
             type: bool
-            hue_apiv2_resource: ..:.
-            hue_apiv2_id: ..:.
-            hue_apiv2_function: on
+            hue3_resource: ..:.
+            hue3_id: ..:.
+            hue3_function: on
 
         level:
             type: num
-            hue_apiv2_resource: ..:.
-            hue_apiv2_id: ..:.
-            hue_apiv2_function: bri
+            hue3_resource: ..:.
+            hue3_id: ..:.
+            hue3_function: bri
 
         xy:
             type: num
-            hue_apiv2_resource: ..:.
-            hue_apiv2_id: ..:.
-            hue_apiv2_function: xy
+            hue3_resource: ..:.
+            hue3_id: ..:.
+            hue3_function: xy
 
         ct:
             type: num
-            hue_apiv2_resource: ..:.
-            hue_apiv2_id: ..:.
-            hue_apiv2_function: ct
+            hue3_resource: ..:.
+            hue3_id: ..:.
+            hue3_function: ct
 
 
-Das Struktur Template **hue_apiv2.light_extended** definiert zusätzlich noch die Sub-Items ``light_name``, ``reachable``,
+Das Struktur Template **hue3.light_extended** definiert zusätzlich noch die Sub-Items ``light_name``, ``reachable``,
 ``colormode``, ``xy``, ``light_type``, ``modelid`` und ``swversion``. Die Sub-Items
 ``reachable``, ``colormode``, ``light_type``, ``modelid`` und ``swversion`` können nur aus der Bridge gelesen
 werden. Änderungen an dem Item werden von der Bridge ignoriert.
@@ -167,16 +167,16 @@ werden. Änderungen an dem Item werden von der Bridge ignoriert.
 Item Attribute
 --------------
 
-Das Plugin verwendet die Item Attribute: ``hue_apiv2_id``, ``hue_apiv2_resource``, ``hue_apiv2_function``
-und ``hue_apiv2_transition_time``.
+Das Plugin verwendet die Item Attribute: ``hue3_id``, ``hue3_resource``, ``hue3_function``
+und ``hue3_transition_time``.
 
-Mit ``hue_apiv2_resource`` wird festgelegt, auf welche Resource der Bridge zugegriffen werden soll: ``light``, ``group``,
+Mit ``hue3_resource`` wird festgelegt, auf welche Resource der Bridge zugegriffen werden soll: ``light``, ``group``,
 ``scene``, ``sensor``, ``button`` oder ``device_power``.
 
-Mit ``hue_apiv2_id`` wird festgelegt auf welche Resource des gewählten Typs zugegriffen werden soll. Die Id kann im
+Mit ``hue3_id`` wird festgelegt auf welche Resource des gewählten Typs zugegriffen werden soll. Die Id kann im
 Web Interface im Tab des entsprechenden Resource-Typs nachgesehen werden.
 
-Mit ``hue_apiv2_function`` wird festgelegt, welche Funktion der gewählten Resource abgefragt oder gesteuert werden soll.
+Mit ``hue3_function`` wird festgelegt, welche Funktion der gewählten Resource abgefragt oder gesteuert werden soll.
 Für den Resource-Typ ``light`` sind die folgenden Funktionen implementiert (einige erlauben nur die Abfrage):
 
     - ``on``
@@ -198,7 +198,7 @@ Für den Resource-Typ ``light`` sind die folgenden Funktionen implementiert (ein
 
 
 Die vollständige Übersicht über die unterstützen Funktionen und die Datentypen dazu kann auf der
-Seite :doc:`/plugins_doc/config/hue_apiv2` in der Beschreibung des Item Attributes ``hue_apiv2_function`` nachgelesen
+Seite :doc:`/plugins_doc/config/hue3` in der Beschreibung des Item Attributes ``hue3_function`` nachgelesen
 werden.
 
 Um zum Beospiel den Namen der Leuchte mit der Id d299371e-098d-4836-9669-d8ad3b5043c0 abzufragen, muss ein Item
@@ -208,9 +208,9 @@ folgendermaßen konfiguriert werden:
 
     leuchten_name:
         type: str
-        hue_apiv2_resource: light
-        hue_apiv2_id: d299371e-098d-4836-9669-d8ad3b5043c0
-        hue_apiv2_function: name
+        hue3_resource: light
+        hue3_id: d299371e-098d-4836-9669-d8ad3b5043c0
+        hue3_function: name
 
 
 |
@@ -218,7 +218,7 @@ folgendermaßen konfiguriert werden:
 Web Interface
 =============
 
-Das hue_apiv2 Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die das Plugin nutzen
+Das hue3 Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die das Plugin nutzen
 übersichtlich dargestellt werden. Außerdem können Informationen zu den Devices angezeigt werden,
 die an der Hue Brigde angemeldet sind.
 
@@ -229,8 +229,8 @@ Aufruf des Webinterfaces
 Das Plugin kann aus der Admin GUI (von der Seite Plugins/Plugin Liste aus) aufgerufen werden. Dazu auf der Seite
 in der entsprechenden Zeile das Icon in der Spalte **Web Interface** anklicken.
 
-Außerdem kann das Webinterface direkt über ``http://smarthome.local:8383/plugin/hue_apiv2`` bzw.
-``http://smarthome.local:8383/plugin/hue_apiv2_<Instanz>`` aufgerufen werden.
+Außerdem kann das Webinterface direkt über ``http://smarthome.local:8383/plugin/hue3`` bzw.
+``http://smarthome.local:8383/plugin/hue3_<Instanz>`` aufgerufen werden.
 
 |
 

@@ -518,9 +518,6 @@ class HueApiV2(SmartPlugin):
             config_data['transition_time'] = self.get_iattr_value(item.conf, 'hue3_transition_time')
 
             config_data['name'] = ''    # to be filled during initialization of v2bridge
-            #if self.has_iattr(item.conf, 'hue3_reference_light_id'):
-            #    if config_data['resource'] == "group":
-            #        config_data['hue3_reference_light_id'] = self.get_iattr_value(item.conf, 'hue3_reference_light_id')
 
             config_data['item'] = item
 
@@ -533,10 +530,6 @@ class HueApiV2(SmartPlugin):
             conf_data['id'] = self.get_iattr_value(item.conf, 'hue3_id')
             conf_data['resource'] = self.get_iattr_value(item.conf, 'hue3_resource')
             conf_data['function'] = self.get_iattr_value(item.conf, 'hue3_function')
-            # TODO: reference_light_id auf sinnhaftigkeit prüfen
-            if self.has_iattr(item.conf, 'hue3_reference_light_id'):
-                if conf_data['resource'] == "group":
-                    conf_data['hue3_reference_light_id'] = self.get_iattr_value(item.conf, 'hue3_reference_light_id')
 
             conf_data['item'] = item
             # store config in plugin_items
@@ -545,12 +538,10 @@ class HueApiV2(SmartPlugin):
             if conf_data['resource'] == 'group':
                 # bridge updates are allways scheduled
                 self.logger.debug("parse_item: configured group item = {}".format(conf_data))
+            # Ende alt
 
             self.add_item(item, mapping=mapping, config_data_dict=config_data, updating=True)
             return self.update_item
-
-        if 'hue3_dpt3_dim' in item.conf:
-            return self.dimDPT3
 
 
     def parse_logic(self, logic):
@@ -560,24 +551,6 @@ class HueApiV2(SmartPlugin):
         if 'xxx' in logic.conf:
             # self.function(logic['name'])
             pass
-
-
-    def dimDPT3(self, item, caller=None, source=None, dest=None):
-        # Evaluation of the list values for the KNX data
-        # [1] for dimming
-        # [0] for direction
-        parent = item.return_parent()
-
-        if item()[1] == 1:
-            # dimmen
-            if item()[0] == 1:
-                # up
-                parent(254, self.get_shortname()+"dpt3")
-            else:
-                # down
-                parent(-254, self.get_shortname()+"dpt3")
-        else:
-            parent(0, self.get_shortname()+"dpt3")
 
 
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -742,7 +715,7 @@ class HueApiV2(SmartPlugin):
                     transition_time = int(float(transition_time)*1000)
                 self.run_asyncio_coro(self.v2bridge.groups.grouped_light.set_state(config_data['id'], on, bri, xy, ct, transition_time=transition_time))
         elif config_data['function'] == 'bri_inc':
-            self.logger.warning(f"Groups: {config_data['function']} not implemented")
+            self.logger.warning(f"Groups: {config_data['function']} not implemented in aiohue")
         elif config_data['function'] == 'alert':
             self.logger.warning(f"Groups: {config_data['function']} not implemented")
         elif config_data['function'] == 'effect':

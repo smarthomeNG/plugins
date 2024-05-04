@@ -195,18 +195,6 @@ item_attributes:
             de: "Zeit für Übergang (in sec)"
             en: "Time for transition (in sec)"
 
-    hue3_dpt3_dim:
-        type: bool
-        description:
-            de: "Aktiviert DPT3 dimmen"
-            en: "Enabled DPT3 dimming"
-
-    hue3_reference_light_id:
-        type: str
-        description:
-            de: "ID der des referenzwert gebenden Lichtes. Nur möglich wenn resource == group"
-            en: "ID of the light giving the reference value. Only possible if resource == group"
-
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
