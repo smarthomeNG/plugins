@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586861-support-thread-für-das-hue2-plugin
 
-    version: 0.7.0                  # Plugin version (must match the version specified in __init__.py)
+    version: 3.0.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.10.0           # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -62,7 +62,7 @@ parameters:
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
 
-    hue_apiv2_resource:
+    hue3_resource:
         type: str
         description:
             de: "Anzusteuernde Resource, falls nicht angegeben wird 'light' angenommen"
@@ -76,13 +76,13 @@ item_attributes:
           - device
           - device_power
 
-    hue_apiv2_id:
+    hue3_id:
         type: str
         description:
-            de: "ID der anzusteuernden resouce. Der Typ der resource wird mit 'hue_apiv2_recource' festgelegt."
-            en: "ID of the resource to conteol/read. The type of the resoucre is defined by 'hue_apiv2_recource' attribute"
+            de: "ID der anzusteuernden resouce. Der Typ der resource wird mit 'hue3_recource' festgelegt."
+            en: "ID of the resource to conteol/read. The type of the resoucre is defined by 'hue3_recource' attribute"
 
-    hue_apiv2_function:
+    hue3_function:
         type: str
         description:
             de: "Anzusteuernde Funktion für die gewählte Resource/ID"
@@ -138,7 +138,7 @@ item_attributes:
               - "Software Version des Leuchtmittels -> str, r/o (resource: light)"
               - "Aktivieren einer Szene für Leuchten -> bool w/o (resource: scene)"
               - "Aktivieren einer Szene (Szenen-Id aus dem Item Wert) für Leuchten -> str w/o (resource: scene)"
-              - "Anpassen einer Szene für Leuchten in der selektierten Gruppe (hue_apiv2_id) -> str w/o (resource: group)"
+              - "Anpassen einer Szene für Leuchten in der selektierten Gruppe (hue3_id) -> str w/o (resource: group)"
               - "Benachrichtigung -> str (Werte: none, select, lselect) (resource: light, group)"
               - "Lichteffekt -> str (Werte: none, colorloop) (resource: light, group)"
               - "Tageslicht -> bool, r/o (resource: sensor)"
@@ -171,7 +171,7 @@ item_attributes:
               - "Software version lamp -> str, r/o (resource: light)"
               - "Activate a scene for lights -> bool w/o (resource: scene)"
               - "Activate a scene (scene-id from item value) for lights -> str w/o (resource: scene)"
-              - "Change a scene for lights in the selected group (hue_apiv2_id) -> str w/o (resource: group)"
+              - "Change a scene for lights in the selected group (hue3_id) -> str w/o (resource: group)"
               - "Alert -> str (values: none, select, lselect) (resource: light, group)"
               - "Effect -> str (values: none, colorloop) (resource: light, group)"
               - "Sensor 'daylight' -> bool, r/o (resource: sensor)"
@@ -189,19 +189,19 @@ item_attributes:
               - "Power Status -> str, r/o (resource: device_power)"
               - "Battery level in percent -> num, r/o (resource: device_power)"
 
-    hue_apiv2_transition_time:
+    hue3_transition_time:
         type: num
         description:
             de: "Zeit für Übergang (in sec)"
             en: "Time for transition (in sec)"
 
-    hue_apiv2_dpt3_dim:
+    hue3_dpt3_dim:
         type: bool
         description:
             de: "Aktiviert DPT3 dimmen"
             en: "Enabled DPT3 dimming"
 
-    hue_apiv2_reference_light_id:
+    hue3_reference_light_id:
         type: str
         description:
             de: "ID der des referenzwert gebenden Lichtes. Nur möglich wenn resource == group"
@@ -212,181 +212,181 @@ item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
     light:
         name: Vorlage-Struktur für eine Hue Leuchte
-        struct: hue_apiv2._light_basic
+        struct: hue3._light_basic
 
         xy:
             type: list
             enforce_updates: True
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: xy
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: xy
 
 
     light_ww:
         name: Vorlage-Struktur für eine Hue Leuchte (warm white)
-        struct: hue_apiv2._light_basic
+        struct: hue3._light_basic
 
 
     light_xy:
         name: Vorlage-Struktur für eine Hue Leuchte (Farbe nur über xy)
-        struct: hue_apiv2._light_basic
+        struct: hue3._light_basic
 
         xy:
             type: list
             enforce_updates: True
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: xy
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: xy
 
 
     light_extended:
         name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items
         struct:
-          - hue_apiv2.light
-          - hue_apiv2._light_extended
+          - hue3.light
+          - hue3._light_extended
 
 
     light_ww_extended:
         name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items (warm white)
         struct:
-          - hue_apiv2.light_ww
-          - hue_apiv2._light_extended
+          - hue3.light_ww
+          - hue3._light_extended
 
 
     light_xy_extended:
         name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items (Farbe nur über xy)
         struct:
-          - hue_apiv2.light_xy
-          - hue_apiv2._light_extended
+          - hue3.light_xy
+          - hue3._light_extended
 
 
     group_activate_scene:
         name: Vorlage-Struktur zum aktivieren von Hue Szenen
         type: str
-        hue_apiv2_resource@instance: group
-        hue_apiv2_function@instance: activate_scene
-        #hue_apiv2_id@instance: 1
+        hue3_resource@instance: group
+        hue3_function@instance: activate_scene
+        #hue3_id@instance: 1
 
     group:
         name: Vorlage-Struktur für eine Hue Gruppe
 
         type: foo
-        hue_apiv2_resource@instance: group
-        #hue_apiv2_id@instance: 1
+        hue3_resource@instance: group
+        #hue3_id@instance: 1
 
         onoff:
             type: bool
             enforce_updates: True
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: on
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: on
 
         level:
             type: num
             enforce_updates: True
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: bri
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: bri
 
         alert:
             type: str
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: alert
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: alert
 
 
     _light_basic:
         name: interne Vorlage-Struktur für eine Hue Leuchte (basic)
 
         type: foo
-        hue_apiv2_resource@instance: light
-        #hue_apiv2_id@instance: 1
+        hue3_resource@instance: light
+        #hue3_id@instance: 1
 
         onoff:
             type: bool
             enforce_updates: True
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: on
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: on
 
         level:
             type: num
             enforce_updates: True
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: bri
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: bri
 
         level_inc:
             type: num
             enforce_updates: True
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: bri_inc
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: bri_inc
 
         ct:
             type: num
             enforce_updates: True
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: ct
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: ct
 
         dict:
             type: dict
             enforce_updates: True
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: dict
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: dict
 
         alert:
             type: str
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: alert
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: alert
 
         effect:
             type: str
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: effect
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: effect
 
 
     _light_extended:
         name: interne Vorlage-Struktur für eine Hue Leuchte (extended attributes)
         lightname:
             type: str
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: name
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: name
 
         reachable:
             type: bool
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: reachable
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: reachable
 
         connectivity:
             type: str
-            hue_apiv2_resource@instance: ..:.
-            hue_apiv2_id@instance: ..:.
-            hue_apiv2_function@instance: connectivity
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: connectivity
 
 #        lighttype:
 #            type: str
-#            hue_apiv2_resource@instance: ..:.
-#            hue_apiv2_id@instance: ..:.
-#            hue_apiv2_function@instance: type
+#            hue3_resource@instance: ..:.
+#            hue3_id@instance: ..:.
+#            hue3_function@instance: type
 #
 #        modelid:
 #            type: str
-#            hue_apiv2_resource@instance: ..:.
-#            hue_apiv2_id@instance: ..:.
-#            hue_apiv2_function@instance: modelid
+#            hue3_resource@instance: ..:.
+#            hue3_id@instance: ..:.
+#            hue3_function@instance: modelid
 #
 #        swversion:
 #            type: str
-#            hue_apiv2_resource@instance: ..:.
-#            hue_apiv2_id@instance: ..:.
-#            hue_apiv2_function@instance: swversion
+#            hue3_resource@instance: ..:.
+#            hue3_id@instance: ..:.
+#            hue3_function@instance: swversion
 
 
 

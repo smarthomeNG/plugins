@@ -7,7 +7,7 @@
 #  https://www.smarthomeNG.de
 #  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  hue_apiv2 plugin to run with SmartHomeNG
+#  hue3 plugin to run with SmartHomeNG
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ class HueApiV2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '0.7.0'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '3.0.0'    # (must match the version specified in plugin.yaml)
 
     hue_sensor_state_values          = ['daylight', 'temperature', 'presence', 'lightlevel', 'status']
 
@@ -503,47 +503,40 @@ class HueApiV2(SmartPlugin):
                         with the item, caller, source and dest as arguments and in case of the knx plugin the value
                         can be sent to the knx with a knx write function within the knx plugin.
         """
-        resource = self.get_iattr_value(item.conf, 'hue_apiv2_resource')
-        function = self.get_iattr_value(item.conf, 'hue_apiv2_function')
-        if self.has_iattr(item.conf, 'hue_apiv2_id') and self.has_iattr(item.conf, 'hue_apiv2_function') or \
+        resource = self.get_iattr_value(item.conf, 'hue3_resource')
+        function = self.get_iattr_value(item.conf, 'hue3_function')
+        if self.has_iattr(item.conf, 'hue3_id') and self.has_iattr(item.conf, 'hue3_function') or \
            resource == 'scene' and function == 'activate_scene':
             config_data = {}
-            id = self.get_iattr_value(item.conf, 'hue_apiv2_id')
+            id = self.get_iattr_value(item.conf, 'hue3_id')
             if id is None:
                 id = 'None'
             config_data['id'] = id
             #config_data['id_v1'] = id
-            config_data['resource'] = self.get_iattr_value(item.conf, 'hue_apiv2_resource')
-            config_data['function'] = self.get_iattr_value(item.conf, 'hue_apiv2_function')
-            config_data['transition_time'] = self.get_iattr_value(item.conf, 'hue_apiv2_transition_time')
+            config_data['resource'] = self.get_iattr_value(item.conf, 'hue3_resource')
+            config_data['function'] = self.get_iattr_value(item.conf, 'hue3_function')
+            config_data['transition_time'] = self.get_iattr_value(item.conf, 'hue3_transition_time')
 
             config_data['name'] = ''    # to be filled during initialization of v2bridge
-            #if self.has_iattr(item.conf, 'hue_apiv2_reference_light_id'):
+            #if self.has_iattr(item.conf, 'hue3_reference_light_id'):
             #    if config_data['resource'] == "group":
-            #        config_data['hue_apiv2_reference_light_id'] = self.get_iattr_value(item.conf, 'hue_apiv2_reference_light_id')
+            #        config_data['hue3_reference_light_id'] = self.get_iattr_value(item.conf, 'hue3_reference_light_id')
 
             config_data['item'] = item
 
 #            mapping = config_data['id_v1'] + mapping_delimiter + config_data['resource'] + mapping_delimiter + config_data['function']
             mapping = config_data['id'] + mapping_delimiter + config_data['resource'] + mapping_delimiter + config_data['function']
-            # updating=True, if not read only
-            if not config_data['function'] in ['reachable', 'battery'] and \
-               not config_data['function'] in self.hue_sensor_state_values:
-                pass
-#                self.add_item(item, mapping=mapping, config_data_dict=config_data, updating=True)
-#                return self.update_item
-            self.add_item(item, mapping=mapping, config_data_dict=config_data)
 
             # alt:
             self.logger.debug("parse item: {}".format(item))
             conf_data = {}
-            conf_data['id'] = self.get_iattr_value(item.conf, 'hue_apiv2_id')
-            conf_data['resource'] = self.get_iattr_value(item.conf, 'hue_apiv2_resource')
-            conf_data['function'] = self.get_iattr_value(item.conf, 'hue_apiv2_function')
+            conf_data['id'] = self.get_iattr_value(item.conf, 'hue3_id')
+            conf_data['resource'] = self.get_iattr_value(item.conf, 'hue3_resource')
+            conf_data['function'] = self.get_iattr_value(item.conf, 'hue3_function')
             # TODO: reference_light_id auf sinnhaftigkeit prüfen
-            if self.has_iattr(item.conf, 'hue_apiv2_reference_light_id'):
+            if self.has_iattr(item.conf, 'hue3_reference_light_id'):
                 if conf_data['resource'] == "group":
-                    conf_data['hue_apiv2_reference_light_id'] = self.get_iattr_value(item.conf, 'hue_apiv2_reference_light_id')
+                    conf_data['hue3_reference_light_id'] = self.get_iattr_value(item.conf, 'hue3_reference_light_id')
 
             conf_data['item'] = item
             # store config in plugin_items
@@ -553,15 +546,10 @@ class HueApiV2(SmartPlugin):
                 # bridge updates are allways scheduled
                 self.logger.debug("parse_item: configured group item = {}".format(conf_data))
 
-            # updating=True, if not read only
-            if not conf_data['function'] in ['reachable', 'battery'] and \
-               not conf_data['function'] in self.hue_sensor_state_values:
-                self.add_item(item, mapping=mapping, config_data_dict=config_data, updating=True)
-                return self.update_item
-            #self.add_item(item, mapping=mapping, config_data_dict=config_data)
-            return
+            self.add_item(item, mapping=mapping, config_data_dict=config_data, updating=True)
+            return self.update_item
 
-        if 'hue_apiv2_dpt3_dim' in item.conf:
+        if 'hue3_dpt3_dim' in item.conf:
             return self.dimDPT3
 
 
@@ -650,11 +638,14 @@ class HueApiV2(SmartPlugin):
             if float(value) <= 100:
                 self.run_asyncio_coro(self.v2bridge.lights.set_brightness(config_data['id'], float(value), hue_transition_time))
             else:
-                self.logger.error(f"{item.property.path}: Cant set brightness of light {config_data['id']} to {value} - out of range")
+                self.logger.error(f"{item.property.path}: Can't set brightness of light {config_data['id']} to {value} - out of range")
         elif config_data['function'] == 'xy' and isinstance(value, list) and len(value) == 2:
             self.run_asyncio_coro(self.v2bridge.lights.set_color(config_data['id'], value[0], value[1], hue_transition_time))
         elif config_data['function'] == 'ct':
-            self.run_asyncio_coro(self.v2bridge.lights.set_color_temperature(config_data['id'], value, hue_transition_time))
+            if float(value) >= 153 and float(value) <= 500:
+                self.run_asyncio_coro(self.v2bridge.lights.set_color_temperature(config_data['id'], value, hue_transition_time))
+            else:
+                self.logger.error(f"{item.property.path}: Can't set color temperature of light {config_data['id']} to {value} - out of range")
         elif config_data['function'] == 'dict':
             if value != {}:
                 on = value.get('on', None)
@@ -672,8 +663,19 @@ class HueApiV2(SmartPlugin):
                     transition_time = int(float(transition_time)*1000)
                 self.run_asyncio_coro(self.v2bridge.lights.set_state(config_data['id'], on, bri, xy, ct, transition_time=transition_time))
         elif config_data['function'] == 'bri_inc':
-            # TODO: bri_inc implementieren
-            self.logger.warning(f"Lights: {config_data['function']} not implemented")
+            if float(value) >= -100 and float(value) <= 100:
+                if float(value) < 0:
+                    action = 'down'
+                    value = -1 * float(value)
+                elif float(value) > 0:
+                    action = 'up'
+                else:
+                    action = 'stop'
+
+                # TODO: bri_inc implementieren (ist in aiohue nicht implememntiert)
+                self.logger.warning(f"Lights: {config_data['function']} not implemented in aiohue")
+            else:
+                self.logger.error(f"{item.property.path}: Can't set relative brightness of light {config_data['id']} with {value} - out of range")
         elif config_data['function'] == 'alert':
             self.logger.warning(f"Lights: {config_data['function']} not implemented")
         elif config_data['function'] == 'effect':
