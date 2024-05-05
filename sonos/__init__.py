@@ -2998,7 +2998,7 @@ class Sonos(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = "1.8.5"
+    PLUGIN_VERSION = "1.8.6"
 
     def __init__(self, sh):
         """Initializes the plugin."""
