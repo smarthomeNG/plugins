@@ -75,7 +75,14 @@ Ab *smarthomeNG 1.6* ist das Anlegen der nötigen Items via ``struct`` besonders
 SmartVISU
 =========
 
-Das UZSU Plugin wird durch die smartVISU ab Version 2.9 sowohl in Form eines Popups als auch einer grafischen Darstellung mittels *device.uzsu Widget* unterstützt.
+Das UZSU Plugin wird durch die smartVISU ab Version 2.9 sowohl in Form eines Popups als auch einer grafischen Darstellung mittels *device.uzsu Widget* unterstützt. Zeitserien sind ebenfalls über die SmartVISU abbildbar.
+Außerdem ist es möglich, die Struct Items "next.value" und "next.time" zu nutzen, um einen Tooltip mit der nächsten Ausführung anzuzeigen.
+
+.. code-block:: html
+
+    {{ device.uzsuicon('uzsu1','test.varuzsua.uzsu') }}
+    {{ basic.print('',['test.varuzsua.uzsu.next.time','test.varuzsua.uzsu .next.value'],'text', '"Nächste Schaltzeit: "+VAR1+" Wert: "+VAR2', '', '', 'uzsu1', 'tooltip') }}
+
 Bei Problemen bitte das entsprechende Supportforum konsultieren. Es wird empfohlen, die Visualisierung für das Einstellen der UZSU zu verwenden.
 
 
@@ -130,6 +137,8 @@ Pluginfunktionen
 ================
 
 Detaillierte Informationen zu den Funktionen des Plugins sind unter :doc:`/plugins_doc/config/uzsu` zu finden.
+Sämtliche Pluginfunktionen funktionieren auch als Itemfunktionen für UZSU Items. Dabei muss beim Funktionsaufruf das Item nicht angegeben werden.
+Beispiel: Die Pluginfunktion sh.uzsu.activate(True, sh.test.uzsu) ist identisch mit dem Aufruf sh.test.uzsu.activate(True)
 
 
 Web Interface
