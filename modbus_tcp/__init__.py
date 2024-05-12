@@ -37,6 +37,8 @@ from pymodbus.payload import BinaryPayloadBuilder
 
 from pymodbus.client.tcp import ModbusTcpClient
 
+import logging
+
 AttrAddress = 'modBusAddress'
 AttrType = 'modBusDataType'
 AttrFactor = 'modBusFactor'
@@ -46,23 +48,29 @@ AttrSlaveUnit = 'modBusUnit'
 AttrObjectType = 'modBusObjectType'
 AttrDirection = 'modBusDirection'
 
-
 class modbus_tcp(SmartPlugin):
     """
     This class provides a Plugin for SmarthomeNG to read and or write to modbus
     devices.
     """
 
-    PLUGIN_VERSION = '1.0.11'
+    PLUGIN_VERSION = '1.0.12'
 
     def __init__(self, sh, *args, **kwargs):
         """
         Initializes the Modbus TCP plugin.
         The parameters are retrieved from get_parameter_value(parameter_name)
         """
-
+        
         self.logger.info('Init modbus_tcp plugin')
 
+        # Disable logging from imported modul 'pymodbus'
+        if not self.logger.isEnabledFor(logging.DEBUG):
+            disable_logger = logging.getLogger('pymodbus')
+            if disable_logger is not None:
+                self.logger.info(f'change logging level from: {disable_logger} to CRITICAL')
+                disable_logger.setLevel(logging.CRITICAL)
+        
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
@@ -77,7 +85,7 @@ class modbus_tcp(SmartPlugin):
             self._crontab = None
         if not (self._cycle or self._crontab):
             self.logger.error(f"{self.get_fullname()}: no update cycle or crontab set. Modbus will not be queried automatically")
-        
+
         self._slaveUnit = int(self.get_parameter_value('slaveUnit'))
         self._slaveUnitRegisterDependend = False
 
@@ -101,10 +109,11 @@ class modbus_tcp(SmartPlugin):
         self.logger.debug(f"Plugin '{self.get_fullname()}': run method called")
         self.alive = True
         if self._cycle or self._crontab:
+            self.error_count = 0  # Initialize error count
             # self.get_shortname()
             self.scheduler_add('poll_device_' + self._host, self.poll_device, cycle=self._cycle, cron=self._crontab, prio=5)
             #self.scheduler_add(self.get_shortname(), self._update_values_callback, prio=5, cycle=self._update_cycle, cron=self._update_crontab, next=shtime.now())
-        self.logger.debug(f"Plugin '{self.get_fullname()}': run method finished")
+        self.logger.debug(f"Plugin '{self.get_fullname()}': run method finished ")
 
     def stop(self):
         """
@@ -117,6 +126,17 @@ class modbus_tcp(SmartPlugin):
         self.connected = False
         self.logger.debug(f"Plugin '{self.get_fullname()}': stop method finished")
 
+    # sh.plugins.return_plugin('pluginName').suspend()
+    def set_suspend(self, suspend_active, by):
+        """
+        enable / disable suspend mode: open/close connections, schedulers
+        """
+        if suspend_active:
+            self.logger.debug(f"Plugin '{self.get_fullname()}': Suspend mode enabled {self.suspended}")
+        else:
+            self.logger.debug(f"Plugin '{self.get_fullname()}': Suspend mode disabled {self.suspended}")
+        #self.suspend_active  = suspend_active
+        
     def parse_item(self, item):
         """
         Default plugin parse_item method. Is called when the plugin is initialized.
@@ -190,6 +210,22 @@ class modbus_tcp(SmartPlugin):
                 self.logger.warning("Invalid data direction -> default(read) is used")
                 self._regToRead.update({reg: regPara})
 
+    def log_error(self, message):
+        """
+        Logs an error message based on error count
+        """
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.error(message)
+        else:
+            if self.error_count < 10:
+                self.logger.error(message)
+            elif self.error_count < 100:
+                if self.error_count % 10 == 0:
+                    self.logger.error(f"{message} [Logging suppressed every 10th error]")
+            else:
+                if self.error_count % 100 == 0:
+                    self.logger.error(f"{message} [Logging suppressed every 100th error]")
+
     def poll_device(self):
         """
         Polls for updates of the device
@@ -198,19 +234,32 @@ class modbus_tcp(SmartPlugin):
         changes on it's own, but has to be polled to get the actual status.
         It is called by the scheduler which is set within run() method.
         """
+        if self.suspended:
+            if self.suspend_log_poll is None or self.suspend_log_poll is False:   # debug - Nachricht nur 1x ausgeben 
+                self.logger.info(f"poll suspended")
+                self.suspend_log_poll = True
+                self.error_count = 0       
+            return
+        else:
+            self.suspend_log_poll = False
 
         with self.lock:
             try:
                 if self._Mclient.connect():
-                    self.logger.info(f"connected to {str(self._Mclient)}")
+                    self.logger.debug(f"connected to {str(self._Mclient)}")
                     self.connected = True
+                    self.error_count = 0  
                 else:
-                    self.logger.error(f"could not connect to {self._host}:{self._port}")
+                    self.error_count += 1
+                    # Logs an error message based on error count
+                    self.log_error(f"could not connect to {self._host}:{self._port}, connection_attempts: {self.error_count}")
                     self.connected = False
                     return
 
             except Exception as e:
-                self.logger.error(f"connection exception: {str(self._Mclient)} {e}")
+                self.error_count += 1
+                # Logs an error message based on error count
+                self.log_error(f"connection exception: {str(self._Mclient)} {e}, errors: {self.error_count}")
                 self.connected = False
                 return
 
@@ -247,6 +296,7 @@ class modbus_tcp(SmartPlugin):
         except Exception as e:
             self.logger.error(f"something went wrong in the poll_device function: {e}")
 
+
     # called each time an item changes.
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -264,6 +314,14 @@ class modbus_tcp(SmartPlugin):
         objectType = 'HoldingRegister'
         slaveUnit = self._slaveUnit
         dataDirection = 'read'
+
+        if self.suspended:
+            if self.suspend_log_update is None or self.suspend_log_update is False:   # debug - Nachricht nur 1x ausgeben 
+                self.logger.info('Plugin is suspended, data will not be written')
+                self.suspend_log_update = True
+            return
+        else:
+            self.suspend_log_update = False
 
         if caller == self.get_fullname():
             # self.logger.debug(f'item was changed by the plugin itself - caller:{caller} source:{source} dest:{dest}')
@@ -301,15 +359,20 @@ class modbus_tcp(SmartPlugin):
                     self.logger.debug(f'update_item:{item} value:{item()} regToWrite: {reg}')
                     try:
                         if self._Mclient.connect():
-                            self.logger.info(f"connected to {str(self._Mclient)}")
+                            self.logger.debug(f"connected to {str(self._Mclient)}")
                             self.connected = True
+                            self.error_count = 0  
                         else:
-                            self.logger.error(f"could not connect to {self._host}:{self._port}")
+                            self.error_count += 1
+                            # Logs an error message based on error count
+                            self.log_error(f"could not connect to {self._host}:{self._port}, connection_attempts: {self.error_count}")
                             self.connected = False
                             return
 
                     except Exception as e:
-                        self.logger.error(f"connection exception: {str(self._Mclient)} {e}")
+                        self.error_count += 1
+                        # Logs an error message based on error count
+                        self.log_error(f"connection exception: {str(self._Mclient)} {e}, errors: {self.error_count}")
                         self.connected = False
                         return
 
