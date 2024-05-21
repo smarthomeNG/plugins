@@ -206,7 +206,9 @@ class HueApiV2(SmartPlugin):
                 self.logger.exception(f"Exception in initialize_items_from_bridge(): {ex}")
 
             # block: wait until a stop command is received by the queue
-            queue_item = await self.run_queue.get()
+            #queue_item = await self.run_queue.get()
+            #queue_item = await self.get_command_from_run_queue()
+            await self.wait_for_asyncio_termination()
 
         self.alive = False
         self.logger.info("plugin_coro: Plugin is stopped (self.alive=False)")
@@ -825,7 +827,6 @@ class HueApiV2(SmartPlugin):
         for br in discovered_bridges:
             ip = discovered_bridges[br].split('/')[2].split(':')[0]
             br_info = self.get_bridge_desciption(ip)
-#            br_config = self.get_bridge_config(ip)
             bridges.append(br_info)
 
         for bridge in bridges:
@@ -872,19 +873,68 @@ class HueApiV2(SmartPlugin):
         return app_key
 
 
+    def disconnect_bridge(self):
+        """
+        Disconnect the plugin from the bridge
+
+        :param disconnect:
+        :return:
+        """
+        if not self.bridge_is_configured():
+            # There is no bridge to disconnect from
+            return
+
+        self.logger.notice(f"Disconnect: Disconnecting bridge")
+        self.stop()
+        self.bridge_ip = '0.0.0.0'
+
+        self.logger.notice(f"disconnect_bridge: self.bridge = {self.bridge}")
+
+        self.bridge = {}
+
+        # update the plugin section in ../etc/plugin.yaml
+        self.update_plugin_config()
+
+        self.run()
+
+
+    # --------------------------------------------------------------------------------------------
+
+    def get_bridge_config(self, host: str = None) -> dict:
+        """
+        Get configuration info of a bridge
+
+        :param host: IP Address of the bridge
+        :return: configuration info
+        """
+        if host is None:
+            if not self.bridge_is_configured():
+                return {}
+            host = self.bridge_ip
+
+        if self.bridge_user == '':
+            user = None
+        else:
+            user = self.bridge_user
+
+        try:
+            bridge_config = self.run_asyncio_coro(self.get_config(host, user), return_exeption=False)
+        except Exception as ex:
+            bridge_config = {}
+            self.logger.error(f"get_bridge_config: {ex}")
+        return bridge_config
+
+
     from aiohttp import ClientSession
 
     async def get_config(self, host: str, app_key: str = None, websession: ClientSession | None = None ) -> dict:
         """
-        Get configuration of the Hue bridge and return it's whitelist.
+        Get configuration of the Hue bridge using aiohue and return it's whitelist.
 
-        The link button on the bridge must be pressed before executing this call,
-        otherwise a LinkButtonNotPressed error will be raised.
-
-        Parameters:
-            `host`: the hostname or IP-address of the bridge as string.
-            `device_type`: provide a name/type for your app for identification.
-            `websession`: optionally provide a aiohttp ClientSession.
+        :param host: the hostname or IP-address of the bridge as string.
+        :param app_key: provide a name/type for your app for identification.
+        :param websession: optionally provide a aiohttp ClientSession.
+        :return:
         """
         # https://developers.meethue.com/develop/hue-api/7-configuration-api/#72_get_configuration
         # this can be used for both V1 and V2 bridges (for now).
@@ -915,50 +965,4 @@ class HueApiV2(SmartPlugin):
         finally:
             if not websession_provided:
                 await websession.close()
-
-
-    def get_bridge_config(self, host: str = None) -> dict:
-
-
-        if host is None:
-            if not self.bridge_is_configured():
-                return {}
-            host = self.bridge_ip
-
-        if self.bridge_user == '':
-            user = None
-        else:
-            user = self.bridge_user
-
-        try:
-            bridge_config = self.run_asyncio_coro(self.get_config(host, user), return_exeption=False)
-        except Exception as ex:
-            bridge_config = {}
-            self.logger.error(f"get_bridge_config: {ex}")
-        return bridge_config
-
-
-    def disconnect_bridge(self):
-        """
-        Disconnect the plugin from the bridge
-
-        :param disconnect:
-        :return:
-        """
-        if not self.bridge_is_configured():
-            # There is no bridge to disconnect from
-            return
-
-        self.logger.notice(f"Disconnect: Disconnecting bridge")
-        self.stop()
-        self.bridge_ip = '0.0.0.0'
-
-        self.logger.notice(f"disconnect_bridge: self.bridge = {self.bridge}")
-
-        self.bridge = {}
-
-        # update the plugin section in ../etc/plugin.yaml
-        self.update_plugin_config()
-
-        self.run()
 
