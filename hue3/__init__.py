@@ -59,7 +59,7 @@ class HueApiV2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '3.0.0'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '3.0.1'    # (must match the version specified in plugin.yaml)
 
     hue_sensor_state_values          = ['daylight', 'temperature', 'presence', 'lightlevel', 'status']
 
@@ -605,20 +605,32 @@ class HueApiV2(SmartPlugin):
             hue_transition_time = int(float(config_data['transition_time']) * 1000)
 
         if config_data['function'] == 'on':
-            if value:
-                self.run_asyncio_coro(self.v2bridge.lights.turn_on(config_data['id'], hue_transition_time))
-            else:
-                self.run_asyncio_coro(self.v2bridge.lights.turn_off(config_data['id'], hue_transition_time))
+            try:
+                if value:
+                    self.run_asyncio_coro(self.v2bridge.lights.turn_on(config_data['id'], hue_transition_time), return_exeption=True)
+                else:
+                    self.run_asyncio_coro(self.v2bridge.lights.turn_off(config_data['id'], hue_transition_time), return_exeption=True)
+            except Exception as ex:
+                self.logger.error(f"update_light_from_item: id={config_data['id']}, {config_data['function']}, {value=} - Exception {ex}")
         elif config_data['function'] == 'bri':
             if float(value) <= 100:
-                self.run_asyncio_coro(self.v2bridge.lights.set_brightness(config_data['id'], float(value), hue_transition_time))
+                try:
+                    self.run_asyncio_coro(self.v2bridge.lights.set_brightness(config_data['id'], float(value), hue_transition_time), return_exeption=True)
+                except Exception as ex:
+                    self.logger.error(f"update_light_from_item: id={config_data['id']}, {config_data['function']}, {value=} - Exception {ex}")
             else:
                 self.logger.error(f"{item.property.path}: Can't set brightness of light {config_data['id']} to {value} - out of range")
         elif config_data['function'] == 'xy' and isinstance(value, list) and len(value) == 2:
-            self.run_asyncio_coro(self.v2bridge.lights.set_color(config_data['id'], value[0], value[1], hue_transition_time))
+            try:
+                self.run_asyncio_coro(self.v2bridge.lights.set_color(config_data['id'], value[0], value[1], hue_transition_time), return_exeption=True)
+            except Exception as ex:
+                self.logger.error(f"update_light_from_item: id={config_data['id']}, {config_data['function']}, {value=} - Exception {ex}")
         elif config_data['function'] == 'ct':
             if float(value) >= 153 and float(value) <= 500:
-                self.run_asyncio_coro(self.v2bridge.lights.set_color_temperature(config_data['id'], value, hue_transition_time))
+                try:
+                    self.run_asyncio_coro(self.v2bridge.lights.set_color_temperature(config_data['id'], value, hue_transition_time), return_exeption=True)
+                except Exception as ex:
+                    self.logger.error(f"update_light_from_item: id={config_data['id']}, {config_data['function']}, {value=} - Exception {ex}")
             else:
                 self.logger.error(f"{item.property.path}: Can't set color temperature of light {config_data['id']} to {value} - out of range")
         elif config_data['function'] == 'dict':
@@ -636,7 +648,10 @@ class HueApiV2(SmartPlugin):
                     transition_time = hue_transition_time
                 else:
                     transition_time = int(float(transition_time)*1000)
-                self.run_asyncio_coro(self.v2bridge.lights.set_state(config_data['id'], on, bri, xy, ct, transition_time=transition_time))
+                try:
+                    self.run_asyncio_coro(self.v2bridge.lights.set_state(config_data['id'], on, bri, xy, ct, transition_time=transition_time), return_exeption=True)
+                except Exception as ex:
+                    self.logger.error(f"update_light_from_item: id={config_data['id']}, {config_data['function']}, {on=}, {bri=}, {xy=}, {ct=} - Exception {ex}")
         elif config_data['function'] == 'bri_inc':
             if float(value) >= -100 and float(value) <= 100:
                 if float(value) < 0:
