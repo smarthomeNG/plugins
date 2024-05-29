@@ -226,6 +226,13 @@ item_attributes:
             de: Konfiguriert ein Intervall in Sekunden für regelmäßiges Lesen
             en: Configures a interval in seconds for cyclic read actions
 
+    denon_readafterwrite:
+        type: num
+
+        description:
+            de: Konfiguriert eine Verzögerung, nach der der Lesebefehl im Anschluss an einen Schreibbefehl gesendet werden soll.
+            en: Configures a delay after that the read command related to a send command will get sent.
+
     denon_read_initial:
         type: bool
 
