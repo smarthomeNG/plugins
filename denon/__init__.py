@@ -89,6 +89,25 @@ class denon(SmartDevicePlugin):
             data['payload'] = f'{data.get("payload", "")}{data["limit_response"].decode("unicode-escape")}'
         return data
 
+    def _process_additional_data(self, command, data, value, custom, by):
+        zone = 0
+        if command == 'zone1.control.power':
+            zone = 1
+        elif command == 'zone2.control.power':
+            zone = 2
+        elif command == 'zone3.control.power':
+            zone = 3
+        if zone > 0 and value is True:
+            self.logger.debug(f"Device is turned on by command {command}. Requesting current state of zone {zone}.")
+            time.sleep(1)
+            self.send_command(f'zone{zone}.control.mute')
+            self.send_command(f'zone{zone}.control.sleep')
+            self.send_command(f'zone{zone}.control.standby')
+        if zone == 1 and value is True:
+            self.send_command(f'zone{zone}.control.input')
+            self.send_command(f'zone{zone}.control.volume')
+            self.send_command(f'zone{zone}.control.listeningmode')
+
     def on_data_received(self, by, data, command=None):
 
         commands = None
