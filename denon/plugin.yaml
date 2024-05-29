@@ -163,6 +163,45 @@ parameters:
             de: Anzahl Verbindungsversuche
             en: number of connect retries
 
+    send_retries:
+        type: num
+        default: 0
+
+        description:
+            de: Anzahl Sendeversuche
+            en: number of sending retries
+        description_long:
+            de: 'Anzahl Sendeversuche\n
+                Kommt keine (passende) Antwort nach dem Senden
+                eines Commands zurück, wird das Kommando nochmals
+                gesendet, sofern der Wert über 0 liegt.
+                '
+            en: 'number of sending retries\n
+                If no (suiting) answer is received after sending
+                a command the command is resent as long as this
+                value is more than 0.
+                '
+
+    sendretry_cycle:
+        type: num
+        valid_min: 1
+        default: 1
+
+        description:
+            de: Pause zwischen Durchgängen von Sendeversuchen
+            en: wait time between sending retry rounds
+        description_long:
+            de: 'Pause zwischen Durchgängen von Sendeversuchen\n
+                Sind Send Retries aktiv, wird ein Scheduler erstellt,
+                der im angegebenen Sekundentakt Kommandos erneut sendet,
+                zu denen keine (passenden) Antworten erhalten wurden.
+                '
+            en: 'wait time between sending retry rounds\n
+                If send retries are active, a scheduler gets added
+                that resends commands in the given cycle value (in seconds)
+                where no (suiting) answer got received.
+                '
+
     connect_cycle:
         type: num
         default: 3
