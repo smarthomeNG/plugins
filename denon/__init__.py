@@ -24,6 +24,8 @@
 import builtins
 import os
 import sys
+import threading
+import time
 
 if __name__ == '__main__':
     builtins.SDP_standalone = True
@@ -56,12 +58,20 @@ class denon(SmartDevicePlugin):
     PLUGIN_VERSION = '1.0.1'
 
     def on_connect(self, by=None):
+        self.logger.debug(f"Connected.. Cycle for retry: {self._sendretry_cycle}")
+        if self._send_retries >= 1:
+            self.scheduler_add('resend', self._resend, cycle=self._sendretry_cycle)
         self.logger.debug("Checking for custom input names.")
         self.send_command('general.custom_inputnames')
+        self._read_initial_values(force=True)
 
     def _set_device_defaults(self):
-
+        self._use_callbacks = True
         self._custom_inputnames = {}
+        self._sending = {}
+        self._sending_lock = threading.Lock()
+        self._send_retries = self.get_parameter_value('send_retries')
+        self._sendretry_cycle = int(self.get_parameter_value('sendretry_cycle'))
 
         # set our own preferences concerning connections
         if PLUGIN_ATTR_NET_HOST in self._parameters and self._parameters[PLUGIN_ATTR_NET_HOST]:
@@ -81,7 +91,30 @@ class denon(SmartDevicePlugin):
     # command and discard it... so break the "return result"-chain and don't
     # return anything
     def _send(self, data_dict):
+        if data_dict.get('returnvalue') is not None:
+            self._sending.update({data_dict['command']: data_dict})
         self._connection.send(data_dict)
+
+    def _resend(self):
+        if not self.alive or self.suspended:
+            return
+        self._sending_lock.acquire(True, 2)
+        _remove_commands = []
+        for command in list(self._sending.keys()):
+            _retry = self._sending[command].get("retry") or 0
+            _sent = True
+            if _retry is not None and _retry < self._send_retries:
+                self.logger.debug(f'Re-sending {command}, retry {_retry}.')
+                _sent = self.send_command(command, self._sending[command].get("returnvalue"), return_result=True, retry=_retry + 1)
+            elif _retry is not None and _retry >= self._send_retries:
+                _sent = False
+            if _sent is False:
+                _remove_commands.append(command)
+                self.logger.info(f"Giving up re-sending {command} after {_retry} retries.")
+        for command in _remove_commands:
+            self._sending.pop(command)
+        if self._sending_lock.locked():
+            self._sending_lock.release()
 
     def _transform_send_data(self, data=None, **kwargs):
         if isinstance(data, dict):
@@ -151,7 +184,18 @@ class denon(SmartDevicePlugin):
             except OSError as e:
                 self.logger.warning(f'received data "{data}" for command {command}, error {e} occurred while converting. Discarding data.')
             else:
-                self.logger.debug(f'received data "{data}" for command {command} converted to value {value}')
+                self.logger.debug(f'received data "{data}" for command {command} converted to value {value}.')
+                if command in self._sending:
+                    self._sending_lock.acquire(True, 2)
+                    _retry = self._sending[command].get("retry") or 0
+                    _compare = self._sending[command].get('returnvalue')
+                    if self._sending[command].get('returntype')(value) == _compare:
+                        self._sending.pop(command)
+                        self.logger.debug(f'Correct answer for {command}, removing from send. Sending {self._sending}')
+                    elif _retry is not None and _retry <= self._send_retries:
+                        self.logger.debug(f'Should send again {self._sending}...')
+                    if self._sending_lock.locked():
+                        self._sending_lock.release()
                 self._dispatch_callback(command, value, by)
 
             self._process_additional_data(base_command, data, value, custom, by)
