@@ -208,4 +208,4 @@ class denon(SmartDevicePlugin):
             self._custom_inputnames[src] = name
 
 if __name__ == '__main__':
-    s = Standalone(lms, sys.argv[0])
+    s = Standalone(denon, sys.argv[0])

@@ -424,7 +424,7 @@ item_templates = {
         'on_change': [".custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]",],
         'custom_name': {
             'type': 'str',
-            'on_change': ".. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]"
+            'on_change': "sh...(sh......general.custom_inputnames.reverse()[value]) if sh......general.custom_inputnames.reverse() != {} else None"
         }
     }
 }
