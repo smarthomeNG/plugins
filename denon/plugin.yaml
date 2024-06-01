@@ -202,6 +202,14 @@ parameters:
                 where no (suiting) answer got received.
                 '
 
+    delay_initial_read:
+        type: num
+        default: 0
+
+        description:
+            de: Warte nach Verbindungsaufbau mit dem Abfragen von Werten
+            en: Wait after connection with querying values
+
     connect_cycle:
         type: num
         default: 3

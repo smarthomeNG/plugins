@@ -26,6 +26,8 @@ import os
 import sys
 import threading
 import time
+import datetime
+from lib.shtime import Shtime
 
 if __name__ == '__main__':
     builtins.SDP_standalone = True
@@ -63,7 +65,13 @@ class denon(SmartDevicePlugin):
             self.scheduler_add('resend', self._resend, cycle=self._sendretry_cycle)
         self.logger.debug("Checking for custom input names.")
         self.send_command('general.custom_inputnames')
-        self._read_initial_values(force=True)
+        if self.scheduler_get('read_initial_values'):
+            return
+        elif self._initial_value_read_delay > 0:
+            self.logger.dbghigh(f"On connect reading initial values after {self._initial_value_read_delay} seconds.")
+            self.scheduler_add('read_initial_values', self._read_initial_values, value={'force': True}, next=self.shtime.now() + datetime.timedelta(seconds=self._initial_value_read_delay))
+        else:
+            self._read_initial_values(True)
 
     def _on_suspend(self):
         for scheduler in self.scheduler_get_all():
@@ -101,10 +109,10 @@ class denon(SmartDevicePlugin):
     # the sent command. Getting it as return value would assign it to the wrong
     # command and discard it... so break the "return result"-chain and don't
     # return anything
-    def _send(self, data_dict):
-        if data_dict.get('returnvalue') is not None:
-            self._sending.update({data_dict['command']: data_dict})
-        self._connection.send(data_dict)
+    def _send(self, data_dict, resend_info=None):
+        if resend_info.get('returnvalue') is not None:
+            self._sending.update({resend_info.get('command'): resend_info})
+        return self._connection.send(data_dict)
 
     def _resend(self):
         if not self.alive or self.suspended:
