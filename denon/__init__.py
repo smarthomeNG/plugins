@@ -65,6 +65,17 @@ class denon(SmartDevicePlugin):
         self.send_command('general.custom_inputnames')
         self._read_initial_values(force=True)
 
+    def _on_suspend(self):
+        for scheduler in self.scheduler_get_all():
+            self.scheduler_remove(scheduler)
+
+    def _on_resume(self):
+        if self.scheduler_get('resend'):
+            self.scheduler_remove('resend')
+        self.logger.debug(f"Resuming.. Cycle for retry: {self._sendretry_cycle}")
+        if self._send_retries >= 1:
+            self.scheduler_add('resend', self._resend, cycle=self._sendretry_cycle)
+
     def _set_device_defaults(self):
         self._use_callbacks = True
         self._custom_inputnames = {}
