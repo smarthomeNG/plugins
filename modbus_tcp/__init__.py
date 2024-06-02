@@ -391,8 +391,8 @@ class modbus_tcp(SmartPlugin):
                     self._slaveUnitRegisterDependend = True
             if self.has_iattr(item.conf, AttrObjectType):
                 objectType = self.get_iattr_value(item.conf, AttrObjectType)
-            else:
-                return
+            # else:
+                # self.logger.debug(f'update_item:{item} default modBusObjectTyp: {objectType}')
 
             reg = str(objectType) # Dict-key: HoldingRegister.528.1 *** objectType.regAddr.slaveUnit ***
             reg += '.'
