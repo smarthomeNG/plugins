@@ -406,8 +406,8 @@ class Database(SmartPlugin):
         except Exception as e:
             self.logger.error( f"Error copying SQLite3 database file: {e}")
 
-        param_dict = {"copy_database": False}
-        self.update_config_section(param_dict)
+        #param_dict = {"copy_database": False}
+        #self.update_config_section(param_dict)
         return
 
 
