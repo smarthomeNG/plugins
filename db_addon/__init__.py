@@ -593,7 +593,6 @@ class DatabaseAddOn(SmartPlugin):
 
             # read item_attribute_dict aus item_attributes_master
             item_attribute_dict = ITEM_ATTRIBUTES['db_addon_fct'].get(db_addon_fct)
-            self.logger.debug(f"{db_addon_fct=}: {item_attribute_dict=}")
 
             # get query parameters from db_addon_fct or db_addon_params
             if item_attribute_dict['params']:
@@ -650,11 +649,9 @@ class DatabaseAddOn(SmartPlugin):
             if self.debug_log.parse:
                 self.logger.debug(f"Item={item.property.path} added with db_addon_fct={db_addon_fct} and database_item={database_item}")
 
-            # add type (onchange or ondemand) to item dict
-            item_config_data_dict.update({'on': item_attribute_dict['on']})
-
             # add cycle for item groups
             cycle = item_attribute_dict['cycle']
+            on = 'demand'
             if cycle == 'group':
                 cycle = item_config_data_dict['query_params'].get('group')
                 if not cycle:
@@ -663,9 +660,9 @@ class DatabaseAddOn(SmartPlugin):
             elif cycle == 'timeframe':
                 cycle = item_config_data_dict['query_params'].get('timeframe')
                 cycle = f"{timeframe_to_updatecyle(cycle)}"
-            elif cycle == 'None':
-                cycle = None
-            item_config_data_dict.update({'cycle': cycle})
+            elif not cycle:
+                on = 'change'
+            item_config_data_dict.update({'cycle': cycle, 'on': on})
 
             # do logging
             if self.debug_log.parse:
@@ -674,7 +671,7 @@ class DatabaseAddOn(SmartPlugin):
                 else:
                     self.logger.debug(f"Item '{item.property.path}' added but will not be run cyclic.")
 
-                if item_attribute_dict['on'] == 'change':
+                if on == 'change':
                     self.logger.debug(f"Item '{item.property.path}' added and will be run on-change of {database_item}.")
 
             # create item config for item to be run on startup
@@ -684,6 +681,8 @@ class DatabaseAddOn(SmartPlugin):
                 item_config_data_dict.update({'startup': False})
 
             # add item to plugin item dict
+            if self.debug_log.parse:
+                self.logger.debug(f"Item '{item.property.path}' completely parsed: {item_config_data_dict=}.")
             self.add_item(item, config_data_dict=item_config_data_dict)
 
         # handle all items with db_addon_info
@@ -699,10 +698,8 @@ class DatabaseAddOn(SmartPlugin):
             self.add_item(item, config_data_dict={'db_addon': 'admin', 'db_addon_fct': f"admin_{self.get_iattr_value(item.conf, 'db_addon_admin').lower()}", 'database_item': None})
             return self.update_item
 
-        # Reference to 'update_item' für alle Items mit Attribut 'database', um die on_change Items zu berechnen
+        # Reference to 'update_item' for all database items to trigger calculation of on-change items
         elif self.has_iattr(item.conf, self.item_attribute_search_str):
-            #if self.debug_log.parse:
-            #    self.logger.debug(f"reference to update_item for item={item.property.path} will be set due to 'onchange'")
             return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
