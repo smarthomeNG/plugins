@@ -113,7 +113,8 @@ class modbus_tcp(SmartPlugin):
         
         if self._cycle or self._crontab:
             self.error_count = 0 # Initialize error count
-            self._create_cyclic_scheduler()
+            if not self.suspended:
+                self._create_cyclic_scheduler()
         self.logger.debug(f"Plugin '{self.get_fullname()}': run method finished ")
 
     def _create_cyclic_scheduler(self):
@@ -274,13 +275,7 @@ class modbus_tcp(SmartPlugin):
         It is called by the scheduler which is set within run() method.
         """
         if self.suspended:
-            if self.suspend_log_poll is None or self.suspend_log_poll is False:   # debug - Nachricht nur 1x ausgeben
-                self.logger.info(f"poll suspended")
-                self.suspend_log_poll = True
-                self.error_count = 0
             return
-        else:
-            self.suspend_log_poll = False
 
         with self.lock:
             try:
