@@ -245,7 +245,7 @@ class KNX(SmartPlugin):
             item = 'unknown item'
         if 'ga' in kwargs:
             self.groupread(kwargs['ga'])
-            if self._log_own_packets is True:
+            if self._log_own_packets is True and self.alive:
                 self._busmonitor(self._bm_format_poll.format(self.get_instance_name(), 'POLL', kwargs["ga"]))
         else:
             self.logger.warning(self.translate('problem polling {}, no known ga').format(item))
