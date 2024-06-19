@@ -116,11 +116,11 @@ class Zigbee2Mqtt(MqttPlugin):
         self.logger.debug("Run method called")
 
         self.alive = True
+        self.set_suspend(by='run')
 
         # start subscription to all topics
         self.start_subscriptions()
 
-        self.scheduler_add('z2m_cycle', self.poll_bridge, cycle=self.cycle)
         self.publish_z2m_topic('bridge', 'config', 'devices', 'get')
 
         if self.read_at_init:
@@ -136,7 +136,6 @@ class Zigbee2Mqtt(MqttPlugin):
 
         self.alive = False
         self.logger.debug("Stop method called")
-        self.scheduler_remove('z2m_c')
 
         # stop subscription to all topics
         self.stop_subscriptions()
@@ -155,15 +154,12 @@ class Zigbee2Mqtt(MqttPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
 
-        # remove this block when its included in smartplugin.py,
-        # replace with super().parse_item(item)
         # check for suspend item
         if item.property.path == self._suspend_item_path:
             self.logger.debug(f'suspend item {item.property.path} registered')
             self._suspend_item = item
             self.add_item(item, updating=True)
             return self.update_item
-        # end block
 
         if self.has_iattr(item.conf, Z2M_ATTR):
             self.logger.debug(f"parsing item: {item}")
@@ -253,6 +249,12 @@ class Zigbee2Mqtt(MqttPlugin):
         """
         self.logger.debug(f"update_item: {item} called by {caller} and source {source}")
 
+        if item is self._suspend_item:
+            if caller != self.get_shortname():
+                self.logger.debug(f'Suspend item changed to {item()}')
+                self.set_suspend(by=f'suspend item {item.property.path}')
+            return
+
         if self.alive and not self.suspended and not caller.startswith(self.get_shortname()):
 
             if item in self._items_write:
@@ -318,7 +320,7 @@ class Zigbee2Mqtt(MqttPlugin):
             else:
                 self.logger.warning(f"update_item: {item}, trying to change item in SmartHomeNG that is readonly (by {caller})")
 
-    def poll_bridge(self):
+    def poll_device(self):
         """ Polls for health state of the bridge """
 
         self.logger.info("poll_bridge: Checking health status of bridge")
