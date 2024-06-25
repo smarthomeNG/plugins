@@ -108,6 +108,10 @@ class UZSU(SmartPlugin):
         Initializes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         :param smarthome:  The instance of the smarthome object, save it for later references
         """
+
+        # call init code of parent class (SmartPlugin)
+        super().__init__()
+
         self.itemsApi = Items.get_instance()
         self._timezone = Shtime.get_instance().tzinfo()
         self._remove_duplicates = self.get_parameter_value('remove_duplicates')
