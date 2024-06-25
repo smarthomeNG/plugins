@@ -25,9 +25,9 @@
 
 from datetime import datetime
 import json
+from logging import DEBUG
 
 from lib.model.mqttplugin import MqttPlugin
-from logging import DEBUG
 
 from .rgbxy import Converter
 from .webif import WebInterface
@@ -48,13 +48,15 @@ HANDLE_ATTR = 'attr_'
 class Zigbee2Mqtt(MqttPlugin):
     """ Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items """
 
-    PLUGIN_VERSION = '2.0.1'
+    PLUGIN_VERSION = '2.0.2'
 
     def __init__(self, sh, **kwargs):
         """ Initializes the plugin. """
 
         # Call init code of parent class (MqttPlugin)
         super().__init__()
+
+        # self.logger = logging.getLogger(__name__)
 
         self.logger.info(f'Init {self.get_shortname()} plugin {self.PLUGIN_VERSION}')
 
@@ -63,8 +65,9 @@ class Zigbee2Mqtt(MqttPlugin):
         self.cycle = self.get_parameter_value('poll_period')
         self.read_at_init = self.get_parameter_value('read_at_init')
         self._z2m_gui = self.get_parameter_value('z2m_gui')
+        self._pause_item_path = self.get_parameter_value('pause_item')
 
-        # bool_values is only good if used internally, because MQTT data is 
+        # bool_values is only good if used internally, because MQTT data is
         # usually sent in JSON. So just make this easy...
         self.bool_values = [False, True]
 
@@ -116,11 +119,13 @@ class Zigbee2Mqtt(MqttPlugin):
         self.logger.debug("Run method called")
 
         self.alive = True
-        self.set_suspend(by='run')
+        if self._pause_item:
+            self._pause_item(False, self.get_fullname())
 
         # start subscription to all topics
         self.start_subscriptions()
 
+        self.scheduler_add('z2m_cycle', self.poll_bridge, cycle=self.cycle)
         self.publish_z2m_topic('bridge', 'config', 'devices', 'get')
 
         if self.read_at_init:
@@ -135,7 +140,10 @@ class Zigbee2Mqtt(MqttPlugin):
         """ Stop method for the plugin """
 
         self.alive = False
+        if self._pause_item:
+            self._pause_item(True, self.get_fullname())
         self.logger.debug("Stop method called")
+        self.scheduler_remove('z2m_cycle')
 
         # stop subscription to all topics
         self.stop_subscriptions()
@@ -154,12 +162,15 @@ class Zigbee2Mqtt(MqttPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
 
-        # check for suspend item
-        if item.property.path == self._suspend_item_path:
-            self.logger.debug(f'suspend item {item.property.path} registered')
-            self._suspend_item = item
+        # remove this block when its included in smartplugin.py,
+        # replace with super().parse_item(item)
+        # check for alive item
+        if item.property.path == self._pause_item_path:
+            self.logger.debug(f'alive item {item.property.path} registered')
+            self._pause_item = item
             self.add_item(item, updating=True)
             return self.update_item
+        # end block
 
         if self.has_iattr(item.conf, Z2M_ATTR):
             self.logger.debug(f"parsing item: {item}")
@@ -170,13 +181,6 @@ class Zigbee2Mqtt(MqttPlugin):
                 return
 
             attr = self.get_iattr_value(item.conf, Z2M_ATTR)
-
-            if item.type() == 'bool':
-                bval = self.get_iattr_value(item.conf, Z2M_BVAL)
-                if bval == []:
-                    bval = None
-                if bval is None or type(bval) is not list:
-                    bval = self.bool_values
 
             # invert read-only/write-only logic to allow read/write
             write = not self.get_iattr_value(item.conf, Z2M_RO, False)
@@ -195,6 +199,9 @@ class Zigbee2Mqtt(MqttPlugin):
                 'write': write,
             }
             if item.type() == 'bool':
+                bval = self.get_iattr_value(item.conf, Z2M_BVAL)
+                if bval is None or bval == [] or type(bval) is not list:
+                    bval = self.bool_values
                 data['bool_values'] = bval
 
             self._devices[device][attr].update(data)
@@ -213,7 +220,7 @@ class Zigbee2Mqtt(MqttPlugin):
 
     def remove_item(self, item):
         if item not in self._plg_item_dict:
-            return
+            return False
 
         mapping = self.get_item_mapping(item)
         if mapping:
@@ -236,9 +243,9 @@ class Zigbee2Mqtt(MqttPlugin):
         except ValueError:
             pass
 
-        super().remove_item(item)
+        return super().remove_item(item)
 
-    def update_item(self, item, caller='', source=None, dest=None):
+    def update_item(self, item, caller=None, source=None, dest=None):
         """
         Item has been updated
 
@@ -249,13 +256,17 @@ class Zigbee2Mqtt(MqttPlugin):
         """
         self.logger.debug(f"update_item: {item} called by {caller} and source {source}")
 
-        if item is self._suspend_item:
+        # check for pause item
+        if item is self._pause_item:
             if caller != self.get_shortname():
-                self.logger.debug(f'Suspend item changed to {item()}')
-                self.set_suspend(by=f'suspend item {item.property.path}')
+                self.logger.debug(f'pause item changed to {item()}')
+                if item() and self.alive:
+                    self.stop()
+                elif not item() and not self.alive:
+                    self.run()
             return
 
-        if self.alive and not self.suspended and not caller.startswith(self.get_shortname()):
+        if self.alive and caller and not caller.startswith(self.get_shortname()):
 
             if item in self._items_write:
 
@@ -314,13 +325,13 @@ class Zigbee2Mqtt(MqttPlugin):
                         attr: value
                     })
                 else:
-                    payload = None
+                    payload = ''
 
                 self.publish_z2m_topic(device, topic_3, topic_4, topic_5, payload, item, bool_values=bool_values)
             else:
                 self.logger.warning(f"update_item: {item}, trying to change item in SmartHomeNG that is readonly (by {caller})")
 
-    def poll_device(self):
+    def poll_bridge(self):
         """ Polls for health state of the bridge """
 
         self.logger.info("poll_bridge: Checking health status of bridge")
