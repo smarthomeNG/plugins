@@ -95,7 +95,7 @@ class EnOcean(SmartPlugin):
             # just try connecting anytime the serial object is not initialized
             connect_count = 0
             while self._tcm is None and self.alive:
-                if connect_count >= self._connect_retries:
+                if self._connect_retries > 0 and connect_count >= self._connect_retries:
                     self.alive = False
                     break
                 if not self.connect():
