@@ -49,8 +49,8 @@ parameters:
     retry:
         type: int
         description:
-            de: 'Anzahl der Verbindungsversuche'
-            en: 'Number of connect retries'
+            de: 'Anzahl der Verbindungsversuche (0 = kein Limit)'
+            en: 'Number of connect retries (0 = no limit)'
         default: 10
 
     retry_cycle:
