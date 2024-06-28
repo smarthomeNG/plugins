@@ -11,7 +11,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1188479-plugin-steuerung-von-jvc-d-ila-projektoren
 
     version: 1.0.2                 # Plugin version
-    sh_minversion: 1.6             # minimum shNG version to use this plugin
+    sh_minversion: '1.6'             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: false          # plugin supports multi instance
     restartable: true

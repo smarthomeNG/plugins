@@ -10,7 +10,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/31450-rtr-heizungs-plugin
     documentation: https://www.smarthomeng.de/dev/user/plugins/rtr/README.html
     version: 1.6.0                 # Plugin version
-    sh_minversion: 1.6             # minimum shNG version to use this plugin
+    sh_minversion: '1.6'             # minimum shNG version to use this plugin
     restartable: True
     multi_instance: False          # plugin supports multi instance
     classname: RTR                 # class containing the plugin

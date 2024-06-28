@@ -10,7 +10,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1455436-support-thread-f%C3%BCr-snmp-plugin
     
     version: 1.6.1                 # Plugin version
-    sh_minversion: 1.6.0           # minimum shNG version to use this plugin
+    sh_minversion: '1.6.0'           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
