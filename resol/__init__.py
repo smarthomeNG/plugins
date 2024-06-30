@@ -25,12 +25,12 @@ from lib.model.smartplugin import *
 
 class Resol(SmartPlugin):
 
-    PLUGIN_VERSION = '1.0.7'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.1.0'    # (must match the version specified in plugin.yaml)
 
 
     def __init__(self, sh):
         """
-        Initalizes the plugin.
+        Initializes the plugin.
 
         """
 
@@ -44,12 +44,14 @@ class Resol(SmartPlugin):
         self._cycle = self.get_parameter_value('cycle')
         self._password = self.get_parameter_value('password')
         self._to_do = True
+        self.socket = None
+        self._last_request_successfull = False
         #self._client = Tcp_client(name=name, host=self._ip, port=self._port, binary=True, autoreconnect=True, connect_cycle=5, retry_cycle=30)
 
 
     def run(self):
         self.alive = True
-        self.scheduler_add('PollData', self.sock, prio=5, cycle=self._cycle, offset=2)
+        self.scheduler_add('PollData', self.pull_socket, prio=5, cycle=self._cycle, offset=2)
         # if you want to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
 
@@ -57,13 +59,13 @@ class Resol(SmartPlugin):
         self.scheduler_remove('PollData')
 
         try:
-            if self.sock: 
-                self.sock.shutdown(0)
-                self.sock.close()
+            if self.socket: 
+                self.socket.shutdown(0)
+                self.socket.close()
         except:
             pass
         
-        self.sock = None
+        self.socket = None
         self.alive = False
 
     def parse_item(self, item):
@@ -90,18 +92,21 @@ class Resol(SmartPlugin):
         # do nothing if items are changed from outside the plugin
         pass
 
-    def sock(self):
+    def pull_socket(self):
         if not self.alive:
+            self._last_request_successfull = False
             return
         self.logger.info("1) Starting sock function")
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.logger.info("2) Connecting socket")
         try:
-            self.sock.connect((self._ip, self._port))
+            self.socket.connect((self._ip, self._port))
         except socket.timeout as e:
             self.logger.warning("Timeout exception during socket connect: %s" % str(e))
+            self._last_request_successfull = False
             return
         except Exception as e:
+            self._last_request_successfull = False
             self.logger.error("Exception during socket connect: %s" % str(e))
             return
         self.logger.info("3) Logging in")
@@ -110,16 +115,17 @@ class Resol(SmartPlugin):
             self.load_data()
         else:
             self.logger.warning("Cannot login")
+            self._last_request_successfull = False
         self.logger.info("5) Shutting down socket")
         try:
-            if self.sock: 
-                self.sock.shutdown(0)
-                self.sock.close()
+            if self.socket: 
+                self.socket.shutdown(0)
+                self.socket.close()
         except Exception as e:
             self.logger.warning("Exception during shutdown socket command: {0}".format(e))
             pass
         self.logger.info("6) Ending socket function")
-        self.sock = None
+        self.socket = None
 
     # Logs in onto the DeltaSol BS Plus over LAN. Also starts (and maintains) the
     # actual stream of data.
@@ -158,14 +164,16 @@ class Resol(SmartPlugin):
 
         if not dat:
             self.logger.warning("Could not receive data via socket")
+            self._last_request_successfull = False
             return
 
         self.logger.info("Response to data: " + str(dat))
     
         #Check if device is ready to send Data
         if not dat.startswith("+OK"):
-          self.logger.warning("Vbus Lan is not ready, reply: " + str(dat))
-          return
+            self.logger.warning("Vbus Lan is not ready, reply: " + str(dat))
+            self._last_request_successfull = False
+            return
         buf = self.readstream()
         
         #self.logger.warning("Readstream {0} bytes as asci: {1}".format(len(buf),str(buf)))
@@ -182,6 +190,7 @@ class Resol(SmartPlugin):
         #self.logger.warning("Readstream hex {0} bytes: {1}".format(len(buf), s.hex()))
 
         if not buf: 
+            self._last_request_successfull = False
             return
 
         msgs = self.splitmsg(buf)
@@ -195,12 +204,12 @@ class Resol(SmartPlugin):
 
     # Receive 1024 bytes from stream
     def recv(self):
-        if not self.sock:
+        if not self.socket:
             self.logger.error("Error during data reception: Socket is not valid")
             return None
-        self.sock.settimeout(5)
+        self.socket.settimeout(5)
         try:
-            dat = self.sock.recv(1024).decode('Cp1252')
+            dat = self.socket.recv(1024).decode('Cp1252')
         except socket.timeout:
             self.logger.info("Exception in recv(): Socket reception timeout")
             return None
@@ -212,9 +221,9 @@ class Resol(SmartPlugin):
     
     # Sends given bytes over the stream. Adds debug
     def send(self, dat):
-        if not self.sock:
+        if not self.socket:
             return
-        self.sock.send(dat.encode('utf-8'))
+        self.socket.send(dat.encode('utf-8'))
     
     # Read Data until minimum 1 message is received
     def readstream(self):
@@ -323,6 +332,7 @@ class Resol(SmartPlugin):
 
         if not self.check_header_crc(msg):
             self.logger.warning("Header crc error")
+            self._last_request_successfull = False
             return
         
         command = self.get_command(msg)
@@ -339,7 +349,10 @@ class Resol(SmartPlugin):
 
         if payload == '':
             self.logger.warning("Payload is empty")
+            self._last_request_successfull = False
             return
+
+        self._last_request_successfull = True
        
         for item in self._items:
             parentItem = item.return_parent()

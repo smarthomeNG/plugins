@@ -12,7 +12,7 @@ plugin:
     keywords: KNX knxd listen cache bus
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1552531-support-thread-zum-knx-plugin
 
-    sh_minversion: 1.9.0          # minimum shNG version to use this plugin
+    sh_minversion: '1.9.0'          # minimum shNG version to use this plugin
     version: 1.8.5                 # Plugin version
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: true           # plugin supports multi instance
