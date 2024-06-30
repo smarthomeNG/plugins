@@ -78,11 +78,11 @@ class DatabaseAddOn(SmartPlugin):
         self.plugins = Plugins.get_instance()
 
         # define cache dicts
-        self.pickle_data_validity_time = 600  # seconds after which the data saved in pickle are not valid anymore
-        self.current_values = {}  # Dict to hold min and max value of current day / week / month / year for items
-        self.previous_values = {}  # Dict to hold value of end of last day / week / month / year for items
-        self.item_cache = {}  # Dict to hold item_id, oldest_log_ts and oldest_entry for items
-        self.value_list_raw_data = {}
+        self.pickle_data_validity_time = 600        # seconds after which the data saved in pickle are not valid anymore
+        self.current_values = {}                    # Dict to hold min and max value of current day / week / month / year for items
+        self.previous_values = {}                   # Dict to hold value of end of last day / week / month / year for items
+        self.item_cache = {}                        # Dict to hold item_id, oldest_log_ts and oldest_entry for items
+        self.value_list_raw_data = {}               # List to hold raw data
 
         # define variables for database, database connection, working queue and status
         self.item_queue = queue.Queue()              # Queue containing all to be executed items
@@ -2585,7 +2585,7 @@ class DatabaseAddOn(SmartPlugin):
             'last':        'LIMIT 1 ',
         }
 
-        _where = "item_id = :item_id AND time < :ts_start " if func == "next" else "item_id = :item_id AND time BETWEEN :ts_start AND :ts_end "
+        _where = "item_id = :item_id AND time <= :ts_start " if func == "next" else "item_id = :item_id AND time BETWEEN :ts_start AND :ts_end "
 
         _db_table = 'log '
 
