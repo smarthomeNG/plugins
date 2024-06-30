@@ -60,6 +60,11 @@ class KNX(SmartPlugin):
     PROVIDER_KNXMC = 'IP Router'
 
     def __init__(self, smarthome):
+        """Initializes the plugin."""
+
+        # call init code of parent class (SmartPlugin)
+        super().__init__()
+
         self.provider = self.get_parameter_value('provider')
         self.host = self.get_parameter_value('host')
         self.port = self.get_parameter_value('port')

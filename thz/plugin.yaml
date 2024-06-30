@@ -10,7 +10,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/thz/README.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1358489-support-thread-zum-thz-lwz-30x-40x-plugin
     version: 1.0.0                # Plugin version
-    sh_minversion: 1.4
+    sh_minversion: '1.4'
     multi_instance: False
     restartable: unknown
     classname: THZ
