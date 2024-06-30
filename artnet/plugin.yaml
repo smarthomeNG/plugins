@@ -12,7 +12,7 @@ plugin:
 #   documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 
     version: 1.6.1                 # Plugin version
-    sh_minversion: 1.5.1           # minimum shNG version to use this plugin
+    sh_minversion: '1.5.1'           # minimum shNG version to use this plugin
 #   sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
     restartable: True              # Plugin can be restarted safely, however, the data is not re-applied from items to the DMX-Values

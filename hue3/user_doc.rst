@@ -27,7 +27,7 @@ Plugin notwendig wurde, um das neue API zu unterstützen.
 
 Die wichtigsten Features/Änderungen beim API v2:
 
-- Aktive Meldung von Veränderungen durch die Bridge
+- Aktive Meldung von Veränderungen durch die Bridge, das Plugin muss den Status nicht mehr periodisch pollen
 - https Verbindung statt http
 - neue (längere) Ids (z.B.: 2915002c-6c8f-4d9b-9134-6b1a8ded4be3)
 - Unterstützung mehrerer Lights in einem Device

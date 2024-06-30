@@ -2,8 +2,10 @@ import hashlib
 import os
 import socket
 import re
-from collections import Set
-
+try:
+    from collections.abc import Set
+except ImportError:
+    from collections import Set
 
 def is_valid_port(port):
     valid_port = re.compile(
