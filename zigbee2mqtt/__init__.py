@@ -162,15 +162,12 @@ class Zigbee2Mqtt(MqttPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
 
-        # remove this block when its included in smartplugin.py,
-        # replace with super().parse_item(item)
-        # check for alive item
+        # check for pause item
         if item.property.path == self._pause_item_path:
-            self.logger.debug(f'alive item {item.property.path} registered')
+            self.logger.debug(f'pause item {item.property.path} registered')
             self._pause_item = item
             self.add_item(item, updating=True)
             return self.update_item
-        # end block
 
         if self.has_iattr(item.conf, Z2M_ATTR):
             self.logger.debug(f"parsing item: {item}")
