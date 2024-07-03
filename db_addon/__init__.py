@@ -99,7 +99,6 @@ class DatabaseAddOn(SmartPlugin):
         self.item_attribute_search_str = 'database'  # attribute, on which an item configured for database can be identified
         self.last_connect_time = 0                   # mechanism for limiting db connection requests
         self.alive = None                            # Is plugin alive?
-        self.suspended = False                       # Is plugin activity suspended
         self.active_queue_item: str = '-'            # String holding item path of currently executed item
         self.onchange_delay_time = 30
 
@@ -139,19 +138,19 @@ class DatabaseAddOn(SmartPlugin):
         # check existence of db-plugin, get parameters, and init connection to db
         if not self._check_db_existence():
             self.logger.error(f"Check of existence of database plugin incl connection check failed. Plugin not loaded")
-            return self.deinit()
+            return
 
         # create db object
         self._db = lib.db.Database("DatabaseAddOn", self.db_driver, self.connection_data)
         if not self._db.api_initialized:
             self.logger.error("Initialization of database API failed")
-            return self.deinit()
+            return
         self.logger.debug("Initialization of database API successful")
 
         # check initialization of db
         if not self._initialize_db():
             self.logger.error("Connection to database failed")
-            return self.deinit()
+            return
         self._db.close()
 
         # check db connection settings
@@ -750,11 +749,8 @@ class DatabaseAddOn(SmartPlugin):
             if item in self._database_items():
                 # if not self.startup_finished:
                 #     self.logger.info(f"Handling of 'onchange' is paused for startup. No updated will be processed.")
-                if self.suspended:
-                    self.logger.info(f"Plugin is suspended. No updated will be processed.")
-                else:
-                    self.logger.debug(f" Updated Item {item.property.path} with value {item()} will be put to queue in approx. {self.onchange_delay_time}s resp. after startup.")
-                    self.update_item_delay_deque.append([item, item(), int(time.time() + self.onchange_delay_time)])
+                self.logger.debug(f" Updated Item {item.property.path} with value {item()} will be put to queue in approx. {self.onchange_delay_time}s resp. after startup.")
+                self.update_item_delay_deque.append([item, item(), int(time.time() + self.onchange_delay_time)])
 
             # handle admin items
             elif self.has_iattr(item.conf, 'db_addon_admin'):
@@ -955,10 +951,6 @@ class DatabaseAddOn(SmartPlugin):
 
         if self.debug_log.execute:
             self.logger.debug(f"execute_items called with {option=}")
-
-        if self.suspended:
-            self.logger.info(f"Plugin is suspended. No items will be calculated.")
-            return
 
         suspended_items = self._suspended_items()
         if len(suspended_items) > 0:
@@ -1536,28 +1528,6 @@ class DatabaseAddOn(SmartPlugin):
             return
 
         return self._fetchall(query, params)
-
-    def suspend(self, state: bool = False) -> bool:
-        """
-        Will pause value evaluation of plugin
-
-        """
-
-        if state:
-            self.logger.info("Plugin is set to 'suspended'. Queries to database will not be made until suspension is cleared.")
-            self.suspended = True
-            self._clear_queue()
-        else:
-            self.logger.info("Plugin suspension cleared. Queries to database will be resumed.")
-            self.suspended = False
-
-        # write back value to item, if one exists
-        for item in self.get_item_list('db_addon', 'admin'):
-            item_config = self.get_item_config(item)
-            if item_config['db_addon_fct'] == 'suspend':
-                item(self.suspended, self.get_shortname())
-
-        return self.suspended
 
     ##############################################
     #   Calculation methods / Using Item Object
