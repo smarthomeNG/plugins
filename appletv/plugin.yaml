@@ -14,7 +14,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1223483-plugin-apple-tv
 
     version: 1.6.2                  # Plugin version
-    sh_minversion: 1.6              # minimum shNG version to use this plugin
+    sh_minversion: '1.6'              # minimum shNG version to use this plugin
     multi_instance: True            # plugin supports multi instance
     restartable: unknown
     classname: AppleTV              # class containing the plugin

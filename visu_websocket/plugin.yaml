@@ -13,7 +13,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/visu_websocket/user_doc.html
 
     version: 1.5.3                # Plugin version
-    sh_minversion: 1.9.0          # minimum shNG version to use this plugin
+    sh_minversion: '1.9.0'          # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False         # plugin supports multi instance
     restartable: unknown

@@ -105,6 +105,12 @@ class WebInterface(SmartPluginWebIf):
             client['hostname'] = clientinfo.get('hostname', '')
             client['browser'] = clientinfo.get('browser', '')
             client['browserversion'] = clientinfo.get('browserversion', '')
+
+            client['osname'] = clientinfo.get('os_name', '')
+            client['osversion'] = clientinfo.get('os_vers', '')
+            client['osversionname'] = clientinfo.get('os_vname', '')
+            client['platformtype'] = clientinfo.get('pl_type', '')
+            client['platformvendor'] = clientinfo.get('pl_vendor', '')
             clients.append(client)
 
         clients_sorted = sorted(clients, key=lambda k: k['name'])
@@ -168,6 +174,12 @@ class WebInterface(SmartPluginWebIf):
                 value_dict['hostname'] = clientinfo.get('hostname', '')
                 value_dict['browser'] = clientinfo.get('browser', '')
                 value_dict['browserversion'] = clientinfo.get('browserversion', '')
+
+                value_dict['osname'] = clientinfo.get('os_name', '')
+                value_dict['osversion'] = clientinfo.get('os_vers', '')
+                value_dict['osversionname'] = clientinfo.get('os_vname', '')
+                value_dict['platformtype'] = clientinfo.get('pl_type', '')
+                value_dict['platformvendor'] = clientinfo.get('pl_vendor', '')
                 client_list.append(value_dict)
 
             plglogics = []

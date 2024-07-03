@@ -12,10 +12,10 @@ plugin:
     #documentation: ''
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586800-support-thread-für-das-smartvisu-plugin
 
-    version: 1.8.14                # Plugin version
-    sh_minversion: 1.9.3.5         # minimum shNG version to use this plugin
+    version: 1.8.15                # Plugin version
+    sh_minversion: '1.9.3.5'         # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    py_minversion: 3.6             # minimum Python version to use for this plugin
+    py_minversion: '3.6'             # minimum Python version to use for this plugin
 #    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: True

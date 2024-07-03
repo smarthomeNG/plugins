@@ -13,9 +13,9 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1856775-support-thread-f%C3%BCr-das-zigbee2mqtt-plugin
 
     version: 2.0.2                 # Plugin version
-    sh_minversion: 1.9.5.6         # minimum shNG version to use this plugin
+    sh_minversion: '1.10.0'         # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    py_minversion: 3.8             # minimum Python version to use for this plugin
+    py_minversion: '3.8'             # minimum Python version to use for this plugin
     multi_instance: true           # plugin supports multi instance
     restartable: true
     classname: Zigbee2Mqtt         # class containing the plugin
