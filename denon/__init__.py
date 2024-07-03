@@ -109,7 +109,7 @@ class denon(SmartDevicePlugin):
     # the sent command. Getting it as return value would assign it to the wrong
     # command and discard it... so break the "return result"-chain and don't
     # return anything
-    def _send(self, data_dict, resend_info=None):
+    def _send(self, data_dict, resend_info={}):
         if resend_info.get('returnvalue') is not None:
             self._sending.update({resend_info.get('command'): resend_info})
         return self._connection.send(data_dict)
