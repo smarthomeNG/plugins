@@ -68,12 +68,16 @@ class SeCondition(StateEngineTools.SeItemChild):
     def check_items(self, check, value=None, item_state=None):
         item_issue, status_issue, eval_issue, status_eval_issue = None, None, None, None
         item_value, status_value, eval_value, status_eval_value = None, None, None, None
+        if check == "attribute":
+            _orig_value = value
+        else:
+            _orig_value = None
         if check == "se_item" or (check == "attribute" and self.__item is None and self.__eval is None):
             if value is None:
                 value = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self.__name)
-            if value is not None:
+            if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
-                if isinstance(value, str) and value.startswith("eval:"):
+                if value.startswith("eval:"):
                     _, _, value = value.partition(":")
                     self.__eval = value
                     self.__item = None
@@ -87,9 +91,11 @@ class SeCondition(StateEngineTools.SeItemChild):
                     self.__item = value
                 item_value = value
         if check == "se_status" or (check == "attribute" and self.__status is None and self.__status_eval is None):
+            if check == "attribute":
+                value = _orig_value
             if value is None:
                 value = StateEngineTools.find_attribute(self._sh, item_state, "se_status_" + self.__name)
-            if value is not None:
+            if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
                 if isinstance(value, str) and value.startswith("eval:"):
                     _, _, value = value.partition(":")
@@ -108,7 +114,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         if check == "se_eval" or (check == "attribute" and self.__eval is None):
             if value is None:
                 value = StateEngineTools.find_attribute(self._sh, item_state, "se_eval_" + self.__name)
-            if value is not None:
+            if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
                 if value.startswith("eval:"):
                     _, _, value = value.partition("eval:")
@@ -122,7 +128,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         if check == "se_status_eval" or (check == "attribute" and self.__status_eval is None):
             if value is None:
                 value = StateEngineTools.find_attribute(self._sh, item_state, "se_status_eval_" + self.__name)
-            if value is not None:
+            if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
                 if value.startswith("eval:"):
                     _, _, value = value.partition("eval:")
