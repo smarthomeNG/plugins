@@ -643,8 +643,6 @@ class SeActionSetItem(SeActionBase):
             self._log_debug("item: {0}", self.__item.property.path)
         else:
             self._log_debug("item is not defined! Check log file.")
-        if self.__status is not None:
-            self._log_debug("status: {0}", self.__status.property.path)
         self.__mindelta.write_to_logger()
         self.__value.write_to_logger()
 
