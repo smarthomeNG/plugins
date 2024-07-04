@@ -856,6 +856,10 @@ class SeCondition(StateEngineTools.SeItemChild):
                    self.__status.property.last_update_by if eval_type == 'updatedby' else\
                    self.__status.property.last_trigger_by if eval_type == 'triggeredby' else\
                    self.__status.property.value
+        elif self.__status_eval is not None:
+            self._log_debug("Trying to get {} of statuseval {}", eval_type, self.__status_eval)
+            return_value = check_eval(self.__status_eval)
+            return return_value
         elif self.__item is not None:
             # noinspection PyUnusedLocal
             self._log_debug("Trying to get {} of item {}", eval_type, self.__item)
@@ -864,12 +868,8 @@ class SeCondition(StateEngineTools.SeItemChild):
                    self.__item.property.last_update_by if eval_type == 'updatedby' else\
                    self.__item.property.last_trigger_by if eval_type == 'triggeredby' else\
                    self.__item.property.value
-        if self.__status_eval is not None:
-            self._log_debug("Trying to get {} of statuseval {}", eval_type, self.__status_eval)
-            return_value = check_eval(self.__status_eval)
-            return return_value
         elif self.__eval is not None:
-            self._log_debug("Trying to get {} of statuseval {}", eval_type, self.__eval)
+            self._log_debug("Trying to get {} of eval {}", eval_type, self.__eval)
             return_value = check_eval(self.__eval)
             return return_value
 
