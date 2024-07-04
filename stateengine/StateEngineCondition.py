@@ -856,7 +856,7 @@ class SeCondition(StateEngineTools.SeItemChild):
 
         if self.__status is not None:
             # noinspection PyUnusedLocal
-            self._log_debug("Trying to get {} of status item {}", eval_type, self.__status)
+            self._log_debug("Trying to get {} of status item {}", eval_type, self.__status.property.path)
             return self.__status.property.last_change_age if eval_type == 'age' else\
                    self.__status.property.last_change_by if eval_type == 'changedby' else\
                    self.__status.property.last_update_by if eval_type == 'updatedby' else\
@@ -868,7 +868,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             return return_value
         elif self.__item is not None:
             # noinspection PyUnusedLocal
-            self._log_debug("Trying to get {} of item {}", eval_type, self.__item)
+            self._log_debug("Trying to get {} of item {}", eval_type, self.__item.property.path)
             return self.__item.property.last_change_age if eval_type == 'age' else\
                    self.__item.property.last_change_by if eval_type == 'changedby' else\
                    self.__item.property.last_update_by if eval_type == 'updatedby' else\
