@@ -594,6 +594,7 @@ class SeActionSetItem(SeActionBase):
     def __init__(self, abitem, name: str):
         super().__init__(abitem, name)
         self.__item = None
+        self.__eval_item = None
         self.__status = None
         self.__delta = 0
         self.__value = StateEngineValue.SeValue(self._abitem, "value")
@@ -606,6 +607,7 @@ class SeActionSetItem(SeActionBase):
     def _getitem_fromeval(self):
         if self.__item is None:
             return
+        self.__eval_item = self.__item
         self.__item, self.__value, self.__mindelta, _issue = self.check_getitem_fromeval(self.__item, self.__value,
                                                                                          self.__mindelta)
         if self.__item is None:
@@ -643,8 +645,6 @@ class SeActionSetItem(SeActionBase):
             self._log_debug("item: {0}", self.__item.property.path)
         else:
             self._log_debug("item is not defined! Check log file.")
-        if self.__status is not None:
-            self._log_debug("status: {0}", self.__status.property.path)
         self.__mindelta.write_to_logger()
         self.__value.write_to_logger()
 
@@ -710,6 +710,7 @@ class SeActionSetItem(SeActionBase):
         self.update_webif_actionstatus(state, re.findall(pat, actionname)[0], 'True')
         # noinspection PyCallingNonCallable
         item(value, caller=self._caller, source=source)
+        self.__item = self.__eval_item
 
     def get(self):
         orig_item = self.__item
@@ -733,6 +734,7 @@ class SeActionSetItem(SeActionBase):
                 value = None
         except Exception:
             value = None
+        self.__item = orig_item
         mindelta = self.__mindelta.get()
         if mindelta is None:
             result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval,
@@ -979,6 +981,7 @@ class SeActionForceItem(SeActionBase):
     def __init__(self, abitem, name: str):
         super().__init__(abitem, name)
         self.__item = None
+        self.__eval_item = None
         self.__status = None
         self.__value = StateEngineValue.SeValue(self._abitem, "value")
         self.__mindelta = StateEngineValue.SeValue(self._abitem, "mindelta")
@@ -1045,6 +1048,7 @@ class SeActionForceItem(SeActionBase):
     def _getitem_fromeval(self):
         if self.__item is None:
             return
+        self.__eval_item = self.__item
         self.__item, self.__value, self.__mindelta, _issue = self.check_getitem_fromeval(self.__item, self.__value,
                                                                                          self.__mindelta)
         if self.__item is None:
@@ -1103,6 +1107,7 @@ class SeActionForceItem(SeActionBase):
         self.update_webif_actionstatus(state, self._name, 'True')
         # noinspection PyCallingNonCallable
         self.__item(value, caller=self._caller, source=source)
+        self.__item = self.__eval_item
 
     def get(self):
         orig_item = self.__item
@@ -1126,6 +1131,7 @@ class SeActionForceItem(SeActionBase):
                 value = None
         except Exception:
             value = None
+        self.__item = orig_item
         result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval, 'value': value,
                  'conditionset': str(self.conditionset.get()), 'previousconditionset': str(self.previousconditionset.get()),
                  'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
