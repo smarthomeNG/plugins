@@ -126,6 +126,8 @@ class SeCondition(StateEngineTools.SeItemChild):
                 self.__eval = value
             eval_value = value
         if check == "se_status_eval" or (check == "attribute" and self.__status_eval is None):
+            if check == "attribute":
+                value = _orig_value
             if value is None:
                 value = StateEngineTools.find_attribute(self._sh, item_state, "se_status_eval_" + self.__name)
             if isinstance(value, str):
@@ -475,7 +477,6 @@ class SeCondition(StateEngineTools.SeItemChild):
             self.__updatedbynegate if valuetype == "updatedby" else\
             self.__triggeredbynegate if valuetype == "triggeredby" else\
             self.__negate
-
         if isinstance(value, list):
             text = "Condition '{0}': {1}={2} negate={3} current={4}"
             _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'current', '{}'.format(valuetype)]
