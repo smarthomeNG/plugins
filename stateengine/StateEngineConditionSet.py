@@ -89,6 +89,9 @@ class SeConditionSet(StateEngineTools.SeItemChild):
         if item is not None:
             for attribute in item.conf:
                 func, name = StateEngineTools.partition_strip(attribute, "_")
+                if name.startswith("eval_"):
+                    _, name = StateEngineTools.partition_strip(name, "_")
+                    func = f"{func}_eval"
                 if name == "":
                     continue
                 try:
@@ -97,6 +100,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                         self.__conditions[name] = StateEngineCondition.SeCondition(self._abitem, name)
                     issue = self.__conditions[name].set(func, item.conf[attribute])
                     self.__conditions.move_to_end(name, last=True)
+                    
                     if issue not in [[], None, [None]]:
                         self.__unused_attributes.update({name: {'attribute': attribute, 'issue': issue}})
                     elif name not in self.__used_attributes.keys():
@@ -110,6 +114,9 @@ class SeConditionSet(StateEngineTools.SeItemChild):
         for attribute in grandparent_item.conf:
             func, name = StateEngineTools.partition_strip(attribute, "_")
 
+            if name.startswith("eval_"):
+                _, name = StateEngineTools.partition_strip(name, "_")
+                func = f"{func}_eval"
             if name == "":
                 continue
             cond1 = name not in self.__used_attributes.keys()

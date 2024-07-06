@@ -262,7 +262,10 @@ def cast_time(value):
 # attribute: name of attribute to find
 def find_attribute(smarthome, base_item, attribute, recursion_depth=0):
     # 1: parent of given item could have attribute
-    parent_item = base_item.return_parent()
+    try:
+        parent_item = base_item.return_parent()
+    except Exception:
+        return None
     try:
         _parent_conf = parent_item.conf
         if parent_item is not None and attribute in _parent_conf:

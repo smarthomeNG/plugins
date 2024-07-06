@@ -68,12 +68,16 @@ class SeCondition(StateEngineTools.SeItemChild):
     def check_items(self, check, value=None, item_state=None):
         item_issue, status_issue, eval_issue, status_eval_issue = None, None, None, None
         item_value, status_value, eval_value, status_eval_value = None, None, None, None
+        if check == "attribute":
+            _orig_value = value
+        else:
+            _orig_value = None
         if check == "se_item" or (check == "attribute" and self.__item is None and self.__eval is None):
             if value is None:
                 value = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self.__name)
-            if value is not None:
+            if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
-                if isinstance(value, str) and value.startswith("eval:"):
+                if value.startswith("eval:"):
                     _, _, value = value.partition(":")
                     self.__eval = value
                     self.__item = None
@@ -87,9 +91,11 @@ class SeCondition(StateEngineTools.SeItemChild):
                     self.__item = value
                 item_value = value
         if check == "se_status" or (check == "attribute" and self.__status is None and self.__status_eval is None):
+            if check == "attribute":
+                value = _orig_value
             if value is None:
                 value = StateEngineTools.find_attribute(self._sh, item_state, "se_status_" + self.__name)
-            if value is not None:
+            if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
                 if isinstance(value, str) and value.startswith("eval:"):
                     _, _, value = value.partition(":")
@@ -108,7 +114,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         if check == "se_eval" or (check == "attribute" and self.__eval is None):
             if value is None:
                 value = StateEngineTools.find_attribute(self._sh, item_state, "se_eval_" + self.__name)
-            if value is not None:
+            if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
                 if value.startswith("eval:"):
                     _, _, value = value.partition("eval:")
@@ -120,9 +126,11 @@ class SeCondition(StateEngineTools.SeItemChild):
                 self.__eval = value
             eval_value = value
         if check == "se_status_eval" or (check == "attribute" and self.__status_eval is None):
+            if check == "attribute":
+                value = _orig_value
             if value is None:
                 value = StateEngineTools.find_attribute(self._sh, item_state, "se_status_eval_" + self.__name)
-            if value is not None:
+            if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
                 if value.startswith("eval:"):
                     _, _, value = value.partition("eval:")
@@ -454,7 +462,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             else:
                 self.__value.set_cast(StateEngineTools.cast_str)
                 convert_value = StateEngineTools.cast_str(convert_value)
-                convert_current = StateEngineTools.cast_str(convert_value)
+                convert_current = StateEngineTools.cast_str(convert_current)
             if not type(_oldvalue) == type(convert_value):
                 self._log_debug("Value {} was type {} and therefore not the same"
                                 " type as item value {}. It got converted to {}.",
@@ -469,7 +477,6 @@ class SeCondition(StateEngineTools.SeItemChild):
             self.__updatedbynegate if valuetype == "updatedby" else\
             self.__triggeredbynegate if valuetype == "triggeredby" else\
             self.__negate
-
         if isinstance(value, list):
             text = "Condition '{0}': {1}={2} negate={3} current={4}"
             _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'current', '{}'.format(valuetype)]
@@ -850,26 +857,26 @@ class SeCondition(StateEngineTools.SeItemChild):
 
         if self.__status is not None:
             # noinspection PyUnusedLocal
-            self._log_debug("Trying to get {} of status item {}", eval_type, self.__status)
+            self._log_debug("Trying to get {} of status item {}", eval_type, self.__status.property.path)
             return self.__status.property.last_change_age if eval_type == 'age' else\
                    self.__status.property.last_change_by if eval_type == 'changedby' else\
                    self.__status.property.last_update_by if eval_type == 'updatedby' else\
                    self.__status.property.last_trigger_by if eval_type == 'triggeredby' else\
                    self.__status.property.value
+        elif self.__status_eval is not None:
+            self._log_debug("Trying to get {} of statuseval {}", eval_type, self.__status_eval)
+            return_value = check_eval(self.__status_eval)
+            return return_value
         elif self.__item is not None:
             # noinspection PyUnusedLocal
-            self._log_debug("Trying to get {} of item {}", eval_type, self.__item)
+            self._log_debug("Trying to get {} of item {}", eval_type, self.__item.property.path)
             return self.__item.property.last_change_age if eval_type == 'age' else\
                    self.__item.property.last_change_by if eval_type == 'changedby' else\
                    self.__item.property.last_update_by if eval_type == 'updatedby' else\
                    self.__item.property.last_trigger_by if eval_type == 'triggeredby' else\
                    self.__item.property.value
-        if self.__status_eval is not None:
-            self._log_debug("Trying to get {} of statuseval {}", eval_type, self.__status_eval)
-            return_value = check_eval(self.__status_eval)
-            return return_value
         elif self.__eval is not None:
-            self._log_debug("Trying to get {} of statuseval {}", eval_type, self.__eval)
+            self._log_debug("Trying to get {} of eval {}", eval_type, self.__eval)
             return_value = check_eval(self.__eval)
             return return_value
 
