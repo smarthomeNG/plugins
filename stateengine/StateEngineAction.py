@@ -509,14 +509,14 @@ class SeActionBase(StateEngineTools.SeItemChild):
             else:
                 self._waitforexecute(state, actionname, self._name, repeat_text, delay, current_condition_met, previous_condition_met, previousstate_condition_met)
 
-            _update_delay_webif('actions_stay', _delay_info)
-            _update_delay_webif('actions_enter', _delay_info)
-            _update_delay_webif('actions_enter_or_stay', _delay_info)
+            _update_delay_webif('actions_stay', str(_delay_info))
+            _update_delay_webif('actions_enter', str(_delay_info))
+            _update_delay_webif('actions_enter_or_stay', str(_delay_info))
             try:
                 state.update_name(state.state_item)
                 _key_name = ['{}'.format(state.id), 'name']
                 self._abitem.update_webif(_key_name, state.name)
-                _update_delay_webif('actions_leave', _delay_info)
+                _update_delay_webif('actions_leave', str(_delay_info))
             except Exception:
                 pass
 
@@ -738,15 +738,15 @@ class SeActionSetItem(SeActionBase):
         mindelta = self.__mindelta.get()
         if mindelta is None:
             result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval,
-                     'value': value, 'conditionset': str(self.conditionset.get()),
-                     'previousconditionset': str(self.previousconditionset.get()),
-                     'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                      'value': value, 'conditionset': self.conditionset.get(),
+                      'previousconditionset': self.previousconditionset.get(),
+                      'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         else:
             result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval,
-                     'value': value, 'conditionset': str(self.conditionset.get()),
-                     'previousconditionset': str(self.previousconditionset.get()),
-                     'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {},
-                     'delta': str(self.__delta), 'mindelta': str(mindelta)}
+                      'value': value, 'conditionset': self.conditionset.get(),
+                      'previousconditionset': self.previousconditionset.get(),
+                      'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {},
+                      'delta': str(self.__delta), 'mindelta': str(mindelta)}
         return result
 
 
@@ -799,8 +799,8 @@ class SeActionSetByattr(SeActionBase):
 
     def get(self):
         result = {'function': str(self._function), 'byattr': str(self.__byattr),
-                 'conditionset': str(self.conditionset.get()), 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'conditionset': self.conditionset.get(), 'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
 
 
@@ -871,10 +871,11 @@ class SeActionTrigger(SeActionBase):
         except Exception:
             value = None
         result = {'function': str(self._function), 'logic': str(self.__logic),
-                 'value': value,
-                 'conditionset': str(self.conditionset.get()), 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'value': value,
+                  'conditionset': self.conditionset.get(), 'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
+
 
 # Class representing a single "se_run" action
 class SeActionRun(SeActionBase):
@@ -968,8 +969,8 @@ class SeActionRun(SeActionBase):
 
     def get(self):
         result = {'function': str(self._function), 'eval': str(self.__eval),
-                 'conditionset': str(self.conditionset.get()), 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'conditionset': self.conditionset.get(), 'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
 
 
@@ -984,6 +985,7 @@ class SeActionForceItem(SeActionBase):
         self.__eval_item = None
         self.__status = None
         self.__value = StateEngineValue.SeValue(self._abitem, "value")
+        self.__delta = 0
         self.__mindelta = StateEngineValue.SeValue(self._abitem, "mindelta")
         self._function = "force set"
 
@@ -1314,9 +1316,9 @@ class SeActionSpecial(SeActionBase):
                 except Exception:
                     pass
         result = {'function': str(self._function), 'special': str(self.__special),
-                 'value': str(value_result), 'conditionset': str(self.conditionset.get()),
-                 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'value': str(value_result), 'conditionset': self.conditionset.get(),
+                  'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
 
 
@@ -1362,9 +1364,9 @@ class SeActionAddItem(SeActionSetItem):
         except Exception:
             value = None
         result = {'function': str(self._function), 'item': item,
-                 'value': value, 'conditionset': str(self.conditionset.get()),
-                 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'value': value, 'conditionset': self.conditionset.get(),
+                  'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
 
 
@@ -1416,9 +1418,9 @@ class SeActionRemoveFirstItem(SeActionSetItem):
         except Exception:
             value = None
         result = {'function': str(self._function), 'item': item,
-                 'value': value, 'conditionset': str(self.conditionset.get()),
-                 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'value': value, 'conditionset': self.conditionset.get(),
+                  'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
 
 
@@ -1472,9 +1474,9 @@ class SeActionRemoveLastItem(SeActionSetItem):
         except Exception:
             value = None
         result = {'function': str(self._function), 'item': item,
-                 'value': value, 'conditionset': str(self.conditionset.get()),
-                 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'value': value, 'conditionset': self.conditionset.get(),
+                  'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
 
 
@@ -1526,7 +1528,7 @@ class SeActionRemoveAllItem(SeActionSetItem):
         except Exception:
             value = None
         result = {'function': str(self._function), 'item': item,
-                 'value': value, 'conditionset': str(self.conditionset.get()),
-                 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'value': value, 'conditionset': self.conditionset.get(),
+                  'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result

@@ -64,6 +64,15 @@ class WebInterface(StateEngineTools.SeItemChild):
         # action_dict: abitem[state]['on_enter'/'on_stay'/'on_enter_or_stay'/'on_leave'].get(action)
         # condition_to_meet: 'conditionset'/'previousconditionset''previousstate_conditionset'
         # conditionset: name of conditionset that should get checked
+        def _strip_regex(regex_list):
+            pattern_strings = []
+            for item in regex_list:
+                if isinstance(item, re.Pattern):
+                    pattern_strings.append(item.pattern)
+                else:
+                    pattern_strings.append(str(item))
+            return str(pattern_strings)
+
         def _check_webif_conditions(action_dict, condition_to_meet: str, conditionset: str):
             _condition_check = action_dict.get(condition_to_meet)
             _condition_check = StateEngineTools.flatten_list(_condition_check)
@@ -73,8 +82,9 @@ class WebInterface(StateEngineTools.SeItemChild):
             _condition = False
             for cond in _condition_check:
                 try:
-                    _cond = re.compile(cond)
-                    _matching = _cond.fullmatch(conditionset)
+                    if isinstance(cond, str):
+                        cond = re.compile(cond)
+                    _matching = cond.fullmatch(conditionset)
                 except Exception:
                     _matching = True
                 _condition_count += 1 if _matching else 0
@@ -96,22 +106,22 @@ class WebInterface(StateEngineTools.SeItemChild):
                     _success = None
                     _issue = None
                 _repeat = action_dict.get('repeat')
-                _delay = action_dict.get('delay') or 0
-                _delta = action_dict.get('delta') or 0
-                _mindelta = action_dict.get('mindelta') or 0
+                _delay = int(float(action_dict.get('delay') or 0))
+                _delta = action_dict.get('delta') or '0'
+                _mindelta = action_dict.get('mindelta') or '0'
 
                 condition_necessary = 0
                 condition_met = True
                 condition_count = 0
                 count, condition1, condition_to_meet, necessary = _check_webif_conditions(action_dict, 'conditionset', conditionset)
                 condition_count += count
-                condition_necessary += necessary
+                condition_necessary += min(1, necessary)
                 count, condition2, previouscondition_to_meet, necessary = _check_webif_conditions(action_dict, 'previousconditionset', previousconditionset)
                 condition_count += count
-                condition_necessary += necessary
+                condition_necessary += min(1, necessary)
                 count, condition3, previousstate_condition_to_meet, necessary = _check_webif_conditions(action_dict, 'previousstate_conditionset', previousstate_conditionset)
                 condition_count += count
-                condition_necessary += necessary
+                condition_necessary += min(1, necessary)
 
                 if condition_count < condition_necessary:
                     condition_met = False
@@ -123,9 +133,9 @@ class WebInterface(StateEngineTools.SeItemChild):
                         (not condition_met or (_repeat is False and originaltype == 'actions_stay'))) \
                     else "#5c5646" if _delay > 0 else "darkred" if _delay < 0  \
                     else "#303030" if not condition_met or _issue else "black"
-                condition_info = condition_to_meet if condition1 is False \
-                    else previouscondition_to_meet if condition2 is False \
-                    else previousstate_condition_to_meet if condition3 is False \
+                condition_info = _strip_regex(condition_to_meet) if condition1 is False \
+                    else _strip_regex(previouscondition_to_meet) if condition2 is False \
+                    else _strip_regex(previousstate_condition_to_meet) if condition3 is False \
                     else ""
                 if _issue:
                     if tooltip_count > 0:
@@ -142,7 +152,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                                  else " (delta {} &#60; {})".format(_delta, _mindelta) if cond_delta and cond1 and cond2\
                                  else ""
                 action1 = action_dict.get('function')
-                if action1 == 'set':
+                if action1 in ['set', 'force set']:
                     action2 = str(action_dict.get('item'))
                     value_check = str(action_dict.get('value'))
                     value_check = '""' if value_check == "" else value_check
@@ -377,7 +387,6 @@ class WebInterface(StateEngineTools.SeItemChild):
         previous_state = ''
         previous_conditionset = ''
         previousconditionset = ''
-        previousstate = ''
         previousstate_conditionset = ''
         for i, state in enumerate(self.__states):
             #self._log_debug('Adding state for webif {}', self.__states[state])
