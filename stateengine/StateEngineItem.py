@@ -177,6 +177,7 @@ class SeItem:
     def __init__(self, smarthome, item, se_plugin):
         self.__item = item
         self.__logger = SeLogger.create(self.__item)
+        self.__logging_off = False
         self.update_lock = threading.Lock()
         self.__ab_alive = False
         self.__queue = queue.Queue()
@@ -197,7 +198,7 @@ class SeItem:
 
         self.__log_level = StateEngineValue.SeValue(self, "Log Level", False, "num")
 
-        _default_log_level = SeLogger.default_log_level.get()
+        _default_log_level = self.__logger.default_log_level.get()
         _returnvalue, _returntype, _using_default, _issue = self.__log_level.set_from_attr(self.__item, "se_log_level",
                                                                                            _default_log_level)
         self.__using_default_log_level = _using_default
@@ -206,11 +207,11 @@ class SeItem:
             _returnvalue = _returnvalue[0]
         self.__logger.log_level_as_num = 2
 
-        _startup_log_level = SeLogger.startup_log_level.get()
+        _startup_log_level = self.__logger.startup_log_level.get()
 
         if _startup_log_level > 0:
             base = self.__sh.get_basedir()
-            SeLogger.manage_logdirectory(base, SeLogger.log_directory, True)
+            self.__logger.manage_logdirectory(base, self.__logger.log_directory, True)
         self.__logger.log_level_as_num = _startup_log_level
         self.__logger.header("")
         self.__logger.info("Set log level to startup log level {}", _startup_log_level)
@@ -356,7 +357,6 @@ class SeItem:
             self.__logger.error("Issue finishing states because {}", ex)
             return
 
-
     def __repr__(self):
         return self.__id
 
@@ -461,22 +461,29 @@ class SeItem:
                                 StateEngineDefaults.plugin_identification)
             return
         _current_log_level = self.__log_level.get()
-        _default_log_level = SeLogger.default_log_level.get()
+        _default_log_level = self.__logger.default_log_level.get()
 
         if _current_log_level <= -1:
             self.__using_default_log_level = True
-            value = SeLogger.default_log_level.get()
+            value = self.__logger.default_log_level.get()
         else:
             value = _current_log_level
             self.__using_default_log_level = False
         self.__logger.log_level_as_num = value
-
+        additional_text = ", currently using default" if self.__using_default_log_level is True else ""
         if _current_log_level > 0:
             base = self.__sh.get_basedir()
-            SeLogger.manage_logdirectory(base, SeLogger.log_directory, True)
-        additional_text = ", currently using default" if self.__using_default_log_level is True else ""
+            self.__logger.manage_logdirectory(base, self.__logger.log_directory, True)
+            self.__logging_off = False
+        elif self.__logging_off is False:
+            self.__logger.log_level_as_num = 1
+            self.__logger.info("Logging turned off! Current log level {} ({}), default {}{}",
+                               _current_log_level, type(self.__logger.log_level), _default_log_level, additional_text)
+            self.__logger.log_level_as_num = value
+            self.__logging_off = True
+
         self.__logger.info("Current log level {} ({}), default {}{}",
-                            _current_log_level, type(self.__logger.log_level), _default_log_level, additional_text)
+                           _current_log_level, type(self.__logger.log_level), _default_log_level, additional_text)
         _instant_leaveaction = self.__instant_leaveaction.get()
         _default_instant_leaveaction_value = self.__default_instant_leaveaction.get()
         if _instant_leaveaction <= -1:
