@@ -221,7 +221,7 @@ class StateEngine(SmartPlugin):
     def get_graph(self, abitem, graphtype='link'):
         if isinstance(abitem, str):
             abitem = self._items[abitem]
-        webif = StateEngineWebif.WebInterface(self.__sh, abitem)
+        webif = StateEngineWebif.WebInterface(abitem)
         try:
             os.makedirs(self.path_join(self.get_plugin_dir(), 'webif/static/img/visualisations/'))
         except OSError:
