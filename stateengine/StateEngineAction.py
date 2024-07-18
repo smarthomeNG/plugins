@@ -1074,7 +1074,8 @@ class SeActionForceItem(SeActionBase):
 
         if value is None:
             self._log_debug("{0}: Value is None", actionname)
-            self.update_webif_actionstatus(state, self._name, 'False', 'Value is None')
+            pat = r"(?:[^,(]*)\'(.*?)\'"
+            self.update_webif_actionstatus(state, re.findall(pat, actionname)[0], 'False', 'Value is None')
             return
 
         if returnvalue:
@@ -1083,12 +1084,19 @@ class SeActionForceItem(SeActionBase):
 
         if not self.__mindelta.is_empty():
             mindelta = self.__mindelta.get()
-            # noinspection PyCallingNonCallable
-            delta = float(abs(self.__item() - value))
+            if self.__status is not None:
+                # noinspection PyCallingNonCallable
+                delta = float(abs(self.__status() - value))
+                additionaltext = "of statusitem "
+            else:
+                delta = float(abs(self.__item() - value))
+                additionaltext = ""
+
+            self.__delta = delta
             if delta < mindelta:
+                text = "{0}: Not setting '{1}' to '{2}' because delta {3}'{4:.2}' is lower than mindelta '{5}'"
+                self._log_debug(text, actionname, self.__item.property.path, value, additionaltext, delta, mindelta)
                 self.update_webif_actionstatus(state, self._name, 'False')
-                text = "{0}: Not setting '{1}' to '{2}' because delta '{3:.2}' is lower than mindelta '{4}'"
-                self._log_debug(text, actionname, self.__item.property.path, value, delta, mindelta)
                 return
         source = self.set_source(current_condition, previous_condition, previousstate_condition)
         # Set to different value first ("force")
@@ -1141,9 +1149,18 @@ class SeActionForceItem(SeActionBase):
         except Exception:
             value = None
         self.__item = orig_item
-        result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval, 'value': value,
-                 'conditionset': str(self.conditionset.get()), 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+        mindelta = self.__mindelta.get()
+        if mindelta is None:
+            result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval,
+                      'value': value, 'conditionset': self.conditionset.get(),
+                      'previousconditionset': self.previousconditionset.get(),
+                      'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
+        else:
+            result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval,
+                      'value': value, 'conditionset': self.conditionset.get(),
+                      'previousconditionset': self.previousconditionset.get(),
+                      'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {},
+                      'delta': str(self.__delta), 'mindelta': str(mindelta)}
         return result
 
 
