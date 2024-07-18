@@ -92,7 +92,6 @@ class SeLogger:
             os.makedirs(log_directory)
         return log_directory
 
-
     # Remove old log files (by scheduler)
     @staticmethod
     def remove_old_logfiles():
@@ -141,7 +140,6 @@ class SeLogger:
         self.__logerror = False
         self.__filename = ""
         self.update_logfile()
-
 
     # Update name logfile if required
     def update_logfile(self):

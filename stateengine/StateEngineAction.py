@@ -24,7 +24,6 @@ from . import StateEngineValue
 from . import StateEngineDefaults
 import datetime
 from lib.shtime import Shtime
-from lib.item import Items
 import re
 
 
@@ -68,7 +67,6 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._parent = self._abitem.id
         self._caller = StateEngineDefaults.plugin_identification
         self.shtime = Shtime.get_instance()
-        self.itemsApi = Items.get_instance()
         self._name = name
         self.__delay = StateEngineValue.SeValue(self._abitem, "delay")
         self.__repeat = None
@@ -271,7 +269,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                         self._caller += '_self'
                     #self._log_develop("Got item from eval on {} {}", self._function, check_item)
                 else:
-                    self._log_develop("Got no item from eval on {} with initial item {}", self._function, self.__item)
+                    self._log_develop("Got no item from eval on {} with initial item {}", self._function, item)
             except Exception as ex:
                 _issue = {self._name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
                 # raise Exception("Problem evaluating item '{}' from eval: {}".format(check_item, ex))
@@ -302,14 +300,13 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 _eval = _eval if _eval not in (None, "None") else None
                 check_item = _selfitem or _eval
                 if check_item is None:
-                    _returnitem, _returnissue = self._abitem.return_item(_item)
-                    check_item = _returnitem
+                    check_item, _returnissue = self._abitem.return_item(_item)
                 else:
                     _returnissue = None
                 _issue = {self._name: {'issue': _returnissue,
                                        'issueorigin': [{'state': item_state.property.path, 'action': self._function}]}}
-                self._log_debug("Check item {} status {} value {} _returnissue {}", check_item, check_status, check_value,
-                        _returnissue)
+                self._log_debug("Check item {} status {} value {} _returnissue {}", check_item, check_status,
+                                check_value, _returnissue)
         except Exception as ex:
             self._log_info("No valid item info for action {}, trying to get differently. Problem: {}", self._name, ex)
         # missing item in action: Try to find it.
@@ -334,8 +331,6 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 check_status, _issue = self._abitem.return_item(status)
                 _issue = {self._name: {'issue': _issue,
                                        'issueorigin': [{'state': item_state.property.path, 'action': self._function}]}}
-            elif check_status is not None:
-                check_status = str(status)
 
         if check_mindelta.is_empty():
             mindelta = StateEngineTools.find_attribute(self._sh, item_state, "se_mindelta_" + self._name)
@@ -436,7 +431,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
             self._getitem_fromeval()
             self._log_decrease_indent()
             _validitem = True
-        except Exception as ex:
+        except Exception:
             _validitem = False
             self._log_decrease_indent()
         if not self._can_execute(state):
@@ -682,7 +677,7 @@ class SeActionSetItem(SeActionBase):
 
         if value is None:
             self._log_debug("{0}: Value is None", actionname)
-            pat = "(?:[^,\(]*)\'(.*?)\'"
+            pat = r"(?:[^,(]*)\'(.*?)\'"
             self.update_webif_actionstatus(state, re.findall(pat, actionname)[0], 'False', 'Value is None')
             return
 
@@ -713,7 +708,7 @@ class SeActionSetItem(SeActionBase):
         self._log_decrease_indent()
         self._log_debug("{0}: Set '{1}' to '{2}'{3}", actionname, item.property.path, value, repeat_text)
         source = self.set_source(current_condition, previous_condition, previousstate_condition)
-        pat = "(?:[^,\(]*)\'(.*?)\'"
+        pat = r"(?:[^,(]*)\'(.*?)\'"
         self.update_webif_actionstatus(state, re.findall(pat, actionname)[0], 'True')
         # noinspection PyCallingNonCallable
         item(value, caller=self._caller, source=source)
@@ -731,7 +726,7 @@ class SeActionSetItem(SeActionBase):
                 item = str(self.__item.property.path)
             else:
                 item = None
-        except Exception as ex:
+        except Exception:
             item = None
         try:
             val = self.__value.get()
@@ -800,7 +795,7 @@ class SeActionSetByattr(SeActionBase):
         self._log_info("{0}: Setting values by attribute '{1}'.{2}", actionname, self.__byattr, repeat_text)
         self.update_webif_actionstatus(state, self._name, 'True')
         source = self.set_source(current_condition, previous_condition, previousstate_condition)
-        for item in self.itemsApi.find_items(self.__byattr):
+        for item in self._sh.find_items(self.__byattr):
             self._log_info("\t{0} = {1}", item.property.path, item.conf[self.__byattr])
             item(item.conf[self.__byattr], caller=self._caller, source=source)
 

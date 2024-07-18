@@ -84,7 +84,7 @@ class SeState(StateEngineTools.SeItemChild):
 
     @releasedby.setter
     def releasedby(self, value):
-        self.__releasedby.set(value, "", True, None, False)
+        self.__releasedby.set(value, "", True, False)
 
     @property
     def order(self):
@@ -92,7 +92,7 @@ class SeState(StateEngineTools.SeItemChild):
 
     @order.setter
     def order(self, value):
-        self.__order.set(value, "", True, None, False)
+        self.__order.set(value, "", True, False)
 
     @property
     def can_release(self):
@@ -100,7 +100,7 @@ class SeState(StateEngineTools.SeItemChild):
 
     @can_release.setter
     def can_release(self, value):
-        self.__can_release.set(value, "", True, None, False)
+        self.__can_release.set(value, "", True, False)
 
     @property
     def has_released(self):
@@ -108,7 +108,7 @@ class SeState(StateEngineTools.SeItemChild):
 
     @has_released.setter
     def has_released(self, value):
-        self.__has_released.set(value, "", True, None, False)
+        self.__has_released.set(value, "", True, False)
 
     @property
     def was_releasedby(self):
@@ -116,7 +116,7 @@ class SeState(StateEngineTools.SeItemChild):
 
     @was_releasedby.setter
     def was_releasedby(self, value):
-        self.__was_releasedby.set(value, "", True, None, False)
+        self.__was_releasedby.set(value, "", True, False)
 
     @property
     def is_copy_for(self):
@@ -130,7 +130,7 @@ class SeState(StateEngineTools.SeItemChild):
             webif_id = None
         _key_copy = ['{}'.format(self.id), 'is_copy_for']
         self._abitem.update_webif(_key_copy, webif_id)
-        self.__is_copy_for.set(value, "", True, None, False)
+        self.__is_copy_for.set(value, "", True, False)
 
     # Constructor
     # abitem: parent SeItem instance
@@ -192,7 +192,7 @@ class SeState(StateEngineTools.SeItemChild):
 
     # log state data
     def write_to_log(self):
-        self._abitem._initstate = self
+        self._abitem.initstate = self
         self._log_info("State {0}:", self.id)
         self._log_increase_indent()
         self.update_name(self.__item)
@@ -267,7 +267,7 @@ class SeState(StateEngineTools.SeItemChild):
         if value is None and "se_stateorder" in self.__item.conf:
             _, _, _, _issue = self.__order.set_from_attr(self.__item, "se_stateorder")
         elif value is not None:
-            _, _, _issue = self.__order.set(value, "", True, None, False)
+            _, _, _issue = self.__order.set(value, "", True, False)
         else:
             _issue = [None]
 
@@ -324,7 +324,6 @@ class SeState(StateEngineTools.SeItemChild):
         for elem in self._abitem.webif_infos:
             _key_leave = ['{}'.format(elem), 'leave']
             self._abitem.update_webif(_key_leave, False)
-            #self._log_debug('set leave for {} to false', elem)
         self.__actions_leave.execute(False, allow_item_repeat, self)
         self._log_decrease_indent(50)
         self._log_increase_indent()
@@ -346,10 +345,10 @@ class SeState(StateEngineTools.SeItemChild):
 
     def update_releasedby_internal(self, states=None):
         if states == []:
-            _returnvalue, _returntype, _issue = self.__releasedby.set([None], "", True, None, False)
+            _returnvalue, _returntype, _issue = self.__releasedby.set([None], "", True, False)
         elif states:
             self._log_develop("Setting releasedby to {}", states)
-            _returnvalue, _returntype, _issue = self.__releasedby.set(states, "", True, None, False)
+            _returnvalue, _returntype, _issue = self.__releasedby.set(states, "", True, False)
             self._log_develop("returnvalue {}", _returnvalue)
         else:
             _returnvalue, _returntype, _, _issue = self.__releasedby.set_from_attr(self.__item, "se_released_by")
@@ -357,9 +356,9 @@ class SeState(StateEngineTools.SeItemChild):
 
     def update_can_release_internal(self, states):
         if states == []:
-            _returnvalue, _returntype, _issue = self.__can_release.set([None], "", True, None, False)
+            _returnvalue, _returntype, _issue = self.__can_release.set([None], "", True, False)
         elif states:
-            _returnvalue, _returntype, _issue = self.__can_release.set(states, "", True, None, False)
+            _returnvalue, _returntype, _issue = self.__can_release.set(states, "", True, False)
         else:
             _returnvalue, _returntype, _issue = [None], [None], None
         return _returnvalue, _returntype, _issue
@@ -394,14 +393,14 @@ class SeState(StateEngineTools.SeItemChild):
     # recursion_depth: current recursion_depth (recursion is canceled after five levels)
     # se_use: If se_use Attribute is used or not
     def __fill(self, item_state, recursion_depth, se_use=None):
-        def update_unused(used_attributes, type, name):
+        def update_unused(used_attributes, attrib_type, attrib_name):
             #filtered_dict = {key: value for key, value in self.__unused_attributes.items() if key not in used_attributes}
             #self.__unused_attributes = copy(filtered_dict)
 
-            for item, nested_dict in self.__unused_attributes.items():
-                if item in used_attributes.keys():
-                    used_attributes[item].update({type: name})
-                    used_attributes[item].update(nested_dict)
+            for nested_entry, nested_dict in self.__unused_attributes.items():
+                if nested_entry in used_attributes.keys():
+                    used_attributes[nested_entry].update({attrib_type: attrib_name})
+                    used_attributes[nested_entry].update(nested_dict)
                     self.__used_attributes.update(used_attributes)
 
         def update_action_status(action_status, actiontype):
@@ -533,13 +532,10 @@ class SeState(StateEngineTools.SeItemChild):
         parent_item = item_state.return_parent()
         child_items = item_state.return_children()
         _conditioncount = 0
-        _enter_actioncount = 0
-        _enter_stay_actioncount = 0
-        _leave_actioncount = 0
-        _stay_actioncount = 0
-        _actioncount = 0
+        _action_counts = {"enter": 0, "stay": 0, "enter_or_stay": 0, "leave": 0}
         _unused_attributes = {}
         _used_attributes = {}
+        _action_status = {}
         # first check all conditions
         for child_item in child_items:
             child_name = StateEngineTools.get_last_part_of_item_id(child_item)
@@ -574,55 +570,39 @@ class SeState(StateEngineTools.SeItemChild):
         for child_item in child_items:
             child_name = StateEngineTools.get_last_part_of_item_id(child_item)
             try:
-                if child_name == "on_enter":
-                    _actioncount += 1
+
+                action_mapping = {
+                    "on_enter": ("enter", self.__actions_enter),
+                    "on_stay": ("stay", self.__actions_stay),
+                    "on_enter_or_stay": ("enter_or_stay", self.__actions_enter_or_stay),
+                    "on_leave": ("leave", self.__actions_leave)
+                }
+
+                if child_name in action_mapping:
+                    action_name, action_method = action_mapping[child_name]
                     for attribute in child_item.conf:
-                        _enter_actioncount += 1
-                        _, _action_status = self.__actions_enter.update(attribute, child_item.conf[attribute])
+                        self._log_develop("Filling state with {} action named {}", child_name, attribute)
+                        _action_counts[action_name] += 1
+                        _, _action_status = action_method.update(attribute, child_item.conf[attribute])
                         if _action_status:
-                            update_action_status(_action_status, 'enter')
+                            update_action_status(_action_status, action_name)
                             self._abitem.update_action_status(self.__action_status)
                         update_unused(_used_attributes, 'action', child_name)
-                elif child_name == "on_stay":
-                    _actioncount += 1
-                    for attribute in child_item.conf:
-                        _stay_actioncount += 1
-                        _, _action_status = self.__actions_stay.update(attribute, child_item.conf[attribute])
-                        if _action_status:
-                            update_action_status(_action_status, 'stay')
-                            self._abitem.update_action_status(self.__action_status)
-                        update_unused(_used_attributes, 'action', child_name)
-                elif child_name == "on_enter_or_stay":
-                    _actioncount += 1
-                    for attribute in child_item.conf:
-                        _enter_stay_actioncount += 1
-                        _, _action_status = self.__actions_enter_or_stay.update(attribute, child_item.conf[attribute])
-                        if _action_status:
-                            update_action_status(_action_status, 'enter_or_stay')
-                            self._abitem.update_action_status(self.__action_status)
-                        update_unused(_used_attributes, 'action', child_name)
-                elif child_name == "on_leave":
-                    _actioncount += 1
-                    for attribute in child_item.conf:
-                        _leave_actioncount += 1
-                        _, _action_status = self.__actions_leave.update(attribute, child_item.conf[attribute])
-                        if _action_status:
-                            update_action_status(_action_status, 'leave')
-                            self._abitem.update_action_status(self.__action_status)
-                        update_unused(_used_attributes, 'action', child_name)
+
             except ValueError as ex:
                 raise ValueError("Condition {0} check for actions error: {1}".format(child_name, ex))
+
         self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
         # Actions defined directly in the item go to "enter_or_stay"
         for attribute in item_state.conf:
             _result = self.__actions_enter_or_stay.update(attribute, item_state.conf[attribute])
-            _enter_stay_actioncount += _result[0] if _result else 0
+            _action_counts["enter_or_stay"] += _result[0] if _result else 0
             _action_status = _result[1]
             if _action_status:
                 update_action_status(_action_status, 'enter_or_stay')
                 self._abitem.update_action_status(self.__action_status)
 
-        _total_actioncount = _enter_actioncount + _stay_actioncount + _enter_stay_actioncount + _leave_actioncount
+        _total_actioncount = _action_counts["enter"] + _action_counts["stay"] + _action_counts["enter_or_stay"] + _action_counts["leave"]
 
         self.update_name(item_state, recursion_depth)
         # Complete condition sets and actions at the end
@@ -647,11 +627,15 @@ class SeState(StateEngineTools.SeItemChild):
             self._abitem.update_action_status(self.__action_status)
             self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
         _summary = "{} on_enter, {} on_stay , {} on_enter_or_stay, {} on_leave"
+        if self.__action_status:
+            _ignore_list = [entry for entry in self.__action_status if self.__action_status[entry].get('ignore') is True]
+            if _ignore_list:
+                self._log_info("Ignored {} action(s) due to errors: {}", len(_ignore_list), _ignore_list)
         if se_use is not None:
             self._log_debug("Added {} action(s) based on se_use {}. " + _summary, _total_actioncount, se_use,
-                           _enter_actioncount, _stay_actioncount, _enter_stay_actioncount, _leave_actioncount)
+                            _action_counts["enter"], _action_counts["stay"], _action_counts["enter_or_stay"], _action_counts["leave"])
             self._log_debug("Added {} condition set(s) based on se_use: {}", _conditioncount, se_use)
         else:
             self._log_debug("Added {} action(s) based on item configuration: " + _summary, _total_actioncount,
-                           _enter_actioncount, _stay_actioncount, _enter_stay_actioncount, _leave_actioncount)
+                            _action_counts["enter"], _action_counts["stay"], _action_counts["enter_or_stay"], _action_counts["leave"])
             self._log_debug("Added {} condition set(s) based on item configuration", _conditioncount)

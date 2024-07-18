@@ -119,7 +119,7 @@ class SeValue(StateEngineTools.SeItemChild):
         if value is not None:
             self._log_develop("Setting value {0}, attribute name {1}, reset {2}, type {3}",
                               value, attribute_name, reset, attr_type)
-        _returnvalue, _returntype, _issue = self.set(value, attribute_name, reset, item)
+        _returnvalue, _returntype, _issue = self.set(value, attribute_name, reset)
         self._log_develop("Set from attribute returnvalue {}, returntype {}, issue {}", _returnvalue, _returntype, _issue)
         return _returnvalue, _returntype, _using_default, _issue
 
@@ -144,7 +144,7 @@ class SeValue(StateEngineTools.SeItemChild):
     # Set value
     # value: string indicating value or source of value
     # name: name of object ("time" is being handled differently)
-    def set(self, value, name="", reset=True, item=None, copyvalue=True):
+    def set(self, value, name="", reset=True, copyvalue=True):
         if copyvalue is True:
             value = copy.copy(value)
         if reset:
@@ -283,8 +283,8 @@ class SeValue(StateEngineTools.SeItemChild):
                                     self._log_warning(_issue)
                                     s = None
                     try:
-                        cond1 = s.lstrip('-').replace('.','',1).isdigit()
-                        cond2 = field_value[i].lstrip('-').replace('.','',1).isdigit()
+                        cond1 = s.lstrip('-').replace('.', '', 1).isdigit()
+                        cond2 = field_value[i].lstrip('-').replace('.', '', 1).isdigit()
                     except Exception:
                         cond1 = False
                         cond2 = False
@@ -297,7 +297,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     self.__value = [] if self.__value is None else [self.__value] if not isinstance(self.__value,
                                                                                                     list) else self.__value
                     if s == "value":
-                        cond3 = isinstance(field_value[i], str) and field_value[i].lstrip('-').replace('.','',1).isdigit()
+                        cond3 = isinstance(field_value[i], str) and field_value[i].lstrip('-').replace('.', '', 1).isdigit()
                         if cond3:
                             field_value[i] = ast.literal_eval(field_value[i])
                         elif isinstance(field_value[i], str) and field_value[i].lower() in ['true', 'yes']:
@@ -359,7 +359,7 @@ class SeValue(StateEngineTools.SeItemChild):
                 if isinstance(field_value, list) and not self.__allow_value_list:
                     raise ValueError("{0}: value_in is not allowed, problem with {1}. Allowed = {2}".format(
                                      self.__name, field_value, self.__allow_value_list))
-                cond3 = isinstance(field_value, str) and field_value.lstrip('-').replace('.','',1).isdigit()
+                cond3 = isinstance(field_value, str) and field_value.lstrip('-').replace('.', '', 1).isdigit()
                 if cond3:
                     field_value = ast.literal_eval(field_value)
                 elif isinstance(field_value, str) and field_value.lower() in ['true', 'yes']:
@@ -382,7 +382,10 @@ class SeValue(StateEngineTools.SeItemChild):
     def set_cast(self, cast_func):
         self.__cast_func = cast_func
         self.__value, _issue = self.__do_cast(self.__value)
-        return [_issue]
+        if _issue:
+            return [_issue]
+        else:
+            return []
 
     # determine and return value
     def get(self, default=None, originalorder=True):
@@ -523,9 +526,9 @@ class SeValue(StateEngineTools.SeItemChild):
             self._log_error("Can't cast {0} to item/struct! {1}".format(value, ex))
             return value
 
-    def __update_item_listorder(self, value, newvalue, id=None):
+    def __update_item_listorder(self, value, newvalue, item_id=None):
         if value is None:
-            _id_value = "item:{}".format(id)
+            _id_value = "item:{}".format(item_id)
             self.__listorder[self.__listorder.index(_id_value)] = newvalue
         if value in self.__listorder:
             self.__listorder[self.__listorder.index(value)] = newvalue
@@ -533,31 +536,31 @@ class SeValue(StateEngineTools.SeItemChild):
             _item_value = "item:{}".format(value.property.path)
             if _item_value in self.__listorder:
                 self.__listorder[self.__listorder.index(_item_value)] = newvalue
-            if id:
-                _item_value = "item:{}".format(id)
+            if item_id:
+                _item_value = "item:{}".format(item_id)
                 if _item_value in self.__listorder:
                     self.__listorder[self.__listorder.index(_item_value)] = "item:{}".format(newvalue.property.path)
                     self._log_develop("Updated relative declaration {} with absolute item path {}. Listorder is now: {}",
                                       _item_value, newvalue.property.path, self.__listorder)
 
-    def __absolute_item(self, value, id=None):
+    def __absolute_item(self, value, item_id=None):
         if value is None:
-            self.__update_item_listorder(value, value, id)
+            self.__update_item_listorder(value, value, item_id)
         elif isinstance(value, list):
             valuelist = []
             for i, element in enumerate(value):
                 element = self.cast_item(element)
-                self.__update_item_listorder(value, element, id[i])
+                self.__update_item_listorder(value, element, item_id[i])
             value = valuelist
         else:
             _newvalue = self.cast_item(value)
-            self.__update_item_listorder(value, _newvalue, id)
+            self.__update_item_listorder(value, _newvalue, item_id)
             value = _newvalue
         return value
 
     # Cast given value, if cast-function is set
     # value: value to cast
-    def __do_cast(self, value, id=None):
+    def __do_cast(self, value, item_id=None):
         _issue = None
         if value is not None and self.__cast_func is not None:
             try:
@@ -574,7 +577,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         if element in self.__listorder:
                             self.__listorder[self.__listorder.index(element)] = _newvalue
                         if isinstance(element, self.__itemClass):
-                            self.__update_item_listorder(value, _newvalue, id[i])
+                            self.__update_item_listorder(value, _newvalue, item_id[i])
 
                         if isinstance(element, StateEngineStruct.SeStruct):
                             _item_value = "struct:{}".format(element.property.path)
@@ -587,7 +590,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         if value in self.__listorder:
                             self.__listorder[self.__listorder.index(value)] = _newvalue
                         if isinstance(value, self.__itemClass):
-                            self.__update_item_listorder(value, _newvalue, id)
+                            self.__update_item_listorder(value, _newvalue, item_id)
 
                         if isinstance(value, StateEngineStruct.SeStruct):
                             _item_value = "struct:{}".format(value.property.path)

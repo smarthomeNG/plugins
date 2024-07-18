@@ -22,12 +22,8 @@
 from . import StateEngineLogger
 import datetime
 from ast import literal_eval
-from lib.item import Items
-from lib.item.item import Item
 import re
 
-itemsApi = Items.get_instance()
-__itemClass = Item
 
 # General class for everything that is below the SeItem Class
 # This class provides some general stuff:
@@ -124,7 +120,7 @@ def parse_relative(evalstr, begintag, endtags):
         rel = rest[:rest.find(endtag)]
         rest = rest[rest.find(endtag)+len(endtag):]
         if 'property' in endtag:
-            rest1 = re.split('([ +\-*/])', rest, 1)
+            rest1 = re.split('([- +*/])', rest, 1)
             rest = ''.join(rest1[1:])
             pref += "se_eval.get_relative_itemproperty('{}', '{}')".format(rel, rest1[0])
         elif '()' in endtag:
@@ -261,30 +257,15 @@ def cast_time(value):
 # base_item: base item to search in
 # attribute: name of attribute to find
 def find_attribute(smarthome, base_item, attribute, recursion_depth=0):
-    # 1: parent of given item could have attribute
-    try:
-        parent_item = base_item.return_parent()
-    except Exception:
+    # if item has attribute "se_use", get the item to use and search this item for required attribute
+    if recursion_depth > 5:
         return None
-    try:
-        _parent_conf = parent_item.conf
-        if parent_item is not None and attribute in _parent_conf:
-            return parent_item.conf[attribute]
-    except Exception:
-        return None
-
-    # 2: if item has attribute "se_use", get the item to use and search this item for required attribute
-    if "se_use" in base_item.conf:
-        if recursion_depth > 5:
-            return None
-        use_item = itemsApi.return_item(base_item.conf.get("se_use"))
-        if use_item is not None:
-            result = find_attribute(smarthome, use_item, attribute, recursion_depth + 1)
-            if result is not None:
-                return result
-
-    # 3: nothing found
-    return None
+    use_item = smarthome.return_item(base_item.find_attribute("se_use", None, 0))
+    if use_item is None:
+        return base_item.find_attribute(attribute, None, 1)
+    else:
+        result = find_attribute(smarthome, use_item, attribute, recursion_depth + 1)
+        return result
 
 
 # partition value at splitchar and strip resulting parts
@@ -305,8 +286,8 @@ def partition_strip(value, splitchar):
 # return list representation of string
 # value: list as string
 # returns: list or original value
-def convert_str_to_list(value):
-    if isinstance(value, str) and ("," in value and value.startswith("[")):
+def convert_str_to_list(value, force=True):
+    if isinstance(value, str) and (value[:1] == '[' and value[-1:] == ']'):
         value = value.strip("[]")
     if isinstance(value, str) and "," in value:
         try:
@@ -317,10 +298,11 @@ def convert_str_to_list(value):
             return literal_eval(formatted_str)
         except Exception as ex:
             raise ValueError("Problem converting string to list: {}".format(ex))
-    elif isinstance(value, list):
+    elif isinstance(value, list) or force is False:
         return value
     else:
         return [value]
+
 
 # return dict representation of string
 # value: OrderedDict as string
@@ -343,6 +325,7 @@ def convert_str_to_dict(value):
         return literal_eval(value)
     except Exception as ex:
         raise ValueError("Problem converting string to OrderedDict: {}".format(ex))
+
 
 # return string representation of eval function
 # eval_func: eval function
@@ -371,7 +354,9 @@ def get_eval_name(eval_func):
 # source: source
 # item: item being updated
 # eval_type: update or change
-def get_original_caller(elog, caller, source, item=None, eval_keyword=['Eval'], eval_type='update'):
+def get_original_caller(smarthome, elog, caller, source, item=None, eval_keyword=None, eval_type='update'):
+    if eval_keyword is None:
+        eval_keyword = ['Eval']
     original_caller = caller
     original_item = item
     if isinstance(source, str):
@@ -379,7 +364,7 @@ def get_original_caller(elog, caller, source, item=None, eval_keyword=['Eval'], 
     else:
         original_source = "None"
     while partition_strip(original_caller, ":")[0] in eval_keyword:
-        original_item = itemsApi.return_item(original_source)
+        original_item = smarthome.return_item(original_source)
         if original_item is None:
             elog.info("get_caller({0}, {1}): original item not found", caller, source)
             break

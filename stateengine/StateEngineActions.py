@@ -21,7 +21,6 @@
 from . import StateEngineAction
 from . import StateEngineTools
 
-import ast
 import threading
 import queue
 
@@ -49,16 +48,16 @@ class SeActions(StateEngineTools.SeItemChild):
     def __repr__(self):
         return "SeActions, count {}".format(self.count())
 
-    def dict_actions(self, type, state):
+    def dict_actions(self, action_type, state):
         result = {}
         for name in self.__actions:
-            self._abitem._initactionname = name
+            self._abitem.initactionname = name
             result.update({name: self.__actions[name].get()})
             try:
-                result[name].update({'actionstatus': self._abitem.webif_infos[state][type][name].get('actionstatus')})
+                result[name].update({'actionstatus': self._abitem.webif_infos[state][action_type][name].get('actionstatus')})
             except Exception:
                 pass
-            self._abitem._initactionname = None
+            self._abitem.initactionname = None
         return result
 
     def reset(self):
@@ -77,6 +76,15 @@ class SeActions(StateEngineTools.SeItemChild):
         _count = 0
         _issue = None
         try:
+            if func == "se_action":  # and name not in self.__actions:
+                _issue = self.__handle_combined_action_attribute(name, value)
+                _count += 1
+                return _count, _issue
+            elif isinstance(value, str):
+                value = ":".join(map(str.strip, value.split(":")))
+                if value[:1] == '[' and value[-1:] == ']':
+                    value = StateEngineTools.convert_str_to_list(value, False)
+            self._log_debug("Value is now {}", value)
             if func == "se_delay":
                 # set delay
                 if name not in self.__actions:
@@ -149,9 +157,6 @@ class SeActions(StateEngineTools.SeItemChild):
                 else:
                     _issue = self.__actions[name].update_order(value)
                 return _count, _issue
-            elif func == "se_action":  # and name not in self.__actions:
-                _issue = self.__handle_combined_action_attribute(name, value)
-                _count += 1
             else:
                 _issue_list = []
                 _ensure_action, _issue = self.__ensure_action_exists(func, name)
@@ -165,9 +170,9 @@ class SeActions(StateEngineTools.SeItemChild):
                     _count += 1
                 _issue = StateEngineTools.flatten_list(_issue_list)
         except ValueError as ex:
+            _issue = {name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': self.__actions[name].function}], 'ignore': True}}
             if name in self.__actions:
                 del self.__actions[name]
-            _issue = {name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': self.__actions[name].function}]}}
             self._log_warning("Ignoring action {0} because: {1}", attribute, ex)
         return _count, _issue
 
@@ -194,13 +199,14 @@ class SeActions(StateEngineTools.SeItemChild):
                                "because parameter 'force' is 'False'!", name)
                 _returnfunction = "set"
         return _issue, _returnfunction
+
     def __check_mode_setting(self, name, value, function, action):
         if value is not None:
             possible_mode_list = ['first', 'last', 'all']
             _issue = None
             # Parameter mode is supported only for type "remove"
-            if not "remove" in function:
-                _issue = {name: {'issue': ['Parameter mode not supported for this function'], 'attribute': 'mode',
+            if "remove" not in function:
+                _issue = {name: {'issue': ['Parameter mode only supported for remove function'], 'attribute': 'mode',
                                  'issueorigin': [{'state': 'unknown', 'action': function}]}}
                 self._log_warning("Attribute 'se_action_{0}': Parameter 'mode' not supported for function '{1}'",
                                   name, function)
@@ -312,39 +318,54 @@ class SeActions(StateEngineTools.SeItemChild):
         return True, _issue_list
 
     def __handle_combined_action_attribute(self, name, value_list):
+        def remove_action(ex):
+            if name in self.__actions:
+                del self.__actions[name]
+            _issue = {name: {'issue': [ex], 'issueorigin': [{'state': 'unknown', 'action': parameter['function']}], 'ignore': True}}
+            _issue_list.append(_issue)
+            self._log_warning("Ignoring action {0} because: {1}", name, ex)
+
+        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'conditionset': None,
+                     'previousconditionset': None, 'previousstate_conditionset': None, 'mode': None, 'instanteval': None}
+        _issue = None
+        _issue_list = []
         # value_list needs to be string or list
         if isinstance(value_list, str):
             value_list = [value_list, ]
         elif not isinstance(value_list, list):
-            raise ValueError("Attribute 'se_action_{0}': Value must be a string or a list!".format(name))
+            remove_action("Value must be a string or a list!")
+            return _issue_list
 
         # parse parameters
-        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'conditionset': None,
-                     'previousconditionset': None, 'previousstate_conditionset': None, 'mode': None, 'instanteval': None}
         for entry in value_list:
-            if isinstance(entry, dict):
-                entry = list("{!s}:{!s}".format(k, v) for (k, v) in entry.items())[0]
-            key, val = StateEngineTools.partition_strip(entry, ":")
-            val = ":".join(map(str.strip, val.split(":")))
-            if val[:1] == '[' and val[-1:] == ']':
-                val = ast.literal_eval(val)
-            if key == "function":
-                parameter[key] = StateEngineTools.cast_str(val)
-            elif key == "force":
-                parameter[key] = StateEngineTools.cast_bool(val)
-            else:
-                parameter[key] = val
+            try:
+                if isinstance(entry, dict):
+                    entry = list("{!s}:{!s}".format(k, v) for (k, v) in entry.items())[0]
+                key, val = StateEngineTools.partition_strip(entry, ":")
+                val = ":".join(map(str.strip, val.split(":")))
+                if val[:1] == '[' and val[-1:] == ']':
+                    val = StateEngineTools.convert_str_to_list(val, False)
+                if key == "function":
+                    parameter[key] = StateEngineTools.cast_str(val)
+                elif key == "force":
+                    parameter[key] = StateEngineTools.cast_bool(val)
+                else:
+                    parameter[key] = val
+            except Exception as ex:
+                remove_action("Problem with entry {} for action {}: {}".format(entry, name, ex))
+        if _issue_list:
+            return _issue_list
         parameter['action'] = name
-        _issue_list = []
+
         # function given and valid?
         if parameter['function'] is None:
-            raise ValueError("Attribute 'se_action_{0}: Parameter 'function' must be set!".format(name))
+            remove_action("Attribute 'se_action_{0}: Parameter 'function' must be set!".format(name))
+            return _issue_list
         if parameter['function'] not in ('set', 'force', 'run', 'byattr', 'trigger', 'special',
                                          'add', 'remove', 'removeall', 'removefirst', 'removelast'):
-            raise ValueError("Attribute 'se_action_{0}: Invalid value '{1}' for parameter "
-                             "'function'!".format(name, parameter['function']))
+            remove_action("Attribute 'se_action_{0}: Invalid value '{1}' for parameter 'function'!".format(name, parameter['function']))
+            return _issue_list
 
-        _issue = None
         _issue, parameter['function'] = self.__check_force_setting(name, parameter['force'], parameter['function'])
         if _issue:
             _issue_list.append(_issue)
@@ -354,7 +375,6 @@ class SeActions(StateEngineTools.SeItemChild):
         if _action:
             self.__actions[name] = _action
         # create action based on function
-        exists = False
         try:
             if parameter['function'] == "set":
                 _action_exists, _issue = self.__ensure_action_exists("se_set", name)
@@ -363,7 +383,6 @@ class SeActions(StateEngineTools.SeItemChild):
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'to')
                     self.__actions[name].update(parameter['to'])
-                    exists = True
             elif parameter['function'] == "force":
                 _action_exists, _issue = self.__ensure_action_exists("se_force", name)
                 if _issue:
@@ -371,7 +390,6 @@ class SeActions(StateEngineTools.SeItemChild):
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'to')
                     self.__actions[name].update(parameter['to'])
-                    exists = True
             elif parameter['function'] == "run":
                 _action_exists, _issue = self.__ensure_action_exists("se_run", name)
                 if _issue:
@@ -379,7 +397,6 @@ class SeActions(StateEngineTools.SeItemChild):
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'eval')
                     self.__actions[name].update(parameter['eval'])
-                    exists = True
             elif parameter['function'] == "byattr":
                 _action_exists, _issue = self.__ensure_action_exists("se_byattr", name)
                 if _issue:
@@ -387,7 +404,6 @@ class SeActions(StateEngineTools.SeItemChild):
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'attribute')
                     self.__actions[name].update(parameter['attribute'])
-                    exists = True
             elif parameter['function'] == "trigger":
                 _action_exists, _issue = self.__ensure_action_exists("se_trigger", name)
                 if _issue:
@@ -398,7 +414,6 @@ class SeActions(StateEngineTools.SeItemChild):
                         self.__actions[name].update(parameter['logic'] + ':' + parameter['value'])
                     else:
                         self.__actions[name].update(parameter['logic'])
-                    exists = True
             elif parameter['function'] == "special":
                 _action_exists, _issue = self.__ensure_action_exists("se_special", name)
                 if _issue:
@@ -406,7 +421,6 @@ class SeActions(StateEngineTools.SeItemChild):
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
-                    exists = True
             elif parameter['function'] == "add":
                 _action_exists, _issue = self.__ensure_action_exists("se_add", name)
                 if _issue:
@@ -414,7 +428,6 @@ class SeActions(StateEngineTools.SeItemChild):
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
-                    exists = True
             elif parameter['function'] == "remove":
                 _action_exists, _issue = self.__ensure_action_exists("se_remove", name)
                 if _issue:
@@ -422,7 +435,6 @@ class SeActions(StateEngineTools.SeItemChild):
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
-                    exists = True
             elif parameter['function'] == "removeall":
                 _action_exists, _issue = self.__ensure_action_exists("se_removeall", name)
                 if _issue:
@@ -430,7 +442,6 @@ class SeActions(StateEngineTools.SeItemChild):
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
-                    exists = True
             elif parameter['function'] == "removefirst":
                 _action_exists, _issue = self.__ensure_action_exists("se_removefirst", name)
                 if _issue:
@@ -438,7 +449,6 @@ class SeActions(StateEngineTools.SeItemChild):
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
-                    exists = True
             elif parameter['function'] == "removelast":
                 _action_exists, _issue = self.__ensure_action_exists("se_removelast", name)
                 if _issue:
@@ -446,55 +456,49 @@ class SeActions(StateEngineTools.SeItemChild):
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
-                    exists = True
 
         except ValueError as ex:
-            exists = False
-            if name in self.__actions:
-                del self.__actions[name]
-            _issue = {name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': parameter['function']}]}}
-            _issue_list.append(_issue)
-            self._log_warning("Ignoring action {0} because: {1}", name, ex)
+            remove_action(ex)
+            return _issue_list
 
         # add additional parameters
-        if exists:
-            if parameter['instanteval'] is not None:
-                _issue = self.__actions[name].update_instanteval(parameter['instanteval'])
-                if _issue:
-                    _issue_list.append(_issue)
-            if parameter['repeat'] is not None:
-                _issue = self.__actions[name].update_repeat(parameter['repeat'])
-                if _issue:
-                    _issue_list.append(_issue)
-            if parameter['delay'] != 0:
-                _issue = self.__actions[name].update_delay(parameter['delay'])
-                if _issue:
-                    _issue_list.append(_issue)
-            if parameter['order'] is not None:
-                _issue = self.__actions[name].update_order(parameter['order'])
-                if _issue:
-                    _issue_list.append(_issue)
-            if parameter['conditionset'] is not None:
-                _issue = self.__actions[name].update_conditionset(parameter['conditionset'])
-                if _issue:
-                    _issue_list.append(_issue)
-            if parameter['previousconditionset'] is not None:
-                _issue = self.__actions[name].update_previousconditionset(parameter['previousconditionset'])
-                if _issue:
-                    _issue_list.append(_issue)
-            if parameter['previousstate_conditionset'] is not None:
-                _issue = self.__actions[name].update_previousstate_conditionset(parameter['previousstate_conditionset'])
-                if _issue:
-                    _issue_list.append(_issue)
-            if parameter['mode'] is not None:
-                _val, _issue = self.__actions[name].update_mode(parameter['mode'])
-                if _issue:
-                    _issue_list.append(_issue)
-                _issue, _action = self.__check_mode_setting(name, _val, parameter['function'], self.__actions[name])
-                if _issue:
-                    _issue_list.append(_issue)
-                if _action:
-                    self.__actions[name] = _action
+        if parameter['instanteval'] is not None:
+            _issue = self.__actions[name].update_instanteval(parameter['instanteval'])
+            if _issue:
+                _issue_list.append(_issue)
+        if parameter['repeat'] is not None:
+            _issue = self.__actions[name].update_repeat(parameter['repeat'])
+            if _issue:
+                _issue_list.append(_issue)
+        if parameter['delay'] != 0:
+            _issue = self.__actions[name].update_delay(parameter['delay'])
+            if _issue:
+                _issue_list.append(_issue)
+        if parameter['order'] is not None:
+            _issue = self.__actions[name].update_order(parameter['order'])
+            if _issue:
+                _issue_list.append(_issue)
+        if parameter['conditionset'] is not None:
+            _issue = self.__actions[name].update_conditionset(parameter['conditionset'])
+            if _issue:
+                _issue_list.append(_issue)
+        if parameter['previousconditionset'] is not None:
+            _issue = self.__actions[name].update_previousconditionset(parameter['previousconditionset'])
+            if _issue:
+                _issue_list.append(_issue)
+        if parameter['previousstate_conditionset'] is not None:
+            _issue = self.__actions[name].update_previousstate_conditionset(parameter['previousstate_conditionset'])
+            if _issue:
+                _issue_list.append(_issue)
+        if parameter['mode'] is not None:
+            _val, _issue = self.__actions[name].update_mode(parameter['mode'])
+            if _issue:
+                _issue_list.append(_issue)
+            _issue, _action = self.__check_mode_setting(name, _val, parameter['function'], self.__actions[name])
+            if _issue:
+                _issue_list.append(_issue)
+            if _action:
+                self.__actions[name] = _action
         return _issue_list
 
     # noinspection PyMethodMayBeStatic
@@ -573,7 +577,7 @@ class SeActions(StateEngineTools.SeItemChild):
             # noinspection PyProtectedMember
             self._log_info("Action '{0}':", action.name)
             self._log_increase_indent()
-            self._abitem._initactionname = action.name
+            self._abitem.initactionname = action.name
             action.write_to_logger()
-            self._abitem._initactionname = None
+            self._abitem.initactionname = None
             self._log_decrease_indent()

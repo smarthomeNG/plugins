@@ -154,7 +154,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
             except ValueError as ex:
                 self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
                 self._abitem.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
-                    [{'conditionset': self.name, 'condition': name}]}})
+                                           [{'conditionset': self.name, 'condition': name}]}})
                 text = "State '{0}', Condition Set '{1}', Condition '{2}' Error: {3}"
                 raise ValueError(text.format(item_state.property.path, self.name, name, ex))
 
@@ -184,14 +184,14 @@ class SeConditionSet(StateEngineTools.SeItemChild):
         try:
             self._log_info("Check condition set '{0}'", self.__name)
             self._log_increase_indent()
-            self.__previousconditionset_set(self._abitem.get_variable('current.conditionset_id'), self._abitem.get_variable('current.conditionset_name'))
+            self.__previousconditionset_set(self._abitem.get_variable('current.conditionset_id'),
+                                            self._abitem.get_variable('current.conditionset_name'))
             self.__currentconditionset_set(self.__id.property.path, self.__name)
 
             for name in self.__conditions:
                 if not self.__conditions[name].check(state):
                     self.__currentconditionset_set('', '')
                     return False
-            #self._abitem.previousconditionset_set(self._abitem.get_variable('previous.conditionset_id'), self._abitem.get_variable('previous.conditionset_name'))
             self._abitem.lastconditionset_set(self.__id.property.path, self.__name)
             return True
         finally:

@@ -22,7 +22,6 @@
 import datetime
 from collections import OrderedDict, defaultdict
 
-import lib.item.item
 from . import StateEngineTools
 from .StateEngineLogger import SeLogger
 from . import StateEngineState
@@ -33,14 +32,12 @@ from . import StateEngineStruct
 from . import StateEngineStructs
 from . import StateEngineEval
 
-from lib.item import Items
 from lib.shtime import Shtime
 from lib.item.item import Item
 import copy
 import threading
 import queue
 import re
-from ast import literal_eval
 
 
 # Class representing a blind item
@@ -180,7 +177,6 @@ class SeItem:
     def __init__(self, smarthome, item, se_plugin):
         self.__item = item
         self.__logger = SeLogger.create(self.__item)
-        self.itemsApi = Items.get_instance()
         self.update_lock = threading.Lock()
         self.__ab_alive = False
         self.__queue = queue.Queue()
@@ -310,8 +306,8 @@ class SeItem:
         self.__repeat_actions = StateEngineValue.SeValue(self, "Repeat actions if state is not changed", False, "bool")
         self.__repeat_actions.set_from_attr(self.__item, "se_repeat_actions", True)
         self.__first_run = None
-        self._initstate = None
-        self._initactionname = None
+        self.initstate = None
+        self.initactionname = None
         self.__update_trigger_item = None
         self.__update_trigger_caller = None
         self.__update_trigger_source = None
@@ -538,8 +534,8 @@ class SeItem:
                                         source, dest)
 
                 # Find out what initially caused the update to trigger if the caller is "Eval"
-                orig_caller, orig_source, orig_item = StateEngineTools.get_original_caller(self.__logger, caller,
-                                                                                           source, item)
+                orig_caller, orig_source, orig_item = StateEngineTools.get_original_caller(self.__sh, self.__logger,
+                                                                                           caller, source, item)
                 if orig_item is None:
                     orig_item = item
                 if orig_caller != caller:
@@ -574,8 +570,8 @@ class SeItem:
                 if last_state is not None:
                     self.__logger.info("Last state: {0} ('{1}')", last_state.id, last_state.name)
 
-                _last_conditionset_id = self.__lastconditionset_internal_id #self.__lastconditionset_get_id()
-                _last_conditionset_name = self.__lastconditionset_internal_name # self.__lastconditionset_get_name()
+                _last_conditionset_id = self.__lastconditionset_internal_id  # self.__lastconditionset_get_id()
+                _last_conditionset_name = self.__lastconditionset_internal_name  # self.__lastconditionset_get_name()
                 if _last_conditionset_id not in ['', None]:
                     self.__logger.info("Last Conditionset: {0} ('{1}')", _last_conditionset_id, _last_conditionset_name)
                 else:
@@ -608,6 +604,8 @@ class SeItem:
                     evaluated_instant_leaveaction = True
                 else:
                     evaluated_instant_leaveaction = False
+                _previousstate_conditionset_id = ''
+                _previousstate_conditionset_name = ''
                 for state in self.__states:
                     if not self.__ab_alive:
                         self.__logger.debug("StateEngine Plugin not running (anymore). Stop state evaluation.")
@@ -656,6 +654,7 @@ class SeItem:
                         last_state.run_stay(self.__repeat_actions.get())
                     if self.update_lock.locked():
                         self.update_lock.release()
+                    self.__logger.decrease_indent(50)
                     self.__logger.debug("State evaluation finished")
                     self.__logger.info("State evaluation queue empty.")
                     self.__handle_releasedby(new_state, last_state, _instant_leaveaction)
@@ -669,7 +668,6 @@ class SeItem:
                         "State is a copy and therefore just releasing {}. Skipping state actions, running leave actions "
                         "of last state, then retriggering.", new_state.is_copy_for.id)
                     if last_state is not None and self.__ab_alive:
-                        #self.lastconditionset_set(_original_conditionset_id, _original_conditionset_name)
                         self.__logger.info("Leaving {0} ('{1}'). Condition set was: {2}.",
                                            last_state.id, last_state.name, _original_conditionset_id)
                         self.__update_check_can_enter(last_state, _instant_leaveaction, False)
@@ -685,7 +683,7 @@ class SeItem:
 
                     if self.update_lock.locked():
                         self.update_lock.release()
-                    self.update_state(self.__item, "Released_by Retrigger", state.id)
+                    self.update_state(self.__item, "Released_by Retrigger")
                     return
 
                 _last_conditionset_id = self.__lastconditionset_internal_id
@@ -753,6 +751,7 @@ class SeItem:
                 self.__logger.debug("State evaluation finished")
                 all_released_by = self.__handle_releasedby(new_state, last_state, _instant_leaveaction)
 
+        self.__logger.decrease_indent(50)
         self.__logger.info("State evaluation queue empty.")
         if new_state:
             self.__logger.develop("States {}, Current state released by {}", self.__states, all_released_by.get(new_state))
@@ -795,12 +794,12 @@ class SeItem:
                     _stateindex = list(state_dict.keys()).index(state.id)
                     for e in release_list:
                         _valueindex = list(state_dict.keys()).index(e) if e in state_dict else -1
-                        self.__logger.develop("Testing entry in canrelease {}, state {} stateindex {}, "\
+                        self.__logger.develop("Testing entry in canrelease {}, state {} stateindex {}, "
                                               "valueindex {}", e, state.id, _stateindex, _valueindex)
                         if e == state.id:
                             self.__logger.info("Value in se_released_by must not be identical to state. Ignoring {}", e)
                         elif _stateindex < _valueindex and not state.is_copy_for:
-                            self.__logger.info("Value {} in se_released_by must have lower priority "\
+                            self.__logger.info("Value {} in se_released_by must have lower priority "
                                                "than state. Ignoring {}", state.id, e)
                         else:
                             can_release_list.append(e)
@@ -888,7 +887,7 @@ class SeItem:
                             self.__logger.develop("Entry {} defined by {} is a copy, skipping", e, releasedby[i])
                             continue
                         _entryindex = list(state_dict.keys()).index(e) if e in state_dict else -1
-                        self.__logger.develop("Testing if entry {} should become a state copy. "\
+                        self.__logger.develop("Testing if entry {} should become a state copy. "
                                               "stateindex {}, entryindex {}", e, _stateindex, _entryindex)
                         if e == new_state.id:
                             self.__logger.warning("Value in se_released_by must no be identical to state. Ignoring {}",
@@ -909,7 +908,7 @@ class SeItem:
                                 can_enter = self.__update_check_can_enter(relevant_state, instant_leaveaction)
                                 self.__logger.log_level_as_num = current_log_level
                                 if relevant_state == last_state:
-                                    self.__logger.debug("Possible release state {} = last state {}, "\
+                                    self.__logger.debug("Possible release state {} = last state {}, "
                                                         "not copying", relevant_state.id, last_state.id)
                                 elif can_enter:
                                     self.__logger.debug("Relevant state {} could enter, not copying", relevant_state.id)
@@ -953,17 +952,14 @@ class SeItem:
     def update_action_status(self, action_status):
         def combine_dicts(dict1, dict2):
             combined_dict = dict1.copy()
-
             for key, value in dict2.items():
                 if key in combined_dict:
                     for k, v in combined_dict.items():
                         v['issueorigin'].extend(
                             [item for item in v['issueorigin'] if item not in combined_dict[k]['issueorigin']])
                         v['issue'].extend([item for item in v['issue'] if item not in combined_dict[k]['issue']])
-
                 else:
                     combined_dict[key] = value
-
             return combined_dict
 
         combined_dict = combine_dicts(action_status, self.__action_status)
@@ -1009,7 +1005,7 @@ class SeItem:
                         combined_entries = [{'state': state, 'conditionset': ', '.join(conditionsets)} for
                                             state, conditionsets in combined_dict.items()]
                         combined_unused_dict[key]['issueorigin'] = combined_entries
-                    except Exception as ex:
+                    except Exception:
                         pass
 
         self.__unused_attributes = combined_unused_dict
@@ -1035,7 +1031,12 @@ class SeItem:
                 self.__logger.info("has the following issue: {}", _issuelist[0])
             else:
                 self.__logger.info("has the following issue: {}", _issuelist)
+            if "ignore" in v:
+                self.__logger.info("It will be ignored")
 
+        warn_unused = ""
+        warn_issues = ""
+        warn = ""
         if issue_type == 'actions':
             to_check = self.__action_status.items()
             warn = ', '.join(key for key in self.__action_status.keys())
@@ -1068,7 +1069,6 @@ class SeItem:
         self.__logger.increase_indent()
         for entry, value in to_check:
             if 'issue' in value:
-                origin_text = ''
                 origin_list = value.get('issueorigin') or []
                 if issue_type == 'states':
                     self.__logger.info("State {} is ignored because", entry)
@@ -1209,13 +1209,13 @@ class SeItem:
             return _statecount + 1
         except ValueError as ex:
             self.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
-                [{'conditionset': 'None', 'condition': 'ValueError'}]}})
+                               [{'conditionset': 'None', 'condition': 'ValueError'}]}})
             self.__logger.error("Ignoring state {0} because ValueError: {1}",
                                 item_state.property.path, ex)
             return _statecount
         except Exception as ex:
             self.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
-                [{'conditionset': 'None', 'condition': 'GeneralError'}]}})
+                               [{'conditionset': 'None', 'condition': 'GeneralError'}]}})
             self.__logger.error("Ignoring state {0} because: {1}",
                                 item_state.property.path, ex)
             return _statecount
@@ -1573,7 +1573,7 @@ class SeItem:
                         if v == state.id:
                             _returnvalue_issue = "State {} defined by {} in se_released_by attribute of state {} " \
                                                  "must not be identical.".format(v, _returnvalue[i], state.id)
-                        elif _valueindex == - 1: #not any(value == test.id for test in self.__states):
+                        elif _valueindex == - 1:  # not any(value == test.id for test in self.__states):
                             _returnvalue_issue = "State {} defined by {} in se_released_by attribute of state {} " \
                                                  "does currently not exist.".format(v, _returnvalue[i], state.id)
                         elif _valueindex < _stateindex:
@@ -1753,14 +1753,14 @@ class SeItem:
             self.__logger.debug("Item 'Previousstate condition Id': {0}", self.__previousstate_conditionset_item_id.property.path)
         if self.__previousstate_conditionset_item_name is not None:
             self.__logger.debug("Item 'Previousstate condition Name': {0}",
-                               self.__previousstate_conditionset_item_name.property.path)
+                                self.__previousstate_conditionset_item_name.property.path)
 
         self.__init_releasedby()
 
         for state in self.__states:
             # log states
             state.write_to_log()
-            self._initstate = None
+            self.initstate = None
 
         filtered_dict = {key: value for key, value in self.__config_issues.items() if value.get('issue') not in [[], [None], None]}
         self.__config_issues = filtered_dict
@@ -1926,7 +1926,7 @@ class SeItem:
         if isinstance(item_id, (StateEngineStruct.SeStruct, self.__itemClass)):
             return item_id, None
         if isinstance(item_id, StateEngineState.SeState):
-            return self.itemsApi.return_item(item_id.id), None
+            return self.__sh.return_item(item_id.id), None
         if item_id is None:
             _issue = "item_id is None"
             return None, [_issue]
@@ -1959,11 +1959,12 @@ class SeItem:
                 _, _, item = item.partition(":")
                 return item, None
             elif match:
-                _issue = "Item '{0}' has to be defined as an item path or eval expression without {}.".format(match.group(1), item_id)
+                _issue = ("Item '{0}' has to be defined as an item path "
+                          "or eval expression without {}.").format(match.group(1), item_id)
                 self.__logger.warning(_issue)
                 return None, [_issue]
             else:
-                item = self.itemsApi.return_item(item_id)
+                item = self.__sh.return_item(item_id)
             if item is None:
                 _issue = "Item '{0}' not found.".format(item_id)
                 self.__logger.warning(_issue)
@@ -1986,7 +1987,7 @@ class SeItem:
         rel_item_id = item_id[parent_level:]
         if rel_item_id != "":
             result += "." + rel_item_id
-        item = self.itemsApi.return_item(result)
+        item = self.__sh.return_item(result)
         if item is None:
             _issue = "Determined item '{0}' does not exist.".format(item_id)
             self.__logger.warning(_issue)
