@@ -401,7 +401,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                         if _matching:
                             self._log_debug("Given {} {} matches current one: {}", condition, _orig_cond, _updated__current_condition)
                             _condition_met.append(_updated__current_condition)
-                            _conditions_met_count +=1
+                            _conditions_met_count += 1
                         else:
                             self._log_debug("Given {} {} not matching current one: {}", condition, _orig_cond, _updated__current_condition)
                     except Exception as ex:
@@ -446,13 +446,13 @@ class SeActionBase(StateEngineTools.SeItemChild):
         condition_necessary = 0
         current_condition_met, cur_conditions_met, cur_condition_necessary = _check_condition('conditionset')
         conditions_met += cur_conditions_met
-        condition_necessary += cur_condition_necessary
+        condition_necessary += min(1, cur_condition_necessary)
         previous_condition_met, prev_conditions_met, prev_condition_necessary = _check_condition('previousconditionset')
         conditions_met += prev_conditions_met
-        condition_necessary += prev_condition_necessary
+        condition_necessary += min(1, prev_condition_necessary)
         previousstate_condition_met, prevst_conditions_met, prevst_condition_necessary = _check_condition('previousstate_conditionset')
         conditions_met += prevst_conditions_met
-        condition_necessary += prevst_condition_necessary
+        condition_necessary += min(1, prevst_condition_necessary)
         self._log_develop("Action '{0}': conditions met: {1}, necessary {2}.", self._name, conditions_met, condition_necessary)
         if conditions_met < condition_necessary:
             self._log_info("Action '{0}': Skipping because not all conditions are met.", self._name)
@@ -537,7 +537,14 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def get(self):
         return True
 
-    def _waitforexecute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", delay: int = 0, current_condition: str = "", previous_condition: str = "", previousstate_condition: str = ""):
+    def _waitforexecute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", delay: int = 0, current_condition: list[str] = None, previous_condition: list[str] = None, previousstate_condition: list[str] = None):
+        if current_condition is None:
+            current_condition = []
+        if previous_condition is None:
+            previous_condition = []
+        if previousstate_condition is None:
+            previousstate_condition = []
+
         self._log_decrease_indent(50)
         self._log_increase_indent()
         if delay == 0:
