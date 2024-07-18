@@ -344,6 +344,20 @@ item_attributes:
                  parameter ``startup_delay_default``.
                  '
 
+    se_name:
+        type: str
+        description:
+            de: 'Zustandsname, überschreibt den im Attribut "name" angegebene Wert'
+            en: 'Name of state, overwriting the value defined by "name" attribute'
+        description_long:
+            de: '**Zustandsname, überschreibt den im Attribut "name" angegebene Wert**\n
+                Dies kann beispielsweise nützlich sein, um den Namen abhängig 
+                von einer Bedingungsgruppe zu ändern. 
+                '
+            en: '**Name of state, overwriting the value defined by "name" attribute**\n
+                 Could be useful to change the state name based on a condition group
+                 '
+
     se_laststate_item_name:
         type: str
         description:
