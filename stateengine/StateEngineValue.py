@@ -482,7 +482,7 @@ class SeValue(StateEngineTools.SeItemChild):
         if self.__eval is not None:
             self._log_debug("{0} from eval: {1}", self.__name, self.__eval)
             _original_listorder = self.__listorder.copy()
-            self._log_debug("Currently eval results in {}", self.__get_eval())
+            self._log_debug("Currently eval results in {}. ", self.__get_eval())
             self.__listorder = _original_listorder
         if self.__varname is not None:
             if isinstance(self.__varname, list):
@@ -722,7 +722,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         val = val.replace("\n", "")
                     except Exception:
                         pass
-                    self._log_debug("Checking eval from list: {0}.", val)
+                    self._log_debug("Checking eval {0} from list {1}.", val, self.__eval)
                     self._log_increase_indent()
                     if isinstance(val, str):
                         if "stateengine_eval" in val or "se_eval" in val:

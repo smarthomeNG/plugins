@@ -57,7 +57,7 @@ class WebInterface(StateEngineTools.SeItemChild):
         self.__conditionset_count = 0
 
     def __repr__(self):
-        return "WebInterface item: {}, id {}.".format(self.__states, self.__name) if REQUIRED_PACKAGE_IMPORTED else "None"
+        return "WebInterface item: {}, id {}".format(self.__states, self.__name) if REQUIRED_PACKAGE_IMPORTED else "None"
 
     def _actionlabel(self, state, label_type, conditionset, previousconditionset, previousstate_conditionset):
         # Check if conditions for action are met or not

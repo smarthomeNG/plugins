@@ -36,6 +36,10 @@ class SeConditionSet(StateEngineTools.SeItemChild):
     def id(self):
         return self.__id
 
+    @property
+    def path(self):
+        return self.__id
+
     # List of conditions that are part of this condition set
     @property
     def conditions(self):

@@ -84,7 +84,6 @@ class SeActions(StateEngineTools.SeItemChild):
                 value = ":".join(map(str.strip, value.split(":")))
                 if value[:1] == '[' and value[-1:] == ']':
                     value = StateEngineTools.convert_str_to_list(value, False)
-            self._log_debug("Value is now {}", value)
             if func == "se_delay":
                 # set delay
                 if name not in self.__actions:

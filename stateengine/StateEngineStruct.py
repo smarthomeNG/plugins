@@ -47,6 +47,10 @@ class SeStruct(StateEngineTools.SeItemChild):
     def id(self):
         return self.struct_path
 
+    @property
+    def path(self):
+        return self.struct_path
+
     def return_children(self):
         for child in self._conf.keys():
             yield child
@@ -103,7 +107,7 @@ class SeStruct(StateEngineTools.SeItemChild):
         raise NotImplementedError("Class {} doesn't implement get()".format(self.__class__.__name__))
 
 
-# Class representing struct child
+# Class representing struct
 class SeStructMain(SeStruct):
     # Initialize the action
     # abitem: parent SeItem instance
@@ -200,11 +204,12 @@ class SeStructParent(SeStruct):
         #self._log_debug("Struct path {} for {}", self.struct_path, __class__.__name__)
 
     def __repr__(self):
-        return "SeStructParent {}".format(self.struct_path, self._conf)
+        return "SeStructParent {}".format(self.struct_path)
 
     def get(self):
         try:
             parent_name = self.struct_path.split(".")[-2]
+            self.struct_path = self.struct_path.rsplit('.', 1)[0]
             _temp_dict = self.dict_get(self._global_struct.get(self._struct) or {}, parent_name,
                                        self._global_struct.get(self._struct) or {})
             _temp_dict = collections.OrderedDict(

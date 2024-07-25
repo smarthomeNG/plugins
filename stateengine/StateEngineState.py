@@ -39,6 +39,14 @@ class SeState(StateEngineTools.SeItemChild):
         return self.__id
 
     @property
+    def path(self):
+        return self.__id
+
+    @property
+    def use(self):
+        return self.__use
+
+    @property
     def state_item(self):
         return self.__item
 
@@ -171,7 +179,7 @@ class SeState(StateEngineTools.SeItemChild):
             self._log_decrease_indent()
 
     def __repr__(self):
-        return "SeState item: {}, id {}.".format(self.__item, self.__id)
+        return "SeState item: {}, id {}".format(self.__item, self.__id)
 
     # Check conditions if state can be entered
     # returns: True = At least one enter condition set is fulfilled, False = No enter condition set is fulfilled
@@ -374,6 +382,7 @@ class SeState(StateEngineTools.SeItemChild):
         elif self.__text.is_empty() and recursion_depth == 0:
             self.__text.set("value:" + self.__name)
         self.__name = self.text
+        self._log_develop("Updated name of state {} to {}.", item_state, self.__name)
         return self.__name
 
     def __fill_list(self, item_states, recursion_depth, se_use=None):

@@ -166,7 +166,9 @@ class SeEval(StateEngineTools.SeItemChild):
                 item, issue = self._abitem.return_item(subitem_id)
                 returnvalue = item.property.value
                 returnvalue = StateEngineTools.convert_str_to_list(returnvalue)
-                self._log_debug("Return item value '{0}' for item {1}", returnvalue, subitem_id)
+                issue = f" Issue: {issue}" if issue not in [[], None, [None]] else ""
+                self._log_debug("Return item value '{0}' for item {1}.{2}",
+                                returnvalue, subitem_id, issue)
         except Exception as ex:
             self._log_warning("Problem evaluating value of '{0}': {1}", subitem_id, ex)
         finally:
@@ -183,7 +185,7 @@ class SeEval(StateEngineTools.SeItemChild):
         self._eval_lock.acquire()
         self._log_debug("Executing method 'get_relative_itemproperty({0}, {1})'", subitem_id, prop)
         try:
-            item, issue = self._abitem.return_item(subitem_id)
+            item, _ = self._abitem.return_item(subitem_id)
         except Exception as ex:
             self._log_warning("Problem evaluating property of {0} - relative item might not exist. Error: {1}",
                               subitem_id, ex)
@@ -223,6 +225,7 @@ class SeEval(StateEngineTools.SeItemChild):
     def get_attributevalue(self, item, attrib):
         self._eval_lock.acquire()
         self._log_debug("Executing method 'get_attributevalue({0}, {1})'", item, attrib)
+        issue = None
         if ":" in item:
             var_type, item = StateEngineTools.partition_strip(item, ":")
             if var_type == "var":

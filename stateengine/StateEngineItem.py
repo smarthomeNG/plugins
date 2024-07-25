@@ -49,6 +49,10 @@ class SeItem:
         return self.__id
 
     @property
+    def path(self):
+        return self.__id
+
+    @property
     def variables(self):
         return self.__variables
 
@@ -114,7 +118,7 @@ class SeItem:
     @property
     def laststate_releasedby(self):
         _returnvalue = None if self.__laststate_item_id is None \
-                       else self.__release_info.get(self.__laststate_item_id.property.value)
+            else self.__release_info.get(self.__laststate_item_id.property.value)
         return _returnvalue
 
     @property
@@ -290,7 +294,8 @@ class SeItem:
         self.__previousstate_conditionset_internal_name = "" if self.__previousstate_conditionset_item_name is None else \
             self.__previousstate_conditionset_item_name.property.value
         self.__config_issues.update(_issue)
-        filtered_dict = {key: value for key, value in self.__config_issues.items() if value.get('issue') not in [[], [None], None]}
+        filtered_dict = {key: value for key, value in self.__config_issues.items() if
+                         value.get('issue') not in [[], [None], None]}
         self.__config_issues = filtered_dict
 
         self.__states = []
@@ -1203,7 +1208,7 @@ class SeItem:
             _issue = _state.update_order(_statecount)
             if _issue:
                 self.__config_issues.update({item_state.property.path:
-                                            {'issue': _issue, 'attribute': 'se_stateorder'}})
+                                                 {'issue': _issue, 'attribute': 'se_stateorder'}})
                 self.__logger.error("Issue with state {0} while setting order: {1}",
                                     item_state.property.path, _issue)
             self.__states.append(_state)
@@ -1216,13 +1221,13 @@ class SeItem:
             return _statecount + 1
         except ValueError as ex:
             self.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
-                               [{'conditionset': 'None', 'condition': 'ValueError'}]}})
+                [{'conditionset': 'None', 'condition': 'ValueError'}]}})
             self.__logger.error("Ignoring state {0} because ValueError: {1}",
                                 item_state.property.path, ex)
             return _statecount
         except Exception as ex:
             self.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
-                               [{'conditionset': 'None', 'condition': 'GeneralError'}]}})
+                [{'conditionset': 'None', 'condition': 'GeneralError'}]}})
             self.__logger.error("Ignoring state {0} because: {1}",
                                 item_state.property.path, ex)
             return _statecount
@@ -1241,7 +1246,8 @@ class SeItem:
             return
         self.__queue.put(["stateevaluation", item, caller, source, dest])
         if not self.update_lock.locked():
-            self.__logger.debug("Run queue to update state. Item: {}, caller: {}, source: {}", item.property.path, caller, source)
+            self.__logger.debug("Run queue to update state. Item: {}, caller: {}, source: {}", item.property.path,
+                                caller, source)
             self.run_queue()
 
     # check if state can be entered after setting state-specific variables
@@ -1609,7 +1615,7 @@ class SeItem:
                                     _returnvalue_issue_list.append(_returnvalue_issue)
                             elif _valueindex < _stateindex:
                                 _returnvalue_issue = "State {} defined by {} in se_released_by " \
-                                                     "attribute of state {} must be lower priority "\
+                                                     "attribute of state {} must be lower priority " \
                                                      "than actual state.".format(match, _returnvalue[i], state.id)
                                 self.__logger.warning("{} Removing it.", _returnvalue_issue)
                                 if _returnvalue_issue not in _returnvalue_issue_list:
@@ -1624,7 +1630,7 @@ class SeItem:
 
                             _returnvalue_issue = _returnvalue_issue_list
                         if not matches:
-                            _returnvalue_issue = "No states match regex {} defined in "\
+                            _returnvalue_issue = "No states match regex {} defined in " \
                                                  "se_released_by attribute of state {}.".format(value, state.id)
                             self.__logger.warning("{} Removing it.", _returnvalue_issue)
                     elif _returntype[i] == 'eval':
@@ -1661,7 +1667,7 @@ class SeItem:
                         v_list.append(v)
                         _converted_typelist.append(_returntype[i])
                     else:
-                        _returnvalue_issue = "Found invalid definition in se_released_by attribute "\
+                        _returnvalue_issue = "Found invalid definition in se_released_by attribute " \
                                              "of state {}, original {}.".format(state.id, v, original_value)
                         self.__logger.warning("{} Removing it.", _returnvalue_issue)
                 _converted_evaluatedlist.append(v_list)
@@ -1769,7 +1775,8 @@ class SeItem:
             state.write_to_log()
             self.initstate = None
 
-        filtered_dict = {key: value for key, value in self.__config_issues.items() if value.get('issue') not in [[], [None], None]}
+        filtered_dict = {key: value for key, value in self.__config_issues.items() if
+                         value.get('issue') not in [[], [None], None]}
         self.__config_issues = filtered_dict
 
     # endregion
@@ -1938,8 +1945,8 @@ class SeItem:
             _issue = "item_id is None"
             return None, [_issue]
         if not isinstance(item_id, str):
-            _issue = "'{0}' is not defined as string.".format(item_id)
-            self.__logger.info("{0} Check your item config!", _issue, item_id)
+            _issue = "'{0}' is not defined as string, cannot find item.".format(item_id)
+            self.__logger.warning("{0} Check your item config!", _issue, item_id)
             return None, [_issue]
         item_id = item_id.strip()
         if item_id.startswith("struct:"):
