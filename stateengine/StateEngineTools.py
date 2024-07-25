@@ -23,6 +23,7 @@ from . import StateEngineLogger
 import datetime
 from ast import literal_eval
 import re
+from lib.item.items import Items
 
 
 # General class for everything that is below the SeItem Class
@@ -256,16 +257,44 @@ def cast_time(value):
 # smarthome: instance of smarthome.py base class
 # base_item: base item to search in
 # attribute: name of attribute to find
-def find_attribute(smarthome, base_item, attribute, recursion_depth=0):
-    # if item has attribute "se_use", get the item to use and search this item for required attribute
-    if recursion_depth > 5:
+def find_attribute(smarthome, state, attribute, recursion_depth=0):
+    if isinstance(state, list):
+        for element in state:
+            result = find_attribute(smarthome, element, attribute, recursion_depth)
+            if result is not None:
+                return result
         return None
-    use_item = smarthome.return_item(base_item.find_attribute("se_use", None, 0))
-    if use_item is None:
-        return base_item.find_attribute(attribute, None, 1)
+
+    # 1: parent of given item could have attribute
+    try:
+        # if state is state object, get the item and se_use information
+        base_item = state.state_item
+        _use = state.use.get()
+    except Exception:
+        # if state is a standard item (e.g. evaluated by se_use, just take it as it is
+        base_item = state
+        _use = None
+    parent_item = base_item.return_parent()
+    if parent_item == Items.get_instance():
+        pass
     else:
-        result = find_attribute(smarthome, use_item, attribute, recursion_depth + 1)
-        return result
+        try:
+            _parent_conf = parent_item.conf
+            if parent_item is not None and attribute in _parent_conf:
+                return parent_item.conf[attribute]
+        except Exception:
+            return None
+
+    # 2: if state has attribute "se_use", get the item to use and search this item for required attribute
+    if _use is not None:
+        if recursion_depth > 5:
+            return None
+        result = find_attribute(smarthome, _use, attribute, recursion_depth + 1)
+        if result is not None:
+            return result
+
+    # 3: nothing found
+    return None
 
 
 # partition value at splitchar and strip resulting parts

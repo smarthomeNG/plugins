@@ -174,7 +174,7 @@ class SeState(StateEngineTools.SeItemChild):
         self.__order = StateEngineValue.SeValue(self._abitem, "State Order", False, "num")
         self._log_increase_indent()
         try:
-            self.__fill(self.__item, 0)
+            self.__fill(self, 0)
         finally:
             self._log_decrease_indent()
 
@@ -348,7 +348,7 @@ class SeState(StateEngineTools.SeItemChild):
             self._log_debug("State {}: se_use attribute including item or eval "
                             "- updating state conditions and actions", self.__name)
             self._log_increase_indent()
-            self.__fill(self.__item, 0, "reinit")
+            self.__fill(self, 0, "reinit")
             self._log_decrease_indent()
 
     def update_releasedby_internal(self, states=None):
@@ -401,7 +401,7 @@ class SeState(StateEngineTools.SeItemChild):
     # item_state: item to read from
     # recursion_depth: current recursion_depth (recursion is canceled after five levels)
     # se_use: If se_use Attribute is used or not
-    def __fill(self, item_state, recursion_depth, se_use=None):
+    def __fill(self, state, recursion_depth, se_use=None):
         def update_unused(used_attributes, attrib_type, attrib_name):
             #filtered_dict = {key: value for key, value in self.__unused_attributes.items() if key not in used_attributes}
             #self.__unused_attributes = copy(filtered_dict)
@@ -457,6 +457,11 @@ class SeState(StateEngineTools.SeItemChild):
             self.__action_status = filtered_dict
             #self._log_develop("Updated action status: {}, updated used {}", self.__action_status, self.__used_attributes)
 
+        if isinstance(state, SeState):
+            item_state = state.state_item
+        else:
+            item_state = state
+        self._log_develop("Fill state {} type {}", item_state, type(item_state))
         if se_use == "reinit":
             self._log_develop("Resetting conditions and actions at re-init")
             self.__conditions.reset()
@@ -466,19 +471,18 @@ class SeState(StateEngineTools.SeItemChild):
             self.__actions_leave.reset()
             self.__use_done = []
         if recursion_depth > 5:
-            self._log_error("{0}/{1}: too many levels of 'use'", self.id, item_state.property.path)
+            self._log_error("{0}/{1}: too many levels of 'use'", self.id, item_state)
             return
         # Import data from other item if attribute "use" is found
         if "se_use" in item_state.conf:
             _returnvalue, _returntype, _, _issue = self.__use.set_from_attr(item_state, "se_use")
             _configvalue = copy(_returnvalue)
             _configvalue = [_configvalue] if not isinstance(_configvalue, list) else _configvalue
-            self._abitem.update_issues('config', {item_state.property.path: {'issue': _issue, 'attribute': 'se_use'}})
+            self._abitem.update_issues('config', {state.id: {'issue': _issue, 'attribute': 'se_use'}})
             _use = self.__use.get()
             if self.__use.is_empty() or _use is None:
                 _issue = "se_use {} is set up in a wrong way".format(_use)
-                self._abitem.update_issues('config',
-                                           {item_state.property.path: {'issue': _issue, 'attribute': 'se_use'}})
+                self._abitem.update_issues('config', {state.id: {'issue': _issue, 'attribute': 'se_use'}})
                 self._log_warning("{} - ignoring.", _issue)
             else:
                 _use = [_use] if not isinstance(_use, list) else _use
@@ -486,12 +490,11 @@ class SeState(StateEngineTools.SeItemChild):
                 cleaned_use_list = []
                 for i, element in enumerate(_use):
                     try:
-                        _name = element.property.path
+                        _name = element.id
                     except Exception:
                         _name = element
                     _fill = True
                     _path = None
-
                     if isinstance(element, StateEngineStruct.SeStruct):
                         _path = element.property.path
                         text1 = "Reading struct {0}. It is{1} a valid struct for the state configuration.{2}"
@@ -506,15 +509,20 @@ class SeState(StateEngineTools.SeItemChild):
                             cleaned_use_list.append(_configvalue[i])
                     elif isinstance(element, self.__itemClass):
                         _path = element.property.path
-                        text1 = "Reading Item {0}. It is{1} a valid item for the state configuration.{2}"
-                        valid1 = " NOT" if _fill is False else " most likely"
-                        valid2 = " Ignoring." if _fill is False else ""
-                        self._log_info(text1, _path, valid1, valid2)
+                        if element.return_parent() == Items.get_instance():
+                            valid1 = " most likely NOT"
+                            valid3 = ""
+                            valid2 = ", because it has no parent item!"
+                        else:
+                            valid2 = ""
+                            valid1 = " NOT" if _fill is False else " most likely"
+                            valid3 = " Ignoring." if _fill is False else ""
+                        text1 = "Reading Item {0}. It is{1} a valid item for the state configuration{2}.{3}"
+                        self._log_info(text1, _path, valid1, valid2, valid3)
                         if _fill is False:
                             _issue = "Item {} is not a valid item for the state configuration.".format(_path)
                             self._abitem.update_issues('config',
-                                                       {item_state.property.path: {'issue': _issue,
-                                                                                   'attribute': 'se_use'}})
+                                                       {state.id: {'issue': _issue, 'attribute': 'se_use'}})
                         elif _configvalue and _configvalue[i] not in cleaned_use_list:
                             cleaned_use_list.append(_configvalue[i])
                     if _returntype[i] in ['item', 'eval']:
@@ -551,9 +559,10 @@ class SeState(StateEngineTools.SeItemChild):
                             self.__use_done.append(element)
                             self.__fill(element, recursion_depth + 1, _name)
                 self.__use.set(cleaned_use_list)
-
         # Get action sets and condition sets
         parent_item = item_state.return_parent()
+        if parent_item == Items.get_instance():
+            parent_item = None
         child_items = item_state.return_children()
         _conditioncount = 0
         _action_counts = {"enter": 0, "stay": 0, "enter_or_stay": 0, "leave": 0}
@@ -580,7 +589,7 @@ class SeState(StateEngineTools.SeItemChild):
             except ValueError as ex:
                 raise ValueError("Condition {0} error: {1}".format(child_name, ex))
 
-        if _conditioncount == 0:
+        if _conditioncount == 0 and parent_item:
             for attribute in parent_item.conf:
                 func, name = StateEngineTools.partition_strip(attribute, "_")
                 cond1 = name and name not in self.__used_attributes
@@ -631,20 +640,20 @@ class SeState(StateEngineTools.SeItemChild):
         self.update_name(item_state, recursion_depth)
         # Complete condition sets and actions at the end
         if recursion_depth == 0:
-            self.__conditions.complete(item_state)
-            _action_status = self.__actions_enter.complete(item_state, self.__conditions.evals_items)
+            self.__conditions.complete(self)
+            _action_status = self.__actions_enter.complete(self, self.__conditions.evals_items)
             if _action_status:
                 update_action_status(_action_status, 'enter')
                 self._abitem.update_action_status(self.__action_status)
-            _action_status = self.__actions_stay.complete(item_state, self.__conditions.evals_items)
+            _action_status = self.__actions_stay.complete(self, self.__conditions.evals_items)
             if _action_status:
                 update_action_status(_action_status, 'stay')
                 self._abitem.update_action_status(self.__action_status)
-            _action_status = self.__actions_enter_or_stay.complete(item_state, self.__conditions.evals_items)
+            _action_status = self.__actions_enter_or_stay.complete(self, self.__conditions.evals_items)
             if _action_status:
                 update_action_status(_action_status, 'enter_or_stay')
                 self._abitem.update_action_status(self.__action_status)
-            _action_status = self.__actions_leave.complete(item_state, self.__conditions.evals_items)
+            _action_status = self.__actions_leave.complete(self, self.__conditions.evals_items)
             if _action_status:
                 update_action_status(_action_status, 'leave')
                 self._abitem.update_action_status(self.__action_status)

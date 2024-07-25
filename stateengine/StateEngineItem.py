@@ -34,6 +34,7 @@ from . import StateEngineEval
 
 from lib.shtime import Shtime
 from lib.item.item import Item
+from lib.item.items import Items
 import copy
 import threading
 import queue
@@ -1981,6 +1982,10 @@ class SeItem:
             return self.__sh.return_item(item_id.id), None
         if item_id is None:
             _issue = "item_id is None"
+            return None, [_issue]
+        if item_id == Items.get_instance():
+            _issue = "'{0}' is no valid item.".format(item_id)
+            self.__logger.warning("{0} Check your item config!", _issue, item_id)
             return None, [_issue]
         if not isinstance(item_id, str):
             _issue = "'{0}' is not defined as string, cannot find item.".format(item_id)
