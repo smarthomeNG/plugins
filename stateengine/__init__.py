@@ -121,14 +121,6 @@ class StateEngine(SmartPlugin):
     # noinspection PyMethodMayBeStatic
     def parse_item(self, item):
         item.expand_relativepathes('se_manual_logitem', '', '')
-        try:
-            item.expand_relativepathes('se_item_*', '', '')
-        except Exception:
-            pass
-        try:
-            item.expand_relativepathes('se_status_*', '', '')
-        except Exception:
-            pass
         if self.has_iattr(item.conf, "se_manual_include") or self.has_iattr(item.conf, "se_manual_exclude"):
             item._eval = "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.property.path + "', caller, source)"
         elif self.has_iattr(item.conf, "se_manual_invert"):
