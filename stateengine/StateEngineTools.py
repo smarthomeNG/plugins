@@ -257,7 +257,7 @@ def cast_time(value):
 # smarthome: instance of smarthome.py base class
 # base_item: base item to search in
 # attribute: name of attribute to find
-def find_attribute(smarthome, state, attribute, recursion_depth=0):
+def find_attribute(smarthome, state, attribute, recursion_depth=0, use=None):
     if isinstance(state, list):
         for element in state:
             result = find_attribute(smarthome, element, attribute, recursion_depth)
@@ -269,11 +269,13 @@ def find_attribute(smarthome, state, attribute, recursion_depth=0):
     try:
         # if state is state object, get the item and se_use information
         base_item = state.state_item
-        _use = state.use.get()
+        if use is None:
+            use = state.use.get()
+        print(f"got use {use}")
     except Exception:
         # if state is a standard item (e.g. evaluated by se_use, just take it as it is
         base_item = state
-        _use = None
+        use = None
     parent_item = base_item.return_parent()
     if parent_item == Items.get_instance():
         pass
@@ -286,10 +288,10 @@ def find_attribute(smarthome, state, attribute, recursion_depth=0):
             return None
 
     # 2: if state has attribute "se_use", get the item to use and search this item for required attribute
-    if _use is not None:
+    if use is not None:
         if recursion_depth > 5:
             return None
-        result = find_attribute(smarthome, _use, attribute, recursion_depth + 1)
+        result = find_attribute(smarthome, use, attribute, recursion_depth + 1)
         if result is not None:
             return result
 

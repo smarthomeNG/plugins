@@ -149,13 +149,13 @@ class SeConditionSet(StateEngineTools.SeItemChild):
 
     # Check the condition set, optimize and complete it
     # state: state (item) to read from
-    def complete(self, state):
+    def complete(self, state, use):
         conditions_to_remove = []
         # try to complete conditions
 
         for name in self.conditions:
             try:
-                if not self.__conditions[name].complete(state):
+                if not self.__conditions[name].complete(state, use):
                     conditions_to_remove.append(name)
                     continue
             except ValueError as ex:

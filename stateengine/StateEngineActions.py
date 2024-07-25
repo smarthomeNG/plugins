@@ -510,9 +510,10 @@ class SeActions(StateEngineTools.SeItemChild):
     # state: state (item) to read from
     def complete(self, state, evals_items=None):
         _status = {}
+        use = state.use.get()
         for name in self.__actions:
             try:
-                _status.update(self.__actions[name].complete(state, evals_items))
+                _status.update(self.__actions[name].complete(state, evals_items, use))
             except ValueError as ex:
                 _status.update({name: {'issue': ex, 'issueorigin': {'state': state.id, 'action': 'unknown'}}})
                 raise ValueError("State '{0}', Action '{1}': {2}".format(state.id, name, ex))

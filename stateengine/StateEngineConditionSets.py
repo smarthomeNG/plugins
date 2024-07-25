@@ -73,8 +73,9 @@ class SeConditionSets(StateEngineTools.SeItemChild):
     # Check the condition sets, optimize and complete them
     # state: item (item) to read from
     def complete(self, state):
+        use = state.use.get()
         for name in self.__condition_sets:
-            self.__condition_sets[name].complete(state)
+            self.__condition_sets[name].complete(state, use)
 
     # Write all condition sets to logger
     def write_to_logger(self):

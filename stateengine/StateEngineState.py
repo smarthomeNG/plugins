@@ -558,6 +558,8 @@ class SeState(StateEngineTools.SeItemChild):
                         else:
                             self.__use_done.append(element)
                             self.__fill(element, recursion_depth + 1, _name)
+                    elif _fill and element is not None and element in self.__use_done:
+                        self._log_debug("Ignoring element {} as it is already added.", element)
                 self.__use.set(cleaned_use_list)
         # Get action sets and condition sets
         parent_item = item_state.return_parent()

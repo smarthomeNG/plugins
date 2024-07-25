@@ -286,10 +286,10 @@ class SeActionBase(StateEngineTools.SeItemChild):
                                    'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return check_item, check_value, check_mindelta, _issue
 
-    def check_complete(self, state, check_item, check_status, check_mindelta, check_value, action_type, evals_items=None):
+    def check_complete(self, state, check_item, check_status, check_mindelta, check_value, action_type, evals_items=None, use=None):
         _issue = {self._name: {'issue': None,
                                'issueorigin': [{'state': state.id, 'action': self._function}]}}
-        self._log_develop("Check item {} status {} value {} evals_items {}", check_item, check_status, check_value, evals_items)
+        self._log_develop("Check item {} status {} value {} use {} evals_items {}", check_item, check_status, check_value, use, evals_items)
         try:
             _name = evals_items.get(self.name)
             if _name is not None:
@@ -311,13 +311,13 @@ class SeActionBase(StateEngineTools.SeItemChild):
             self._log_info("No valid item info for action {}, trying to get differently. Problem: {}", self._name, ex)
         # missing item in action: Try to find it.
         if check_item is None:
-            item = StateEngineTools.find_attribute(self._sh, state, "se_item_" + self._name)
+            item = StateEngineTools.find_attribute(self._sh, state, "se_item_" + self._name, 0, use)
             if item is not None:
                 check_item, _issue = self._abitem.return_item(item)
                 _issue = {self._name: {'issue': _issue,
                                        'issueorigin': [{'state': state.id, 'action': self._function}]}}
             else:
-                item = StateEngineTools.find_attribute(self._sh, state, "se_eval_" + self._name)
+                item = StateEngineTools.find_attribute(self._sh, state, "se_eval_" + self._name, 0, use)
                 if item is not None:
                     check_item = str(item)
 
@@ -326,14 +326,14 @@ class SeActionBase(StateEngineTools.SeItemChild):
                                    'issueorigin': [{'state': state.id, 'action': self._function}]}}
         # missing status in action: Try to find it.
         if check_status is None:
-            status = StateEngineTools.find_attribute(self._sh, state, "se_status_" + self._name)
+            status = StateEngineTools.find_attribute(self._sh, state, "se_status_" + self._name, 0, use)
             if status is not None:
                 check_status, _issue = self._abitem.return_item(status)
                 _issue = {self._name: {'issue': _issue,
                                        'issueorigin': [{'state': state.id, 'action': self._function}]}}
 
         if check_mindelta.is_empty():
-            mindelta = StateEngineTools.find_attribute(self._sh, state, "se_mindelta_" + self._name)
+            mindelta = StateEngineTools.find_attribute(self._sh, state, "se_mindelta_" + self._name, 0, use)
             if mindelta is not None:
                 check_mindelta.set(mindelta)
 
@@ -522,7 +522,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
 
     # Complete action
     # state: state (item) to read from
-    def complete(self, state, evals_items=None):
+    def complete(self, state, evals_items=None, use=None):
         raise NotImplementedError("Class {} doesn't implement complete()".format(self.__class__.__name__))
 
     # Check if execution is possible
@@ -625,9 +625,9 @@ class SeActionSetItem(SeActionBase):
 
     # Complete action
     # state: state (item) to read from
-    def complete(self, state, evals_items=None):
+    def complete(self, state, evals_items=None, use=None):
         self.__item, self.__status, self.__mindelta, self.__value, _issue = self.check_complete(
-            state, self.__item, self.__status, self.__mindelta, self.__value, "set", evals_items)
+            state, self.__item, self.__status, self.__mindelta, self.__value, "set", evals_items, use)
         self._action_status = _issue
         return _issue
 
@@ -775,7 +775,7 @@ class SeActionSetByattr(SeActionBase):
 
     # Complete action
     # state: state (item) to read from
-    def complete(self, state, evals_items=None):
+    def complete(self, state, evals_items=None, use=None):
         self._scheduler_name = "{}-SeByAttrDelayTimer".format(self.__byattr)
         _issue = {self._name: {'issue': None, 'attribute': self.__byattr,
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
@@ -833,7 +833,7 @@ class SeActionTrigger(SeActionBase):
 
     # Complete action
     # state: state (item) to read from
-    def complete(self, state, evals_items=None):
+    def complete(self, state, evals_items=None, use=None):
         self._scheduler_name = "{}-SeLogicDelayTimer".format(self.__logic)
         _issue = {self._name: {'issue': None, 'logic': self.__logic,
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
@@ -908,7 +908,7 @@ class SeActionRun(SeActionBase):
 
     # Complete action
     # state: state (item) to read from
-    def complete(self, state, evals_items=None):
+    def complete(self, state, evals_items=None, use=None):
         self._scheduler_name = "{}-SeRunDelayTimer".format(StateEngineTools.get_eval_name(self.__eval))
         _issue = {self._name: {'issue': None, 'eval': StateEngineTools.get_eval_name(self.__eval),
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
@@ -1003,9 +1003,9 @@ class SeActionForceItem(SeActionBase):
 
     # Complete action
     # state: state (item) to read from
-    def complete(self, state, evals_items=None):
+    def complete(self, state, evals_items=None, use=None):
         self.__item, self.__status, self.__mindelta, self.__value, _issue = self.check_complete(
-            state, self.__item, self.__status, self.__mindelta, self.__value, "force", evals_items)
+            state, self.__item, self.__status, self.__mindelta, self.__value, "force", evals_items, use)
         self._action_status = _issue
         return _issue
 
@@ -1189,7 +1189,7 @@ class SeActionSpecial(SeActionBase):
 
     # Complete action
     # state: state (item) to read from
-    def complete(self, state, evals_items=None):
+    def complete(self, state, evals_items=None, use=None):
         if isinstance(self.__value, list):
             item = self.__value[0].property.path
         else:

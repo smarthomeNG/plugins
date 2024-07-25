@@ -66,16 +66,18 @@ class SeCondition(StateEngineTools.SeItemChild):
                "'status_eval': {}, 'value': {}".format(self.__item, self.__status, self.__eval,
                                                        self.__status_eval, self.__value)
 
-    def check_items(self, check, value=None, state=None):
+    def check_items(self, check, value=None, state=None, use=None):
         item_issue, status_issue, eval_issue, status_eval_issue = None, None, None, None
         item_value, status_value, eval_value, status_eval_value = None, None, None, None
+        if state and use is None:
+            use = state.use.get()
         if check == "attribute":
             _orig_value = value
         else:
             _orig_value = None
         if check == "se_item" or (check == "attribute" and self.__item is None and self.__eval is None):
             if value is None:
-                value = StateEngineTools.find_attribute(self._sh, state, "se_item_" + self.__name)
+                value = StateEngineTools.find_attribute(self._sh, state, "se_item_" + self.__name, 0, use)
             if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
                 if value.startswith("eval:"):
@@ -95,7 +97,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             if check == "attribute":
                 value = _orig_value
             if value is None:
-                value = StateEngineTools.find_attribute(self._sh, state, "se_status_" + self.__name)
+                value = StateEngineTools.find_attribute(self._sh, state, "se_status_" + self.__name, 0, use)
             if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
                 if isinstance(value, str) and value.startswith("eval:"):
@@ -114,7 +116,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             status_value = value
         if check == "se_eval" or (check == "attribute" and self.__eval is None):
             if value is None:
-                value = StateEngineTools.find_attribute(self._sh, state, "se_eval_" + self.__name)
+                value = StateEngineTools.find_attribute(self._sh, state, "se_eval_" + self.__name, 0, use)
             if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
                 if value.startswith("eval:"):
@@ -130,7 +132,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             if check == "attribute":
                 value = _orig_value
             if value is None:
-                value = StateEngineTools.find_attribute(self._sh, state, "se_status_eval_" + self.__name)
+                value = StateEngineTools.find_attribute(self._sh, state, "se_status_eval_" + self.__name, 0, use)
             if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
                 if value.startswith("eval:"):
@@ -225,7 +227,7 @@ class SeCondition(StateEngineTools.SeItemChild):
     # Complete condition (do some checks, cast value, min and max based on item or eval data types)
     # state: state (item) to read from
     # abitem_object: Related SeItem instance for later determination of current age and current delay
-    def complete(self, state):
+    def complete(self, state, use):
         # check if it is possible to complete this condition
         if self.__min.is_empty() and self.__max.is_empty() and self.__value.is_empty() \
                 and self.__agemin.is_empty() and self.__agemax.is_empty() \
@@ -284,8 +286,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                 self.__eval = self._abitem.get_update_original_caller
             elif self.__name == "original_source":
                 self.__eval = self._abitem.get_update_original_source
-
-        self.check_items("attribute", None, state)
+        self.check_items("attribute", None, state, use)
 
         # now we should have either 'item' or '(status)eval' set. If not, raise ValueError
         if all(item is None for item in [self.__item, self.__status, self.__eval, self.__status_eval]):
