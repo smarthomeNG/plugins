@@ -234,12 +234,13 @@ class SeEval(StateEngineTools.SeItemChild):
             item, issue = self._abitem.return_item(item)
         try:
             if self._abitem.initstate and item == '..state_name':
-                returnvalue = self._abitem.return_item(self._abitem.initstate.id).conf[attrib]
-                self._log_debug("Return item attribute '{0}' from {1}: {2} during init", attrib,
-                                self._abitem.return_item(self._abitem.initstate.id)[0].property.path, returnvalue)
+                returnvalue, issue = self._abitem.return_item(self._abitem.initstate.id).conf[attrib]
+                self._log_debug("Return item attribute '{0}' from {1}: {2} during init. Issue {3}", attrib,
+                                self._abitem.return_item(self._abitem.initstate.id)[0].property.path, returnvalue, issue)
             else:
                 returnvalue = item.conf[attrib]
-                self._log_debug("Return item attribute {0} from {1}: {2}", attrib, item.property.path, returnvalue)
+                self._log_debug("Return item attribute {0} from {1}: {2}. Issue {3}",
+                                attrib, item.property.path, returnvalue, issue)
         except Exception as ex:
             returnvalue = None
             self._log_warning("Problem evaluating attribute {0} of {1} - attribute might not exist. "

@@ -979,13 +979,29 @@ class SeItem:
 
     def update_issues(self, issue_type, issues):
         def combine_dicts(dict1, dict2):
+            def update_list(existing, new_entries):
+                # Ensure existing is a list
+                if not isinstance(existing, list):
+                    existing = [existing]
+                if not isinstance(new_entries, list):
+                    new_entries = [new_entries]
+                # Append new entries to the list if they don't exist
+                for entry in new_entries:
+                    if entry not in existing:
+                        existing.append(entry)
+                return existing
+
             combined_dict = dict1.copy()
 
             for key, value in dict2.items():
-                if key in combined_dict and combined_dict[key].get('issueorigin'):
-                    combined_dict[key]['issueorigin'].extend(value['issueorigin'])
-                else:
+                if key not in combined_dict:
                     combined_dict[key] = value
+                    continue
+                combined_entry = combined_dict[key]
+                if 'issue' in value:
+                    combined_entry['issue'] = update_list(combined_entry.get('issue', []), value['issue'])
+                if 'issueorigin' in value:
+                    combined_entry['issueorigin'] = update_list(combined_entry.get('issueorigin', []), value['issueorigin'])
 
             return combined_dict
 
@@ -1031,13 +1047,33 @@ class SeItem:
         self.__used_attributes = combined_dict
 
     def __log_issues(self, issue_type):
+        def print_readable_dict(data):
+            for key, value in data.items():
+                if isinstance(value, list):
+                    formatted_entries = []
+                    for item in value:
+                        if isinstance(item, dict):
+                            for sub_key, sub_value in item.items():
+                                if isinstance(sub_value, list):
+                                    formatted_entries.append(f"{sub_key}: {', '.join(sub_value)}")
+                                else:
+                                    formatted_entries.append(f"{sub_key}: {sub_value}")
+                        else:
+                            formatted_entries.append(item)
+                    if formatted_entries:
+                        self.__logger.info(f"- {key}: {', '.join(formatted_entries)}")
+                else:
+                    self.__logger.info(f"- {key}: {value}")
         def list_issues(v):
             _issuelist = StateEngineTools.flatten_list(v.get('issue'))
             if isinstance(_issuelist, list) and len(_issuelist) > 1:
                 self.__logger.info("has the following issues:")
                 self.__logger.increase_indent()
                 for e in _issuelist:
-                    self.__logger.info("- {}", e)
+                    if isinstance(e, dict):
+                        print_readable_dict(e)
+                    else:
+                        self.__logger.info("- {}", e)
                 self.__logger.decrease_indent()
             elif isinstance(_issuelist, list) and len(_issuelist) == 1:
                 self.__logger.info("has the following issue: {}", _issuelist[0])
@@ -1096,7 +1132,9 @@ class SeItem:
                     self.__logger.info("")
                     continue
                 elif issue_type == 'structs':
-                    self.__logger.info("Struct {} has an issue: {}", entry, value.get('issue'))
+                    self.__logger.info("Struct {} ", entry)
+                    #self.__logger.info("")
+                    list_issues(value)
                     self.__logger.info("")
                     continue
                 else:

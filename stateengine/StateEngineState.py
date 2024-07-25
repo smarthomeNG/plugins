@@ -519,9 +519,24 @@ class SeState(StateEngineTools.SeItemChild):
                             cleaned_use_list.append(_configvalue[i])
                     if _returntype[i] in ['item', 'eval']:
                         _path = _configvalue[i]
-                        self._log_info("se_use {} defined by item/eval. Even if current result is not valid, "
-                                       "entry will be re-evaluated on next state evaluation.", _path)
-                        if _path is not None and _path not in cleaned_use_list:
+                        _issues = self.__use.get_issues()
+                        for list_key in ['cast_item', 'eval', 'item']:
+                            if list_key in _issues:
+                                for item in _issues[list_key]:
+                                    if _path is not None and StateEngineTools.partition_strip(_path, ":")[1] in item:
+                                        self._log_warning("se_use {} defined by invalid item/eval. Ignoring", _path)
+                                        _issue_list = [item for key, value in _issues.items() if value for item in value]
+
+                                        self._abitem.update_issues('config', {state.id:
+                                                                                  {'issue': [_issues],
+                                                                                   'attribute': 'se_use'}})
+                                        _path = None
+                        if _path is None:
+                            pass
+
+                        elif _path is not None and _path not in cleaned_use_list:
+                            self._log_info("se_use {} defined by item/eval. Even if current result is not valid, "
+                                           "entry will be re-evaluated on next state evaluation.", _path)
                             cleaned_use_list.append(_path)
                             self.__use_done.append(_path)
                     if _path is None:
