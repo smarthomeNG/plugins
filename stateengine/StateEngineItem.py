@@ -1137,7 +1137,11 @@ class SeItem:
                     if value.get('attribute'):
                         self.__logger.info("Attribute {}", value.get('attribute'))
                         self.__logger.increase_indent()
-                        self.__logger.info("defined in state {}", entry)
+                        if value.get('origin'):
+                            origin = value.get('origin')
+                        else:
+                            origin = "state"
+                        self.__logger.info("defined in {} {}", origin, entry)
                         self.__logger.decrease_indent()
                         list_issues(value)
                     else:

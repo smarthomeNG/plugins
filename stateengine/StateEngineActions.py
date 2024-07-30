@@ -508,9 +508,10 @@ class SeActions(StateEngineTools.SeItemChild):
 
     # Check the actions optimize and complete them
     # state: state (item) to read from
-    def complete(self, state, evals_items=None):
+    def complete(self, state, evals_items=None, use=None):
         _status = {}
-        use = state.use.get()
+        if use is None:
+            use = state.use.get()
         for name in self.__actions:
             try:
                 _status.update(self.__actions[name].complete(state, evals_items, use))
