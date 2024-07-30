@@ -23,7 +23,6 @@ import logging
 # noinspection PyUnresolvedReferences
 from lib.model.smartplugin import SmartPlugin
 from lib.plugin import Plugins
-from bin.smarthome import VERSION
 
 
 class SeCliCommands:
@@ -42,7 +41,8 @@ class SeCliCommands:
                 self.logger.info("StateEngine: Additional CLI commands not registered because CLI plugin is too old")
             else:
                 cli.commands.add_command("se_list", self.cli_list, "StateEngine", "se_list: list StateEngine items")
-                cli.commands.add_command("se_detail", self.cli_detail, "StateEngine", "se_detail [seItem]: show details on StateEngine item [seItem]")
+                cli.commands.add_command("se_detail", self.cli_detail, "StateEngine",
+                                         "se_detail [seItem]: show details on StateEngine item [seItem]")
                 self.logger.info("StateEngine: Two additional CLI commands registered")
         except AttributeError as err:
             self.logger.error("StateEngine: Additional CLI commands not registered because error occured.")

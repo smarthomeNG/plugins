@@ -348,11 +348,11 @@ Die einzelnen Angaben einer Liste werden als ``OR`` evaluiert.
     screens:
         conditionset_to_check:
             type: str
-            value: "screens.osten_s1.automatik.rules.abend.enter_abend"
+            initial_value: "screens.osten_s1.automatik.rules.abend.enter_abend"
 
           conditionset:
             - regex:enter_(.*)_test
-            - eval:sh.screens.conditionset_to_check.property.name
+            - eval:sh.screens.conditionset_to_check.property.value
 
 Der gesamte Pfad könnte wie folgt evaluiert werden:
 

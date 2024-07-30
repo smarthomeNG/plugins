@@ -25,7 +25,6 @@ import re
 from . import StateEngineLogger
 from . import StateEngineTools
 from . import StateEngineDefaults
-from lib.item import Items
 from ast import literal_eval
 
 
@@ -45,7 +44,6 @@ class SeFunctions:
         self.__locks = {}
         self.__global_struct = {}
         self.__ab_alive = False
-        self.itemsApi = Items.get_instance()
 
     def __repr__(self):
         return "SeFunctions"
@@ -99,7 +97,7 @@ class SeFunctions:
             elog.decrease_indent()
             return None
 
-        item = self.itemsApi.return_item(item_id)
+        item = self.__sh.return_item(item_id)
         if item is None:
             self.logger.error("manual_item_update_eval: item {0} not found!".format(item_id))
 
@@ -113,7 +111,7 @@ class SeFunctions:
 
             if "se_manual_logitem" in item.conf:
                 elog_item_id = item.conf["se_manual_logitem"]
-                elog_item = self.itemsApi.return_item(elog_item_id)
+                elog_item = self.__sh.return_item(elog_item_id)
                 if elog_item is None:
                     self.logger.error("manual_item_update_item: se_manual_logitem {0} not found!".format(elog_item_id))
                     elog = StateEngineLogger.SeLoggerDummy()
@@ -128,7 +126,7 @@ class SeFunctions:
             retval_trigger = not item()
             elog.info("Current value of item {0} is {1}", item_id, retval_no_trigger)
 
-            original_caller, original_source = StateEngineTools.get_original_caller(elog, caller, source)
+            original_caller, original_source = StateEngineTools.get_original_caller(self.__sh, elog, caller, source)
             elog.info("get_caller({0}, {1}): original trigger by {2}:{3}", caller, source,
                       original_caller, original_source)
             original = "{}:{}".format(original_caller, original_source)
