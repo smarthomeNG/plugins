@@ -92,10 +92,21 @@ class SeValue(StateEngineTools.SeItemChild):
     # item: item containing the attribute
     # attribute_name: name of attribute to use
     # default_value: default value to be used if item contains no such attribute
-    def set_from_attr(self, item, attribute_name, default_value=None, reset=True, attr_type=None):
+    def set_from_attr(self, item, attribute_name, default_value=None, reset=True, attr_type=None, ignore=None):
         value = copy.deepcopy(item.conf.get(attribute_name))
         if value is not None:
             _using_default = False
+            if isinstance(value, list):
+                if not ignore:
+                    seen = set()
+                else:
+                    ignore = ignore if isinstance(ignore, list) else [ignore]
+                    seen = set(ignore)
+                    self._log_develop("Ignoring values {}", ignore)
+                value = [x for x in value if not (x in seen or seen.add(x))]
+            elif value == ignore:
+                self._log_develop("Not setting value {} as it should be ignored", value)
+                return None, None, False, None, None
             self._log_develop("Processing value {0} from attribute name {1}, reset {2}, type {3}",
                               value, attribute_name, reset, attr_type)
         elif default_value is None:
@@ -540,6 +551,13 @@ class SeValue(StateEngineTools.SeItemChild):
                 _issue_dict = {str(value): _issue[0]}
             else:
                 _issue_dict = {}
+            if isinstance(_returnvalue, str):
+                try:
+                    _returnvalue = eval(_returnvalue)
+                except Exception:
+                    _issue = "Got string {0} while casting item {1}".format(_returnvalue, value)
+                    _issue_dict = {str(value): _issue}
+                    self._log_error(_issue)
             if _issue_dict and _issue_dict not in self.__get_issues['cast_item']:
                 self.__get_issues['cast_item'].append(_issue_dict)
             return _returnvalue
