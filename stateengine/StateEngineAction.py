@@ -948,7 +948,7 @@ class SeActionRun(SeActionBase):
                 self._log_decrease_indent()
                 text = "{0}: Problem evaluating '{1}': {2}."
                 self.update_webif_actionstatus(state, self._name, 'False', 'Problem evaluating: {}'.format(ex))
-                self._log_error(text.format(actionname, StateEngineTools.get_eval_name(self.__eval), ex))
+                self._log_error(text, actionname, StateEngineTools.get_eval_name(self.__eval), ex)
         else:
             try:
                 if returnvalue:
@@ -967,7 +967,7 @@ class SeActionRun(SeActionBase):
                 self._log_decrease_indent()
                 self.update_webif_actionstatus(state, self._name, 'False', 'Problem calling: {}'.format(ex))
                 text = "{0}: Problem calling '{0}': {1}."
-                self._log_error(text.format(actionname, StateEngineTools.get_eval_name(self.__eval), ex))
+                self._log_error(text, actionname, StateEngineTools.get_eval_name(self.__eval), ex)
 
     def get(self):
         result = {'function': str(self._function), 'eval': str(self.__eval),

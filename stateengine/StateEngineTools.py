@@ -271,7 +271,6 @@ def find_attribute(smarthome, state, attribute, recursion_depth=0, use=None):
         base_item = state.state_item
         if use is None:
             use = state.use.get()
-        print(f"got use {use}")
     except Exception:
         # if state is a standard item (e.g. evaluated by se_use, just take it as it is
         base_item = state
@@ -304,8 +303,8 @@ def find_attribute(smarthome, state, attribute, recursion_depth=0, use=None):
 # splitchar: where to split
 # returns: Parts before and after split, whitespaces stripped
 def partition_strip(value, splitchar):
-    if isinstance(value, list):
-        raise ValueError("You can not use list entries!")
+    if not isinstance(value, str):
+        raise ValueError("value has to be a string!")
     elif value.startswith("se_") and splitchar == "_":
         part1, __, part2 = value[3:].partition(splitchar)
         return "se_" + part1.strip(), part2.strip()

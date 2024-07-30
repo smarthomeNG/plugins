@@ -543,7 +543,7 @@ class SeValue(StateEngineTools.SeItemChild):
             _issue_dict = {str(value): _issue}
             if _issue_dict not in self.__get_issues['cast_item']:
                 self.__get_issues['cast_item'].append(_issue_dict)
-            self._log_error("Can't cast {0} to item/struct! {1}".format(value, ex))
+            self._log_error(_issue)
             return value
 
     def __update_item_listorder(self, value, newvalue, item_id=None):
@@ -712,7 +712,7 @@ class SeValue(StateEngineTools.SeItemChild):
             values = self.__regex
             _issue = "Problem while creating regex '{0}': {1}.".format(values, ex)
             _issue_dict = {values: _issue}
-            if _issue not in [[], None, [None]] and _issue_dict not in self.__get_issues['regex']:
+            if _issue_dict not in self.__get_issues['regex']:
                 self.__get_issues['regex'].append(_issue_dict)
             self._log_info(_issue)
         return values
@@ -744,7 +744,9 @@ class SeValue(StateEngineTools.SeItemChild):
                 self._log_decrease_indent()
                 _name = StateEngineTools.get_eval_name(self.__eval)
                 _issue = "Problem evaluating '{0}': {1}.".format(_name, ex)
-                self.__get_issues['eval'].append({_name: ex})
+                _issue_dict = {_name: _issue}
+                if _issue_dict not in self.__get_issues['eval']:
+                    self.__get_issues['eval'].append(_issue_dict)
                 self._log_warning(_issue)
                 self._log_increase_indent()
                 values = None
@@ -779,7 +781,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             self._log_decrease_indent()
                             _issue = "Problem evaluating from list '{0}': {1}.".format(
                                 StateEngineTools.get_eval_name(val), ex)
-                            _issue_dict = {val: ex}
+                            _issue_dict = {val: _issue}
                             if _issue_dict not in self.__get_issues['eval']:
                                 self.__get_issues['eval'].append(_issue_dict)
                             self._log_warning(_issue)
@@ -827,7 +829,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     self._log_warning(_issue)
                     self._log_increase_indent()
                     _issue_dict = {_name: _issue}
-                    if _issue not in [[], None, [None]] and _issue_dict not in self.__get_issues['eval']:
+                    if _issue_dict not in self.__get_issues['eval']:
                         self.__get_issues['eval'].append(_issue_dict)
                     return None
         return values

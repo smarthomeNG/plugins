@@ -1062,9 +1062,9 @@ class SeItem:
                         else:
                             formatted_entries.append(item)
                     if formatted_entries:
-                        self.__logger.info(f"- {key}: {', '.join(formatted_entries)}")
+                        self.__logger.info("- {}: {}", key, ', '.join(formatted_entries))
                 else:
-                    self.__logger.info(f"- {key}: {value}")
+                    self.__logger.info("- {}: {}", key, value)
         def list_issues(v):
             _issuelist = StateEngineTools.flatten_list(v.get('issue'))
             if isinstance(_issuelist, list) and len(_issuelist) > 1:
@@ -1077,9 +1077,21 @@ class SeItem:
                         self.__logger.info("- {}", e)
                 self.__logger.decrease_indent()
             elif isinstance(_issuelist, list) and len(_issuelist) == 1:
-                self.__logger.info("has the following issue: {}", _issuelist[0])
+                if isinstance(_issuelist[0], dict):
+                    self.__logger.info("has the following issues:")
+                    self.__logger.increase_indent()
+                    print_readable_dict(_issuelist[0])
+                    self.__logger.decrease_indent()
+                else:
+                    self.__logger.info("has the following issue: {}", _issuelist[0])
             else:
-                self.__logger.info("has the following issue: {}", _issuelist)
+                if isinstance(_issuelist, dict):
+                    self.__logger.info("has the following issues:")
+                    self.__logger.increase_indent()
+                    print_readable_dict(_issuelist)
+                    self.__logger.decrease_indent()
+                else:
+                    self.__logger.info("has the following issue: {}", _issuelist)
             if "ignore" in v:
                 self.__logger.info("It will be ignored")
 
@@ -1996,7 +2008,6 @@ class SeItem:
             item = None
             _, item_id = StateEngineTools.partition_strip(item_id, ":")
             try:
-                # self.__logger.debug("Creating struct for id {}".format(item_id))
                 item = StateEngineStructs.create(self, item_id)
             except Exception as e:
                 _issue = "Struct {} creation failed. Error: {}".format(item_id, e)
