@@ -86,7 +86,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
 
     def update_delay(self, value):
         _issue_list = []
-        _, _, _issue = self.__delay.set(value)
+        _, _, _issue, _ = self.__delay.set(value)
         if _issue:
             _issue = {self._name: {'issue': _issue, 'attribute': 'delay',
                                    'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
@@ -102,7 +102,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def update_instanteval(self, value):
         if self.__instanteval is None:
             self.__instanteval = StateEngineValue.SeValue(self._abitem, "instanteval", False, "bool")
-        _, _, _issue = self.__instanteval.set(value)
+        _, _, _issue, _ = self.__instanteval.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'instanteval',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
@@ -110,37 +110,37 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def update_repeat(self, value):
         if self.__repeat is None:
             self.__repeat = StateEngineValue.SeValue(self._abitem, "repeat", False, "bool")
-        _, _, _issue = self.__repeat.set(value)
+        _, _, _issue, _ = self.__repeat.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'repeat',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     def update_order(self, value):
-        _, _, _issue = self.__order.set(value)
+        _, _, _issue, _ = self.__order.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'order',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     def update_conditionset(self, value):
-        _, _, _issue = self.conditionset.set(value)
+        _, _, _issue, _ = self.conditionset.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'conditionset',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     def update_previousconditionset(self, value):
-        _, _, _issue = self.previousconditionset.set(value)
+        _, _, _issue, _ = self.previousconditionset.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'previousconditionset',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     def update_previousstate_conditionset(self, value):
-        _, _, _issue = self.previousstate_conditionset.set(value)
+        _, _, _issue, _ = self.previousstate_conditionset.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'previousstate_conditionset',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     def update_mode(self, value):
-        _value, _, _issue = self.__mode.set(value)
+        _value, _, _issue, _ = self.__mode.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'mode',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _value[0], _issue
@@ -619,7 +619,7 @@ class SeActionSetItem(SeActionBase):
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
-        _, _, _issue = self.__value.set(value)
+        _, _, _issue, _ = self.__value.set(value)
         _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
@@ -826,7 +826,7 @@ class SeActionTrigger(SeActionBase):
         logic, value = StateEngineTools.partition_strip(value, ":")
         self.__logic = logic
         value = None if value == "" else value
-        _, _, _issue = self.__value.set(value)
+        _, _, _issue, _ = self.__value.set(value)
         _issue = {self._name: {'issue': _issue, 'logic': self.__logic,
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
@@ -997,7 +997,7 @@ class SeActionForceItem(SeActionBase):
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
-        _, _, _issue = self.__value.set(value)
+        _, _, _issue, _ = self.__value.set(value)
         _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 

@@ -273,9 +273,9 @@ class SeState(StateEngineTools.SeItemChild):
             elif len(value) == 1:
                 value = value[0]
         if value is None and "se_stateorder" in self.__item.conf:
-            _, _, _, _issue = self.__order.set_from_attr(self.__item, "se_stateorder")
+            _, _, _, _issue, _ = self.__order.set_from_attr(self.__item, "se_stateorder")
         elif value is not None:
-            _, _, _issue = self.__order.set(value, "", True, False)
+            _, _, _issue, _ = self.__order.set(value, "", True, False)
         else:
             _issue = [None]
 
@@ -353,20 +353,20 @@ class SeState(StateEngineTools.SeItemChild):
 
     def update_releasedby_internal(self, states=None):
         if states == []:
-            _returnvalue, _returntype, _issue = self.__releasedby.set([None], "", True, False)
+            _returnvalue, _returntype, _issue, _ = self.__releasedby.set([None], "", True, False)
         elif states:
             self._log_develop("Setting releasedby to {}", states)
-            _returnvalue, _returntype, _issue = self.__releasedby.set(states, "", True, False)
+            _returnvalue, _returntype, _issue, _ = self.__releasedby.set(states, "", True, False)
             self._log_develop("returnvalue {}", _returnvalue)
         else:
-            _returnvalue, _returntype, _, _issue = self.__releasedby.set_from_attr(self.__item, "se_released_by")
+            _returnvalue, _returntype, _, _issue, _ = self.__releasedby.set_from_attr(self.__item, "se_released_by")
         return _returnvalue, _returntype, _issue
 
     def update_can_release_internal(self, states):
         if states == []:
-            _returnvalue, _returntype, _issue = self.__can_release.set([None], "", True, False)
+            _returnvalue, _returntype, _issue, _ = self.__can_release.set([None], "", True, False)
         elif states:
-            _returnvalue, _returntype, _issue = self.__can_release.set(states, "", True, False)
+            _returnvalue, _returntype, _issue, _ = self.__can_release.set(states, "", True, False)
         else:
             _returnvalue, _returntype, _issue = [None], [None], None
         return _returnvalue, _returntype, _issue
@@ -605,7 +605,6 @@ class SeState(StateEngineTools.SeItemChild):
         for child_item in child_items:
             child_name = StateEngineTools.get_last_part_of_item_id(child_item)
             try:
-
                 action_mapping = {
                     "on_enter": ("enter", self.__actions_enter),
                     "on_stay": ("stay", self.__actions_stay),

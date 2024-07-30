@@ -60,6 +60,7 @@ class SeValue(StateEngineTools.SeItemChild):
         self.__itemClass = Item
         self.__listorder = []
         self.__type_listorder = []
+        self.__orig_listorder = []
         self.__valid_valuetypes = ["value", "regex", "eval", "var", "item", "template", "struct"]
         if value_type == "str":
             self.__cast_func = StateEngineTools.cast_str
@@ -98,7 +99,7 @@ class SeValue(StateEngineTools.SeItemChild):
             self._log_develop("Processing value {0} from attribute name {1}, reset {2}, type {3}",
                               value, attribute_name, reset, attr_type)
         elif default_value is None:
-            return None, None, False, None
+            return None, None, False, None, None
         else:
             value = default_value
             _using_default = True
@@ -123,9 +124,9 @@ class SeValue(StateEngineTools.SeItemChild):
         if value is not None:
             self._log_develop("Setting value {0}, attribute name {1}, reset {2}, type {3}",
                               value, attribute_name, reset, attr_type)
-        _returnvalue, _returntype, _issue = self.set(value, attribute_name, reset)
-        self._log_develop("Set from attribute returnvalue {}, returntype {}, issue {}", _returnvalue, _returntype, _issue)
-        return _returnvalue, _returntype, _using_default, _issue
+        _returnvalue, _returntype, _issue, _origvalue = self.set(value, attribute_name, reset)
+        self._log_develop("Set from attribute returnvalue {}, returntype {}, issue {}, original {}", _returnvalue, _returntype, _issue, _origvalue)
+        return _returnvalue, _returntype, _using_default, _issue, _origvalue
 
     def _set_additional(self, _additional_sources):
         for _use in _additional_sources:
@@ -144,6 +145,7 @@ class SeValue(StateEngineTools.SeItemChild):
         self._additional_sources = []
         self.__listorder = []
         self.__type_listorder = []
+        self.__orig_listorder = []
 
     # Set value
     # value: string indicating value or source of value
@@ -184,6 +186,7 @@ class SeValue(StateEngineTools.SeItemChild):
                                       _issue, self.__valid_valuetypes, field_value[i])
                     source[i] = "value"
                 self.__type_listorder.append(source[i])
+                self.__orig_listorder.append(val)
                 if source[i] == "value":
                     self.__listorder[i] = value[i]
                 if source[i] == "template":
@@ -260,6 +263,7 @@ class SeValue(StateEngineTools.SeItemChild):
             if source == "value":
                 self.__listorder = [field_value]
             self.__type_listorder.append(source)
+            self.__orig_listorder.append(value)
         else:
             source = "value"
             field_value = value
@@ -384,8 +388,9 @@ class SeValue(StateEngineTools.SeItemChild):
         self.__issues = StateEngineTools.flatten_list(self.__issues)
         self.__listorder = StateEngineTools.flatten_list(self.__listorder)
         self.__type_listorder = StateEngineTools.flatten_list(self.__type_listorder)
+        self.__orig_listorder = StateEngineTools.flatten_list(self.__orig_listorder)
         del value
-        return self.__listorder, self.__type_listorder, self.__issues
+        return self.__listorder, self.__type_listorder, self.__issues, self.__orig_listorder
 
     # Set cast function
     # cast_func: cast function

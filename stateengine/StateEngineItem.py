@@ -204,7 +204,7 @@ class SeItem:
         self.__log_level = StateEngineValue.SeValue(self, "Log Level", False, "num")
 
         _default_log_level = self.__logger.default_log_level.get()
-        _returnvalue, _returntype, _using_default, _issue = self.__log_level.set_from_attr(self.__item, "se_log_level",
+        _returnvalue, _returntype, _using_default, _issue, _ = self.__log_level.set_from_attr(self.__item, "se_log_level",
                                                                                            _default_log_level)
         self.__using_default_log_level = _using_default
         _returnvalue = self.__log_level.get()
@@ -418,7 +418,7 @@ class SeItem:
         default_instant_leaveaction_value = default_instant_leaveaction.get()
         self.__default_instant_leaveaction = default_instant_leaveaction
 
-        _returnvalue_leave, _returntype_leave, _using_default_leave, _issue = self.__instant_leaveaction.set_from_attr(
+        _returnvalue_leave, _returntype_leave, _using_default_leave, _issue, _ = self.__instant_leaveaction.set_from_attr(
             self.__item, "se_instant_leaveaction", default_instant_leaveaction)
 
         if len(_returnvalue_leave) > 1:
