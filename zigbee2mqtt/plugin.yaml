@@ -12,8 +12,8 @@ plugin:
     documentation: ''
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1856775-support-thread-f%C3%BCr-das-zigbee2mqtt-plugin
 
-    version: 2.0.1                 # Plugin version
-    sh_minversion: '1.9.5.6'         # minimum shNG version to use this plugin
+    version: 2.0.2                 # Plugin version
+    sh_minversion: '1.10.0'         # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: '3.8'             # minimum Python version to use for this plugin
     multi_instance: true           # plugin supports multi instance
@@ -45,12 +45,12 @@ parameters:
             de: Einlesen aller Werte beim Start
             en: Read all values at init
 
-    suspend_item:
+    pause_item:
         type: str
         default: ''
         description:
-            de: Pfad zum Suspend-Item
-            en: Path to suspend item
+            de: Pfad zum Pause-Item
+            en: Path to pause item
 
     z2m_gui:
         type: str

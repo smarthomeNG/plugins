@@ -39,7 +39,7 @@ plugin:
     state: ready
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 2.0.0
+    version: '2.1.0'
     sh_minversion: '1.6'
     multi_instance: False
     classname: StateEngine
@@ -342,6 +342,20 @@ item_attributes:
                  All evaluations are suspended until the startup delay has passed.
                  The values for ``se_startup_delay`` are the same as for the plugin
                  parameter ``startup_delay_default``.
+                 '
+
+    se_name:
+        type: str
+        description:
+            de: 'Zustandsname, überschreibt den im Attribut "name" angegebene Wert'
+            en: 'Name of state, overwriting the value defined by "name" attribute'
+        description_long:
+            de: '**Zustandsname, überschreibt den im Attribut "name" angegebene Wert**\n
+                Dies kann beispielsweise nützlich sein, um den Namen abhängig
+                von einer Bedingungsgruppe zu ändern.
+                '
+            en: '**Name of state, overwriting the value defined by "name" attribute**\n
+                 Could be useful to change the state name based on a condition group
                  '
 
     se_laststate_item_name:

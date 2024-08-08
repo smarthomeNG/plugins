@@ -42,7 +42,7 @@ class Russound(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.7.2'
+    PLUGIN_VERSION = '1.7.3'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -52,16 +52,10 @@ class Russound(SmartPlugin):
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
-        super().__init__(sh, args, kwargs)
-        try:
-            # sh = self.get_sh() to get it.
-            self.host = self.get_parameter_value('host')
-            self.port = self.get_parameter_value('port')
-        except KeyError as e:
-            self.logger.critical(
-                "Plugin '{}': Inconsistent plugin (invalid metadata definition: {} not defined)".format(self.get_shortname(), e))
-            self._init_complete = False
-            return
+        super().__init__()
+        self.host = self.get_parameter_value('host')
+        self.port = self.get_parameter_value('port')
+        self._pause_item_path = self.get_parameter_value('pause_item')
 
         # Initialization code goes here
         self.terminator = RESP_DELIMITER
@@ -69,10 +63,8 @@ class Russound(SmartPlugin):
         self._client.set_callbacks(data_received=self.found_terminator)
         self.params = {}
         self.sources = {}
-        self.suspended = False
-        
+
         self.init_webinterface()
-        return
 
     def run(self):
         """
@@ -80,21 +72,30 @@ class Russound(SmartPlugin):
         """
         self.logger.debug("Run method called")
         if not self._client.connect():
-            self.logger.debug(f'Connection to {self.host}:{self.port} not possible. Plugin deactivated.')
+            self.logger.debug(f'Connection to {self.host}:{self.port} not possible. Plugin stopped.')
+            self.stop()
             return
+
         self.alive = True
+        if self._pause_item:
+            self._pause_item(False, self.get_fullname())
 
     def activate(self):
-        self.logger.debug("Activate method called, queries to russound will be resumes and data will be written again")
-        self.resume()
-        
+        self.logger.debug("Activate method called, but is deprecated. Please move to run()")
+        self.run()
+
     def stop(self):
         """
         Stop method for the plugin
         """
         self.logger.debug("Stop method called")
         self.alive = False
-        self._client.close()
+        if self._pause_item:
+            self._pause_item(True, self.get_fullname())
+        try:
+            self._client.close()
+        except Exception:
+            pass
 
     def connect(self):
         self._client.open()
@@ -121,10 +122,10 @@ class Russound(SmartPlugin):
         #     self.logger.debug("Source {0} added".format(s))
         #     return None
 
-        if item.property.path == self._suspend_item_path:
-            self._suspend_item = item
-            self.logger.info(f'set suspend_item to {item.property.path}')
-            return
+        if item.property.path == self._pause_item_path:
+            self._pause_item = item
+            self.logger.info(f'set pause_item to {item.property.path}')
+            return self.update_item
 
         if self.has_iattr(item.conf, 'rus_path'):
             self.logger.debug("parse item: {}".format(item))
@@ -177,9 +178,6 @@ class Russound(SmartPlugin):
 
         return self.update_item
 
-    def parse_logic(self, logic):
-        pass
-
     def _restrict(self, val, minval, maxval):
         if val < minval:
             return minval
@@ -200,18 +198,20 @@ class Russound(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
+        # check for pause item
+        if item is self._pause_item:
+            if caller != self.get_shortname():
+                self.logger.debug(f'pause item changed to {item()}')
+                if item() and self.alive:
+                    self.stop()
+                elif not item() and not self.alive:
+                    self.run()
+            return
+
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
             self.logger.info("Update item: {}, item has been changed outside this plugin (caller={}, source={}, dest={})".format(item.property.path, caller, source, dest))
-
-            if item.property.path == self._suspend_item_path:
-                if self._suspend_item is not None:
-                    if item():
-                        self.suspend(f'suspend item {item.property.path}')
-                    else:
-                        self.resume(f'suspend item {item.property.path}')
-                return
 
             if self.has_iattr(item.conf, 'rus_path'):
                 path = self.get_iattr_value(item.conf, 'rus_path')
@@ -282,18 +282,11 @@ class Russound(SmartPlugin):
         if not self.alive:
             self.logger.error('Trying to send data but plugin is not running')
             return
-        
-        if self.suspended:
-            self.logger.debug('Plugin is suspended, data will not be written')
-            return
 
         self.logger.debug("Sending request: {0}".format(cmd))
 
         # if connection is closed we don't wait for sh.con to reopen it
         # instead we reconnect immediatly
-#
-        # if not self.connected:
-        #     self.connect()
         if not self._client.connected:
             self._client.connect()
 

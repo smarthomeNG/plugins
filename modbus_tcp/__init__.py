@@ -47,13 +47,14 @@ AttrSlaveUnit = 'modBusUnit'
 AttrObjectType = 'modBusObjectType'
 AttrDirection = 'modBusDirection'
 
+
 class modbus_tcp(SmartPlugin):
     """
     This class provides a Plugin for SmarthomeNG to read and or write to modbus
     devices.
     """
 
-    PLUGIN_VERSION = '1.0.12'
+    PLUGIN_VERSION = '1.0.13'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -85,8 +86,10 @@ class modbus_tcp(SmartPlugin):
         if not (self._cycle or self._crontab):
             self.logger.error(f"{self.get_fullname()}: no update cycle or crontab set. Modbus will not be queried automatically")
 
-        self._slaveUnit = int(self.get_parameter_value('slaveUnit'))
+        self._slaveUnit = self.get_parameter_value('slaveUnit')
         self._slaveUnitRegisterDependend = False
+
+        self._pause_item_path = self.get_parameter_value('pause_item')
 
         self._sh = sh
         self._regToRead = {}
@@ -99,8 +102,6 @@ class modbus_tcp(SmartPlugin):
 
         self.init_webinterface(WebInterface)
 
-        return
-
     def run(self):
         """
         Run method for the plugin
@@ -108,20 +109,13 @@ class modbus_tcp(SmartPlugin):
         self.logger.debug(f"Plugin '{self.get_fullname()}': run method called")
         if self.alive:
             return
+
         self.alive = True
-        self.set_suspend(by='run()')
-        
+
         if self._cycle or self._crontab:
-            self.error_count = 0 # Initialize error count
-            if not self.suspended:
-                self._create_cyclic_scheduler()
+            self.error_count = 0  # Initialize error count
+            self.scheduler_add('poll_device_' + self._host, self.poll_device, cycle=self._cycle, cron=self._crontab, prio=5)
         self.logger.debug(f"Plugin '{self.get_fullname()}': run method finished ")
-
-    def _create_cyclic_scheduler(self):
-        self.scheduler_add('poll_device_' + self._host, self.poll_device, cycle=self._cycle, cron=self._crontab, prio=5)
-
-    def _remove_cyclic_scheduler(self):
-        self.scheduler_remove('poll_device_' + self._host)
 
     def stop(self):
         """
@@ -129,45 +123,10 @@ class modbus_tcp(SmartPlugin):
         """
         self.alive = False
         self.logger.debug(f"Plugin '{self.get_fullname()}': stop method called")
-        self._remove_cyclic_scheduler()
+        self.scheduler_remove('poll_device_' + self._host)
         self._Mclient.close()
         self.connected = False
         self.logger.debug(f"Plugin '{self.get_fullname()}': stop method finished")
-
-    # sh.plugins.return_plugin('pluginName').suspend()
-    def set_suspend(self, suspend_active=None, by=None):
-        """
-        enable / disable suspend mode: open/close connections, schedulers
-        """
-
-        if suspend_active is None:
-            if self._suspend_item is not None:
-                # if no parameter set, try to use item setting
-                suspend_active = bool(self._suspend_item())
-            else:
-                # if not available, default to "resume" (non-breaking default)
-                suspend_active = False
-
-        # print debug logging
-        if suspend_active:
-            msg = 'Suspend mode enabled'
-        else:
-            msg = 'Suspend mode disabled'
-        if by:
-            msg += f' (set by {by})'
-        self.logger.debug(msg)
-
-        # activate selected mode, use smartplugin methods
-        if suspend_active:
-            self.suspend(by)
-        else:
-            self.resume(by)
-
-        if suspend_active:
-            self._remove_cyclic_scheduler()
-        else:
-            self._create_cyclic_scheduler()
-
 
     def parse_item(self, item):
         """
@@ -178,10 +137,10 @@ class modbus_tcp(SmartPlugin):
         :param item:    The item to process.
         """
 
-        # check for suspend item
-        if item.property.path == self._suspend_item_path:
-            self.logger.debug(f'suspend item {item.property.path} registered')
-            self._suspend_item = item
+        # check for pause item
+        if item.property.path == self._pause_item_path:
+            self.logger.debug(f'pause item {item.property.path} registered')
+            self._pause_item = item
             self.add_item(item, updating=True)
             return self.update_item
 
@@ -207,7 +166,7 @@ class modbus_tcp(SmartPlugin):
             if self.has_iattr(item.conf, AttrObjectType):
                 objectType = self.get_iattr_value(item.conf, AttrObjectType)
 
-            reg = str(objectType) # dictionary key: objectType.regAddr.slaveUnit // HoldingRegister.528.1
+            reg = str(objectType)  # dictionary key: objectType.regAddr.slaveUnit // HoldingRegister.528.1
             reg += '.'
             reg += str(regAddr)
             reg += '.'
@@ -274,7 +233,7 @@ class modbus_tcp(SmartPlugin):
         changes on it's own, but has to be polled to get the actual status.
         It is called by the scheduler which is set within run() method.
         """
-        if self.suspended:
+        if not self.alive:
             return
 
         with self.lock:
@@ -302,7 +261,6 @@ class modbus_tcp(SmartPlugin):
         try:
             for reg, regPara in self._regToRead.items():
                 with self.lock:
-                    regAddr = regPara['regAddr']
                     value = self.__read_Registers(regPara)
                     # self.logger.debug(f"value read: {value} type: {type(value)}")
                     if value is not None:
@@ -330,8 +288,6 @@ class modbus_tcp(SmartPlugin):
         except Exception as e:
             self.logger.error(f"something went wrong in the poll_device function: {e}")
 
-
-    # called each time an item changes.
     def update_item(self, item, caller=None, source=None, dest=None):
         """
         Item has been updated
@@ -349,20 +305,15 @@ class modbus_tcp(SmartPlugin):
         slaveUnit = self._slaveUnit
         dataDirection = 'read'
 
-        # check for suspend item
-        if item is self._suspend_item:
+        # check for pause item
+        if item is self._pause_item:
             if caller != self.get_shortname():
-                self.logger.debug(f'Suspend item changed to {item()}')
-                self.set_suspend(item(), by=f'suspend item {item.property.path}')
+                self.logger.debug(f'pause item changed to {item()}')
+                if item() and self.alive:
+                    self.stop()
+                elif not item() and not self.alive:
+                    self.run()
             return
-
-        if self.suspended:
-            if self.suspend_log_update is None or self.suspend_log_update is False:   # debug - Nachricht nur 1x ausgeben
-                self.logger.info('Plugin is suspended, data will not be written')
-                self.suspend_log_update = True
-            return
-        else:
-            self.suspend_log_update = False
 
         if caller == self.get_fullname():
             # self.logger.debug(f'item was changed by the plugin itself - caller:{caller} source:{source} dest:{dest}')
@@ -389,7 +340,7 @@ class modbus_tcp(SmartPlugin):
             # else:
                 # self.logger.debug(f'update_item:{item} default modBusObjectTyp: {objectType}')
 
-            reg = str(objectType) # Dict-key: HoldingRegister.528.1 *** objectType.regAddr.slaveUnit ***
+            reg = str(objectType)  # Dict-key: HoldingRegister.528.1 *** objectType.regAddr.slaveUnit ***
             reg += '.'
             reg += str(regAddr)
             reg += '.'
@@ -417,8 +368,6 @@ class modbus_tcp(SmartPlugin):
                         self.connected = False
                         return
 
-                    startTime = datetime.now()
-                    regCount = 0
                     try:
                         self.__write_Registers(regPara, item())
                     except Exception as e:
@@ -431,18 +380,12 @@ class modbus_tcp(SmartPlugin):
         bo = regPara['byteOrder']
         wo = regPara['wordOrder']
         dataTypeStr = regPara['dataType']
-        dataType = ''.join(filter(str.isalpha, dataTypeStr)) # vom dataType die Ziffen entfernen z.B. uint16 = uint
-        registerCount = 0 # Anzahl der zu schreibenden Register (Words)
+        dataType = ''.join(filter(str.isalpha, dataTypeStr))  # vom dataType die Ziffen entfernen z.B. uint16 = uint
 
         try:
-            bits = int(''.join(filter(str.isdigit, dataTypeStr))) # bit-Zahl aus aus dataType z.B. uint16 = 16
+            bits = int(''.join(filter(str.isdigit, dataTypeStr)))  # bit-Zahl aus aus dataType z.B. uint16 = 16
         except:
             bits = 16
-
-        if dataType.lower() == 'string':
-            registerCount = int(bits / 2) # bei string: bits = bytes !! string16 -> 16Byte - 8 registerCount
-        else:
-            registerCount = int(bits / 16)
 
         if regPara['factor'] != 1:
             # self.logger.debug(f"value {value} divided by: {regPara['factor']}")
@@ -480,11 +423,11 @@ class modbus_tcp(SmartPlugin):
             builder.add_string(value)
         elif dataType.lower() == 'bit':
             if objectType == 'Coil' or objectType == 'DiscreteInput':
-                if not isinstance(value, bool): # test is boolean
+                if not isinstance(value, bool):  # test is boolean
                     self.logger.error(f"Value is not boolean: {value}")
                     return
             else:
-                if set(value).issubset({'0', '1'}) and bool(value): # test is bit-string '00110101'
+                if set(value).issubset({'0', '1'}) and bool(value):  # test is bit-string '00110101'
                     builder.add_bits(value)
                 else:
                     self.logger.error(f"Value is not a bitstring: {value}")
@@ -541,13 +484,13 @@ class modbus_tcp(SmartPlugin):
             bits = 16
 
         if dataType.lower() == 'string':
-            registerCount = int(bits / 2) # bei string: bits = bytes !! string16 -> 16Byte - 8 registerCount
+            registerCount = int(bits / 2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 registerCount
         else:
             registerCount = int(bits / 16)
 
-        if self.connected == False:
+        if not self.connected:
             self.logger.error(f"not connected to {self._host}:{self._port}")
-            return None
+            return
 
         # self.logger.debug(f"read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}")
         if objectType == 'Coil':
@@ -560,11 +503,11 @@ class modbus_tcp(SmartPlugin):
             result = self._Mclient.read_holding_registers(address, registerCount, slave=slaveUnit)
         else:
             self.logger.error(f"{AttrObjectType} not supported: {objectType}")
-            return None
+            return
 
         if result.isError():
             self.logger.error(f"read error: {result} {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}")
-            return None
+            return
 
         if objectType == 'Coil':
             value = result.bits[0]
@@ -615,4 +558,3 @@ class modbus_tcp(SmartPlugin):
                 return decoder.decode_bits()
         else:
             self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
-        return None

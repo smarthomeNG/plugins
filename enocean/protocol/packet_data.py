@@ -22,9 +22,10 @@
 import logging
 from lib.utils import Utils
 
+from .constants import RORG, PACKET_TYPE
 
 
-class Prepare_Packet_Data():
+class Packet_Data():
 
     def __init__(self, plugin_instance):
         """
@@ -35,13 +36,13 @@ class Prepare_Packet_Data():
         # Get the plugin instance from encocean class
         self._plugin_instance = plugin_instance
 
-    def CanDataPrepare(self, tx_eep):
+    def CanPrepareData(self, tx_eep):
         """
         This Method checks if there is an available Prepare Data Method for the tx_eep
         """
         found = callable(getattr(self, '_prepare_data_for_tx_eep_' + tx_eep, None))
-        if (not found):
-            self.logger.error(f"enocean-CanDataPrepare: missing tx_eep for pepare send data {tx_eep} - there should be a _prepare_data_for_tx_eep_{tx_eep}-function!")
+        if not found:
+            self.logger.error(f"enocean-CanPrepareData: missing tx_eep for pepare send data {tx_eep} - there should be a _prepare_data_for_tx_eep_{tx_eep}-function!")
         return found
 
     def PrepareData(self, item, tx_eep):
@@ -54,40 +55,34 @@ class Prepare_Packet_Data():
         if self._plugin_instance.has_iattr(item.conf, 'enocean_tx_id_offset'):
             self.logger.debug("enocean-PrepareData: item has valid enocean_tx_id_offset")
             id_offset = int(self._plugin_instance.get_iattr_value(item.conf, 'enocean_tx_id_offset'))
-            if (id_offset < 0) or (id_offset > 127):
+            if id_offset < 0 or id_offset > 127:
                 self.logger.error('enocean-PrepareData: ID offset out of range (0-127). Aborting.')
-                return None
+                return
         else:
             self.logger.info(f"enocean-PrepareData: {tx_eep} item has no attribute ''enocean_tx_id_offset''! Set to default = 0")
             id_offset = 0
-        # start prepare data           
+        # start prepare data
         rorg, payload, optional = getattr(self, '_prepare_data_for_tx_eep_' + tx_eep)(item, tx_eep)
-        #self.logger.info('enocean-PrepareData: {} returns [{:#04x}], [{}], [{}]'.format(tx_eep, rorg, ', '.join('{:#04x}'.format(x) for x in payload), ', '.join('{:#04x}'.format(x) for x in optional)))
+        # self.logger.info('enocean-PrepareData: {} returns [{:#04x}], [{}], [{}]'.format(tx_eep, rorg, ', '.join('{:#04x}'.format(x) for x in payload), ', '.join('{:#04x}'.format(x) for x in optional)))
         return id_offset, rorg, payload, optional
 
+# Definitions for RORG =  A5 / ORG = 07
 
-#####################################################
-### --- Definitions for RORG =  A5 / ORG = 07 --- ###
-### --> Definition of 4BS Telegrams               ###
-#####################################################
-    
-    
     def _prepare_data_for_tx_eep_A5_20_04(self, item, tx_eep):
         """
         ### --- Data for radiator valve command --- ###
         """
         self.logger.debug(f'enocean-PrepareData: prepare data for tx_eep {tx_eep}')
-        rorg = 0xa5
         temperature = item()
         # define default values:
-        MC  = 1 # off
-        WUC = 3 # 120 seconds
-        BLC = 0 # unlocked
-        LRNB = 1 # data
-        DSO = 0 # 0 degree
+        MC = 1  # off
+        WUC = 3  # 120 seconds
+        BLC = 0  # unlocked
+        LRNB = 1  # data
+        DSO = 0  # 0 degree
         valve_position = 50
 
-        for sibling in get_children(item.parent):
+        for sibling in item.return_parent().get_children():
             if hasattr(sibling, 'MC'):
                 MC = sibling()
             if hasattr(sibling, 'WUC'):
@@ -100,24 +95,22 @@ class Prepare_Packet_Data():
                 DSO = sibling()
             if hasattr(sibling, 'VALVE_POSITION'):
                 valve_position = sibling()
-        TSP = int((temperature -10)*255/30)
-        status =  0 + (MC << 1) + (WUC << 2) 
+        TSP = int((temperature - 10) * 255 / 30)
+        status = 0 + (MC << 1) + (WUC << 2)
         status2 = (BLC << 5) + (LRNB << 4) + (DSO << 2)
-        payload = [valve_position, TSP, status , status2]
+        payload = [valve_position, TSP, status, status2]
         optional = []
-        return rorg, payload, optional
-    
-    
-    def _prepare_data_for_tx_eep_A5_38_08_01(self, item, tx_eep):    
+        return RORG.BS4, payload, optional
+
+    def _prepare_data_for_tx_eep_A5_38_08_01(self, item, tx_eep):
         """
         ### --- Data for A5-38_08 command 1 --- ###
         Eltako Devices:
-        FSR14-2x, FSR14-4x, FSR14SSR, FSR71 
+        FSR14-2x, FSR14-4x, FSR14SSR, FSR71
         FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP
         This method has the function to prepare the packet data in case of switching device on or off
         """
         self.logger.debug(f'enocean-PrepareData: prepare data for tx_eep {tx_eep}')
-        rorg = 0xa5
         block = 0
         # check if item has attribute block_switch
         if self._plugin_instance.has_iattr(item.conf, 'block_switch'):
@@ -133,10 +126,9 @@ class Prepare_Packet_Data():
             payload = [0x01, 0x00, 0x00, int(9 + block)]
             self.logger.debug(f'enocean-PrepareData: {tx_eep} prepare data to switch on')
         optional = []
-        return rorg, payload, optional
-  
-    
-    def _prepare_data_for_tx_eep_A5_38_08_02(self, item, tx_eep):    
+        return RORG.BS4, payload, optional
+
+    def _prepare_data_for_tx_eep_A5_38_08_02(self, item, tx_eep):
         """
         ### --- Data for A5-38_08 command 2 --- ###
         Eltako Devices:
@@ -145,8 +137,7 @@ class Prepare_Packet_Data():
         This method has the function to prepare the packet data in case of switching the dimmer device on or off,
         but calculate also the correct data of dim_speed and dim_value for further solutions.
         """
-        #self.logger.debug(f'enocean-PrepareData: prepare data for tx_eep {tx_eep}')
-        rorg = 0xa5
+        # self.logger.debug(f'enocean-PrepareData: prepare data for tx_eep {tx_eep}')
         block = 0
         # check if item has attribute block_dim_value
         if self._plugin_instance.has_iattr(item.level.conf, 'block_dim_value'):
@@ -158,7 +149,7 @@ class Prepare_Packet_Data():
             dim_speed = self._plugin_instance.get_iattr_value(item.level.conf, 'dim_speed')
             # bound dim_speed values to [0 - 100] %
             dim_speed = max(0, min(100, int(dim_speed)))
-            #self.logger.debug(f'enocean-PrepareData: {tx_eep} use dim_speed = {dim_speed} %')
+            # self.logger.debug(f'enocean-PrepareData: {tx_eep} use dim_speed = {dim_speed} %')
             # calculate dimspeed from percent into integer
             # 0x01 --> fastest speed --> 100 %
             # 0xFF --> slowest speed --> 0 %
@@ -166,29 +157,28 @@ class Prepare_Packet_Data():
         else:
             # use intern dim_speed of the dim device
             dim_speed = 0
-            #self.logger.debug('enocean-PrepareData: no attribute dim_speed --> use intern dim speed')
+            # self.logger.debug('enocean-PrepareData: no attribute dim_speed --> use intern dim speed')
         if not item():
             # if value is False --> Switch off
             dim_value = 0
             payload = [0x02, int(dim_value), int(dim_speed), int(8 + block)]
-            #self.logger.debug('enocean-PrepareData: prepare data to switch off for command for A5_38_08_02')
+            # self.logger.debug('enocean-PrepareData: prepare data to switch off for command for A5_38_08_02')
         else:
             # check if reference dim value exists
             if 'ref_level' in item.level.conf:
                 dim_value = int(item.level.conf['ref_level'])
                 # check range of dim_value [0 - 100] %
                 dim_value = max(0, min(100, int(dim_value)))
-                #self.logger.debug(f'enocean-PrepareData: {tx_eep} ref_level {dim_value} % found for A5_38_08_02')
+                # self.logger.debug(f'enocean-PrepareData: {tx_eep} ref_level {dim_value} % found for A5_38_08_02')
             else:
                 # set dim_value on 100 % == 0x64
                 dim_value = 0x64
                 self.logger.debug(f'enocean-PrepareData: {tx_eep} no ref_level found! Setting to default 100 %')
             payload = [0x02, int(dim_value), int(dim_speed), int(9 + block)]
         optional = []
-        return rorg, payload, optional
-        
-    
-    def _prepare_data_for_tx_eep_A5_38_08_03(self, item, tx_eep):    
+        return RORG.BS4, payload, optional
+
+    def _prepare_data_for_tx_eep_A5_38_08_03(self, item, tx_eep):
         """
         ### --- Data for A5-38_08 command 3--- ###
         Eltako Devices:
@@ -198,14 +188,13 @@ class Prepare_Packet_Data():
         In case of dim_value == 0 the dimmer is switched off.
         """
         self.logger.debug(f'enocean-PrepareData: prepare data for tx_eep {tx_eep}')
-        rorg = 0xa5
         block = 0
         # check if item has attribute block_dim_value
         if self._plugin_instance.has_iattr(item.conf, 'block_dim_value'):
             block_value = self._plugin_instance.get_iattr_value(item.conf, 'block_dim_value')
             if Utils.to_bool(block_value):
                 block = 4
-        # check if item has attribite dim_speed 
+        # check if item has attribite dim_speed
         if self._plugin_instance.has_iattr(item.conf, 'dim_speed'):
             dim_speed = self._plugin_instance.get_iattr_value(item.conf, 'dim_speed')
             # bound dim_speed values to [0 - 100] %
@@ -214,7 +203,7 @@ class Prepare_Packet_Data():
             # calculate dimspeed from percent into hex
             # 0x01 --> fastest speed --> 100 %
             # 0xFF --> slowest speed --> 0 %
-            dim_speed = (255 - (254 * dim_speed/100))
+            dim_speed = (255 - (254 * dim_speed / 100))
         else:
             # use intern dim_speed of the dim device
             dim_speed = 0x00
@@ -232,10 +221,9 @@ class Prepare_Packet_Data():
             dim_value = dim_value
             payload = [0x02, int(dim_value), int(dim_speed), int(9 + block)]
         optional = []
-        return rorg, payload, optional
-    
-    
-    def _prepare_data_for_tx_eep_A5_3F_7F(self, item, tx_eep):    
+        return RORG.BS4, payload, optional
+
+    def _prepare_data_for_tx_eep_A5_3F_7F(self, item, tx_eep):
         """
         ### --- Data for A5-3F-7F - Universal Actuator Command --- ###
         Eltako Devices:
@@ -244,14 +232,13 @@ class Prepare_Packet_Data():
         The Runtime is set in [0 - 255] s
         """
         self.logger.debug(f'enocean-PrepareData: prepare data for tx_eep {tx_eep}')
-        rorg = 0xa5
         block = 0
         # check if item has attribute block_switch
         if self._plugin_instance.has_iattr(item.conf, 'block_switch'):
             block_value = self._plugin_instance.get_iattr_value(item.conf, 'block_switch')
             if Utils.to_bool(block_value):
                 block = 4
-        # check if item has attribite enocean_rtime 
+        # check if item has attribite enocean_rtime
         if self._plugin_instance.has_iattr(item.conf, 'enocean_rtime'):
             rtime = self._plugin_instance.get_iattr_value(item.conf, 'enocean_rtime')
             # rtime [0 - 255] s
@@ -263,25 +250,24 @@ class Prepare_Packet_Data():
             self.logger.debug(f'enocean-PrepareData: {tx_eep} actuator runtime not specified set to {rtime} s.')
         # check command (up, stop, or down)
         command = int(item())
-        if(command == 0):
+        if command == 0:
             # Stopp moving
             command_hex_code = 0x00
-        elif(command == 1):
+        elif command == 1:
             # moving up
             command_hex_code = 0x01
-        elif(command == 2):
+        elif command == 2:
             # moving down
             command_hex_code = 0x02
         else:
             self.logger.error(f'enocean-PrepareData: {tx_eep} sending actuator command failed: invalid command {command}')
-            return None
+            return
         # define payload
         payload = [0x00, rtime, command_hex_code, int(8 + block)]
         optional = []
-        return rorg, payload, optional
-        
-    
-    def _prepare_data_for_tx_eep_07_3F_7F(self, item, tx_eep):    
+        return RORG.BS4, payload, optional
+
+    def _prepare_data_for_tx_eep_07_3F_7F(self, item, tx_eep):
         """
         ### --- Data for 07-3F-7F Command --- ###
         Eltako Devices:
@@ -294,8 +280,9 @@ class Prepare_Packet_Data():
         Color: bit0 = red, bit1= green, bit2 = blue, bit3 = white
         """
         self.logger.debug(f'enocean-PrepareData: prepare data for tx_eep {tx_eep}')
+        # NOTE: not an official RORG value!
         rorg = 0x07
-        # check if item has attribite dim_speed 
+        # check if item has attribite dim_speed
         if self._plugin_instance.has_iattr(item.conf, 'dim_speed'):
             dim_speed = self._plugin_instance.get_iattr_value(item.conf, 'dim_speed')
             dim_speed = max(0, min(100, int(dim_speed)))
@@ -303,89 +290,87 @@ class Prepare_Packet_Data():
             # calculate dimspeed from percent into hex
             # 0x01 --> fastest speed --> 100 %
             # 0xFF --> slowest speed --> 0 %
-            dim_speed = (255 - (254 * dim_speed/100))
+            dim_speed = (255 - (254 * dim_speed / 100))
         else:
             # use intern dim_speed of the dim device
             dim_speed = 0x00
             self.logger.debug(f'enocean-PrepareData: {tx_eep} no attribute dim_speed --> use intern dim speed')
+
         # check the color of the item
         if self._plugin_instance.has_iattr(item.conf, 'color'):
             color = self._plugin_instance.get_iattr_value(item.conf, 'color')
-            if (color == 'red'):
+            color_hex = ''
+            if color == 'red':
                 color_hex = 0x01
-            elif (color == 'green'):
+            elif color == 'green':
                 color_hex = 0x02
-            elif (color == 'blue'):
+            elif color == 'blue':
                 color_hex = 0x04
-            elif (color == 'white'):
+            elif color == 'white':
                 color_hex = 0x08
         else:
             self.logger.error(f'enocean-PrepareData: {item} has no attribute color --> please specify color!')
-            return None
+            return
+
         # Aufdimmen: [dim_speed, color_hex, 0x30, 0x0F]
         # Abdimmen:  [dim_speed, color_hex, 0x31, 0x0F]
         # Dimmstop:  [dim_speed, color_hex, 0x32, 0x0F]
         # check command (up, stop, or down)
         command = int(item())
-        if(command == 0):
+        if command == 0:
             # dim up
             command_hex_code = 0x30
-        elif(command == 1):
+        elif command == 1:
             # dim down
             command_hex_code = 0x31
-        elif(command == 2):
+        elif command == 2:
             # stop dim
             command_hex_code = 0x32
         else:
             self.logger.error(f'enocean-PrepareData: {tx_eep} sending actuator command failed: invalid command {command}')
-            return None
+            return
         # define payload
         payload = [int(dim_speed), color_hex, command_hex_code, 0x0F]
         optional = []
         return rorg, payload, optional
-    
-   
-#############################################################
-### --- Definitions for RORG = D2                     --- ###
-### --> Definition EnOcean Variable Length Telegram (VLD) ###
-#############################################################
 
-    def _prepare_data_for_tx_eep_D2_01_07(self, item, tx_eep):    
+# Definitions for RORG = D2, EnOcean Variable Length Telegram (VLD) 
+
+    def _prepare_data_for_tx_eep_D2_01_07(self, item, tx_eep):
         """
         ### --- Data for D2_01_07 (VLD) --- ###
         Prepare data for Devices with Varable Length Telegram.
-        There is currently no device information available. 
-        Optional 'pulsewidth' - Attribute was removed, it can be realized with the smarthomeNG    
+        There is currently no device information available.
+        Optional 'pulsewidth' - Attribute was removed, it can be realized with the smarthomeNG
         build in function autotimer!
         """
         self.logger.debug(f'enocean-PrepareData: prepare data for tx_eep {tx_eep}')
-        rorg = 0xD2
-        SubTel = 0x03
         db = 0xFF
         Secu = 0x0
         if self._plugin_instance.has_iattr(item.conf, 'enocean_rx_id'):
             rx_id = int(self._plugin_instance.get_iattr_value(item.conf, 'enocean_rx_id'), 16)
-            if (rx_id < 0) or (rx_id > 0xFFFFFFFF):
+            if rx_id < 0 or rx_id > 0xFFFFFFFF:
                 self.logger.error(f'enocean-PrepareData: {tx_eep} rx-ID-Offset out of range (0-127). Aborting.')
-                return None
+                return
             self.logger.debug(f'enocean-PrepareData: {tx_eep} enocean_rx_id found.')
         else:
             rx_id = 0
             self.logger.debug(f'enocean-PrepareData: {tx_eep} no enocean_rx_id found!')
         # Prepare Data Packet
-        if (item() == 0):
+        if item() == 0:
             payload = [0x01, 0x1E, 0x00]
-            optional = [SubTel, rx_id, db, Secu]
-        elif (item() == 1):
+            optional = [PACKET_TYPE.RADIO_SUB_TEL, rx_id, db, Secu]
+        elif item() == 1:
             payload = [0x01, 0x1E, 0x01]
-            optional = [SubTel, rx_id, db, Secu]
+            optional = [PACKET_TYPE.RADIO_SUB_TEL, rx_id, db, Secu]
         else:
             self.logger.error(f'enocean-PrepareData: {tx_eep} undefined Value. Error!')
-            return None
+            return
         # packet_data_prepared = (id_offset, 0xD2, payload, [0x03, 0xFF, 0xBA, 0xD0, 0x00, 0xFF, 0x0])
         self.logger.info(f'enocean-PrepareData: {tx_eep} Packet Data Prepared for {tx_eep} (VLD)')
-        optional = [SubTel, rx_id, db, Secu]
-        return rorg, payload, optional
+        optional = [PACKET_TYPE.RADIO_SUB_TEL, rx_id, db, Secu]
+
+        return RORG.VLD, payload, optional
 
     def _prepare_data_for_tx_eep_D2_01_12(self, item, tx_eep):
         """
@@ -396,24 +381,22 @@ class Prepare_Packet_Data():
         build in function autotimer!
         """
         self.logger.debug(f'enocean-PrepareData: prepare data for tx_eep {tx_eep}')
-        rorg = 0xD2
-        SubTel = 0x03
         db = 0xFF
         Secu = 0x0
         if self._plugin_instance.has_iattr(item.conf, 'enocean_rx_id'):
             rx_id = int(self._plugin_instance.get_iattr_value(item.conf, 'enocean_rx_id'), 16)
-            if (rx_id < 0) or (rx_id > 0xFFFFFFFF):
+            if rx_id < 0 or rx_id > 0xFFFFFFFF:
                 self.logger.error(f'enocean-PrepareData: {tx_eep} rx-ID-Offset out of range (0-127). Aborting.')
-                return None
+                return
             self.logger.debug(f'enocean-PrepareData: {tx_eep} enocean_rx_id found.')
         else:
             rx_id = 0
             self.logger.debug(f'enocean-PrepareData: {tx_eep} no enocean_rx_id found!')
         if self._plugin_instance.has_iattr(item.conf, 'enocean_channel'):
             schannel = self._plugin_instance.get_iattr_value(item.conf, 'enocean_channel')
-            if (schannel == "A"):
+            if schannel == "A":
                 channel = 0x00
-            elif (schannel == "B"):
+            elif schannel == "B":
                 channel = 0x01
             else:
                 channel = 0x1E
@@ -422,16 +405,17 @@ class Prepare_Packet_Data():
             channel = 0x1E
             self.logger.debug(f'enocean-PrepareData: {tx_eep} no enocean_channel found!')
         # Prepare Data Packet
-        if (item() == 0):
+        if item() == 0:
             payload = [0x01, channel, 0x00]
-            optional = [SubTel, rx_id, db, Secu]
-        elif (item() == 1):
+            optional = [PACKET_TYPE.RADIO_SUB_TEL, rx_id, db, Secu]
+        elif item() == 1:
             payload = [0x01, channel, 0x01]
-            optional = [SubTel, rx_id, db, Secu]
+            optional = [PACKET_TYPE.RADIO_SUB_TEL, rx_id, db, Secu]
         else:
             self.logger.error(f'enocean-PrepareData: {tx_eep} undefined Value. Error!')
-            return None
+            return
         # packet_data_prepared = (id_offset, 0xD2, payload, [0x03, 0xFF, 0xBA, 0xD0, 0x00, 0xFF, 0x0])
         self.logger.info(f'enocean-PrepareData: {tx_eep} Packet Data Prepared for {tx_eep} (VLD)')
-        optional = [SubTel, rx_id, db, Secu]
-        return rorg, payload, optional
+        optional = [PACKET_TYPE.RADIO_SUB_TEL, rx_id, db, Secu]
+
+        return RORG.VLD, payload, optional

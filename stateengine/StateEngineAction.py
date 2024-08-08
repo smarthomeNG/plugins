@@ -24,7 +24,6 @@ from . import StateEngineValue
 from . import StateEngineDefaults
 import datetime
 from lib.shtime import Shtime
-from lib.item import Items
 import re
 
 
@@ -68,7 +67,6 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._parent = self._abitem.id
         self._caller = StateEngineDefaults.plugin_identification
         self.shtime = Shtime.get_instance()
-        self.itemsApi = Items.get_instance()
         self._name = name
         self.__delay = StateEngineValue.SeValue(self._abitem, "delay")
         self.__repeat = None
@@ -88,7 +86,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
 
     def update_delay(self, value):
         _issue_list = []
-        _, _, _issue = self.__delay.set(value)
+        _, _, _issue, _ = self.__delay.set(value)
         if _issue:
             _issue = {self._name: {'issue': _issue, 'attribute': 'delay',
                                    'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
@@ -104,7 +102,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def update_instanteval(self, value):
         if self.__instanteval is None:
             self.__instanteval = StateEngineValue.SeValue(self._abitem, "instanteval", False, "bool")
-        _, _, _issue = self.__instanteval.set(value)
+        _, _, _issue, _ = self.__instanteval.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'instanteval',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
@@ -112,37 +110,37 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def update_repeat(self, value):
         if self.__repeat is None:
             self.__repeat = StateEngineValue.SeValue(self._abitem, "repeat", False, "bool")
-        _, _, _issue = self.__repeat.set(value)
+        _, _, _issue, _ = self.__repeat.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'repeat',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     def update_order(self, value):
-        _, _, _issue = self.__order.set(value)
+        _, _, _issue, _ = self.__order.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'order',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     def update_conditionset(self, value):
-        _, _, _issue = self.conditionset.set(value)
+        _, _, _issue, _ = self.conditionset.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'conditionset',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     def update_previousconditionset(self, value):
-        _, _, _issue = self.previousconditionset.set(value)
+        _, _, _issue, _ = self.previousconditionset.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'previousconditionset',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     def update_previousstate_conditionset(self, value):
-        _, _, _issue = self.previousstate_conditionset.set(value)
+        _, _, _issue, _ = self.previousstate_conditionset.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'previousstate_conditionset',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     def update_mode(self, value):
-        _value, _, _issue = self.__mode.set(value)
+        _value, _, _issue, _ = self.__mode.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'mode',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _value[0], _issue
@@ -271,7 +269,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                         self._caller += '_self'
                     #self._log_develop("Got item from eval on {} {}", self._function, check_item)
                 else:
-                    self._log_develop("Got no item from eval on {} with initial item {}", self._function, self.__item)
+                    self._log_develop("Got no item from eval on {} with initial item {}", self._function, item)
             except Exception as ex:
                 _issue = {self._name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
                 # raise Exception("Problem evaluating item '{}' from eval: {}".format(check_item, ex))
@@ -288,10 +286,10 @@ class SeActionBase(StateEngineTools.SeItemChild):
                                    'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return check_item, check_value, check_mindelta, _issue
 
-    def check_complete(self, item_state, check_item, check_status, check_mindelta, check_value, action_type, evals_items=None):
+    def check_complete(self, state, check_item, check_status, check_mindelta, check_value, action_type, evals_items=None, use=None):
         _issue = {self._name: {'issue': None,
-                               'issueorigin': [{'state': item_state.property.path, 'action': self._function}]}}
-        self._log_develop("Check item {} status {} value {} evals_items {}", check_item, check_status, check_value, evals_items)
+                               'issueorigin': [{'state': state.id, 'action': self._function}]}}
+        self._log_develop("Check item {} status {} value {} use {} evals_items {}", check_item, check_status, check_value, use, evals_items)
         try:
             _name = evals_items.get(self.name)
             if _name is not None:
@@ -302,43 +300,40 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 _eval = _eval if _eval not in (None, "None") else None
                 check_item = _selfitem or _eval
                 if check_item is None:
-                    _returnitem, _returnissue = self._abitem.return_item(_item)
-                    check_item = _returnitem
+                    check_item, _returnissue = self._abitem.return_item(_item)
                 else:
                     _returnissue = None
                 _issue = {self._name: {'issue': _returnissue,
-                                       'issueorigin': [{'state': item_state.property.path, 'action': self._function}]}}
-                self._log_debug("Check item {} status {} value {} _returnissue {}", check_item, check_status, check_value,
-                        _returnissue)
+                                       'issueorigin': [{'state': state.id, 'action': self._function}]}}
+                self._log_debug("Check item {} status {} value {} _returnissue {}", check_item, check_status,
+                                check_value, _returnissue)
         except Exception as ex:
             self._log_info("No valid item info for action {}, trying to get differently. Problem: {}", self._name, ex)
         # missing item in action: Try to find it.
         if check_item is None:
-            item = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self._name)
+            item = StateEngineTools.find_attribute(self._sh, state, "se_item_" + self._name, 0, use)
             if item is not None:
                 check_item, _issue = self._abitem.return_item(item)
                 _issue = {self._name: {'issue': _issue,
-                                       'issueorigin': [{'state': item_state.property.path, 'action': self._function}]}}
+                                       'issueorigin': [{'state': state.id, 'action': self._function}]}}
             else:
-                item = StateEngineTools.find_attribute(self._sh, item_state, "se_eval_" + self._name)
+                item = StateEngineTools.find_attribute(self._sh, state, "se_eval_" + self._name, 0, use)
                 if item is not None:
                     check_item = str(item)
 
         if check_item is None and _issue[self._name].get('issue') is None:
             _issue = {self._name: {'issue': ['Item not defined in rules section'],
-                                   'issueorigin': [{'state': item_state.property.path, 'action': self._function}]}}
+                                   'issueorigin': [{'state': state.id, 'action': self._function}]}}
         # missing status in action: Try to find it.
         if check_status is None:
-            status = StateEngineTools.find_attribute(self._sh, item_state, "se_status_" + self._name)
+            status = StateEngineTools.find_attribute(self._sh, state, "se_status_" + self._name, 0, use)
             if status is not None:
                 check_status, _issue = self._abitem.return_item(status)
                 _issue = {self._name: {'issue': _issue,
-                                       'issueorigin': [{'state': item_state.property.path, 'action': self._function}]}}
-            elif check_status is not None:
-                check_status = str(status)
+                                       'issueorigin': [{'state': state.id, 'action': self._function}]}}
 
         if check_mindelta.is_empty():
-            mindelta = StateEngineTools.find_attribute(self._sh, item_state, "se_mindelta_" + self._name)
+            mindelta = StateEngineTools.find_attribute(self._sh, state, "se_mindelta_" + self._name, 0, use)
             if mindelta is not None:
                 check_mindelta.set(mindelta)
 
@@ -361,7 +356,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
             self._log_develop("Issue with {} action {}", action_type, _issue)
         else:
             _issue = {self._name: {'issue': None,
-                                   'issueorigin': [{'state': item_state.property.path, 'action': self._function}]}}
+                                   'issueorigin': [{'state': state.id, 'action': self._function}]}}
 
         return check_item, check_status, check_mindelta, check_value, _issue
 
@@ -401,7 +396,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                         if _matching:
                             self._log_debug("Given {} {} matches current one: {}", condition, _orig_cond, _updated__current_condition)
                             _condition_met.append(_updated__current_condition)
-                            _conditions_met_count +=1
+                            _conditions_met_count += 1
                         else:
                             self._log_debug("Given {} {} not matching current one: {}", condition, _orig_cond, _updated__current_condition)
                     except Exception as ex:
@@ -436,7 +431,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
             self._getitem_fromeval()
             self._log_decrease_indent()
             _validitem = True
-        except Exception as ex:
+        except Exception:
             _validitem = False
             self._log_decrease_indent()
         if not self._can_execute(state):
@@ -446,13 +441,13 @@ class SeActionBase(StateEngineTools.SeItemChild):
         condition_necessary = 0
         current_condition_met, cur_conditions_met, cur_condition_necessary = _check_condition('conditionset')
         conditions_met += cur_conditions_met
-        condition_necessary += cur_condition_necessary
+        condition_necessary += min(1, cur_condition_necessary)
         previous_condition_met, prev_conditions_met, prev_condition_necessary = _check_condition('previousconditionset')
         conditions_met += prev_conditions_met
-        condition_necessary += prev_condition_necessary
+        condition_necessary += min(1, prev_condition_necessary)
         previousstate_condition_met, prevst_conditions_met, prevst_condition_necessary = _check_condition('previousstate_conditionset')
         conditions_met += prevst_conditions_met
-        condition_necessary += prevst_condition_necessary
+        condition_necessary += min(1, prevst_condition_necessary)
         self._log_develop("Action '{0}': conditions met: {1}, necessary {2}.", self._name, conditions_met, condition_necessary)
         if conditions_met < condition_necessary:
             self._log_info("Action '{0}': Skipping because not all conditions are met.", self._name)
@@ -509,14 +504,14 @@ class SeActionBase(StateEngineTools.SeItemChild):
             else:
                 self._waitforexecute(state, actionname, self._name, repeat_text, delay, current_condition_met, previous_condition_met, previousstate_condition_met)
 
-            _update_delay_webif('actions_stay', _delay_info)
-            _update_delay_webif('actions_enter', _delay_info)
-            _update_delay_webif('actions_enter_or_stay', _delay_info)
+            _update_delay_webif('actions_stay', str(_delay_info))
+            _update_delay_webif('actions_enter', str(_delay_info))
+            _update_delay_webif('actions_enter_or_stay', str(_delay_info))
             try:
                 state.update_name(state.state_item)
                 _key_name = ['{}'.format(state.id), 'name']
                 self._abitem.update_webif(_key_name, state.name)
-                _update_delay_webif('actions_leave', _delay_info)
+                _update_delay_webif('actions_leave', str(_delay_info))
             except Exception:
                 pass
 
@@ -526,8 +521,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
         raise NotImplementedError("Class {} doesn't implement update()".format(self.__class__.__name__))
 
     # Complete action
-    # item_state: state item to read from
-    def complete(self, item_state, evals_items=None):
+    # state: state (item) to read from
+    def complete(self, state, evals_items=None, use=None):
         raise NotImplementedError("Class {} doesn't implement complete()".format(self.__class__.__name__))
 
     # Check if execution is possible
@@ -537,7 +532,14 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def get(self):
         return True
 
-    def _waitforexecute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", delay: int = 0, current_condition: str = "", previous_condition: str = "", previousstate_condition: str = ""):
+    def _waitforexecute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", delay: int = 0, current_condition: list[str] = None, previous_condition: list[str] = None, previousstate_condition: list[str] = None):
+        if current_condition is None:
+            current_condition = []
+        if previous_condition is None:
+            previous_condition = []
+        if previousstate_condition is None:
+            previousstate_condition = []
+
         self._log_decrease_indent(50)
         self._log_increase_indent()
         if delay == 0:
@@ -594,6 +596,7 @@ class SeActionSetItem(SeActionBase):
     def __init__(self, abitem, name: str):
         super().__init__(abitem, name)
         self.__item = None
+        self.__eval_item = None
         self.__status = None
         self.__delta = 0
         self.__value = StateEngineValue.SeValue(self._abitem, "value")
@@ -606,6 +609,7 @@ class SeActionSetItem(SeActionBase):
     def _getitem_fromeval(self):
         if self.__item is None:
             return
+        self.__eval_item = self.__item
         self.__item, self.__value, self.__mindelta, _issue = self.check_getitem_fromeval(self.__item, self.__value,
                                                                                          self.__mindelta)
         if self.__item is None:
@@ -615,15 +619,15 @@ class SeActionSetItem(SeActionBase):
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
-        _, _, _issue = self.__value.set(value)
+        _, _, _issue, _ = self.__value.set(value)
         _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     # Complete action
-    # item_state: state item to read from
-    def complete(self, item_state, evals_items=None):
+    # state: state (item) to read from
+    def complete(self, state, evals_items=None, use=None):
         self.__item, self.__status, self.__mindelta, self.__value, _issue = self.check_complete(
-            item_state, self.__item, self.__status, self.__mindelta, self.__value, "set", evals_items)
+            state, self.__item, self.__status, self.__mindelta, self.__value, "set", evals_items, use)
         self._action_status = _issue
         return _issue
 
@@ -643,8 +647,6 @@ class SeActionSetItem(SeActionBase):
             self._log_debug("item: {0}", self.__item.property.path)
         else:
             self._log_debug("item is not defined! Check log file.")
-        if self.__status is not None:
-            self._log_debug("status: {0}", self.__status.property.path)
         self.__mindelta.write_to_logger()
         self.__value.write_to_logger()
 
@@ -675,7 +677,7 @@ class SeActionSetItem(SeActionBase):
 
         if value is None:
             self._log_debug("{0}: Value is None", actionname)
-            pat = "(?:[^,\(]*)\'(.*?)\'"
+            pat = r"(?:[^,(]*)\'(.*?)\'"
             self.update_webif_actionstatus(state, re.findall(pat, actionname)[0], 'False', 'Value is None')
             return
 
@@ -706,10 +708,11 @@ class SeActionSetItem(SeActionBase):
         self._log_decrease_indent()
         self._log_debug("{0}: Set '{1}' to '{2}'{3}", actionname, item.property.path, value, repeat_text)
         source = self.set_source(current_condition, previous_condition, previousstate_condition)
-        pat = "(?:[^,\(]*)\'(.*?)\'"
+        pat = r"(?:[^,(]*)\'(.*?)\'"
         self.update_webif_actionstatus(state, re.findall(pat, actionname)[0], 'True')
         # noinspection PyCallingNonCallable
         item(value, caller=self._caller, source=source)
+        self.__item = self.__eval_item
 
     def get(self):
         orig_item = self.__item
@@ -723,7 +726,7 @@ class SeActionSetItem(SeActionBase):
                 item = str(self.__item.property.path)
             else:
                 item = None
-        except Exception as ex:
+        except Exception:
             item = None
         try:
             val = self.__value.get()
@@ -733,18 +736,19 @@ class SeActionSetItem(SeActionBase):
                 value = None
         except Exception:
             value = None
+        self.__item = orig_item
         mindelta = self.__mindelta.get()
         if mindelta is None:
             result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval,
-                     'value': value, 'conditionset': str(self.conditionset.get()),
-                     'previousconditionset': str(self.previousconditionset.get()),
-                     'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                      'value': value, 'conditionset': self.conditionset.get(),
+                      'previousconditionset': self.previousconditionset.get(),
+                      'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         else:
             result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval,
-                     'value': value, 'conditionset': str(self.conditionset.get()),
-                     'previousconditionset': str(self.previousconditionset.get()),
-                     'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {},
-                     'delta': str(self.__delta), 'mindelta': str(mindelta)}
+                      'value': value, 'conditionset': self.conditionset.get(),
+                      'previousconditionset': self.previousconditionset.get(),
+                      'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {},
+                      'delta': str(self.__delta), 'mindelta': str(mindelta)}
         return result
 
 
@@ -770,8 +774,8 @@ class SeActionSetByattr(SeActionBase):
         return _issue
 
     # Complete action
-    # item_state: state item to read from
-    def complete(self, item_state, evals_items=None):
+    # state: state (item) to read from
+    def complete(self, state, evals_items=None, use=None):
         self._scheduler_name = "{}-SeByAttrDelayTimer".format(self.__byattr)
         _issue = {self._name: {'issue': None, 'attribute': self.__byattr,
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
@@ -791,14 +795,14 @@ class SeActionSetByattr(SeActionBase):
         self._log_info("{0}: Setting values by attribute '{1}'.{2}", actionname, self.__byattr, repeat_text)
         self.update_webif_actionstatus(state, self._name, 'True')
         source = self.set_source(current_condition, previous_condition, previousstate_condition)
-        for item in self.itemsApi.find_items(self.__byattr):
+        for item in self._sh.find_items(self.__byattr):
             self._log_info("\t{0} = {1}", item.property.path, item.conf[self.__byattr])
             item(item.conf[self.__byattr], caller=self._caller, source=source)
 
     def get(self):
         result = {'function': str(self._function), 'byattr': str(self.__byattr),
-                 'conditionset': str(self.conditionset.get()), 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'conditionset': self.conditionset.get(), 'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
 
 
@@ -822,14 +826,14 @@ class SeActionTrigger(SeActionBase):
         logic, value = StateEngineTools.partition_strip(value, ":")
         self.__logic = logic
         value = None if value == "" else value
-        _, _, _issue = self.__value.set(value)
+        _, _, _issue, _ = self.__value.set(value)
         _issue = {self._name: {'issue': _issue, 'logic': self.__logic,
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     # Complete action
-    # item_state: state item to read from
-    def complete(self, item_state, evals_items=None):
+    # state: state (item) to read from
+    def complete(self, state, evals_items=None, use=None):
         self._scheduler_name = "{}-SeLogicDelayTimer".format(self.__logic)
         _issue = {self._name: {'issue': None, 'logic': self.__logic,
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
@@ -869,10 +873,11 @@ class SeActionTrigger(SeActionBase):
         except Exception:
             value = None
         result = {'function': str(self._function), 'logic': str(self.__logic),
-                 'value': value,
-                 'conditionset': str(self.conditionset.get()), 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'value': value,
+                  'conditionset': self.conditionset.get(), 'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
+
 
 # Class representing a single "se_run" action
 class SeActionRun(SeActionBase):
@@ -902,8 +907,8 @@ class SeActionRun(SeActionBase):
         return _issue
 
     # Complete action
-    # item_state: state item to read from
-    def complete(self, item_state, evals_items=None):
+    # state: state (item) to read from
+    def complete(self, state, evals_items=None, use=None):
         self._scheduler_name = "{}-SeRunDelayTimer".format(StateEngineTools.get_eval_name(self.__eval))
         _issue = {self._name: {'issue': None, 'eval': StateEngineTools.get_eval_name(self.__eval),
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
@@ -943,7 +948,7 @@ class SeActionRun(SeActionBase):
                 self._log_decrease_indent()
                 text = "{0}: Problem evaluating '{1}': {2}."
                 self.update_webif_actionstatus(state, self._name, 'False', 'Problem evaluating: {}'.format(ex))
-                self._log_error(text.format(actionname, StateEngineTools.get_eval_name(self.__eval), ex))
+                self._log_error(text, actionname, StateEngineTools.get_eval_name(self.__eval), ex)
         else:
             try:
                 if returnvalue:
@@ -962,12 +967,12 @@ class SeActionRun(SeActionBase):
                 self._log_decrease_indent()
                 self.update_webif_actionstatus(state, self._name, 'False', 'Problem calling: {}'.format(ex))
                 text = "{0}: Problem calling '{0}': {1}."
-                self._log_error(text.format(actionname, StateEngineTools.get_eval_name(self.__eval), ex))
+                self._log_error(text, actionname, StateEngineTools.get_eval_name(self.__eval), ex)
 
     def get(self):
         result = {'function': str(self._function), 'eval': str(self.__eval),
-                 'conditionset': str(self.conditionset.get()), 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'conditionset': self.conditionset.get(), 'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
 
 
@@ -979,8 +984,10 @@ class SeActionForceItem(SeActionBase):
     def __init__(self, abitem, name: str):
         super().__init__(abitem, name)
         self.__item = None
+        self.__eval_item = None
         self.__status = None
         self.__value = StateEngineValue.SeValue(self._abitem, "value")
+        self.__delta = 0
         self.__mindelta = StateEngineValue.SeValue(self._abitem, "mindelta")
         self._function = "force set"
 
@@ -990,15 +997,15 @@ class SeActionForceItem(SeActionBase):
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
-        _, _, _issue = self.__value.set(value)
+        _, _, _issue, _ = self.__value.set(value)
         _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
     # Complete action
-    # item_state: state item to read from
-    def complete(self, item_state, evals_items=None):
+    # state: state (item) to read from
+    def complete(self, state, evals_items=None, use=None):
         self.__item, self.__status, self.__mindelta, self.__value, _issue = self.check_complete(
-            item_state, self.__item, self.__status, self.__mindelta, self.__value, "force", evals_items)
+            state, self.__item, self.__status, self.__mindelta, self.__value, "force", evals_items, use)
         self._action_status = _issue
         return _issue
 
@@ -1045,6 +1052,7 @@ class SeActionForceItem(SeActionBase):
     def _getitem_fromeval(self):
         if self.__item is None:
             return
+        self.__eval_item = self.__item
         self.__item, self.__value, self.__mindelta, _issue = self.check_getitem_fromeval(self.__item, self.__value,
                                                                                          self.__mindelta)
         if self.__item is None:
@@ -1061,7 +1069,8 @@ class SeActionForceItem(SeActionBase):
 
         if value is None:
             self._log_debug("{0}: Value is None", actionname)
-            self.update_webif_actionstatus(state, self._name, 'False', 'Value is None')
+            pat = r"(?:[^,(]*)\'(.*?)\'"
+            self.update_webif_actionstatus(state, re.findall(pat, actionname)[0], 'False', 'Value is None')
             return
 
         if returnvalue:
@@ -1070,12 +1079,19 @@ class SeActionForceItem(SeActionBase):
 
         if not self.__mindelta.is_empty():
             mindelta = self.__mindelta.get()
-            # noinspection PyCallingNonCallable
-            delta = float(abs(self.__item() - value))
+            if self.__status is not None:
+                # noinspection PyCallingNonCallable
+                delta = float(abs(self.__status() - value))
+                additionaltext = "of statusitem "
+            else:
+                delta = float(abs(self.__item() - value))
+                additionaltext = ""
+
+            self.__delta = delta
             if delta < mindelta:
+                text = "{0}: Not setting '{1}' to '{2}' because delta {3}'{4:.2}' is lower than mindelta '{5}'"
+                self._log_debug(text, actionname, self.__item.property.path, value, additionaltext, delta, mindelta)
                 self.update_webif_actionstatus(state, self._name, 'False')
-                text = "{0}: Not setting '{1}' to '{2}' because delta '{3:.2}' is lower than mindelta '{4}'"
-                self._log_debug(text, actionname, self.__item.property.path, value, delta, mindelta)
                 return
         source = self.set_source(current_condition, previous_condition, previousstate_condition)
         # Set to different value first ("force")
@@ -1103,6 +1119,7 @@ class SeActionForceItem(SeActionBase):
         self.update_webif_actionstatus(state, self._name, 'True')
         # noinspection PyCallingNonCallable
         self.__item(value, caller=self._caller, source=source)
+        self.__item = self.__eval_item
 
     def get(self):
         orig_item = self.__item
@@ -1126,9 +1143,19 @@ class SeActionForceItem(SeActionBase):
                 value = None
         except Exception:
             value = None
-        result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval, 'value': value,
-                 'conditionset': str(self.conditionset.get()), 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+        self.__item = orig_item
+        mindelta = self.__mindelta.get()
+        if mindelta is None:
+            result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval,
+                      'value': value, 'conditionset': self.conditionset.get(),
+                      'previousconditionset': self.previousconditionset.get(),
+                      'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
+        else:
+            result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval,
+                      'value': value, 'conditionset': self.conditionset.get(),
+                      'previousconditionset': self.previousconditionset.get(),
+                      'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {},
+                      'delta': str(self.__delta), 'mindelta': str(mindelta)}
         return result
 
 
@@ -1161,8 +1188,8 @@ class SeActionSpecial(SeActionBase):
         return _issue
 
     # Complete action
-    # item_state: state item to read from
-    def complete(self, item_state, evals_items=None):
+    # state: state (item) to read from
+    def complete(self, state, evals_items=None, use=None):
         if isinstance(self.__value, list):
             item = self.__value[0].property.path
         else:
@@ -1308,9 +1335,9 @@ class SeActionSpecial(SeActionBase):
                 except Exception:
                     pass
         result = {'function': str(self._function), 'special': str(self.__special),
-                 'value': str(value_result), 'conditionset': str(self.conditionset.get()),
-                 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'value': str(value_result), 'conditionset': self.conditionset.get(),
+                  'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
 
 
@@ -1356,9 +1383,9 @@ class SeActionAddItem(SeActionSetItem):
         except Exception:
             value = None
         result = {'function': str(self._function), 'item': item,
-                 'value': value, 'conditionset': str(self.conditionset.get()),
-                 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'value': value, 'conditionset': self.conditionset.get(),
+                  'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
 
 
@@ -1410,9 +1437,9 @@ class SeActionRemoveFirstItem(SeActionSetItem):
         except Exception:
             value = None
         result = {'function': str(self._function), 'item': item,
-                 'value': value, 'conditionset': str(self.conditionset.get()),
-                 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'value': value, 'conditionset': self.conditionset.get(),
+                  'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
 
 
@@ -1466,9 +1493,9 @@ class SeActionRemoveLastItem(SeActionSetItem):
         except Exception:
             value = None
         result = {'function': str(self._function), 'item': item,
-                 'value': value, 'conditionset': str(self.conditionset.get()),
-                 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'value': value, 'conditionset': self.conditionset.get(),
+                  'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
 
 
@@ -1520,7 +1547,7 @@ class SeActionRemoveAllItem(SeActionSetItem):
         except Exception:
             value = None
         result = {'function': str(self._function), 'item': item,
-                 'value': value, 'conditionset': str(self.conditionset.get()),
-                 'previousconditionset': str(self.previousconditionset.get()),
-                 'previousstate_conditionset': str(self.previousstate_conditionset.get()), 'actionstatus': {}}
+                  'value': value, 'conditionset': self.conditionset.get(),
+                  'previousconditionset': self.previousconditionset.get(),
+                  'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
