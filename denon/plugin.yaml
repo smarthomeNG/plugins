@@ -139,6 +139,16 @@ parameters:
             de: Klasse für Verarbeitung von Kommandos
             en: class for command processing
 
+    protocol:
+        type: str
+        default: ''
+        valid list:
+            - ''
+            - 'resend'
+        description:
+            de: 'Protokoll'
+            en: 'Protocol'
+
     autoreconnect:
         type: bool
         default: true
@@ -210,6 +220,13 @@ parameters:
             de: Warte nach Verbindungsaufbau mit dem Abfragen von Werten
             en: Wait after connection with querying values
 
+    resume_initial_read:
+        type: bool
+        defaul: false
+        description:
+            de: 'Bei resume vom Plugin erstmaliges Lesen erneut durchführen'
+            en: 'Repeat initial read on resume'
+            
     connect_cycle:
         type: num
         default: 3
