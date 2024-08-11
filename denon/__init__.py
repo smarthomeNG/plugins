@@ -24,7 +24,6 @@
 import builtins
 import os
 import sys
-import threading
 import time
 
 if __name__ == '__main__':
