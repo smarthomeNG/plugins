@@ -75,10 +75,6 @@ class oppo(SmartDevicePlugin):
         self.logger.debug(f"Activating verbose mode {verbose} after connection.")
         self.send_command('general.verbose', verbose)
 
-    def _send(self, data_dict):
-        self.logger.debug(f"Sending data_dict {data_dict}")
-        self._connection.send(data_dict)
-
     def _transform_send_data(self, data=None, **kwargs):
         if isinstance(data, dict):
             data['limit_response'] = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR]
