@@ -226,7 +226,7 @@ parameters:
         description:
             de: 'Bei resume vom Plugin erstmaliges Lesen erneut durchführen'
             en: 'Repeat initial read on resume'
-            
+
     connect_cycle:
         type: num
         default: 3
@@ -880,9 +880,6 @@ item_structs:
                 denon_command@instance: zone1.control.volumemax
                 denon_read@instance: true
                 denon_write@instance: false
-                denon_read_group@instance:
-                -   zone1
-                -   zone1.control
 
             input:
                 type: str
@@ -2104,10 +2101,6 @@ item_structs:
                     denon_command@instance: zone1.control.volumemax
                     denon_read@instance: true
                     denon_write@instance: false
-                    denon_read_group@instance:
-                    -   ALL
-                    -   ALL.zone1
-                    -   ALL.zone1.control
 
                 input:
                     type: str
@@ -3195,10 +3188,6 @@ item_structs:
                     denon_command@instance: zone1.control.volumemax
                     denon_read@instance: true
                     denon_write@instance: false
-                    denon_read_group@instance:
-                    -   AVR-X6300H
-                    -   AVR-X6300H.zone1
-                    -   AVR-X6300H.zone1.control
 
                 input:
                     type: str
@@ -4401,10 +4390,6 @@ item_structs:
                     denon_command@instance: zone1.control.volumemax
                     denon_read@instance: true
                     denon_write@instance: false
-                    denon_read_group@instance:
-                    -   AVR-X4300H
-                    -   AVR-X4300H.zone1
-                    -   AVR-X4300H.zone1.control
 
                 input:
                     type: str
@@ -5662,10 +5647,6 @@ item_structs:
                     denon_command@instance: zone1.control.volumemax
                     denon_read@instance: true
                     denon_write@instance: false
-                    denon_read_group@instance:
-                    -   AVR-X3300W
-                    -   AVR-X3300W.zone1
-                    -   AVR-X3300W.zone1.control
 
                 input:
                     type: str
@@ -6689,10 +6670,6 @@ item_structs:
                     denon_command@instance: zone1.control.volumemax
                     denon_read@instance: true
                     denon_write@instance: false
-                    denon_read_group@instance:
-                    -   AVR-X2300W
-                    -   AVR-X2300W.zone1
-                    -   AVR-X2300W.zone1.control
 
                 input:
                     type: str
@@ -7648,10 +7625,6 @@ item_structs:
                     denon_command@instance: zone1.control.volumemax
                     denon_read@instance: true
                     denon_write@instance: false
-                    denon_read_group@instance:
-                    -   AVR-X1300W
-                    -   AVR-X1300W.zone1
-                    -   AVR-X1300W.zone1.control
 
                 input:
                     type: str
