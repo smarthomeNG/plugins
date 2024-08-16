@@ -39,36 +39,6 @@ parameters:
             de: Serieller Anschluss (z.B. /dev/ttyUSB0 oder COM1)
             en: serial port (e.g. /dev/ttyUSB0 or COM1)
 
-    conn_type:
-        type: str
-        mandatory: false
-        valid_list:
-        -   ''
-        -   net_tcp_request
-        -   net_tcp_client
-        -   net_tcp_jsonrpc
-        -   net_udp_server
-        -   serial
-        -   serial_async
-
-        description:
-            de: Verbindungstyp
-            en: connection type
-
-    command_class:
-        type: str
-        default: SDPCommandParseStr
-        valid_list:
-        -   SDPCommand
-        -   SDPCommandStr
-        -   SDPCommandParseStr
-        -   SDPCommandJSON
-        -   SDPCommandViessmann
-
-        description:
-            de: Klasse für Verarbeitung von Kommandos
-            en: class for command processing
-
     model:
         type: str
         mandatory: false
