@@ -54,7 +54,7 @@ class oppo(SmartDevicePlugin):
     The know-how is in the commands.py (and some DT_ classes...)
     """
 
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '1.0.1'
 
     def _set_device_defaults(self):
 
