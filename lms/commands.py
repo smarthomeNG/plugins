@@ -6,7 +6,7 @@
 
 commands = {
     'server': {
-        'listenmode': {'read': True, 'write': True, 'write_cmd': 'listen {RAW_VALUE:01}', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': r'listen (\d)', 'item_attrs': {'custom1': ''}},
+        'listenmode': {'read': True, 'write': True, 'write_cmd': 'listen {RAW_VALUE:01}', 'item_type': 'bool', 'dev_datatype': 'LMSonoff', 'reply_pattern': r'listen (\d)', 'item_attrs': {'custom1': ''}},
         'playercount': {'read': True, 'write': False, 'read_cmd': 'player count ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'player count (\d+)', 'item_attrs': {'initial': True, 'custom1': ''}},
         'favoritescount': {'read': True, 'write': False, 'read_cmd': 'favorites items', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'favorites items\s+ count:(\d+)', 'item_attrs': {'initial': True, 'custom1': ''}},
     },
@@ -28,11 +28,11 @@ commands = {
     },
     'player': {
         'control': {
-            'power': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} power ?', 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} power {RAW_VALUE:01}', 'dev_datatype': 'str', 'reply_pattern': [r'{CUSTOM_PATTERN1} (?:prefset server\s)?power (\d)', '{CUSTOM_PATTERN1} status(?:.*)power:([^\s]+)'], 'item_attrs': {'enforce': True}},
+            'power': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} power ?', 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} power {RAW_VALUE:01}', 'dev_datatype': 'LMSonoff', 'reply_pattern': [r'{CUSTOM_PATTERN1} (?:prefset server\s)?power (\d)', '{CUSTOM_PATTERN1} status(?:.*)power:([^\s]+)'], 'item_attrs': {'enforce': True}},
             'playmode': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} mode ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} mode {VALUE}', 'dev_datatype': 'LMSPlayMode', 'cmd_settings': {'valid_list_ci': ['PLAY', 'PAUSE', 'STOP']}, 'reply_pattern': [r'{CUSTOM_PATTERN1} mode {VALID_LIST_CI}', r'{CUSTOM_PATTERN1} playlist (pause \d|stop)', '{CUSTOM_PATTERN1} status(?:.*)mode:([^\s]+)'], 'item_attrs': {'enforce': True}},
             'playpause': {'read': True, 'write': True, 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} {VALUE}', 'dev_datatype': 'LMSPlay', 'reply_pattern': [r'{CUSTOM_PATTERN1} (?:playlist\s)?(play|pause)(?:\s3)?$', '{CUSTOM_PATTERN1} pause (0|1)'], 'item_attrs': {'enforce': True}},
             'stop': {'read': True, 'write': True, 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} {VALUE}', 'dev_datatype': 'LMSStop', 'reply_pattern': r'{CUSTOM_PATTERN1} (?:playlist\s)?(stop)$', 'item_attrs': {'enforce': True}},
-            'mute': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} mixer muting ?', 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} mixer muting {RAW_VALUE:01}', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} (?:mixer muting|prefset server mute) (\d)', 'item_attrs': {'initial': True, 'enforce': True}},
+            'mute': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} mixer muting ?', 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} mixer muting {RAW_VALUE:01}', 'dev_datatype': 'LMSonoff', 'reply_pattern': r'{CUSTOM_PATTERN1} (?:mixer muting|prefset server mute) (\d)', 'item_attrs': {'initial': True, 'enforce': True}},
             'volume': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} mixer volume ?', 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'{CUSTOM_PATTERN1} (?:mixer volume \-?|prefset server volume \-?)(\d{1,3})', '{CUSTOM_PATTERN1} status(?:.*)mixer volume:([^\s]+)']},
             'volume_fading': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume {VALUE}', 'dev_datatype': 'str', 'item_attrs': {'item_template': 'volume_fading'}},
             'volume_low': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume {VALUE}', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'cache': True, 'enforce_updates': True, 'initial_value': 60}}},
@@ -42,7 +42,7 @@ commands = {
             'set_alarm': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} alarm {VALUE}', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} alarm (.*)'},
             'alarms': {'read': True, 'write': False, 'item_type': 'dict', 'read_cmd': '{CUSTOM_ATTR1} alarms 0 100 all', 'dev_datatype': 'LMSAlarms', 'reply_pattern': r'{CUSTOM_PATTERN1} alarms 0 100 all fade:\d+ count:\d+ (.*)', 'item_attrs': {'initial': True, 'read_groups': [{'name': 'player.control.alarms', 'trigger': 'query'}]}},
             'sync': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} sync ?', 'write_cmd': '{CUSTOM_ATTR1} sync {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} sync (.*)', 'item_attrs': {'initial': True}},
-            'unsync': {'read': False, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} sync -', 'item_type': 'bool', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'autotimer': '1s = 0'}}},
+            'unsync': {'read': False, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} sync -', 'item_type': 'bool', 'dev_datatype': 'LMSonoff', 'item_attrs': {'attributes': {'autotimer': '1s = 0'}}},
             'display': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} display ? ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} display {VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} display\s?(.*)', 'item_attrs': {'initial': True}},
             'connect': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} connect {VALUE}', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} connect (.*)', 'item_attrs': {'attributes': {'remark': 'ip|www.mysqueezebox.com|www.test.mysqueezebox.com'}}},
             'disconnect': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': 'disconnect {CUSTOM_ATTR1} {VALUE}', 'dev_datatype': 'str', 'reply_pattern': 'disconnect {CUSTOM_PATTERN1} (.*)', 'item_attrs': {'attributes': {'remark': 'ip|www.mysqueezebox.com|www.test.mysqueezebox.com'}}},
