@@ -6,9 +6,9 @@ plugin:
     tester: Morg
     state: develop
     keywords: iot device av denon sdp
-    version: 1.0.1
-    sh_minversion: 1.9.5
-    py_minversion: 3.7
+    version: '1.0.1'
+    sh_minversion: '1.9.5'
+    py_minversion: '3.7'
     sdp_minversion: '1.0.3'
     multi_instance: false
     restartable: true
