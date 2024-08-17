@@ -52,8 +52,7 @@ class pioneer(SmartDevicePlugin):
     """ Device class for Pioneer AV function. """
 
     PLUGIN_VERSION = '1.0.3'
-    MIN_SDP_VERSION = '1.0.3'
-
+    
     def _set_device_defaults(self):
         # set our own preferences concerning connections
         if PLUGIN_ATTR_NET_HOST in self._parameters and self._parameters[PLUGIN_ATTR_NET_HOST]:
