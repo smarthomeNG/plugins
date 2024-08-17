@@ -6,9 +6,10 @@ plugin:
     tester: OnkelAndy
     state: develop
     keywords: iot device mediacenter kodi xmbc sdp
-    version: 1.7.2
+    version: 1.7.3
     sh_minversion: '1.9.5'
     py_minversion: '3.7'
+    sdp_minversion: '1.0.3'
     multi_instance: true
     restartable: true
     classname: kodi
@@ -30,6 +31,20 @@ parameters:
         description:
             de: Item-Pfad für das Suspend-Item
             en: item path for suspend switch item
+
+    delay_initial_read:
+        type: num
+        default: 10
+        description:
+            de: 'Verzögerung für das erstmalige Lesen beim Start (in Sekunden)'
+            en: 'delay for initial command read on start (in seconds)'
+
+    resume_initial_read:
+        type: bool
+        defaul: true
+        description:
+            de: 'Bei resume vom Plugin erstmaliges Lesen erneut durchführen'
+            en: 'Repeat initial read on resume'
 
     timeout:
         type: num
