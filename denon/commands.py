@@ -61,7 +61,7 @@ commands = {
         'region': {'read': True, 'write': False, 'read_cmd': 'SYMODTUN ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'SYMODTUN\s(.*)', 'item_attrs': {'initial': True}},
     },
     'general': {
-        'custom_inputnames': {'read': True, 'write': False, 'read_cmd': 'SSFUN ?', 'item_type': 'dict', 'dev_datatype': 'str', 'reply_pattern': 'SSFUN(.*)', 'item_attrs': {'item_template': 'custom_inputnames'}},
+        'custom_inputnames': {'read': True, 'write': False, 'read_cmd': 'SSFUN ?', 'item_type': 'dict', 'dev_datatype': 'DenonCustominput', 'reply_pattern': 'SSFUN(.*)', 'item_attrs': {'item_template': 'custom_inputnames'}},
         'power': {'read': True, 'write': True, 'read_cmd': 'PW?', 'write_cmd': 'PW{VALUE}', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': 'PW{LOOKUP}', 'lookup': 'POWER'},
         'setupmenu': {'read': True, 'write': True, 'read_cmd': 'MNMEN?', 'write_cmd': 'MNMEN {VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': 'MNMEN (ON|OFF)'},
         'display': {'read': True, 'write': False, 'read_cmd': 'NSE', 'item_type': 'str', 'dev_datatype': 'DenonDisplay', 'reply_pattern': 'NSE(.*)'},
@@ -106,7 +106,7 @@ commands = {
             'volume': {'read': True, 'write': True, 'read_cmd': 'MV?', 'write_cmd': 'MV{VALUE}', 'item_type': 'num', 'dev_datatype': 'DenonVol', 'reply_pattern': r'MV(\d{2,3})', 'cmd_settings': {'force_min': 0.0, 'valid_max': 98.0}, 'item_attrs': {'initial': True}},
             'volumeup': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'MVUP', 'dev_datatype': 'raw'},
             'volumedown': {'read': False, 'write': True, 'write_cmd': 'MVDOWN', 'item_type': 'bool', 'dev_datatype': 'raw'},
-            'volumemax': {'opcode': '{VALUE}', 'read': True, 'write': False, 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'MVMAX (\d{2,3})', 'item_attrs': {'initial': True}},
+            'volumemax': {'opcode': '{VALUE}', 'read': True, 'write': False, 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'MVMAX (\d{2,3})'},
             'input': {'read': True, 'write': True, 'read_cmd': 'SI?', 'write_cmd': 'SI{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'SI{LOOKUP}', 'lookup': 'INPUT', 'item_attrs': {'item_template': 'input', 'initial': True}},
             'listeningmode': {'read': True, 'write': True, 'cmd_settings': {'valid_list_ci': ['MOVIE', 'MUSIC', 'GAME', 'DIRECT', 'PURE DIRECT', 'STEREO', 'AUTO', 'DOLBY DIGITAL', 'DOLBY SURROUND', 'DTS SURROUND', 'NEURAL:X', 'AURO3D', 'AURO2DSURR', 'MCH STEREO', 'ROCK ARENA', 'JAZZ CLUB', 'MONO MOVIE', 'MATRIX', 'VIDEO GAME', 'VIRTUAL', 'LEFT', 'RIGHT']}, 'read_cmd': 'MS?', 'write_cmd': 'MS{RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'\s?MS(.*)', 'item_attrs': {'initial': True}},
             'sleep': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'SLP?', 'write_cmd': 'SLP{VALUE}', 'dev_datatype': 'convert0', 'reply_pattern': r'SLP(\d{3}|OFF)', 'cmd_settings': {'force_min': 0, 'force_max': 120}, 'item_attrs': {'initial': True}},
@@ -424,7 +424,7 @@ item_templates = {
         'on_change': [".custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]",],
         'custom_name': {
             'type': 'str',
-            'on_change': ".. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]"
+            'on_change': "sh...(sh......general.custom_inputnames.reverse()[value]) if sh......general.custom_inputnames.reverse() != {} else None"
         }
     }
 }
