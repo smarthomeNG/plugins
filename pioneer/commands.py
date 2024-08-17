@@ -21,7 +21,7 @@ commands = {
         'dimmer': {'read': True, 'write': True, 'write_cmd': '{RAW_VALUE}SAA', 'cmd_settings': {'force_min': 0, 'force_max': 3}, 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'SAA(\d)', 'item_attrs': {'attributes': {'remark': '0 = very bright, 1 = bright, 2 = dark, 3 = off'}}},
         'sleep': {'read': True, 'write': True, 'read_cmd': '?SAB', 'write_cmd': '{VALUE}SAB', 'item_type': 'num', 'dev_datatype': 'PioSleep', 'reply_pattern': r'SAB(\d{3})', 'item_attrs': {'attributes': {'remark': '0 = off, 30 = 30 minutes, 60 = 60 minutes, 90 = 90 minutes'}}},
         'amp': {'read': True, 'write': True, 'read_cmd': '?SAC', 'write_cmd': '{VALUE}SAC', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'SAC{LOOKUP}', 'lookup': 'AMP', 'item_attrs': {'attributes': {'remark': '0 = AMP, 1 = THR'}, 'lookup_item': True}},
-        'multizone': {'read': False, 'write': True, 'write_cmd': 'ZZ', 'item_type': 'str', 'dev_datatype': 'str'},
+        'multizone': {'read': True, 'write': True, 'write_cmd': 'ZZ', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': r'(?:APR|BPR|ZEP)(\d{1})'},
         'settings': {
             'language': {'read': True, 'write': True, 'read_cmd': '?SSE', 'write_cmd': '{VALUE}SSE', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SSE{LOOKUP}', 'lookup': 'LANGUAGE', 'item_attrs': {'initial': True}},
             'name': {'read': True, 'write': True, 'read_cmd': '?SSO', 'write_cmd': '{VALUE}SSO', 'item_type': 'str', 'dev_datatype': 'PioName', 'reply_pattern': r'SSO(?:\d{2})(.*)', 'item_attrs': {'initial': True}},
