@@ -105,60 +105,6 @@ class denon(SmartDevicePlugin):
             self.send_command(f'zone{zone}.control.volume')
             self.send_command(f'zone{zone}.control.listeningmode')
 
-    def on_data_received(self, by, data, command=None):
-
-        commands = None
-        if command is not None:
-            self.logger.debug(f'received data "{data}" from {by} for command {command}')
-            commands = [command]
-        else:
-            # command == None means that we got raw data from a callback and
-            # don't know yet to which command this belongs to. So find out...
-            self.logger.debug(f'received data "{data}" from {by} without command specification')
-
-            # command can be a string (classic single command) or
-            # - new - a list of strings if multiple commands are identified
-            # in that case, work on all strings
-            commands = self._commands.get_commands_from_reply(data)
-            if not commands:
-                if self._discard_unknown_command:
-                    self.logger.debug(f'data "{data}" did not identify a known command, ignoring it')
-                    return
-                else:
-                    self.logger.debug(f'data "{data}" did not identify a known command, forwarding it anyway for {self._unknown_command}')
-                    self._dispatch_callback(self._unknown_command, data, by)
-
-        # TODO: remove later?
-        assert(isinstance(commands, list))
-
-        # process all commands
-        for command in commands:
-            self._check_for_custominputs(command, data)
-            custom = None
-            if self.custom_commands:
-                custom = self._get_custom_value(command, data)
-
-            base_command = command
-            value = None
-            try:
-                if CUSTOM_INPUT_NAME_COMMAND in command:
-                    value = self._custom_inputnames
-                else:
-                    value = self._commands.get_shng_data(command, data)
-            except OSError as e:
-                self.logger.warning(f'received data "{data}" for command {command}, error {e} occurred while converting. Discarding data.')
-            else:
-                self.logger.debug(f'received data "{data}" for command {command} converted to value {value}.')
-                self._dispatch_callback(command, value, by)
-
-            self._process_additional_data(base_command, data, value, custom, by)
-
-    def _check_for_custominputs(self, command, data):
-        if CUSTOM_INPUT_NAME_COMMAND in command and isinstance(data, str):
-            tmp = data.split(' ', 1)
-            src = tmp[0][5:]
-            name = tmp[1]
-            self._custom_inputnames[src] = name
 
 if __name__ == '__main__':
     s = Standalone(denon, sys.argv[0])

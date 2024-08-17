@@ -61,7 +61,7 @@ commands = {
         'region': {'read': True, 'write': False, 'read_cmd': 'SYMODTUN ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'SYMODTUN\s(.*)', 'item_attrs': {'initial': True}},
     },
     'general': {
-        'custom_inputnames': {'read': True, 'write': False, 'read_cmd': 'SSFUN ?', 'item_type': 'dict', 'dev_datatype': 'str', 'reply_pattern': 'SSFUN(.*)', 'item_attrs': {'item_template': 'custom_inputnames'}},
+        'custom_inputnames': {'read': True, 'write': False, 'read_cmd': 'SSFUN ?', 'item_type': 'dict', 'dev_datatype': 'DenonCustominput', 'reply_pattern': 'SSFUN(.*)', 'item_attrs': {'item_template': 'custom_inputnames'}},
         'power': {'read': True, 'write': True, 'read_cmd': 'PW?', 'write_cmd': 'PW{VALUE}', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': 'PW{LOOKUP}', 'lookup': 'POWER'},
         'setupmenu': {'read': True, 'write': True, 'read_cmd': 'MNMEN?', 'write_cmd': 'MNMEN {VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': 'MNMEN (ON|OFF)'},
         'display': {'read': True, 'write': False, 'read_cmd': 'NSE', 'item_type': 'str', 'dev_datatype': 'DenonDisplay', 'reply_pattern': 'NSE(.*)'},

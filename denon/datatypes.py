@@ -20,6 +20,17 @@ class DT_DenonDisplay(DT.Datatype):
         return None
 
 
+# read only. Creating dict with custom inputnames
+class DT_DenonCustominput(DT.Datatype):
+    def __init__(self, fail_silent=False):
+        super().__init__(fail_silent)
+        self._custom_inputnames = {}
+
+    def get_shng_data(self, data, type=None, **kwargs):
+        tmp = data.split(' ', 1)
+        self._custom_inputnames[tmp[0]] = tmp[1]
+        return self._custom_inputnames
+
 # handle pseudo-decimal values without decimal point
 class DT_DenonVol(DT.Datatype):
     def get_send_data(self, data, **kwargs):
