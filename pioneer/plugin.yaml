@@ -130,17 +130,6 @@ parameters:
             de: Verbindungstyp
             en: connection type
 
-    command_class:
-        type: str
-        default: SDPCommandParseStr
-        valid_list:
-        -   SDPCommand
-        -   SDPCommandParseStr
-
-        description:
-            de: Klasse für Verarbeitung von Kommandos
-            en: class for command processing
-
     autoreconnect:
         type: bool
         default: true
