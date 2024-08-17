@@ -65,7 +65,7 @@ class oppo(SmartDevicePlugin):
         elif PLUGIN_ATTR_SERIAL_PORT in self._parameters and self._parameters[PLUGIN_ATTR_SERIAL_PORT]:
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_SER_ASYNC
 
-        self._parameters[PLUGIN_ATTR_CMD_CLASS] = SDPCommandParseStr
+        self._parameters[PLUGIN_ATTR_CMD_CLASS] = "SDPCommandParseStr"
 
         b = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR].encode()
         b = b.decode('unicode-escape').encode()
