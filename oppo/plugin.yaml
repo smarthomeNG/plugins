@@ -9,6 +9,7 @@ plugin:
     version: 1.0.1
     sh_minversion: '1.9.5.1'
     py_minversion: '3.6'
+    sdp_minversion: '1.0.3'
     multi_instance: false
     restartable: true
     classname: oppo
