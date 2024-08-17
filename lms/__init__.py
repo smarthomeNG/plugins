@@ -40,8 +40,9 @@ if __name__ == '__main__':
 else:
     builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import (CUSTOM_SEP, PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_RECURSIVE, PLUGIN_ATTR_CONN_TERMINATOR)
+from lib.model.sdp.globals import (CUSTOM_SEP, PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_RECURSIVE, PLUGIN_ATTR_CMD_CLASS, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_CONN_TERMINATOR)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
+from lib.model.sdp.command import SDPCommandParseStr
 
 import urllib.parse
 
@@ -49,7 +50,8 @@ import urllib.parse
 class lms(SmartDevicePlugin):
     """ Device class for Logitech Mediaserver/Squeezebox function. """
 
-    PLUGIN_VERSION = '1.5.2'
+    PLUGIN_VERSION = '1.5.3'
+    MIN_SDP_VERSION = '1.0.3'
 
     def _set_device_defaults(self):
         self.custom_commands = 1
@@ -58,6 +60,9 @@ class lms(SmartDevicePlugin):
         self._custom_patterns = {1: '(?:[0-9a-fA-F]{2}[-:]){5}[0-9a-fA-F]{2}', 2: '', 3: ''}
         self._use_callbacks = True
         self._parameters[PLUGIN_ATTR_RECURSIVE] = 1
+        self._parameters[PLUGIN_ATTR_CMD_CLASS] = SDPCommandParseStr
+        self._parameters[PLUGIN_ATTR_CONNECTION] = 'net_tcp_client'
+
         self._parameters['web_port'] = self.get_parameter_value('web_port')
         if self.get_parameter_value('web_host') == '':
             host = self._parameters.get(PLUGIN_ATTR_NET_HOST)
