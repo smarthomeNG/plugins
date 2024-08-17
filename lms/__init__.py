@@ -51,7 +51,6 @@ class lms(SmartDevicePlugin):
     """ Device class for Logitech Mediaserver/Squeezebox function. """
 
     PLUGIN_VERSION = '1.5.3'
-    MIN_SDP_VERSION = '1.0.3'
 
     def _set_device_defaults(self):
         self.custom_commands = 1
