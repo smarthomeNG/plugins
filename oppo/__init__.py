@@ -56,7 +56,6 @@ class oppo(SmartDevicePlugin):
     """
 
     PLUGIN_VERSION = '1.0.1'
-    MIN_SDP_VERSION = '1.0.3'
 
     def _set_device_defaults(self):
 
