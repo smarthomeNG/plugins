@@ -51,7 +51,7 @@ builtins.SDP_standalone = False
 class pioneer(SmartDevicePlugin):
     """ Device class for Pioneer AV function. """
 
-    PLUGIN_VERSION = '1.0.2'
+    PLUGIN_VERSION = '1.0.3'
     MIN_SDP_VERSION = '1.0.3'
 
     def _set_device_defaults(self):
