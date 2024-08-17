@@ -41,6 +41,7 @@ else:
     builtins.SDP_standalone = False
 from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, CONN_NET_TCP_CLI, CONN_SER_ASYNC, PLUGIN_ATTR_CMD_CLASS)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
+from lib.model.sdp.command import SDPCommandParseStr
 
 CUSTOM_INPUT_NAME_COMMAND = 'custom_inputnames'
 
@@ -65,7 +66,7 @@ class oppo(SmartDevicePlugin):
         elif PLUGIN_ATTR_SERIAL_PORT in self._parameters and self._parameters[PLUGIN_ATTR_SERIAL_PORT]:
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_SER_ASYNC
 
-        self._parameters[PLUGIN_ATTR_CMD_CLASS] = "SDPCommandParseStr"
+        self._parameters[PLUGIN_ATTR_CMD_CLASS] = SDPCommandParseStr
 
         b = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR].encode()
         b = b.decode('unicode-escape').encode()
