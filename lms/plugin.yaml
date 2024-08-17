@@ -6,9 +6,10 @@ plugin:
     tester: Morg
     state: develop
     keywords: iot device logitechmediaserver lms sdp av
-    version: 1.5.2
+    version: 1.5.3
     sh_minversion: '1.9.5'
     py_minversion: '3.7'
+    sdp_minversion: '1.0.3'
     multi_instance: false
     restartable: true
     classname: lms
@@ -71,28 +72,6 @@ parameters:
             de: Port für CLI Netzwerkverbindung
             en: CLI network port
 
-    conn_type:
-        type: str
-        default: net_tcp_client
-        valid_list:
-        -   ''
-        -   net_tcp_client
-
-        description:
-            de: Verbindungstyp
-            en: connection type
-
-    command_class:
-        type: str
-        default: SDPCommandParseStr
-        valid_list:
-        -   SDPCommand
-        -   SDPCommandParseStr
-
-        description:
-            de: Klasse für Verarbeitung von Kommandos
-            en: class for command processing
-
     autoreconnect:
         type: bool
         default: true
@@ -148,6 +127,60 @@ parameters:
         description:
             de: Item-Pfad für das Standby-Item
             en: item path for standby switch item
+
+    send_retries:
+        type: num
+        default: 0
+
+        description:
+            de: Anzahl Sendeversuche
+            en: number of sending retries
+        description_long:
+            de: 'Anzahl Sendeversuche\n
+                Kommt keine (passende) Antwort nach dem Senden
+                eines Commands zurück, wird das Kommando nochmals
+                gesendet, sofern der Wert über 0 liegt.
+                '
+            en: 'number of sending retries\n
+                If no (suiting) answer is received after sending
+                a command the command is resent as long as this
+                value is more than 0.
+                '
+
+    sendretry_cycle:
+        type: num
+        valid_min: 1
+        default: 1
+
+        description:
+            de: Pause zwischen Durchgängen von Sendeversuchen
+            en: wait time between sending retry rounds
+        description_long:
+            de: 'Pause zwischen Durchgängen von Sendeversuchen\n
+                Sind Send Retries aktiv, wird ein Scheduler erstellt,
+                der im angegebenen Sekundentakt Kommandos erneut sendet,
+                zu denen keine (passenden) Antworten erhalten wurden.
+                '
+            en: 'wait time between sending retry rounds\n
+                If send retries are active, a scheduler gets added
+                that resends commands in the given cycle value (in seconds)
+                where no (suiting) answer got received.
+                '
+
+    delay_initial_read:
+        type: num
+        default: 0
+
+        description:
+            de: Warte nach Verbindungsaufbau mit dem Abfragen von Werten
+            en: Wait after connection with querying values
+
+    resume_initial_read:
+        type: bool
+        defaul: false
+        description:
+            de: 'Bei resume vom Plugin erstmaliges Lesen erneut durchführen'
+            en: 'Repeat initial read on resume'
 
 item_attributes:
 

@@ -70,3 +70,7 @@ class DT_LMSStop(DT.Datatype):
 
     def get_shng_data(self, data, type=None, **kwargs):
         return True if data == "stop" else False
+
+class DT_LMSonoff(DT.Datatype):
+    def get_shng_data(self, data, type=None, **kwargs):
+        return True if data == "1" else False
