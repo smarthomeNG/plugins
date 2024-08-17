@@ -55,6 +55,7 @@ class oppo(SmartDevicePlugin):
     """
 
     PLUGIN_VERSION = '1.0.1'
+    MIN_SDP_VERSION = '1.0.3'
 
     def _set_device_defaults(self):
 
@@ -63,7 +64,7 @@ class oppo(SmartDevicePlugin):
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_NET_TCP_CLI
         elif PLUGIN_ATTR_SERIAL_PORT in self._parameters and self._parameters[PLUGIN_ATTR_SERIAL_PORT]:
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_SER_ASYNC
-        
+
         self._parameters[PLUGIN_ATTR_CMD_CLASS] = SDPCommandParseStr
 
         b = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR].encode()

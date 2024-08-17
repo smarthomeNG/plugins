@@ -9,7 +9,6 @@ plugin:
     version: 1.0.1
     sh_minversion: '1.9.5.1'
     py_minversion: '3.6'
-    MIN_SDP_VERSION: '1.0.3'
     multi_instance: false
     restartable: true
     classname: oppo
@@ -169,16 +168,6 @@ parameters:
             de: Item-Pfad für das Standby-Item
             en: item path for standby switch item
 
-    protocol:
-        type: str
-        default: ''
-        valid list:
-            - ''
-            - 'resend'
-        description:
-            de: 'Protokoll'
-            en: 'Protocol'
-
     send_retries:
         type: num
         default: 0
@@ -232,7 +221,7 @@ parameters:
         description:
             de: 'Bei resume vom Plugin erstmaliges Lesen erneut durchführen'
             en: 'Repeat initial read on resume'
-            
+
 
 item_attributes:
 
