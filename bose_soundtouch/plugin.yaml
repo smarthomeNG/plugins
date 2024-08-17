@@ -12,7 +12,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
     version: 1.0.1                  # Plugin version
-    sh_minversion: 1.6              # minimum shNG version to use this plugin
+    sh_minversion: '1.6'              # minimum shNG version to use this plugin
     multi_instance: False           # plugin supports multi instance
     restartable: True
     classname: BoseSoundtouch         # class containing the plugin

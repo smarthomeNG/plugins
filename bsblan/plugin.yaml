@@ -13,9 +13,9 @@ plugin:
     support:
 
     version: 1.0.2                  # Plugin version
-    sh_minversion: 1.8              # minimum shNG version to use this plugin
+    sh_minversion: '1.8'              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    py_minversion: 3.7              # minimum Python version to use this plugin
+    py_minversion: '3.7'              # minimum Python version to use this plugin
 #    py_maxversion:                 # maximum Python version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
     restartable: unknown

@@ -7,8 +7,8 @@ plugin:
     state: develop
     keywords: iot device av pioneer sdp
     version: 1.0.2
-    sh_minversion: 1.9.5
-    py_minversion: 3.7
+    sh_minversion: '1.9.5'
+    py_minversion: '3.7'
     multi_instance: false
     restartable: true
     classname: pioneer

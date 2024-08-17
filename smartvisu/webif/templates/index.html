@@ -203,6 +203,14 @@
 				let hostname = clients[client]['hostname'];
 				let browser = clients[client]['browser'];
 				let browserversion = clients[client]['browserversion'];
+
+				let osname = clients[client]['osname'];
+				let osversion = clients[client]['osversion'];
+				let osversionname = clients[client]['osversionname'];
+				let platformtype = clients[client]['platformtype'];
+				let platformvendor = clients[client]['platformvendor'];
+
+				if (hostname === '') hostname = platformvendor + ' ' + platformtype + ' (' + osname + ' ' + osversion + ')'
 				//let newRow = clienttable.row.add( [ null, name, ip, port, protocol, sw + ' ' + swversion, browser + ' ' + browserversion, hostname] );
 				clientdata.push([ null, name, ip, port, protocol, sw + ' ' + swversion, browser + ' ' + browserversion, hostname]);
 			}

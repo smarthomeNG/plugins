@@ -13,9 +13,9 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1002464-support-thread-für-dlms-plugin
 
     version: 1.9.5                 # Plugin version
-    sh_minversion: 1.8             # minimum shNG version to use this plugin
+    sh_minversion: '1.8'             # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    py_minversion: 3.6             # minimum Python version to use for this plugin, due to f-strings
+    py_minversion: '3.6'             # minimum Python version to use for this plugin, due to f-strings
     # py_maxversion:               # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown

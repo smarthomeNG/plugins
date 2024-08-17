@@ -7,8 +7,8 @@ plugin:
     state: develop
     keywords: iot device
     version: 1.0.0
-    sh_minversion: 1.9.5.1
-    py_minversion: 3.6
+    sh_minversion: '1.9.5.1'
+    py_minversion: '3.6'
     multi_instance: false
     restartable: true
     classname: oppo

@@ -14,7 +14,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/36372-plugin-siemens-logo-0ba7
 
     version: 1.6.0                 # Plugin version
-    sh_minversion: 1.8             # minimum shNG version to use this plugin
+    sh_minversion: '1.8'             # minimum shNG version to use this plugin
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
     classname: snap7_logo          # class containing the plugin

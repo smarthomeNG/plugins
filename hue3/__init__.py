@@ -59,7 +59,7 @@ class HueApiV2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '3.0.0'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '3.0.1'    # (must match the version specified in plugin.yaml)
 
     hue_sensor_state_values          = ['daylight', 'temperature', 'presence', 'lightlevel', 'status']
 
@@ -206,7 +206,9 @@ class HueApiV2(SmartPlugin):
                 self.logger.exception(f"Exception in initialize_items_from_bridge(): {ex}")
 
             # block: wait until a stop command is received by the queue
-            queue_item = await self.run_queue.get()
+            #queue_item = await self.run_queue.get()
+            #queue_item = await self.get_command_from_run_queue()
+            await self.wait_for_asyncio_termination()
 
         self.alive = False
         self.logger.info("plugin_coro: Plugin is stopped (self.alive=False)")
@@ -603,20 +605,32 @@ class HueApiV2(SmartPlugin):
             hue_transition_time = int(float(config_data['transition_time']) * 1000)
 
         if config_data['function'] == 'on':
-            if value:
-                self.run_asyncio_coro(self.v2bridge.lights.turn_on(config_data['id'], hue_transition_time))
-            else:
-                self.run_asyncio_coro(self.v2bridge.lights.turn_off(config_data['id'], hue_transition_time))
+            try:
+                if value:
+                    self.run_asyncio_coro(self.v2bridge.lights.turn_on(config_data['id'], hue_transition_time), return_exeption=True)
+                else:
+                    self.run_asyncio_coro(self.v2bridge.lights.turn_off(config_data['id'], hue_transition_time), return_exeption=True)
+            except Exception as ex:
+                self.logger.error(f"update_light_from_item: id={config_data['id']}, {config_data['function']}, {value=} - Exception {ex}")
         elif config_data['function'] == 'bri':
             if float(value) <= 100:
-                self.run_asyncio_coro(self.v2bridge.lights.set_brightness(config_data['id'], float(value), hue_transition_time))
+                try:
+                    self.run_asyncio_coro(self.v2bridge.lights.set_brightness(config_data['id'], float(value), hue_transition_time), return_exeption=True)
+                except Exception as ex:
+                    self.logger.error(f"update_light_from_item: id={config_data['id']}, {config_data['function']}, {value=} - Exception {ex}")
             else:
                 self.logger.error(f"{item.property.path}: Can't set brightness of light {config_data['id']} to {value} - out of range")
         elif config_data['function'] == 'xy' and isinstance(value, list) and len(value) == 2:
-            self.run_asyncio_coro(self.v2bridge.lights.set_color(config_data['id'], value[0], value[1], hue_transition_time))
+            try:
+                self.run_asyncio_coro(self.v2bridge.lights.set_color(config_data['id'], value[0], value[1], hue_transition_time), return_exeption=True)
+            except Exception as ex:
+                self.logger.error(f"update_light_from_item: id={config_data['id']}, {config_data['function']}, {value=} - Exception {ex}")
         elif config_data['function'] == 'ct':
             if float(value) >= 153 and float(value) <= 500:
-                self.run_asyncio_coro(self.v2bridge.lights.set_color_temperature(config_data['id'], value, hue_transition_time))
+                try:
+                    self.run_asyncio_coro(self.v2bridge.lights.set_color_temperature(config_data['id'], value, hue_transition_time), return_exeption=True)
+                except Exception as ex:
+                    self.logger.error(f"update_light_from_item: id={config_data['id']}, {config_data['function']}, {value=} - Exception {ex}")
             else:
                 self.logger.error(f"{item.property.path}: Can't set color temperature of light {config_data['id']} to {value} - out of range")
         elif config_data['function'] == 'dict':
@@ -634,7 +648,10 @@ class HueApiV2(SmartPlugin):
                     transition_time = hue_transition_time
                 else:
                     transition_time = int(float(transition_time)*1000)
-                self.run_asyncio_coro(self.v2bridge.lights.set_state(config_data['id'], on, bri, xy, ct, transition_time=transition_time))
+                try:
+                    self.run_asyncio_coro(self.v2bridge.lights.set_state(config_data['id'], on, bri, xy, ct, transition_time=transition_time), return_exeption=True)
+                except Exception as ex:
+                    self.logger.error(f"update_light_from_item: id={config_data['id']}, {config_data['function']}, {on=}, {bri=}, {xy=}, {ct=} - Exception {ex}")
         elif config_data['function'] == 'bri_inc':
             if float(value) >= -100 and float(value) <= 100:
                 if float(value) < 0:
@@ -825,7 +842,6 @@ class HueApiV2(SmartPlugin):
         for br in discovered_bridges:
             ip = discovered_bridges[br].split('/')[2].split(':')[0]
             br_info = self.get_bridge_desciption(ip)
-#            br_config = self.get_bridge_config(ip)
             bridges.append(br_info)
 
         for bridge in bridges:
@@ -872,19 +888,68 @@ class HueApiV2(SmartPlugin):
         return app_key
 
 
+    def disconnect_bridge(self):
+        """
+        Disconnect the plugin from the bridge
+
+        :param disconnect:
+        :return:
+        """
+        if not self.bridge_is_configured():
+            # There is no bridge to disconnect from
+            return
+
+        self.logger.notice(f"Disconnect: Disconnecting bridge")
+        self.stop()
+        self.bridge_ip = '0.0.0.0'
+
+        self.logger.notice(f"disconnect_bridge: self.bridge = {self.bridge}")
+
+        self.bridge = {}
+
+        # update the plugin section in ../etc/plugin.yaml
+        self.update_plugin_config()
+
+        self.run()
+
+
+    # --------------------------------------------------------------------------------------------
+
+    def get_bridge_config(self, host: str = None) -> dict:
+        """
+        Get configuration info of a bridge
+
+        :param host: IP Address of the bridge
+        :return: configuration info
+        """
+        if host is None:
+            if not self.bridge_is_configured():
+                return {}
+            host = self.bridge_ip
+
+        if self.bridge_user == '':
+            user = None
+        else:
+            user = self.bridge_user
+
+        try:
+            bridge_config = self.run_asyncio_coro(self.get_config(host, user), return_exeption=False)
+        except Exception as ex:
+            bridge_config = {}
+            self.logger.error(f"get_bridge_config: {ex}")
+        return bridge_config
+
+
     from aiohttp import ClientSession
 
     async def get_config(self, host: str, app_key: str = None, websession: ClientSession | None = None ) -> dict:
         """
-        Get configuration of the Hue bridge and return it's whitelist.
+        Get configuration of the Hue bridge using aiohue and return it's whitelist.
 
-        The link button on the bridge must be pressed before executing this call,
-        otherwise a LinkButtonNotPressed error will be raised.
-
-        Parameters:
-            `host`: the hostname or IP-address of the bridge as string.
-            `device_type`: provide a name/type for your app for identification.
-            `websession`: optionally provide a aiohttp ClientSession.
+        :param host: the hostname or IP-address of the bridge as string.
+        :param app_key: provide a name/type for your app for identification.
+        :param websession: optionally provide a aiohttp ClientSession.
+        :return:
         """
         # https://developers.meethue.com/develop/hue-api/7-configuration-api/#72_get_configuration
         # this can be used for both V1 and V2 bridges (for now).
@@ -915,50 +980,4 @@ class HueApiV2(SmartPlugin):
         finally:
             if not websession_provided:
                 await websession.close()
-
-
-    def get_bridge_config(self, host: str = None) -> dict:
-
-
-        if host is None:
-            if not self.bridge_is_configured():
-                return {}
-            host = self.bridge_ip
-
-        if self.bridge_user == '':
-            user = None
-        else:
-            user = self.bridge_user
-
-        try:
-            bridge_config = self.run_asyncio_coro(self.get_config(host, user), return_exeption=False)
-        except Exception as ex:
-            bridge_config = {}
-            self.logger.error(f"get_bridge_config: {ex}")
-        return bridge_config
-
-
-    def disconnect_bridge(self):
-        """
-        Disconnect the plugin from the bridge
-
-        :param disconnect:
-        :return:
-        """
-        if not self.bridge_is_configured():
-            # There is no bridge to disconnect from
-            return
-
-        self.logger.notice(f"Disconnect: Disconnecting bridge")
-        self.stop()
-        self.bridge_ip = '0.0.0.0'
-
-        self.logger.notice(f"disconnect_bridge: self.bridge = {self.bridge}")
-
-        self.bridge = {}
-
-        # update the plugin section in ../etc/plugin.yaml
-        self.update_plugin_config()
-
-        self.run()
 

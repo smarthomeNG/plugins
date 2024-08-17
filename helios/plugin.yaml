@@ -13,7 +13,7 @@ plugin:
     documentation: https://github.com/Tom-Bom-badil/helios/wiki
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/40092-erweiterung-helios-vallox-plugin
     version: 1.4.3
-    sh_minversion: 1.6
+    sh_minversion: '1.6'
     multi_instance:  false
     restartable: true
     classname: 'Helios'

@@ -142,7 +142,7 @@ function mainpage() {
           {% endif %}
         </td>
         <td class="py-1" id="{{ item }}_log_level">{{ item.logger.log_level_as_num }}</td>
-        <td class="py-1">{% for cond in item.webif_infos.keys() %}{% if not p.itemsApi.return_item(cond) == None %}{% if loop.index > 1 %},{% endif %}{{ p.itemsApi.return_item(cond)._name.split('.')[-1] }}{% endif %}{% endfor %}</td>
+        <td class="py-1">{% for cond in item.webif_infos.keys() %}{% if not p.get_sh().return_item(cond) == None %}{% if loop.index > 1 %},{% endif %}{{ p.get_sh().return_item(cond)._name.split('.')[-1] }}{% endif %}{% endfor %}</td>
 
 
       </tr>

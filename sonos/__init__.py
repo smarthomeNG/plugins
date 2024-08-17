@@ -2318,7 +2318,7 @@ class Speaker(object):
         # if a patch is applied.
 
         # ------------------------------------------------------------------------------------------------------------ #
-        self.logger.warning(f"DEBUG: _play_tunein start")
+        self.logger.debug(f"_play_tunein start")
         if not self._check_property():
             return False, "Property check failed"
 
@@ -2359,7 +2359,7 @@ class Speaker(object):
                 return False, "response should contain either the key 'searchResult' or 'getMetadataResult'"
 
             for result_type in ('mediaCollection', 'mediaMetadata'):
-                self.logger.warning(f"DEBUG loop: result is {result_type}")
+                self.logger.debug(f"loop: result is {result_type}")
 
                 # Upper case the first letter (used for the class_key)
                 result_type_proper = result_type[0].upper() + result_type[1:]
@@ -2373,7 +2373,7 @@ class Speaker(object):
                     # formed by concatenating the result type with the item type. Turns
                     # into e.g: MediaMetadataTrack
 
-                    self.logger.warning(f"DEBUG loop 2: raw_item is {raw_item}")
+                    self.logger.debug(f"loop 2: raw_item is {raw_item}")
 
                     class_key = result_type_proper + raw_item['itemType'].title()
                     cls = get_class(class_key)
@@ -2383,7 +2383,7 @@ class Speaker(object):
                         #cls.from_music_service(MusicService(service_name='TuneIn', token_store=JsonFileTokenStore()), raw_item))
 
             if not items:
-                self.logger.warning(f"DEBUG _play radio: No matching items found")
+                self.logger.warning(f"_play radio: No matching items found")
                 exit(0)
 
             item_id = items[0].metadata['id']
@@ -2396,10 +2396,10 @@ class Speaker(object):
             self.soco.avTransport.SetAVTransportURI([('InstanceID', 0),
                                                      ('CurrentURI', uri), ('CurrentURIMetaData', meta)])
             if start:
-                self.logger.warning(f"DEBUG _play radio: Starting play")
+                self.logger.debug(f"_play radio: Starting play")
                 self.soco.play()
 
-            self.logger.warning(f"DEBUG _play radio: finished function")
+            self.logger.debug(f"_play radio: finished function")
             return True, ""
 
     def _play_radio(self, station_name: str, music_service: str = 'TuneIn', start: bool = True) -> tuple:
@@ -2998,7 +2998,7 @@ class Sonos(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = "1.8.6"
+    PLUGIN_VERSION = "1.8.7"
 
     def __init__(self, sh):
         """Initializes the plugin."""
