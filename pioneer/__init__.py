@@ -37,7 +37,7 @@ if __name__ == '__main__':
     BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
     sys.path.insert(0, BASE)
 
-from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION,
+from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_CMD_CLASS,
                                    PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR,
                                    PLUGIN_ATTR_MODEL, CONN_NET_TCP_CLI, CONN_SER_ASYNC, CONN_NULL)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
@@ -52,7 +52,7 @@ class pioneer(SmartDevicePlugin):
     """ Device class for Pioneer AV function. """
 
     PLUGIN_VERSION = '1.0.3'
-    
+
     def _set_device_defaults(self):
         # set our own preferences concerning connections
         if PLUGIN_ATTR_NET_HOST in self._parameters and self._parameters[PLUGIN_ATTR_NET_HOST]:
