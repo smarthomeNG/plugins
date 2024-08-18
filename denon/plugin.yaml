@@ -1,7 +1,10 @@
 
 plugin:
     type: interface
-    description: Denon AV-Receiver
+
+    description:
+        de: Denon AV-Receiver
+        en: Denon AV-Receiver
     maintainer: OnkelAndy
     tester: Morg
     state: develop
@@ -160,17 +163,18 @@ parameters:
         description:
             de: Anzahl Sendeversuche
             en: number of sending retries
+
         description_long:
-            de: 'Anzahl Sendeversuche\n
+            de: |4
+                Anzahl Sendeversuche\n
                 Kommt keine (passende) Antwort nach dem Senden
                 eines Commands zurück, wird das Kommando nochmals
                 gesendet, sofern der Wert über 0 liegt.
-                '
-            en: 'number of sending retries\n
+            en: |4
+                number of sending retries\n
                 If no (suiting) answer is received after sending
                 a command the command is resent as long as this
                 value is more than 0.
-                '
 
     sendretry_cycle:
         type: num
@@ -180,17 +184,18 @@ parameters:
         description:
             de: Pause zwischen Durchgängen von Sendeversuchen
             en: wait time between sending retry rounds
+
         description_long:
-            de: 'Pause zwischen Durchgängen von Sendeversuchen\n
+            de: |4
+                Pause zwischen Durchgängen von Sendeversuchen\n
                 Sind Send Retries aktiv, wird ein Scheduler erstellt,
                 der im angegebenen Sekundentakt Kommandos erneut sendet,
                 zu denen keine (passenden) Antworten erhalten wurden.
-                '
-            en: 'wait time between sending retry rounds\n
+            en: |4
+                wait time between sending retry rounds\n
                 If send retries are active, a scheduler gets added
                 that resends commands in the given cycle value (in seconds)
                 where no (suiting) answer got received.
-                '
 
     delay_initial_read:
         type: num
@@ -203,9 +208,10 @@ parameters:
     resume_initial_read:
         type: bool
         defaul: false
+
         description:
-            de: 'Bei resume vom Plugin erstmaliges Lesen erneut durchführen'
-            en: 'Repeat initial read on resume'
+            de: Bei resume vom Plugin erstmaliges Lesen erneut durchführen
+            en: Repeat initial read on resume
 
     connect_cycle:
         type: num
@@ -305,8 +311,26 @@ item_attributes:
             en: The lookup table with the given name will be assigned to the item in dict or list format once on startup.
 
         description_long:
-            de: "Der Inhalt der Lookup-Tabelle mit dem angegebenen Namen wird beim\nStart einmalig als dict oder list in das Item geschrieben.\n\n\nDurch Anhängen von \"#<mode>\" an den Namen der Tabelle kann die Art\nder Tabelle ausgewählt werden:\n- fwd liefert die Tabelle Gerät -> SmartHomeNG (Standard)\n- rev liefert die Tabelle SmartHomeNG -> Gerät\n- rci liefert die Tabelle SmarthomeNG -> Gerät in Kleinbuchstaben\n- list liefert die Liste der Namen für SmartHomeNG (z.B. für Auswahllisten in der Visu)"
-            en: "The lookup table with the given name will be assigned to the item\nin dict or list format once on startup.\n\n\nBy appending \"#<mode>\" to the tables name the type of table can\nbe selected:\n- fwd returns the table device -> SmartHomeNG (default)\n- rev returns the table SmartHomeNG -> device\n- rci returns the table SmartHomeNG -> device in lower case\n- list return the list of names for SmartHomeNG (e.g. for selection dropdowns in visu applications)"
+            de: |4-
+                Der Inhalt der Lookup-Tabelle mit dem angegebenen Namen wird beim
+                Start einmalig als dict oder list in das Item geschrieben.
+
+                Durch Anhängen von "#<mode>" an den Namen der Tabelle kann die Art
+                der Tabelle ausgewählt werden:
+                - fwd liefert die Tabelle Gerät -> SmartHomeNG (Standard)
+                - rev liefert die Tabelle SmartHomeNG -> Gerät
+                - rci liefert die Tabelle SmarthomeNG -> Gerät in Kleinbuchstaben
+                - list liefert die Liste der Namen für SmartHomeNG (z.B. für Auswahllisten in der Visu)
+            en: |4-
+                The lookup table with the given name will be assigned to the item
+                in dict or list format once on startup.
+
+                By appending "#<mode>" to the tables name the type of table can
+                be selected:
+                - fwd returns the table device -> SmartHomeNG (default)
+                - rev returns the table SmartHomeNG -> device
+                - rci returns the table SmartHomeNG -> device in lower case
+                - list return the list of names for SmartHomeNG (e.g. for selection dropdowns in visu applications)
 
 item_structs:
 
@@ -1620,7 +1644,7 @@ item_structs:
                         -   zone2.settings.sound
                         -   zone2.settings.sound.general
 
-                    hpf:
+                    HPF:
                         type: bool
                         denon_command@instance: zone2.settings.sound.general.HPF
                         denon_read@instance: true
@@ -1820,7 +1844,7 @@ item_structs:
                         enforce_updates: true
                         denon_read_group_trigger@instance: zone3.settings.sound.general
 
-                    hpf:
+                    HPF:
                         type: bool
                         denon_command@instance: zone3.settings.sound.general.HPF
                         denon_read@instance: true
@@ -3897,7 +3921,7 @@ item_structs:
                             -   AVR-X6300H.zone2.settings.sound
                             -   AVR-X6300H.zone2.settings.sound.general
 
-                        hpf:
+                        HPF:
                             type: bool
                             denon_command@instance: zone2.settings.sound.general.HPF
                             denon_read@instance: true
@@ -4108,7 +4132,7 @@ item_structs:
                             enforce_updates: true
                             denon_read_group_trigger@instance: AVR-X6300H.zone3.settings.sound.general
 
-                        hpf:
+                        HPF:
                             type: bool
                             denon_command@instance: zone3.settings.sound.general.HPF
                             denon_read@instance: true
@@ -5123,7 +5147,7 @@ item_structs:
                             -   AVR-X4300H.zone2.settings.sound
                             -   AVR-X4300H.zone2.settings.sound.general
 
-                        hpf:
+                        HPF:
                             type: bool
                             denon_command@instance: zone2.settings.sound.general.HPF
                             denon_read@instance: true
@@ -5334,7 +5358,7 @@ item_structs:
                             enforce_updates: true
                             denon_read_group_trigger@instance: AVR-X4300H.zone3.settings.sound.general
 
-                        hpf:
+                        HPF:
                             type: bool
                             denon_command@instance: zone3.settings.sound.general.HPF
                             denon_read@instance: true
@@ -6357,7 +6381,7 @@ item_structs:
                             -   AVR-X3300W.zone2.settings.sound
                             -   AVR-X3300W.zone2.settings.sound.general
 
-                        hpf:
+                        HPF:
                             type: bool
                             denon_command@instance: zone2.settings.sound.general.HPF
                             denon_read@instance: true

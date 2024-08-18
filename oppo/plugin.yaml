@@ -1,12 +1,14 @@
 
 plugin:
     type: interface
-    description: Oppo UHD Player
+    description:
+      de: Oppo UHD Player
+      en: Oppo UHD Player
     maintainer: OnkelAndy
     tester: Morg
     state: develop
     keywords: iot device
-    version: 1.0.1
+    version: '1.0.1'
     sh_minversion: '1.9.5.1'
     py_minversion: '3.6'
     sdp_minversion: '1.0.3'
@@ -176,17 +178,18 @@ parameters:
         description:
             de: Anzahl Sendeversuche
             en: number of sending retries
+
         description_long:
-            de: 'Anzahl Sendeversuche\n
+            de: |
+                Anzahl Sendeversuche\n
                 Kommt keine (passende) Antwort nach dem Senden
                 eines Commands zurück, wird das Kommando nochmals
                 gesendet, sofern der Wert über 0 liegt.
-                '
-            en: 'number of sending retries\n
+            en: |
+                number of sending retries\n
                 If no (suiting) answer is received after sending
                 a command the command is resent as long as this
                 value is more than 0.
-                '
 
     sendretry_cycle:
         type: num
@@ -196,17 +199,18 @@ parameters:
         description:
             de: Pause zwischen Durchgängen von Sendeversuchen
             en: wait time between sending retry rounds
+
         description_long:
-            de: 'Pause zwischen Durchgängen von Sendeversuchen\n
+            de: |
+                Pause zwischen Durchgängen von Sendeversuchen\n
                 Sind Send Retries aktiv, wird ein Scheduler erstellt,
                 der im angegebenen Sekundentakt Kommandos erneut sendet,
                 zu denen keine (passenden) Antworten erhalten wurden.
-                '
-            en: 'wait time between sending retry rounds\n
+            en: |
+                wait time between sending retry rounds\n
                 If send retries are active, a scheduler gets added
                 that resends commands in the given cycle value (in seconds)
                 where no (suiting) answer got received.
-                '
 
     delay_initial_read:
         type: num
@@ -219,10 +223,10 @@ parameters:
     resume_initial_read:
         type: bool
         defaul: false
-        description:
-            de: 'Bei resume vom Plugin erstmaliges Lesen erneut durchführen'
-            en: 'Repeat initial read on resume'
 
+        description:
+            de: Bei resume vom Plugin erstmaliges Lesen erneut durchführen
+            en: Repeat initial read on resume
 
 item_attributes:
 
@@ -283,8 +287,26 @@ item_attributes:
             en: The lookup table with the given name will be assigned to the item in dict or list format once on startup.
 
         description_long:
-            de: "Der Inhalt der Lookup-Tabelle mit dem angegebenen Namen wird beim\nStart einmalig als dict oder list in das Item geschrieben.\n\n\nDurch Anhängen von \"#<mode>\" an den Namen der Tabelle kann die Art\nder Tabelle ausgewählt werden:\n- fwd liefert die Tabelle Gerät -> SmartHomeNG (Standard)\n- rev liefert die Tabelle SmartHomeNG -> Gerät\n- rci liefert die Tabelle SmarthomeNG -> Gerät in Kleinbuchstaben\n- list liefert die Liste der Namen für SmartHomeNG (z.B. für Auswahllisten in der Visu)"
-            en: "The lookup table with the given name will be assigned to the item\nin dict or list format once on startup.\n\n\nBy appending \"#<mode>\" to the tables name the type of table can\nbe selected:\n- fwd returns the table device -> SmartHomeNG (default)\n- rev returns the table SmartHomeNG -> device\n- rci returns the table SmartHomeNG -> device in lower case\n- list return the list of names for SmartHomeNG (e.g. for selection dropdowns in visu applications)"
+            de: |-
+                Der Inhalt der Lookup-Tabelle mit dem angegebenen Namen wird beim
+                Start einmalig als dict oder list in das Item geschrieben.
+
+                Durch Anhängen von "#<mode>" an den Namen der Tabelle kann die Art
+                der Tabelle ausgewählt werden:
+                - fwd liefert die Tabelle Gerät -> SmartHomeNG (Standard)
+                - rev liefert die Tabelle SmartHomeNG -> Gerät
+                - rci liefert die Tabelle SmarthomeNG -> Gerät in Kleinbuchstaben
+                - list liefert die Liste der Namen für SmartHomeNG (z.B. für Auswahllisten in der Visu)
+            en: |-
+                The lookup table with the given name will be assigned to the item
+                in dict or list format once on startup.
+
+                By appending "#<mode>" to the tables name the type of table can
+                be selected:
+                - fwd returns the table device -> SmartHomeNG (default)
+                - rev returns the table SmartHomeNG -> device
+                - rci returns the table SmartHomeNG -> device in lower case
+                - list return the list of names for SmartHomeNG (e.g. for selection dropdowns in visu applications)
 
 item_structs:
 
@@ -293,66 +315,66 @@ item_structs:
         read:
             type: bool
             enforce_updates: true
-            oppo_read_group_trigger: info
+            oppo_read_group_trigger@instance: info
 
         time:
 
             read:
                 type: bool
                 enforce_updates: true
-                oppo_read_group_trigger: info.time
+                oppo_read_group_trigger@instance: info.time
 
             totalelapsed:
                 type: str
-                oppo_command: info.time.totalelapsed
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.time.totalelapsed
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   info
                 -   info.time
 
             totalremaining:
                 type: str
-                oppo_command: info.time.totalremaining
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.time.totalremaining
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   info
                 -   info.time
 
             chapterelapsed:
                 type: str
-                oppo_command: info.time.chapterelapsed
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.time.chapterelapsed
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   info
                 -   info.time
 
             chapterremaining:
                 type: str
-                oppo_command: info.time.chapterremaining
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.time.chapterremaining
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   info
                 -   info.time
 
             titleelapsed:
                 type: str
-                oppo_command: info.time.titleelapsed
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.time.titleelapsed
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   info
                 -   info.time
 
             titleremaining:
                 type: str
-                oppo_command: info.time.titleremaining
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.time.titleremaining
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   info
                 -   info.time
 
@@ -361,421 +383,421 @@ item_structs:
             read:
                 type: bool
                 enforce_updates: true
-                oppo_read_group_trigger: info.audio
+                oppo_read_group_trigger@instance: info.audio
 
             current:
                 type: num
-                oppo_command: info.audio.current
-                oppo_read: true
-                oppo_write: false
+                oppo_command@instance: info.audio.current
+                oppo_read@instance: true
+                oppo_write@instance: false
 
             available:
                 type: num
-                oppo_command: info.audio.available
-                oppo_read: true
-                oppo_write: false
+                oppo_command@instance: info.audio.available
+                oppo_read@instance: true
+                oppo_write@instance: false
 
             language:
                 type: str
-                oppo_command: info.audio.language
-                oppo_read: true
-                oppo_write: false
+                oppo_command@instance: info.audio.language
+                oppo_read@instance: true
+                oppo_write@instance: false
 
         subtitle:
 
             read:
                 type: bool
                 enforce_updates: true
-                oppo_read_group_trigger: info.subtitle
+                oppo_read_group_trigger@instance: info.subtitle
 
             current:
                 type: num
-                oppo_command: info.subtitle.current
-                oppo_read: true
-                oppo_write: false
+                oppo_command@instance: info.subtitle.current
+                oppo_read@instance: true
+                oppo_write@instance: false
 
             available:
                 type: num
-                oppo_command: info.subtitle.available
-                oppo_read: true
-                oppo_write: false
+                oppo_command@instance: info.subtitle.available
+                oppo_read@instance: true
+                oppo_write@instance: false
 
             language:
                 type: str
-                oppo_command: info.subtitle.language
-                oppo_read: true
-                oppo_write: false
+                oppo_command@instance: info.subtitle.language
+                oppo_read@instance: true
+                oppo_write@instance: false
 
         firmware:
             type: str
-            oppo_command: info.firmware
-            oppo_read: true
-            oppo_write: false
-            oppo_read_group:
+            oppo_command@instance: info.firmware
+            oppo_read@instance: true
+            oppo_write@instance: false
+            oppo_read_group@instance:
             -   info
-            oppo_read_initial: true
+            oppo_read_initial@instance: true
 
         status:
             type: str
-            oppo_command: info.status
-            oppo_read: true
-            oppo_write: false
-            oppo_read_group:
+            oppo_command@instance: info.status
+            oppo_read@instance: true
+            oppo_write@instance: false
+            oppo_read_group@instance:
             -   info
-            oppo_read_initial: true
+            oppo_read_initial@instance: true
 
         disctype:
             type: str
-            oppo_command: info.disctype
-            oppo_read: true
-            oppo_write: false
-            oppo_read_group:
+            oppo_command@instance: info.disctype
+            oppo_read@instance: true
+            oppo_write@instance: false
+            oppo_read_group@instance:
             -   info
-            oppo_read_initial: true
+            oppo_read_initial@instance: true
 
         totaltracks:
             type: num
-            oppo_command: info.totaltracks
-            oppo_read: true
-            oppo_write: false
-            oppo_read_group:
+            oppo_command@instance: info.totaltracks
+            oppo_read@instance: true
+            oppo_write@instance: false
+            oppo_read_group@instance:
             -   info
-            oppo_read_initial: true
+            oppo_read_initial@instance: true
 
         displaytype:
             type: str
-            oppo_command: info.displaytype
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: info.displaytype
+            oppo_read@instance: true
+            oppo_write@instance: true
 
         audiotype:
             type: str
-            oppo_command: info.audiotype
-            oppo_read: true
-            oppo_write: false
-            oppo_read_group:
+            oppo_command@instance: info.audiotype
+            oppo_read@instance: true
+            oppo_write@instance: false
+            oppo_read_group@instance:
             -   info
-            oppo_read_initial: true
+            oppo_read_initial@instance: true
 
         channels:
             type: str
-            oppo_command: info.channels
-            oppo_read: true
-            oppo_write: false
-            oppo_read_group:
+            oppo_command@instance: info.channels
+            oppo_read@instance: true
+            oppo_write@instance: false
+            oppo_read_group@instance:
             -   info
 
         trackinfo:
             type: num
-            oppo_command: info.trackinfo
-            oppo_read: true
-            oppo_write: false
-            oppo_read_group:
+            oppo_command@instance: info.trackinfo
+            oppo_read@instance: true
+            oppo_write@instance: false
+            oppo_read_group@instance:
             -   info
 
         inputresolution:
             type: str
-            oppo_command: info.inputresolution
-            oppo_read: true
-            oppo_write: false
+            oppo_command@instance: info.inputresolution
+            oppo_read@instance: true
+            oppo_write@instance: false
 
         outputresolution:
             type: str
-            oppo_command: info.outputresolution
-            oppo_read: true
-            oppo_write: false
+            oppo_command@instance: info.outputresolution
+            oppo_read@instance: true
+            oppo_write@instance: false
 
         aspectratio:
             type: str
-            oppo_command: info.aspectratio
-            oppo_read: true
-            oppo_write: false
+            oppo_command@instance: info.aspectratio
+            oppo_read@instance: true
+            oppo_write@instance: false
 
         U3D:
             type: str
-            oppo_command: info.U3D
-            oppo_read: true
-            oppo_write: false
+            oppo_command@instance: info.U3D
+            oppo_read@instance: true
+            oppo_write@instance: false
 
     general:
 
         read:
             type: bool
             enforce_updates: true
-            oppo_read_group_trigger: general
+            oppo_read_group_trigger@instance: general
 
         verbose:
             type: num
-            oppo_command: general.verbose
-            oppo_read: true
-            oppo_write: true
-            oppo_read_group:
+            oppo_command@instance: general.verbose
+            oppo_read@instance: true
+            oppo_write@instance: true
+            oppo_read_group@instance:
             -   general
             cache: true
             initial_value: 2
 
         hdmiresolution:
             type: str
-            oppo_command: general.hdmiresolution
-            oppo_read: true
-            oppo_write: true
-            oppo_read_group:
+            oppo_command@instance: general.hdmiresolution
+            oppo_read@instance: true
+            oppo_write@instance: true
+            oppo_read_group@instance:
             -   general
-            oppo_read_initial: true
+            oppo_read_initial@instance: true
 
     control:
 
         read:
             type: bool
             enforce_updates: true
-            oppo_read_group_trigger: control
+            oppo_read_group_trigger@instance: control
 
         power:
             type: bool
-            oppo_command: control.power
-            oppo_read: true
-            oppo_write: true
-            oppo_read_group:
+            oppo_command@instance: control.power
+            oppo_read@instance: true
+            oppo_write@instance: true
+            oppo_read_group@instance:
             -   control
-            oppo_read_initial: true
+            oppo_read_initial@instance: true
 
         pureaudio:
             type: bool
-            oppo_command: control.pureaudio
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: control.pureaudio
+            oppo_read@instance: true
+            oppo_write@instance: true
 
         playpause:
             type: bool
-            oppo_command: control.playpause
-            oppo_read: true
-            oppo_write: true
-            oppo_read_group:
+            oppo_command@instance: control.playpause
+            oppo_read@instance: true
+            oppo_write@instance: true
+            oppo_read_group@instance:
             -   control
 
         stop:
             type: bool
-            oppo_command: control.stop
-            oppo_read: true
-            oppo_write: true
-            oppo_read_group:
+            oppo_command@instance: control.stop
+            oppo_read@instance: true
+            oppo_write@instance: true
+            oppo_read_group@instance:
             -   control
 
         eject:
             type: bool
-            oppo_command: control.eject
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: control.eject
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         chapter:
             type: num
-            oppo_command: control.chapter
-            oppo_read: true
-            oppo_write: true
-            oppo_read_group:
+            oppo_command@instance: control.chapter
+            oppo_read@instance: true
+            oppo_write@instance: true
+            oppo_read_group@instance:
             -   control
 
         title:
             type: num
-            oppo_command: control.title
-            oppo_read: true
-            oppo_write: true
-            oppo_read_group:
+            oppo_command@instance: control.title
+            oppo_read@instance: true
+            oppo_write@instance: true
+            oppo_read_group@instance:
             -   control
 
         next:
             type: bool
-            oppo_command: control.next
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: control.next
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         previous:
             type: bool
-            oppo_command: control.previous
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: control.previous
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         forward:
             type: bool
-            oppo_command: control.forward
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: control.forward
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         reverse:
             type: bool
-            oppo_command: control.reverse
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: control.reverse
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         audio:
             type: bool
-            oppo_command: control.audio
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: control.audio
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         subtitle:
             type: bool
-            oppo_command: control.subtitle
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: control.subtitle
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         repeat:
             type: num
-            oppo_command: control.repeat
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: control.repeat
+            oppo_read@instance: true
+            oppo_write@instance: true
 
         input:
             type: num
-            oppo_command: control.input
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: control.input
+            oppo_read@instance: true
+            oppo_write@instance: true
 
     menu:
 
         read:
             type: bool
             enforce_updates: true
-            oppo_read_group_trigger: menu
+            oppo_read_group_trigger@instance: menu
 
         home:
             type: bool
-            oppo_command: menu.home
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.home
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         setup:
             type: bool
-            oppo_command: menu.setup
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.setup
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         option:
             type: bool
-            oppo_command: menu.option
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.option
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         info:
             type: bool
-            oppo_command: menu.info
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.info
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         popup:
             type: bool
-            oppo_command: menu.popup
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.popup
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         top:
             type: bool
-            oppo_command: menu.top
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.top
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         osd:
             type: bool
-            oppo_command: menu.osd
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.osd
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         pageup:
             type: bool
-            oppo_command: menu.pageup
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.pageup
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         pagedown:
             type: bool
-            oppo_command: menu.pagedown
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.pagedown
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         up:
             type: bool
-            oppo_command: menu.up
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.up
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         down:
             type: bool
-            oppo_command: menu.down
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.down
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         left:
             type: bool
-            oppo_command: menu.left
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.left
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         right:
             type: bool
-            oppo_command: menu.right
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.right
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         select:
             type: bool
-            oppo_command: menu.select
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.select
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         back:
             type: bool
-            oppo_command: menu.back
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.back
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         red:
             type: bool
-            oppo_command: menu.red
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.red
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         green:
             type: bool
-            oppo_command: menu.green
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.green
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         blue:
             type: bool
-            oppo_command: menu.blue
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.blue
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
         yellow:
             type: bool
-            oppo_command: menu.yellow
-            oppo_read: true
-            oppo_write: true
+            oppo_command@instance: menu.yellow
+            oppo_read@instance: true
+            oppo_write@instance: true
             enforce_updates: true
 
     ALL:
@@ -783,78 +805,78 @@ item_structs:
         read:
             type: bool
             enforce_updates: true
-            oppo_read_group_trigger: ALL
+            oppo_read_group_trigger@instance: ALL
 
         info:
 
             read:
                 type: bool
                 enforce_updates: true
-                oppo_read_group_trigger: ALL.info
+                oppo_read_group_trigger@instance: ALL.info
 
             time:
 
                 read:
                     type: bool
                     enforce_updates: true
-                    oppo_read_group_trigger: ALL.info.time
+                    oppo_read_group_trigger@instance: ALL.info.time
 
                 totalelapsed:
                     type: str
-                    oppo_command: info.time.totalelapsed
-                    oppo_read: true
-                    oppo_write: false
-                    oppo_read_group:
+                    oppo_command@instance: info.time.totalelapsed
+                    oppo_read@instance: true
+                    oppo_write@instance: false
+                    oppo_read_group@instance:
                     -   ALL
                     -   ALL.info
                     -   ALL.info.time
 
                 totalremaining:
                     type: str
-                    oppo_command: info.time.totalremaining
-                    oppo_read: true
-                    oppo_write: false
-                    oppo_read_group:
+                    oppo_command@instance: info.time.totalremaining
+                    oppo_read@instance: true
+                    oppo_write@instance: false
+                    oppo_read_group@instance:
                     -   ALL
                     -   ALL.info
                     -   ALL.info.time
 
                 chapterelapsed:
                     type: str
-                    oppo_command: info.time.chapterelapsed
-                    oppo_read: true
-                    oppo_write: false
-                    oppo_read_group:
+                    oppo_command@instance: info.time.chapterelapsed
+                    oppo_read@instance: true
+                    oppo_write@instance: false
+                    oppo_read_group@instance:
                     -   ALL
                     -   ALL.info
                     -   ALL.info.time
 
                 chapterremaining:
                     type: str
-                    oppo_command: info.time.chapterremaining
-                    oppo_read: true
-                    oppo_write: false
-                    oppo_read_group:
+                    oppo_command@instance: info.time.chapterremaining
+                    oppo_read@instance: true
+                    oppo_write@instance: false
+                    oppo_read_group@instance:
                     -   ALL
                     -   ALL.info
                     -   ALL.info.time
 
                 titleelapsed:
                     type: str
-                    oppo_command: info.time.titleelapsed
-                    oppo_read: true
-                    oppo_write: false
-                    oppo_read_group:
+                    oppo_command@instance: info.time.titleelapsed
+                    oppo_read@instance: true
+                    oppo_write@instance: false
+                    oppo_read_group@instance:
                     -   ALL
                     -   ALL.info
                     -   ALL.info.time
 
                 titleremaining:
                     type: str
-                    oppo_command: info.time.titleremaining
-                    oppo_read: true
-                    oppo_write: false
-                    oppo_read_group:
+                    oppo_command@instance: info.time.titleremaining
+                    oppo_read@instance: true
+                    oppo_write@instance: false
+                    oppo_read_group@instance:
                     -   ALL
                     -   ALL.info
                     -   ALL.info.time
@@ -864,162 +886,162 @@ item_structs:
                 read:
                     type: bool
                     enforce_updates: true
-                    oppo_read_group_trigger: ALL.info.audio
+                    oppo_read_group_trigger@instance: ALL.info.audio
 
                 current:
                     type: num
-                    oppo_command: info.audio.current
-                    oppo_read: true
-                    oppo_write: false
+                    oppo_command@instance: info.audio.current
+                    oppo_read@instance: true
+                    oppo_write@instance: false
 
                 available:
                     type: num
-                    oppo_command: info.audio.available
-                    oppo_read: true
-                    oppo_write: false
+                    oppo_command@instance: info.audio.available
+                    oppo_read@instance: true
+                    oppo_write@instance: false
 
                 language:
                     type: str
-                    oppo_command: info.audio.language
-                    oppo_read: true
-                    oppo_write: false
+                    oppo_command@instance: info.audio.language
+                    oppo_read@instance: true
+                    oppo_write@instance: false
 
             subtitle:
 
                 read:
                     type: bool
                     enforce_updates: true
-                    oppo_read_group_trigger: ALL.info.subtitle
+                    oppo_read_group_trigger@instance: ALL.info.subtitle
 
                 current:
                     type: num
-                    oppo_command: info.subtitle.current
-                    oppo_read: true
-                    oppo_write: false
+                    oppo_command@instance: info.subtitle.current
+                    oppo_read@instance: true
+                    oppo_write@instance: false
 
                 available:
                     type: num
-                    oppo_command: info.subtitle.available
-                    oppo_read: true
-                    oppo_write: false
+                    oppo_command@instance: info.subtitle.available
+                    oppo_read@instance: true
+                    oppo_write@instance: false
 
                 language:
                     type: str
-                    oppo_command: info.subtitle.language
-                    oppo_read: true
-                    oppo_write: false
+                    oppo_command@instance: info.subtitle.language
+                    oppo_read@instance: true
+                    oppo_write@instance: false
 
             firmware:
                 type: str
-                oppo_command: info.firmware
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.firmware
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   ALL
                 -   ALL.info
-                oppo_read_initial: true
+                oppo_read_initial@instance: true
 
             status:
                 type: str
-                oppo_command: info.status
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.status
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   ALL
                 -   ALL.info
-                oppo_read_initial: true
+                oppo_read_initial@instance: true
 
             disctype:
                 type: str
-                oppo_command: info.disctype
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.disctype
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   ALL
                 -   ALL.info
-                oppo_read_initial: true
+                oppo_read_initial@instance: true
 
             totaltracks:
                 type: num
-                oppo_command: info.totaltracks
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.totaltracks
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   ALL
                 -   ALL.info
-                oppo_read_initial: true
+                oppo_read_initial@instance: true
 
             displaytype:
                 type: str
-                oppo_command: info.displaytype
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: info.displaytype
+                oppo_read@instance: true
+                oppo_write@instance: true
 
             audiotype:
                 type: str
-                oppo_command: info.audiotype
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.audiotype
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   ALL
                 -   ALL.info
-                oppo_read_initial: true
+                oppo_read_initial@instance: true
 
             channels:
                 type: str
-                oppo_command: info.channels
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.channels
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   ALL
                 -   ALL.info
 
             trackinfo:
                 type: num
-                oppo_command: info.trackinfo
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.trackinfo
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   ALL
                 -   ALL.info
 
             inputresolution:
                 type: str
-                oppo_command: info.inputresolution
-                oppo_read: true
-                oppo_write: false
+                oppo_command@instance: info.inputresolution
+                oppo_read@instance: true
+                oppo_write@instance: false
 
             outputresolution:
                 type: str
-                oppo_command: info.outputresolution
-                oppo_read: true
-                oppo_write: false
+                oppo_command@instance: info.outputresolution
+                oppo_read@instance: true
+                oppo_write@instance: false
 
             aspectratio:
                 type: str
-                oppo_command: info.aspectratio
-                oppo_read: true
-                oppo_write: false
+                oppo_command@instance: info.aspectratio
+                oppo_read@instance: true
+                oppo_write@instance: false
 
             U3D:
                 type: str
-                oppo_command: info.U3D
-                oppo_read: true
-                oppo_write: false
+                oppo_command@instance: info.U3D
+                oppo_read@instance: true
+                oppo_write@instance: false
 
         general:
 
             read:
                 type: bool
                 enforce_updates: true
-                oppo_read_group_trigger: ALL.general
+                oppo_read_group_trigger@instance: ALL.general
 
             verbose:
                 type: num
-                oppo_command: general.verbose
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
+                oppo_command@instance: general.verbose
+                oppo_read@instance: true
+                oppo_write@instance: true
+                oppo_read_group@instance:
                 -   ALL
                 -   ALL.general
                 cache: true
@@ -1027,272 +1049,272 @@ item_structs:
 
             hdmiresolution:
                 type: str
-                oppo_command: general.hdmiresolution
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
+                oppo_command@instance: general.hdmiresolution
+                oppo_read@instance: true
+                oppo_write@instance: true
+                oppo_read_group@instance:
                 -   ALL
                 -   ALL.general
-                oppo_read_initial: true
+                oppo_read_initial@instance: true
 
         control:
 
             read:
                 type: bool
                 enforce_updates: true
-                oppo_read_group_trigger: ALL.control
+                oppo_read_group_trigger@instance: ALL.control
 
             power:
                 type: bool
-                oppo_command: control.power
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
+                oppo_command@instance: control.power
+                oppo_read@instance: true
+                oppo_write@instance: true
+                oppo_read_group@instance:
                 -   ALL
                 -   ALL.control
-                oppo_read_initial: true
+                oppo_read_initial@instance: true
 
             pureaudio:
                 type: bool
-                oppo_command: control.pureaudio
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.pureaudio
+                oppo_read@instance: true
+                oppo_write@instance: true
 
             playpause:
                 type: bool
-                oppo_command: control.playpause
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
+                oppo_command@instance: control.playpause
+                oppo_read@instance: true
+                oppo_write@instance: true
+                oppo_read_group@instance:
                 -   ALL
                 -   ALL.control
 
             stop:
                 type: bool
-                oppo_command: control.stop
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
+                oppo_command@instance: control.stop
+                oppo_read@instance: true
+                oppo_write@instance: true
+                oppo_read_group@instance:
                 -   ALL
                 -   ALL.control
 
             eject:
                 type: bool
-                oppo_command: control.eject
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.eject
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             chapter:
                 type: num
-                oppo_command: control.chapter
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
+                oppo_command@instance: control.chapter
+                oppo_read@instance: true
+                oppo_write@instance: true
+                oppo_read_group@instance:
                 -   ALL
                 -   ALL.control
 
             title:
                 type: num
-                oppo_command: control.title
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
+                oppo_command@instance: control.title
+                oppo_read@instance: true
+                oppo_write@instance: true
+                oppo_read_group@instance:
                 -   ALL
                 -   ALL.control
 
             next:
                 type: bool
-                oppo_command: control.next
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.next
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             previous:
                 type: bool
-                oppo_command: control.previous
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.previous
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             forward:
                 type: bool
-                oppo_command: control.forward
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.forward
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             reverse:
                 type: bool
-                oppo_command: control.reverse
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.reverse
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             audio:
                 type: bool
-                oppo_command: control.audio
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.audio
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             subtitle:
                 type: bool
-                oppo_command: control.subtitle
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.subtitle
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             repeat:
                 type: num
-                oppo_command: control.repeat
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.repeat
+                oppo_read@instance: true
+                oppo_write@instance: true
 
             input:
                 type: num
-                oppo_command: control.input
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.input
+                oppo_read@instance: true
+                oppo_write@instance: true
 
         menu:
 
             read:
                 type: bool
                 enforce_updates: true
-                oppo_read_group_trigger: ALL.menu
+                oppo_read_group_trigger@instance: ALL.menu
 
             home:
                 type: bool
-                oppo_command: menu.home
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.home
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             setup:
                 type: bool
-                oppo_command: menu.setup
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.setup
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             option:
                 type: bool
-                oppo_command: menu.option
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.option
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             info:
                 type: bool
-                oppo_command: menu.info
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.info
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             popup:
                 type: bool
-                oppo_command: menu.popup
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.popup
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             top:
                 type: bool
-                oppo_command: menu.top
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.top
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             osd:
                 type: bool
-                oppo_command: menu.osd
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.osd
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             pageup:
                 type: bool
-                oppo_command: menu.pageup
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.pageup
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             pagedown:
                 type: bool
-                oppo_command: menu.pagedown
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.pagedown
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             up:
                 type: bool
-                oppo_command: menu.up
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.up
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             down:
                 type: bool
-                oppo_command: menu.down
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.down
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             left:
                 type: bool
-                oppo_command: menu.left
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.left
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             right:
                 type: bool
-                oppo_command: menu.right
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.right
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             select:
                 type: bool
-                oppo_command: menu.select
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.select
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             back:
                 type: bool
-                oppo_command: menu.back
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.back
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             red:
                 type: bool
-                oppo_command: menu.red
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.red
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             green:
                 type: bool
-                oppo_command: menu.green
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.green
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             blue:
                 type: bool
-                oppo_command: menu.blue
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.blue
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             yellow:
                 type: bool
-                oppo_command: menu.yellow
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.yellow
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
     UDP-203:
@@ -1300,78 +1322,78 @@ item_structs:
         read:
             type: bool
             enforce_updates: true
-            oppo_read_group_trigger: UDP-203
+            oppo_read_group_trigger@instance: UDP-203
 
         info:
 
             read:
                 type: bool
                 enforce_updates: true
-                oppo_read_group_trigger: UDP-203.info
+                oppo_read_group_trigger@instance: UDP-203.info
 
             time:
 
                 read:
                     type: bool
                     enforce_updates: true
-                    oppo_read_group_trigger: UDP-203.info.time
+                    oppo_read_group_trigger@instance: UDP-203.info.time
 
                 totalelapsed:
                     type: str
-                    oppo_command: info.time.totalelapsed
-                    oppo_read: true
-                    oppo_write: false
-                    oppo_read_group:
+                    oppo_command@instance: info.time.totalelapsed
+                    oppo_read@instance: true
+                    oppo_write@instance: false
+                    oppo_read_group@instance:
                     -   UDP-203
                     -   UDP-203.info
                     -   UDP-203.info.time
 
                 totalremaining:
                     type: str
-                    oppo_command: info.time.totalremaining
-                    oppo_read: true
-                    oppo_write: false
-                    oppo_read_group:
+                    oppo_command@instance: info.time.totalremaining
+                    oppo_read@instance: true
+                    oppo_write@instance: false
+                    oppo_read_group@instance:
                     -   UDP-203
                     -   UDP-203.info
                     -   UDP-203.info.time
 
                 chapterelapsed:
                     type: str
-                    oppo_command: info.time.chapterelapsed
-                    oppo_read: true
-                    oppo_write: false
-                    oppo_read_group:
+                    oppo_command@instance: info.time.chapterelapsed
+                    oppo_read@instance: true
+                    oppo_write@instance: false
+                    oppo_read_group@instance:
                     -   UDP-203
                     -   UDP-203.info
                     -   UDP-203.info.time
 
                 chapterremaining:
                     type: str
-                    oppo_command: info.time.chapterremaining
-                    oppo_read: true
-                    oppo_write: false
-                    oppo_read_group:
+                    oppo_command@instance: info.time.chapterremaining
+                    oppo_read@instance: true
+                    oppo_write@instance: false
+                    oppo_read_group@instance:
                     -   UDP-203
                     -   UDP-203.info
                     -   UDP-203.info.time
 
                 titleelapsed:
                     type: str
-                    oppo_command: info.time.titleelapsed
-                    oppo_read: true
-                    oppo_write: false
-                    oppo_read_group:
+                    oppo_command@instance: info.time.titleelapsed
+                    oppo_read@instance: true
+                    oppo_write@instance: false
+                    oppo_read_group@instance:
                     -   UDP-203
                     -   UDP-203.info
                     -   UDP-203.info.time
 
                 titleremaining:
                     type: str
-                    oppo_command: info.time.titleremaining
-                    oppo_read: true
-                    oppo_write: false
-                    oppo_read_group:
+                    oppo_command@instance: info.time.titleremaining
+                    oppo_read@instance: true
+                    oppo_write@instance: false
+                    oppo_read_group@instance:
                     -   UDP-203
                     -   UDP-203.info
                     -   UDP-203.info.time
@@ -1381,162 +1403,162 @@ item_structs:
                 read:
                     type: bool
                     enforce_updates: true
-                    oppo_read_group_trigger: UDP-203.info.audio
+                    oppo_read_group_trigger@instance: UDP-203.info.audio
 
                 current:
                     type: num
-                    oppo_command: info.audio.current
-                    oppo_read: true
-                    oppo_write: false
+                    oppo_command@instance: info.audio.current
+                    oppo_read@instance: true
+                    oppo_write@instance: false
 
                 available:
                     type: num
-                    oppo_command: info.audio.available
-                    oppo_read: true
-                    oppo_write: false
+                    oppo_command@instance: info.audio.available
+                    oppo_read@instance: true
+                    oppo_write@instance: false
 
                 language:
                     type: str
-                    oppo_command: info.audio.language
-                    oppo_read: true
-                    oppo_write: false
+                    oppo_command@instance: info.audio.language
+                    oppo_read@instance: true
+                    oppo_write@instance: false
 
             subtitle:
 
                 read:
                     type: bool
                     enforce_updates: true
-                    oppo_read_group_trigger: UDP-203.info.subtitle
+                    oppo_read_group_trigger@instance: UDP-203.info.subtitle
 
                 current:
                     type: num
-                    oppo_command: info.subtitle.current
-                    oppo_read: true
-                    oppo_write: false
+                    oppo_command@instance: info.subtitle.current
+                    oppo_read@instance: true
+                    oppo_write@instance: false
 
                 available:
                     type: num
-                    oppo_command: info.subtitle.available
-                    oppo_read: true
-                    oppo_write: false
+                    oppo_command@instance: info.subtitle.available
+                    oppo_read@instance: true
+                    oppo_write@instance: false
 
                 language:
                     type: str
-                    oppo_command: info.subtitle.language
-                    oppo_read: true
-                    oppo_write: false
+                    oppo_command@instance: info.subtitle.language
+                    oppo_read@instance: true
+                    oppo_write@instance: false
 
             firmware:
                 type: str
-                oppo_command: info.firmware
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.firmware
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   UDP-203
                 -   UDP-203.info
-                oppo_read_initial: true
+                oppo_read_initial@instance: true
 
             status:
                 type: str
-                oppo_command: info.status
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.status
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   UDP-203
                 -   UDP-203.info
-                oppo_read_initial: true
+                oppo_read_initial@instance: true
 
             disctype:
                 type: str
-                oppo_command: info.disctype
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.disctype
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   UDP-203
                 -   UDP-203.info
-                oppo_read_initial: true
+                oppo_read_initial@instance: true
 
             totaltracks:
                 type: num
-                oppo_command: info.totaltracks
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.totaltracks
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   UDP-203
                 -   UDP-203.info
-                oppo_read_initial: true
+                oppo_read_initial@instance: true
 
             displaytype:
                 type: str
-                oppo_command: info.displaytype
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: info.displaytype
+                oppo_read@instance: true
+                oppo_write@instance: true
 
             audiotype:
                 type: str
-                oppo_command: info.audiotype
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.audiotype
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   UDP-203
                 -   UDP-203.info
-                oppo_read_initial: true
+                oppo_read_initial@instance: true
 
             channels:
                 type: str
-                oppo_command: info.channels
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.channels
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   UDP-203
                 -   UDP-203.info
 
             trackinfo:
                 type: num
-                oppo_command: info.trackinfo
-                oppo_read: true
-                oppo_write: false
-                oppo_read_group:
+                oppo_command@instance: info.trackinfo
+                oppo_read@instance: true
+                oppo_write@instance: false
+                oppo_read_group@instance:
                 -   UDP-203
                 -   UDP-203.info
 
             inputresolution:
                 type: str
-                oppo_command: info.inputresolution
-                oppo_read: true
-                oppo_write: false
+                oppo_command@instance: info.inputresolution
+                oppo_read@instance: true
+                oppo_write@instance: false
 
             outputresolution:
                 type: str
-                oppo_command: info.outputresolution
-                oppo_read: true
-                oppo_write: false
+                oppo_command@instance: info.outputresolution
+                oppo_read@instance: true
+                oppo_write@instance: false
 
             aspectratio:
                 type: str
-                oppo_command: info.aspectratio
-                oppo_read: true
-                oppo_write: false
+                oppo_command@instance: info.aspectratio
+                oppo_read@instance: true
+                oppo_write@instance: false
 
             U3D:
                 type: str
-                oppo_command: info.U3D
-                oppo_read: true
-                oppo_write: false
+                oppo_command@instance: info.U3D
+                oppo_read@instance: true
+                oppo_write@instance: false
 
         general:
 
             read:
                 type: bool
                 enforce_updates: true
-                oppo_read_group_trigger: UDP-203.general
+                oppo_read_group_trigger@instance: UDP-203.general
 
             verbose:
                 type: num
-                oppo_command: general.verbose
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
+                oppo_command@instance: general.verbose
+                oppo_read@instance: true
+                oppo_write@instance: true
+                oppo_read_group@instance:
                 -   UDP-203
                 -   UDP-203.general
                 cache: true
@@ -1544,272 +1566,272 @@ item_structs:
 
             hdmiresolution:
                 type: str
-                oppo_command: general.hdmiresolution
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
+                oppo_command@instance: general.hdmiresolution
+                oppo_read@instance: true
+                oppo_write@instance: true
+                oppo_read_group@instance:
                 -   UDP-203
                 -   UDP-203.general
-                oppo_read_initial: true
+                oppo_read_initial@instance: true
 
         control:
 
             read:
                 type: bool
                 enforce_updates: true
-                oppo_read_group_trigger: UDP-203.control
+                oppo_read_group_trigger@instance: UDP-203.control
 
             power:
                 type: bool
-                oppo_command: control.power
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
+                oppo_command@instance: control.power
+                oppo_read@instance: true
+                oppo_write@instance: true
+                oppo_read_group@instance:
                 -   UDP-203
                 -   UDP-203.control
-                oppo_read_initial: true
+                oppo_read_initial@instance: true
 
             pureaudio:
                 type: bool
-                oppo_command: control.pureaudio
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.pureaudio
+                oppo_read@instance: true
+                oppo_write@instance: true
 
             playpause:
                 type: bool
-                oppo_command: control.playpause
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
+                oppo_command@instance: control.playpause
+                oppo_read@instance: true
+                oppo_write@instance: true
+                oppo_read_group@instance:
                 -   UDP-203
                 -   UDP-203.control
 
             stop:
                 type: bool
-                oppo_command: control.stop
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
+                oppo_command@instance: control.stop
+                oppo_read@instance: true
+                oppo_write@instance: true
+                oppo_read_group@instance:
                 -   UDP-203
                 -   UDP-203.control
 
             eject:
                 type: bool
-                oppo_command: control.eject
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.eject
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             chapter:
                 type: num
-                oppo_command: control.chapter
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
+                oppo_command@instance: control.chapter
+                oppo_read@instance: true
+                oppo_write@instance: true
+                oppo_read_group@instance:
                 -   UDP-203
                 -   UDP-203.control
 
             title:
                 type: num
-                oppo_command: control.title
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
+                oppo_command@instance: control.title
+                oppo_read@instance: true
+                oppo_write@instance: true
+                oppo_read_group@instance:
                 -   UDP-203
                 -   UDP-203.control
 
             next:
                 type: bool
-                oppo_command: control.next
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.next
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             previous:
                 type: bool
-                oppo_command: control.previous
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.previous
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             forward:
                 type: bool
-                oppo_command: control.forward
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.forward
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             reverse:
                 type: bool
-                oppo_command: control.reverse
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.reverse
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             audio:
                 type: bool
-                oppo_command: control.audio
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.audio
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             subtitle:
                 type: bool
-                oppo_command: control.subtitle
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.subtitle
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             repeat:
                 type: num
-                oppo_command: control.repeat
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.repeat
+                oppo_read@instance: true
+                oppo_write@instance: true
 
             input:
                 type: num
-                oppo_command: control.input
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: control.input
+                oppo_read@instance: true
+                oppo_write@instance: true
 
         menu:
 
             read:
                 type: bool
                 enforce_updates: true
-                oppo_read_group_trigger: UDP-203.menu
+                oppo_read_group_trigger@instance: UDP-203.menu
 
             home:
                 type: bool
-                oppo_command: menu.home
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.home
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             setup:
                 type: bool
-                oppo_command: menu.setup
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.setup
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             option:
                 type: bool
-                oppo_command: menu.option
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.option
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             info:
                 type: bool
-                oppo_command: menu.info
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.info
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             popup:
                 type: bool
-                oppo_command: menu.popup
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.popup
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             top:
                 type: bool
-                oppo_command: menu.top
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.top
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             osd:
                 type: bool
-                oppo_command: menu.osd
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.osd
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             pageup:
                 type: bool
-                oppo_command: menu.pageup
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.pageup
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             pagedown:
                 type: bool
-                oppo_command: menu.pagedown
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.pagedown
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             up:
                 type: bool
-                oppo_command: menu.up
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.up
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             down:
                 type: bool
-                oppo_command: menu.down
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.down
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             left:
                 type: bool
-                oppo_command: menu.left
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.left
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             right:
                 type: bool
-                oppo_command: menu.right
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.right
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             select:
                 type: bool
-                oppo_command: menu.select
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.select
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             back:
                 type: bool
-                oppo_command: menu.back
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.back
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             red:
                 type: bool
-                oppo_command: menu.red
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.red
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             green:
                 type: bool
-                oppo_command: menu.green
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.green
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             blue:
                 type: bool
-                oppo_command: menu.blue
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.blue
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 
             yellow:
                 type: bool
-                oppo_command: menu.yellow
-                oppo_read: true
-                oppo_write: true
+                oppo_command@instance: menu.yellow
+                oppo_read@instance: true
+                oppo_write@instance: true
                 enforce_updates: true
 plugin_functions: NONE
 logic_parameters: NONE

@@ -1,12 +1,14 @@
 
 plugin:
     type: interface
-    description: Logitech Mediaserver
+    description:
+      de: Logitech Mediaserver
+      en: Logitech Mediaserver
     maintainer: OnkelAndy
     tester: Morg
     state: develop
     keywords: iot device logitechmediaserver lms sdp av
-    version: 1.5.3
+    version: '1.5.3'
     sh_minversion: '1.9.5'
     py_minversion: '3.7'
     sdp_minversion: '1.0.3'
@@ -135,17 +137,18 @@ parameters:
         description:
             de: Anzahl Sendeversuche
             en: number of sending retries
+
         description_long:
-            de: 'Anzahl Sendeversuche\n
+            de: |
+                Anzahl Sendeversuche\n
                 Kommt keine (passende) Antwort nach dem Senden
                 eines Commands zurück, wird das Kommando nochmals
                 gesendet, sofern der Wert über 0 liegt.
-                '
-            en: 'number of sending retries\n
+            en: |
+                number of sending retries\n
                 If no (suiting) answer is received after sending
                 a command the command is resent as long as this
                 value is more than 0.
-                '
 
     sendretry_cycle:
         type: num
@@ -155,17 +158,18 @@ parameters:
         description:
             de: Pause zwischen Durchgängen von Sendeversuchen
             en: wait time between sending retry rounds
+
         description_long:
-            de: 'Pause zwischen Durchgängen von Sendeversuchen\n
+            de: |
+                Pause zwischen Durchgängen von Sendeversuchen\n
                 Sind Send Retries aktiv, wird ein Scheduler erstellt,
                 der im angegebenen Sekundentakt Kommandos erneut sendet,
                 zu denen keine (passenden) Antworten erhalten wurden.
-                '
-            en: 'wait time between sending retry rounds\n
+            en: |
+                wait time between sending retry rounds\n
                 If send retries are active, a scheduler gets added
                 that resends commands in the given cycle value (in seconds)
                 where no (suiting) answer got received.
-                '
 
     delay_initial_read:
         type: num
@@ -178,9 +182,10 @@ parameters:
     resume_initial_read:
         type: bool
         defaul: false
+
         description:
-            de: 'Bei resume vom Plugin erstmaliges Lesen erneut durchführen'
-            en: 'Repeat initial read on resume'
+            de: Bei resume vom Plugin erstmaliges Lesen erneut durchführen
+            en: Repeat initial read on resume
 
 item_attributes:
 
@@ -241,8 +246,26 @@ item_attributes:
             en: The lookup table with the given name will be assigned to the item in dict or list format once on startup.
 
         description_long:
-            de: "Der Inhalt der Lookup-Tabelle mit dem angegebenen Namen wird beim\nStart einmalig als dict oder list in das Item geschrieben.\n\n\nDurch Anhängen von \"#<mode>\" an den Namen der Tabelle kann die Art\nder Tabelle ausgewählt werden:\n- fwd liefert die Tabelle Gerät -> SmartHomeNG (Standard)\n- rev liefert die Tabelle SmartHomeNG -> Gerät\n- rci liefert die Tabelle SmarthomeNG -> Gerät in Kleinbuchstaben\n- list liefert die Liste der Namen für SmartHomeNG (z.B. für Auswahllisten in der Visu)"
-            en: "The lookup table with the given name will be assigned to the item\nin dict or list format once on startup.\n\n\nBy appending \"#<mode>\" to the tables name the type of table can\nbe selected:\n- fwd returns the table device -> SmartHomeNG (default)\n- rev returns the table SmartHomeNG -> device\n- rci returns the table SmartHomeNG -> device in lower case\n- list return the list of names for SmartHomeNG (e.g. for selection dropdowns in visu applications)"
+            de: |-
+                Der Inhalt der Lookup-Tabelle mit dem angegebenen Namen wird beim
+                Start einmalig als dict oder list in das Item geschrieben.
+
+                Durch Anhängen von "#<mode>" an den Namen der Tabelle kann die Art
+                der Tabelle ausgewählt werden:
+                - fwd liefert die Tabelle Gerät -> SmartHomeNG (Standard)
+                - rev liefert die Tabelle SmartHomeNG -> Gerät
+                - rci liefert die Tabelle SmarthomeNG -> Gerät in Kleinbuchstaben
+                - list liefert die Liste der Namen für SmartHomeNG (z.B. für Auswahllisten in der Visu)
+            en: |-
+                The lookup table with the given name will be assigned to the item
+                in dict or list format once on startup.
+
+                By appending "#<mode>" to the tables name the type of table can
+                be selected:
+                - fwd returns the table device -> SmartHomeNG (default)
+                - rev returns the table SmartHomeNG -> device
+                - rci returns the table SmartHomeNG -> device in lower case
+                - list return the list of names for SmartHomeNG (e.g. for selection dropdowns in visu applications)
 
     sqb_custom1:
         type: str
@@ -382,7 +405,7 @@ item_structs:
             duration_format:
                 type: str
                 eval: "'{}d {}h {}i {}s'.format(int(sh...()//86400), int((sh...()%86400)//3600), int((sh...()%3600)//60), round((sh...()%3600)%60))"
-                eval_trigger: ..
+                eval_trigger: '..'
 
         totalartists:
             type: num
@@ -1146,7 +1169,7 @@ item_structs:
                 duration_format:
                     type: str
                     eval: "'{}d {}h {}i {}s'.format(int(sh...()//86400), int((sh...()%86400)//3600), int((sh...()%3600)//60), round((sh...()%3600)%60))"
-                    eval_trigger: ..
+                    eval_trigger: '..'
 
             totalartists:
                 type: num
