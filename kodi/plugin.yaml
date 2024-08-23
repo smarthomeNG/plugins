@@ -102,7 +102,7 @@ parameters:
             de: Anzahl von Durchgängen vor Verbindungsabbruch oder Suspend-Modus
             en: number of connect rounds before giving up / entering suspend mode
 
-    message_timeout:
+    send_timeout:
         type: num
         default: 5
 
@@ -110,7 +110,7 @@ parameters:
             de: Timeout für Antwort auf Protokollebene
             en: timeout for reply at protocol level
 
-    message_repeat:
+    send_retries:
         type: num
         default: 3
 
@@ -125,39 +125,6 @@ parameters:
         description:
             de: Port für Netzwerkverbindung
             en: network port
-
-    conn_type:
-        type: str
-        default: net_tcp_client
-        valid_list:
-        -   ''
-        -   net_tcp_client
-
-        description:
-            de: Verbindungstyp
-            en: connection type
-
-    protocol:
-        type: str
-        default: jsonrpc
-        valid_list:
-        -   ''
-        -   jsonrpc
-
-        description:
-            de: Protokolltyp für Verbindung
-            en: protocol type for connection
-
-    command_class:
-        type: str
-        default: SDPCommandJSON
-        valid_list:
-        -   SDPCommand
-        -   SDPCommandJSON
-
-        description:
-            de: Klasse für Verarbeitung von Kommandos
-            en: class for command processing
 
 item_attributes:
 
