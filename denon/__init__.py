@@ -57,10 +57,6 @@ class denon(SmartDevicePlugin):
 
     PLUGIN_VERSION = '1.0.1'
 
-    def on_connect(self, by=None):
-        self.logger.debug("Checking for custom input names.")
-        self.send_command('general.custom_inputnames')
-
     def _set_device_defaults(self):
         self._use_callbacks = True
         self._custom_inputnames = {}
