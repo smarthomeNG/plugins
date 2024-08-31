@@ -46,6 +46,7 @@ class SmartVisuInstallWidgets:
             self.pgbdir = os.path.join(self.smartvisu_dir, 'dropins')
             self.icndir_ws = os.path.join(self.smartvisu_dir, 'dropins/icons/ws')
             self.icndir_sw = os.path.join(self.smartvisu_dir, 'dropins/icons/sw')
+        #if self.smartvisu_version >= '3.0' and self.smartvisu_version <= '3.4':
         if self.smartvisu_version >= '3.0':
             # v3.x
             self.outdir = os.path.join(self.smartvisu_dir, 'dropins/shwidgets')
