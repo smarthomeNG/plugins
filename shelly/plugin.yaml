@@ -12,7 +12,7 @@ plugin:
 #    documentation: http://smarthomeng.de/user/plugins/mqtt2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1451853-support-thread-für-das-shelly-plugin
 
-    version: 1.8.2                 # Plugin version
+    version: 1.8.3                 # Plugin version
     sh_minversion: '1.9.5.6'         # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -123,17 +123,20 @@ item_structs:
 
         online:
             type: bool
+            description: State of Shelly device (online/offline)
             shelly_id: ..:.
             shelly_type: ..:.
             shelly_attr: online
         power:
             type: num
+            description: Power consumption
             shelly_id: ..:.
             shelly_type: ..:.
             shelly_group: "switch:0"
             shelly_attr: power
         energy:
             type: num
+            description: Energy measured in Milliwatt
             shelly_id: ..:.
             shelly_type: ..:.
             shelly_group: "switch:0"
@@ -146,11 +149,13 @@ item_structs:
         #shelly_attr: relay
         temp:
             type: num
+            description: Temperature of Shelly device measured in °C
             shelly_id: ..:.
             shelly_type: ..:.
             shelly_attr: temp
         temp_f:
             type: num
+            description: Temperature of Shelly device measured in °F
             shelly_id: ..:.
             shelly_type: ..:.
             shelly_attr: temp_f
@@ -170,22 +175,36 @@ item_structs:
         #shelly_attr: relay
         voltage:
             type: num
+            description: Voltage of switched outlet of Shelly device measured in Volt
             shelly_id: ..:.
             shelly_type: ..:.
             shelly_group: "switch:0"
             shelly_attr: voltage
         current:
             type: num
+            description: Current on switched outlet of Shelly device measured in Ampere
             shelly_id: ..:.
             shelly_type: ..:.
             shelly_group: "switch:0"
             shelly_attr: current
         energy_by_minute:
             type: num
+            cache: True
+            description: Energy by minute measured in Milliwatt/minute
             shelly_id: ..:.
             shelly_type: ..:.
             shelly_group: "switch:0"
             shelly_attr: energy_by_minute
+        energy_wh:
+            type: num
+            description: Calculated energy measured in Wh
+            eval: round(sh...energy_by_minute() *60 /1000, 4)
+            eval_trigger: ..energy_by_minute
+        energy_kwh:
+            type: num
+            description: Calculated energy measured in kWh
+            eval: round(sh...energy_wh() /1000, 4)
+            eval_trigger: ..energy_wh
 
     shellyht:
         name: WLAN Temperatur & Feuchtesensor (Zwischenstecker)
@@ -238,10 +257,12 @@ item_structs:
             shelly_attr: illumination
         temp:
             type: num
+            description: Temperature of Shelly device measured in °C
             shelly_id: ..:.
             shelly_attr: temp
         temp_f:
             type: num
+            description: Temperature of Shelly device measured in °F
             shelly_id: ..:.
             shelly_attr: temp_f
         battery:
@@ -251,6 +272,7 @@ item_structs:
             shelly_attr: battery
         voltage:
             type: num
+            description: Voltage on switched outlet of Shelly device measured in Volt
             shelly_id: ..:.
             shelly_group: sensor
             shelly_attr: voltage
@@ -282,6 +304,7 @@ item_structs:
             shelly_attr: online
         temp:
             type: num
+            description: Temperature of Shelly device measured in °C
             shelly_id: ..:.
             shelly_type: ..:.
             shelly_attr: temp
