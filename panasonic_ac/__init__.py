@@ -63,7 +63,7 @@ class PanComfortCloud(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '0.3.0'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = '0.3.1'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
 
     def __init__(self, sh):
         """
