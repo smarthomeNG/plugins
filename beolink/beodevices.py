@@ -234,20 +234,22 @@ class BeoDevices():
             self.beodeviceinfo[beo_id]['device']['audiomode'] = ['-', -1]
             self.beodeviceinfo[beo_id]['device']['stand'] = ['-', -1]
         else:
-            self.beodeviceinfo[beo_id]['source']['source'] = self.get_beo_api(ip, '/BeoZone/Zone/ActiveSources', ['primaryExperience','source','friendlyName'])
+            try:
+                self.beodeviceinfo[beo_id]['source']['source'] = self.get_beo_api(ip, '/BeoZone/Zone/ActiveSources', ['primaryExperience','source','friendlyName'])
 
-            # get picture-mode of the B&O device
-            self.beodeviceinfo[beo_id]['device']['videomode'] = list(self.read_list_value(ip, '/Picture/Mode', 'mode'))
-            self.logger.debug("update_deviceinfo: ip: {} videomode-friendly = {}".format(ip, self.beodeviceinfo[beo_id]['device']['videomode']))
+                # get picture-mode of the B&O device
+                self.beodeviceinfo[beo_id]['device']['videomode'] = list(self.read_list_value(ip, '/Picture/Mode', 'mode'))
+                self.logger.debug("update_deviceinfo: ip: {} videomode-friendly = {}".format(ip, self.beodeviceinfo[beo_id]['device']['videomode']))
 
-            # get sound-mode of the B&O device
-            self.beodeviceinfo[beo_id]['device']['audiomode'] = list(self.read_list_value(ip, '/Sound/Mode', 'mode'))
-            self.logger.debug("update_deviceinfo: ip: {} audiomode-friendly = {}".format(ip, self.beodeviceinfo[beo_id]['device']['audiomode']))
+                # get sound-mode of the B&O device
+                self.beodeviceinfo[beo_id]['device']['audiomode'] = list(self.read_list_value(ip, '/Sound/Mode', 'mode'))
+                self.logger.debug("update_deviceinfo: ip: {} audiomode-friendly = {}".format(ip, self.beodeviceinfo[beo_id]['device']['audiomode']))
 
-            # get stand position of the B&O device
-            self.beodeviceinfo[beo_id]['device']['stand'] = list(self.read_list_value(ip, '/Stand', 'stand'))
-            self.logger.debug("update_deviceinfo: ip: {} stand-friendly = {}".format(ip, self.beodeviceinfo[beo_id]['device']['stand']))
-
+                # get stand position of the B&O device
+                self.beodeviceinfo[beo_id]['device']['stand'] = list(self.read_list_value(ip, '/Stand', 'stand'))
+                self.logger.debug("update_deviceinfo: ip: {} stand-friendly = {}".format(ip, self.beodeviceinfo[beo_id]['device']['stand']))
+            except Exception as ex:
+                self.logger.warning(f"beodevices/update_deviceinfo: {beo_id} - Exception '{ex}'")
         # get possible sources of the B&O device
         #raw_sources = self.get_beo_api(ip, '/BeoZone/Zone/Sources', [])
         #self.beodeviceinfo[beo_id]['sources'] = []
