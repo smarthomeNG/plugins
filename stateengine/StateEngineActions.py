@@ -308,7 +308,7 @@ class SeActions(StateEngineTools.SeItemChild):
             del self.__unassigned_previousconditionsets[name]
 
         if name in self.__unassigned_previousstate_conditionsets:
-            _issue = action.update_previousconditionset(self.__unassigned_previousstate_conditionsets[name])
+            _issue = action.update_previousstate_conditionset(self.__unassigned_previousstate_conditionsets[name])
             if _issue:
                 _issue_list.append(_issue)
             del self.__unassigned_previousstate_conditionsets[name]
