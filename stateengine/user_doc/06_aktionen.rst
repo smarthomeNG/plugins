@@ -409,6 +409,17 @@ Die Abfrage erfolgt dabei nach den gleichen Regeln wie bei ``conditionset`` oben
 soll, wenn die Bedingungsgruppe, mit der der vorherige Zustand eingenommen wurde, mit dem angegebenen Ausdruck übereinstimmt.
 Die Abfrage erfolgt dabei ebenfalls nach den gleichen Regeln wie bei ``conditionset`` oben angegeben.
 
+**next_conditionset: <conditionset regex>**
+
+.. code-block:: yaml
+
+      next_conditionset: regex:enter_(.*)_test"
+
+Über das Attribut wird festgelegt, dass die Aktion nur dann ausgeführt werden
+soll, wenn die Bedingungsgruppe, mit der der zukünftige Zustand eingenommen wird, mit dem angegebenen Ausdruck übereinstimmt.
+Die Abfrage erfolgt dabei ebenfalls nach den gleichen Regeln wie bei ``conditionset`` oben angegeben.
+Diese Angabe ist primär bei leave_actions sinnvoll.
+
 Templates für Aktionen
 ----------------------
 
