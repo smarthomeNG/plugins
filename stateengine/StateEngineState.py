@@ -379,13 +379,16 @@ class SeState(StateEngineTools.SeItemChild):
         # use item name as state name
         if "se_name" in item_state.conf:
             self.__text.set_from_attr(item_state, "se_name")
+            self._log_develop("Updated name of state {} to {} based on se_name.", item_state, self.__name)
         elif str(item_state) != item_state.property.path or (self.__name == "" and recursion_depth == 0):
             _name = str(item_state).split('.')[-1]
             self.__text.set(_name)
+            self._log_develop("Updated name of state {} to {} based on item name (recursion_depth = {}).",
+                              item_state, self.__name, recursion_depth)
         elif self.__text.is_empty() and recursion_depth == 0:
             self.__text.set("value:" + self.__name)
+            self._log_develop("Set name of state {} to {} as it was empty.", item_state, self.__name)
         self.__name = self.text
-        self._log_develop("Updated name of state {} to {}.", item_state, self.__name)
         return self.__name
 
     def __fill_list(self, item_states, recursion_depth, se_use=None, use=None):
@@ -679,7 +682,7 @@ class SeState(StateEngineTools.SeItemChild):
                 if child_name in action_mapping:
                     action_name, action_method = action_mapping[child_name]
                     for attribute in child_item.conf:
-                        self._log_develop("Filling state with {} action named {}", child_name, attribute)
+                        self._log_develop("Filling state with {} action named {} based on {}", child_name, attribute, state)
                         _action_counts[action_name] += 1
                         _, _action_status = action_method.update(attribute, child_item.conf[attribute])
                         if _action_status:
