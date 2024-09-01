@@ -71,6 +71,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self.__delay = StateEngineValue.SeValue(self._abitem, "delay")
         self.__repeat = None
         self.__instanteval = None
+        self.nextconditionset = StateEngineValue.SeValue(self._abitem, "nextconditionset", True, "str")
         self.conditionset = StateEngineValue.SeValue(self._abitem, "conditionset", True, "str")
         self.previousconditionset = StateEngineValue.SeValue(self._abitem, "previousconditionset", True, "str")
         self.previousstate_conditionset = StateEngineValue.SeValue(self._abitem, "previousstate_conditionset", True, "str")
@@ -118,6 +119,12 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def update_order(self, value):
         _, _, _issue, _ = self.__order.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'order',
+                               'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
+        return _issue
+
+    def update_nextconditionset(self, value):
+        _, _, _issue, _ = self.nextconditionset.set(value)
+        _issue = {self._name: {'issue': _issue, 'attribute': 'nextconditionset',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
@@ -197,6 +204,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
             self.__repeat.write_to_logger()
         if self.__instanteval is not None:
             self.__instanteval.write_to_logger()
+        if self.nextconditionset is not None:
+            self.nextconditionset.write_to_logger()
         if self.conditionset is not None:
             self.conditionset.write_to_logger()
         if self.previousconditionset is not None:
@@ -366,24 +375,28 @@ class SeActionBase(StateEngineTools.SeItemChild):
     # state: state item that triggered the action
     def execute(self, is_repeat: bool, allow_item_repeat: bool, state):
         # check if any conditiontype is met or not
-        # condition: type of condition 'conditionset'/'previousconditionset'/'previousstate_conditionset'
+        # condition: type of condition 'conditionset'/'previousconditionset'/'previousstate_conditionset'/'nextconditionset'
         def _check_condition(condition: str):
             _conditions_met_count = 0
             _conditions_necessary_count = 0
             _condition_to_meet = None
-            _updated__current_condition = None
+            _updated_current_condition = None
             if condition == 'conditionset':
                 _condition_to_meet = None if self.conditionset.is_empty() else self.conditionset.get()
                 _current_condition = self._abitem.get_lastconditionset_id()
-                _updated__current_condition = self._abitem.get_variable("current.state_id") if _current_condition == '' else _current_condition
+                _updated_current_condition = self._abitem.get_variable("current.state_id") if _current_condition == '' else _current_condition
             elif condition == 'previousconditionset':
                 _condition_to_meet = None if self.previousconditionset.is_empty() else self.previousconditionset.get()
                 _current_condition = self._abitem.get_previousconditionset_id()
-                _updated__current_condition = self._abitem.get_previousstate_id() if _current_condition == '' else _current_condition
+                _updated_current_condition = self._abitem.get_previousstate_id() if _current_condition == '' else _current_condition
             elif condition == 'previousstate_conditionset':
                 _condition_to_meet = None if self.previousstate_conditionset.is_empty() else self.previousstate_conditionset.get()
                 _current_condition = self._abitem.get_previousstate_conditionset_id()
-                _updated__current_condition = self._abitem.get_previousstate_id() if _current_condition == '' else _current_condition
+                _updated_current_condition = self._abitem.get_previousstate_id() if _current_condition == '' else _current_condition
+            elif condition == 'nextconditionset':
+                _condition_to_meet = None if self.nextconditionset.is_empty() else self.nextconditionset.get()
+                _current_condition = self._abitem.get_nextconditionset_id()
+                _updated_current_condition = self._abitem.get_variable("next.conditionset_id") if _current_condition == '' else _current_condition
             _condition_to_meet = _condition_to_meet if isinstance(_condition_to_meet, list) else [_condition_to_meet]
             _condition_met = []
             for cond in _condition_to_meet:
@@ -392,13 +405,13 @@ class SeActionBase(StateEngineTools.SeItemChild):
                     _orig_cond = cond
                     try:
                         cond = re.compile(cond)
-                        _matching = cond.fullmatch(_updated__current_condition)
+                        _matching = cond.fullmatch(_updated_current_condition)
                         if _matching:
-                            self._log_debug("Given {} {} matches current one: {}", condition, _orig_cond, _updated__current_condition)
-                            _condition_met.append(_updated__current_condition)
+                            self._log_debug("Given {} {} matches current one: {}", condition, _orig_cond, _updated_current_condition)
+                            _condition_met.append(_updated_current_condition)
                             _conditions_met_count += 1
                         else:
-                            self._log_debug("Given {} {} not matching current one: {}", condition, _orig_cond, _updated__current_condition)
+                            self._log_debug("Given {} {} not matching current one: {}", condition, _orig_cond, _updated_current_condition)
                     except Exception as ex:
                         if cond is not None:
                             self._log_warning("Given {} {} is not a valid regex: {}", condition, _orig_cond, ex)
@@ -513,7 +526,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 self._log_decrease_indent()
                 _delay_info = -1
             else:
-                self._waitforexecute(state, actionname, self._name, repeat_text, delay, current_condition_met, previous_condition_met, previousstate_condition_met)
+                self._waitforexecute(state, actionname, self._name, repeat_text, delay, current_condition_met, previous_condition_met, previousstate_condition_met, next_condition_met)
 
             _update_delay_webif('actions_stay', str(_delay_info))
             _update_delay_webif('actions_enter', str(_delay_info))
@@ -543,19 +556,21 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def get(self):
         return True
 
-    def _waitforexecute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", delay: int = 0, current_condition: list[str] = None, previous_condition: list[str] = None, previousstate_condition: list[str] = None):
+    def _waitforexecute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", delay: int = 0, current_condition: list[str] = None, previous_condition: list[str] = None, previousstate_condition: list[str] = None, next_condition: list[str] = None):
         if current_condition is None:
             current_condition = []
         if previous_condition is None:
             previous_condition = []
         if previousstate_condition is None:
             previousstate_condition = []
+        if next_condition is None:
+            next_condition = []
 
         self._log_decrease_indent(50)
         self._log_increase_indent()
         if delay == 0:
             self._log_info("Action '{}': Running.", namevar)
-            self.real_execute(state, actionname, namevar, repeat_text, None, False, current_condition, previous_condition, previousstate_condition)
+            self.real_execute(state, actionname, namevar, repeat_text, None, False, current_condition, previous_condition, previousstate_condition, next_condition)
         else:
             instanteval = None if self.__instanteval is None else self.__instanteval.get()
             self._log_info("Action '{0}': Add {1} second timer '{2}' "
@@ -565,7 +580,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
             if instanteval is True:
                 self._log_increase_indent()
                 self._log_debug("Evaluating value for delayed action '{}'.", namevar)
-                value = self.real_execute(state, actionname, namevar, repeat_text, None, True, current_condition, previous_condition, previousstate_condition)
+                value = self.real_execute(state, actionname, namevar, repeat_text, None, True, current_condition, previous_condition, previousstate_condition, next_condition)
                 self._log_debug("Value for delayed action is going to be '{}'.", value)
                 self._log_decrease_indent()
             else:
@@ -578,21 +593,21 @@ class SeActionBase(StateEngineTools.SeItemChild):
                                                  'current_condition': current_condition,
                                                  'previous_condition': previous_condition,
                                                  'previousstate_condition': previousstate_condition,
-                                                 'state': state}, next=next_run)
+                                                 'next_condition': next_condition, 'state': state}, next=next_run)
 
-    def _delayed_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, current_condition=None, previous_condition=None, previousstate_condition=None, state=None, caller=None):
+    def _delayed_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None, state=None, caller=None):
         if state:
             self._log_debug("Putting delayed action '{}' from state '{}' into queue. Caller: {}", namevar, state, caller)
-            self.__queue.put(["delayedaction", self, actionname, namevar, repeat_text, value, current_condition, previous_condition, previousstate_condition, state])
+            self.__queue.put(["delayedaction", self, actionname, namevar, repeat_text, value, current_condition, previous_condition, previousstate_condition, next_condition, state])
         else:
             self._log_debug("Putting delayed action '{}' into queue. Caller: {}", namevar, caller)
-            self.__queue.put(["delayedaction", self, actionname, namevar, repeat_text, value, current_condition, previous_condition, previousstate_condition])
+            self.__queue.put(["delayedaction", self, actionname, namevar, repeat_text, value, current_condition, previous_condition, previousstate_condition, next_condition])
         if not self._abitem.update_lock.locked():
             self._log_debug("Running queue")
             self._abitem.run_queue()
 
     # Really execute the action (needs to be implemented in derived classes)
-    def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None):
+    def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         raise NotImplementedError("Class {} doesn't implement real_execute()".format(self.__class__.__name__))
 
     def _getitem_fromeval(self):
@@ -680,7 +695,7 @@ class SeActionSetItem(SeActionBase):
         return True
 
     # Really execute the action (needs to be implemented in derived classes)
-    def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None):
+    def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         self._abitem.set_variable('current.action_name', namevar)
         self._log_increase_indent()
         if value is None:
@@ -713,9 +728,9 @@ class SeActionSetItem(SeActionBase):
                 self.update_webif_actionstatus(state, self._name, 'False')
                 return
 
-        self._execute_set_add_remove(state, actionname, namevar, repeat_text, self.__item, value, current_condition, previous_condition, previousstate_condition)
+        self._execute_set_add_remove(state, actionname, namevar, repeat_text, self.__item, value, current_condition, previous_condition, previousstate_condition, next_condition)
 
-    def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, current_condition, previous_condition, previousstate_condition):
+    def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, current_condition, previous_condition, previousstate_condition, next_condition):
         self._log_decrease_indent()
         self._log_debug("{0}: Set '{1}' to '{2}'{3}", actionname, item.property.path, value, repeat_text)
         source = self.set_source(current_condition, previous_condition, previousstate_condition)
@@ -751,12 +766,12 @@ class SeActionSetItem(SeActionBase):
         mindelta = self.__mindelta.get()
         if mindelta is None:
             result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval,
-                      'value': value, 'conditionset': self.conditionset.get(),
+                      'value': value, 'nextconditionset': self.nextconditionset.get(), 'conditionset': self.conditionset.get(),
                       'previousconditionset': self.previousconditionset.get(),
                       'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         else:
             result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval,
-                      'value': value, 'conditionset': self.conditionset.get(),
+                      'value': value, 'nextconditionset': self.nextconditionset.get(), 'conditionset': self.conditionset.get(),
                       'previousconditionset': self.previousconditionset.get(),
                       'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {},
                       'delta': str(self.__delta), 'mindelta': str(mindelta)}
@@ -799,7 +814,7 @@ class SeActionSetByattr(SeActionBase):
             self._log_debug("set by attribute: {0}", self.__byattr)
 
     # Really execute the action
-    def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None):
+    def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         self._abitem.set_variable('current.action_name', namevar)
         if returnvalue:
             return value
@@ -811,7 +826,7 @@ class SeActionSetByattr(SeActionBase):
             item(item.conf[self.__byattr], caller=self._caller, source=source)
 
     def get(self):
-        result = {'function': str(self._function), 'byattr': str(self.__byattr),
+        result = {'function': str(self._function), 'byattr': str(self.__byattr), 'nextconditionset': self.nextconditionset.get(),
                   'conditionset': self.conditionset.get(), 'previousconditionset': self.previousconditionset.get(),
                   'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
@@ -859,7 +874,7 @@ class SeActionTrigger(SeActionBase):
             self._log_debug("value: {0}", self.__value)
 
     # Really execute the action
-    def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None):
+    def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         self._abitem.set_variable('current.action_name', namevar)
         if value is None:
             try:
@@ -884,7 +899,7 @@ class SeActionTrigger(SeActionBase):
         except Exception:
             value = None
         result = {'function': str(self._function), 'logic': str(self.__logic),
-                  'value': value,
+                  'value': value, 'nextconditionset': self.nextconditionset.get(),
                   'conditionset': self.conditionset.get(), 'previousconditionset': self.previousconditionset.get(),
                   'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
@@ -932,7 +947,7 @@ class SeActionRun(SeActionBase):
             self._log_debug("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
 
     # Really execute the action
-    def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None):
+    def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         self._abitem.set_variable('current.action_name', namevar)
         self._log_increase_indent()
         if isinstance(self.__eval, str):
@@ -952,6 +967,8 @@ class SeActionRun(SeActionBase):
                     self._log_debug("Running eval {0} based on previous conditionset {1}", self.__eval, previous_condition)
                 if previousstate_condition:
                     self._log_debug("Running eval {0} based on previous state's conditionset {1}", self.__eval, previousstate_condition)
+                if next_condition:
+                    self._log_debug("Running eval {0} based on next_condition {1}", self.__eval, next_condition)
                 eval(self.__eval)
                 self.update_webif_actionstatus(state, self._name, 'True')
                 self._log_decrease_indent()
@@ -971,6 +988,8 @@ class SeActionRun(SeActionBase):
                     self._log_debug("Running eval {0} based on previous conditionset {1}", self.__eval, previous_condition)
                 if previousstate_condition:
                     self._log_debug("Running eval {0} based on previous state's conditionset {1}", self.__eval, previousstate_condition)
+                if next_condition:
+                    self._log_debug("Running eval {0} based on next conditionset {1}", self.__eval, next_condition)
                 self.__eval()
                 self.update_webif_actionstatus(state, self._name, 'True')
                 self._log_decrease_indent()
@@ -981,7 +1000,7 @@ class SeActionRun(SeActionBase):
                 self._log_error(text, actionname, StateEngineTools.get_eval_name(self.__eval), ex)
 
     def get(self):
-        result = {'function': str(self._function), 'eval': str(self.__eval),
+        result = {'function': str(self._function), 'eval': str(self.__eval), 'nextconditionset': self.nextconditionset.get(),
                   'conditionset': self.conditionset.get(), 'previousconditionset': self.previousconditionset.get(),
                   'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
@@ -1072,7 +1091,7 @@ class SeActionForceItem(SeActionBase):
 
     # Really execute the action (needs to be implemented in derived classes)
     # noinspection PyProtectedMember
-    def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None):
+    def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         self._abitem.set_variable('current.action_name', namevar)
         self._log_increase_indent()
         if value is None:
@@ -1158,12 +1177,12 @@ class SeActionForceItem(SeActionBase):
         mindelta = self.__mindelta.get()
         if mindelta is None:
             result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval,
-                      'value': value, 'conditionset': self.conditionset.get(),
+                      'value': value, 'nextconditionset': self.nextconditionset.get(), 'conditionset': self.conditionset.get(),
                       'previousconditionset': self.previousconditionset.get(),
                       'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         else:
             result = {'function': str(self._function), 'item': item, 'item_from_eval': item_from_eval,
-                      'value': value, 'conditionset': self.conditionset.get(),
+                      'value': value, 'nextconditionset': self.nextconditionset.get(), 'conditionset': self.conditionset.get(),
                       'previousconditionset': self.previousconditionset.get(),
                       'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {},
                       'delta': str(self.__delta), 'mindelta': str(mindelta)}
@@ -1219,7 +1238,7 @@ class SeActionSpecial(SeActionBase):
             self._log_debug("Retrigger item: {0}", self.__value.property.path)
 
     # Really execute the action
-    def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None):
+    def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         self._abitem.set_variable('current.action_name', namevar)
         if returnvalue:
             return None
@@ -1227,11 +1246,11 @@ class SeActionSpecial(SeActionBase):
             _log_value = self.__value.property.path
         except Exception:
             _log_value = self.__value
-        self._log_info("{0}: Executing special action '{1}' using item '{2}' based on '{3}/{4}/{5}'.{6}",
-                       actionname, self.__special, _log_value, current_condition, previous_condition, previousstate_condition, repeat_text)
+        self._log_info("{0}: Executing special action '{1}' using item '{2}' based on current condition {3} / previous condition {4} / previousstate condition {5} / next_condition {6}.{7}",
+                       actionname, self.__special, _log_value, current_condition, previous_condition, previousstate_condition, next_condition, repeat_text)
         self._log_increase_indent()
         if self.__special == "suspend":
-            self.suspend_execute(state, current_condition, previous_condition, previousstate_condition)
+            self.suspend_execute(state, current_condition, previous_condition, previousstate_condition, next_condition)
             if self._suspend_issue in ["", [], None, [None]]:
                 self.update_webif_actionstatus(state, self._name, 'True')
             else:
@@ -1312,7 +1331,7 @@ class SeActionSpecial(SeActionBase):
             raise ValueError("Action {0}: {1}".format(self._name, text))
         return se_item
 
-    def suspend_execute(self, state=None, current_condition=None, previous_condition=None, previousstate_condition=None):
+    def suspend_execute(self, state=None, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         suspend_item, _issue = self._abitem.return_item(self.__value[0])
         _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': state.id, 'action': 'suspend'}]}}
         source = "SuspendAction, {}".format(self.set_source(current_condition, previous_condition, previousstate_condition))
@@ -1346,7 +1365,7 @@ class SeActionSpecial(SeActionBase):
                 except Exception:
                     pass
         result = {'function': str(self._function), 'special': str(self.__special),
-                  'value': str(value_result), 'conditionset': self.conditionset.get(),
+                  'value': str(value_result), 'nextconditionset': self.nextconditionset.get(), 'conditionset': self.conditionset.get(),
                   'previousconditionset': self.previousconditionset.get(),
                   'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
@@ -1368,7 +1387,7 @@ class SeActionAddItem(SeActionSetItem):
         SeActionSetItem.write_to_logger(self)
         SeActionBase.write_to_logger(self)
 
-    def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, current_condition=None, previous_condition=None, previousstate_condition=None):
+    def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         value = value if isinstance(value, list) else [value]
         self._log_debug("{0}: Add '{1}' to '{2}'.{3}", actionname, value, item.property.path, repeat_text)
         value = item.property.value + value
@@ -1394,7 +1413,7 @@ class SeActionAddItem(SeActionSetItem):
         except Exception:
             value = None
         result = {'function': str(self._function), 'item': item,
-                  'value': value, 'conditionset': self.conditionset.get(),
+                  'value': value, 'nextconditionset': self.nextconditionset.get(), 'conditionset': self.conditionset.get(),
                   'previousconditionset': self.previousconditionset.get(),
                   'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
@@ -1416,7 +1435,7 @@ class SeActionRemoveFirstItem(SeActionSetItem):
         SeActionSetItem.write_to_logger(self)
         SeActionBase.write_to_logger(self)
 
-    def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, current_condition=None, previous_condition=None, previousstate_condition=None):
+    def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         currentvalue = item.property.value
         value = value if isinstance(value, list) else [value]
         for v in value:
@@ -1448,7 +1467,7 @@ class SeActionRemoveFirstItem(SeActionSetItem):
         except Exception:
             value = None
         result = {'function': str(self._function), 'item': item,
-                  'value': value, 'conditionset': self.conditionset.get(),
+                  'value': value, 'nextconditionset': self.nextconditionset.get(), 'conditionset': self.conditionset.get(),
                   'previousconditionset': self.previousconditionset.get(),
                   'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
@@ -1470,7 +1489,7 @@ class SeActionRemoveLastItem(SeActionSetItem):
         SeActionSetItem.write_to_logger(self)
         SeActionBase.write_to_logger(self)
 
-    def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, current_condition=None, previous_condition=None, previousstate_condition=None):
+    def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         currentvalue = item.property.value
         value = value if isinstance(value, list) else [value]
         for v in value:
@@ -1504,7 +1523,7 @@ class SeActionRemoveLastItem(SeActionSetItem):
         except Exception:
             value = None
         result = {'function': str(self._function), 'item': item,
-                  'value': value, 'conditionset': self.conditionset.get(),
+                  'value': value, 'nextconditionset': self.nextconditionset.get(), 'conditionset': self.conditionset.get(),
                   'previousconditionset': self.previousconditionset.get(),
                   'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result
@@ -1526,7 +1545,7 @@ class SeActionRemoveAllItem(SeActionSetItem):
         SeActionSetItem.write_to_logger(self)
         SeActionBase.write_to_logger(self)
 
-    def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, current_condition=None, previous_condition=None, previousstate_condition=None):
+    def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         currentvalue = item.property.value
         value = value if isinstance(value, list) else [value]
         for v in value:
@@ -1558,7 +1577,7 @@ class SeActionRemoveAllItem(SeActionSetItem):
         except Exception:
             value = None
         result = {'function': str(self._function), 'item': item,
-                  'value': value, 'conditionset': self.conditionset.get(),
+                  'value': value, 'nextconditionset': self.nextconditionset.get(), 'conditionset': self.conditionset.get(),
                   'previousconditionset': self.previousconditionset.get(),
                   'previousstate_conditionset': self.previousstate_conditionset.get(), 'actionstatus': {}}
         return result

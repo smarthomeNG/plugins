@@ -112,6 +112,10 @@ class SeItem:
         self.__default_instant_leaveaction.set(value)
 
     @property
+    def nextconditionset(self):
+        return self.__nextconditionset_id
+
+    @property
     def laststate(self):
         _returnvalue = None if self.__laststate_item_id is None else self.__laststate_item_id.property.value
         return _returnvalue
@@ -266,6 +270,8 @@ class SeItem:
         self.__config_issues.update(_issue)
 
         # Init lastconditionset items/values
+        self.__nextconditionset_id = ""
+        self.__nextconditionset_name = ""
         self.__lastconditionset_item_id, _issue = self.return_item_by_attribute("se_lastconditionset_item_id")
         self.__lastconditionset_internal_id = "" if self.__lastconditionset_item_id is None else \
             self.__lastconditionset_item_id.property.value
@@ -338,6 +344,8 @@ class SeItem:
             "release.has_released": "",
             "release.was_released_by": "",
             "release.will_release": "",
+            "next.conditionset_id": "",
+            "next.conditionset_name": "",
             "current.state_id": "",
             "current.state_name": "",
             "current.conditionset_id": "",
@@ -532,11 +540,11 @@ class SeItem:
             elif job[0] == "delayedaction":
                 self.__logger.debug("Job {}", job)
                 (_, action, actionname, namevar, repeat_text, value, current_condition, previous_condition,
-                 previousstate_condition, state) = job
+                 previousstate_condition, next_condition, state) = job
                 self.__logger.info(
-                    "Running delayed action: {0} based on current condition {1} or previous condition {2}",
-                    actionname, current_condition, previous_condition)
-                action.real_execute(state, actionname, namevar, repeat_text, value, False, current_condition)
+                    "Running delayed action: {0} based on current_condition {1} / previous_condition {2} / previousstate_condition {3} or next condition {4}",
+                    actionname, current_condition, previous_condition, previousstate_condition, next_condition)
+                action.real_execute(state, actionname, namevar, repeat_text, value, False, current_condition, previous_condition, previousstate_condition, next_condition)
             else:
                 (_, item, caller, source, dest) = job
                 item_id = item.property.path if item is not None else "(no item)"
@@ -627,7 +635,13 @@ class SeItem:
                     _key_name = ['{}'.format(state.id), 'name']
                     self.update_webif(_key_name, state.name)
 
-                    result = self.__update_check_can_enter(state, _instant_leaveaction)
+                    result, self.__nextconditionset_name = self.__update_check_can_enter(state, _instant_leaveaction)
+                    if self.__nextconditionset_name:
+                        self.__nextconditionset_id = f"{state.state_item.property.path}.{self.__nextconditionset_name}"
+                    else:
+                        self.__nextconditionset_id = ""
+                    self.set_variable('next.conditionset_id', self.__nextconditionset_id)
+                    self.set_variable('next.conditionset_name', self.__nextconditionset_name)
                     _previousstate_conditionset_id = _last_conditionset_id
                     _previousstate_conditionset_name = _last_conditionset_name
                     _last_conditionset_id = self.__lastconditionset_internal_id
@@ -649,6 +663,10 @@ class SeItem:
                 # no new state -> stay
                 if new_state is None:
                     if last_state is None:
+                        self.__nextconditionset_id = ''
+                        self.__nextconditionset_name = ''
+                        self.set_variable('next.conditionset_id', self.__nextconditionset_id)
+                        self.set_variable('next.conditionset_name', self.__nextconditionset_name)
                         self.__logger.info("No matching state found, no previous state available. Doing nothing.")
                     else:
                         if last_state.conditions.count() == 0:
@@ -657,6 +675,11 @@ class SeItem:
                             _last_conditionset_name = ''
                         else:
                             self.lastconditionset_set(_last_conditionset_id, _last_conditionset_name)
+                        self.__nextconditionset_id = _last_conditionset_id
+                        self.__nextconditionset_name = _last_conditionset_name
+                        self.set_variable('next.conditionset_id', self.__nextconditionset_id)
+                        self.set_variable('next.conditionset_name', self.__nextconditionset_name)
+                        self.__logger.develop("Current variables: {}", self.__variables)
                         if _last_conditionset_id in ['', None]:
                             text = "No matching state found, staying at {0} ('{1}')"
                             self.__logger.info(text, last_state.id, last_state.name)
@@ -681,9 +704,18 @@ class SeItem:
                         "State is a copy and therefore just releasing {}. Skipping state actions, running leave actions "
                         "of last state, then retriggering.", new_state.is_copy_for.id)
                     if last_state is not None and self.__ab_alive:
-                        self.__logger.info("Leaving {0} ('{1}'). Condition set was: {2}.",
-                                           last_state.id, last_state.name, _original_conditionset_id)
-                        self.__update_check_can_enter(last_state, _instant_leaveaction, False)
+                        _, self.__nextconditionset_name = self.__update_check_can_enter(last_state, _instant_leaveaction, False)
+                        if self.__nextconditionset_name:
+                            self.__nextconditionset_id = f"{state.state_item.property.path}.{self.__nextconditionset_name}"
+                        else:
+                            self.__nextconditionset_id = ""
+                        self.set_variable('next.conditionset_id', self.__nextconditionset_id)
+                        self.set_variable('next.conditionset_name', self.__nextconditionset_name)
+                        self.__logger.develop("Current variables: {}", self.__variables)
+                        self.__logger.info("Leaving {0} ('{1}'). Condition set was: {2} ({3}), will be {4} ({5}).",
+                                           last_state.id, last_state.name, _original_conditionset_id,
+                                           _original_conditionset_name, self.__nextconditionset_id,
+                                           self.__nextconditionset_name)
                         last_state.run_leave(self.__repeat_actions.get())
                         _key_leave = ['{}'.format(last_state.id), 'leave']
                         _key_stay = ['{}'.format(last_state.id), 'stay']
@@ -710,6 +742,11 @@ class SeItem:
                 # endblock
                 # get data for new state
                 if last_state is not None and new_state.id == last_state.id:
+                    self.__nextconditionset_id = _last_conditionset_id
+                    self.__nextconditionset_name = _last_conditionset_name
+                    self.set_variable('next.conditionset_id', self.__nextconditionset_id)
+                    self.set_variable('next.conditionset_name', self.__nextconditionset_name)
+                    self.__logger.develop("Current variables: {}", self.__variables)
                     if _last_conditionset_id in ['', None]:
                         self.__logger.info("Staying at {0} ('{1}')", new_state.id, new_state.name)
                     else:
@@ -731,18 +768,25 @@ class SeItem:
                                 "Maybe some actions were performed directly after leave - see log above.")
                     elif last_state is not None:
                         self.lastconditionset_set(_original_conditionset_id, _original_conditionset_name)
-                        self.__logger.info("Leaving {0} ('{1}'). Condition set was: {2}.",
-                                           last_state.id, last_state.name, _original_conditionset_id)
+                        self.__logger.develop("Current variables: {}", self.__variables)
+                        self.__logger.info("Leaving {0} ('{1}'). Condition set was: {2} ({3}), will be {4} ({5}).",
+                                           last_state.id, last_state.name, _original_conditionset_id,
+                                           _original_conditionset_name, self.__nextconditionset_id, self.__nextconditionset_name)
                         last_state.run_leave(self.__repeat_actions.get())
                         _leaveactions_run = True
                     if new_state.conditions.count() == 0:
                         self.lastconditionset_set('', '')
                         _last_conditionset_id = ''
                         _last_conditionset_name = ''
+                        self.__nextconditionset_id = _last_conditionset_id
+                        self.__nextconditionset_name = _last_conditionset_name
                     else:
                         self.lastconditionset_set(_last_conditionset_id, _last_conditionset_name)
                     self.previousstate_conditionset_set(_previousstate_conditionset_id,
                                                         _previousstate_conditionset_name)
+                    self.set_variable('next.conditionset_id', self.__nextconditionset_id)
+                    self.set_variable('next.conditionset_name', self.__nextconditionset_name)
+                    self.__logger.develop("Current variables: {}", self.__variables)
                     if _last_conditionset_id in ['', None]:
                         self.__logger.info("Entering {0} ('{1}')", new_state.id, new_state.name)
                     else:
@@ -918,7 +962,7 @@ class SeItem:
                                 current_log_level = self.__log_level.get()
                                 if current_log_level < 3:
                                     self.__logger.log_level_as_num = 0
-                                can_enter = self.__update_check_can_enter(relevant_state, instant_leaveaction)
+                                can_enter, _ = self.__update_check_can_enter(relevant_state, instant_leaveaction)
                                 self.__logger.log_level_as_num = current_log_level
                                 if relevant_state == last_state:
                                     self.__logger.debug("Possible release state {} = last state {}, "
@@ -1333,6 +1377,8 @@ class SeItem:
             self.__variables["previous.state_id"] = self.__previousstate_internal_id
             self.__variables["previous.state_name"] = self.__previousstate_internal_name
             self.__variables["item.instant_leaveaction"] = instant_leaveaction
+            self.__variables["next.conditionset_id"] = self.__nextconditionset_id
+            self.__variables["next.conditionset_name"] = self.__nextconditionset_name
             self.__variables["current.state_id"] = state.id
             self.__variables["current.state_name"] = state.name
             self.__variables["current.conditionset_id"] = self.__lastconditionset_internal_id
@@ -1354,6 +1400,8 @@ class SeItem:
             self.__variables["release.was_released_by"] = ""
             self.__variables["release.will_release"] = ""
             self.__variables["item.instant_leaveaction"] = ""
+            self.__variables["next.conditionset_id"] = ""
+            self.__variables["next.conditionset_name"] = ""
             self.__variables["current.state_id"] = ""
             self.__variables["current.state_name"] = ""
             self.__variables["current.conditionset_id"] = ""
@@ -1854,6 +1902,8 @@ class SeItem:
                                                                            self.get_previousstate_conditionset_name()))
         handler.push("\tPrevious conditionset: {0} ('{1}')\n".format(self.get_previousconditionset_id(),
                                                                      self.get_previousconditionset_name()))
+        handler.push("\tNext conditionset: {0} ('{1}')\n".format(self.get_nextconditionset_id(),
+                                                                    self.get_nextconditionset_name()))
         handler.push(self.__startup_delay.get_text("\t", "\n"))
         handler.push("\tCycle: {0}\n".format(cycles))
         handler.push("\tCron: {0}\n".format(crons))
@@ -1877,6 +1927,14 @@ class SeItem:
         else:
             self.__logger.warning('No item for last condition id given. Can not determine age!')
             return 0
+
+    # return id of new (upcoming) conditionset
+    def get_nextconditionset_id(self):
+        return self.__nextconditionset_id
+
+    # return name of new (upcoming) conditionset
+    def get_nextconditionset_name(self):
+        return self.__nextconditionset_name
 
     # return id of last state
     def get_laststate_id(self):

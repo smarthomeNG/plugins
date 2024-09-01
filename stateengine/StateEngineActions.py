@@ -37,6 +37,7 @@ class SeActions(StateEngineTools.SeItemChild):
         self.__unassigned_repeats = {}
         self.__unassigned_instantevals = {}
         self.__unassigned_orders = {}
+        self.__unassigned_nextconditionsets = {}
         self.__unassigned_conditionsets = {}
         self.__unassigned_previousconditionsets = {}
         self.__unassigned_previousstate_conditionsets = {}
@@ -107,6 +108,14 @@ class SeActions(StateEngineTools.SeItemChild):
                     self.__unassigned_repeats[name] = value
                 else:
                     _issue = self.__actions[name].update_repeat(value)
+                return _count, _issue
+            elif func == "se_nextconditionset":
+                # set nextconditionset
+                if name not in self.__actions:
+                    # If we do not have the action yet (conditionset-attribute before action-attribute), ...
+                    self.__unassigned_nextconditionsets[name] = value
+                else:
+                    _issue = self.__actions[name].update_nextconditionset(value)
                 return _count, _issue
             elif func == "se_conditionset":
                 # set conditionset
@@ -295,6 +304,12 @@ class SeActions(StateEngineTools.SeItemChild):
                 _issue_list.append(_issue)
             del self.__unassigned_orders[name]
 
+        if name in self.__unassigned_nextconditionsets:
+            _issue = action.update_nextconditionset(self.__unassigned_nextconditionsets[name])
+            if _issue:
+                _issue_list.append(_issue)
+            del self.__unassigned_nextconditionsets[name]
+
         if name in self.__unassigned_conditionsets:
             _issue = action.update_conditionset(self.__unassigned_conditionsets[name])
             if _issue:
@@ -324,7 +339,7 @@ class SeActions(StateEngineTools.SeItemChild):
             _issue_list.append(_issue)
             self._log_warning("Ignoring action {0} because: {1}", name, ex)
 
-        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'conditionset': None,
+        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'nextconditionset': None, 'conditionset': None,
                      'previousconditionset': None, 'previousstate_conditionset': None, 'mode': None, 'instanteval': None}
         _issue = None
         _issue_list = []
@@ -475,6 +490,10 @@ class SeActions(StateEngineTools.SeItemChild):
                 _issue_list.append(_issue)
         if parameter['order'] is not None:
             _issue = self.__actions[name].update_order(parameter['order'])
+            if _issue:
+                _issue_list.append(_issue)
+        if parameter['nextconditionset'] is not None:
+            _issue = self.__actions[name].update_nextconditionset(parameter['nextconditionset'])
             if _issue:
                 _issue_list.append(_issue)
         if parameter['conditionset'] is not None:

@@ -853,6 +853,12 @@ item_structs:
             eval: sh..suspendduration(sh..suspendduration(), "Init", "Start")
             crontab: init = True
 
+            conditionset_leaveactions:
+                suspend:
+                    type: str
+                    initial_value: '.*'
+                    cache: True
+
             suspendduration:
                 remark: duration of suspend mode in minutes (gets converted automatically)
                 type: num
@@ -942,24 +948,29 @@ item_structs:
                       - 'function: set'
                       - 'to: False'
                       - 'order: 2'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_suspend_visu:
                       - 'function: set'
                       - 'to: False'
                       - 'order: 3'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_suspend_end:
                       - 'function: set'
                       - 'to:  '
                       - 'order: 4'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_suspend_start:
                       - 'function: set'
                       - 'to:  '
                       - 'order: 5'
                       - 'delay: 1'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_retrigger:
                       - 'function: special'
                       - 'value: retrigger:..retrigger'
                       - 'delay: -1'
                       - 'order: 1'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
 
                 enter_manuell:
                     se_value_trigger_source: eval:se_eval.get_relative_itemproperty('..manuell', 'path')
@@ -1048,6 +1059,12 @@ item_structs:
             type: bool
             eval: (sh..suspendduration(sh..suspendduration(), "Init", "Start"), sh..suspendvariant.suspendduration0(sh..suspendduration(), "Init", "Start"), sh..suspendvariant.suspendduration1(sh..suspendvariant.suspendduration1(), "Init", "Start"), sh..suspendvariant.suspendduration2(sh..suspendvariant.suspendduration2(), "Init", "Start"))
             crontab: init = True
+
+            conditionset_leaveactions:
+                suspend:
+                    type: str
+                    initial_value: '.*'
+                    cache: True
 
             suspendvariant:
                 remark: number between 0 and 2 to define which suspendduration should be used
@@ -1246,28 +1263,34 @@ item_structs:
                       - 'function: set'
                       - 'to: eval:se_eval.get_relative_itemproperty("..settings.suspendvariant", "last_value")'
                       - 'order: 1'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_suspend:
                       - 'function: set'
                       - 'to: False'
                       - 'order: 2'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_suspend_visu:
                       - 'function: set'
                       - 'to: False'
                       - 'order: 3'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_suspend_end:
                       - 'function: set'
                       - 'to:  '
                       - 'order: 4'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_suspend_start:
                       - 'function: set'
                       - 'to:  '
                       - 'order: 5'
                       - 'delay: 1'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_retrigger:
                       - 'function: special'
                       - 'value: retrigger:..retrigger'
                       - 'delay: -1'
                       - 'order: 1'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
 
                 enter_manuell:
                     se_value_trigger_source: eval:se_eval.get_relative_itemproperty('..manuell', 'path')

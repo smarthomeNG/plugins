@@ -193,13 +193,13 @@ class SeState(StateEngineTools.SeItemChild):
         self.__is_copy_for.write_to_logger()
         self.__releasedby.write_to_logger()
         self.__can_release.write_to_logger()
-        result = self.__conditions.one_conditionset_matching(self)
+        result, conditionset = self.__conditions.one_conditionset_matching(self)
         self._log_decrease_indent()
         if result:
-            self._log_info("State {} can be entered", self.id)
+            self._log_info("State {} can be entered based on conditionset {}", self.id, conditionset)
         else:
             self._log_info("State {} can not be entered", self.id)
-        return result
+        return result, conditionset
 
     # log state data
     def write_to_log(self):
