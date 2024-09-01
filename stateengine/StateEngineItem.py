@@ -172,6 +172,14 @@ class SeItem:
         return _returnvalue
 
     @property
+    def cache(self):
+        return self.__cache
+
+    @cache.setter
+    def cache(self, value):
+        self.__cache.update(value)
+
+    @property
     def ab_alive(self):
         return self.__ab_alive
 
@@ -195,6 +203,7 @@ class SeItem:
         self.__se_plugin = se_plugin
         self.__active_schedulers = []
         self.__release_info = {}
+        self.__cache = {}
         self.__default_instant_leaveaction = StateEngineValue.SeValue(self, "Default Instant Leave Action", False, "bool")
         self.__instant_leaveaction = StateEngineValue.SeValue(self, "Instant Leave Action", False, "num")
         try:
@@ -549,6 +558,7 @@ class SeItem:
                 (_, item, caller, source, dest) = job
                 item_id = item.property.path if item is not None else "(no item)"
                 self.__logger.update_logfile()
+                self.__cache = {}
                 self.__logger.header("Update state of item {0}".format(self.__name))
                 if caller:
                     self.__logger.debug("Update triggered by {0} (item={1} source={2} dest={3})", caller, item_id,

@@ -744,13 +744,28 @@ class SeValue(StateEngineTools.SeItemChild):
     def __get_eval(self):
         # noinspection PyUnusedLocal
         sh = self._sh
+        # noinspection PyUnusedLocal
         shtime = self._shtime
+        patterns = [
+            "get_variable('current.",
+            'get_variable("current.',
+            "get_variable('next.",
+            'get_variable("next.'
+        ]
         if isinstance(self.__eval, str):
             self.__eval = StateEngineTools.parse_relative(self.__eval, 'sh.', ['()', '.property.'])
             if "stateengine_eval" in self.__eval or "se_eval" in self.__eval:
                 # noinspection PyUnusedLocal
                 stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
             self._log_debug("Checking eval: {0}", self.__eval)
+            if self.__eval in self._abitem.cache:
+                self._log_increase_indent()
+                result = self._abitem.cache.get(self.__eval)
+                self._log_debug("Loading eval from cache: {}", result)
+                self._log_decrease_indent()
+                if 'eval:{}'.format(self.__eval) in self.__listorder:
+                    self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = [result]
+                return result
             self._log_increase_indent()
             try:
                 _newvalue, _issue = self.__do_cast(eval(self.__eval))
@@ -762,6 +777,8 @@ class SeValue(StateEngineTools.SeItemChild):
                 values = _newvalue
                 self._log_decrease_indent()
                 self._log_debug("Eval result: {0} ({1}).", values, type(values))
+                if not any(pattern in self.__eval for pattern in patterns):
+                    self._abitem.cache = {self.__eval: values}
                 self._log_increase_indent()
             except Exception as ex:
                 self._log_decrease_indent()
@@ -785,6 +802,14 @@ class SeValue(StateEngineTools.SeItemChild):
                         pass
                     self._log_debug("Checking eval {0} from list {1}.", val, self.__eval)
                     self._log_increase_indent()
+                    if val in self._abitem.cache:
+                        result = self._abitem.cache.get(val)
+                        self._log_debug("Loading eval in list from cache: {} ({})", result, type(result))
+                        self._log_decrease_indent()
+                        values.append(result)
+                        if 'eval:{}'.format(val) in self.__listorder:
+                            self.__listorder[self.__listorder.index('eval:{}'.format(val))] = [result]
+                        continue
                     if isinstance(val, str):
                         if "stateengine_eval" in val or "se_eval" in val:
                             # noinspection PyUnusedLocal
@@ -830,9 +855,19 @@ class SeValue(StateEngineTools.SeItemChild):
                             value = None
                     if value is not None:
                         values.append(value)
+                        if not any(pattern in val for pattern in patterns):
+                            self._abitem.cache = {val: value}
                     self._log_decrease_indent()
             else:
                 self._log_debug("Checking eval (no str, no list): {0}.", self.__eval)
+                if self.__eval in self._abitem.cache:
+                    self._log_increase_indent()
+                    result = self._abitem.cache.get(self.__eval)
+                    self._log_debug("Loading eval (no str, no list) from cache: {}", result)
+                    self._log_decrease_indent()
+                    if 'eval:{}'.format(self.__eval) in self.__listorder:
+                        self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = [result]
+                    return result
                 try:
                     self._log_increase_indent()
                     _newvalue, _issue = self.__do_cast(self.__eval())
@@ -844,6 +879,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     values = _newvalue
                     self._log_decrease_indent()
                     self._log_debug("Eval result (no str, no list): {0}.", values)
+                    self._abitem.cache = {self.__eval: values}
                     self._log_increase_indent()
                 except Exception as ex:
                     self._log_decrease_indent()
