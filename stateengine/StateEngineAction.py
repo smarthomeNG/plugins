@@ -439,15 +439,26 @@ class SeActionBase(StateEngineTools.SeItemChild):
             return
         conditions_met = 0
         condition_necessary = 0
-        current_condition_met, cur_conditions_met, cur_condition_necessary = _check_condition('conditionset')
-        conditions_met += cur_conditions_met
-        condition_necessary += min(1, cur_condition_necessary)
-        previous_condition_met, prev_conditions_met, prev_condition_necessary = _check_condition('previousconditionset')
-        conditions_met += prev_conditions_met
-        condition_necessary += min(1, prev_condition_necessary)
-        previousstate_condition_met, prevst_conditions_met, prevst_condition_necessary = _check_condition('previousstate_conditionset')
-        conditions_met += prevst_conditions_met
-        condition_necessary += min(1, prevst_condition_necessary)
+        current_condition_met = None
+        previous_condition_met = None
+        previousstate_condition_met = None
+        next_condition_met = None
+        if not self.conditionset.is_empty():
+            current_condition_met, cur_conditions_met, cur_condition_necessary = _check_condition('conditionset')
+            conditions_met += cur_conditions_met
+            condition_necessary += min(1, cur_condition_necessary)
+        if not self.previousconditionset.is_empty():
+            previous_condition_met, prev_conditions_met, prev_condition_necessary = _check_condition('previousconditionset')
+            conditions_met += prev_conditions_met
+            condition_necessary += min(1, prev_condition_necessary)
+        if not self.previousstate_conditionset.is_empty():
+            previousstate_condition_met, prevst_conditions_met, prevst_condition_necessary = _check_condition('previousstate_conditionset')
+            conditions_met += prevst_conditions_met
+            condition_necessary += min(1, prevst_condition_necessary)
+        if not self.nextconditionset.is_empty():
+            next_condition_met, next_conditions_met, next_conditionset_necessary = _check_condition('nextconditionset')
+            conditions_met += next_conditions_met
+            condition_necessary += min(1, next_conditionset_necessary)
         self._log_develop("Action '{0}': conditions met: {1}, necessary {2}.", self._name, conditions_met, condition_necessary)
         if conditions_met < condition_necessary:
             self._log_info("Action '{0}': Skipping because not all conditions are met.", self._name)
