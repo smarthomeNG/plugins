@@ -84,6 +84,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._retrigger_issue = None
         self._suspend_issue = None
         self.__queue = abitem.queue
+        self.__action_type = None
 
     def update_delay(self, value):
         _issue_list = []
@@ -548,7 +549,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
 
     # Complete action
     # state: state (item) to read from
-    def complete(self, state, evals_items=None, use=None):
+    def complete(self, state, action_type, evals_items=None, use=None):
         raise NotImplementedError("Class {} doesn't implement complete()".format(self.__class__.__name__))
 
     # Check if execution is possible
@@ -653,7 +654,8 @@ class SeActionSetItem(SeActionBase):
 
     # Complete action
     # state: state (item) to read from
-    def complete(self, state, evals_items=None, use=None):
+    def complete(self, state, action_type, evals_items=None, use=None):
+        self.__action_type = action_type
         self.__item, self.__status, self.__mindelta, self.__value, _issue = self.check_complete(
             state, self.__item, self.__status, self.__mindelta, self.__value, "set", evals_items, use)
         self._action_status = _issue
@@ -803,7 +805,8 @@ class SeActionSetByattr(SeActionBase):
 
     # Complete action
     # state: state (item) to read from
-    def complete(self, state, evals_items=None, use=None):
+    def complete(self, state, action_type, evals_items=None, use=None):
+        self.__action_type = action_type
         self._scheduler_name = "{}-SeByAttrDelayTimer".format(self.__byattr)
         _issue = {self._name: {'issue': None, 'attribute': self.__byattr,
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
@@ -861,7 +864,8 @@ class SeActionTrigger(SeActionBase):
 
     # Complete action
     # state: state (item) to read from
-    def complete(self, state, evals_items=None, use=None):
+    def complete(self, state, action_type, evals_items=None, use=None):
+        self.__action_type = action_type
         self._scheduler_name = "{}-SeLogicDelayTimer".format(self.__logic)
         _issue = {self._name: {'issue': None, 'logic': self.__logic,
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
@@ -936,7 +940,8 @@ class SeActionRun(SeActionBase):
 
     # Complete action
     # state: state (item) to read from
-    def complete(self, state, evals_items=None, use=None):
+    def complete(self, state, action_type, evals_items=None, use=None):
+        self.__action_type = action_type
         self._scheduler_name = "{}-SeRunDelayTimer".format(StateEngineTools.get_eval_name(self.__eval))
         _issue = {self._name: {'issue': None, 'eval': StateEngineTools.get_eval_name(self.__eval),
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
@@ -1035,7 +1040,8 @@ class SeActionForceItem(SeActionBase):
 
     # Complete action
     # state: state (item) to read from
-    def complete(self, state, evals_items=None, use=None):
+    def complete(self, state, action_type, evals_items=None, use=None):
+        self.__action_type = action_type
         self.__item, self.__status, self.__mindelta, self.__value, _issue = self.check_complete(
             state, self.__item, self.__status, self.__mindelta, self.__value, "force", evals_items, use)
         self._action_status = _issue
@@ -1221,7 +1227,8 @@ class SeActionSpecial(SeActionBase):
 
     # Complete action
     # state: state (item) to read from
-    def complete(self, state, evals_items=None, use=None):
+    def complete(self, state, action_type, evals_items=None, use=None):
+        self.__action_type = action_type
         if isinstance(self.__value, list):
             item = self.__value[0].property.path
         else:

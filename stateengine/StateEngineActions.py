@@ -33,6 +33,8 @@ class SeActions(StateEngineTools.SeItemChild):
     def __init__(self, abitem):
         super().__init__(abitem)
         self.__actions = {}
+        self.__action_type = None
+        self.__state = None
         self.__unassigned_delays = {}
         self.__unassigned_repeats = {}
         self.__unassigned_instantevals = {}
@@ -527,16 +529,20 @@ class SeActions(StateEngineTools.SeItemChild):
 
     # Check the actions optimize and complete them
     # state: state (item) to read from
-    def complete(self, state, evals_items=None, use=None):
+    def complete(self, state, action_type, evals_items=None, use=None):
+        self.__action_type = action_type
+        self.__state = state
+
         _status = {}
         if use is None:
             use = state.use.get()
         for name in self.__actions:
             try:
-                _status.update(self.__actions[name].complete(state, evals_items, use))
+                _status.update(self.__actions[name].complete(state, action_type, evals_items, use))
             except ValueError as ex:
                 _status.update({name: {'issue': ex, 'issueorigin': {'state': state.id, 'action': 'unknown'}}})
                 raise ValueError("State '{0}', Action '{1}': {2}".format(state.id, name, ex))
+        self._log_debug("Completing {} for state {} status {}", self.__actions, state, _status)
         return _status
 
     def set(self, value):

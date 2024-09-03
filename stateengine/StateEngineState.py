@@ -710,19 +710,19 @@ class SeState(StateEngineTools.SeItemChild):
 
         if recursion_depth == 0:
             self.__conditions.complete(self, use)
-            _action_status = self.__actions_enter.complete(self, self.__conditions.evals_items, use)
+            _action_status = self.__actions_enter.complete(self, 'actions_enter', self.__conditions.evals_items, use)
             if _action_status:
                 update_action_status(_action_status, 'enter')
                 self._abitem.update_action_status(self.__action_status)
-            _action_status = self.__actions_stay.complete(self, self.__conditions.evals_items, use)
+            _action_status = self.__actions_stay.complete(self,'actions_stay', self.__conditions.evals_items, use)
             if _action_status:
                 update_action_status(_action_status, 'stay')
                 self._abitem.update_action_status(self.__action_status)
-            _action_status = self.__actions_enter_or_stay.complete(self, self.__conditions.evals_items, use)
+            _action_status = self.__actions_enter_or_stay.complete(self, 'actions_enter_or_stay', self.__conditions.evals_items, use)
             if _action_status:
                 update_action_status(_action_status, 'enter_or_stay')
                 self._abitem.update_action_status(self.__action_status)
-            _action_status = self.__actions_leave.complete(self, self.__conditions.evals_items, use)
+            _action_status = self.__actions_leave.complete(self, 'actions_leave',self.__conditions.evals_items, use)
             if _action_status:
                 update_action_status(_action_status, 'leave')
                 self._abitem.update_action_status(self.__action_status)
