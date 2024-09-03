@@ -216,9 +216,9 @@ class SeActionBase(StateEngineTools.SeItemChild):
             self.__mode.write_to_logger()
         self.__order.write_to_logger()
 
-    def set_source(self, current_condition, previous_condition, previousstate_condition):
+    def set_source(self, current_condition, previous_condition, previousstate_condition, next_condition):
         source = []
-        if current_condition in [[], None] and previous_condition in [[], None] and previousstate_condition in [[], None]:
+        if current_condition in [[], None] and previous_condition in [[], None] and previousstate_condition in [[], None] and next_condition in [[], None]:
             source = self._parent
         else:
             if current_condition != []:
@@ -227,6 +227,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 source.append("previouscondition={}".format(previous_condition))
             if previousstate_condition != []:
                 source.append("previousstate_condition={}".format(previousstate_condition))
+            if next_condition != []:
+                source.append("nextcondition={}".format(next_condition))
             source = ", ".join(source)
         return source
 
@@ -733,7 +735,7 @@ class SeActionSetItem(SeActionBase):
     def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, current_condition, previous_condition, previousstate_condition, next_condition):
         self._log_decrease_indent()
         self._log_debug("{0}: Set '{1}' to '{2}'{3}", actionname, item.property.path, value, repeat_text)
-        source = self.set_source(current_condition, previous_condition, previousstate_condition)
+        source = self.set_source(current_condition, previous_condition, previousstate_condition, next_condition)
         pat = r"(?:[^,(]*)\'(.*?)\'"
         self.update_webif_actionstatus(state, re.findall(pat, actionname)[0], 'True')
         # noinspection PyCallingNonCallable
@@ -820,7 +822,7 @@ class SeActionSetByattr(SeActionBase):
             return value
         self._log_info("{0}: Setting values by attribute '{1}'.{2}", actionname, self.__byattr, repeat_text)
         self.update_webif_actionstatus(state, self._name, 'True')
-        source = self.set_source(current_condition, previous_condition, previousstate_condition)
+        source = self.set_source(current_condition, previous_condition, previousstate_condition, next_condition)
         for item in self._sh.find_items(self.__byattr):
             self._log_info("\t{0} = {1}", item.property.path, item.conf[self.__byattr])
             item(item.conf[self.__byattr], caller=self._caller, source=source)
@@ -1123,7 +1125,7 @@ class SeActionForceItem(SeActionBase):
                 self._log_debug(text, actionname, self.__item.property.path, value, additionaltext, delta, mindelta)
                 self.update_webif_actionstatus(state, self._name, 'False')
                 return
-        source = self.set_source(current_condition, previous_condition, previousstate_condition)
+        source = self.set_source(current_condition, previous_condition, previousstate_condition, next_condition)
         # Set to different value first ("force")
         current_value = self.__item()
         if current_value == value:
@@ -1334,7 +1336,7 @@ class SeActionSpecial(SeActionBase):
     def suspend_execute(self, state=None, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         suspend_item, _issue = self._abitem.return_item(self.__value[0])
         _issue = {self._name: {'issue': _issue, 'issueorigin': [{'state': state.id, 'action': 'suspend'}]}}
-        source = "SuspendAction, {}".format(self.set_source(current_condition, previous_condition, previousstate_condition))
+        source = "SuspendAction, {}".format(self.set_source(current_condition, previous_condition, previousstate_condition, next_condition))
         if self._abitem.get_update_trigger_source() == self.__value[1]:
             # triggered by manual-item: Update suspend item
             if suspend_item.property.value:
@@ -1391,7 +1393,7 @@ class SeActionAddItem(SeActionSetItem):
         value = value if isinstance(value, list) else [value]
         self._log_debug("{0}: Add '{1}' to '{2}'.{3}", actionname, value, item.property.path, repeat_text)
         value = item.property.value + value
-        source = self.set_source(current_condition, previous_condition, previousstate_condition)
+        source = self.set_source(current_condition, previous_condition, previousstate_condition, next_condition)
         self.update_webif_actionstatus(state, self._name, 'True')
         # noinspection PyCallingNonCallable
         item(value, caller=self._caller, source=source)
@@ -1446,7 +1448,7 @@ class SeActionRemoveFirstItem(SeActionSetItem):
             except Exception as ex:
                 self._log_warning("{0}: Remove first entry '{1}' from '{2}' failed: {3}",
                                   actionname, value, item.property.path, ex)
-        source = self.set_source(current_condition, previous_condition, previousstate_condition)
+        source = self.set_source(current_condition, previous_condition, previousstate_condition, next_condition)
         self.update_webif_actionstatus(state, self._name, 'True')
         item(currentvalue, caller=self._caller, source=source)
 
@@ -1502,7 +1504,7 @@ class SeActionRemoveLastItem(SeActionSetItem):
             except Exception as ex:
                 self._log_warning("{0}: Remove last entry '{1}' from '{2}' failed: {3}",
                                   actionname, value, item.property.path, ex)
-        source = self.set_source(current_condition, previous_condition, previousstate_condition)
+        source = self.set_source(current_condition, previous_condition, previousstate_condition, next_condition)
         self.update_webif_actionstatus(state, self._name, 'True')
         item(currentvalue, caller=self._caller, source=source)
 
@@ -1556,7 +1558,7 @@ class SeActionRemoveAllItem(SeActionSetItem):
             except Exception as ex:
                 self._log_warning("{0}: Remove all '{1}' from '{2}' failed: {3}",
                                   actionname, value, item.property.path, ex)
-        source = self.set_source(current_condition, previous_condition, previousstate_condition)
+        source = self.set_source(current_condition, previous_condition, previousstate_condition, next_condition)
         self.update_webif_actionstatus(state, self._name, 'True')
         item(currentvalue, caller=self._caller, source=source)
 
