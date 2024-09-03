@@ -57,7 +57,7 @@ class SeState(StateEngineTools.SeItemChild):
 
     # Return leave actions
     @property
-    def leaveactions(self):
+    def actions_leave(self):
         return self.__actions_leave
 
     # Return text of state

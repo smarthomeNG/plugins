@@ -1069,14 +1069,14 @@ class SeActionForceItem(SeActionBase):
             self._log_increase_indent()
             self._log_warning("Action '{0}': No item defined. Ignoring.", self._name)
             self._log_decrease_indent()
-            self.update_webif_actionstatus(state, self._name, 'False', 'No item defined')
+            self.update_webif_actionstatus(state, self._name, 'False', 'Action {}: No item defined'.format(self._name))
             return False
 
         if self.__value.is_empty():
             self._log_increase_indent()
             self._log_warning("Action '{0}': No value defined for item {1}. Ignoring.", self._name, self.__item)
             self._log_decrease_indent()
-            self.update_webif_actionstatus(state, self._name, 'False', 'No value defined for item {}'.format(self.__item))
+            self.update_webif_actionstatus(state, self._name, 'False', 'Action {}: No value for item {}'.format(self._name, self.__item))
             return False
         self.update_webif_actionstatus(state, self._name, 'True')
         return True

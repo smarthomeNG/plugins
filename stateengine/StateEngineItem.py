@@ -773,7 +773,7 @@ class SeItem:
                         self.__logger.info("Leave actions already run during state release.")
                     elif last_state is not None and _leaveactions_run is True:
                         self.__logger.info("Left {0} ('{1}')", last_state.id, last_state.name)
-                        if last_state.leaveactions.count() > 0:
+                        if last_state.actions_leave.count() > 0:
                             self.__logger.info(
                                 "Maybe some actions were performed directly after leave - see log above.")
                     elif last_state is not None:
