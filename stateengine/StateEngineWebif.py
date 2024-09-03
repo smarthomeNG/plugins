@@ -59,10 +59,10 @@ class WebInterface(StateEngineTools.SeItemChild):
     def __repr__(self):
         return "WebInterface item: {}, id {}".format(self.__states, self.__name) if REQUIRED_PACKAGE_IMPORTED else "None"
 
-    def _actionlabel(self, state, label_type, conditionset, previousconditionset, previousstate_conditionset):
+    def _actionlabel(self, state, label_type, conditionset, previousconditionset, previousstate_conditionset, next_conditionset):
         # Check if conditions for action are met or not
         # action_dict: abitem[state]['on_enter'/'on_stay'/'on_enter_or_stay'/'on_leave'].get(action)
-        # condition_to_meet: 'conditionset'/'previousconditionset''previousstate_conditionset'
+        # condition_to_meet: 'conditionset'/'previousconditionset'/'previousstate_conditionset'/'nextconditionset'
         # conditionset: name of conditionset that should get checked
         def _strip_regex(regex_list):
             pattern_strings = []
@@ -122,6 +122,9 @@ class WebInterface(StateEngineTools.SeItemChild):
                 count, condition3, previousstate_condition_to_meet, necessary = _check_webif_conditions(action_dict, 'previousstate_conditionset', previousstate_conditionset)
                 condition_count += count
                 condition_necessary += min(1, necessary)
+                count, condition4, next_condition_to_meet, necessary = _check_webif_conditions(action_dict, 'nextconditionset', next_conditionset)
+                condition_count += count
+                condition_necessary += min(1, necessary)
 
                 if condition_count < condition_necessary:
                     condition_met = False
@@ -136,6 +139,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                 condition_info = _strip_regex(condition_to_meet) if condition1 is False \
                     else _strip_regex(previouscondition_to_meet) if condition2 is False \
                     else _strip_regex(previousstate_condition_to_meet) if condition3 is False \
+                    else _strip_regex(next_condition_to_meet) if condition4 is False \
                     else ""
                 if _issue:
                     if tooltip_count > 0:
@@ -388,6 +392,7 @@ class WebInterface(StateEngineTools.SeItemChild):
         previous_conditionset = ''
         previousconditionset = ''
         previousstate_conditionset = ''
+        next_conditionset = ''
         for i, state in enumerate(self.__states):
             #self._log_debug('Adding state for webif {}', self.__states[state])
             if isinstance(self.__states[state], (OrderedDict, dict)):
@@ -457,20 +462,20 @@ class WebInterface(StateEngineTools.SeItemChild):
 
                     if len(actions_enter) > 0 or len(actions_enter_or_stay) > 0:
                         actionlist_enter, action_tooltip_enter, action_tooltip_count_enter = \
-                            self._actionlabel(state, 'actions_enter', conditionset, previousconditionset, previousstate_conditionset)
+                            self._actionlabel(state, 'actions_enter', conditionset, previousconditionset, previousstate_conditionset, next_conditionset)
 
                     if len(actions_stay) > 0 or len(actions_enter_or_stay) > 0:
                         actionlist_stay, action_tooltip_stay, action_tooltip_count_stay = \
-                            self._actionlabel(state, 'actions_stay', conditionset, previousconditionset, previousstate_conditionset)
+                            self._actionlabel(state, 'actions_stay', conditionset, previousconditionset, previousstate_conditionset, next_conditionset)
 
                     if len(actions_leave) > 0:
                         actionlist_leave, action_tooltip_leave, action_tooltip_count_leave = \
-                            self._actionlabel(state, 'actions_leave', conditionset, previousconditionset, previousstate_conditionset)
+                            self._actionlabel(state, 'actions_leave', conditionset, previousconditionset, previousstate_conditionset, next_conditionset)
 
                     new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
                     position = '{},{}!'.format(0.5, new_y)
                     conditionset_positions.append(new_y)
-                    #self._log_debug('conditionset: {} {}, previous {}', conditionset, position, previous_conditionset)
+                    #self._log_debug('conditionset: {} {}, previous {} next {}', conditionset, position, previous_conditionset, next_conditionset)
 
                     conditionlist, condition_tooltip, condition_tooltip_count = self._conditionlabel(state, conditionset, i)
                     cond3 = conditionset == ''
