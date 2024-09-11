@@ -508,7 +508,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                         self._abitem.update_webif(_key_match, 'yes')
                         return True
                 if regex_check is True:
-                    self._log_debug("Regex '{}' result: {}, element {}", element, regex_result)
+                    self._log_debug("Regex '{0}' result: {1}.", element, regex_result)
 
             if negate:
                 self._log_debug("{0} not in list -> matching", current)
