@@ -102,8 +102,9 @@ class WebInterface(StateEngineTools.SeItemChild):
         actionlabel = actionstart = '<<table border="0" cellpadding="1" cellborder="0">'
         action_tooltip = ''
         originaltype = label_type
-        types = [label_type] if label_type == 'actions_leave' else ['actions_enter_or_stay', label_type]
+        types = [label_type] if label_type in ['actions_leave', 'actions_pass'] else ['actions_enter_or_stay', label_type]
         tooltip_count = 0
+
         for label_type in types:
             for action in self.__states[state].get(label_type):
                 action_dict = self.__states[state][label_type].get(action)
@@ -211,12 +212,12 @@ class WebInterface(StateEngineTools.SeItemChild):
         if _empty_set:
             return '', '', 0
         conditionlist = '<<table border="0" cellpadding="5" cellborder="0">'
+        conditionlist += '<tr><td align="center" colspan="4" bgcolor="white">{}</td></tr>'.format(conditionset)
         tooltip_count = 0
         for k, condition in enumerate(self.__states[state]['conditionsets'].get(conditionset)):
             condition_dict = self.__states[state]['conditionsets'][conditionset].get(condition)
             current = condition_dict.get('current')
             match = condition_dict.get('match')
-
             status_none = str(condition_dict.get('status')) == 'None'
             item_none = str(condition_dict.get('item')) == 'None' or not status_none
             status_eval_none = condition_dict.get('status_eval') == 'None'
@@ -236,23 +237,19 @@ class WebInterface(StateEngineTools.SeItemChild):
                                    'updatedbynegate', 'triggeredbynegate', 'status', 'current', 'match', 'status_eval']
 
                 if cond1 and compare not in excluded_values:
-                    try:
-                        list_index = list(self.__states.keys()).index(self.__active_state)
-                    except Exception:
-                        list_index = 0
                     if condition not in conditions_done:
                         current_clean = ", ".join(f"{k} = {v}" for k, v in current.items())
-                        text = " Current {}".format(current_clean) if current and len(current) > 0 else " Not evaluated."
+                        text = " Current {}".format(current_clean) if current is not None and len(current) > 0 else " Not evaluated."
                         conditionlist += ('<tr><td align="center" colspan="4"><table border="0" cellpadding="0" '
                                           'cellborder="0"><tr><td></td><td align="center">{}:{}</td><td></td></tr><tr>'
                                           '<td width="40%"></td><td align="center" border="1" height="1"></td>'
                                           '<td width="40%"></td></tr></table></td></tr>').format(condition.upper(), text)
                     conditions_done.append(condition)
                     conditionlist += '<tr><td align="center"><b>'
-                    info_status = str(condition_dict.get('status') or '')
-                    info_item = str(condition_dict.get('item') or '')
-                    info_eval = str(condition_dict.get('eval') or '')
-                    info_status_eval = str(condition_dict.get('status_eval') or '')
+                    info_status = str(condition_dict.get('status') or 'n/a')
+                    info_item = str(condition_dict.get('item') or 'n/a')
+                    info_eval = str(condition_dict.get('eval') or 'n/a')
+                    info_status_eval = str(condition_dict.get('status_eval') or 'n/a')
                     info_compare = str(condition_dict.get(compare) or '')
                     info_compare = self._strip_regex(info_compare)
                     if not status_none:
@@ -307,7 +304,8 @@ class WebInterface(StateEngineTools.SeItemChild):
                     elif not item_none:
                         info = info_item
                     else:
-                        info = ""
+                        info = "n/a"
+
                     conditionlist += '{}</b></td>'.format(info)
                     comparison = "&#62;=" if not min_none and compare == "min"\
                                  else "&#60;=" if not max_none and compare == "max"\
@@ -345,10 +343,9 @@ class WebInterface(StateEngineTools.SeItemChild):
                     conditionlist += ' (negate)' if condition_dict.get('negate') == 'True' and "age" \
                                      not in compare and not compare == "value" else ''
                     conditionlist += ' (negate)' if condition_dict.get('agenegate') == 'True' and "age" in compare else ''
-                    active = i < list_index or (i == list_index and conditionset in ['', self.__active_conditionset])
-                    match_info = '<img src="sign_true.png" />' if match_info == 'yes' and active\
-                                 else '<img src="sign_false.png" />' if match_info == 'no' and active\
-                                 else '<img src="sign_warn.png" />' if match_info and len(match_info) > 0 and active\
+                    match_info = '<img src="sign_true.png" />' if match_info == 'yes'\
+                                 else '<img src="sign_false.png" />' if match_info == 'no'\
+                                 else '<img src="sign_warn.png" />' if match_info and len(match_info) > 0 \
                                  else ''
                     conditionlist += '</td><td>{}</td></tr>'.format(match_info)
         conditionlist += '<tr><td></td><td></td><td></td><td></td></tr></table>>'
@@ -357,14 +354,14 @@ class WebInterface(StateEngineTools.SeItemChild):
     def _add_actioncondition(self, state, conditionset, action_type, new_y, cond1, cond2):
         cond4 = conditionset in ['', self.__active_conditionset] and state == self.__active_state
         cond5 = self.__states[state]['conditionsets'].get(conditionset) is not None
-        cond_enter = action_type == 'actions_enter' and self.__states[state].get('enter') is False
-        cond_stay = action_type == 'actions_stay' and self.__states[state].get('stay') is False
+        cond_enter = action_type in ['actions_enter', 'actions_enter_or_stay'] and self.__states[state].get('enter') is False
+        cond_stay = action_type in ['actions_stay', 'actions_enter_or_stay'] and self.__states[state].get('stay') is False
         color_enter = "gray" if (cond1 and cond2 and cond5) or \
                                 (cond_enter and cond4 and cond5) else "olivedrab" if cond4 else "indianred2"
         color_stay = "gray" if (cond1 and cond2 and cond5) or \
                                (cond_stay and cond4 and cond5) else "olivedrab" if cond4 else "indianred2"
 
-        label = 'first enter' if action_type == 'actions_enter' else 'staying at state'
+        label = 'first enter' if action_type in ['actions_enter', 'actions_enter_or_stay'] else 'staying at state'
 
         position = '{},{}!'.format(0.63, new_y)
         color = color_enter if label == 'first enter' else color_stay
