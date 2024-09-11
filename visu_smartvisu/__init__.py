@@ -148,9 +148,9 @@ class SmartVisuGenerator:
         self.smartvisu_version = smartvisu_version
         self.overwrite_templates = overwrite_templates
         self.visu_style = visu_style.lower()
-        if not self.visu_style in ['std','blk']:
+        if self.visu_style not in ['std', 'blk']:
             self.visu_style = 'std'
-            self.logger.warning("SmartVisuGenerator: visu_style '{}' unknown, using visu_style '{1}'".format(visu_style, self.visu_style))
+            self.logger.warning("SmartVisuGenerator: visu_style '{0}' unknown, using visu_style '{1}'".format(visu_style, self.visu_style))
 
         self.logger.info("Generating pages for smartVISU v{}".format(self.smartvisu_version))
 
@@ -364,14 +364,13 @@ class SmartVisuGenerator:
         except Exception as e:
             self.logger.warning("Could not write to {0}/{1}: {2}".format(self.outdir, htmlfile, e))
 
-
     def copy_tpl(self, tplname, destname=''):
         if destname == '':
             destname = tplname
         try:
             shutil.copy(self.tpldir + '/' + tplname, self.outdir + '/' + destname)
         except Exception as e:
-            self.logger.error("Could not copy {0} from {1} to {2}".format(tplname, tpldir, destdir))
+            self.logger.error("Could not copy {0} from {1} to {2}".format(tplname, self.tpldir, self.outdir))
 
 
 #########################################################################
