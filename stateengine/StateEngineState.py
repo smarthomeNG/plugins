@@ -334,6 +334,7 @@ class SeState(StateEngineTools.SeItemChild):
     # run actions when passing the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
     def run_pass(self, allow_item_repeat: bool):
+        self._log_info("Passing state {}, running pass actions.", self.id)
         self._log_increase_indent()
         for elem in self._abitem.webif_infos:
             _key_pass = ['{}'.format(elem), 'pass']

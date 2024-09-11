@@ -1429,7 +1429,10 @@ class SeItem:
             self.__logger.develop("Current variables: {}", self.__variables)
             if refill:
                 state.refill()
-                return state.can_enter()
+                can_enter = state.can_enter()
+                if can_enter is False:
+                    state.run_pass()
+                return can_enter
         except Exception as ex:
             self.__logger.warning("Problem with currentstate {0}. Error: {1}", state.id, ex)
             # The variables where originally reset in a finally: statement. No idea why... ;)
