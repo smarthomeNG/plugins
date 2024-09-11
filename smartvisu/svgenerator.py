@@ -43,9 +43,9 @@ class SmartVisuGenerator:
         self.smartvisu_version = plugin_instance.smartvisu_version
         self.overwrite_templates = plugin_instance.overwrite_templates
         self.visu_style = plugin_instance.visu_style.lower()
-        if not self.visu_style in ['std','blk']:
+        if self.visu_style not in ['std', 'blk']:
             self.visu_style = 'std'
-            self.logger.warning("SmartVisuGenerator: visu_style '{}' unknown, using visu_style '{1}'".format(plugin_instance.visu_style, self.visu_style))
+            self.logger.warning("SmartVisuGenerator: visu_style '{0}' unknown, using visu_style '{1}'".format(plugin_instance.visu_style, self.visu_style))
         self.list_deprecated_warnings = plugin_instance.list_deprecated_warnings
 
         self.logger.info("Generating pages for smartVISU v{}".format(self.smartvisu_version))
