@@ -51,18 +51,6 @@ class SeActions(StateEngineTools.SeItemChild):
     def __repr__(self):
         return "SeActions, count {}".format(self.count())
 
-    def dict_actions(self, action_type, state):
-        result = {}
-        for name in self.__actions:
-            self._abitem.initactionname = name
-            result.update({name: self.__actions[name].get()})
-            try:
-                result[name].update({'actionstatus': self._abitem.webif_infos[state][action_type][name].get('actionstatus')})
-            except Exception:
-                pass
-            self._abitem.initactionname = None
-        return result
-
     def reset(self):
         self.__actions = {}
 

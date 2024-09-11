@@ -78,6 +78,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
         self.__evals_items = {}
         self.__unused_attributes = {}
         self.__used_attributes = {}
+        self.__state = None
 
     def __repr__(self):
         return "SeConditionSet {}".format(self.__conditions)
@@ -150,6 +151,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
     # Check the condition set, optimize and complete it
     # state: state (item) to read from
     def complete(self, state, use):
+        self.__state = state
         conditions_to_remove = []
         # try to complete conditions
 
@@ -174,7 +176,9 @@ class SeConditionSet(StateEngineTools.SeItemChild):
         for name in self.__conditions:
             self._log_info("Condition '{0}':", name)
             self._log_increase_indent()
-            self.__conditions[name].write_to_logger()
+            _webif = self.__conditions[name].write_to_logger()
+            _key = [self.__state.id, 'conditionsets', self.name]
+            self._abitem.update_webif(_key, _webif, True)
             self._log_decrease_indent()
 
     def __currentconditionset_set(self, conditionsetid, name):

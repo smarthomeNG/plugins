@@ -480,6 +480,15 @@ class SeItem:
     # region Updatestate ***********************************************************************************************
     # run queue
     def run_queue(self):
+        def update_current_to_empty(d):
+            if isinstance(d, dict):  # Check if the current level is a dictionary
+                for key, val in d.items():
+                    if key in ['current', 'match', 'actionstatus'] and isinstance(val, dict):  # If the key is 'current', and value is a dict
+                        d[key] = {}  # Set it to an empty dict
+                    else:
+                        # Recur for nested dictionaries
+                        update_current_to_empty(val)
+
         if not self.__ab_alive:
             self.__logger.debug("{} not running (anymore). Queue not activated.",
                                 StateEngineDefaults.plugin_identification)
@@ -638,6 +647,9 @@ class SeItem:
                     evaluated_instant_leaveaction = False
                 _previousstate_conditionset_id = ''
                 _previousstate_conditionset_name = ''
+
+                update_current_to_empty(self.__webif_infos)
+                self.__logger.develop("Resetted current info for webif info. It is now: {}", self.__webif_infos)
                 for state in self.__states:
                     if not self.__ab_alive:
                         self.__logger.debug("StateEngine Plugin not running (anymore). Stop state evaluation.")
@@ -680,7 +692,7 @@ class SeItem:
                         self.set_variable('next.conditionset_name', self.__nextconditionset_name)
                         self.__logger.info("No matching state found, no previous state available. Doing nothing.")
                     else:
-                        if last_state.conditions.count() == 0:
+                        if last_state.conditionsets.count() == 0:
                             self.lastconditionset_set('', '')
                             _last_conditionset_id = ''
                             _last_conditionset_name = ''
@@ -745,7 +757,7 @@ class SeItem:
                 _last_conditionset_id = self.__lastconditionset_internal_id
                 _last_conditionset_name = self.__lastconditionset_internal_name
 
-                if new_state.conditions.count() == 0:
+                if new_state.conditionsets.count() == 0:
                     self.lastconditionset_set('', '')
                     _last_conditionset_id = ''
                     _last_conditionset_name = ''
@@ -785,7 +797,7 @@ class SeItem:
                                            _original_conditionset_name, self.__nextconditionset_id, self.__nextconditionset_name)
                         last_state.run_leave(self.__repeat_actions.get())
                         _leaveactions_run = True
-                    if new_state.conditions.count() == 0:
+                    if new_state.conditionsets.count() == 0:
                         self.lastconditionset_set('', '')
                         _last_conditionset_id = ''
                         _last_conditionset_name = ''
@@ -995,16 +1007,26 @@ class SeItem:
         self.__logger.info("".ljust(80, "_"))
         return all_released_by
 
-    def update_webif(self, key, value):
+    def update_webif(self, key, value, update=False):
         def _nested_set(dic, keys, val):
             for nestedkey in keys[:-1]:
                 dic = dic.setdefault(nestedkey, {})
-            dic[keys[-1]] = val
+            # Check if both existing value and new value are dictionaries
+            if update is True and isinstance(dic.get(keys[-1]), dict) and isinstance(val, dict):
+                # Update the existing dictionary with the new dictionary
+                dic[keys[-1]].update(val)
+                self.__logger.develop("Updating WEBIF with list {}, value: {}. infos is {}", key, value,
+                                      self.__webif_infos)
+            else:
+                # Otherwise, set the value as is
+                dic[keys[-1]] = val
+                self.__logger.develop("Setting WEBIF with list {}, value: {}. infos is {}", key, value,
+                                      self.__webif_infos)
 
         def _nested_test(dic, keys):
             for nestedkey in keys[:-2]:
                 dic = dic.setdefault(nestedkey, {})
-            return dic[keys[-2]]
+            return dic.get(keys[-2], {})
 
         if isinstance(key, list):
             try:
@@ -1014,21 +1036,26 @@ class SeItem:
             except Exception:
                 return False
         else:
-            self.__webif_infos[key] = value
+            if update is True:
+                self.__webif_infos.setdefault(key, {}).update(value)
+                self.__logger.develop("Updating WEBIF {}, value: {}. infos is {}", key, value, self.__webif_infos)
+            else:
+                self.__webif_infos[key] = value
+                self.__logger.develop("Setting WEBIF {}, value: {}. infos is {}", key, value, self.__webif_infos)
             return True
 
     def update_action_status(self, action_status):
         def combine_dicts(dict1, dict2):
-            combined_dict = dict1.copy()
+            combined = dict1.copy()
             for key, value in dict2.items():
-                if key in combined_dict:
-                    for k, v in combined_dict.items():
+                if key in combined:
+                    for k, v in combined.items():
                         v['issueorigin'].extend(
-                            [item for item in v['issueorigin'] if item not in combined_dict[k]['issueorigin']])
-                        v['issue'].extend([item for item in v['issue'] if item not in combined_dict[k]['issue']])
+                            [item for item in v['issueorigin'] if item not in combined[k]['issueorigin']])
+                        v['issue'].extend([item for item in v['issue'] if item not in combined[k]['issue']])
                 else:
-                    combined_dict[key] = value
-            return combined_dict
+                    combined[key] = value
+            return combined
 
         combined_dict = combine_dicts(action_status, self.__action_status)
         self.__action_status = combined_dict
@@ -1120,6 +1147,7 @@ class SeItem:
                         self.__logger.info("- {}: {}", key, ', '.join(formatted_entries))
                 else:
                     self.__logger.info("- {}: {}", key, value)
+
         def list_issues(v):
             _issuelist = StateEngineTools.flatten_list(v.get('issue'))
             if isinstance(_issuelist, list) and len(_issuelist) > 1:

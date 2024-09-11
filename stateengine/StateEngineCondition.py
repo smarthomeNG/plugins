@@ -59,6 +59,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__triggeredbynegate = None
         self.__agenegate = None
         self.__error = None
+        self.__state = None
         self.__itemClass = Item
 
     def __repr__(self):
@@ -228,6 +229,7 @@ class SeCondition(StateEngineTools.SeItemChild):
     # state: state (item) to read from
     # abitem_object: Related SeItem instance for later determination of current age and current delay
     def complete(self, state, use):
+        self.__state = state
         # check if it is possible to complete this condition
         if self.__min.is_empty() and self.__max.is_empty() and self.__value.is_empty() \
                 and self.__agemin.is_empty() and self.__agemax.is_empty() \
@@ -368,50 +370,80 @@ class SeCondition(StateEngineTools.SeItemChild):
 
     # Write condition to logger
     def write_to_logger(self):
+        def write_item(item_type, value):
+            item_list = []
+            if value is not None:
+                if isinstance(value, list):
+                    for i in value:
+                        try:
+                            itm = i.property.path
+                        except Exception:
+                            itm = i
+                        item_list.append(itm)
+                        self._log_info("{0}: {1} ({2})", item_type, self.__name, itm)
+                else:
+                    try:
+                        itm = value.property.path
+                    except Exception:
+                        itm = value
+                    item_list.append(itm)
+                    self._log_info("{0}: {1} ({2})", item_type, self.__name, itm)
+            item_list = StateEngineTools.flatten_list(item_list)
+            item_list = None if len(item_list) == 0 else str(item_list[0]) if len(item_list) == 1 else str(item_list)
+            return item_list
+
+        def write_eval(eval_type, value):
+            eval_list = []
+            if value is not None:
+                if isinstance(value, list):
+                    for e in value:
+                        name = StateEngineTools.get_eval_name(e)
+                        eval_list.append(name)
+                        self._log_info("{0}: {1}", eval_type, name)
+                else:
+                    name = StateEngineTools.get_eval_name(value)
+                    eval_list.append(name)
+                    self._log_info("{0}: {1}", eval_type, name)
+            eval_list = StateEngineTools.flatten_list(eval_list)
+            eval_list = None if len(eval_list) == 0 else str(eval_list[0]) if len(eval_list) == 1 else str(eval_list)
+            return str(eval_list)
+
         if self.__error is not None:
             self._log_warning("error: {0}", self.__error)
-        if self.__item is not None:
-            if isinstance(self.__item, list):
-                for i in self.__item:
-                    self._log_info("item: {0} ({1})", self.__name, i.property.path)
-            else:
-                self._log_info("item: {0} ({1})", self.__name, self.__item.property.path)
-        if self.__status is not None:
-            if isinstance(self.__status, list):
-                for i in self.__status:
-                    self._log_info("status item: {0} ({1})", self.__name, i.property.path)
-            else:
-                self._log_info("status item: {0} ({1})", self.__name, self.__status.property.path)
-        if self.__eval is not None:
-            if isinstance(self.__eval, list):
-                for e in self.__eval:
-                    self._log_info("eval: {0}", StateEngineTools.get_eval_name(e))
-            else:
-                self._log_info("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
-        if self.__status_eval is not None:
-            if isinstance(self.__status_eval, list):
-                for e in self.__status_eval:
-                    self._log_info("status eval: {0}", StateEngineTools.get_eval_name(e))
-            else:
-                self._log_info("status eval: {0}", StateEngineTools.get_eval_name(self.__status_eval))
-        self.__value.write_to_logger()
-        self.__min.write_to_logger()
-        self.__max.write_to_logger()
+        item_result = self.__item
+        status_result = self.__status
+        item = write_item("item", item_result)
+        status = write_item("status item", status_result)
+        eval_result = self.__eval
+        status_eval_result = self.__status_eval
+        eval_result = write_eval("eval", eval_result)
+        status_eval_result = write_eval("status", status_eval_result)
+        val = self.__value.write_to_logger()
+        value_result = self.__value.get_for_webif(val)
+        min_result = self.__min.write_to_logger()
+        max_result = self.__max.write_to_logger()
         if self.__negate is not None:
             self._log_info("negate: {0}", self.__negate)
-        self.__agemin.write_to_logger()
-        self.__agemax.write_to_logger()
+        agemin = self.__agemin.write_to_logger()
+        agemax = self.__agemax.write_to_logger()
         if self.__agenegate is not None:
             self._log_info("age negate: {0}", self.__agenegate)
-        self.__changedby.write_to_logger()
+        changedby = self.__changedby.write_to_logger()
         if self.__changedbynegate is not None and not self.__changedby.is_empty():
             self._log_info("changedby negate: {0}", self.__changedbynegate)
-        self.__updatedby.write_to_logger()
+        updatedby = self.__updatedby.write_to_logger()
         if self.__updatedbynegate is not None and not self.__updatedby.is_empty():
             self._log_info("updatedby negate: {0}", self.__updatedbynegate)
-        self.__triggeredby.write_to_logger()
+        triggeredby = self.__triggeredby.write_to_logger()
         if self.__updatedbynegate is not None and not self.__triggeredby.is_empty():
             self._log_info("triggeredby negate: {0}", self.__triggeredbynegate)
+        return {self.name: {'item': item, 'status': status, 'eval': eval_result, 'status_eval': status_eval_result,
+                            'value': value_result, 'min': str(min_result), 'max': str(max_result), 'agemin': str(agemin),
+                            'agemax': str(agemax), 'negate': str(self.__negate), 'agenegate': str(self.__agenegate),
+                            'changedby': str(changedby), 'updatedby': str(updatedby),
+                            'triggeredby': str(triggeredby), 'triggeredbynegate': str(self.__triggeredbynegate),
+                            'changedbynegate': str(self.__changedbynegate),
+                            'updatedbynegate': str(self.__updatedbynegate), 'current': {}, 'match': {}}}
 
     # Cast 'value', 'min' and 'max' using given cast function
     # cast_func: cast function to use

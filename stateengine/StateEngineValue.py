@@ -447,10 +447,14 @@ class SeValue(StateEngineTools.SeItemChild):
         else:
             return returnvalues
 
-    def get_for_webif(self):
-        returnvalues = self.get()
+    def get_for_webif(self, value=None):
+        if value is None:
+            returnvalues = self.get()
+        else:
+            returnvalues = value
         returnvalues = self.__varname if returnvalues == '' else returnvalues
-        return str(returnvalues)
+        returnvalues = str(returnvalues)
+        return returnvalues
 
     def get_type(self):
         if len(self.__listorder) <= 1:
@@ -480,6 +484,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         self._log_debug("{0}: {1} ({2})", self.__name, i, type(i))
             else:
                 self._log_debug("{0}: {1} ({2})", self.__name, self.__value, type(self.__value))
+            return self.__value
         if self.__regex is not None:
             if isinstance(self.__regex, list):
                 for i in self.__regex:
@@ -487,6 +492,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         self._log_debug("{0} from regex: {1}", self.__name, i)
             else:
                 self._log_debug("{0} from regex: {1}", self.__name, self.__regex)
+            return f"regex:{self.__regex}"
         if self.__struct is not None:
             if isinstance(self.__struct, list):
                 for i in self.__struct:
@@ -495,23 +501,30 @@ class SeValue(StateEngineTools.SeItemChild):
 
             else:
                 self._log_debug("{0} from struct: {1}", self.__name, self.__struct.property.path)
+            return self.__struct
         if self.__item is not None:
             _original_listorder = self.__listorder.copy()
+            items = []
             if isinstance(self.__item, list):
                 for i, item in enumerate(self.__item):
                     if item is not None:
                         self._log_debug("{0} from item: {1}", self.__name, item.property.path)
-                        self._log_debug("Currently item results in {}", self.__get_from_item()[i])
+                        current = self.__get_from_item()[i]
+                        items.append(current)
+                        self._log_debug("Currently item results in {}", current)
             else:
                 self._log_debug("{0} from item: {1}", self.__name, self.__item.property.path)
-                self._log_debug("Currently item results in {}", self.__get_from_item())
+                items = self.__get_from_item()
+                self._log_debug("Currently item results in {}", items)
             self.__listorder = _original_listorder
+            return items
         if self.__eval is not None:
             self._log_debug("{0} from eval: {1}", self.__name, self.__eval)
             _original_listorder = self.__listorder.copy()
             eval_result = self.__get_eval()
             self._log_debug("Currently eval results in {}. ", eval_result)
             self.__listorder = _original_listorder
+            return eval_result
         if self.__varname is not None:
             if isinstance(self.__varname, list):
                 for i in self.__varname:
@@ -519,7 +532,8 @@ class SeValue(StateEngineTools.SeItemChild):
                         self._log_debug("{0} from variable: {1}", self.__name, i)
             else:
                 self._log_debug("{0} from variable: {1}", self.__name, self.__varname)
-        return eval_result
+            return self.__get_from_variable()
+        return None
 
     # Get Text (similar to logger text)
     # prefix: Prefix for text

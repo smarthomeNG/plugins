@@ -60,6 +60,18 @@ class SeState(StateEngineTools.SeItemChild):
     def actions_leave(self):
         return self.__actions_leave
 
+    @property
+    def actions_enter(self):
+        return self.__actions_enter
+
+    @property
+    def actions_enter_or_stay(self):
+        return self.__actions_enter_or_stay
+
+    @property
+    def actions_stay(self):
+        return self.__actions_stay
+
     # Return text of state
     @property
     def text(self):
@@ -67,8 +79,8 @@ class SeState(StateEngineTools.SeItemChild):
 
     # Return conditions
     @property
-    def conditions(self):
-        return self.__conditions
+    def conditionsets(self):
+        return self.__conditionsets
 
     # Return orphaned definitions
     @property
@@ -168,7 +180,7 @@ class SeState(StateEngineTools.SeItemChild):
         self.__use_done = []
         self.__use_list = []
         self.__use_ignore_list = []
-        self.__conditions = StateEngineConditionSets.SeConditionSets(self._abitem)
+        self.__conditionsets = StateEngineConditionSets.SeConditionSets(self._abitem)
         self.__actions_enter_or_stay = StateEngineActions.SeActions(self._abitem)
         self.__actions_enter = StateEngineActions.SeActions(self._abitem)
         self.__actions_stay = StateEngineActions.SeActions(self._abitem)
@@ -193,7 +205,7 @@ class SeState(StateEngineTools.SeItemChild):
         self.__is_copy_for.write_to_logger()
         self.__releasedby.write_to_logger()
         self.__can_release.write_to_logger()
-        result, conditionset = self.__conditions.one_conditionset_matching(self)
+        result, conditionset = self.__conditionsets.one_conditionset_matching(self)
         self._log_decrease_indent()
         if result:
             self._log_info("State {} can be entered based on conditionset {}", self.id, conditionset)
@@ -219,7 +231,7 @@ class SeState(StateEngineTools.SeItemChild):
         self._log_info("Updating Web Interface...")
         self._log_increase_indent()
         self._abitem.update_webif(self.id, {'name': self.name,
-                                            'conditionsets': self.__conditions.get(),
+                                            'conditionsets': {},
                                             'actions_enter': {},
                                             'actions_enter_or_stay': {},
                                             'actions_stay': {},
@@ -229,10 +241,10 @@ class SeState(StateEngineTools.SeItemChild):
         self._log_decrease_indent()
         self._log_info("Finished Web Interface Update")
 
-        if self.__conditions.count() > 0:
+        if self.__conditionsets.count() > 0:
             self._log_info("Condition sets to enter state:")
             self._log_increase_indent()
-            self.__conditions.write_to_logger()
+            self.__conditionsets.write_to_logger()
             self._log_decrease_indent()
 
         if self.__actions_enter.count() > 0:
@@ -240,28 +252,24 @@ class SeState(StateEngineTools.SeItemChild):
             self._log_increase_indent()
             self.__actions_enter.write_to_logger()
             self._log_decrease_indent()
-            self._abitem.update_webif([self.id, 'actions_enter'], self.__actions_enter.dict_actions('actions_enter', self.id))
 
         if self.__actions_stay.count() > 0:
             self._log_info("Actions to perform on stay:")
             self._log_increase_indent()
             self.__actions_stay.write_to_logger()
             self._log_decrease_indent()
-            self._abitem.update_webif([self.id, 'actions_stay'], self.__actions_stay.dict_actions('actions_stay', self.id))
 
         if self.__actions_enter_or_stay.count() > 0:
             self._log_info("Actions to perform on enter or stay:")
             self._log_increase_indent()
             self.__actions_enter_or_stay.write_to_logger()
             self._log_decrease_indent()
-            self._abitem.update_webif([self.id, 'actions_enter_or_stay'], self.__actions_enter_or_stay.dict_actions('actions_enter_or_stay', self.id))
 
         if self.__actions_leave.count() > 0:
             self._log_info("Actions to perform on leave (instant leave: {})", self._abitem.instant_leaveaction)
             self._log_increase_indent()
             self.__actions_leave.write_to_logger()
             self._log_decrease_indent()
-            self._abitem.update_webif([self.id, 'actions_leave'], self.__actions_leave.dict_actions('actions_leave', self.id))
         self._abitem.set_variable("current.state_name", "")
         self._abitem.set_variable("current.state_id", "")
         self._log_decrease_indent()
@@ -296,15 +304,6 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem.update_webif(_key_enter, True)
         self.__actions_enter.execute(False, allow_item_repeat, self, self.__actions_enter_or_stay)
         self._log_decrease_indent(50)
-        self._log_increase_indent()
-        self._log_debug("Update web interface enter {}", self.id)
-        self._log_increase_indent()
-        if self.__actions_enter_or_stay.count() > 0:
-            self._abitem.update_webif([self.id, 'actions_enter_or_stay'], self.__actions_enter_or_stay.dict_actions('actions_enter_or_stay', self.id))
-        if self.__actions_enter.count() > 0:
-            self._abitem.update_webif([self.id, 'actions_enter'], self.__actions_enter.dict_actions('actions_enter', self.id))
-        self._log_decrease_indent()
-        self._log_decrease_indent()
 
     # run actions when staying at the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
@@ -318,15 +317,16 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem.update_webif(_key_enter, False)
         self.__actions_stay.execute(True, allow_item_repeat, self, self.__actions_enter_or_stay)
         self._log_decrease_indent(50)
+
+    # run actions when passing the state
+    # item_allow_repeat: Is repeating actions generally allowed for the item?
+    def run_pass(self, allow_item_repeat: bool):
         self._log_increase_indent()
-        self._log_debug("Update web interface stay {}", self.id)
-        self._log_increase_indent()
-        if self.__actions_enter_or_stay.count() > 0:
-            self._abitem.update_webif([self.id, 'actions_enter_or_stay'], self.__actions_enter_or_stay.dict_actions('actions_enter_or_stay', self.id))
-        if self.__actions_stay.count() > 0:
-            self._abitem.update_webif([self.id, 'actions_stay'], self.__actions_stay.dict_actions('actions_stay', self.id))
-        self._log_decrease_indent()
-        self._log_decrease_indent()
+        for elem in self._abitem.webif_infos:
+            _key_pass = ['{}'.format(elem), 'pass']
+            self._abitem.update_webif(_key_pass, False)
+        self.__actions_pass.execute(False, allow_item_repeat, self)
+        self._log_decrease_indent(50)
 
     # run actions when leaving the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
@@ -337,13 +337,6 @@ class SeState(StateEngineTools.SeItemChild):
             self._abitem.update_webif(_key_leave, False)
         self.__actions_leave.execute(False, allow_item_repeat, self)
         self._log_decrease_indent(50)
-        self._log_increase_indent()
-        self._log_debug("Update web interface leave {}", self.id)
-        self._log_increase_indent()
-        if self.__actions_leave.count() > 0:
-            self._abitem.update_webif([self.id, 'actions_leave'], self.__actions_leave.dict_actions('actions_leave', self.id))
-        self._log_decrease_indent()
-        self._log_decrease_indent()
 
     def refill(self):
         cond_refill = not self.__use.is_empty() and ("eval" in self.__use.get_type() or "item" in self.__use.get_type())
@@ -404,7 +397,6 @@ class SeState(StateEngineTools.SeItemChild):
                     se_use = element
                 self.__use_done.append(element)
                 self.__fill(element, recursion_depth, se_use, use)
-
 
     def __initialize_se_use(self, state, recursion_depth):
         # Import data from other item if attribute "use" is found
@@ -611,7 +603,7 @@ class SeState(StateEngineTools.SeItemChild):
         self._log_develop("Fill state {} type {}, called by {}, recursion {}", item_state, type(item_state), se_use, recursion_depth)
         if se_use == "reinit":
             self._log_develop("Resetting conditions and actions at re-init use is {}", use)
-            self.__conditions.reset()
+            self.__conditionsets.reset()
             self.__actions_enter_or_stay.reset()
             self.__actions_enter.reset()
             self.__actions_stay.reset()
@@ -642,7 +634,7 @@ class SeState(StateEngineTools.SeItemChild):
             try:
                 if child_name == "enter" or child_name.startswith("enter_"):
                     _conditioncount += 1
-                    _unused_attributes, _used_attributes = self.__conditions.update(child_name, child_item, parent_item)
+                    _unused_attributes, _used_attributes = self.__conditionsets.update(child_name, child_item, parent_item)
                     self.__unused_attributes = copy(_unused_attributes)
                     self.__used_attributes = copy(_used_attributes)
                     for item in self.__unused_attributes.keys():
@@ -707,16 +699,16 @@ class SeState(StateEngineTools.SeItemChild):
         # Complete condition sets and actions at the end
 
         if recursion_depth == 0:
-            self.__conditions.complete(self, use)
-            _action_status = self.__actions_enter.complete(self, 'actions_enter', self.__conditions.evals_items, use)
+            self.__conditionsets.complete(self, use)
+            _action_status = self.__actions_enter.complete(self, 'actions_enter', self.__conditionsets.evals_items, use)
             if _action_status:
                 update_action_status(_action_status, 'enter')
                 self._abitem.update_action_status(self.__action_status)
-            _action_status = self.__actions_stay.complete(self,'actions_stay', self.__conditions.evals_items, use)
+            _action_status = self.__actions_stay.complete(self, 'actions_stay', self.__conditionsets.evals_items, use)
             if _action_status:
                 update_action_status(_action_status, 'stay')
                 self._abitem.update_action_status(self.__action_status)
-            _action_status = self.__actions_enter_or_stay.complete(self, 'actions_enter_or_stay', self.__conditions.evals_items, use)
+            _action_status = self.__actions_enter_or_stay.complete(self, 'actions_enter_or_stay', self.__conditionsets.evals_items, use)
             if _action_status:
                 update_action_status(_action_status, 'enter_or_stay')
                 self._abitem.update_action_status(self.__action_status)
