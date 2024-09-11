@@ -529,7 +529,7 @@ class SeActions(StateEngineTools.SeItemChild):
                 _status.update(self.__actions[name].complete(state, action_type, evals_items, use))
             except ValueError as ex:
                 _status.update({name: {'issue': ex, 'issueorigin': {'state': state.id, 'action': 'unknown'}}})
-                raise ValueError("State '{0}', Action '{1}': {2}".format(state.id, name, ex))
+                raise ValueError("Completing State '{0}', Action '{1}': {2}".format(state.id, name, ex))
         self._log_debug("Completing {} for state {} status {}", self.__actions, state, _status)
         return _status
 
@@ -538,7 +538,7 @@ class SeActions(StateEngineTools.SeItemChild):
             try:
                 self.__actions[name].update(value)
             except ValueError as ex:
-                raise ValueError("State '{0}', Action '{1}': {2}".format(value.property.path, name, ex))
+                raise ValueError("Setting State '{0}', Action '{1}': {2}".format(value.property.path, name, ex))
 
     # Execute all actions
     # is_repeat: Indicate if this is a repeated action without changing the state

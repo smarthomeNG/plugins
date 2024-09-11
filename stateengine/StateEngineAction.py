@@ -668,7 +668,6 @@ class SeActionMixSetForce:
         self._abitem.set_variable('current.state_name', state.name)
         self._action_type = action_type
         self._state = state
-
         self._item, self._status, self._mindelta, self._value, _issue = self.check_complete(
             state, self._item, self._status, self._mindelta, self._value, "set/force", evals_items, use)
         self._action_status = _issue

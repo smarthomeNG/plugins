@@ -2131,7 +2131,7 @@ class SeItem:
                 _, _, item = item.partition(":")
                 return item, None
             elif match:
-                _issue = ("Item '{0}' has to be defined as an item path "
+                _issue = ("Item '{}' has to be defined as an item path "
                           "or eval expression without {}.").format(match.group(1), item_id)
                 self.__logger.warning(_issue)
                 return None, [_issue]
