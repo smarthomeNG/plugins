@@ -943,6 +943,20 @@ item_structs:
                       - 'repeat: True'
                       - 'order: 5'
 
+                on_pass:
+                    se_action_suspend:
+                      - 'function: set'
+                      - 'to: False'
+                    se_action_suspend_visu:
+                      - 'function: set'
+                      - 'to: False'
+                    se_action_suspend_end:
+                      - 'function: set'
+                      - 'to:  '
+                    se_action_suspend_start:
+                      - 'function: set'
+                      - 'to:  '
+
                 on_leave:
                     se_action_suspend:
                       - 'function: set'
@@ -1257,6 +1271,20 @@ item_structs:
                       - 'delay: var:item.suspend_remaining'
                       - 'repeat: True'
                       - 'order: 5'
+
+                on_pass:
+                    se_action_suspend:
+                      - 'function: set'
+                      - 'to: False'
+                    se_action_suspend_visu:
+                      - 'function: set'
+                      - 'to: False'
+                    se_action_suspend_end:
+                      - 'function: set'
+                      - 'to:  '
+                    se_action_suspend_start:
+                      - 'function: set'
+                      - 'to:  '
 
                 on_leave:
                     se_action_suspendvariant:

@@ -312,9 +312,11 @@ class SeState(StateEngineTools.SeItemChild):
         _key_leave = ['{}'.format(self.id), 'leave']
         _key_stay = ['{}'.format(self.id), 'stay']
         _key_enter = ['{}'.format(self.id), 'enter']
+        _key_pass = ['{}'.format(self.id), 'pass']
         self._abitem.update_webif(_key_leave, False)
         self._abitem.update_webif(_key_stay, False)
         self._abitem.update_webif(_key_enter, True)
+        self._abitem.update_webif(_key_pass, False)
         self.__actions_enter.execute(False, allow_item_repeat, self, self.__actions_enter_or_stay)
         self._log_decrease_indent(50)
 
@@ -325,9 +327,11 @@ class SeState(StateEngineTools.SeItemChild):
         _key_leave = ['{}'.format(self.id), 'leave']
         _key_stay = ['{}'.format(self.id), 'stay']
         _key_enter = ['{}'.format(self.id), 'enter']
+        _key_pass = ['{}'.format(self.id), 'pass']
         self._abitem.update_webif(_key_leave, False)
         self._abitem.update_webif(_key_stay, True)
         self._abitem.update_webif(_key_enter, False)
+        self._abitem.update_webif(_key_pass, False)
         self.__actions_stay.execute(True, allow_item_repeat, self, self.__actions_enter_or_stay)
         self._log_decrease_indent(50)
 
@@ -336,10 +340,15 @@ class SeState(StateEngineTools.SeItemChild):
     def run_pass(self, allow_item_repeat: bool):
         self._log_info("Passing state {}, running pass actions.", self.id)
         self._log_increase_indent()
-        for elem in self._abitem.webif_infos:
-            _key_pass = ['{}'.format(elem), 'pass']
-            self._abitem.update_webif(_key_pass, False)
-        self.__actions_pass.execute(False, allow_item_repeat, self)
+        _key_leave = ['{}'.format(self.id), 'leave']
+        _key_stay = ['{}'.format(self.id), 'stay']
+        _key_enter = ['{}'.format(self.id), 'enter']
+        _key_pass = ['{}'.format(self.id), 'pass']
+        self._abitem.update_webif(_key_leave, False)
+        self._abitem.update_webif(_key_stay, False)
+        self._abitem.update_webif(_key_enter, False)
+        self._abitem.update_webif(_key_pass, True)
+        self.__actions_pass.execute(True, allow_item_repeat, self)
         self._log_decrease_indent(50)
 
     # run actions when leaving the state

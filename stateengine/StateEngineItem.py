@@ -1015,13 +1015,11 @@ class SeItem:
             if update is True and isinstance(dic.get(keys[-1]), dict) and isinstance(val, dict):
                 # Update the existing dictionary with the new dictionary
                 dic[keys[-1]].update(val)
-                self.__logger.develop("Updating WEBIF with list {}, value: {}. infos is {}", key, value,
-                                      self.__webif_infos)
+                #self.__logger.develop("Updating WEBIF with list {}, value: {}. infos is {}", key, value, self.__webif_infos)
             else:
                 # Otherwise, set the value as is
                 dic[keys[-1]] = val
-                self.__logger.develop("Setting WEBIF with list {}, value: {}. infos is {}", key, value,
-                                      self.__webif_infos)
+                #self.__logger.develop("Setting WEBIF with list {}, value: {}. infos is {}", key, value, self.__webif_infos)
 
         def _nested_test(dic, keys):
             for nestedkey in keys[:-2]:
@@ -1430,8 +1428,8 @@ class SeItem:
             if refill:
                 state.refill()
                 can_enter = state.can_enter()
-                if can_enter is False:
-                    state.run_pass()
+                if can_enter[0] is False:
+                    state.run_pass(self.__repeat_actions.get())
                 return can_enter
         except Exception as ex:
             self.__logger.warning("Problem with currentstate {0}. Error: {1}", state.id, ex)
