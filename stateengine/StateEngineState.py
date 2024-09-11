@@ -72,6 +72,10 @@ class SeState(StateEngineTools.SeItemChild):
     def actions_stay(self):
         return self.__actions_stay
 
+    @property
+    def actions_pass(self):
+        return self.__actions_pass
+
     # Return text of state
     @property
     def text(self):
@@ -185,6 +189,7 @@ class SeState(StateEngineTools.SeItemChild):
         self.__actions_enter = StateEngineActions.SeActions(self._abitem)
         self.__actions_stay = StateEngineActions.SeActions(self._abitem)
         self.__actions_leave = StateEngineActions.SeActions(self._abitem)
+        self.__actions_pass = StateEngineActions.SeActions(self._abitem)
         self.__order = StateEngineValue.SeValue(self._abitem, "State Order", False, "num")
         self._log_increase_indent()
         try:
@@ -236,6 +241,7 @@ class SeState(StateEngineTools.SeItemChild):
                                             'actions_enter_or_stay': {},
                                             'actions_stay': {},
                                             'actions_leave': {},
+                                            'actions_pass': {},
                                             'leave': False, 'enter': False, 'stay': False,
                                             'is_copy_for': None, 'releasedby': None})
         self._log_decrease_indent()
@@ -270,6 +276,13 @@ class SeState(StateEngineTools.SeItemChild):
             self._log_increase_indent()
             self.__actions_leave.write_to_logger()
             self._log_decrease_indent()
+
+        if self.__actions_pass.count() > 0:
+            self._log_info("Actions to perform on pass / transit:")
+            self._log_increase_indent()
+            self.__actions_pass.write_to_logger()
+            self._log_decrease_indent()
+
         self._abitem.set_variable("current.state_name", "")
         self._abitem.set_variable("current.state_id", "")
         self._log_decrease_indent()
@@ -608,6 +621,7 @@ class SeState(StateEngineTools.SeItemChild):
             self.__actions_enter.reset()
             self.__actions_stay.reset()
             self.__actions_leave.reset()
+            self.__actions_pass.reset()
             self.__use_done = []
 
             use = self.__use.get()
@@ -624,7 +638,7 @@ class SeState(StateEngineTools.SeItemChild):
             parent_item = None
         child_items = item_state.return_children()
         _conditioncount = 0
-        _action_counts = {"enter": 0, "stay": 0, "enter_or_stay": 0, "leave": 0}
+        _action_counts = {"enter": 0, "stay": 0, "enter_or_stay": 0, "leave": 0, "pass": 0}
         _unused_attributes = {}
         _used_attributes = {}
         _action_status = {}
@@ -666,7 +680,8 @@ class SeState(StateEngineTools.SeItemChild):
                     "on_enter": ("enter", self.__actions_enter),
                     "on_stay": ("stay", self.__actions_stay),
                     "on_enter_or_stay": ("enter_or_stay", self.__actions_enter_or_stay),
-                    "on_leave": ("leave", self.__actions_leave)
+                    "on_leave": ("leave", self.__actions_leave),
+                    "on_pass": ("pass", self.__actions_pass)
                 }
 
                 if child_name in action_mapping:
@@ -712,22 +727,26 @@ class SeState(StateEngineTools.SeItemChild):
             if _action_status:
                 update_action_status(_action_status, 'enter_or_stay')
                 self._abitem.update_action_status(self.__action_status)
-            _action_status = self.__actions_leave.complete(self, 'actions_leave',self.__conditions.evals_items, use)
+            _action_status = self.__actions_pass.complete(self, 'actions_pass', self.__conditionsets.evals_items, use)
+            if _action_status:
+                update_action_status(_action_status, 'pass')
+                self._abitem.update_action_status(self.__action_status)
+            _action_status = self.__actions_leave.complete(self, 'actions_leave', self.__conditionsets.evals_items, use)
             if _action_status:
                 update_action_status(_action_status, 'leave')
                 self._abitem.update_action_status(self.__action_status)
             self._abitem.update_action_status(self.__action_status)
             self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
-        _summary = "{} on_enter, {} on_stay , {} on_enter_or_stay, {} on_leave"
+        _summary = "{} on_enter, {} on_stay , {} on_enter_or_stay, {} on_leave, {} on_pass"
         if self.__action_status:
             _ignore_list = [entry for entry in self.__action_status if self.__action_status[entry].get('ignore') is True]
             if _ignore_list:
                 self._log_info("Ignored {} action(s) due to errors: {}", len(_ignore_list), _ignore_list)
         if se_use is not None:
             self._log_debug("Added {} action(s) based on se_use {}. " + _summary, _total_actioncount, se_use,
-                            _action_counts["enter"], _action_counts["stay"], _action_counts["enter_or_stay"], _action_counts["leave"])
+                            _action_counts["enter"], _action_counts["stay"], _action_counts["enter_or_stay"], _action_counts["leave"], _action_counts["pass"])
             self._log_debug("Added {} condition set(s) based on se_use: {}", _conditioncount, se_use)
         else:
             self._log_debug("Added {} action(s) based on item configuration: " + _summary, _total_actioncount,
-                            _action_counts["enter"], _action_counts["stay"], _action_counts["enter_or_stay"], _action_counts["leave"])
+                            _action_counts["enter"], _action_counts["stay"], _action_counts["enter_or_stay"], _action_counts["leave"], _action_counts["pass"])
             self._log_debug("Added {} condition set(s) based on item configuration", _conditioncount)
