@@ -85,14 +85,14 @@ class SeFunctions:
             # If current value is in list -> Return "Trigger"
             for e in conf_entry:
                 e = re.compile(e, re.IGNORECASE)
-                result = e.match(original)
-                elog.info("Checking regex result {}", result)
-                if result is not None:
+                r = e.match(original)
+                elog.info("Checking regex result {}", r)
+                if r is not None:
                     elog.info("{0}: matching.", e)
                     elog.decrease_indent()
-                    returnvalue = retval_trigger if entry_type == "include" else retval_no_trigger
-                    elog.info("Writing value {0}", returnvalue)
-                    return returnvalue
+                    retval = retval_trigger if entry_type == "include" else retval_no_trigger
+                    elog.info("Writing value {0}", retval)
+                    return retval
                 elog.info("{0}: not matching", e)
             elog.decrease_indent()
             return None

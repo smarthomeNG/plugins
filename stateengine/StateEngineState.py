@@ -489,9 +489,8 @@ class SeState(StateEngineTools.SeItemChild):
                                      _configorigvalue[i] in item)):
                                 _issue_list = [item for key, value in _issues.items() if value for item in value]
                                 self._log_warning("se_use {} points to invalid item. Ignoring.", _configorigvalue[i])
-                                self._abitem.update_issues('config', {state.id:
-                                                                          {'issue': _issue_list,
-                                                                           'attribute': 'se_use', 'origin': state_type}})
+                                self._abitem.update_issues('config', {state.id: {'issue': _issue_list,
+                                                                                 'attribute': 'se_use', 'origin': state_type}})
                                 self.__use_ignore_list.append(_configorigvalue[i])
                                 _path = None
                     elif _returntype[i] in ['item', 'eval']:
@@ -505,9 +504,8 @@ class SeState(StateEngineTools.SeItemChild):
 
                                         _issue_list = [item for key, value in _issues.items() if value for item in value]
                                         self._log_warning("se_use {} defined by invalid item/eval. Ignoring.", _path)
-                                        self._abitem.update_issues('config', {state.id:
-                                                                                  {'issue': _issue_list,
-                                                                                   'attribute': 'se_use', 'origin': state_type}})
+                                        self._abitem.update_issues('config', {state.id: {'issue': _issue_list,
+                                                                                         'attribute': 'se_use', 'origin': state_type}})
                                         self.__use_ignore_list.append(_path)
                                         _path = None
                         if _path is None:

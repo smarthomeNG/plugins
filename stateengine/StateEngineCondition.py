@@ -292,14 +292,14 @@ class SeCondition(StateEngineTools.SeItemChild):
         if all(item is None for item in [self.__item, self.__status, self.__eval, self.__status_eval]):
             raise ValueError("Neither 'item' nor 'status' nor '(status)eval' given!")
 
-        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval])\
-           and not self.__changedby.is_empty() and self.__changedbynegate is None:
+        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval]) \
+                and not self.__changedby.is_empty() and self.__changedbynegate is None:
             self.__changedbynegate = False
-        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval])\
-           and not self.__updatedby.is_empty() and self.__updatedbynegate is None:
+        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval]) \
+                and not self.__updatedby.is_empty() and self.__updatedbynegate is None:
             self.__updatedbynegate = False
-        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval])\
-           and not self.__triggeredby.is_empty() and self.__triggeredbynegate is None:
+        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval]) \
+                and not self.__triggeredby.is_empty() and self.__triggeredbynegate is None:
             self.__triggeredbynegate = False
 
         # cast stuff
@@ -462,19 +462,19 @@ class SeCondition(StateEngineTools.SeItemChild):
                 self.__value.set_cast(StateEngineTools.cast_str)
                 convert_value = StateEngineTools.cast_str(convert_value)
                 convert_current = StateEngineTools.cast_str(convert_current)
-            if not type(_oldvalue) == type(convert_value):
+            if not type(_oldvalue) is type(convert_value):
                 self._log_debug("Value {} was type {} and therefore not the same"
                                 " type as item value {}. It got converted to {}.",
                                 _oldvalue, type(_oldvalue), convert_current, type(convert_value))
             return convert_value, convert_current
 
-        current = self.__get_current(eval_type='changedby') if valuetype == "changedby" else\
-            self.__get_current(eval_type='updatedby') if valuetype == "updatedby" else\
-            self.__get_current(eval_type='triggeredby') if valuetype == "triggeredby" else\
+        current = self.__get_current(eval_type='changedby') if valuetype == "changedby" else \
+            self.__get_current(eval_type='updatedby') if valuetype == "updatedby" else \
+            self.__get_current(eval_type='triggeredby') if valuetype == "triggeredby" else \
             self.__get_current(eval_type='value')
-        negate = self.__changedbynegate if valuetype == "changedby" else\
-            self.__updatedbynegate if valuetype == "updatedby" else\
-            self.__triggeredbynegate if valuetype == "triggeredby" else\
+        negate = self.__changedbynegate if valuetype == "changedby" else \
+            self.__updatedbynegate if valuetype == "updatedby" else \
+            self.__triggeredbynegate if valuetype == "triggeredby" else \
             self.__negate
         _key_current = ['{}'.format(state.id), 'conditionsets', '{}'.format(
             self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name),
@@ -490,20 +490,20 @@ class SeCondition(StateEngineTools.SeItemChild):
             for i, element in enumerate(value):
                 regex_result = None
                 regex_check = False
-                if valuetype == "value" and type(element) != type(current) and current is not None:
+                if valuetype == "value" and type(element) is not type(current) and current is not None:
                     element, current = __convert(element, current)
                 if isinstance(element, re.Pattern):
                     regex_result = element.fullmatch(str(current))
                     regex_check = True
                 if negate:
-                    if (regex_result is not None and regex_check is True)\
-                       or (current == element and regex_check is False):
+                    if (regex_result is not None and regex_check is True) \
+                            or (current == element and regex_check is False):
                         self._log_debug("{0} found but negated -> not matching", element)
                         self._abitem.update_webif(_key_match, 'no')
                         return False
                 else:
-                    if (regex_result is not None and regex_check is True)\
-                       or (current == element and regex_check is False):
+                    if (regex_result is not None and regex_check is True) \
+                            or (current == element and regex_check is False):
                         self._log_debug("{0} found -> matching", element)
                         self._abitem.update_webif(_key_match, 'yes')
                         return True
@@ -522,7 +522,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             regex_result = None
             regex_check = False
             # If current and value have different types, convert both to string
-            if valuetype == "value" and type(value) != type(current) and current is not None:
+            if valuetype == "value" and type(value) is not type(current) and current is not None:
                 value, current = __convert(value, current)
             text = "Condition '{0}': {1}={2} negate={3} current={4}"
             self._abitem.update_webif(_key_current, str(current))
@@ -532,14 +532,14 @@ class SeCondition(StateEngineTools.SeItemChild):
                 regex_result = value.fullmatch(str(current))
                 regex_check = True
             if negate:
-                if (regex_result is None and regex_check is True)\
-                   or (current != value and regex_check is False):
+                if (regex_result is None and regex_check is True) \
+                        or (current != value and regex_check is False):
                     self._log_debug("not OK but negated -> matching")
                     self._abitem.update_webif(_key_match, 'yes')
                     return True
             else:
-                if (regex_result is not None and regex_check is True)\
-                   or (current == value and regex_check is False):
+                if (regex_result is not None and regex_check is True) \
+                        or (current == value and regex_check is False):
                     self._log_debug("OK -> matching")
                     self._abitem.update_webif(_key_match, 'yes')
                     return True
@@ -823,10 +823,10 @@ class SeCondition(StateEngineTools.SeItemChild):
                     eval_result = eval(eval_or_status_eval)
                     if isinstance(eval_result, self.__itemClass):
                         value = eval_result.property.last_change_age if eval_type == 'age' else \
-                                eval_result.property.last_change_by if eval_type == 'changedby' else \
-                                eval_result.property.last_update_by if eval_type == 'updatedby' else \
-                                eval_result.property.last_trigger_by if eval_type == 'triggeredby' else \
-                                eval_result.property.value
+                            eval_result.property.last_change_by if eval_type == 'changedby' else \
+                            eval_result.property.last_update_by if eval_type == 'updatedby' else \
+                            eval_result.property.last_trigger_by if eval_type == 'triggeredby' else \
+                            eval_result.property.value
                     else:
                         value = eval_result
                 except Exception as ex:
@@ -840,10 +840,10 @@ class SeCondition(StateEngineTools.SeItemChild):
         if self.__status is not None:
             # noinspection PyUnusedLocal
             self._log_debug("Trying to get {} of status item {}", eval_type, self.__status.property.path)
-            return self.__status.property.last_change_age if eval_type == 'age' else\
-                self.__status.property.last_change_by if eval_type == 'changedby' else\
-                self.__status.property.last_update_by if eval_type == 'updatedby' else\
-                self.__status.property.last_trigger_by if eval_type == 'triggeredby' else\
+            return self.__status.property.last_change_age if eval_type == 'age' else \
+                self.__status.property.last_change_by if eval_type == 'changedby' else \
+                self.__status.property.last_update_by if eval_type == 'updatedby' else \
+                self.__status.property.last_trigger_by if eval_type == 'triggeredby' else \
                 self.__status.property.value
         elif self.__status_eval is not None:
             self._log_debug("Trying to get {} of statuseval {}", eval_type, self.__status_eval)
@@ -852,10 +852,10 @@ class SeCondition(StateEngineTools.SeItemChild):
         elif self.__item is not None:
             # noinspection PyUnusedLocal
             self._log_debug("Trying to get {} of item {}", eval_type, self.__item.property.path)
-            return self.__item.property.last_change_age if eval_type == 'age' else\
-                self.__item.property.last_change_by if eval_type == 'changedby' else\
-                self.__item.property.last_update_by if eval_type == 'updatedby' else\
-                self.__item.property.last_trigger_by if eval_type == 'triggeredby' else\
+            return self.__item.property.last_change_age if eval_type == 'age' else \
+                self.__item.property.last_change_by if eval_type == 'changedby' else \
+                self.__item.property.last_update_by if eval_type == 'updatedby' else \
+                self.__item.property.last_trigger_by if eval_type == 'triggeredby' else \
                 self.__item.property.value
         elif self.__eval is not None:
             self._log_debug("Trying to get {} of eval {}", eval_type, self.__eval)

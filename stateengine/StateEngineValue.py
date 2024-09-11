@@ -136,7 +136,8 @@ class SeValue(StateEngineTools.SeItemChild):
             self._log_develop("Setting value {0}, attribute name {1}, reset {2}, type {3}",
                               value, attribute_name, reset, attr_type)
         _returnvalue, _returntype, _issue, _origvalue = self.set(value, attribute_name, reset)
-        self._log_develop("Set from attribute returnvalue {}, returntype {}, issue {}, original {}", _returnvalue, _returntype, _issue, _origvalue)
+        self._log_develop("Set from attribute returnvalue {}, returntype {}, issue {}, original {}",
+                          _returnvalue, _returntype, _issue, _origvalue)
         return _returnvalue, _returntype, _using_default, _issue, _origvalue
 
     def _set_additional(self, _additional_sources):
@@ -470,7 +471,6 @@ class SeValue(StateEngineTools.SeItemChild):
 
     # Write condition to logger
     def write_to_logger(self):
-        eval_result = None
         if self.__template is not None:
             self._log_info("{0}: Using template(s) {1}", self.__name, self.__template)
         if self.__value is not None:
@@ -1007,6 +1007,6 @@ class SeValue(StateEngineTools.SeItemChild):
                                 var, values[-1], self.__listorder)
         else:
             values = update_value(self.__varname)
-            self._log_debug("Variable result: {0}", values)
+        self._log_debug("Variable result: {0}", values)
 
         return values

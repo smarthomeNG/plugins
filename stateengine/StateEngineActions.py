@@ -334,12 +334,12 @@ class SeActions(StateEngineTools.SeItemChild):
         return True, _issue_list
 
     def __handle_combined_action_attribute(self, name, value_list):
-        def remove_action(ex):
+        def remove_action(e):
             if name in self.__actions:
                 del self.__actions[name]
-            _issue = {name: {'issue': [ex], 'issueorigin': [{'state': 'unknown', 'action': parameter['function']}], 'ignore': True}}
-            _issue_list.append(_issue)
-            self._log_warning("Ignoring action {0} because: {1}", name, ex)
+            i = {name: {'issue': [e], 'issueorigin': [{'state': 'unknown', 'action': parameter['function']}], 'ignore': True}}
+            _issue_list.append(i)
+            self._log_warning("Ignoring action {0} because: {1}", name, e)
 
         parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'nextconditionset': None, 'conditionset': None,
                      'previousconditionset': None, 'previousstate_conditionset': None, 'mode': None, 'instanteval': None}

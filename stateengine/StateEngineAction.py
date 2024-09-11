@@ -301,7 +301,6 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def check_complete(self, state, check_item, check_status, check_mindelta, check_value, action_type, evals_items=None, use=None):
         _issue = {self._name: {'issue': None,
                                'issueorigin': [{'state': state.id, 'action': self._function}]}}
-        self._log_develop("For action {} check item {} status {} mindelta {} value {} actiontype {}, use {} evals_items {}", self, check_item, check_status, check_mindelta, check_value, action_type, use, evals_items)
         try:
             _name = evals_items.get(self.name)
             if _name is not None:

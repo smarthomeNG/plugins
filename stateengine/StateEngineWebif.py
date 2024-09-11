@@ -59,19 +59,27 @@ class WebInterface(StateEngineTools.SeItemChild):
     def __repr__(self):
         return "WebInterface item: {}, id {}".format(self.__states, self.__name) if REQUIRED_PACKAGE_IMPORTED else "None"
 
+    def _strip_regex(self, regex_list):
+        pattern_strings = []
+        if not isinstance(regex_list, list):
+            regex_list = [regex_list]
+        for item in regex_list:
+            if isinstance(item, re.Pattern):
+                pattern_strings.append(item.pattern)
+            else:
+                pattern_match = re.search(r"re\.compile\('([^']*)'", item)
+                if pattern_match:
+                    item = f"regex:{pattern_match.group(1)}"
+                pattern_strings.append(str(item))
+        if len(pattern_strings) <= 1:
+            pattern_strings = pattern_strings[0]
+        return str(pattern_strings)
+
     def _actionlabel(self, state, label_type, conditionset, previousconditionset, previousstate_conditionset, next_conditionset):
         # Check if conditions for action are met or not
         # action_dict: abitem[state]['on_enter'/'on_stay'/'on_enter_or_stay'/'on_leave'].get(action)
         # condition_to_meet: 'conditionset'/'previousconditionset'/'previousstate_conditionset'/'nextconditionset'
         # conditionset: name of conditionset that should get checked
-        def _strip_regex(regex_list):
-            pattern_strings = []
-            for item in regex_list:
-                if isinstance(item, re.Pattern):
-                    pattern_strings.append(item.pattern)
-                else:
-                    pattern_strings.append(str(item))
-            return str(pattern_strings)
 
         def _check_webif_conditions(action_dict, condition_to_meet: str, conditionset: str):
             _condition_check = action_dict.get(condition_to_meet)
@@ -136,10 +144,10 @@ class WebInterface(StateEngineTools.SeItemChild):
                         (not condition_met or (_repeat is False and originaltype == 'actions_stay'))) \
                     else "#5c5646" if _delay > 0 else "darkred" if _delay < 0  \
                     else "#303030" if not condition_met or _issue else "black"
-                condition_info = _strip_regex(condition_to_meet) if condition1 is False \
-                    else _strip_regex(previouscondition_to_meet) if condition2 is False \
-                    else _strip_regex(previousstate_condition_to_meet) if condition3 is False \
-                    else _strip_regex(next_condition_to_meet) if condition4 is False \
+                condition_info = self._strip_regex(condition_to_meet) if condition1 is False \
+                    else self._strip_regex(previouscondition_to_meet) if condition2 is False \
+                    else self._strip_regex(previousstate_condition_to_meet) if condition3 is False \
+                    else self._strip_regex(next_condition_to_meet) if condition4 is False \
                     else ""
                 if _issue:
                     if tooltip_count > 0:
@@ -237,7 +245,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                         text = " Current {}".format(current_clean) if current and len(current) > 0 else " Not evaluated."
                         conditionlist += ('<tr><td align="center" colspan="4"><table border="0" cellpadding="0" '
                                           'cellborder="0"><tr><td></td><td align="center">{}:{}</td><td></td></tr><tr>'
-                                          '<td width="40%"></td><td  align="center" border="1" height="1"></td>'
+                                          '<td width="40%"></td><td align="center" border="1" height="1"></td>'
                                           '<td width="40%"></td></tr></table></td></tr>').format(condition.upper(), text)
                     conditions_done.append(condition)
                     conditionlist += '<tr><td align="center"><b>'
@@ -246,6 +254,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     info_eval = str(condition_dict.get('eval') or '')
                     info_status_eval = str(condition_dict.get('status_eval') or '')
                     info_compare = str(condition_dict.get(compare) or '')
+                    info_compare = self._strip_regex(info_compare)
                     if not status_none:
                         textlength = len(info_status)
                         if textlength > self.__textlimit:
@@ -502,7 +511,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     self.__nodes['{}_{}'.format(state, conditionset)] = pydotplus.Node(
                         '{}_{}'.format(state, conditionset), style="filled", fillcolor=color, shape="diamond",
                         label=label, pos=position)
-                    #self._log_debug('Node {} {} drawn', state, conditionset)
+                    #self._log_debug('Node {} {} drawn. Conditionlist {}', state, conditionset, conditionlist)
                     position = '{},{}!'.format(0.2, new_y)
                     xlabel = '1 tooltip' if condition_tooltip_count == 1\
                              else '{} tooltips'.format(condition_tooltip_count)\
@@ -562,7 +571,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                         xlabel = ""
                     if j == 0:
                         self.__graph.add_edge(pydotplus.Edge(self.__nodes[state], self.__nodes['{}_right'.format(state)],
-                                                             style='bold', color='black', dir='none', 
+                                                             style='bold', color='black', dir='none',
                                                              xlabel=xlabel, edgetooltip='check first conditionset'))
                         self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_right'.format(state)],
                                                              self.__nodes['{}_{}'.format(state, conditionset)],

@@ -217,8 +217,9 @@ class SeItem:
         self.__log_level = StateEngineValue.SeValue(self, "Log Level", False, "num")
 
         _default_log_level = self.__logger.default_log_level.get()
-        _returnvalue, _returntype, _using_default, _issue, _ = self.__log_level.set_from_attr(self.__item, "se_log_level",
-                                                                                           _default_log_level)
+        _returnvalue, _returntype, _using_default, _issue, _ = self.__log_level.set_from_attr(self.__item,
+                                                                                              "se_log_level",
+                                                                                              _default_log_level)
         self.__using_default_log_level = _using_default
         _returnvalue = self.__log_level.get()
         if isinstance(_returnvalue, list) and len(_returnvalue) == 1:
@@ -880,10 +881,10 @@ class SeItem:
 
     def __handle_releasedby(self, new_state, last_state, instant_leaveaction):
         def update_can_release_list():
-            for e in _returnvalue:
-                e = self.__update_release_item_value(e, new_state)
-                e = e if isinstance(e, list) else [e]
-                for entry in e:
+            for r in _returnvalue:
+                r = self.__update_release_item_value(r, new_state)
+                r = r if isinstance(r, list) else [r]
+                for entry in r:
                     if entry and state.id not in can_release.setdefault(entry, [state.id]):
                         can_release[entry].append(state.id)
 
@@ -1046,19 +1047,19 @@ class SeItem:
                         existing.append(entry)
                 return existing
 
-            combined_dict = dict1.copy()
+            comb_dict = dict1.copy()
 
             for key, value in dict2.items():
-                if key not in combined_dict:
-                    combined_dict[key] = value
+                if key not in comb_dict:
+                    comb_dict[key] = value
                     continue
-                combined_entry = combined_dict[key]
+                combined_entry = comb_dict[key]
                 if 'issue' in value:
                     combined_entry['issue'] = update_list(combined_entry.get('issue', []), value['issue'])
                 if 'issueorigin' in value:
                     combined_entry['issueorigin'] = update_list(combined_entry.get('issueorigin', []), value['issueorigin'])
 
-            return combined_dict
+            return comb_dict
 
         if issue_type == "state":
             combined_dict = combine_dicts(issues, self.__state_issues)
@@ -1317,7 +1318,7 @@ class SeItem:
             _issue = _state.update_order(_statecount)
             if _issue:
                 self.__config_issues.update({item_state.property.path:
-                                                 {'issue': _issue, 'attribute': 'se_stateorder'}})
+                                            {'issue': _issue, 'attribute': 'se_stateorder'}})
                 self.__logger.error("Issue with state {0} while setting order: {1}",
                                     item_state.property.path, _issue)
             self.__states.append(_state)
@@ -1330,13 +1331,13 @@ class SeItem:
             return _statecount + 1
         except ValueError as ex:
             self.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
-                [{'conditionset': 'None', 'condition': 'ValueError'}]}})
+                               [{'conditionset': 'None', 'condition': 'ValueError'}]}})
             self.__logger.error("Ignoring state {0} because ValueError: {1}",
                                 item_state.property.path, ex)
             return _statecount
         except Exception as ex:
             self.update_issues('state', {item_state.property.path: {'issue': ex, 'issueorigin':
-                [{'conditionset': 'None', 'condition': 'GeneralError'}]}})
+                               [{'conditionset': 'None', 'condition': 'GeneralError'}]}})
             self.__logger.error("Ignoring state {0} because: {1}",
                                 item_state.property.path, ex)
             return _statecount
@@ -1790,11 +1791,11 @@ class SeItem:
             return _returnvalue_issue
 
         def update_can_release_list():
-            for i, value in enumerate(_convertedlist):
-                if _converted_typelist[i] == 'item':
-                    value = self.__update_release_item_value(_converted_evaluatedlist[i], state)
-                elif _converted_typelist[i] == 'eval':
-                    value = _converted_evaluatedlist[i]
+            for z, value in enumerate(_convertedlist):
+                if _converted_typelist[z] == 'item':
+                    value = self.__update_release_item_value(_converted_evaluatedlist[z], state)
+                elif _converted_typelist[z] == 'eval':
+                    value = _converted_evaluatedlist[z]
                 value = value if isinstance(value, list) else [value]
                 for v in value:
                     if v and can_release.get(v) and state.id not in can_release.get(v):
@@ -1913,7 +1914,7 @@ class SeItem:
         handler.push("\tPrevious conditionset: {0} ('{1}')\n".format(self.get_previousconditionset_id(),
                                                                      self.get_previousconditionset_name()))
         handler.push("\tNext conditionset: {0} ('{1}')\n".format(self.get_nextconditionset_id(),
-                                                                    self.get_nextconditionset_name()))
+                                                                 self.get_nextconditionset_name()))
         handler.push(self.__startup_delay.get_text("\t", "\n"))
         handler.push("\tCycle: {0}\n".format(cycles))
         handler.push("\tCron: {0}\n".format(crons))
