@@ -25,12 +25,12 @@ import shutil
 
 from lib.item import Items
 
+
 class SmartVisuGenerator:
 
     valid_sv_page_entries = ['room', 'overview', 'separator', 'seperator',
-                             'category', 'cat_overview', 'cat_separator','cat_seperator',
+                             'category', 'cat_overview', 'cat_separator', 'cat_seperator',
                              'room_lite', 'sv_overview']
-
 
     def __init__(self, plugin_instance, visu_definition=None):
         self.items = Items.get_instance()
@@ -102,7 +102,6 @@ class SmartVisuGenerator:
                 self.add_menuentry_to_list(menu, menu_entry)
             self.logger.debug("initialize_visu_menu: '{}' menu_entry={}".format(menu, menu_entry))
 
-
     def handle_heading_attributes(self, room):
         if 'sv_heading_right' in room.conf:
             heading_right = room.conf['sv_heading_right']
@@ -122,7 +121,6 @@ class SmartVisuGenerator:
             heading = ''
         return heading
 
-
     def get_widgetblocksize(self, item):
         """
         Returns the blocksize for the block in which the item is to be displayed.
@@ -134,12 +132,11 @@ class SmartVisuGenerator:
         """
         if 'sv_blocksize' in item.conf:
             blocksize = item.conf['sv_blocksize']
-            if not blocksize in ['1','2','3']:
+            if blocksize not in ['1', '2', '3']:
                 blocksize = '2'
         else:
             blocksize = '2'
         return blocksize
-
 
     def get_attribute(self, attr, item):
         if attr in item.conf:
@@ -147,7 +144,6 @@ class SmartVisuGenerator:
         else:
             attrvalue = ''
         return attrvalue
-
 
     def create_page(self, room, menu_entry):
         """
@@ -159,7 +155,7 @@ class SmartVisuGenerator:
         :return: html code to be included in the visu file for the room
         :rtype: str
         """
-        block_style = 'std' # 'std' or 'noh'
+        block_style = 'std'  # 'std' or 'noh'
         widgetblocktemplate = 'widgetblock_' + self.visu_style + '_' + block_style + '.html'
         widgetblocktemplate2 = 'widgetblock2_' + self.visu_style + '_' + block_style + '.html'
         widgets = ''
@@ -214,7 +210,6 @@ class SmartVisuGenerator:
         menu_entry['heading'] = heading
         menu_entry['content'] += widgets
         return r
-
 
     def pages(self):
         if not self.remove_oldpages():
@@ -284,13 +279,13 @@ class SmartVisuGenerator:
     def create_menuentry(self, menu, entry_name, item_path, separator, img_name, nav_aside, nav_aside2, from_navconfig=False):
         for menu_entry in self.navigation[menu]:
             if menu_entry['name'] == entry_name:
-                if menu_entry.get('img', '') == '' and menu_entry.get('img_set', False) == False:
+                if menu_entry.get('img', '') == '' and menu_entry.get('img_set', False) is False:
                     menu_entry['img'] = img_name
                 if menu_entry['item_path'] == '':
                     menu_entry['item_path'] = item_path
-                if menu_entry.get('nav_aside', '') == ''and menu_entry.get('nav_aside_set', False) == False:
+                if menu_entry.get('nav_aside', '') == '' and menu_entry.get('nav_aside_set', False) is False:
                     menu_entry['nav_aside'] = nav_aside
-                if menu_entry.get('nav_aside2', '') == '' and menu_entry.get('nav_aside2_set', False) == False:
+                if menu_entry.get('nav_aside2', '') == '' and menu_entry.get('nav_aside2_set', False) is False:
                     menu_entry['nav_aside2'] = nav_aside2
                 return menu_entry
 
@@ -299,7 +294,7 @@ class SmartVisuGenerator:
         menu_entry['item_path'] = item_path
         menu_entry['separator'] = separator
         menu_entry['page'] = menu + '.' + entry_name
-        for ch in [' ',':','/','\\']:
+        for ch in [' ', ':', '/', '\\']:
             if ch in menu_entry['page']:
                 menu_entry['page'] = menu_entry['page'].replace(ch, '_')
         menu_entry['heading'] = ''
@@ -329,7 +324,6 @@ class SmartVisuGenerator:
 
         return menu_entry
 
-
     def add_menuentry_to_list(self, menu, menu_entry):
         for entry in self.navigation[menu]:
             if entry['name'] == menu_entry['name']:
@@ -358,7 +352,7 @@ class SmartVisuGenerator:
                           ('{{ visu_aside2 }}', menu_entry['nav_aside2']),
                           ('item.name', menu_entry['name']), ("'item", "'" + menu_entry['item_path'])
                           ]
-            if menu_entry['separator'] == True:
+            if menu_entry['separator'] is True:
                 nav_list += self.parse_tpl('navi_sep.html', [('{{ name }}', menu_entry['name'])])
             else:
                 #menu_entry['html'] = self.parse_tpl('navi.html', parse_list)
@@ -371,7 +365,7 @@ class SmartVisuGenerator:
                     nav_list += self.parse_tpl('navi.html', parse_list)
 
             # build page code
-            if menu_entry['separator'] == False:
+            if menu_entry['separator'] is False:
                 # build and write file for a single room
                 r = self.parse_tpl(menu+'_page.html', [('{{ visu_name }}', menu_entry['name']), ('{{ visu_widgets }}', menu_entry['content']),
                                                        ('{{ visu_img }}', menu_entry['img']), ('{{ visu_heading }}', menu_entry['heading'])])
@@ -420,14 +414,12 @@ class SmartVisuGenerator:
                 tpl = tpl.replace(s, rs)
         return tpl
 
-
     def write_parseresult(self, htmlfile, parseresult):
         try:
             with open(self.pages_dir + '/' + htmlfile, 'w') as f:
                 f.write(parseresult)
         except Exception as e:
             self.logger.warning("Could not write to {0}/{1}: {2}".format(self.pages_dir, htmlfile, e))
-
 
     def copy_tpl(self, tplname, destname=''):
         if destname == '':
@@ -487,7 +479,7 @@ class SmartVisuGenerator:
 
         if self.smartvisu_version >= '2.9':
             for fn in os.listdir(self.shng_tpldir):
-                if (self.overwrite_templates) or (not os.path.isfile(os.path.join(self.gen_tpldir, fn)) ):
+                if (self.overwrite_templates) or (not os.path.isfile(os.path.join(self.gen_tpldir, fn))):
                     self.logger.debug("copy_templates: Copying template '{}' from plugin to smartVISU v{} ({})".format(fn, self.smartvisu_version, self.gen_tpldir))
                     shutil.copy2(os.path.join(self.shng_tpldir, fn), self.gen_tpldir)
             shutil.copy2(os.path.join(self.sv_tpldir, 'index.html'), self.gen_tpldir)
@@ -503,10 +495,10 @@ class SmartVisuGenerator:
                 pass
             # Open file for twig import statements (for root.html)
             for fn in os.listdir(self.shng_tpldir):
-                if (self.overwrite_templates) or (not os.path.isfile(os.path.join(self.gen_tpldir, fn)) ):
+                if (self.overwrite_templates) or (not os.path.isfile(os.path.join(self.gen_tpldir, fn))):
                     self.logger.debug("copy_templates: Copying template '{}' from plugin to smartVISU v{}".format(fn, self.smartvisu_version))
                     try:
-                        shutil.copy2( os.path.join(self.shng_tpldir, fn), self.gen_tpldir )
+                        shutil.copy2(os.path.join(self.shng_tpldir, fn), self.gen_tpldir)
                     except Exception as e:
                         self.logger.error("Could not copy {0} from {1} to {2}".format(fn, self.shng_tpldir, self.gen_tpldir))
         return
