@@ -532,7 +532,10 @@ class SeValue(StateEngineTools.SeItemChild):
                         self._log_debug("{0} from variable: {1}", self.__name, i)
             else:
                 self._log_debug("{0} from variable: {1}", self.__name, self.__varname)
-            return self.__get_from_variable()
+            _original_listorder = self.__listorder.copy()
+            var_result = self.__get_from_variable()
+            self.__listorder = _original_listorder
+            return var_result
         return None
 
     # Get Text (similar to logger text)
@@ -1016,11 +1019,10 @@ class SeValue(StateEngineTools.SeItemChild):
 
         if isinstance(self.__varname, list):
             for var in self.__varname:
-                values.append(update_value(var))
                 self._log_debug("Checking variable in loop '{0}', value {1} from list {2}",
                                 var, values[-1], self.__listorder)
+                values.append(update_value(var))
         else:
             values = update_value(self.__varname)
         self._log_debug("Variable result: {0}", values)
-
         return values
