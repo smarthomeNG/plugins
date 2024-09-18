@@ -75,33 +75,14 @@ class WebInterface(StateEngineTools.SeItemChild):
             pattern_strings = pattern_strings[0]
         return str(pattern_strings)
 
-    def _actionlabel(self, state, label_type, conditionset, previousconditionset, previousstate_conditionset, next_conditionset):
+    def _actionlabel(self, state, label_type, conditionset, active):
         # Check if conditions for action are met or not
-        # action_dict: abitem[state]['on_enter'/'on_stay'/'on_enter_or_stay'/'on_leave'].get(action)
-        # condition_to_meet: 'conditionset'/'previousconditionset'/'previousstate_conditionset'/'nextconditionset'
-        # conditionset: name of conditionset that should get checked
-
-        def _check_webif_conditions(action_dict, condition_to_meet: str, conditionset: str):
-            _condition_check = action_dict.get(condition_to_meet)
-            _condition_check = StateEngineTools.flatten_list(_condition_check)
-            _condition_necessary = 1 if _condition_check != 'None' else 0
-            _condition_check = _condition_check if isinstance(_condition_check, list) else [_condition_check]
-            _condition_count = 0
-            _condition = False
-            for cond in _condition_check:
-                try:
-                    if isinstance(cond, str):
-                        cond = re.compile(cond)
-                    _matching = cond.fullmatch(conditionset)
-                except Exception:
-                    _matching = True
-                _condition_count += 1 if _matching else 0
-                _condition = True if _matching else False
-            return _condition_count, _condition, _condition_check, _condition_necessary
+        # state: state where action is defined in
+        # label_type: on_enter, on_stay, on_leave, on_pass
+        # active: if action is currently run
 
         actionlabel = actionstart = '<<table border="0" cellpadding="1" cellborder="0">'
         action_tooltip = ''
-        originaltype = label_type
         types = [label_type] if label_type in ['actions_leave', 'actions_pass'] else ['actions_enter_or_stay', label_type]
         tooltip_count = 0
 
@@ -111,59 +92,33 @@ class WebInterface(StateEngineTools.SeItemChild):
                 if action_dict.get('actionstatus'):
                     _success = action_dict['actionstatus'].get('success')
                     _issue = action_dict['actionstatus'].get('issue')
+                    _reason = action_dict['actionstatus'].get('reason')
                 else:
                     _success = None
                     _issue = None
+                    _reason = None
                 _repeat = action_dict.get('repeat')
                 _delay = int(float(action_dict.get('delay') or 0))
-                _delta = action_dict.get('delta') or '0'
-                _mindelta = action_dict.get('mindelta') or '0'
 
-                condition_necessary = 0
-                condition_met = True
-                condition_count = 0
-                count, condition1, condition_to_meet, necessary = _check_webif_conditions(action_dict, 'conditionset', conditionset)
-                condition_count += count
-                condition_necessary += min(1, necessary)
-                count, condition2, previouscondition_to_meet, necessary = _check_webif_conditions(action_dict, 'previousconditionset', previousconditionset)
-                condition_count += count
-                condition_necessary += min(1, necessary)
-                count, condition3, previousstate_condition_to_meet, necessary = _check_webif_conditions(action_dict, 'previousstate_conditionset', previousstate_conditionset)
-                condition_count += count
-                condition_necessary += min(1, necessary)
-                count, condition4, next_condition_to_meet, necessary = _check_webif_conditions(action_dict, 'nextconditionset', next_conditionset)
-                condition_count += count
-                condition_necessary += min(1, necessary)
-
-                if condition_count < condition_necessary:
-                    condition_met = False
                 cond1 = conditionset in ['', self.__active_conditionset] and state == self.__active_state
                 cond2 = self.__states[state]['conditionsets'].get(conditionset) is not None
-                cond_delta = float(_delta) < float(_mindelta)
-                fontcolor = "white" if cond1 and cond2 and (
-                        cond_delta or
-                        (not condition_met or (_repeat is False and originaltype == 'actions_stay'))) \
-                    else "#5c5646" if _delay > 0 else "darkred" if _delay < 0  \
-                    else "#303030" if not condition_met or _issue else "black"
-                condition_info = self._strip_regex(condition_to_meet) if condition1 is False \
-                    else self._strip_regex(previouscondition_to_meet) if condition2 is False \
-                    else self._strip_regex(previousstate_condition_to_meet) if condition3 is False \
-                    else self._strip_regex(next_condition_to_meet) if condition4 is False \
-                    else ""
+
+                fontcolor = "white" if (_success == "False" and active) and ((cond1 and cond2 and _reason) or (_reason and label_type in ['actions_leave', 'actions_pass'])) \
+                    else "#f4c430" if _delay > 0 and active else "darkred" if _delay < 0 and active \
+                    else "#303030" if _issue else "black"
+
                 if _issue:
                     if tooltip_count > 0:
                         action_tooltip += '&#13;&#10;&#13;&#10;'
                     tooltip_count += 1
                     action_tooltip += '{}'.format(_issue) if _issue is not None else ''
 
-                additionaltext = " (issue: see tooltip)" if _issue is not None\
-                                 else " ({} not met)".format(condition_info) if not condition_met\
-                                 else " (no repeat)" if _repeat is False and originaltype == 'actions_stay'\
-                                 else " (delay: {})".format(_delay) if _delay > 0\
-                                 else " (cancel delay!)" if _delay == -1 \
-                                 else " (wrong delay!)" if _delay < -1 \
-                                 else " (delta {} &#60; {})".format(_delta, _mindelta) if cond_delta and cond1 and cond2\
-                                 else ""
+                additionaltext = " (issue: see tooltip)" if _issue is not None \
+                    else _reason if _reason is not None \
+                    else " (delay: {})".format(_delay) if _delay > 0\
+                    else " (cancel delay!)" if _delay == -1 \
+                    else " (wrong delay!)" if _delay < -1 \
+                    else ""
                 action1 = action_dict.get('function')
                 if action1 in ['set', 'force set']:
                     action2 = str(action_dict.get('item'))
@@ -179,14 +134,10 @@ class WebInterface(StateEngineTools.SeItemChild):
                 else:
                     action2 = 'None'
                     action3 = ""
-                cond1 = conditionset in ['', self.__active_conditionset] and state == self.__active_state
-                cond_enter = originaltype == 'actions_enter' and self.__states[state].get('enter') is True
-                cond_stay = originaltype == 'actions_stay' and self.__states[state].get('stay') is True
-                active = True if (cond_enter or cond_stay) and cond1 else False
                 success_info = '<td width="26"><img src="sign_warn.png" /></td></tr>' \
                     if _issue is not None and active \
                     else '<td width="26"><img src="sign_false.png" /></td></tr>' \
-                    if (_success == 'False' or not condition_met) and active \
+                    if _success == 'False' and active \
                     else '<td width="26"><img src="sign_scheduled.png" /></td></tr>' \
                     if _success == 'Scheduled' and active \
                     else '<td width="26"><img src="sign_delay.png" /></td></tr>' \
@@ -205,7 +156,7 @@ class WebInterface(StateEngineTools.SeItemChild):
         #self._log_debug('actionlabel: {}', actionlabel)
         return actionlabel, action_tooltip, tooltip_count
 
-    def _conditionlabel(self, state, conditionset, i):
+    def _conditionlabel(self, state, conditionset):
         condition_tooltip = ''
         conditions_done = []
         _empty_set = self.__states[state]['conditionsets'].get(conditionset) == ''
@@ -363,7 +314,7 @@ class WebInterface(StateEngineTools.SeItemChild):
 
         label = 'first enter' if action_type in ['actions_enter', 'actions_enter_or_stay'] else 'staying at state'
 
-        position = '{},{}!'.format(0.63, new_y)
+        position = '{},{}!'.format(0.38, new_y)
         color = color_enter if label == 'first enter' else color_stay
         self.__nodes['{}_{}_state_{}'.format(state, conditionset, action_type)] = \
             pydotplus.Node('{}_{}_state_{}'.format(state, conditionset, action_type), style="filled", fillcolor=color,
@@ -396,9 +347,6 @@ class WebInterface(StateEngineTools.SeItemChild):
         new_y = 2
         previous_state = ''
         previous_conditionset = ''
-        previousconditionset = ''
-        previousstate_conditionset = ''
-        next_conditionset = ''
         for i, state in enumerate(self.__states):
             #self._log_debug('Adding state for webif {}', self.__states[state])
             if isinstance(self.__states[state], (OrderedDict, dict)):
@@ -415,13 +363,14 @@ class WebInterface(StateEngineTools.SeItemChild):
                 new_y -= 1 * self.__scalefactor
                 position = '{},{}!'.format(0, new_y)
                 if not i == 0:
-                    condition_node = 'leave' if self.__nodes.get('{}_leave'.format(previous_state)) \
-                        else list(self.__states[previous_state]['conditionsets'].keys())[-1]
+                    condition_node = 'pass' if self.__nodes.get('{}_pass'.format(previous_state)) \
+                            else 'leave' if self.__nodes.get('{}_leave'.format(previous_state)) \
+                            else list(self.__states[previous_state]['conditionsets'].keys())[-1]
                     lastnode = self.__nodes['{}_{}'.format(previous_state, condition_node)]
                     self.__nodes['{}_above'.format(state)] = pydotplus.Node('{}_above'.format(state), pos=position,
                                                                             shape="square", width="0", label="")
                     self.__graph.add_node(self.__nodes['{}_above'.format(state)])
-                    position = '{},{}!'.format(0.5, new_y)
+                    position = '{},{}!'.format(0.3, new_y)
                     self.__nodes['{}_above_right'.format(state)] = pydotplus.Node('{}_above_right'.format(state),
                                                                                   pos=position, shape="square", width="0", label="")
                     self.__graph.add_node(self.__nodes['{}_above_right'.format(state)])
@@ -441,7 +390,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                                                      label='<<table border="0"><tr><td>{}</td></tr><hr/><tr>'
                                                            '<td>{}</td></tr></table>>'.format(
                                                             state, self.__states[state]['name']))
-                position = '{},{}!'.format(0.5, new_y)
+                position = '{},{}!'.format(0.3, new_y)
                 self.__nodes['{}_right'.format(state)] = pydotplus.Node('{}_right'.format(state), pos=position,
                                                                         shape="square", width="0", label="")
                 self.__graph.add_node(self.__nodes[state])
@@ -450,66 +399,82 @@ class WebInterface(StateEngineTools.SeItemChild):
                 actionlist_enter = ''
                 actionlist_stay = ''
                 actionlist_leave = ''
+                actionlist_pass = ''
                 condition_tooltip = ''
                 action_tooltip = ''
                 j = 0
-                new_x = 0.9
+                new_x = 0.55
                 actions_enter = self.__states[state].get('actions_enter') or []
                 actions_enter_or_stay = self.__states[state].get('actions_enter_or_stay') or []
                 actions_stay = self.__states[state].get('actions_stay') or []
                 actions_leave = self.__states[state].get('actions_leave') or []
+                actions_pass = self.__states[state].get('actions_pass') or []
                 action_tooltip_count_enter = 0
                 action_tooltip_count_stay = 0
                 action_tooltip_count_leave = 0
+                action_tooltip_count_pass = 0
                 action_tooltip_enter = ""
                 action_tooltip_stay = ""
                 action_tooltip_leave = ""
+                action_tooltip_pass = ""
                 for j, conditionset in enumerate(self.__states[state]['conditionsets']):
-
-                    if len(actions_enter) > 0 or len(actions_enter_or_stay) > 0:
-                        actionlist_enter, action_tooltip_enter, action_tooltip_count_enter = \
-                            self._actionlabel(state, 'actions_enter', conditionset, previousconditionset, previousstate_conditionset, next_conditionset)
-
-                    if len(actions_stay) > 0 or len(actions_enter_or_stay) > 0:
-                        actionlist_stay, action_tooltip_stay, action_tooltip_count_stay = \
-                            self._actionlabel(state, 'actions_stay', conditionset, previousconditionset, previousstate_conditionset, next_conditionset)
-
-                    if len(actions_leave) > 0:
-                        actionlist_leave, action_tooltip_leave, action_tooltip_count_leave = \
-                            self._actionlabel(state, 'actions_leave', conditionset, previousconditionset, previousstate_conditionset, next_conditionset)
-
-                    new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
-                    position = '{},{}!'.format(0.5, new_y)
-                    conditionset_positions.append(new_y)
-                    #self._log_debug('conditionset: {} {}, previous {} next {}', conditionset, position, previous_conditionset, next_conditionset)
-
-                    conditionlist, condition_tooltip, condition_tooltip_count = self._conditionlabel(state, conditionset, i)
                     cond3 = conditionset == ''
                     try:
                         cond1 = i >= list(self.__states.keys()).index(self.__active_state)
-                    except Exception as ex:
-                        #self._log_debug('Condition 1 problem {}'.format(ex))
+                    except Exception:
                         cond1 = True
                     try:
                         cond4 = i == list(self.__states.keys()).index(self.__active_state)
-                    except Exception as ex:
-                        #self._log_debug('Condition 4 problem {}'.format(ex))
+                    except Exception:
                         cond4 = True
                     #self._log_debug('i {}, index of active state {}', i, list(self.__states.keys()).index(self.__active_state))
                     try:
                         cond2 = (j > list(self.__states[state]['conditionsets'].keys()).index(self.__active_conditionset)
                                  or i > list(self.__states.keys()).index(self.__active_state))
-                    except Exception as ex:
-                        #self._log_debug('Condition 2 problem {}'.format(ex))
+                    except Exception:
                         cond2 = False if cond3 and cond4 else True
                     color = "gray" if cond1 and cond2 else "olivedrab" \
                         if (conditionset == self.__active_conditionset or cond3) and state == self.__active_state else "indianred2"
+                    try:
+                        cond5 = i >= list(self.__states.keys()).index(self.__active_state)
+                    except Exception:
+                        cond5 = True
+
+                    cond6 = conditionset in ['', self.__active_conditionset] and state == self.__active_state
+                    cond_enter = True if self.__states[state].get('enter') is True else False
+                    cond_stay = True if self.__states[state].get('stay') is True else False
+                    active = True if cond_enter and cond6 else False
+
+                    if len(actions_enter) > 0 or len(actions_enter_or_stay) > 0:
+                        actionlist_enter, action_tooltip_enter, action_tooltip_count_enter = \
+                            self._actionlabel(state, 'actions_enter', conditionset, active)
+                    active = True if cond_stay and cond6 else False
+                    if len(actions_stay) > 0 or len(actions_enter_or_stay) > 0:
+                        actionlist_stay, action_tooltip_stay, action_tooltip_count_stay = \
+                            self._actionlabel(state, 'actions_stay', conditionset, active)
+                    cond_leave = True if self.__states[state].get('leave') is True else False
+                    active = True if cond_leave else False
+
+                    if len(actions_leave) > 0:
+                        actionlist_leave, action_tooltip_leave, action_tooltip_count_leave = \
+                            self._actionlabel(state, 'actions_leave', conditionset, active)
+                    cond_pass = True if self.__states[state].get('pass') is True else False
+                    active = False if (cond5 and not cond_pass) or cond_leave else True
+                    if len(actions_pass) > 0:
+                        actionlist_pass, action_tooltip_pass, action_tooltip_count_pass = \
+                            self._actionlabel(state, 'actions_pass', conditionset, active)
+
+                    new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
+                    position = '{},{}!'.format(0.3, new_y)
+                    conditionset_positions.append(new_y)
+                    conditionlist, condition_tooltip, condition_tooltip_count = self._conditionlabel(state, conditionset)
+
                     label = 'no condition' if conditionset == '' else conditionset
                     self.__nodes['{}_{}'.format(state, conditionset)] = pydotplus.Node(
                         '{}_{}'.format(state, conditionset), style="filled", fillcolor=color, shape="diamond",
                         label=label, pos=position)
                     #self._log_debug('Node {} {} drawn. Conditionlist {}', state, conditionset, conditionlist)
-                    position = '{},{}!'.format(0.2, new_y)
+                    position = '{},{}!'.format(0.1, new_y)
                     xlabel = '1 tooltip' if condition_tooltip_count == 1\
                              else '{} tooltips'.format(condition_tooltip_count)\
                              if condition_tooltip_count > 1 else ''
@@ -518,9 +483,12 @@ class WebInterface(StateEngineTools.SeItemChild):
                             '{}_{}_conditions'.format(state, conditionset), style="filled", fillcolor=color,
                             shape="rect", label=conditionlist, pos=position, tooltip=condition_tooltip, xlabel=xlabel)
                         self.__graph.add_node(self.__nodes['{}_{}_conditions'.format(state, conditionset)])
+                        # Create a dotted line between conditionlist and conditionset name
+                        parenthesis_edge = pydotplus.Edge(self.__nodes['{}_{}_conditions'.format(state, conditionset)], self.__nodes['{}_{}'.format(state, conditionset)], arrowhead="none", color="black", style="dotted", constraint="false")
+                        self.__graph.add_edge(parenthesis_edge)
                     self.__graph.add_node(self.__nodes['{}_{}'.format(state, conditionset)])
 
-                    new_x = 0.9
+                    new_x = 0.55
                     if not actionlist_enter == '':
                         position = '{},{}!'.format(new_x, new_y)
                         xlabel = '1 tooltip' if action_tooltip_count_enter == 1\
@@ -548,11 +516,12 @@ class WebInterface(StateEngineTools.SeItemChild):
                         self.__graph.add_node(self.__nodes['{}_{}_actions_stay'.format(state, conditionset)])
                         self._add_actioncondition(state, conditionset, 'actions_stay', new_y, cond1, cond2)
 
-                    position = '{},{}!'.format(0.9, new_y)
+                    position = '{},{}!'.format(0.55, new_y)
                     cond1 = self.__nodes.get('{}_{}_actions_enter'.format(state, conditionset)) is None
                     cond2 = self.__nodes.get('{}_{}_actions_stay'.format(state, conditionset)) is None
                     cond3 = self.__nodes.get('{}_{}_actions_leave'.format(state, conditionset)) is None
-                    if cond1 and cond2 and cond3:
+                    cond4 = self.__nodes.get('{}_{}_actions_pass'.format(state, conditionset)) is None
+                    if cond1 and cond2 and cond3 and cond4:
                         self.__nodes['{}_{}_right'.format(state, conditionset)] = pydotplus.Node('{}_{}_right'.format(
                             state, conditionset), shape="circle", width="0.7", pos=position, label="", fillcolor="black",
                             style="filled", tooltip="No Action")
@@ -582,18 +551,13 @@ class WebInterface(StateEngineTools.SeItemChild):
 
                 if len(actions_leave) > 0:
                     new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
-                    position = '{},{}!'.format(0.5, new_y)
-                    #self._log_debug('leaveconditions {}', position)
-                    try:
-                        cond1 = j > list(self.__states[state]['conditionsets'].keys()).index(self.__active_conditionset)
-                    except Exception:
-                        cond1 = True
+                    position = '{},{}!'.format(0.3, new_y)
                     try:
                         cond2 = i >= list(self.__states.keys()).index(self.__active_state)
-                    except Exception:
+                    except Exception as ex:
                         cond2 = True
                     cond3 = True if self.__states[state].get('leave') is True else False
-                    color = "gray" if cond1 and cond2 and not cond3 else "olivedrab" if cond3 else "indianred2"
+                    color = "gray" if cond2 and not cond3 else "olivedrab" if cond3 else "indianred2"
                     self.__nodes['{}_leave'.format(state)] = pydotplus.Node('{}_leave'.format(state),
                                                                             style="filled", fillcolor=color, shape="diamond",
                                                                             label='leave', pos=position)
@@ -616,6 +580,39 @@ class WebInterface(StateEngineTools.SeItemChild):
                     self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_leave'.format(state)],
                                                          self.__nodes['{}_actions_leave'.format(state)], style='bold',
                                                          taillabel="    True",  tooltip='run leave actions'))
+                    previous_conditionset = self.__nodes['{}_leave'.format(state)]
+
+                if len(actions_pass) > 0:
+                    new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
+                    position = '{},{}!'.format(0.3, new_y)
+                    try:
+                        cond2 = i >= list(self.__states.keys()).index(self.__active_state)
+                    except Exception:
+                        cond2 = True
+                    cond3 = True if self.__states[state].get('pass') is True else False
+                    color = "gray" if cond2 and not cond3 else "olivedrab" if cond3 else "indianred2"
+                    self.__nodes['{}_pass'.format(state)] = pydotplus.Node('{}_pass'.format(state),
+                                                                           style="filled", fillcolor=color, shape="diamond",
+                                                                           label='pass', pos=position)
+                    self.__graph.add_node(self.__nodes['{}_pass'.format(state)])
+                    self.__graph.add_edge(pydotplus.Edge(previous_conditionset, self.__nodes['{}_pass'.format(state)],
+                                                         style='bold', color='black', tooltip='check pass'))
+
+                    position = '{},{}!'.format(new_x, new_y)
+                    xlabel = '1 tooltip' if action_tooltip_count_pass == 1\
+                             else '{} tooltips'.format(action_tooltip_count_pass)\
+                             if action_tooltip_count_pass > 1 else ''
+                    #self._log_debug('action pass: {}', position)
+                    self.__nodes['{}_actions_pass'.format(state)] = pydotplus.Node('{}_actions_pass'.format(state),
+                                                                                   style="filled", fillcolor=color,
+                                                                                   shape="rectangle", label=actionlist_pass,
+                                                                                   pos=position, align="center",
+                                                                                   tooltip=action_tooltip_pass,
+                                                                                   xlabel=xlabel)
+                    self.__graph.add_node(self.__nodes['{}_actions_pass'.format(state)])
+                    self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_pass'.format(state)],
+                                                         self.__nodes['{}_actions_pass'.format(state)], style='bold',
+                                                         taillabel="    True",  tooltip='run pass actions'))
 
                 previous_state = state
 

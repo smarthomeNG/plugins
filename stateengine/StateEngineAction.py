@@ -162,7 +162,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
             order = 1
         return order
 
-    def update_webif_actionstatus(self, state, name, success, issue=None):
+    def update_webif_actionstatus(self, state, name, success, issue=None, reason=None):
         try:
             if self._action_type == "actions_leave":
                 state.update_name(state.state_item)
@@ -171,8 +171,12 @@ class SeActionBase(StateEngineTools.SeItemChild):
             if self._abitem.webif_infos[state.id].get(self._action_type):
                 _key = ['{}'.format(state.id), self._action_type, '{}'.format(name), 'actionstatus', 'success']
                 self._abitem.update_webif(_key, success)
-                _key = ['{}'.format(state.id), self._action_type, '{}'.format(name), 'actionstatus', 'issue']
-                self._abitem.update_webif(_key, issue)
+                if issue is not None:
+                    _key = ['{}'.format(state.id), self._action_type, '{}'.format(name), 'actionstatus', 'issue']
+                    self._abitem.update_webif(_key, issue)
+                if reason is not None:
+                    _key = ['{}'.format(state.id), self._action_type, '{}'.format(name), 'actionstatus', 'reason']
+                    self._abitem.update_webif(_key, reason)
         except Exception as ex:
             self._log_warning("Error setting action status {}: {}", name, ex)
 
@@ -412,6 +416,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                             _conditions_met_count += 1
                         else:
                             self._log_debug("Given {} {} not matching current one: {}", condition, _orig_cond, _updated_current_condition)
+                            self.update_webif_actionstatus(state, self._name, 'False', None, f"({condition} {_orig_cond} not met)")
                     except Exception as ex:
                         if cond is not None:
                             self._log_warning("Given {} {} is not a valid regex: {}", condition, _orig_cond, ex)
@@ -437,12 +442,12 @@ class SeActionBase(StateEngineTools.SeItemChild):
         # update web interface with repeat info
         # value: bool type True or False for repeat value
         def _update_repeat_webif(value: bool):
-            _key1 = ['{}'.format(state.id), self._action_type, '{}'.format(self._name), 'repeat']
+            _key1 = [state.id, self._action_type, self._name, 'repeat']
             self._abitem.update_webif(_key1, value, True)
 
         self._log_decrease_indent(50)
         self._log_increase_indent()
-        self._log_info("Action '{0}': Preparing", self._name)
+        self._log_info("Action '{0}' defined in '{1}': Preparing", self._name, self._action_type)
         self._log_increase_indent()
         try:
             self._getitem_fromeval()
@@ -480,7 +485,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
         if conditions_met < condition_necessary:
             self._log_info("Action '{0}': Skipping because not all conditions are met.", self._name)
             return
-
+        elif condition_necessary > 0 and conditions_met == condition_necessary:
+            self.update_webif_actionstatus(state, self._name, 'True', None, "(all conditions met)")
         if is_repeat:
             if self.__repeat is None:
                 if allow_item_repeat:
@@ -488,17 +494,26 @@ class SeActionBase(StateEngineTools.SeItemChild):
                     _update_repeat_webif(True)
                 else:
                     self._log_info("Action '{0}': Repeat denied by item configuration.", self._name)
+                    self.update_webif_actionstatus(state, self._name, 'False', None, "(no repeat by item)")
                     _update_repeat_webif(False)
                     return
             elif self.__repeat.get():
                 repeat_text = " Repeat allowed by action configuration."
+                self.update_webif_actionstatus(state, self._name, 'True')
                 _update_repeat_webif(True)
             else:
                 self._log_info("Action '{0}': Repeat denied by action configuration.", self._name)
+                self.update_webif_actionstatus(state, self._name, 'False', None, "(no repeat by action)")
                 _update_repeat_webif(False)
                 return
         else:
-            repeat_text = ""
+            if self.__repeat is None:
+                repeat_text = ""
+            elif self.__repeat.get():
+                repeat_text = " Repeat allowed by action configuration but not applicable."
+                self.update_webif_actionstatus(state, self._name, 'True')
+            else:
+                repeat_text = ""
         self._log_increase_indent()
         if _validitem:
             delay = 0 if self.__delay.is_empty() else self.__delay.get()
@@ -530,6 +545,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 self._log_decrease_indent()
                 _delay_info = -1
             else:
+                _delay_info = delay
                 self._waitforexecute(state, actionname, self._name, repeat_text, delay, current_condition_met, previous_condition_met, previousstate_condition_met, next_condition_met)
 
             _update_delay_webif(str(_delay_info))
@@ -715,24 +731,34 @@ class SeActionMixSetForce:
             return value
 
         if not self._mindelta.is_empty():
-            mindelta = self._mindelta.get()
-            if self._status is not None:
-                # noinspection PyCallingNonCallable
-                delta = float(abs(self._status() - value))
-                additionaltext = "of statusitem "
-            else:
-                delta = float(abs(self._item() - value))
+            mindelta = float(self._mindelta.get())
+            try:
+                if self._status is not None:
+                    # noinspection PyCallingNonCallable
+                    delta = float(abs(self._status() - value))
+                    additionaltext = "of statusitem "
+                else:
+                    delta = float(abs(self._item() - value))
+                    additionaltext = ""
+            except Exception:
+                delta = None
                 additionaltext = ""
-
-            self._delta = delta
-            self._info_dict.update({'delta': str(delta), 'mindelta': str(mindelta)})
-            _key = [self._state.id, self._action_type, self._name]
-            self._abitem.update_webif(_key, self._info_dict, True)
-            if delta < mindelta:
-                text = "{0}: Not setting '{1}' to '{2}' because delta {3}'{4:.2}' is lower than mindelta '{5}'"
-                self._log_debug(text, actionname, self._item.property.path, value, additionaltext, delta, mindelta)
-                self.update_webif_actionstatus(state, self._name, 'False')
-                return
+                self._log_warning("{0}: Can not evaluate delta as value '{1}' is no number.", self._name, value)
+            if delta is not None:
+                self._delta = delta
+                self._info_dict.update({'delta': str(delta), 'mindelta': str(mindelta)})
+                _key = [self._state.id, self._action_type, self._name]
+                self._abitem.update_webif(_key, self._info_dict, True)
+                if delta < mindelta:
+                    text = "{0}: Not setting '{1}' to '{2}' because delta {3}'{4:.2f}' is lower than mindelta '{5:.2f}'."
+                    self._log_debug(text, actionname, self._item.property.path, value, additionaltext, delta, mindelta)
+                    self.update_webif_actionstatus(state, self._name, 'False', None, f"(delta '{delta:.2f}' &#60; '{mindelta:.2f})")
+                    return
+                else:
+                    text = "{0}: Proceeding because delta {1}'{2:.2f}' is lower than mindelta '{3:.2f}'."
+                    self.update_webif_actionstatus(state, self._name, 'True', None,
+                                                   f"(delta '{delta:.2f}' &#62; '{mindelta:.2f})")
+                    self._log_debug(text, actionname, additionaltext, delta, mindelta)
         source = self.set_source(current_condition, previous_condition, previousstate_condition, next_condition)
         self._force_set(actionname, self._item, value, source)
         self._execute_set_add_remove(state, actionname, namevar, repeat_text, self._item, value, source, current_condition, previous_condition, previousstate_condition, next_condition)
