@@ -337,7 +337,7 @@ class SeState(StateEngineTools.SeItemChild):
 
     # run actions when passing the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
-    def run_pass(self, allow_item_repeat: bool):
+    def run_pass(self, is_repeat: bool, allow_item_repeat: bool):
         self._log_info("Passing state {}, running pass actions.", self.id)
         self._log_increase_indent()
         _key_leave = ['{}'.format(self.id), 'leave']
@@ -348,7 +348,7 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem.update_webif(_key_stay, False)
         self._abitem.update_webif(_key_enter, False)
         self._abitem.update_webif(_key_pass, True)
-        self.__actions_pass.execute(True, allow_item_repeat, self)
+        self.__actions_pass.execute(is_repeat, allow_item_repeat, self)
         self._log_decrease_indent(50)
 
     # run actions when leaving the state
@@ -642,7 +642,6 @@ class SeState(StateEngineTools.SeItemChild):
                 use = StateEngineTools.flatten_list(use)
                 self.__fill_list(use, recursion_depth, se_use, use)
         # Get action sets and condition sets
-        self._log_develop("Use is {}", use)
         parent_item = item_state.return_parent()
         if parent_item == Items.get_instance():
             parent_item = None
@@ -697,9 +696,9 @@ class SeState(StateEngineTools.SeItemChild):
                 if child_name in action_mapping:
                     action_name, action_method = action_mapping[child_name]
                     for attribute in child_item.conf:
-                        self._log_develop("Filling state with {} action named {} based on {}", child_name, attribute, state)
+                        self._log_develop("Filling state with {} action named {} for state {} with config {}", child_name, attribute, state.id, child_item.conf)
                         _action_counts[action_name] += 1
-                        _, _action_status = action_method.update(attribute, child_item.conf[attribute])
+                        _, _action_status = action_method.update(attribute, child_item.conf.get(attribute))
                         if _action_status:
                             update_action_status(_action_status, action_name)
                             self._abitem.update_action_status(self.__action_status)

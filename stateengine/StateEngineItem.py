@@ -104,6 +104,14 @@ class SeItem:
         return self.__instant_leaveaction.get()
 
     @property
+    def last_run(self):
+        return self.__last_run
+
+    @last_run.setter
+    def last_run(self, value_dict):
+        self.__last_run.update(value_dict)
+
+    @property
     def default_instant_leaveaction(self):
         return self.__default_instant_leaveaction.get()
 
@@ -204,6 +212,8 @@ class SeItem:
         self.__active_schedulers = []
         self.__release_info = {}
         self.__cache = {}
+        self.__last_run = {}
+        self.__pass_repeat = {}
         self.__default_instant_leaveaction = StateEngineValue.SeValue(self, "Default Instant Leave Action", False, "bool")
         self.__instant_leaveaction = StateEngineValue.SeValue(self, "Instant Leave Action", False, "num")
         try:
@@ -640,6 +650,7 @@ class SeItem:
 
                 # find new state
                 _leaveactions_run = False
+                _pass_state = None
 
                 if _instant_leaveaction >= 1 and caller != "Released_by Retrigger":
                     evaluated_instant_leaveaction = True
@@ -649,7 +660,7 @@ class SeItem:
                 _previousstate_conditionset_name = ''
 
                 update_current_to_empty(self.__webif_infos)
-                self.__logger.develop("Resetted current info for webif info. It is now: {}", self.__webif_infos)
+                self.__logger.develop("Reset current info for webif info. It is now: {}", self.__webif_infos)
                 for state in self.__states:
                     if not self.__ab_alive:
                         self.__logger.debug("StateEngine Plugin not running (anymore). Stop state evaluation.")
@@ -673,14 +684,25 @@ class SeItem:
                         self.__conditionsets.update(
                             {state.state_item.property.path: [_last_conditionset_id, _last_conditionset_name]})
                     # New state is different from last state
-
-                    if result is False and last_state == state and evaluated_instant_leaveaction is True:
-                        self.__logger.info("Leaving {0} ('{1}'). Running actions immediately.", last_state.id,
-                                           last_state.name)
-                        last_state.run_leave(self.__repeat_actions.get())
-                        _leaveactions_run = True
+                    if result is False and last_state == state:
+                        if evaluated_instant_leaveaction is True:
+                            self.__logger.info("Leaving {0} ('{1}'). Running actions immediately.", last_state.id,
+                                               last_state.name)
+                            last_state.run_leave(self.__repeat_actions.get())
+                            _leaveactions_run = True
+                    elif result is False and last_state != state and state.actions_pass.count() > 0:
+                        _pass_state = state
+                        state.run_pass(self.__pass_repeat.get(state, False), self.__repeat_actions.get())
+                        _key_pass = ['{}'.format(last_state.id), 'pass']
+                        self.update_webif(_key_pass, True)
+                        self.__pass_repeat.update({state: True})
                     if result is True:
                         new_state = state
+                        for repeat_state in self.__pass_repeat:
+                            if new_state.order < repeat_state.order:
+                                self.__pass_repeat.update({repeat_state: False})
+                                _key_pass = ['{}'.format(repeat_state.id), 'pass']
+                                self.update_webif(_key_pass, False)
                         break
 
                 # no new state -> stay
@@ -743,10 +765,12 @@ class SeItem:
                         _key_leave = ['{}'.format(last_state.id), 'leave']
                         _key_stay = ['{}'.format(last_state.id), 'stay']
                         _key_enter = ['{}'.format(last_state.id), 'enter']
+                        _key_pass = ['{}'.format(last_state.id), 'pass']
 
                         self.update_webif(_key_leave, True)
                         self.update_webif(_key_stay, False)
                         self.update_webif(_key_enter, False)
+                        self.update_webif(_key_pass, False)
                     self.__handle_releasedby(new_state, last_state, _instant_leaveaction)
 
                     if self.update_lock.locked():
@@ -817,16 +841,19 @@ class SeItem:
                                            new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
 
                     new_state.run_enter(self.__repeat_actions.get())
+
                     self.__laststate_set(new_state)
                     self.__previousstate_set(last_state)
                 if _leaveactions_run is True and self.__ab_alive:
                     _key_leave = ['{}'.format(last_state.id), 'leave']
                     _key_stay = ['{}'.format(last_state.id), 'stay']
                     _key_enter = ['{}'.format(last_state.id), 'enter']
+                    _key_pass = ['{}'.format(last_state.id), 'pass']
 
                     self.update_webif(_key_leave, True)
                     self.update_webif(_key_stay, False)
                     self.update_webif(_key_enter, False)
+                    self.update_webif(_key_pass, False)
 
                 self.__logger.debug("State evaluation finished")
                 all_released_by = self.__handle_releasedby(new_state, last_state, _instant_leaveaction)
@@ -1428,8 +1455,6 @@ class SeItem:
             if refill:
                 state.refill()
                 can_enter = state.can_enter()
-                if can_enter[0] is False:
-                    state.run_pass(self.__repeat_actions.get())
                 return can_enter
         except Exception as ex:
             self.__logger.warning("Problem with currentstate {0}. Error: {1}", state.id, ex)
