@@ -35,6 +35,8 @@ class SeActions(StateEngineTools.SeItemChild):
         self.__actions = {}
         self.__action_type = None
         self.__state = None
+        self.__unassigned_mindeltas = {}
+        self.__unassigned_minagedeltas = {}
         self.__unassigned_delays = {}
         self.__unassigned_repeats = {}
         self.__unassigned_instantevals = {}
@@ -82,6 +84,22 @@ class SeActions(StateEngineTools.SeItemChild):
                     self.__unassigned_delays[name] = value
                 else:
                     _issue = self.__actions[name].update_delay(value)
+                return _count, _issue
+            elif func == "se_mindelta":
+                # set mindelta
+                if name not in self.__actions:
+                    # If we do not have the action yet (delay-attribute before action-attribute), ...
+                    self.__unassigned_mindeltas[name] = value
+                else:
+                    _issue = self.__actions[name].update_mindelta(value)
+                return _count, _issue
+            elif func == "se_minagedelta":
+                # set minagedelta
+                if name not in self.__actions:
+                    # If we do not have the action yet (delay-attribute before action-attribute), ...
+                    self.__unassigned_minagedeltas[name] = value
+                else:
+                    _issue = self.__actions[name].update_minagedelta(value)
                 return _count, _issue
             elif func == "se_instanteval":
                 # set instant calculation
@@ -273,6 +291,18 @@ class SeActions(StateEngineTools.SeItemChild):
                 _issue_list.append(_issue)
             del self.__unassigned_instantevals[name]
 
+        if name in self.__unassigned_mindeltas:
+            _issue = action.update_mindelta(self.__unassigned_mindeltas[name])
+            if _issue:
+                _issue_list.append(_issue)
+            del self.__unassigned_mindeltas[name]
+
+        if name in self.__unassigned_minagedeltas:
+            _issue = action.update_minagedelta(self.__unassigned_minagedeltas[name])
+            if _issue:
+                _issue_list.append(_issue)
+            del self.__unassigned_minagedeltas[name]
+
         if name in self.__unassigned_repeats:
             _issue = action.update_repeat(self.__unassigned_repeats[name])
             if _issue:
@@ -330,7 +360,7 @@ class SeActions(StateEngineTools.SeItemChild):
             self._log_warning("Ignoring action {0} because: {1}", name, e)
 
         parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'nextconditionset': None, 'conditionset': None,
-                     'previousconditionset': None, 'previousstate_conditionset': None, 'mode': None, 'instanteval': None}
+                     'previousconditionset': None, 'previousstate_conditionset': None, 'mode': None, 'instanteval': None, 'mindelta': None, 'minagedelta': None}
         _issue = None
         _issue_list = []
         # value_list needs to be string or list
@@ -472,6 +502,14 @@ class SeActions(StateEngineTools.SeItemChild):
                 _issue_list.append(_issue)
         if parameter['repeat'] is not None:
             _issue = self.__actions[name].update_repeat(parameter['repeat'])
+            if _issue:
+                _issue_list.append(_issue)
+        if parameter['mindelta'] is not None:
+            _issue = self.__actions[name].update_mindelta(parameter['mindelta'])
+            if _issue:
+                _issue_list.append(_issue)
+        if parameter['minagedelta'] is not None:
+            _issue = self.__actions[name].update_minagedelta(parameter['minagedelta'])
             if _issue:
                 _issue_list.append(_issue)
         if parameter['delay'] != 0:

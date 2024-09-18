@@ -22,6 +22,7 @@ from . import StateEngineTools
 from . import StateEngineEval
 from . import StateEngineValue
 from . import StateEngineDefaults
+from . import StateEngineCurrent
 import datetime
 from lib.shtime import Shtime
 import re
@@ -77,6 +78,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self.previousstate_conditionset = StateEngineValue.SeValue(self._abitem, "previousstate_conditionset", True, "str")
         self.__mode = StateEngineValue.SeValue(self._abitem, "mode", True, "str")
         self.__order = StateEngineValue.SeValue(self._abitem, "order", False, "num")
+        self._minagedelta = StateEngineValue.SeValue(self._abitem, "minagedelta")
+        self._agedelta = 0
         self._scheduler_name = None
         self._function = None
         self.__template = None
@@ -108,6 +111,20 @@ class SeActionBase(StateEngineTools.SeItemChild):
             self.__instanteval = StateEngineValue.SeValue(self._abitem, "instanteval", False, "bool")
         _, _, _issue, _ = self.__instanteval.set(value)
         _issue = {self._name: {'issue': _issue, 'attribute': 'instanteval',
+                               'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
+        return _issue
+
+    def update_mindelta(self, value):
+        self._log_warning("Mindelta is only relevant for set (force) actions - ignoring")
+        _issue = {self._name: {'issue': 'Mindelta not relevant for this action type', 'attribute': 'mindelta',
+                               'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
+        return _issue
+
+    def update_minagedelta(self, value):
+        if self._minagedelta is None:
+            self._minagedelta = StateEngineValue.SeValue(self._abitem, "minagedelta", False, "num")
+        _, _, _issue, _ = self._minagedelta.set(value)
+        _issue = {self._name: {'issue': _issue, 'attribute': 'minagedelta',
                                'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return _issue
 
@@ -300,7 +317,37 @@ class SeActionBase(StateEngineTools.SeItemChild):
                                    'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
         return check_item, check_value, check_mindelta, _issue
 
-    def check_complete(self, state, check_item, check_status, check_mindelta, check_value, action_type, evals_items=None, use=None):
+    def eval_minagedelta(self, actioninfo, state):
+        lastrun = self._abitem.last_run.get(self._name)
+        if not lastrun:
+            return False
+        if not self._minagedelta.is_empty():
+            minagedelta = self._minagedelta.get()
+            try:
+                minagedelta = float(minagedelta)
+            except Exception:
+                self._log_warning("{0}: minagedelta {1} seems to be no number.", self._name, minagedelta)
+                minagedelta = 0.0
+            self._agedelta = float((datetime.datetime.now() - lastrun).total_seconds())
+            self._info_dict.update({'agedelta': self._agedelta, 'minagedelta': str(minagedelta)})
+            _key = [self._state.id, self._action_type, self._name]
+            self._abitem.update_webif(_key, self._info_dict, True)
+            if self._agedelta < minagedelta:
+                text = "{0}: {1} because age delta '{2:.2f}' is lower than minagedelta '{3:.2f}'."
+                self._log_debug(text, self.name, actioninfo, self._agedelta, minagedelta)
+                self.update_webif_actionstatus(state, self._name, 'False', None,
+                                               f"(age delta '{self._agedelta:.2f}' &#60; '{minagedelta:.2f})")
+                return True
+            else:
+                text = "{0}: Proceeding as age delta '{1:.2f}' is higher than minagedelta '{2:.2f}'."
+                self.update_webif_actionstatus(state, self._name, 'True', None,
+                                               f"(age delta '{self._agedelta:.2f}' &#62; '{minagedelta:.2f})")
+                self._log_debug(text, self.name, self._agedelta, minagedelta)
+                return False
+        else:
+            return False
+
+    def check_complete(self, state, check_item, check_status, check_mindelta, check_minagedelta, check_value, action_type, evals_items=None, use=None):
         _issue = {self._name: {'issue': None,
                                'issueorigin': [{'state': state.id, 'action': self._function}]}}
         try:
@@ -350,6 +397,11 @@ class SeActionBase(StateEngineTools.SeItemChild):
             if mindelta is not None:
                 check_mindelta.set(mindelta)
 
+        if check_minagedelta.is_empty():
+            minagedelta = StateEngineTools.find_attribute(self._sh, state, "se_minagedelta_" + self._name, 0, use)
+            if minagedelta is not None:
+                check_minagedelta.set(minagedelta)
+
         if check_status is not None:
             check_value.set_cast(check_status.cast)
             check_mindelta.set_cast(check_status.cast)
@@ -371,7 +423,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
             _issue = {self._name: {'issue': None,
                                    'issueorigin': [{'state': state.id, 'action': self._function}]}}
 
-        return check_item, check_status, check_mindelta, check_value, _issue
+        return check_item, check_status, check_mindelta, check_minagedelta, check_value, _issue
 
     # Execute action (considering delay, etc)
     # is_repeat: Indicate if this is a repeated action without changing the state
@@ -526,7 +578,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 except Exception:
                     pass
 
-            actionname = "Action '{0}'".format(self._name) if delay == 0 else "Delayed Action ({0} seconds) '{1}'".format(
+            actionname = "Action '{0}'".format(self._name) if delay == 0 else "Delayed Action ({0} seconds) '{1}'.".format(
                 delay, self._scheduler_name)
             _delay_info = 0
             if delay is None:
@@ -670,8 +722,9 @@ class SeActionMixSetForce:
             self._log_debug("item is not defined! Check log file.")
             item = None
         mindelta = self._mindelta.write_to_logger() or 0
+        minagedelta = self._minagedelta.write_to_logger() or 0
         value = self._value.write_to_logger()
-        self._info_dict.update({'item': item, 'mindelta': str(mindelta), 'delta': str(self._delta), 'value': str(value)})
+        self._info_dict.update({'item': item, 'mindelta': str(mindelta), 'minagedelta': str(minagedelta), 'agedelta': str(self._agedelta), 'delta': str(self._delta), 'value': str(value)})
         _key = [self._state.id, self._action_type, self._name]
         self._abitem.update_webif(_key, self._info_dict, True)
         return value
@@ -684,8 +737,8 @@ class SeActionMixSetForce:
         self._abitem.set_variable('current.state_name', state.name)
         self._action_type = action_type
         self._state = state
-        self._item, self._status, self._mindelta, self._value, _issue = self.check_complete(
-            state, self._item, self._status, self._mindelta, self._value, "set/force", evals_items, use)
+        self._item, self._status, self._mindelta, self._minagedelta, self._value, _issue = self.check_complete(
+            state, self._item, self._status, self._mindelta, self._minagedelta, self._value, "set/force", evals_items, use)
         self._action_status = _issue
 
         self._abitem.set_variable('current.action_name', '')
@@ -729,7 +782,9 @@ class SeActionMixSetForce:
         if returnvalue:
             self._log_decrease_indent()
             return value
-
+        minagedelta = self.eval_minagedelta(f"Not setting {self._item.property.path} to {value}", state)
+        if minagedelta:
+            return
         if not self._mindelta.is_empty():
             mindelta = float(self._mindelta.get())
             try:
@@ -766,13 +821,22 @@ class SeActionMixSetForce:
     def _force_set(self, actionname, item, value, source):
         pass
 
+    def update_mindelta(self, value):
+        if self._mindelta is None:
+            self._mindelta = StateEngineValue.SeValue(self._abitem, "mindelta", False, "num")
+        _, _, _issue, _ = self._mindelta.set(value)
+        _issue = {self._name: {'issue': _issue, 'attribute': 'mindelta',
+                               'issueorigin': [{'state': 'unknown', 'action': self._function}]}}
+        return _issue
+
     def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, source, current_condition, previous_condition, previousstate_condition, next_condition):
         self._log_decrease_indent()
-        self._log_debug("{0}: Set '{1}' to '{2}'{3}", actionname, item.property.path, value, repeat_text)
+        self._log_debug("{0}: Set '{1}' to '{2}'.{3}", actionname, item.property.path, value, repeat_text)
         pat = r"(?:[^,(]*)\'(.*?)\'"
         self.update_webif_actionstatus(state, re.findall(pat, actionname)[0], 'True')
         # noinspection PyCallingNonCallable
         item(value, caller=self._caller, source=source)
+        self._abitem.last_run = {self._name: datetime.datetime.now()}
         self._item = self._eval_item
 
 
@@ -816,20 +880,20 @@ class SeActionForceItem(SeActionMixSetForce, SeActionBase):
         current_value = item()
         if current_value == value:
             if self._item._type == 'bool':
-                self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, item.property.path, not value)
+                self._log_debug("{0}: Set '{1}' to '{2}' (Force).", actionname, item.property.path, not value)
                 item(not value, caller=self._caller, source=source)
             elif self._item._type == 'str':
                 if value != '':
-                    self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, item.property.path, '')
+                    self._log_debug("{0}: Set '{1}' to '{2}' (Force).", actionname, item.property.path, '')
                     item('', caller=self._caller, source=source)
                 else:
-                    self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, item.property.path, '-')
+                    self._log_debug("{0}: Set '{1}' to '{2}' (Force).", actionname, item.property.path, '-')
                     item('-', caller=self._caller, source=source)
             elif self._item._type == 'num':
-                self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, item.property.path, current_value+0.1)
+                self._log_debug("{0}: Set '{1}' to '{2}' (Force).", actionname, item.property.path, current_value+0.1)
                 item(current_value+0.1, caller=self._caller, source=source)
             else:
-                self._log_warning("{0}: Force not implemented for item type '{1}'", actionname, item._type)
+                self._log_warning("{0}: Force not implemented for item type '{1}'.", actionname, item._type)
         else:
             self._log_debug("{0}: New value differs from old value, no force required.", actionname)
 
@@ -884,12 +948,16 @@ class SeActionSetByattr(SeActionBase):
         self._abitem.set_variable('current.action_name', namevar)
         if returnvalue:
             return value
+        minagedelta = self.eval_minagedelta(f"Not setting values by attribute {self.__byattr}", state)
+        if minagedelta:
+            return
         self._log_info("{0}: Setting values by attribute '{1}'.{2}", actionname, self.__byattr, repeat_text)
         self.update_webif_actionstatus(state, self._name, 'True')
         source = self.set_source(current_condition, previous_condition, previousstate_condition, next_condition)
         for item in self._sh.find_items(self.__byattr):
             self._log_info("\t{0} = {1}", item.property.path, item.conf[self.__byattr])
             item(item.conf[self.__byattr], caller=self._caller, source=source)
+        self._abitem.last_run = {self._name: datetime.datetime.now()}
 
 
 # Class representing a single "se_trigger" action
@@ -957,6 +1025,9 @@ class SeActionTrigger(SeActionBase):
 
         if returnvalue:
             return value
+        minagedelta = self.eval_minagedelta(f"Not triggering logic {self.__logic}", state)
+        if minagedelta:
+            return
         self._info_dict.update({'value': str(value)})
         _key = [self._state.id, self._action_type, self._name]
         self._abitem.update_webif(_key, self._info_dict, True)
@@ -964,6 +1035,7 @@ class SeActionTrigger(SeActionBase):
         self._log_info("{0}: Triggering logic '{1}' using value '{2}'.{3}", actionname, self.__logic, value, repeat_text)
         add_logics = 'logics.{}'.format(self.__logic) if not self.__logic.startswith('logics.') else self.__logic
         self._sh.trigger(add_logics, by=self._caller, source=self._name, value=value)
+        self._abitem.last_run = {self._name: datetime.datetime.now()}
 
 
 # Class representing a single "se_run" action
@@ -1022,15 +1094,18 @@ class SeActionRun(SeActionBase):
     def real_execute(self, state, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         def log_conditions():
             if current_condition:
-                self._log_debug("Running eval {0} based on conditionset {1}", self.__eval, current_condition)
+                self._log_debug("Running eval {0} based on conditionset {1}.", self.__eval, current_condition)
             if previous_condition:
-                self._log_debug("Running eval {0} based on previous conditionset {1}", self.__eval, previous_condition)
+                self._log_debug("Running eval {0} based on previous conditionset {1}.", self.__eval, previous_condition)
             if previousstate_condition:
-                self._log_debug("Running eval {0} based on previous state's conditionset {1}", self.__eval,
+                self._log_debug("Running eval {0} based on previous state's conditionset {1}.", self.__eval,
                                 previousstate_condition)
             if next_condition:
-                self._log_debug("Running eval {0} based on next conditionset {1}", self.__eval, next_condition)
+                self._log_debug("Running eval {0} based on next conditionset {1}.", self.__eval, next_condition)
 
+        minagedelta = self.eval_minagedelta(f"Not running eval {self.__eval}", state)
+        if minagedelta:
+            return
         self._abitem.set_variable('current.action_name', namevar)
         self._log_increase_indent()
         eval_result = ''
@@ -1068,6 +1143,7 @@ class SeActionRun(SeActionBase):
                 self.update_webif_actionstatus(state, self._name, 'False', 'Problem calling: {}'.format(ex))
                 text = "{0}: Problem calling '{0}': {1}."
                 self._log_error(text, actionname, StateEngineTools.get_eval_name(self.__eval), ex)
+        self._abitem.last_run = {self._name: datetime.datetime.now()}
         self._info_dict.update({'value': str(eval_result)})
         _key = [self._state.id, self._action_type, self._name]
         self._abitem.update_webif(_key, self._info_dict, True)
@@ -1137,6 +1213,9 @@ class SeActionSpecial(SeActionBase):
         self._abitem.set_variable('current.action_name', namevar)
         if returnvalue:
             return None
+        minagedelta = self.eval_minagedelta(f"Not executing special action {self.__special}", state)
+        if minagedelta:
+            return
         try:
             _log_value = self.__value.property.path
         except Exception:
@@ -1165,6 +1244,7 @@ class SeActionSpecial(SeActionBase):
             self.update_webif_actionstatus(state, self._name, 'False', 'Unknown special value {}'.format(self.__special))
             raise ValueError("{0}: Unknown special value '{1}'!".format(actionname, self.__special))
         self._log_debug("Special action {0}: done", self.__special)
+        self._abitem.last_run = {self._name: datetime.datetime.now()}
 
     def suspend_get_value(self, value):
         _issue = {self._name: {'issue': None, 'issueorigin': [{'state': 'suspend', 'action': 'suspend'}]}}
