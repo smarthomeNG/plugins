@@ -634,7 +634,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             _newvalue = element if element == 'novalue' else self.__cast_func(element)
                         except Exception as ex:
                             _newvalue = None
-                            _issue = "Problem casting element '{0}' to {1}: {2}.".format(element, self.__cast_func, ex)
+                            _issue = "Problem casting element '{0}': {1}.".format(element, ex)
                             self._log_warning(_issue)
                         valuelist.append(_newvalue)
                         if element in self.__listorder:
@@ -664,7 +664,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             _issue = "You most likely forgot to prefix your expression with 'eval:'"
                             raise ValueError(_issue)
                         else:
-                            _issue = "Not possible to cast '{}' because {}".format(value, ex)
+                            _issue = "{}".format(ex)
                             raise ValueError(_issue)
                     if value in self.__listorder:
                         self.__listorder[self.__listorder.index(value)] = _newvalue
