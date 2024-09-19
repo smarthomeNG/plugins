@@ -39,7 +39,7 @@ plugin:
     state: ready
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: '2.1.0'
+    version: '2.2.0'
     sh_minversion: '1.6'
     multi_instance: False
     classname: StateEngine
