@@ -28,7 +28,7 @@ from . import StateEngineStruct
 
 from lib.item import Items
 from lib.item.item import Item
-from copy import copy
+from copy import copy, deepcopy
 
 
 # Class representing an object state, consisting of name, conditions to be met and configured actions for state
@@ -180,7 +180,7 @@ class SeState(StateEngineTools.SeItemChild):
         self.__name = ''
         self.__unused_attributes = {}
         self.__used_attributes = {}
-        self.__action_status = {}
+        self.__action_status = {"enter": {}, "enter_or_stay": {}, "stay": {}, "pass": {}, "leave": {}}
         self.__use_done = []
         self.__use_list = []
         self.__use_ignore_list = []
@@ -574,50 +574,47 @@ class SeState(StateEngineTools.SeItemChild):
                     used_attributes[nested_entry].update(nested_dict)
                     self.__used_attributes.update(used_attributes)
 
-        def update_action_status(action_status, actiontype):
+        def update_action_status(actn_type, action_status):
+            def filter_issues(input_dict):
+                return {
+                    key: {sub_key: sub_value for sub_key, sub_value in value.items() if
+                          sub_value.get('issue') not in (None, [], [None])}
+                    for key, value in input_dict.items()
+                }
+
             if action_status is None:
                 return
             action_status = StateEngineTools.flatten_list(action_status)
             if isinstance(action_status, list):
                 for e in action_status:
-                    update_action_status(e, actiontype)
+                    update_action_status(actn_type, e)
                 return
             for itm, dct in action_status.items():
-                if itm not in self.__action_status:
-                    self.__action_status.update({itm: dct})
+                if itm not in self.__action_status[actn_type]:
+                    self.__action_status[actn_type].update({itm: dct})
 
             for (itm, dct) in action_status.items():
                 issues = dct.get('issue')
+                attributes = dct.get('attribute')
                 if issues:
                     if isinstance(issues, list):
-                        self.__action_status[itm]['issue'].extend(
-                            [issue for issue in issues if issue not in self.__action_status[itm]['issue']])
-                    origin_list = self.__action_status[itm].get('issueorigin', [])
-                    new_list = origin_list.copy()
-                    for i, listitem in enumerate(origin_list):
-                        entry_unknown = {'state': 'unknown', 'action': listitem.get('action')}
-                        entry_unknown2 = {'state': 'unknown', 'action': 'unknown'}
-                        entry_notype = {'state': self.id, 'action': listitem.get('action')}
-                        entry_final = {'state': self.id, 'action': listitem.get('action'), 'type': actiontype}
+                        for i, issue in enumerate(issues):
+                            if issue not in self.__action_status[actn_type][itm]['issue']:
+                                self.__action_status[actn_type][itm]['issue'].append(issue)
+                                self.__action_status[actn_type][itm]['attribute'].append(attributes[i])
 
-                        if listitem in (entry_unknown, entry_unknown2, entry_notype):
-                            new_list[i] = entry_final
-                        elif entry_final not in origin_list:
-                            new_list.append(entry_final)
-
-                    self.__action_status[itm]['issueorigin'] = new_list
-
-            filtered_dict = {}
-            for key, nested_dict in self.__action_status.items():
-                filtered_dict.update({key: {}})
-                filtered_dict[key].update({'used in': actiontype})
-                filtered_dict[key].update(nested_dict)
-                #self._log_develop("Add {} to used {}", key, filtered_dict)
-            self.__used_attributes = copy(filtered_dict)
-            filtered_dict = {key: value for key, value in self.__action_status.items()
-                             if value.get('issue') not in [[], [None], None]}
-            self.__action_status = filtered_dict
-            #self._log_develop("Updated action status: {}, updated used {}", self.__action_status, self.__used_attributes)
+            flattened_dict = {}
+            for key, action_type_dict in self.__action_status.items():
+                # Iterate through the inner dictionaries
+                for inner_key, nested_dict in action_type_dict.items():
+                    # Initialize the entry in the flattened dictionary
+                    if inner_key not in flattened_dict:
+                        flattened_dict[inner_key] = {}
+                    # Add 'used in' and update with existing data
+                    flattened_dict[inner_key]['used in'] = key
+                    flattened_dict[inner_key].update(nested_dict)
+            self.__used_attributes = deepcopy(flattened_dict)
+            self.__action_status = filter_issues(self.__action_status)
 
         if isinstance(state, SeState):
             item_state = state.state_item
@@ -686,21 +683,22 @@ class SeState(StateEngineTools.SeItemChild):
             child_name = StateEngineTools.get_last_part_of_item_id(child_item)
             try:
                 action_mapping = {
-                    "on_enter": ("enter", self.__actions_enter),
-                    "on_stay": ("stay", self.__actions_stay),
-                    "on_enter_or_stay": ("enter_or_stay", self.__actions_enter_or_stay),
-                    "on_leave": ("leave", self.__actions_leave),
-                    "on_pass": ("pass", self.__actions_pass)
+                    "on_enter": ("enter", "actions_enter", self.__actions_enter),
+                    "on_stay": ("stay", "actions_stay", self.__actions_stay),
+                    "on_enter_or_stay": ("enter_or_stay", "actions_enter_or_stay", self.__actions_enter_or_stay),
+                    "on_leave": ("leave", "actions_leave", self.__actions_leave),
+                    "on_pass": ("pass", "actions_pass", self.__actions_pass)
                 }
 
                 if child_name in action_mapping:
-                    action_name, action_method = action_mapping[child_name]
+                    action_name, action_type, action_method = action_mapping[child_name]
                     for attribute in child_item.conf:
                         self._log_develop("Filling state with {} action named {} for state {} with config {}", child_name, attribute, state.id, child_item.conf)
+                        action_method.update_action_details(self, action_type)
                         _action_counts[action_name] += 1
                         _, _action_status = action_method.update(attribute, child_item.conf.get(attribute))
                         if _action_status:
-                            update_action_status(_action_status, action_name)
+                            update_action_status(action_name, _action_status)
                             self._abitem.update_action_status(self.__action_status)
                         update_unused(_used_attributes, 'action', child_name)
 
@@ -710,11 +708,12 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
         # Actions defined directly in the item go to "enter_or_stay"
         for attribute in item_state.conf:
-            _result = self.__actions_enter_or_stay.update(attribute, item_state.conf[attribute])
+            self.__actions_enter_or_stay.update_action_details(self, "actions_enter_or_stay")
+            _result = self.__actions_enter_or_stay.update(attribute, item_state.conf.get(attribute))
             _action_counts["enter_or_stay"] += _result[0] if _result else 0
             _action_status = _result[1]
             if _action_status:
-                update_action_status(_action_status, 'enter_or_stay')
+                update_action_status("enter_or_stay", _action_status)
                 self._abitem.update_action_status(self.__action_status)
 
         _total_actioncount = _action_counts["enter"] + _action_counts["stay"] + _action_counts["enter_or_stay"] + _action_counts["leave"]
@@ -724,25 +723,25 @@ class SeState(StateEngineTools.SeItemChild):
 
         if recursion_depth == 0:
             self.__conditionsets.complete(self, use)
-            _action_status = self.__actions_enter.complete(self, 'actions_enter', self.__conditionsets.evals_items, use)
+            _action_status = self.__actions_enter.complete(self.__conditionsets.evals_items, use)
             if _action_status:
-                update_action_status(_action_status, 'enter')
+                update_action_status("enter", _action_status)
                 self._abitem.update_action_status(self.__action_status)
-            _action_status = self.__actions_stay.complete(self, 'actions_stay', self.__conditionsets.evals_items, use)
+            _action_status = self.__actions_stay.complete(self.__conditionsets.evals_items, use)
             if _action_status:
-                update_action_status(_action_status, 'stay')
+                update_action_status("stay", _action_status)
                 self._abitem.update_action_status(self.__action_status)
-            _action_status = self.__actions_enter_or_stay.complete(self, 'actions_enter_or_stay', self.__conditionsets.evals_items, use)
+            _action_status = self.__actions_enter_or_stay.complete(self.__conditionsets.evals_items, use)
             if _action_status:
-                update_action_status(_action_status, 'enter_or_stay')
+                update_action_status("enter_or_stay", _action_status)
                 self._abitem.update_action_status(self.__action_status)
-            _action_status = self.__actions_pass.complete(self, 'actions_pass', self.__conditionsets.evals_items, use)
+            _action_status = self.__actions_pass.complete(self.__conditionsets.evals_items, use)
             if _action_status:
-                update_action_status(_action_status, 'pass')
+                update_action_status("pass", _action_status)
                 self._abitem.update_action_status(self.__action_status)
-            _action_status = self.__actions_leave.complete(self, 'actions_leave', self.__conditionsets.evals_items, use)
+            _action_status = self.__actions_leave.complete(self.__conditionsets.evals_items, use)
             if _action_status:
-                update_action_status(_action_status, 'leave')
+                update_action_status("leave", _action_status)
                 self._abitem.update_action_status(self.__action_status)
             self._abitem.update_action_status(self.__action_status)
             self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)

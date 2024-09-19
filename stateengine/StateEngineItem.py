@@ -331,7 +331,7 @@ class SeItem:
         self.__templates = {}
         self.__unused_attributes = {}
         self.__used_attributes = {}
-        self.__action_status = {}
+        self.__action_status = {"enter": {}, "enter_or_stay": {}, "stay": {}, "pass": {}, "leave": {}}
         self.__state_issues = {}
         self.__struct_issues = {}
         self.__webif_infos = OrderedDict()
@@ -430,9 +430,21 @@ class SeItem:
         if self.__unused_attributes:
             issues += 1
             self.__log_issues('attributes')
-        if self.__action_status:
+        if self.__action_status['enter']:
             issues += 1
-            self.__log_issues('actions')
+            self.__log_issues('actions_enter')
+        if self.__action_status['enter_or_stay']:
+            issues += 1
+            self.__log_issues('actions_enter_or_stay')
+        if self.__action_status['stay']:
+            issues += 1
+            self.__log_issues('actions_stay')
+        if self.__action_status['leave']:
+            issues += 1
+            self.__log_issues('actions_leave')
+        if self.__action_status['pass']:
+            issues += 1
+            self.__log_issues('actions_pass')
         if self.__state_issues:
             issues += 1
             self.__log_issues('states')
@@ -1071,19 +1083,31 @@ class SeItem:
 
     def update_action_status(self, action_status):
         def combine_dicts(dict1, dict2):
-            combined = dict1.copy()
-            for key, value in dict2.items():
-                if key in combined:
-                    for k, v in combined.items():
-                        v['issueorigin'].extend(
-                            [item for item in v['issueorigin'] if item not in combined[k]['issueorigin']])
-                        v['issue'].extend([item for item in v['issue'] if item not in combined[k]['issue']])
+            combined = copy.deepcopy(dict1)
+            for action_type, action_dict in dict2.items():
+                if action_type in combined:
+                    # Merge the inner dictionary for this action_type
+                    for key, value in action_dict.items():
+                        if key in combined[action_type]:
+                            combined[action_type][key]['issueorigin'].extend(
+                                [item for item in value['issueorigin'] if
+                                 item not in combined[action_type][key]['issueorigin']]
+                            )
+                            combined[action_type][key]['issue'].extend(
+                                [item for item in value['issue'] if item not in combined[action_type][key]['issue']]
+                            )
+                        else:
+                            # Add new key at the inner level if it doesn't exist
+                            combined[action_type][key] = value
                 else:
-                    combined[key] = value
+                    # Add the entire action_type dictionary if it's not in combined
+                    combined[action_type] = action_dict
+
             return combined
 
-        combined_dict = combine_dicts(action_status, self.__action_status)
+        combined_dict = combine_dicts(copy.deepcopy(action_status), copy.deepcopy(self.__action_status))
         self.__action_status = combined_dict
+        del combined_dict
 
     def update_issues(self, issue_type, issues):
         def combine_dicts(dict1, dict2):
@@ -1155,7 +1179,7 @@ class SeItem:
         self.__used_attributes = combined_dict
 
     def __log_issues(self, issue_type):
-        def print_readable_dict(data):
+        def print_readable_dict(attr, data):
             for key, value in data.items():
                 if isinstance(value, list):
                     formatted_entries = []
@@ -1169,46 +1193,64 @@ class SeItem:
                         else:
                             formatted_entries.append(item)
                     if formatted_entries:
-                        self.__logger.info("- {}: {}", key, ', '.join(formatted_entries))
+                        self.__logger.info("- {}{}: {}", attr, key, ', '.join(formatted_entries))
                 else:
-                    self.__logger.info("- {}: {}", key, value)
+                    self.__logger.info("- {}{}: {}", attr, key, value)
 
         def list_issues(v):
             _issuelist = StateEngineTools.flatten_list(v.get('issue'))
+            _attrlist = StateEngineTools.flatten_list(v.get('attribute'))
             if isinstance(_issuelist, list) and len(_issuelist) > 1:
                 self.__logger.info("has the following issues:")
                 self.__logger.increase_indent()
-                for e in _issuelist:
+                for i, e in enumerate(_issuelist):
+                    _attr = "" if _attrlist is None or not _attrlist[i] else "attribute {}: ".format(_attrlist[i])
                     if isinstance(e, dict):
-                        print_readable_dict(e)
+                        print_readable_dict(_attr, e)
                     else:
-                        self.__logger.info("- {}", e)
+                        self.__logger.info("- {}{}", _attr, e)
                 self.__logger.decrease_indent()
             elif isinstance(_issuelist, list) and len(_issuelist) == 1:
                 if isinstance(_issuelist[0], dict):
                     self.__logger.info("has the following issues:")
                     self.__logger.increase_indent()
-                    print_readable_dict(_issuelist[0])
+                    _attr = "" if _attrlist is None or not _attrlist[0] else "attribute {}: ".format(_attrlist[0])
+                    print_readable_dict(_attr, _issuelist[0])
                     self.__logger.decrease_indent()
                 else:
-                    self.__logger.info("has the following issue: {}", _issuelist[0])
+                    _attr = "" if _attrlist is None or not _attrlist[0] else " for attribute {}".format(_attrlist[0])
+                    self.__logger.info("has the following issue{}: {}", _attr, _issuelist[0])
             else:
                 if isinstance(_issuelist, dict):
                     self.__logger.info("has the following issues:")
                     self.__logger.increase_indent()
-                    print_readable_dict(_issuelist)
+                    _attr = "" if not _attrlist else "attribute {}: ".format(_attrlist)
+                    print_readable_dict(_attr, _issuelist)
                     self.__logger.decrease_indent()
                 else:
-                    self.__logger.info("has the following issue: {}", _issuelist)
+                    _attr = "" if not _attrlist else " for attribute {}".format(_attrlist)
+                    self.__logger.info("has the following issue{}: {}", _attr, _issuelist)
             if "ignore" in v:
                 self.__logger.info("It will be ignored")
 
         warn_unused = ""
         warn_issues = ""
         warn = ""
-        if issue_type == 'actions':
-            to_check = self.__action_status.items()
-            warn = ', '.join(key for key in self.__action_status.keys())
+        if issue_type == 'actions_enter':
+            to_check = self.__action_status['enter'].items()
+            warn = ', '.join(key for key in self.__action_status['enter'].keys())
+        elif issue_type == 'actions_enter_or_stay':
+            to_check = self.__action_status['enter_or_stay'].items()
+            warn = ', '.join(key for key in self.__action_status['enter_or_stay'].keys())
+        elif issue_type == 'actions_stay':
+            to_check = self.__action_status['stay'].items()
+            warn = ', '.join(key for key in self.__action_status['stay'].keys())
+        elif issue_type == 'actions_pass':
+            to_check = self.__action_status['pass'].items()
+            warn = ', '.join(key for key in self.__action_status['pass'].keys())
+        elif issue_type == 'actions_leave':
+            to_check = self.__action_status['leave'].items()
+            warn = ', '.join(key for key in self.__action_status['leave'].keys())
         elif issue_type == 'structs':
             to_check = self.__struct_issues.items()
             warn = ', '.join(key for key in self.__struct_issues.keys())
@@ -1267,9 +1309,8 @@ class SeItem:
                     self.__logger.info("Definition {}{}", entry, additional)
                 self.__logger.increase_indent()
                 for origin in origin_list:
-                    if issue_type == 'actions':
-                        origin_text = 'state {}, action {}, on_{}'.format(origin.get('state'), origin.get('action'),
-                                                                          origin.get('type'))
+                    if issue_type.startswith('actions_'):
+                        origin_text = 'state {}, action {}'.format(origin.get('state'), origin.get('action'))
                     elif issue_type == 'states':
                         if origin.get('condition') == 'GeneralError' and len(origin_list) == 1:
                             origin_text = 'there was a general error. The state'
