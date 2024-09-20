@@ -33,10 +33,15 @@ class SeActions(StateEngineTools.SeItemChild):
     def __init__(self, abitem):
         super().__init__(abitem)
         self.__actions = {}
+        self.__action_type = None
+        self.__state = None
+        self.__unassigned_mindeltas = {}
+        self.__unassigned_minagedeltas = {}
         self.__unassigned_delays = {}
         self.__unassigned_repeats = {}
         self.__unassigned_instantevals = {}
         self.__unassigned_orders = {}
+        self.__unassigned_nextconditionsets = {}
         self.__unassigned_conditionsets = {}
         self.__unassigned_previousconditionsets = {}
         self.__unassigned_previousstate_conditionsets = {}
@@ -48,24 +53,19 @@ class SeActions(StateEngineTools.SeItemChild):
     def __repr__(self):
         return "SeActions, count {}".format(self.count())
 
-    def dict_actions(self, action_type, state):
-        result = {}
-        for name in self.__actions:
-            self._abitem.initactionname = name
-            result.update({name: self.__actions[name].get()})
-            try:
-                result[name].update({'actionstatus': self._abitem.webif_infos[state][action_type][name].get('actionstatus')})
-            except Exception:
-                pass
-            self._abitem.initactionname = None
-        return result
-
     def reset(self):
         self.__actions = {}
 
     # Return number of actions in list
     def count(self):
         return len(self.__actions)
+
+    def update_action_details(self, state, action_type):
+        if self.__action_type is None:
+            self.__action_type = action_type
+        if self.__state is None:
+            self._log_develop("Updating state for actions: {}, action type: {}", state.id, action_type)
+            self.__state = state
 
     # update action
     # attribute: name of attribute that defines action
@@ -84,6 +84,8 @@ class SeActions(StateEngineTools.SeItemChild):
                 value = ":".join(map(str.strip, value.split(":")))
                 if value[:1] == '[' and value[-1:] == ']':
                     value = StateEngineTools.convert_str_to_list(value, False)
+            if name in self.__actions:
+                self.__actions[name].update_action_details(self.__state, self.__action_type)
             if func == "se_delay":
                 # set delay
                 if name not in self.__actions:
@@ -91,6 +93,22 @@ class SeActions(StateEngineTools.SeItemChild):
                     self.__unassigned_delays[name] = value
                 else:
                     _issue = self.__actions[name].update_delay(value)
+                return _count, _issue
+            elif func == "se_mindelta":
+                # set mindelta
+                if name not in self.__actions:
+                    # If we do not have the action yet (delay-attribute before action-attribute), ...
+                    self.__unassigned_mindeltas[name] = value
+                else:
+                    _issue = self.__actions[name].update_mindelta(value)
+                return _count, _issue
+            elif func == "se_minagedelta":
+                # set minagedelta
+                if name not in self.__actions:
+                    # If we do not have the action yet (delay-attribute before action-attribute), ...
+                    self.__unassigned_minagedeltas[name] = value
+                else:
+                    _issue = self.__actions[name].update_minagedelta(value)
                 return _count, _issue
             elif func == "se_instanteval":
                 # set instant calculation
@@ -107,6 +125,14 @@ class SeActions(StateEngineTools.SeItemChild):
                     self.__unassigned_repeats[name] = value
                 else:
                     _issue = self.__actions[name].update_repeat(value)
+                return _count, _issue
+            elif func == "se_nextconditionset":
+                # set nextconditionset
+                if name not in self.__actions:
+                    # If we do not have the action yet (conditionset-attribute before action-attribute), ...
+                    self.__unassigned_nextconditionsets[name] = value
+                else:
+                    _issue = self.__actions[name].update_nextconditionset(value)
                 return _count, _issue
             elif func == "se_conditionset":
                 # set conditionset
@@ -236,6 +262,7 @@ class SeActions(StateEngineTools.SeItemChild):
         # Check if action exists
         _issue = None
         if name in self.__actions:
+            self.__actions[name].update_action_details(self.__state, self.__action_type)
             return True, _issue
 
         # Create action depending on function
@@ -262,6 +289,7 @@ class SeActions(StateEngineTools.SeItemChild):
         else:
             return False, _issue
         _issue_list = []
+        action.update_action_details(self.__state, self.__action_type)
         if name in self.__unassigned_delays:
             _issue = action.update_delay(self.__unassigned_delays[name])
             if _issue:
@@ -273,6 +301,18 @@ class SeActions(StateEngineTools.SeItemChild):
             if _issue:
                 _issue_list.append(_issue)
             del self.__unassigned_instantevals[name]
+
+        if name in self.__unassigned_mindeltas:
+            _issue = action.update_mindelta(self.__unassigned_mindeltas[name])
+            if _issue:
+                _issue_list.append(_issue)
+            del self.__unassigned_mindeltas[name]
+
+        if name in self.__unassigned_minagedeltas:
+            _issue = action.update_minagedelta(self.__unassigned_minagedeltas[name])
+            if _issue:
+                _issue_list.append(_issue)
+            del self.__unassigned_minagedeltas[name]
 
         if name in self.__unassigned_repeats:
             _issue = action.update_repeat(self.__unassigned_repeats[name])
@@ -295,6 +335,12 @@ class SeActions(StateEngineTools.SeItemChild):
                 _issue_list.append(_issue)
             del self.__unassigned_orders[name]
 
+        if name in self.__unassigned_nextconditionsets:
+            _issue = action.update_nextconditionset(self.__unassigned_nextconditionsets[name])
+            if _issue:
+                _issue_list.append(_issue)
+            del self.__unassigned_nextconditionsets[name]
+
         if name in self.__unassigned_conditionsets:
             _issue = action.update_conditionset(self.__unassigned_conditionsets[name])
             if _issue:
@@ -308,7 +354,7 @@ class SeActions(StateEngineTools.SeItemChild):
             del self.__unassigned_previousconditionsets[name]
 
         if name in self.__unassigned_previousstate_conditionsets:
-            _issue = action.update_previousconditionset(self.__unassigned_previousstate_conditionsets[name])
+            _issue = action.update_previousstate_conditionset(self.__unassigned_previousstate_conditionsets[name])
             if _issue:
                 _issue_list.append(_issue)
             del self.__unassigned_previousstate_conditionsets[name]
@@ -317,15 +363,15 @@ class SeActions(StateEngineTools.SeItemChild):
         return True, _issue_list
 
     def __handle_combined_action_attribute(self, name, value_list):
-        def remove_action(ex):
+        def remove_action(e):
             if name in self.__actions:
                 del self.__actions[name]
-            _issue = {name: {'issue': [ex], 'issueorigin': [{'state': 'unknown', 'action': parameter['function']}], 'ignore': True}}
-            _issue_list.append(_issue)
-            self._log_warning("Ignoring action {0} because: {1}", name, ex)
+            i = {name: {'issue': [e], 'issueorigin': [{'state': 'unknown', 'action': parameter['function']}], 'ignore': True}}
+            _issue_list.append(i)
+            self._log_warning("Ignoring action {0} because: {1}", name, e)
 
-        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'conditionset': None,
-                     'previousconditionset': None, 'previousstate_conditionset': None, 'mode': None, 'instanteval': None}
+        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'nextconditionset': None, 'conditionset': None,
+                     'previousconditionset': None, 'previousstate_conditionset': None, 'mode': None, 'instanteval': None, 'mindelta': None, 'minagedelta': None}
         _issue = None
         _issue_list = []
         # value_list needs to be string or list
@@ -381,6 +427,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     _issue_list.append(_issue)
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'to')
+                    self.__actions[name].update_action_details(self.__state, self.__action_type)
                     self.__actions[name].update(parameter['to'])
             elif parameter['function'] == "force":
                 _action_exists, _issue = self.__ensure_action_exists("se_force", name)
@@ -388,6 +435,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     _issue_list.append(_issue)
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'to')
+                    self.__actions[name].update_action_details(self.__state, self.__action_type)
                     self.__actions[name].update(parameter['to'])
             elif parameter['function'] == "run":
                 _action_exists, _issue = self.__ensure_action_exists("se_run", name)
@@ -395,6 +443,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     _issue_list.append(_issue)
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'eval')
+                    self.__actions[name].update_action_details(self.__state, self.__action_type)
                     self.__actions[name].update(parameter['eval'])
             elif parameter['function'] == "byattr":
                 _action_exists, _issue = self.__ensure_action_exists("se_byattr", name)
@@ -402,6 +451,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     _issue_list.append(_issue)
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'attribute')
+                    self.__actions[name].update_action_details(self.__state, self.__action_type)
                     self.__actions[name].update(parameter['attribute'])
             elif parameter['function'] == "trigger":
                 _action_exists, _issue = self.__ensure_action_exists("se_trigger", name)
@@ -409,6 +459,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     _issue_list.append(_issue)
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'logic')
+                    self.__actions[name].update_action_details(self.__state, self.__action_type)
                     if 'value' in parameter and parameter['value'] is not None:
                         self.__actions[name].update(parameter['logic'] + ':' + parameter['value'])
                     else:
@@ -419,6 +470,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     _issue_list.append(_issue)
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update_action_details(self.__state, self.__action_type)
                     self.__actions[name].update(parameter['value'])
             elif parameter['function'] == "add":
                 _action_exists, _issue = self.__ensure_action_exists("se_add", name)
@@ -426,6 +478,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     _issue_list.append(_issue)
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update_action_details(self.__state, self.__action_type)
                     self.__actions[name].update(parameter['value'])
             elif parameter['function'] == "remove":
                 _action_exists, _issue = self.__ensure_action_exists("se_remove", name)
@@ -433,6 +486,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     _issue_list.append(_issue)
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update_action_details(self.__state, self.__action_type)
                     self.__actions[name].update(parameter['value'])
             elif parameter['function'] == "removeall":
                 _action_exists, _issue = self.__ensure_action_exists("se_removeall", name)
@@ -440,6 +494,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     _issue_list.append(_issue)
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update_action_details(self.__state, self.__action_type)
                     self.__actions[name].update(parameter['value'])
             elif parameter['function'] == "removefirst":
                 _action_exists, _issue = self.__ensure_action_exists("se_removefirst", name)
@@ -447,6 +502,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     _issue_list.append(_issue)
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update_action_details(self.__state, self.__action_type)
                     self.__actions[name].update(parameter['value'])
             elif parameter['function'] == "removelast":
                 _action_exists, _issue = self.__ensure_action_exists("se_removelast", name)
@@ -454,6 +510,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     _issue_list.append(_issue)
                 if _action_exists:
                     self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update_action_details(self.__state, self.__action_type)
                     self.__actions[name].update(parameter['value'])
 
         except ValueError as ex:
@@ -469,12 +526,24 @@ class SeActions(StateEngineTools.SeItemChild):
             _issue = self.__actions[name].update_repeat(parameter['repeat'])
             if _issue:
                 _issue_list.append(_issue)
+        if parameter['mindelta'] is not None:
+            _issue = self.__actions[name].update_mindelta(parameter['mindelta'])
+            if _issue:
+                _issue_list.append(_issue)
+        if parameter['minagedelta'] is not None:
+            _issue = self.__actions[name].update_minagedelta(parameter['minagedelta'])
+            if _issue:
+                _issue_list.append(_issue)
         if parameter['delay'] != 0:
             _issue = self.__actions[name].update_delay(parameter['delay'])
             if _issue:
                 _issue_list.append(_issue)
         if parameter['order'] is not None:
             _issue = self.__actions[name].update_order(parameter['order'])
+            if _issue:
+                _issue_list.append(_issue)
+        if parameter['nextconditionset'] is not None:
+            _issue = self.__actions[name].update_nextconditionset(parameter['nextconditionset'])
             if _issue:
                 _issue_list.append(_issue)
         if parameter['conditionset'] is not None:
@@ -498,6 +567,7 @@ class SeActions(StateEngineTools.SeItemChild):
                 _issue_list.append(_issue)
             if _action:
                 self.__actions[name] = _action
+        self._log_debug("Handle combined issuelist {}", _issue_list)
         return _issue_list
 
     # noinspection PyMethodMayBeStatic
@@ -508,16 +578,16 @@ class SeActions(StateEngineTools.SeItemChild):
 
     # Check the actions optimize and complete them
     # state: state (item) to read from
-    def complete(self, state, evals_items=None, use=None):
+    def complete(self, evals_items=None, use=None):
         _status = {}
-        if use is None:
-            use = state.use.get()
+        if not self.__actions:
+            return _status
         for name in self.__actions:
             try:
-                _status.update(self.__actions[name].complete(state, evals_items, use))
+                _status.update(self.__actions[name].complete(evals_items, use))
             except ValueError as ex:
-                _status.update({name: {'issue': ex, 'issueorigin': {'state': state.id, 'action': 'unknown'}}})
-                raise ValueError("State '{0}', Action '{1}': {2}".format(state.id, name, ex))
+                _status.update({name: {'issue': ex, 'issueorigin': {'state': self.__state.id, 'action': 'unknown'}}})
+                raise ValueError("Completing State '{0}', Action '{1}': {2}".format(self.__state.id, name, ex))
         return _status
 
     def set(self, value):
@@ -525,7 +595,7 @@ class SeActions(StateEngineTools.SeItemChild):
             try:
                 self.__actions[name].update(value)
             except ValueError as ex:
-                raise ValueError("State '{0}', Action '{1}': {2}".format(value.property.path, name, ex))
+                raise ValueError("Setting State '{0}', Action '{1}': {2}".format(value.property.path, name, ex))
 
     # Execute all actions
     # is_repeat: Indicate if this is a repeated action without changing the state

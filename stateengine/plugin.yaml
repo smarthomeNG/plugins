@@ -39,7 +39,7 @@ plugin:
     state: ready
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: '2.1.0'
+    version: '2.2.0'
     sh_minversion: '1.6'
     multi_instance: False
     classname: StateEngine
@@ -853,6 +853,12 @@ item_structs:
             eval: sh..suspendduration(sh..suspendduration(), "Init", "Start")
             crontab: init = True
 
+            conditionset_leaveactions:
+                suspend:
+                    type: str
+                    initial_value: '.*'
+                    cache: True
+
             suspendduration:
                 remark: duration of suspend mode in minutes (gets converted automatically)
                 type: num
@@ -937,29 +943,52 @@ item_structs:
                       - 'repeat: True'
                       - 'order: 5'
 
+                on_pass:
+                    se_action_suspend:
+                      - 'function: set'
+                      - 'to: False'
+                      - 'repeat: False'
+                    se_action_suspend_visu:
+                      - 'function: set'
+                      - 'to: False'
+                      - 'repeat: False'
+                    se_action_suspend_end:
+                      - 'function: set'
+                      - 'to:  '
+                      - 'repeat: False'
+                    se_action_suspend_start:
+                      - 'function: set'
+                      - 'to:  '
+                      - 'repeat: False'
+
                 on_leave:
                     se_action_suspend:
                       - 'function: set'
                       - 'to: False'
                       - 'order: 2'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_suspend_visu:
                       - 'function: set'
                       - 'to: False'
                       - 'order: 3'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_suspend_end:
                       - 'function: set'
                       - 'to:  '
                       - 'order: 4'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_suspend_start:
                       - 'function: set'
                       - 'to:  '
                       - 'order: 5'
                       - 'delay: 1'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_retrigger:
                       - 'function: special'
                       - 'value: retrigger:..retrigger'
                       - 'delay: -1'
                       - 'order: 1'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
 
                 enter_manuell:
                     se_value_trigger_source: eval:se_eval.get_relative_itemproperty('..manuell', 'path')
@@ -1048,6 +1077,12 @@ item_structs:
             type: bool
             eval: (sh..suspendduration(sh..suspendduration(), "Init", "Start"), sh..suspendvariant.suspendduration0(sh..suspendduration(), "Init", "Start"), sh..suspendvariant.suspendduration1(sh..suspendvariant.suspendduration1(), "Init", "Start"), sh..suspendvariant.suspendduration2(sh..suspendvariant.suspendduration2(), "Init", "Start"))
             crontab: init = True
+
+            conditionset_leaveactions:
+                suspend:
+                    type: str
+                    initial_value: '.*'
+                    cache: True
 
             suspendvariant:
                 remark: number between 0 and 2 to define which suspendduration should be used
@@ -1241,33 +1276,57 @@ item_structs:
                       - 'repeat: True'
                       - 'order: 5'
 
+                on_pass:
+                    se_action_suspend:
+                      - 'function: set'
+                      - 'to: False'
+                      - 'repeat: False'
+                    se_action_suspend_visu:
+                      - 'function: set'
+                      - 'to: False'
+                      - 'repeat: False'
+                    se_action_suspend_end:
+                      - 'function: set'
+                      - 'to:  '
+                      - 'repeat: False'
+                    se_action_suspend_start:
+                      - 'function: set'
+                      - 'to:  '
+                      - 'repeat: False'
+
                 on_leave:
                     se_action_suspendvariant:
                       - 'function: set'
                       - 'to: eval:se_eval.get_relative_itemproperty("..settings.suspendvariant", "last_value")'
                       - 'order: 1'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_suspend:
                       - 'function: set'
                       - 'to: False'
                       - 'order: 2'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_suspend_visu:
                       - 'function: set'
                       - 'to: False'
                       - 'order: 3'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_suspend_end:
                       - 'function: set'
                       - 'to:  '
                       - 'order: 4'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_suspend_start:
                       - 'function: set'
                       - 'to:  '
                       - 'order: 5'
                       - 'delay: 1'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
                     se_action_retrigger:
                       - 'function: special'
                       - 'value: retrigger:..retrigger'
                       - 'delay: -1'
                       - 'order: 1'
+                      - 'nextconditionset: item:..settings.conditionset_leaveactions.suspend'
 
                 enter_manuell:
                     se_value_trigger_source: eval:se_eval.get_relative_itemproperty('..manuell', 'path')
@@ -1418,6 +1477,12 @@ item_attribute_prefixes:
             de: 'Definiert um welchen Wert sich das Item mindestens geändert haben muss, um neu gesetzt zu werden'
             en: 'Definition of a threshold the item has to surpass to be newly set'
 
+    se_minagedelta_:
+        type: foo
+        description:
+            de: 'Definiert eine Pause zwischen mehreren Aktionsaufrufen.'
+            en: 'Definition of pause interval between multiple runs of actions'
+
     se_min_:
         type: foo
         description:
@@ -1431,6 +1496,7 @@ item_attribute_prefixes:
             en: 'Condition: The value of the item has to be lower than defined by se_max'
 
     se_value_:
+        type: foo
         description:
             de: 'Bedingung: Das Item muss exakt dem durch se_value angegebenem Wert entsprechen'
             en: 'Condition: The item has to have the exact same value as defined by se_value'
@@ -1508,11 +1574,13 @@ item_attribute_prefixes:
             en: 'Special action like suspend or retrigger'
 
     se_set_:
+        type: foo
         description:
             de: 'Setzen eines Items auf einen bestimmten Wert (veraltet - Nutze stattdessen se_action)'
             en: 'Setting an item to a specific value (deprecated - use se_action instead)'
 
     se_force_:
+        type: foo
         description:
             de: 'Setzen eines Items auf einen bestimmten Wert, egal ob sich der Wert geändert hat oder nicht (veraltet - Nutze stattdessen se_action)'
             en: 'Setting an item to a specific value no matter whether the value has changed or not (deprecated - use se_action instead)'
@@ -1542,17 +1610,19 @@ item_attribute_prefixes:
             en: 'Delaying an action (deprecated - use se_action instead)'
 
     se_repeat_:
-        type: bool
+        type: foo
         description:
             de: 'Definiert, ob eine Aktion beim erneuten Eintritt in den gleichen Status wiederholt werden soll oder nicht (veraltet - Nutze stattdessen se_action)'
             en: 'Definition wether an action should be repeated or not when reentering the same state (deprecated - use se_action instead)'
 
     se_order_:
+        type: foo
         description:
             de: 'Definiert die Reihenfolge einer Aktion als Integerzahl (veraltet - Nutze stattdessen se_action)'
             en: 'Definition of the running order of an action as integer (deprecated - use se_action instead)'
 
     se_manual_:
+        type: foo
         description:
             de: 'Diverse Funktion für den Suspendmodus wie include, exclude, invert, logitem.'
             en: 'Some functions relevant for the suspend mode like include, exclude, invert, logitem.'

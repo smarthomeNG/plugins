@@ -91,9 +91,9 @@ class SeConditionSets(StateEngineTools.SeItemChild):
     def one_conditionset_matching(self, state):
         if self.count() == 0:
             self._log_debug("No condition sets defined -> matching")
-            return True
+            return True, ''
         for name in self.__condition_sets:
             if self.__condition_sets[name].all_conditions_matching(state):
-                return True
+                return True, name
 
-        return False
+        return False, ''

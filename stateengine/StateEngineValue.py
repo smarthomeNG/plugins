@@ -136,7 +136,8 @@ class SeValue(StateEngineTools.SeItemChild):
             self._log_develop("Setting value {0}, attribute name {1}, reset {2}, type {3}",
                               value, attribute_name, reset, attr_type)
         _returnvalue, _returntype, _issue, _origvalue = self.set(value, attribute_name, reset)
-        self._log_develop("Set from attribute returnvalue {}, returntype {}, issue {}, original {}", _returnvalue, _returntype, _issue, _origvalue)
+        self._log_develop("Set from attribute returnvalue {}, returntype {}, issue {}, original {}",
+                          _returnvalue, _returntype, _issue, _origvalue)
         return _returnvalue, _returntype, _using_default, _issue, _origvalue
 
     def _set_additional(self, _additional_sources):
@@ -446,10 +447,14 @@ class SeValue(StateEngineTools.SeItemChild):
         else:
             return returnvalues
 
-    def get_for_webif(self):
-        returnvalues = self.get()
+    def get_for_webif(self, value=None):
+        if value is None:
+            returnvalues = self.get()
+        else:
+            returnvalues = value
         returnvalues = self.__varname if returnvalues == '' else returnvalues
-        return str(returnvalues)
+        returnvalues = str(returnvalues)
+        return returnvalues
 
     def get_type(self):
         if len(self.__listorder) <= 1:
@@ -479,6 +484,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         self._log_debug("{0}: {1} ({2})", self.__name, i, type(i))
             else:
                 self._log_debug("{0}: {1} ({2})", self.__name, self.__value, type(self.__value))
+            return self.__value
         if self.__regex is not None:
             if isinstance(self.__regex, list):
                 for i in self.__regex:
@@ -486,6 +492,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         self._log_debug("{0} from regex: {1}", self.__name, i)
             else:
                 self._log_debug("{0} from regex: {1}", self.__name, self.__regex)
+            return f"regex:{self.__regex}"
         if self.__struct is not None:
             if isinstance(self.__struct, list):
                 for i in self.__struct:
@@ -494,22 +501,30 @@ class SeValue(StateEngineTools.SeItemChild):
 
             else:
                 self._log_debug("{0} from struct: {1}", self.__name, self.__struct.property.path)
+            return self.__struct
         if self.__item is not None:
             _original_listorder = self.__listorder.copy()
+            items = []
             if isinstance(self.__item, list):
                 for i, item in enumerate(self.__item):
                     if item is not None:
                         self._log_debug("{0} from item: {1}", self.__name, item.property.path)
-                        self._log_debug("Currently item results in {}", self.__get_from_item()[i])
+                        current = self.__get_from_item()[i]
+                        items.append(current)
+                        self._log_debug("Currently item results in {}", current)
             else:
                 self._log_debug("{0} from item: {1}", self.__name, self.__item.property.path)
-                self._log_debug("Currently item results in {}", self.__get_from_item())
+                items = self.__get_from_item()
+                self._log_debug("Currently item results in {}", items)
             self.__listorder = _original_listorder
+            return items
         if self.__eval is not None:
             self._log_debug("{0} from eval: {1}", self.__name, self.__eval)
             _original_listorder = self.__listorder.copy()
-            self._log_debug("Currently eval results in {}. ", self.__get_eval())
+            eval_result = self.__get_eval()
+            self._log_debug("Currently eval results in {}. ", eval_result)
             self.__listorder = _original_listorder
+            return eval_result
         if self.__varname is not None:
             if isinstance(self.__varname, list):
                 for i in self.__varname:
@@ -517,6 +532,11 @@ class SeValue(StateEngineTools.SeItemChild):
                         self._log_debug("{0} from variable: {1}", self.__name, i)
             else:
                 self._log_debug("{0} from variable: {1}", self.__name, self.__varname)
+            _original_listorder = self.__listorder.copy()
+            var_result = self.__get_from_variable()
+            self.__listorder = _original_listorder
+            return var_result
+        return None
 
     # Get Text (similar to logger text)
     # prefix: Prefix for text
@@ -614,7 +634,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             _newvalue = element if element == 'novalue' else self.__cast_func(element)
                         except Exception as ex:
                             _newvalue = None
-                            _issue = "Problem casting element '{0}' to {1}: {2}.".format(element, self.__cast_func, ex)
+                            _issue = "Problem casting element '{0}': {1}.".format(element, ex)
                             self._log_warning(_issue)
                         valuelist.append(_newvalue)
                         if element in self.__listorder:
@@ -644,7 +664,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             _issue = "You most likely forgot to prefix your expression with 'eval:'"
                             raise ValueError(_issue)
                         else:
-                            _issue = "Not possible to cast '{}' because {}".format(value, ex)
+                            _issue = "{}".format(ex)
                             raise ValueError(_issue)
                     if value in self.__listorder:
                         self.__listorder[self.__listorder.index(value)] = _newvalue
@@ -744,13 +764,28 @@ class SeValue(StateEngineTools.SeItemChild):
     def __get_eval(self):
         # noinspection PyUnusedLocal
         sh = self._sh
+        # noinspection PyUnusedLocal
         shtime = self._shtime
+        patterns = [
+            "get_variable('current.",
+            'get_variable("current.',
+            "get_variable('next.",
+            'get_variable("next.'
+        ]
         if isinstance(self.__eval, str):
             self.__eval = StateEngineTools.parse_relative(self.__eval, 'sh.', ['()', '.property.'])
             if "stateengine_eval" in self.__eval or "se_eval" in self.__eval:
                 # noinspection PyUnusedLocal
                 stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
             self._log_debug("Checking eval: {0}", self.__eval)
+            if self.__eval in self._abitem.cache:
+                self._log_increase_indent()
+                result = self._abitem.cache.get(self.__eval)
+                self._log_debug("Loading eval from cache: {}", result)
+                self._log_decrease_indent()
+                if 'eval:{}'.format(self.__eval) in self.__listorder:
+                    self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = [result]
+                return result
             self._log_increase_indent()
             try:
                 _newvalue, _issue = self.__do_cast(eval(self.__eval))
@@ -762,6 +797,8 @@ class SeValue(StateEngineTools.SeItemChild):
                 values = _newvalue
                 self._log_decrease_indent()
                 self._log_debug("Eval result: {0} ({1}).", values, type(values))
+                if not any(pattern in self.__eval for pattern in patterns):
+                    self._abitem.cache = {self.__eval: values}
                 self._log_increase_indent()
             except Exception as ex:
                 self._log_decrease_indent()
@@ -785,6 +822,14 @@ class SeValue(StateEngineTools.SeItemChild):
                         pass
                     self._log_debug("Checking eval {0} from list {1}.", val, self.__eval)
                     self._log_increase_indent()
+                    if val in self._abitem.cache:
+                        result = self._abitem.cache.get(val)
+                        self._log_debug("Loading eval in list from cache: {} ({})", result, type(result))
+                        self._log_decrease_indent()
+                        values.append(result)
+                        if 'eval:{}'.format(val) in self.__listorder:
+                            self.__listorder[self.__listorder.index('eval:{}'.format(val))] = [result]
+                        continue
                     if isinstance(val, str):
                         if "stateengine_eval" in val or "se_eval" in val:
                             # noinspection PyUnusedLocal
@@ -830,9 +875,19 @@ class SeValue(StateEngineTools.SeItemChild):
                             value = None
                     if value is not None:
                         values.append(value)
+                        if not any(pattern in val for pattern in patterns):
+                            self._abitem.cache = {val: value}
                     self._log_decrease_indent()
             else:
                 self._log_debug("Checking eval (no str, no list): {0}.", self.__eval)
+                if self.__eval in self._abitem.cache:
+                    self._log_increase_indent()
+                    result = self._abitem.cache.get(self.__eval)
+                    self._log_debug("Loading eval (no str, no list) from cache: {}", result)
+                    self._log_decrease_indent()
+                    if 'eval:{}'.format(self.__eval) in self.__listorder:
+                        self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = [result]
+                    return result
                 try:
                     self._log_increase_indent()
                     _newvalue, _issue = self.__do_cast(self.__eval())
@@ -844,6 +899,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     values = _newvalue
                     self._log_decrease_indent()
                     self._log_debug("Eval result (no str, no list): {0}.", values)
+                    self._abitem.cache = {self.__eval: values}
                     self._log_increase_indent()
                 except Exception as ex:
                     self._log_decrease_indent()
@@ -963,11 +1019,10 @@ class SeValue(StateEngineTools.SeItemChild):
 
         if isinstance(self.__varname, list):
             for var in self.__varname:
-                values.append(update_value(var))
                 self._log_debug("Checking variable in loop '{0}', value {1} from list {2}",
                                 var, values[-1], self.__listorder)
+                values.append(update_value(var))
         else:
             values = update_value(self.__varname)
-            self._log_debug("Variable result: {0}", values)
-
+        self._log_debug("Variable result: {0}", values)
         return values
