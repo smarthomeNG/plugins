@@ -704,8 +704,8 @@ class SeItem:
                             _leaveactions_run = True
                     elif result is False and last_state != state and state.actions_pass.count() > 0:
                         _pass_state = state
-                        state.run_pass(self.__pass_repeat.get(state, False), self.__repeat_actions.get())
-                        _key_pass = ['{}'.format(last_state.id), 'pass']
+                        _pass_state.run_pass(self.__pass_repeat.get(state, False), self.__repeat_actions.get())
+                        _key_pass = ['{}'.format(_pass_state.id), 'pass']
                         self.update_webif(_key_pass, True)
                         self.__pass_repeat.update({state: True})
                     if result is True:
