@@ -1204,7 +1204,7 @@ class SeItem:
                 self.__logger.info("has the following issues:")
                 self.__logger.increase_indent()
                 for i, e in enumerate(_issuelist):
-                    _attr = "" if _attrlist is None or not _attrlist[i] else "attribute {}: ".format(_attrlist[i])
+                    _attr = "" if _attrlist is None or not isinstance(_attrlist, list) or not _attrlist[i] else "attribute {}: ".format(_attrlist[i])
                     if isinstance(e, dict):
                         print_readable_dict(_attr, e)
                     else:
@@ -1214,11 +1214,11 @@ class SeItem:
                 if isinstance(_issuelist[0], dict):
                     self.__logger.info("has the following issues:")
                     self.__logger.increase_indent()
-                    _attr = "" if _attrlist is None or not _attrlist[0] else "attribute {}: ".format(_attrlist[0])
+                    _attr = "" if _attrlist is None or not isinstance(_attrlist, list) or not _attrlist[0] else "attribute {}: ".format(_attrlist[0])
                     print_readable_dict(_attr, _issuelist[0])
                     self.__logger.decrease_indent()
                 else:
-                    _attr = "" if _attrlist is None or not _attrlist[0] else " for attribute {}".format(_attrlist[0])
+                    _attr = "" if _attrlist is None or not isinstance(_attrlist, list) or not _attrlist[0] else " for attribute {}".format(_attrlist[0])
                     self.__logger.info("has the following issue{}: {}", _attr, _issuelist[0])
             else:
                 if isinstance(_issuelist, dict):
