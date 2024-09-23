@@ -42,7 +42,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def action_status(self):
         return self._action_status
 
-    # Cast function for delay
+    # Cast function for delay and other time based attributes
     # value: value to cast
     @staticmethod
     def __cast_seconds(value):
@@ -59,7 +59,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         elif isinstance(value, float):
             return int(value)
         else:
-            raise ValueError("Can not cast delay value {0} to int!".format(value))
+            raise ValueError("Can not cast value {0} to int!".format(value))
 
     # Initialize the action
     # abitem: parent SeItem instance

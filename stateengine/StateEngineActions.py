@@ -567,7 +567,7 @@ class SeActions(StateEngineTools.SeItemChild):
                 _issue_list.append(_issue)
             if _action:
                 self.__actions[name] = _action
-        self._log_debug("Handle combined issuelist {}", _issue_list)
+        # self._log_develop("Handle combined issuelist {}", _issue_list)
         return _issue_list
 
     # noinspection PyMethodMayBeStatic
