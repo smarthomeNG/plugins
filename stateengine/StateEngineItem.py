@@ -936,6 +936,7 @@ class SeItem:
 
         self.__logger.info("".ljust(80, "_"))
         self.__logger.info("Handling released_by attributes")
+        self.__logger.increase_indent("Handling released_by... ")
         can_release = {}
         all_released_by = {}
         skip_copy = True
@@ -1037,7 +1038,7 @@ class SeItem:
                 self.__release_info = {new_state.id: _can_release_list}
                 _key_releasedby = ['{}'.format(new_state.id), 'releasedby']
                 self.update_webif(_key_releasedby, _can_release_list)
-
+        self.__logger.increase_indent("")
         self.__logger.info("".ljust(80, "_"))
         return all_released_by
 
@@ -1333,6 +1334,7 @@ class SeItem:
         _reordered_states = []
         self.__logger.info("".ljust(80, "_"))
         self.__logger.info("Recalculating state order. Current order: {}", self.__states)
+        self.__logger.increase_indent()
         _copied_states = {}
         _add_order = 0
         _changed_orders = []
@@ -1398,6 +1400,7 @@ class SeItem:
                 else:
                     _reorder_webif[state.id] = self.__webif_infos[state.id]
             self.__webif_infos = _reorder_webif
+        self.__logger.decrease_indent()
         self.__logger.info("Recalculated state order. New order: {}", self.__states)
         self.__logger.info("".ljust(80, "_"))
 
@@ -1895,6 +1898,7 @@ class SeItem:
 
         self.__logger.info("".ljust(80, "_"))
         self.__logger.info("Initializing released_by attributes")
+        self.__logger.increase_indent()
         can_release = {}
         state_dict = {state.id: state for state in self.__states}
         for state in self.__states:
@@ -1920,7 +1924,7 @@ class SeItem:
                 self.__config_issues.update({state.id: {'issue': _issuelist, 'attribute': 'se_released_by'}})
                 state.update_releasedby_internal(_convertedlist)
                 self.__update_can_release(can_release, state)
-
+        self.__logger.decrease_indent()
         self.__logger.info("".ljust(80, "_"))
 
     # log item data
