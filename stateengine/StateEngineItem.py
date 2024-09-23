@@ -761,11 +761,6 @@ class SeItem:
                         "State is a copy and therefore just releasing {}. Skipping state actions, running leave actions "
                         "of last state, then retriggering.", new_state.is_copy_for.id)
                     if last_state is not None and self.__ab_alive:
-                        _, self.__nextconditionset_name = self.__update_check_can_enter(last_state, _instant_leaveaction, False)
-                        if self.__nextconditionset_name:
-                            self.__nextconditionset_id = f"{state.state_item.property.path}.{self.__nextconditionset_name}"
-                        else:
-                            self.__nextconditionset_id = ""
                         self.set_variable('next.conditionset_id', self.__nextconditionset_id)
                         self.set_variable('next.conditionset_name', self.__nextconditionset_name)
                         self.__logger.develop("Current variables: {}", self.__variables)
