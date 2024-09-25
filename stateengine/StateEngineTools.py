@@ -323,8 +323,16 @@ def convert_str_to_list(value, force=True):
         try:
             elements = re.findall(r"'([^']+)'|([^,]+)", value)
             flattened_elements = [element[0] if element[0] else element[1] for element in elements]
-            formatted_str = "[" + ", ".join(
-                ["'" + element.strip(" '\"") + "'" for element in flattened_elements]) + "]"
+            formatted_elements = []
+            for element in flattened_elements:
+                element = element.strip(" '\"")
+                if "'" in element:
+                    formatted_elements.append(f'"{element}"')
+                elif '"' in element:
+                    formatted_elements.append(f"'{element}'")
+                else:
+                    formatted_elements.append(f"'{element}'")
+            formatted_str = "[" + ", ".join(formatted_elements) + "]"
             return literal_eval(formatted_str)
         except Exception as ex:
             raise ValueError("Problem converting string to list: {}".format(ex))
