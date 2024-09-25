@@ -223,18 +223,17 @@ class SeItem:
         self.__name = str(self.__item)
         self.__itemClass = Item
         # initialize logging
-
+        self.__logger.log_level_as_num = 2
         self.__log_level = StateEngineValue.SeValue(self, "Log Level", False, "num")
 
         _default_log_level = self.__logger.default_log_level.get()
         _returnvalue, _returntype, _using_default, _issue, _ = self.__log_level.set_from_attr(self.__item,
                                                                                               "se_log_level",
-                                                                                              _default_log_level)
+                                                                                              default_value=_default_log_level)
         self.__using_default_log_level = _using_default
         _returnvalue = self.__log_level.get()
         if isinstance(_returnvalue, list) and len(_returnvalue) == 1:
             _returnvalue = _returnvalue[0]
-        self.__logger.log_level_as_num = 2
 
         _startup_log_level = self.__logger.startup_log_level.get()
 
@@ -266,13 +265,13 @@ class SeItem:
 
         # get startup delay
         self.__startup_delay = StateEngineValue.SeValue(self, "Startup Delay", False, "num")
-        self.__startup_delay.set_from_attr(self.__item, "se_startup_delay", StateEngineDefaults.startup_delay)
+        self.__startup_delay.set_from_attr(self.__item, "se_startup_delay", default_value=StateEngineDefaults.startup_delay)
         self.__startup_delay_over = False
 
         # Init suspend settings
         self.__default_suspend_time = StateEngineDefaults.suspend_time.get()
         self.__suspend_time = StateEngineValue.SeValue(self, "Suspension time on manual changes", False, "num")
-        self.__suspend_time.set_from_attr(self.__item, "se_suspend_time", self.__default_suspend_time)
+        self.__suspend_time.set_from_attr(self.__item, "se_suspend_time", default_value=self.__default_suspend_time)
 
         # Init laststate and previousstate items/values
         self.__config_issues = {}
@@ -459,7 +458,7 @@ class SeItem:
         self.__default_instant_leaveaction = default_instant_leaveaction
 
         _returnvalue_leave, _returntype_leave, _using_default_leave, _issue, _ = self.__instant_leaveaction.set_from_attr(
-            self.__item, "se_instant_leaveaction", default_instant_leaveaction)
+            self.__item, "se_instant_leaveaction", default_value=default_instant_leaveaction)
 
         if len(_returnvalue_leave) > 1:
             self.__logger.warning("se_instant_leaveaction for item {} can not be defined as a list"
@@ -2111,7 +2110,12 @@ class SeItem:
 
     # return value of variable
     def get_variable(self, varname):
-        return self.__variables[varname] if varname in self.__variables else "(Unknown variable '{0}'!)".format(varname)
+        if varname not in self.__variables:
+            returnvalue = "(Unknown variable '{0}'!)".format(varname)
+            self.__logger.warning("Issue when getting variable {}".format(returnvalue))
+        else:
+            returnvalue = self.__variables[varname]
+        return returnvalue
 
     # set value of variable
     def set_variable(self, varname, value):

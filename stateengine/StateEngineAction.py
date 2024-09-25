@@ -429,6 +429,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
         # check if any conditiontype is met or not
         # condition: type of condition 'conditionset'/'previousconditionset'/'previousstate_conditionset'/'nextconditionset'
         def _check_condition(condition: str):
+            self._log_debug("Checking {}", condition)
+            self._log_increase_indent()
             _conditions_met_count = 0
             _conditions_necessary_count = 0
             _condition_to_meet = None
@@ -451,23 +453,24 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 _updated_current_condition = self._abitem.get_variable("next.conditionset_id") if _current_condition == '' else _current_condition
             _condition_to_meet = _condition_to_meet if isinstance(_condition_to_meet, list) else [_condition_to_meet]
             _condition_met = []
+            self._log_decrease_indent()
             for cond in _condition_to_meet:
-                if cond is not None:
+                if cond is not None and condition not in _conditions_met_type:
                     _conditions_necessary_count += 1
                     _orig_cond = cond
                     try:
-                        cond = re.compile(cond)
                         _matching = cond.fullmatch(_updated_current_condition)
                         if _matching:
-                            self._log_debug("Given {} {} matches current one: {}", condition, _orig_cond, _updated_current_condition)
+                            self._log_debug("Given {} '{}' matches current one: '{}'", condition, _orig_cond.pattern, _updated_current_condition)
                             _condition_met.append(_updated_current_condition)
                             _conditions_met_count += 1
+                            _conditions_met_type.append(condition)
                         else:
-                            self._log_debug("Given {} {} not matching current one: {}", condition, _orig_cond, _updated_current_condition)
-                            self.update_webif_actionstatus(state, self._name, 'False', None, f"({condition} {_orig_cond} not met)")
+                            self._log_debug("Given {} '{}' not matching current one: '{}'", condition, _orig_cond.pattern, _updated_current_condition)
+                            self.update_webif_actionstatus(state, self._name, 'False', None, f"({condition} {_orig_cond.pattern} not met)")
                     except Exception as ex:
                         if cond is not None:
-                            self._log_warning("Given {} {} is not a valid regex: {}", condition, _orig_cond, ex)
+                            self._log_warning("Given {} '{}' is not a valid regex: {}", condition, _orig_cond.pattern, ex)
             return _condition_met, _conditions_met_count, _conditions_necessary_count
 
         # update web interface with delay info
@@ -499,11 +502,9 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._log_increase_indent()
         try:
             self._getitem_fromeval()
-            self._log_decrease_indent()
             _validitem = True
         except Exception:
             _validitem = False
-            self._log_decrease_indent()
         if not self._can_execute(state):
             self._log_decrease_indent()
             return
@@ -513,6 +514,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         previous_condition_met = None
         previousstate_condition_met = None
         next_condition_met = None
+        _conditions_met_type = []
         if not self.conditionset.is_empty():
             current_condition_met, cur_conditions_met, cur_condition_necessary = _check_condition('conditionset')
             conditions_met += cur_conditions_met
@@ -529,6 +531,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
             next_condition_met, next_conditions_met, next_conditionset_necessary = _check_condition('nextconditionset')
             conditions_met += next_conditions_met
             condition_necessary += min(1, next_conditionset_necessary)
+        self._log_decrease_indent()
         self._log_develop("Action '{0}': conditions met: {1}, necessary {2}.", self._name, conditions_met, condition_necessary)
         if conditions_met < condition_necessary:
             self._log_info("Action '{0}': Skipping because not all conditions are met.", self._name)

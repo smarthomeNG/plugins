@@ -115,7 +115,7 @@ class SeValue(StateEngineTools.SeItemChild):
             value = default_value
             _using_default = True
             self._log_develop("Processing value from attribute name {0}, reset {1}, type {2}: using default value {3}",
-                              attribute_name, reset, value, attr_type)
+                              attribute_name, reset, attr_type, value)
         value_list = []
         if value is not None and isinstance(value, list) and attr_type is not None:
             for i, entry in enumerate(value):
@@ -475,6 +475,7 @@ class SeValue(StateEngineTools.SeItemChild):
 
     # Write condition to logger
     def write_to_logger(self):
+        returnvalues = []
         if self.__template is not None:
             self._log_info("{0}: Using template(s) {1}", self.__name, self.__template)
         if self.__value is not None:
@@ -484,7 +485,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         self._log_debug("{0}: {1} ({2})", self.__name, i, type(i))
             else:
                 self._log_debug("{0}: {1} ({2})", self.__name, self.__value, type(self.__value))
-            return self.__value
+            returnvalues.append(self.__value)
         if self.__regex is not None:
             if isinstance(self.__regex, list):
                 for i in self.__regex:
@@ -492,7 +493,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         self._log_debug("{0} from regex: {1}", self.__name, i)
             else:
                 self._log_debug("{0} from regex: {1}", self.__name, self.__regex)
-            return f"regex:{self.__regex}"
+            returnvalues.append(f"regex:{self.__regex}")
         if self.__struct is not None:
             if isinstance(self.__struct, list):
                 for i in self.__struct:
@@ -501,7 +502,7 @@ class SeValue(StateEngineTools.SeItemChild):
 
             else:
                 self._log_debug("{0} from struct: {1}", self.__name, self.__struct.property.path)
-            return self.__struct
+            returnvalues.append(self.__struct)
         if self.__item is not None:
             _original_listorder = self.__listorder.copy()
             items = []
@@ -517,14 +518,14 @@ class SeValue(StateEngineTools.SeItemChild):
                 items = self.__get_from_item()
                 self._log_debug("Currently item results in {}", items)
             self.__listorder = _original_listorder
-            return items
+            returnvalues.append(items)
         if self.__eval is not None:
             self._log_debug("{0} from eval: {1}", self.__name, self.__eval)
             _original_listorder = self.__listorder.copy()
             eval_result = self.__get_eval()
             self._log_debug("Currently eval results in {}. ", eval_result)
             self.__listorder = _original_listorder
-            return eval_result
+            returnvalues.append(eval_result)
         if self.__varname is not None:
             if isinstance(self.__varname, list):
                 for i in self.__varname:
@@ -535,8 +536,10 @@ class SeValue(StateEngineTools.SeItemChild):
             _original_listorder = self.__listorder.copy()
             var_result = self.__get_from_variable()
             self.__listorder = _original_listorder
-            return var_result
-        return None
+            returnvalues.append(var_result)
+        returnvalues = StateEngineTools.flatten_list(returnvalues)
+        returnvalues = returnvalues[0] if len(returnvalues) == 1 else None if len(returnvalues) == 0 else returnvalues
+        return returnvalues
 
     # Get Text (similar to logger text)
     # prefix: Prefix for text
