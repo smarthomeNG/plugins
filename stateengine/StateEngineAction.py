@@ -74,10 +74,10 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self.__delay = StateEngineValue.SeValue(self._abitem, "delay")
         self.__repeat = None
         self.__instanteval = None
-        self.nextconditionset = StateEngineValue.SeValue(self._abitem, "nextconditionset", True, "str")
-        self.conditionset = StateEngineValue.SeValue(self._abitem, "conditionset", True, "str")
-        self.previousconditionset = StateEngineValue.SeValue(self._abitem, "previousconditionset", True, "str")
-        self.previousstate_conditionset = StateEngineValue.SeValue(self._abitem, "previousstate_conditionset", True, "str")
+        self.nextconditionset = StateEngineValue.SeValue(self._abitem, "nextconditionset", True, "regex")
+        self.conditionset = StateEngineValue.SeValue(self._abitem, "conditionset", True, "regex")
+        self.previousconditionset = StateEngineValue.SeValue(self._abitem, "previousconditionset", True, "regex")
+        self.previousstate_conditionset = StateEngineValue.SeValue(self._abitem, "previousstate_conditionset", True, "regex")
         self.__mode = StateEngineValue.SeValue(self._abitem, "mode", True, "str")
         self.__order = StateEngineValue.SeValue(self._abitem, "order", False, "num")
         self._minagedelta = StateEngineValue.SeValue(self._abitem, "minagedelta")

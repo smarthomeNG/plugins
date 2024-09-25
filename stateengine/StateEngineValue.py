@@ -54,7 +54,7 @@ class SeValue(StateEngineTools.SeItemChild):
         self.__varname = None
         self.__template = None
         self.__issues = []
-        self.__get_issues = {'cast_item': [], 'eval': [], 'regex': [], 'struct': [], 'var': [], 'item': []}
+        self.__get_issues = {'cast_item': [], 'cast_regex': [], 'eval': [], 'regex': [], 'struct': [], 'var': [], 'item': []}
         self._additional_sources = []
         self.itemsApi = Items.get_instance()
         self.__itemClass = Item
@@ -64,6 +64,8 @@ class SeValue(StateEngineTools.SeItemChild):
         self.__valid_valuetypes = ["value", "regex", "eval", "var", "item", "template", "struct"]
         if value_type == "str":
             self.__cast_func = StateEngineTools.cast_str
+        elif value_type == "regex":
+            self.__cast_func = self.cast_regex
         elif value_type == "num":
             self.__cast_func = StateEngineTools.cast_num
         elif value_type == "item":
@@ -563,6 +565,31 @@ class SeValue(StateEngineTools.SeItemChild):
         value = value if prefix is None else prefix + value
         value = value if suffix is None else value + suffix
         return value
+
+    # cast a value as regex. Throws ValueError if cast is not possible
+    # value: value to cast
+    # returns: value as regex
+    def cast_regex(self, value):
+        try:
+            _issue_dict = {}
+            _returnvalue = value
+            if isinstance(value, str):
+                try:
+                    _returnvalue = re.compile(value, re.IGNORECASE)
+                except Exception as ex:
+                    _issue = "Issue converting {} to regex: {}".format(value, ex)
+                    _issue_dict = {str(value): _issue}
+                    self._log_error(_issue)
+            if _issue_dict and _issue_dict not in self.__get_issues['cast_regex']:
+                self.__get_issues['cast_regex'].append(_issue_dict)
+            return _returnvalue
+        except Exception as ex:
+            _issue = "Can't cast {0} to regex! {1}".format(value, ex)
+            _issue_dict = {str(value): _issue}
+            if _issue_dict not in self.__get_issues['cast_regex']:
+                self.__get_issues['cast_regex'].append(_issue_dict)
+            self._log_error(_issue)
+            return value
 
     # cast a value as item. Throws ValueError if cast is not possible
     # value: value to cast
