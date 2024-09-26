@@ -695,8 +695,9 @@ class SeState(StateEngineTools.SeItemChild):
                     for attribute in child_item.conf:
                         self._log_develop("Filling state with {} action named {} for state {} with config {}", child_name, attribute, state.id, child_item.conf)
                         action_method.update_action_details(self, action_type)
-                        _action_counts[action_name] += 1
-                        _, _action_status = action_method.update(attribute, child_item.conf.get(attribute))
+                        _result = action_method.update(attribute, child_item.conf.get(attribute))
+                        _action_counts[action_name] += _result[0] if _result else 0
+                        _action_status = _result[1]
                         if _action_status:
                             update_action_status(action_name, _action_status)
                             self._abitem.update_action_status(self.__action_status)
@@ -716,7 +717,7 @@ class SeState(StateEngineTools.SeItemChild):
                 update_action_status("enter_or_stay", _action_status)
                 self._abitem.update_action_status(self.__action_status)
 
-        _total_actioncount = _action_counts["enter"] + _action_counts["stay"] + _action_counts["enter_or_stay"] + _action_counts["leave"]
+        _total_actioncount = _action_counts["enter"] + _action_counts["stay"] + _action_counts["enter_or_stay"] + _action_counts["leave"] + _action_counts["pass"]
 
         self.update_name(item_state, recursion_depth)
         # Complete condition sets and actions at the end
