@@ -1325,7 +1325,7 @@ class SeItem:
                 self.__logger.info("")
         for entry, value in to_check:
             if 'issue' not in value:
-                text = "Definition {} not used in any action or condition.".format(entry)
+                text = "Definition {} not used in any action or condition.".format(value.get('attribute', entry))
                 self.__logger.info("{}", text)
         self.__logger.decrease_indent()
 

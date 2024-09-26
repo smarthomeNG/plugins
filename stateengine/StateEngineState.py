@@ -242,7 +242,7 @@ class SeState(StateEngineTools.SeItemChild):
                                             'actions_stay': {},
                                             'actions_leave': {},
                                             'actions_pass': {},
-                                            'leave': False, 'enter': False, 'stay': False,
+                                            'leave': False, 'enter': False, 'stay': False, 'pass': False,
                                             'is_copy_for': None, 'releasedby': None})
         self._log_decrease_indent()
         self._log_info("Finished Web Interface Update")
@@ -573,6 +573,7 @@ class SeState(StateEngineTools.SeItemChild):
                     used_attributes[nested_entry].update({attrib_type: attrib_name})
                     used_attributes[nested_entry].update(nested_dict)
                     self.__used_attributes.update(used_attributes)
+            self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
 
         def update_action_status(actn_type, action_status):
             def filter_issues(input_dict):
@@ -613,8 +614,10 @@ class SeState(StateEngineTools.SeItemChild):
                     # Add 'used in' and update with existing data
                     flattened_dict[inner_key]['used in'] = key
                     flattened_dict[inner_key].update(nested_dict)
+
             self.__used_attributes = deepcopy(flattened_dict)
             self.__action_status = filter_issues(self.__action_status)
+            self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
 
         if isinstance(state, SeState):
             item_state = state.state_item
