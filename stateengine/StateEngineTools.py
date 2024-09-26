@@ -317,21 +317,25 @@ def partition_strip(value, splitchar):
 # value: list as string
 # returns: list or original value
 def convert_str_to_list(value, force=True):
-    if isinstance(value, str) and (value[:1] == '[' and value[-1:] == ']'):
-        value = value.strip("[]")
+    if isinstance(value, str):
+        value = value.strip()
+        if value.startswith('[') and value.endswith(']'):
+            value = value[1:-1].strip()
     if isinstance(value, str) and "," in value:
         try:
-            elements = re.findall(r"'([^']+)'|([^,]+)", value)
-            flattened_elements = [element[0] if element[0] else element[1] for element in elements]
+            elements = re.findall(r"'([^']*)'|\"([^\"]*)\"|([^,]+)", value)
+            flattened_elements = [element[0] if element[0] else (element[1] if element[1] else element[2].strip()) for
+                                  element in elements]
+            flattened_elements = [element.strip() for element in flattened_elements]
             formatted_elements = []
             for element in flattened_elements:
                 element = element.strip(" '\"")
                 if "'" in element:
-                    formatted_elements.append(f'"{element}"')
+                    formatted_elements.append(f'"{element}"')  # If element contains single quote, wrap in double quotes
                 elif '"' in element:
-                    formatted_elements.append(f"'{element}'")
+                    formatted_elements.append(f"'{element}'")  # If element contains double quote, wrap in single quotes
                 else:
-                    formatted_elements.append(f"'{element}'")
+                    formatted_elements.append(f"'{element}'")  # Default case, wrap in single quotes
             formatted_str = "[" + ", ".join(formatted_elements) + "]"
             return literal_eval(formatted_str)
         except Exception as ex:
