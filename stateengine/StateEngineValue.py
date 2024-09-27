@@ -64,20 +64,28 @@ class SeValue(StateEngineTools.SeItemChild):
         self.__valid_valuetypes = ["value", "regex", "eval", "var", "item", "template", "struct"]
         if value_type == "str":
             self.__cast_func = StateEngineTools.cast_str
+            self.__cast = "str"
         elif value_type == "regex":
             self.__cast_func = self.cast_regex
+            self.__cast = "regex"
         elif value_type == "num":
             self.__cast_func = StateEngineTools.cast_num
+            self.__cast = "num"
         elif value_type == "item":
             self.__cast_func = self.cast_item
+            self.__cast = "item"
         elif value_type == "bool":
             self.__cast_func = StateEngineTools.cast_bool
+            self.__cast = "bool"
         elif value_type == "time":
             self.__cast_func = StateEngineTools.cast_time
+            self.__cast = "time"
         elif value_type == "list":
             self.__cast_func = StateEngineTools.cast_list
+            self.__cast = "list"
         else:
             self.__cast_func = None
+            self.__cast = None
 
     def __repr__(self):
         return "{}".format(self.get())
@@ -156,6 +164,7 @@ class SeValue(StateEngineTools.SeItemChild):
         self.__struct = None
         self.__varname = None
         self.__template = None
+        self.__cast = None
         self._additional_sources = []
         self.__listorder = []
         self.__type_listorder = []
@@ -170,6 +179,8 @@ class SeValue(StateEngineTools.SeItemChild):
             value = copy.copy(value)
         if reset:
             self.__resetvalue()
+        if name:
+            self.__cast = name
         returnvalues = []
         if isinstance(value, list):
             source = []
@@ -273,7 +284,7 @@ class SeValue(StateEngineTools.SeItemChild):
             except Exception:
                 cond1 = False
                 cond2 = False
-            if name == "time" and cond1 and cond2:
+            if (name == "time" or self.__cast == "time") and cond1 and cond2:
                 field_value = value
                 source = "value"
             elif field_value == "":
@@ -324,7 +335,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     except Exception:
                         cond1 = False
                         cond2 = False
-                    if name == "time" and cond1 and cond2:
+                    if (name == "time" or self.__cast == "time") and cond1 and cond2:
                         field_value[i] = '{}:{}'.format(source[i], field_value[i])
                         s = "value"
                     elif field_value[i] == "":
