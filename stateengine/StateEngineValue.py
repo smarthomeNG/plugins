@@ -726,7 +726,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         try:
                             _newvalue = element if element == 'novalue' else self.__cast_func(element)
                         except Exception as ex:
-                            _newvalue = None
+                            _newvalue = element
                             _issue = "Problem casting element '{0}': {1}.".format(element, ex)
                             self._log_warning(_issue)
                         valuelist.append(_newvalue)
@@ -777,7 +777,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     self._log_debug("Original casting of {} to {} failed. New cast is now: {}.",
                                     value, self.__cast_func, type(value))
                     return value, _issue
-                return None, _issue
+                return value, _issue
         return value, _issue
 
     # Determine value by using a struct
