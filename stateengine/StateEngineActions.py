@@ -82,8 +82,7 @@ class SeActions(StateEngineTools.SeItemChild):
                 return _count, _issue
             elif isinstance(value, str):
                 value = ":".join(map(str.strip, value.split(":")))
-                if value[:1] == '[' and value[-1:] == ']':
-                    value = StateEngineTools.convert_str_to_list(value, False)
+                value = StateEngineTools.convert_str_to_list(value, False)
             if name in self.__actions:
                 self.__actions[name].update_action_details(self.__state, self.__action_type)
             if func == "se_delay":
@@ -388,8 +387,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     entry = list("{!s}:{!s}".format(k, v) for (k, v) in entry.items())[0]
                 key, val = StateEngineTools.partition_strip(entry, ":")
                 val = ":".join(map(str.strip, val.split(":")))
-                if val[:1] == '[' and val[-1:] == ']':
-                    val = StateEngineTools.convert_str_to_list(val, False)
+                val = StateEngineTools.convert_str_to_list(val, False)
                 if key == "function":
                     parameter[key] = StateEngineTools.cast_str(val)
                 elif key == "force":
@@ -567,7 +565,7 @@ class SeActions(StateEngineTools.SeItemChild):
                 _issue_list.append(_issue)
             if _action:
                 self.__actions[name] = _action
-        self._log_debug("Handle combined issuelist {}", _issue_list)
+        # self._log_develop("Handle combined issuelist {}", _issue_list)
         return _issue_list
 
     # noinspection PyMethodMayBeStatic

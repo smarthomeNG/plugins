@@ -42,7 +42,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def action_status(self):
         return self._action_status
 
-    # Cast function for delay
+    # Cast function for delay and other time based attributes
     # value: value to cast
     @staticmethod
     def __cast_seconds(value):
@@ -59,7 +59,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         elif isinstance(value, float):
             return int(value)
         else:
-            raise ValueError("Can not cast delay value {0} to int!".format(value))
+            raise ValueError("Can not cast value {0} to int!".format(value))
 
     # Initialize the action
     # abitem: parent SeItem instance
@@ -74,10 +74,10 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self.__delay = StateEngineValue.SeValue(self._abitem, "delay")
         self.__repeat = None
         self.__instanteval = None
-        self.nextconditionset = StateEngineValue.SeValue(self._abitem, "nextconditionset", True, "str")
-        self.conditionset = StateEngineValue.SeValue(self._abitem, "conditionset", True, "str")
-        self.previousconditionset = StateEngineValue.SeValue(self._abitem, "previousconditionset", True, "str")
-        self.previousstate_conditionset = StateEngineValue.SeValue(self._abitem, "previousstate_conditionset", True, "str")
+        self.nextconditionset = StateEngineValue.SeValue(self._abitem, "nextconditionset", True, "regex")
+        self.conditionset = StateEngineValue.SeValue(self._abitem, "conditionset", True, "regex")
+        self.previousconditionset = StateEngineValue.SeValue(self._abitem, "previousconditionset", True, "regex")
+        self.previousstate_conditionset = StateEngineValue.SeValue(self._abitem, "previousstate_conditionset", True, "regex")
         self.__mode = StateEngineValue.SeValue(self._abitem, "mode", True, "str")
         self.__order = StateEngineValue.SeValue(self._abitem, "order", False, "num")
         self._minagedelta = StateEngineValue.SeValue(self._abitem, "minagedelta")
@@ -287,10 +287,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                     check_item, _issue = self._abitem.return_item(item)
                     _issue = {
                         self._name: {'issue': _issue, 'issueorigin': [{'state': self._state.id, 'action': self._function}]}}
-                    if check_value:
-                        check_value.set_cast(check_item.cast)
-                    if check_mindelta:
-                        check_mindelta.set_cast(check_item.cast)
+                    check_item, check_mindelta = self._cast_stuff(check_item, check_mindelta, check_value)
                     self._scheduler_name = "{}-SeItemDelayTimer".format(check_item.property.path)
                     if self._abitem.id == check_item.property.path:
                         self._caller += '_self'
@@ -343,6 +340,12 @@ class SeActionBase(StateEngineTools.SeItemChild):
         else:
             return False
 
+    def _get_status(self, check_item, check_status, check_mindelta, check_value, state, use, action_type, _issue):
+        return check_item, check_status, check_mindelta, check_value, _issue
+
+    def _cast_stuff(self, check_item, check_mindelta, check_value):
+        return check_item, check_mindelta
+
     def check_complete(self, state, check_item, check_status, check_mindelta, check_minagedelta, check_value, action_type, evals_items=None, use=None):
         _issue = {self._name: {'issue': None,
                                'issueorigin': [{'state': state.id, 'action': self._function}]}}
@@ -380,45 +383,12 @@ class SeActionBase(StateEngineTools.SeItemChild):
         if check_item is None and _issue[self._name].get('issue') is None:
             _issue = {self._name: {'issue': ['Item not defined in rules section'],
                                    'issueorigin': [{'state': state.id, 'action': self._function}]}}
-        # missing status in action: Try to find it.
-        if check_status is None:
-            status = StateEngineTools.find_attribute(self._sh, state, "se_status_" + self._name, 0, use)
-            if status is not None:
-                check_status, _issue = self._abitem.return_item(status)
-                _issue = {self._name: {'issue': _issue,
-                                       'issueorigin': [{'state': state.id, 'action': self._function}]}}
-
-        if check_mindelta.is_empty():
-            mindelta = StateEngineTools.find_attribute(self._sh, state, "se_mindelta_" + self._name, 0, use)
-            if mindelta is not None:
-                check_mindelta.set(mindelta)
 
         if check_minagedelta.is_empty():
             minagedelta = StateEngineTools.find_attribute(self._sh, state, "se_minagedelta_" + self._name, 0, use)
             if minagedelta is not None:
                 check_minagedelta.set(minagedelta)
-
-        if check_status is not None:
-            check_value.set_cast(check_status.cast)
-            check_mindelta.set_cast(check_status.cast)
-            self._scheduler_name = "{}-SeItemDelayTimer".format(check_status.property.path)
-            if self._abitem.id == check_status.property.path:
-                self._caller += '_self'
-        elif check_status is None:
-            if isinstance(check_item, str):
-                pass
-            elif check_item is not None:
-                check_value.set_cast(check_item.cast)
-                check_mindelta.set_cast(check_item.cast)
-                self._scheduler_name = "{}-SeItemDelayTimer".format(check_item.property.path)
-                if self._abitem.id == check_item.property.path:
-                    self._caller += '_self'
-        if _issue[self._name].get('issue') not in [[], [None], None]:
-            self._log_develop("Issue with {} action {}", action_type, _issue)
-        else:
-            _issue = {self._name: {'issue': None,
-                                   'issueorigin': [{'state': state.id, 'action': self._function}]}}
-
+        check_item, check_status, check_mindelta, check_value, _issue = self._get_status(check_item, check_status, check_mindelta, check_value, state, use, action_type, _issue)
         return check_item, check_status, check_mindelta, check_minagedelta, check_value, _issue
 
     # Execute action (considering delay, etc)
@@ -429,6 +399,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
         # check if any conditiontype is met or not
         # condition: type of condition 'conditionset'/'previousconditionset'/'previousstate_conditionset'/'nextconditionset'
         def _check_condition(condition: str):
+            self._log_debug("Checking {}", condition)
+            self._log_increase_indent()
             _conditions_met_count = 0
             _conditions_necessary_count = 0
             _condition_to_meet = None
@@ -451,23 +423,24 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 _updated_current_condition = self._abitem.get_variable("next.conditionset_id") if _current_condition == '' else _current_condition
             _condition_to_meet = _condition_to_meet if isinstance(_condition_to_meet, list) else [_condition_to_meet]
             _condition_met = []
+            self._log_decrease_indent()
             for cond in _condition_to_meet:
-                if cond is not None:
+                if cond is not None and condition not in _conditions_met_type:
                     _conditions_necessary_count += 1
                     _orig_cond = cond
                     try:
-                        cond = re.compile(cond)
                         _matching = cond.fullmatch(_updated_current_condition)
                         if _matching:
-                            self._log_debug("Given {} {} matches current one: {}", condition, _orig_cond, _updated_current_condition)
+                            self._log_debug("Given {} '{}' matches current one: '{}'", condition, _orig_cond.pattern, _updated_current_condition)
                             _condition_met.append(_updated_current_condition)
                             _conditions_met_count += 1
+                            _conditions_met_type.append(condition)
                         else:
-                            self._log_debug("Given {} {} not matching current one: {}", condition, _orig_cond, _updated_current_condition)
-                            self.update_webif_actionstatus(state, self._name, 'False', None, f"({condition} {_orig_cond} not met)")
+                            self._log_debug("Given {} '{}' not matching current one: '{}'", condition, _orig_cond.pattern, _updated_current_condition)
+                            self.update_webif_actionstatus(state, self._name, 'False', None, f"({condition} {_orig_cond.pattern} not met)")
                     except Exception as ex:
                         if cond is not None:
-                            self._log_warning("Given {} {} is not a valid regex: {}", condition, _orig_cond, ex)
+                            self._log_warning("Given {} '{}' is not a valid regex: {}", condition, _orig_cond.pattern, ex)
             return _condition_met, _conditions_met_count, _conditions_necessary_count
 
         # update web interface with delay info
@@ -499,11 +472,9 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._log_increase_indent()
         try:
             self._getitem_fromeval()
-            self._log_decrease_indent()
             _validitem = True
         except Exception:
             _validitem = False
-            self._log_decrease_indent()
         if not self._can_execute(state):
             self._log_decrease_indent()
             return
@@ -513,6 +484,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         previous_condition_met = None
         previousstate_condition_met = None
         next_condition_met = None
+        _conditions_met_type = []
         if not self.conditionset.is_empty():
             current_condition_met, cur_conditions_met, cur_condition_necessary = _check_condition('conditionset')
             conditions_met += cur_conditions_met
@@ -529,6 +501,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
             next_condition_met, next_conditions_met, next_conditionset_necessary = _check_condition('nextconditionset')
             conditions_met += next_conditions_met
             condition_necessary += min(1, next_conditionset_necessary)
+        self._log_decrease_indent()
         self._log_develop("Action '{0}': conditions met: {1}, necessary {2}.", self._name, conditions_met, condition_necessary)
         if conditions_met < condition_necessary:
             self._log_info("Action '{0}': Skipping because not all conditions are met.", self._name)
@@ -565,7 +538,9 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._log_increase_indent()
         if _validitem:
             delay = 0 if self.__delay.is_empty() else self.__delay.get()
-            plan_next = self._se_plugin.scheduler_return_next(self._scheduler_name)
+            plan_next = None
+            if self._scheduler_name:
+                plan_next = self._se_plugin.scheduler_return_next(self._scheduler_name)
             if plan_next is not None and plan_next > self.shtime.now() or delay == -1:
                 self._log_info("Action '{0}: Removing previous delay timer '{1}'.", self._name, self._scheduler_name)
                 self._se_plugin.scheduler_remove(self._scheduler_name)
@@ -680,6 +655,51 @@ class SeActionMixSetForce:
         self._delta = 0
         self._value = StateEngineValue.SeValue(self._abitem, "value")
         self._mindelta = StateEngineValue.SeValue(self._abitem, "mindelta", False, "num")
+
+    def _get_status(self, check_item, check_status, check_mindelta, check_value, state, use, action_type, _issue):
+        # missing status in action: Try to find it.
+        if check_status is None:
+            status = StateEngineTools.find_attribute(self._sh, state, "se_status_" + self._name, 0, use)
+            if status is not None:
+                check_status, _issue = self._abitem.return_item(status)
+                _issue = {self._name: {'issue': _issue,
+                                       'issueorigin': [{'state': state.id, 'action': self._function}]}}
+
+        if check_mindelta.is_empty():
+            mindelta = StateEngineTools.find_attribute(self._sh, state, "se_mindelta_" + self._name, 0, use)
+            if mindelta is not None:
+                check_mindelta.set(mindelta)
+
+        if check_status is not None:
+            self._log_develop("Casting value {} to status {}", check_value, check_status)
+            check_value.set_cast(check_status.cast)
+            check_mindelta.set_cast(check_status.cast)
+            self._scheduler_name = "{}-SeItemDelayTimer".format(check_status.property.path)
+            if self._abitem.id == check_status.property.path:
+                self._caller += '_self'
+        elif check_status is None:
+            if isinstance(check_item, str):
+                pass
+            elif check_item is not None:
+                self._log_develop("Casting value {} to item {}", check_value, check_item)
+                check_value.set_cast(check_item.cast)
+                check_mindelta.set_cast(check_item.cast)
+                self._scheduler_name = "{}-SeItemDelayTimer".format(check_item.property.path)
+                if self._abitem.id == check_item.property.path:
+                    self._caller += '_self'
+        if _issue[self._name].get('issue') not in [[], [None], None]:
+            self._log_develop("Issue with {} action {}", action_type, _issue)
+        else:
+            _issue = {self._name: {'issue': None,
+                                   'issueorigin': [{'state': state.id, 'action': self._function}]}}
+        return check_item, check_status, check_mindelta, check_value, _issue
+
+    def _cast_stuff(self, check_item, check_mindelta, check_value):
+        if check_value:
+            check_value.set_cast(check_item.cast)
+        if check_mindelta:
+            check_mindelta.set_cast(check_item.cast)
+        return check_item, check_mindelta
 
     def _getitem_fromeval(self):
         if self._item is None:
@@ -1326,12 +1346,17 @@ class SeActionAddItem(SeActionSetItem):
         return "SeAction Add {}".format(self._name)
 
     def write_to_logger(self):
-        SeActionBase.write_to_logger(self)
         SeActionSetItem.write_to_logger(self)
 
+    def _get_status(self, check_item, check_status, check_mindelta, check_value, state, use, action_type, _issue):
+        return check_item, check_status, check_mindelta, check_value, _issue
+
+    def _cast_stuff(self, check_item, check_mindelta, check_value):
+        return check_item, check_mindelta
+
     def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, source, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
-        value = value if isinstance(value, list) else [value]
         self._log_debug("{0}: Add '{1}' to '{2}'.{3}", actionname, value, item.property.path, repeat_text)
+        value = value if isinstance(value, list) else [value]
         value = item.property.value + value
         self.update_webif_actionstatus(state, self._name, 'True')
         # noinspection PyCallingNonCallable
@@ -1351,8 +1376,13 @@ class SeActionRemoveFirstItem(SeActionSetItem):
         return "SeAction RemoveFirst {}".format(self._name)
 
     def write_to_logger(self):
-        SeActionBase.write_to_logger(self)
         SeActionSetItem.write_to_logger(self)
+
+    def _get_status(self, check_item, check_status, check_mindelta, check_value, state, use, action_type, _issue):
+        return check_item, check_status, check_mindelta, check_value, _issue
+
+    def _cast_stuff(self, check_item, check_mindelta, check_value):
+        return check_item, check_mindelta
 
     def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, source, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         currentvalue = item.property.value
@@ -1382,8 +1412,13 @@ class SeActionRemoveLastItem(SeActionSetItem):
         return "SeAction RemoveLast {}".format(self._name)
 
     def write_to_logger(self):
-        SeActionBase.write_to_logger(self)
         SeActionSetItem.write_to_logger(self)
+
+    def _get_status(self, check_item, check_status, check_mindelta, check_value, state, use, action_type, _issue):
+        return check_item, check_status, check_mindelta, check_value, _issue
+
+    def _cast_stuff(self, check_item, check_mindelta, check_value):
+        return check_item, check_mindelta
 
     def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, source, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         currentvalue = item.property.value
@@ -1415,8 +1450,13 @@ class SeActionRemoveAllItem(SeActionSetItem):
         return "SeAction RemoveAll {}".format(self._name)
 
     def write_to_logger(self):
-        SeActionBase.write_to_logger(self)
         SeActionSetItem.write_to_logger(self)
+
+    def _get_status(self, check_item, check_status, check_mindelta, check_value, state, use, action_type, _issue):
+        return check_item, check_status, check_mindelta, check_value, _issue
+
+    def _cast_stuff(self, check_item, check_mindelta, check_value):
+        return check_item, check_mindelta
 
     def _execute_set_add_remove(self, state, actionname, namevar, repeat_text, item, value, source, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None):
         currentvalue = item.property.value
@@ -1424,8 +1464,8 @@ class SeActionRemoveAllItem(SeActionSetItem):
         for v in value:
             try:
                 currentvalue = [i for i in currentvalue if i != v]
-                self._log_debug("{0}: Remove all '{1}' from '{2}'.{3}",
-                                actionname, v, item.property.path, repeat_text)
+                self._log_debug("{0}: Remove all '{1}' from '{2}', value is now {3}.{4}",
+                                actionname, v, item.property.path, currentvalue, repeat_text)
             except Exception as ex:
                 self._log_warning("{0}: Remove all '{1}' from '{2}' failed: {3}",
                                   actionname, value, item.property.path, ex)

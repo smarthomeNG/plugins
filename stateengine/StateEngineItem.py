@@ -223,18 +223,17 @@ class SeItem:
         self.__name = str(self.__item)
         self.__itemClass = Item
         # initialize logging
-
+        self.__logger.log_level_as_num = 2
         self.__log_level = StateEngineValue.SeValue(self, "Log Level", False, "num")
 
         _default_log_level = self.__logger.default_log_level.get()
         _returnvalue, _returntype, _using_default, _issue, _ = self.__log_level.set_from_attr(self.__item,
                                                                                               "se_log_level",
-                                                                                              _default_log_level)
+                                                                                              default_value=_default_log_level)
         self.__using_default_log_level = _using_default
         _returnvalue = self.__log_level.get()
         if isinstance(_returnvalue, list) and len(_returnvalue) == 1:
             _returnvalue = _returnvalue[0]
-        self.__logger.log_level_as_num = 2
 
         _startup_log_level = self.__logger.startup_log_level.get()
 
@@ -266,13 +265,13 @@ class SeItem:
 
         # get startup delay
         self.__startup_delay = StateEngineValue.SeValue(self, "Startup Delay", False, "num")
-        self.__startup_delay.set_from_attr(self.__item, "se_startup_delay", StateEngineDefaults.startup_delay)
+        self.__startup_delay.set_from_attr(self.__item, "se_startup_delay", default_value=StateEngineDefaults.startup_delay)
         self.__startup_delay_over = False
 
         # Init suspend settings
         self.__default_suspend_time = StateEngineDefaults.suspend_time.get()
         self.__suspend_time = StateEngineValue.SeValue(self, "Suspension time on manual changes", False, "num")
-        self.__suspend_time.set_from_attr(self.__item, "se_suspend_time", self.__default_suspend_time)
+        self.__suspend_time.set_from_attr(self.__item, "se_suspend_time", default_value=self.__default_suspend_time)
 
         # Init laststate and previousstate items/values
         self.__config_issues = {}
@@ -459,7 +458,7 @@ class SeItem:
         self.__default_instant_leaveaction = default_instant_leaveaction
 
         _returnvalue_leave, _returntype_leave, _using_default_leave, _issue, _ = self.__instant_leaveaction.set_from_attr(
-            self.__item, "se_instant_leaveaction", default_instant_leaveaction)
+            self.__item, "se_instant_leaveaction", default_value=default_instant_leaveaction)
 
         if len(_returnvalue_leave) > 1:
             self.__logger.warning("se_instant_leaveaction for item {} can not be defined as a list"
@@ -704,8 +703,8 @@ class SeItem:
                             _leaveactions_run = True
                     elif result is False and last_state != state and state.actions_pass.count() > 0:
                         _pass_state = state
-                        state.run_pass(self.__pass_repeat.get(state, False), self.__repeat_actions.get())
-                        _key_pass = ['{}'.format(last_state.id), 'pass']
+                        _pass_state.run_pass(self.__pass_repeat.get(state, False), self.__repeat_actions.get())
+                        _key_pass = ['{}'.format(_pass_state.id), 'pass']
                         self.update_webif(_key_pass, True)
                         self.__pass_repeat.update({state: True})
                     if result is True:
@@ -761,11 +760,6 @@ class SeItem:
                         "State is a copy and therefore just releasing {}. Skipping state actions, running leave actions "
                         "of last state, then retriggering.", new_state.is_copy_for.id)
                     if last_state is not None and self.__ab_alive:
-                        _, self.__nextconditionset_name = self.__update_check_can_enter(last_state, _instant_leaveaction, False)
-                        if self.__nextconditionset_name:
-                            self.__nextconditionset_id = f"{state.state_item.property.path}.{self.__nextconditionset_name}"
-                        else:
-                            self.__nextconditionset_id = ""
                         self.set_variable('next.conditionset_id', self.__nextconditionset_id)
                         self.set_variable('next.conditionset_name', self.__nextconditionset_name)
                         self.__logger.develop("Current variables: {}", self.__variables)
@@ -941,6 +935,7 @@ class SeItem:
 
         self.__logger.info("".ljust(80, "_"))
         self.__logger.info("Handling released_by attributes")
+        self.__logger.increase_indent("Handling released_by... ")
         can_release = {}
         all_released_by = {}
         skip_copy = True
@@ -1042,7 +1037,7 @@ class SeItem:
                 self.__release_info = {new_state.id: _can_release_list}
                 _key_releasedby = ['{}'.format(new_state.id), 'releasedby']
                 self.update_webif(_key_releasedby, _can_release_list)
-
+        self.__logger.increase_indent("")
         self.__logger.info("".ljust(80, "_"))
         return all_released_by
 
@@ -1204,7 +1199,7 @@ class SeItem:
                 self.__logger.info("has the following issues:")
                 self.__logger.increase_indent()
                 for i, e in enumerate(_issuelist):
-                    _attr = "" if _attrlist is None or not _attrlist[i] else "attribute {}: ".format(_attrlist[i])
+                    _attr = "" if _attrlist is None or not isinstance(_attrlist, list) or not _attrlist[i] else "attribute {}: ".format(_attrlist[i])
                     if isinstance(e, dict):
                         print_readable_dict(_attr, e)
                     else:
@@ -1214,11 +1209,11 @@ class SeItem:
                 if isinstance(_issuelist[0], dict):
                     self.__logger.info("has the following issues:")
                     self.__logger.increase_indent()
-                    _attr = "" if _attrlist is None or not _attrlist[0] else "attribute {}: ".format(_attrlist[0])
+                    _attr = "" if _attrlist is None or not isinstance(_attrlist, list) or not _attrlist[0] else "attribute {}: ".format(_attrlist[0])
                     print_readable_dict(_attr, _issuelist[0])
                     self.__logger.decrease_indent()
                 else:
-                    _attr = "" if _attrlist is None or not _attrlist[0] else " for attribute {}".format(_attrlist[0])
+                    _attr = "" if _attrlist is None or not isinstance(_attrlist, list) or not _attrlist[0] else " for attribute {}".format(_attrlist[0])
                     self.__logger.info("has the following issue{}: {}", _attr, _issuelist[0])
             else:
                 if isinstance(_issuelist, dict):
@@ -1330,7 +1325,7 @@ class SeItem:
                 self.__logger.info("")
         for entry, value in to_check:
             if 'issue' not in value:
-                text = "Definition {} not used in any action or condition.".format(entry)
+                text = "Definition {} not used in any action or condition.".format(value.get('attribute', entry))
                 self.__logger.info("{}", text)
         self.__logger.decrease_indent()
 
@@ -1338,6 +1333,7 @@ class SeItem:
         _reordered_states = []
         self.__logger.info("".ljust(80, "_"))
         self.__logger.info("Recalculating state order. Current order: {}", self.__states)
+        self.__logger.increase_indent()
         _copied_states = {}
         _add_order = 0
         _changed_orders = []
@@ -1403,6 +1399,7 @@ class SeItem:
                 else:
                     _reorder_webif[state.id] = self.__webif_infos[state.id]
             self.__webif_infos = _reorder_webif
+        self.__logger.decrease_indent()
         self.__logger.info("Recalculated state order. New order: {}", self.__states)
         self.__logger.info("".ljust(80, "_"))
 
@@ -1900,6 +1897,7 @@ class SeItem:
 
         self.__logger.info("".ljust(80, "_"))
         self.__logger.info("Initializing released_by attributes")
+        self.__logger.increase_indent()
         can_release = {}
         state_dict = {state.id: state for state in self.__states}
         for state in self.__states:
@@ -1925,7 +1923,7 @@ class SeItem:
                 self.__config_issues.update({state.id: {'issue': _issuelist, 'attribute': 'se_released_by'}})
                 state.update_releasedby_internal(_convertedlist)
                 self.__update_can_release(can_release, state)
-
+        self.__logger.decrease_indent()
         self.__logger.info("".ljust(80, "_"))
 
     # log item data
@@ -2112,7 +2110,12 @@ class SeItem:
 
     # return value of variable
     def get_variable(self, varname):
-        return self.__variables[varname] if varname in self.__variables else "(Unknown variable '{0}'!)".format(varname)
+        if varname not in self.__variables:
+            returnvalue = "(Unknown variable '{0}'!)".format(varname)
+            self.__logger.warning("Issue when getting variable {}".format(returnvalue))
+        else:
+            returnvalue = self.__variables[varname]
+        return returnvalue
 
     # set value of variable
     def set_variable(self, varname, value):
