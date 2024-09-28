@@ -318,9 +318,13 @@ def partition_strip(value, splitchar):
 # returns: list or original value
 def convert_str_to_list(value, force=True):
     if isinstance(value, str):
+        orig_value = value
         value = value.strip()
         if value.startswith('[') and value.endswith(']'):
             value = value[1:-1].strip()
+        else:
+            return orig_value
+
     if isinstance(value, str) and "," in value:
         try:
             elements = re.findall(r"'([^']*)'|\"([^\"]*)\"|([^,]+)", value)
