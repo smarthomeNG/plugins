@@ -24,6 +24,7 @@
 import builtins
 import os
 import sys
+import time
 
 if __name__ == '__main__':
     builtins.SDP_standalone = True
@@ -40,8 +41,9 @@ if __name__ == '__main__':
 else:
     builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, CONN_NULL, CONN_NET_TCP_CLI, CONN_SER_ASYNC)
+from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, PLUGIN_ATTR_CMD_CLASS, CONN_NULL, CONN_NET_TCP_CLI, CONN_SER_ASYNC)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
+from lib.model.sdp.command import SDPCommandParseStr
 
 # from .webif import WebInterface
 
@@ -60,7 +62,7 @@ class denon(SmartDevicePlugin):
         self.send_command('general.custom_inputnames')
 
     def _set_device_defaults(self):
-
+        self._use_callbacks = True
         self._custom_inputnames = {}
 
         # set our own preferences concerning connections
@@ -72,16 +74,11 @@ class denon(SmartDevicePlugin):
             self.logger.error('Neither host nor serialport set, connection not possible. Using dummy connection, plugin will not work')
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_NULL
 
+        self._parameters[PLUGIN_ATTR_CMD_CLASS] = SDPCommandParseStr
+
         b = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR].encode()
         b = b.decode('unicode-escape').encode()
         self._parameters[PLUGIN_ATTR_CONN_TERMINATOR] = b
-
-    # we need to receive data via callback, as the "reply" can be unrelated to
-    # the sent command. Getting it as return value would assign it to the wrong
-    # command and discard it... so break the "return result"-chain and don't
-    # return anything
-    def _send(self, data_dict):
-        self._connection.send(data_dict)
 
     def _transform_send_data(self, data=None, **kwargs):
         if isinstance(data, dict):
@@ -89,60 +86,25 @@ class denon(SmartDevicePlugin):
             data['payload'] = f'{data.get("payload", "")}{data["limit_response"].decode("unicode-escape")}'
         return data
 
-    def on_data_received(self, by, data, command=None):
+    def _process_additional_data(self, command, data, value, custom, by):
+        zone = 0
+        if command == 'zone1.control.power':
+            zone = 1
+        elif command == 'zone2.control.power':
+            zone = 2
+        elif command == 'zone3.control.power':
+            zone = 3
+        if zone > 0 and value is True:
+            self.logger.debug(f"Device is turned on by command {command}. Requesting current state of zone {zone}.")
+            time.sleep(1)
+            self.send_command(f'zone{zone}.control.mute')
+            self.send_command(f'zone{zone}.control.sleep')
+            self.send_command(f'zone{zone}.control.standby')
+        if zone == 1 and value is True:
+            self.send_command(f'zone{zone}.control.input')
+            self.send_command(f'zone{zone}.control.volume')
+            self.send_command(f'zone{zone}.control.listeningmode')
 
-        commands = None
-        if command is not None:
-            self.logger.debug(f'received data "{data}" from {by} for command {command}')
-            commands = [command]
-        else:
-            # command == None means that we got raw data from a callback and
-            # don't know yet to which command this belongs to. So find out...
-            self.logger.debug(f'received data "{data}" from {by} without command specification')
-
-            # command can be a string (classic single command) or
-            # - new - a list of strings if multiple commands are identified
-            # in that case, work on all strings
-            commands = self._commands.get_commands_from_reply(data)
-            if not commands:
-                if self._discard_unknown_command:
-                    self.logger.debug(f'data "{data}" did not identify a known command, ignoring it')
-                    return
-                else:
-                    self.logger.debug(f'data "{data}" did not identify a known command, forwarding it anyway for {self._unknown_command}')
-                    self._dispatch_callback(self._unknown_command, data, by)
-
-        # TODO: remove later?
-        assert(isinstance(commands, list))
-
-        # process all commands
-        for command in commands:
-            self._check_for_custominputs(command, data)
-            custom = None
-            if self.custom_commands:
-                custom = self._get_custom_value(command, data)
-
-            base_command = command
-            value = None
-            try:
-                if CUSTOM_INPUT_NAME_COMMAND in command:
-                    value = self._custom_inputnames
-                else:
-                    value = self._commands.get_shng_data(command, data)
-            except OSError as e:
-                self.logger.warning(f'received data "{data}" for command {command}, error {e} occurred while converting. Discarding data.')
-            else:
-                self.logger.debug(f'received data "{data}" for command {command} converted to value {value}')
-                self._dispatch_callback(command, value, by)
-
-            self._process_additional_data(base_command, data, value, custom, by)
-
-    def _check_for_custominputs(self, command, data):
-        if CUSTOM_INPUT_NAME_COMMAND in command and isinstance(data, str):
-            tmp = data.split(' ', 1)
-            src = tmp[0][5:]
-            name = tmp[1]
-            self._custom_inputnames[src] = name
 
 if __name__ == '__main__':
-    s = Standalone(lms, sys.argv[0])
+    s = Standalone(denon, sys.argv[0])

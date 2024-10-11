@@ -39,8 +39,9 @@ if __name__ == '__main__':
 
 else:
     builtins.SDP_standalone = False
-from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, CONN_NET_TCP_CLI, CONN_SER_ASYNC)
+from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, CONN_NET_TCP_CLI, CONN_SER_ASYNC, PLUGIN_ATTR_CMD_CLASS)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
+from lib.model.sdp.command import SDPCommandParseStr
 
 CUSTOM_INPUT_NAME_COMMAND = 'custom_inputnames'
 
@@ -54,7 +55,7 @@ class oppo(SmartDevicePlugin):
     The know-how is in the commands.py (and some DT_ classes...)
     """
 
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '1.0.1'
 
     def _set_device_defaults(self):
 
@@ -63,6 +64,8 @@ class oppo(SmartDevicePlugin):
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_NET_TCP_CLI
         elif PLUGIN_ATTR_SERIAL_PORT in self._parameters and self._parameters[PLUGIN_ATTR_SERIAL_PORT]:
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_SER_ASYNC
+
+        self._parameters[PLUGIN_ATTR_CMD_CLASS] = SDPCommandParseStr
 
         b = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR].encode()
         b = b.decode('unicode-escape').encode()
@@ -74,10 +77,6 @@ class oppo(SmartDevicePlugin):
         verbose = self.get_items_for_mapping('general.verbose')[0].property.value
         self.logger.debug(f"Activating verbose mode {verbose} after connection.")
         self.send_command('general.verbose', verbose)
-
-    def _send(self, data_dict):
-        self.logger.debug(f"Sending data_dict {data_dict}")
-        self._connection.send(data_dict)
 
     def _transform_send_data(self, data=None, **kwargs):
         if isinstance(data, dict):

@@ -10,7 +10,7 @@ plugin:
     state: develop # change to ready when done with development
     keywords: infrastructure network
     version: 1.0.0
-    sh_minversion: 1.9
+    sh_minversion: '1.9'
     multi_instance: true
     restartable: true
     classname: MikrotikPlugin

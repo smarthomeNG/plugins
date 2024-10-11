@@ -2,7 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 # Copyright 2017 Markus Garscha                 http://knx-user-forum.de/
-#           2018-2023 Ivan De Filippis
+#           2018-2024 Ivan De Filippis
 #           2018-2021 Bernd Meiners                 Bernd.Meiners@mail.de
 #########################################################################
 #
@@ -68,7 +68,7 @@ MESSAGE_TAG_DEST          = '[DEST]'
 
 class Telegram(SmartPlugin):
 
-    PLUGIN_VERSION = "2.0.1"
+    PLUGIN_VERSION = '2.0.3'
 
     _items = []               # all items using attribute ``telegram_message``
     _items_info = {}          # dict used whith the info-command: key = attribute_value, val= item_list telegram_info
@@ -77,6 +77,7 @@ class Telegram(SmartPlugin):
     _chat_ids_item = {}       # an item with a dict of chat_id and write access
     _waitAnswer = None        # wait a specific answer Yes/No - or num (change_item)
     _queue = None             # queue for the messages to be sent
+    _cHandlers = []           # CommandHandler from parse_item
 
     def __init__(self, sh):
         """
@@ -100,8 +101,9 @@ class Telegram(SmartPlugin):
             self.logger.error(f"{self.get_fullname()}: Unable to import Python package 'python-telegram-bot' [{REQUIRED_PACKAGE_IMPORTED}]")
             return
 
-        self._loop = asyncio.new_event_loop()   # new_event is required for multi-instance
-        asyncio.set_event_loop(self._loop)
+        #self._loop = asyncio.new_event_loop()   # new_event is required for multi-instance
+        #self.log_event_loop_details()
+        #asyncio.set_event_loop(self._loop)
 
         self.alive = False
         self._name = self.get_parameter_value('name')
@@ -116,26 +118,11 @@ class Telegram(SmartPlugin):
         self._resend_delay = self.get_parameter_value('resend_delay')
         self._resend_attemps = self.get_parameter_value('resend_attemps')
 
+        self._pause_item = None
+        self._pause_item_path = self.get_parameter_value('pause_item')
+
         self._bot =  None
         self._queue = Queue()
-
-        self._application = Application.builder().token(self._token).build()
-
-        if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug("adding command handlers to application")
-
-        self._application.add_error_handler(self.eHandler)
-        self._application.add_handler(CommandHandler('time', self.cHandler_time))
-        self._application.add_handler(CommandHandler('help', self.cHandler_help))
-        self._application.add_handler(CommandHandler('hide', self.cHandler_hide))
-        self._application.add_handler(CommandHandler('list', self.cHandler_list))
-        self._application.add_handler(CommandHandler('info', self.cHandler_info))
-        self._application.add_handler(CommandHandler('start', self.cHandler_start))
-        self._application.add_handler(CommandHandler('lo', self.cHandler_lo))
-        self._application.add_handler(CommandHandler('tr', self.cHandler_tr))
-        self._application.add_handler(CommandHandler('control', self.cHandler_control))
-        # Filters.text includes also commands, starting with ``/`` so it is needed to exclude them.
-        self._application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.mHandler))
 
         self.init_webinterface()
         if not self.init_webinterface(WebInterface):
@@ -162,22 +149,56 @@ class Telegram(SmartPlugin):
         This is called when the plugins thread is about to run
         """
         if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug("Run method called")
+            self.logger.debug(f"Plugin '{self.get_fullname()}': run method called")
+
+        if self.alive:
+            return
+        if self._pause_item is not None and bool(self._pause_item()):
+            self.logger.info(f'plugin not startet - pause_item is True')
+            return
+
+        self._loop = asyncio.new_event_loop()   # new_event is required for multi-instance
+        asyncio.set_event_loop(self._loop)
+
+        self._application = Application.builder().token(self._token).build()
+
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug("adding command handlers to application")
+
+        self._application.add_error_handler(self.eHandler)
+        self._application.add_handler(CommandHandler('time', self.cHandler_time))
+        self._application.add_handler(CommandHandler('help', self.cHandler_help))
+        self._application.add_handler(CommandHandler('hide', self.cHandler_hide))
+        self._application.add_handler(CommandHandler('list', self.cHandler_list))
+        self._application.add_handler(CommandHandler('info', self.cHandler_info))
+        self._application.add_handler(CommandHandler('start', self.cHandler_start))
+        self._application.add_handler(CommandHandler('lo', self.cHandler_lo))
+        self._application.add_handler(CommandHandler('tr', self.cHandler_tr))
+        self._application.add_handler(CommandHandler('control', self.cHandler_control))
+        # Filters.text includes also commands, starting with ``/`` so it is needed to exclude them.
+        self._application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.mHandler))
+
+        # add CommandHandlers from parse_item
+        for cHandler in self._cHandlers:
+            self._application.add_handler(cHandler)
+        
+        self.alive = True
 
         self.logics = Logics.get_instance()  # Returns the instance of the Logics class, to be used to access the logics-api
 
-        self.alive = True
-
         self._loop.run_until_complete(self.run_coros())
         if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug(f"Run method ended")
+            self.logger.debug(f"Plugin '{self.get_fullname()}': run method finished ")
 
     def stop(self):
         """
         This is called when the plugins thread is about to stop
         """
         if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug("stop telegram plugin")
+            self.logger.debug(f"Plugin '{self.get_fullname()}': stop method called")
+
+        if self.scheduler_get('telegram_change_item_timeout'):
+            self.scheduler_remove('telegram_change_item_timeout')
 
         try:
             if self._bye_msg:
@@ -188,8 +209,18 @@ class Telegram(SmartPlugin):
         except Exception as e:
             self.logger.error(f"could not send bye message [{e}]")
 
-        time.sleep(1)
-        self.alive = False  # Clears the infiniti loop in sendQueue
+        if not self._queue.empty():
+            time.sleep(5)
+            if not self._queue.empty():
+                try:
+                    self.alive = False # Clears the infiniti loop in sendQueue
+                    self.remove_all_events()
+                    self.logger.debug(f"Events removed.")
+                except Exception as e:
+                   self.logger.error(f"An error occurred while removing the events: [{e}]")
+        
+        self.alive = False  
+        
         try:
             asyncio.gather(self._taskConn,  self._taskQueue)
             self.disconnect()
@@ -204,8 +235,20 @@ class Telegram(SmartPlugin):
             self.logger.error(f"An error occurred while stopping the plugin [{e}]")
 
         if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug("stop telegram plugin finished")
+            self.logger.debug(f"Plugin '{self.get_fullname()}': stop method finished")
 
+    def remove_all_events(self):
+        while not self._queue.empty():
+            self._queue.get_nowait()  # Entfernt das Event aus der Queue
+            self._queue.task_done()  # Markiert die Aufgabe als erledigt
+        self.logger.debug("all events removed")
+
+    def _start_loop(self):
+        self._loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self._loop)
+        self.logger.debug("Starting event loop")
+        self._loop.run_forever()
+    
     async def run_coros(self):
         """
         This method run multiple coroutines concurrently using asyncio
@@ -220,37 +263,41 @@ class Telegram(SmartPlugin):
         """
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("connect method called")
-        try:
-            await self._application.initialize()
-            await self._application.start()
-            self._updater = self._application.updater
+        while self.alive:
+            try:
+                await self._application.initialize()
+                await self._application.start()
+                self._updater = self._application.updater
 
-            q = await self._updater.start_polling(timeout=self._long_polling_timeout, error_callback=self.error_handler)
+                q = await self._updater.start_polling(timeout=self._long_polling_timeout, error_callback=self.error_handler)
 
-            if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug(f"started polling the updater, Queue is {q}")
-
-            self._bot = self._updater.bot
-            self.logger.info(f"Telegram bot is listening: {await self._updater.bot.getMe()}")
-            if self._welcome_msg:
                 if self.logger.isEnabledFor(logging.DEBUG):
-                    self.logger.debug(f"sent welcome message {self._welcome_msg}")
-                cids = [key for key, value in self._chat_ids_item().items() if value == 1]
-                self.msg_broadcast(self._welcome_msg, chat_id=cids)
+                    self.logger.debug(f"started polling the updater, Queue is {q}")
 
-        except TelegramError as e:
-            # catch Unauthorized errors due to an invalid token
-            self.logger.error(f"Unable to start up Telegram conversation. Maybe an invalid token? {e}")
-            return False
+                self._bot = self._updater.bot
+                self.logger.info(f"Telegram bot is listening: {await self._updater.bot.getMe()}")
+                if self._welcome_msg:
+                    if self.logger.isEnabledFor(logging.DEBUG):
+                        self.logger.debug(f"sent welcome message {self._welcome_msg}")
+                    cids = [key for key, value in self._chat_ids_item().items() if value == 1]
+                    self.msg_broadcast(self._welcome_msg, chat_id=cids)
+                
+                # If no exception occurred, break the loop and exit the function
+                break
+
+            except TelegramError as e:
+                self.logger.error(f"Unable to start up Telegram conversation. {e}")
+                await asyncio.sleep(60)     # Wait for 60 seconds before retrying - while
+            
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("connect method end")
 
-    def error_handler(self, update, context):
+    def error_handler(self, error):
         """
         Just logs an error in case of a problem
         """
         try:
-            self.logger.warning(f'Update {update} caused error {context.error}')
+            self.logger.error(f'Update caused error {error}')
         except Exception:
             pass
 
@@ -330,6 +377,14 @@ class Telegram(SmartPlugin):
         Default plugin parse_item method. Is called when the plugin is initialized.
         :param item: The item to process.
         """
+
+        # check for pause item
+        if item.property.path == self._pause_item_path:
+            self.logger.debug(f'pause item {item.property.path} registered')
+            self._pause_item = item
+            self.add_item(item, updating=True)
+            return self.update_item
+        
         if self.has_iattr(item.conf, ITEM_ATTR_CHAT_IDS):
             if self._chat_ids_item:
                 self.logger.warning(f"Item: {item.property.path} declares chat_id for telegram plugin which are already defined, aborting!")
@@ -360,7 +415,8 @@ class Telegram(SmartPlugin):
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug(f"Register new command '{key}', add item '{item}' and register a handler")
                     # add a handler for each info-attribute
-                    self._application.add_handler(CommandHandler(key, self.cHandler_info_attr))
+                    self._cHandlers.append(CommandHandler(key, self.cHandler_info_attr))
+                    #self._application.add_handler(CommandHandler(key, self.cHandler_info_attr))
                 return self.update_item
             else:
                 self.logger.error(f"Command '{key}' chosen for item '{item}' is invalid for telegram botfather")
@@ -411,7 +467,8 @@ class Telegram(SmartPlugin):
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug(f"Register new command '{key}', add item '{item}' and register a handler")
                 # add a handler for each control-attribute
-                self._application.add_handler(CommandHandler(key, self.cHandler_control_attr))
+                #self._application.add_handler(CommandHandler(key, self.cHandler_control_attr))
+                self._cHandlers.append(CommandHandler(key, self.cHandler_control_attr))
             return self.update_item
 
         return None
@@ -433,6 +490,21 @@ class Telegram(SmartPlugin):
         """
         Called each time an item changed in SmartHomeNG
         """
+
+        # check for pause item
+        if item is self._pause_item:
+            if caller != self.get_shortname():
+                self.logger.debug(f'pause item changed to {item()}')
+                if item() and self.alive:
+                    self.stop()
+                elif not item() and not self.alive:
+                    self.run()
+            return
+
+        if not self.alive:
+            self.logger.info('Plugin is not alive, data will not be written')
+            return
+
         if caller != self.get_fullname():
             self.logger.info(f"update item: {item.property.path}")
 
@@ -527,7 +599,7 @@ class Telegram(SmartPlugin):
 
         for cid in self.get_chat_id_list(chat_id):
             try:
-                response = await self._bot.send_message(chat_id=cid, text=msg, reply_markup=reply_markup, parse_mode=parse_mode)
+                response = await self._bot.sendMessage(chat_id=cid, text=msg, reply_markup=reply_markup, parse_mode=parse_mode)
                 if response:
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug(f"Message sent:[{msg}] to Chat_ID:[{cid}] Bot:[{self._bot.bot}] response:[{response}]")
@@ -630,7 +702,7 @@ class Telegram(SmartPlugin):
             if user_id in self._chat_ids_item():
                 return True
             else:
-                self._bot.send_message(chat_id=user_id, text=self._no_access_msg)
+                self._bot.sendMessage(chat_id=user_id, text=self._no_access_msg)
 
         return False
 
@@ -642,7 +714,7 @@ class Telegram(SmartPlugin):
             if user_id in self._chat_ids_item():
                 return self._chat_ids_item()[user_id]
             else:
-                self._bot.send_message(chat_id=user_id, text=self._no_write_access_msg)
+                self._bot.sendMessage(chat_id=user_id, text=self._no_write_access_msg)
 
         return False
 
@@ -685,7 +757,7 @@ class Telegram(SmartPlugin):
 
         it contains the following objects:
         args
-        bot         context.bot is the target for send_message() function
+        bot         context.bot is the target for sendMessage() function
         bot_data
         chat_data
         dispatcher
@@ -707,7 +779,7 @@ class Telegram(SmartPlugin):
         Just logs an error in case of a problem
         """
         try:
-            self.logger.warning(f'Update {update} caused error {context.error}')
+            self.logger.error(f'Update {update} caused error {context.error}')
         except Exception:
             pass
 
@@ -740,26 +812,26 @@ class Telegram(SmartPlugin):
                             if dicCtl['type'] == 'onoff':
                                 item = dicCtl['item']
                                 msg = f"{dicCtl['name']} \n change to:On(True)"
-                                self._bot.sendMessage(chat_id=update.message.chat.id, text=msg)
+                                await self._bot.sendMessage(chat_id=update.message.chat.id, text=msg)
                                 item(True)
                                 self._waitAnswer = None
-                                self._bot.send_message(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard":self.create_control_reply_markup()})
+                                await self._bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard":self.create_control_reply_markup()})
                         elif text == 'Off':
                             if dicCtl['type'] == 'onoff':
                                 item = dicCtl['item']
                                 msg = f"{dicCtl['name']} \n change to:Off(False)"
-                                self._bot.sendMessage(chat_id=update.message.chat.id, text=msg)
+                                await self._bot.sendMessage(chat_id=update.message.chat.id, text=msg)
                                 item(False)
                                 self._waitAnswer = None
-                                self._bot.send_message(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard":self.create_control_reply_markup()})
+                                await self._bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard":self.create_control_reply_markup()})
                         elif text == 'Yes':
                             if self.scheduler_get('telegram_change_item_timeout'):
                                 self.scheduler_remove('telegram_change_item_timeout')
                             dicCtlCopy = dicCtl.copy()
                             dicCtlCopy['question'] = ''
-                            self.change_item(update, context, dicCtlCopy['name'], dicCtlCopy)
+                            await self.change_item(update, context, dicCtlCopy['name'], dicCtlCopy)
                             self._waitAnswer = None
-                            self._bot.send_message(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard":self.create_control_reply_markup()})
+                            await self._bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard":self.create_control_reply_markup()})
                         elif dicCtl['type'] == 'num':
                             if type(text) == int or float:
                                 if self.logger.isEnabledFor(logging.DEBUG):
@@ -787,7 +859,7 @@ class Telegram(SmartPlugin):
                                     msg = f"{dicCtl['name']} \n out off range"
                                     await context.bot.sendMessage(chat_id=update.message.chat.id, text=msg)
                         else:
-                            await context.bot.send_message(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard": self.create_control_reply_markup()})
+                            await context.bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard": self.create_control_reply_markup()})
                             self._waitAnswer = None
                 except Exception as e:
                     if self.logger.isEnabledFor(logging.DEBUG):
@@ -800,7 +872,7 @@ class Telegram(SmartPlugin):
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(f"/time: return server time for update={update}, chat_id={update.message.chat.id} and context={dir(context)}")
         if self.has_access_right(update.message.chat.id):
-            await context.bot.send_message(chat_id=update.message.chat.id, text=str(datetime.datetime.now()))
+            await context.bot.sendMessage(chat_id=update.message.chat.id, text=str(datetime.datetime.now()))
 
     async def cHandler_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -809,7 +881,7 @@ class Telegram(SmartPlugin):
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(f"/help: show available commands as keyboard for update={update}, chat_id={update.message.chat.id} and context={dir(context)}")
         if self.has_access_right(update.message.chat.id):
-            await context.bot.send_message(chat_id=update.message.chat.id, text=self.translate("choose"), reply_markup={"keyboard": [["/hide","/start"], ["/time","/list"], ["/lo","/info"], ["/control", "/tr <logicname>"]]})
+            await context.bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("choose"), reply_markup={"keyboard": [["/hide","/start"], ["/time","/list"], ["/lo","/info"], ["/control", "/tr <logicname>"]]})
 
     async def cHandler_hide(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -819,7 +891,7 @@ class Telegram(SmartPlugin):
             self.logger.debug(f"/hide: hide keyboard for bot={context.bot} and chat_id={update.message.chat.id}")
         if self.has_access_right(update.message.chat.id):
             hide_keyboard = {'hide_keyboard': True}
-            await context.bot.send_message(chat_id=update.message.chat.id, text=self.translate("I'll hide the keyboard"), reply_markup=hide_keyboard)
+            await context.bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("I'll hide the keyboard"), reply_markup=hide_keyboard)
 
     async def cHandler_list(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -828,8 +900,7 @@ class Telegram(SmartPlugin):
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(f"/list: show registered items and value for chat_id={update.message.chat.id}")
         if self.has_access_right(update.message.chat.id):
-            await context.bot.send_message(chat_id=update.message.chat.id, text=self.list_items())
-            #self.list_items(update.message.chat.id)
+            await context.bot.sendMessage(chat_id=update.message.chat.id, text=self.list_items())
 
     async def cHandler_info(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -839,9 +910,9 @@ class Telegram(SmartPlugin):
             self.logger.debug(f"/info: show item-menu with registered items with specific attribute for chat_id={update.message.chat.id}")
         if self.has_access_right(update.message.chat.id):
             if len(self._items_info) > 0:
-                await context.bot.send_message(chat_id=update.message.chat.id, text=self.translate("Infos from the items:"), reply_markup={"keyboard": self.create_info_reply_markup()})
+                await context.bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("Infos from the items:"), reply_markup={"keyboard": self.create_info_reply_markup()})
             else:
-                await context.bot.send_message(chat_id=update.message.chat.id, text=self.translate("no items have attribute telegram_info!"), reply_markup={"keyboard": self.create_info_reply_markup()})
+                await context.bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("no items have attribute telegram_info!"), reply_markup={"keyboard": self.create_info_reply_markup()})
 
     async def cHandler_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -866,7 +937,7 @@ class Telegram(SmartPlugin):
         else:
             self.logger.warning('No chat_ids defined')
 
-        await context.bot.send_message(chat_id=update.message.chat.id, text=text)
+        await context.bot.sendMessage(chat_id=update.message.chat.id, text=text)
 
     async def cHandler_info_attr(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -882,7 +953,6 @@ class Telegram(SmartPlugin):
             if c_key in self._items_info:
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug(f"info-command: {c_key}")
-                #self.list_items_info(update.message.chat.id, c_key)
                 await context.bot.sendMessage(chat_id=update.message.chat.id, text=self.list_items_info(c_key))
             else:
                 await context.bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("unknown command %s") % c_key)
@@ -901,7 +971,6 @@ class Telegram(SmartPlugin):
             for logic in sorted(self.logics.return_defined_logics()):    # list with the names of all logics that are currently loaded
                 data = []
                 info = self.logics.get_logic_info(logic)
-                # self.logger.debug(f"logic_info: {info}")
                 if len(info) == 0 or not info['enabled']:
                     data.append("disabled")
                 if 'next_exec' in info:
@@ -936,11 +1005,10 @@ class Telegram(SmartPlugin):
             self.logger.debug(f"/control: show item-menu with registered items with specific attribute for chat_id={update.message.chat.id}")
         if self.has_write_access_right(update.message.chat.id):
             if len(self._items_control) > 0:
-                await context.bot.send_message(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard":self.create_control_reply_markup()})
-                await context.bot.send_message(chat_id=update.message.chat.id, text=self.list_items_control())
-                #self.list_items_control(update.message.chat.id)
+                await context.bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard":self.create_control_reply_markup()})
+                await context.bot.sendMessage(chat_id=update.message.chat.id, text=self.list_items_control())
             else:
-                await context.bot.send_message(chat_id=update.message.chat.id, text=self.translate("no items have attribute telegram_control!"), reply_markup={"keyboard": self.create_control_reply_markup()})
+                await context.bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("no items have attribute telegram_control!"), reply_markup={"keyboard": self.create_control_reply_markup()})
 
     async def cHandler_control_attr(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -1035,6 +1103,7 @@ class Telegram(SmartPlugin):
         """
         Show registered items and value with specific attribute ITEM_ATTR_CONTROL
         """
+        text = ""
         for key, value in sorted(self._items_control.items()):  # {'type':type,'item':item}
             item = value['item']
             if item.type():
@@ -1135,16 +1204,14 @@ class Telegram(SmartPlugin):
             text = self.translate("no items found with the attribute %s") % ITEM_ATTR_CONTROL
             await context.bot.sendMessage(chat_id=chat_id, text=text)
 
-    async def telegram_change_item_timeout(self, **kwargs):
+    def telegram_change_item_timeout(self, **kwargs):
         update = None
-        context = None
         if 'update' in kwargs:
             update = kwargs['update']
-        if 'context' in kwargs:
-            context = kwargs['context']
-        if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug(f"Answer control_item timeout update:{update} context:{context}")
-        if self._waitAnswer is not None:
-            self._waitAnswer = None
-            # self._bot.send_message(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard": self.create_control_reply_markup()})
-            await context.bot.sendMessage(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard": self.create_control_reply_markup()})
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.logger.debug(f"Answer control_item timeout update:{update}")
+            if self._waitAnswer is not None:
+                self._waitAnswer = None
+            self.msg_broadcast(msg=self.translate("Control/Change item-values:"), chat_id=update.message.chat.id, reply_markup={"keyboard": self.create_control_reply_markup()} )
+        elif self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug(f"telegram_change_item_timeout: update argument missing")

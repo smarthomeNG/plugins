@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 
     version: 1.1.2                 # Plugin version
-    sh_minversion: 1.1             # minimum shNG version to use this plugin
+    sh_minversion: '1.1'             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     restartable: False

@@ -1,0 +1,946 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 5000 %}
+
+<!-- set dataSet if you need specific data to be updated automatically. Also see init.py in plugin webif!-->
+{% set dataSet = 'bridge_info' %}
+
+<!-- set update_params if you need to provide additional parameters for the auto-update function-->
+{% set update_params = item_id %}
+
+<!-- if you don't need any buttons in the header, disable them completely-->
+{% set buttons = true %}
+
+<!-- if you don't need any auto-refresh elements in the header, disable them-->
+{% set autorefresh_buttons = true %}
+
+<!-- if you don't need the reload_button in the header, disable it-->
+{% set reload_button = true %}
+
+<!-- if you don't need the close in the header, disable it-->
+{% set close_button = false %}
+
+<!-- for some situations it might be useful to know the number of datatable rows shown on the current page.
+Activate that function if needed, otherwise just remove the line to increase performance -->
+{% set row_count = true %}
+
+<!-- if new values should be retrieved using automatic page update right in the beginning and on page changes -->
+{% set initial_update = true %}
+
+{% set bordered_tab = true %}
+
+<!--
+	Additional styles go into this block. Examples are for datatables
+-->
+{% block pluginstyles %}
+<style>
+  table th.value {
+    width: 100px;
+  }
+  /*
+  These are used for highligt effect in web interface when a value changes. If you don't want to overwrite the
+  default color, you can remove the entries here as the classes are already defined in smarthomeng.css
+  */
+  .shng_effect_highlight {
+    background-color: #FFFFE0;
+  }
+  .shng_effect_standard {
+    background-color: none;
+  }
+  .aligncenter {
+      text-align:center;
+  }
+  .alignright {
+      text-align:right;
+  }
+</style>
+{% endblock pluginstyles %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'bridge_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			for (item in objResponse) {
+				/*
+        Parameters for shngInsertText:
+          0: mandatory, ID of the HTML element, e.g. the table cell
+          1: mandatory, Value to be written - taken from the objResponse dict
+          2: optional, If element of parameter 0 is in a (data)table, the ID of the table has to be put here
+          3: optional, If you want a visual highlight effect when a value changes, provide the duration in seconds.
+				shngInsertText (item+'_value', objResponse[item]['value'], 'maintable', 5);
+				*/
+			}
+			// Redraw datatable after cell updates
+			$('#maintable').DataTable().draw(false);
+
+			// Update items table
+			itemstable.clear();
+			let items = objResponse['items'];
+			console.log('items:', {items})
+			for (item in items) {
+				let path = items[item]['path'];
+				let type = items[item]['type'];
+				let value = items[item]['value'];
+				let hue_resource = items[item]['resource'];
+				let hue_id = items[item]['id'];
+				let hue_function = items[item]['function'];
+
+				let last_update = items[item]['last_update'];
+				let last_change = items[item]['last_change'];
+
+				let newRow = itemstable.row.add([null, path, type, value, hue_resource, hue_id, hue_function, last_update, last_change]).sort().draw(false).node();
+			}
+
+			// Update lights table
+			lightstable.clear();
+			let lights = objResponse['lights'];
+			console.log('lights:', {lights})
+			for (light in lights) {
+				let id = lights[light]['id'];
+				let idv1 = lights[light]['id_v1'];
+				let name = lights[light]['name'];
+				let on = lights[light]['on'];
+				let brightness = lights[light]['brightness'] + '%';
+
+				let xy = '[' + lights[light]['xy'].toString() + ']';
+				let ct = lights[light]['ct'];
+				let status = lights[light]['zigbee_status'];
+				let newRow = lightstable.row.add([null, id, idv1, name, on, brightness, xy, ct, status]).sort().draw(false).node();
+//				let newRow = lightstable.row.add([null, id, idv1, name, devicemodelid, devicemanufacturername, deviceproductname, deviceswversion, devicehwplatform, devicelights, deviceservices, deviceproductarchetype, certified, devicearchetype]).sort().draw(false).node();
+			}
+
+			// Update scenes table
+			scenestable.clear();
+			let scenes = objResponse['scenes'];
+			console.log('scenes:', {scenes})
+			for (scene in scenes) {
+				let id = scenes[scene]['id'];
+				let idv1 = scenes[scene]['id_v1'];
+				let name = scenes[scene]['name'];
+				let type = scenes[scene]['type'];
+
+				let newRow = scenestable.row.add([null, id, idv1, name, type]).sort().draw(false).node();
+//				let newRow = scenestable.row.add([null, id, idv1, name, devicemodelid, devicemanufacturername, deviceproductname, deviceswversion, devicehwplatform, devicelights, deviceservices, deviceproductarchetype, certified, devicearchetype]).sort().draw(false).node();
+			}
+
+			// Update groups table
+			groupstable.clear();
+			let groups = objResponse['groups'];
+			console.log('groups:', {groups})
+			for (group in groups) {
+				let id = groups[group]['id'];
+				let idv1 = groups[group]['id_v1'];
+				let name = groups[group]['name'];
+				let type = groups[group]['type'];
+
+				let newRow = groupstable.row.add([null, id, idv1, name, type]).sort().draw(false).node();
+//				let newRow = groupstable.row.add([null, id, idv1, name, devicemodelid, devicemanufacturername, deviceproductname, deviceswversion, devicehwplatform, devicelights, deviceservices, deviceproductarchetype, certified, devicearchetype]).sort().draw(false).node();
+			}
+
+			// Update sensor table
+			sensorstable.clear();
+			let sensors = objResponse['sensors'];
+			console.log('sensors:', {sensors})
+			for (sensor in sensors) {
+				let id = sensors[sensor]['id'];
+				let idv1 = sensors[sensor]['id_v1'];
+				let device_id = sensors[sensor]['device_id'];
+				let name = sensors[sensor]['name'];
+				if (sensors[sensor]['control_id'] !== '') {
+					name = name + ' - id: ' + sensors[sensor]['control_id']
+				}
+				let type = sensors[sensor]['type'];
+				let status = sensors[sensor]['status'];
+				if (status === '' ) {
+					status = sensors[sensor]['last_event'];
+				}
+				if (status === '' && sensors[sensor]['battery_state'] !== '') {
+					status = sensors[sensor]['battery_state'] + ', level=' + sensors[sensor]['battery_level'] + '%';
+				}
+
+				let newRow = sensorstable.row.add([null, id, idv1, device_id, name, type, status]).sort().draw(false).node();
+//				let newRow = sensorstable.row.add([null, id, idv1, name, devicemodelid, devicemanufacturername, deviceproductname, deviceswversion, devicehwplatform, devicelights, deviceservices, deviceproductarchetype, certified, devicearchetype]).sort().draw(false).node();
+			}
+
+			// Update deivce table
+			devicetable.clear();
+			let devices = objResponse['devices'];
+			for (device in devices) {
+				let id = devices[device]['id'];
+				let idv1 = devices[device]['id_v1'];
+				let name = devices[device]['name'];
+				let modelid = devices[device]['model_id'];
+				let connectivity = devices[device]['zigbee_connectivity'];
+				let manufacturername = devices[device]['manufacturer_name'];
+				let productname = devices[device]['product_name'];
+				let swversion = devices[device]['software_version'];
+				let hwplatform = devices[device]['hardware_platform_type'];
+				let lights = devices[device]['lights'].length;
+				let services = devices[device]['services'].toString();
+				let productarchetype = devices[device]['product_archetype'];
+				let certified = devices[device]['certified'];
+				let archetype = devices[device]['archetype'];
+
+				let items_defined = devices[device]['items_defined'];
+				if (items_defined == 0) {
+					items_defined = "{{ _('Nein') }}"
+				}
+				let newRow = devicetable.row.add([null, id, idv1, name, connectivity, modelid, productname, swversion, hwplatform, manufacturername, lights, services, productarchetype, certified, archetype]).sort().draw(false).node();
+
+			}
+
+			shngInsertText('devicecount', objResponse['devices'].length);
+			devicetable.draw(false);
+		}
+	}
+</script>
+<script>
+    $(document).ready( function () {
+		/*
+		loading defaults from /modules/http/webif/gstatic/datatables/datatables.defaults.js
+		You can copy that file, put it in your plugin directory, rename the "bind" function and
+		trigger that function here instead of datatables_defaults if you want to change the behaviour.
+		Of course you can also overwrite defaults by putting the option declarations in {} below.
+		*/
+		$(window).trigger('datatables_defaults');
+
+		try {
+		  {% if (webif_pagelength is defined) %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+		  if (isNaN(parseFloat(webif_pagelength)) ) {
+			resize = true;
+			webif_pagelength = -1;
+			  console.log('Activating automatic table resize');
+		  }
+		  else {
+			resize = false;
+		  }
+		}
+		catch (e) {
+			webif_pagelength = 100;
+			resize = false;
+			console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+		}
+
+		try {
+			/*
+			Copy this part for every datatable on your page. Adjust options if necessary.
+			*/
+			maintable = $('#maintable').DataTable( {
+				/* If you want to define your own columnDefs options (e.g. for hiding a column by default), use the concat function shown here.
+				*/
+				columnDefs: [
+				    {
+						title: "{{ _('Wert') }}",
+						"targets": [2], "className": "value"
+					}
+			    ].concat($.fn.dataTable.defaults.columnDefs)
+			} );
+
+			itemstable = $('#itemstable').DataTable( {
+				columnDefs: [
+					{
+						title: '{{ _("Item") }}',
+						targets: [1]
+					},
+					{
+						title: '{{ _("Typ") }}',
+						targets: [2], "className": "type"
+					},
+					{
+						title: '{{ _("Wert") }}',
+						targets: [3], "className": "value dt-head-right"
+					},
+					{
+						title: '{{ _("hue resource") }}',
+						targets: [4]
+					},
+					{
+						title: '{{ _("hue id") }}',
+						targets: [5]
+					},
+					{
+						title: '{{ _("hue function") }}',
+						targets: [6]
+					},
+					{
+						title: '{{ _("Letztes Update") }}',
+						targets: [7], "className": "change_update"
+					},
+					{
+						title: '{{ _("Letzte Änderung") }}',
+						targets: [8], "className": "change_update"
+					}
+				].concat($.fn.dataTable.defaults.columnDefs),
+				pageLength: webif_pagelength,
+				pageResize: resize
+			} );
+
+			lightstable = $('#lightstable').DataTable( {
+				order: {idx: 2, dir: 'asc'},
+				columnDefs: [
+					{
+						title: "{{ _('Leuchten Id') }}",
+						targets: [1], "className": "deviceid",
+					},
+					{
+						title: "{{ _('v1 Id') }}",
+						targets: [2], "className": "aligncenter"
+					},
+					{
+						title: "{{ _('Name') }}",
+						targets: [3], "className": "devicename"
+					},
+					{
+						title: "{{ _('Eingeschaltet') }}",
+						targets: [4], "className": "aligncenter"
+					},
+					{
+						title: "{{ _('Helligkeit') }}",
+						targets: [5], "className": "alignright"
+					},
+					{
+						title: "{{ _('xy') }}",
+						targets: [6], "className": "devicename"
+					},
+					{
+						title: "{{ _('ct') }}",
+						targets: [7], "className": "devicename"
+					},
+					{
+						title: "{{ _('Status') }}",
+						targets: [8], "className": "devicename"
+					}
+				].concat($.fn.dataTable.defaults.columnDefs),
+				pageLength: webif_pagelength,
+				pageResize: resize
+			} );
+
+			scenestable = $('#scenestable').DataTable( {
+				order: {idx: 2, dir: 'asc'},
+				columnDefs: [
+					{
+						title: "{{ _('Szenen Id') }}",
+						targets: [1], "className": "deviceid",
+					},
+					{
+						title: "{{ _('v1 Id') }}",
+						targets: [2], "className": "aligncenter"
+					},
+					{
+						title: "{{ _('Name') }}",
+						targets: [3], "className": "devicename"
+					},
+					{
+						title: "{{ _('Typ') }}",
+						targets: [4], "className": "devicename"
+					}
+				].concat($.fn.dataTable.defaults.columnDefs),
+				pageLength: webif_pagelength,
+				pageResize: resize
+			} );
+
+			groupstable = $('#groupstable').DataTable( {
+				order: {idx: 2, dir: 'asc'},
+				columnDefs: [
+					{
+						title: "{{ _('Gruppen Id') }}",
+						targets: [1], "className": "deviceid",
+					},
+					{
+						title: "{{ _('v1 Id') }}",
+						targets: [2], "className": "aligncenter"
+					},
+					{
+						title: "{{ _('Name') }}",
+						targets: [3], "className": "devicename"
+					},
+					{
+						title: "{{ _('Typ') }}",
+						targets: [4], "className": "devicename"
+					}
+				].concat($.fn.dataTable.defaults.columnDefs),
+				pageLength: webif_pagelength,
+				pageResize: resize
+			} );
+
+			sensorstable = $('#sensorstable').DataTable( {
+				order: {idx: 2, dir: 'asc'},
+				columnDefs: [
+					{
+						title: "{{ _('Sensor Id') }}",
+						targets: [1], "className": "deviceid",
+					},
+					{
+						title: "{{ _('v1 Id') }}",
+						targets: [2], "className": "aligncenter"
+					},
+					{
+						title: "{{ _('Sensor Id') }}",
+						targets: [3], "className": "deviceid",
+					},
+					{
+						title: "{{ _('Sensorname') }}",
+						targets: [4], "className": "devicename"
+					},
+					{
+						title: "{{ _('Typ') }}",
+						targets: [5], "className": "devicename"
+					},
+					{
+						title: "{{ _('Status') }}",
+						targets: [6], "className": "devicename"
+					}
+				].concat($.fn.dataTable.defaults.columnDefs),
+				pageLength: webif_pagelength,
+				pageResize: resize
+			} );
+
+			devicetable = $('#devicetable').DataTable( {
+				order: {idx: 2, dir: 'asc'},
+				columnDefs: [
+					{
+						title: "{{ _('Device Id') }}",
+						targets: [1], "className": "deviceid",
+					},
+					{
+						title: "{{ _('v1 Id') }}",
+						targets: [2], "className": "aligncenter"
+					},
+					{
+						title: "{{ _('Name') }}",
+						targets: [3], "className": "devicename"
+					},
+					{
+						title: "{{ _('Zigbee') }}",
+						targets: [4], "className": "devicemodelid"
+					},
+					{
+						title: "{{ _('Model Id') }}",
+						targets: [5], "className": "devicemodelid"
+					},
+					{
+						title: "{{ _('Produktname') }}",
+						targets: [6], "className": "deviceproductname"
+					},
+					{
+						title: "{{ _('SW-Version') }}",
+						targets: [7], "className": "deviceswversion",
+					},
+					{
+						title: "{{ _('HW Platform') }}",
+						targets: [8], "className": "devicehwplatform"
+					},
+					{
+						title: "{{ _('Hersteller') }}",
+						visible: true,
+						targets: [9], "className": "devicemanufacturername"
+					},
+					{
+						title: "{{ _('Lights') }}",
+						targets: [10], "className": "devicelights"
+					},
+					{
+						title: "{{ _('Services') }}",
+						targets: [11], "className": "deviceservices"
+					},
+					{
+						title: "{{ _('Produkt Archetype') }}",
+						targets: [12], "className": "deviceproductarchetype"
+					},
+					{
+						title: "{{ _('Zertifiziert') }}",
+						targets: [12], "className": "certified"
+					},
+					{
+						title: "{{ _('Archetype') }}",
+						targets: [13], "className": "devicearchetype"
+					}
+				].concat($.fn.dataTable.defaults.columnDefs),
+				pageLength: webif_pagelength,
+				pageResize: resize
+			} );
+
+		}
+		catch (e) {
+			console.warn("Error: " + e + "\nMaybe Datatable JS is not loaded (->showing standard table without reorder option)");
+		}
+    /*
+    This part creates tooltips for buttons/inputs that have the class "button-tooltip"
+    */
+    const tooltipList = ['Nach Devices suchen'];
+    createTooltips(tooltipList);
+    /*
+    This part reads cookies for the attribute "sort_order" and activates the resepctive button after page load
+    */
+    order = getCookie('sort_order');
+    if (order == '')
+      order = 'time-desc';
+    const button = document.getElementById(order);
+    button.click();
+	});
+</script>
+<!--
+This is an example on how to update the page refresh method. You can set the dataSet, update interval, special parameters or (de)activate the auto refresh
+In the example the update is deactivated on the 12th of December 2022 (what might make no sense at all)
+<script>
+  var today = new Date();
+  var today_date = String(today.getDate()) + String(today.getMonth() + 1) + today.getFullYear();
+  let test_date = "12122022";
+  if (today_date === test_date)
+      window.refresh.update({dataSet:'test', update_params:'specialitem', update_interval: 2000, update_active:false});
+  </script>
+-->
+{% endblock pluginscripts %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>Bridge Serial</strong></td>
+			{% if p.bridge_is_configured() %}
+				<td class="py-1">{{ p.bridge_ip }}</td>
+			{% else %}
+				<td class="py-1">{{ _('nicht konfiguriert') }}</td>
+
+			{% endif %}
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>-</strong></td>
+			<td class="py-1">-</td>
+			<td class="py-1" width="10px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>Bridge IP</strong></td>
+			<td class="py-1">{% if bridge.username == undeffined or not p.bridge_is_configured() %}{{ _('nicht konfiguriert') }}{% else %}{{ p.bridge.ip }}{% endif %}</td>
+			<td></td>
+			<td class="py-1"><strong>-</strong></td>
+			<td class="py-1">-</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>Anwendungsschlüssel</strong></td>
+			<td class="py-1">{% if bridge.username == undeffined or not p.bridge_is_configured() %}{{ _('nicht konfiguriert') }}{% else %}{{ _('konfiguriert') }}{% endif %}</td>
+			<td></td>
+			<td class="py-1"><strong>-</strong></td>
+			<td class="py-1">-</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+	{% if not p.bridge_is_configured() %}
+	<form action="" method="post">
+		<button id="btn1" class="btn btn-shng btn-sm" name="scan" type="submit" value="on"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;{{ _('Bridge suchen') }}&nbsp;</button>
+	</form>
+	{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 7 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count == 0 %}
+	{% set start_tab = 2 %}
+{% endif %}
+{% if (item_count == 0) and (bridge_lights|length == 0) %}
+	{% set start_tab = 6 %}
+{% endif %}
+{% if not p.bridge_is_configured() %}
+	{% set start_tab = 7 %}
+{% endif %}
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% block bodytab1 %}
+	<div class="container-fluid table-resize" style="margin-top: 6px">
+		<table id="itemstable"></table>
+	</div>
+{% endblock bodytab1 %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{ % set tab2title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab2
+-->
+{% set tab2title = "<strong>" ~ _('Leuchten') ~ "</strong> (" ~ w.get_lightsdata()|length ~ ")" %}
+{% block bodytab2 %}
+	<div class="container-fluid table-resize" style="margin-top: 6px">
+		<table id="lightstable"></table>
+	</div>
+{% endblock bodytab2 %}
+
+
+<!--
+	Content block for the third tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{ % set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab3
+-->
+{% set tab3title = "<strong>" ~ _('Szenen') ~ "</strong> (" ~ w.get_scenesdata()|length ~ ")" %}
+{% block bodytab3 %}
+	<div class="container-fluid table-resize" style="margin-top: 6px">
+		<table id="scenestable"></table>
+	</div>
+{% endblock bodytab3 %}
+
+
+<!--
+	Content block for the fourth tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{ % set tab4title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab4
+-->
+{% set tab4title = "<strong>" ~ _('Gruppen') ~ "</strong> (" ~ w.get_groupsdata()|length ~ ")" %}
+{% block bodytab4 %}
+	<div class="container-fluid table-resize" style="margin-top: 6px">
+		<table id="groupstable"></table>
+	</div>
+{% endblock bodytab4 %}
+
+
+<!--
+	Content block for the fifth tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{ % set tab5title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab5
+-->
+{% set tab5title = "<strong>" ~ _('Sensoren') ~ "</strong> (" ~ w.get_sensorsdata()|length ~ ")" %}
+{% block bodytab5 %}
+	<div class="container-fluid table-resize" style="margin-top: 6px">
+		<table id="sensorstable"></table>
+	</div>
+
+	{% if true %}
+		<br>
+		{% for sensor in bridge_sensors %}
+			sensor: {{ bridge_sensors[sensor] }} <br>
+			type.value: {{ bridge_sensors[sensor]._full.type.value }} <br>
+			{% if bridge_sensors[sensor]._full.type.value == 'button' %}
+				{% if bridge_sensors[sensor]._full.button.metadata is not undefined %}
+					Metadata: {{ bridge_sensors[sensor]._full.button.metadata.control_id }} <br>
+				{% endif %}
+			{% endif %}
+			<br>
+		{% endfor %}
+	{% endif %}
+{% endblock bodytab5 %}
+
+
+<!--
+	Content block for the fourth tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{ % set tab6title = "<strong>" ~ p.get_shortname() ~ " Bridges</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab6
+-->
+<!-- { % set tab6title = "<strong>" ~ _('Devices') ~ "</strong> (" ~ bridge_devices|length ~ ")" % } -->
+{% set tab6title = "<strong>" ~ _('Devices') ~ "</strong> (" ~ w.get_devicesdata()|length ~ ")" %}
+{% block bodytab6 %}
+	<div class="container-fluid table-resize" style="margin-top: 6px">
+		<table id="devicetable"></table>
+	</div>
+	{% if true %}
+		<br>
+		{% set bridge_devicesx = w.get_devicesdata() %}
+		{% for device in bridge_devicesx %}
+			sensor: {{ bridge_devicesx[device] }} <br>
+			type.value: {{ bridge_devicesx[device]._full.type.value }} <br>
+			{% if bridge_devicesx[device]._full.type.value == 'button' %}
+			{% endif %}
+			<br>
+		{% endfor %}
+	{% endif %}
+{% endblock bodytab6 %}
+
+
+<!--
+	Content block for the fourth tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{ % set tab6title = "<strong>" ~ p.get_shortname() ~ " Bridges</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab6
+-->
+{% set tab7title = "<strong>Hue Bridge</strong>" %}
+{% block bodytab7 %}
+	{% if p.discovered_bridges != [] and not p.bridge_is_configured() %}
+		<div style="margin-left: 20px;">
+			<br>
+			<strong>{{ _('Gefundene Bridges') }}:</strong><br>
+		</div>
+		<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+			<div class="col-sm-12">
+
+				{% if p.discovered_bridges != [] %}
+				<form action="" method="post">
+				<table class="table table-striped table-hover pluginList">
+					<thead>
+						<tr class="shng_heading">
+							<th class="py-1">{{ _('Serien-Nr.') }}</th>
+							<th class="py-1">{{ _('Hersteller') }}</th>
+							<th class="py-1">{{ _('Modell Name') }}</th>
+							<th class="py-1">{{ _('Modell Nr.') }}</th>
+							<th class="py-1">{{ _('Version') }}</th>
+							<th class="py-1">{{ _('API-Version') }}</th>
+							<th class="py-1">{{ _('Modell ID') }}</th>
+							<th class="py-1">{{ _('swversion') }}</th>
+							<th class="py-1">{{ _('IP') }}</th>
+							<th class="py-1" width="200px"></th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for db in p.discovered_bridges %}
+							<tr id="{{ loop.index }}_clickip" style="cursor: pointer;">
+								<td class="py-1">{{ db.serialNumber }}</td>
+								<td class="py-1">{{ db.manufacturer }}</td>
+								<td class="py-1">{{ db.modelName }}</td>
+								<td class="py-1">{{ db.modelNumber }}</td>
+								<td class="py-1">{{ db.version }}</td>
+								<td class="py-1">{{ db.apiversion }}</td>
+								<td class="py-1">{{ db.modelid }}</td>
+								<td class="py-1">{{ db.swversion }}</td>
+								<td class="py-1">{{ db.ip }}</td>
+								<td class="py-1">
+									{% if db.version == 'v1' %}
+										{{ _('nicht unterstützt') }}
+									{% else %}
+										{% if not p.bridge_is_configured() %}
+											<button id="btn1" class="btn btn-shng btn-sm" name="connect" type="submit" value="{{ db.serialNumber }}"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;{{ _('Verbinden') }}&nbsp;</button>
+										{% elif db.ip == p.bridge_ip %}
+										{{ _('Konfigurierte Bridge') }}
+										{% endif %}
+									{% endif %}
+								</td>
+								<td class="py-1"></td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+				</form>
+				{% endif %}
+			</div>
+		</div>
+	{%  endif %}
+
+	<div style="margin-left: 20px;">
+		{% if not p.bridge_is_configured() %}
+			<br>
+			<strong>{{ _('Es ist keine Bridge mit dieser Plugin Instanz verbunden.') }}</strong><br>
+			{% if p.discovered_bridges != [] %}
+				<br>
+				{{ _('Zum Verbinden den <strong>Knopf an der Hue Bridge drücken</strong> und anschließend in der Liste der gefundenen Bridges den Button "Verbinden" drücken.') }}<br>
+				<br>
+				{{ _('Nach dem Klicken auf den Button <strong>Verbinden</strong> bitte auf <strong>Aktualisieren</strong> klicken, damit die Daten der verbundenen Bridge angezeigt werden.') }}<br>
+			{% endif %}
+		{% endif %}
+		<br>
+	</div>
+
+	{% if p.bridge_is_configured() %}
+		<div style="margin-left: 20px;">
+			<strong>{{ _('Konfigurierte Bridge') }}:</strong><br>
+		</div>
+
+		<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+			<div class="col-sm-12">
+
+				<form action="" method="post">
+				<table class="table table-striped table-hover pluginList">
+					<thead>
+						<tr class="shng_heading">
+							<th class="py-1">{{ _('Serien-Nr.') }}</th>
+							<th class="py-1">{{ _('Modell Name') }}</th>
+	<!--					<th class="py-1">{{ _('Modell Nr.') }}</th>  -->
+	<!--					<th class="py-1">{{ _('Version') }}</th>  -->
+							<th class="py-1">{{ _('') }}</th>
+							<th class="py-1">{{ _('API-Version') }}</th>
+							<th class="py-1">{{ _('Modell ID') }}</th>
+							<th class="py-1">{{ _('IP') }}</th>
+							<th class="py-1">{{ _('Anwendungsschlüssel') }}</th>
+							<th class="py-1" width="200px"></th>
+						</tr>
+					</thead>
+					<tbody>
+						{% set cb = bridge %}
+		<!--
+							<tr id="{ { loop.index } }_clickip" style="cursor: pointer;">
+		-->
+						{% if p.bridge_is_configured() %}
+							<tr style="cursor: pointer;">
+								<td class="py-1">{{ bridge_config.bridgeid|lower }}</td>
+								<td class="py-1">{{ cb.modelName }}</td>
+	<!--						<td class="py-1">{{ cb.modelNumber }}</td>  -->
+	<!--						<td class="py-1">{{ cb.version }}</td>  -->
+								<td class="py-1">{{ cb.gatewayName }}</td>
+								<td class="py-1">{{ bridge_config.apiversion }}</td>
+								<td class="py-1">{{ bridge_config.modelid }}</td>
+								<td class="py-1">{{ bridge_config.ipaddress }}</td>
+								<td class="py-1">{{ cb.username }}</td>
+								<td class="py-1">
+									<button id="btn1" class="btn btn-shng btn-sm" name="disconnect" type="submit" value="{{ cb.serialNumber }}"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;{{ _('Trennen') }}&nbsp;</button>
+								</td>
+								<td class="py-1"></td>
+							</tr>
+						{% endif %}
+					</tbody>
+				</table>
+				</form>
+			</div>
+		</div>
+	{% endif %}
+
+
+	{% if p.bridge_is_configured() and true %}
+		<div style="margin-left: 20px;">
+			<br>
+			<strong>{{ _('Bridge Konfiguration') }}:</strong><br>
+		</div>
+		<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+			<div class="col-sm-12">
+				<table class="table table-striped table-hover pluginList">
+					<thead>
+						<tr class="shng_heading">
+							<td class="py-1" colspan="2"><center>Bridge '{{ bridge_config.name }}'</center></td>
+							<td class="py-1"></td>
+							<td class="py-1" colspan="2"><center>{{ _('Internet Services') }}</center></td>
+							<td class="py-1"></td>
+							<td class="py-1" colspan="2"><center>{{ _('Portal State') }}</center></td>
+							<td class="py-1"></td>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td class="py-1"><strong>{{ _('Zigbee Kanal') }}</strong></td>
+							<td class="py-1">{{ bridge_config.zigbeechannel }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('Internet') }}</strong></td>
+							<td class="py-1">{{ _(bridge_config.internetservices.internet) }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('angemeldet') }}</strong></td>
+							<td class="py-1">{{ w.ja_nein( bridge_config.portalstate.signedon ) }}</td>
+							<td class="py-1"></td>
+						</tr>
+						<tr>
+							<td class="py-1"><strong>{{ _('Software Version') }}</strong></td>
+							<td class="py-1">{{ bridge_config.swversion }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('Remote Access') }}</strong></td>
+							<td class="py-1">{{ _(bridge_config.internetservices.remoteaccess) }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('eingehend') }}</strong></td>
+							<td class="py-1">{{ w.ja_nein( bridge_config.portalstate.incoming ) }}</td>
+							<td class="py-1"></td>
+						</tr>
+						<tr>
+							<td class="py-1"><strong>{{ _('Datastore Version') }}</strong></td>
+							<td class="py-1">{{ bridge_config.datastoreversion }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('Zeit') }}</strong></td>
+							<td class="py-1">{{ _(bridge_config.internetservices.time) }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('ausgehend') }}</strong></td>
+							<td class="py-1">{{ w.ja_nein( bridge_config.portalstate.outgoing ) }}</td>
+							<td class="py-1"></td>
+						</tr>
+						<tr>
+							<td class="py-1"><strong>{{ _('Eingerichtete App-Keys') }}</strong></td>
+							<td class="py-1">{{ len(bridge_config.whitelist) }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('Software Update') }}</strong></td>
+							<td class="py-1">{{ _(bridge_config.internetservices.swupdate) }}</td>
+							<td class="py-1"></td>
+							<td class="py-1"><strong>{{ _('Kommunikation') }}</strong></td>
+							<td class="py-1">{{ _(bridge_config.portalstate.communication) }}</td>
+							<td class="py-1"></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	{% endif %}
+
+
+	{% if p.bridge_is_configured() and true %}
+		<div style="margin-left: 20px;">
+			<br>
+			<strong>{{ _('Konfigurierte Benutzer') }}:</strong><br>
+		</div>
+		<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+			<div class="col-sm-12">
+
+				<form action="" method="post">
+				<table class="table table-striped table-hover pluginList">
+					<thead>
+						<tr class="shng_heading">
+							<th class="py-1">{{ _('Anwendung') }}</th>
+							<th class="py-1">{{ _('Letze Nutzung') }}</th>
+							<th class="py-1">{{ _('Erstellt') }}</th>
+							<th class="py-1" width="200px"></th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for u in bridge_config.whitelist %}
+							<tr id="{{ loop.index }}_clickip" style="cursor: pointer;">
+								<td class="py-1">{{ bridge_config.whitelist[u].name }}</td>
+								<td class="py-1">{{ bridge_config.whitelist[u]['last use date'] }}</td>
+								<td class="py-1">{{ bridge_config.whitelist[u]['create date'] }}</td>
+								<td class="py-1"></td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+				</form>
+			</div>
+		</div>
+	{% endif %}
+{% endblock bodytab7 %}
+
+
+{% set tab8title = "<strong>" ~ "Hue " ~ _('Leuchten') ~ " X</strong> (" ~ bridge_lights|length ~ ")" %}
+{% block bodytab8 %}
+	<div class="container-fluid table-resize" style="margin-top: 6px">
+		<table id="lightstable"></table>
+	</div>
+
+	{% if false %}
+-----
+		{% for d in bridge_devices %}
+			<div>
+				{{ d }}: {{ bridge_devices[d]._full }}<br>
+
+				{% for s in bridge_devices[d]._full.services %}
+					- services[...]: {{ s.rtype.value }}<br>
+				{% endfor %}
+				- product_data.product_archetype: {{ bridge_devices[d]._full.product_data.product_archetype.value }}<br>
+				- product_data.certified: {{ bridge_devices[d]._full.product_data.certified }}<br>
+				- metadata.archetype: {{ bridge_devices[d]._full.metadata.archetype.value }}<br>
+				<br>
+			</div>
+		{% endfor %}
+	{% endif %}
+{% endblock bodytab8 %}

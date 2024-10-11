@@ -324,6 +324,7 @@ class DuW(SmartPlugin):
                                             reginfo = self.LUcmdl[
                                                 dw_register]['reginfo']
                                             divisor = int(reginfo[4])
+                                            divisor = 1 if divisor == 0 else divisor
                                             komma = int(reginfo[5])
                                             self.logger.debug("DuW Busmonitor LU register: {} {}: {}".format(
                                                 dw_register, reginfo[1], ((dw_data / divisor) / (10 ** komma))))
@@ -335,6 +336,7 @@ class DuW(SmartPlugin):
                                             reginfo = self.WPcmdl[dw_register][
                                                 'reginfo']
                                             divisor = int(reginfo[4])
+                                            divisor = 1 if divisor == 0 else divisor
                                             komma = int(reginfo[5])
                                             self.logger.debug("DuW Busmonitor WP register: {} {}: {}".format(
                                                 dw_register, reginfo[1], ((dw_data / divisor) / (10 ** komma))))
@@ -346,6 +348,7 @@ class DuW(SmartPlugin):
                                             reginfo = self.PANELcmdl[dw_register][
                                                 'reginfo']
                                             divisor = int(reginfo[4])
+                                            divisor = 1 if divisor == 0 else divisor
                                             komma = int(reginfo[5])
                                             self.logger.debug("DuW Busmonitor PANEL register: {} {}: {}".format(
                                                 dw_register, reginfo[1], ((dw_data / divisor) / (10 ** komma))))
@@ -360,6 +363,7 @@ class DuW(SmartPlugin):
                                         reginfo = self.LUregl[
                                             dw_register]['reginfo']
                                         divisor = int(reginfo[4])
+                                        divisor = 1 if divisor == 0 else divisor
                                         komma = int(reginfo[5])
                                         for item in self.LUregl[dw_register]['items']:
                                             item(
@@ -373,6 +377,7 @@ class DuW(SmartPlugin):
                                         reginfo = self.WPregl[
                                             dw_register]['reginfo']
                                         divisor = int(reginfo[4])
+                                        divisor = 1 if divisor == 0 else divisor
                                         komma = int(reginfo[5])
                                         for item in self.WPregl[dw_register]['items']:
                                             item(
@@ -386,6 +391,7 @@ class DuW(SmartPlugin):
                                         reginfo = self.PANELregl[
                                             dw_register]['reginfo']
                                         divisor = int(reginfo[4])
+                                        divisor = 1 if divisor == 0 else divisor
                                         komma = int(reginfo[5])
                                         for item in self.PANELregl[dw_register]['items']:
                                             item(

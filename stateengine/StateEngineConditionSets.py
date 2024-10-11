@@ -71,10 +71,12 @@ class SeConditionSets(StateEngineTools.SeItemChild):
         return self.__condition_sets[name].unused_attributes, self.__condition_sets[name].used_attributes
 
     # Check the condition sets, optimize and complete them
-    # item_state: item to read from
-    def complete(self, item_state):
+    # state: item (item) to read from
+    def complete(self, state, use=None):
+        if use is None:
+            use = state.use.get()
         for name in self.__condition_sets:
-            self.__condition_sets[name].complete(item_state)
+            self.__condition_sets[name].complete(state, use)
 
     # Write all condition sets to logger
     def write_to_logger(self):
@@ -89,9 +91,9 @@ class SeConditionSets(StateEngineTools.SeItemChild):
     def one_conditionset_matching(self, state):
         if self.count() == 0:
             self._log_debug("No condition sets defined -> matching")
-            return True
+            return True, ''
         for name in self.__condition_sets:
             if self.__condition_sets[name].all_conditions_matching(state):
-                return True
+                return True, name
 
-        return False
+        return False, ''

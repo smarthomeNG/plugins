@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2023       Matthias Manhart             smarthome@beathis.ch
+#  Copyright 2024       Matthias Manhart             smarthome@beathis.ch
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -40,6 +40,7 @@ from lib.model.smartplugin import SmartPluginWebIf
 import cherrypy
 import csv
 from jinja2 import Environment, FileSystemLoader
+
 
 class WebInterface(SmartPluginWebIf):
 
@@ -103,7 +104,7 @@ class WebInterface(SmartPluginWebIf):
 #        self.logger.warning("c=" + str(self.plugin.byd_root.enable_connection()))
         data['connection'] = self.plugin.byd_root.enable_connection()
 
-        for xx in range(1,self.plugin.byd_towers_max+1):
+        for xx in range(1,self.plugin.byd_towers_max + 1):
           tx = 't' + str(xx) + '_'
           if xx <= self.plugin.byd_bms_qty:
             # Turm ist vorhanden
@@ -146,13 +147,13 @@ class WebInterface(SmartPluginWebIf):
         t = t + '<tr><td class="py-1"><strong>' + 'BMU' + ':</strong></td>' + '<td class="py-1" style="text-align: right">' + self.plugin.byd_bms + '</td>' + '</tr>'
         t = t + '<tr><td class="py-1"><strong>' + 'BMU A' + ':</strong></td>' + '<td class="py-1" style="text-align: right">' + self.plugin.byd_bmu_a + '</td>' + '</tr>'
         t = t + '<tr><td class="py-1"><strong>' + 'BMU B' + ':</strong></td>' + '<td class="py-1" style="text-align: right">' + self.plugin.byd_bmu_b + '</td>' + '</tr>'
-        t = t + '<tr><td class="py-1"><strong>' + 'P/T' + ':</strong></td>' + '<td class="py-1" style="text-align: right">' + self.plugin.byd_param_t + '</td>' + '</tr>'
+        t = t + '<tr><td class="py-1"><strong>' + self.translate("Parameter-Tabelle") + ':</strong></td>' + '<td class="py-1" style="text-align: right">' + self.plugin.byd_param_t + '</td>' + '</tr>'
         t = t + '</tbody></table>'
         data['r2_table'] = t
         
         # 2.Register "BYD Diagnose"
         ds = []
-        for xx in range(1,self.plugin.byd_towers_max+1):
+        for xx in range(1,self.plugin.byd_towers_max + 1):
           ts = []
           if xx <= self.plugin.byd_bms_qty:
             # Turm ist vorhanden
@@ -190,24 +191,31 @@ class WebInterface(SmartPluginWebIf):
         
         t = '<p><strong>' + self.translate("Turm") + ' 1 BMS</strong></p><p></p>'
         t = t + self.table_diag_details(1)
+        if not isinstance(self.plugin.byd_diag_state_str[1],str):
+          self.plugin.byd_diag_state_str[1] = "-"
         t = t + '<p>' + self.translate("Status") + ': ' + self.plugin.byd_diag_state_str[1] + ' (0x' + f'{self.plugin.byd_diag_state[1]:04x}' + ')</p>'
         if self.plugin.byd_bms_qty > 1:
           t = t + '<p></p>'
           t = t + '<p><strong>' + self.translate("Turm") + ' 2 BMS</strong></p>'
-          t = t + self.table_diag_details[2]
+          t = t + self.table_diag_details(2)
+          if not isinstance(self.plugin.byd_diag_state_str[2],str):
+            self.plugin.byd_diag_state_str[2] = "-"
           t = t + '<p>' + self.translate("Status") + ': ' + self.plugin.byd_diag_state_str[2] + ' (0x' + f'{self.plugin.byd_diag_state[2]:04x}' + ')</p>'
           if self.plugin.byd_bms_qty > 2:
             t = t + '<p></p>'
             t = t + '<p><strong>' + self.translate("Turm") + ' 3 BMS</strong></p>'
-            t = t + self.table_diag_details[3]
+            t = t + self.table_diag_details(3)
+            if not isinstance(self.plugin.byd_diag_state_str[3],str):
+              self.plugin.byd_diag_state_str[3] = "-"
             t = t + '<p>' + self.translate("Status") + ': ' + self.plugin.byd_diag_state_str[3] + ' (0x' + f'{self.plugin.byd_diag_state[3]:04x}' + ')</p>'
         data['r4_table'] = t
 
-        # 5.Register "BYD Logdaten"
-        t = '<p><strong>BMU</strong></p><p></p>'
-        t = t + self.plugin.byd_bmu_log_html
-        t = t + '<p></p>'
-        t = t + '<p><strong>' + self.translate("Turm") + ' 1 BMS</strong></p>'
+        # 5.Register "BMU Logdaten"
+        t = self.plugin.byd_bmu_log_html
+        data['r5_table'] = t
+
+        # 6.Register "BMS Logdaten"
+        t = '<p><strong>' + self.translate("Turm") + ' 1 BMS</strong></p>'
         t = t + self.plugin.byd_diag_bms_log_html[1]
         if self.plugin.byd_bms_qty > 1:
           t = t + '<p></p>'
@@ -217,7 +225,7 @@ class WebInterface(SmartPluginWebIf):
             t = t + '<p></p>'
             t = t + '<p><strong>' + self.translate("Turm") + ' 3 BMS</strong></p>'
             t = t + self.plugin.byd_diag_bms_log_html[3]
-        data['r5_table'] = t
+        data['r6_table'] = t
 
 #        self.logger.warning("done done")
         
@@ -239,11 +247,16 @@ class WebInterface(SmartPluginWebIf):
         return s
         
     def table_diag_details(self,xx):
+        # Erzeugt die Tabelle mit den Details zu den Spannungen im Tab 'Diagnose' fuer den Turm 'xx' fuer alle Module.
+        if self.plugin.byd_modules == 0:
+          return "-"
         t = '<table id="byd_diag_table2" border="1">'
+        # Kopfzeile mit allen Modulen erstellen.
         t = t + '<tr>''<td>' + '' + '</td>'
         for i in range(0,self.plugin.byd_modules):
-          t = t + '<td class="py-1" style="text-align: center"><strong>' + 'M' + str(i+1) + '</strong></td>'
+          t = t + '<td class="py-1" style="text-align: center"><strong>' + 'M' + str(i + 1) + '</strong></td>'
         t = t + '</tr>'
+        # Datenzeilen erstellen.
         t = t + self.table_diag_details_row(self.translate("Spannung minimal") + ' [V]',xx,self.plugin.byd_module_vmin,3)
         t = t + self.table_diag_details_row(self.translate("Spannung maximal") + ' [V]',xx,self.plugin.byd_module_vmax,3)
         t = t + self.table_diag_details_row(self.translate("Spannung Durchschnitt") + ' [V]',xx,self.plugin.byd_module_vava,3)
@@ -252,6 +265,7 @@ class WebInterface(SmartPluginWebIf):
         return t
         
     def table_diag_details_row(self,txt,xx,vi,nn):
+        # Erzeugt eine Zeile in der Tabelle mit den Details im Turm 'xx'
         t = '<tr>'
         t = t + '<td class="py-1">' + txt + '</td>'
         for i in range(0,self.plugin.byd_modules):
@@ -277,5 +291,3 @@ class WebInterface(SmartPluginWebIf):
         self.logger.warning("byd_connection_false")
         self.plugin.byd_root.enable_connection(False)
         return
-        
-        

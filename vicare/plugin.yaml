@@ -12,8 +12,8 @@ plugin:
     #documentation: 
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1916122-support-thread-f%C3%BCr-das-viessmann-plugin
 
-    version: 1.9.3                  # Plugin version
-    sh_minversion: 1.9.0            # minimum shNG version to use this plugin
+    version: 1.9.5                  # Plugin version
+    sh_minversion: '1.9.0'            # minimum shNG version to use this plugin
     #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
     restartable: True
@@ -64,6 +64,7 @@ item_attributes:
         - 'heating.dhw.temperature.main'
         - 'heating.dhw.operating.modes.active'
         - 'heating.circuits.1.operating.modes.active'
+        - 'heating.dhw.oneTimeCharge'
 
     vicare_tx_path:
         type: list
@@ -116,7 +117,7 @@ plugin_functions: NONE
 logic_parameters: NONE
 
 item_structs:
-    heizung:
+    heizung_Vitodens_200:
         serial:
             name: serial number
             type: str
@@ -231,6 +232,24 @@ item_structs:
             vicare_path: ['active','value']
             visu_acl: ro
 
+            activate:
+                # Helper item for sending on command only
+                type: bool
+                enforce_updates: True
+                vicare_tx_key: heating.dhw.oneTimeCharge
+                vicare_tx_path: ['activate']
+                eval: "True if ( (sh....online_status() == True) and ( sh...() == True) and not('vicare' in sh...self.property.last_update_by) and (sh.shng_status['code'] == 20) ) else None"
+                eval_trigger: ..
+                
+            deactivate:
+                # Helper item for sending off command only
+                type: bool
+                enforce_updates: True
+                vicare_tx_key: heating.dhw.oneTimeCharge
+                vicare_tx_path: ['deactivate']
+                eval: "True if ( (sh....online_status() == True) and ( sh...() == False) and not('vicare' in sh...self.property.last_update_by) and (sh.shng_status['code'] == 20) ) else None"
+                eval_trigger: ..
+                
         sensor_hw_cylinder:
             name: Sensor Warmwasser Zylinder, Celsius
             type: num

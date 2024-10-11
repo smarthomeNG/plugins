@@ -38,7 +38,7 @@ AUTHORIZE_URL = 'https://iam.viessmann.com/idp/v3/authorize'
 TOKEN_URL = 'https://iam.viessmann.com/idp/v3/token'
 
 class Vicare(SmartPlugin):
-    PLUGIN_VERSION = '1.9.3'
+    PLUGIN_VERSION = '1.9.5'
 
     def __init__(self, sh):
         """
@@ -152,7 +152,10 @@ class Vicare(SmartPlugin):
                 self.logger.debug(f"Updated item {item} with tx_key: {tx_key}")
                 uri, tag, type, min, max, stepping, enumList = self.decodeCommandFeature(self.featureListJson, vicare_tx_key = tx_key, vicare_tx_path = tx_path, log_features = False)
                 self.logger.debug(f"uri, tag, type, min, max, stepping: {uri},{tag},{type},{min},{max},{stepping}")
-                self.controlItem(url=uri, tag=tag, type=type, min=min, max=max, stepping=stepping, enumList=enumList, value=item())
+                if uri is not None:
+                    self.controlItem(url=uri, tag=tag, type=type, min=min, max=max, stepping=stepping, enumList=enumList, value=item())
+                else:
+                    self.logger.debug(f"Item {item} cannot be controlled because no valid command url was found. Aborting.")
             else:
                 self.logger.error(f"Item {item} is missing the attribute vicare_tx_key.")
         pass
@@ -543,7 +546,8 @@ class Vicare(SmartPlugin):
             self.logger.debug(f"pollFeatures: request successfull, response: {response.text}")
         else:
             self.logger.warning(f"pollFeatures request was unsuccessfull. Status code: {response.status_code}")
-            self.logger.warning(f"pollFeatures Debug response: {response}, response.text: {response.text}")
+            if not response.text == "":
+                self.logger.warning(f"pollFeatures Debug response: {response}, response.text: {response.text}")
             return
     
         if response.json() is not None:
@@ -642,7 +646,7 @@ class Vicare(SmartPlugin):
         nr_features = len(featureList)
         
         if nr_features == 0:
-            self.logger.error(f"decodeCommandFeature, feature list is empty. Aborting")
+            self.logger.warning(f"decodeCommandFeature, feature list is empty. Aborting")
             return None, None, None, None, None, None, None
 
         if vicare_tx_key == '':
@@ -707,7 +711,7 @@ class Vicare(SmartPlugin):
 
 
                 if not uri == '' and isExecutable:
-                    self.logger.warning(f"Debug: Execute command with type, min, max: {type},{min},{max}")
+                    self.logger.debug(f"Debug: Execute command with uri,tag,type, min, max, stepping, enumList: {uri},{tag},{type},{min},{max},{stepping},{enumList}")
                     return uri, tag, type, min, max, stepping, enumList  
                 break
 
@@ -727,16 +731,27 @@ class Vicare(SmartPlugin):
             self.logger.warning(f"Value {value} will be round to integer {int(value)}")
             value = int(value)
 
-        if len(enumList) > 0 and isinstance(value, str):
+        if enumList and len(enumList) > 0 and isinstance(value, str):
            if not value in enumList:
                self.logger.warning(f"controlItem: String value ({value}) is not in the list of allowed values ({enumList}). Aborting.")
                return
            else:
-               self.logger.warning(f"Debug SUCCES: Value is on postivie list.")
+               self.logger.warning(f"Debug SUCCES: Value is on positive list.")
 
-        jsonCommand = {tag: value}
+        # Some commands are sent without a value and only provide a url. 
+        # Therefore, only sent additional data for commands with valid (data) types.
+        jsonCommand = {}
+        if type is not None:
+            jsonCommand = {tag: value}
+        else:
+            # Items with no valid type would send the uri on every item state change. 
+            # Here, only allow commands to be sent on positive item values (== bool state True)
+            if not value:
+                self.logger.debug(f"controlItem: Supressing sending for command without additional data because item is false")
+                return
+            self.logger.debug(f"controlItem: Sending command without additional data because to data type is supported")
+
         data = json.dumps(jsonCommand)
-        
         self.logger.debug(f"Prepare control data: {data}")
         response = self.session.post(url, headers = headers, data = data, verify=False, timeout=4)
    

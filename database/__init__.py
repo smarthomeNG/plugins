@@ -392,22 +392,22 @@ class Database(SmartPlugin):
 
         # get source and destination names
         try:
-            database_name = self._connect[0]
+            database_name = next((s for s in self._connect if s.startswith("database:")), '')
             database_name = database_name[9:].strip()
         except:
             database_name = ''
 
         # copy the database file
-        self.logger.warning( f"Starting to copy SQLite3 database file from {database_name} to {self._copy_database_name}")
+        self.logger.info( f"Starting to copy SQLite3 database file from {database_name} to {self._copy_database_name}")
         import shutil
         try:
             shutil.copy2(database_name, self._copy_database_name)
-            self.logger.warning("Finished copying SQLite3 database file")
+            self.logger.info("Finished copying SQLite3 database file")
         except Exception as e:
-            self.logger.Error( f"Error copying SQLite3 database file: {e}")
+            self.logger.error( f"Error copying SQLite3 database file: {e}")
 
-        param_dict = {"copy_database": False}
-        self.update_config_section(param_dict)
+        #param_dict = {"copy_database": False}
+        #self.update_config_section(param_dict)
         return
 
 
@@ -918,7 +918,7 @@ class Database(SmartPlugin):
         self.orphanlist = []
 
         items = [item.property.path for item in self._buffer]
-        try: 
+        try:
             cur = self._db_maint.cursor()
         except Exception as e:
             self.logger.error("Database build_orphan_list failed obtaining cursor: {}".format(e))
@@ -935,9 +935,9 @@ class Database(SmartPlugin):
                             self.orphanlist.append(item[COL_ITEM_NAME])
             except Exception as e:
                 self.logger.error("Database build_orphan_list failed: {}".format(e))
-        
+
             try:
-                if cur: 
+                if cur:
                     cur.close()
             except Exception as e:
                 self.logger.error("Database build_orphan_list failed closing cursor: {}".format(e))
@@ -1137,6 +1137,7 @@ class Database(SmartPlugin):
                        'step': logs['step'], 'sid': sid},
             'update': self.shtime.now() + datetime.timedelta(seconds=int(logs['step'] / 1000))
         }
+        self.logger.dbgmed(f"_series: {sid=}, {step=}, update={result['update']}, delta={int(logs['step'] / 1000)}, now={self.shtime.now()}")
         #self.logger.debug("_series: result={}".format(result))
 
         return result

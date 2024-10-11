@@ -91,7 +91,7 @@ Beispiele
             type: num
             rrd: 'yes'
 
-    Versorgung
+    Versorgung:
         Wasser:
             type: num
             rrd_type: counter

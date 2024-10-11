@@ -1,0 +1,83 @@
+/**
+ * Hue Widget
+ * (c) 2020 Martin Sinn
+ *
+ * @param       unique id for this widget
+ * @param       the gad/item for hue lamp
+ * @param       the gad/item for g_alert_effect (show buttons alert and effect if not empty)
+ *
+ */
+{% macro color_control(id, g_lamp, g_alert_effect) %}
+{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
+
+<table height="90%" width="90%" align="center">
+	<tr>
+		<td width="15%" align="center">
+			{{ basic.stateswitch(id~'power', g_lamp~'.onoff', 'mini', ['0','1']) }}
+		</td>
+		<td width="15%" align="center">
+			{{basic.symbol(id~'reachon', g_lamp~'.reachable', '', icon1~'it_wifi.png', '1')}}
+			{{basic.symbol(id~'reachoff', g_lamp~'.reachable', '', icon0~'it_wifi.png', '0')}}
+		</td>
+		<td width="15%" align="center">
+<!--
+			{{basic.color(id~'hsv', g_lamp~'.hue', g_lamp~'.sat', g_lamp~'.level' ,[0,0,0], [65535,255,255], '', 8, '', 'hsl')}}
+-->
+		</td>
+		{% if g_alert_effect != '' %}
+			<td width="25%" align="center">
+				Alert:{{ basic.stateswitch(id~'alert',g_lamp~'.alert', 'mini', ['lselect','none'], [icon1~'audio_pause.png', icon1~'audio_play.png']) }}
+			</td>
+			<td width="25%" align="center">
+				Effect:{{ basic.stateswitch(id~'effect', g_lamp~'.effect', 'mini', ['colorloop','none'], [icon1~'audio_pause.png', icon1~'audio_play.png']) }}
+			</td>
+		{% endif %}
+	</tr>
+</table>
+<table height="85%" width="90%" align="center">
+	<tr>
+		<td width="15%" align="left">
+		Helligkeit
+		</td>
+		<td width="85%">
+			{{basic.slider(id~'bri', g_lamp~'.level', 0, 255, 5)}}
+		</td>
+	</tr>
+<!--
+	<tr>
+		<td width="15%" align="left">
+			Sättigung
+		</td>
+		<td width="85%">
+			{{basic.slider(id~'sat',g_lamp~'.sat', 0, 255, 5)}}
+		</td>
+	</tr>
+	<tr>
+		<td width="15%" align="left">
+			Farbe
+		</td>
+		<td width="85%">
+			{{basic.slider(id~'hue',g_lamp~'.hue', 0, 65535, 500)}}
+		</td>
+	</tr>
+-->
+</table>
+{% endmacro %}
+
+/**
+ * Hue Widget
+ * (c) 2020 Martin Sinn
+ *
+ * @param       unique id for this widget
+ * @param       the gad/item for hue lamp
+ *
+ */
+{% macro attributes(id, g_lamp) %}
+{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
+
+	Name: {{ basic.print(id~'.lightname', g_lamp~'.lightname') }} <br>
+	reachable: {{ basic.symbol(id~'.reachable', g_lamp~'.reachable', ['Ja', 'Nein']) }} <br>
+	<br>
+	ct {{ basic.slider(id~'.ct', g_lamp~'.ct', 153, 500) }}
+
+{% endmacro %}

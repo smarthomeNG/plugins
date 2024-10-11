@@ -1,0 +1,390 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Anbindung des Philips/Signify Hue Systems über eine Hue Bridge unter Nutzung des neuen API v2'
+        en: 'Gateway for connection to the Philips/Signify Hue system through a bridge using the new API v2'
+    maintainer: msinn
+#    tester:                         # Who tests this plugin?
+    state: develop                    # change to ready when done with development
+    keywords: philips hue signify
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586861-support-thread-für-das-hue2-plugin
+
+    version: 3.0.1                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: '1.10.0'         # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: True            # plugin supports multi instance
+    restartable: True
+    configuration_needed: False     # False: The plugin will be enabled by the Admin GUI without configuration
+    classname: HueApiV2             # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    default_transitionTime:
+        type: float
+        default: 0.4
+        valid_min: 0
+        description:
+            de: 'Zeit in sekunden welche die Leuchte benötigt um in einen neuen Zustand überzugehen'
+            en: 'Time in seconds required for the light to transition to a new state.'
+
+    bridge_serial:
+        type: str
+        gui_type: readonly
+        description:
+            de: 'Seriennummer der Philips/Signify Hue Bridge
+                 Dieser Parameter wird durch das Plugins in den Konfigurationsdaten abgelegt. Er ist in der Admin GUI nicht änderbar'
+            en: 'Serial number of the Philips/Signify hue bridge
+                 The plugin ist saving this dats to the configuration. This parameter cannot be changed in the admin GUI'
+
+    bridge_user:
+        type: str
+        gui_type: readonly
+        description:
+            de: 'Username/Anwendungsschlüssel um auf die Philips/Signify Hue Bridge zuzugreifen
+                 Dieser Parameter wird durch das Plugins in den Konfigurationsdaten abgelegt. Er ist in der Admin GUI nicht änderbar'
+            en: 'Username/application key to access to the Philips/Signify hue bridge
+                 The plugin ist saving this dats to the configuration. This parameter cannot be changed in the admin GUI'
+
+    bridge_ip:
+        type: ip
+        gui_type: readonly
+        description:
+            de: 'IP Adresse der Philips/Signify Hue Bridge
+                 Dieser Parameter wird durch das Plugins in den Konfigurationsdaten abgelegt. Er ist in der Admin GUI nicht änderbar'
+            en: 'ip address of the Philips/Signify hue bridge
+                 The plugin ist saving this dats to the configuration. This parameter cannot be changed in the admin GUI'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+
+    hue3_resource:
+        type: str
+        description:
+            de: "Anzusteuernde Resource, falls nicht angegeben wird 'light' angenommen"
+            en: "Resource type to control/read"
+        valid_list:
+          - light
+          - group
+          - scene
+          - sensor
+          - button
+          - device
+          - device_power
+
+    hue3_id:
+        type: str
+        description:
+            de: "ID der anzusteuernden resouce. Der Typ der resource wird mit 'hue3_recource' festgelegt."
+            en: "ID of the resource to conteol/read. The type of the resoucre is defined by 'hue3_recource' attribute"
+
+    hue3_function:
+        type: str
+        description:
+            de: "Anzusteuernde Funktion für die gewählte Resource/ID"
+            en: "Function of the selected resource/id that shall be read/controlled"
+        valid_list:
+          - ''
+          - on
+          - bri
+          - bri_inc
+          - xy
+          - ct
+          - dict
+          - name
+          - reachable
+          - connectivity
+          - type
+          - modelid
+          - swversion
+          - activate
+          - activate_scene
+          - modify_scene
+          - alert
+          - effect
+          - daylight
+          - sunriseoffset
+          - sunsetoffset
+          - temperature
+          - presence
+          - lightlevel
+          - status
+          - event
+          - initial_press
+          - repeat
+          - short_release
+          - long_release
+          - power_status
+          - battery_level
+
+        valid_list_description:
+            de:
+              - "<noch keine Funktion gewählt>"
+              - "Ein-/Ausschalten -> bool, r/w (resource: light, group)"
+              - "Helligkeit in Prozent, 0 … 100 -> num, r/w (resource: light, group)"
+              - "Relative Helligkeitsveränderung 0 … 254, w/o (resource: light, group)"
+              - "xy Werte -> list, r/w (resource: light, group)"
+              - "ct Wert -> num, w/o (resource: light, group)"
+              - "Mehrere Funktionen auf einmal -> dict, w/o (resource: light, group)"
+              - "Name -> str, r/w (resource: light, group, scene, sensor)"
+              - "Erreichbar -> bool, r/o (resource: light)"
+              - "Connectivity status -> str, r/o (resource: light)"
+              - "Typ des Leuchtmittels -> str, r/o (resource: light)"
+              - "Model Id des Leuchtmittels -> str, r/o (resource: light)"
+              - "Software Version des Leuchtmittels -> str, r/o (resource: light)"
+              - "Aktivieren einer Szene für Leuchten -> bool w/o (resource: scene)"
+              - "Aktivieren einer Szene (Szenen-Id aus dem Item Wert) für Leuchten -> str w/o (resource: scene)"
+              - "Anpassen einer Szene für Leuchten in der selektierten Gruppe (hue3_id) -> str w/o (resource: group)"
+              - "Benachrichtigung -> str (Werte: none, select, lselect) (resource: light, group)"
+              - "Lichteffekt -> str (Werte: none, colorloop) (resource: light, group)"
+              - "Tageslicht -> bool, r/o (resource: sensor)"
+              - "Tageslicht: sunriseoffset -> num r/o (resource: sensor)"
+              - "Tageslicht: sunsetoffset -> num r/o (resource: sensor)"
+              - "Temperatur -> num r/o (resource: sensor)"
+              - "Präsenz -> bool, r/o (resource: sensor)"
+              - "Sensor 'lightlevel' -> num r/o (resource: sensor)"
+              - "Sensor 'status' -> num, r/o (resource: sensor)"
+              - "Event, welches der Button sendet -> str, r/o (resource: button)"
+              - "True, wenn der Button gerade gedrückt wurde -> bool, r/o (resource: button)"
+              - "True, wenn der Button repeat sendet -> bool, r/o (resource: button)"
+              - "True, wenn der Button kurz gedrückt wurde -> bool, r/o (resource: button)"
+              - "True, wenn der Button lang gedrückt wurde -> bool, r/o (resource: button)"
+              - "Power Status -> str, r/o (resource: device_power)"
+              - "Batterie Ladung in Prozent -> num, r/o (resource: device_power)"
+            en:
+              - "<no function choosen yet>"
+              - "On/Off -> bool, r/w (resource: light, group)"
+              - "Brightness, 0 … 100 -> num, r/w (resource: light, group)"
+              - "Relative change of brightness 0 … 254, w/o (resource: light, group)"
+              - "xy values -> list, r/w (resource: light, group)"
+              - "ct value -> num, w/o (resource: light, group)"
+              - "Multiple functions at once -> dict, w/o (resource: light, group)"
+              - "Name -> str, r/w (resource: light, group, scene, sensor)"
+              - "Reachable -> bool, r/o (resource: light)"
+              - "Connectivity status -> str, r/o (resource: light)"
+              - "Typ of lamp -> str, r/o (resource: light)"
+              - "Model id of lamp -> str, r/o (resource: light)"
+              - "Software version lamp -> str, r/o (resource: light)"
+              - "Activate a scene for lights -> bool w/o (resource: scene)"
+              - "Activate a scene (scene-id from item value) for lights -> str w/o (resource: scene)"
+              - "Change a scene for lights in the selected group (hue3_id) -> str w/o (resource: group)"
+              - "Alert -> str (values: none, select, lselect) (resource: light, group)"
+              - "Effect -> str (values: none, colorloop) (resource: light, group)"
+              - "Sensor 'daylight' -> bool, r/o (resource: sensor)"
+              - "Sensor 'daylight': sunriseoffset -> num r/o (resource: sensor)"
+              - "Sensor 'daylight': sunsetoffset -> num r/o (resource: sensor)"
+              - "Sensor 'temperature' -> num r/o (resource: sensor)"
+              - "Sensor 'presence' -> bool, r/o (resource: sensor)"
+              - "Sensor 'lightlevel' -> num r/o (resource: sensor)"
+              - "Sensor 'status' -> num, r/o (resource: sensor)"
+              - "Event which is sent by the button -> str, r/o (resource: button)"
+              - "True, if the button has just been pressed -> bool, r/o (resource: button)"
+              - "True, if the button sends 'repeat' -> bool, r/o (resource: button)"
+              - "True, if the button was pressed short-> bool, r/o (resource: button)"
+              - "True, if the button was pressed long -> bool, r/o (resource: button)"
+              - "Power Status -> str, r/o (resource: device_power)"
+              - "Battery level in percent -> num, r/o (resource: device_power)"
+
+    hue3_transition_time:
+        type: num
+        description:
+            de: "Zeit für Übergang (in sec)"
+            en: "Time for transition (in sec)"
+
+
+item_structs:
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    light:
+        name: Vorlage-Struktur für eine Hue Leuchte
+        struct: hue3._light_basic
+
+        xy:
+            type: list
+            enforce_updates: True
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: xy
+
+
+    light_ww:
+        name: Vorlage-Struktur für eine Hue Leuchte (warm white)
+        struct: hue3._light_basic
+
+
+    light_xy:
+        name: Vorlage-Struktur für eine Hue Leuchte (Farbe nur über xy)
+        struct: hue3._light_basic
+
+        xy:
+            type: list
+            enforce_updates: True
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: xy
+
+
+    light_extended:
+        name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items
+        struct:
+          - hue3.light
+          - hue3._light_extended
+
+
+    light_ww_extended:
+        name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items (warm white)
+        struct:
+          - hue3.light_ww
+          - hue3._light_extended
+
+
+    light_xy_extended:
+        name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items (Farbe nur über xy)
+        struct:
+          - hue3.light_xy
+          - hue3._light_extended
+
+
+    group_activate_scene:
+        name: Vorlage-Struktur zum aktivieren von Hue Szenen
+        type: str
+        hue3_resource@instance: group
+        hue3_function@instance: activate_scene
+        #hue3_id@instance: 1
+
+    group:
+        name: Vorlage-Struktur für eine Hue Gruppe
+
+        type: foo
+        hue3_resource@instance: group
+        #hue3_id@instance: 1
+
+        onoff:
+            type: bool
+            enforce_updates: True
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: on
+
+        level:
+            type: num
+            enforce_updates: True
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: bri
+
+        alert:
+            type: str
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: alert
+
+
+    _light_basic:
+        name: interne Vorlage-Struktur für eine Hue Leuchte (basic)
+
+        type: foo
+        hue3_resource@instance: light
+        #hue3_id@instance: 1
+
+        onoff:
+            type: bool
+            enforce_updates: True
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: on
+
+        level:
+            type: num
+            enforce_updates: True
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: bri
+
+        level_inc:
+            type: num
+            enforce_updates: True
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: bri_inc
+
+        ct:
+            type: num
+            enforce_updates: True
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: ct
+
+        dict:
+            type: dict
+            enforce_updates: True
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: dict
+
+        alert:
+            type: str
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: alert
+
+        effect:
+            type: str
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: effect
+
+
+    _light_extended:
+        name: interne Vorlage-Struktur für eine Hue Leuchte (extended attributes)
+        lightname:
+            type: str
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: name
+
+        reachable:
+            type: bool
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: reachable
+
+        connectivity:
+            type: str
+            hue3_resource@instance: ..:.
+            hue3_id@instance: ..:.
+            hue3_function@instance: connectivity
+
+#        lighttype:
+#            type: str
+#            hue3_resource@instance: ..:.
+#            hue3_id@instance: ..:.
+#            hue3_function@instance: type
+#
+#        modelid:
+#            type: str
+#            hue3_resource@instance: ..:.
+#            hue3_id@instance: ..:.
+#            hue3_function@instance: modelid
+#
+#        swversion:
+#            type: str
+#            hue3_resource@instance: ..:.
+#            hue3_id@instance: ..:.
+#            hue3_function@instance: swversion
+
+
+
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+

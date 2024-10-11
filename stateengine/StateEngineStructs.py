@@ -25,7 +25,7 @@ __allstructs = []
 
 
 def create(_abitem, struct):
-    _find_result = next((item for item in __allstructs if item["name"] == struct), False)
+    _find_result = next((item for item in __allstructs if item["name"] == struct), {})
     if not _find_result:
         created_struct = StateEngineStruct.SeStructMain(_abitem, struct, global_struct)
         __allstructs.append({'name': struct, 'struct': created_struct})

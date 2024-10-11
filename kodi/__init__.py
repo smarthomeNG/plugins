@@ -40,7 +40,9 @@ if __name__ == '__main__':
 else:
     builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import JSON_MOVE_KEYS
+from lib.model.sdp.globals import (JSON_MOVE_KEYS, PLUGIN_ATTR_CMD_CLASS, PLUGIN_ATTR_PROTOCOL,
+                                   PROTO_JSONRPC, PLUGIN_ATTR_CONNECTION, CONN_NET_TCP_CLI)
+
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 
 # from .webif import WebInterface
@@ -81,11 +83,16 @@ class kodi(SmartDevicePlugin):
           another place, in ``commands.py`` and/or the item configuration.
     """
 
-    PLUGIN_VERSION = '1.7.2'
+    PLUGIN_VERSION = '1.7.3'
 
     def _set_device_defaults(self):
         self._use_callbacks = True
-        self._parameters[JSON_MOVE_KEYS] = ['playerid', 'properties']
+        self._parameters.update({
+            JSON_MOVE_KEYS: ['playerid', 'properties'],
+            PLUGIN_ATTR_CONNECTION: CONN_NET_TCP_CLI,
+            PLUGIN_ATTR_PROTOCOL: PROTO_JSONRPC,
+            PLUGIN_ATTR_CMD_CLASS: 'SDPCommandJSON'
+        })
 
     def _post_init(self):
         self._activeplayers = []

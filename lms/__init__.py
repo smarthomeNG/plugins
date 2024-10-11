@@ -40,8 +40,9 @@ if __name__ == '__main__':
 else:
     builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import (CUSTOM_SEP, PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_RECURSIVE, PLUGIN_ATTR_CONN_TERMINATOR)
+from lib.model.sdp.globals import (CUSTOM_SEP, PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_RECURSIVE, PLUGIN_ATTR_CMD_CLASS, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_CONN_TERMINATOR)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
+from lib.model.sdp.command import SDPCommandParseStr
 
 import urllib.parse
 
@@ -49,7 +50,7 @@ import urllib.parse
 class lms(SmartDevicePlugin):
     """ Device class for Logitech Mediaserver/Squeezebox function. """
 
-    PLUGIN_VERSION = '1.5.2'
+    PLUGIN_VERSION = '1.5.3'
 
     def _set_device_defaults(self):
         self.custom_commands = 1
@@ -58,6 +59,9 @@ class lms(SmartDevicePlugin):
         self._custom_patterns = {1: '(?:[0-9a-fA-F]{2}[-:]){5}[0-9a-fA-F]{2}', 2: '', 3: ''}
         self._use_callbacks = True
         self._parameters[PLUGIN_ATTR_RECURSIVE] = 1
+        self._parameters[PLUGIN_ATTR_CMD_CLASS] = SDPCommandParseStr
+        self._parameters[PLUGIN_ATTR_CONNECTION] = 'net_tcp_client'
+
         self._parameters['web_port'] = self.get_parameter_value('web_port')
         if self.get_parameter_value('web_host') == '':
             host = self._parameters.get(PLUGIN_ATTR_NET_HOST)
@@ -94,7 +98,7 @@ class lms(SmartDevicePlugin):
         if not custom:
             return
 
-        if command == 'player.info.playlists.names':
+        if command == f'player.info.playlists.names{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command playlist names {command} data {data} value {value} custom {custom} by {by}")
             trigger_read('player.playlist.id')
             trigger_read('player.playlist.name')
@@ -102,7 +106,7 @@ class lms(SmartDevicePlugin):
         if command == 'playlist.rename':
             trigger_read('info.playlists.names')
         # set alarm
-        if command == 'player.control.alarms':
+        if command == f'player.control.alarms{CUSTOM_SEP}{custom}':
             # This does not really work currently. The created string is somehow correct.
             # However, much more logic has to be included to add/update/delete alarms, etc.
             try:
@@ -118,7 +122,7 @@ class lms(SmartDevicePlugin):
                 self.logger.error(f"Error setting alarm: {e}")
 
         # set album art URL
-        if command == 'player.info.album':
+        if command == f'player.info.album{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command album {command} data {data} value {value} custom {custom} by {by}")
             host = self._parameters['web_host']
             port = self._parameters['web_port']
@@ -130,17 +134,17 @@ class lms(SmartDevicePlugin):
             self._dispatch_callback('player.info.albumarturl' + CUSTOM_SEP + custom, url, by)
 
         # set playlist ID
-        if command == 'player.playlist.load':
+        if command == f'player.playlist.load{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command load {command} data {data} value {value} custom {custom} by {by}")
             trigger_read('player.playlist.id')
             trigger_read('player.control.playmode')
 
-        if command == 'player.playlist.id':
+        if command == f'player.playlist.id{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command id {command} data {data} value {value} custom {custom} by {by}")
             trigger_read('player.playlist.name')
 
         # update on new song
-        if command == 'player.info.title':
+        if command == f'player.info.title{CUSTOM_SEP}{custom}':
             # trigger_read('player.control.playmode')
             # trigger_read('player.playlist.index')
             trigger_read('player.info.duration')
@@ -150,7 +154,7 @@ class lms(SmartDevicePlugin):
             trigger_read('player.info.path')
 
         # update on new song
-        if command == 'player.control.playpause' and value:
+        if command == f'player.control.playpause{CUSTOM_SEP}{custom}' and value:
             trigger_read('player.control.playmode')
             trigger_read('player.info.duration')
             trigger_read('player.info.album')
@@ -159,7 +163,7 @@ class lms(SmartDevicePlugin):
             trigger_read('player.info.path')
 
         # update on new song
-        if command == 'player.playlist.index':
+        if command == f'player.playlist.index{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command index {command} data {data} value {value} custom {custom} by {by}")
             trigger_read('player.control.playmode')
             trigger_read('player.info.duration')
@@ -170,12 +174,12 @@ class lms(SmartDevicePlugin):
             trigger_read('player.info.title')
 
         # update current time info
-        if command in ['player.control.forward', 'player.control.rewind']:
+        if command in [f'player.control.forward{CUSTOM_SEP}{custom}', f'player.control.rewind{CUSTOM_SEP}{custom}']:
             self.logger.debug(f"Got command forward/rewind {command} data {data} value {value} custom {custom} by {by}")
             trigger_read('player.control.time')
 
         # update play and stop items based on playmode
-        if command == 'player.control.playmode':
+        if command == f'player.control.playmode{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command playmode {command} data {data} value {value} custom {custom} by {by}")
             mode = data.split("mode")[-1].strip()
             mode = mode.split("playlist")[-1].strip()
@@ -186,7 +190,7 @@ class lms(SmartDevicePlugin):
             trigger_read('player.control.time')
 
         # update play and stop items based on playmode
-        if command == 'player.control.stop' or (command == 'player.control.playpause' and not value):
+        if command == f'player.control.stop{CUSTOM_SEP}{custom}' or (command == f'player.control.playpause{CUSTOM_SEP}{custom}' and not value):
             self.logger.debug(f"Got command stop or pause {command} data {data} value {value} custom {custom} by {by}")
             trigger_read('player.control.playmode')
 

@@ -14,7 +14,7 @@ plugin:
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
     version: 1.7.2                  # Plugin version (must match the version specified in __init__.py)
-    sh_minversion: 1.5              # minimum shNG version to use this plugin
+    sh_minversion: '1.5'              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True            # plugin supports multi instance
     restartable: true

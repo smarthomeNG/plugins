@@ -47,6 +47,10 @@ class SeStruct(StateEngineTools.SeItemChild):
     def id(self):
         return self.struct_path
 
+    @property
+    def path(self):
+        return self.struct_path
+
     def return_children(self):
         for child in self._conf.keys():
             yield child
@@ -61,7 +65,7 @@ class SeStruct(StateEngineTools.SeItemChild):
         self._conf = {}
         self._full_conf = {}
         self._struct = None
-        self._global_struct = global_struct # copy.deepcopy(self.itemsApi.return_struct_definitions())
+        self._global_struct = global_struct  # copy.deepcopy(self.itemsApi.return_struct_definitions())
         self._struct_rest = None
         self._children_structs = []
         self._parent_struct = None
@@ -103,7 +107,7 @@ class SeStruct(StateEngineTools.SeItemChild):
         raise NotImplementedError("Class {} doesn't implement get()".format(self.__class__.__name__))
 
 
-# Class representing struct child
+# Class representing struct
 class SeStructMain(SeStruct):
     # Initialize the action
     # abitem: parent SeItem instance
@@ -160,7 +164,7 @@ class SeStructMain(SeStruct):
                 self.create_children()
                 self.valid_se_use = True if "se_use" in self._full_conf else self.valid_se_use
             else:
-                _issue = "Item '{}' does not exist".format( self._struct_rest)
+                _issue = "Item '{}' does not exist".format(self._struct_rest)
                 self._abitem.update_issues('struct', {self.struct_path: {'issue': _issue}})
                 self._log_error("{} in struct {}", _issue, self._struct)
         except Exception as ex:
@@ -184,7 +188,8 @@ class SeStructChild(SeStruct):
 
     def get(self):
         try:
-            self._conf = self.dict_get(self._global_struct.get(self._struct) or {}, self._struct_rest, self._global_struct.get(self._struct) or {})
+            self._conf = self.dict_get(self._global_struct.get(self._struct) or {},
+                                       self._struct_rest, self._global_struct.get(self._struct) or {})
         except Exception:
             self._conf = {}
 
@@ -199,12 +204,14 @@ class SeStructParent(SeStruct):
         #self._log_debug("Struct path {} for {}", self.struct_path, __class__.__name__)
 
     def __repr__(self):
-        return "SeStructParent {}".format(self.struct_path, self._conf)
+        return "SeStructParent {}".format(self.struct_path)
 
     def get(self):
         try:
             parent_name = self.struct_path.split(".")[-2]
-            _temp_dict = self.dict_get(self._global_struct.get(self._struct) or {}, parent_name, self._global_struct.get(self._struct) or {})
+            self.struct_path = self.struct_path.rsplit('.', 1)[0]
+            _temp_dict = self.dict_get(self._global_struct.get(self._struct) or {}, parent_name,
+                                       self._global_struct.get(self._struct) or {})
             _temp_dict = collections.OrderedDict(
                 {key: value for (key, value) in _temp_dict.items() if not isinstance(value, collections.abc.Mapping)})
             self._conf = _temp_dict

@@ -6,9 +6,10 @@ plugin:
     tester: OnkelAndy
     state: develop
     keywords: iot device mediacenter kodi xmbc sdp
-    version: 1.7.2
-    sh_minversion: 1.9.5
-    py_minversion: 3.7
+    version: 1.7.3
+    sh_minversion: '1.9.5'
+    py_minversion: '3.7'
+    sdp_minversion: '1.0.3'
     multi_instance: true
     restartable: true
     classname: kodi
@@ -30,6 +31,20 @@ parameters:
         description:
             de: Item-Pfad für das Suspend-Item
             en: item path for suspend switch item
+
+    delay_initial_read:
+        type: num
+        default: 10
+        description:
+            de: 'Verzögerung für das erstmalige Lesen beim Start (in Sekunden)'
+            en: 'delay for initial command read on start (in seconds)'
+
+    resume_initial_read:
+        type: bool
+        defaul: true
+        description:
+            de: 'Bei resume vom Plugin erstmaliges Lesen erneut durchführen'
+            en: 'Repeat initial read on resume'
 
     timeout:
         type: num
@@ -87,7 +102,7 @@ parameters:
             de: Anzahl von Durchgängen vor Verbindungsabbruch oder Suspend-Modus
             en: number of connect rounds before giving up / entering suspend mode
 
-    message_timeout:
+    send_timeout:
         type: num
         default: 5
 
@@ -95,7 +110,7 @@ parameters:
             de: Timeout für Antwort auf Protokollebene
             en: timeout for reply at protocol level
 
-    message_repeat:
+    send_retries:
         type: num
         default: 3
 
@@ -110,39 +125,6 @@ parameters:
         description:
             de: Port für Netzwerkverbindung
             en: network port
-
-    conn_type:
-        type: str
-        default: net_tcp_client
-        valid_list:
-        -   ''
-        -   net_tcp_client
-
-        description:
-            de: Verbindungstyp
-            en: connection type
-
-    protocol:
-        type: str
-        default: jsonrpc
-        valid_list:
-        -   ''
-        -   jsonrpc
-
-        description:
-            de: Protokolltyp für Verbindung
-            en: protocol type for connection
-
-    command_class:
-        type: str
-        default: SDPCommandJSON
-        valid_list:
-        -   SDPCommand
-        -   SDPCommandJSON
-
-        description:
-            de: Klasse für Verarbeitung von Kommandos
-            en: class for command processing
 
 item_attributes:
 

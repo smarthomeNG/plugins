@@ -11,13 +11,13 @@ plugin:
     keywords: modbus_tcp modbus smartmeter inverter heatpump
     #documentation: http://smarthomeng.de/user/plugins/modbus_tcp/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1154368-einbindung-von-modbus-tcp
-    version: 1.0.10                # Plugin version
-    sh_minversion: 1.8             # minimum shNG version to use this plugin
+    version: 1.0.13                # Plugin version
+    sh_minversion: '1.10'             # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    py_minversion: 3.6
+    py_minversion: '3.6'
     # py_maxversion:               # maximum Python version to use for this plugin (leave empty if latest)
-    multi_instance: True           # plugin supports multi instance
-    restartable: unknown
+    multi_instance: true           # plugin supports multi instance
+    restartable: true
     classname: modbus_tcp          # class containing the plugin
 
 parameters:
@@ -26,6 +26,7 @@ parameters:
         description:
             de: 'IP Adresse des Modbus-Geraetes'
             en: 'IP address from the modbus-device'
+        mandatory: true
 
     port:
         type: int
@@ -34,6 +35,7 @@ parameters:
         description:
             de: 'modbus Port'
             en: 'modbus port'
+        mandatory: true
 
     cycle:
         type: int
@@ -41,7 +43,7 @@ parameters:
         valid_min: 0
         description:
             de: 'Update Zyklus in Sekunden. Wenn der Wert 0 ist, wird keine Abfrage über cycle ausgeführt'
-            en: 'Update cycle in seconds. If value is 0 then noch query will be made by means of cycle'
+            en: 'Update cycle in seconds. If value is 0 then no query will be made by means of cycle'
 
     crontab:
         type: str
@@ -50,11 +52,19 @@ parameters:
             en: 'Update by means of a crontab'
 
     slaveUnit:
-        type: num
+        type: int
         default: 1
         description:
             de: 'Slave-Addresse der zu lesenden Modbus-Einheit'
             en: 'slave-address of the Modbus-Unit to read'
+
+    pause_item:
+        type: str
+        default: ''
+        description:
+            de: 'Item, um die Ausführung des Plugins zu steuern'
+            en: 'item for controlling plugin execution'
+
 
 item_attributes:
     modBusObjectType:
@@ -102,23 +112,23 @@ item_attributes:
 
     modBusByteOrder:
         type: str
-        default: 'Endian.Big'
+        default: 'Endian.BIG'
         description:
-            de: 'Endian.Big oder Endian.Little'
-            en: 'Endian.Big or Endian.Little'
+            de: 'Endian.BIG oder Endian.LITTLE'
+            en: 'Endian.BIG or Endian.LITTLE'
         valid_list:
-            - 'Endian.Big'
-            - 'Endian.Little'
+            - 'Endian.BIG'
+            - 'Endian.LITTLE'
 
     modBusWordOrder:
         type: str
-        default: 'Endian.Big'
+        default: 'Endian.BIG'
         description:
-            de: 'Endian.Big oder Endian.Little'
-            en: 'Endian.Big or Endian.Little'
+            de: 'Endian.BIG oder Endian.LITTLE'
+            en: 'Endian.BIG or Endian.LITTLE'
         valid_list:
-            - 'Endian.Big'
-            - 'Endian.Little'
+            - 'Endian.BIG'
+            - 'Endian.LITTLE'
 
     modBusFactor:
         type: num

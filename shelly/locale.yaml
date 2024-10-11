@@ -22,4 +22,3 @@ plugin_translations:
     'Unbehandelter Status':         {'de': '=', 'en': 'Unhandled status'}
     'Unbehandelter Substatus':      {'de': '=', 'en': 'Unhandled sub-status'}
     'Unbehandelter {gen} Status':   {'de': '=', 'en': 'Unhandled {gen} status'}
-

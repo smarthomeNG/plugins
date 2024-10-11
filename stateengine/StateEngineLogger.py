@@ -92,7 +92,6 @@ class SeLogger:
             os.makedirs(log_directory)
         return log_directory
 
-
     # Remove old log files (by scheduler)
     @staticmethod
     def remove_old_logfiles():
@@ -132,6 +131,7 @@ class SeLogger:
         self.__name = 'stateengine.{}'.format(item.property.path)
         self.__section = item.property.path.replace(".", "_").replace("/", "")
         self.__indentlevel = 0
+        self.__indentprefix = ""
         if manual:
             self.__log_level_as_num = 2
         else:
@@ -141,7 +141,6 @@ class SeLogger:
         self.__logerror = False
         self.__filename = ""
         self.update_logfile()
-
 
     # Update name logfile if required
     def update_logfile(self):
@@ -153,7 +152,10 @@ class SeLogger:
     # Increase indentation level
     # by: number of levels to increase
     def increase_indent(self, by=1):
-        self.__indentlevel += by
+        if isinstance(by, int):
+            self.__indentlevel += by
+        else:
+            self.__indentprefix = by
 
     # Decrease indentation level
     # by: number of levels to decrease
@@ -172,7 +174,7 @@ class SeLogger:
             indent = "\t" * self.__indentlevel
             if args:
                 text = text.format(*args)
-            logtext = "{0}{1} {2}\r\n".format(datetime.datetime.now(), indent, text)
+            logtext = "{0} {1}{2}{3}\r\n".format(datetime.datetime.now(), self.__indentprefix, indent, text)
             try:
                 with open(self.__filename, mode="a", encoding="utf-8") as f:
                     f.write(logtext)
@@ -196,7 +198,7 @@ class SeLogger:
     def info(self, text, *args):
         self.log(1, text, *args)
         indent = "\t" * self.__indentlevel
-        text = '{}{}'.format(indent, text)
+        text = '{}{}{}'.format(self.__indentprefix, indent, text)
         if args:
             text = text.format(*args)
         self.logger.info(text)
@@ -207,7 +209,7 @@ class SeLogger:
     def debug(self, text, *args):
         self.log(2, text, *args)
         indent = "\t" * self.__indentlevel
-        text = '{}{}'.format(indent, text)
+        text = '{}{}{}'.format(self.__indentprefix, indent, text)
         if args:
             text = text.format(*args)
         self.logger.debug(text)
@@ -218,7 +220,7 @@ class SeLogger:
     def develop(self, text, *args):
         self.log(3, "DEV: " + text, *args)
         indent = "\t" * self.__indentlevel
-        text = '{}{}'.format(indent, text)
+        text = '{}{}{}'.format(self.__indentprefix, indent, text)
         if args:
             text = text.format(*args)
         self.logger.log(StateEngineDefaults.VERBOSE, text)
@@ -230,7 +232,7 @@ class SeLogger:
     def warning(self, text, *args):
         self.log(1, "WARNING: " + text, *args)
         indent = "\t" * self.__indentlevel
-        text = '{}{}'.format(indent, text)
+        text = '{}{}{}'.format(self.__indentprefix, indent, text)
         if args:
             text = text.format(*args)
         self.logger.warning(text)
@@ -242,7 +244,7 @@ class SeLogger:
     def error(self, text, *args):
         self.log(1, "ERROR: " + text, *args)
         indent = "\t" * self.__indentlevel
-        text = '{}{}'.format(indent, text)
+        text = '{}{}{}'.format(self.__indentprefix, indent, text)
         if args:
             text = text.format(*args)
         self.logger.error(text)

@@ -9,7 +9,7 @@ plugin:
     tester: nobody
     version: 1.0.2                 # Plugin version
     state: ready
-    sh_minversion: 1.6             # minimum shNG version to use this plugin
+    sh_minversion: '1.6'             # minimum shNG version to use this plugin
 #   sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     restartable: True
     multi_instance: False          # plugin supports multi instance

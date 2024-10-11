@@ -59,21 +59,29 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__triggeredbynegate = None
         self.__agenegate = None
         self.__error = None
+        self.__state = None
         self.__itemClass = Item
 
     def __repr__(self):
         return "SeCondition 'item': {}, 'status': {}, 'eval': {}, " \
-               "'status_eval': {}, 'value': {}".format(self.__item, self.__status, self.__eval, self.__status_eval, self.__value)
+               "'status_eval': {}, 'value': {}".format(self.__item, self.__status, self.__eval,
+                                                       self.__status_eval, self.__value)
 
-    def check_items(self, check, value=None, item_state=None):
+    def check_items(self, check, value=None, state=None, use=None):
         item_issue, status_issue, eval_issue, status_eval_issue = None, None, None, None
         item_value, status_value, eval_value, status_eval_value = None, None, None, None
+        if state and use is None:
+            use = state.use.get()
+        if check == "attribute":
+            _orig_value = value
+        else:
+            _orig_value = None
         if check == "se_item" or (check == "attribute" and self.__item is None and self.__eval is None):
             if value is None:
-                value = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self.__name)
-            if value is not None:
+                value = StateEngineTools.find_attribute(self._sh, state, "se_item_" + self.__name, 0, use)
+            if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
-                if isinstance(value, str) and value.startswith("eval:"):
+                if value.startswith("eval:"):
                     _, _, value = value.partition(":")
                     self.__eval = value
                     self.__item = None
@@ -87,9 +95,11 @@ class SeCondition(StateEngineTools.SeItemChild):
                     self.__item = value
                 item_value = value
         if check == "se_status" or (check == "attribute" and self.__status is None and self.__status_eval is None):
+            if check == "attribute":
+                value = _orig_value
             if value is None:
-                value = StateEngineTools.find_attribute(self._sh, item_state, "se_status_" + self.__name)
-            if value is not None:
+                value = StateEngineTools.find_attribute(self._sh, state, "se_status_" + self.__name, 0, use)
+            if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
                 if isinstance(value, str) and value.startswith("eval:"):
                     _, _, value = value.partition(":")
@@ -107,8 +117,8 @@ class SeCondition(StateEngineTools.SeItemChild):
             status_value = value
         if check == "se_eval" or (check == "attribute" and self.__eval is None):
             if value is None:
-                value = StateEngineTools.find_attribute(self._sh, item_state, "se_eval_" + self.__name)
-            if value is not None:
+                value = StateEngineTools.find_attribute(self._sh, state, "se_eval_" + self.__name, 0, use)
+            if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
                 if value.startswith("eval:"):
                     _, _, value = value.partition("eval:")
@@ -120,9 +130,11 @@ class SeCondition(StateEngineTools.SeItemChild):
                 self.__eval = value
             eval_value = value
         if check == "se_status_eval" or (check == "attribute" and self.__status_eval is None):
+            if check == "attribute":
+                value = _orig_value
             if value is None:
-                value = StateEngineTools.find_attribute(self._sh, item_state, "se_status_eval_" + self.__name)
-            if value is not None:
+                value = StateEngineTools.find_attribute(self._sh, state, "se_status_eval_" + self.__name, 0, use)
+            if isinstance(value, str):
                 match = re.match(r'^(.*):', value)
                 if value.startswith("eval:"):
                     _, _, value = value.partition("eval:")
@@ -214,9 +226,10 @@ class SeCondition(StateEngineTools.SeItemChild):
         return result
 
     # Complete condition (do some checks, cast value, min and max based on item or eval data types)
-    # item_state: item to read from
+    # state: state (item) to read from
     # abitem_object: Related SeItem instance for later determination of current age and current delay
-    def complete(self, item_state):
+    def complete(self, state, use):
+        self.__state = state
         # check if it is possible to complete this condition
         if self.__min.is_empty() and self.__max.is_empty() and self.__value.is_empty() \
                 and self.__agemin.is_empty() and self.__agemax.is_empty() \
@@ -275,21 +288,20 @@ class SeCondition(StateEngineTools.SeItemChild):
                 self.__eval = self._abitem.get_update_original_caller
             elif self.__name == "original_source":
                 self.__eval = self._abitem.get_update_original_source
-
-        self.check_items("attribute", None, item_state)
+        self.check_items("attribute", None, state, use)
 
         # now we should have either 'item' or '(status)eval' set. If not, raise ValueError
         if all(item is None for item in [self.__item, self.__status, self.__eval, self.__status_eval]):
             raise ValueError("Neither 'item' nor 'status' nor '(status)eval' given!")
 
-        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval])\
-           and not self.__changedby.is_empty() and self.__changedbynegate is None:
+        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval]) \
+                and not self.__changedby.is_empty() and self.__changedbynegate is None:
             self.__changedbynegate = False
-        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval])\
-           and not self.__updatedby.is_empty() and self.__updatedbynegate is None:
+        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval]) \
+                and not self.__updatedby.is_empty() and self.__updatedbynegate is None:
             self.__updatedbynegate = False
-        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval])\
-           and not self.__triggeredby.is_empty() and self.__triggeredbynegate is None:
+        if any(item is not None for item in [self.__item, self.__status, self.__eval, self.__status_eval]) \
+                and not self.__triggeredby.is_empty() and self.__triggeredbynegate is None:
             self.__triggeredbynegate = False
 
         # cast stuff
@@ -301,8 +313,9 @@ class SeCondition(StateEngineTools.SeItemChild):
             elif self.__name in ("weekday", "sun_azimut", "sun_altitude", "age", "delay", "random", "month"):
                 self.__cast_all(StateEngineTools.cast_num)
             elif self.__name in (
-                    "laststate", "laststate_id", "laststate_name", "lastconditionset", "lastconditionset_id", "lastconditionset_name",
-                    "previousstate", "previousstate_name", "previousstate_id", "previousconditionset", "previousconditionset_id", "previousconditionset_name",
+                    "laststate", "laststate_id", "laststate_name", "lastconditionset", "lastconditionset_id",
+                    "lastconditionset_name", "previousstate", "previousstate_name", "previousstate_id",
+                    "previousconditionset", "previousconditionset_id", "previousconditionset_name",
                     "previousstate_conditionset", "previousstate_conditionset_id", "previousstate_conditionset_name",
                     "trigger_item", "trigger_caller", "trigger_source", "trigger_dest", "original_item",
                     "original_caller", "original_source"):
@@ -357,50 +370,80 @@ class SeCondition(StateEngineTools.SeItemChild):
 
     # Write condition to logger
     def write_to_logger(self):
+        def write_item(item_type, value):
+            item_list = []
+            if value is not None:
+                if isinstance(value, list):
+                    for i in value:
+                        try:
+                            itm = i.property.path
+                        except Exception:
+                            itm = i
+                        item_list.append(itm)
+                        self._log_info("{0}: {1} ({2})", item_type, self.__name, itm)
+                else:
+                    try:
+                        itm = value.property.path
+                    except Exception:
+                        itm = value
+                    item_list.append(itm)
+                    self._log_info("{0}: {1} ({2})", item_type, self.__name, itm)
+            item_list = StateEngineTools.flatten_list(item_list)
+            item_list = None if len(item_list) == 0 else str(item_list[0]) if len(item_list) == 1 else str(item_list)
+            return item_list
+
+        def write_eval(eval_type, value):
+            eval_list = []
+            if value is not None:
+                if isinstance(value, list):
+                    for e in value:
+                        name = StateEngineTools.get_eval_name(e)
+                        eval_list.append(name)
+                        self._log_info("{0}: {1}", eval_type, name)
+                else:
+                    name = StateEngineTools.get_eval_name(value)
+                    eval_list.append(name)
+                    self._log_info("{0}: {1}", eval_type, name)
+            eval_list = StateEngineTools.flatten_list(eval_list)
+            eval_list = None if len(eval_list) == 0 else str(eval_list[0]) if len(eval_list) == 1 else str(eval_list)
+            return str(eval_list)
+
         if self.__error is not None:
             self._log_warning("error: {0}", self.__error)
-        if self.__item is not None:
-            if isinstance(self.__item, list):
-                for i in self.__item:
-                    self._log_info("item: {0} ({1})", self.__name, i.property.path)
-            else:
-                self._log_info("item: {0} ({1})", self.__name, self.__item.property.path)
-        if self.__status is not None:
-            if isinstance(self.__status, list):
-                for i in self.__status:
-                    self._log_info("status item: {0} ({1})", self.__name, i.property.path)
-            else:
-                self._log_info("status item: {0} ({1})", self.__name, self.__status.property.path)
-        if self.__eval is not None:
-            if isinstance(self.__eval, list):
-                for e in self.__eval:
-                    self._log_info("eval: {0}", StateEngineTools.get_eval_name(e))
-            else:
-                self._log_info("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
-        if self.__status_eval is not None:
-            if isinstance(self.__status_eval, list):
-                for e in self.__status_eval:
-                    self._log_info("status eval: {0}", StateEngineTools.get_eval_name(e))
-            else:
-                self._log_info("status eval: {0}", StateEngineTools.get_eval_name(self.__status_eval))
-        self.__value.write_to_logger()
-        self.__min.write_to_logger()
-        self.__max.write_to_logger()
+        item_result = self.__item
+        status_result = self.__status
+        item = write_item("item", item_result)
+        status = write_item("status item", status_result)
+        eval_result = self.__eval
+        status_eval_result = self.__status_eval
+        eval_result = write_eval("eval", eval_result)
+        status_eval_result = write_eval("status", status_eval_result)
+        val = self.__value.write_to_logger()
+        value_result = self.__value.get_for_webif(val)
+        min_result = self.__min.write_to_logger()
+        max_result = self.__max.write_to_logger()
         if self.__negate is not None:
             self._log_info("negate: {0}", self.__negate)
-        self.__agemin.write_to_logger()
-        self.__agemax.write_to_logger()
+        agemin = self.__agemin.write_to_logger()
+        agemax = self.__agemax.write_to_logger()
         if self.__agenegate is not None:
             self._log_info("age negate: {0}", self.__agenegate)
-        self.__changedby.write_to_logger()
+        changedby = self.__changedby.write_to_logger()
         if self.__changedbynegate is not None and not self.__changedby.is_empty():
             self._log_info("changedby negate: {0}", self.__changedbynegate)
-        self.__updatedby.write_to_logger()
+        updatedby = self.__updatedby.write_to_logger()
         if self.__updatedbynegate is not None and not self.__updatedby.is_empty():
             self._log_info("updatedby negate: {0}", self.__updatedbynegate)
-        self.__triggeredby.write_to_logger()
+        triggeredby = self.__triggeredby.write_to_logger()
         if self.__updatedbynegate is not None and not self.__triggeredby.is_empty():
             self._log_info("triggeredby negate: {0}", self.__triggeredbynegate)
+        return {self.name: {'item': item, 'status': status, 'eval': eval_result, 'status_eval': status_eval_result,
+                            'value': value_result, 'min': str(min_result), 'max': str(max_result), 'agemin': str(agemin),
+                            'agemax': str(agemax), 'negate': str(self.__negate), 'agenegate': str(self.__agenegate),
+                            'changedby': str(changedby), 'updatedby': str(updatedby),
+                            'triggeredby': str(triggeredby), 'triggeredbynegate': str(self.__triggeredbynegate),
+                            'changedbynegate': str(self.__changedbynegate),
+                            'updatedbynegate': str(self.__updatedbynegate), 'current': {}, 'match': {}}}
 
     # Cast 'value', 'min' and 'max' using given cast function
     # cast_func: cast function to use
@@ -430,12 +473,8 @@ class SeCondition(StateEngineTools.SeItemChild):
                 self._log_develop("Ignoring value None for conversion")
                 return convert_value, convert_current
             _oldvalue = convert_value
-            try:
-                if isinstance(convert_value, re._pattern_type):
-                    return convert_value, convert_current
-            except Exception:
-                if isinstance(convert_value, re.Pattern):
-                    return convert_value, convert_current
+            if isinstance(convert_value, re.Pattern):
+                return convert_value, convert_current
             if isinstance(convert_current, bool):
                 self.__value.set_cast(StateEngineTools.cast_bool)
                 convert_value = StateEngineTools.cast_bool(convert_value)
@@ -454,108 +493,100 @@ class SeCondition(StateEngineTools.SeItemChild):
             else:
                 self.__value.set_cast(StateEngineTools.cast_str)
                 convert_value = StateEngineTools.cast_str(convert_value)
-                convert_current = StateEngineTools.cast_str(convert_value)
-            if not type(_oldvalue) == type(convert_value):
+                convert_current = StateEngineTools.cast_str(convert_current)
+            if not type(_oldvalue) is type(convert_value):
                 self._log_debug("Value {} was type {} and therefore not the same"
                                 " type as item value {}. It got converted to {}.",
                                 _oldvalue, type(_oldvalue), convert_current, type(convert_value))
             return convert_value, convert_current
 
-        current = self.__get_current(eval_type='changedby') if valuetype == "changedby" else\
-            self.__get_current(eval_type='updatedby') if valuetype == "updatedby" else\
-            self.__get_current(eval_type='triggeredby') if valuetype == "triggeredby" else\
+        current = self.__get_current(eval_type='changedby') if valuetype == "changedby" else \
+            self.__get_current(eval_type='updatedby') if valuetype == "updatedby" else \
+            self.__get_current(eval_type='triggeredby') if valuetype == "triggeredby" else \
             self.__get_current(eval_type='value')
-        negate = self.__changedbynegate if valuetype == "changedby" else\
-            self.__updatedbynegate if valuetype == "updatedby" else\
-            self.__triggeredbynegate if valuetype == "triggeredby" else\
+        negate = self.__changedbynegate if valuetype == "changedby" else \
+            self.__updatedbynegate if valuetype == "updatedby" else \
+            self.__triggeredbynegate if valuetype == "triggeredby" else \
             self.__negate
-
+        _key_current = ['{}'.format(state.id), 'conditionsets', '{}'.format(
+            self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name),
+                        'current', '{}'.format(valuetype)]
+        _key_match = ['{}'.format(state.id), 'conditionsets', '{}'.format(
+            self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name),
+                      'match', '{}'.format(valuetype)]
         if isinstance(value, list):
             text = "Condition '{0}': {1}={2} negate={3} current={4}"
-            _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'current', '{}'.format(valuetype)]
-            self._abitem.update_webif(_key, str(current))
+            self._abitem.update_webif(_key_current, str(current))
             self._log_info(text, self.__name, valuetype, value, negate, current)
             self._log_increase_indent()
             for i, element in enumerate(value):
                 regex_result = None
                 regex_check = False
-                if valuetype == "value" and type(element) != type(current) and current is not None:
+                if valuetype == "value" and type(element) is not type(current) and current is not None:
                     element, current = __convert(element, current)
-                try:
-                    if isinstance(element, re._pattern_type):
-                        regex_result = element.fullmatch(str(current))
-                        regex_check = True
-                except Exception:
-                    if isinstance(element, re.Pattern):
-                        regex_result = element.fullmatch(str(current))
-                        regex_check = True
+                if isinstance(element, re.Pattern):
+                    regex_result = element.fullmatch(str(current))
+                    regex_check = True
                 if negate:
-                    if (regex_result is not None and regex_check is True)\
-                       or (current == element and regex_check is False):
+                    if (regex_result is not None and regex_check is True) \
+                            or (current == element and regex_check is False):
                         self._log_debug("{0} found but negated -> not matching", element)
-                        _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', '{}'.format(valuetype)]
-                        self._abitem.update_webif(_key, 'no')
+                        self._abitem.update_webif(_key_match, 'no')
                         return False
                 else:
-                    if (regex_result is not None and regex_check is True)\
-                       or (current == element and regex_check is False):
+                    if (regex_result is not None and regex_check is True) \
+                            or (current == element and regex_check is False):
                         self._log_debug("{0} found -> matching", element)
-                        _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', '{}'.format(valuetype)]
-                        self._abitem.update_webif(_key, 'yes')
+                        self._abitem.update_webif(_key_match, 'yes')
                         return True
                 if regex_check is True:
-                    self._log_debug("Regex '{}' result: {}, element {}", element, regex_result)
+                    self._log_debug("Regex '{0}' result: {1}.", element, regex_result)
 
             if negate:
                 self._log_debug("{0} not in list -> matching", current)
-                _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', '{}'.format(valuetype)]
-                self._abitem.update_webif(_key, 'yes')
+                self._abitem.update_webif(_key_match, 'yes')
                 return True
             else:
                 self._log_debug("{0} not in list -> not matching", current)
-                _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', '{}'.format(valuetype)]
-                self._abitem.update_webif(_key, 'no')
+                self._abitem.update_webif(_key_match, 'no')
                 return False
         else:
             regex_result = None
             regex_check = False
             # If current and value have different types, convert both to string
-            if valuetype == "value" and type(value) != type(current) and current is not None:
+            if valuetype == "value" and type(value) is not type(current) and current is not None:
                 value, current = __convert(value, current)
             text = "Condition '{0}': {1}={2} negate={3} current={4}"
-            _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'current', valuetype]
-            self._abitem.update_webif(_key, str(current))
+            self._abitem.update_webif(_key_current, str(current))
             self._log_info(text, self.__name, valuetype, value, negate, current)
             self._log_increase_indent()
-            try:
-                if isinstance(value, re._pattern_type):
-                    regex_result = value.fullmatch(str(current))
-                    regex_check = True
-            except Exception:
-                if isinstance(value, re.Pattern):
-                    regex_result = value.fullmatch(str(current))
-                    regex_check = True
+            if isinstance(value, re.Pattern):
+                regex_result = value.fullmatch(str(current))
+                regex_check = True
             if negate:
-                if (regex_result is None and regex_check is True)\
-                   or (current != value and regex_check is False):
+                if (regex_result is None and regex_check is True) \
+                        or (current != value and regex_check is False):
                     self._log_debug("not OK but negated -> matching")
-                    _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', '{}'.format(valuetype)]
-                    self._abitem.update_webif(_key, 'yes')
+                    self._abitem.update_webif(_key_match, 'yes')
                     return True
             else:
-                if (regex_result is not None and regex_check is True)\
-                   or (current == value and regex_check is False):
+                if (regex_result is not None and regex_check is True) \
+                        or (current == value and regex_check is False):
                     self._log_debug("OK -> matching")
-                    _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', '{}'.format(valuetype)]
-                    self._abitem.update_webif(_key, 'yes')
+                    self._abitem.update_webif(_key_match, 'yes')
                     return True
             self._log_debug("not OK -> not matching")
-            _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', '{}'.format(valuetype)]
-            self._abitem.update_webif(_key, 'no')
+            self._abitem.update_webif(_key_match, 'no')
             return False
 
     # Check if value conditions match
     def __check_value(self, state):
+        _key_current = ['{}'.format(state.id), 'conditionsets', '{}'.format(
+            self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name),
+                        'current', 'value']
+        _key_match = ['{}'.format(state.id), 'conditionsets', '{}'.format(
+            self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name),
+                      'match', 'value']
         try:
             cond_min_max = self.__min.is_empty() and self.__max.is_empty()
             if not self.__value.is_empty():
@@ -568,18 +599,11 @@ class SeCondition(StateEngineTools.SeItemChild):
                 min_get_value = self.__min.get()
                 max_get_value = self.__max.get()
                 current = self.__get_current()
-                try:
-                    if isinstance(min_get_value, re._pattern_type) or isinstance(max_get_value, re._pattern_type):
-                        self._log_warning("You can not use regular expression with min/max -> ignoring")
-                        _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'value']
-                        self._abitem.update_webif(_key, 'You can not use regular expression with min or max')
-                        return True
-                except Exception:
-                    if isinstance(min_get_value, re.Pattern) or isinstance(max_get_value, re.Pattern):
-                        self._log_warning("You can not use regular expression with min/max -> ignoring")
-                        _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'value']
-                        self._abitem.update_webif(_key, 'You can not use regular expression with min or max')
-                        return True
+
+                if isinstance(min_get_value, re.Pattern) or isinstance(max_get_value, re.Pattern):
+                    self._log_warning("You can not use regular expression with min/max -> ignoring")
+                    self._abitem.update_webif(_key_match, 'You can not use regular expression with min or max')
+                    return True
                 min_value = [min_get_value] if not isinstance(min_get_value, list) else min_get_value
                 max_value = [max_get_value] if not isinstance(max_get_value, list) else max_get_value
                 min_value = StateEngineTools.flatten_list(min_value)
@@ -588,8 +612,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                 min_value = min_value + [None] * abs(diff_len) if diff_len < 0 else min_value
                 max_value = max_value + [None] * diff_len if diff_len > 0 else max_value
                 text = "Condition '{0}': min={1} max={2} negate={3} current={4}"
-                _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'current', 'value']
-                self._abitem.update_webif(_key, str(current))
+                self._abitem.update_webif(_key_current, str(current))
                 self._log_info(text, self.__name, min_value, max_value, self.__negate, current)
                 if diff_len != 0:
                     self._log_debug("Min and max are always evaluated as valuepairs. "
@@ -597,56 +620,53 @@ class SeCondition(StateEngineTools.SeItemChild):
                 self._log_increase_indent()
                 _notmatching = 0
                 for i, _ in enumerate(min_value):
-                    min = None if min_value[i] == 'novalue' else min_value[i]
-                    max = None if max_value[i] == 'novalue' else max_value[i]
-                    self._log_debug("Checking minvalue {} ({}) and maxvalue {} ({}) against current {} ({})", min, type(min), max, type(max), current, type(current))
-                    if min is not None and max is not None and min > max:
-                        min, max = max, min
+                    _min = None if min_value[i] == 'novalue' else min_value[i]
+                    _max = None if max_value[i] == 'novalue' else max_value[i]
+                    self._log_debug("Checking minvalue {} ({}) and maxvalue {} ({}) against current {} ({})",
+                                    _min, type(_min), _max, type(_max), current, type(current))
+                    if _min is not None and _max is not None and _min > _max:
+                        _min, _max = _max, _min
                         self._log_warning("Condition {}: min must not be greater than max! "
-                                          "Values got switched: min is now {}, max is now {}", self.__name, min, max)
-                    if min is None and max is None:
+                                          "Values got switched: min is now {}, max is now {}",
+                                          self.__name, _min, _max)
+                    if _min is None and _max is None:
                         self._log_debug("no limit given -> matching")
-                        _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'value']
-                        self._abitem.update_webif(_key, 'yes')
+                        self._abitem.update_webif(_key_match, 'yes')
                         return True
 
                     if not self.__negate:
-                        if min is not None and current < min:
+                        if _min is not None and current < _min:
                             self._log_debug("too low -> not matching")
                             _notmatching += 1
 
-                        elif max is not None and current > max:
+                        elif _max is not None and current > _max:
                             self._log_debug("too high -> not matching")
                             _notmatching += 1
 
                         else:
                             self._log_debug("given limits ok -> matching")
-                            _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'value']
-                            self._abitem.update_webif(_key, 'yes')
+                            self._abitem.update_webif(_key_match, 'yes')
                             return True
                     else:
-                        if min is not None and current > min and (max is None or current < max):
+                        if _min is not None and current > _min and (_max is None or current < _max):
                             self._log_debug("not lower than min -> not matching")
                             _notmatching += 1
 
-                        elif max is not None and current < max and (min is None or current > min):
+                        elif _max is not None and current < _max and (_min is None or current > _min):
                             self._log_debug("not higher than max -> not matching")
                             _notmatching += 1
 
                         else:
                             self._log_debug("given limits ok -> matching")
-                            _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'value']
-                            self._abitem.update_webif(_key, 'yes')
+                            self._abitem.update_webif(_key_match, 'yes')
                             return True
 
                 if _notmatching == len(min_value):
-                    _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'value']
-                    self._abitem.update_webif(_key, 'no')
+                    self._abitem.update_webif(_key_match, 'no')
                     return False
                 else:
                     self._log_debug("given limits ok -> matching")
-                    _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'value']
-                    self._abitem.update_webif(_key, 'yes')
+                    self._abitem.update_webif(_key_match, 'yes')
                     return True
 
             elif self.__value.is_empty() and cond_min_max:
@@ -655,14 +675,12 @@ class SeCondition(StateEngineTools.SeItemChild):
                                   " evalutions. Min {}, max {}, value {}", self.__name,
                                   self.__min.get(), self.__max.get(), self.__value.get())
                 self._log_increase_indent()
-                _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'value']
-                self._abitem.update_webif(_key, 'Neither value nor min/max given.')
+                self._abitem.update_webif(_key_match, 'Neither value nor min/max given.')
                 return True
 
         except Exception as ex:
             self._log_warning("Problem checking value: {}", ex)
-            _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'value']
-            self._abitem.update_webif(_key, 'Problem checking value: {}'.format(ex))
+            self._abitem.update_webif(_key_match, 'Problem checking value: {}'.format(ex))
         finally:
             self._log_decrease_indent()
 
@@ -748,7 +766,8 @@ class SeCondition(StateEngineTools.SeItemChild):
         try:
             current = self.__get_current(eval_type='age')
         except Exception as ex:
-            _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'age']
+            _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(
+                self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'age']
             self._abitem.update_webif(_key, 'Not possible to get age from eval {} '
                                             'or status_eval {}'.format(self.__eval, self.__status_eval))
             self._log_warning("Age of '{0}': Not possible to get age from eval {1} or status_eval {2}! "
@@ -767,7 +786,9 @@ class SeCondition(StateEngineTools.SeItemChild):
             agemin = agemin + [None] * abs(diff_len) if diff_len < 0 else agemin
             agemax = agemax + [None] * diff_len if diff_len > 0 else agemax
             text = "Age of '{0}': min={1} max={2} negate={3} current={4}"
-            _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'current', 'age']
+            _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(
+                self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name),
+                    'current', 'age']
             self._abitem.update_webif(_key, str(current))
             self._log_info(text, self.__name, agemin, agemax, self.__agenegate, current)
             if diff_len != 0:
@@ -775,46 +796,45 @@ class SeCondition(StateEngineTools.SeItemChild):
                                   " If needed you can also provide 'novalue' as a list value")
             self._log_increase_indent()
             _notmatching = 0
+            _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(
+                self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name),
+                    'match', 'age']
             for i, _ in enumerate(agemin):
-                min = None if agemin[i] == 'novalue' else agemin[i]
-                max = None if agemax[i] == 'novalue' else agemax[i]
-                self._log_debug("Testing valuepair min {} and max {}", min, max)
+                _min = None if agemin[i] == 'novalue' else agemin[i]
+                _max = None if agemax[i] == 'novalue' else agemax[i]
+                self._log_debug("Testing valuepair min {} and max {}", _min, _max)
                 if not self.__agenegate:
-                    if min is not None and current < min:
+                    if _min is not None and current < _min:
                         self._log_debug("too young -> not matching")
                         _notmatching += 1
 
-                    elif max is not None and current > max:
+                    elif _max is not None and current > _max:
                         self._log_debug("too old -> not matching")
                         _notmatching += 1
 
                     else:
                         self._log_debug("given limits ok -> matching")
-                        _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'age']
                         self._abitem.update_webif(_key, 'yes')
                         return True
                 else:
-                    if min is not None and current > min and (max is None or current < max):
+                    if _min is not None and current > _min and (_max is None or current < _max):
                         self._log_debug("not younger than min -> not matching")
                         _notmatching += 1
 
-                    elif max is not None and current < max and (min is None or current > min):
+                    elif _max is not None and current < _max and (_min is None or current > _min):
                         self._log_debug("not older than max -> not matching")
                         _notmatching += 1
 
                     else:
                         self._log_debug("given limits ok -> matching")
-                        _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'age']
                         self._abitem.update_webif(_key, 'yes')
                         return True
 
             if _notmatching == len(agemin):
-                _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'age']
                 self._abitem.update_webif(_key, 'no')
                 return False
             else:
                 self._log_debug("given limits ok -> matching")
-                _key = ['{}'.format(state.id), 'conditionsets', '{}'.format(self._abitem.get_variable('current.conditionset_name')), '{}'.format(self.__name), 'match', 'age']
                 self._abitem.update_webif(_key, 'yes')
                 return True
         finally:
@@ -824,9 +844,10 @@ class SeCondition(StateEngineTools.SeItemChild):
     def __get_current(self, eval_type='value'):
         def check_eval(eval_or_status_eval):
             if isinstance(eval_or_status_eval, str):
-                sh = self._sh
-                shtime = self._shtime
                 # noinspection PyUnusedLocal
+                sh = self._sh
+                # noinspection PyUnusedLocal
+                shtime = self._shtime
                 if "stateengine_eval" in eval_or_status_eval or "se_eval" in eval_or_status_eval:
                     # noinspection PyUnusedLocal
                     stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
@@ -834,10 +855,10 @@ class SeCondition(StateEngineTools.SeItemChild):
                     eval_result = eval(eval_or_status_eval)
                     if isinstance(eval_result, self.__itemClass):
                         value = eval_result.property.last_change_age if eval_type == 'age' else \
-                                eval_result.property.last_change_by if eval_type == 'changedby' else \
-                                eval_result.property.last_update_by if eval_type == 'updatedby' else \
-                                eval_result.property.last_trigger_by if eval_type == 'triggeredby' else \
-                                eval_result.property.value
+                            eval_result.property.last_change_by if eval_type == 'changedby' else \
+                            eval_result.property.last_update_by if eval_type == 'updatedby' else \
+                            eval_result.property.last_trigger_by if eval_type == 'triggeredby' else \
+                            eval_result.property.value
                     else:
                         value = eval_result
                 except Exception as ex:
@@ -850,26 +871,26 @@ class SeCondition(StateEngineTools.SeItemChild):
 
         if self.__status is not None:
             # noinspection PyUnusedLocal
-            self._log_debug("Trying to get {} of status item {}", eval_type, self.__status)
-            return self.__status.property.last_change_age if eval_type == 'age' else\
-                   self.__status.property.last_change_by if eval_type == 'changedby' else\
-                   self.__status.property.last_update_by if eval_type == 'updatedby' else\
-                   self.__status.property.last_trigger_by if eval_type == 'triggeredby' else\
-                   self.__status.property.value
-        elif self.__item is not None:
-            # noinspection PyUnusedLocal
-            self._log_debug("Trying to get {} of item {}", eval_type, self.__item)
-            return self.__item.property.last_change_age if eval_type == 'age' else\
-                   self.__item.property.last_change_by if eval_type == 'changedby' else\
-                   self.__item.property.last_update_by if eval_type == 'updatedby' else\
-                   self.__item.property.last_trigger_by if eval_type == 'triggeredby' else\
-                   self.__item.property.value
-        if self.__status_eval is not None:
+            self._log_debug("Trying to get {} of status item {}", eval_type, self.__status.property.path)
+            return self.__status.property.last_change_age if eval_type == 'age' else \
+                self.__status.property.last_change_by if eval_type == 'changedby' else \
+                self.__status.property.last_update_by if eval_type == 'updatedby' else \
+                self.__status.property.last_trigger_by if eval_type == 'triggeredby' else \
+                self.__status.property.value
+        elif self.__status_eval is not None:
             self._log_debug("Trying to get {} of statuseval {}", eval_type, self.__status_eval)
             return_value = check_eval(self.__status_eval)
             return return_value
+        elif self.__item is not None:
+            # noinspection PyUnusedLocal
+            self._log_debug("Trying to get {} of item {}", eval_type, self.__item.property.path)
+            return self.__item.property.last_change_age if eval_type == 'age' else \
+                self.__item.property.last_change_by if eval_type == 'changedby' else \
+                self.__item.property.last_update_by if eval_type == 'updatedby' else \
+                self.__item.property.last_trigger_by if eval_type == 'triggeredby' else \
+                self.__item.property.value
         elif self.__eval is not None:
-            self._log_debug("Trying to get {} of statuseval {}", eval_type, self.__eval)
+            self._log_debug("Trying to get {} of eval {}", eval_type, self.__eval)
             return_value = check_eval(self.__eval)
             return return_value
 
