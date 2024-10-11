@@ -71,7 +71,7 @@ class Husky2(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '2.1.1'
+    PLUGIN_VERSION = '2.1.2'
 
     ITEM_INFO = "husky_info"
     ITEM_CONTROL = "husky_control"
@@ -440,7 +440,7 @@ class Husky2(SmartPlugin):
         :param dest: if given it represents the dest
         """
 
-        if self.alive and caller != self.get_shortname():
+        if self.alive and not self.get_fullname() in caller:
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
             item_value = "{0}".format(item())
@@ -459,7 +459,7 @@ class Husky2(SmartPlugin):
 
                 # if control item is a bool type reset it to False after sending cmd
                 if item.property.type == 'bool':
-                    item(0, self.get_shortname())
+                    item(0, self.get_fullname())
 
     def sendCmd(self, cmd, value=-1):
         self.writeToStatusItem(self.translate("Sending command") + ": " + cmd)
@@ -469,7 +469,7 @@ class Husky2(SmartPlugin):
         self.message = txt
         if 'message' in self._items_state:
             for item in self._items_state['message']:
-                item(txt, self.get_shortname())
+                item(txt, self.get_fullname())
 
     def poll_device(self):
         self.logger.debug("Poll new status")
@@ -517,19 +517,19 @@ class Husky2(SmartPlugin):
                                       data['attributes']['positions'][i]['longitude']])
         if 'gpspoints' in self._items_state:
             for item in self._items_state['gpspoints']:
-                item(self.mowerGpspoints.get_list()[::-1], self.get_shortname())
+                item(self.mowerGpspoints.get_list()[::-1], self.get_fullname())
         self.mowerLongitude.push(data['attributes']['positions'][0]['longitude'])
         if 'longitude' in self._items_state:
             for item in self._items_state['longitude']:
-                item(self.mowerLongitude.get_last(), self.get_shortname())
+                item(self.mowerLongitude.get_last(), self.get_fullname())
         self.mowerLatitude.push(data['attributes']['positions'][0]['latitude'])
         if 'latitude' in self._items_state:
             for item in self._items_state['latitude']:
-                item(self.mowerLatitude.get_last(), self.get_shortname())
+                item(self.mowerLatitude.get_last(), self.get_fullname())
         self.mowerBatterypercent.push(data['attributes']['battery']['batteryPercent'])
         if 'batterypercent' in self._items_state:
             for item in self._items_state['batterypercent']:
-                item(self.mowerBatterypercent.get_last(), self.get_shortname())
+                item(self.mowerBatterypercent.get_last(), self.get_fullname())
         errorcode = data['attributes']['mower']['errorCode']
         if errorcode in self.MOWERERROR:
             self.mowerErrormsg.push(self.translate(self.MOWERERROR[errorcode]['msg']))
@@ -537,39 +537,39 @@ class Husky2(SmartPlugin):
             self.mowerErrormsg.push(self.translate('Unknown error code') + ": " + str(errorcode))
         if 'errormessage' in self._items_state:
             for item in self._items_state['errormessage']:
-                item(self.mowerErrormsg.get_last(), self.get_shortname())
+                item(self.mowerErrormsg.get_last(), self.get_fullname())
         self.mowerActivity.push(data['attributes']['mower']['activity'])
         if 'activity' in self._items_state:
             for item in self._items_state['activity']:
-                item(self.translate(self.mowerActivity.get_last()), self.get_shortname())
+                item(self.translate(self.mowerActivity.get_last()), self.get_fullname())
         if 'state' in self._items_state:
             for item in self._items_state['state']:
-                item(self.translate(data['attributes']['mower']['state']), self.get_shortname())
+                item(self.translate(data['attributes']['mower']['state']), self.get_fullname())
         if 'mode' in self._items_state:
             for item in self._items_state['mode']:
-                item(self.translate(data['attributes']['mower']['mode']), self.get_shortname())
+                item(self.translate(data['attributes']['mower']['mode']), self.get_fullname())
         self.mowerConnection.push(data['attributes']['metadata']['connected'])
         if 'connection' in self._items_state:
             for item in self._items_state['connection']:
-                item(self.mowerConnection.get_last(), self.get_shortname())
+                item(self.mowerConnection.get_last(), self.get_fullname())
 
         # settings
         if 'cuttingHeight' in data['attributes']:
             if 'cuttingheight' in self._items_control:
                 for item in self._items_control['cuttingheight']:
-                    item(data['attributes']['cuttingHeight'], self.get_shortname())
+                    item(data['attributes']['cuttingHeight'], self.get_fullname())
         else:
             if 'cuttingheight' in self._items_control:
                 for item in self._items_control['cuttingheight']:
-                    item(data['attributes']['settings']['cuttingHeight'], self.get_shortname())
+                    item(data['attributes']['settings']['cuttingHeight'], self.get_fullname())
         if 'headlight' in data['attributes']:
             if 'headlight' in self._items_control:
                 for item in self._items_control['headlight']:
-                    item(data['attributes']['headlight']['mode'], self.get_shortname())
+                    item(data['attributes']['headlight']['mode'], self.get_fullname())
         else:
             if 'headlight' in self._items_control:
                 for item in self._items_control['headlight']:
-                    item(data['attributes']['settings']['headlight']['mode'], self.get_shortname())
+                    item(data['attributes']['settings']['headlight']['mode'], self.get_fullname())
 
     def token_callback(self, token):
         """
@@ -622,16 +622,16 @@ class Husky2(SmartPlugin):
 
         if 'name' in self._items_info:
             for item in self._items_info['name']:
-                item(self.mowerName, self.get_shortname())
+                item(self.mowerName, self.get_fullname())
         if 'id' in self._items_info:
             for item in self._items_info['id']:
-                item(self.mowerId, self.get_shortname())
+                item(self.mowerId, self.get_fullname())
         if 'serial' in self._items_info:
             for item in self._items_info['serial']:
-                item(self.mowerSerial, self.get_shortname())
+                item(self.mowerSerial, self.get_fullname())
         if 'model' in self._items_info:
             for item in self._items_info['model']:
-                item(self.mowerModel, self.get_shortname())
+                item(self.mowerModel, self.get_fullname())
 
         self.data_callback(status_all)
         return
@@ -801,7 +801,7 @@ class Husky2(SmartPlugin):
 
         # Register the web interface as a cherrypy app
         self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
+                                     self.get_fullname(),
                                      config,
                                      self.get_classname(), self.get_instance_name(),
                                      description='')
