@@ -967,6 +967,25 @@ class Database(SmartPlugin):
         return
 
 
+    def reassign_orphaned_id(self, orphan_id, to):
+        """
+        Reassign values from orphaned item ID to given item ID
+
+        :param orphan_id: item id of the orphaned item
+        :param to: item id of the target item
+        :type orphan_id: int
+        :type to: int
+        """
+        self.logger.error(f'reassign called: {orphan_id} -> {to}')
+        cur = self._db_maint.cursor()
+        self._execute(self._prepare("UPDATE {log} SET item_id = :newid WHERE item_id = :orphanid;"), {'newid': to, 'orphanid': orphan_id}, cur=cur)
+        self._execute(self._prepare("DELETE FROM  {item} WHERE id = :orphanid LIMIT 1;"), {'orphanid': orphan_id}, cur=cur)
+        self.logger.info(f'reassigned orphaned id {orphan_id} to new id {to}')
+        cur.close()
+        self._db_maint.commit()
+        self.logger.debug('rebuilding orphan list')
+        self.build_orphanlist()
+
     def _delete_orphan(self, item_path):
         """
         Delete orphan item or logentries it
