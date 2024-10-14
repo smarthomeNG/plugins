@@ -977,14 +977,14 @@ class Database(SmartPlugin):
         :type to: int
         """
         try:
-            self.logger.warning(f'reassigning orphaned data from (old) id {orphan_id} to (new) id {to}')
+            self.logger.debug(f'reassigning orphaned data from (old) id {orphan_id} to (new) id {to}')
             cur = self._db_maint.cursor()
             self._execute(self._prepare("UPDATE {log} SET item_id = :newid WHERE item_id = :orphanid;"), {'newid': to, 'orphanid': orphan_id}, cur=cur)
             self._execute(self._prepare("DELETE FROM  {item} WHERE id = :orphanid LIMIT 1;"), {'orphanid': orphan_id}, cur=cur)
-            self.logger.warning(f'reassigned orphaned id {orphan_id} to new id {to}')
+            self.logger.info(f'reassigned orphaned id {orphan_id} to new id {to}')
             cur.close()
             self._db_maint.commit()
-            self.logger.warning('rebuilding orphan list')
+            self.logger.debug('rebuilding orphan list')
             self.build_orphanlist()
         except Exception as e:
             self.logger.error(f'error on reassigning id {orphan_id} to {to}: {e}')

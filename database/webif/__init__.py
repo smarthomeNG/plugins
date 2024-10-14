@@ -76,9 +76,7 @@ class WebInterface(SmartPluginWebIf):
         if item_path is not None:
             item = self.plugin.items.return_item(item_path)
         delete_triggered = False
-        self.logger.error(f'index called with oid {orphan_id} and nid {new_id}')
         if orphan_id is not None and new_id is not None and orphan_id != new_id:
-            self.logger.error(f'calling reassign for {orphan_id} and {new_id}')
             self.plugin.reassign_orphaned_id(orphan_id, to=new_id)
         if action is not None:
             if action == "delete_log" and item_id is not None:
