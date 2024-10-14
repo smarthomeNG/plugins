@@ -63,7 +63,7 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     def index(self, reload=None, action=None, item_id=None, item_path=None, time_end=None, day=None, month=None, year=None,
-              time_orig=None, changed_orig=None, orphanID=None, newID=None):
+              time_orig=None, changed_orig=None, orphan_id=None, new_id=None):
         """
         Build index.html for cherrypy
 
@@ -76,8 +76,10 @@ class WebInterface(SmartPluginWebIf):
         if item_path is not None:
             item = self.plugin.items.return_item(item_path)
         delete_triggered = False
-        if orphanID is not None and newID is not None and orphanID != newID:
-            self.plugin.reassign_orphaned_id(orphanID, to=newID)
+        self.logger.error(f'index called with oid {orphan_id} and nid {new_id}')
+        if orphan_id is not None and new_id is not None and orphan_id != new_id:
+            self.logger.error(f'calling reassign for {orphan_id} and {new_id}')
+            self.plugin.reassign_orphaned_id(orphan_id, to=new_id)
         if action is not None:
             if action == "delete_log" and item_id is not None:
                 if time_orig is not None and changed_orig is not None:
