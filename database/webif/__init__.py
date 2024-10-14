@@ -63,7 +63,7 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     def index(self, reload=None, action=None, item_id=None, item_path=None, time_end=None, day=None, month=None, year=None,
-              time_orig=None, changed_orig=None, orphan_id=None, new_id=None):
+              time_orig=None, changed_orig=None):
         """
         Build index.html for cherrypy
 
@@ -76,8 +76,6 @@ class WebInterface(SmartPluginWebIf):
         if item_path is not None:
             item = self.plugin.items.return_item(item_path)
         delete_triggered = False
-        if orphan_id is not None and new_id is not None and orphan_id != new_id:
-            self.plugin.reassign_orphaned_id(orphan_id, to=new_id)
         if action is not None:
             if action == "delete_log" and item_id is not None:
                 if time_orig is not None and changed_orig is not None:
@@ -131,6 +129,28 @@ class WebInterface(SmartPluginWebIf):
                            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
                            tabcount=2, action=action, item_id=item_id, delete_triggered=delete_triggered,
                            language=self.plugin.get_sh().get_defaultlanguage())
+
+    @cherrypy.expose
+    def reassign(self):
+        cl = cherrypy.request.headers['Content-Length']
+        if not cl:
+            return
+        try:
+            rawbody = cherrypy.request.body.read(int(cl))
+            data = json.loads(rawbody)
+        except Exception:
+            return
+        orphan_id = data.get("orphan_id")
+        new_id = data.get("new_id")
+        result = {"operation": "request", "result": "success"}
+        if orphan_id is not None and new_id is not None and orphan_id != new_id:
+            self.logger.info(f'reassigning orphaned id {orphan_id} to new id {new_id}')
+            err = self.plugin.reassign_orphaned_id(orphan_id, to=new_id)
+            if err:
+                return
+            return json.dumps(result)
+        else:
+            self.logger.warning(f'reassigning orphaned id {orphan_id} to new id {new_id} failed')
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None, params=None):

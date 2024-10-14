@@ -179,11 +179,23 @@
 		// debug: show call parameters
 		// alert("shngPost('', {orphan_id: " + orphanID + ", new_id: " + newID + "});");
 
-		// call index page with arguments
-		shngPost('', {orphan_id: orphanID, new_id: newID});
-
-		// reload page to reflect recalculated orphans
-		setTimeout(window.location.reload(), 3000); 
+		var mydata = {"orphan_id": orphanID, "new_id": newID};
+		$.ajax({
+			type: "POST",
+			url: "reassign",
+			data: JSON.stringify(mydata),
+			contentType: 'application/json',
+			dataType: 'json',
+			error: function() {
+				alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+				document.getElementById('orphanModal').style.display = 'none';
+			},
+			success: function() {
+				document.getElementById('orphanModal').style.display = 'none';
+				// reload page to reflect recalculated orphans
+				setTimeout(window.location.reload(), 3000); 
+			}
+		})
 	}
 </script>
 

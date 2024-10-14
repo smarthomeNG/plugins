@@ -988,6 +988,7 @@ class Database(SmartPlugin):
             self.build_orphanlist()
         except Exception as e:
             self.logger.error(f'error on reassigning id {orphan_id} to {to}: {e}')
+            return e
 
     def _delete_orphan(self, item_path):
         """
