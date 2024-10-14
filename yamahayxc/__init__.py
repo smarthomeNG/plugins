@@ -29,7 +29,6 @@
 #   - parse zone().range_step -> read range/step for vol / eq
 
 
-import logging
 import requests
 import socket
 import json
@@ -53,20 +52,20 @@ class YamahaYXC(SmartPlugin):
     """
     This is the main plugin class YamahaYXC to control YXC-compatible devices.
     """
-    PLUGIN_VERSION = "1.0.6"
+    PLUGIN_VERSION = "1.0.7"
     ALLOW_MULTIINSTANCE = False
 
     #
     # public functions
     #
 
-    def __init__(self, smarthome):
+    def __init__(self, **kwargs):
         """
         Default init function
         """
-        self.logger = logging.getLogger(__name__)
+        super().__init__(**kwargs)
+
         self.logger.info("Init YamahaYXC")
-        self._sh = smarthome
 
         # valid commands for use in item configuration 'yamahayxc_cmd = ...'
         self._yamaha_cmds = ['state', 'power', 'input', 'playback', 'preset',
@@ -79,7 +78,7 @@ class YamahaYXC(SmartPlugin):
         self._yamaha_ignore_cmds_upd = ['state', 'preset', 'alarm_on', 'alarm_time', 'alarm_beep']
 
         # store items in 2D-array:
-        # _yamaha_dev [host] [cmd] = item
+        # _yamaha_dev [host] [cmd] = item
         # also see parse_item()...
         self._yamaha_dev = {}
         # store host addresses of devices
@@ -106,13 +105,13 @@ class YamahaYXC(SmartPlugin):
             data, addr = self.sock.recvfrom(self.srv_buffer)
             try:
                 host, port = addr
-            except:
+            except Exception as e:
                 self.logger.warn(
-                    "Error receiving data - host/port not readable")
+                    f"Error receiving data - host/port not readable: {e}")
                 return
             if host not in list(self._yamaha_dev.keys()):
                 self.logger.debug(
-                    "Received notify from unknown host {}".format(host))
+                    f"Received notify from unknown host {host}")
             else:
                 # connected device sends updates every second for
                 # about 10 minutes without further interaction
@@ -128,11 +127,11 @@ class YamahaYXC(SmartPlugin):
                 data_flat = {}
                 try:
                     data_flat.update(data['main'])
-                except:
+                except Exception:
                     pass
                 try:
                     data_flat.update(data['netusb'])
-                except:
+                except Exception:
                     pass
 
                 # try all known command words...
@@ -145,7 +144,7 @@ class YamahaYXC(SmartPlugin):
                             notify_val = self._convert_value_yxc_to_plugin(data_flat[cmd], cmd, host)
                             item = self._yamaha_dev[host][cmd]
                             item(notify_val, "YamahaYXC")
-                        except:
+                        except Exception:
                             pass
 
                 # device told us new info is available?
@@ -171,7 +170,7 @@ class YamahaYXC(SmartPlugin):
         self.alive = False
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
-        except:
+        except Exception:
             pass
 
     def parse_item(self, item):
@@ -352,7 +351,7 @@ class YamahaYXC(SmartPlugin):
                 alarm = state["alarm"]
             except KeyError:
                 return
-            
+
             alarm_on = alarm["alarm_on"]
             alarm_time = alarm["oneday"]["time"]
             alarm_beep = alarm["oneday"]["beep"]
