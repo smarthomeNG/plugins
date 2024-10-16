@@ -4,6 +4,10 @@
 {% set dataSet = 'overview' %}
 {% set tab1title = _('Database Items') %}
 
+{% block pluginstyles %}
+<link rel="stylesheet" href="static/style.css">
+{% endblock pluginstyles %}
+
 {%- block pluginscripts %}
 {{ super() }}
 <script>
@@ -158,6 +162,63 @@
 
 {% set tab3title = _('Verwaiste Items') %}
 {% block bodytab3 %}
+
+<script type="text/javascript">
+	function reassignOrphan(selObj) {
+		// get modal box data from elements
+		var orphanID = document.getElementById('orphan-item-id').textContent;
+		var orphanItem = document.getElementById('orphan-item-name').textContent;
+		var newID = document.getElementById('orphanSelect').value;
+		var newItem = document.getElementById('orphanSelect').selectedOptions[0].text;
+
+		// reset elements (just to be sure...)
+		document.getElementById('orphan-item-id').textContent = "";
+		document.getElementById('orphan-item-name').textContent = "";
+		document.getElementById('orphanSelect').selectedIndex = 0;
+
+		var mydata = {"orphan_id": orphanID, "new_id": newID};
+		$.ajax({
+			type: "POST",
+			url: "reassign",
+			data: JSON.stringify(mydata),
+			contentType: 'application/json',
+			dataType: 'json',
+			error: function() {
+				alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+				document.getElementById('orphanModal').style.display = 'none';
+			},
+			success: function() {
+				document.getElementById('orphanModal').style.display = 'none';
+				// reload page to reflect recalculated orphans
+				setTimeout(window.location.reload(), 3000); 
+			}
+		})
+	}
+</script>
+
+<div id="orphanModal" class="or-modal">
+	<div class="or-modal-content">
+		<span class="or-close" onclick="document.getElementById('orphanModal').style.display = 'none';">&times;</span>
+		<div>
+			<strong>Neuzuweisen von Itemreihe <span id='orphan-item-name'></span> (ID <span id='orphan-item-id'></span>)</strong>
+		</div>
+		<div>
+			<span>Bitte wählen Sie die Itemreihe aus, der die verwaisten Daten zugewiesen werden sollen: </span>
+			<select id="orphanSelect" name="{{ item }}_reassign" onchange="btn = document.getElementById('orphanAssignBtn'); if (this.value == -1) { btn.disabled = true; } else { btn.disabled = false; }">
+				<option value=-1 selected="selected"></option>
+				{% for newitem in items %}
+					{% set newitemid = p.id(newitem, create=False) %}
+					{% if p.has_iattr(newitem.conf, 'database') %}
+						<option value={{ newitemid }}>{{ newitem.property.path }} ({{ newitemid }})</option>
+					{% endif %}
+				{% endfor %}
+			</select>
+			<button type="button" id="orphanAssignBtn" disabled class="btn btn-danger btn-sm" onclick="reassignOrphan()">Zuweisen</button>
+			<button type="button" class="btn btn-shng btn-sm" onclick="document.getElementById('orphanModal').style.display = 'none';">Abbrechen</button>
+		</div>
+	</div>		
+</div>
+
 <div class="container-fluid m-2 table-resize">
 	<div id="webif-orphanbuttons" style="margin-left: 10px; margin-bottom: 10px; float:right; white-space: nowrap;" class="mb-2">
 		{% if p.remove_orphan or len(p.orphanlist) == 0 %}
@@ -174,6 +235,7 @@
 			<th>{{ _('Letzte Änderung') }}</th>
 			<th>{{ _('Typ') }}</th>
 			<th class="dt-head-right" title="{{ _('Item-ID in der Datenbank') }}">{{ _('DB-ID') }}</th>
+			<th>{{ _('Neuzuweisung') }}</th>
 			{%  if p.count_logentries %}
 				<th class="logcount dt-head-right">{{ _('Anzahl Einträge') }}</th>
 			{% endif %}
@@ -181,6 +243,7 @@
 		</thead>
 		<tbody>
 		{% for item in p.orphanlist %}
+			{% set itemid = p.id(item, create=False) %}
 			<tr>
 				<td></td>
 				<td id="{{ item }}_orphan_path">{{ item }}</td>
@@ -199,7 +262,10 @@
 					{% endif %}
 				{% endif %}</td>
 				<td id="{{ item }}_orphan_type">{{ _(p.db_itemtype(item)) }}</td>
-				<td id="{{ item }}_orphan_id">{{ p.id(item, create=False) }}</td>
+				<td id="{{ item }}_orphan_id">{{ itemid }}</td>
+				<td id="{{ item }}_orphan_reassign">
+					<button type="button" id="orphanBtn" class="btn btn-danger btn-sm" value="{{ itemid }}-{{ item }}" onclick="document.getElementById('orphan-item-name').textContent = '{{ item }}'; document.getElementById('orphan-item-id').textContent = '{{ itemid }}'; document.getElementById('orphanModal').style.display = 'block';"><i class="fas fa-share"></i></button>
+				</td>
 				{%  if p.count_logentries %}
 					<td id="{{ item }}_orphan_logcount">{{ p._orphan_logcount[p.id(item, create=False)] }}</td>
 				{% endif %}

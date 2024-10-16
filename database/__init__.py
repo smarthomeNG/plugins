@@ -967,6 +967,29 @@ class Database(SmartPlugin):
         return
 
 
+    def reassign_orphaned_id(self, orphan_id, to):
+        """
+        Reassign values from orphaned item ID to given item ID
+
+        :param orphan_id: item id of the orphaned item
+        :param to: item id of the target item
+        :type orphan_id: int
+        :type to: int
+        """
+        try:
+            self.logger.debug(f'reassigning orphaned data from (old) id {orphan_id} to (new) id {to}')
+            cur = self._db_maint.cursor()
+            self._execute(self._prepare("UPDATE {log} SET item_id = :newid WHERE item_id = :orphanid;"), {'newid': to, 'orphanid': orphan_id}, cur=cur)
+            self._execute(self._prepare("DELETE FROM  {item} WHERE id = :orphanid LIMIT 1;"), {'orphanid': orphan_id}, cur=cur)
+            self.logger.info(f'reassigned orphaned id {orphan_id} to new id {to}')
+            cur.close()
+            self._db_maint.commit()
+            self.logger.debug('rebuilding orphan list')
+            self.build_orphanlist()
+        except Exception as e:
+            self.logger.error(f'error on reassigning id {orphan_id} to {to}: {e}')
+            return e
+
     def _delete_orphan(self, item_path):
         """
         Delete orphan item or logentries it
@@ -1184,7 +1207,7 @@ class Database(SmartPlugin):
             expression['finalizer'] = func[:func.index(":")]
             func = func[func.index(":") + 1:]
         if func == 'count' or func.startswith('count'):
-            parts = re.match('(count)((<>|!=|<|=|>)(\d+))?', func)
+            parts = re.match(r'(count)((<>|!=|<|=|>)(\d+))?', func)
             func = 'count'
             if parts and parts.group(3) is not None:
                 expression['params']['op'] = parts.group(3)
