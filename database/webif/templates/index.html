@@ -176,9 +176,6 @@
 		document.getElementById('orphan-item-name').textContent = "";
 		document.getElementById('orphanSelect').selectedIndex = 0;
 
-		// debug: show call parameters
-		// alert("shngPost('', {orphan_id: " + orphanID + ", new_id: " + newID + "});");
-
 		var mydata = {"orphan_id": orphanID, "new_id": newID};
 		$.ajax({
 			type: "POST",
