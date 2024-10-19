@@ -51,7 +51,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.12'
+    PLUGIN_VERSION = '1.6.13'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -104,6 +104,7 @@ class Database(SmartPlugin):
         self._precision = self.get_parameter_value('precision')
         self.count_logentries = self.get_parameter_value('count_logentries')
         self.max_delete_logentries = self.get_parameter_value('max_delete_logentries')
+        self.max_reassign_logentries = self.get_parameter_value('max_reassign_logentries')
         self._default_maxage = float(self.get_parameter_value('default_maxage'))
 
         self._copy_database = self.get_parameter_value('copy_database')
@@ -976,15 +977,24 @@ class Database(SmartPlugin):
         :type orphan_id: int
         :type to: int
         """
+        log_info = self.logger.warning  # info
+        log_debug = self.logger.error  # debug
         try:
-            self.logger.debug(f'reassigning orphaned data from (old) id {orphan_id} to (new) id {to}')
+            log_info(f'reassigning orphaned data from (old) id {orphan_id} to (new) id {to}')
             cur = self._db_maint.cursor()
-            self._execute(self._prepare("UPDATE {log} SET item_id = :newid WHERE item_id = :orphanid;"), {'newid': to, 'orphanid': orphan_id}, cur=cur)
+            count = self.readLogCount(orphan_id, cur=cur)
+            log_debug(f'found {count} entries to reassign, reassigning {self.max_reassign_logentries} at once')
+
+            while count > 0:
+                log_debug(f'reassigning {min(count, self.max_reassign_logentries)} log entries')
+                self._execute(self._prepare("UPDATE {log} SET item_id = :newid WHERE item_id = :orphanid LIMIT :limit;"), {'newid': to, 'orphanid': orphan_id, 'limit': self.max_reassign_logentries}, cur=cur)
+                count -= self.max_reassign_logentries
+
             self._execute(self._prepare("DELETE FROM  {item} WHERE id = :orphanid LIMIT 1;"), {'orphanid': orphan_id}, cur=cur)
-            self.logger.info(f'reassigned orphaned id {orphan_id} to new id {to}')
+            log_info(f'reassigned orphaned id {orphan_id} to new id {to}')
             cur.close()
             self._db_maint.commit()
-            self.logger.debug('rebuilding orphan list')
+            log_debug('rebuilding orphan list')
             self.build_orphanlist()
         except Exception as e:
             self.logger.error(f'error on reassigning id {orphan_id} to {to}: {e}')
@@ -1207,7 +1217,7 @@ class Database(SmartPlugin):
             expression['finalizer'] = func[:func.index(":")]
             func = func[func.index(":") + 1:]
         if func == 'count' or func.startswith('count'):
-            parts = re.match('(count)((<>|!=|<|=|>)(\d+))?', func)
+            parts = re.match(r'(count)((<>|!=|<|=|>)(\d+))?', func)
             func = 'count'
             if parts and parts.group(3) is not None:
                 expression['params']['op'] = parts.group(3)
