@@ -59,12 +59,12 @@ class YamahaYXC(SmartPlugin):
     # public functions
     #
 
-    def __init__(self, **kwargs):
+    def __init__(self, smarthome, **kwargs):
         """
         Default init function
         """
         super().__init__(**kwargs)
-
+        self._sh = smarthome
         self.logger.info("Init YamahaYXC")
 
         # valid commands for use in item configuration 'yamahayxc_cmd = ...'
