@@ -131,6 +131,28 @@ class WebInterface(SmartPluginWebIf):
                            language=self.plugin.get_sh().get_defaultlanguage())
 
     @cherrypy.expose
+    def reassign(self):
+        cl = cherrypy.request.headers['Content-Length']
+        if not cl:
+            return
+        try:
+            rawbody = cherrypy.request.body.read(int(cl))
+            data = json.loads(rawbody)
+        except Exception:
+            return
+        orphan_id = data.get("orphan_id")
+        new_id = data.get("new_id")
+        result = {"operation": "request", "result": "success"}
+        if orphan_id is not None and new_id is not None and orphan_id != new_id:
+            self.logger.info(f'reassigning orphaned id {orphan_id} to new id {new_id}')
+            err = self.plugin.reassign_orphaned_id(orphan_id, to=new_id)
+            if err:
+                return
+            return json.dumps(result)
+        else:
+            self.logger.warning(f'reassigning orphaned id {orphan_id} to new id {new_id} failed')
+
+    @cherrypy.expose
     def get_data_html(self, dataSet=None, params=None):
         """
         Return data to update the webpage
@@ -270,7 +292,6 @@ class WebInterface(SmartPluginWebIf):
             return cherrypy.lib.static.serve_file(pathname, mime, disposition='attachment', name=filename)
 
         return
-
 
     @cherrypy.expose
     def cleanup(self):
