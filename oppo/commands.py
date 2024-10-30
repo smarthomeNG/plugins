@@ -29,7 +29,7 @@ commands = {
             'language': {'read': True, 'write': False, 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': [r'@QAT OK (?:[A-Z]*) (?:\d{1,2})/(?:\d{1,2}) ([A-Za-z]*)', r'@UAT (?:[A-Z]{2}) (?:\d{2})/(?:\d{2}) ([A-Z]{3}) (?:[0-7.]*)']},
         },
         'subtitle': {
-            'current': {'read': True, 'write': False, 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': r'@UST (\d{2})/(?:\d{2}) ([A-Z]{3})'},
+            'current': {'read': True, 'write': False, 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': r'@UST (\d{2})/(?:\d{2}) (?:[A-Z]{3})'},
             'available': {'read': True, 'write': False, 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': r'@UST (?:\d{2})/(\d{2}) (?:[A-Z]{3})'},
             'language': {'read': True, 'write': False, 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'@UST (?:\d{2})/(?:\d{2}) ([A-Z]{3})'},
         },
