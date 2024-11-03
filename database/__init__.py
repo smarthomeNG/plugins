@@ -988,7 +988,7 @@ class Database(SmartPlugin):
             return True
 
         cur = self._db_maint.cursor()
-        self._execute(self._prepare("DELETE FROM {log} WHERE item_id = :id ORDER BY time ASC LIMIT :maxrecords;"), {'id': item_id, 'maxrecords': self.delete_orphan_chunk_size}, cur=cur)
+        self._execute(self._prepare("DELETE FROM {log} WHERE item_id = :id LIMIT :maxrecords;"), {'id': item_id, 'maxrecords': self.delete_orphan_chunk_size}, cur=cur)
         delete_orphan_chunk_size_str = f"{self.delete_orphan_chunk_size:,}".replace(',', '.')
         self.logger.info(f"_delete_orphan: Deleted (up to) {delete_orphan_chunk_size_str} log entries for Item {item_path}")
         cur.close()
