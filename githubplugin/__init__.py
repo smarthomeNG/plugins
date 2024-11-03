@@ -26,7 +26,6 @@
 #########################################################################
 
 import os
-import logging
 from pathlib import Path
 
 from lib.model.smartplugin import SmartPlugin
@@ -160,12 +159,23 @@ class GitHubHelper(object):
 
         return True
 
-    def get_branches_from(self, fork) -> dict:
+    def get_branches_from(self, fork=None, owner='') -> dict:
+
+        if fork is None and owner:
+            try:
+                fork = self.forks[owner]['repo']
+            except Exception:
+                pass
+
+        if not fork:
+            return {}
+
         branches = fork.get_branches()
         b_list = {}
         for branch in branches:
-            b_list[branch.name] = branch
+            b_list[branch.name] = {'branch': branch, 'repo': fork, 'owner': fork.owner.login}
 
+        self.forks[fork.owner.login]['branches'] = b_list
         return b_list
 
     def get_all_branches(self) -> bool:
@@ -176,7 +186,7 @@ class GitHubHelper(object):
 
         branches = {}
         for user in self.forks:
-            branches[user]['branches'] = self.get_branches_from(self.forks[user]['repo'])
+            branches[user]['branches'] = self.get_branches_from(owner=user)
 
         for entry in branches:
             if entry in self.forks:
@@ -213,6 +223,10 @@ class GithubPlugin(SmartPlugin):
         self.gh = GitHubHelper(apikey=self.gh_apikey, logger=self.logger)
 
         # self.init_webinterface(WebInterface)
+
+    #
+    # methods for handling local repos
+    #
 
     def read_repos_from_dir(self):
         # clear stored repos
@@ -260,7 +274,7 @@ class GithubPlugin(SmartPlugin):
                 id = self._repoitem(key=wtpath)
             else:
                 # make up id
-                id = f'{user}_{branch}'
+                id = f'{user}/{branch}'
 
             self.repos[id] = {
                 'plugin': plugin,
@@ -280,13 +294,18 @@ class GithubPlugin(SmartPlugin):
             }
 
         # add missing ids to repoitem
-        if self._repoitem:
+        if self._repoitem is not None:
             self.logger.debug('checking repo item for all repos')
             for repo in self.repos:
                 if self.repos[repo]['full_wt_path'] not in self._repoitem():
-                    self._repoitem.dict.update({
-                        self.repos[repo]['full_wt_path']: repo
-                    })
+                    self.add_repo_to_item(repo)
+
+    def add_repo_to_item(self, repo):
+        if self._repoitem is not None and repo in self.repos:
+            self.logger.debug(f'adding {repo} to repoitem {self._repoitem}')
+            self._repoitem.dict.update({
+                self.repos[repo]['full_wt_path']: repo
+            })
 
     def init_repo(self, name, user, plugin, branch=None, force=False) -> bool:
 
@@ -368,7 +387,7 @@ class GithubPlugin(SmartPlugin):
                 else:
                     try:
                         if not repo['repo'].create_remote('origin', repo['url']).exists():
-                            raise GitError(f'error creating remote "origin" at {repo["url"]}, aborting.')
+                            raise RuntimeError(f'error creating remote "origin" at {repo["url"]}, aborting.')
                     except Exception as e:
                         self.logger.error(f'error setting up remote: {e}')
                         return False
@@ -428,9 +447,137 @@ class GithubPlugin(SmartPlugin):
                 pass
 
         self.logger.debug(f'creating link {repo["link"]} to {repo["rel_link_path"]}...')
-        os.symlink(repo['rel_link_path'], repo['link'])
+        try:
+            os.symlink(repo['rel_link_path'], repo['link'])
+        except FileExistsError:
+            pass
+
+        self.add_repo_to_item(name)
 
         return True
+
+    #
+    # github API methods
+    #
+
+    def setup_github(self) -> bool:
+        """ login to github and set repo """
+        try:
+            self.gh.login()
+        except Exception as e:
+            self.logger.error(f'error while logging in to GitHub: {e}')
+            return False
+
+        return self.gh.set_repo()
+
+    def fetch_github_forks(self) -> bool:
+        """ fetch forks from github API """
+        return self.gh.get_forks()
+
+    def fetch_github_pulls(self) -> bool:
+        """ fetch PRs from github API """
+        return self.gh.get_pulls()
+
+    def fetch_github_branches_from(self, fork=None, owner='') -> dict:
+        """
+        fetch branches for given fork from github API
+
+        if fork is given as fork object, use this
+        if owner is given and present in self.forks, use their fork object
+        """
+        return self.gh.get_branches_from(fork=fork, owner=owner)
+
+    def get_github_forks(self, owner=None) -> dict:
+        """ return forks or single fork for given owner """
+        if owner:
+            return self.gh.forks.get(owner, {})
+        else:
+            return self.gh.forks
+
+    def get_github_pulls(self, number=None) -> dict:
+        """ return pulls or single pull for given number """ 
+        if number:
+            return self.gh.pulls.get(number, {})
+        else:
+            return self.gh.pulls
+
+    #
+    # methods to run git actions based on github data
+    #
+
+    def create_repo_from_gh(self, number=0, owner='', branch=None, plugin='') -> bool:
+        """
+        call init/create methods to download new repo and create worktree
+
+        if number is given, the corresponding PR is used for identifying the branch
+        if branch is given, it is used
+
+        if plugin is given, it is used as plugin name. otherwise, we will try to
+        deduce it from the PR title or use the branch name
+        """
+        r_owner = ''
+        r_branch = ''
+        r_plugin = plugin
+
+        if number:
+            # get data from given PR
+            pr = self.get_github_pulls(number=number)
+            if pr:
+                r_owner = pr['user']
+                r_branch = pr['branch']
+                # try to be smart about the plugin name
+                if not r_plugin:
+                    if ':' in pr['name']:
+                        r_plugin, _ = pr['name'].split(':', maxsplit=1)
+                    elif ' ' in pr['name']:
+                        r_plugin, _ = pr['name'].split(' ', maxsplit=1)
+                    else:
+                        r_plugin = pr['name']
+                    if r_plugin.lower().endswith(' plugin'):
+                        r_plugin = r_plugin[:-7].strip()
+
+        elif branch is not None and type(branch) is str and owner is not None:
+            # just take given data
+            r_owner = owner
+            r_branch = branch
+            if not r_plugin:
+                r_plugin = branch
+
+        elif branch is not None:
+            # search for branch object in forks.
+            # Will not succeed if branches were not fetched for this fork earlier...
+            for user in self.gh.forks:
+                if 'branches' in self.gh.forks[user]:
+                    for b in self.gh.forks[user]['branches']:
+                        if self.gh.forks[user]['branches'][b]['branch'] is branch:
+                            r_owner = user
+                            r_branch = b
+                            if not r_plugin:
+                                r_plugin = b
+
+        # do some sanity checks on given data
+        if not r_owner or not r_branch or not r_plugin:
+            self.logger.error(f'unable to identify repo from owner "{r_owner}", branch "{r_branch}" and plugin "{r_plugin}"')
+            return False
+
+        if r_owner not in self.gh.forks:
+            self.logger.error(f'plugins fork by owner {r_owner} not found')
+            return False
+
+        if 'branches' in self.gh.forks[r_owner] and r_branch not in self.gh.forks[r_owner]['branches']:
+            self.logger.warning(f'branch {r_branch} not found in cached branches for owner {r_owner}. Maybe re-fetch branches?')
+
+        # default id for plugin (actually not identifying the plugin but the branch...)
+        name = f'{r_owner}/{r_branch}'
+
+        if not self.init_repo(name, r_owner, r_plugin.lower(), r_branch):
+            return False
+
+        return self.create_repo(name)
+
+    #
+    # general plugin methods
+    #
 
     def run(self):
         self.logger.dbghigh(self.translate("Methode '{method}' aufgerufen", {'method': 'run()'}))
@@ -457,8 +604,12 @@ class GithubPlugin(SmartPlugin):
         """
 
         if self.has_iattr(item.conf, 'repoitem'):
-            self.logger.debug(f"parse item: {item}")
+            self.logger.debug(f"repo item set: {item}")
             self._repoitem = item
+
+    #
+    # helper methods
+    #
 
     def _get_last_2_path_parts(self, path):
         """ return last 2 parts of a path """
