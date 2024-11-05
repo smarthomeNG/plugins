@@ -29,7 +29,7 @@ import os
 from pathlib import Path
 
 from lib.model.smartplugin import SmartPlugin
-# from .webif import WebInterface
+from .webif import WebInterface
 
 from github import Auth
 from github import Github
@@ -51,10 +51,42 @@ class GitHubHelper(object):
             self.auth = bool(self.apikey)
         else:
             self.auth = auth and bool(self.apikey)
+
+        # name of the repo, at present always 'plugins'
         self.repo = repo
+
+        # github class instance
         self._github = None
+
+        # contains a list of all smarthomeNG/plugins forks after fetching from GitHub:
+        #
+        # self.forks = {
+        #   'owner': {
+        #     'repo': git.Repo(path),
+        #     'branches': {  # (optional!)
+        #       '<branch1>': {'branch': git.Branch(name="<branch1>"), 'repo': git.Repo(path)', 'owner': '<owner>'}, 
+        #       '<branch2>': {...}
+        #     }
+        #   }
+        # }
+        #
+        # the 'branches' key and data is only inserted after branches have been fetched from github
+        # repo and owner info are identical to the forks' data and present for branches return data
+        # outside the self.forks dict
         self.forks = {}
+
+        # contains a list of all PRs of smarthomeNG/plugins after fetching from GitHub:
+        #
+        # self.pulls = {
+        #     <PR1 number>: {'title': '<title of the PR>', 'pull': github.PullRequest(title, number), 'git_repo': git.Repo(path), 'owner': '<fork owner>', 'repo': 'plugins', 'branch': '<branch>'},
+        #     <PR2 number>: {...}
+        # }
+        #
+        # as this is the GitHub PR data, no information is present which plugin "really" is
+        # changed in the PR, need to identify this later
         self.pulls = {}
+
+        # keeps the git.Repo() for smarthomeNG/plugins
         self.git_repo = None
 
     def login(self):
@@ -116,10 +148,10 @@ class GitHubHelper(object):
             return
 
         return {
-            'name': pull.title,
+            'title': pull.title,
             'pull': pull,
             'git_repo': pull.head.repo,
-            'user': pull.head.repo.owner.login,
+            'owner': pull.head.repo.owner.login,
             'repo': pull.head.repo.name,
             'branch': pull.head.ref
         }
@@ -135,10 +167,10 @@ class GitHubHelper(object):
         self.pulls = {}
         for pull in self.git_repo.get_pulls():
             self.pulls[pull.number] = {
-                'name': pull.title,
+                'title': pull.title,
                 'pull': pull,
                 'git_repo': pull.head.repo,
-                'user': pull.head.repo.owner.login,
+                'owner': pull.head.repo.owner.login,
                 'repo': pull.head.repo.name,
                 'branch': pull.head.ref
             }
@@ -166,7 +198,6 @@ class GitHubHelper(object):
                 fork = self.forks[owner]['repo']
             except Exception:
                 pass
-
         if not fork:
             return {}
 
@@ -177,6 +208,25 @@ class GitHubHelper(object):
 
         self.forks[fork.owner.login]['branches'] = b_list
         return b_list
+
+    def get_plugins_from(self, fork=None, owner='', branch='') -> list:
+
+        if not branch:
+            return []
+
+        if fork is None and owner:
+            try:
+                fork = self.forks[owner]['repo']
+            except Exception:
+                pass
+
+        if not fork:
+            return []
+
+        contents = fork.get_contents("", ref=branch)
+        plugins = [item.path for item in contents if item.type == 'dir' and not item.path.startswith('.')]
+
+        return sorted(plugins)
 
     def get_all_branches(self) -> bool:
         # this takes up a lot of the ratelimit. Only allow if authenticated
@@ -212,7 +262,31 @@ class GithubPlugin(SmartPlugin):
     def __init__(self, sh):
         super().__init__()
 
+        # self.repos enthält die Liste der lokal eingebundenen Fremd-Repositories
+        # mit den jeweils zugehörigen Daten über das installierte Plugin, den
+        # jeweiligen Worktree/Branch und Pfadangaben.
+        #
+        # self.repos = {
+        #   '<id1>': {
+        #     'plugin': '<plugin>',                                 # Name des installierten Plugins
+        #     'owner': '<owner>',                                    # Owner des GitHub-Forks
+        #     'branch': '<branch>'',                                # Branch im GitHub-Fork
+        #     'gh_repo': 'plugins',                                 # fix, Repo smarthomeNG/plugins
+        #     'url': f'https://github.com/{owner}/plugins.git',     # URL des Forks
+        #     'repo_path': repo_path,                               # relativer Pfad zum Repo unterhalb von plugins/
+        #     'full_repo_path': os.path.join('plugins', repo_path), # relativer Pfad zum Repo unterhalb von shng
+        #     'wt_path': wt_path,                                   # relativer Pfad zum Worktree unterhalb von plugins/
+        #     'full_wt_path': os.path.join('plugins', wt_path),     # relativer Pfad zum Worktree unterhalb von shng
+        #     'rel_wt_path': os.path.join('..', '..', wt_path),     # relativer Pfad zum Worktree vom Repo aus
+        #     'link': os.path.join('plugins', f'priv_{plugin}'),    # relativer Pfad-/Dateiname des Plugin-Symlinks unterhalb von shng
+        #     'rel_link_path': os.path.join(wt_path, plugin),       # relativer Pfad des Pluginordners "unterhalb" von plugins/
+        #     'force': False,                                       # vorhandene Dateien überschreiben
+        #     'repo': repo                                          # git.Repo(path)
+        #   },
+        #   '<id2>': {...}
+        # }
         self.repos = {}
+
         self.repo_path = os.path.join('plugins', 'priv_repos')
 
         # item contains a dict containing the user-defined name for the path of
@@ -222,7 +296,7 @@ class GithubPlugin(SmartPlugin):
         self.gh_apikey = self.get_parameter_value('github_apikey')
         self.gh = GitHubHelper(apikey=self.gh_apikey, logger=self.logger)
 
-        # self.init_webinterface(WebInterface)
+        self.init_webinterface(WebInterface)
 
     #
     # methods for handling local repos
@@ -232,7 +306,6 @@ class GithubPlugin(SmartPlugin):
         # clear stored repos
         self.repos = {}
 
-        print(f'checking for {self.repo_path}')
         # plugins/priv_repos not present -> no previous plugin action
         if not os.path.exists(self.repo_path):
             return
@@ -257,7 +330,7 @@ class GithubPlugin(SmartPlugin):
 
             try:
                 wtname, _ = self._get_last_2_path_parts(target)
-                user, _, branch = wtname.split('_')
+                owner, _, branch = wtname.split('_')
             except Exception:
                 self.logger.debug(f'ignoring {target}, not in priv_repos/*_wt_*/plugin form ')
                 continue
@@ -266,22 +339,22 @@ class GithubPlugin(SmartPlugin):
             # but this seems more consistent...
             wtpath, _ = os.path.split(target)
             repo = Repo(wtpath)
-            repo_path = os.path.join('priv_repos', user)
-            wt_path = os.path.join('priv_repos', f'{user}_wt_{branch}')
+            repo_path = os.path.join('priv_repos', owner)
+            wt_path = os.path.join('priv_repos', f'{owner}_wt_{branch}')
 
             if self._repoitem and wtpath in self._repoitem():
                 # get id stored in self._repoitem
                 id = self._repoitem(key=wtpath)
             else:
                 # make up id
-                id = f'{user}/{branch}'
+                id = f'{owner}/{branch}'
 
             self.repos[id] = {
                 'plugin': plugin,
-                'user': user,
+                'owner': owner,
                 'branch': branch,
                 'gh_repo': 'plugins',
-                'url': f'https://github.com/{user}/plugins.git',
+                'url': f'https://github.com/{owner}/plugins.git',
                 'repo_path': repo_path,
                 'full_repo_path': os.path.join('plugins', repo_path),
                 'wt_path': wt_path,
@@ -307,7 +380,7 @@ class GithubPlugin(SmartPlugin):
                 self.repos[repo]['full_wt_path']: repo
             })
 
-    def init_repo(self, name, user, plugin, branch=None, force=False) -> bool:
+    def init_repo(self, name, owner, plugin, branch=None, force=False) -> bool:
 
         if name in self.repos and not force:
             self.logger.warning(f'name {name} already taken, not overwriting without force parameter.')
@@ -318,10 +391,10 @@ class GithubPlugin(SmartPlugin):
 
         # if no plugin is given, make an educated but not very clever guess ;)
         repo['plugin'] = plugin
-        repo['user'] = user
+        repo['owner'] = owner
 
-        if not user or not plugin:
-            self.logger.error(f'Insufficient parameters, github user {user} or plugin {plugin} empty, unable to fetch repo, aborting.')
+        if not owner or not plugin:
+            self.logger.error(f'Insufficient parameters, github user {owner} or plugin {plugin} empty, unable to fetch repo, aborting.')
             return False
             # raise RuntimeError(f'Insufficient parameters, github user {user} or plugin {plugin} empty, unable to fetch repo')
 
@@ -334,14 +407,14 @@ class GithubPlugin(SmartPlugin):
         repo['gh_repo'] = 'plugins'  # kwargs.get('repo', 'plugins')
 
         # build GitHub url from parameters. Hope they don't change the syntax...
-        repo['url'] = f'https://github.com/{user}/{repo["gh_repo"]}.git'
+        repo['url'] = f'https://github.com/{owner}/{repo["gh_repo"]}.git'
 
-        # path to git repo dir, default to "plugins/priv_repos/{user}"
-        repo['repo_path'] = os.path.join('priv_repos', user)
+        # path to git repo dir, default to "plugins/priv_repos/{owner}"
+        repo['repo_path'] = os.path.join('priv_repos', owner)
         repo['full_repo_path'] = os.path.join('plugins', repo['repo_path'])
 
-        # üath to git worktree dir, default to "plugins/priv_repos/{user}_wt_{branch}"
-        repo['wt_path'] = os.path.join('priv_repos', f'{user}_wt_{branch}')
+        # üath to git worktree dir, default to "plugins/priv_repos/{owner}_wt_{branch}"
+        repo['wt_path'] = os.path.join('priv_repos', f'{owner}_wt_{branch}')
         repo['full_wt_path'] = os.path.join('plugins', repo['wt_path'])
         repo['rel_wt_path'] = os.path.join('..', '..', repo['wt_path'])
 
@@ -485,7 +558,10 @@ class GithubPlugin(SmartPlugin):
         if fork is given as fork object, use this
         if owner is given and present in self.forks, use their fork object
         """
-        return self.gh.get_branches_from(fork=fork, owner=owner)
+        self.logger.error(f'fetch github branches for {owner} or {fork}')
+        res = self.gh.get_branches_from(fork=fork, owner=owner)
+        self.logger.error(f'got {res}')
+        return res
 
     def get_github_forks(self, owner=None) -> dict:
         """ return forks or single fork for given owner """
@@ -523,16 +599,16 @@ class GithubPlugin(SmartPlugin):
             # get data from given PR
             pr = self.get_github_pulls(number=number)
             if pr:
-                r_owner = pr['user']
+                r_owner = pr['owner']
                 r_branch = pr['branch']
                 # try to be smart about the plugin name
                 if not r_plugin:
-                    if ':' in pr['name']:
-                        r_plugin, _ = pr['name'].split(':', maxsplit=1)
+                    if ':' in pr['title']:
+                        r_plugin, _ = pr['title'].split(':', maxsplit=1)
                     elif ' ' in pr['name']:
-                        r_plugin, _ = pr['name'].split(' ', maxsplit=1)
+                        r_plugin, _ = pr['title'].split(' ', maxsplit=1)
                     else:
-                        r_plugin = pr['name']
+                        r_plugin = pr['title']
                     if r_plugin.lower().endswith(' plugin'):
                         r_plugin = r_plugin[:-7].strip()
 
@@ -584,6 +660,9 @@ class GithubPlugin(SmartPlugin):
         self.alive = True     # if using asyncio, do not set self.alive here. Set it in the session coroutine
 
         self.read_repos_from_dir()
+        self.setup_github()
+        self.fetch_github_pulls()
+        self.fetch_github_forks()
 
     def stop(self):
         """

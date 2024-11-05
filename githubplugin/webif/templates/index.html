@@ -1,0 +1,185 @@
+{% extends "base_plugin.html" %}
+{% set tabcount = 1 %}
+{% set tab1title = 'GitHub-Plugins' %}
+
+{% set dataSet = 'overview' %}
+{% set tab1title = _('Plugins in GitHub-Repos') %}
+
+{%- block pluginscripts %}
+<link rel="stylesheet" type="text/css" href="static/datatables_min.css">
+<script type="text/javascript" charset="utf8" src="static/datatables_min.js"></script>
+
+<script type="text/javascript">
+	$(document).ready( function () {
+	    $('#plugintable').DataTable( {
+	        "paging": false,
+	        fixedHeader: true
+	        } );
+	});
+
+	var pulls = {{ pulls }};
+
+	function clearSelect(sel) {
+		var i, L = sel.options.length - 1;
+		for (i = L; i > 0; i--) {
+			sel.remove(i);
+		}		
+	}
+
+	function addOption(sel, val) {
+		var option = document.createElement('option');
+		option.text = val;
+		sel.add(option);
+	}
+
+	function setPR(selObj) {
+		var PR = document.getElementById('pr').value;
+		if (PR > 0) {
+			document.getElementById('fork').value = pulls[PR]['owner'];
+			var branch = document.getElementById('branch');
+			clearSelect(branch);
+			addOption(branch, pulls[PR]['branch']);
+			branch.value = pulls[PR]['branch'];
+			document.getElementById('branch').disabled = false;
+		}
+	}
+
+	function updateBranches(selObj) {
+		var fork = document.getElementById('fork').value;
+
+		if (fork != '') {
+			// alert(fork);
+			$.ajax({
+				type: "POST",
+				url: "updateBranches",
+				data: JSON.stringify({'fork': fork}),
+				contentType: 'application/json',
+				dataType: 'json',
+				error: function(response) {
+					alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+					// document.getElementById('orphanModal').style.display = 'none';
+				},
+				success: function(response) {
+					var item = document.getElementById('branch');
+
+					// enable branch options
+					item.disabled = false;
+
+					// clear options
+					clearSelect(item);
+
+					// add all branches except master and main
+					for (const branch of response['data']) {
+						if (branch == 'master' || branch == 'main') {
+							continue;
+						}
+						addOption(item, branch);
+					}
+				}
+			})
+		}
+	}
+
+</script>
+
+{%- endblock pluginscripts %}
+
+{% block bodytab1 %}
+
+<!-- 
+<div id="orphanModal" class="or-modal">
+	<div class="or-modal-content">
+		<span class="or-close" onclick="document.getElementById('orphanModal').style.display = 'none';">&times;</span>
+		<div>
+			<strong>Neuzuweisen von Itemreihe <span id='orphan-item-name'></span> (ID <span id='orphan-item-id'></span>)</strong>
+		</div>
+		<div>
+			<span>Bitte wählen Sie die Itemreihe aus, der die verwaisten Daten zugewiesen werden sollen: </span>
+			<select id="orphanSelect" name="{{ item }}_reassign" onchange="btn = document.getElementById('orphanAssignBtn'); if (this.value == -1) { btn.disabled = true; } else { btn.disabled = false; }">
+				<option value=-1 selected="selected"></option>
+				{% for newitem in items %}
+					{% set newitemid = p.id(newitem, create=False) %}
+					{% if p.has_iattr(newitem.conf, 'database') %}
+						<option value={{ newitemid }}>{{ newitem.property.path }} ({{ newitemid }})</option>
+					{% endif %}
+				{% endfor %}
+			</select>
+			<button type="button" id="orphanAssignBtn" disabled class="btn btn-danger btn-sm" onclick="reassignOrphan()">Zuweisen</button>
+			<button type="button" class="btn btn-shng btn-sm" onclick="document.getElementById('orphanModal').style.display = 'none';">Abbrechen</button>
+		</div>
+	</div>		
+</div>
+-->
+
+<div class="container-fluid m-2 table-responsive">
+	<div class="mb-2">Die folgenden Plugins sind von extern installiert. <div>
+	<table id="plugintable">
+		<thead>
+		<tr><th></th>
+			<th>Plugin</th>
+			<th>Autor</th>
+			<th>Branch</th>
+			<th>Pfad (Worktree)</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for plugin in repos %}
+			<tr>
+				<td></td>
+				<td id="{{ plugin }}_name">{{ plugin }}</td>
+				<td id="{{ plugin }}_owner">{{ repos[plugin].owner }}</td>
+				<td id="{{ plugin }}_branch">{{ repos[plugin].branch }}</td>
+				<td id="{{ plugin }}_wtpath">{{ repos[plugin].full_wt_path }}</td>
+				</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+</div>
+<hr />
+<form id='install'>
+	<div class="container-fluid m-2">
+		<div class="mb-2">Plugin installieren aus:</div>
+		<table>
+			<tr>
+				<td>PR:</td>
+				<td colspan=3>
+					<select id='pr' onchange="javascript:setPR(this);">
+						<option value=''>(PR auswählen)</option>
+						{% for pr in pulls %}
+						<option value='{{ pr }}'>{{ pr }}: {{ pulls[pr].title }}</option>
+						{% endfor %}
+					</select>
+				</td>
+				<td>&nbsp;</td>
+			</tr>
+			<tr>
+				<td>Fork:</td>
+				<td>
+					<select id='fork' onchange="javascript:updateBranches(this);">
+						<option value=''>(Fork auswählen)</option>
+						{% for fork in forklist %}
+						<option>{{ fork }}</option>
+						{% endfor %}
+					</select>
+				</td>
+				<td style='padding-left: 15px;'>Branch:</td>
+				<td>
+					<select id='branch' disabled>
+					<option value=''>(Branch auswählen)</option>
+					</select>
+				</td>
+				<td style='padding-left: 15px;'>
+					<button type="button" class="btn btn-shng btn-sm" onclick="javascript:fetchFork(this);">Auswählen</button>
+				</td>
+			</tr>
+		</table>
+	</div>
+
+	<select id='plugin' disabled>
+		<option value=''>(select plugin)</option>
+	</select>
+</form>
+
+{% endblock bodytab1 %}
+
+
