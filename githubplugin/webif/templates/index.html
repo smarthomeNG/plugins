@@ -26,38 +26,41 @@
 		}		
 	}
 
-	function addOption(sel, val) {
+	function addOption(sel, val, def) {
 		var option = document.createElement('option');
 		option.text = val;
+		if (def) {
+			option.selected = true;
+		}
 		sel.add(option);
 	}
 
 	function setPR(selObj) {
 		var PR = document.getElementById('pr').value;
 		if (PR > 0) {
-			document.getElementById('fork').value = pulls[PR]['owner'];
+			document.getElementById('owner').value = pulls[PR]['owner'];
 			var branch = document.getElementById('branch');
 			clearSelect(branch);
 			addOption(branch, pulls[PR]['branch']);
 			branch.value = pulls[PR]['branch'];
 			document.getElementById('branch').disabled = false;
+			document.getElementById('btn-branch').disabled = false;
+			document.getElementById('btn-plugin').disabled = true;
 		}
 	}
 
 	function updateBranches(selObj) {
-		var fork = document.getElementById('fork').value;
+		var owner = document.getElementById('owner').value;
 
-		if (fork != '') {
-			// alert(fork);
+		if (owner != '') {
 			$.ajax({
 				type: "POST",
 				url: "updateBranches",
-				data: JSON.stringify({'fork': fork}),
+				data: JSON.stringify({'owner': owner}),
 				contentType: 'application/json',
 				dataType: 'json',
 				error: function(response) {
 					alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
-					// document.getElementById('orphanModal').style.display = 'none';
 				},
 				success: function(response) {
 					var item = document.getElementById('branch');
@@ -73,12 +76,56 @@
 						if (branch == 'master' || branch == 'main') {
 							continue;
 						}
-						addOption(item, branch);
+						addOption(item, branch, false);
 					}
 				}
 			})
 		}
 	}
+
+	function selectedBranch(selObj) {
+		if (document.getElementById('branch').value != '') {
+			document.getElementById('btn-branch').disabled = false;
+		} else {
+			document.getElementById('btn-branch').disabled = true;
+			document.getElementById('btn-plugin').disabled = true;
+		}
+	}
+
+	function updatePlugins(selObj) {
+		var owner = document.getElementById('owner').value;
+		var branch = document.getElementById('branch').value;
+
+		if (owner != '' && branch != '') {
+			$.ajax({
+				type: "POST",
+				url: "updatePlugins",
+				data: JSON.stringify({'owner': owner, 'branch': branch}),
+				contentType: 'application/json',
+				dataType: 'json',
+				error: function(response) {
+					alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+				},
+				success: function(response) {
+					var item = document.getElementById('plugin');
+
+					// enable branch options
+					item.disabled = false;
+
+					// clear options
+					clearSelect(item);
+
+					// add all branches except master and main
+					for (const plugin of response['data']) {
+						addOption(item, plugin, plugin==branch);
+					}
+
+					document.getElementById('btn-plugin').disabled = false;
+				}
+			})
+		}
+	}
+
 
 </script>
 
@@ -153,31 +200,38 @@
 				<td>&nbsp;</td>
 			</tr>
 			<tr>
-				<td>Fork:</td>
+				<td>Repo von:</td>
 				<td>
-					<select id='fork' onchange="javascript:updateBranches(this);">
-						<option value=''>(Fork auswählen)</option>
-						{% for fork in forklist %}
-						<option>{{ fork }}</option>
+					<select id='owner' onchange="javascript:updateBranches(this);">
+						<option value=''>(Repo auswählen)</option>
+						{% for owner in forklist %}
+						<option>{{ owner }}</option>
 						{% endfor %}
 					</select>
 				</td>
 				<td style='padding-left: 15px;'>Branch:</td>
 				<td>
-					<select id='branch' disabled>
+					<select id='branch' disabled onchange="javascript:selectedBranch(this)">
 					<option value=''>(Branch auswählen)</option>
 					</select>
 				</td>
 				<td style='padding-left: 15px;'>
-					<button type="button" class="btn btn-shng btn-sm" onclick="javascript:fetchFork(this);">Auswählen</button>
+					<button id='btn-branch' disabled type="button" class="btn btn-shng btn-sm" onclick="javascript:updatePlugins(this);">Auswählen</button>
+				</td>
+			</tr>
+			<tr>
+				<td>Plugin:</td>
+				<td colspan=3>
+					<select id='plugin' disabled>
+						<option value=''>(Plugin auswählen)</option>
+					</select>
+				</td>
+				<td style='padding-left: 15px;'>
+					<button id='btn-plugin' disabled type="button" class="btn btn-shng btn-sm" onclick="javascript:selectPlugin(this);">Auswählen</button>					
 				</td>
 			</tr>
 		</table>
 	</div>
-
-	<select id='plugin' disabled>
-		<option value=''>(select plugin)</option>
-	</select>
 </form>
 
 {% endblock bodytab1 %}

@@ -134,7 +134,7 @@ class GitHubHelper(object):
         self.git_repo = self.get_repo('smarthomeNG', self.repo)
         return True
 
-    def get_pull(self, number):
+    def get_pulls(self, fetch=False) -> bool:
         if not self._github:
             self.logger.error('error: Github object not initialized')
             return False
@@ -142,27 +142,10 @@ class GitHubHelper(object):
         if not self.git_repo:
             self.set_repo()
 
-        try:
-            pull = self.git_repo.get_pull(number=number)
-        except Exception:
-            return
-
-        return {
-            'title': pull.title,
-            'pull': pull,
-            'git_repo': pull.head.repo,
-            'owner': pull.head.repo.owner.login,
-            'repo': pull.head.repo.name,
-            'branch': pull.head.ref
-        }
-
-    def get_pulls(self) -> bool:
-        if not self._github:
-            self.logger.error('error: Github object not initialized')
-            return False
-
-        if not self.git_repo:
-            self.set_repo()
+        # succeed if cached pulls present and fetch not requested
+        if not fetch:
+            if self.pulls != {}:
+                return True
 
         self.pulls = {}
         for pull in self.git_repo.get_pulls():
@@ -177,7 +160,7 @@ class GitHubHelper(object):
 
         return True
 
-    def get_forks(self) -> bool:
+    def get_forks(self, fetch=False) -> bool:
         if not self._github:
             self.logger.error('error: Github object not initialized')
             return False
@@ -185,13 +168,18 @@ class GitHubHelper(object):
         if not self.git_repo:
             self.set_repo()
 
+        # succeed if cached forks present and fetch not requested
+        if not fetch:
+            if self.forks != {}:
+                return True
+
         self.forks = {}
         for fork in self.git_repo.get_forks():
             self.forks[fork.full_name.split('/')[0]] = {'repo': fork}
 
         return True
 
-    def get_branches_from(self, fork=None, owner='') -> dict:
+    def get_branches_from(self, fork=None, owner='', fetch=False) -> dict:
 
         if fork is None and owner:
             try:
@@ -201,6 +189,17 @@ class GitHubHelper(object):
         if not fork:
             return {}
 
+        # if not specifically told to fetch from github -
+        if not fetch:
+            # try to get cached branches
+            try:
+                b_list = self.forks[fork.owner.login]['branches']
+            except KeyError:
+                pass
+            else:
+                return b_list
+
+        # fetch from github
         branches = fork.get_branches()
         b_list = {}
         for branch in branches:
@@ -209,7 +208,7 @@ class GitHubHelper(object):
         self.forks[fork.owner.login]['branches'] = b_list
         return b_list
 
-    def get_plugins_from(self, fork=None, owner='', branch='') -> list:
+    def get_plugins_from(self, fork=None, owner='', branch='', fetch=False) -> list:
 
         if not branch:
             return []
@@ -223,9 +222,26 @@ class GitHubHelper(object):
         if not fork:
             return []
 
+        # if not specifically told to fetch from github, -
+        if not fetch:
+            # try to get cached plugin list
+            try:
+                plugins = self.forks[fork.owner.login]['branches'][branch]['plugins']
+            except KeyError:
+                pass
+            else:
+                return plugins
+
+        # plugins not yet cached, fetch from github
         contents = fork.get_contents("", ref=branch)
         plugins = [item.path for item in contents if item.type == 'dir' and not item.path.startswith('.')]
 
+        try:
+            # add plugins to branch entry, if present
+            b = self.forks[fork.owner.login]['branches'][branch]
+            b['plugins'] = plugins
+        except KeyError:
+            pass
         return sorted(plugins)
 
     def get_all_branches(self) -> bool:
@@ -551,17 +567,18 @@ class GithubPlugin(SmartPlugin):
         """ fetch PRs from github API """
         return self.gh.get_pulls()
 
-    def fetch_github_branches_from(self, fork=None, owner='') -> dict:
+    def fetch_github_branches_from(self, fork=None, owner='', fetch=False) -> dict:
         """
         fetch branches for given fork from github API
 
         if fork is given as fork object, use this
         if owner is given and present in self.forks, use their fork object
         """
-        self.logger.error(f'fetch github branches for {owner} or {fork}')
-        res = self.gh.get_branches_from(fork=fork, owner=owner)
-        self.logger.error(f'got {res}')
-        return res
+        return self.gh.get_branches_from(fork=fork, owner=owner, fetch=fetch)
+
+    def fetch_github_plugins_from(self, fork=None, owner='', branch='', fetch=False) -> list:
+        """ fetch plugin names for selected fork/branch """
+        return self.gh.get_plugins_from(fork=fork, owner=owner, branch=branch, fetch=fetch)
 
     def get_github_forks(self, owner=None) -> dict:
         """ return forks or single fork for given owner """

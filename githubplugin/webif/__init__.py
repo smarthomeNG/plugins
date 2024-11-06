@@ -102,20 +102,24 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.tools.json_out()
     @cherrypy.tools.json_in()
     def updateBranches(self):
-        #         cl = cherrypy.request.headers['Content-Length']
-        #         if not cl:
-        #             return
-        #         try:
-        #             rawbody = cherrypy.request.body.read(int(cl))
-        #             data = json.loads(rawbody)
-        #         except Exception:
-        #             return
         json = cherrypy.request.json
-        fork = json.get("fork")
-        if fork is not None and fork != '':
-            branches = self.plugin.fetch_github_branches_from(owner=fork)
+        owner = json.get("owner")
+        if owner is not None and owner != '':
+            branches = self.plugin.fetch_github_branches_from(owner=owner)
             if branches != {}:
                 return {"operation": "request", "result": "success", "data": list(branches.keys())}
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
+    def updatePlugins(self):
+        json = cherrypy.request.json
+        owner = json.get("owner")
+        branch = json.get("branch")
+        if owner is not None and owner != '' and branch is not None and branch != '':
+            plugins = self.plugin.fetch_github_plugins_from(owner=owner, branch=branch)
+            if plugins != {}:
+                return {"operation": "request", "result": "success", "data": plugins}
 
 
 #    @cherrypy.expose
