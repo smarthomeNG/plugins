@@ -126,6 +126,28 @@
 		}
 	}
 
+	function selectPlugin(selObj) {
+		var owner = document.getElementById('owner').value;
+		var branch = document.getElementById('branch').value;
+		var plugin = document.getElementById('plugin').value;
+
+		if (owner != '' && branch != '' && plugin != '') {
+			$.ajax({
+				type: "POST",
+				url: "selectPlugin",
+				data: JSON.stringify({'owner': owner, 'branch': branch, 'plugin': plugin}),
+				contentType: 'application/json',
+				dataType: 'json',
+				error: function(response) {
+					alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+				},
+				success: function(response) {
+					alert(response['data']);
+				}
+			})
+		}
+	}
+
 
 </script>
 

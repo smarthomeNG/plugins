@@ -561,11 +561,17 @@ class GithubPlugin(SmartPlugin):
 
     def fetch_github_forks(self) -> bool:
         """ fetch forks from github API """
-        return self.gh.get_forks()
+        if self.gh:
+            return self.gh.get_forks()
+        else:
+            return False
 
     def fetch_github_pulls(self) -> bool:
         """ fetch PRs from github API """
-        return self.gh.get_pulls()
+        if self.gh:
+            return self.gh.get_pulls()
+        else:
+            return False
 
     def fetch_github_branches_from(self, fork=None, owner='', fetch=False) -> dict:
         """

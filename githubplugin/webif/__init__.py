@@ -121,6 +121,34 @@ class WebInterface(SmartPluginWebIf):
             if plugins != {}:
                 return {"operation": "request", "result": "success", "data": plugins}
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
+    def selectPlugin(self):
+        json = cherrypy.request.json
+        owner = json.get("owner")
+        branch = json.get("branch")
+        plugin = json.get("plugin")
+        confirm = json.get("confirm")
+        name = f'{owner}/{branch}'
+        if (owner is None or owner == '' or
+                branch is None or branch == '' or
+                plugin is None or plugin == ''):
+            msg = f'Fehlerhafte Daten für Repo {owner}/plugins, Branch {branch} oder Plugin {plugin} übergeben.'
+            return {"operation": "request", "result": "error", "data": msg}
+
+        if confirm:
+            res = self.plugin.create_repo()
+            msg = f'Fehler beim Erstellen des Repos "{owner}/plugins", Branch {branch}, Plugin {plugin}'
+        else:
+            res = self.plugin.init_repo(name, owner, plugin, branch)
+            msg = f'Fehler beim Initialisieren des Repos "{owner}/plugins", Branch {branch}, Plugin {plugin}'
+
+        if res:
+            return {"operation": "request", "result": "success"}
+        else:
+            return {"operation": "request", "result": "error", "data": msg}
+
 
 #    @cherrypy.expose
 #    @cherrypy.tools.json_out()
