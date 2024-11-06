@@ -302,11 +302,12 @@ class GithubPlugin(SmartPlugin):
         #   '<id2>': {...}
         # }
         self.repos = {}
+        self.init_repos = {}
 
         self.repo_path = os.path.join('plugins', 'priv_repos')
 
         # item contains a dict containing the user-defined name for the path of
-        # each retrieved plugin: {<path to plugin in worktree>: <user-id>}
+        # each retrieved plugin: {<path1 to plugin in worktree>: <user-id>}
         self._repoitem = None
 
         self.gh_apikey = self.get_parameter_value('github_apikey')
@@ -345,8 +346,7 @@ class GithubPlugin(SmartPlugin):
                 continue
 
             try:
-                wtname, _ = self._get_last_2_path_parts(target)
-                owner, _, branch = wtname.split('_')
+                owner, _, branch = wt.split('_')
             except Exception:
                 self.logger.debug(f'ignoring {target}, not in priv_repos/*_wt_*/plugin form ')
                 continue
@@ -398,12 +398,18 @@ class GithubPlugin(SmartPlugin):
 
     def init_repo(self, name, owner, plugin, branch=None, force=False) -> bool:
 
-        if name in self.repos and not force:
-            self.logger.warning(f'name {name} already taken, not overwriting without force parameter.')
+        if name in self.repos:
+            self.logger.warning(f'name {name} already taken, delete old repo first or choose a different name.')
             return False
 
-        self.repos[name] = {}
-        repo = self.repos[name]
+        if name in self.init_repos and not force:
+            self.logger.warning(f'name {name} already initialized, not overwriting without force parameter.')
+            return False
+
+        if name in self.init_repos and force:
+            del self.init_repos[name]
+
+        repo = {}
 
         # if no plugin is given, make an educated but not very clever guess ;)
         repo['plugin'] = plugin
@@ -439,6 +445,7 @@ class GithubPlugin(SmartPlugin):
         repo['rel_link_path'] = os.path.join(repo['wt_path'], plugin)
 
         repo['force'] = force
+        repo['plugin'] = plugin
 
         if os.path.exists(repo['link']) and os.path.islink(repo['link']) and not force:
             self.logger.error(f'file {repo["link"]} exists and force is not requested, aborting.')
@@ -450,15 +457,20 @@ class GithubPlugin(SmartPlugin):
             self.logger.debug('creating plugins/priv_repos dir')
             os.mkdir(os.path.join('plugins', 'priv_repos'))
 
+        self.init_repos[name] = repo
         return True
 
     def create_repo(self, name) -> bool:
 
-        if name not in self.repos:
+        if name in self.repos:
+            self.logger.error(f'repo {name} already exists, not overwriting.')
+            return False
+
+        if name not in self.init_repos:
             self.logger.warning(f'repo {name} not in own data, unable to process')
             return False
 
-        repo = self.repos[name]
+        repo = self.init_repos[name]
 
         self.logger.debug(f'check for repo at {repo["full_repo_path"]}...')
 
@@ -541,6 +553,8 @@ class GithubPlugin(SmartPlugin):
         except FileExistsError:
             pass
 
+        self.repos[name] = self.init_repos[name]
+        del self.init_repos[name]
         self.add_repo_to_item(name)
 
         return True

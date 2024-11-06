@@ -56,7 +56,7 @@ class WebInterface(SmartPluginWebIf):
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
-    def index(self, reload=None, action=None, prnum=None, owner=None, branch=None, plugin=None):
+    def index(self):
         """
         Build index.html for cherrypy
 
@@ -66,9 +66,6 @@ class WebInterface(SmartPluginWebIf):
         """
         # try to get the webif pagelength from the module.yaml configuration
         pagelength = self.plugin.get_parameter_value('webif_pagelength')
-        if action is not None:
-            if action == "delete_log" and reload is not None:
-                pass
 
         tmpl = self.tplenv.get_template('index.html')
 
@@ -93,10 +90,11 @@ class WebInterface(SmartPluginWebIf):
         return tmpl.render(p=self.plugin,
                            webif_pagelength=pagelength,
                            repos=self.plugin.repos,
+                           init_repos=self.plugin.init_repos,
                            forklist=sorted(self.plugin.gh.forks.keys()),
                            forks=self.plugin.gh.forks,
                            pulls=pulls,
-                           tabcount=1, action=action, language=self.plugin.get_sh().get_defaultlanguage())
+                           language=self.plugin.get_sh().get_defaultlanguage())
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -129,16 +127,18 @@ class WebInterface(SmartPluginWebIf):
         owner = json.get("owner")
         branch = json.get("branch")
         plugin = json.get("plugin")
+        name = json.get("name")
         confirm = json.get("confirm")
-        name = f'{owner}/{branch}'
+
         if (owner is None or owner == '' or
                 branch is None or branch == '' or
                 plugin is None or plugin == ''):
             msg = f'Fehlerhafte Daten für Repo {owner}/plugins, Branch {branch} oder Plugin {plugin} übergeben.'
+            self.logger.error(msg)
             return {"operation": "request", "result": "error", "data": msg}
 
         if confirm:
-            res = self.plugin.create_repo()
+            res = self.plugin.create_repo(name)
             msg = f'Fehler beim Erstellen des Repos "{owner}/plugins", Branch {branch}, Plugin {plugin}'
         else:
             res = self.plugin.init_repo(name, owner, plugin, branch)
@@ -147,6 +147,7 @@ class WebInterface(SmartPluginWebIf):
         if res:
             return {"operation": "request", "result": "success"}
         else:
+            self.logger.error(msg)
             return {"operation": "request", "result": "error", "data": msg}
 
 

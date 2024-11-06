@@ -1,11 +1,104 @@
 {% extends "base_plugin.html" %}
-{% set tabcount = 1 %}
-{% set tab1title = 'GitHub-Plugins' %}
-
+{% set tabcount = 2 %}
+{% if len(init_repo) > 0 %}
+	{% set tabcount = 2 %}
+{%  endif %}
 {% set dataSet = 'overview' %}
 {% set tab1title = _('Plugins in GitHub-Repos') %}
+{% set tab2title = _('Zur Installation vorbereitet') %}
 
-{%- block pluginscripts %}
+{% block pluginstyles %}
+<link rel="stylesheet" href="static/style.css">
+{% endblock pluginstyles %}
+
+{% block buttons %}
+<button id='install' class="btn btn-shng btn-sm" onclick='javascript:document.getElementById("installModal").style.display = "block";' type="button">Neues Plugin installieren</button>
+{% endblock buttons %}
+
+{% block headtable %}
+<div id="pluginModal" class="or-modal">
+	<div class="or-modal-content">
+		<span class="or-close" onclick="document.getElementById('pluginModal').style.display = 'none';">&times;</span>
+		<div>
+			<strong>Installieren von Plugin <span id='doplugin'></span> aus dem Repo <span id='doowner'></span>/plugins, Branch <span id='dobranch'></span></strong>
+		</div>
+		<div>
+			<span>Soll das Plugin wirklich installiert werden?</span><br />
+			<span id="modalButtons" display="block">
+				<button type="button" id="btn-plugin-inst" class="btn btn-danger btn-sm" onclick="installPlugin(this)">Installieren</button>
+				<button type="button" class="btn btn-shng btn-sm" onclick="document.getElementById('pluginModal').style.display = 'none';">Abbrechen</button>
+			</span>
+			<span id="modalSpinner" display="none">Befehl wird ausgeführt. Bitte etwas Geduld... </span>
+		</div>
+	</div>		
+</div>
+
+<div id="installModal" class="in-modal">
+	<div class="or-modal-content">
+		<span class="or-close" onclick="document.getElementById('installModal').style.display = 'none';">&times;</span>
+		<div>
+			<strong>Neues Plugin installieren</strong>
+		</div>
+		<div>
+			<form id='install'>
+				<div class="container-fluid m-2">
+					<div class="mb-2">Plugin installieren aus:</div>
+					<table>
+						<tr>
+							<td>PR:</td>
+							<td colspan=3>
+								<select id='pr' {% if len(pulls) == 0 %}disabled {% endif %} onchange="javascript:selectedPR(this);">
+									<option value=''>(PR auswählen)</option>
+									{% for pr in pulls %}
+									<option value='{{ pr }}'>{{ pr }}: {{ pulls[pr].title }}</option>
+									{% endfor %}
+								</select>
+							</td>
+							<td>&nbsp;</td>
+						</tr>
+						<tr>
+							<td>Repo von:</td>
+							<td>
+								<select id='owner' onchange="javascript:updateBranches(this);">
+									<option value=''>(Repo auswählen)</option>
+									{% for owner in forklist %}
+									<option>{{ owner }}</option>
+									{% endfor %}
+								</select>
+							</td>
+							<td style='padding-left: 15px;'>Branch:</td>
+							<td>
+								<select id='branch' disabled onchange="javascript:selectedBranch(this);">
+								<option value=''>(Branch auswählen)</option>
+								</select>
+							</td>
+							<td style='padding-left: 15px;'>
+								<button id='btn-branch' disabled type="button" class="btn btn-shng btn-sm" onclick="javascript:updatePlugins(this);">Auswählen</button>
+							</td>
+						</tr>
+						<tr>
+							<td>Plugin:</td>
+							<td>
+								<select id='plugin' disabled onchange="javascript:selectedPlugin(this);">
+									<option value=''>(Plugin auswählen)</option>
+								</select>
+							</td>
+							<td style='padding-left: 15px;'>Name:</td>
+							<td><input id='name' disabled /></td>
+							<td style='padding-left: 15px;'>
+								<button id='btn-plugin' disabled type="button" class="btn btn-shng btn-sm" onclick="javascript:selectPlugin(this);">Auswählen</button>					
+							</td>
+						</tr>
+					</table>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+{% endblock headtable %}
+
+{% block pluginscripts %}
 <link rel="stylesheet" type="text/css" href="static/datatables_min.css">
 <script type="text/javascript" charset="utf8" src="static/datatables_min.js"></script>
 
@@ -15,9 +108,14 @@
 	        "paging": false,
 	        fixedHeader: true
 	        } );
+	    $('#inittable').DataTable( {
+	        "paging": false,
+	        fixedHeader: true
+	        } );
 	});
 
 	var pulls = {{ pulls }};
+
 
 	function clearSelect(sel) {
 		var i, L = sel.options.length - 1;
@@ -35,7 +133,30 @@
 		sel.add(option);
 	}
 
-	function setPR(selObj) {
+	function showModal(owner, branch, plugin) {
+		document.getElementById('doplugin').textContent = plugin;
+		document.getElementById('doowner').textContent = owner;
+		document.getElementById('dobranch').textContent = branch;
+		document.getElementById('modalButtons').style.display = 'block';
+		document.getElementById('modalSpinner').style.display = 'none';
+		document.getElementById('pluginModal').style.display = 'block';
+	}
+
+	function hideModal() {
+		document.getElementById('pluginModal').style.display = 'none';
+		document.getElementById('doplugin').textContent = '';
+		document.getElementById('doowner').textContent = '';
+		document.getElementById('dobranch').textContent = '';
+		document.getElementById('modalButtons').style.display = 'block';
+		document.getElementById('modalSpinner').style.display = 'none';
+	}
+
+	function spinModal() {
+		document.getElementById('modalButtons').style.display = 'none';
+		document.getElementById('modalSpinner').style.display = 'block';		
+	}
+
+	function selectedPR(selObj) {
 		var PR = document.getElementById('pr').value;
 		if (PR > 0) {
 			document.getElementById('owner').value = pulls[PR]['owner'];
@@ -46,11 +167,23 @@
 			document.getElementById('branch').disabled = false;
 			document.getElementById('btn-branch').disabled = false;
 			document.getElementById('btn-plugin').disabled = true;
+			clearPlugin();
 		}
+	}
+
+	function clearPlugin() {
+		var p = document.getElementById('plugin');
+		clearSelect(p);
+		p.disabled = true;
+
+		var n = document.getElementById('name');
+		n.value = '';
+		n.disabled = true;		
 	}
 
 	function updateBranches(selObj) {
 		var owner = document.getElementById('owner').value;
+		clearPlugin();
 
 		if (owner != '') {
 			$.ajax({
@@ -96,6 +229,8 @@
 		var owner = document.getElementById('owner').value;
 		var branch = document.getElementById('branch').value;
 
+		document.getElementById('pr').value = '';
+
 		if (owner != '' && branch != '') {
 			$.ajax({
 				type: "POST",
@@ -119,6 +254,7 @@
 					for (const plugin of response['data']) {
 						addOption(item, plugin, plugin==branch);
 					}
+					selectedPlugin(this);
 
 					document.getElementById('btn-plugin').disabled = false;
 				}
@@ -126,23 +262,60 @@
 		}
 	}
 
+	function selectedPlugin(selObj) {
+		var owner = document.getElementById('owner').value;
+		var branch = document.getElementById('branch').value;
+		var plugin = document.getElementById('plugin').value;
+
+		var name = owner + "/" + branch + "-" + plugin;
+
+		document.getElementById('name').value = name;
+		document.getElementById('name').disabled = false;
+	}
+
 	function selectPlugin(selObj) {
 		var owner = document.getElementById('owner').value;
 		var branch = document.getElementById('branch').value;
 		var plugin = document.getElementById('plugin').value;
+		var name = document.getElementById('name').value;
 
 		if (owner != '' && branch != '' && plugin != '') {
 			$.ajax({
 				type: "POST",
 				url: "selectPlugin",
-				data: JSON.stringify({'owner': owner, 'branch': branch, 'plugin': plugin}),
+				data: JSON.stringify({'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': false}),
 				contentType: 'application/json',
 				dataType: 'json',
 				error: function(response) {
-					alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+					alert("Fehler beim Initialisieren: " + response['data'])
 				},
 				success: function(response) {
-					alert(response['data']);
+					showModal(owner, branch, plugin);
+				}
+			})
+		}
+	}
+
+	function installPlugin(selObj) {
+		var owner = document.getElementById('owner').value;
+		var branch = document.getElementById('branch').value;
+		var plugin = document.getElementById('plugin').value;
+		var name = document.getElementById('name').value;
+
+		if (owner != '' && branch != '' && plugin != '') {
+			spinModal();
+			$.ajax({
+				type: "POST",
+				url: "selectPlugin",
+				data: JSON.stringify({'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': true}),
+				contentType: 'application/json',
+				dataType: 'json',
+				error: function(response) {
+					alert("Fehler beim Installieren: " + response['data'])
+				},
+				success: function(response) {
+					hideModal();
+					setTimeout(window.location.reload(), 300); 
 				}
 			})
 		}
@@ -151,40 +324,17 @@
 
 </script>
 
-{%- endblock pluginscripts %}
+{% endblock pluginscripts %}
+
 
 {% block bodytab1 %}
 
-<!-- 
-<div id="orphanModal" class="or-modal">
-	<div class="or-modal-content">
-		<span class="or-close" onclick="document.getElementById('orphanModal').style.display = 'none';">&times;</span>
-		<div>
-			<strong>Neuzuweisen von Itemreihe <span id='orphan-item-name'></span> (ID <span id='orphan-item-id'></span>)</strong>
-		</div>
-		<div>
-			<span>Bitte wählen Sie die Itemreihe aus, der die verwaisten Daten zugewiesen werden sollen: </span>
-			<select id="orphanSelect" name="{{ item }}_reassign" onchange="btn = document.getElementById('orphanAssignBtn'); if (this.value == -1) { btn.disabled = true; } else { btn.disabled = false; }">
-				<option value=-1 selected="selected"></option>
-				{% for newitem in items %}
-					{% set newitemid = p.id(newitem, create=False) %}
-					{% if p.has_iattr(newitem.conf, 'database') %}
-						<option value={{ newitemid }}>{{ newitem.property.path }} ({{ newitemid }})</option>
-					{% endif %}
-				{% endfor %}
-			</select>
-			<button type="button" id="orphanAssignBtn" disabled class="btn btn-danger btn-sm" onclick="reassignOrphan()">Zuweisen</button>
-			<button type="button" class="btn btn-shng btn-sm" onclick="document.getElementById('orphanModal').style.display = 'none';">Abbrechen</button>
-		</div>
-	</div>		
-</div>
--->
-
 <div class="container-fluid m-2 table-responsive">
-	<div class="mb-2">Die folgenden Plugins sind von extern installiert. <div>
+	<div>Die folgenden Plugins sind von extern installiert:</div>
 	<table id="plugintable">
 		<thead>
 		<tr><th></th>
+			<th>Name</th>
 			<th>Plugin</th>
 			<th>Autor</th>
 			<th>Branch</th>
@@ -196,6 +346,7 @@
 			<tr>
 				<td></td>
 				<td id="{{ plugin }}_name">{{ plugin }}</td>
+				<td id="{{ plugin }}_plugin">{{ repos[plugin].plugin }}</td>
 				<td id="{{ plugin }}_owner">{{ repos[plugin].owner }}</td>
 				<td id="{{ plugin }}_branch">{{ repos[plugin].branch }}</td>
 				<td id="{{ plugin }}_wtpath">{{ repos[plugin].full_wt_path }}</td>
@@ -204,58 +355,40 @@
 		</tbody>
 	</table>
 </div>
-<hr />
-<form id='install'>
-	<div class="container-fluid m-2">
-		<div class="mb-2">Plugin installieren aus:</div>
-		<table>
-			<tr>
-				<td>PR:</td>
-				<td colspan=3>
-					<select id='pr' onchange="javascript:setPR(this);">
-						<option value=''>(PR auswählen)</option>
-						{% for pr in pulls %}
-						<option value='{{ pr }}'>{{ pr }}: {{ pulls[pr].title }}</option>
-						{% endfor %}
-					</select>
-				</td>
-				<td>&nbsp;</td>
-			</tr>
-			<tr>
-				<td>Repo von:</td>
-				<td>
-					<select id='owner' onchange="javascript:updateBranches(this);">
-						<option value=''>(Repo auswählen)</option>
-						{% for owner in forklist %}
-						<option>{{ owner }}</option>
-						{% endfor %}
-					</select>
-				</td>
-				<td style='padding-left: 15px;'>Branch:</td>
-				<td>
-					<select id='branch' disabled onchange="javascript:selectedBranch(this)">
-					<option value=''>(Branch auswählen)</option>
-					</select>
-				</td>
-				<td style='padding-left: 15px;'>
-					<button id='btn-branch' disabled type="button" class="btn btn-shng btn-sm" onclick="javascript:updatePlugins(this);">Auswählen</button>
-				</td>
-			</tr>
-			<tr>
-				<td>Plugin:</td>
-				<td colspan=3>
-					<select id='plugin' disabled>
-						<option value=''>(Plugin auswählen)</option>
-					</select>
-				</td>
-				<td style='padding-left: 15px;'>
-					<button id='btn-plugin' disabled type="button" class="btn btn-shng btn-sm" onclick="javascript:selectPlugin(this);">Auswählen</button>					
-				</td>
-			</tr>
-		</table>
-	</div>
-</form>
 
 {% endblock bodytab1 %}
 
+{% if init_repos|length > 0 %}
+
+{% block bodytab2 %}
+<div class="container-fluid m-2 table-responsive">
+	<div>Die folgenden Plugins sind zur Installation vorbereitet, aber noch nicht installiert:</div>
+	<table id="inittable">
+		<thead>
+		<tr><th></th>
+			<th>Name</th>
+			<th>Plugin</th>
+			<th>Autor</th>
+			<th>Branch</th>
+			<th>Pfad (Worktree)</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for plugin in init_repos %}
+			<tr>
+				<td></td>
+				<td id="{{ plugin }}_name">{{ plugin }}</td>
+				<td id="{{ plugin }}_plugin">{{ init_repos[plugin].plugin }}</td>
+				<td id="{{ plugin }}_owner">{{ init_repos[plugin].owner }}</td>
+				<td id="{{ plugin }}_branch">{{ init_repos[plugin].branch }}</td>
+				<td id="{{ plugin }}_wtpath">{{ init_repos[plugin].full_wt_path }}</td>
+				</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+</div>
+<hr />
+{% endblock bodytab2 %}
+
+{% endif %}
 
