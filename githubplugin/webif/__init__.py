@@ -56,7 +56,7 @@ class WebInterface(SmartPluginWebIf):
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
-    def index(self):
+    def index(self, action=None):
         """
         Build index.html for cherrypy
 
@@ -64,6 +64,10 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+        if action == 'rescan':
+            self.plugin.read_repos_from_dir()
+            raise cherrypy.HTTPRedirect(cherrypy.url())
+
         # try to get the webif pagelength from the module.yaml configuration
         pagelength = self.plugin.get_parameter_value('webif_pagelength')
 
@@ -118,6 +122,20 @@ class WebInterface(SmartPluginWebIf):
             plugins = self.plugin.fetch_github_plugins_from(owner=owner, branch=branch)
             if plugins != {}:
                 return {"operation": "request", "result": "success", "data": plugins}
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
+    def removePlugin(self):
+        json = cherrypy.request.json
+        name = json.get("name")
+        if name is None or name == '' or name not in self.plugin.repos:
+            msg = f'Repo {name} nicht vorhanden.'
+            self.logger.error(msg)
+            return {"operation": "request", "result": "error", "data": msg}
+
+        if self.plugin.remove_plugin(name):
+            return {"operation": "request", "result": "success"}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

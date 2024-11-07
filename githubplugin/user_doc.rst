@@ -1,91 +1,47 @@
 
-.. index:: Plugins; Pluginname (in Kleinbuchstaben)
-.. index:: Pluginname (in Kleinbuchstaben)
+.. index:: Plugins; githubplugin
+.. index:: githubplugin
 
 
-===============================
-Pluginname (in Kleinbuchstaben)
-===============================
+============
+githubplugin
+============
 
 
-.. comment set image name and extension according to the image file you use for the plugin-logo
+Wenn man das Plugin eines anderen Autors ausprobieren oder testen möchte, muss es aus einem fremden Repository von GitHub in die eigene Installation eingebunden werden.
 
-.. image:: webif/static/img/plugin_logo.png
-   :alt: plugin logo
-   :width: 300px
-   :height: 300px
-   :scale: 50 %
-   :align: left
+Dieses Plugin ermöglicht es komfortabel, fremde Plugins von GitHub zu installieren und wieder zu deinstallieren. 
 
-<Hier erfolgt die allgemeine Beschreibung des Zwecks des Plugins>
+Auch wenn die Funktionen des Plugins grundsätzlich über Logiken genutzt werden können, erfolgt die Bedienung grundsätzlich über das pluginspezifische Webinterface, das über die Admin-UI von SmartHomeNG zugänglich ist.
 
+Dort können Plugins angezeigt, installiert und entfernt werden. Das Löschen von installierten Plugins, deren git-Verzeichnisse nicht "sauber" sind (veränderte, gelöschte oder hinzugefügte Dateien im git-Index), können nicht über die Weboberfläche entfernt werden. Diese Änderungen müssen erst von Hand rückgängig gemacht oder per commit/push gesichert werden.
+
+Vorsicht: Wenn Änderungen an Fremd-Plugins per `git commit` in den Index übernommen wurden, aber nicht per push oder Pull-Request an GitHub gesendet wurden, können diese beim Löschen des Plugins ggf. unwiderruflich verloren gehen.
 
 Anforderungen
 =============
 
-...
-
 Notwendige Software
 -------------------
 
-<Hier wird weitere benötigte Software beschrieben. Falls keine weitere Software benötigt wird, kann dieser
-Abschnitt entfallen.>
-
-Unterstützte Geräte
--------------------
-
-<Hier werden unterstützte Geräte beschrieben. Falls keine keine speziell zu beschreibenden Geräte unterstützt
-werden, kann dieser Abschnitt entfallen.>
+Das Plugin benötigt die Python-Pakete GitPython und PyGithub.
 
 
 Konfiguration
 =============
 
-.. comment Den Text **Pluginname (in Kleinbuchstaben)** durch :doc:`/plugins_doc/config/pluginname` ersetzen
+Das Plugin ist ohne Konfiguration lauffähig.
 
-Die Plugin Parameter, die Informationen zur Item-spezifischen Konfiguration des Plugins und zur Logik-spezifischen
-Konfiguration sind unter **Pluginname (in Kleinbuchstaben)** beschrieben.
+Optional kann ein GitHub-API-Key hinterlegt werden, um die Anzahl der möglichen GitHub-Zugriffe zu erhöhen. 
+
+Die installiereten Fremd-Plugins werden über den Besitzer des GitHub-Repositories, den jeweiligen branch und den Pluginnamen identifiziert. Dazu wird ein Bezeichner nach dem Format `<Besitzer>/<Branch>-<Plugin>` erstellt. Alternativ kann vom Benutzer ein eigener Bezeichner frei gewählt werden. Um diese Bezeichner dauerhaft zu sichern, kann ein Item vom Typ `dict` bestimmt werden. Dieses benötigt nur die Item-Attribute
+
+.. code:
+   repoitem: true
+   cache: true
+
+
+Die Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/githubplugin` beschrieben.
 
 Dort findet sich auch die Dokumentation zu Funktionen, die das Plugin evtl. bereit stellt.
-
-
-Funktionen
-----------
-
-<Hier können bei Bedarf ausführliche Beschreibungen zu den Funktionen dokumentiert werden.>
-
-<Sonst diesen Abschnitt löschen>
-
-|
-
-Beispiele
-=========
-
-Hier können bei Bedarf Konfigurationsbeispiele dokumentiert werden.
-
-|
-
-Web Interface
-=============
-
-<Hier erfolgt die Beschreibung des Web Interfaces>
-
-Tab 1: <Name des Tabs>
-----------------------
-
-<Hier wird der Inhalt und die Funktionalität des Tabs beschrieben.>
-
-.. image:: assets/webif_tab1.jpg
-   :class: screenshot
-
-<Zu dem Tab ist ein Screenshot im Unterverzeichnis ``assets`` des Plugins abzulegen.
-
-|
-
-Version History
-===============
-
-<In diesem Abschnitt kann die Versionshistorie dokumentiert werden, falls der Plugin Autor dieses möchte.
-Diese Abschnitt ist optional.>
-
 

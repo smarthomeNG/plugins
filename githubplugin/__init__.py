@@ -26,6 +26,7 @@
 #########################################################################
 
 import os
+from shutil import rmtree
 from pathlib import Path
 
 from lib.model.smartplugin import SmartPlugin
@@ -269,9 +270,6 @@ class GithubPlugin(SmartPlugin):
     shng plugins fork and branch, and then setting up a local repo containing
     that fork. Additionally, the specified plugin will be soft-linked into the
     "live" plugins repo worktree as a private plugin.
-
-    At the moment, this is a standalone demonstrator, which will be transformed
-    into a SmartPlugin later.
     """
     PLUGIN_VERSION = '1.0.0'
 
@@ -297,7 +295,8 @@ class GithubPlugin(SmartPlugin):
         #     'link': os.path.join('plugins', f'priv_{plugin}'),    # relativer Pfad-/Dateiname des Plugin-Symlinks unterhalb von shng
         #     'rel_link_path': os.path.join(wt_path, plugin),       # relativer Pfad des Pluginordners "unterhalb" von plugins/
         #     'force': False,                                       # vorhandene Dateien überschreiben
-        #     'repo': repo                                          # git.Repo(path)
+        #     'repo': repo,                                         # git.Repo(path)
+        #     'dirty': bool                                         # repo is dirty?
         #   },
         #   '<id2>': {...}
         # }
@@ -379,7 +378,8 @@ class GithubPlugin(SmartPlugin):
                 'link': os.path.join('plugins', f'priv_{plugin}'),
                 'rel_link_path': os.path.join(wt_path, plugin),
                 'force': False,
-                'repo': repo
+                'repo': repo,
+                'dirty': repo.is_dirty()
             }
 
         # add missing ids to repoitem
@@ -556,6 +556,67 @@ class GithubPlugin(SmartPlugin):
         self.repos[name] = self.init_repos[name]
         del self.init_repos[name]
         self.add_repo_to_item(name)
+
+        return True
+
+    def remove_plugin(self, name) -> bool:
+        """ remove plugin link, worktree and if not longer needed, local repo """
+        if name not in self.repos:
+            self.logger.warning(f'plugin entry {name} not found.')
+            return False
+
+        # get all data to remove
+        repo = self.repos[name]
+        link_path = repo['link']
+        wt_path = repo['full_wt_path']
+        repo_path = repo['full_repo_path']
+        owner = repo['owner']
+        # check if repo is used by other plugins
+        last = True
+        for r in self.repos:
+            if r == name:
+                continue
+            if self.repos[r]["owner"] == owner:
+                last = False
+                break
+
+        err = []
+        try:
+            self.logger.debug(f'removing link {link_path}')
+            os.remove(link_path)
+        except Exception as e:
+            err.append(e)
+        try:
+            self.logger.debug(f'removing worktree {wt_path}')
+            rmtree(wt_path)
+        except Exception as e:
+            err.append(e)
+        try:
+            self.logger.debug('pruning worktree')
+            repo['repo'].git.worktree('prune')
+        except Exception as e:
+            err.append(e)
+        if last:
+            try:
+                self.logger.debug(f'repo {repo_path} is no longer used, removing')
+                rmtree(repo_path)
+            except Exception as e:
+                err.append(e)
+
+        # remove repo entry from plugin dict
+        del self.repos[name]
+        del repo
+
+        # remove repo entry from repoitem
+        if self._repoitem is not None:
+            try:
+                self._repoitem.dict.delete(wt_path)
+            except Exception as e:
+                err.append(e)
+
+        if err:
+            self.logger.warning(f'error(s) occurred while removing plugin: {", ".join(err)}')
+            return False
 
         return True
 

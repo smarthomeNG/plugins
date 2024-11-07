@@ -13,6 +13,7 @@
 
 {% block buttons %}
 <button id='install' class="btn btn-shng btn-sm" onclick='javascript:document.getElementById("installModal").style.display = "block";' type="button">Neues Plugin installieren</button>
+<button id='rescan' class="btn btn-shng btn-sm" onclick='location.href="?action=rescan"' type="button">Plugin-Verzeichnis neu lesen</button>
 {% endblock buttons %}
 
 {% block headtable %}
@@ -23,12 +24,30 @@
 			<strong>Installieren von Plugin <span id='doplugin'></span> aus dem Repo <span id='doowner'></span>/plugins, Branch <span id='dobranch'></span></strong>
 		</div>
 		<div>
-			<span>Soll das Plugin wirklich installiert werden?</span><br />
 			<span id="modalButtons" display="block">
+				<span>Soll das Plugin wirklich installiert werden?</span><br />
 				<button type="button" id="btn-plugin-inst" class="btn btn-danger btn-sm" onclick="installPlugin(this)">Installieren</button>
 				<button type="button" class="btn btn-shng btn-sm" onclick="document.getElementById('pluginModal').style.display = 'none';">Abbrechen</button>
 			</span>
-			<span id="modalSpinner" display="none">Befehl wird ausgeführt. Bitte etwas Geduld... </span>
+			<span id="modalSpinner" display="none">Installation wird ausgeführt. Bitte Geduld, dies kann etwas dauern... </span>
+		</div>
+	</div>		
+</div>
+
+<div id="pluginModal2" class="or-modal">
+	<div class="or-modal-content">
+		<span class="or-close" onclick="document.getElementById('pluginModal2').style.display = 'none';">&times;</span>
+		<div>
+			<strong>Entfernen von Plugin <span id='doplugin2'></span> aus dem Repo <span id='doowner2'></span>/plugins, Branch <span id='dobranch2'></span></strong>
+			<span id='doname2' style='display: none;'></span>
+		</div>
+		<div>
+			<span id="modalButtons2" display="block">
+				<span>Soll das Plugin wirklich gelöscht werden?</span><br />
+				<button type="button" id="btn-plugin-inst2" class="btn btn-danger btn-sm" onclick="removePlugin(this)">Löschen</button>
+				<button type="button" class="btn btn-shng btn-sm" onclick="document.getElementById('pluginModal2').style.display = 'none';">Abbrechen</button>
+			</span>
+			<span id="modalSpinner2" display="none">Löschen wird ausgeführt. Bitte Geduld, dies kann etwas dauern... </span>
 		</div>
 	</div>		
 </div>
@@ -116,7 +135,6 @@
 
 	var pulls = {{ pulls }};
 
-
 	function clearSelect(sel) {
 		var i, L = sel.options.length - 1;
 		for (i = L; i > 0; i--) {
@@ -133,27 +151,33 @@
 		sel.add(option);
 	}
 
-	function showModal(owner, branch, plugin) {
-		document.getElementById('doplugin').textContent = plugin;
-		document.getElementById('doowner').textContent = owner;
-		document.getElementById('dobranch').textContent = branch;
-		document.getElementById('modalButtons').style.display = 'block';
-		document.getElementById('modalSpinner').style.display = 'none';
-		document.getElementById('pluginModal').style.display = 'block';
+	function showModal(owner, branch, plugin, nr, name) {
+		document.getElementById('doplugin' + nr).textContent = plugin;
+		document.getElementById('doowner' + nr).textContent = owner;
+		document.getElementById('dobranch' + nr).textContent = branch;
+		document.getElementById('modalButtons' + nr).style.display = 'block';
+		document.getElementById('modalSpinner' + nr).style.display = 'none';
+		document.getElementById('pluginModal' + nr).style.display = 'block';
+		if (nr == '2') {
+			document.getElementById('doname2').textContent = name;
+		}
 	}
 
-	function hideModal() {
-		document.getElementById('pluginModal').style.display = 'none';
-		document.getElementById('doplugin').textContent = '';
-		document.getElementById('doowner').textContent = '';
-		document.getElementById('dobranch').textContent = '';
-		document.getElementById('modalButtons').style.display = 'block';
-		document.getElementById('modalSpinner').style.display = 'none';
+	function hideModal(nr) {
+		document.getElementById('pluginModal' + nr).style.display = 'none';
+		document.getElementById('doplugin' + nr).textContent = '';
+		document.getElementById('doowner' + nr).textContent = '';
+		document.getElementById('dobranch' + nr).textContent = '';
+		document.getElementById('modalButtons' + nr).style.display = 'block';
+		document.getElementById('modalSpinner' + nr).style.display = 'none';
+		if (nr == 2) {
+			document.getElementById('doname2').textContent = '';
+		}
 	}
 
-	function spinModal() {
-		document.getElementById('modalButtons').style.display = 'none';
-		document.getElementById('modalSpinner').style.display = 'block';		
+	function spinModal(nr) {
+		document.getElementById('modalButtons' + nr).style.display = 'none';
+		document.getElementById('modalSpinner' + nr).style.display = 'block';		
 	}
 
 	function selectedPR(selObj) {
@@ -290,7 +314,7 @@
 					alert("Fehler beim Initialisieren: " + response['data'])
 				},
 				success: function(response) {
-					showModal(owner, branch, plugin);
+					showModal(owner, branch, plugin, '');
 				}
 			})
 		}
@@ -301,9 +325,13 @@
 		var branch = document.getElementById('branch').value;
 		var plugin = document.getElementById('plugin').value;
 		var name = document.getElementById('name').value;
+		doInstallPlugin(owner, branch, plugin, name);
+	}
 
+	function doInstallPlugin(owner, branch, plugin, name) {
+		showModal(owner, branch, plugin, '');
 		if (owner != '' && branch != '' && plugin != '') {
-			spinModal();
+			spinModal('');
 			$.ajax({
 				type: "POST",
 				url: "selectPlugin",
@@ -314,8 +342,29 @@
 					alert("Fehler beim Installieren: " + response['data'])
 				},
 				success: function(response) {
-					hideModal();
+					hideModal('');
 					setTimeout(window.location.reload(), 300); 
+				}
+			})
+		}
+	}
+
+	function removePlugin(selObj) {
+		var name = document.getElementById('doname2').textContent;
+		if (name != '') {
+			spinModal('2');
+			$.ajax({
+				type: "POST",
+				url: "removePlugin",
+				data: JSON.stringify({'name': name}),
+				contentType: 'application/json',
+				dataType: 'json',
+				error: function(response) {
+					alert("Fehler beim Entfernen: " + response['data'])
+				},
+				success: function(response) {
+					hideModal('2');
+					// setTimeout(window.location.reload(), 300); 
 				}
 			})
 		}
@@ -339,6 +388,7 @@
 			<th>Autor</th>
 			<th>Branch</th>
 			<th>Pfad (Worktree)</th>
+			<th>Aktion</th>
 		</tr>
 		</thead>
 		<tbody>
@@ -350,6 +400,7 @@
 				<td id="{{ plugin }}_owner">{{ repos[plugin].owner }}</td>
 				<td id="{{ plugin }}_branch">{{ repos[plugin].branch }}</td>
 				<td id="{{ plugin }}_wtpath">{{ repos[plugin].full_wt_path }}</td>
+				<td id="{{ plugin }}_action">{% if repos[plugin].dirty %}Änderungen vorhanden{% else %}<button type="button" class="btn btn-danger btn-sm" onclick="javascript:showModal('{{ repos[plugin].owner }}', '{{ repos[plugin].branch }}', '{{ repos[plugin].plugin }}', '2', '{{ plugin }}');"><i class="fas fa-times"></i></button>{% endif %}</td>
 				</tr>
 		{% endfor %}
 		</tbody>
@@ -371,6 +422,7 @@
 			<th>Autor</th>
 			<th>Branch</th>
 			<th>Pfad (Worktree)</th>
+			<th></th>
 		</tr>
 		</thead>
 		<tbody>
@@ -382,6 +434,8 @@
 				<td id="{{ plugin }}_owner">{{ init_repos[plugin].owner }}</td>
 				<td id="{{ plugin }}_branch">{{ init_repos[plugin].branch }}</td>
 				<td id="{{ plugin }}_wtpath">{{ init_repos[plugin].full_wt_path }}</td>
+				<td><button type="button" class="btn btn-shng btn-sm" onclick="javascript:doInstallPlugin('{{ init_repos[plugin].owner }}', '{{ init_repos[plugin].branch }}', '{{ init_repos[plugin].plugin }}', '{{ plugin }}');"><i class="fas fa-share"></i></button>
+				</td>
 				</tr>
 		{% endfor %}
 		</tbody>
