@@ -311,10 +311,6 @@ class GithubPlugin(SmartPlugin):
 
         self.repo_path = os.path.join('plugins', 'priv_repos')
 
-        # item contains a dict containing the user-defined name for the path of
-        # each retrieved plugin: {<path1 to plugin in worktree>: <user-id>}
-        self._repoitem = None
-
         self.gh_apikey = self.get_parameter_value('github_apikey')
         self.gh = GitHubHelper(apikey=self.gh_apikey, logger=self.logger)
 
@@ -363,12 +359,8 @@ class GithubPlugin(SmartPlugin):
             repo_path = os.path.join('priv_repos', owner)
             wt_path = os.path.join('priv_repos', f'{owner}_wt_{branch}')
 
-            if self._repoitem and wtpath in self._repoitem():
-                # get id stored in self._repoitem
-                id = self._repoitem(key=wtpath)
-            else:
-                # make up id
-                id = f'{owner}/{branch}'
+            # use part of link name after priv_
+            id = str(item)[5:]
 
             self.repos[id] = {
                 'plugin': plugin,
@@ -388,24 +380,10 @@ class GithubPlugin(SmartPlugin):
                 'dirty': repo.is_dirty()
             }
 
-        # add missing ids to repoitem
-        if self._repoitem is not None:
-            self.logger.debug('checking repo item for all repos')
-            for repo in self.repos:
-                if self.repos[repo]['full_wt_path'] not in self._repoitem():
-                    self.add_repo_to_item(repo)
-
-    def add_repo_to_item(self, repo):
-        if self._repoitem is not None and repo in self.repos:
-            self.logger.debug(f'adding {repo} to repoitem {self._repoitem}')
-            self._repoitem.dict.update({
-                self.repos[repo]['full_wt_path']: repo
-            })
-
     def init_repo(self, name, owner, plugin, branch=None, force=False) -> bool:
 
-        if name in self.repos:
-            self.logger.warning(f'name {name} already taken, delete old repo first or choose a different name.')
+        if name in self.repos or os.path.exists(os.path.join('plugins', 'priv_' + name)):
+            self.logger.warning(f'name {name} already taken, delete old plugin first or choose a different name.')
             return False
 
         if name in self.init_repos and not force:
@@ -447,7 +425,7 @@ class GithubPlugin(SmartPlugin):
         repo['rel_wt_path'] = os.path.join('..', '..', repo['wt_path'])
 
         # set link location from plugin name
-        repo['link'] = os.path.join('plugins', f'priv_{plugin}')
+        repo['link'] = os.path.join('plugins', f'priv_{name}')
         repo['rel_link_path'] = os.path.join(repo['wt_path'], plugin)
 
         repo['force'] = force
@@ -468,7 +446,7 @@ class GithubPlugin(SmartPlugin):
 
     def create_repo(self, name) -> bool:
 
-        if name in self.repos:
+        if name in self.repos or os.path.exists(os.path.join('plugins', 'priv_' + name)):
             self.logger.error(f'repo {name} already exists, not overwriting.')
             return False
 
@@ -561,7 +539,6 @@ class GithubPlugin(SmartPlugin):
 
         self.repos[name] = self.init_repos[name]
         del self.init_repos[name]
-        self.add_repo_to_item(name)
 
         return True
 
@@ -612,13 +589,6 @@ class GithubPlugin(SmartPlugin):
         # remove repo entry from plugin dict
         del self.repos[name]
         del repo
-
-        # remove repo entry from repoitem
-        if self._repoitem is not None:
-            try:
-                self._repoitem.dict.delete(wt_path)
-            except Exception as e:
-                err.append(e)
 
         if err:
             self.logger.warning(f'error(s) occurred while removing plugin: {", ".join(err)}')
@@ -774,21 +744,6 @@ class GithubPlugin(SmartPlugin):
         """
         self.logger.dbghigh(self.translate("Methode '{method}' aufgerufen", {'method': 'stop()'}))
         self.alive = False     # if using asyncio, do not set self.alive here. Set it in the session coroutine
-
-    def parse_item(self, item):
-        """
-        :param item:    The item to process.
-        :return:        If the plugin needs to be informed of an items change you should return a call back function
-                        like the function update_item down below. An example when this is needed is the knx plugin
-                        where parse_item returns the update_item function when the attribute knx_send is found.
-                        This means that when the items value is about to be updated, the call back function is called
-                        with the item, caller, source and dest as arguments and in case of the knx plugin the value
-                        can be sent to the knx with a knx write function within the knx plugin.
-        """
-
-        if self.has_iattr(item.conf, 'repoitem'):
-            self.logger.debug(f"repo item set: {item}")
-            self._repoitem = item
 
     #
     # helper methods

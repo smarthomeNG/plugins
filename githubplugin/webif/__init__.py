@@ -99,6 +99,8 @@ class WebInterface(SmartPluginWebIf):
                            forklist=sorted(self.plugin.gh.forks.keys()),
                            forks=self.plugin.gh.forks,
                            pulls=pulls,
+                           auth=self.plugin.gh_apikey != '',
+                           conn=self.plugin.gh._github is not None,
                            language=self.plugin.get_sh().get_defaultlanguage())
 
     @cherrypy.expose
@@ -220,72 +222,3 @@ class WebInterface(SmartPluginWebIf):
         else:
             self.logger.error(msg)
             return {"operation": "request", "result": "error", "data": msg}
-
-
-#    @cherrypy.expose
-#    @cherrypy.tools.json_out()
-#    def countall(self, item_path):
-#        if item_path is not None:
-#            item = self.plugin.items.return_item(item_path)
-#            count = item.db('countall', 0)
-#            if count is not None:
-#                return int(count)
-#            else:
-#                return 0
-
-#     @cherrypy.expose
-#     def get_data_html(self, dataSet=None, params=None):
-#         """
-#         Return data to update the webpage
-# 
-#         For the standard update mechanism of the web interface, the dataSet to return the data for is None
-# 
-#         :param dataSet: Dataset for which the data should be returned (standard: None)
-#         :return: dict with the data needed to update the web page.
-#         """
-#         if dataSet == 'overview':
-#             # get the new data
-#             data = self.plugin._webdata
-#             try:
-#                 data = json.dumps(data)
-#                 return data
-#             except Exception as e:
-#                 self.logger.error(f"get_data_html exception: {e}")
-#         if dataSet == "item_details":
-#             item_id = params
-#             now = self.plugin.shtime.now()
-#             time_start = time.mktime(datetime.datetime.strptime("%s/%s/%s" % (now.month, now.day, now.year),
-#                                                                 "%m/%d/%Y").timetuple()) * 1000
-#             time_end = time_start + 24 * 60 * 60 * 1000
-#             if item_id is not None:
-#                 rows = self.plugin.readLogs(item_id, time_start=time_start, time_end=time_end)
-#             else:
-#                 rows = []
-#             log_array = []
-#             if rows is None:
-#                 reversed_arr = []
-#             else:
-#                 for row in rows:
-#                     value_dict = {}
-#                     for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
-#                                 COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
-#                         if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
-#                             value_dict[key] = row[key]
-#                         else:
-#                             value_dict[key] = datetime.datetime.fromtimestamp(row[key] / 1000,
-#                                                                               tz=self.plugin.shtime.tzinfo()).isoformat()
-#                             value_dict["%s_orig" % key] = row[key]
-# 
-#                     log_array.append(value_dict)
-#                 reversed_arr = log_array[::-1]
-#             try:
-#                 data = json.dumps(reversed_arr)
-#                 if data:
-#                     return data
-#                 else:
-#                     return None
-#             except Exception as e:
-#                 self.logger.error(f"get_data_html exception: {e}")
-# 
-#         return {}
-# 

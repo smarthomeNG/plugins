@@ -38,14 +38,7 @@ parameters:
             en: 'API key (app password) for accessing GitHub (optional)'
 
 
-item_attributes:
-    repoitem:
-        type: bool
-
-        description:
-            de: Legt das Item als Speicherort für Informationen über die installierten Plugins fest
-            en: Identifies the item to store installed plugin info
-
+item_attributes: NONE
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
