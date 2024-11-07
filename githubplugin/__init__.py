@@ -146,8 +146,10 @@ class GitHubHelper(object):
         # succeed if cached pulls present and fetch not requested
         if not fetch:
             if self.pulls != {}:
+                self.logger.debug(f'using cached pulls: {self.pulls.keys()}')
                 return True
 
+        self.logger.debug('fetching pulls from github')
         self.pulls = {}
         for pull in self.git_repo.get_pulls():
             self.pulls[pull.number] = {
@@ -198,9 +200,11 @@ class GitHubHelper(object):
             except KeyError:
                 pass
             else:
+                self.logger.debug(f'returning cached {b_list}')
                 return b_list
 
         # fetch from github
+        self.logger.debug('refreshing branches from github')
         branches = fork.get_branches()
         b_list = {}
         for branch in branches:
@@ -231,9 +235,11 @@ class GitHubHelper(object):
             except KeyError:
                 pass
             else:
+                self.logger.debug(f'returning cached plugins {plugins}')
                 return plugins
 
         # plugins not yet cached, fetch from github
+        self.logger.debug('fetching plugins from github')
         contents = fork.get_contents("", ref=branch)
         plugins = [item.path for item in contents if item.type == 'dir' and not item.path.startswith('.')]
 
@@ -634,17 +640,17 @@ class GithubPlugin(SmartPlugin):
 
         return self.gh.set_repo()
 
-    def fetch_github_forks(self) -> bool:
+    def fetch_github_forks(self, fetch=False) -> bool:
         """ fetch forks from github API """
         if self.gh:
-            return self.gh.get_forks()
+            return self.gh.get_forks(fetch=fetch)
         else:
             return False
 
-    def fetch_github_pulls(self) -> bool:
+    def fetch_github_pulls(self, fetch=False) -> bool:
         """ fetch PRs from github API """
         if self.gh:
-            return self.gh.get_pulls()
+            return self.gh.get_pulls(fetch=fetch)
         else:
             return False
 

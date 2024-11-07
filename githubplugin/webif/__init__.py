@@ -24,18 +24,15 @@
 #
 #########################################################################
 
-import os
-import json
-
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
+
+import cherrypy
 
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
 
-import cherrypy
-import csv
 
 class WebInterface(SmartPluginWebIf):
 
@@ -83,13 +80,17 @@ class WebInterface(SmartPluginWebIf):
         # collect only PRs which (branches) are not already installed as a worktree
         pulls = {}
         for pr in self.plugin.gh.pulls:
+            skip = False
             if self.plugin.gh.pulls[pr]['owner'] in reposbyowner:
-                if self.plugin.gh.pulls[pr]['branch'] not in reposbyowner[self.plugin.gh.pulls[pr]['owner']]:
-                    pulls[pr] = {
-                        'title': self.plugin.gh.pulls[pr]['title'],
-                        'owner': self.plugin.gh.pulls[pr]['owner'],
-                        'branch': self.plugin.gh.pulls[pr]['branch']
-                    }
+                if self.plugin.gh.pulls[pr]['branch'] in reposbyowner[self.plugin.gh.pulls[pr]['owner']]:
+                    skip = True
+
+            if not skip:
+                pulls[pr] = {
+                    'title': self.plugin.gh.pulls[pr]['title'],
+                    'owner': self.plugin.gh.pulls[pr]['owner'],
+                    'branch': self.plugin.gh.pulls[pr]['branch']
+                }
 
         return tmpl.render(p=self.plugin,
                            webif_pagelength=pagelength,
@@ -102,12 +103,46 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    def updateForks(self):
+        if self.plugin.fetch_github_forks(fetch=True):
+            return {"operation": "request", "result": "success", "data": sorted(self.plugin.gh.forks.keys())}
+
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def getPull(self):
+        json = cherrypy.request.json
+        try:
+            pr = int(json.get("pull", 0))
+        except Exception:
+            self.logger.error(f'invalid value for pr in {json}')
+            return
+        if pr > 0:
+            pull = self.plugin.get_github_pulls(number=pr)
+            b = pull.get('branch')
+            o = pull.get('owner')
+            if b and o:
+                return {"operation": "request", "result": "success", "owner": o, "branch": b}
+        else:
+            self.logger.error(f'invalid data on processing PR {pr}')
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def updatePulls(self):
+        if self.plugin.fetch_github_pulls(fetch=True):
+            prn = list(self.plugin.get_github_pulls().keys())
+            prt = [v['title'] for pr, v in self.plugin.get_github_pulls().items()]
+            return {"operation": "request", "result": "success", "prn": prn, "prt": prt}
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
     @cherrypy.tools.json_in()
     def updateBranches(self):
         json = cherrypy.request.json
         owner = json.get("owner")
+        force = json.get("force", False)
         if owner is not None and owner != '':
-            branches = self.plugin.fetch_github_branches_from(owner=owner)
+            branches = self.plugin.fetch_github_branches_from(owner=owner, fetch=force)
             if branches != {}:
                 return {"operation": "request", "result": "success", "data": list(branches.keys())}
 
@@ -116,10 +151,11 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.tools.json_in()
     def updatePlugins(self):
         json = cherrypy.request.json
+        force = json.get("force", False)
         owner = json.get("owner")
         branch = json.get("branch")
         if owner is not None and owner != '' and branch is not None and branch != '':
-            plugins = self.plugin.fetch_github_plugins_from(owner=owner, branch=branch)
+            plugins = self.plugin.fetch_github_plugins_from(owner=owner, branch=branch, fetch=force)
             if plugins != {}:
                 return {"operation": "request", "result": "success", "data": plugins}
 
@@ -136,6 +172,23 @@ class WebInterface(SmartPluginWebIf):
 
         if self.plugin.remove_plugin(name):
             return {"operation": "request", "result": "success"}
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
+    def removeInitPlugin(self):
+        json = cherrypy.request.json
+        name = json.get("name")
+        if name is None or name == '' or name not in self.plugin.init_repos:
+            msg = f'Plugin {name} nicht vorhanden.'
+            self.logger.error(msg)
+            return {"operation": "request", "result": "error", "data": msg}
+
+        try:
+            del self.plugin.init_repos[name]
+        except Exception:
+            pass
+        return {"operation": "request", "result": "success"}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

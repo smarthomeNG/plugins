@@ -47,7 +47,7 @@
 				<button type="button" id="btn-plugin-inst2" class="btn btn-danger btn-sm" onclick="removePlugin(this)">Löschen</button>
 				<button type="button" class="btn btn-shng btn-sm" onclick="document.getElementById('pluginModal2').style.display = 'none';">Abbrechen</button>
 			</span>
-			<span id="modalSpinner2" display="none">Löschen wird ausgeführt. Bitte Geduld, dies kann etwas dauern... </span>
+			<span id="modalSpinner2" display="none">Löschen wird ausgeführt. Bitte Geduld, dies kann etwas dauern... <i class="fa fa-refresh fa-spin"></i></span>
 		</div>
 	</div>		
 </div>
@@ -62,7 +62,7 @@
 			<form id='install'>
 				<div class="container-fluid m-2">
 					<div class="mb-2">Plugin installieren aus:</div>
-					<table>
+					<table width="100%">
 						<tr>
 							<td>PR:</td>
 							<td colspan=3>
@@ -72,6 +72,7 @@
 									<option value='{{ pr }}'>{{ pr }}: {{ pulls[pr].title }}</option>
 									{% endfor %}
 								</select>
+								<button id='btn-ref-pr' type="button" class="btn btn-shng btn-sm" onclick="javascript:refetch('pr');">&#8635;</i></button>
 							</td>
 							<td>&nbsp;</td>
 						</tr>
@@ -84,12 +85,14 @@
 									<option>{{ owner }}</option>
 									{% endfor %}
 								</select>
+								<button id='btn-ref-fork' type="button" class="btn btn-shng btn-sm" onclick="javascript:refetch('owner');">&#8635;</i></button>
 							</td>
 							<td style='padding-left: 15px;'>Branch:</td>
 							<td>
 								<select id='branch' disabled onchange="javascript:selectedBranch(this);">
 								<option value=''>(Branch auswählen)</option>
 								</select>
+								<button id='btn-ref-branch' type="button" class="btn btn-shng btn-sm" onclick="javascript:refetch('branch');">&#8635;</i></button>
 							</td>
 							<td style='padding-left: 15px;'>
 								<button id='btn-branch' disabled type="button" class="btn btn-shng btn-sm" onclick="javascript:updatePlugins(this);">Auswählen</button>
@@ -101,6 +104,7 @@
 								<select id='plugin' disabled onchange="javascript:selectedPlugin(this);">
 									<option value=''>(Plugin auswählen)</option>
 								</select>
+								<button id='btn-ref-plugin' type="button" class="btn btn-shng btn-sm" onclick="javascript:refetch('plugin');">&#8635;</i></button>
 							</td>
 							<td style='padding-left: 15px;'>Name:</td>
 							<td><input id='name' disabled /></td>
@@ -142,9 +146,14 @@
 		}		
 	}
 
-	function addOption(sel, val, def) {
+	function addOption(sel, text, def, val) {
 		var option = document.createElement('option');
-		option.text = val;
+		option.text = text;
+		if (val != undefined) {
+			option.value = val;
+		} else {
+			option.value = text;
+		}
 		if (def) {
 			option.selected = true;
 		}
@@ -180,19 +189,54 @@
 		document.getElementById('modalSpinner' + nr).style.display = 'block';		
 	}
 
+	function sendData(url, data, error, success) {
+		$.ajax({
+			type: "POST",
+			url: url,
+			data: JSON.stringify(data),
+			contentType: 'application/json',
+			dataType: 'json',
+			error: error,
+			success: success
+		})
+	}
+
 	function selectedPR(selObj) {
 		var PR = document.getElementById('pr').value;
 		if (PR > 0) {
-			document.getElementById('owner').value = pulls[PR]['owner'];
-			var branch = document.getElementById('branch');
-			clearSelect(branch);
-			addOption(branch, pulls[PR]['branch']);
-			branch.value = pulls[PR]['branch'];
-			document.getElementById('branch').disabled = false;
-			document.getElementById('btn-branch').disabled = false;
-			document.getElementById('btn-plugin').disabled = true;
-			clearPlugin();
+			sendData('getPull', {'pull': PR}, 
+			function(response){
+				alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+			},
+			function(response){
+				var branch = document.getElementById('branch');
+				var powner = response['owner'];
+				var pbranch = response['branch'];
+				document.getElementById('owner').value = powner;
+				clearSelect(branch);
+				addOption(branch, pbranch);
+				branch.value = pbranch;
+				branch.disabled = false;
+				document.getElementById('btn-branch').disabled = false;
+				document.getElementById('btn-plugin').disabled = true;
+				clearPlugin();
+			})
 		}
+	}
+
+	function clearForks() {
+		var f = document.getElementById('owner');
+		f.value = '';
+
+		clearBranches();
+	}
+
+	function clearBranches() {
+		var b = document.getElementById('branch');
+		clearSelect(b);
+		b.disabled = true;
+
+		clearPlugin();
 	}
 
 	function clearPlugin() {
@@ -205,21 +249,39 @@
 		n.disabled = true;		
 	}
 
-	function updateBranches(selObj) {
+	function updatePulls(selObj, force) {
+		clearForks();
+
+		sendData('updatePulls', {}, function(response) {
+				alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
+			}, function(response) {
+				var item = document.getElementById('pr');
+
+				// clear options
+				clearSelect(pr);
+
+				// add all pulls
+				prn = response['prn'];
+				prt = response['prt'];
+				for (var i = 0; i < prn.length; i++) {
+					addOption(item, prn[i] + ": " + prt[i], false, prn[i]);
+				}
+			}
+		)
+	}
+
+	function updateBranches(selObj, force) {
 		var owner = document.getElementById('owner').value;
 		clearPlugin();
 
 		if (owner != '') {
-			$.ajax({
-				type: "POST",
-				url: "updateBranches",
-				data: JSON.stringify({'owner': owner}),
-				contentType: 'application/json',
-				dataType: 'json',
-				error: function(response) {
+			data = {'owner': owner}
+			if (force == true) {
+				data['force'] = true;
+			}
+			sendData('updateBranches', data, function(response) {
 					alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
-				},
-				success: function(response) {
+				}, function(response) {
 					var item = document.getElementById('branch');
 
 					// enable branch options
@@ -236,7 +298,7 @@
 						addOption(item, branch, false);
 					}
 				}
-			})
+			)
 		}
 	}
 
@@ -249,23 +311,21 @@
 		}
 	}
 
-	function updatePlugins(selObj) {
+	function updatePlugins(selObj, force) {
 		var owner = document.getElementById('owner').value;
 		var branch = document.getElementById('branch').value;
 
 		document.getElementById('pr').value = '';
-
 		if (owner != '' && branch != '') {
-			$.ajax({
-				type: "POST",
-				url: "updatePlugins",
-				data: JSON.stringify({'owner': owner, 'branch': branch}),
-				contentType: 'application/json',
-				dataType: 'json',
-				error: function(response) {
+			data = {'owner': owner, 'branch': branch};
+			if (force == true) {
+				data['force'] = true;
+			}
+			sendData("updatePlugins", data,
+				function(response) {
 					alert("Fehler beim Übermitteln der Daten. Bitte shng-Log prüfen!");
 				},
-				success: function(response) {
+				function(response) {
 					var item = document.getElementById('plugin');
 
 					// enable branch options
@@ -282,7 +342,7 @@
 
 					document.getElementById('btn-plugin').disabled = false;
 				}
-			})
+			)
 		}
 	}
 
@@ -304,19 +364,15 @@
 		var name = document.getElementById('name').value;
 
 		if (owner != '' && branch != '' && plugin != '') {
-			$.ajax({
-				type: "POST",
-				url: "selectPlugin",
-				data: JSON.stringify({'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': false}),
-				contentType: 'application/json',
-				dataType: 'json',
-				error: function(response) {
+			sendData("selectPlugin", {'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': false},
+				function(response) {
 					alert("Fehler beim Initialisieren: " + response['data'])
 				},
-				success: function(response) {
+				function(response) {
+					document.getElementById('installModal').style.display = 'none';
 					showModal(owner, branch, plugin, '');
 				}
-			})
+			)
 		}
 	}
 
@@ -332,20 +388,29 @@
 		showModal(owner, branch, plugin, '');
 		if (owner != '' && branch != '' && plugin != '') {
 			spinModal('');
-			$.ajax({
-				type: "POST",
-				url: "selectPlugin",
-				data: JSON.stringify({'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': true}),
-				contentType: 'application/json',
-				dataType: 'json',
-				error: function(response) {
+			sendData("selectPlugin", {'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': true},
+				function(response) {
 					alert("Fehler beim Installieren: " + response['data'])
 				},
-				success: function(response) {
+				function(response) {
 					hideModal('');
 					setTimeout(window.location.reload(), 300); 
 				}
-			})
+			)
+		}
+	}
+
+	function removeInitPlugin(name) {
+		if (name != '') {
+			spinModal('');
+			sendData("removeInitPlugin", {'name': name},
+				function(response) {
+					alert("Fehler beim Entfernen: " + response['data'])
+				},
+				function(response) {
+					setTimeout(window.location.reload(), 300); 
+				}
+			)
 		}
 	}
 
@@ -353,21 +418,32 @@
 		var name = document.getElementById('doname2').textContent;
 		if (name != '') {
 			spinModal('2');
-			$.ajax({
-				type: "POST",
-				url: "removePlugin",
-				data: JSON.stringify({'name': name}),
-				contentType: 'application/json',
-				dataType: 'json',
-				error: function(response) {
+			sendData("removePlugin", {'name': name},
+				function(response) {
 					alert("Fehler beim Entfernen: " + response['data'])
 				},
-				success: function(response) {
+				function(response) {
 					hideModal('2');
-					// setTimeout(window.location.reload(), 300); 
+					setTimeout(window.location.reload(), 300); 
 				}
-			})
+			)
 		}
+	}
+
+	function refetch(what) {
+		if (what == 'owner') {
+
+		}
+		if (what == 'pr') {
+			updatePulls(null, true);
+		}
+		if (what == 'branch') {
+			updateBranches(null, true);
+		}
+		if (what == 'plugin') {
+			updatePlugins(null, true);
+		}
+
 	}
 
 
@@ -434,7 +510,9 @@
 				<td id="{{ plugin }}_owner">{{ init_repos[plugin].owner }}</td>
 				<td id="{{ plugin }}_branch">{{ init_repos[plugin].branch }}</td>
 				<td id="{{ plugin }}_wtpath">{{ init_repos[plugin].full_wt_path }}</td>
-				<td><button type="button" class="btn btn-shng btn-sm" onclick="javascript:doInstallPlugin('{{ init_repos[plugin].owner }}', '{{ init_repos[plugin].branch }}', '{{ init_repos[plugin].plugin }}', '{{ plugin }}');"><i class="fas fa-share"></i></button>
+				<td>
+					<button type="button" class="btn btn-shng btn-sm" onclick="javascript:doInstallPlugin('{{ init_repos[plugin].owner }}', '{{ init_repos[plugin].branch }}', '{{ init_repos[plugin].plugin }}', '{{ plugin }}');" style='display:inline;'><i class="fas fa-share"></i></button>
+					<button type="button" class="btn btn-danger btn-sm" onclick="javascript:removeInitPlugin('{{ plugin }}');" style='display:inline;'><i class="fas fa-times"></i></button>
 				</td>
 				</tr>
 		{% endfor %}
