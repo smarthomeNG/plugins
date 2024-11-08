@@ -27,15 +27,12 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
-
-    # item to toggle plugin execution, remove if not wanted
-    # (needs plugin to be restartable)
-    github_apikey:
+    app_token:
         type: str
         default: ''
         description:
-            de: 'API-Key (App-Passwort) zum Zugriff auf GitHub (optional)'
-            en: 'API key (app password) for accessing GitHub (optional)'
+            de: 'App-Token zum Zugriff auf GitHub (optional)'
+            en: 'App token for accessing GitHub (optional)'
 
 
 item_attributes: NONE

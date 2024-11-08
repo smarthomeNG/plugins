@@ -24,15 +24,30 @@
 #
 #########################################################################
 
+import cherrypy
+
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
+from ..gperror import GPError
 
-import cherrypy
+
+def XHRError(value):
+    """ decorator to catch GPError and return error with message """
+    def decorate(f):
+        def applicator(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except GPError as e:
+                return {"operation": "request", "result": "error", "error": str(e)}
+
+        return applicator
+
+    return decorate
+
 
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
-
 
 class WebInterface(SmartPluginWebIf):
 
@@ -105,12 +120,14 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @XHRError
     def getRateLimit(self):
         rl = self.plugin.gh.get_rate_limit()
         return {"operation": "request", "result": "success", "data": rl}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @XHRError
     def updateForks(self):
         if self.plugin.fetch_github_forks(fetch=True):
             return {"operation": "request", "result": "success", "data": sorted(self.plugin.gh.forks.keys())}
@@ -118,13 +135,13 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
+    @XHRError
     def isRepoClean(self):
         json = cherrypy.request.json
         name = json.get('name')
 
         if not name or name not in self.plugin.repos:
-            self.logger.warning(f'repo {name} invalid or not found')
-            return
+            raise GPError(f'repo {name} invalid or not found')
 
         clean = self.plugin.is_repo_clean(name)
         return {"operation": "request", "result": "success", "data": clean}
@@ -132,13 +149,13 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
+    @XHRError
     def getPull(self):
         json = cherrypy.request.json
         try:
             pr = int(json.get("pull", 0))
         except Exception:
-            self.logger.error(f'invalid value for pr in {json}')
-            return
+            raise GPError(f'invalid value for pr in {json}')
         if pr > 0:
             pull = self.plugin.get_github_pulls(number=pr)
             b = pull.get('branch')
@@ -146,10 +163,11 @@ class WebInterface(SmartPluginWebIf):
             if b and o:
                 return {"operation": "request", "result": "success", "owner": o, "branch": b}
         else:
-            self.logger.error(f'invalid data on processing PR {pr}')
+            raise GPError(f'invalid data on processing PR {pr}')
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @XHRError
     def updatePulls(self):
         if self.plugin.fetch_github_pulls(fetch=True):
             prn = list(self.plugin.get_github_pulls().keys())
@@ -159,6 +177,7 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     @cherrypy.tools.json_in()
+    @XHRError
     def updateBranches(self):
         json = cherrypy.request.json
         owner = json.get("owner")
@@ -171,6 +190,7 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     @cherrypy.tools.json_in()
+    @XHRError
     def updatePlugins(self):
         json = cherrypy.request.json
         force = json.get("force", False)
@@ -184,13 +204,12 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     @cherrypy.tools.json_in()
+    @XHRError
     def removePlugin(self):
         json = cherrypy.request.json
         name = json.get("name")
         if name is None or name == '' or name not in self.plugin.repos:
-            msg = f'Repo {name} nicht vorhanden.'
-            self.logger.error(msg)
-            return {"operation": "request", "result": "error", "data": msg}
+            raise GPError(f'Repo {name} nicht vorhanden.')
 
         if self.plugin.remove_plugin(name):
             return {"operation": "request", "result": "success"}
@@ -198,13 +217,12 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     @cherrypy.tools.json_in()
+    @XHRError
     def removeInitPlugin(self):
         json = cherrypy.request.json
         name = json.get("name")
         if name is None or name == '' or name not in self.plugin.init_repos:
-            msg = f'Plugin {name} nicht vorhanden.'
-            self.logger.error(msg)
-            return {"operation": "request", "result": "error", "data": msg}
+            raise GPError(f'Plugin {name} nicht vorhanden.')
 
         try:
             del self.plugin.init_repos[name]
@@ -215,6 +233,7 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     @cherrypy.tools.json_in()
+    @XHRError
     def selectPlugin(self):
         json = cherrypy.request.json
         owner = json.get("owner")
@@ -226,9 +245,7 @@ class WebInterface(SmartPluginWebIf):
         if (owner is None or owner == '' or
                 branch is None or branch == '' or
                 plugin is None or plugin == ''):
-            msg = f'Fehlerhafte Daten für Repo {owner}/plugins, Branch {branch} oder Plugin {plugin} übergeben.'
-            self.logger.error(msg)
-            return {"operation": "request", "result": "error", "data": msg}
+            raise GPError(f'Fehlerhafte Daten für Repo {owner}/plugins, Branch {branch} oder Plugin {plugin} übergeben.')
 
         if confirm:
             res = self.plugin.create_repo(name)
@@ -240,5 +257,4 @@ class WebInterface(SmartPluginWebIf):
         if res:
             return {"operation": "request", "result": "success"}
         else:
-            self.logger.error(msg)
-            return {"operation": "request", "result": "error", "data": msg}
+            raise GPError(msg)
