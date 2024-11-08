@@ -28,21 +28,9 @@ import cherrypy
 
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
-from ..gperror import GPError
+# from ..Exception import Exception
 
-
-def XHRError(value):
-    """ decorator to catch GPError and return error with message """
-    def decorate(f):
-        def applicator(*args, **kwargs):
-            try:
-                return f(*args, **kwargs)
-            except GPError as e:
-                return {"operation": "request", "result": "error", "error": str(e)}
-
-        return applicator
-
-    return decorate
+ERR_CODE = 500
 
 
 # ------------------------------------------
@@ -120,141 +108,171 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    @XHRError
     def getRateLimit(self):
-        rl = self.plugin.gh.get_rate_limit()
-        return {"operation": "request", "result": "success", "data": rl}
+        try:
+            rl = self.plugin.gh.get_rate_limit()
+            return {"operation": "request", "result": "success", "data": rl}
+        except Exception as e:
+            cherrypy.response.status = ERR_CODE
+            return {"error": str(e)}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    @XHRError
     def updateForks(self):
-        if self.plugin.fetch_github_forks(fetch=True):
-            return {"operation": "request", "result": "success", "data": sorted(self.plugin.gh.forks.keys())}
+        try:
+            if self.plugin.fetch_github_forks(fetch=True):
+                return {"operation": "request", "result": "success", "data": sorted(self.plugin.gh.forks.keys())}
+        except Exception as e:
+            cherrypy.response.status = ERR_CODE
+            return {"error": str(e)}
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
-    @XHRError
     def isRepoClean(self):
-        json = cherrypy.request.json
-        name = json.get('name')
+        try:
+            json = cherrypy.request.json
+            name = json.get('name')
 
-        if not name or name not in self.plugin.repos:
-            raise GPError(f'repo {name} invalid or not found')
+            if not name or name not in self.plugin.repos:
+                raise Exception(f'repo {name} invalid or not found')
 
-        clean = self.plugin.is_repo_clean(name)
-        return {"operation": "request", "result": "success", "data": clean}
+            clean = self.plugin.is_repo_clean(name)
+            return {"operation": "request", "result": "success", "data": clean}
+        except Exception as e:
+            cherrypy.response.status = ERR_CODE
+            return {"error": str(e)}
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
-    @XHRError
     def getPull(self):
-        json = cherrypy.request.json
         try:
-            pr = int(json.get("pull", 0))
-        except Exception:
-            raise GPError(f'invalid value for pr in {json}')
-        if pr > 0:
-            pull = self.plugin.get_github_pulls(number=pr)
-            b = pull.get('branch')
-            o = pull.get('owner')
-            if b and o:
-                return {"operation": "request", "result": "success", "owner": o, "branch": b}
-        else:
-            raise GPError(f'invalid data on processing PR {pr}')
+            json = cherrypy.request.json
+            try:
+                pr = int(json.get("pull", 0))
+            except Exception:
+                raise Exception(f'invalid value for pr in {json}')
+            if pr > 0:
+                pull = self.plugin.get_github_pulls(number=pr)
+                b = pull.get('branch')
+                o = pull.get('owner')
+                if b and o:
+                    return {"operation": "request", "result": "success", "owner": o, "branch": b}
+            else:
+                raise Exception(f'invalid data on processing PR {pr}')
+        except Exception as e:
+            cherrypy.response.status = ERR_CODE
+            return {"error": str(e)}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    @XHRError
     def updatePulls(self):
-        if self.plugin.fetch_github_pulls(fetch=True):
-            prn = list(self.plugin.get_github_pulls().keys())
-            prt = [v['title'] for pr, v in self.plugin.get_github_pulls().items()]
-            return {"operation": "request", "result": "success", "prn": prn, "prt": prt}
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    @cherrypy.tools.json_in()
-    @XHRError
-    def updateBranches(self):
-        json = cherrypy.request.json
-        owner = json.get("owner")
-        force = json.get("force", False)
-        if owner is not None and owner != '':
-            branches = self.plugin.fetch_github_branches_from(owner=owner, fetch=force)
-            if branches != {}:
-                return {"operation": "request", "result": "success", "data": list(branches.keys())}
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    @cherrypy.tools.json_in()
-    @XHRError
-    def updatePlugins(self):
-        json = cherrypy.request.json
-        force = json.get("force", False)
-        owner = json.get("owner")
-        branch = json.get("branch")
-        if owner is not None and owner != '' and branch is not None and branch != '':
-            plugins = self.plugin.fetch_github_plugins_from(owner=owner, branch=branch, fetch=force)
-            if plugins != {}:
-                return {"operation": "request", "result": "success", "data": plugins}
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    @cherrypy.tools.json_in()
-    @XHRError
-    def removePlugin(self):
-        json = cherrypy.request.json
-        name = json.get("name")
-        if name is None or name == '' or name not in self.plugin.repos:
-            raise GPError(f'Repo {name} nicht vorhanden.')
-
-        if self.plugin.remove_plugin(name):
-            return {"operation": "request", "result": "success"}
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    @cherrypy.tools.json_in()
-    @XHRError
-    def removeInitPlugin(self):
-        json = cherrypy.request.json
-        name = json.get("name")
-        if name is None or name == '' or name not in self.plugin.init_repos:
-            raise GPError(f'Plugin {name} nicht vorhanden.')
-
         try:
-            del self.plugin.init_repos[name]
-        except Exception:
-            pass
-        return {"operation": "request", "result": "success"}
+            if self.plugin.fetch_github_pulls(fetch=True):
+                prn = list(self.plugin.get_github_pulls().keys())
+                prt = [v['title'] for pr, v in self.plugin.get_github_pulls().items()]
+                return {"operation": "request", "result": "success", "prn": prn, "prt": prt}
+        except Exception as e:
+            cherrypy.response.status = ERR_CODE
+            return {"error": str(e)}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     @cherrypy.tools.json_in()
-    @XHRError
-    def selectPlugin(self):
-        json = cherrypy.request.json
-        owner = json.get("owner")
-        branch = json.get("branch")
-        plugin = json.get("plugin")
-        name = json.get("name")
-        confirm = json.get("confirm")
+    def updateBranches(self):
+        try:
+            json = cherrypy.request.json
+            owner = json.get("owner")
+            force = json.get("force", False)
+            if owner is not None and owner != '':
+                branches = self.plugin.fetch_github_branches_from(owner=owner, fetch=force)
+                if branches != {}:
+                    return {"operation": "request", "result": "success", "data": list(branches.keys())}
+        except Exception as e:
+            cherrypy.response.status = ERR_CODE
+            return {"error": str(e)}
 
-        if (owner is None or owner == '' or
-                branch is None or branch == '' or
-                plugin is None or plugin == ''):
-            raise GPError(f'Fehlerhafte Daten für Repo {owner}/plugins, Branch {branch} oder Plugin {plugin} übergeben.')
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
+    def updatePlugins(self):
+        try:
+            json = cherrypy.request.json
+            force = json.get("force", False)
+            owner = json.get("owner")
+            branch = json.get("branch")
+            if owner is not None and owner != '' and branch is not None and branch != '':
+                plugins = self.plugin.fetch_github_plugins_from(owner=owner, branch=branch, fetch=force)
+                if plugins != {}:
+                    return {"operation": "request", "result": "success", "data": plugins}
+        except Exception as e:
+            cherrypy.response.status = ERR_CODE
+            return {"error": str(e)}
 
-        if confirm:
-            res = self.plugin.create_repo(name)
-            msg = f'Fehler beim Erstellen des Repos "{owner}/plugins", Branch {branch}, Plugin {plugin}'
-        else:
-            res = self.plugin.init_repo(name, owner, plugin, branch)
-            msg = f'Fehler beim Initialisieren des Repos "{owner}/plugins", Branch {branch}, Plugin {plugin}'
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
+    def removePlugin(self):
+        try:
+            json = cherrypy.request.json
+            name = json.get("name")
+            if name is None or name == '' or name not in self.plugin.repos:
+                raise Exception(f'Repo {name} nicht vorhanden.')
 
-        if res:
+            if self.plugin.remove_plugin(name):
+                return {"operation": "request", "result": "success"}
+        except Exception as e:
+            cherrypy.response.status = ERR_CODE
+            return {"error": str(e)}
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
+    def removeInitPlugin(self):
+        try:
+            json = cherrypy.request.json
+            name = json.get("name")
+            if name is None or name == '' or name not in self.plugin.init_repos:
+                raise Exception(f'Plugin {name} nicht vorhanden.')
+
+            try:
+                del self.plugin.init_repos[name]
+            except Exception:
+                pass
             return {"operation": "request", "result": "success"}
-        else:
-            raise GPError(msg)
+        except Exception as e:
+            cherrypy.response.status = ERR_CODE
+            return {"error": str(e)}
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
+    def selectPlugin(self):
+        try:
+            json = cherrypy.request.json
+            owner = json.get("owner")
+            branch = json.get("branch")
+            plugin = json.get("plugin")
+            name = json.get("name")
+            confirm = json.get("confirm")
+
+            if (owner is None or owner == '' or
+                    branch is None or branch == '' or
+                    plugin is None or plugin == ''):
+                raise Exception(f'Fehlerhafte Daten für Repo {owner}/plugins, Branch {branch} oder Plugin {plugin} übergeben.')
+
+            if confirm:
+                res = self.plugin.create_repo(name)
+                msg = f'Fehler beim Erstellen des Repos "{owner}/plugins", Branch {branch}, Plugin {plugin}'
+            else:
+                res = self.plugin.init_repo(name, owner, plugin, branch)
+                msg = f'Fehler beim Initialisieren des Repos "{owner}/plugins", Branch {branch}, Plugin {plugin}'
+
+            if res:
+                return {"operation": "request", "result": "success"}
+            else:
+                raise Exception(msg)
+        except Exception as e:
+            cherrypy.response.status = ERR_CODE
+            return {"error": str(e)}

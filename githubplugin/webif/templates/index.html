@@ -40,7 +40,7 @@
 	</tbody>
 </table>
 
-<div id="alert" display="none" class="mb-2 alert alert-success alert-dismissible show" role="alert">
+<div id="alert" class="mb-2 alert alert-danger alert-dismissible show" role="alert">
 	<strong>Fehler bei der Ausführung</strong><br/>
 	<span id="alertmsg"></span>
 	<button type="button" class="close" data-hide="alert" aria-label="Close">
@@ -60,7 +60,7 @@
 				<button type="button" class="btn btn-danger btn-sm" onclick="installPlugin(this)">Installieren</button>
 				<button type="button" class="btn btn-shng btn-sm" onclick="document.getElementById('install_ConfirmModal').style.display = 'none';">Abbrechen</button>
 			</span>
-			<span id="install_modalSpinner" display="none">Installation wird ausgeführt. Bitte Geduld, dies kann etwas dauern... <i class="fa fa-refresh fa-spin"></span>
+			<span id="install_modalSpinner" display="none">Installation wird ausgeführt. Bitte Geduld, dies kann etwas dauern... </span>
 		</div>
 	</div>		
 </div>
@@ -78,7 +78,7 @@
 				<button type="button" class="btn btn-danger btn-sm" onclick="removePlugin(this)">Löschen</button>
 				<button type="button" class="btn btn-shng btn-sm" onclick="document.getElementById('remove_ConfirmModal').style.display = 'none';">Abbrechen</button>
 			</span>
-			<span id="remove_modalSpinner" display="none">Löschen wird ausgeführt. Bitte Geduld, dies kann etwas dauern... <i class="fa fa-refresh fa-spin"></i></span>
+			<span id="remove_modalSpinner" display="none">Löschen wird ausgeführt. Bitte Geduld, dies kann etwas dauern... </i></span>
 		</div>
 	</div>		
 </div>
@@ -160,9 +160,15 @@
 
 	var pulls = {{ pulls }};
 
+    $(function(){
+        $("[data-hide]").on("click", function(){
+            $("." + $(this).attr("data-hide")).hide();
+        });
+    });
+
 	function alertMsg(msg) {
 		document.getElementById('alertmsg').textContent = msg;
-		document.getElementById('alert').style.display = 'block';
+		$('#alert').show();
 	}
 
 	function clearSelect(sel) {
@@ -197,7 +203,7 @@
 	}
 
 	function hideModal(mode) {
-		document.getElementById(mode + '_ConfirmModal' + nr).style.display = 'none';
+		document.getElementById(mode + '_ConfirmModal').style.display = 'none';
 		document.getElementById(mode + '_plugin').textContent = '';
 		document.getElementById(mode + '_owner').textContent = '';
 		document.getElementById(mode + '_branch').textContent = '';
@@ -211,7 +217,7 @@
 		document.getElementById(mode + '_modalSpinner').style.display = 'block';		
 	}
 
-	function sendData(url, data, error, success) {
+	function sendData(url, data, errf, success) {
 		$.ajax({
 			type: "POST",
 			url: url,
@@ -219,9 +225,8 @@
 			contentType: 'application/json',
 			dataType: 'json',
 			error: function(response) {
-				error();
-				msg = response['error'];
-				alertMsg(msg);
+				errf(response);
+				alertMsg(response['responseJSON']['error']);
 			},
 			success: success
 		})
@@ -387,7 +392,10 @@
 
 		if (owner != '' && branch != '' && plugin != '') {
 			sendData("selectPlugin", {'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': false},
-				function(response) {},
+				function(response) {
+					alert('hi');
+					hideModal('install');
+				},
 				function(response) {
 					document.getElementById('installModal').style.display = 'none';
 					showModal('install', owner, branch, plugin);
@@ -407,13 +415,13 @@
 	function doInstallPlugin(owner, branch, plugin, name) {
 		showModal('install', owner, branch, plugin);
 		if (owner != '' && branch != '' && plugin != '') {
-			spinModal('');
+			spinModal('install');
 			sendData("selectPlugin", {'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': true},
 				function(response) {
-					hideModal('');
+					hideModal('install');
 				},
 				function(response) {
-					hideModal('');
+					hideModal('install');
 					setTimeout(window.location.reload(), 300); 
 				}
 			)
@@ -422,7 +430,7 @@
 
 	function removeInitPlugin(name) {
 		if (name != '') {
-			spinModal('');
+			spinModal('install');
 			sendData("removeInitPlugin", {'name': name},
 				function(response) {},
 				function(response) {
@@ -481,7 +489,9 @@
 	}
 
 	$(document).ready( function () {
-	    $('#plugintable').DataTable( {
+			$('#alert').hide();
+			// document.getElementById('alert').style.display = 'none';
+    	    $('#plugintable').DataTable( {
 	        "paging": false,
 	        fixedHeader: true
 	        } );
