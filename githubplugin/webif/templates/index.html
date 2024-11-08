@@ -20,20 +20,22 @@
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td class="py-1"><strong>Mit GitHub verbunden:</strong></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1"><strong>GitHub</strong></td>
+			<td class="py-1" align="right">verbunden:</td>
 			<td class="py-1">{% if conn %}Ja{% else %}Nein{% endif %}</td>
+			<td class="py-1" align="right">angemeldet:</td>
+			<td class="py-1">{% if auth %}Ja{% else %}Nein{% endif %}</td>
 		</tr>
 		<tr>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td class="py-1"><strong>Bei GitHub angemeldet:</strong></td>
-			<td class="py-1">{% if auth %}Ja{% else %}Nein{% endif %}</td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1" align="right">Zugriffe:</td>
+			<td class="py-1"><span id="remain"></span>/<span id="allow"></span></td>
+			<td class="py-1" align="right">Reset in:</td>
+			<td class="py-1"><span id="backoff"></span></td>
 		</tr>
 	</tbody>
 </table>
@@ -147,16 +149,6 @@
 <script type="text/javascript" charset="utf8" src="static/datatables_min.js"></script>
 
 <script type="text/javascript">
-	$(document).ready( function () {
-	    $('#plugintable').DataTable( {
-	        "paging": false,
-	        fixedHeader: true
-	        } );
-	    $('#inittable').DataTable( {
-	        "paging": false,
-	        fixedHeader: true
-	        } );
-	});
 
 	var pulls = {{ pulls }};
 
@@ -411,6 +403,7 @@
 			spinModal('');
 			sendData("selectPlugin", {'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': true},
 				function(response) {
+					hideModal('');
 					alert("Fehler beim Installieren: " + response['data'])
 				},
 				function(response) {
@@ -431,7 +424,26 @@
 				function(response) {
 					setTimeout(window.location.reload(), 300); 
 				}
-			)
+			);
+		}
+	}
+
+	function removePluginCheck(owner, branch, plugin, name) {
+		if (name != '') {
+			sendData("isRepoClean", {'name': name},
+				function(response){
+					hideModal('2');
+					alert("Fehler beim Abrufen der Informationen");
+				},
+				function(response){
+					var clean = response['data'];
+					if (clean) {
+						showModal(owner, branch, plugin, '2', name);
+					} else {
+						alert('Plugin ' + name + ' kann nicht entfernt werden, Repo ist nicht sauber (lose Dateien im Arbeitsverzeichnis, Änderungen am Index, commits nicht gepushed).')
+					}
+				}
+			);
 		}
 	}
 
@@ -447,7 +459,7 @@
 					hideModal('2');
 					setTimeout(window.location.reload(), 300); 
 				}
-			)
+			);
 		}
 	}
 
@@ -466,6 +478,29 @@
 		}
 
 	}
+
+	$(document).ready( function () {
+	    $('#plugintable').DataTable( {
+	        "paging": false,
+	        fixedHeader: true
+	        } );
+	    $('#inittable').DataTable( {
+	        "paging": false,
+	        fixedHeader: true
+	        } );
+	    sendData('getRateLimit', '',
+	    	function(response) {},
+	    	function(response) {
+	    		data = response['data'];
+	    		var allow = data[0];
+	    		var remain = data[1];
+	    		var backoff = data[2];
+
+	    		document.getElementById('allow').textContent = allow;
+	    		document.getElementById('remain').textContent = remain;
+	    		document.getElementById('backoff').textContent = backoff;
+	    	});
+	});
 
 
 </script>
@@ -497,7 +532,7 @@
 				<td id="{{ plugin }}_owner">{{ repos[plugin].owner }}</td>
 				<td id="{{ plugin }}_branch">{{ repos[plugin].branch }}</td>
 				<td id="{{ plugin }}_wtpath">{{ repos[plugin].full_wt_path }}</td>
-				<td id="{{ plugin }}_action">{% if repos[plugin].dirty %}Änderungen vorhanden{% else %}<button type="button" class="btn btn-danger btn-sm" onclick="javascript:showModal('{{ repos[plugin].owner }}', '{{ repos[plugin].branch }}', '{{ repos[plugin].plugin }}', '2', '{{ plugin }}');"><i class="fas fa-times"></i></button>{% endif %}</td>
+				<td id="{{ plugin }}_action">{% if not repos[plugin].clean %}Änderungen vorhanden{% else %}<button type="button" class="btn btn-danger btn-sm" onclick="javascript:removePluginCheck('{{ repos[plugin].owner }}', '{{ repos[plugin].branch }}', '{{ repos[plugin].plugin }}', '{{ plugin }}');"><i class="fas fa-times"></i></button>{% endif %}</td>
 				</tr>
 		{% endfor %}
 		</tbody>

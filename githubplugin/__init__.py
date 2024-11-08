@@ -28,6 +28,7 @@
 import os
 from shutil import rmtree
 from pathlib import Path
+import datetime as dt
 
 from lib.model.smartplugin import SmartPlugin
 from .webif import WebInterface
@@ -104,6 +105,21 @@ class GitHubHelper(object):
         except Exception as e:
             self._github = None
             raise GitHubAuthError(e)
+
+    def get_rate_limit(self):
+        """ return list of allowed and remaining requests and backoff seconds """
+        try:
+            rl = self._github.get_rate_limit()
+            allow = rl.core.limit
+            remain = rl.core.remaining
+            backoff = (rl.core.reset.replace(tzinfo=None) - dt.datetime.now()).total_seconds()
+            if backoff < 0:
+                backoff = 0
+        except Exception as e:
+            self.logger.warning(f'error while getting rate limits: {e}')
+            return [0, 0, 0]
+
+        return [allow, remain, backoff]
 
     def is_repo(self, user, repo) -> bool:
         if not self._github:
@@ -302,7 +318,7 @@ class GithubPlugin(SmartPlugin):
         #     'rel_link_path': os.path.join(wt_path, plugin),       # relativer Pfad des Pluginordners "unterhalb" von plugins/
         #     'force': False,                                       # vorhandene Dateien überschreiben
         #     'repo': repo,                                         # git.Repo(path)
-        #     'dirty': bool                                         # repo is dirty?
+        #     'clean': bool                                         # repo is clean and synced?
         #   },
         #   '<id2>': {...}
         # }
@@ -359,8 +375,8 @@ class GithubPlugin(SmartPlugin):
             repo_path = os.path.join('priv_repos', owner)
             wt_path = os.path.join('priv_repos', f'{owner}_wt_{branch}')
 
-            # use part of link name after priv_
-            id = str(item)[5:]
+            # use part of link name after "plugins/priv_"
+            id = str(item)[13:]
 
             self.repos[id] = {
                 'plugin': plugin,
@@ -377,8 +393,8 @@ class GithubPlugin(SmartPlugin):
                 'rel_link_path': os.path.join(wt_path, plugin),
                 'force': False,
                 'repo': repo,
-                'dirty': repo.is_dirty()
             }
+            self.repos[id]['clean'] = self.is_repo_clean(id)
 
     def init_repo(self, name, owner, plugin, branch=None, force=False) -> bool:
 
@@ -548,6 +564,10 @@ class GithubPlugin(SmartPlugin):
             self.logger.warning(f'plugin entry {name} not found.')
             return False
 
+        if not self.is_repo_clean(name):
+            self.logger.warning(f'repo {name} is not synced or dirty, not removing.')
+            return False
+
         # get all data to remove
         repo = self.repos[name]
         link_path = repo['link']
@@ -591,7 +611,8 @@ class GithubPlugin(SmartPlugin):
         del repo
 
         if err:
-            self.logger.warning(f'error(s) occurred while removing plugin: {", ".join(err)}')
+            msg = ", ".join([str(x) for x in err])
+            self.logger.warning(f'error(s) occurred while removing plugin: {msg}')
             return False
 
         return True
@@ -599,6 +620,34 @@ class GithubPlugin(SmartPlugin):
     #
     # github API methods
     #
+
+    def is_repo_clean(self, name) -> bool:
+        """ checks if worktree is clean and local and remote branches are in sync """
+        if name not in self.repos:
+            self.logger.warning(f'repo {name} not found')
+            return False
+
+        entry = self.repos[name]
+        local = entry['repo']
+
+        # abort if worktree isn't clean
+        if local.is_dirty() or local.untracked_files != []:
+            self.repos[name]['clean'] = False
+            return False
+
+        # get remote and local branch heads
+        try:
+            remote = self.gh.get_repo(entry['owner'], entry['gh_repo'])
+            r_branch = remote.get_branch(branch=entry['branch'])
+            l_head = local.heads[entry['branch']].commit.hexsha
+            r_head = r_branch.commit.sha
+        except Exception as e:
+            self.logger.warning(f'error which checking sync status for {id}: {e}')
+            return False
+
+        clean = l_head == r_head
+        self.repos[name]['clean'] = clean
+        return clean
 
     def setup_github(self) -> bool:
         """ login to github and set repo """
@@ -733,10 +782,10 @@ class GithubPlugin(SmartPlugin):
         self.logger.dbghigh(self.translate("Methode '{method}' aufgerufen", {'method': 'run()'}))
         self.alive = True     # if using asyncio, do not set self.alive here. Set it in the session coroutine
 
-        self.read_repos_from_dir()
         self.setup_github()
         self.fetch_github_pulls()
         self.fetch_github_forks()
+        self.read_repos_from_dir()
 
     def stop(self):
         """

@@ -105,9 +105,29 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    def getRateLimit(self):
+        rl = self.plugin.gh.get_rate_limit()
+        return {"operation": "request", "result": "success", "data": rl}
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
     def updateForks(self):
         if self.plugin.fetch_github_forks(fetch=True):
             return {"operation": "request", "result": "success", "data": sorted(self.plugin.gh.forks.keys())}
+
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def isRepoClean(self):
+        json = cherrypy.request.json
+        name = json.get('name')
+
+        if not name or name not in self.plugin.repos:
+            self.logger.warning(f'repo {name} invalid or not found')
+            return
+
+        clean = self.plugin.is_repo_clean(name)
+        return {"operation": "request", "result": "success", "data": clean}
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
