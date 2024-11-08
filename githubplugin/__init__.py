@@ -100,7 +100,7 @@ class GitHubHelper(object):
             else:
                 auth = None
 
-            self._github = Github(auth=auth)
+            self._github = Github(auth=auth, retry=None)
 
             if auth:
                 self._github.get_user().login
