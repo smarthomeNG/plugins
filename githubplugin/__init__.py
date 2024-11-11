@@ -44,6 +44,8 @@ class GitHubHelper(object):
 
     def loggerr(self, msg):
         """ log error message and raise GPError to signal WebIf """
+
+        # TODO: this need to be reworked if WebIf errors should be displayed in German or translated
         self.logger.error(msg)
         raise GPError(msg)
 
@@ -331,6 +333,10 @@ class GithubPlugin(SmartPlugin):
                 self.logger.debug(f'ignoring {target}, is not directory')
                 continue
             try:
+                # plugins/priv_repos/foo_wt_bar/baz/ ->
+                # pr = 'priv_repos'
+                # wt = 'foo_wt_bar'
+                # plugin = 'baz'
                 pr, wt, plugin = self._get_last_3_path_parts(target)
                 if pr != 'priv_repos' or '_wt_' not in wt:
                     self.logger.debug(f'ignoring {target}, not in priv_repos/*_wt_*/plugin form ')
@@ -339,6 +345,7 @@ class GithubPlugin(SmartPlugin):
                 continue
 
             try:
+                # owner_wt_branch
                 owner, _, branch = wt.split('_')
             except Exception:
                 self.logger.debug(f'ignoring {target}, not in priv_repos/*_wt_*/plugin form ')
@@ -365,8 +372,8 @@ class GithubPlugin(SmartPlugin):
                 'wt_path': wt_path,
                 'full_wt_path': os.path.join('plugins', wt_path),
                 'rel_wt_path': os.path.join('..', '..', wt_path),
-                'link': os.path.join('plugins', f'priv_{plugin}'),
-                'rel_link_path': os.path.join(wt_path, plugin),
+                'link': str(item),
+                'rel_link_path': str(target),
                 'force': False,
                 'repo': repo,
             }
@@ -374,26 +381,28 @@ class GithubPlugin(SmartPlugin):
 
     def init_repo(self, name, owner, plugin, branch=None, force=False) -> bool:
 
+        # check if name exists in repos or link exists
         if name in self.repos or os.path.exists(os.path.join('plugins', 'priv_' + name)):
             self.loggerr(f'name {name} already taken, delete old plugin first or choose a different name.')
             return False
 
+        # check if name was already initialized
         if name in self.init_repos and not force:
             self.loggerr(f'name {name} already initialized, not overwriting without force parameter.')
             return False
 
+        # overwrite existing initialized repo with same name
         if name in self.init_repos and force:
             del self.init_repos[name]
 
         repo = {}
 
-        # if no plugin is given, make an educated but not very clever guess ;)
-        repo['plugin'] = plugin
-        repo['owner'] = owner
-
         if not owner or not plugin:
             self.loggerr(f'Insufficient parameters, github user {owner} or plugin {plugin} empty, unable to fetch repo, aborting.')
             return False
+
+        repo['plugin'] = plugin
+        repo['owner'] = owner
 
         # if branch is not given, assume that the branch is named like the plugin
         if not branch:
@@ -508,6 +517,8 @@ class GithubPlugin(SmartPlugin):
             except Exception as e:
                 self.loggerr(f'setting up local branch {repo["branch"]} failed: {e}')
                 return False
+
+        repo['clean'] = True
 
         if repo['force'] and os.path.exists(repo['link']):
             self.logger.debug(f'removing link {repo["link"]} as force is set')

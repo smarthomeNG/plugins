@@ -25,6 +25,7 @@
 #########################################################################
 
 import cherrypy
+import os
 
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
@@ -139,6 +140,22 @@ class WebInterface(SmartPluginWebIf):
 
             clean = self.plugin.is_repo_clean(name)
             return {"operation": "request", "result": "success", "data": clean}
+        except Exception as e:
+            cherrypy.response.status = ERR_CODE
+            return {"error": str(e)}
+
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def getNameSuggestion(self):
+        try:
+            json = cherrypy.request.json
+            plugin = json.get('plugin')
+
+            count = ''
+            while os.path.exists(os.path.join('plugins', f'priv_{plugin}{count}')) and int('0' + count) < 20:
+                count = str(int('0' + count) + 1)
+            return {"operation": "request", "result": "success", "name": plugin + count}
         except Exception as e:
             cherrypy.response.status = ERR_CODE
             return {"error": str(e)}

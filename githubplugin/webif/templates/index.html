@@ -75,7 +75,7 @@
 		<div>
 			<span id="remove_modalButtons" display="block">
 				<span>Soll das Plugin wirklich gelöscht werden?</span><br />
-				<button type="button" class="btn btn-danger btn-sm" onclick="removePlugin(this)">Löschen</button>
+				<button type="button" class="btn btn-danger btn-sm" onclick="doRemovePlugin(this)">Löschen</button>
 				<button type="button" class="btn btn-shng btn-sm" onclick="document.getElementById('remove_ConfirmModal').style.display = 'none';">Abbrechen</button>
 			</span>
 			<span id="remove_modalSpinner" display="none">Löschen wird ausgeführt. Bitte Geduld, dies kann etwas dauern... </i></span>
@@ -97,7 +97,7 @@
 						<tr>
 							<td>PR:</td>
 							<td colspan=3>
-								<select id='pr' {% if len(pulls) == 0 %}disabled {% endif %} onchange="javascript:selectedPR(this);">
+								<select id='pr' {% if len(pulls) == 0 %}disabled {% endif %} onchange="javascript:PR_onchange(this);">
 									<option value=''>(PR auswählen)</option>
 									{% for pr in pulls %}
 									<option value='{{ pr }}'>{{ pr }}: {{ pulls[pr].title }}</option>
@@ -120,7 +120,7 @@
 							</td>
 							<td style='padding-left: 15px;'>Branch:</td>
 							<td>
-								<select id='branch' disabled onchange="javascript:selectedBranch(this);">
+								<select id='branch' disabled onchange="javascript:Branch_onchange(this);">
 								<option value=''>(Branch auswählen)</option>
 								</select>
 								<button id='btn-ref-branch' type="button" class="btn btn-shng btn-sm" onclick="javascript:refetch('branch');">&#8635;</i></button>
@@ -132,7 +132,7 @@
 						<tr>
 							<td>Plugin:</td>
 							<td>
-								<select id='plugin' disabled onchange="javascript:selectedPlugin(this);">
+								<select id='plugin' disabled onchange="javascript:Plugin_onchange(this);">
 									<option value=''>(Plugin auswählen)</option>
 								</select>
 								<button id='btn-ref-plugin' type="button" class="btn btn-shng btn-sm" onclick="javascript:refetch('plugin');">&#8635;</i></button>
@@ -167,11 +167,13 @@
     });
 
 	function alertMsg(msg) {
+		// show exception from python code
 		document.getElementById('alertmsg').textContent = msg;
 		$('#alert').show();
 	}
 
 	function clearSelect(sel) {
+		// empty HTML select value list except for first "empty" entry
 		var i, L = sel.options.length - 1;
 		for (i = L; i > 0; i--) {
 			sel.remove(i);
@@ -179,6 +181,7 @@
 	}
 
 	function addOption(sel, text, def, val) {
+		// add option to HTML select field, possibly set selected option
 		var option = document.createElement('option');
 		option.text = text;
 		if (val != undefined) {
@@ -193,6 +196,7 @@
 	}
 
 	function showModal(mode, owner, branch, plugin, name) {
+		// show given confirmation modal for install or remove
 		document.getElementById(mode + '_plugin').textContent = plugin;
 		document.getElementById(mode + '_owner').textContent = owner;
 		document.getElementById(mode + '_branch').textContent = branch;
@@ -203,6 +207,7 @@
 	}
 
 	function hideModal(mode) {
+		// hide given confirmation modal and clear text areas
 		document.getElementById(mode + '_ConfirmModal').style.display = 'none';
 		document.getElementById(mode + '_plugin').textContent = '';
 		document.getElementById(mode + '_owner').textContent = '';
@@ -213,11 +218,14 @@
 	}
 
 	function spinModal(mode) {
+		// switch given confirmation modal to "please wait" mode
 		document.getElementById(mode + '_modalButtons').style.display = 'none';
 		document.getElementById(mode + '_modalSpinner').style.display = 'block';		
 	}
 
 	function sendData(url, data, errf, success) {
+		// send ajax data and execute proper given function
+		// error function always executes given function first, then alerts
 		$.ajax({
 			type: "POST",
 			url: url,
@@ -232,7 +240,8 @@
 		})
 	}
 
-	function selectedPR(selObj) {
+	function PR_onchange(selObj) {
+		// called if PR selection field is changed
 		var PR = document.getElementById('pr').value;
 		if (PR > 0) {
 			sendData('getPull', {'pull': PR}, 
@@ -254,6 +263,7 @@
 	}
 
 	function clearForks() {
+		// empty forks (owner) list and following selections
 		var f = document.getElementById('owner');
 		f.value = '';
 
@@ -261,6 +271,7 @@
 	}
 
 	function clearBranches() {
+		// clear branches list and following selections
 		var b = document.getElementById('branch');
 		clearSelect(b);
 		b.disabled = true;
@@ -269,6 +280,7 @@
 	}
 
 	function clearPlugin() {
+		// clear plugins list, clear name input
 		var p = document.getElementById('plugin');
 		clearSelect(p);
 		p.disabled = true;
@@ -279,6 +291,7 @@
 	}
 
 	function updatePulls(selObj, force) {
+		// reload PR list, cleanup dialog
 		clearForks();
 
 		sendData('updatePulls', {}, 
@@ -300,6 +313,7 @@
 	}
 
 	function updateBranches(selObj, force) {
+		// reload branches list, cleanup dialog
 		var owner = document.getElementById('owner').value;
 		clearPlugin();
 
@@ -331,7 +345,8 @@
 		}
 	}
 
-	function selectedBranch(selObj) {
+	function Branch_onchange(selObj) {
+		// called if branch selection field is changed
 		if (document.getElementById('branch').value != '') {
 			document.getElementById('btn-branch').disabled = false;
 		} else {
@@ -341,6 +356,7 @@
 	}
 
 	function updatePlugins(selObj, force) {
+		// reload plugins list, cleanup dialog
 		var owner = document.getElementById('owner').value;
 		var branch = document.getElementById('branch').value;
 
@@ -365,26 +381,35 @@
 					for (const plugin of response['data']) {
 						addOption(item, plugin, plugin==branch);
 					}
-					selectedPlugin(this);
-
-					document.getElementById('btn-plugin').disabled = false;
+					Plugin_onchange(this);
 				}
-			)
+			);
 		}
 	}
 
-	function selectedPlugin(selObj) {
+	function Plugin_onchange(selObj) {
+		// called if plugin selection field is changed, get suggested priv_ name
 		var owner = document.getElementById('owner').value;
 		var branch = document.getElementById('branch').value;
 		var plugin = document.getElementById('plugin').value;
 
-		var name = owner + "/" + branch + "-" + plugin;
-
-		document.getElementById('name').value = name;
-		document.getElementById('name').disabled = false;
+		if (plugin != '') {
+			document.getElementById('name').value = plugin;
+			sendData("getNameSuggestion", {"plugin": plugin},
+				function(response) {},
+				function(response) {
+					if (response["name"] != undefined && response["name"] != "") {
+						document.getElementById('name').value = response["name"];;
+					}
+				}
+			);
+			document.getElementById('name').disabled = false;
+			document.getElementById('btn-plugin').disabled = false;
+		}		
 	}
 
 	function selectPlugin(selObj) {
+		// plugin selected in install dialog, prepare installation, show confirmation
 		var owner = document.getElementById('owner').value;
 		var branch = document.getElementById('branch').value;
 		var plugin = document.getElementById('plugin').value;
@@ -393,8 +418,7 @@
 		if (owner != '' && branch != '' && plugin != '') {
 			sendData("selectPlugin", {'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': false},
 				function(response) {
-					alert('hi');
-					hideModal('install');
+					document.getElementById('installModal').style.display = 'none';
 				},
 				function(response) {
 					document.getElementById('installModal').style.display = 'none';
@@ -405,6 +429,7 @@
 	}
 
 	function installPlugin(selObj) {
+		// plugin installation confirmed, call function to execute installation
 		var owner = document.getElementById('owner').value;
 		var branch = document.getElementById('branch').value;
 		var plugin = document.getElementById('plugin').value;
@@ -413,6 +438,7 @@
 	}
 
 	function doInstallPlugin(owner, branch, plugin, name) {
+		// execute installation
 		showModal('install', owner, branch, plugin);
 		if (owner != '' && branch != '' && plugin != '') {
 			spinModal('install');
@@ -429,18 +455,23 @@
 	}
 
 	function removeInitPlugin(name) {
+		// delete initialized plugin data (installion confirm dialog aborted)
 		if (name != '') {
 			spinModal('install');
 			sendData("removeInitPlugin", {'name': name},
-				function(response) {},
 				function(response) {
+					hideModal('install');
+				},
+				function(response) {
+					hideModal('install');
 					setTimeout(window.location.reload(), 300); 
 				}
 			);
 		}
 	}
 
-	function removePluginCheck(owner, branch, plugin, name) {
+	function removePlugin(owner, branch, plugin, name) {
+		// check if plugin can be removed, show confirmation
 		if (name != '') {
 			sendData("isRepoClean", {'name': name},
 				function(response) {
@@ -458,12 +489,15 @@
 		}
 	}
 
-	function removePlugin(selObj) {
+	function doRemovePlugin(selObj) {
+		// execute plugin removal
 		var name = document.getElementById('remove_name').textContent;
 		if (name != '') {
 			spinModal('remove');
 			sendData("removePlugin", {'name': name},
-				function(response) {},
+				function(response) {
+					hideModal('remove');
+				},
 				function(response) {
 					hideModal('remove');
 					setTimeout(window.location.reload(), 300); 
@@ -473,6 +507,7 @@
 	}
 
 	function refetch(what) {
+		// reload given HTML select field data
 		if (what == 'owner') {
 
 		}
@@ -489,16 +524,21 @@
 	}
 
 	$(document).ready( function () {
-			$('#alert').hide();
-			// document.getElementById('alert').style.display = 'none';
-    	    $('#plugintable').DataTable( {
+
+		// hide alert popup
+		$('#alert').hide();
+
+		// enable datatable tables (2x)
+	    $('#plugintable').DataTable( {
 	        "paging": false,
 	        fixedHeader: true
-	        } );
+        } );
 	    $('#inittable').DataTable( {
 	        "paging": false,
 	        fixedHeader: true
-	        } );
+        } );
+
+	    // update rate limit data
 	    sendData('getRateLimit', '',
 	    	function(response) {},
 	    	function(response) {
@@ -512,8 +552,6 @@
 	    		document.getElementById('backoff').textContent = backoff;
 	    	});
 	});
-
-
 </script>
 
 {% endblock pluginscripts %}
@@ -543,7 +581,7 @@
 				<td id="{{ plugin }}_owner">{{ repos[plugin].owner }}</td>
 				<td id="{{ plugin }}_branch">{{ repos[plugin].branch }}</td>
 				<td id="{{ plugin }}_wtpath">{{ repos[plugin].full_wt_path }}</td>
-				<td id="{{ plugin }}_action">{% if not repos[plugin].clean %}Änderungen vorhanden{% else %}<button type="button" class="btn btn-danger btn-sm" onclick="javascript:removePluginCheck('{{ repos[plugin].owner }}', '{{ repos[plugin].branch }}', '{{ repos[plugin].plugin }}', '{{ plugin }}');"><i class="fas fa-times"></i></button>{% endif %}</td>
+				<td id="{{ plugin }}_action">{% if not repos[plugin].clean %}Änderungen vorhanden{% else %}<button type="button" class="btn btn-danger btn-sm" onclick="javascript:removePlugin('{{ repos[plugin].owner }}', '{{ repos[plugin].branch }}', '{{ repos[plugin].plugin }}', '{{ plugin }}');"><i class="fas fa-times"></i></button>{% endif %}</td>
 				</tr>
 		{% endfor %}
 		</tbody>
