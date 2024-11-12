@@ -106,9 +106,12 @@ class GitHubHelper(object):
 
             if auth:
                 self._github.get_user().login
+
+            if not self._github:
+                raise GPError('setup/login failed')
         except Exception as e:
             self._github = None
-            raise GPError(e)
+            self.loggerr(f'could not initialize Github object: {e}')
 
     def get_rate_limit(self):
         """ return list of allowed and remaining requests and backoff seconds """
@@ -127,7 +130,7 @@ class GitHubHelper(object):
 
     def get_repo(self, user, repo):
         if not self._github:
-            self.loggerr('error: Github object not initialized')
+            self.login()
 
         try:
             return self._github.get_repo(f'{user}/{repo}')
@@ -136,16 +139,14 @@ class GitHubHelper(object):
 
     def set_repo(self) -> bool:
         if not self._github:
-            self.loggerr('error: Github object not initialized')
-            return False
+            self.login()
 
         self.git_repo = self.get_repo('smarthomeNG', self.repo)
         return True
 
     def get_pulls(self, fetch=False) -> bool:
         if not self._github:
-            self.loggerr('error: Github object not initialized')
-            return False
+            self.login()
 
         if not self.git_repo:
             self.set_repo()
@@ -172,8 +173,7 @@ class GitHubHelper(object):
 
     def get_forks(self, fetch=False) -> bool:
         if not self._github:
-            self.loggerr('error: Github object not initialized')
-            return False
+            self.login()
 
         if not self.git_repo:
             self.set_repo()
@@ -346,7 +346,7 @@ class GithubPlugin(SmartPlugin):
 
             try:
                 # owner_wt_branch
-                owner, _, branch = wt.split('_')
+                owner, branch = wt.split('_wt_')
             except Exception:
                 self.logger.debug(f'ignoring {target}, not in priv_repos/*_wt_*/plugin form ')
                 continue
