@@ -2713,7 +2713,7 @@ class DatabaseAddOn(SmartPlugin):
             'last':        'LIMIT 1 ',
         }
 
-        _where = "item_id = :item_id AND time <= :ts_start " if func == "next" else "item_id = :item_id AND time BETWEEN :ts_start AND :ts_end "
+        _where = "item_id = :item_id AND time <= :ts_end " if func == "next" else "item_id = :item_id AND time BETWEEN :ts_start AND :ts_end "
 
         _db_table = 'log '
 
@@ -2765,7 +2765,7 @@ class DatabaseAddOn(SmartPlugin):
         # set params
         params = {'item_id': item_id, 'ts_start': ts_start, 'ts_end': ts_end}
         if func == "next":
-            params.pop('ts_end', None)
+            params.pop('ts_start', None)
 
         # assemble query
         query = f"SELECT {_select[func]}FROM {_db_table}WHERE {_where}{_group_by.get(group, '')}{_order.get(func, '')}{_limit.get(func, '')}{_table_alias.get(func, '')}{_group_by.get(group2, '')}".strip()

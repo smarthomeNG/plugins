@@ -116,7 +116,6 @@ class WebInterface(SmartPluginWebIf):
                 data['items'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                 data['items'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
-            data['plugin_suspended'] = self.plugin.suspended
             data['maintenance'] = True if self.plugin.log_level == 10 else False
             data['queue_length'] = self.plugin.queue_backlog()
             data['active_queue_item'] = self.plugin.active_queue_item
