@@ -100,7 +100,7 @@ class WebInterface(SmartPluginWebIf):
                            webif_pagelength=pagelength,
                            repos=self.plugin.repos,
                            init_repos=self.plugin.init_repos,
-                           forklist=sorted(self.plugin.gh.forks.keys()),
+                           forklist=self.plugin.get_github_forklist_sorted(),
                            forks=self.plugin.gh.forks,
                            pulls=pulls,
                            auth=self.plugin.gh_apikey != '',
@@ -122,7 +122,7 @@ class WebInterface(SmartPluginWebIf):
     def updateForks(self):
         try:
             if self.plugin.fetch_github_forks(fetch=True):
-                return {"operation": "request", "result": "success", "data": sorted(self.plugin.gh.forks.keys())}
+                return {"operation": "request", "result": "success", "data": self.plugin.get_github_forklist_sorted()}
         except Exception as e:
             cherrypy.response.status = ERR_CODE
             return {"error": str(e)}

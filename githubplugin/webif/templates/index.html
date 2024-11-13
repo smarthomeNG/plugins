@@ -535,6 +535,8 @@
 	        fixedHeader: true
         } );
 
+	    $(window).trigger('datatables_defaults');
+	    
 	    // update rate limit data
 	    sendData('getRateLimit', '',
 	    	function(response) {},

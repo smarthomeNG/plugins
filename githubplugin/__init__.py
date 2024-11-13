@@ -330,7 +330,7 @@ class GithubPlugin(SmartPlugin):
                 continue
             target = os.path.join('plugins', os.readlink(str(item)))
             if not os.path.isdir(target):
-                self.logger.debug(f'ignoring {target}, is not directory')
+                self.logger.debug(f'ignoring link {item}, target {target} is not directory')
                 continue
             try:
                 # plugins/priv_repos/foo_wt_bar/baz/ ->
@@ -520,12 +520,16 @@ class GithubPlugin(SmartPlugin):
 
         repo['clean'] = True
 
-        if repo['force'] and os.path.exists(repo['link']):
-            self.logger.debug(f'removing link {repo["link"]} as force is set')
-            try:
-                os.remove(repo['link'])
-            except Exception:
-                pass
+        if os.path.exists(repo['link']):
+            if repo['force']:
+                self.logger.debug(f'removing link {repo["link"]} as force is set')
+                try:
+                    os.remove(repo['link'])
+                except Exception:
+                    pass
+            else:
+                self.loggerr(f'plugin symlink {repo["link"]} exists and force not set')
+                return False
 
         self.logger.debug(f'creating link {repo["link"]} to {repo["rel_link_path"]}...')
         try:
@@ -672,6 +676,27 @@ class GithubPlugin(SmartPlugin):
             return self.gh.forks.get(owner, {})
         else:
             return self.gh.forks
+
+    def get_github_forklist_sorted(self) -> list:
+        """ return list of forks, sorted alphabetically, used forks up front """
+
+        # case insensitive sorted forks
+        forks = sorted(self.get_github_forks().keys(), key=lambda x: x.casefold())
+        sforkstop = []
+        sforks = []
+
+        # existing owners in self.repos
+        owners = [v['owner'] for k, v in self.repos.items()]
+
+        for f in forks:
+            if f in owners:
+                # put at top of list
+                sforkstop.append(f)
+            else:
+                # put in nowmal list below
+                sforks.append(f)
+
+        return sforkstop + sforks
 
     def get_github_pulls(self, number=None) -> dict:
         """ return pulls or single pull for given number """ 
