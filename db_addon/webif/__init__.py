@@ -86,13 +86,13 @@ class WebInterface(SmartPluginWebIf):
 
         return tmpl.render(p=self.plugin,
                            webif_pagelength=pagelength,
-                           suspended='true' if self.plugin.suspended else 'false',
                            items=self.plugin.get_item_list('db_addon', 'function'),
                            item_count=len(self.plugin.get_item_list('db_addon', 'function')),
                            plugin_shortname=self.plugin.get_shortname(),
                            plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(),
                            maintenance=True if self.plugin.log_level < 20 else False,
+                           paused=not(self.plugin.alive)
                            )
 
     @cherrypy.expose
@@ -149,12 +149,15 @@ class WebInterface(SmartPluginWebIf):
                 self.logger.debug(f"Result for web interface: {result}")
                 return json.dumps(result).encode('utf-8')
 
-            elif cmd.startswith("suspend_plugin_calculation"):
-                self.logger.debug(f"set_plugin_calculation {cmd=}")
+            elif cmd.startswith("pause_plugin"):
+                self.logger.debug(f"pause_plugin {cmd=}")
                 cmd, value = cmd.split(',')
-                value = True if value == "True" else False
-                self.logger.info(f"Plugin will be set to suspended: {value} via WebIF.")
-                result = self.plugin.suspend(value)
+                if value == "True":
+                    self.plugin.stop()
+                else:
+                    self.plugin.run()
+                self.logger.warning(f"Plugin will be set to paused: {value} via WebIF.")
+                result = not(self.plugin.alive)
                 self.logger.debug(f"Result for web interface: {result}")
                 return json.dumps(result).encode('utf-8')
 
@@ -186,16 +189,6 @@ class WebInterface(SmartPluginWebIf):
     def clear_queue(self):
         self.logger.debug(f"_clear_queue called")
         self.plugin._clear_queue()
-
-    @cherrypy.expose
-    def activate(self):
-        self.logger.debug(f"active called")
-        self.plugin.suspend(False)
-
-    @cherrypy.expose
-    def suspend(self):
-        self.logger.debug(f"suspend called")
-        self.plugin.suspend(True)
 
     @cherrypy.expose
     def debug_log_option(self, log: str = None, state: bool = None):
