@@ -3125,9 +3125,12 @@ class Sonos(SmartPlugin):
             if 'sonos_send' in item_config:
                 return self.update_item
 
-        # some special handling for dpt3 volume
+        # handling sonos_attrib incl some special handling for dpt3 volume
         elif self.has_iattr(item.conf, 'sonos_attrib'):
+            uid = self._resolve_uid(item)
+            item_config.update({'uid': uid})
             item_attribute = self.get_iattr_value(item.conf, 'sonos_attrib')
+
             if item_attribute != 'vol_dpt3':
                 item_config.update({'sonos_attrib': item_attribute})
                 self.add_item(item, config_data_dict=item_config, updating=True)
@@ -3156,8 +3159,8 @@ class Sonos(SmartPlugin):
                 self.logger.warning("volume_dpt3 item has no helper item. Ignoring!")
                 return
 
-            dpt3_step = self.has_iattr(item.conf, 'sonos_dpt3_step')
-            dpt3_time = self.has_iattr(item.conf, 'sonos_dpt3_time')
+            dpt3_step = self.get_iattr_value(item.conf, 'sonos_dpt3_step')
+            dpt3_time = self.get_iattr_value(item.conf, 'sonos_dpt3_time')
 
             item_config.update({'volume_item': parent_item, 'helper': child_helper, 'dpt3_step': dpt3_step, 'dpt3_time': dpt3_time})
             self.add_item(item, config_data_dict=item_config, updating=True)
