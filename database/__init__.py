@@ -102,7 +102,7 @@ class Database(SmartPlugin):
         if self._removeold_cycle == self._dump_cycle:
             self._removeold_cycle += 2
         self._precision = self.get_parameter_value('precision')
-	self._time_precision = set.get_parameter_value('time_precision')
+        self._time_precision = self.get_parameter_value('time_precision')
         self.count_logentries = self.get_parameter_value('count_logentries')
         self.max_delete_logentries = self.get_parameter_value('max_delete_logentries')
         self.max_reassign_logentries = self.get_parameter_value('max_reassign_logentries')
