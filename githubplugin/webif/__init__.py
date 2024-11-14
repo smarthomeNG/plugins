@@ -57,7 +57,7 @@ class WebInterface(SmartPluginWebIf):
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
-    def index(self, action=None):
+    def index(self):
         """
         Build index.html for cherrypy
 
@@ -65,9 +65,6 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        if action == 'rescan':
-            self.plugin.read_repos_from_dir()
-            raise cherrypy.HTTPRedirect(cherrypy.url())
 
         # try to get the webif pagelength from the module.yaml configuration
         pagelength = self.plugin.get_parameter_value('webif_pagelength')
@@ -106,6 +103,17 @@ class WebInterface(SmartPluginWebIf):
                            auth=self.plugin.gh_apikey != '',
                            conn=self.plugin.gh._github is not None,
                            language=self.plugin.get_sh().get_defaultlanguage())
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def rescanDirs(self):
+        try:
+            self.plugin.read_repos_from_dir(exc=True)
+        except Exception as e:
+            cherrypy.response.status = ERR_CODE
+            return {"error": str(e)}
+
+        return {"operation": "request", "result": "success"}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -177,7 +185,7 @@ class WebInterface(SmartPluginWebIf):
                 if b and o:
                     return {"operation": "request", "result": "success", "owner": o, "branch": b}
             else:
-                raise Exception(f'invalid data on processing PR {pr}')
+                raise Exception(f'Ungültige Daten beim Verarbeiten von PR {pr}')
         except Exception as e:
             cherrypy.response.status = ERR_CODE
             return {"error": str(e)}
@@ -246,25 +254,6 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     @cherrypy.tools.json_in()
-    def removeInitPlugin(self):
-        try:
-            json = cherrypy.request.json
-            name = json.get("name")
-            if name is None or name == '' or name not in self.plugin.init_repos:
-                raise Exception(f'Plugin {name} nicht vorhanden.')
-
-            try:
-                del self.plugin.init_repos[name]
-            except Exception:
-                pass
-            return {"operation": "request", "result": "success"}
-        except Exception as e:
-            cherrypy.response.status = ERR_CODE
-            return {"error": str(e)}
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    @cherrypy.tools.json_in()
     def selectPlugin(self):
         try:
             json = cherrypy.request.json
@@ -280,11 +269,11 @@ class WebInterface(SmartPluginWebIf):
                 raise Exception(f'Fehlerhafte Daten für Repo {owner}/plugins, Branch {branch} oder Plugin {plugin} übergeben.')
 
             if confirm:
-                res = self.plugin.create_repo(name)
+                res = self.plugin.create_repo(name, owner, plugin, branch)
                 msg = f'Fehler beim Erstellen des Repos "{owner}/plugins", Branch {branch}, Plugin {plugin}'
             else:
-                res = self.plugin.init_repo(name, owner, plugin, branch)
-                msg = f'Fehler beim Initialisieren des Repos "{owner}/plugins", Branch {branch}, Plugin {plugin}'
+                res = self.plugin.check_for_repo_name(name)
+                msg = f'Repo {name} oder Plugin-Link "priv_{name}" schon vorhanden'
 
             if res:
                 return {"operation": "request", "result": "success"}

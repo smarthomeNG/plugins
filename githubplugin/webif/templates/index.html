@@ -1,11 +1,7 @@
 {% extends "base_plugin.html" %}
-{% set tabcount = 2 %}
-{% if len(init_repo) > 0 %}
-	{% set tabcount = 2 %}
-{%  endif %}
+{% set tabcount = 1 %}
 {% set dataSet = 'overview' %}
 {% set tab1title = _('Plugins in GitHub-Repos') %}
-{% set tab2title = _('Zur Installation vorbereitet') %}
 
 {% block pluginstyles %}
 <link rel="stylesheet" href="static/style.css">
@@ -13,7 +9,7 @@
 
 {% block buttons %}
 <button id='install' class="btn btn-shng btn-sm" onclick='javascript:document.getElementById("installModal").style.display = "block";' type="button">Neues Plugin installieren</button>
-<button id='rescan' class="btn btn-shng btn-sm" onclick='location.href="?action=rescan"' type="button">Plugin-Verzeichnis neu lesen</button>
+<button id='rescan' class="btn btn-shng btn-sm" onclick='javascript:rescanDirs()' title='location.href="?action=rescan"' type="button">Plugin-Verzeichnis neu lesen</button>
 {% endblock buttons %}
 
 {% block headtable %}
@@ -156,6 +152,7 @@
 <script type="text/javascript">
 
 	var pulls = {{ pulls }};
+	var rateInterval = null;
 
     $(function(){
         $("[data-hide]").on("click", function(){
@@ -285,6 +282,15 @@
 		var n = document.getElementById('name');
 		n.value = '';
 		n.disabled = true;		
+	}
+
+	function rescanDirs() {
+		// trigger rescan of plugin dir
+		sendData('rescanDirs', {},
+			function(response) {},
+			function(response) {
+				location.reload();
+			});
 	}
 
 	function updatePulls(selObj, force) {
@@ -451,22 +457,6 @@
 		}
 	}
 
-	function removeInitPlugin(name) {
-		// delete initialized plugin data (installion confirm dialog aborted)
-		if (name != '') {
-			spinModal('install');
-			sendData("removeInitPlugin", {'name': name},
-				function(response) {
-					hideModal('install');
-				},
-				function(response) {
-					hideModal('install');
-					setTimeout(window.location.reload(), 300); 
-				}
-			);
-		}
-	}
-
 	function removePlugin(owner, branch, plugin, name) {
 		// check if plugin can be removed, show confirmation
 		if (name != '') {
@@ -520,23 +510,7 @@
 
 	}
 
-	$(document).ready( function () {
-
-		// hide alert popup
-		$('#alert').hide();
-
-		// enable datatable tables (2x)
-	    $('#plugintable').DataTable( {
-	        "paging": false,
-	        fixedHeader: true
-        } );
-	    $('#inittable').DataTable( {
-	        "paging": false,
-	        fixedHeader: true
-        } );
-
-	    $(window).trigger('datatables_defaults');
-	    
+	function getRateLimit() {
 	    // update rate limit data
 	    sendData('getRateLimit', '',
 	    	function(response) {},
@@ -548,8 +522,45 @@
 
 	    		document.getElementById('allow').textContent = allow;
 	    		document.getElementById('remain').textContent = remain;
-	    		document.getElementById('backoff').textContent = backoff;
-	    	});
+	    		var bo = document.getElementById('backoff')
+	    		if (backoff > 0 && remain == 0) {
+	    			var secs = backoff % 60;
+	    			var mins = ~~(backoff / 60);
+	    			var val = "" + mins + ":" + (secs < 10 ? "0" : "") + parseInt(secs) + "m";
+
+	    			bo.style.color = 'red';
+	    			bo.textContent = val;
+
+	    			if (rateInterval === null) {
+	    				rateInterval = setInterval(getRateLimit, 10000);
+	    			}
+
+	    		} else {
+	    			bo.style.color = 'black';
+	    			bo.textContent = '---';	    			
+
+	    			if (rateInterval != null) {
+	    				clearInterval(rateInterval);
+	    				rateInterval = null;
+	    			}
+	    		}
+	    	}
+	    );
+	}
+
+	$(document).ready( function () {
+
+		// hide alert popup
+		$('#alert').hide();
+
+		// enable datatable table
+	    $('#plugintable').DataTable( {
+	        "paging": false,
+	        fixedHeader: true
+        } );
+	    $(window).trigger('datatables_defaults');
+
+		getRateLimit();	    
 	});
 </script>
 
@@ -588,43 +599,3 @@
 </div>
 
 {% endblock bodytab1 %}
-
-{% if init_repos|length > 0 %}
-
-{% block bodytab2 %}
-<div class="container-fluid m-2 table-responsive">
-	<div>Die folgenden Plugins sind zur Installation vorbereitet, aber noch nicht installiert:</div>
-	<table id="inittable">
-		<thead>
-		<tr><th></th>
-			<th>Name</th>
-			<th>Plugin</th>
-			<th>Autor</th>
-			<th>Branch</th>
-			<th>Pfad (Worktree)</th>
-			<th></th>
-		</tr>
-		</thead>
-		<tbody>
-		{% for plugin in init_repos %}
-			<tr>
-				<td></td>
-				<td id="{{ plugin }}_name">{{ plugin }}</td>
-				<td id="{{ plugin }}_plugin">{{ init_repos[plugin].plugin }}</td>
-				<td id="{{ plugin }}_owner">{{ init_repos[plugin].owner }}</td>
-				<td id="{{ plugin }}_branch">{{ init_repos[plugin].branch }}</td>
-				<td id="{{ plugin }}_wtpath">{{ init_repos[plugin].full_wt_path }}</td>
-				<td>
-					<button type="button" class="btn btn-shng btn-sm" onclick="javascript:doInstallPlugin('{{ init_repos[plugin].owner }}', '{{ init_repos[plugin].branch }}', '{{ init_repos[plugin].plugin }}', '{{ plugin }}');" style='display:inline;'><i class="fas fa-share"></i></button>
-					<button type="button" class="btn btn-danger btn-sm" onclick="javascript:removeInitPlugin('{{ plugin }}');" style='display:inline;'><i class="fas fa-times"></i></button>
-				</td>
-				</tr>
-		{% endfor %}
-		</tbody>
-	</table>
-</div>
-<hr />
-{% endblock bodytab2 %}
-
-{% endif %}
-

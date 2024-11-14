@@ -49,7 +49,8 @@ class GitHubHelper(object):
         self.logger.error(msg)
         raise GPError(msg)
 
-    def __init__(self, repo='plugins', apikey='', auth=None, logger=None, **kwargs):
+    def __init__(self, dt, repo='plugins', apikey='', auth=None, logger=None, **kwargs):
+        self.dt = dt
         self.logger = logger
         self.apikey = apikey
         # allow auth only, if apikey is set
@@ -119,7 +120,7 @@ class GitHubHelper(object):
             rl = self._github.get_rate_limit()
             allow = rl.core.limit
             remain = rl.core.remaining
-            backoff = (rl.core.reset.replace(tzinfo=None) - dt.datetime.now()).total_seconds()
+            backoff = (rl.core.reset - self.dt.now()).total_seconds()
             if backoff < 0:
                 backoff = 0
         except Exception as e:
@@ -159,15 +160,19 @@ class GitHubHelper(object):
 
         self.logger.debug('fetching pulls from github')
         self.pulls = {}
-        for pull in self.git_repo.get_pulls():
-            self.pulls[pull.number] = {
-                'title': pull.title,
-                'pull': pull,
-                'git_repo': pull.head.repo,
-                'owner': pull.head.repo.owner.login,
-                'repo': pull.head.repo.name,
-                'branch': pull.head.ref
-            }
+        try:
+            for pull in self.git_repo.get_pulls():
+                self.pulls[pull.number] = {
+                    'title': pull.title,
+                    'pull': pull,
+                    'git_repo': pull.head.repo,
+                    'owner': pull.head.repo.owner.login,
+                    'repo': pull.head.repo.name,
+                    'branch': pull.head.ref
+                }
+        except AttributeError:
+            self.logger.warning('github object not created. Check rate limit.')
+            return False
 
         return True
 
@@ -184,8 +189,12 @@ class GitHubHelper(object):
                 return True
 
         self.forks = {}
-        for fork in self.git_repo.get_forks():
-            self.forks[fork.full_name.split('/')[0]] = {'repo': fork}
+        try:
+            for fork in self.git_repo.get_forks():
+                self.forks[fork.full_name.split('/')[0]] = {'repo': fork}
+        except AttributeError:
+            self.logger.warning('github object not created. Check rate limit.')
+            return False
 
         return True
 
@@ -294,7 +303,6 @@ class GithubPlugin(SmartPlugin):
         #     'rel_wt_path': os.path.join('..', '..', wt_path),     # relativer Pfad zum Worktree vom Repo aus
         #     'link': os.path.join('plugins', f'priv_{plugin}'),    # relativer Pfad-/Dateiname des Plugin-Symlinks unterhalb von shng
         #     'rel_link_path': os.path.join(wt_path, plugin),       # relativer Pfad des Pluginordners "unterhalb" von plugins/
-        #     'force': False,                                       # vorhandene Dateien überschreiben
         #     'repo': repo,                                         # git.Repo(path)
         #     'clean': bool                                         # repo is clean and synced?
         #   },
@@ -306,7 +314,7 @@ class GithubPlugin(SmartPlugin):
         self.repo_path = os.path.join('plugins', 'priv_repos')
 
         self.gh_apikey = self.get_parameter_value('app_token')
-        self.gh = GitHubHelper(apikey=self.gh_apikey, logger=self.logger)
+        self.gh = GitHubHelper(self._sh.shtime, apikey=self.gh_apikey, logger=self.logger)
 
         self.init_webinterface(WebInterface)
 
@@ -314,7 +322,7 @@ class GithubPlugin(SmartPlugin):
     # methods for handling local repos
     #
 
-    def read_repos_from_dir(self):
+    def read_repos_from_dir(self, exc=False):
         # clear stored repos
         self.repos = {}
 
@@ -374,43 +382,43 @@ class GithubPlugin(SmartPlugin):
                 'rel_wt_path': os.path.join('..', '..', wt_path),
                 'link': str(item),
                 'rel_link_path': str(target),
-                'force': False,
                 'repo': repo,
             }
-            self.repos[id]['clean'] = self.is_repo_clean(id)
+            self.repos[id]['clean'] = self.is_repo_clean(id, exc)
 
-    def init_repo(self, name, owner, plugin, branch=None, force=False) -> bool:
-
-        # check if name exists in repos or link exists
+    def check_for_repo_name(self, name) -> bool:
+        """ check if name exists in repos or link exists """
         if name in self.repos or os.path.exists(os.path.join('plugins', 'priv_' + name)):
             self.loggerr(f'name {name} already taken, delete old plugin first or choose a different name.')
             return False
 
-        # check if name was already initialized
-        if name in self.init_repos and not force:
-            self.loggerr(f'name {name} already initialized, not overwriting without force parameter.')
+        return True
+
+    def create_repo(self, name, owner, plugin, branch=None) -> bool:
+        """ create repo from given parameters """
+
+        try:
+            self.check_for_repo_name(name)
+        except Exception as e:
+            self.loggerr(e)
             return False
-
-        # overwrite existing initialized repo with same name
-        if name in self.init_repos and force:
-            del self.init_repos[name]
-
-        repo = {}
 
         if not owner or not plugin:
             self.loggerr(f'Insufficient parameters, github user {owner} or plugin {plugin} empty, unable to fetch repo, aborting.')
             return False
 
-        repo['plugin'] = plugin
-        repo['owner'] = owner
-
         # if branch is not given, assume that the branch is named like the plugin
         if not branch:
             branch = plugin
-        repo['branch'] = branch
 
-        # default to plugins repo. No further repos are managed right now
-        repo['gh_repo'] = 'plugins'  # kwargs.get('repo', 'plugins')
+        repo = {
+            'plugin': plugin,
+            'owner': owner,
+            'branch': branch,
+            'plugin': plugin,
+            # default to plugins repo. No further repos are managed right now
+            'gh_repo': 'plugins'
+        }
 
         # build GitHub url from parameters. Hope they don't change the syntax...
         repo['url'] = f'https://github.com/{owner}/{repo["gh_repo"]}.git'
@@ -428,32 +436,10 @@ class GithubPlugin(SmartPlugin):
         repo['link'] = os.path.join('plugins', f'priv_{name}')
         repo['rel_link_path'] = os.path.join(repo['wt_path'], plugin)
 
-        repo['force'] = force
-        repo['plugin'] = plugin
-
-        if os.path.exists(repo['link']) and os.path.islink(repo['link']) and not force:
-            self.loggerr(f'file {repo["link"]} exists and force is not requested, aborting.')
-            return False
-
         # make plugins/priv_repos if not present
         if not os.path.exists(os.path.join('plugins', 'priv_repos')):
             self.logger.debug('creating plugins/priv_repos dir')
             os.mkdir(os.path.join('plugins', 'priv_repos'))
-
-        self.init_repos[name] = repo
-        return True
-
-    def create_repo(self, name) -> bool:
-
-        if name in self.repos or os.path.exists(os.path.join('plugins', 'priv_' + name)):
-            self.loggerr(f'repo {name} already exists, not overwriting.')
-            return False
-
-        if name not in self.init_repos:
-            self.loggerr(f'repo {name} not in own data, unable to process')
-            return False
-
-        repo = self.init_repos[name]
 
         self.logger.debug(f'check for repo at {repo["full_repo_path"]}...')
 
@@ -464,20 +450,12 @@ class GithubPlugin(SmartPlugin):
             self.logger.debug(f'found repo {repo["repo"]} at {repo["full_repo_path"]}')
 
             if "origin" not in repo['repo'].remotes:
-                if not repo['force']:
-                    self.loggerr(f'Repo at {repo["full_repo_path"]} has no "origin" remote set and force is not requested, aborting.')
-                    return False
-                else:
-                    try:
-                        if not repo['repo'].create_remote('origin', repo['url']).exists():
-                            raise RuntimeError(f'error creating remote "origin" at {repo["url"]}, aborting.')
-                    except Exception as e:
-                        self.loggerr(f'error setting up remote: {e}')
-                        return False
+                self.loggerr(f'repo at {repo["full_repo_path"]} has no "origin" remote set')
+                return False
 
             origin = repo['repo'].remotes.origin
             if origin.url != repo['url']:
-                self.loggerr(f'Origin of existing repo is {origin.url}, expecting {repo["url"]}. Aborting.')
+                self.loggerr(f'origin of existing repo is {origin.url}, expecting {repo["url"]}')
                 return False
 
         else:
@@ -513,29 +491,18 @@ class GithubPlugin(SmartPlugin):
             try:
                 branchref = repo['wt'].create_head(repo['branch'], rbranch)
                 branchref.set_tracking_branch(rbranch)
-                branchref.checkout(force=repo['force'])
+                branchref.checkout()
             except Exception as e:
                 self.loggerr(f'setting up local branch {repo["branch"]} failed: {e}')
                 return False
 
         repo['clean'] = True
 
-        if os.path.exists(repo['link']):
-            if repo['force']:
-                self.logger.debug(f'removing link {repo["link"]} as force is set')
-                try:
-                    os.remove(repo['link'])
-                except Exception:
-                    pass
-            else:
-                self.loggerr(f'plugin symlink {repo["link"]} exists and force not set')
-                return False
-
         self.logger.debug(f'creating link {repo["link"]} to {repo["rel_link_path"]}...')
         try:
             os.symlink(repo['rel_link_path'], repo['link'])
         except FileExistsError:
-            pass
+            self.loggerr(f'plugin link {repo["link"]} was created by someone else while we were setting up repo. Not overwriting, check link file manually')
 
         self.repos[name] = self.init_repos[name]
         del self.init_repos[name]
@@ -605,7 +572,7 @@ class GithubPlugin(SmartPlugin):
     # github API methods
     #
 
-    def is_repo_clean(self, name) -> bool:
+    def is_repo_clean(self, name: str, exc=False) -> bool:
         """ checks if worktree is clean and local and remote branches are in sync """
         if name not in self.repos:
             self.loggerr(f'repo {name} not found')
@@ -625,8 +592,15 @@ class GithubPlugin(SmartPlugin):
             r_branch = remote.get_branch(branch=entry['branch'])
             l_head = local.heads[entry['branch']].commit.hexsha
             r_head = r_branch.commit.sha
+        except AttributeError:
+            if exc:
+                f = self.loggerr
+            else:
+                f = self.logger.warning
+            f(f'error while checking sync status for {name}. Rate limit active?')
+            return False
         except Exception as e:
-            self.loggerr(f'error while checking sync status for {id}: {e}')
+            self.loggerr(f'error while checking sync status for {name}: {e}')
             return False
 
         clean = l_head == r_head
@@ -774,10 +748,7 @@ class GithubPlugin(SmartPlugin):
         # default id for plugin (actually not identifying the plugin but the branch...)
         name = f'{r_owner}/{r_branch}'
 
-        if not self.init_repo(name, r_owner, r_plugin.lower(), r_branch):
-            return False
-
-        return self.create_repo(name)
+        return self.create_repo(name, r_owner, r_plugin.lower(), r_branch)
 
     #
     # general plugin methods
