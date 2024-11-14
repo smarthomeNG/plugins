@@ -43,7 +43,7 @@ class OneWire(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.9.4'
+    PLUGIN_VERSION = '1.9.5'
 
     _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
 
@@ -448,7 +448,7 @@ class OneWire(SmartPlugin):
     def _discovery_process_bus(self, path):
 
         bus = path.split("/")[-2]
-        self.logger.info(f"- Processing of data for bus {bus} started")
+        self.logger.dbghigh(f"Discovery: Processing of data for bus {bus} started")
         if bus not in self._buses:
             self._buses[bus] = []
             self._webif_buses[bus] = {}
@@ -461,7 +461,7 @@ class OneWire(SmartPlugin):
             self.logger.info(f"_discovery_process_bus: Problem reading {bus}, error: {e}")
             return
 
-        self.logger.info(f"- On bus {bus} found sensors: {sensors}")
+        self.logger.info(f"Discovery: On bus {bus}  {len(sensors)} sensors found: {sensors}")
 
         for sensor in sensors:
             # skip subdirectories alarm, interface and simultaneous
@@ -547,7 +547,7 @@ class OneWire(SmartPlugin):
             else:
                 self.logger.debug(f"_discovery_process_bus: Sensor {sensor} was already found in bus {bus}")
 
-        self.logger.info(f"- Processing of data for bus {bus} finished")
+        self.logger.dbghigh(f"Discovery: Processing of data for bus {bus} finished")
         return
 
     def _discovery(self):
@@ -558,14 +558,14 @@ class OneWire(SmartPlugin):
         If the next call takes places it will be checked if there is something changed in top level directory.
         The rest of the discovery will be skipped if now changes are found.
         """
-        self.logger.info("discovery started")
+        self.logger.dbghigh("Discovery started")
         self._intruders = []  # reset intrusion detection
         try:
             listing = self.owbase.dir('/')
         except Exception as e:
             self.logger.error(f"_discovery: listing '/' failed with error '{e}'")
             return
-        self.logger.info(f"_discovery: got listing for '/' = '{listing}'  self.alive: {self.alive}")
+        self.logger.dbghigh(f"Discovery: Got listing for '/' = '{listing}'  self.alive: {self.alive}")
         if type(listing) != list:
             self.logger.warning(f"_discovery: listing '{listing}' is not a list.")
             return
@@ -588,7 +588,7 @@ class OneWire(SmartPlugin):
 
         else: # for did not end prematurely with break or something else
             self._discovered = True
-            self.logger.info("discovery finished")
+            self.logger.dbghigh("Discovery finished")
 
         # get a list of all directory entries from owserver
         # self.devices = self.tree()

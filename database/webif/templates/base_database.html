@@ -31,7 +31,8 @@
         { className: "time", targets: 2 },
         { className: "type", targets: 3 },
         { className: "id", targets: 4, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
-        { className: "logcount", targets: 5, render: $.fn.dataTable.render.number('.', ',', 0, '') },
+        { className: "reassign", targets: 5 },
+        { className: "logcount", targets: 6, render: $.fn.dataTable.render.number('.', ',', 0, '') },
         ].concat($.fn.dataTable.defaults.columnDefs)});
       {% else %}
       orphantable = $('#orphantable').DataTable( {
@@ -42,6 +43,7 @@
         { className: "time", targets: 2 },
         { className: "type", targets: 3 },
         { className: "id", targets: 4, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
+        { className: "reassign", targets: 5 },
         ].concat($.fn.dataTable.defaults.columnDefs)});
       {% endif %}
 

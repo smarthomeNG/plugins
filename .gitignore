@@ -24,8 +24,8 @@ nosetests.xml
 ehthumbs.db
 Thumbs.db
 
-# don't upload private plugins
-/priv_*/
+# don't upload private plugins or symlinked dirs
+/priv_*
 
 # don't upload plugins loaded from develop to a release installation
 /*_dev/

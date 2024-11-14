@@ -42,7 +42,7 @@ class BeoNetlink(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '0.8.0'
+    PLUGIN_VERSION = '0.8.1'
 
     def __init__(self, sh):
         """
@@ -267,7 +267,7 @@ class BeoNetlink(SmartPlugin):
             item = self.beo_items[beo_itemkey]
             beo_id = item.conf['beo_id']
             beo_status = item.conf['beo_status']
-            if beo_status:
+            if beo_status and beo_id != '':
                 # set items according to beo_status
                 #if beo_status == 'beoname':
                 #    deviceinfo = self.beodevices.beodeviceinfo[beo_id].get('FriendlyName', None)
@@ -275,43 +275,47 @@ class BeoNetlink(SmartPlugin):
                 #    deviceinfo = self.beodevices.beodeviceinfo[beo_id].get('productType', None)
                 #else:
                 #    deviceinfo = self.beodevices.beodeviceinfo[beo_id].get(beo_status, None)
-                if beo_status == 'audiomode':
-                    deviceinfo = self.beodevices.beodeviceinfo[beo_id]['device'].get('audiomode'[1], False)
-                elif beo_status == 'videomode':
-                    deviceinfo = self.beodevices.beodeviceinfo[beo_id]['device'].get('videomode'[1], False)
-                elif beo_status == 'powerstate':
-                    deviceinfo = self.beodevices.beodeviceinfo[beo_id]['device'].get('powerstate', False)
-                elif beo_status == 'stand':
-                    deviceinfo = self.beodevices.beodeviceinfo[beo_id]['device'].get('stand'[1], False)
-                elif beo_status == 'source':
-                    deviceinfo = self.beodevices.beodeviceinfo[beo_id]['source'].get('source', '-')
-                elif beo_status == 'volume':
-                    deviceinfo = self.beodevices.beodeviceinfo[beo_id]['volume'].get('level', 0)
-                elif beo_status == 'muted':
-                    deviceinfo = self.beodevices.beodeviceinfo[beo_id]['volume'].get('muted', False)
-                elif beo_status == 'FriendlyName':
-                    deviceinfo = self.beodevices.beodeviceinfo[beo_id]['device'].get('FriendlyName', False)
-                elif beo_status == 'productType':
-                    deviceinfo = self.beodevices.beodeviceinfo[beo_id]['device'].get('productType', False)
-
+                beo_device = self.beodevices.beodeviceinfo.get(beo_id, None)
+                if beo_device is None:
+                    self.logger.warning(f"poll_device: No deviceinfo found  for device-id '{beo_id}'")
                 else:
-                    deviceinfo = self.beodevices.beodeviceinfo[beo_id].get(beo_status, None)
-                #self.logger.info(f"poll_device: item={item.property.path}, beo_id={beo_id}, beo_status={beo_status}, self.beodevices.beodeviceinfo[beo_id]={self.beodevices.beodeviceinfo[beo_id]}")
-                #self.logger.info(f"poll_device: item={item.property.path}, deviceinfo={deviceinfo}")
-                if isinstance(deviceinfo, tuple):
-                    if item._type == 'num':
-                        beo_value = deviceinfo[1]
+                    if beo_status == 'audiomode':
+                        deviceinfo = self.beodevices.beodeviceinfo[beo_id]['device'].get('audiomode'[1], False)
+                    elif beo_status == 'videomode':
+                        deviceinfo = self.beodevices.beodeviceinfo[beo_id]['device'].get('videomode'[1], False)
+                    elif beo_status == 'powerstate':
+                        deviceinfo = self.beodevices.beodeviceinfo[beo_id]['device'].get('powerstate', False)
+                    elif beo_status == 'stand':
+                        deviceinfo = self.beodevices.beodeviceinfo[beo_id]['device'].get('stand'[1], False)
+                    elif beo_status == 'source':
+                        deviceinfo = self.beodevices.beodeviceinfo[beo_id]['source'].get('source', '-')
+                    elif beo_status == 'volume':
+                        deviceinfo = self.beodevices.beodeviceinfo[beo_id]['volume'].get('level', 0)
+                    elif beo_status == 'muted':
+                        deviceinfo = self.beodevices.beodeviceinfo[beo_id]['volume'].get('muted', False)
+                    elif beo_status == 'FriendlyName':
+                        deviceinfo = self.beodevices.beodeviceinfo[beo_id]['device'].get('FriendlyName', False)
+                    elif beo_status == 'productType':
+                        deviceinfo = self.beodevices.beodeviceinfo[beo_id]['device'].get('productType', False)
+
                     else:
-                        beo_value = deviceinfo[0]
-                else:
-                    beo_value = deviceinfo
+                        deviceinfo = self.beodevices.beodeviceinfo[beo_id].get(beo_status, None)
+                    #self.logger.info(f"poll_device: item={item.property.path}, beo_id={beo_id}, beo_status={beo_status}, self.beodevices.beodeviceinfo[beo_id]={self.beodevices.beodeviceinfo[beo_id]}")
+                    #self.logger.info(f"poll_device: item={item.property.path}, deviceinfo={deviceinfo}")
+                    if isinstance(deviceinfo, tuple):
+                        if item._type == 'num':
+                            beo_value = deviceinfo[1]
+                        else:
+                            beo_value = deviceinfo[0]
+                    else:
+                        beo_value = deviceinfo
 
-                if item() == beo_value:
-                    self.logger.debug("update_deviceinfo: Updated item {} with beo-{} {}".format(item.property.path, beo_status, beo_value))
-                else:
-                    self.logger.info("update_deviceinfo: Changed item {} with beo-{} {}".format(item.property.path, beo_status, beo_value))
-                item(beo_value, self.get_shortname())
-                self._update_item_values(item, beo_value)
+                    if item() == beo_value:
+                        self.logger.debug("update_deviceinfo: Updated item {} with beo-{} {}".format(item.property.path, beo_status, beo_value))
+                    else:
+                        self.logger.info("update_deviceinfo: Changed item {} with beo-{} {}".format(item.property.path, beo_status, beo_value))
+                    item(beo_value, self.get_shortname())
+                    self._update_item_values(item, beo_value)
             else:
                 self.logger.info(f"poll_device: No beo_status")
         return

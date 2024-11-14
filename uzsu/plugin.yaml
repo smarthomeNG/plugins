@@ -149,6 +149,7 @@ item_structs:
                 visu_acl: ro
                 eval: sh...planned()
                 eval_trigger: ..
+                initial_value: "{'value': '-', 'next': '-'}"
 
                 value:
                     remark: The next value
@@ -156,7 +157,6 @@ item_structs:
                     visu_acl: ro
                     eval: sh...property.value['value']
                     eval_trigger: ..
-                    initial_value: '-'
 
                 time:
                     remark: The next time
@@ -164,7 +164,6 @@ item_structs:
                     visu_acl: ro
                     eval: sh...property.value['next']
                     eval_trigger: ..
-                    initial_value: '-'
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

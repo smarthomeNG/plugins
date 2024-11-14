@@ -27,7 +27,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class MVG_Live(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.6.0"
+    PLUGIN_VERSION = "1.6.1"
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -42,14 +42,19 @@ class MVG_Live(SmartPlugin):
         self.alive = False
 
     def get_station(self, station):
-        mvg_station = MvgApi.station(station)
-        if mvg_station:
-            return mvg_station
+        try:
+            mvg_station = MvgApi.station(station)
+            if mvg_station:
+                return mvg_station
+        except MvgApiError as e:
+            self.logger.error("MVGLive: Could not find %s: %s" % (ort, e))
 
     def get_station_departures(self, station):
         mvg_station = self.get_station(station)
+        self.logger.error(mvg_station)
         if mvg_station:
             mvgapi = MvgApi(mvg_station['id'])
+            mvgapi.station_id = mvg_station['id']
             return mvgapi.departures()
         else:
-            logger.error("Station %s does not exist."%station)
+            self.logger.error("Station %s does not exist."%station)

@@ -1,0 +1,488 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 5000 %}
+<!-- for data-heavy plugins it might be useful to set the update interval based on the amount of data -->
+<!-- { % set update_interval = (200 * (log_array | length)) % } -->
+
+<!-- set dataSet if you need specific data to be updated automatically. Also see init.py in plugin webif!-->
+<!--  { % set dataSet = 'devices_info' % } -->
+
+<!-- set update_params if you need to provide additional parameters for the auto-update function-->
+<!-- { % set update_params = item_id % } -->
+
+<!-- if you don't need any buttons in the header, disable them completely-->
+{% set buttons = true %}
+
+<!-- if you don't need any auto-refresh elements in the header, disable them-->
+{% set autorefresh_buttons = true %}
+
+<!-- if you don't need the reload_button in the header, disable it-->
+{% set reload_button = false %}
+
+<!-- if you don't need the close in the header, disable it-->
+{% set close_button = false %}
+
+<!-- for some situations it might be useful to know the number of datatable rows shown on the current page.
+Activate that function if needed, otherwise just remove the line to increase performance -->
+{% set row_count = true %}
+
+<!-- if new values should be retrieved using automatic page update right in the beginning and on page changes -->
+{% set initial_update = true %}
+
+<!--
+	Additional styles go into this block. Examples are for datatables
+-->
+{% block pluginstyles %}
+<style>
+  .index {
+    width: 50px;
+  }
+  .name {
+      width: 180px;
+  }
+  .group {
+      width: 180px;
+  }
+  .model {
+      width: 150px;
+  }
+  .temp {
+      width: 100px;
+  }
+
+  table th.value {
+    width: 100px;
+  }
+  /*
+  These are used for highlight effect in web interface when a value changes. If you don't want to overwrite the
+  default color, you can remove the entries here as the classes are already defined in smarthomeng.css
+  */
+  .shng_effect_highlight {
+    background-color: #FFFFE0;
+  }
+  .shng_effect_standard {
+    background-color: none;
+  }
+</style>
+{% endblock pluginstyles %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'bridge_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			for (item in objResponse) {
+				/*
+        Parameters for shngInsertText:
+          0: mandatory, ID of the HTML element, e.g. the table cell
+          1: mandatory, Value to be written - taken from the objResponse dict
+          2: optional, If element of parameter 0 is in a (data)table, the ID of the table has to be put here
+          3: optional, If you want a visual highlight effect when a value changes, provide the duration in seconds.
+				shngInsertText (item+'_value', objResponse[item]['value'], 'maintable', 5);
+				*/
+			}
+			// Redraw datatable after cell updates
+			$('#maintable').DataTable().draw(false);
+
+			// Update items table
+			itemstable.clear();
+			let items = objResponse['items'];
+			console.log('items:', {items})
+			for (item in items) {
+				let path = items[item]['path'];
+				let type = items[item]['type'];
+				let value = items[item]['value'];
+				let pcc_index = items[item]['index'];
+				let pcc_parameter = items[item]['parameter'];
+
+				let last_update = items[item]['last_update'];
+				let last_change = items[item]['last_change'];
+
+				let newRow = itemstable.row.add([null, path, type, value, pcc_index, pcc_parameter, last_update, last_change]).sort().draw(false).node();
+			}
+
+			// Update devicedata tables
+			let devices = objResponse['devices'];
+			console.log('devices:', {devices})
+
+			// Update parameterdata table
+			devicesparametertable.clear();
+			for (device in devices) {
+				let name = devices[device]['name'];
+				let itemp = devices[device]['parameters']['temperatureInside'];
+				let otemp = devices[device]['parameters']['temperatureOutside'];
+				let temp = devices[device]['parameters']['temperature'];
+				let power = devices[device]['parameters']['power'];
+				let mode = devices[device]['parameters']['mode'];
+				let fanSpeed = devices[device]['parameters']['fanSpeed'];
+				let airSwingHorizontal = devices[device]['parameters']['airSwingHorizontal'];
+				let airSwingVertical = devices[device]['parameters']['airSwingVertical'];
+				let eco = devices[device]['parameters']['eco'];
+				let nanoe = devices[device]['parameters']['nanoe'];
+
+				let newRow = devicesparametertable.row.add([null, device, name, itemp, otemp, temp, power, mode, fanSpeed, airSwingHorizontal, airSwingVertical, eco, nanoe]).sort().draw(false).node();
+			}
+
+			// Update device table
+			devicestable.clear();
+			for (device in devices) {
+				let name = devices[device]['name'];
+				let group = devices[device]['group'];
+				let model = devices[device]['model'];
+				let id = devices[device]['id'];
+
+				let newRow = devicestable.row.add([null, device, name, group, model, id]).sort().draw(false).node();
+			}
+
+		}
+	}
+</script>
+<!--
+	This part is used to implement datatable JS for the tables. It allows resorting tables by column, etc.
+	For each table you have to implement the code part $('#<table_id>').DataTable(..); where the <table_id> matches the id of a table tag
+-->
+<script>
+    $(document).ready( function () {
+		/*
+		loading defaults from /modules/http/webif/gstatic/datatables/datatables.defaults.js
+		You can copy that file, put it in your plugin directory, rename the "bind" function and
+		trigger that function here instead of datatables_defaults if you want to change the behaviour.
+		Of course you can also overwrite defaults by putting the option declarations in {} below.
+		*/
+		$(window).trigger('datatables_defaults');
+
+		try {
+		  {% if (webif_pagelength is defined) %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+		  if (isNaN(parseFloat(webif_pagelength)) ) {
+			resize = true;
+			webif_pagelength = -1;
+			  console.log('Activating automatic table resize');
+		  }
+		  else {
+			resize = false;
+		  }
+		}
+		catch (e) {
+			webif_pagelength = 100;
+			resize = false;
+			console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+		}
+
+		try {
+			/*
+			Copy this part for every datatable on your page. Adjust options if necessary.
+			*/
+			maintable = $('#maintable').DataTable( {
+				/* If you want to define your own columnDefs options (e.g. for hiding a column by default), use the concat function shown here.
+				*/
+				columnDefs: [
+				    {
+						title: "{{ _('Wert') }}",
+						"targets": [2], "className": "value"
+					}
+			    ].concat($.fn.dataTable.defaults.columnDefs)
+			} );
+
+			itemstable = $('#itemstable').DataTable( {
+				columnDefs: [
+					{
+						title: '{{ _("Item") }}',
+						targets: [1]
+					},
+					{
+						title: '{{ _("Typ") }}',
+						targets: [2], "className": "type"
+					},
+					{
+						title: '{{ _("Wert") }}',
+						targets: [3], "className": "value dt-head-right"
+					},
+					{
+						title: '{{ _("Index") }}',
+						targets: [4]
+					},
+					{
+						title: '{{ _("Parameter") }}',
+						targets: [5]
+					},
+					{
+						title: '{{ _("Letztes Update") }}',
+						targets: [6], "className": "change_update"
+					},
+					{
+						title: '{{ _("Letzte Änderung") }}',
+						targets: [7], "className": "change_update"
+					}
+				].concat($.fn.dataTable.defaults.columnDefs),
+				pageLength: webif_pagelength,
+				pageResize: resize
+			} );
+
+			devicesparametertable = $('#devicesparametertable').DataTable( {
+				/* If you want to define your own columnDefs options (e.g. for hiding a column by default), use the concat function shown here.
+				*/
+				columnDefs: [
+					{
+						title: '{{ _("Device") }}',
+						targets: [1], "className": "index"
+					},
+					{
+						title: '{{ _("Name") }}',
+						targets: [2], "className": "name"
+					},
+					{
+						title: '{{ _("Innen-Temp") }}',
+						targets: [3], "className": "temp"
+					},
+					{
+						title: '{{ _("Außen-Temp") }}',
+						targets: [4], "className": "temp"
+					},
+					{
+						title: '{{ _("Soll-Temp") }}',
+						targets: [5], "className": "temp"
+					},
+					{
+						title: '{{ _("power") }}',
+						targets: [6], "className": "power"
+					},
+					{
+						title: '{{ _("mode") }}',
+						targets: [7], "className": "mode"
+					},
+					{
+						title: '{{ _("fanSpeed") }}',
+						targets: [8], "className": "fanSpeed"
+					},
+					{
+						title: '{{ _("airSwing Horizontal") }}',
+						targets: [9], "className": "airSwingHorizontal"
+					},
+					{
+						title: '{{ _("airSwing Vertical") }}',
+						targets: [10], "className": "airSwingVertical"
+					},
+					{
+						title: '{{ _("eco") }}',
+						targets: [11], "className": "eco"
+					},
+					{
+						title: '{{ _("nanoe") }}',
+						targets: [12], "className": "nanoe"
+					},
+			    ].concat($.fn.dataTable.defaults.columnDefs)
+			} );
+
+			devicestable = $('#devicestable').DataTable( {
+				/* If you want to define your own columnDefs options (e.g. for hiding a column by default), use the concat function shown here.
+				*/
+				columnDefs: [
+					{
+						title: '{{ _("Device") }}',
+						targets: [1], "className": "index"
+					},
+					{
+						title: '{{ _("Name") }}',
+						targets: [2], "className": "name"
+					},
+					{
+						title: '{{ _("Gruppe") }}',
+						targets: [3], "className": "group"
+					},
+					{
+						title: '{{ _("Modell") }}',
+						targets: [4], "className": "model"
+					},
+					{
+						title: '{{ _("Device-ID") }}',
+						targets: [5]
+					},
+			    ].concat($.fn.dataTable.defaults.columnDefs)
+			} );
+
+		}
+		catch (e) {
+			console.warn("Error: " + e + "\nMaybe Datatable JS is not loaded (->showing standard table without reorder option)");
+		}
+    /*
+    This part creates tooltips for buttons/inputs that have the class "button-tooltip"
+    */
+    const tooltipList = ['Nach Devices suchen'];
+    createTooltips(tooltipList);
+    /*
+    This part reads cookies for the attribute "sort_order" and activates the resepctive button after page load
+    */
+    order = getCookie('sort_order');
+    if (order == '')
+      order = 'time-desc';
+    const button = document.getElementById(order);
+    button.click();
+	});
+</script>
+
+
+
+<script>
+    $(document).ready( function () {
+		/*
+		loading defaults from /modules/http/webif/gstatic/datatables/datatables.defaults.js
+		You can copy that file, put it in your plugin directory, rename the "bind" function and
+		trigger that function here instead of datatables_defaults if you want to change the behaviour.
+		Of course you can also overwrite defaults by putting the option declarations in {} below.
+		*/
+		$(window).trigger('datatables_defaults');
+		try {
+			/*
+			Copy this part for every datatable on your page. Adjust options if necessary.
+			*/
+			maintable = $('#maintable').DataTable( {
+			  /* If you want to define your own columnDefs options (e.g. for hiding a column by default), use the concat function shown here.
+			  */
+			  columnDefs: [{ "targets": [2], "className": "value"}].concat($.fn.dataTable.defaults.columnDefs),
+			  });
+		}
+		catch (e) {
+			console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
+		}
+    /*
+    This part creates tooltips for buttons/inputs that have the class "button-tooltip"
+    */
+    const tooltipList = ['Nach Devices suchen'];
+    createTooltips(tooltipList);
+    /*
+    This part reads cookies for the attribute "sort_order" and activates the resepctive button after page load
+    */
+    order = getCookie('sort_order');
+    if (order == '')
+      order = 'time-desc';
+    const button = document.getElementById(order);
+    button.click();
+	});
+</script>
+<!--
+This is an example on how to update the page refresh method. You can set the dataSet, update interval, special parameters or (de)activate the auto refresh
+In the example the update is deactivated on the 12th of December 2022 (what might make no sense at all)
+<script>
+  var today = new Date();
+  var today_date = String(today.getDate()) + String(today.getMonth() + 1) + today.getFullYear();
+  let test_date = "12122022";
+  if (today_date === test_date)
+      window.refresh.update({dataSet:'test', update_params:'specialitem', update_interval: 2000, update_active:false});
+  </script>
+-->
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<!-- add a style="min-width:..px;" if you want to define a minimum width for responsive behaviour -->
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>&nbsp;</strong></td>
+			<td class="py-1">{{ _(' ') }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong></strong></td>
+			<td class="py-1">{{ _('') }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>&nbsp;</strong></td>
+			<td class="py-1">{{ _('') }}</td>
+			<td></td>
+			<td class="py-1"><strong></strong></td>
+			<td class="py-1"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>&nbsp;</strong></td>
+			<td class="py-1"></td>
+			<td></td>
+			<td class="py-1"><strong></strong></td>
+			<td class="py-1"></td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+	<div>
+		<button id="btn1" class="btn btn-shng btn-sm" name="scan" onclick="shngPost('', {learn: 'on'})"><i class="fas fa-question button-tooltip"></i>&nbsp;&nbsp;&nbsp;{{ _('nach Devices suchen') }}&nbsp;</button>
+    <button onclick="setCookie('sort_order', 'time-desc', 365, window.pluginname);" type="button" class="button-tooltip" id="time-desc">Button</button>
+	</div>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 6)
+-->
+{% set tabcount = 3 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if p._plg_item_dict|length == 0 %}
+	{% set start_tab = 2 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>Plugin Items</strong> (<span id=itemcount>" ~ p._plg_item_dict|length ~ "</span>)" %}
+{% block bodytab1 %}
+	<div class="container-fluid table-resize" style="margin-top: 6px">
+		<table id="itemstable"></table>
+	</div>
+  <div class="m-2">
+    Etwaige Informationen unterhalb der Tabelle (optional)
+  </div>
+
+{% endblock bodytab1 %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong> Geräte Einstellungen</strong> (" ~ p._devices | length ~ ")" %}
+{% block bodytab2 %}
+
+	<div class="container-fluid table-resize" style="margin-top: 6px">
+		<table id="devicesparametertable"></table>
+	</div>
+
+{% endblock bodytab2 %}
+
+
+{% set tab3title = "<strong>Klima-Geräte</strong> (" ~ p._devices | length ~ ")" %}
+{% block bodytab3 %}
+
+	<div class="container-fluid table-resize" style="margin-top: 6px">
+		<table id="devicestable"></table>
+	</div>
+
+{% endblock bodytab3 %}
+
+
+<!--
+	Content block for the fourth tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{% set tab4title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
+
+	It has to be defined before (and outside) the block bodytab4
+-->
+{% block bodytab4 %}
+{% endblock bodytab4 %}
