@@ -155,6 +155,25 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
+    def pullRepo(self):
+        try:
+            json = cherrypy.request.json
+            name = json.get('name')
+
+            if not name or name not in self.plugin.repos:
+                raise Exception(f'repo {name} invalid or not found')
+
+            if self.plugin.pull_repo(name):
+                return {"operation": "request", "result": "success"}
+            else:
+                raise Exception(f'pull for repo {name} failed')
+        except Exception as e:
+            cherrypy.response.status = ERR_CODE
+            return {"error": str(e)}
+
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
     def getNameSuggestion(self):
         try:
             json = cherrypy.request.json

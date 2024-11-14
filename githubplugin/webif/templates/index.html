@@ -44,6 +44,14 @@
 	</button>
 </div>
 
+<div id="success" class="mb-2 alert alert-info alert-dismissible show" role="alert">
+	<strong>Ausführung erfolgreich</strong><br/>
+	<span id="successmsg"></span>
+	<button type="button" class="close" data-hide="alert" aria-label="Close">
+		<span aria-hidden="true">&times;</span>
+	</button>
+</div>
+
 <div id="install_ConfirmModal" class="or-modal">
 	<div class="or-modal-content">
 		<span class="or-close" onclick="document.getElementById('install_ConfirmModal').style.display = 'none';">&times;</span>
@@ -164,6 +172,12 @@
 		// show exception from python code
 		document.getElementById('alertmsg').textContent = msg;
 		$('#alert').show();
+	}
+
+	function successMsg(msg) {
+		// show message
+		document.getElementById('successmsg').textContent = msg;
+		$('#success').show();
 	}
 
 	function clearSelect(sel) {
@@ -457,6 +471,17 @@
 		}
 	}
 
+	function pullRepo(name) {
+		// try to pull from origin for given repo
+		if (name != '') {
+			sendData("pullRepo", {'name': name},
+				function(response) {},
+				function(response) {
+					successMsg('Plugin ' + name + ' erfolgreich aktualisiert');
+				}
+			);
+		}
+	}
 	function removePlugin(owner, branch, plugin, name) {
 		// check if plugin can be removed, show confirmation
 		if (name != '') {
@@ -469,7 +494,7 @@
 					if (clean) {
 						showModal('remove', owner, branch, plugin, name);
 					} else {
-						alert('Plugin ' + name + ' kann nicht entfernt werden, Repo ist nicht sauber (lose Dateien im Arbeitsverzeichnis, Änderungen am Index, commits nicht gepushed).')
+						alertMsg('Plugin ' + name + ' kann nicht entfernt werden, Repo ist nicht sauber (lose Dateien im Arbeitsverzeichnis, Änderungen am Index, commits nicht gepushed).')
 					}
 				}
 			);
@@ -550,8 +575,9 @@
 
 	$(document).ready( function () {
 
-		// hide alert popup
+		// hide alert popups
 		$('#alert').hide();
+		$('#success').hide();
 
 		// enable datatable table
 	    $('#plugintable').DataTable( {
@@ -591,7 +617,10 @@
 				<td id="{{ plugin }}_owner">{{ repos[plugin].owner }}</td>
 				<td id="{{ plugin }}_branch">{{ repos[plugin].branch }}</td>
 				<td id="{{ plugin }}_wtpath">{{ repos[plugin].full_wt_path }}</td>
-				<td id="{{ plugin }}_action">{% if not repos[plugin].clean %}Änderungen vorhanden{% else %}<button type="button" class="btn btn-danger btn-sm" onclick="javascript:removePlugin('{{ repos[plugin].owner }}', '{{ repos[plugin].branch }}', '{{ repos[plugin].plugin }}', '{{ plugin }}');"><i class="fas fa-times"></i></button>{% endif %}</td>
+				<td id="{{ plugin }}_action">{% if not repos[plugin].clean %}Änderungen vorhanden{% else %}
+					<button type="button" class="btn btn-danger btn-sm" onclick="javascript:removePlugin('{{ repos[plugin].owner }}', '{{ repos[plugin].branch }}', '{{ repos[plugin].plugin }}', '{{ plugin }}');"><i class="fas fa-times"></i></button>
+					<button type="button" class="btn btn-shng btn-sm" onclick="javascript:pullRepo('{{ plugin }}');"><i class="fas fa-download"></i></button>
+					{% endif %}</td>
 				</tr>
 		{% endfor %}
 		</tbody>

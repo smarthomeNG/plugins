@@ -504,8 +504,7 @@ class GithubPlugin(SmartPlugin):
         except FileExistsError:
             self.loggerr(f'plugin link {repo["link"]} was created by someone else while we were setting up repo. Not overwriting, check link file manually')
 
-        self.repos[name] = self.init_repos[name]
-        del self.init_repos[name]
+        self.repos[name] = repo
 
         return True
 
@@ -606,6 +605,38 @@ class GithubPlugin(SmartPlugin):
         clean = l_head == r_head
         self.repos[name]['clean'] = clean
         return clean
+
+    def pull_repo(self, name: str) -> bool:
+        """ pull repo if clean """
+        if not name or name not in self.repos:
+            self.loggerr(f'repo {name} invalid or not found')
+            return False
+
+        try:
+            res = self.is_repo_clean(name)
+            if not res:
+                raise GPError('worktree not clean')
+        except Exception as e:
+            self.loggerr(f'error checking repo {name}: {e}')
+            return False
+
+        repo = self.repos[name]['repo']
+        org = None
+        try:
+            org = repo.remotes.origin
+        except Exception:
+            if len(repo.remotes) > 0:
+                org = repo.remotes.get('origin')
+
+        if org is None:
+            self.loggerr(f'remote "origin" not found in remotes {repo.remotes}')
+            return False
+
+        try:
+            org.pull()
+            return True
+        except Exception as e:
+            self.loggerr(f'error while pulling: {e}')
 
     def setup_github(self) -> bool:
         """ login to github and set repo """
