@@ -26,6 +26,8 @@
 
 import cherrypy
 import os
+import json
+from copy import deepcopy
 
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
@@ -56,6 +58,15 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
+    def collect_repos(self):
+        # remove object items from repos dict
+        repos = deepcopy(self.plugin.repos)
+        for repo in repos:
+            if 'repo' in repos[repo]:
+                del repos[repo]['repo']
+
+        return repos
+
     @cherrypy.expose
     def index(self):
         """
@@ -71,6 +82,7 @@ class WebInterface(SmartPluginWebIf):
 
         tmpl = self.tplenv.get_template('index.html')
 
+        """ build current PR data structures for the webif """
         reposbyowner = {}
         for repo in self.plugin.repos:
             owner = self.plugin.repos[repo]['owner']
@@ -95,14 +107,35 @@ class WebInterface(SmartPluginWebIf):
 
         return tmpl.render(p=self.plugin,
                            webif_pagelength=pagelength,
-                           repos=self.plugin.repos,
-                           init_repos=self.plugin.init_repos,
+                           repos=self.collect_repos(),
                            forklist=self.plugin.get_github_forklist_sorted(),
                            forks=self.plugin.gh.forks,
                            pulls=pulls,
                            auth=self.plugin.gh_apikey != '',
                            conn=self.plugin.gh._github is not None,
                            language=self.plugin.get_sh().get_defaultlanguage())
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet == 'overview':
+            # get the new data
+            data = self.collect_repos()
+
+            # return it as json the the web page
+            try:
+                return json.dumps(data)
+            except Exception as e:
+                self.logger.error(f"get_data_html exception: {e}, {data}")
+
+        return {}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

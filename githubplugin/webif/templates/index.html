@@ -2,6 +2,10 @@
 {% set tabcount = 1 %}
 {% set dataSet = 'overview' %}
 {% set tab1title = _('Plugins in GitHub-Repos') %}
+<!-- deactivated until proper table handling implemented
+{% set xupdate_interval = 5000 %} 
+{% set xupdate_active = true %}
+-->
 
 {% block pluginstyles %}
 <link rel="stylesheet" href="static/style.css">
@@ -9,7 +13,7 @@
 
 {% block buttons %}
 <button id='install' class="btn btn-shng btn-sm" onclick='javascript:document.getElementById("installModal").style.display = "block";' type="button">Neues Plugin installieren</button>
-<button id='rescan' class="btn btn-shng btn-sm" onclick='javascript:rescanDirs()' title='location.href="?action=rescan"' type="button">Plugin-Verzeichnis neu lesen</button>
+<button id='rescan' class="btn btn-shng btn-sm" onclick='javascript:rescanDirs()' title='location.href="?action=rescan"' type="button">Plugin-Verzeichnis neu lesen</button><br />
 {% endblock buttons %}
 
 {% block headtable %}
@@ -28,7 +32,7 @@
 			<td class="py-1"></td>
 			<td class="py-1"></td>
 			<td class="py-1"></td>
-			<td class="py-1" align="right">Zugriffe:</td>
+			<td class="py-1" align="right">verbleibende Zugriffe:</td>
 			<td class="py-1"><span id="remain"></span>/<span id="allow"></span></td>
 			<td class="py-1" align="right">Reset in:</td>
 			<td class="py-1"><span id="backoff"></span></td>
@@ -157,10 +161,46 @@
 {% endblock headtable %}
 
 {% block pluginscripts %}
+{{ super() }}
 <script type="text/javascript">
 
-	var pulls = {{ pulls }};
 	var rateInterval = null;
+
+	function handleUpdatedData(response, dataSet='overview') {
+		if (dataSet === 'overview' || dataSet === null) {
+			objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+            for (var plugin in objResponse) {
+                if (!document.getElementById(plugin+'_name')) {
+                    if ( $.fn.dataTable.isDataTable('#plugintable') ) {
+                        table_to_update = $('#plugintable').DataTable();
+                        let newRow = table_to_update.row.add( [ plugin, '' ] ).draw(false).node();
+                        newRow.id = plugin+"_row";
+                        $('td:eq(1)', newRow).attr('id', plugin+'_name');
+                        $('td:eq(2)', newRow).attr('id', plugin+'_plugin');
+                        $('td:eq(3)', newRow).attr('id', plugin+'_owner');
+                        $('td:eq(4)', newRow).attr('id', plugin+'_branch');
+                        $('td:eq(5)', newRow).attr('id', plugin+'_wtpath');
+                        $('td:eq(6)', newRow).attr('id', plugin+'_action');
+                    }
+                }
+                shngInsertText(plugin+'_name', plugin, 'plugintable', 2);
+                shngInsertText(plugin+'_plugin', objResponse[plugin]['plugin'], 'plugintable', 2);
+                shngInsertText(plugin+'_owner', objResponse[plugin]['owner'], 'plugintable', 2);
+                shngInsertText(plugin+'_branch', objResponse[plugin]['branch'], 'plugintable', 2);
+                shngInsertText(plugin+'_wtpath', objResponse[plugin]['full_wt_path'], 'plugintable', 2);
+                if (objResponse[plugin]['clean']) {
+                	txt = 
+                    	'<button type="button" class="btn btn-danger btn-sm" onclick="javascript:removePlugin(' +
+                    	objResponse[plugin]['owner'] + ', ' + objResponse[plugin]['branch'] + ', ' + objResponse[plugin]['plugin'] + ', ' + plugin + ');"><i class="fas fa-times"></i></button>' + 
+                    	'<button type="button" class="btn btn-shng btn-sm" onclick="javascript:pullRepo(' + plugin + ');"><i class="fas fa-download"></i></button>';
+                } else {
+                	txt = 'Änderungen vorhanden';
+                }
+                shngInsertText(plugin+'_action', txt, 'plugintable', 2);
+            }
+		}
+	}
 
     $(function(){
         $("[data-hide]").on("click", function(){
@@ -580,11 +620,11 @@
 		$('#success').hide();
 
 		// enable datatable table
+	    $(window).trigger('datatables_defaults');
 	    $('#plugintable').DataTable( {
 	        "paging": false,
 	        fixedHeader: true
         } );
-	    $(window).trigger('datatables_defaults');
 
 		getRateLimit();	    
 	});
