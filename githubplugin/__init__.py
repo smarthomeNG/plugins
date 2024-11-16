@@ -311,7 +311,7 @@ class GithubPlugin(SmartPlugin):
 
         # to make sure we really hit the right path, don't use relative paths
         # but use shngs BASE path attribute
-        self.plg_path = os.path.join(self._sh.BASE, 'plugins')
+        self.plg_path = os.path.join(self._sh.get_basedir(), 'plugins')
         self.repo_path = os.path.join(self.plg_path, self.REPO_DIR)
 
         # make plugins/priv_repos if not present
