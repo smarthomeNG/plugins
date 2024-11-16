@@ -383,7 +383,7 @@ class GithubPlugin(SmartPlugin):
                 'url': f'https://github.com/{owner}/plugins.git',
                 'repo_path': repo_path,
                 'wt_path': wt_path,
-                'disp_wt_path': wt_path[len(self._sh.BASE) + 1:],
+                'disp_wt_path': wt_path[len(self._sh.get_basedir()) + 1:],
                 'rel_wt_path': os.path.join('..', f'{owner}_wt_{branch}'),
                 'link': str(item),
                 'rel_link_path': str(target),
@@ -433,7 +433,7 @@ class GithubPlugin(SmartPlugin):
 
         # üath to git worktree dir, default to "plugins/priv_repos/{owner}_wt_{branch}"
         repo['wt_path'] = os.path.join(self.repo_path, f'{owner}_wt_{branch}')
-        repo['disp_wt_path'] = repo['wt_path'][len(self._sh.BASE) + 1:]
+        repo['disp_wt_path'] = repo['wt_path'][len(self._sh.get_basedir()) + 1:]
         repo['rel_wt_path'] = os.path.join('..', f'{owner}_wt_{branch}')
 
         # set link location from plugin name
