@@ -96,6 +96,11 @@ class GitHubHelper(object):
         # keeps the git.Repo() for smarthomeNG/plugins
         self.git_repo = None
 
+        # make plugins/priv_repos if not present
+        if not os.path.exists(os.path.join('plugins', 'priv_repos')):
+            self.logger.debug('creating plugins/priv_repos dir')
+            os.mkdir(os.path.join('plugins', 'priv_repos'))
+
     def login(self):
         try:
             if self.auth:
