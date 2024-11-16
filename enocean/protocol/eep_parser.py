@@ -177,7 +177,7 @@ class EEP_Parser():
             self.logger.error(f"Occupancy sensor issued error code: {payload[0]}")
         else:
             result['SVC'] = payload[0] / 255.0 * 5.0                  # supply voltage in volts
-        result['ILL'] = payload[1] << 2 + (payload[2] & 0xC0) >> 6    # 10 bit illumination in lux
+        result['ILL'] = (payload[1] << 2) + ((payload[2] & 0xC0) >> 6)    # 10 bit illumination in lux
         result['PIR'] = (payload[3] & 0x80) == 0x80                   # Movement flag, 1:motion detected
         self.logger.debug(f"Occupancy: PIR:{result['PIR']} illumination: {result['ILL']}lx, voltage: {result['SVC']}V")
         return result
@@ -240,7 +240,7 @@ class EEP_Parser():
             self.logger.debug("Processing A5_12_01: powermeter: Unit is Watts")
         else:
             self.logger.debug("Processing A5_12_01: powermeter: Unit is kWh")
-        value = (payload[0] << 16 + payload[1] << 8 + payload[2]) / divisor
+        value = ((payload[0] << 16) + (payload[1] << 8) + payload[2]) / divisor
         self.logger.debug(f"Processing A5_12_01: powermeter: {value} W")
 
         # It is confirmed by Eltako that with the use of multiple repeaters in an Eltako network, values can be corrupted in random cases.
@@ -326,7 +326,7 @@ class EEP_Parser():
     def _parse_eep_A5_3F_7F(self, payload, status):
         self.logger.debug("Processing A5_3F_7F")
         results = {'DI_3': (payload[3] & 1 << 3) == 1 << 3, 'DI_2': (payload[3] & 1 << 2) == 1 << 2, 'DI_1': (payload[3] & 1 << 1) == 1 << 1, 'DI_0': (payload[3] & 1 << 0) == 1 << 0}
-        results['AD_0'] = ((payload[1] & 0x03) << 8 + payload[2]) * 1.8 / pow(2, 10)
+        results['AD_0'] = (((payload[1] & 0x03) << 8) + payload[2]) * 1.8 / pow(2, 10)
         results['AD_1'] = (payload[1] >> 2) * 1.8 / pow(2, 6)
         results['AD_2'] = payload[0] * 1.8 / pow(2, 8)
         return results
