@@ -28,7 +28,6 @@
 import os
 from shutil import rmtree
 from pathlib import Path
-import datetime as dt
 
 from lib.model.smartplugin import SmartPlugin
 from .webif import WebInterface
@@ -49,7 +48,7 @@ class GitHubHelper(object):
         self.logger.error(msg)
         raise GPError(msg)
 
-    def __init__(self, dt, repo='plugins', apikey='', auth=None, logger=None, **kwargs):
+    def __init__(self, dt, logger, repo='plugins', apikey='', auth=None, **kwargs):
         self.dt = dt
         self.logger = logger
         self.apikey = apikey
@@ -95,11 +94,6 @@ class GitHubHelper(object):
 
         # keeps the git.Repo() for smarthomeNG/plugins
         self.git_repo = None
-
-        # make plugins/priv_repos if not present
-        if not os.path.exists(os.path.join('plugins', 'priv_repos')):
-            self.logger.debug('creating plugins/priv_repos dir')
-            os.mkdir(os.path.join('plugins', 'priv_repos'))
 
     def login(self):
         try:
@@ -281,6 +275,7 @@ class GithubPlugin(SmartPlugin):
     "live" plugins repo worktree as a private plugin.
     """
     PLUGIN_VERSION = '1.0.0'
+    REPO_DIR = 'priv_repos'
 
     def loggerr(self, msg):
         """ log error message and raise GPError to signal WebIf """
@@ -301,22 +296,28 @@ class GithubPlugin(SmartPlugin):
         #     'branch': '<branch>'',                                # Branch im GitHub-Fork
         #     'gh_repo': 'plugins',                                 # fix, Repo smarthomeNG/plugins
         #     'url': f'https://github.com/{owner}/plugins.git',     # URL des Forks
-        #     'repo_path': repo_path,                               # relativer Pfad zum Repo unterhalb von plugins/
-        #     'full_repo_path': os.path.join('plugins', repo_path), # relativer Pfad zum Repo unterhalb von shng
-        #     'wt_path': wt_path,                                   # relativer Pfad zum Worktree unterhalb von plugins/
-        #     'full_wt_path': os.path.join('plugins', wt_path),     # relativer Pfad zum Worktree unterhalb von shng
+        #     'repo_path': repo_path,                               # absoluter Pfad zum Repo
+        #     'wt_path': wt_path,                                   # absoluter Pfad zum Worktree
+        #     'disp_wt_path': 'plugins/priv_repos/...'              # relativer Pfad zum Worktree vom shng-Basisverzeichnis aus
         #     'rel_wt_path': os.path.join('..', '..', wt_path),     # relativer Pfad zum Worktree vom Repo aus
-        #     'link': os.path.join('plugins', f'priv_{plugin}'),    # relativer Pfad-/Dateiname des Plugin-Symlinks unterhalb von shng
-        #     'rel_link_path': os.path.join(wt_path, plugin),       # relativer Pfad des Pluginordners "unterhalb" von plugins/
+        #     'link': os.path.join('plugins', f'priv_{plugin}'),    # absoluter Pfad-/Dateiname des Plugin-Symlinks
+        #     'rel_link_path': os.path.join(wt_path, plugin),       # Ziel der Plugin-Symlinks: relativer Pfad des Ziel-Pluginordners "unterhalb" von plugins/
         #     'repo': repo,                                         # git.Repo(path)
         #     'clean': bool                                         # repo is clean and synced?
         #   },
         #   '<id2>': {...}
         # }
         self.repos = {}
-        self.init_repos = {}
 
-        self.repo_path = os.path.join('plugins', 'priv_repos')
+        # to make sure we really hit the right path, don't use relative paths
+        # but use shngs BASE path attribute
+        self.plg_path = os.path.join(self._sh.BASE, 'plugins')
+        self.repo_path = os.path.join(self.plg_path, self.REPO_DIR)
+
+        # make plugins/priv_repos if not present
+        if not os.path.exists(self.repo_path):
+            self.logger.debug(f'creating repo dir {self.repo_path}')
+            os.mkdir(self.repo_path)
 
         self.gh_apikey = self.get_parameter_value('app_token')
         self.gh = GitHubHelper(self._sh.shtime, apikey=self.gh_apikey, logger=self.logger)
@@ -336,12 +337,12 @@ class GithubPlugin(SmartPlugin):
             return
 
         self.logger.debug('checking plugin links')
-        pathlist = Path('plugins').glob('priv_*')
+        pathlist = Path(self.plg_path).glob('priv_*')
         for item in pathlist:
             if not item.is_symlink():
                 self.logger.debug(f'ignoring {item}, is not symlink')
                 continue
-            target = os.path.join('plugins', os.readlink(str(item)))
+            target = os.path.join(self.plg_path, os.readlink(str(item)))
             if not os.path.isdir(target):
                 self.logger.debug(f'ignoring link {item}, target {target} is not directory')
                 continue
@@ -368,32 +369,31 @@ class GithubPlugin(SmartPlugin):
             # but this seems more consistent...
             wtpath, _ = os.path.split(target)
             repo = Repo(wtpath)
-            repo_path = os.path.join('priv_repos', owner)
-            wt_path = os.path.join('priv_repos', f'{owner}_wt_{branch}')
+            repo_path = os.path.join(self.repo_path, owner)
+            wt_path = os.path.join(self.repo_path, f'{owner}_wt_{branch}')
 
-            # use part of link name after "plugins/priv_"
-            id = str(item)[13:]
+            # use part of link name after ".../plugins/priv_"
+            name = str(item)[len(self.plg_path) + 6:]
 
-            self.repos[id] = {
+            self.repos[name] = {
                 'plugin': plugin,
                 'owner': owner,
                 'branch': branch,
                 'gh_repo': 'plugins',
                 'url': f'https://github.com/{owner}/plugins.git',
                 'repo_path': repo_path,
-                'full_repo_path': os.path.join('plugins', repo_path),
                 'wt_path': wt_path,
-                'full_wt_path': os.path.join('plugins', wt_path),
-                'rel_wt_path': os.path.join('..', '..', wt_path),
+                'disp_wt_path': wt_path[len(self._sh.BASE) + 1:],
+                'rel_wt_path': os.path.join('..', f'{owner}_wt_{branch}'),
                 'link': str(item),
                 'rel_link_path': str(target),
                 'repo': repo,
             }
-            self.repos[id]['clean'] = self.is_repo_clean(id, exc)
+            self.repos[name]['clean'] = self.is_repo_clean(name, exc)
 
     def check_for_repo_name(self, name) -> bool:
         """ check if name exists in repos or link exists """
-        if name in self.repos or os.path.exists(os.path.join('plugins', 'priv_' + name)):
+        if name in self.repos or os.path.exists(os.path.join(self.plg_path, 'priv_' + name)):
             self.loggerr(f'name {name} already taken, delete old plugin first or choose a different name.')
             return False
 
@@ -429,33 +429,32 @@ class GithubPlugin(SmartPlugin):
         repo['url'] = f'https://github.com/{owner}/{repo["gh_repo"]}.git'
 
         # path to git repo dir, default to "plugins/priv_repos/{owner}"
-        repo['repo_path'] = os.path.join('priv_repos', owner)
-        repo['full_repo_path'] = os.path.join('plugins', repo['repo_path'])
+        repo['repo_path'] = os.path.join(self.repo_path, owner)
 
         # üath to git worktree dir, default to "plugins/priv_repos/{owner}_wt_{branch}"
-        repo['wt_path'] = os.path.join('priv_repos', f'{owner}_wt_{branch}')
-        repo['full_wt_path'] = os.path.join('plugins', repo['wt_path'])
-        repo['rel_wt_path'] = os.path.join('..', '..', repo['wt_path'])
+        repo['wt_path'] = os.path.join(self.repo_path, f'{owner}_wt_{branch}')
+        repo['disp_wt_path'] = repo['wt_path'][len(self._sh.BASE) + 1:]
+        repo['rel_wt_path'] = os.path.join('..', f'{owner}_wt_{branch}')
 
         # set link location from plugin name
-        repo['link'] = os.path.join('plugins', f'priv_{name}')
-        repo['rel_link_path'] = os.path.join(repo['wt_path'], plugin)
+        repo['link'] = os.path.join(self.plg_path, f'priv_{name}')
+        repo['rel_link_path'] = os.path.join(self.REPO_DIR, f'{owner}_wt_{branch}', plugin)
 
         # make plugins/priv_repos if not present
-        if not os.path.exists(os.path.join('plugins', 'priv_repos')):
-            self.logger.debug('creating plugins/priv_repos dir')
-            os.mkdir(os.path.join('plugins', 'priv_repos'))
+        if not os.path.exists(self.repo_path):
+            self.logger.debug(f'creating dir {self.repo_path}')
+            os.mkdir(self.repo_path)
 
-        self.logger.debug(f'check for repo at {repo["full_repo_path"]}...')
+        self.logger.debug(f'check for repo at {repo["repo_path"]}...')
 
-        if os.path.exists(repo['full_repo_path']) and os.path.isdir(repo['full_repo_path']):
+        if os.path.exists(repo['repo_path']) and os.path.isdir(repo['repo_path']):
             # path exists, try to load existing repo
-            repo['repo'] = Repo(repo['full_repo_path'])
+            repo['repo'] = Repo(repo['repo_path'])
 
-            self.logger.debug(f'found repo {repo["repo"]} at {repo["full_repo_path"]}')
+            self.logger.debug(f'found repo {repo["repo"]} at {repo["repo_path"]}')
 
             if "origin" not in repo['repo'].remotes:
-                self.loggerr(f'repo at {repo["full_repo_path"]} has no "origin" remote set')
+                self.loggerr(f'repo at {repo["repo_path"]} has no "origin" remote set')
                 return False
 
             origin = repo['repo'].remotes.origin
@@ -464,24 +463,32 @@ class GithubPlugin(SmartPlugin):
                 return False
 
         else:
-            self.logger.debug(f'cloning repo at {repo["full_repo_path"]} from {repo["url"]}...')
+            self.logger.debug(f'cloning repo at {repo["repo_path"]} from {repo["url"]}...')
 
             # clone repo from url
-            repo['repo'] = Repo.clone_from(repo['url'], repo['full_repo_path'])
+            repo['repo'] = Repo.clone_from(repo['url'], repo['repo_path'])
 
         # fetch repo data
         self.logger.debug('fetching from origin...')
         repo['repo'].remotes.origin.fetch()
 
         wtr = ''
+
+        # cleanup worktrees (just in case...)
+        try:
+            self.logger.debug('pruning worktree')
+            repo['repo'].git.worktree('prune')
+        except Exception:
+            pass
+
         # setup worktree
-        if not os.path.exists(repo['full_wt_path']):
-            self.logger.debug(f'creating worktree at {repo["full_wt_path"]}...')
+        if not os.path.exists(repo['wt_path']):
+            self.logger.debug(f'creating worktree at {repo["wt_path"]}...')
             wtr = repo['repo'].git.worktree('add', repo['rel_wt_path'], repo['branch'])
 
         # path exists, try to load existing worktree
-        repo['wt'] = Repo(repo['full_wt_path'])
-        self.logger.debug(f'found worktree {repo["wt"]} at {repo["full_wt_path"]}')
+        repo['wt'] = Repo(repo['wt_path'])
+        self.logger.debug(f'found worktree {repo["wt"]} at {repo["wt_path"]}')
 
         # worktree not created from branch, checkout branch of existing worktree manually
         if not wtr:
@@ -526,8 +533,8 @@ class GithubPlugin(SmartPlugin):
         # get all data to remove
         repo = self.repos[name]
         link_path = repo['link']
-        wt_path = repo['full_wt_path']
-        repo_path = repo['full_repo_path']
+        wt_path = repo['wt_path']
+        repo_path = repo['repo_path']
         owner = repo['owner']
         # check if repo is used by other plugins
         last = True
@@ -709,7 +716,7 @@ class GithubPlugin(SmartPlugin):
         return sforkstop + sforks
 
     def get_github_pulls(self, number=None) -> dict:
-        """ return pulls or single pull for given number """ 
+        """ return pulls or single pull for given number """
         if number:
             return self.gh.pulls.get(number, {})
         else:
@@ -719,6 +726,7 @@ class GithubPlugin(SmartPlugin):
     # methods to run git actions based on github data
     #
 
+    # unused right now, possibly remove?
     def create_repo_from_gh(self, number=0, owner='', branch=None, plugin='') -> bool:
         """
         call init/create methods to download new repo and create worktree

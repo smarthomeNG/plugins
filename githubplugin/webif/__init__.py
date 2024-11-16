@@ -33,6 +33,7 @@ from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
 # from ..Exception import Exception
 
+# return for error signaling to webif -> display returned error message as alert
 ERR_CODE = 500
 
 
@@ -213,7 +214,7 @@ class WebInterface(SmartPluginWebIf):
             plugin = json.get('plugin')
 
             count = ''
-            while os.path.exists(os.path.join('plugins', f'priv_{plugin}{count}')) and int('0' + count) < 20:
+            while os.path.exists(os.path.join(self.plugin.plg_path, f'priv_{plugin}{count}')) and int('0' + count) < 20:
                 count = str(int('0' + count) + 1)
             return {"operation": "request", "result": "success", "name": plugin + count}
         except Exception as e:
