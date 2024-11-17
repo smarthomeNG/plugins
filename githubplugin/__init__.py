@@ -30,6 +30,7 @@ from shutil import rmtree
 from pathlib import Path
 
 from lib.model.smartplugin import SmartPlugin
+from lib.shyaml import yaml_load
 from .webif import WebInterface
 from .gperror import GPError
 
@@ -391,19 +392,19 @@ class GithubPlugin(SmartPlugin):
             }
             self.repos[name]['clean'] = self.is_repo_clean(name, exc)
 
-    def check_for_repo_name(self, name) -> bool:
+    def check_for_repo_name(self, name, rename=False) -> bool:
         """ check if name exists in repos or link exists """
-        if name in self.repos or os.path.exists(os.path.join(self.plg_path, 'priv_' + name)):
+        if name in self.repos or (not rename and os.path.exists(os.path.join(self.plg_path, 'priv_' + name))):
             self.loggerr(f'name {name} already taken, delete old plugin first or choose a different name.')
             return False
 
         return True
 
-    def create_repo(self, name, owner, plugin, branch=None) -> bool:
+    def create_repo(self, name, owner, plugin, branch=None, rename=False) -> bool:
         """ create repo from given parameters """
 
         try:
-            self.check_for_repo_name(name)
+            self.check_for_repo_name(name, rename=rename)
         except Exception as e:
             self.loggerr(e)
             return False
@@ -510,6 +511,11 @@ class GithubPlugin(SmartPlugin):
 
         repo['clean'] = True
 
+        if rename:
+            self.logger.debug(f'renaming old link priv_{name}')
+            if not self._move_old_link(name, repo):
+                self.logger.warning(f'unable to move old link priv_{name}, installation needs to be repaired manually')
+
         self.logger.debug(f'creating link {repo["link"]} to {repo["rel_link_path"]}...')
         try:
             os.symlink(repo['rel_link_path'], repo['link'])
@@ -519,6 +525,33 @@ class GithubPlugin(SmartPlugin):
         self.repos[name] = repo
 
         return True
+
+    def _move_old_link(self, name) -> bool:
+        """ rename old plugin link or folder """
+        link = os.path.join(self.plg_path, f'priv_{name}')
+        if not os.path.exists(link):
+            self.logger.debug(f'old link/folder not found: {link}')
+            return True
+
+        self.logger.debug(f'found old link/folder {link}')
+
+        # try plugin.yaml
+        plgyml = os.path.join(link, 'plugin.yaml')
+        if not os.path.exists(plgyml):
+            self.logger.debug(f'plugin.yaml not found for {link}, aborting')
+            return False
+
+        try:
+            yaml = yaml_load(plgyml, ignore_notfound=True)
+            ver = yaml['plugin']['version']
+            self.logger.debug(f'found old version {ver}')
+            newlink = f'{link}_{ver}'
+            os.rename(link, newlink)
+            self.logger.debug(f'renamed {link} to {newlink}')
+            return True
+        except Exception as e:
+            self.loggerr(f'error renaming old plugin: {e}')
+            return False
 
     def remove_plugin(self, name) -> bool:
         """ remove plugin link, worktree and if not longer needed, local repo """

@@ -151,6 +151,10 @@
 								<button id='btn-plugin' disabled type="button" class="btn btn-shng btn-sm" onclick="javascript:selectPlugin(this);">Auswählen</button>					
 							</td>
 						</tr>
+						<tr>
+							<td colspan=2>alte Version umbenennen:</td>
+							<td><input id="rename" type="checkbox" /></td>
+						</tr>
 					</table>
 				</div>
 			</form>
@@ -491,15 +495,16 @@
 		var branch = document.getElementById('branch').value;
 		var plugin = document.getElementById('plugin').value;
 		var name = document.getElementById('name').value;
-		doInstallPlugin(owner, branch, plugin, name);
+		var rename = document.getElementById('rename').checked;
+		doInstallPlugin(owner, branch, plugin, name, rename);
 	}
 
-	function doInstallPlugin(owner, branch, plugin, name) {
+	function doInstallPlugin(owner, branch, plugin, name, rename: false) {
 		// execute installation
 		showModal('install', owner, branch, plugin);
 		if (owner != '' && branch != '' && plugin != '') {
 			spinModal('install');
-			sendData("selectPlugin", {'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': true},
+			sendData("selectPlugin", {'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': true, 'rename': rename},
 				function(response) {
 					hideModal('install');
 				},
@@ -589,6 +594,7 @@
 	    		document.getElementById('remain').textContent = remain;
 	    		var bo = document.getElementById('backoff')
 	    		if (backoff > 0 && remain == 0) {
+	    			// backoff active, no remaining actions
 	    			var secs = backoff % 60;
 	    			var mins = ~~(backoff / 60);
 	    			var val = "" + mins + ":" + (secs < 10 ? "0" : "") + parseInt(secs) + "m";
@@ -600,6 +606,7 @@
 	    				rateInterval = setInterval(getRateLimit, 10000);
 	    			}
 
+	    			document.getElementById('install').disabled = true;
 	    		} else {
 	    			bo.style.color = 'black';
 	    			bo.textContent = '---';	    			
@@ -608,6 +615,8 @@
 	    				clearInterval(rateInterval);
 	    				rateInterval = null;
 	    			}
+
+	    			document.getElementById('install').disabled = false;	    			
 	    		}
 	    	}
 	    );

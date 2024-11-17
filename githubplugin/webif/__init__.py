@@ -315,6 +315,7 @@ class WebInterface(SmartPluginWebIf):
             plugin = json.get("plugin")
             name = json.get("name")
             confirm = json.get("confirm")
+            rename = json.get("rename")
 
             if (owner is None or owner == '' or
                     branch is None or branch == '' or
@@ -322,10 +323,10 @@ class WebInterface(SmartPluginWebIf):
                 raise Exception(f'Fehlerhafte Daten für Repo {owner}/plugins, Branch {branch} oder Plugin {plugin} übergeben.')
 
             if confirm:
-                res = self.plugin.create_repo(name, owner, plugin, branch)
+                res = self.plugin.create_repo(name, owner, plugin, branch, rename=rename)
                 msg = f'Fehler beim Erstellen des Repos "{owner}/plugins", Branch {branch}, Plugin {plugin}'
             else:
-                res = self.plugin.check_for_repo_name(name)
+                res = self.plugin.check_for_repo_name(name, rename=rename)
                 msg = f'Repo {name} oder Plugin-Link "priv_{name}" schon vorhanden'
 
             if res:
