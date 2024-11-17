@@ -210,21 +210,12 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
                     <td></td>
                     <td class="py-1">{{ item._path }}</td>
                     <td class="py-1">{{ item._type }}</td>
-					<td class="py-1">
-						{% if 'sonos_uid' in item.conf %}
-							{{ p._get_zone_name_from_uid(item.conf['sonos_uid']) }}
-						{% elif 'sonos_recv' in item.conf %}
-							{{ p._get_zone_name_from_uid(p._resolve_uid(item)) }}
-						{% elif 'sonos_send' in item.conf %}
-							{{ p._get_zone_name_from_uid(p._resolve_uid(item)) }}
-						{% else %}
-							{{_('-')}}
-						{% endif %}</td>
-					<td class="py-1">{% if 'sonos_recv' in item.conf %} {{ item.conf['sonos_recv'] }} {% else %} {{_('-')}} {% endif %}</td>
-					<td class="py-1">{% if 'sonos_send' in item.conf %} {{ item.conf['sonos_send'] }} {% else %} {{_('-')}} {% endif %}</td>
-					<td class="py-1">{% if 'sonos_attrib' in item.conf %} {{ item.conf['sonos_attrib'] }} {% else %} {{_('-')}} {% endif %}</td>
-					<td class="py-1">{% if 'sonos_dpt3_step' in item.conf %} {{ item.conf['sonos_dpt3_step'] }} {% else %} {{_('-')}} {% endif %}</td>
-					<td class="py-1">{% if 'sonos_dpt3_time' in item.conf %} {{ item.conf['sonos_dpt3_time'] }} {% else %} {{_('-')}} {% endif %}</td>
+					<td class="py-1">{{ p._get_zone_name_from_uid(p.get_item_config(item).get('uid')) }}</td>
+					<td class="py-1">{{ p.get_item_config(item).get('sonos_recv', '-') }}</td>
+					<td class="py-1">{{ p.get_item_config(item).get('sonos_send', '-') }}</td>
+					<td class="py-1">{{ p.get_item_config(item).get('sonos_attrib', '-') }}</td>
+					<td class="py-1">{{ p.get_item_config(item).get('dpt3_step', '-') }}</td>
+					<td class="py-1">{{ p.get_item_config(item).get('dpt3_time', '-') }}</td>
 					<td class="py-1" id="{{ item.id() }}_value">.{{ item._value }}</td>
 					<!--  <td class="py-1">{{ item.conf }}</td> -->
                 </tr>
