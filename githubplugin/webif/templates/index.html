@@ -1,0 +1,678 @@
+{% extends "base_plugin.html" %}
+{% set tabcount = 1 %}
+{% set dataSet = 'overview' %}
+{% set tab1title = _('Plugins in GitHub-Repos') %}
+<!-- deactivated until proper table handling implemented
+{% set xupdate_interval = 5000 %} 
+{% set xupdate_active = true %}
+-->
+
+{% block pluginstyles %}
+<link rel="stylesheet" href="static/style.css">
+{% endblock pluginstyles %}
+
+{% block buttons %}
+<button id='installBtn' class="btn btn-shng btn-sm" onclick='javascript:document.getElementById("installModal").style.display = "block";' type="button">Neues Plugin installieren</button>
+<button id='rescanBtn' class="btn btn-shng btn-sm" onclick='javascript:rescanDirs()' title='location.href="?action=rescan"' type="button">Plugin-Verzeichnis neu lesen</button><br />
+{% endblock buttons %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1"><strong>GitHub</strong></td>
+			<td class="py-1" align="right">verbunden:</td>
+			<td class="py-1">{% if conn %}Ja{% else %}Nein{% endif %}</td>
+			<td class="py-1" align="right">angemeldet:</td>
+			<td class="py-1">{% if auth %}Ja{% else %}Nein{% endif %}</td>
+		</tr>
+		<tr>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1" align="right">verbleibende Zugriffe:</td>
+			<td class="py-1"><span id="remain"></span>/<span id="allow"></span></td>
+			<td class="py-1" align="right">Reset in:</td>
+			<td class="py-1"><span id="backoff"></span></td>
+		</tr>
+	</tbody>
+</table>
+
+<div id="alert" class="mb-2 alert alert-danger alert-dismissible show" role="alert">
+	<strong>Fehler bei der Ausführung</strong><br/>
+	<span id="alertmsg"></span>
+	<button type="button" class="close" data-hide="alert" aria-label="Close">
+		<span aria-hidden="true">&times;</span>
+	</button>
+</div>
+
+<div id="success" class="mb-2 alert alert-info alert-dismissible show" role="alert">
+	<strong>Ausführung erfolgreich</strong><br/>
+	<span id="successmsg"></span>
+	<button type="button" class="close" data-hide="alert" aria-label="Close">
+		<span aria-hidden="true">&times;</span>
+	</button>
+</div>
+
+<div id="install_ConfirmModal" class="or-modal">
+	<div class="or-modal-content">
+		<span class="or-close" onclick="document.getElementById('install_ConfirmModal').style.display = 'none';">&times;</span>
+		<div>
+			<strong>Installieren von Plugin <span id='install_plugin'></span> aus dem Repo <span id='install_owner'></span>/plugins, Branch <span id='install_branch'></span><span id='install_name' display='none' /></strong>
+		</div>
+		<div>
+			<span id="install_modalButtons" display="block">
+				<span>Soll das Plugin wirklich installiert werden?</span><br />
+				<button type="button" class="btn btn-danger btn-sm" onclick="installPlugin(this)">Installieren</button>
+				<button type="button" class="btn btn-shng btn-sm" onclick="document.getElementById('install_ConfirmModal').style.display = 'none';">Abbrechen</button>
+			</span>
+			<span id="install_modalSpinner" display="none">Installation wird ausgeführt. Bitte Geduld, dies kann etwas dauern... </span>
+		</div>
+	</div>		
+</div>
+
+<div id="remove_ConfirmModal" class="or-modal">
+	<div class="or-modal-content">
+		<span class="or-close" onclick="document.getElementById('remove_ConfirmModal').style.display = 'none';">&times;</span>
+		<div>
+			<strong>Entfernen von Plugin <span id='remove_plugin'></span> aus dem Repo <span id='remove_owner'></span>/plugins, Branch <span id='remove_branch'></span></strong>
+			<span id='remove_name' style='display: none;'></span>
+		</div>
+		<div>
+			<span id="remove_modalButtons" display="block">
+				<span>Soll das Plugin wirklich gelöscht werden?</span><br />
+				<button type="button" class="btn btn-danger btn-sm" onclick="doRemovePlugin(this)">Löschen</button>
+				<button type="button" class="btn btn-shng btn-sm" onclick="document.getElementById('remove_ConfirmModal').style.display = 'none';">Abbrechen</button>
+			</span>
+			<span id="remove_modalSpinner" display="none">Löschen wird ausgeführt. Bitte Geduld, dies kann etwas dauern... </i></span>
+		</div>
+	</div>		
+</div>
+
+<div id="installModal" class="in-modal">
+	<div class="or-modal-content">
+		<span class="or-close" onclick="document.getElementById('installModal').style.display = 'none';">&times;</span>
+		<div>
+			<strong>Neues Plugin installieren</strong>
+		</div>
+		<div>
+			<form id='install'>
+				<div class="container-fluid m-2">
+					<div class="mb-2">Plugin installieren aus:</div>
+					<table width="100%">
+						<tr>
+							<td>PR:</td>
+							<td colspan=3>
+								<select id='pr' {% if len(pulls) == 0 %}disabled {% endif %} onchange="javascript:PR_onchange(this);">
+									<option value=''>(PR auswählen)</option>
+									{% for pr in pulls %}
+									<option value='{{ pr }}'>{{ pr }}: {{ pulls[pr].title }}</option>
+									{% endfor %}
+								</select>
+								<button id='btn-ref-pr' type="button" class="btn btn-shng btn-sm" onclick="javascript:refetch('pr');">&#8635;</i></button>
+							</td>
+							<td>&nbsp;</td>
+						</tr>
+						<tr>
+							<td>Repo von:</td>
+							<td>
+								<select id='owner' onchange="javascript:updateBranches(this);">
+									<option value=''>(Repo auswählen)</option>
+									{% for owner in forklist %}
+									<option>{{ owner }}</option>
+									{% endfor %}
+								</select>
+								<button id='btn-ref-fork' type="button" class="btn btn-shng btn-sm" onclick="javascript:refetch('owner');">&#8635;</i></button>
+							</td>
+							<td style='padding-left: 15px;'>Branch:</td>
+							<td>
+								<select id='branch' disabled onchange="javascript:Branch_onchange(this);">
+								<option value=''>(Branch auswählen)</option>
+								</select>
+								<button id='btn-ref-branch' type="button" class="btn btn-shng btn-sm" onclick="javascript:refetch('branch');">&#8635;</i></button>
+							</td>
+							<td style='padding-left: 15px;'>
+								<button id='btn-branch' disabled type="button" class="btn btn-shng btn-sm" onclick="javascript:updatePlugins(this);">Auswählen</button>
+							</td>
+						</tr>
+						<tr>
+							<td>Plugin:</td>
+							<td>
+								<select id='plugin' disabled onchange="javascript:Plugin_onchange(this);">
+									<option value=''>(Plugin auswählen)</option>
+								</select>
+								<button id='btn-ref-plugin' type="button" class="btn btn-shng btn-sm" onclick="javascript:refetch('plugin');">&#8635;</i></button>
+							</td>
+							<td style='padding-left: 15px;'>Pluginname: priv_</td>
+							<td><input id='name' disabled /></td>
+							<td style='padding-left: 15px;'>
+								<button id='btn-plugin' disabled type="button" class="btn btn-shng btn-sm" onclick="javascript:selectPlugin(this);">Auswählen</button>					
+							</td>
+						</tr>
+						<tr>
+							<td colspan=2>alte Version umbenennen:</td>
+							<td><input id="rename" type="checkbox" /></td>
+						</tr>
+					</table>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+{% endblock headtable %}
+
+{% block pluginscripts %}
+{{ super() }}
+<script type="text/javascript">
+
+	var rateInterval = null;
+
+	function handleUpdatedData(response, dataSet='overview') {
+		if (dataSet === 'overview' || dataSet === null) {
+			objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+            for (var plugin in objResponse) {
+                if (!document.getElementById(plugin+'_name')) {
+                    if ( $.fn.dataTable.isDataTable('#plugintable') ) {
+                        table_to_update = $('#plugintable').DataTable();
+                        let newRow = table_to_update.row.add( [ plugin, '' ] ).draw(false).node();
+                        newRow.id = plugin+"_row";
+                        $('td:eq(1)', newRow).attr('id', plugin+'_name');
+                        $('td:eq(2)', newRow).attr('id', plugin+'_plugin');
+                        $('td:eq(3)', newRow).attr('id', plugin+'_owner');
+                        $('td:eq(4)', newRow).attr('id', plugin+'_branch');
+                        $('td:eq(5)', newRow).attr('id', plugin+'_wtpath');
+                        $('td:eq(6)', newRow).attr('id', plugin+'_action');
+                    }
+                }
+                shngInsertText(plugin+'_name', plugin, 'plugintable', 2);
+                shngInsertText(plugin+'_plugin', objResponse[plugin]['plugin'], 'plugintable', 2);
+                shngInsertText(plugin+'_owner', objResponse[plugin]['owner'], 'plugintable', 2);
+                shngInsertText(plugin+'_branch', objResponse[plugin]['branch'], 'plugintable', 2);
+                shngInsertText(plugin+'_wtpath', objResponse[plugin]['disp_wt_path'], 'plugintable', 2);
+                if (objResponse[plugin]['clean']) {
+                	txt = 
+                    	'<button type="button" class="btn btn-danger btn-sm" onclick="javascript:removePlugin(' +
+                    	objResponse[plugin]['owner'] + ', ' + objResponse[plugin]['branch'] + ', ' + objResponse[plugin]['plugin'] + ', ' + plugin + ');"><i class="fas fa-times"></i></button>' + 
+                    	'<button type="button" class="btn btn-shng btn-sm" onclick="javascript:pullRepo(' + plugin + ');"><i class="fas fa-download"></i></button>';
+                } else {
+                	txt = 'Änderungen vorhanden';
+                }
+                shngInsertText(plugin+'_action', txt, 'plugintable', 2);
+            }
+		}
+	}
+
+    $(function(){
+        $("[data-hide]").on("click", function(){
+            $("." + $(this).attr("data-hide")).hide();
+        });
+    });
+
+	function alertMsg(msg) {
+		// show exception from python code
+		document.getElementById('alertmsg').textContent = msg;
+		$('#alert').show();
+	}
+
+	function successMsg(msg) {
+		// show message
+		document.getElementById('successmsg').textContent = msg;
+		$('#success').show();
+	}
+
+	function clearSelect(sel) {
+		// empty HTML select value list except for first "empty" entry
+		var i, L = sel.options.length - 1;
+		for (i = L; i > 0; i--) {
+			sel.remove(i);
+		}		
+	}
+
+	function addOption(sel, text, def, val) {
+		// add option to HTML select field, possibly set selected option
+		var option = document.createElement('option');
+		option.text = text;
+		if (val != undefined) {
+			option.value = val;
+		} else {
+			option.value = text;
+		}
+		if (def) {
+			option.selected = true;
+		}
+		sel.add(option);
+	}
+
+	function showModal(mode, owner, branch, plugin, name) {
+		// show given confirmation modal for install or remove
+		document.getElementById(mode + '_plugin').textContent = plugin;
+		document.getElementById(mode + '_owner').textContent = owner;
+		document.getElementById(mode + '_branch').textContent = branch;
+		document.getElementById(mode + '_name').textContent = name;
+		document.getElementById(mode + '_modalButtons').style.display = 'block';
+		document.getElementById(mode + '_modalSpinner').style.display = 'none';
+		document.getElementById(mode + '_ConfirmModal').style.display = 'block';
+	}
+
+	function hideModal(mode) {
+		// hide given confirmation modal and clear text areas
+		document.getElementById(mode + '_ConfirmModal').style.display = 'none';
+		document.getElementById(mode + '_plugin').textContent = '';
+		document.getElementById(mode + '_owner').textContent = '';
+		document.getElementById(mode + '_branch').textContent = '';
+		document.getElementById(mode + '_name').textContent = '';
+		document.getElementById(mode + '_modalButtons').style.display = 'block';
+		document.getElementById(mode + '_modalSpinner').style.display = 'none';
+	}
+
+	function spinModal(mode) {
+		// switch given confirmation modal to "please wait" mode
+		document.getElementById(mode + '_modalButtons').style.display = 'none';
+		document.getElementById(mode + '_modalSpinner').style.display = 'block';		
+	}
+
+	function sendData(url, data, errf, success) {
+		// send ajax data and execute proper given function
+		// error function always executes given function first, then alerts
+		$.ajax({
+			type: "POST",
+			url: url,
+			data: JSON.stringify(data),
+			contentType: 'application/json',
+			dataType: 'json',
+			error: function(response) {
+				errf(response);
+				getRateLimit();
+				alertMsg(response['responseJSON']['error']);
+			},
+			success: success
+		})
+	}
+
+	function PR_onchange(selObj) {
+		// called if PR selection field is changed
+		var PR = document.getElementById('pr').value;
+		if (PR > 0) {
+			sendData('getPull', {'pull': PR}, 
+			function(response) {},
+			function(response) {
+				var branch = document.getElementById('branch');
+				var powner = response['owner'];
+				var pbranch = response['branch'];
+				document.getElementById('owner').value = powner;
+				clearSelect(branch);
+				addOption(branch, pbranch);
+				branch.value = pbranch;
+				branch.disabled = false;
+				document.getElementById('btn-branch').disabled = false;
+				document.getElementById('btn-plugin').disabled = true;
+				clearPlugin();
+			})
+		}
+	}
+
+	function clearForks() {
+		// empty forks (owner) list and following selections
+		var f = document.getElementById('owner');
+		f.value = '';
+
+		clearBranches();
+	}
+
+	function clearBranches() {
+		// clear branches list and following selections
+		var b = document.getElementById('branch');
+		clearSelect(b);
+		b.disabled = true;
+
+		clearPlugin();
+	}
+
+	function clearPlugin() {
+		// clear plugins list, clear name input
+		var p = document.getElementById('plugin');
+		clearSelect(p);
+		p.disabled = true;
+
+		var n = document.getElementById('name');
+		n.value = '';
+		n.disabled = true;		
+	}
+
+	function rescanDirs() {
+		// trigger rescan of plugin dir
+		sendData('rescanDirs', {},
+			function(response) {},
+			function(response) {
+				location.reload();
+			});
+	}
+
+	function updatePulls(selObj, force) {
+		// reload PR list, cleanup dialog
+		clearForks();
+
+		sendData('updatePulls', {}, 
+ 			function(response) {},
+			function(response) {
+				var item = document.getElementById('pr');
+
+				// clear options
+				clearSelect(pr);
+
+				// add all pulls
+				prn = response['prn'];
+				prt = response['prt'];
+				for (var i = 0; i < prn.length; i++) {
+					addOption(item, prn[i] + ": " + prt[i], false, prn[i]);
+				}
+			}
+		)
+	}
+
+	function updateBranches(selObj, force) {
+		// reload branches list, cleanup dialog
+		var owner = document.getElementById('owner').value;
+		clearPlugin();
+
+		if (owner != '') {
+			data = {'owner': owner}
+			if (force == true) {
+				data['force'] = true;
+			}
+			sendData('updateBranches', data,
+				function(response) {},
+				function(response) {
+					var item = document.getElementById('branch');
+
+					// enable branch options
+					item.disabled = false;
+
+					// clear options
+					clearSelect(item);
+
+					// add all branches except master and main
+					for (const branch of response['data']) {
+						if (branch == 'master' || branch == 'main') {
+							continue;
+						}
+						addOption(item, branch, false);
+					}
+				}
+			)
+		}
+	}
+
+	function Branch_onchange(selObj) {
+		// called if branch selection field is changed
+		if (document.getElementById('branch').value != '') {
+			document.getElementById('btn-branch').disabled = false;
+		} else {
+			document.getElementById('btn-branch').disabled = true;
+			document.getElementById('btn-plugin').disabled = true;
+		}
+	}
+
+	function updatePlugins(selObj, force) {
+		// reload plugins list, cleanup dialog
+		var owner = document.getElementById('owner').value;
+		var branch = document.getElementById('branch').value;
+
+		document.getElementById('pr').value = '';
+		if (owner != '' && branch != '') {
+			data = {'owner': owner, 'branch': branch};
+			if (force == true) {
+				data['force'] = true;
+			}
+			sendData("updatePlugins", data,
+				function(response) {},
+				function(response) {
+					var item = document.getElementById('plugin');
+
+					// enable branch options
+					item.disabled = false;
+
+					// clear options
+					clearSelect(item);
+
+					// add all branches except master and main
+					for (const plugin of response['data']) {
+						addOption(item, plugin, plugin==branch);
+					}
+					Plugin_onchange(this);
+				}
+			);
+		}
+	}
+
+	function Plugin_onchange(selObj) {
+		// called if plugin selection field is changed, get suggested priv_ name
+		var owner = document.getElementById('owner').value;
+		var branch = document.getElementById('branch').value;
+		var plugin = document.getElementById('plugin').value;
+
+		if (plugin != '') {
+			document.getElementById('name').value = plugin;
+			sendData("getNameSuggestion", {"plugin": plugin},
+				function(response) {},
+				function(response) {
+					if (response["name"] != undefined && response["name"] != "") {
+						document.getElementById('name').value = response["name"];;
+					}
+				}
+			);
+			document.getElementById('name').disabled = false;
+			document.getElementById('btn-plugin').disabled = false;
+		}		
+	}
+
+	function selectPlugin(selObj) {
+		// plugin selected in install dialog, prepare installation, show confirmation
+		var owner = document.getElementById('owner').value;
+		var branch = document.getElementById('branch').value;
+		var plugin = document.getElementById('plugin').value;
+		var name = document.getElementById('name').value;
+		var rename = document.getElementById('rename').checked;
+
+		if (owner != '' && branch != '' && plugin != '') {
+			sendData("selectPlugin", {'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': false, 'rename': rename},
+				function(response) {
+					document.getElementById('installModal').style.display = 'none';
+				},
+				function(response) {
+					document.getElementById('installModal').style.display = 'none';
+					showModal('install', owner, branch, plugin);
+				}
+			)
+		}
+	}
+
+	function installPlugin(selObj) {
+		// plugin installation confirmed, call function to execute installation
+		var owner = document.getElementById('owner').value;
+		var branch = document.getElementById('branch').value;
+		var plugin = document.getElementById('plugin').value;
+		var name = document.getElementById('name').value;
+		var rename = document.getElementById('rename').checked;
+
+		// execute installation
+		showModal('install', owner, branch, plugin);
+		if (owner != '' && branch != '' && plugin != '') {
+			spinModal('install');
+			sendData("selectPlugin", {'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': true, 'rename': rename},
+				function(response) {
+					hideModal('install');
+				},
+				function(response) {
+					hideModal('install');
+					setTimeout(window.location.reload(), 300); 
+				}
+			)
+		}
+	}
+
+	function pullRepo(name) {
+		// try to pull from origin for given repo
+		if (name != '') {
+			sendData("pullRepo", {'name': name},
+				function(response) {},
+				function(response) {
+					successMsg('Plugin ' + name + ' erfolgreich aktualisiert');
+				}
+			);
+		}
+	}
+	function removePlugin(owner, branch, plugin, name) {
+		// check if plugin can be removed, show confirmation
+		if (name != '') {
+			sendData("isRepoClean", {'name': name},
+				function(response) {
+					hideModal('remove');
+				},
+				function(response){
+					var clean = response['data'];
+					if (clean) {
+						showModal('remove', owner, branch, plugin, name);
+					} else {
+						alertMsg('Plugin ' + name + ' kann nicht entfernt werden, Repo ist nicht sauber (lose Dateien im Arbeitsverzeichnis, Änderungen am Index, commits nicht gepushed).')
+					}
+				}
+			);
+		}
+	}
+
+	function doRemovePlugin(selObj) {
+		// execute plugin removal
+		var name = document.getElementById('remove_name').textContent;
+		if (name != '') {
+			spinModal('remove');
+			sendData("removePlugin", {'name': name},
+				function(response) {
+					hideModal('remove');
+				},
+				function(response) {
+					hideModal('remove');
+					setTimeout(window.location.reload(), 300); 
+				}
+			);
+		}
+	}
+
+	function refetch(what) {
+		// reload given HTML select field data
+		if (what == 'owner') {
+
+		}
+		if (what == 'pr') {
+			updatePulls(null, true);
+		}
+		if (what == 'branch') {
+			updateBranches(null, true);
+		}
+		if (what == 'plugin') {
+			updatePlugins(null, true);
+		}
+
+	}
+
+	function getRateLimit() {
+	    // update rate limit data
+	    sendData('getRateLimit', '',
+	    	function(response) {},
+	    	function(response) {
+	    		data = response['data'];
+	    		var allow = data[0];
+	    		var remain = data[1];
+	    		var backoff = data[2];
+
+	    		document.getElementById('allow').textContent = allow;
+	    		document.getElementById('remain').textContent = remain;
+	    		var bo = document.getElementById('backoff')
+	    		if (backoff > 0 && remain == 0) {
+	    			// backoff active, no remaining actions
+	    			var secs = backoff % 60;
+	    			var mins = ~~(backoff / 60);
+	    			var val = "" + mins + ":" + (secs < 10 ? "0" : "") + parseInt(secs) + "m";
+
+	    			bo.style.color = 'red';
+	    			bo.textContent = val;
+
+	    			if (rateInterval === null) {
+	    				rateInterval = setInterval(getRateLimit, 10000);
+	    			}
+
+	    			document.getElementById('installBtn').disabled = true;
+	    		} else {
+	    			bo.style.color = 'black';
+	    			bo.textContent = '---';	    			
+
+	    			if (rateInterval != null) {
+	    				clearInterval(rateInterval);
+	    				rateInterval = null;
+	    			}
+
+	    			document.getElementById('installBtn').disabled = false;	    			
+	    		}
+	    	}
+	    );
+	}
+
+	$(document).ready( function () {
+
+		// hide alert popups
+		$('#alert').hide();
+		$('#success').hide();
+
+		// enable datatable table
+	    $(window).trigger('datatables_defaults');
+	    $('#plugintable').DataTable( {
+	        "paging": false,
+	        fixedHeader: true
+        } );
+
+		getRateLimit();	    
+	});
+</script>
+
+{% endblock pluginscripts %}
+
+
+{% block bodytab1 %}
+
+<div class="container-fluid m-2 table-responsive">
+	<div>Die folgenden Plugins sind von extern installiert:</div>
+	<table id="plugintable">
+		<thead>
+		<tr><th></th>
+			<th>Name</th>
+			<th>Plugin</th>
+			<th>Autor</th>
+			<th>Branch</th>
+			<th>Pfad (Worktree)</th>
+			<th>Aktion</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for plugin in repos %}
+			<tr>
+				<td></td>
+				<td id="{{ plugin }}_name">{{ plugin }}</td>
+				<td id="{{ plugin }}_plugin">{{ repos[plugin].plugin }}</td>
+				<td id="{{ plugin }}_owner">{{ repos[plugin].owner }}</td>
+				<td id="{{ plugin }}_branch">{{ repos[plugin].branch }}</td>
+				<td id="{{ plugin }}_wtpath">{{ repos[plugin].disp_wt_path }}</td>
+				<td id="{{ plugin }}_action">{% if not repos[plugin].clean %}Änderungen vorhanden{% else %}
+					<button type="button" class="btn btn-danger btn-sm" onclick="javascript:removePlugin('{{ repos[plugin].owner }}', '{{ repos[plugin].branch }}', '{{ repos[plugin].plugin }}', '{{ plugin }}');"><i class="fas fa-times"></i></button>
+					<button type="button" class="btn btn-shng btn-sm" onclick="javascript:pullRepo('{{ plugin }}');"><i class="fas fa-download"></i></button>
+					{% endif %}</td>
+				</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+</div>
+
+{% endblock bodytab1 %}
