@@ -1,9 +1,10 @@
 
 plugin:
     type: interface
+
     description:
-      de: Logitech Mediaserver
-      en: Logitech Mediaserver
+        de: Logitech Mediaserver
+        en: Logitech Mediaserver
     maintainer: OnkelAndy
     tester: Morg
     state: develop
@@ -139,12 +140,12 @@ parameters:
             en: number of sending retries
 
         description_long:
-            de: |
+            de: |4
                 Anzahl Sendeversuche\n
                 Kommt keine (passende) Antwort nach dem Senden
                 eines Commands zurück, wird das Kommando nochmals
                 gesendet, sofern der Wert über 0 liegt.
-            en: |
+            en: |4
                 number of sending retries\n
                 If no (suiting) answer is received after sending
                 a command the command is resent as long as this
@@ -160,12 +161,12 @@ parameters:
             en: wait time between sending retry rounds
 
         description_long:
-            de: |
+            de: |4
                 Pause zwischen Durchgängen von Sendeversuchen\n
                 Sind Send Retries aktiv, wird ein Scheduler erstellt,
                 der im angegebenen Sekundentakt Kommandos erneut sendet,
                 zu denen keine (passenden) Antworten erhalten wurden.
-            en: |
+            en: |4
                 wait time between sending retry rounds\n
                 If send retries are active, a scheduler gets added
                 that resends commands in the given cycle value (in seconds)
@@ -246,7 +247,7 @@ item_attributes:
             en: The lookup table with the given name will be assigned to the item in dict or list format once on startup.
 
         description_long:
-            de: |-
+            de: |4-
                 Der Inhalt der Lookup-Tabelle mit dem angegebenen Namen wird beim
                 Start einmalig als dict oder list in das Item geschrieben.
 
@@ -256,7 +257,7 @@ item_attributes:
                 - rev liefert die Tabelle SmartHomeNG -> Gerät
                 - rci liefert die Tabelle SmarthomeNG -> Gerät in Kleinbuchstaben
                 - list liefert die Liste der Namen für SmartHomeNG (z.B. für Auswahllisten in der Visu)
-            en: |-
+            en: |4-
                 The lookup table with the given name will be assigned to the item
                 in dict or list format once on startup.
 
@@ -677,7 +678,13 @@ item_structs:
                 type: str
                 sqb_command@instance: player.playlist.rename
                 sqb_read@instance: false
-                sqb_write@instance: false
+                sqb_write@instance: true
+
+            rename_current:
+                type: str
+                sqb_command@instance: player.playlist.rename_current
+                sqb_read@instance: false
+                sqb_write@instance: true
 
             repeat:
                 type: str
@@ -756,6 +763,7 @@ item_structs:
                 sqb_read@instance: true
                 sqb_write@instance: true
                 enforce_updates: true
+                remark: <Genre> <Artist> <Album>. You can use * for any of the entries. Spaces need to be replaced by %20
 
             loadtracks:
                 type: str
@@ -1453,7 +1461,13 @@ item_structs:
                     type: str
                     sqb_command@instance: player.playlist.rename
                     sqb_read@instance: false
-                    sqb_write@instance: false
+                    sqb_write@instance: true
+
+                rename_current:
+                    type: str
+                    sqb_command@instance: player.playlist.rename_current
+                    sqb_read@instance: false
+                    sqb_write@instance: true
 
                 repeat:
                     type: str
@@ -1537,6 +1551,7 @@ item_structs:
                     sqb_read@instance: true
                     sqb_write@instance: true
                     enforce_updates: true
+                    remark: <Genre> <Artist> <Album>. You can use * for any of the entries. Spaces need to be replaced by %20
 
                 loadtracks:
                     type: str
