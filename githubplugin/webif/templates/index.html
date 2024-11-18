@@ -12,8 +12,8 @@
 {% endblock pluginstyles %}
 
 {% block buttons %}
-<button id='install' class="btn btn-shng btn-sm" onclick='javascript:document.getElementById("installModal").style.display = "block";' type="button">Neues Plugin installieren</button>
-<button id='rescan' class="btn btn-shng btn-sm" onclick='javascript:rescanDirs()' title='location.href="?action=rescan"' type="button">Plugin-Verzeichnis neu lesen</button><br />
+<button id='installBtn' class="btn btn-shng btn-sm" onclick='javascript:document.getElementById("installModal").style.display = "block";' type="button">Neues Plugin installieren</button>
+<button id='rescanBtn' class="btn btn-shng btn-sm" onclick='javascript:rescanDirs()' title='location.href="?action=rescan"' type="button">Plugin-Verzeichnis neu lesen</button><br />
 {% endblock buttons %}
 
 {% block headtable %}
@@ -286,6 +286,7 @@
 			dataType: 'json',
 			error: function(response) {
 				errf(response);
+				getRateLimit();
 				alertMsg(response['responseJSON']['error']);
 			},
 			success: success
@@ -475,9 +476,10 @@
 		var branch = document.getElementById('branch').value;
 		var plugin = document.getElementById('plugin').value;
 		var name = document.getElementById('name').value;
+		var rename = document.getElementById('rename').checked;
 
 		if (owner != '' && branch != '' && plugin != '') {
-			sendData("selectPlugin", {'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': false},
+			sendData("selectPlugin", {'owner': owner, 'branch': branch, 'plugin': plugin, 'name': name, 'confirm': false, 'rename': rename},
 				function(response) {
 					document.getElementById('installModal').style.display = 'none';
 				},
@@ -496,10 +498,7 @@
 		var plugin = document.getElementById('plugin').value;
 		var name = document.getElementById('name').value;
 		var rename = document.getElementById('rename').checked;
-		doInstallPlugin(owner, branch, plugin, name, rename);
-	}
 
-	function doInstallPlugin(owner, branch, plugin, name, rename: false) {
 		// execute installation
 		showModal('install', owner, branch, plugin);
 		if (owner != '' && branch != '' && plugin != '') {
@@ -606,7 +605,7 @@
 	    				rateInterval = setInterval(getRateLimit, 10000);
 	    			}
 
-	    			document.getElementById('install').disabled = true;
+	    			document.getElementById('installBtn').disabled = true;
 	    		} else {
 	    			bo.style.color = 'black';
 	    			bo.textContent = '---';	    			
@@ -616,7 +615,7 @@
 	    				rateInterval = null;
 	    			}
 
-	    			document.getElementById('install').disabled = false;	    			
+	    			document.getElementById('installBtn').disabled = false;	    			
 	    		}
 	    	}
 	    );

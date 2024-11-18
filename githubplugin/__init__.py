@@ -392,9 +392,9 @@ class GithubPlugin(SmartPlugin):
             }
             self.repos[name]['clean'] = self.is_repo_clean(name, exc)
 
-    def check_for_repo_name(self, name, rename=False) -> bool:
+    def check_for_repo_name(self, name) -> bool:
         """ check if name exists in repos or link exists """
-        if name in self.repos or (not rename and os.path.exists(os.path.join(self.plg_path, 'priv_' + name))):
+        if name in self.repos or os.path.exists(os.path.join(self.plg_path, 'priv_' + name)):
             self.loggerr(f'name {name} already taken, delete old plugin first or choose a different name.')
             return False
 
@@ -403,11 +403,12 @@ class GithubPlugin(SmartPlugin):
     def create_repo(self, name, owner, plugin, branch=None, rename=False) -> bool:
         """ create repo from given parameters """
 
-        try:
-            self.check_for_repo_name(name, rename=rename)
-        except Exception as e:
-            self.loggerr(e)
-            return False
+        if not rename:
+            try:
+                self.check_for_repo_name(name)
+            except Exception as e:
+                self.loggerr(e)
+                return False
 
         if not owner or not plugin:
             self.loggerr(f'Insufficient parameters, github user {owner} or plugin {plugin} empty, unable to fetch repo, aborting.')
@@ -467,7 +468,10 @@ class GithubPlugin(SmartPlugin):
             self.logger.debug(f'cloning repo at {repo["repo_path"]} from {repo["url"]}...')
 
             # clone repo from url
-            repo['repo'] = Repo.clone_from(repo['url'], repo['repo_path'])
+            try:
+                repo['repo'] = Repo.clone_from(repo['url'], repo['repo_path'])
+            except Exception as e:
+                self.loggerr(f'error while cloning: {e}')
 
         # fetch repo data
         self.logger.debug('fetching from origin...')
@@ -513,7 +517,7 @@ class GithubPlugin(SmartPlugin):
 
         if rename:
             self.logger.debug(f'renaming old link priv_{name}')
-            if not self._move_old_link(name, repo):
+            if not self._move_old_link(name):
                 self.logger.warning(f'unable to move old link priv_{name}, installation needs to be repaired manually')
 
         self.logger.debug(f'creating link {repo["link"]} to {repo["rel_link_path"]}...')
@@ -527,7 +531,7 @@ class GithubPlugin(SmartPlugin):
         return True
 
     def _move_old_link(self, name) -> bool:
-        """ rename old plugin link or folder """
+        """ rename old plugin link or folder and repo entry """
         link = os.path.join(self.plg_path, f'priv_{name}')
         if not os.path.exists(link):
             self.logger.debug(f'old link/folder not found: {link}')
@@ -548,6 +552,13 @@ class GithubPlugin(SmartPlugin):
             newlink = f'{link}_{ver}'
             os.rename(link, newlink)
             self.logger.debug(f'renamed {link} to {newlink}')
+            try:
+                # try to move repo entry to new name
+                # ignore if repo name is not existent
+                self.repos[f'{name}_{ver}'] = self.repos[name]
+                del self.repos[name]
+            except KeyError:
+                pass
             return True
         except Exception as e:
             self.loggerr(f'error renaming old plugin: {e}')
@@ -557,6 +568,12 @@ class GithubPlugin(SmartPlugin):
         """ remove plugin link, worktree and if not longer needed, local repo """
         if name not in self.repos:
             self.loggerr(f'plugin entry {name} not found.')
+            return False
+
+        (allow, remain, backoff) = self.gh.get_rate_limit()
+        print(allow, remain, backoff)
+        if not remain:
+            self.loggerr(f'rate limit active, operation not possible. Wait {backoff} seconds...')
             return False
 
         if not self.is_repo_clean(name):

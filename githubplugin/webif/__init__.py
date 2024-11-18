@@ -178,8 +178,11 @@ class WebInterface(SmartPluginWebIf):
             name = json.get('name')
 
             if not name or name not in self.plugin.repos:
-                raise Exception(f'repo {name} invalid or not found')
+                raise Exception(f'Repo {name} ungültig oder nicht gefunden')
 
+            allow, remain, backoff = self.plugin.gh.get_rate_limit()
+            if not remain:
+                raise Exception(f'Rate limit aktiv, Vorgang nicht möglich. Bitte {int(backoff)} Sekunden warten...')
             clean = self.plugin.is_repo_clean(name)
             return {"operation": "request", "result": "success", "data": clean}
         except Exception as e:
@@ -195,12 +198,12 @@ class WebInterface(SmartPluginWebIf):
             name = json.get('name')
 
             if not name or name not in self.plugin.repos:
-                raise Exception(f'repo {name} invalid or not found')
+                raise Exception(f'Repo {name} ungültig oder nicht vorhanden')
 
             if self.plugin.pull_repo(name):
                 return {"operation": "request", "result": "success"}
             else:
-                raise Exception(f'pull for repo {name} failed')
+                raise Exception(f'Pull von Repo {name} fehlgeschlagen')
         except Exception as e:
             cherrypy.response.status = ERR_CODE
             return {"error": str(e)}
@@ -230,7 +233,7 @@ class WebInterface(SmartPluginWebIf):
             try:
                 pr = int(json.get("pull", 0))
             except Exception:
-                raise Exception(f'invalid value for pr in {json}')
+                raise Exception(f'Ungültiger Wert für "pr" in {json}')
             if pr > 0:
                 pull = self.plugin.get_github_pulls(number=pr)
                 b = pull.get('branch')
@@ -326,7 +329,10 @@ class WebInterface(SmartPluginWebIf):
                 res = self.plugin.create_repo(name, owner, plugin, branch, rename=rename)
                 msg = f'Fehler beim Erstellen des Repos "{owner}/plugins", Branch {branch}, Plugin {plugin}'
             else:
-                res = self.plugin.check_for_repo_name(name, rename=rename)
+                if not rename:
+                    res = self.plugin.check_for_repo_name(name)
+                else:
+                    res = True
                 msg = f'Repo {name} oder Plugin-Link "priv_{name}" schon vorhanden'
 
             if res:
