@@ -555,8 +555,11 @@ class GithubPlugin(SmartPlugin):
             try:
                 # try to move repo entry to new name
                 # ignore if repo name is not existent
-                self.repos[f'{name}_{ver}'] = self.repos[name]
+                name_new = f'{name}_{ver}'
+                self.repos[name_new] = self.repos[name]
                 del self.repos[name]
+                # also change stored link
+                self.repos[name_new]['link'] += f'_{ver}'
             except KeyError:
                 pass
             return True
@@ -571,7 +574,6 @@ class GithubPlugin(SmartPlugin):
             return False
 
         (allow, remain, backoff) = self.gh.get_rate_limit()
-        print(allow, remain, backoff)
         if not remain:
             self.loggerr(f'rate limit active, operation not possible. Wait {backoff} seconds...')
             return False
@@ -586,13 +588,20 @@ class GithubPlugin(SmartPlugin):
         wt_path = repo['wt_path']
         repo_path = repo['repo_path']
         owner = repo['owner']
+        branch = repo['branch']
         # check if repo is used by other plugins
-        last = True
+        last_repo = True
+        last_branch = True
         for r in self.repos:
             if r == name:
                 continue
             if self.repos[r]["owner"] == owner:
-                last = False
+                last_repo = False
+
+                if self.repos[r]["branch"] == branch:
+                    last_branch = False
+                    break
+
                 break
 
         err = []
@@ -601,22 +610,39 @@ class GithubPlugin(SmartPlugin):
             os.remove(link_path)
         except Exception as e:
             err.append(e)
-        try:
-            self.logger.debug(f'removing worktree {wt_path}')
-            rmtree(wt_path)
-        except Exception as e:
-            err.append(e)
-        try:
-            self.logger.debug('pruning worktree')
-            repo['repo'].git.worktree('prune')
-        except Exception as e:
-            err.append(e)
-        if last:
+
+        if last_branch:
             try:
-                self.logger.debug(f'repo {repo_path} is no longer used, removing')
-                rmtree(repo_path)
+                # cope with possibly created .DS_Store files on Mac
+                os.chmod(wt_path, 0o777)
+            except Exception:
+                pass
+            try:
+                self.logger.debug(f'removing worktree {wt_path}')
+                rmtree(wt_path)
             except Exception as e:
                 err.append(e)
+            try:
+                self.logger.debug('pruning worktree')
+                repo['repo'].git.worktree('prune')
+            except Exception as e:
+                err.append(e)
+
+            if last_repo:
+                try:
+                    # cope with possibly created .DS_Store files on Mac
+                    os.chmod(repo_path, 0o777)
+                except Exception:
+                    pass
+                try:
+                    self.logger.debug(f'repo {repo_path} is no longer used, removing')
+                    rmtree(repo_path)
+                except Exception as e:
+                    err.append(e)
+            else:
+                self.logger.info(f'keeping repo {repo_path} as it is still in use')
+        else:
+            self.logger.info(f'keeping worktree {wt_path} as it is still in use')
 
         # remove repo entry from plugin dict
         del self.repos[name]
