@@ -518,7 +518,7 @@ class GithubPlugin(SmartPlugin):
         if rename:
             self.logger.debug(f'renaming old link priv_{name}')
             if not self._move_old_link(name):
-                self.logger.warning(f'unable to move old link priv_{name}, installation needs to be repaired manually')
+                self.loggerr(f'unable to move old link priv_{name}, installation needs to be repaired manually')
 
         self.logger.debug(f'creating link {repo["link"]} to {repo["rel_link_path"]}...')
         try:
@@ -542,7 +542,7 @@ class GithubPlugin(SmartPlugin):
         # try plugin.yaml
         plgyml = os.path.join(link, 'plugin.yaml')
         if not os.path.exists(plgyml):
-            self.logger.debug(f'plugin.yaml not found for {link}, aborting')
+            self.loggerr(f'plugin.yaml not found for {link}, aborting')
             return False
 
         try:
