@@ -567,6 +567,24 @@ class GithubPlugin(SmartPlugin):
             self.loggerr(f'error renaming old plugin: {e}')
             return False
 
+    def _rmtree(self, path):
+        """ remove path tree, also try to remove .DS_Store if present """
+        try:
+            rmtree(path)
+        except Exception:
+            pass
+
+        if os.path.exists(path):
+            # if directory wasn't deleted, just silently try again
+            try:
+                rmtree(path)
+            except Exception:
+                pass
+
+            if os.path.exists(path):
+                # Try again, but finally give up if error persists
+                rmtree(path)
+
     def remove_plugin(self, name) -> bool:
         """ remove plugin link, worktree and if not longer needed, local repo """
         if name not in self.repos:
@@ -613,13 +631,8 @@ class GithubPlugin(SmartPlugin):
 
         if last_branch:
             try:
-                # cope with possibly created .DS_Store files on Mac
-                os.chmod(wt_path, 0o777)
-            except Exception:
-                pass
-            try:
                 self.logger.debug(f'removing worktree {wt_path}')
-                rmtree(wt_path)
+                self._rmtree(wt_path)
             except Exception as e:
                 err.append(e)
             try:
@@ -630,13 +643,8 @@ class GithubPlugin(SmartPlugin):
 
             if last_repo:
                 try:
-                    # cope with possibly created .DS_Store files on Mac
-                    os.chmod(repo_path, 0o777)
-                except Exception:
-                    pass
-                try:
                     self.logger.debug(f'repo {repo_path} is no longer used, removing')
-                    rmtree(repo_path)
+                    self._rmtree(repo_path)
                 except Exception as e:
                     err.append(e)
             else:
