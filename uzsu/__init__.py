@@ -306,7 +306,7 @@ class UZSU(SmartPlugin):
         self.logger.info(f'Resuming item {item}: Activated and value set to {lastvalue}. Active value: {activevalue}')
         return lastvalue
 
-    def activate(self, activevalue=None, item=None):
+    def activate(self, activevalue=None, item=None, caller='logic'):
         if self._items.get(item) is None:
             try:
                 self.logger.warning(f'Item {item.property.path} is no valid UZSU item!')
@@ -323,8 +323,8 @@ class UZSU(SmartPlugin):
         if isinstance(activevalue, bool):
             self._items[item] = item()
             self._items[item]['active'] = activevalue
-            self.logger.info(f'Item {item} is set via logic to: {activevalue}')
-            self._update_item(item, 'UZSU Plugin', 'logic')
+            self.logger.info(f'Item {item} is set via {caller} to: {activevalue}')
+            self._update_item(item, 'UZSU Plugin', caller)
             return activevalue
         if activevalue is None:
             return self._items[item].get('active')
@@ -780,6 +780,8 @@ class UZSU(SmartPlugin):
         _uzsuitem, _itemvalue = self._get_dependant(item)
         _uzsuitem(value, 'UZSU Plugin', 'set')
         self._webdata['items'][item.property.path].update({'depend': {'item': _uzsuitem.property.path, 'value': str(_itemvalue)}})
+        if self._items[item].get('once'):
+            self.activate(False, item, 'once')
         if not caller or caller == "Scheduler":
             self._schedule(item, caller='set')
 
