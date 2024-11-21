@@ -323,7 +323,8 @@ class UZSU(SmartPlugin):
         if isinstance(activevalue, bool):
             self._items[item] = item()
             self._items[item]['active'] = activevalue
-            self.logger.info(f'Item {item} is set via {caller} to: {activevalue}')
+            _activeinfo = "deactivated" if activevalue is False else "activated"
+            self.logger.info(f'Item {item} is set via {caller} to: {_activeinfo}')
             self._update_item(item, 'UZSU Plugin', caller)
             return activevalue
         if activevalue is None:
