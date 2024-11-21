@@ -11,7 +11,7 @@ plugin:
     keywords: database
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
-    version: 1.6.13                # Plugin version
+    version: 1.6.14                # Plugin version
     sh_minversion: '1.9.3.2'         # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -60,9 +60,11 @@ parameters:
     time_precision:
         type: int
         default: 3
+        valid_min: 0
+        valid_max: 3
         description:
             de: 'Genauigkeit der aus der Datenbank ausgelesenen Zeitwerte (Nachkommastellen (für Sekunden)).'
-            en: 'Precision of time values read from database (digits after comma (for seconds).'
+            en: 'Precision of time values read from database (digits after comma (for seconds)).'
             
     count_logentries:
         type: bool
