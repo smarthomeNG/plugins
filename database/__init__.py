@@ -102,6 +102,7 @@ class Database(SmartPlugin):
         if self._removeold_cycle == self._dump_cycle:
             self._removeold_cycle += 2
         self._precision = self.get_parameter_value('precision')
+        self._time_precision = self.get_parameter_value('time_precision')
         self.count_logentries = self.get_parameter_value('count_logentries')
         self.max_delete_logentries = self.get_parameter_value('max_delete_logentries')
         self.max_reassign_logentries = self.get_parameter_value('max_reassign_logentries')
@@ -1115,21 +1116,21 @@ class Database(SmartPlugin):
             sid = item + '|' + func + '|' + str(start) + '|' + str(end) + '|' + str(count)
         func, expression = self._expression(func)
         queries = {
-            'avg': 'MIN(time), ' + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
+            'avg': self._time_precision_query('MIN(time)') + ', ' + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
             'avg.order': 'ORDER BY time ASC',
-            'integrate': 'MIN(time), SUM(val_num * duration)',
-            'diff': 'MIN(time), (val_num - LAG(val_num,1) OVER (ORDER BY val_num))',
-            'duration': 'MIN(time), duration',
+            'integrate': self._time_precision_query('MIN(time)') + ', SUM(val_num * duration)',
+            'diff': self._time_precision_query('MIN(time)') + ', (val_num - LAG(val_num,1) OVER (ORDER BY val_num))',
+            'duration': self._time_precision_query('MIN(time)') + ', duration',
             # differentiate (d/dt) is scaled to match the conversion from d/dt (kWh) = kWh: time is in ms, val_num in kWh, therefore scale by 1000ms and 3600s/h to obtain the result in kW:
-            'differentiate': 'MIN(time), (val_num - LAG(val_num,1) OVER (ORDER BY val_num)) / ( (time - LAG(time,1) OVER (ORDER BY val_num)) / (3600 * 1000) )',
-            'count': 'MIN(time), SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
-            'countall': 'MIN(time), COUNT(*)',
-            'min': 'MIN(time), MIN(val_num)',
-            'max': 'MIN(time), MAX(val_num)',
-            'on': 'MIN(time), ' + self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
+            'differentiate': self._time_precision_query('MIN(time)') + ', (val_num - LAG(val_num,1) OVER (ORDER BY val_num)) / ( (time - LAG(time,1) OVER (ORDER BY val_num)) / (3600 * 1000) )',
+            'count': self._time_precision_query('MIN(time)') + ', SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
+            'countall': self._time_precision_query('MIN(time)') + ', COUNT(*)',
+            'min': self._time_precision_query('MIN(time)') + ', MIN(val_num)',
+            'max': self._time_precision_query('MIN(time)') + ', MAX(val_num)',
+            'on': self._time_precision_query('MIN(time)') + ', ' + self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
             'on.order': 'ORDER BY time ASC',
-            'sum': 'MIN(time), SUM(val_num)',
-            'raw': 'time, val_num',
+            'sum': self._time_precision_query('MIN(time)') + ', SUM(val_num)',
+            'raw': self._time_precision_query('time') + ', val_num',
             'raw.order': 'ORDER BY time ASC',
             'raw.group': ''
         }
@@ -1241,6 +1242,10 @@ class Database(SmartPlugin):
             return 'ROUND({}, {})'.format(query, self._precision)
         return query
 
+    def _time_precision_query(self, query):
+        if self._time_precision < 3:
+            return 'ROUND({}, {})'.format(query, self._time_precision - 3)
+        return query
 
     def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order=''):
         _item = self.items.return_item(item)

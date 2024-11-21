@@ -57,6 +57,13 @@ parameters:
             de: 'Genauigkeit der aus der Datenbank ausgelesenen Werte (Nachkommastellen).'
             en: 'Precision of values read from database (digits after comma).'
 
+    time_precision:
+        type: int
+        default: 3
+        description:
+            de: 'Genauigkeit der aus der Datenbank ausgelesenen Zeitwerte (Nachkommastellen (für Sekunden)).'
+            en: 'Precision of time values read from database (digits after comma (for seconds).'
+            
     count_logentries:
         type: bool
         default: False
