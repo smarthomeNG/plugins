@@ -71,8 +71,8 @@ class WebInterface(SmartPluginWebIf):
 
         return tmpl.render(p=self.plugin,
                            webif_pagelength=pagelength,
-                           item_list=self.plugin.item_list,
-                           item_count=len(self.plugin.item_list),
+                           item_list=self.plugin.get_item_list(),
+                           item_count=len(self.plugin.get_item_list()),
                            plugin_shortname=self.plugin.get_shortname(),
                            plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(),
@@ -103,7 +103,7 @@ class WebInterface(SmartPluginWebIf):
             data = dict()
 
             data['items'] = {}
-            for item in self.plugin.item_list:
+            for item in self.plugin.get_item_list():
                 data['items'][item.property.path] = {}
                 data['items'][item.property.path]['value'] = item() if item() is not None else '-'
                 data['items'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')

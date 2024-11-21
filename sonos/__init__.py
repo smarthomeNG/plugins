@@ -184,7 +184,7 @@ def renew_error_callback(exception):  # events_twisted: failure
     # Redundant, as the exception will be logged by the events module
     self.logger.error(msg)
 
-    # ToDo possible improvement: Do not do periodic renew but do propper disposal on renew failure here instead. sub.renew(requested_timeout=10)
+    # ToDo possible improvement: Do not do periodic renew but do proper disposal on renew failure here instead. sub.renew(requested_timeout=10)
 
 
 class SubscriptionHandler(object):
@@ -201,7 +201,7 @@ class SubscriptionHandler(object):
     def subscribe(self):
         self.logger.dbglow(f"start subscribe for endpoint {self._endpoint}")
         if 'eventAvTransport' in self._threadName:
-            self.logger.dbghigh(f"subscribe(): endpoint av envent detected. Enabling debugging logs")
+            self.logger.dbghigh(f"subscribe(): endpoint av event detected. Enabling debugging logs")
             debug = 1
         else:
             debug = 0
@@ -254,7 +254,7 @@ class SubscriptionHandler(object):
     def unsubscribe(self):
         self.logger.dbglow(f"unsubscribe(): start for endpoint {self._endpoint}")
         if 'eventAvTransport' in self._threadName:
-            self.logger.dbghigh(f"unsubscribe: endpoint av envent detected. Enabling debugging logs")
+            self.logger.dbghigh(f"unsubscribe: endpoint av event detected. Enabling debugging logs")
             debug = 1
         else:
             debug = 0
@@ -283,11 +283,11 @@ class SubscriptionHandler(object):
                     self.logger.dbghigh(f"unsubscribe(): Thread joined for endpoint {self._endpoint}")
 
                 if not self._thread.is_alive(): 
-                    self.logger.dbglow("Thread killed for enpoint {self._endpoint}")
+                    self.logger.dbglow("Thread killed for endpoint {self._endpoint}")
                     if debug:
                         self.logger.dbghigh(f"Thread killed for endpoint {self._endpoint}")
                 else:
-                    self.logger.warning("unsubscibe(): Error, thread is still alive after termination (join timed-out)")
+                    self.logger.warning("unsubscribe(): Error, thread is still alive after termination (join timed-out)")
                 self._thread = None
                 self.logger.info(f"Event {self._endpoint} thread terminated")
 
@@ -296,7 +296,6 @@ class SubscriptionHandler(object):
             
         if debug:
             self.logger.dbghigh(f"unsubscribe(): {self._endpoint}: lock released")
-
 
     @property
     def eventSignalIsSet(self):
@@ -514,7 +513,6 @@ class Speaker(object):
         # Important note:
         # av event is not subscribed here because it has special handling in function zone group event. 
         pass
-        
 
     def refresh_static_properties(self) -> None:
         """
@@ -707,12 +705,12 @@ class Speaker(object):
 
         self.logger.dbghigh(f"_av_transport_event: {self.uid}: av transport event handler active.")
         while not sub_handler.signal.wait(1):
-#            self.logger.dbglow(f"_av_transport_event: {self.uid}: start try")
+            # self.logger.dbglow(f"_av_transport_event: {self.uid}: start try")
 
             try:
                 event = sub_handler.event.events.get(timeout=0.5)
             except Empty:
-                #self.logger.dbglow(f"av_transport_event: got empty exception, which is normal")
+                # self.logger.dbglow(f"av_transport_event: got empty exception, which is normal")
                 pass
             except Exception as e:
                 self.logger.error(f"_av_tranport_event: Exception during events.get(): {e}")
@@ -1108,7 +1106,7 @@ class Speaker(object):
     @loudness.setter
     def loudness(self, loudness: bool) -> None:
         """
-        Setter for loudnes (internal)
+        Setter for loudness (internal)
         :param loudness: True or False
         :rtype: None
         :return: None
@@ -1259,7 +1257,7 @@ class Speaker(object):
     def _check_max_volume_exceeded(self, volume: int, max_volume: int) -> bool:
         """
         Checks if the volume exceeds a maximum volume value.
-        :param volume: volme
+        :param volume: volume
         :param max_volume: maximum volume
         :return: 'True' if volume exceeds maximum volume, 'False# otherwise.
         """
@@ -1442,13 +1440,13 @@ class Speaker(object):
                             pass
                 else:
                     # Register AV event for coordinator speakers: 
-                    #self.logger.dbglow(f"Un/Subscribe av event for uid '{self.uid}' in fct zone_group_members")
+                    # self.logger.dbglow(f"Un/Subscribe av event for uid '{self.uid}' in fct zone_group_members")
 
                     active = member.av_subscription.subscriptionThreadIsActive
                     is_subscribed = member.av_subscription.is_subscribed
                     self.logger.dbghigh(f"zone_group_members(): Subscribe av event for uid '{self.uid}': Status before measure: AV Thread is {active}, subscription is {is_subscribed}, Eventflag: {member.av_subscription.eventSignalIsSet}")
 
-                    if active == False:
+                    if active is False:
                         self.logger.dbghigh(f"zone_group_members: Subscribe av event for uid '{self.uid}' because thread is not active")
                         #member.av_subscription.unsubscribe()
                         #
@@ -1456,7 +1454,6 @@ class Speaker(object):
                         # member.av_subscription.update_endpoint(endpoint=self._av_transport_event)
                         member.av_subscription.subscribe()
                         self.logger.dbghigh(f"zone_group_members: Subscribe av event for uid '{self.uid}': Status after measure: AV thread is {member.av_subscription.subscriptionThreadIsActive}, subscription {member.av_subscription.is_subscribed}, Eventflag: {member.av_subscription.eventSignalIsSet}")
-                    
 
     @property
     def streamtype(self) -> str:
@@ -1906,7 +1903,7 @@ class Speaker(object):
     def is_coordinator(self, value: bool) -> None:
         """
         is_coordinator setter
-        :param value: 'True' to indicate that the speker is the coordiantor of the group, otherwise 'False'
+        :param value: 'True' to indicate that the speaker is the coordinator of the group, otherwise 'False'
         """
         self._is_coordinator = value
         for item in self.is_coordinator_items:
@@ -2511,7 +2508,6 @@ class Speaker(object):
         self.soco.play_uri(uri=uri, meta=metadata, title=the_station.title, start=start, force_radio=True)
         return True, ""
 
-
     def play_sharelink(self, url: str, start: bool = True) -> None:
         """
         Plays a sharelink from a given url
@@ -2998,7 +2994,7 @@ class Sonos(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = "1.8.7"
+    PLUGIN_VERSION = "1.8.8"
 
     def __init__(self, sh):
         """Initializes the plugin."""
@@ -3030,7 +3026,6 @@ class Sonos(SmartPlugin):
         self._uid_lookup_levels = 4         # iterations of return_parent() on lookup for item uid
         self._speaker_ips = []              # list of fixed speaker ips
         self.zones = {}                     # dict to hold zone information via soco objects
-        self.item_list = []                 # list of all items, used by / linked to that plugin
         self.alive = False                  # plugin alive property
         self.webservice = None              # webservice thread
         
@@ -3089,8 +3084,10 @@ class Sonos(SmartPlugin):
         :param item: item to parse
         :return: update function or None
         """
-        uid = None
+        
+        item_config = dict()
 
+        # handling sonos_recv and sonos_send
         if self.has_iattr(item.conf, 'sonos_recv') or self.has_iattr(item.conf, 'sonos_send'):
             self.logger.debug(f"parse item: {item.property.path}")
             # get uid from parent item
@@ -3098,34 +3095,45 @@ class Sonos(SmartPlugin):
             if not uid:
                 self.logger.error(f"No uid found for {item.property.path}.")
                 return
+            
+            item_config.update({'uid': uid})
 
-        if self.has_iattr(item.conf, 'sonos_recv'):
-            # create Speaker instance if not exists
-            _initialize_speaker(uid, self.logger, self.get_shortname())
+            if self.has_iattr(item.conf, 'sonos_recv'):
+                # create Speaker instance if not exists
+                _initialize_speaker(uid, self.logger, self.get_shortname())
 
-            # to make code smaller, map sonos_cmd value to the Speaker property by name
-            item_attribute = self.get_iattr_value(item.conf, 'sonos_recv')
-            list_name = f"{item_attribute}_items"
-            try:
-                attr = getattr(sonos_speaker[uid], list_name)
-                self.logger.debug(f"Adding item {item.property.path} to {uid}: list {list_name}")
-                attr.append(item)
-                if item not in self.item_list:
-                    self.item_list.append(item)
-            except Exception:
-                self.logger.warning(f"No item list available for sonos_cmd '{item_attribute}'.")
+                # to make code smaller, map sonos_cmd value to the Speaker property by name
+                item_attribute = self.get_iattr_value(item.conf, 'sonos_recv')
+                list_name = f"{item_attribute}_items"
+                try:
+                    attr = getattr(sonos_speaker[uid], list_name)
+                    self.logger.debug(f"Adding item {item.property.path} to {uid}: list {list_name}")
+                    attr.append(item)
+                    item_config.update({'sonos_recv': item_attribute})
+                    self.logger.debug(f"Item {item.property.path} registered to 'sonos_send' commands with '{item_attribute}'.")
+                except Exception:
+                    self.logger.warning(f"No item list available for sonos_cmd '{item_attribute}'.")
 
-        if self.has_iattr(item.conf, 'sonos_send'):
-            self.logger.debug(f"Item {item.property.path} registered to 'sonos_send' commands.")
-            if item not in self.item_list:
-                self.item_list.append(item)
-            return self.update_item
+            if self.has_iattr(item.conf, 'sonos_send'):
+                item_attribute = self.get_iattr_value(item.conf, 'sonos_send')
+                item_config.update({'sonos_send': item_attribute})
+                self.logger.debug(f"Item {item.property.path} registered to 'sonos_send' commands with '{item_attribute}'.")
 
-        # some special handling for dpt3 volume
-        if self.has_iattr(item.conf, 'sonos_attrib'):
-            if self.get_iattr_value(item.conf, 'sonos_attrib') != 'vol_dpt3':
-                if item not in self.item_list:
-                    self.item_list.append(item)
+            if 'sonos_recv' in item_config or 'sonos_send' in item_config:
+                self.add_item(item, config_data_dict=item_config, updating=True)
+
+            if 'sonos_send' in item_config:
+                return self.update_item
+
+        # handling sonos_attrib incl some special handling for dpt3 volume
+        elif self.has_iattr(item.conf, 'sonos_attrib'):
+            uid = self._resolve_uid(item)
+            item_config.update({'uid': uid})
+            item_attribute = self.get_iattr_value(item.conf, 'sonos_attrib')
+
+            if item_attribute != 'vol_dpt3':
+                item_config.update({'sonos_attrib': item_attribute})
+                self.add_item(item, config_data_dict=item_config, updating=True)
                 return
 
             # check, if a volume parent item exists
@@ -3139,8 +3147,6 @@ class Sonos(SmartPlugin):
                     self.logger.warning("volume_dpt3 item has no volume parent item. Ignoring!")
                     return
 
-            item.conf['volume_parent'] = parent_item
-
             # make sure there is a child helper item
             child_helper = None
             for child in item.return_children():
@@ -3153,21 +3159,14 @@ class Sonos(SmartPlugin):
                 self.logger.warning("volume_dpt3 item has no helper item. Ignoring!")
                 return
 
-            item.conf['helper'] = child_helper
+            dpt3_step = self.get_iattr_value(item.conf, 'sonos_dpt3_step')
+            dpt3_time = self.get_iattr_value(item.conf, 'sonos_dpt3_time')
 
-            if not self.has_iattr(item.conf, 'sonos_dpt3_step'):
-                item.conf['sonos_dpt3_step'] = self._sonos_dpt3_step
-                self.logger.debug(f"No sonos_dpt3_step defined, using default value {self._sonos_dpt3_step}.")
-
-            if not self.has_iattr(item.conf, 'sonos_dpt3_time'):
-                item.conf['sonos_dpt3_time'] = self._sonos_dpt3_time
-                self.logger.debug(f"No sonos_dpt3_time defined, using default value {self._sonos_dpt3_time}.")
-
-            if item not in self.item_list:
-                self.item_list.append(item)
+            item_config.update({'volume_item': parent_item, 'helper': child_helper, 'dpt3_step': dpt3_step, 'dpt3_time': dpt3_time})
+            self.add_item(item, config_data_dict=item_config, updating=True)
             return self._handle_dpt3
 
-    def play_alert_all_speakers(self, alert_uri, speaker_list = [], alert_volume=20, alert_duration=0, fade_back=False):
+    def play_alert_all_speakers(self, alert_uri, speaker_list=[], alert_volume=20, alert_duration=0, fade_back=False):
         """
         Demo function using soco.snapshot across multiple Sonos players.
         
@@ -3226,11 +3225,14 @@ class Sonos(SmartPlugin):
             self.logger.warning(f"Debug: restoring {zone.player_name}")
             zone.snap.restore(fade=fade_back)
 
-
     def _handle_dpt3(self, item, caller=None, source=None, dest=None):
         if caller != self.get_shortname():
-            volume_item = self.get_iattr_value(item.conf, 'volume_parent')
-            volume_helper = self.get_iattr_value(item.conf, 'helper')
+
+            item_config = self.get_item_config(item)
+            volume_item = item_config['volume_item']
+            volume_helper = item_config['helper']
+            vol_step = item_config['dpt3_step']
+            vol_time = item_config['dpt3_time']
             vol_max = self._resolve_max_volume_command(item)
 
             if vol_max < 0:
@@ -3243,8 +3245,6 @@ class Sonos(SmartPlugin):
                 current_volume = 100
 
             volume_helper(current_volume)
-            vol_step = int(item.conf['sonos_dpt3_step'])
-            vol_time = int(item.conf['sonos_dpt3_time'])
 
             if item()[1] == 1:
                 if item()[0] == 1:
@@ -3293,7 +3293,7 @@ class Sonos(SmartPlugin):
             self.logger.warning(f"Mandatory path for local webserver for TTS not given in Plugin parameters. TTS disabled!")
             return False
     
-        # if path is given, check avilability, create and check access rights
+        # if path is given, check availability, create and check access rights
         try:
             os.makedirs(local_webservice_path, exist_ok=True)
         except OSError:
@@ -3322,7 +3322,7 @@ class Sonos(SmartPlugin):
             self._local_webservice_path_snippet = self._local_webservice_path
             return True
         
-        # if path is given, check avilability, create and check access rights
+        # if path is given, check availability, create and check access rights
         try:
             os.makedirs(local_webservice_path_snippet, exist_ok=True)
         except OSError:
@@ -3407,15 +3407,13 @@ class Sonos(SmartPlugin):
         # return unique items in list
         return utils.unique_list(self._speaker_ips)
 
-
     def debug_speaker(self, uid):
         self.logger.warning(f"debug_speaker: Starting function for uid {uid}")
-        #sonos_speaker[uid].set_stop()
+        # sonos_speaker[uid].set_stop()
         self.logger.warning(f"debug_speaker: check sonos_speaker[uid].av.subscription: {sonos_speaker[uid].av_subscription}")
         # Event objekt is not callable:
-        #sonos_speaker[uid]._av_transport_event(sonos_speaker[uid].av_subscription) 
+        # sonos_speaker[uid]._av_transport_event(sonos_speaker[uid].av_subscription)
         self.logger.warning(f"debug_speaker: av_subscription: thread active {sonos_speaker[uid].av_subscription.subscriptionThreadIsActive}, eventSignal: {sonos_speaker[uid].av_subscription.eventSignalIsSet}")
-
 
     def get_soco_version(self) -> str:
         """
@@ -3461,9 +3459,15 @@ class Sonos(SmartPlugin):
         """
         
         if self.alive and caller != self.get_fullname():
-            if self.has_iattr(item.conf, 'sonos_send'):
-                uid = self._resolve_uid(item)
-                command = self.get_iattr_value(item.conf, "sonos_send").lower()
+
+            self.logger.debug(f"update_item called for {item.path()} with value {item()}")
+            item_config = self.get_item_config(item)
+            command = item_config.get('sonos_send', '').lower()
+            uid = item_config.get('uid')
+
+            self.logger.debug(f"{uid=}, {command=}, ")
+
+            if command and uid:
 
                 if command == "play":
                     sonos_speaker[uid].set_play() if item() else sonos_speaker[uid].set_pause()
@@ -3634,9 +3638,11 @@ class Sonos(SmartPlugin):
         :return: 'True' or 'False' (whether the command should execute as a group command or not)
         """
 
+        item_config = self.get_item_config(item)
+
         # special handling for dpt_volume
-        if self.get_iattr_value(item.conf, 'sonos_attrib') == 'vol_dpt3':
-            group_item = self.get_iattr_value(item.conf, 'volume_parent')
+        if item_config.get('sonos_attrib', '') == 'vol_dpt3':
+            group_item = item_config['volume_item']
         else:
             group_item = item
 
@@ -3653,8 +3659,10 @@ class Sonos(SmartPlugin):
         :return:
         """
 
-        if self.get_iattr_value(item.conf, 'sonos_attrib') == 'vol_dpt3':
-            volume_item = self.get_iattr_value(item.conf, 'volume_parent')
+        item_config = self.get_item_config(item)
+
+        if item_config.get('sonos_attrib', '') == 'vol_dpt3':
+            volume_item = item_config['volume_item']
         else:
             volume_item = item
 
