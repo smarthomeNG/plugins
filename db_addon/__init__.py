@@ -264,11 +264,13 @@ class DatabaseAddOn(SmartPlugin):
 
             # handle all functions of cat 'verbrauch'
             elif db_addon_fct_cat == 'verbrauch':
+                # 'start' ist das Zeitinkrement von jetzt (0) für den Zählerstand zu Beginn der Betrachtung; 'end' ist das Zeitinkrement von jetzt (0) für den Zählerstand zum Ende der Betrachtung
 
                 # handle functions of sub_cat 'onchange' in format 'verbrauch_timeframe' like 'verbrauch_heute', 'verbrauch_woche', 'verbrauch_monat', 'verbrauch_jahr'
                 if db_addon_fct_sub_cat == 'onchange':
                     timeframe = translate_timeframe(db_addon_fct_vars[1])
-                    start = end = 0
+                    end = 0
+                    start = end + 1
                     mandatory_params = [timeframe, start, end]
 
                 # handle functions of sub_cat 'last' in format 'verbrauch_last_timedelta|timeframe' like 'verbrauch_last_24h'
@@ -282,7 +284,8 @@ class DatabaseAddOn(SmartPlugin):
                 # handle functions of sub_cat 'timeframe' in format 'verbrauch_timeframe_timedelta' like 'verbrauch_heute_minus2'
                 elif db_addon_fct_sub_cat == 'timeframe':
                     timeframe = translate_timeframe(db_addon_fct_vars[1])
-                    start = end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
+                    end = to_int(split_sting_letters_numbers(db_addon_fct_vars[2])[1])
+                    start = end + 1
                     mandatory_params = [timeframe, start, end]
 
                 # handle functions of sub_cat 'rolling' in format 'verbrauch_rolling_window_timeframe_timedelta' like 'verbrauch_rolling_12m_woche_minus1'
@@ -1580,7 +1583,7 @@ class DatabaseAddOn(SmartPlugin):
                 - Ergibt diese Abfrage keinen Wert, Anfangszählerstand = 0
         """
 
-        # define start, end for verbrauch_jahreszeitraum_timedelta
+        # define start, end for verbrauch_jahreszeitraum_timedelta like 'verbrauch_jahreszeitraum_minus1'
         if 'timedelta' in query_params:
             timedelta = query_params.pop('timedelta')
             today = self.shtime.today(offset=0)
@@ -1588,16 +1591,14 @@ class DatabaseAddOn(SmartPlugin):
             end_date = today - relativedelta(years=timedelta)
             start = (today - start_date).days
             end = (today - end_date).days
-        else:
-            start = query_params['start']
-            end = query_params['end']
+            query_params.update({'start': start, 'end': end})
 
         # calculate consumption
         if self.debug_log.prepare:
             self.logger.debug(f"called with {query_params=}")
 
-        # get value for end and check it;
-        query_params.update({'func': 'last', 'start': start, 'end': end})
+        # get value for end and check it
+        query_params.update({'func': 'last'})
         value_end = self._query_item(**query_params)[0][1]
 
         if self.debug_log.prepare:
@@ -1606,8 +1607,9 @@ class DatabaseAddOn(SmartPlugin):
         if value_end is None or value_end == 0:
             return value_end
 
-        # get value for start and check it;
-        query_params.update({'func': 'next', 'start': start, 'end': start})
+        # get value for start and check it
+        # ToDo: Check if right start and end is used
+        query_params.update({'func': 'next'})
         value_start = self._query_item(**query_params)[0][1]
         if self.debug_log.prepare:
             self.logger.debug(f"{value_start=}")
@@ -1641,7 +1643,10 @@ class DatabaseAddOn(SmartPlugin):
 
         for i in range(start, 1, -1):
             value = self._handle_verbrauch({'database_item': database_item, 'timeframe': timeframe, 'start': i + 1, 'end': i})
-            ts_start, ts_end = self._get_start_end_as_timestamp(timeframe, i, i + 1)
+            # ToDo: check ts_start, ts_end
+            ts_start, ts_end = self._get_start_end_as_timestamp(timeframe=timeframe, start=(i + 1), end=i)
+            if self.debug_log.prepare:
+                self.logger.debug(f"{ts_start=}, {ts_end=}")
             series.append([ts_end, value])
 
         return series
