@@ -74,6 +74,7 @@ class Neato(SmartPlugin):
         self.scheduler_remove('poll_device')
         self.logger.debug("Stop method called")
         self.alive = False
+        self.robot._backendOnline = False
 
     def parse_item(self, item):
         
