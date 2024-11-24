@@ -16,7 +16,7 @@ plugin:
   sh_minversion: '1.5.1'           # minimum shNG version to use this plugin
   py_minversion: '3.8'             # minimum Python version to use for this plugin
   multi_instance: False          # plugin supports multi instance
-  restartable: unknown
+  restartable: yes
   classname: Sonos               # class containing the plugin
 
 parameters:
@@ -84,6 +84,13 @@ parameters:
     description:
       de: "(optional) Verlängert die Dauer von Snippet Audio Dateien um einen festen Offset in Sekunden."
       en: "(optional) Extend snippet duration by a fixed offset specified in seconds"
+
+  pause_item:
+    type: str
+    default: ''
+    description:
+      de: 'Item, um die Ausführung des Plugins zu steuern'
+      en: 'item for controlling plugin execution'
 
 item_attributes:
   sonos_uid:

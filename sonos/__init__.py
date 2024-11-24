@@ -3007,12 +3007,12 @@ class Sonos(SmartPlugin):
             self._tts = self.get_parameter_value("tts")
             self._snippet_duration_offset = float(self.get_parameter_value("snippet_duration_offset"))
             self._discover_cycle = self.get_parameter_value("discover_cycle")
-            self.webif_pagelength = self.get_parameter_value('webif_pagelength')
             local_webservice_path = self.get_parameter_value("local_webservice_path")
             local_webservice_path_snippet = self.get_parameter_value("local_webservice_path_snippet")
             webservice_ip = self.get_parameter_value("webservice_ip")
             webservice_port = self.get_parameter_value("webservice_port")
             speaker_ips = self.get_parameter_value("speaker_ips")
+            self._pause_item_path = self.get_parameter_value('pause_item')
         except KeyError as e:
             self.logger.critical(f"Plugin '{self.get_shortname()}': Inconsistent plugin (invalid metadata definition: {e} not defined)")
             self._init_complete = False
@@ -3054,6 +3054,10 @@ class Sonos(SmartPlugin):
 
     def run(self):
         self.logger.debug("Run method called")
+
+        # let the plugin change the state of pause_item
+        if self._pause_item:
+            self._pause_item(False, self.get_fullname())
         
         # do initial speaker discovery and set scheduler
         self._discover()
@@ -3063,13 +3067,16 @@ class Sonos(SmartPlugin):
         self.alive = True
 
     def stop(self):
-        self.logger.debug("Stop method called")
+        self.logger.dbghigh(self.translate("Methode '{method}' aufgerufen", {'method': 'stop()'}))
+
+        # let the plugin change the state of pause_item
+        if self._pause_item:
+            self._pause_item(True, self.get_fullname())
         
         if self.webservice:
             self.webservice.stop() 
         
-        if self.scheduler_get('sonos_discover_scheduler'):
-            self.scheduler_remove('sonos_discover_scheduler')
+        self.scheduler_remove_all()
         
         for uid, speaker in sonos_speaker.items():
             speaker.dispose()
@@ -3084,6 +3091,12 @@ class Sonos(SmartPlugin):
         :param item: item to parse
         :return: update function or None
         """
+
+        if item.property.path == self._pause_item_path:
+            self.logger.debug(f'pause item {item.property.path} registered')
+            self._pause_item = item
+            self.add_item(item, updating=True)
+            return self.update_item
         
         item_config = dict()
 
@@ -3452,9 +3465,18 @@ class Sonos(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        
-        if self.alive and caller != self.get_fullname():
 
+        # check for pause item
+        if item is self._pause_item and caller != self.get_shortname():
+            self.logger.debug(f'pause item changed to {item()}')
+            if item() and self.alive:
+                self.stop()
+            elif not item() and not self.alive:
+                self.run()
+            return
+
+        # check for sonos item
+        if self.alive and caller != self.get_fullname():
             self.logger.debug(f"update_item called for {item.path()} with value {item()} {caller=}")
             item_config = self.get_item_config(item)
             command = item_config.get('sonos_send', '').lower()
