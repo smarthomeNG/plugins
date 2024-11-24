@@ -2994,7 +2994,7 @@ class Sonos(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = "1.8.8"
+    PLUGIN_VERSION = "1.8.9"
 
     def __init__(self, sh):
         """Initializes the plugin."""
@@ -3147,22 +3147,22 @@ class Sonos(SmartPlugin):
                     self.logger.warning("volume_dpt3 item has no volume parent item. Ignoring!")
                     return
 
-            # make sure there is a child helper item
-            child_helper = None
+            # make sure there is a child volume helper item
+            volume_helper_item = None
             for child in item.return_children():
                 if self.has_iattr(child.conf, 'sonos_attrib'):
                     if self.get_iattr_value(child.conf, 'sonos_attrib').lower() == 'dpt3_helper':
-                        child_helper = child
+                        volume_helper_item = child
                         break
 
-            if child_helper is None:
-                self.logger.warning("volume_dpt3 item has no helper item. Ignoring!")
+            if volume_helper_item is None:
+                self.logger.warning("volume_dpt3 item has no volume helper item. Ignoring!")
                 return
 
             dpt3_step = self.get_iattr_value(item.conf, 'sonos_dpt3_step')
             dpt3_time = self.get_iattr_value(item.conf, 'sonos_dpt3_time')
 
-            item_config.update({'volume_item': parent_item, 'helper': child_helper, 'dpt3_step': dpt3_step, 'dpt3_time': dpt3_time})
+            item_config.update({'volume_item': parent_item, 'helper_item': volume_helper_item, 'dpt3_step': dpt3_step, 'dpt3_time': dpt3_time})
             self.add_item(item, config_data_dict=item_config, updating=True)
             return self._handle_dpt3
 
@@ -3226,36 +3226,31 @@ class Sonos(SmartPlugin):
             zone.snap.restore(fade=fade_back)
 
     def _handle_dpt3(self, item, caller=None, source=None, dest=None):
-        if caller != self.get_shortname():
+        """Handle relative volumen change via a received relative dim command (dpt3) by making use of internal fadeing"""
 
+        if caller != self.get_shortname():
             item_config = self.get_item_config(item)
             volume_item = item_config['volume_item']
-            volume_helper = item_config['helper']
+            volume_helper_item = item_config['helper']
             vol_step = item_config['dpt3_step']
             vol_time = item_config['dpt3_time']
-            vol_max = self._resolve_max_volume_command(item)
-
-            if vol_max < 0:
-                vol_max = 100
-
-            current_volume = int(volume_item())
-            if current_volume < 0:
-                current_volume = 0
-            if current_volume > 100:
-                current_volume = 100
-
-            volume_helper(current_volume)
+            vol_max = max(0, self._resolve_max_volume_command(item)) or 100
+            _current_volume = max(0, min(100, int(volume_item())))
+            volume_helper_item(_current_volume, self.get_shortname())
 
             if item()[1] == 1:
+                self.logger.debug(f"Starte relative Lautstärkeänderung.")
                 if item()[0] == 1:
                     # up
-                    volume_helper.fade(vol_max, vol_step, vol_time)
+                    self.logger.debug(f"erhöhe Lautstärke mit {vol_step} Stufe(n) pro {vol_time}s")
+                    volume_helper_item.fade(vol_max, vol_step, vol_time)
                 else:
                     # down
-                    volume_helper.fade(0 - vol_step, vol_step, vol_time)
+                    self.logger.debug(f"reduziere Lautstärke mit {vol_step} Stufe(n) pro {vol_time}s")
+                    volume_helper_item.fade(0 - vol_step, vol_step, vol_time)
             else:
-                volume_helper(int(volume_helper() + 1))
-                volume_helper(int(volume_helper() - 1))
+                self.logger.debug(f"Stoppe relative Lautstärkeänderung.")
+                volume_helper_item(int(volume_helper_item()), self.get_shortname())
 
     def _check_webservice_ip(self, webservice_ip: str) -> bool:
         if not webservice_ip == '' and not webservice_ip == '0.0.0.0':
@@ -3460,7 +3455,7 @@ class Sonos(SmartPlugin):
         
         if self.alive and caller != self.get_fullname():
 
-            self.logger.debug(f"update_item called for {item.path()} with value {item()}")
+            self.logger.debug(f"update_item called for {item.path()} with value {item()} {caller=}")
             item_config = self.get_item_config(item)
             command = item_config.get('sonos_send', '').lower()
             uid = item_config.get('uid')
