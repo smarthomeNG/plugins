@@ -11,7 +11,7 @@ plugin:
     keywords: weather precipation irrigation
     documentation: ''
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1246998-support-thread-zum-openweathermap-plugin'
-    version: 1.8.7                # Plugin version
+    version: 1.8.8                # Plugin version
     sh_minversion: '1.9.0'          # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
@@ -465,13 +465,13 @@ item_structs:
             beaufort_nr:
                 name: wind gusts as beaufort number
                 type: num
-                eval: sh.plugins.get('openweathermap').get_beaufort_number(sh....wind_gust())
+                eval: sh.plugins.return_plugin('openweathermap').get_beaufort_number(sh....wind_gust())
                 eval_trigger: ...wind_gust
 
             beaufort_string:
                 name: wind gusts as beaufort string
                 type: str
-                eval: sh.plugins.get('openweathermap').get_beaufort_description( sh...beaufort_nr() )
+                eval: sh.plugins.return_plugin('openweathermap').get_beaufort_description( sh...beaufort_nr() )
                 eval_trigger: ..beaufort_nr
 
         wind_deg:
@@ -630,12 +630,12 @@ item_structs:
             beaufort_nr:
                 name: wind speed as beaufort number
                 type: num
-                eval: sh.plugins.get('openweathermap').get_beaufort_number(sh...())
+                eval: sh.plugins.return_plugin('openweathermap').get_beaufort_number(sh...())
                 eval_trigger: ..
             beaufort_string:
                 name: wind speed as beaufort string
                 type: str
-                eval: sh.plugins.get('openweathermap').get_beaufort_description( sh...beaufort_nr() )
+                eval: sh.plugins.return_plugin('openweathermap').get_beaufort_description( sh...beaufort_nr() )
                 eval_trigger: ..beaufort_nr
 
         wind_gust:
@@ -646,12 +646,12 @@ item_structs:
             beaufort_nr:
                 name: wind gusts as beaufort number
                 type: num
-                eval: sh.plugins.get('openweathermap').get_beaufort_number(sh...())
+                eval: sh.plugins.return_plugin('openweathermap').get_beaufort_number(sh...())
                 eval_trigger: ..
             beaufort_string:
                 name: wind gusts as beaufort string
                 type: str
-                eval: sh.plugins.get('openweathermap').get_beaufort_description( sh...beaufort_nr() )
+                eval: sh.plugins.return_plugin('openweathermap').get_beaufort_description( sh...beaufort_nr() )
                 eval_trigger: ..beaufort_nr
 
         wind_deg:
