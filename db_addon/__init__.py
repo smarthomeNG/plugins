@@ -104,7 +104,6 @@ class DatabaseAddOn(SmartPlugin):
 
         # define variables from plugin parameters
         self._pause_item_path = self.get_parameter_value('pause_item')
-        self._pause_item = None
         self.db_configname = self.get_parameter_value('database_plugin_config')
         self.startup_run_delay = self.get_parameter_value('startup_run_delay')
         self.ignore_0 = self.get_parameter_value('ignore_0')
