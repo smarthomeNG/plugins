@@ -69,7 +69,7 @@ class DatabaseAddOn(SmartPlugin):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
-        self.logger.debug(f'Start of {self.get_shortname()} Plugin.')
+        self.logger.debug(f'Start of {self.get_fullname()} Plugin.')
 
         # get item and shtime instance
         self.shtime = Shtime.get_instance()
@@ -104,6 +104,7 @@ class DatabaseAddOn(SmartPlugin):
 
         # define variables from plugin parameters
         self._pause_item_path = self.get_parameter_value('pause_item')
+        self._pause_item = None
         self.db_configname = self.get_parameter_value('database_plugin_config')
         self.startup_run_delay = self.get_parameter_value('startup_run_delay')
         self.ignore_0 = self.get_parameter_value('ignore_0')
@@ -114,7 +115,7 @@ class DatabaseAddOn(SmartPlugin):
 
         # path and filename for data storage
         data_storage_file = 'db_addon_data'
-        self.data_storage_path = f"{os.getcwd()}/var/plugin_data/{self.get_shortname()}/{data_storage_file}.pkl"
+        self.data_storage_path = f"{os.getcwd()}/var/plugin_data/{self.get_fullname()}/{data_storage_file}.pkl"
 
         # get debug log options
         self.debug_log = DebugLogOptions(self.log_level)
@@ -753,7 +754,7 @@ class DatabaseAddOn(SmartPlugin):
 
         # check for pause item
         if item is self._pause_item:
-            if caller != self.get_shortname():
+            if caller != self.get_fullname():
                 self.logger.debug(f'pause item changed to {item()}')
                 if item() and self.alive:
                     self.stop()
@@ -761,7 +762,7 @@ class DatabaseAddOn(SmartPlugin):
                     self.run()
             return
 
-        if self.alive and caller != self.get_shortname():
+        if self.alive and caller != self.get_fullname():
             # handle database items
             if item in self._database_items():
                 self.logger.debug(f" Updated Item {item.property.path} with value {item()} will be put to queue in approx. {self.onchange_delay_time}s resp. after startup.")
@@ -772,10 +773,10 @@ class DatabaseAddOn(SmartPlugin):
                 self.logger.debug(f"update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}")
                 if self.get_iattr_value(item.conf, 'db_addon_admin') == 'recalc_all':
                     self.execute_all_items()
-                    item(False, self.get_shortname())
+                    item(False, self.get_fullname())
                 elif self.get_iattr_value(item.conf, 'db_addon_admin') == 'clean_cache_values':
                     self._init_cache_dicts()
-                    item(False, self.get_shortname())
+                    item(False, self.get_fullname())
 
     def _save_pickle(self, data) -> None:
         """Saves received data as pickle to given file"""
@@ -958,7 +959,7 @@ class DatabaseAddOn(SmartPlugin):
                         _reset_items.update(set(self._onchange_yearly_items()))
 
             # reset der onchange items
-            [_item(0, self.get_shortname()) for _item in _reset_items]
+            [_item(0, self.get_fullname()) for _item in _reset_items]
 
             return list(_todo_items)
 
@@ -1140,7 +1141,7 @@ class DatabaseAddOn(SmartPlugin):
         self.logger.info(f"  Item value for '{item.property.path}' will be set to {result}")
         item_config = self.get_item_config(item)
         item_config.update({'value': result})
-        item(result, self.get_shortname())
+        item(result, self.get_fullname())
 
     def handle_onchange(self, updated_item: Item, value: float) -> None:
         """
@@ -1278,7 +1279,7 @@ class DatabaseAddOn(SmartPlugin):
             self.logger.info(f"  Item value for '{item.property.path}' with func={func} will be set to {new_value}")
             item_config = self.get_item_config(item)
             item_config.update({'value': new_value})
-            item(new_value, self.get_shortname())
+            item(new_value, self.get_fullname())
 
     def _update_database_items(self) -> None:
         """Turns given as database_item path into database_items"""
@@ -1597,8 +1598,12 @@ class DatabaseAddOn(SmartPlugin):
         if self.debug_log.prepare:
             self.logger.debug(f"called with {query_params=}")
 
+        # extract start and end out of query_params
+        _start = query_params.pop('start')
+        _end = query_params.pop('end')
+
         # get value for end and check it
-        query_params.update({'func': 'last'})
+        query_params.update({'func': 'last', 'start': _end, 'end': _end})
         value_end = self._query_item(**query_params)[0][1]
 
         if self.debug_log.prepare:
@@ -1609,7 +1614,7 @@ class DatabaseAddOn(SmartPlugin):
 
         # get value for start and check it
         # ToDo: Check if right start and end is used
-        query_params.update({'func': 'next'})
+        query_params.update({'func': 'next', 'start': _start, 'end': _start})
         value_start = self._query_item(**query_params)[0][1]
         if self.debug_log.prepare:
             self.logger.debug(f"{value_start=}")
