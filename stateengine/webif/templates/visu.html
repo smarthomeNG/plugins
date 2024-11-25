@@ -18,7 +18,7 @@
     display: flex;
     align-items: center;
     position: sticky;
-    top: 250px;
+    top: 270px;
     z-index: 1;
   }
   .buttonrow {
@@ -28,33 +28,33 @@
     opacity: 0.9;
     border: 3px solid white;
     padding: 10px;
-    overflow: hidden;
+    overflow: visible;
     width:100%;
     height:100%;
     z-index: -1;
+    visibility: hidden;
+    pointer-events: all;
   }
   #visu_parent {
     width:99%;
-    height:100%;
-    padding-bottom: 50px;
+    padding-bottom: 20px;
   }
   body {
     overflow-y: scroll;
+    overflow-x: hidden;
   }
-  #visu_div.active.hovered{
-    border: 3px solid darkred;
-  }
-  .enable_tooltip {
-  pointer-events: none;
+  .enable_scroll {
+    pointer-events: none;
   }
 </style>
 {% endblock pluginstyles %}
 {% block pluginscripts %}
-<script src="static/panzoom.min.js">
+<script src="static/svg-pan-zoom.min.js">
 </script>
 <script>
 function refreshGraph() {
   const graphContainer = document.getElementById('visu_div');
+  graphContainer.innerHTML = '';
   // Fetch the updated HTML content from the server (replace 'fetch_url' with the actual URL)
   fetch(window.location.href)
     .then(response => response.text())
@@ -68,7 +68,7 @@ function refreshGraph() {
 
       // Insert the extracted content into the target <div>
       graphContainer.innerHTML = graphContent;
-      initPanzoom();
+      graphContainer.querySelector('object').onload = function() { initPanzoom(); }
 
     })
     .catch(error => {
@@ -77,44 +77,161 @@ function refreshGraph() {
 
 }
 </script>
+
 <script>
 function initPanzoom() {
-  const elem = document.getElementById('visu_object');
-  if (elem !== null) {
-    const panzoom = Panzoom(elem, { canvas: true, animate: true, duration: 800, step: 0.2, maxScale: 3, minScale: 0.3, panOnlyWhenZoomed: true, roundPixels: true })
-    const parent = elem.parentElement;
+    const elem = document.getElementById('visu_object');
 
-    parent.addEventListener('wheel', function(event) {
-      if (!event.shiftKey) return
-      panzoom.zoomWithWheel(event);
-    })
+    if (elem == null) return;
+
+    let programmaticScroll = false;
+    var options = {
+        zoomEnabled: true,
+        controlIconsEnabled: false,
+        maxZoom: 3,
+        minZoom: 0.3,
+        contain: true,
+        fit: false,
+        zoomScaleSensitivity: 0.1,
+        dblClickZoomEnabled: true, // Enable double-click zoom
+        mouseWheelZoomEnabled: true,
+        onUpdatedCTM: function() {
+            // Triggered whenever zoom or pan changes
+            const pan = panzoom.getPan(); // Get the updated pan values
+            const zoom = Math.round(panzoom.getZoom() * 100) / 100; // Get the updated zoom level
+            document.getElementById('zoomSlider').value = zoom + '';
+            let update = false;
+            if (panZoomState.pan.x !== pan.x || panZoomState.pan.y !== pan.y)
+            {
+                console.log('Pan Updated:', pan);
+                panZoomState.pan = pan;
+                update = true;
+            }
+            if (panZoomState.zoom !== zoom) {
+                console.log('Zoom Updated:', zoom);
+                panZoomState.zoom = zoom;
+                update = true;
+            }
+            if (update === true)
+                savePanZoomState();
+        }
+    };
+
+    const urlObj = new URL(window.location.href);
+    const abitem = urlObj.searchParams.get('abitem');
+
+    let panZoomState = {
+        zoom: null,
+        pan: null,
+        scroll: null
+    };
+    const cookieData = getCookie(abitem);
+    const savedZoom = panZoomState.zoom = cookieData.zoom  || 1;
+    const savedPan = panZoomState.pan = cookieData.pan || {x: 0, y: 0};
+    const savedScroll = panZoomState.scroll = cookieData.scroll || {x: 0, y: 0};
+    const panzoom = svgPanZoom(elem, options);
+    panzoom.zoom(savedZoom);
+    panzoom.pan(savedPan);
+    programmaticScroll = true;
+    window.scrollTo(savedScroll.x, savedScroll.y);
+
+    const onScroll = debounce(() => {
+        if (programmaticScroll || (panZoomState.scroll.x === window.scrollX && panZoomState.scroll.y === window.scrollY)) {
+            programmaticScroll = false;
+        } else if (window.scrollY !== 0 ) {
+            panZoomState.scroll = {x: window.scrollX, y: window.scrollY};
+            setCookie(abitem, panZoomState, 365, window.pluginname);
+        }
+    }, 200);
+    window.addEventListener('scroll', onScroll);
+
+    const scrollEvent = new Event('scroll');
+    window.dispatchEvent(scrollEvent);
+    elem.style.visibility = 'visible';
+
+    // Debounce function
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), wait);
+        };
+    }
+
+    // Adjust object height
+    function adjustObjectHeight(zoomLevel, svgHeight, savedPan) {
+        const newHeight = svgHeight * zoomLevel + savedPan.y + 30;
+        svgObject.style.height = `${newHeight}px`;
+    }
+
+    // Function to save the state to localStorage
+    const savePanZoomState = debounce(() => {
+        setCookie(abitem, panZoomState, 365, window.pluginname);
+        adjustObjectHeight(panZoomState.zoom, svgHeight, panZoomState.pan);
+    }, 200);
+
+    const svgObject = document.getElementById('visu_object');
+    const svgHeight = svgObject.offsetHeight; // Height of the SVG object
+    svgObject.style.width = `100%`;
     const zoomInButton = document.getElementById('zoomInButton');
     const zoomOutButton = document.getElementById('zoomOutButton');
     const resetButton = document.getElementById('resetButton');
     const rangeInput = document.getElementById('zoomSlider');
-    const toolTip = document.getElementById('toolTip');
+    const scroll = document.getElementById('scroll');
 
-    toolTip.addEventListener('click', function() {
-      if ($('#visu_object').hasClass("enable_tooltip") || !toolTip.checked) {
-              $('#visu_object').removeClass("enable_tooltip");
+    scroll.addEventListener('click', function() {
+      if ($('#visu_object').hasClass("enable_scroll") || !scroll.checked) {
+              $('#visu_object').removeClass("enable_scroll");
           }
           else {
-              $('#visu_object').addClass("enable_tooltip");
+              $('#visu_object').addClass("enable_scroll");
           }
         });
-    zoomInButton.addEventListener('click', () => {
-         panzoom.zoomIn();
-         document.getElementById('zoomSlider').value = panzoom.getScale() + '';})
 
-    zoomOutButton.addEventListener('click', () => {
-         panzoom.zoomOut();
-         document.getElementById('zoomSlider').value = panzoom.getScale() + '';})
+    // Shared zoom functionality
+    function performZoom(zoomAction, targetZoom) {
+        const savedPan = panZoomState.pan || {x: 0, y: 0};
+        let savedZoom = panZoomState.zoom || 1;
+        savedZoom = savedZoom !== null ? parseFloat(savedZoom) : 1;
+
+        const scrollY = window.scrollY;
+        const totalScrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrollPercentage = totalScrollableHeight > 0 ? scrollY / totalScrollableHeight : 0;
+
+        if (zoomAction === "in") {
+            panzoom.zoomIn();
+        } else if (zoomAction === "out") {
+            panzoom.zoomOut();
+        } else if (zoomAction === "specific") {
+            panzoom.zoom(targetZoom);
+        }
+        const zoomNew = panzoom.getZoom();
+        const newScrollPercentage = scrollPercentage * (zoomNew / savedZoom);
+        const newScrollY = newScrollPercentage * totalScrollableHeight;
+        programmaticScroll = true;
+        window.scrollTo(0, newScrollY);
+
+        if (savedPan) {
+            savedPan.y *= zoomNew / savedZoom;
+            panzoom.pan(savedPan);
+        }
+        rangeInput.value = zoomNew; // Update slider
+    }
+
+    // Button handlers
+    zoomInButton.addEventListener('click', () => performZoom("in"));
+    zoomOutButton.addEventListener('click', () => performZoom("out"));
     resetButton.addEventListener('click', () => {
-         panzoom.reset();
-         document.getElementById('zoomSlider').value = panzoom.getScale() + '';})
+        panzoom.reset();
+        rangeInput.value = panzoom.getZoom();
+    });
+
     rangeInput.addEventListener('input', (event) => {
-      panzoom.zoom(event.target.valueAsNumber);})
-  }
+        const targetZoom = event.target.valueAsNumber;
+        performZoom("specific", targetZoom);
+    });
+
 }
 </script>
 <script>
@@ -146,12 +263,14 @@ function initPanzoom() {
 <script>
 window.addEventListener('load', function() {
   initPanzoom();
+
   if ("{{firstrun}}" != 'None'){
     window.update_active = true;
     refresh.set_interval(5000, false);
   }
 });
 </script>
+
 {% endblock pluginscripts %}
 {% set update_interval = 0 %}
 {% set logo_frame = false %}
@@ -165,18 +284,16 @@ window.addEventListener('load', function() {
     <a href="static/img/visualisations/{{ item }}.svg" style="display: inline-block; position: relative; z-index: 1;" target="_blank">
       {{ _('Klicken zum Öffnen des SVG Files') }}</a>
     <br>
-    Mittels Buttons und Slider kann jederzeit gezoomt werden. Ist die Zoom-Funktion aktiviert,
-    kann zusätzlich bei Halten der "Shift"-Taste  mittels Mausrad in der Grafik gezoomt werden.
-    Die linke Maustaste ermöglicht dann auch ein Verschieben des Ausschnitts. Dabei werden
-    allerdings die Tooltips nicht angezeigt - hierfür ist die Zoom-Funktion zu deaktivieren.
+    Mittels Buttons und Slider kann jederzeit gezoomt werden. Sofern "Scrollen" nicht aktiv ist, kann
+    das Mausrad zum zielgerichteten Zoomen und die linke Maustaste zum Verschieben des Ausschnitts genutzt werden.
 
   </div>
   <div class="buttons" id="fixed">
     <button id="zoomInButton" class="buttonrow btn btn-shng btn-sm">{{_('Zoom +')}}</button>
     <button id="zoomOutButton" class="buttonrow btn btn-shng btn-sm">{{_('Zoom -')}}</button>
-    <input type="range" id="zoomSlider" min="0.3" max="3" defaultvalue="1" step="0.2" class="buttonrow">
+    <input type="range" id="zoomSlider" min="0.3" max="3" value="1" step="0.2" class="slider">
     <button id="resetButton" class="buttonrow btn btn-shng btn-sm">{{_('Zoom Reset')}}</button>
-    <input type="checkbox" id="toolTip" name="Tooltip" class="buttonrow">{{_('Zoom/Pan aktiv')}}
+    <input type="checkbox" id="scroll" name="scroll" class="buttonrow">{{_('Scrollen aktiv')}}
   </div>
 
   <div class="container-fluid m-2" id="visu_div">
