@@ -3014,7 +3014,7 @@ class Sonos(SmartPlugin):
             speaker_ips = self.get_parameter_value("speaker_ips")
             self._pause_item_path = self.get_parameter_value('pause_item')
         except KeyError as e:
-            self.logger.critical(f"Plugin '{self.get_shortname()}': Inconsistent plugin (invalid metadata definition: {e} not defined)")
+            self.logger.critical(f"Plugin '{self.get_fullname()}': Inconsistent plugin (invalid metadata definition: {e} not defined)")
             self._init_complete = False
             return
 
@@ -3113,7 +3113,7 @@ class Sonos(SmartPlugin):
 
             if self.has_iattr(item.conf, 'sonos_recv'):
                 # create Speaker instance if not exists
-                _initialize_speaker(uid, self.logger, self.get_shortname())
+                _initialize_speaker(uid, self.logger, self.get_fullname())
 
                 # to make code smaller, map sonos_cmd value to the Speaker property by name
                 item_attribute = self.get_iattr_value(item.conf, 'sonos_recv')
@@ -3241,7 +3241,7 @@ class Sonos(SmartPlugin):
     def _handle_dpt3(self, item, caller=None, source=None, dest=None):
         """Handle relative volumen change via a received relative dim command (dpt3) by making use of internal fadeing"""
 
-        if caller != self.get_shortname():
+        if caller != self.get_fullname():
             item_config = self.get_item_config(item)
             volume_item = item_config['volume_item']
             volume_helper_item = item_config['helper']
@@ -3249,7 +3249,7 @@ class Sonos(SmartPlugin):
             vol_time = item_config['dpt3_time']
             vol_max = max(0, self._resolve_max_volume_command(item)) or 100
             _current_volume = max(0, min(100, int(volume_item())))
-            volume_helper_item(_current_volume, self.get_shortname())
+            volume_helper_item(_current_volume, self.get_fullname())
 
             if item()[1] == 1:
                 self.logger.debug(f"Starte relative Lautstärkeänderung.")
@@ -3263,7 +3263,7 @@ class Sonos(SmartPlugin):
                     volume_helper_item.fade(0 - vol_step, vol_step, vol_time)
             else:
                 self.logger.debug(f"Stoppe relative Lautstärkeänderung.")
-                volume_helper_item(int(volume_helper_item()), self.get_shortname())
+                volume_helper_item(int(volume_helper_item()), self.get_fullname())
 
     def _check_webservice_ip(self, webservice_ip: str) -> bool:
         if not webservice_ip == '' and not webservice_ip == '0.0.0.0':
@@ -3291,7 +3291,7 @@ class Sonos(SmartPlugin):
         else:
             self.logger.error(f"Your webservice_port parameter is invalid. '{webservice_port}' is not within port range 1024-65535. TTS disabled!")
             return False
-            
+
         return True
 
     def _check_local_webservice_path(self, local_webservice_path: str) -> bool:
@@ -3467,7 +3467,7 @@ class Sonos(SmartPlugin):
         """
 
         # check for pause item
-        if item is self._pause_item and caller != self.get_shortname():
+        if item is self._pause_item and caller != self.get_fullname():
             self.logger.debug(f'pause item changed to {item()}')
             if item() and self.alive:
                 self.stop()
@@ -3797,7 +3797,7 @@ class Sonos(SmartPlugin):
                             # sonos_speaker[uid].check_subscriptions()
                 else:
                     self.logger.warning(f"Initializing new speaker with uid={uid} and ip={zone.ip_address}")
-                    _initialize_speaker(uid, self.logger, self.get_shortname())
+                    _initialize_speaker(uid, self.logger, self.get_fullname())
                     sonos_speaker[uid].soco = zone
 
                 sonos_speaker[uid].is_initialized = True
