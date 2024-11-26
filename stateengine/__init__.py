@@ -47,7 +47,7 @@ logging.addLevelName(StateEngineDefaults.VERBOSE, 'DEVELOP')
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '2.2.0'
+    PLUGIN_VERSION = '2.2.1'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
@@ -207,10 +207,12 @@ class StateEngine(SmartPlugin):
             finallist.append(self._items[i])
         return finallist
 
-    def get_graph(self, abitem, graphtype='link'):
+    def get_graph(self, abitem, graphtype='link', width=1, height=1):
         if isinstance(abitem, str):
             abitem = self._items[abitem]
         webif = StateEngineWebif.WebInterface(abitem)
+        webif.width = width
+        webif.height = height
         try:
             os.makedirs(self.path_join(self.get_plugin_dir(), 'webif/static/img/visualisations/'))
         except OSError:

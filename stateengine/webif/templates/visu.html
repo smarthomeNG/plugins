@@ -29,7 +29,7 @@
     border: 3px solid white;
     padding: 10px;
     overflow: visible;
-    width:100%;
+    width:98%;
     height:100%;
     z-index: -1;
     visibility: hidden;
@@ -298,7 +298,7 @@ window.addEventListener('load', function() {
 
   <div class="container-fluid m-2" id="visu_div">
 
-      {{ p.get_graph(item, 'graph') }}
+      {{ p.get_graph(item, 'graph', 1, 1) }}
   </div>
 {% else %}
   <div style="margin-top:15px;">
