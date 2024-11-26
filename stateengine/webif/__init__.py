@@ -63,7 +63,7 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        item = self.plugin.get_sh().return_item(item_path)
+        item = self.plugin.get_sh().items.return_item(item_path)
 
         tmpl = self.tplenv.get_template('{}.html'.format(page))
         pagelength = self.plugin.get_parameter_value('webif_pagelength')

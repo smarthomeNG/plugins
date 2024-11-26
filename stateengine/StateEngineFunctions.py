@@ -97,7 +97,7 @@ class SeFunctions:
             elog.decrease_indent()
             return None
 
-        item = self.__sh.return_item(item_id)
+        item = self.__sh.items.return_item(item_id)
         if item is None:
             self.logger.error("manual_item_update_eval: item {0} not found!".format(item_id))
 
@@ -111,7 +111,7 @@ class SeFunctions:
 
             if "se_manual_logitem" in item.conf:
                 elog_item_id = item.conf["se_manual_logitem"]
-                elog_item = self.__sh.return_item(elog_item_id)
+                elog_item = self.__sh.items.return_item(elog_item_id)
                 if elog_item is None:
                     self.logger.error("manual_item_update_item: se_manual_logitem {0} not found!".format(elog_item_id))
                     elog = StateEngineLogger.SeLoggerDummy()

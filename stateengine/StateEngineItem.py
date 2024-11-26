@@ -2162,7 +2162,7 @@ class SeItem:
         if isinstance(item_id, (StateEngineStruct.SeStruct, self.__itemClass)):
             return item_id, None
         if isinstance(item_id, StateEngineState.SeState):
-            return self.__sh.return_item(item_id.id), None
+            return self.__sh.items.return_item(item_id.id), None
         if item_id is None:
             _issue = "item_id is None"
             return None, [_issue]
@@ -2203,7 +2203,7 @@ class SeItem:
                 self.__logger.warning(_issue)
                 return None, [_issue]
             else:
-                item = self.__sh.return_item(item_id)
+                item = self.__sh.items.return_item(item_id)
             if item is None:
                 _issue = "Item '{0}' not found.".format(item_id)
                 self.__logger.warning(_issue)
@@ -2226,7 +2226,7 @@ class SeItem:
         rel_item_id = item_id[parent_level:]
         if rel_item_id != "":
             result += "." + rel_item_id
-        item = self.__sh.return_item(result)
+        item = self.__sh.items.return_item(result)
         if item is None:
             _issue = "Determined item '{0}' does not exist.".format(item_id)
             self.__logger.warning(_issue)
