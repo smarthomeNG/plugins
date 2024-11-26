@@ -194,7 +194,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     _count += 1
                 _issue = StateEngineTools.flatten_list(_issue_list)
         except ValueError as ex:
-            _issue = {name: {'issue': ex, 'issueorigin': [{'state': 'unknown', 'action': self.__actions[name].function}], 'ignore': True}}
+            _issue = {name: {'issue': [str(ex)], 'attribute': func, 'issueorigin': [{'state': self.__state.id, 'action': self.__actions[name].function}], 'ignore': True}}
             if name in self.__actions:
                 del self.__actions[name]
             self._log_warning("Ignoring action {0} because: {1}", attribute, ex)
@@ -208,7 +208,7 @@ class SeActions(StateEngineTools.SeItemChild):
             if function not in ["set", "force"]:
                 _issue = {
                     name: {'issue': ['Parameter force not supported for this function'],
-                           'attribute': 'force', 'issueorigin': [{'state': 'unknown', 'action': function}]}}
+                           'attribute': 'force', 'issueorigin': [{'state': self.__state.id, 'action': function}]}}
                 _issue = "Parameter 'force' not supported for this function"
                 self._log_warning("Attribute 'se_action_{0}': Parameter 'force' not supported "
                                   "for function '{1}'", name, function)
@@ -231,7 +231,7 @@ class SeActions(StateEngineTools.SeItemChild):
             # Parameter mode is supported only for type "remove"
             if "remove" not in function:
                 _issue = {name: {'issue': ['Parameter mode only supported for remove function'], 'attribute': 'mode',
-                                 'issueorigin': [{'state': 'unknown', 'action': function}]}}
+                                 'issueorigin': [{'state': self.__state.id, 'action': function}]}}
                 self._log_warning("Attribute 'se_action_{0}': Parameter 'mode' not supported for function '{1}'",
                                   name, function)
             elif function in ["remove", "remove all from list"]:
@@ -247,7 +247,7 @@ class SeActions(StateEngineTools.SeItemChild):
                 else:
                     _issue = {
                         name: {'issue': ['Parameter {} not allowed for mode!'.format(value)], 'attribute': 'mode',
-                               'issueorigin': [{'state': 'unknown', 'action': function}]}}
+                               'issueorigin': [{'state': self.__state.id, 'action': function}]}}
                     self._log_warning(
                         "Attribute 'se_action_{0}': Parameter '{1}' for 'mode' is wrong - can only be {2}",
                         name, value, possible_mode_list)
@@ -365,7 +365,7 @@ class SeActions(StateEngineTools.SeItemChild):
         def remove_action(e):
             if name in self.__actions:
                 del self.__actions[name]
-            i = {name: {'issue': [e], 'issueorigin': [{'state': 'unknown', 'action': parameter['function']}], 'ignore': True}}
+            i = {name: {'issue': [str(e)], 'attribute': 'unknown', 'issueorigin': [{'state': self.__state.id, 'action': parameter['function']}], 'ignore': True}}
             _issue_list.append(i)
             self._log_warning("Ignoring action {0} because: {1}", name, e)
 
@@ -584,7 +584,7 @@ class SeActions(StateEngineTools.SeItemChild):
             try:
                 _status.update(self.__actions[name].complete(evals_items, use))
             except ValueError as ex:
-                _status.update({name: {'issue': ex, 'issueorigin': {'state': self.__state.id, 'action': 'unknown'}}})
+                _status.update({name: {'issue': [str(ex)], 'issueorigin': {'state': self.__state.id, 'action': name}}})
                 raise ValueError("Completing State '{0}', Action '{1}': {2}".format(self.__state.id, name, ex))
         return _status
 
