@@ -231,11 +231,9 @@ class StateEngine(SmartPlugin):
                 except Exception:
                     formatted_date = "Unbekannt"
                 return f'<div style="margin-bottom:15px;">{self.translate("Letzte Aktualisierung:")} {formatted_date}<br></div>\
-                        <object type="image/svg+xml" data="static/img/visualisations/{abitem}.svg"\
-                        style="max-width: 100%; height: auto; width: auto;" id="visu_object">\
+                        <object type="image/svg+xml" data="static/img/visualisations/{abitem}.svg" id="visu_object">\
                         <iframe src="static/img/visualisations/{abitem}.svg">\
-                        <img src="static/img/visualisations/{abitem}.svg"\
-                        style="max-width: 100%; height: auto; width: auto;">\
+                        <img src="static/img/visualisations/{abitem}.svg">\
                         </iframe></object>'
             else:
                 return ''

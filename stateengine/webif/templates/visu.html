@@ -35,6 +35,11 @@
     visibility: hidden;
     pointer-events: all;
   }
+  #visu_object {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
   #visu_parent {
     width:99%;
     padding-bottom: 20px;
@@ -119,6 +124,8 @@ function initPanzoom() {
 
     const urlObj = new URL(window.location.href);
     const abitem = urlObj.searchParams.get('abitem');
+    const svgObject = document.getElementById('visu_object');
+    const svgHeight = svgObject.offsetHeight; // Height of the SVG object
 
     let panZoomState = {
         zoom: null,
@@ -171,9 +178,6 @@ function initPanzoom() {
         adjustObjectHeight(panZoomState.zoom, svgHeight, panZoomState.pan);
     }, 200);
 
-    const svgObject = document.getElementById('visu_object');
-    const svgHeight = svgObject.offsetHeight; // Height of the SVG object
-    svgObject.style.width = `100%`;
     const zoomInButton = document.getElementById('zoomInButton');
     const zoomOutButton = document.getElementById('zoomOutButton');
     const resetButton = document.getElementById('resetButton');
