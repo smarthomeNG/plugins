@@ -592,19 +592,29 @@ class SeState(StateEngineTools.SeItemChild):
                 return
             for itm, dct in action_status.items():
                 if itm not in self.__action_status[actn_type]:
-                    self.__action_status[actn_type].update({itm: dct})
+                    self.__action_status[actn_type][itm] = dct
+                else:
+                    for key, value in dct.items():
+                        if key not in self.__action_status[actn_type][itm]:
+                            self.__action_status[actn_type][itm][key] = value
 
             for (itm, dct) in action_status.items():
                 issues = dct.get('issue')
                 attributes = dct.get('attribute')
+                if not isinstance(attributes, list):
+                    attributes = [attributes]
+                if not isinstance(self.__action_status[actn_type][itm].get('attribute'), list):
+                    self.__action_status[actn_type][itm]['attribute'] = [self.__action_status[actn_type][itm].get('attribute')]
                 if issues:
                     if isinstance(issues, list):
+                        attributes = (attributes + [None] * len(issues))[:len(issues)]
                         for i, issue in enumerate(issues):
                             if issue not in self.__action_status[actn_type][itm]['issue']:
                                 self.__action_status[actn_type][itm]['issue'].append(issue)
                                 self.__action_status[actn_type][itm]['attribute'].append(attributes[i])
 
             flattened_dict = {}
+
             for key, action_type_dict in self.__action_status.items():
                 # Iterate through the inner dictionaries
                 for inner_key, nested_dict in action_type_dict.items():
@@ -616,6 +626,7 @@ class SeState(StateEngineTools.SeItemChild):
                     flattened_dict[inner_key].update(nested_dict)
 
             self.__used_attributes = deepcopy(flattened_dict)
+
             self.__action_status = filter_issues(self.__action_status)
             self._abitem.update_attributes(self.__unused_attributes, self.__used_attributes)
 

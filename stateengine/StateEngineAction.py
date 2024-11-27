@@ -927,7 +927,7 @@ class SeActionSetByattr(SeActionBase):
     # value: Value of the set_(action_name) attribute
     def update(self, value):
         self.__byattr = value
-        _issue = {self._name: {'issue': None, 'attribute': self.__byattr,
+        _issue = {self._name: {'issue': None, 'attribute': [self.__byattr],
                                'issueorigin': [{'state': self._state.id, 'action': self._function}]}}
         return _issue
 
@@ -938,7 +938,7 @@ class SeActionSetByattr(SeActionBase):
         self._abitem.set_variable('current.action_name', self._name)
         self._abitem.set_variable('current.state_name', self._state.name)
         self._scheduler_name = "{}-SeByAttrDelayTimer".format(self.__byattr)
-        _issue = {self._name: {'issue': None, 'attribute': self.__byattr,
+        _issue = {self._name: {'issue': None, 'attribute': [self.__byattr],
                                'issueorigin': [{'state': self._state.id, 'action': self._function}]}}
         self._abitem.set_variable('current.action_name', '')
         self._abitem.set_variable('current.state_name', '')

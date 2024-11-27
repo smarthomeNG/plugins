@@ -164,10 +164,10 @@ class SeActions(StateEngineTools.SeItemChild):
                     # If we do not have the action yet (mode-attribute before action-attribute), ...
                     self.__unassigned_modes[name] = value
                 else:
-                    _val, _issue = self.__actions[name].update_mode(value)
+                    _issue = self.__actions[name].update_mode(value)
                     if _issue:
                         _issue_list.append(_issue)
-                    _issue, _action = self.__check_mode_setting(name, _val, self.__actions[name].function, self.__actions[name])
+                    _issue, _action = self.__check_mode_setting(name, value, self.__actions[name].function, self.__actions[name])
                     if _issue:
                         _issue_list.append(_issue)
                     if _action:
@@ -194,7 +194,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     _count += 1
                 _issue = StateEngineTools.flatten_list(_issue_list)
         except ValueError as ex:
-            _issue = {name: {'issue': [str(ex)], 'attribute': func, 'issueorigin': [{'state': self.__state.id, 'action': self.__actions[name].function}], 'ignore': True}}
+            _issue = {name: {'issue': [str(ex)], 'attribute': [func], 'issueorigin': [{'state': self.__state.id, 'action': self.__actions[name].function}], 'ignore': True}}
             if name in self.__actions:
                 del self.__actions[name]
             self._log_warning("Ignoring action {0} because: {1}", attribute, ex)
@@ -208,8 +208,7 @@ class SeActions(StateEngineTools.SeItemChild):
             if function not in ["set", "force"]:
                 _issue = {
                     name: {'issue': ['Parameter force not supported for this function'],
-                           'attribute': 'force', 'issueorigin': [{'state': self.__state.id, 'action': function}]}}
-                _issue = "Parameter 'force' not supported for this function"
+                           'attribute': ['force'], 'issueorigin': [{'state': self.__state.id, 'action': function}]}}
                 self._log_warning("Attribute 'se_action_{0}': Parameter 'force' not supported "
                                   "for function '{1}'", name, function)
             elif value and function == "set":
@@ -230,7 +229,7 @@ class SeActions(StateEngineTools.SeItemChild):
             _issue = None
             # Parameter mode is supported only for type "remove"
             if "remove" not in function:
-                _issue = {name: {'issue': ['Parameter mode only supported for remove function'], 'attribute': 'mode',
+                _issue = {name: {'issue': ['Parameter mode only supported for remove function'], 'attribute': ['mode'],
                                  'issueorigin': [{'state': self.__state.id, 'action': function}]}}
                 self._log_warning("Attribute 'se_action_{0}': Parameter 'mode' not supported for function '{1}'",
                                   name, function)
@@ -246,7 +245,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     self._log_info("Attribute 'se_action_{0}': Function 'remove' changed to '{1}'", name, value)
                 else:
                     _issue = {
-                        name: {'issue': ['Parameter {} not allowed for mode!'.format(value)], 'attribute': 'mode',
+                        name: {'issue': ['Parameter {} not allowed for mode!'.format(value)], 'attribute': ['mode'],
                                'issueorigin': [{'state': self.__state.id, 'action': function}]}}
                     self._log_warning(
                         "Attribute 'se_action_{0}': Parameter '{1}' for 'mode' is wrong - can only be {2}",
@@ -365,9 +364,9 @@ class SeActions(StateEngineTools.SeItemChild):
         def remove_action(e):
             if name in self.__actions:
                 del self.__actions[name]
-            i = {name: {'issue': [str(e)], 'attribute': 'unknown', 'issueorigin': [{'state': self.__state.id, 'action': parameter['function']}], 'ignore': True}}
+            i = {name: {'issue': [str(e)], 'attribute': [f'se_action_{name}'], 'issueorigin': [{'state': self.__state.id, 'action': parameter['function']}], 'ignore': True}}
             _issue_list.append(i)
-            self._log_warning("Ignoring action {0} because: {1}", name, e)
+            self._log_warning("Removed action {0} because: {1}.", name, e)
 
         parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'nextconditionset': None, 'conditionset': None,
                      'previousconditionset': None, 'previousstate_conditionset': None, 'mode': None, 'instanteval': None, 'mindelta': None, 'minagedelta': None}
@@ -395,18 +394,18 @@ class SeActions(StateEngineTools.SeItemChild):
                 else:
                     parameter[key] = val
             except Exception as ex:
-                remove_action("Problem with entry {} for action {}: {}".format(entry, name, ex))
+                remove_action("Problem with entry {}: {}".format(entry, ex))
         if _issue_list:
             return _issue_list
         parameter['action'] = name
 
         # function given and valid?
         if parameter['function'] is None:
-            remove_action("Attribute 'se_action_{0}: Parameter 'function' must be set!".format(name))
+            remove_action("Parameter 'function' must be set!")
             return _issue_list
         if parameter['function'] not in ('set', 'force', 'run', 'byattr', 'trigger', 'special',
                                          'add', 'remove', 'removeall', 'removefirst', 'removelast'):
-            remove_action("Attribute 'se_action_{0}: Invalid value '{1}' for parameter 'function'!".format(name, parameter['function']))
+            remove_action("Invalid value '{}' for parameter 'function'!".format(parameter['function']))
             return _issue_list
 
         _issue, parameter['function'] = self.__check_force_setting(name, parameter['force'], parameter['function'])
@@ -571,8 +570,7 @@ class SeActions(StateEngineTools.SeItemChild):
     # noinspection PyMethodMayBeStatic
     def __raise_missing_parameter_error(self, parameter, param_name):
         if param_name not in parameter or parameter[param_name] is None:
-            raise ValueError("Attribute 'se_action_{0}: Parameter '{1}' must be set for "
-                             "function '{2}'!".format(parameter['action'], param_name, parameter['function']))
+            raise ValueError("Parameter '{0}' must be set for function '{1}'!".format(param_name, parameter['function']))
 
     # Check the actions optimize and complete them
     # state: state (item) to read from
