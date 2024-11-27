@@ -1,0 +1,83 @@
+{% extends "base_plugin.html" %}
+{% set logo_frame = false %}
+{% set update_interval = 30000 %}
+
+<!--
+        Additional styles go into this block. Examples are for datatables
+-->
+{% block pluginstyles %}
+{% endblock pluginstyles %}
+
+<!--
+        Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+{% endblock pluginscripts %}
+
+{% block headtable %}
+<span id='suspended' style="display:none">{{ p.suspended }}</span>
+
+<table class="table table-striped table-hover">
+    <tbody>
+	<tr>
+	    <td class="py-1"><strong>Model</strong></td>
+	    <td class="py-1">PIUSV+</td>
+	    <td class="py-1" width="25px"></td>
+	    <td class="py-1"><strong>SN</strong></td>
+	    <td class="py-1">{{ p.rpi_sn }}</td>
+	    <td class="py-1" width="25px"></td>
+	    <td class="py-1"><strong>Interval</strong></td>
+	    <td class="py-1">{{ p.poll_cycle }}s</td>
+	    <td class="py-1" width="25px"></td>
+	</tr>
+    </tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+        Define the number of tabs for the body of the web interface (1 - 6)
+-->
+{% set tabcount = 1 %}
+
+{% if item_count > 0 %}
+        {% set start_tab = 1 %}
+{% endif %}
+
+
+<!--
+        Define tab title
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
+
+<!--
+        Content block for the first tab of the Webinterface
+-->
+{% block bodytab1 %}
+        <table id="maintable" class="table table-striped table-hover pluginList display">
+            <thead>
+                <tr>
+                <th></th>
+                <th>{{ _('Item') }}</th>
+                <th class="attribute">{{ _('Attribute') }}</th>
+                <th class="type">{{_('Type')}}</th>
+                <th class="value" style="text-align: right">{{_('Value')}}</th>
+                <th style="text-align: center">{{_('Last Update')}}</th>
+                <th style="text-align: center">{{_('Last Change')}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                    <tr><td></td>
+                        <td class="py-1">{{ item._path }}</td>
+                        <td class="py-1">{{ p.get_iattr_value(item.conf, 'piusv_func') }}</td>
+                        <td class="py-1">{{ item._type }}</td>
+                        <td class="py-1" id="{{ item._path }}_value" style="text-align: right">{{ item._value }}</td>
+                        <td class="py-1" id="{{ item._path }}_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item._path }}_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+{% endblock bodytab1 %}
