@@ -1,0 +1,205 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zum Auslesen Informationen aus der PIUSV+'
+        en: 'Plugin to readout information from PIUSV+'
+    maintainer: SergeoLacruz
+    tester: SergeoLacruz                        # Who tests this plugin?
+    state: develop                   # change to ready when done with development
+    keywords: usv
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 0.1.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.8              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: false           # plugin supports multi instance
+    restartable: unknown
+    classname: piusv             # class containing the plugin
+
+parameters:
+    poll_cycle:
+        type: int
+        default: 120
+        description:
+            de: 'Zyklus, in dem die Informationen abgefragt werden sollen.'
+            en: 'Poll cycle of information.'
+    i2c_address:
+        type: int
+        default: 0x18
+        description:
+            de: 'I2C Adresse der PIUPS+'
+            en: 'I2C address of the PIUPS+'
+
+
+
+item_attributes:
+    piusv_func:
+        type: str
+        description:
+            de: 'Funktion des piusv Plugins'
+            en: 'Function of piusv Plugins'
+        valid_list:
+            - 'v_batt'
+            - 'i_rasp'
+            - 'u_rasp'
+            - 'u_usb'
+            - 'u_ext'
+            - 'piusv_status'
+            - 'piusv_firmware'
+
+    piusv_sys:
+        type: str
+        description:
+            de: 'Attribut für globale Plugin Items zum Triggern eines Update'
+            en: 'Attribute for global plugin items to trigger value read update'
+        valid_list:
+          - update
+        valid_list_description:
+            de:
+                - 'Startet bei Triggerung ein Update der Daten'
+            en:
+                - 'Rereads rpi data'
+
+item_structs:
+    piusv_info:
+        name: Struct für Information über die piusv
+
+        update_piusv_info:
+            type: bool
+            piusv_sys: update
+
+        v_batt:
+            type: num
+            piusv_func: v_batt
+            visu_acl: ro
+
+        i_rasp:
+            type: num
+            piusv_func: i_rasp
+            visu_acl: ro
+
+        u_rasp:
+            type: num
+            piusv_func: u_rasp
+            visu_acl: ro
+
+        u_ext:
+            type: num
+            piusv_func: u_ext
+            visu_acl: ro
+
+        u_usb:
+            type: num
+            piusv_func: u_usb
+            visu_acl: ro
+
+        piusv_status:
+            type: num
+            piusv_func: piusv_status
+            visu_acl: ro
+
+        piusv_firmware:
+            type: str
+            piusv_func: piusv_firmware
+            visu_acl: ro
+
+    piusv_info_db:
+        name: Struct für Information über piusv mit database
+
+        update_piusv_info:
+            type: bool
+            piusv_sys: update
+
+        v_batt:
+            type: num
+            piusv_func: v_batt
+            visu_acl: ro
+
+        i_rasp:
+            type: num
+            piusv_func: i_rasp
+            visu_acl: ro
+
+        u_rasp:
+            type: num
+            piusv_func: u_rasp
+            visu_acl: ro
+
+        u_ext:
+            type: num
+            piusv_func: u_ext
+            visu_acl: ro
+
+        u_usb:
+            type: num
+            piusv_func: u_usb
+            visu_acl: ro
+
+        piusv_status:
+            type: num
+            piusv_func: piusv_status
+            visu_acl: ro
+
+        piusv_firmware:
+            type: str
+            piusv_func: piusv_firmware
+            visu_acl: ro
+
+item_attribute_prefixes: NONE
+
+plugin_functions:
+    v_batt:
+        type: int
+        description:
+            de: 'Batteriespannung'
+            en: 'Battery Voltage'
+
+    i_rasp:
+        type: int
+        description:
+            de: 'Stromaufnahme von Raspberry'
+            en: 'Current consumprion of raspberry'
+
+    u_rasp:
+        type: bool
+        description:
+            de: 'Versorgungsspannung des Raspberry'
+            en: 'Supply voltage of raspberry'
+
+    u_usb:
+        type: bool
+        description:
+            de: 'USB voltage'
+            en: 'Voltage on USB port'
+
+    u_ext:
+        type: bool
+        description:
+            de: 'Versorgungsspannung der PIUSV+'
+            en: 'Supply voltage of PIUSV+'
+
+    piusv_status:
+        type: bool
+        description:
+            de: 'Status der PIUSV+'
+            en: 'Status byte of PIUSV+'
+
+    piusv_firmware:
+        type: str
+        description:
+            de: 'Firmware version der PIUSV+'
+            en: 'Firmware version byte of PIUSV+'
+
+    suspend:
+        type: bool
+        description:
+            de: 'Pausiert das Plugins'
+            en: 'Suspends plugin'
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
