@@ -22,10 +22,10 @@ from . import StateEngineTools
 from . import StateEngineEval
 from . import StateEngineValue
 from . import StateEngineDefaults
-from . import StateEngineCurrent
 import datetime
 from lib.shtime import Shtime
 import re
+from lib.item import Items
 
 
 # Base class from which all action classes are derived
@@ -67,6 +67,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def __init__(self, abitem, name: str):
         super().__init__(abitem)
         self._se_plugin = abitem.se_plugin
+        self.itemsApi = Items.get_instance()
         self._parent = self._abitem.id
         self._caller = StateEngineDefaults.plugin_identification
         self.shtime = Shtime.get_instance()
@@ -964,7 +965,7 @@ class SeActionSetByattr(SeActionBase):
         self._log_info("{0}: Setting values by attribute '{1}'.{2}", actionname, self.__byattr, repeat_text)
         self.update_webif_actionstatus(state, self._name, 'True')
         source = self.set_source(current_condition, previous_condition, previousstate_condition, next_condition)
-        for item in self._sh.find_items(self.__byattr):
+        for item in self.itemsApi.find_items(self.__byattr):
             self._log_info("\t{0} = {1}", item.property.path, item.conf[self.__byattr])
             item(item.conf[self.__byattr], caller=self._caller, source=source)
         self._abitem.last_run = {self._name: datetime.datetime.now()}

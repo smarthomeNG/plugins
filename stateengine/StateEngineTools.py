@@ -23,7 +23,7 @@ from . import StateEngineLogger
 import datetime
 from ast import literal_eval
 import re
-from lib.item.items import Items
+from lib.item import Items
 
 
 # General class for everything that is below the SeItem Class

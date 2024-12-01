@@ -34,7 +34,7 @@ from . import StateEngineEval
 
 from lib.shtime import Shtime
 from lib.item.item import Item
-from lib.item.items import Items
+from lib.item import Items
 import copy
 import threading
 import queue
@@ -201,6 +201,7 @@ class SeItem:
     # se_plugin: smartplugin instance
     def __init__(self, smarthome, item, se_plugin):
         self.__item = item
+        self.itemsApi = Items.get_instance()
         self.__logger = SeLogger.create(self.__item)
         self.__logging_off = False
         self.update_lock = threading.Lock()
@@ -2162,7 +2163,7 @@ class SeItem:
         if isinstance(item_id, (StateEngineStruct.SeStruct, self.__itemClass)):
             return item_id, None
         if isinstance(item_id, StateEngineState.SeState):
-            return self.__sh.items.return_item(item_id.id), None
+            return self.itemsApi.return_item(item_id.id), None
         if item_id is None:
             _issue = "item_id is None"
             return None, [_issue]
@@ -2203,7 +2204,7 @@ class SeItem:
                 self.__logger.warning(_issue)
                 return None, [_issue]
             else:
-                item = self.__sh.items.return_item(item_id)
+                item = self.itemsApi.return_item(item_id)
             if item is None:
                 _issue = "Item '{0}' not found.".format(item_id)
                 self.__logger.warning(_issue)
@@ -2226,7 +2227,7 @@ class SeItem:
         rel_item_id = item_id[parent_level:]
         if rel_item_id != "":
             result += "." + rel_item_id
-        item = self.__sh.items.return_item(result)
+        item = self.itemsApi.return_item(result)
         if item is None:
             _issue = "Determined item '{0}' does not exist.".format(item_id)
             self.__logger.warning(_issue)

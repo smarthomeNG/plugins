@@ -33,6 +33,7 @@ import logging
 import os
 import copy
 from lib.model.smartplugin import *
+from lib.item import Items
 from .webif import WebInterface
 from datetime import datetime
 
@@ -55,6 +56,7 @@ class StateEngine(SmartPlugin):
         super().__init__()
         StateEngineDefaults.logger = self.logger
         self._items = self.abitems = {}
+        self.itemsApi = Items.get_instance()
         self.mod_http = None
         self.__sh = sh
         self.alive = False
@@ -130,9 +132,9 @@ class StateEngine(SmartPlugin):
     # Initialization of plugin
     def run(self):
         # Initialize
-        StateEngineStructs.global_struct = copy.deepcopy(self.__sh.items.return_struct_definitions())
+        StateEngineStructs.global_struct = copy.deepcopy(self.itemsApi.return_struct_definitions())
         self.logger.info("Init StateEngine items")
-        for item in self.__sh.find_items("se_plugin"):
+        for item in self.itemsApi.find_items("se_plugin"):
             if item.conf["se_plugin"] == "active":
                 try:
                     abitem = StateEngineItem.SeItem(self.__sh, item, self)
