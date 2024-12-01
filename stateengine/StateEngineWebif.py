@@ -418,6 +418,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                 self.__graph.add_node(self.__nodes[state])
                 self.__graph.add_node(self.__nodes['{}_right'.format(state)])
                 conditionset_nodeheights = []
+                actions_nodeheights = []
                 actionlist_enter = ''
                 actionlist_stay = ''
                 actionlist_leave = ''
@@ -519,6 +520,9 @@ class WebInterface(StateEngineTools.SeItemChild):
 
                     new_x = 17.5 * self.__widthfactor
                     if not actionlist_enter == '':
+                        nodeheight = 0.2 + len(re.findall(r'<tr class="actionentry">', actionlist_stay)) * 0.26
+                        nodeheight /= 2
+                        actions_nodeheights.append(nodeheight)
                         position = '{},{}!'.format(new_x, new_y)
                         xlabel = '1 tooltip' if action_tooltip_count_enter == 1\
                                  else '{} tooltips'.format(action_tooltip_count_enter)\
@@ -532,7 +536,13 @@ class WebInterface(StateEngineTools.SeItemChild):
                         self._add_actioncondition(state, conditionset, 'actions_enter', new_y, cond1, cond2)
 
                     if not actionlist_stay == '':
-                        new_y -= 1.5 * self.__heightfactor if not actionlist_enter == '' else 0
+                        nodeheight = 0.2 + max(2, len(re.findall(r'<tr class="actionentry">', actionlist_stay))) * 0.26
+                        nodeheight /= 2
+                        new_y -= nodeheight * self.__heightfactor
+                        actions_nodeheights.append(nodeheight)
+                        new_y -= actions_nodeheights[j - 1] * self.__heightfactor
+
+                        #new_y -= 1.5 * self.__heightfactor if not actionlist_enter == '' else 0
                         position = '{},{}!'.format(new_x, new_y)
 
                         xlabel = '1 tooltip' if action_tooltip_count_stay == 1\
