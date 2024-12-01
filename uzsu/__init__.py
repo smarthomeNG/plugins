@@ -653,6 +653,7 @@ class UZSU(SmartPlugin):
             _caller = "dry_run"
         _next = None
         _value = None
+        _listentry = None
         self._update_sun(item, caller=_caller)
         self._add_dicts(item)
         if not self._items[item]['interpolation'].get('itemtype') or \
@@ -678,10 +679,12 @@ class UZSU(SmartPlugin):
                 if _next is None:
                     _next = next
                     _value = value
+                    _listentry = i
                 elif next and next < _next:
                     self.logger.debug(f'uzsu active entry for item {item} using now {next}, value {value} and tzinfo {next.tzinfo}')
                     _next = next
                     _value = value
+                    _listentry = i
                 else:
                     self.logger.debug(f'uzsu active entry for item {item} keep {_next}, value {_value} and tzinfo {_next.tzinfo}')
         elif not self._items[item].get('list') and self._items[item].get('active') is True:
@@ -762,7 +765,7 @@ class UZSU(SmartPlugin):
                 self._webdata['items'][item.property.path].update({'planned': {'value': _value, 'time': _next.strftime('%d.%m.%Y %H:%M')}})
                 self._update_count['done'] = self._update_count.get('done', 0) + 1
                 self.scheduler_add(item.property.path, self._set,
-                                   value={'item': item, 'value': _value, 'caller': 'Scheduler'}, next=_next)
+                                   value={'item': item, 'value': _value, 'caller': 'Scheduler', 'listentry': _listentry}, next=_next)
                 if self._update_count.get('done') == self._update_count.get('todo'):
                     self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
                     self._update_count = {'done': 0, 'todo': 0}
@@ -771,18 +774,25 @@ class UZSU(SmartPlugin):
             self._planned.update({item: None})
             self._webdata['items'][item.property.path].update({'planned': {'value': '-', 'time': '-'}})
 
-    def _set(self, item=None, value=None, caller=None):
+    def _set(self, item=None, value=None, caller=None, listentry=None):
         """
         This function sets the specific item
-        :param item:    item to be updated towards the plugin
-        :param value:   value the item should be set to
-        :param caller:  if given it represents the callers name
+        :param item:       item to be updated towards the plugin
+        :param value:      value the item should be set to
+        :param caller:     if given it represents the callers name
+        :param listentry:  if given it represents the index of the entry in uzsu list responsible for setting the value
         """
         _uzsuitem, _itemvalue = self._get_dependant(item)
         _uzsuitem(value, 'UZSU Plugin', 'set')
         self._webdata['items'][item.property.path].update({'depend': {'item': _uzsuitem.property.path, 'value': str(_itemvalue)}})
+        if self._items[item]['list'][listentry].get('once'):
+            self._items[item]['list'][listentry]['active'] = False
+            self._update_item(item, 'UZSU Plugin', 'once')
+            self.logger.debug(
+                f'Deactivate list entry {self._items[item]["list"][listentry]} of item {item} as it has "once" set to True')
         if self._items[item].get('once'):
             self.activate(False, item, 'once')
+            self.logger.debug(f'Deactivate UZSU for item {item} as it has "once" set to True')
         if not caller or caller == "Scheduler":
             self._schedule(item, caller='set')
 
