@@ -1,0 +1,244 @@
+%YAML 1.1
+---
+plugin:
+    classname: Smartmeter
+    version: '0.0.1'                 # Plugin version
+    sh_minversion: '1.10'             # minimum shNG version to use this plugin
+    py_minversion: '3.9'             # minimum Python version to use for this plugin, due to f-strings
+    type: gateway                  # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Unterstützung für Smartmeter, die DLMS (Device Language Message Specification, IEC 62056-21) oder SML (Smart Message Language) nutzen und OBIS Codes liefern'
+        en: 'Support for smartmeter using DLMS (Device Language Message Specification, IEC 62056-21) or SML (Smart Message Language) and delivering OBIS codes'
+    maintainer: Morg
+    tester: bmxp, onkelandy
+    state: develop
+    keywords: smartmeter ehz dlms sml obis smartmeter
+    multi_instance: true           # plugin supports multi instance
+    restartable: true
+    # support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1002464-support-thread-für-dlms-plugin
+
+parameters:
+    protocol:
+        type: str
+        valid_list:
+            - DLMS
+            - SML
+            - ''
+        default: ''
+        description:
+            de: 'Protokoll zur Kommunikation mit dem Smartmeter. Leerer Wert bedeutet automatische Erkennung (soweit erfolgreich).'
+            en: 'protocol for communicating with the smartmeter. Empty value means try to detect protocol automagically.'
+    serialport:
+        type: str
+        description:
+            de: 'Serieller Port, an dem das Smartmeter angeschlossen ist'
+            en: 'serial port at which the smartmeter is attached'
+    timeout:
+        type: int
+        default: 2
+        description:
+            de: 'Timeout in Sekunden nach dem der Lesevorgang automatisch beendet wird'
+            en: 'timeout in seconds for automatic abortion of readout'
+    baudrate:
+        type: int
+        valid_min: 50
+        default: 9600
+        description:
+            de: 'Baudrate, bei der die Kommunikation erfolgen soll'
+            en: 'Baudrate at which the communikation should take place'
+    cycle:
+        type: int
+        valid_min: 0
+        default: 60
+        description:
+            de: 'Zeitlicher Abstand zwischen zwei Abfragen des Smartmeters in Sekunden, setzen auf 0 schaltet cycle aus'
+            en: 'Time between two queries of smartmeter in seconds, set to zero will switch off usage of cycle'
+    crontab:
+        type: str
+        description:
+            de: 'Abfragen des Smartmeters mit Festlegung via Crontab'
+            en: 'Queries of smartmeter by means of a crontab'
+
+    # DLMS parameters
+    baudrate_min:
+        type: int
+        valid_min: 50
+        default: 300
+        description:
+            de: 'Baudrate, bei der die Kommunikation zuerst erfolgen soll (nur DLMS)'
+            en: 'Baudrate at which the communication should be initiated (DLMS only)'
+    baudrate_fix:
+        type: bool
+        default: false
+        description:
+            de: 'Baudrate beibehalten trotz Änderungsanforderung (nur DLMS)'
+            en: 'Keep up baudrate in communication despite of change request'
+    device_address:
+        type: str
+        default: ''
+        description:
+            de: 'Interne Unteradresse des Smartmeters (nur DLMS)'
+            en: 'Internal subadress of smartmeter (DLMS only)'
+    querycode:
+        type: str
+        default: '?'
+        description:
+            de: 'Abfragecode für den Smartmeter, default ist `?`, einige Smartmeter akzeptieren z.B. `2` (nur DLMS)'
+            en: 'querycode of smartmeter, defaults to `?`, some smartmeter accept e.g. `2` (DLMS only)'
+    use_checksum:
+        type: bool
+        default: true
+        description:
+            de: 'Wenn wahr, wird eine Prüfsumme über die ausgelesenen Daten gebildet (nur DLMS)'
+            en: 'if true then a checksum will be calculated of the readout result'
+    only_listen:
+        type: bool
+        default: False
+        description:
+            de: 'Manche Smartmeter können nicht abgefragt werden sondern senden von sich aus Informationen. Für diese Smartmeter auf True setzen und die Baudrate anpassen (nur DLMS)'
+            en: 'Some smartmeter can not be queried, they send information without request. For those devices set to True and adjust baudrate'
+
+    # SML parameters
+    buffersize:
+        type: int
+        default: 1024
+        description:
+            de: 'Größe des Lesepuffers. Mindestens doppelte Größe der maximalen Nachrichtenlänge in Bytes (nur SML)'
+            en: 'Size of read buffer. At least twice the size of maximum message length (SML only)'
+    host:
+        type: str
+        description:
+            de: 'Host der eine IP Schnittstelle bereitstellt (nur SML)'
+            en: 'Host that provides an IP interface (SML only)'
+    port:
+        type: int
+        description:
+            de: 'Port für die Kommunikation (nur SML)'
+            en: 'Port for communication (SML only)'
+    device_type:
+        type: str
+        default: 'raw'
+        description:
+            de: 'Name des Gerätes (nur SML)'
+            en: 'Name of Smartmeter (SML only)'
+    date_offset:
+        type: int
+        default: 0
+        description:
+            de: 'Unix timestamp der Smartmeter Inbetriebnahme (nur SML)'
+            en: 'Unix timestamp of Smartmeter start-up after installation (SML only)'
+    poly:
+        type: int
+        default: 0x1021
+        description:
+            de: 'Polynom für die crc Berechnung (nur SML)'
+            en: 'Polynomial for crc calculation (SML only)'
+    reflect_in:
+        type: bool
+        default: true
+        description:
+            de: 'Umkehren der Bitreihenfolge für die Eingabe (nur SML)'
+            en: 'Reflect the octets in the input (SML only)'
+    xor_in:
+        type: int
+        default: 0xffff
+        description:
+            de: 'Initialer Wert für XOR Berechnung (nur SML)'
+            en: 'Initial value for XOR calculation (SML only)'
+    reflect_out:
+        type: bool
+        default: true
+        description:
+            de: 'Umkehren der Bitreihenfolge der Checksumme vor der Anwendung des XOR Wertes (nur SML)'
+            en: 'Reflect the octet of checksum before application of XOR value (SML only)'
+    xor_out:
+        type: int
+        default: 0xffff
+        description:
+            de: 'XOR Berechnung der CRC mit diesem Wert (nur SML)'
+            en: 'XOR final CRC value with this value (SML only)'
+    swap_crc_bytes:
+        type: bool
+        default: false
+        description:
+            de: 'Bytereihenfolge der berechneten Checksumme vor dem Vergleich mit der vorgegeben Checksumme tauschen (nur SML)'
+            en: 'Swap bytes of calculated checksum prior to comparison with given checksum (SML only)'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    obis_code:
+        type: str
+        description:
+            de: OBIS-Code, dessen Wert gelesen werden soll
+            en: obis code to be read
+    obis_index:
+        type: int
+        default: 0
+        valid_min: 0
+        valid_max: 10
+        description:
+            de: Index des OBIS-Werts, der gelesen werden soll
+            en: index of the obis value to be read
+    obis_property:
+        type: str
+        default: value
+        valid_list:
+            - value
+            - unit
+        description:
+            de: >
+                Eigenschaft des gelesenen Wertes:
+                * value: gelesener Wert (siehe obis_index)
+                * unit: zurückgegebene Einheit des Wertes
+            en: >
+                property of the read data:
+                * value: read obis value (see obis_index)
+                * unit: read unit of value
+    obis_vtype:
+        type: str
+        default: ''
+        valid_list:
+            - str
+            - num
+            - int
+            - float
+            - ZST12
+            - ZST10
+            - D6
+            - Z6
+            - Z4
+            - ''
+        description:
+            de: >
+                Konvertierungsart des gelesenen Wertes:
+                * str: eine Zeichenkette
+                * num: numerisch, entweder Ganzzahl oder Fließkommazahl
+                * int: Ganzzahl
+                * float: Fließkommazahl
+                * ZST12: Datum und Zeit codiert als YYMMDDhhmmss
+                * ZST10: Datum und Zeit codiert als YYMMDDhhmm
+                * D6: Datum codiert als YYMMDD
+                * Z4: Zeit codiert als hhmm
+                * Z6: Zeit codiert als hhmmss
+            en: >
+                type conversion of read value:
+                * str: a string
+                * num: a number, integer or floating point number
+                * int: an integer number
+                * float: a floating point number
+                * ZST12: date and time coded as YYMMDDhhmmss
+                * ZST10: date and time coded as YYMMDDhhmm
+                * D6: date coded as YYMMDD
+                * Z4: time coded as hhmm
+                * Z6: time coded as hhmmss                
+    obis_readout:
+        type: str
+        description:
+            de: 'Der komplette Auslesepuffer wird für eigene Untersuchungen gespeichert'
+            en: 'the complete readout will be saved for own examinations'
+
+logic_parameters: NONE
+
+plugin_functions: NONE
+
+item_structs: NONE
