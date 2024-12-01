@@ -367,6 +367,7 @@ class WebInterface(StateEngineTools.SeItemChild):
         new_y = 2
         previous_state = ''
         previous_conditionset = ''
+        above_nodeheights = []
         for i, state in enumerate(self.__states):
             #self._log_debug('Adding state for webif {}', self.__states[state])
             if isinstance(self.__states[state], (OrderedDict, dict)):
@@ -379,10 +380,11 @@ class WebInterface(StateEngineTools.SeItemChild):
                     list_index = 0
                 color = "olivedrab" if state == self.__active_state \
                     else "gray" if i > list_index else "indianred2"
-
-                new_y -= 1.5 * self.__heightfactor
-                position = '{},{}!'.format(0, new_y)
+                
                 if not i == 0:
+                    new_y -= above_nodeheights[i-1] * self.__heightfactor
+                    position = '{},{}!'.format(0, new_y)
+                    
                     condition_node = 'pass' if self.__nodes.get('{}_pass'.format(previous_state)) \
                             else 'leave' if self.__nodes.get('{}_leave'.format(previous_state)) \
                             else list(self.__states[previous_state]['conditionsets'].keys())[-1]
@@ -415,7 +417,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                                                                         shape="square", width="0", label="")
                 self.__graph.add_node(self.__nodes[state])
                 self.__graph.add_node(self.__nodes['{}_right'.format(state)])
-                conditionset_positions = []
+                conditionset_nodeheights = []
                 actionlist_enter = ''
                 actionlist_stay = ''
                 actionlist_leave = ''
@@ -485,14 +487,14 @@ class WebInterface(StateEngineTools.SeItemChild):
                             self._actionlabel(state, 'actions_pass', conditionset, active)
 
                     conditionlist, condition_tooltip, condition_tooltip_count = self._conditionlabel(state, conditionset)
-                    nodeheight = 1 + len(re.findall(r'<tr class="conditionheader">', conditionlist)) * 0.26
+                    nodeheight = 1 + len(re.findall(r'<tr class="conditionheader">', conditionlist)) * 0.23
                     nodeheight += len(re.findall(r'<tr class="conditionline">', conditionlist)) * 0.16
-                    nodeheight += len(re.findall(r'<tr class="conditionentry">', conditionlist)) * 0.26
+                    nodeheight += len(re.findall(r'<tr class="conditionentry">', conditionlist)) * 0.23
                     nodeheight /= 2
                     new_y -= nodeheight * self.__heightfactor
-                    conditionset_positions.append(nodeheight)
+                    conditionset_nodeheights.append(nodeheight)
                     if j > 0:
-                        new_y -= conditionset_positions[j-1] * self.__heightfactor
+                        new_y -= conditionset_nodeheights[j-1] * self.__heightfactor
                     else:
                         new_y -= 0.8 * self.__heightfactor
                     position = '{},{}!'.format(10 * self.__widthfactor, new_y)
@@ -641,7 +643,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_pass'.format(state)],
                                                          self.__nodes['{}_actions_pass'.format(state)], style='bold',
                                                          taillabel="    True",  tooltip='run pass actions'))
-
+                above_nodeheights.append(conditionset_nodeheights[-1])
                 previous_state = state
 
         result = self.__graph.write_svg(filename, prog='neato')
