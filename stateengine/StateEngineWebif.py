@@ -210,7 +210,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     if condition not in conditions_done:
                         current_clean = ", ".join(f"{k} = {v}" for k, v in current.items())
                         text = " Current {}".format(current_clean) if current is not None and len(current) > 0 else " Not evaluated."
-                        conditionlist += ('<tr><td align="center" colspan="4"><table border="0" cellpadding="0" '
+                        conditionlist += ('<tr><td align="center" colspan="2"><table border="0" cellpadding="0" '
                                           'cellborder="0"><tr class="conditionheader"><td></td><td align="center">{}:{}</td>'
                                           '<td></td></tr><tr class="conditionline">'
                                           '<td width="40%"></td><td align="center" border="1" height="1"></td>'
@@ -277,7 +277,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     else:
                         info = "n/a"
 
-                    conditionlist += '{}</b></td>'.format(info)
+                    conditionlist += '{}</b>'.format(info)
                     comparison = "&#62;=" if not min_none and compare == "min"\
                                  else "&#60;=" if not max_none and compare == "max"\
                                  else "older" if not agemin_none and compare == "agemin"\
@@ -300,7 +300,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                         match_info = match.get('value') if compare in ["min", "max", "value"]\
                                      else match.get('age') if compare in ["agemin", "agemax", "age"]\
                                      else match.get(compare)
-                    conditionlist += '<td align="center" width="5">{}</td><td align="center">'.format(comparison)
+                    conditionlist += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{}&nbsp;&nbsp;&nbsp;'.format(comparison)
                     conditionlist += '"{}"'.format(info) if not item_none and not status_none \
                         and not eval_none and not status_eval_none else ''
 
@@ -319,7 +319,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                                  else '<img src="sign_warn.png" />' if match_info and len(match_info) > 0 \
                                  else ''
                     conditionlist += '</td><td>{}</td></tr>'.format(match_info)
-        conditionlist += '<tr><td></td><td></td><td></td><td></td></tr></table>>'
+        conditionlist += '<tr><td></td><td></td></tr></table>>'
         return conditionlist, condition_tooltip, tooltip_count
 
     def _add_actioncondition(self, state, conditionset, action_type, new_y, cond1, cond2):
