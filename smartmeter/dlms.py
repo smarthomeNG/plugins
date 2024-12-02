@@ -301,6 +301,7 @@ def query(config) -> dict:
             logger.error(f"Serial port '{serial_port}' could not be opened")
         else:
             logger.error(f"Serial port '{serial_port}' could be opened but somehow not accessed")
+        return {}
     except OSError:
         logger.error(f"Serial port '{serial_port}' does not exist, please check the spelling")
         return {}

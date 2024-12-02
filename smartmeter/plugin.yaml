@@ -23,6 +23,8 @@ parameters:
         valid_list:
             - DLMS
             - SML
+            - dlms
+            - sml
             - ''
         default: ''
         description:

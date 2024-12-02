@@ -44,6 +44,7 @@ from lib.model.smartplugin import SmartPlugin
 from lib.item.item import Item
 from lib.shtime import Shtime
 from collections.abc import Callable
+from typing import Union
 
 from . import dlms
 from . import sml
@@ -89,6 +90,7 @@ class Smartmeter(SmartPlugin, Conversion):
 
         # load parameters from config
         self._protocol = None
+        self._proto_detect = False
         self.load_parameters()
 
         # quit if errors on parameter read
@@ -143,7 +145,7 @@ class Smartmeter(SmartPlugin, Conversion):
 
         # get mode (SML/DLMS) if set by user
         # if not set, try to get at runtime
-        self._protocol = self.get_parameter_value('protocol')
+        self._protocol = self.get_parameter_value('protocol').upper()
 
         # DLMS only
         self._config['dlms'] = {}
@@ -203,12 +205,14 @@ class Smartmeter(SmartPlugin, Conversion):
             # TODO: call DLMS/SML discovery routines to find protocol
             if sml.discover(self._config):
                 self._protocol = 'SML'
+                self._proto_detect = True
             elif dlms.discover(self._config):
                 self._protocol = 'DLMS'
+                self._proto_detect = True
 
         self.alive = True
         if self._protocol:
-            self.logger.info(f'set/detected protocol {self._protocol}')
+            self.logger.info(f'{"detected" if self._proto_detect else "set"} protocol {self._protocol}')
         else:
             self.logger.error('unable to auto-detect device protocol (SML/DLMS). Try manual disconvery via standalone mode or Web Interface.')
             # skip cycle / crontab scheduler if no protocol set (only manual control from web interface)
@@ -235,7 +239,7 @@ class Smartmeter(SmartPlugin, Conversion):
         except Exception:
             pass
 
-    def parse_item(self, item: Item) -> Callable | None:
+    def parse_item(self, item: Item) -> Union[Callable, None]:
         """
         Default plugin parse_item method. Is called when the plugin is initialized.
 
