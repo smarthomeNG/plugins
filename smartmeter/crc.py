@@ -45,13 +45,26 @@ This is an example use of the different algorithms:
     print("{0:#x}".format(crc.table_driven("123456789")))
 """
 
+
 class Crc(object):
     """
     A base class for CRC routines.
+
+    Default parameters are set to necessary CRC16 values for SML calculations
     """
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self, width, poly, reflect_in, xor_in, reflect_out, xor_out, table_idx_width=None, slice_by=1):
+    def __init__(
+        self,
+        width: int = 16,
+        poly: int = 0x1021,
+        reflect_in: bool = True,
+        xor_in: int = 0xffff,
+        reflect_out: bool = True,
+        xor_out: int = 0xffff,
+        table_idx_width: int = 8,
+        slice_by: int = 1
+    ):
         """The Crc constructor.
 
         The parameters are as follows:
@@ -75,11 +88,7 @@ class Crc(object):
 
         self.msb_mask = 0x1 << (self.width - 1)
         self.mask = ((self.msb_mask - 1) << 1) | 1
-        if self.tbl_idx_width != None:
-            self.tbl_width = 1 << self.tbl_idx_width
-        else:
-            self.tbl_idx_width = 8
-            self.tbl_width = 1 << self.tbl_idx_width
+        self.tbl_width = 1 << self.tbl_idx_width
 
         self.direct_init = self.xor_in
         self.nondirect_init = self.__get_nondirect_init(self.xor_in)
@@ -87,7 +96,6 @@ class Crc(object):
             self.crc_shift = 8 - self.width
         else:
             self.crc_shift = 0
-
 
     def __get_nondirect_init(self, init):
         """
@@ -103,7 +111,6 @@ class Crc(object):
                 crc |= self.msb_mask
         return crc & self.mask
 
-
     def reflect(self, data, width):
         """
         reflect a data word, i.e. reverts the bit order.
@@ -115,7 +122,6 @@ class Crc(object):
             data >>= 1
             res = (res << 1) | (data & 0x01)
         return res
-
 
     def bit_by_bit(self, in_data):
         """
@@ -147,7 +153,6 @@ class Crc(object):
             reg = self.reflect(reg, self.width)
         return (reg ^ self.xor_out) & self.mask
 
-
     def bit_by_bit_fast(self, in_data):
         """
         This is a slightly modified version of the bit-by-bit algorithm: it
@@ -173,7 +178,6 @@ class Crc(object):
         if self.reflect_out:
             reg = self.reflect(reg, self.width)
         return reg ^ self.xor_out
-
 
     def gen_table(self):
         """
@@ -203,7 +207,6 @@ class Crc(object):
                 tbl[j][i] = (tbl[j - 1][i] >> 8) ^ tbl[0][tbl[j - 1][i] & 0xff]
         return tbl
 
-
     def table_driven(self, in_data):
         """
         The Standard table_driven CRC algorithm.
@@ -232,4 +235,3 @@ class Crc(object):
         if self.reflect_out:
             reg = self.reflect(reg, self.width)
         return reg ^ self.xor_out
-

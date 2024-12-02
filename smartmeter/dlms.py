@@ -34,10 +34,8 @@ __revision__ = "0.1"
 __docformat__ = 'reStructuredText'
 
 import logging
-import datetime
 import time
 import serial
-import re
 
 from ruamel.yaml import YAML
 
@@ -391,14 +389,14 @@ def query(config) -> dict:
         # Some meters do initiate a protocol by themselves with a fixed speed of 2400 baud e.g. Mode D
         # However some meters specify a speed of 9600 Baud although they use protocol mode D (readonly)
         #
-        # Protocol_Mode = 'A'
+        # protocol_mode = 'A'
         #
         # The communication of the plugin always stays at the same speed,
         # Protocol indicator can be anything except for A-I, 0-9, /, ?
         #
         baudrates = {
             # mode A
-            '': 300,
+            '': (300, 'A'),
             # mode B
             'A': (600, 'B'),
             'B': (1200, 'B'),
@@ -416,7 +414,6 @@ def query(config) -> dict:
             '6': (19200, 'C'),
         }
 
-# TODO: cur
         baudrate_id = chr(identification_message[4])
         if baudrate_id not in baudrates:
             baudrate_id = ''
@@ -428,48 +425,47 @@ def query(config) -> dict:
             if chr(identification_message[6]) == '2':
                 logger.debug("HDLC protocol could be used if it was implemented")
             else:
-                logger.debug("Another protocol could probably be used if it was implemented")
+                logger.debug(f"another protocol could probably be used if it was implemented, id is {identification_message[6]}")
 
         # for protocol C or E we now send an acknowledge and include the new baudrate parameter
         # maybe todo
         # we could implement here a baudrate that is fixed to somewhat lower speed if we need to
         # read out a smartmeter with broken communication
-        Action = b'0' # Data readout, possible are also b'1' for programming mode or some manufacturer specific
-        acknowledge = b'\x060'+ baudrate_id.encode() + Action + b'\r\n'
+        action = b'0'  # Data readout, possible are also b'1' for programming mode or some manufacturer specific
+        acknowledge = b'\x060' + baudrate_id.encode() + action + b'\r\n'
 
-        if Protocol_Mode == 'C':
+        if protocol_mode == 'C':
             # the speed change in communication is initiated from the reading device
             time.sleep(wait_before_acknowledge)
-            logger.debug(f"Using protocol mode C, send acknowledge {acknowledge} and tell smartmeter to switch to {NewBaudrate} Baud")
+            logger.debug(f"using protocol mode C, send acknowledge {acknowledge} and tell smartmeter to switch to {new_baudrate} baud")
             try:
                 dlms_serial.write(acknowledge)
             except Exception as e:
-                logger.warning(f"Warning {e}")
-                return
+                logger.warning(f"error on sending baudrate change: {e}")
+                return {}
             time.sleep(wait_after_acknowledge)
-            #dlms_serial.flush()
-            #dlms_serial.reset_input_buffer()
-            if (NewBaudrate != initial_baudrate):
+            # dlms_serial.flush()
+            # dlms_serial.reset_input_buffer()
+            if (new_baudrate != initial_baudrate):
                 # change request to set higher baudrate
-                dlms_serial.baudrate = NewBaudrate
+                dlms_serial.baudrate = new_baudrate
 
-        elif Protocol_Mode == 'B':
+        elif protocol_mode == 'B':
             # the speed change in communication is initiated from the smartmeter device
             time.sleep(wait_before_acknowledge)
-            logger.debug(f"Using protocol mode B, smartmeter and reader will switch to {NewBaudrate} Baud")
+            logger.debug(f"using protocol mode B, smartmeter and reader will switch to {new_baudrate} baud")
             time.sleep(wait_after_acknowledge)
-            #dlms_serial.flush()
-            #dlms_serial.reset_input_buffer()
-            if (NewBaudrate != initial_baudrate):
+            # dlms_serial.flush()
+            # dlms_serial.reset_input_buffer()
+            if (new_baudrate != initial_baudrate):
                 # change request to set higher baudrate
-                dlms_serial.baudrate = NewBaudrate
+                dlms_serial.baudrate = new_baudrate
         else:
-            logger.debug(f"No change of readout baudrate, "
-                            "smartmeter and reader will stay at {NewBaudrate} Baud")
+            logger.debug(f"no change of readout baudrate, smartmeter and reader will stay at {new_baudrate} baud")
 
         # now read the huge data block with all the OBIS codes
         logger.debug("Reading OBIS data from smartmeter")
-        response = read_data_block_from_serial(dlms_serial, None)
+        response = read_data_block_from_serial(dlms_serial, b'')
     else:
         # only listen mode, starts with / and last char is !
         # data will be in between those two
@@ -595,75 +591,68 @@ def query(config) -> dict:
     except Exception as e:
         logger.debug(f"error while extracting data: '{e}'")
 
-# end TODO
-
     return rdict
 
-# f __name__ == '__main__':
-#    import sys
-#    import argparse
 
-#    parser = argparse.ArgumentParser(description='Query a smartmeter at a given port for DLMS output',
-#                                     usage='use "%(prog)s --help" for more information',
-#                                     formatter_class=argparse.RawTextHelpFormatter)
-#    parser.add_argument('port', help='specify the port to use for the smartmeter query, e.g. /dev/ttyUSB0 or /dev/dlms0')
-#    parser.add_argument('-v', '--verbose', help='print verbose information', action='store_true')
-#    parser.add_argument('-t', '--timeout', help='maximum time to wait for a message from the smartmeter', type=float, default=3.0 )
-#    parser.add_argument('-b', '--baudrate', help='initial baudrate to start the communication with the smartmeter', type=int, default=300 )
-#    parser.add_argument('-d', '--device', help='give a device address to include in the query', default='' )
-#    parser.add_argument('-q', '--querycode', help='define alternative query code\ndefault query code is ?\nsome smartmeters provide additional information when sending\nan alternative query code, e.g. 2 instead of ?', default='?' )
-#    parser.add_argument('-l', '--onlylisten', help='Only listen to serial, no active query', action='store_true' )
-#    parser.add_argument('-f', '--baudrate_fix', help='Keep baudrate speed fixed', action='store_false' )
-#    parser.add_argument('-c', '--nochecksum', help='use a checksum', action='store_false' )
+if __name__ == '__main__':
+    import argparse
 
-#    args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='Query a smartmeter at a given port for DLMS output',
+                                     usage='use "%(prog)s --help" for more information',
+                                     formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('port', help='specify the port to use for the smartmeter query, e.g. /dev/ttyUSB0 or /dev/dlms0')
+    parser.add_argument('-v', '--verbose', help='print verbose information', action='store_true')
+    parser.add_argument('-t', '--timeout', help='maximum time to wait for a message from the smartmeter', type=float, default=3.0)
+    parser.add_argument('-b', '--baudrate', help='initial baudrate to start the communication with the smartmeter', type=int, default=300)
+    parser.add_argument('-d', '--device', help='give a device address to include in the query', default='')
+    parser.add_argument('-q', '--querycode', help='define alternative query code\ndefault query code is ?\nsome smartmeters provide additional information when sending\nan alternative query code, e.g. 2 instead of ?', default='?')
+    parser.add_argument('-l', '--onlylisten', help='only listen to serial, no active query', action='store_true')
+    parser.add_argument('-f', '--baudrate_fix', help='keep baudrate speed fixed', action='store_false')
+    parser.add_argument('-c', '--nochecksum', help='don\'t use a checksum', action='store_false')
 
-#    config = {}
+    args = parser.parse_args()
 
-#    config['serial_port'] = args.port
-#    config['device'] = args.device
-#    config['querycode'] = args.querycode
-#    config['baudrate'] = args.baudrate
-#    config['baudrate_fix'] = args.baudrate_fix
-#    config['timeout'] = args.timeout
-#    config['onlylisten'] = args.onlylisten
-#    config['use_checksum'] = args.nochecksum
+    config = {}
 
-#    if args.verbose:
-#        logging.getLogger().setLevel(logging.DEBUG)
-#        ch = logging.StreamHandler()
-#        ch.setLevel(logging.DEBUG)
-#        # create formatter and add it to the handlers
-#        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s  @ %(lineno)d')
-#        #formatter = logging.Formatter('%(message)s')
-#        ch.setFormatter(formatter)
-#        # add the handlers to the logger
-#        logging.getLogger().addHandler(ch)
-#    else:
-#        logging.getLogger().setLevel(logging.DEBUG)
-#        ch = logging.StreamHandler()
-#        ch.setLevel(logging.DEBUG)
-#        # just like print
-#        formatter = logging.Formatter('%(message)s')
-#        ch.setFormatter(formatter)
-#        # add the handlers to the logger
-#        logging.getLogger().addHandler(ch)
+    config['serial_port'] = args.port
+    config['timeout'] = args.timeout
+    config['dlms'] = {}
+    config['dlms']['querycode'] = args.querycode
+    config['dlms']['baudrate_min'] = args.baudrate
+    config['dlms']['baudrate_fix'] = args.baudrate_fix
+    config['dlms']['onlylisten'] = args.onlylisten
+    config['dlms']['use_checksum'] = args.nochecksum
+    config['dlms']['device'] = args.device
 
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+        # create formatter and add it to the handlers
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s  @ %(lineno)d')
+        # formatter = logging.Formatter('%(message)s')
+        ch.setFormatter(formatter)
+        # add the handlers to the logger
+        logging.getLogger().addHandler(ch)
+    else:
+        logging.getLogger().setLevel(logging.DEBUG)
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+        # just like print
+        formatter = logging.Formatter('%(message)s')
+        ch.setFormatter(formatter)
+        # add the handlers to the logger
+        logging.getLogger().addHandler(ch)
 
-#    logger.info("This is DLMS Plugin running in standalone mode")
-#    logger.info("==============================================")
+    logger.info("This is Smartmeter Plugin, DLMS module, running in standalone mode")
+    logger.info("==================================================================")
 
-#    result = query(config)
+    result = query(config)
 
-#    if result is None:
-#        logger.info(f"No results from query, maybe a problem with the serial port '{config['serial_port']}' given ")
-#        logger.info("==============================================")
-#    elif len(result) > 0:
-#        logger.info("These are the results of the query")
-#        logger.info("==============================================")
-#        logger.info(result)
-#        logger.info("==============================================")
-#    else:
-#        logger.info("The query did not get any results!")
-#        logger.info("Maybe the serial was occupied or there was an error")
-
+    if result is None:
+        logger.info(f"No results from query, maybe a problem with the serial port '{config['serial_port']}' given.")
+    elif len(result) > 0:
+        logger.info("These are the results of the query:")
+        logger.info(result)
+    else:
+        logger.info("The query did not get any results. Maybe the serial port was occupied or there was an error.")

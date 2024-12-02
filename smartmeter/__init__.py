@@ -201,9 +201,6 @@ class Smartmeter(SmartPlugin, Conversion):
 
         if not self._protocol:
             # TODO: call DLMS/SML discovery routines to find protocol
-#
-# TODO: module.discover needs to probe for communication and return True if succeeded
-#
             if sml.discover(self._config):
                 self._protocol = 'SML'
             elif dlms.discover(self._config):
@@ -289,14 +286,14 @@ class Smartmeter(SmartPlugin, Conversion):
         if self._lock.acquire(blocking=False):
             self.logger.debug('lock acquired')
             try:
-#
-# module.query needs to return a dict:
-# {
-#     'readout':    '<full readout str>', (only for dlms?)
-#     'obis1':    [{'value': val0, optional 'unit': unit1}, {'value': val1, optional 'unit': unit1'}]
-#     'obis2':    [{...}]
-# }
-#
+                #
+                # module.query needs to return a dict:
+                # {
+                #     'readout':    '<full readout str>', (only for dlms?)
+                #     'obis1':    [{'value': val0, optional 'unit': unit1}, {'value': val1, optional 'unit': unit1'}]
+                #     'obis2':    [{...}]
+                # }
+                #
                 result = self._get_module().query(self._config)
                 if not result:
                     self.logger.warning('no results from smartmeter query received')
