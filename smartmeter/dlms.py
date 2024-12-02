@@ -99,12 +99,6 @@ except Exception:
     pass
 
 
-def discover(config: dict) -> bool:
-    """ try to autodiscover SML protocol """
-    # TODO: write this...
-    return True
-
-
 def format_time(timedelta: float) -> str:
     """
     returns a pretty formatted string according to the size of the timedelta
@@ -547,8 +541,6 @@ def query(config) -> dict:
 
     rdict = {}  # {'readout': result}
 
-# TODO : adjust
-
     _, obis = split_header(result)
 
     try:
@@ -593,6 +585,24 @@ def query(config) -> dict:
         logger.debug(f"error while extracting data: '{e}'")
 
     return rdict
+
+
+def discover(config: dict) -> bool:
+    """ try to autodiscover DLMS protocol """
+
+    # as of now, this simply tries to query the meter
+    # called from within the plugin, the parameters are either manually set by
+    # the user, or preset by the plugin.yaml defaults.
+    # If really necessary, the query could be called multiple times with
+    # reduced baud rates or changed parameters, but there would need to be
+    # the need for this. 
+    # For now, let's see how well this works...
+    result = query(config)
+
+    # result should have one key 'readout' with the full answer and a separate
+    # key for every read OBIS code. If no OBIS codes are read/converted, we can
+    # not be sure this is really DLMS, so we check for at least one OBIS code.
+    return len(result) > 1
 
 
 if __name__ == '__main__':
@@ -650,10 +660,17 @@ if __name__ == '__main__':
 
     result = query(config)
 
-    if result is None:
+    if not result:
         logger.info(f"No results from query, maybe a problem with the serial port '{config['serial_port']}' given.")
-    elif len(result) > 0:
-        logger.info("These are the results of the query:")
+    elif len(result) > 1:
+        logger.info("These are the processed results of the query:")
+        try:
+            del result['readout']
+        except KeyError:
+            pass
+        logger.info(result)
+    elif len(result) == 1:
+        logger.info("The results of the query could not be processed; raw result is:")
         logger.info(result)
     else:
         logger.info("The query did not get any results. Maybe the serial port was occupied or there was an error.")
