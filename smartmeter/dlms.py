@@ -81,7 +81,7 @@ BCC = 0x00  # Block check Character will contain the checksum immediately follow
 # internal testing
 #
 TESTING = False
-TESTING = True
+# TESTING = True
 
 if TESTING:
     from .dlms_test import RESULT
