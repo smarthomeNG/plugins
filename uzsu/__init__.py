@@ -774,6 +774,7 @@ class UZSU(SmartPlugin):
                         self._update_item(item, 'UZSU Plugin', 'series_once')
                         self.logger.debug(f'Deactivating uzsu entry {_entryindex} because series is finished and set to once')
                         self._schedule(item, caller)
+                        return
                 self.logger.debug(f'will add scheduler named uzsu_{item.property.path} with datetime {_next} and tzinfo {_next.tzinfo} and value {_value} based on list index {_entryindex}')
                 self._planned.update({item: {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M:%S')}})
                 self._webdata['items'][item.property.path].update({'planned': {'value': _value, 'time': _next.strftime('%d.%m.%Y %H:%M')}})
@@ -802,7 +803,6 @@ class UZSU(SmartPlugin):
         _uzsuitem(value, 'UZSU Plugin', 'set')
         self._webdata['items'][item.property.path].update({'depend': {'item': _uzsuitem.property.path, 'value': str(_itemvalue)}})
         if self._items[item]['list'][entryindex].get('once') and not interpolated:
-
             self._update_item(item, 'UZSU Plugin', 'once', entryindex)
             self.logger.debug(
                 f'Deactivate list entry {self._items[item]["list"][entryindex]} of item {item} as it has "once" set to True')
