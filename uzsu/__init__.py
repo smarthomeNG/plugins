@@ -656,6 +656,7 @@ class UZSU(SmartPlugin):
         _next = None
         _value = None
         _entryindex = None
+        _series = False
         self._update_sun(item, caller=_caller)
         self._add_dicts(item)
         if not self._items[item]['interpolation'].get('itemtype') or \
@@ -669,8 +670,10 @@ class UZSU(SmartPlugin):
         elif self._items[item].get('active') is True or _caller == "dry_run":
             self._itpl[item] = OrderedDict()
             for i, entry in enumerate(self._items[item]['list']):
-                next, value = self._get_time(entry, 'next', item, i, _caller)
-                previous, previousvalue = self._get_time(entry, 'previous', item, i, _caller)
+                next, value, next_series = self._get_time(entry, 'next', item, i, _caller)
+                previous, previousvalue, previous_series = self._get_time(entry, 'previous', item, i, _caller)
+                _series = True if next_series + previous_series >= 3 else False
+                self.logger.debug(f'next series value is {next_series}, prev {previous_series}')
                 cond1 = next is None and previous is not None
                 cond2 = previous is not None and next is not None and previous < next
                 if cond1 or cond2:
@@ -763,6 +766,9 @@ class UZSU(SmartPlugin):
                 self._items[item]['interpolation']['type'] = 'none'
                 self._update_item(item, 'UZSU Plugin', 'reset_interpolation')
             if _caller != "dry_run":
+                if self._items[item]["list"][_entryindex].get("series"):
+                    self.logger.debug(f'Series is running? {_series}')
+                    self._items[item]["list"][_entryindex]["series"]["running"] = _series
                 self._update_item(item, 'UZSU Plugin', 'add_scheduler')
                 self.logger.debug(f'will add scheduler named uzsu_{item.property.path} with datetime {_next} and tzinfo {_next.tzinfo} and value {_value}')
                 self._planned.update({item: {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M:%S')}})
@@ -823,15 +829,16 @@ class UZSU(SmartPlugin):
             time = None
         try:
             if not isinstance(entry, dict):
-                return None, None
+                return None, None, None
             if 'value' not in entry:
-                return None, None
+                return None, None, None
             if 'active' not in entry:
-                return None, None
+                return None, None, None
             if 'time' not in entry:
-                return None, None
+                return None, None, None
             value = entry['value']
             next = None
+            series = 0
             active = True if caller == "dry_run" else entry['active']
             today = datetime.today()
             tomorrow = today + timedelta(days=1)
@@ -839,7 +846,7 @@ class UZSU(SmartPlugin):
             weekbefore = today - timedelta(days=7)
             time = entry['time']
             if not active:
-                return None, None
+                return None, None, None
             if 'rrule' in entry and 'series' not in time:
                 if entry['rrule'] == '':
                     entry['rrule'] = 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU'
@@ -868,7 +875,7 @@ class UZSU(SmartPlugin):
                 while self.alive:
                     dt = rrule.before(dt) if timescan == 'previous' else rrule.after(dt)
                     if dt is None:
-                        return None, None
+                        return None, None, None
                     if 'sun' in time:
                         sleep(0.01)
                         next = self._sun(datetime.combine(dt.date(),
@@ -884,7 +891,7 @@ class UZSU(SmartPlugin):
                         self._itpl[item][next.timestamp() * 1000.0] = value
                         if next - timedelta(seconds=1) > datetime.now().replace(tzinfo=self._timezone):
                             self.logger.debug(f'{item}: Return from rrule {timescan}: {next}, value {value}.')
-                            return next, value
+                            return next, value, series
                         else:
                             self.logger.debug(f"{item}: Not returning {timescan} rrule {next} because it's in the past.")
             if 'sun' in time and 'series' not in time:
@@ -914,8 +921,9 @@ class UZSU(SmartPlugin):
                 # Get next Time for Series
                 next = self._series_get_time(entry, timescan)
                 if next is None:
-                    return None, None
+                    return None, None, None
                 self._itpl[item][next.timestamp() * 1000.0] = value
+                series += 1
                 rstr = str(entry['rrule']).replace('\n', ';')
                 self.logger.debug(f'{item}: Looking for {timescan} series-related time. Found rrule: {rstr} with start-time {entry["series"]["timeSeriesMin"]}')
 
@@ -928,23 +936,26 @@ class UZSU(SmartPlugin):
             if next and cond_today and cond_next:
                 self._itpl[item][next.timestamp() * 1000.0] = value
                 self.logger.debug(f'{item}: Return next today: {next}, value {value}')
-                return next, value
+                series += 1
+                return next, value, series
             if next and cond_tomorrow and cond_next:
                 self._itpl[item][next.timestamp() * 1000.0] = value
                 self.logger.debug(f'{item}: Return next tomorrow: {next}, value {value}')
-                return next, value
+                return next, value, series
             if 'series' in time and next and cond_next:
                 self.logger.debug(f'{item}: Return next for series: {next}, value {value}')
-                return next, value
+                return next, value, series
             if next and cond_today and cond_previous_today:
                 self._itpl[item][(next - timedelta(seconds=1)).timestamp() * 1000.0] = value
                 self.logger.debug(f'{item}: Not returning previous today {next} because it‘s in the past.')
+                return None, None, series
             if next and cond_yesterday and cond_previous_yesterday:
                 self._itpl[item][(next - timedelta(days=1)).timestamp() * 1000.0] = value
                 self.logger.debug(f'{item}: Not returning previous yesterday {next} because it‘s in the past.')
+                return None, None, series
         except Exception as e:
             self.logger.error(f'{item}: Error "{time}" parsing time: {e}')
-        return None, None
+        return None, None, None
 
     def _series_calculate(self, item, caller=None, source=None):
         """
