@@ -6,7 +6,7 @@
 #  Copyright 2024 -      Sebastian Helms         morg @ knx-user-forum.de
 #########################################################################
 #
-#  DLMS plugin for SmartHomeNG
+#  DLMS module for SmartMeter plugin for SmartHomeNG
 #
 #  This file is part of SmartHomeNG.py.
 #  Visit:  https://github.com/smarthomeNG/
@@ -34,6 +34,7 @@ __revision__ = "0.1"
 __docformat__ = 'reStructuredText'
 
 import logging
+import threading
 import time
 import serial
 
@@ -84,7 +85,10 @@ TESTING = False
 # TESTING = True
 
 if TESTING:
-    from .dlms_test import RESULT
+    if __name__ == '__main__':
+        from dlms_test import RESULT
+    else:
+        from .dlms_test import RESULT
     logger.error('DLMS testing mode enabled, no serial communication, no real results!')
 else:
     RESULT = ''
@@ -239,6 +243,7 @@ def query(config) -> dict:
     starttime = time.time()
     runtime = starttime
     result = None
+    lock = threading.Lock()
 
     try:
         serial_port = config['serial_port']
@@ -275,207 +280,219 @@ def query(config) -> dict:
     # ta < 1 500 ms
     wait_before_acknowledge = 0.4   # wait for 400 ms before sending the request to change baudrate
     wait_after_acknowledge = 0.4    # wait for 400 ms after sending acknowledge
-
     dlms_serial = None
-    try:
-        dlms_serial = serial.Serial(serial_port,
-                                    initial_baudrate,
-                                    bytesize=serial.SEVENBITS,
-                                    parity=serial.PARITY_EVEN,
-                                    stopbits=serial.STOPBITS_ONE,
-                                    timeout=timeout)
-        if not serial_port == dlms_serial.name:
-            logger.debug(f"Asked for {serial_port} as serial port, but really using now {dlms_serial.name}")
 
-    except FileNotFoundError:
-        logger.error(f"Serial port '{serial_port}' does not exist, please check your port")
-        return {}
-    except serial.SerialException:
-        if dlms_serial is None:
-            logger.error(f"Serial port '{serial_port}' could not be opened")
-        else:
-            logger.error(f"Serial port '{serial_port}' could be opened but somehow not accessed")
-        return {}
-    except OSError:
-        logger.error(f"Serial port '{serial_port}' does not exist, please check the spelling")
-        return {}
-    except Exception as e:
-        logger.error(f"unforeseen error occurred: '{e}'")
+    locked = lock.acquire(blocking=False)
+    if not locked:
+        logger.error('could not get lock for serial access. Is another scheduled/manual action still active?')
         return {}
 
-    if dlms_serial is None:
-        # this should not happen...
-        logger.error("unforeseen error occurred, serial object was not initialized.")
-        return {}
+    try:  # lock release
+        if not TESTING:
+            try:  # open serial
+                dlms_serial = serial.Serial(serial_port,
+                                            initial_baudrate,
+                                            bytesize=serial.SEVENBITS,
+                                            parity=serial.PARITY_EVEN,
+                                            stopbits=serial.STOPBITS_ONE,
+                                            timeout=timeout)
+                if not serial_port == dlms_serial.name:
+                    logger.debug(f"Asked for {serial_port} as serial port, but really using now {dlms_serial.name}")
 
-    if not dlms_serial.is_open:
-        logger.error(f"serial port '{serial_port}' could not be opened with given parameters, maybe wrong baudrate?")
-        return {}
-
-    logger.debug(f"time to open serial port {serial_port}: {format_time(time.time() - runtime)}")
-    runtime = time.time()
-
-    acknowledge = b''   # preset empty answer
-
-    if not only_listen:
-        # TODO: check/implement later
-        response = b''
-
-        # start a dialog with smartmeter
-        try:
-            # TODO: is this needed? when?
-            # logger.debug(f"Reset input buffer from serial port '{serial_port}'")
-            # dlms_serial.reset_input_buffer()    # replaced dlms_serial.flushInput()
-            logger.debug(f"writing request message {request_message} to serial port '{serial_port}'")
-            dlms_serial.write(request_message)
-            # TODO: same as above
-            # logger.debug(f"Flushing buffer from serial port '{serial_port}'")
-            # dlms_serial.flush()                 # replaced dlms_serial.drainOutput()
-        except Exception as e:
-            logger.warning(f"error on serial write: {e}")
-            return {}
-
-        logger.debug(f"time to send first request to smartmeter: {format_time(time.time() - runtime)}")
-
-        # now get first response
-        response = read_data_block_from_serial(dlms_serial)
-        if not response:
-            logger.debug("no response received upon first request")
-            return {}
-
-        logger.debug(f"time to receive an answer: {format_time(time.time() - runtime)}")
-        runtime = time.time()
-
-        # We need to examine the read response here for an echo of the _Request_Message
-        # some meters answer with an echo of the request Message
-        if response == request_message:
-            logger.debug("request message was echoed, need to read the identification message")
-            # now read the capabilities and type/brand line from Smartmeter
-            # e.g. b'/LGZ5\\2ZMD3104407.B32\r\n'
-            response = read_data_block_from_serial(dlms_serial)
-        else:
-            logger.debug("request message was not equal to response, treating as identification message")
-
-        logger.debug(f"time to get first identification message from smartmeter: {format_time(time.time() - runtime)}")
-        runtime = time.time()
-
-        identification_message = response
-        logger.debug(f"identification message is {identification_message}")
-
-        # need at least 7 bytes:
-        # 1 byte "/"
-        # 3 bytes short Identification
-        # 1 byte speed indication
-        # 2 bytes CR LF
-        if len(identification_message) < 7:
-            logger.warning(f"malformed identification message: '{identification_message}', abort query")
-            return {}
-
-        if (identification_message[0] != start_char):
-            logger.warning(f"identification message '{identification_message}' does not start with '/', abort query")
-            return {}
-
-        manid = str(identification_message[1:4], 'utf-8')
-        manname = manufacturer_ids.get(manid, 'unknown')
-        logger.debug(f"manufacturer for {manid} is {manname} ({len(manufacturer_ids)} manufacturers known)")
-
-        # Different smartmeters allow for different protocol modes.
-        # The protocol mode decides whether the communication is fixed to a certain baudrate or might be speed up.
-        # Some meters do initiate a protocol by themselves with a fixed speed of 2400 baud e.g. Mode D
-        # However some meters specify a speed of 9600 Baud although they use protocol mode D (readonly)
-        #
-        # protocol_mode = 'A'
-        #
-        # The communication of the plugin always stays at the same speed,
-        # Protocol indicator can be anything except for A-I, 0-9, /, ?
-        #
-        baudrates = {
-            # mode A
-            '': (300, 'A'),
-            # mode B
-            'A': (600, 'B'),
-            'B': (1200, 'B'),
-            'C': (2400, 'B'),
-            'D': (4800, 'B'),
-            'E': (9600, 'B'),
-            'F': (19200, 'B'),
-            # mode C & E
-            '0': (300, 'C'),
-            '1': (600, 'C'),
-            '2': (1200, 'C'),
-            '3': (2400, 'C'),
-            '4': (4800, 'C'),
-            '5': (9600, 'C'),
-            '6': (19200, 'C'),
-        }
-
-        baudrate_id = chr(identification_message[4])
-        if baudrate_id not in baudrates:
-            baudrate_id = ''
-        new_baudrate, protocol_mode = baudrates[baudrate_id]
-
-        logger.debug(f"baudrate id is '{baudrate_id}' thus protocol mode is {protocol_mode} and suggested Baudrate is {new_baudrate} Bd")
-
-        if chr(identification_message[5]) == '\\':
-            if chr(identification_message[6]) == '2':
-                logger.debug("HDLC protocol could be used if it was implemented")
-            else:
-                logger.debug(f"another protocol could probably be used if it was implemented, id is {identification_message[6]}")
-
-        # for protocol C or E we now send an acknowledge and include the new baudrate parameter
-        # maybe todo
-        # we could implement here a baudrate that is fixed to somewhat lower speed if we need to
-        # read out a smartmeter with broken communication
-        action = b'0'  # Data readout, possible are also b'1' for programming mode or some manufacturer specific
-        acknowledge = b'\x060' + baudrate_id.encode() + action + b'\r\n'
-
-        if protocol_mode == 'C':
-            # the speed change in communication is initiated from the reading device
-            time.sleep(wait_before_acknowledge)
-            logger.debug(f"using protocol mode C, send acknowledge {acknowledge} and tell smartmeter to switch to {new_baudrate} baud")
-            try:
-                dlms_serial.write(acknowledge)
-            except Exception as e:
-                logger.warning(f"error on sending baudrate change: {e}")
+            except FileNotFoundError:
+                logger.error(f"Serial port '{serial_port}' does not exist, please check your port")
                 return {}
-            time.sleep(wait_after_acknowledge)
-            # dlms_serial.flush()
-            # dlms_serial.reset_input_buffer()
-            if (new_baudrate != initial_baudrate):
-                # change request to set higher baudrate
-                dlms_serial.baudrate = new_baudrate
+            except serial.SerialException:
+                if dlms_serial is None:
+                    logger.error(f"Serial port '{serial_port}' could not be opened")
+                else:
+                    logger.error(f"Serial port '{serial_port}' could be opened but somehow not accessed")
+                return {}
+            except OSError:
+                logger.error(f"Serial port '{serial_port}' does not exist, please check the spelling")
+                return {}
+            except Exception as e:
+                logger.error(f"unforeseen error occurred: '{e}'")
+                return {}
 
-        elif protocol_mode == 'B':
-            # the speed change in communication is initiated from the smartmeter device
-            time.sleep(wait_before_acknowledge)
-            logger.debug(f"using protocol mode B, smartmeter and reader will switch to {new_baudrate} baud")
-            time.sleep(wait_after_acknowledge)
-            # dlms_serial.flush()
-            # dlms_serial.reset_input_buffer()
-            if (new_baudrate != initial_baudrate):
-                # change request to set higher baudrate
-                dlms_serial.baudrate = new_baudrate
+            if dlms_serial is None:
+                # this should not happen...
+                logger.error("unforeseen error occurred, serial object was not initialized.")
+                return {}
+
+            if not dlms_serial.is_open:
+                logger.error(f"serial port '{serial_port}' could not be opened with given parameters, maybe wrong baudrate?")
+                return {}
+
+        logger.debug(f"time to open serial port {serial_port}: {format_time(time.time() - runtime)}")
+        runtime = time.time()
+
+        acknowledge = b''   # preset empty answer
+
+        if not only_listen:
+            # TODO: check/implement later
+            response = b''
+
+            # start a dialog with smartmeter
+            try:
+                # TODO: is this needed? when?
+                # logger.debug(f"Reset input buffer from serial port '{serial_port}'")
+                # dlms_serial.reset_input_buffer()    # replaced dlms_serial.flushInput()
+                logger.debug(f"writing request message {request_message} to serial port '{serial_port}'")
+                dlms_serial.write(request_message)
+                # TODO: same as above
+                # logger.debug(f"Flushing buffer from serial port '{serial_port}'")
+                # dlms_serial.flush()                 # replaced dlms_serial.drainOutput()
+            except Exception as e:
+                logger.warning(f"error on serial write: {e}")
+                return {}
+
+            logger.debug(f"time to send first request to smartmeter: {format_time(time.time() - runtime)}")
+
+            # now get first response
+            response = read_data_block_from_serial(dlms_serial)
+            if not response:
+                logger.debug("no response received upon first request")
+                return {}
+
+            logger.debug(f"time to receive an answer: {format_time(time.time() - runtime)}")
+            runtime = time.time()
+
+            # We need to examine the read response here for an echo of the _Request_Message
+            # some meters answer with an echo of the request Message
+            if response == request_message:
+                logger.debug("request message was echoed, need to read the identification message")
+                # now read the capabilities and type/brand line from Smartmeter
+                # e.g. b'/LGZ5\\2ZMD3104407.B32\r\n'
+                response = read_data_block_from_serial(dlms_serial)
+            else:
+                logger.debug("request message was not equal to response, treating as identification message")
+
+            logger.debug(f"time to get first identification message from smartmeter: {format_time(time.time() - runtime)}")
+            runtime = time.time()
+
+            identification_message = response
+            logger.debug(f"identification message is {identification_message}")
+
+            # need at least 7 bytes:
+            # 1 byte "/"
+            # 3 bytes short Identification
+            # 1 byte speed indication
+            # 2 bytes CR LF
+            if len(identification_message) < 7:
+                logger.warning(f"malformed identification message: '{identification_message}', abort query")
+                return {}
+
+            if (identification_message[0] != start_char):
+                logger.warning(f"identification message '{identification_message}' does not start with '/', abort query")
+                return {}
+
+            manid = str(identification_message[1:4], 'utf-8')
+            manname = manufacturer_ids.get(manid, 'unknown')
+            logger.debug(f"manufacturer for {manid} is {manname} ({len(manufacturer_ids)} manufacturers known)")
+
+            # Different smartmeters allow for different protocol modes.
+            # The protocol mode decides whether the communication is fixed to a certain baudrate or might be speed up.
+            # Some meters do initiate a protocol by themselves with a fixed speed of 2400 baud e.g. Mode D
+            # However some meters specify a speed of 9600 Baud although they use protocol mode D (readonly)
+            #
+            # protocol_mode = 'A'
+            #
+            # The communication of the plugin always stays at the same speed,
+            # Protocol indicator can be anything except for A-I, 0-9, /, ?
+            #
+            baudrates = {
+                # mode A
+                '': (300, 'A'),
+                # mode B
+                'A': (600, 'B'),
+                'B': (1200, 'B'),
+                'C': (2400, 'B'),
+                'D': (4800, 'B'),
+                'E': (9600, 'B'),
+                'F': (19200, 'B'),
+                # mode C & E
+                '0': (300, 'C'),
+                '1': (600, 'C'),
+                '2': (1200, 'C'),
+                '3': (2400, 'C'),
+                '4': (4800, 'C'),
+                '5': (9600, 'C'),
+                '6': (19200, 'C'),
+            }
+
+            baudrate_id = chr(identification_message[4])
+            if baudrate_id not in baudrates:
+                baudrate_id = ''
+            new_baudrate, protocol_mode = baudrates[baudrate_id]
+
+            logger.debug(f"baudrate id is '{baudrate_id}' thus protocol mode is {protocol_mode} and suggested Baudrate is {new_baudrate} Bd")
+
+            if chr(identification_message[5]) == '\\':
+                if chr(identification_message[6]) == '2':
+                    logger.debug("HDLC protocol could be used if it was implemented")
+                else:
+                    logger.debug(f"another protocol could probably be used if it was implemented, id is {identification_message[6]}")
+
+            # for protocol C or E we now send an acknowledge and include the new baudrate parameter
+            # maybe todo
+            # we could implement here a baudrate that is fixed to somewhat lower speed if we need to
+            # read out a smartmeter with broken communication
+            action = b'0'  # Data readout, possible are also b'1' for programming mode or some manufacturer specific
+            acknowledge = b'\x060' + baudrate_id.encode() + action + b'\r\n'
+
+            if protocol_mode == 'C':
+                # the speed change in communication is initiated from the reading device
+                time.sleep(wait_before_acknowledge)
+                logger.debug(f"using protocol mode C, send acknowledge {acknowledge} and tell smartmeter to switch to {new_baudrate} baud")
+                try:
+                    dlms_serial.write(acknowledge)
+                except Exception as e:
+                    logger.warning(f"error on sending baudrate change: {e}")
+                    return {}
+                time.sleep(wait_after_acknowledge)
+                # dlms_serial.flush()
+                # dlms_serial.reset_input_buffer()
+                if (new_baudrate != initial_baudrate):
+                    # change request to set higher baudrate
+                    dlms_serial.baudrate = new_baudrate
+
+            elif protocol_mode == 'B':
+                # the speed change in communication is initiated from the smartmeter device
+                time.sleep(wait_before_acknowledge)
+                logger.debug(f"using protocol mode B, smartmeter and reader will switch to {new_baudrate} baud")
+                time.sleep(wait_after_acknowledge)
+                # dlms_serial.flush()
+                # dlms_serial.reset_input_buffer()
+                if (new_baudrate != initial_baudrate):
+                    # change request to set higher baudrate
+                    dlms_serial.baudrate = new_baudrate
+            else:
+                logger.debug(f"no change of readout baudrate, smartmeter and reader will stay at {new_baudrate} baud")
+
+            # now read the huge data block with all the OBIS codes
+            logger.debug("Reading OBIS data from smartmeter")
+            response = read_data_block_from_serial(dlms_serial, b'')
         else:
-            logger.debug(f"no change of readout baudrate, smartmeter and reader will stay at {new_baudrate} baud")
+            # only listen mode, starts with / and last char is !
+            # data will be in between those two
+            response = read_data_block_from_serial(dlms_serial, b'!', b'/')
 
-        # now read the huge data block with all the OBIS codes
-        logger.debug("Reading OBIS data from smartmeter")
-        response = read_data_block_from_serial(dlms_serial, b'')
-    else:
-        # only listen mode, starts with / and last char is !
-        # data will be in between those two
-        response = read_data_block_from_serial(dlms_serial, b'!', b'/')
+            identification_message = str(response, 'utf-8').splitlines()[0]
 
-        identification_message = str(response, 'utf-8').splitlines()[0]
+            manid = identification_message[1:4]
+            manname = manufacturer_ids.get(manid, 'unknown')
+            logger.debug(f"manufacturer for {manid} is {manname} (out of {len(manufacturer_ids)} given manufacturers)")
 
-        manid = identification_message[1:4]
-        manname = manufacturer_ids.get(manid, 'unknown')
-        logger.debug(f"manufacturer for {manid} is {manname} (out of {len(manufacturer_ids)} given manufacturers)")
-
-    try:
-        dlms_serial.close()
+        try:
+            dlms_serial.close()
+        except Exception:
+            pass
     except Exception:
-        pass
+        # passthrough, this is only for releasing the lock
+        raise
+    finally:
+        lock.release()
 
     logger.debug(f"time for reading OBIS data: {format_time(time.time() - runtime)}")
     runtime = time.time()
@@ -541,7 +558,7 @@ def query(config) -> dict:
 
     rdict = {}  # {'readout': result}
 
-    _, obis = split_header(result)
+    obis = split_header(result)
 
     try:
         for line in obis:
