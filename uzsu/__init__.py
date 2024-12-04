@@ -679,7 +679,7 @@ class UZSU(SmartPlugin):
                     next = previous
                     value = previousvalue
                 if next is not None:
-                    self.logger.debug(f'uzsu active entry for item {item} with datetime {next}, value {value} and tzinfo {next.tzinfo}')
+                    self.logger.debug(f'uzsu active entry for item {item} with datetime {next}, value {value} and tzinfo {next.tzinfo}. Series {_series}')
                 if _next is None:
                     _next = next
                     _value = value
@@ -691,6 +691,13 @@ class UZSU(SmartPlugin):
                     _entryindex = i
                 else:
                     self.logger.debug(f'uzsu active entry for item {item} keep {_next}, value {_value} and tzinfo {_next.tzinfo}')
+                if self._items[item]["list"][i].get("series"):
+                    series_previous = self._items[item]["list"][i]["series"].get("running")
+                    series_running = _series.get(i)
+                    self._items[item]["list"][i]["series"]["running"] = series_running
+                    if self._items[item]["list"][i].get("once") and series_running is False and series_previous is True:
+                        self._items[item]["list"][i]["active"] = False
+                        self.logger.debug(f'Deactivating uzsu entry {i} because series is finished and set to once')
         elif not self._items[item].get('list') and self._items[item].get('active') is True:
             self.logger.warning(f'item "{item}" is active but has no entries.')
             self._planned.update({item: None})
@@ -765,23 +772,15 @@ class UZSU(SmartPlugin):
                 self._items[item]['interpolation']['type'] = 'none'
                 self._update_item(item, 'UZSU Plugin', 'reset_interpolation')
             if _caller != "dry_run":
-                if self._items[item]["list"][_entryindex].get("series"):
-                    series_previous = self._items[item]["list"][_entryindex]["series"].get("running")
-                    series_running = _series.get(_entryindex)
-                    self._items[item]["list"][_entryindex]["series"]["running"] = series_running
-                    if self._items[item]["list"][_entryindex].get("once") and series_running is False and series_previous is True:
-                        self._items[item]["list"][_entryindex]["active"] = False
-                        self._update_item(item, 'UZSU Plugin', 'series_once')
-                        self.logger.debug(f'Deactivating uzsu entry {_entryindex} because series is finished and set to once')
-                        self._schedule(item, caller)
-                        return
                 self.logger.debug(f'will add scheduler named uzsu_{item.property.path} with datetime {_next} and tzinfo {_next.tzinfo} and value {_value} based on list index {_entryindex}')
                 self._planned.update({item: {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M:%S')}})
                 self._webdata['items'][item.property.path].update({'planned': {'value': _value, 'time': _next.strftime('%d.%m.%Y %H:%M')}})
                 self._update_count['done'] = self._update_count.get('done', 0) + 1
                 self._update_item(item, 'UZSU Plugin', 'add_scheduler')
                 self.scheduler_add(item.property.path, self._set,
-                                   value={'item': item, 'value': _value, 'caller': 'Scheduler', 'entryindex': _entryindex, 'interpolated': _interpolated}, next=_next)
+                                   value={'item': item, 'value': _value, 'caller': 'Scheduler',
+                                          'entryindex': _entryindex, 'interpolated': _interpolated,
+                                          'seriesrunning': _series.get(_entryindex)}, next=_next)
                 if self._update_count.get('done') == self._update_count.get('todo'):
                     self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
                     self._update_count = {'done': 0, 'todo': 0}
@@ -790,7 +789,7 @@ class UZSU(SmartPlugin):
             self._planned.update({item: None})
             self._webdata['items'][item.property.path].update({'planned': {'value': '-', 'time': '-'}})
 
-    def _set(self, item=None, value=None, caller=None, entryindex=None, interpolated=False):
+    def _set(self, item=None, value=None, caller=None, entryindex=None, interpolated=False, seriesrunning=False):
         """
         This function sets the specific item
         :param item:         item to be updated towards the plugin
@@ -802,10 +801,10 @@ class UZSU(SmartPlugin):
         _uzsuitem, _itemvalue = self._get_dependant(item)
         _uzsuitem(value, 'UZSU Plugin', 'set')
         self._webdata['items'][item.property.path].update({'depend': {'item': _uzsuitem.property.path, 'value': str(_itemvalue)}})
-        if self._items[item]['list'][entryindex].get('once') and not interpolated:
-            self._update_item(item, 'UZSU Plugin', 'once', entryindex)
+        if self._items[item]['list'][entryindex].get('once') and not interpolated and not seriesrunning:
             self.logger.debug(
-                f'Deactivate list entry {self._items[item]["list"][entryindex]} of item {item} as it has "once" set to True')
+                f'Deactivating list entry {self._items[item]["list"][entryindex]} of item {item} as it has "once" set to True')
+            self._update_item(item, 'UZSU Plugin', 'once', entryindex)
         if self._items[item].get('once'):
             self.activate(False, item, 'once')
             self.logger.debug(f'Deactivate UZSU for item {item} as it has "once" set to True')
