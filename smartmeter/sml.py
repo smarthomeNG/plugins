@@ -43,6 +43,7 @@ import traceback
 from smllib.reader import SmlStreamReader
 from smllib import const as smlConst
 from threading import Lock
+from typing import Union
 
 # needed for old frame parser
 # from .crc import Crc
@@ -99,7 +100,7 @@ else:
     RESULT = ''
 
 
-def to_hex(data: int | str | bytes | bytearray, space: bool = True) -> str:
+def to_hex(data: Union[int, str, bytes, bytearray], space: bool = True) -> str:
     """
     Returns the hex representation of the given data
     """
@@ -140,7 +141,7 @@ def _read(sock, length: int) -> bytes:
         return b''
 
 
-def read(sock: serial.Serial | socket.socket, length: int = 0) -> bytes:
+def read(sock: Union[serial.Serial, socket.socket], length: int = 0) -> bytes:
     """
     This function reads some bytes from serial or network interface
     it returns an array of bytes if a timeout occurs or a given end byte is encountered
