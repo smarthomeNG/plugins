@@ -96,6 +96,7 @@ Für die universelle Zeitschaltuhr können folgende Einstellungen vorgenommen we
 * Wert: Der zu schaltende Wert
 * Zeit: Die Uhrzeit, zu der der gewünschte Wert geschaltet werden soll. Im Experten- und Serienmodus kann dieser Parameter auch detaillierter konfiguriert werden.
 * Aktivieren: Eintrag aktivieren oder deaktivieren.
+* Einmal-Schaltung ("Once"): Sowohl auf globaler Ebene als auch pro Eintrag kann eingestellt werden, dass ein Schaltvorgang nur ein Mal ausgeführt wird.
 
 
 Experteneinstellungen
@@ -111,6 +112,8 @@ Zeitserie
 ---------
 
 Für wiederkehrende Schaltungen können auch Serien angelegt werden. Dabei ist ein Startzeitpunkt und ein Intervall zu definieren. Das Ende kann entweder über einen Zeitpunkt oder die Anzahl Wiederholungen definiert werden. Start- und Endzeitpunkte können wie bei der normalen UZSU auch sonnenstandsabhängig deklariert werden.
+
+Wird bei einer Serie die Einmal-Funktion aktiviert, wird die Serie (erst) nach Abarbeiten aller Wiederholungen deaktiviert.
 
 
 Interpolation
@@ -132,6 +135,7 @@ Interpolation ist ein eigenes Dict innerhalb des UZSU Dictionary mit folgenden E
 
 -  **initizialized**: bool, wird beim Pluginstart automatisch gesetzt, sobald ein gültiger Eintrag innerhalb der initage Zeit gefunden wurde und diese Initialisierung tatsächlich ausgeführt wurde.
 
+Ist die Interpolation und die Einmal-Funktion (global oder für einen Eintrag) aktiviert, so werden so viele interpolierte Schaltvorgänge durchgeführt, bis der tatsächlich hinterlegte Wert erreich ist. Erst dann wird der Eintrag oder die UZSU deaktiviert.
 
 Pluginfunktionen
 ================
@@ -148,7 +152,7 @@ Das Webinterface bietet folgende Informationen:
 
 -  **Allgemeines**: Oben rechts werden die berechneten Sonnenauf- und Sonnenuntergänge der nächsten 7 Tage und die Anzahl der UZSU Items angezeigt.
 
--  **UZSUs**: Liste aller UZSU Items mit farbkodierter Information über den Status (inaktiv = grau, aktiv = grün, Problem = rot)
+-  **UZSUs**: Liste aller UZSU Items mit farbkodierter Information über den Status (inaktiv = grau, aktiv = grün, aktive Serie = orange, Problem = rot)
 
 -  **UZSU Items**: Info zu den Items, die über die UZSU geschaltet werden (inkl. Typ)
 
@@ -193,13 +197,15 @@ Folgender Python Aufruf bzw. Dictionary Eintrag schaltet das Licht jeden zweiten
 Datenformat
 ===========
 
-Jedes USZU Item wird als dict-Typ gespeichert. Jeder Listen-Eintrag ist wiederum ein dict, das aus Key und Value-Paaren besteht. Im Folgenden werden die möglichen Dictionary-Keys gelistet. Nutzt man das USZU Widget der SmartVISU, muss man sich um diese Einträge nicht kümmern.
+Jedes USZU Item wird als dict-Typ gespeichert. Darin enthalten sind einige allgemeine Informationen und Berechnungen und das Herzstück - die Liste mit den Schaltvorgängen. Jeder Listen-Eintrag ist wiederum ein dict, das aus Key und Value-Paaren besteht. Im Folgenden werden die möglichen Dictionary-Keys gelistet. Nutzt man das USZU Widget der SmartVISU, muss man sich um diese Einträge nicht kümmern.
 
 -  **dtstart**: Ein datetime Objekt, das den exakten Startwert für den rrule Algorithmus bestimmt. Dieser Parameter ist besonders bei FREQ=MINUTELY rrules relevant.
 
 -  **value**: Der Wert, auf den das uzsu_item gesetzt werden soll.
 
 -  **active**: ``True`` wenn die UZSU aktiviert ist, ``False`` wenn keine Aktualisierungen vorgenommen werden sollen. Dieser Wert kann über die Pluginfunktion activate gesteuert werden.
+
+-  **once**: ``True`` wenn die UZSU oder ein Eintrag nach einmaligem Schalten deaktiviert werden soll, ``False`` wenn ein Eintrag oder die UZSU öfters evaluiert werden soll.
 
 -  **time**: Zeit als String. Entweder eine direkte Zeitangabe wie ``17:00`` oder eine Kombination mit Sonnenauf- und Untergang wie bei einem crontab, z.B. ``17:00<sunset``, ``sunrise>8:00``, ``17:00<sunset``.
 

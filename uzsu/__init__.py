@@ -775,6 +775,7 @@ class UZSU(SmartPlugin):
                 self.logger.debug(f'will add scheduler named uzsu_{item.property.path} with datetime {_next} and tzinfo {_next.tzinfo} and value {_value} based on list index {_entryindex}')
                 self._planned.update({item: {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M:%S')}})
                 self._webdata['items'][item.property.path].update({'planned': {'value': _value, 'time': _next.strftime('%d.%m.%Y %H:%M')}})
+                self._webdata['items'][item.property.path].update({'seriesrunning': str(_series.get(_entryindex))})
                 self._update_count['done'] = self._update_count.get('done', 0) + 1
                 self._update_item(item, 'UZSU Plugin', 'add_scheduler')
                 self.scheduler_add(item.property.path, self._set,

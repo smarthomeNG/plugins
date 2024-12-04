@@ -38,8 +38,10 @@
 			for (item in objResponse['items']) {
         planned = objResponse['items'][item]['planned']['value'];
         lastvalue = objResponse['items'][item]['lastvalue'];
+        seriesrunning = objResponse['items'][item]['seriesrunning'];
         if (objResponse['items'][item]['active'] == 'True' && planned == '-') {color = 'red';}
         else if (planned == '-' || objResponse['items'][item]['active'] == 'False' ){color = 'gray';}
+        else if (seriesrunning == 'True'){color = '#FEC34D';}
         else {color = 'green'}
 
         if (objResponse['items'][item]['depend']['item'] == null) {
@@ -197,6 +199,8 @@
           {% set color = 'red' %}
         {% elif p._webdata['items'][item]['planned'] == '-' or p._webdata['items'][item]['active'] == 'False' %}
           {% set color = 'gray' %}
+        {% elif p._webdata['items'][item]['seriesrunning'] == 'True' %}
+          {% set color = '#FEC34D' %}
         {% else %}
           {% set color = 'green' %}
         {% endif %}
