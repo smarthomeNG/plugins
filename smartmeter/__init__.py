@@ -65,11 +65,12 @@ OBIS_READOUT = 'obis_readout'    # complete readout (dlms only)
 
 ITEM_ATTRS = (OBIS_CODE, OBIS_INDEX, OBIS_PROPERTY, OBIS_VTYPE, OBIS_READOUT)
 
-# obis properties with default (empty) values
-PROPS = {
-    'value': [],
-    'unit': ''
-}
+# obis properties
+PROPS = [
+    'value', 'unit', 'name', 'valueReal', 'scaler', 'status', 'valTime', 'actTime', 'signature', 'unitName',
+    'statRun', 'statFraudMagnet', 'statFraudCover', 'statEnergyTotal', 'statEnergyL1', 'statEnergyL2', 'statEnergyL3',
+    'statRotaryField', 'statBackstop', 'statCalFault', 'statVoltageL1', 'statVoltageL2', 'statVoltageL3', 'obis'
+]
 
 
 class Smartmeter(SmartPlugin, Conversion):
@@ -151,19 +152,16 @@ class Smartmeter(SmartPlugin, Conversion):
         self._config['dlms'] = {}
         self._config['dlms']['device'] = self.get_parameter_value('device_address')
         self._config['dlms']['querycode'] = self.get_parameter_value('querycode')
-        self._config['dlms']['baudrate_fix'] = self.get_parameter_value('baudrate_fix')
         self._config['dlms']['baudrate_min'] = self.get_parameter_value('baudrate_min')
         self._config['dlms']['use_checksum'] = self.get_parameter_value('use_checksum')
-        self._config['dlms']['onlylisten'] = self.get_parameter_value('only_listen')
-        # self._config['dlms']['reset_baudrate'] = self.get_parameter_value('reset_baudrate')
-        # self._config['dlms']['no_waiting'] = self.get_parameter_value('no_waiting')
+        self._config['dlms']['only_listen'] = self.get_parameter_value('only_listen')
 
         # SML only
         # disabled parameters are for old frame parser
         self._config['sml'] = {}
-        # self._config['sml']['device'] = self.get_parameter_value('device_type')
         self._config['sml']['buffersize'] = self.get_parameter_value('buffersize')            # 1024
-        # self._config['sml']['date_offset'] = self.get_parameter_value('date_offset')          # 0
+        self._config['sml']['device'] = self.get_parameter_value('device_type')
+        self._config['sml']['date_offset'] = self.get_parameter_value('date_offset')          # 0
         # self._config['sml']['poly'] = self.get_parameter_value('poly')                        # 0x1021
         # self._config['sml']['reflect_in'] = self.get_parameter_value('reflect_in')            # True
         # self._config['sml']['xor_in'] = self.get_parameter_value('xor_in')                    # 0xffff
@@ -255,7 +253,9 @@ class Smartmeter(SmartPlugin, Conversion):
                 prop = 'value'
             index = self.get_iattr_value(item.conf, OBIS_INDEX, default=0)
             vtype = self.get_iattr_value(item.conf, OBIS_VTYPE, default='')
-            # TODO: crosscheck vtype and item type
+            if vtype in ('int', 'num', 'float', 'str'):
+                if vtype != item.type():
+                    self.logger.warning(f'item {item}: item type is {item.type()}, but obis_vtype is {vtype}, please fix item definition')
 
             self.add_item(item, {'property': prop, 'index': index, 'vtype': vtype}, obis)
 
@@ -329,33 +329,30 @@ class Smartmeter(SmartPlugin, Conversion):
             if obis in self._items:
                 entry = self._items[obis]
                 for prop, items in entry.items():
-                    if prop not in PROPS:
-                        self.logger.warning(f'invalid property {prop} requested for obis {obis}, ignoring')
-                        continue
                     for item in items:
                         conf = self.get_item_config(item)
                         index = conf.get('index', 0)
-                        itemValue = vlist[index].get(prop, PROPS[prop])
-                        if prop == 'value':
-                            try:
-                                val = vlist[index][prop]
-                                converter = conf['vtype']
-                                itemValue = self._convert_value(val, converter)
-                                # self.logger.debug(f'conversion yielded {itemValue} from {val} for converter "{converter}"')
-                            except IndexError:
-                                self.logger.warning(f'value for index {index} not found in {vlist["value"]}, skipping...')
-                                continue
-                            except KeyError as e:
-                                self.logger.warning(f'key  error while setting item {item} for obis code {obis} to value "{itemValue}": {e}')
-                            except NameError as e:
-                                self.logger.warning(f'name  error while setting item {item} for obis code {obis} to value "{itemValue}": {e}')
-                        # TODO: add more props? -> sml!
-                        else:
-                            if itemValue is None:
-                                itemValue = ''
+                        # new default: if we don't find prop, we don't change the respective item
+                        itemValue = vlist[index].get(prop)
+                        try:
+                            val = vlist[index][prop]
+                            converter = conf['vtype']
+                            itemValue = self._convert_value(val, converter)
+                            # self.logger.debug(f'conversion yielded {itemValue} from {val} for converter "{converter}"')
+                        except IndexError:
+                            self.logger.warning(f'value for index {index} not found in {vlist["value"]}, skipping...')
+                            continue
+                        except KeyError as e:
+                            self.logger.warning(f'key  error while setting item {item} for obis code {obis} to value "{itemValue}": {e}')
+                        except NameError as e:
+                            self.logger.warning(f'name  error while setting item {item} for obis code {obis} to value "{itemValue}": {e}')
 
-                        item(itemValue, self.get_fullname())
-                        self.logger.debug(f'set item {item} for obis code {obis}:{prop} to value "{itemValue}"')
+                        # skip item assignment to save time and cpu cycles
+                        if itemValue is not None:
+                            item(itemValue, self.get_fullname())
+                            self.logger.debug(f'set item {item} for obis code {obis}:{prop} to value "{itemValue}"')
+                        else:
+                            self.logger.debug(f'for item {item} and obis code {obis}:{prop} no content was received')
 
     @property
     def item_list(self):

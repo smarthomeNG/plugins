@@ -34,11 +34,14 @@ __revision__ = "0.1"
 __docformat__ = 'reStructuredText'
 
 import logging
-import threading
 import time
 import serial
+import socket  # not needed, just for code portability
 
 from ruamel.yaml import YAML
+from threading import Lock
+from typing import Union
+
 
 """
 This module implements the query of a smartmeter using the DLMS protocol.
@@ -58,13 +61,6 @@ OBIS
 
 """
 
-if __name__ == '__main__':
-    logger = logging.getLogger(__name__)
-    logger.debug(f"init standalone {__name__}")
-else:
-    logger = logging.getLogger(__name__)
-    logger.debug(f"init plugin component {__name__}")
-
 #
 # protocol constants
 #
@@ -76,6 +72,29 @@ ACK = 0x06  # acknowledge
 CR = 0x0D  # carriage return
 LF = 0x0A  # linefeed
 BCC = 0x00  # Block check Character will contain the checksum immediately following the data packet
+
+# serial config
+S_BITS = serial.SEVENBITS
+S_PARITY = serial.PARITY_EVEN
+S_STOP = serial.STOPBITS_ONE
+
+
+if __name__ == '__main__':
+    logger = logging.getLogger(__name__)
+    logger.debug(f"init standalone {__name__}")
+else:
+    logger = logging.getLogger(__name__)
+    logger.debug(f"init plugin component {__name__}")
+
+
+manufacturer_ids = {}
+exportfile = 'manufacturer.yaml'
+try:
+    with open(exportfile, 'r') as infile:
+        y = YAML(typ='safe')
+        manufacturer_ids = y.load(infile)
+except Exception:
+    pass
 
 
 #
@@ -93,14 +112,10 @@ if TESTING:
 else:
     RESULT = ''
 
-manufacturer_ids = {}
-exportfile = 'manufacturer.yaml'
-try:
-    with open(exportfile, 'r') as infile:
-        y = YAML(typ='safe')
-        manufacturer_ids = y.load(infile)
-except Exception:
-    pass
+
+#
+# start module code
+#
 
 
 def format_time(timedelta: float) -> str:
@@ -132,16 +147,17 @@ def read_data_block_from_serial(the_serial: serial.Serial, end_byte: bytes = b'\
     :param the_serial: interface to read from
     :param end_byte: the indicator for end of data, this will be included in response
     :param start_byte: the indicator for start of data, this will be included in response
-    :param max_read_time:
+    :param max_read_time: maximum time after which to stop reading even if data is still sent
     :returns the read data or None
     """
     if TESTING:
         return RESULT.encode()
 
-    logger.debug("start to read data from serial device")
+    logger.debug(f"start to read data from serial device, start is {start_byte}, end is '{end_byte}, time is {max_read_time}")
     response = bytes()
     starttime = time.time()
     start_found = False
+    ch = bytes()
     try:
         while True:
             ch = the_serial.read()
@@ -151,19 +167,23 @@ def read_data_block_from_serial(the_serial: serial.Serial, end_byte: bytes = b'\
                 break
             if start_byte != b'':
                 if ch == start_byte:
+                    logger.debug('start byte found')
                     response = bytes()
                     start_found = True
             response += ch
             if ch == end_byte:
+                logger.debug('end byte found')
                 if start_byte is not None and not start_found:
                     response = bytes()
                     continue
                 else:
                     break
             if (response[-1] == end_byte):
+                logger.debug('end byte at end of response found')
                 break
             if max_read_time is not None:
-                if runtime - starttime > max_read_time:
+                if runtime - starttime > max_read_time and max_read_time > 0:
+                    logger.debug('max read time reached')
                     break
     except Exception as e:
         logger.debug(f"error occurred while reading data block from serial: {e} ")
@@ -206,7 +226,183 @@ def split_header(readout: str, break_at_eod: bool = True) -> list:
     return obis
 
 
-def query(config) -> dict:
+def get_sock(config) -> tuple[Union[serial.Serial, socket.socket, None], str]:
+    """ open serial or network socket """
+    sock = None
+    serial_port = config.get('serial_port')
+    host = config.get('host')
+    port = config.get('port')
+    timeout = config.get('timeout', 2)
+    baudrate = config.get('DLMS', {'baudate_min': 300}).get('baudrate_min', 300)
+
+    if TESTING:
+        return None, '(test input)'
+
+    if serial_port:
+        #
+        # open the serial communication
+        #
+        try:  # open serial
+            sock = serial.Serial(
+                serial_port,
+                baudrate,
+                S_BITS,
+                S_PARITY,
+                S_STOP,
+                timeout=timeout
+            )
+            if not serial_port == sock.name:
+                logger.debug(f"Asked for {serial_port} as serial port, but really using now {sock.name}")
+            target = f'serial://{sock.name}'
+
+        except FileNotFoundError:
+            logger.error(f"Serial port '{serial_port}' does not exist, please check your port")
+            return None, ''
+        except serial.SerialException:
+            if sock is None:
+                logger.error(f"Serial port '{serial_port}' could not be opened")
+            else:
+                logger.error(f"Serial port '{serial_port}' could be opened but somehow not accessed")
+            return None, ''
+        except OSError:
+            logger.error(f"Serial port '{serial_port}' does not exist, please check the spelling")
+            return None, ''
+        except Exception as e:
+            logger.error(f"unforeseen error occurred: '{e}'")
+            return None, ''
+
+        if sock is None:
+            # this should not happen...
+            logger.error("unforeseen error occurred, serial object was not initialized.")
+            return None, ''
+
+        if not sock.is_open:
+            logger.error(f"serial port '{serial_port}' could not be opened with given parameters, maybe wrong baudrate?")
+            return None, ''
+
+    elif host:
+        #
+        # open network connection
+        #
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(2)
+        sock.connect((host, port))
+        sock.setblocking(False)
+        target = f'tcp://{host}:{port}'
+
+    else:
+        logger.error('neither serialport nor host/port was given, no action possible.')
+        return None, ''
+
+    return sock, target
+
+
+def check_protocol(data: bytes, only_listen=False, use_checksum=True) -> Union[str, None]:
+    """ check for proper protocol handling """
+    acknowledge = b''   # preset empty answer
+
+    if data.startswith(acknowledge):
+        if not only_listen:
+            logger.debug("acknowledge echoed from smartmeter")
+            data = data[len(acknowledge):]
+
+    if use_checksum:
+        # data block in response may be capsuled within STX and ETX to provide error checking
+        # thus the response will contain a sequence of
+        # STX Datablock ! CR LF ETX BCC
+        # which means we need at least 6 characters in response where Datablock is empty
+        logger.debug("trying now to calculate a checksum")
+
+        if data[0] == STX:
+            logger.debug("STX found")
+        else:
+            logger.warning(f"STX not found in response='{' '.join(hex(i) for i in data[:10])}...'")
+
+        if data[-2] == ETX:
+            logger.debug("ETX found")
+        else:
+            logger.warning(f"ETX not found in response='...{' '.join(hex(i) for i in data[-11:])}'")
+
+        if (len(data) > 5) and (data[0] == STX) and (data[-2] == ETX):
+            # perform checks (start with char after STX, end with ETX including, checksum matches last byte (BCC))
+            BCC = data[-1]
+            logger.debug(f"block check character BCC is {BCC}")
+            checksum = 0
+            for i in data[1:-1]:
+                checksum ^= i
+            if checksum != BCC:
+                logger.warning(f"checksum/protocol error: response={' '.join(hex(i) for i in data[1:-1])}, checksum={checksum}")
+                return
+            else:
+                logger.debug("checksum over data response was ok, data is valid")
+        else:
+            logger.warning("STX - ETX not found")
+    else:
+        logger.debug("checksum calculation skipped")
+
+    if not only_listen:
+        if len(data) > 5:
+            res = str(data[1:-4], 'ascii')
+        else:
+            logger.debug("response did not contain enough data for OBIS decode")
+            return
+    else:
+        res = str(data, 'ascii')
+
+    return res
+
+
+def parse(data: str) -> dict:
+    """ parse data returned from device read """
+
+    result = {}
+    obis = split_header(data)
+
+    try:
+        for line in obis:
+            # Now check if we can split between values and OBIS code
+            arguments = line.split('(')
+            if len(arguments) == 1:
+                # no values found at all; that seems to be a wrong OBIS code line then
+                arguments = arguments[0]
+                values = ""
+                logger.warning(f"OBIS code line without data item: {line}")
+            else:
+                # ok, found some values to the right, lets isolate them
+                values = arguments[1:]
+                obis_code = arguments[0]
+
+                temp_values = values
+                values = []
+                for s in temp_values:
+                    s = s.replace(')', '')
+                    if len(s) > 0:
+                        # we now should have a list with values that may contain a number
+                        # separated from a unit by a '*' or a date
+                        # so see, if there is an '*' within
+                        vu = s.split('*')
+                        if len(vu) > 2:
+                            logger.error(f"too many '*' found in '{s}' of '{line}'")
+                        elif len(vu) == 2:
+                            # just a value and a unit
+                            v = vu[0]
+                            u = vu[1]
+                            values.append({'value': v, 'unit': u})
+                        else:
+                            # just a value, no unit
+                            v = vu[0]
+                            values.append({'value': v})
+                # uncomment the following line to check the generation of the values dictionary
+                logger.debug(f"{line:40} ---> {values}")
+                result[obis_code] = values
+        logger.debug("finished processing lines")
+    except Exception as e:
+        logger.debug(f"error while extracting data: '{e}'")
+
+    return result
+
+
+def query(config) -> Union[dict, None]:
     """
     This function will
     1. open a serial communication line to the smartmeter
@@ -220,7 +416,7 @@ def query(config) -> dict:
 
     config contains a dict with entries for
     'serial_port', 'device' and a sub-dict 'dlms' with entries for
-    'querycode', 'baudrate', 'baudrate_fix', 'timeout', 'onlylisten', 'use_checksum'
+    'querycode', 'baudrate', 'baudrate_fix', 'timeout', 'only_listen', 'use_checksum'
 
     return: a dict with the response data formatted as follows:
         {
@@ -233,8 +429,6 @@ def query(config) -> dict:
     The obis lines contain at least one value (index 0), possibly with a unit, and possibly more values in analogous format
     """
 
-    # TODO: modularize; find components to reuse with SML?
-
     #
     # initialize module
     #
@@ -242,118 +436,85 @@ def query(config) -> dict:
     # for the performance of the serial read we need to save the current time
     starttime = time.time()
     runtime = starttime
-    result = None
-    lock = threading.Lock()
+    lock = Lock()
+    sock = None
+
+    if not ('serial_port' in config or ('host' in config and 'port' in config)):
+        logger.warning(f'configuration {config} is missing source config (serialport or host and port)')
+        return
 
     try:
-        serial_port = config['serial_port']
-        timeout = config['timeout']
-
         device = config['dlms']['device']
         initial_baudrate = config['dlms']['baudrate_min']
-        # baudrate_fix = config['dlms']['baudrate_fix']
         query_code = config['dlms']['querycode']
         use_checksum = config['dlms']['use_checksum']
-        only_listen = config['dlms'].get('onlylisten', False)    # just for the case that smartmeter transmits data without a query first
+        only_listen = config['dlms'].get('only_listen', False)    # just for the case that smartmeter transmits data without a query first
     except (KeyError, AttributeError) as e:
         logger.warning(f'configuration {config} is missing elements: {e}')
-        return {}
+        return
 
     logger.debug(f"config='{config}'")
-    start_char = b'/'
-
-    request_message = b"/" + query_code.encode('ascii') + device.encode('ascii') + b"!\r\n"
 
     #
     # open the serial communication
     #
 
-    # about timeout: time tr between sending a request and an answer needs to be
-    # 200ms < tr < 1500ms for protocol mode A or B
-    # inter character time must be smaller than 1500 ms
-    # The time between the reception of a message and the transmission of an answer is:
-    # (20 ms) 200 ms = tr = 1 500 ms (see item 12) of 6.3.14).
-    # If a response has not been received, the waiting time of the transmitting equipment after
-    # transmission of the identification message, before it continues with the transmission, is:
-    # 1 500 ms < tt = 2 200 ms
-    # The time between two characters in a character sequence is:
-    # ta < 1 500 ms
-    wait_before_acknowledge = 0.4   # wait for 400 ms before sending the request to change baudrate
-    wait_after_acknowledge = 0.4    # wait for 400 ms after sending acknowledge
-    dlms_serial = None
-
     locked = lock.acquire(blocking=False)
     if not locked:
         logger.error('could not get lock for serial access. Is another scheduled/manual action still active?')
-        return {}
+        return
 
     try:  # lock release
-        if not TESTING:
-            try:  # open serial
-                dlms_serial = serial.Serial(serial_port,
-                                            initial_baudrate,
-                                            bytesize=serial.SEVENBITS,
-                                            parity=serial.PARITY_EVEN,
-                                            stopbits=serial.STOPBITS_ONE,
-                                            timeout=timeout)
-                if not serial_port == dlms_serial.name:
-                    logger.debug(f"Asked for {serial_port} as serial port, but really using now {dlms_serial.name}")
 
-            except FileNotFoundError:
-                logger.error(f"Serial port '{serial_port}' does not exist, please check your port")
-                return {}
-            except serial.SerialException:
-                if dlms_serial is None:
-                    logger.error(f"Serial port '{serial_port}' could not be opened")
-                else:
-                    logger.error(f"Serial port '{serial_port}' could be opened but somehow not accessed")
-                return {}
-            except OSError:
-                logger.error(f"Serial port '{serial_port}' does not exist, please check the spelling")
-                return {}
-            except Exception as e:
-                logger.error(f"unforeseen error occurred: '{e}'")
-                return {}
+        sock, target = get_sock(config)
+        if not sock:
+            # error already logged, just go
+            return
 
-            if dlms_serial is None:
-                # this should not happen...
-                logger.error("unforeseen error occurred, serial object was not initialized.")
-                return {}
+        if isinstance(sock, socket.socket):
+            logger.error(f'network reading not yet implemented for DLMS at {target}')
+            return
 
-            if not dlms_serial.is_open:
-                logger.error(f"serial port '{serial_port}' could not be opened with given parameters, maybe wrong baudrate?")
-                return {}
-
-        logger.debug(f"time to open serial port {serial_port}: {format_time(time.time() - runtime)}")
         runtime = time.time()
+        logger.debug(f"time to open {target}: {format_time(time.time() - runtime)}")
 
-        acknowledge = b''   # preset empty answer
+        #
+        # read data from device
+        #
+
+        # about timeout: time tr between sending a request and an answer needs to be
+        # 200ms < tr < 1500ms for protocol mode A or B
+        # inter character time must be smaller than 1500 ms
+        # The time between the reception of a message and the transmission of an answer is:
+        # (20 ms) 200 ms = tr = 1 500 ms (see item 12) of 6.3.14).
+        # If a response has not been received, the waiting time of the transmitting equipment after
+        # transmission of the identification message, before it continues with the transmission, is:
+        # 1 500 ms < tt = 2 200 ms
+        # The time between two characters in a character sequence is:
+        # ta < 1 500 ms
+        wait_before_acknowledge = 0.4   # wait for 400 ms before sending the request to change baudrate
+        wait_after_acknowledge = 0.4    # wait for 400 ms after sending acknowledge
+        start_char = b'/'
+        request_message = b"/" + query_code.encode('ascii') + device.encode('ascii') + b"!\r\n"
 
         if not only_listen:
-            # TODO: check/implement later
             response = b''
 
             # start a dialog with smartmeter
             try:
-                # TODO: is this needed? when?
-                # logger.debug(f"Reset input buffer from serial port '{serial_port}'")
-                # dlms_serial.reset_input_buffer()    # replaced dlms_serial.flushInput()
-                logger.debug(f"writing request message {request_message} to serial port '{serial_port}'")
-                dlms_serial.write(request_message)
-                # TODO: same as above
-                # logger.debug(f"Flushing buffer from serial port '{serial_port}'")
-                # dlms_serial.flush()                 # replaced dlms_serial.drainOutput()
+                logger.debug(f"writing request message {request_message} to serial port '{target}'")
+                sock.write(request_message)
             except Exception as e:
                 logger.warning(f"error on serial write: {e}")
-                return {}
+                return
 
             logger.debug(f"time to send first request to smartmeter: {format_time(time.time() - runtime)}")
 
             # now get first response
-            response = read_data_block_from_serial(dlms_serial)
+            response = read_data_block_from_serial(sock)
             if not response:
                 logger.debug("no response received upon first request")
-                return {}
+                return
 
             logger.debug(f"time to receive an answer: {format_time(time.time() - runtime)}")
             runtime = time.time()
@@ -364,7 +525,7 @@ def query(config) -> dict:
                 logger.debug("request message was echoed, need to read the identification message")
                 # now read the capabilities and type/brand line from Smartmeter
                 # e.g. b'/LGZ5\\2ZMD3104407.B32\r\n'
-                response = read_data_block_from_serial(dlms_serial)
+                response = read_data_block_from_serial(sock)
             else:
                 logger.debug("request message was not equal to response, treating as identification message")
 
@@ -381,11 +542,11 @@ def query(config) -> dict:
             # 2 bytes CR LF
             if len(identification_message) < 7:
                 logger.warning(f"malformed identification message: '{identification_message}', abort query")
-                return {}
+                return
 
             if (identification_message[0] != start_char):
                 logger.warning(f"identification message '{identification_message}' does not start with '/', abort query")
-                return {}
+                return
 
             manid = str(identification_message[1:4], 'utf-8')
             manname = manufacturer_ids.get(manid, 'unknown')
@@ -446,16 +607,16 @@ def query(config) -> dict:
                 time.sleep(wait_before_acknowledge)
                 logger.debug(f"using protocol mode C, send acknowledge {acknowledge} and tell smartmeter to switch to {new_baudrate} baud")
                 try:
-                    dlms_serial.write(acknowledge)
+                    sock.write(acknowledge)
                 except Exception as e:
                     logger.warning(f"error on sending baudrate change: {e}")
-                    return {}
+                    return
                 time.sleep(wait_after_acknowledge)
                 # dlms_serial.flush()
                 # dlms_serial.reset_input_buffer()
                 if (new_baudrate != initial_baudrate):
                     # change request to set higher baudrate
-                    dlms_serial.baudrate = new_baudrate
+                    sock.baudrate = new_baudrate
 
             elif protocol_mode == 'B':
                 # the speed change in communication is initiated from the smartmeter device
@@ -466,17 +627,17 @@ def query(config) -> dict:
                 # dlms_serial.reset_input_buffer()
                 if (new_baudrate != initial_baudrate):
                     # change request to set higher baudrate
-                    dlms_serial.baudrate = new_baudrate
+                    sock.baudrate = new_baudrate
             else:
                 logger.debug(f"no change of readout baudrate, smartmeter and reader will stay at {new_baudrate} baud")
 
             # now read the huge data block with all the OBIS codes
             logger.debug("Reading OBIS data from smartmeter")
-            response = read_data_block_from_serial(dlms_serial, b'')
+            response = read_data_block_from_serial(sock, b'')
         else:
             # only listen mode, starts with / and last char is !
             # data will be in between those two
-            response = read_data_block_from_serial(dlms_serial, b'!', b'/')
+            response = read_data_block_from_serial(sock, b'!', b'/')
 
             identification_message = str(response, 'utf-8').splitlines()[0]
 
@@ -485,7 +646,7 @@ def query(config) -> dict:
             logger.debug(f"manufacturer for {manid} is {manname} (out of {len(manufacturer_ids)} given manufacturers)")
 
         try:
-            dlms_serial.close()
+            sock.close()
         except Exception:
             pass
     except Exception:
@@ -500,108 +661,16 @@ def query(config) -> dict:
     # Display performance of the serial communication
     logger.debug(f"whole communication with smartmeter took {format_time(time.time() - starttime)}")
 
-    if response.startswith(acknowledge):
-        if not only_listen:
-            logger.debug("acknowledge echoed from smartmeter")
-            response = response[len(acknowledge):]
-
-    if use_checksum:
-        # data block in response may be capsuled within STX and ETX to provide error checking
-        # thus the response will contain a sequence of
-        # STX Datablock ! CR LF ETX BCC
-        # which means we need at least 6 characters in response where Datablock is empty
-        logger.debug("trying now to calculate a checksum")
-
-        if response[0] == STX:
-            logger.debug("STX found")
-        else:
-            logger.warning(f"STX not found in response='{' '.join(hex(i) for i in response[:10])}...'")
-
-        if response[-2] == ETX:
-            logger.debug("ETX found")
-        else:
-            logger.warning(f"ETX not found in response='...{' '.join(hex(i) for i in response[-11:])}'")
-
-        if (len(response) > 5) and (response[0] == STX) and (response[-2] == ETX):
-            # perform checks (start with char after STX, end with ETX including, checksum matches last byte (BCC))
-            BCC = response[-1]
-            logger.debug(f"block check character BCC is {BCC}")
-            checksum = 0
-            for i in response[1:-1]:
-                checksum ^= i
-            if checksum != BCC:
-                logger.warning(f"checksum/protocol error: response={' '.join(hex(i) for i in response[1:-1])} "
-                                    "checksum={checksum}")
-                return
-            else:
-                logger.debug("checksum over data response was ok, data is valid")
-        else:
-            logger.warning("STX - ETX not found")
-    else:
-        logger.debug("checksum calculation skipped")
-
-    if not only_listen:
-        if len(response) > 5:
-            result = str(response[1:-4], 'ascii')
-            logger.debug(f"parsing OBIS codes took {format_time(time.time() - runtime)}")
-        else:
-            logger.debug("response did not contain enough data for OBIS decode")
-    else:
-        result = str(response, 'ascii')
+    response = check_protocol(response, only_listen, use_checksum)
+    if not response:
+        return
+    logger.debug(f"parsing OBIS codes took {format_time(time.time() - runtime)}")
 
     suggested_cycle = (time.time() - starttime) + 10.0
     config['suggested_cycle'] = suggested_cycle
     logger.debug(f"the whole query took {format_time(time.time() - starttime)}, suggested cycle thus is at least {format_time(suggested_cycle)}")
 
-    if not result:
-        return {}
-
-    rdict = {}  # {'readout': result}
-
-    obis = split_header(result)
-
-    try:
-        for line in obis:
-            # Now check if we can split between values and OBIS code
-            arguments = line.split('(')
-            if len(arguments) == 1:
-                # no values found at all; that seems to be a wrong OBIS code line then
-                arguments = arguments[0]
-                values = ""
-                logger.warning(f"OBIS code line without data item: {line}")
-            else:
-                # ok, found some values to the right, lets isolate them
-                values = arguments[1:]
-                obis_code = arguments[0]
-
-                temp_values = values
-                values = []
-                for s in temp_values:
-                    s = s.replace(')', '')
-                    if len(s) > 0:
-                        # we now should have a list with values that may contain a number
-                        # separated from a unit by a '*' or a date
-                        # so see, if there is an '*' within
-                        vu = s.split('*')
-                        if len(vu) > 2:
-                            logger.error(f"too many '*' found in '{s}' of '{line}'")
-                        elif len(vu) == 2:
-                            # just a value and a unit
-                            v = vu[0]
-                            u = vu[1]
-                            values.append({'value': v, 'unit': u})
-                        else:
-                            # just a value, no unit
-                            v = vu[0]
-                            values.append({'value': v})
-                # uncomment the following line to check the generation of the values dictionary
-                logger.debug(f"{line:40} ---> {values}")
-                rdict[obis_code] = values
-        logger.debug("finished processing lines")
-    except Exception as e:
-        logger.debug(f"error while extracting data: '{e}'")
-
-    return rdict
+    return parse(response)
 
 
 def discover(config: dict) -> bool:
@@ -612,14 +681,17 @@ def discover(config: dict) -> bool:
     # the user, or preset by the plugin.yaml defaults.
     # If really necessary, the query could be called multiple times with
     # reduced baud rates or changed parameters, but there would need to be
-    # the need for this. 
+    # the need for this.
     # For now, let's see how well this works...
     result = query(config)
 
     # result should have one key 'readout' with the full answer and a separate
     # key for every read OBIS code. If no OBIS codes are read/converted, we can
     # not be sure this is really DLMS, so we check for at least one OBIS code.
-    return len(result) > 1
+    if result:
+        return len(result) > 1
+    else:
+        return False
 
 
 if __name__ == '__main__':
@@ -640,15 +712,32 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    config = {}
+    # complete default dict
+    config = {
+        'serial_port': '',
+        'host': '',
+        'port': 0,
+        'connection': '',
+        'timeout': 2,
+        'baudrate': 9600,
+        'dlms': {
+            'device': '',
+            'querycode': '?',
+            'baudrate_min': 300,
+            'use_checksum': True,
+            'onlylisten': False
+        },
+        'sml': {
+            'buffersize': 1024
+        }
+    }
 
     config['serial_port'] = args.port
     config['timeout'] = args.timeout
-    config['dlms'] = {}
     config['dlms']['querycode'] = args.querycode
     config['dlms']['baudrate_min'] = args.baudrate
     config['dlms']['baudrate_fix'] = args.baudrate_fix
-    config['dlms']['onlylisten'] = args.onlylisten
+    config['dlms']['only_listen'] = args.onlylisten
     config['dlms']['use_checksum'] = args.nochecksum
     config['dlms']['device'] = args.device
 
@@ -663,9 +752,9 @@ if __name__ == '__main__':
         # add the handlers to the logger
         logging.getLogger().addHandler(ch)
     else:
-        logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger().setLevel(logging.INFO)
         ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
+        ch.setLevel(logging.INFO)
         # just like print
         formatter = logging.Formatter('%(message)s')
         ch.setFormatter(formatter)
@@ -685,7 +774,13 @@ if __name__ == '__main__':
             del result['readout']
         except KeyError:
             pass
-        logger.info(result)
+        try:
+            import pprint
+        except ImportError:
+            txt = str(result)
+        else:
+            txt = pprint.pformat(result, indent=4)
+        logger.info(txt)
     elif len(result) == 1:
         logger.info("The results of the query could not be processed; raw result is:")
         logger.info(result)

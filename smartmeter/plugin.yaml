@@ -35,6 +35,16 @@ parameters:
         description:
             de: 'Serieller Port, an dem das Smartmeter angeschlossen ist'
             en: 'serial port at which the smartmeter is attached'
+    host:
+        type: str
+        description:
+            de: 'Host der eine IP Schnittstelle bereitstellt (nur SML)'
+            en: 'Host that provides an IP interface (SML only)'
+    port:
+        type: int
+        description:
+            de: 'Port für die Kommunikation (nur SML)'
+            en: 'Port for communication (SML only)'
     timeout:
         type: int
         default: 2
@@ -69,12 +79,6 @@ parameters:
         description:
             de: 'Baudrate, bei der die Kommunikation zuerst erfolgen soll (nur DLMS)'
             en: 'Baudrate at which the communication should be initiated (DLMS only)'
-    baudrate_fix:
-        type: bool
-        default: false
-        description:
-            de: 'Baudrate beibehalten trotz Änderungsanforderung (nur DLMS)'
-            en: 'Keep up baudrate in communication despite of change request'
     device_address:
         type: str
         default: ''
@@ -95,7 +99,7 @@ parameters:
             en: 'if true then a checksum will be calculated of the readout result'
     only_listen:
         type: bool
-        default: False
+        default: false
         description:
             de: 'Manche Smartmeter können nicht abgefragt werden sondern senden von sich aus Informationen. Für diese Smartmeter auf True setzen und die Baudrate anpassen (nur DLMS)'
             en: 'Some smartmeter can not be queried, they send information without request. For those devices set to True and adjust baudrate'
@@ -107,29 +111,19 @@ parameters:
         description:
             de: 'Größe des Lesepuffers. Mindestens doppelte Größe der maximalen Nachrichtenlänge in Bytes (nur SML)'
             en: 'Size of read buffer. At least twice the size of maximum message length (SML only)'
-    host:
+    device_type:
         type: str
+        default: 'raw'
         description:
-            de: 'Host der eine IP Schnittstelle bereitstellt (nur SML)'
-            en: 'Host that provides an IP interface (SML only)'
-    port:
+            de: 'Name des Gerätes (nur SML)'
+            en: 'Name of Smartmeter (SML only)'
+    date_offset:
         type: int
+        default: 0
         description:
-            de: 'Port für die Kommunikation (nur SML)'
-            en: 'Port for communication (SML only)'
+            de: 'Unix timestamp der Smartmeter Inbetriebnahme (nur SML)'
+            en: 'Unix timestamp of Smartmeter start-up after installation (SML only)'
     # the following parameters are for the old frame parser
-    # device_type:
-    #     type: str
-    #     default: 'raw'
-    #     description:
-    #         de: 'Name des Gerätes (nur SML)'
-    #         en: 'Name of Smartmeter (SML only)'
-    # date_offset:
-    #     type: int
-    #     default: 0
-    #     description:
-    #         de: 'Unix timestamp der Smartmeter Inbetriebnahme (nur SML)'
-    #         en: 'Unix timestamp of Smartmeter start-up after installation (SML only)'
     # poly:
     #     type: int
     #     default: 0x1021
