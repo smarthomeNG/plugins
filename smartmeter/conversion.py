@@ -128,10 +128,14 @@ class Conversion:
             return val
 
         try:
-            if converter in ('num', 'float'):
+            if converter in ('num', 'float', 'int'):
 
-                if converter == 'num' and val.isdigit():
-                    return int(val)
+                if converter in ('num', 'int'):
+                    try:
+                        return int(val)
+                    except (ValueError, AttributeError):
+                        if converter == 'int':
+                            raise ValueError
 
                 # try/except to catch floats like '1.0' and '1,0'
                 try:

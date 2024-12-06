@@ -67,7 +67,7 @@ ITEM_ATTRS = (OBIS_CODE, OBIS_INDEX, OBIS_PROPERTY, OBIS_VTYPE, OBIS_READOUT)
 
 # obis properties
 PROPS = [
-    'value', 'unit', 'name', 'valueReal', 'scaler', 'status', 'valTime', 'actTime', 'signature', 'unitName',
+    'value', 'unit', 'name', 'valueRaw', 'scaler', 'status', 'valTime', 'actTime', 'signature', 'unitCode',
     'statRun', 'statFraudMagnet', 'statFraudCover', 'statEnergyTotal', 'statEnergyL1', 'statEnergyL2', 'statEnergyL3',
     'statRotaryField', 'statBackstop', 'statCalFault', 'statVoltageL1', 'statVoltageL2', 'statVoltageL3', 'obis'
 ]
@@ -155,6 +155,7 @@ class Smartmeter(SmartPlugin, Conversion):
         self._config['dlms']['baudrate_min'] = self.get_parameter_value('baudrate_min')
         self._config['dlms']['use_checksum'] = self.get_parameter_value('use_checksum')
         self._config['dlms']['only_listen'] = self.get_parameter_value('only_listen')
+        self._config['dlms']['normalize'] = self.get_parameter_value('normalize')
 
         # SML only
         # disabled parameters are for old frame parser
@@ -334,21 +335,21 @@ class Smartmeter(SmartPlugin, Conversion):
                         index = conf.get('index', 0)
                         # new default: if we don't find prop, we don't change the respective item
                         itemValue = vlist[index].get(prop)
-                        try:
-                            val = vlist[index][prop]
-                            converter = conf['vtype']
-                            itemValue = self._convert_value(val, converter)
-                            # self.logger.debug(f'conversion yielded {itemValue} from {val} for converter "{converter}"')
-                        except IndexError:
-                            self.logger.warning(f'value for index {index} not found in {vlist["value"]}, skipping...')
-                            continue
-                        except KeyError as e:
-                            self.logger.warning(f'key  error while setting item {item} for obis code {obis} to value "{itemValue}": {e}')
-                        except NameError as e:
-                            self.logger.warning(f'name  error while setting item {item} for obis code {obis} to value "{itemValue}": {e}')
-
                         # skip item assignment to save time and cpu cycles
                         if itemValue is not None:
+                            try:
+                                val = vlist[index][prop]
+                                converter = conf['vtype']
+                                itemValue = self._convert_value(val, converter)
+                                # self.logger.debug(f'conversion yielded {itemValue} from {val} for converter "{converter}"')
+                            except IndexError:
+                                self.logger.warning(f'value for index {index} not found in {vlist["value"]}, skipping...')
+                                continue
+                            except KeyError as e:
+                                self.logger.warning(f'key  error while setting item {item} for obis code {obis} to value "{itemValue}": {e}')
+                            except NameError as e:
+                                self.logger.warning(f'name  error while setting item {item} for obis code {obis} to value "{itemValue}": {e}')
+
                             item(itemValue, self.get_fullname())
                             self.logger.debug(f'set item {item} for obis code {obis}:{prop} to value "{itemValue}"')
                         else:

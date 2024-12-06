@@ -284,11 +284,11 @@ def parse(data: bytes, config: dict) -> dict:
                 content = {
                     'value': entry.get_value(),
                     'name': OBIS_NAMES.get(entry.obis),
-                    'valueReal': entry.get_value()
+                    'valueRaw': entry.get_value()
                 }
                 if entry.scaler:
                     content['scaler'] = entry.scaler
-                    content['valueReal'] = round(content['value'] * 10 ** content['scaler'], 1)
+                    content['value'] = round(content['value'] * 10 ** content['scaler'], 1)
                 if entry.status:
                     content['status'] = entry.status
                 if entry.val_time:
@@ -297,8 +297,8 @@ def parse(data: bytes, config: dict) -> dict:
                 if entry.value_signature:
                     content['signature'] = entry.value_signature
                 if entry.unit:
-                    content['unit'] = entry.unit
-                    content['unitName'] = smlConst.UNITS.get(content['unit'])
+                    content['unit'] = smlConst.UNITS.get(entry.unit)
+                    content['unitCode'] = entry.unit
 
                 # Decoding status information if present
                 if 'status' in content:
@@ -322,13 +322,13 @@ def parse(data: bytes, config: dict) -> dict:
                 # Convert some special OBIS values into nicer format
                 # EMH ED300L: add additional OBIS codes
                 if content['obis'] == '1-0:0.2.0*0':
-                    content['valueReal'] = content['value'].decode()     # Firmware as UTF-8 string
+                    content['value'] = content['valueRaw'].decode()     # Firmware as UTF-8 string
                 if content['obis'] == '1-0:96.50.1*1' or content['obis'] == '129-129:199.130.3*255':
-                    content['valueReal'] = content['value'].decode()     # Manufacturer code as UTF-8 string
+                    content['value'] = content['valueRaw'].decode()     # Manufacturer code as UTF-8 string
                 if content['obis'] == '1-0:96.1.0*255' or content['obis'] == '1-0:0.0.9*255':
-                    content['valueReal'] = to_hex(content['value'])
+                    content['value'] = to_hex(content['valueRaw'])
                 if content['obis'] == '1-0:96.5.0*255':
-                    content['valueReal'] = bin(content['value'] >> 8)    # Status as binary string, so not decoded into status bits as above
+                    content['value'] = bin(content['valueRaw'] >> 8)    # Status as binary string, so not decoded into status bits as above
                 # end TODO
 
                 result[code].append(content)

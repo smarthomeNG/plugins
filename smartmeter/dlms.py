@@ -35,12 +35,14 @@ __docformat__ = 'reStructuredText'
 
 import logging
 import time
+from jinja2.ext import ExprStmtExtension
 import serial
 import socket  # not needed, just for code portability
 
 from ruamel.yaml import YAML
+from smllib import const as smlConst
 from threading import Lock
-from typing import Union
+from typing import (Union, Tuple, Any)
 
 
 """
@@ -116,6 +118,66 @@ else:
 #
 # start module code
 #
+
+
+def normalize_unit(value: Union[int, float], unit: str) -> Tuple[Union[int, float], str]:
+    """ normalize units, i.e. remove prefixes and recalculate value """
+    # in this environment, smaller or larger prefixes don't seem sensible...
+    _prefix = {
+        'u': 1e-6,   # micro
+        'm': 1e-3,   # mili
+        'c': 1e-2,   # centi
+        'd': 1e-1,   # deci
+        'k': 1e3,    # kilo
+        'M': 1e6,    # mega
+        'G': 1e9,    # giga
+    }
+
+    nval = value
+    nunit = unit
+
+    for p in _prefix:
+        if unit.startswith(p):
+            nunit = unit[1:]
+            nval = nval * _prefix[p]
+            break
+
+    # check if we made a float without necessity...
+    if unit != nunit and type(value) is int and type(nval) is float and _prefix[unit[0]] > 1:
+        nval = int(nval)
+
+    return nval, nunit
+
+
+def get_unit_code(value: Any, unit: str, normalize: bool = True) -> Tuple[Any, str, Union[int, None]]:
+    """
+    try to get unit code for u from sml Units. If normalize is set, first try to
+    normalize value/unit.
+    As SML only lists base units, prefixes units like kW or MWh don't match
+    the value/unit pair for prefixed units and we don't return unit codes that
+    need normalizing.
+    """
+    unit_code = None
+
+    # check if value is numeric
+    x = None
+    try:
+        x = float(value)
+    except Exception:
+        pass
+    try:
+        x = int(value)
+    except Exception:
+        pass
+
+    # only check for numeric values...
+    if type(x) in (int, float) and unit:
+        if normalize:
+            value, unit = normalize_unit(x, unit)
+        if unit in smlConst.UNITS.values():
+            unit_code = list(smlConst.UNITS.keys())[list(smlConst.UNITS.values()).index(unit)]
+
+    return value, unit, unit_code
 
 
 def format_time(timedelta: float) -> str:
@@ -352,7 +414,7 @@ def check_protocol(data: bytes, only_listen=False, use_checksum=True) -> Union[s
     return res
 
 
-def parse(data: str) -> dict:
+def parse(data: str, normalize: bool = True) -> dict:
     """ parse data returned from device read """
 
     result = {}
@@ -387,7 +449,14 @@ def parse(data: str) -> dict:
                             # just a value and a unit
                             v = vu[0]
                             u = vu[1]
-                            values.append({'value': v, 'unit': u})
+
+                            # normalize SI units if possible to return values analogue to SML (e.g. Wh instead of kWh)
+                            v, u, uc = get_unit_code(v, u, normalize)
+
+                            if uc:
+                                values.append({'value': v, 'unit': u, 'unitCode': uc})
+                            else:
+                                values.append({'value': v, 'unit': u})
                         else:
                             # just a value, no unit
                             v = vu[0]
@@ -449,6 +518,7 @@ def query(config) -> Union[dict, None]:
         query_code = config['dlms']['querycode']
         use_checksum = config['dlms']['use_checksum']
         only_listen = config['dlms'].get('only_listen', False)    # just for the case that smartmeter transmits data without a query first
+        normalize = config['dlms'].get('normalize', True)
     except (KeyError, AttributeError) as e:
         logger.warning(f'configuration {config} is missing elements: {e}')
         return
@@ -670,7 +740,7 @@ def query(config) -> Union[dict, None]:
     config['suggested_cycle'] = suggested_cycle
     logger.debug(f"the whole query took {format_time(time.time() - starttime)}, suggested cycle thus is at least {format_time(suggested_cycle)}")
 
-    return parse(response)
+    return parse(response, normalize)
 
 
 def discover(config: dict) -> bool:
@@ -709,6 +779,7 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--onlylisten', help='only listen to serial, no active query', action='store_true')
     parser.add_argument('-f', '--baudrate_fix', help='keep baudrate speed fixed', action='store_false')
     parser.add_argument('-c', '--nochecksum', help='don\'t use a checksum', action='store_false')
+    parser.add_argument('-n', '--normalize', help='convert units to base units and recalculate value', action='store_true')
 
     args = parser.parse_args()
 
@@ -725,7 +796,8 @@ if __name__ == '__main__':
             'querycode': '?',
             'baudrate_min': 300,
             'use_checksum': True,
-            'onlylisten': False
+            'onlylisten': False,
+            'normalize': True
         },
         'sml': {
             'buffersize': 1024
@@ -740,6 +812,7 @@ if __name__ == '__main__':
     config['dlms']['only_listen'] = args.onlylisten
     config['dlms']['use_checksum'] = args.nochecksum
     config['dlms']['device'] = args.device
+    config['dlms']['normalize'] = args.normalize
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)

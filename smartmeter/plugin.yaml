@@ -103,6 +103,12 @@ parameters:
         description:
             de: 'Manche Smartmeter können nicht abgefragt werden sondern senden von sich aus Informationen. Für diese Smartmeter auf True setzen und die Baudrate anpassen (nur DLMS)'
             en: 'Some smartmeter can not be queried, they send information without request. For those devices set to True and adjust baudrate'
+    normalize:
+        type: bool
+        default: true
+        description:
+            de: 'Wenn Einheiten mit Zehnerpräfix geliefert werden, werden Einheit und Wert in die entsprechende Basiseinheit konvertiert (z.B. 12.7 kWh -> 12700 Wh)'
+            en: 'if units are read with power of ten prefix, unit and value will be converted to the corresponding base unit (e.g. 12.7 kWh -> 12700 Wh)'
 
     # SML parameters
     buffersize:
@@ -180,29 +186,53 @@ item_attributes:
         type: str
         default: value
         valid_list:
-            - value
-            - unit
-            - scaler
-            - status
-            - valTime 
-            - signature
+            - value             # value, possibly corrected (scaler, normalized unit)
+            - valueRaw          # value as sent from meter
+            - unit              # unit as str
+            - unitCode          # unit code from smllib.const.UNITS
+            - name              # 
+            - obis              # obis code
+            - valTime           # time as sent from meter
+            - actTime           # time corrected for meter time base
+            - scaler            # 10**x scaler for valueRaw
+            - signature         # meter signature
+            - status            # status bit field
+            - statRun           # meter is running
+            - statFraudMagnet   # fraud magnet activated
+            - statFraudCover    # fraud cover triggered
+            - statEnergyTotal   # 
+            - statEnergyL1      # 
+            - statEnergyL2      # 
+            - statEnergyL3      # 
+            - statRotaryField   # 
+            - statBackstop      # 
+            - statCalFault      # 
+            - statVoltageL1     # 
+            - statVoltageL2     # 
+            - statVoltageL3     # 
         description:
             de: >
                 Eigenschaft des gelesenen Wertes:
-                * value: gelesener Wert (siehe obis_index)
+                * value: korrigierter Wert (Skalierungsfaktor, SI-Basiseinheit)
+                * valueRaw: vom Gerät gelieferter (Roh-)Wert
                 * unit: zurückgegebene Einheit des Wertes
-                * scaler: Multiplikationsfaktor
-                * status: tbd
+                * unitCode: Code der Einheit gem. smllib.const.UNITS
+                * scaler: Multiplikationsfaktor für valueRaw
+                * status: Status-Bitfeld
                 * valTime: Zeitstempel des Wertes
-                * signature: tbc
+                * actTime: korrigierter Zeitstempel des Wertes
+                * signature: tbd
                 Nicht alle Eigenschaften sind in jedem Datenpunkt vorhanden.
             en: >
                 property of the read data:
-                * value: read obis value (see obis_index)
+                * value: corrected value (scaler, SI base units)
+                * valueRaw: value as read from meter
                 * unit: read unit of value
-                * scaler: multiplicative factor
-                * status: tbd
-                * valTime: timestamp of the value
+                * unitCode: code for unit as given in smllib.const.UNITS
+                * scaler: multiplicative factor for valueRaw
+                * status: meter status bitfield
+                * valTime: timestamp for value
+                * actTime: corrected timestamp for value
                 * signature: tbd
                 Not all properties are present for all data points.
     obis_vtype:
