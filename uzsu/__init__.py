@@ -930,7 +930,7 @@ class UZSU(SmartPlugin):
                 self._itpl[item][next.timestamp() * 1000.0] = value
                 series += 1
                 rstr = str(entry['rrule']).replace('\n', ';')
-                self.logger.debug(f'{item}: Looking for {timescan} series-related time. Found rrule: {rstr} with start-time {entry["series"]["timeSeriesMin"]}')
+                self.logger.debug(f'{item}: Looking for {timescan} series-related time. Found rrule: {rstr} with start-time {entry["series"]["timeSeriesMin"]}. Next: {next}')
 
             cond_today = False if next is None else next.date() == today.date()
             cond_yesterday = False if next is None else next.date() - timedelta(days=1) == yesterday.date()
@@ -1046,9 +1046,9 @@ class UZSU(SmartPlugin):
                     original_daycount = daycount
 
                     if daycount is None:
-                        daycount = int(timediff.total_seconds() / 60 / interval)
+                        daycount = int((timediff.total_seconds() // 60) // interval + 1)
                     else:
-                        new_daycount = int(timediff.total_seconds() / 60 / interval)
+                        new_daycount = int((timediff.total_seconds() // 60) // interval + 1)
                         if int(daycount) > new_daycount:
                             self.logger.warning(f'Cut your SerieCount to {new_daycount} - because interval {interval} x SerieCount {daycount} is not possible between {starttime} and {endtime}')
                             daycount = new_daycount
@@ -1221,13 +1221,13 @@ class UZSU(SmartPlugin):
             if endtime < starttime:
                 endtime += timedelta(days=1)
             timediff = endtime - starttime
-            daycount = int(timediff.total_seconds() / 60 / interval)
+            daycount = int((timediff.total_seconds() // 60) // interval + 1)
         else:
             if seriesend is None:
                 endtime = starttime
                 endtime += timedelta(minutes=interval * int(daycount))
                 timediff = endtime - starttime
-                daycount = int(timediff.total_seconds() / 60 / interval)
+                daycount = int((timediff.total_seconds() // 60) // interval + 1)
             else:
                 endtime = datetime.strptime(seriesend, "%H:%M")
                 timediff = endtime - starttime
@@ -1238,7 +1238,7 @@ class UZSU(SmartPlugin):
                 count = int(1439 / interval)
                 self.logger.warning(f'Cut your SerieCount to {count} - because interval {interval} x SerieCount {org_count} is more than 24h')
             else:
-                new_daycount = int(timediff.total_seconds() / 60 / interval)
+                new_daycount = int((timediff.total_seconds() // 60) // interval + 1)
                 if int(daycount) > new_daycount:
                     self.logger.warning(f'Cut your SerieCount to {new_daycount} - because interval {interval} x SerieCount {daycount} is not possible between {datetime.strftime(starttime, "%H:%M")} and {datetime.strftime(endtime, "%H:%M")}')
                     daycount = new_daycount
