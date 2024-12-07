@@ -144,202 +144,306 @@ def format_time(timedelta):
         return f"{timedelta * 1000000000.0:.2f} ns"
 
 
-def _read(sock, length: int) -> bytes:
-    """ isolate the read method from the connection object """
-    if isinstance(sock, serial.Serial):
-        return sock.read()
-    elif isinstance(sock, socket.socket):
-        return sock.recv(length)
-    else:
-        return b''
+#
+# single-shot reader
+#
 
 
-def read(sock: Union[serial.Serial, socket.socket], length: int = 0) -> bytes:
-    """
-    This function reads some bytes from serial or network interface
-    it returns an array of bytes if a timeout occurs or a given end byte is encountered
-    and otherwise b'' if an error occurred
-    :returns the read data
-    """
-    if TESTING:
-        return RESULT
+class SmlReader():
+    def __init__(self, logger, config: dict):
+        self.config = config
+        self.sock = None
+        self.logger = logger
 
-    logger.debug("start to read data from serial/network device")
-    response = bytes()
-    while True:
-        try:
-            # on serial, length is ignored
-            data = _read(sock, length)
-            if data:
-                response += data
-                if len(response) >= length:
-                    logger.debug('read end, length reached')
-                    break
-            else:
-                if isinstance(sock, serial.Serial):
-                    logger.debug('read end, end of data reached')
-                    break
-        except socket.error as e:
-            if e.args[0] == errno.EAGAIN or e.args[0] == errno.EWOULDBLOCK:
-                logger.debug(f'read end, error: {e}')
-                break
-            else:
-                raise
-        except Exception as e:
-            logger.debug(f"error while reading from serial/network: {e}")
-            return b''
+        if not ('serial_port' in config or ('host' in config and 'port' in config)):
+            raise ValueError(f'configuration {config} is missing source config (serialport or host and port)')
 
-    logger.debug(f"finished reading data from serial/network {len(response)} bytes")
-    return response
+        self.serial_port = config.get('serial_port')
+        self.host = config.get('host')
+        self.port = config.get('port')
+        self.timeout = config.get('timeout', 2)
+        self.baudrate = config.get('baudrate', 9600)
+        self.target = '(not set)'
+        self.buffersize = config.get('sml', {'buffersize': 1024}).get('buffersize', 1024)
+        self.lock = Lock()
 
+        logger.debug(f"config='{config}'")
 
-def get_sock(config: dict) -> tuple[Union[serial.Serial, socket.socket, None], str]:
-    """ open serial or network socket """
-    sock = None
-    serial_port = config.get('serial_port')
-    host = config.get('host')
-    port = config.get('port')
-    timeout = config.get('timeout', 2)
-    baudrate = config.get('baudrate', 9600)
+    def __call__(self) -> bytes:
 
-    if TESTING:
-        return None, '(test input)'
-
-    if serial_port:
         #
         # open the serial communication
         #
-        try:  # open serial
-            sock = serial.Serial(
-                serial_port,
-                baudrate,
-                S_BITS,
-                S_PARITY,
-                S_STOP,
-                timeout=timeout
-            )
-            if not serial_port == sock.name:
-                logger.debug(f"Asked for {serial_port} as serial port, but really using now {sock.name}")
-            target = f'serial://{sock.name}'
 
-        except FileNotFoundError:
-            logger.error(f"Serial port '{serial_port}' does not exist, please check your port")
+        locked = self.lock.acquire(blocking=False)
+        if not locked:
+            logger.error('could not get lock for serial/network access. Is another scheduled/manual action still active?')
+            return b''
+
+        try:  # lock release
+
+            runtime = time.time()
+            self.get_sock()
+            if not self.sock:
+                # error already logged, just go
+                return b''
+            logger.debug(f"time to open {self.target}: {format_time(time.time() - runtime)}")
+
+            #
+            # read data from device
+            #
+
+            response = bytes()
+            try:
+                response = self.read()
+                if len(response) == 0:
+                    logger.error('reading data from device returned 0 bytes!')
+                    return b''
+                else:
+                    logger.debug(f'read {len(response)} bytes')
+
+            except Exception as e:
+                logger.error(f'reading data from {self.target} failed with error: {e}')
+
+        except Exception:
+            # passthrough, this is only for releasing the lock
+            raise
+        finally:
+            #
+            # clean up connection
+            #
+            try:
+                self.sock.close()
+            except Exception:
+                pass
+            self.sock = None
+            self.lock.release()
+
+        return response
+
+    def _read(self) -> bytes:
+        """ isolate the read method from the connection object """
+        if isinstance(self.sock, serial.Serial):
+            return self.sock.read()
+        elif isinstance(self.sock, socket.socket):
+            return self.sock.recv(self.buffersize)
+        else:
+            return b''
+
+    def read(self) -> bytes:
+        """
+        This function reads some bytes from serial or network interface
+        it returns an array of bytes if a timeout occurs or a given end byte is encountered
+        and otherwise b'' if an error occurred
+        :returns the read data
+        """
+        if TESTING:
+            return RESULT
+
+        self.logger.debug("start to read data from serial/network device")
+        response = bytes()
+        while True:
+            try:
+                # on serial, length is ignored
+                data = self._read()
+                if data:
+                    response += data
+                    if len(response) >= self.buffersize:
+                        self.logger.debug('read end, length reached')
+                        break
+                else:
+                    if isinstance(self.sock, serial.Serial):
+                        self.logger.debug('read end, end of data reached')
+                        break
+            except socket.error as e:
+                if e.args[0] == errno.EAGAIN or e.args[0] == errno.EWOULDBLOCK:
+                    self.logger.debug(f'read end, error: {e}')
+                    break
+                else:
+                    raise
+            except Exception as e:
+                self.logger.debug(f"error while reading from serial/network: {e}")
+                return b''
+
+        self.logger.debug(f"finished reading data from serial/network {len(response)} bytes")
+        return response
+
+    def get_sock(self):
+        """ open serial or network socket """
+
+        if TESTING:
+            self.sock = None
+            self.target = '(test input)'
+            return
+
+        if self.serial_port:
+            #
+            # open the serial communication
+            #
+            try:  # open serial
+                self.sock = serial.Serial(
+                    self.serial_port,
+                    self.baudrate,
+                    S_BITS,
+                    S_PARITY,
+                    S_STOP,
+                    timeout=self.timeout
+                )
+                if not self.serial_port == self.sock.name:
+                    logger.debug(f"Asked for {self.serial_port} as serial port, but really using now {self.sock.name}")
+                self.target = f'serial://{self.sock.name}'
+
+            except FileNotFoundError:
+                logger.error(f"Serial port '{self.serial_port}' does not exist, please check your port")
+                return None, ''
+            except serial.SerialException:
+                if self.sock is None:
+                    logger.error(f"Serial port '{self.serial_port}' could not be opened")
+                else:
+                    logger.error(f"Serial port '{self.serial_port}' could be opened but somehow not accessed")
+                return None, ''
+            except OSError:
+                logger.error(f"Serial port '{self.serial_port}' does not exist, please check the spelling")
+                return None, ''
+            except Exception as e:
+                logger.error(f"unforeseen error occurred: '{e}'")
+                return None, ''
+
+            if self.sock is None:
+                # this should not happen...
+                logger.error("unforeseen error occurred, serial object was not initialized.")
+                return None, ''
+
+            if not self.sock.is_open:
+                logger.error(f"serial port '{self.serial_port}' could not be opened with given parameters, maybe wrong baudrate?")
+                return None, ''
+
+        elif self.host:
+            #
+            # open network connection
+            #
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(2)
+            sock.connect((self.host, self.port))
+            sock.setblocking(False)
+            self.target = f'tcp://{self.host}:{self.port}'
+
+        else:
+            logger.error('neither serialport nor host/port was given, no action possible.')
             return None, ''
-        except serial.SerialException:
-            if sock is None:
-                logger.error(f"Serial port '{serial_port}' could not be opened")
-            else:
-                logger.error(f"Serial port '{serial_port}' could be opened but somehow not accessed")
-            return None, ''
-        except OSError:
-            logger.error(f"Serial port '{serial_port}' does not exist, please check the spelling")
-            return None, ''
-        except Exception as e:
-            logger.error(f"unforeseen error occurred: '{e}'")
-            return None, ''
-
-        if sock is None:
-            # this should not happen...
-            logger.error("unforeseen error occurred, serial object was not initialized.")
-            return None, ''
-
-        if not sock.is_open:
-            logger.error(f"serial port '{serial_port}' could not be opened with given parameters, maybe wrong baudrate?")
-            return None, ''
-
-    elif host:
-        #
-        # open network connection
-        #
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(2)
-        sock.connect((host, port))
-        sock.setblocking(False)
-        target = f'tcp://{host}:{port}'
-
-    else:
-        logger.error('neither serialport nor host/port was given, no action possible.')
-        return None, ''
-
-    return sock, target
 
 
-def parse(data: bytes, config: dict) -> dict:
-    """ parse data returned from device read """
-    result = {}
-    stream = SmlStreamReader()
-    stream.add(data)
+#
+# frame parser
+#
 
-    while True:
-        try:
-            frame = stream.get_frame()
-            if frame is None:
-                break
 
-            obis_values = frame.get_obis()
-            for entry in obis_values:
-                code = entry.obis.obis_code
-                if code not in result:
-                    result[code] = []
-                content = {
-                    'value': entry.get_value(),
-                    'name': OBIS_NAMES.get(entry.obis),
-                    'valueRaw': entry.get_value()
-                }
-                if entry.scaler:
-                    content['scaler'] = entry.scaler
-                    content['value'] = round(content['value'] * 10 ** content['scaler'], 1)
-                if entry.status:
-                    content['status'] = entry.status
-                if entry.val_time:
-                    content['valTime'] = entry.val_time
-                    content['actTime'] = time.ctime(config.get('date_offset', 0) + entry.val_time)
-                if entry.value_signature:
-                    content['signature'] = entry.value_signature
-                if entry.unit:
-                    content['unit'] = smlConst.UNITS.get(entry.unit)
-                    content['unitCode'] = entry.unit
+class SmlFrameParser():
+    def __init__(self):
+        self.result = {}
 
-                # Decoding status information if present
-                if 'status' in content:
-                    # for bitwise operation, true-ish result means bit is set
-                    content['statRun'] = bool((content['status'] >> 8) & 1)              # True: meter is counting, False: standstill
-                    content['statFraudMagnet'] = bool((content['status'] >> 8) & 2)      # True: magnetic manipulation detected, False: ok
-                    content['statFraudCover'] = bool((content['status'] >> 8) & 4)       # True: cover manipulation detected, False: ok
-                    content['statEnergyTotal'] = bool((content['status'] >> 8) & 8)      # Current flow total. True: -A, False: +A
-                    content['statEnergyL1'] = bool((content['status'] >> 8) & 16)        # Current flow L1. True: -A, False: +A
-                    content['statEnergyL2'] = bool((content['status'] >> 8) & 32)        # Current flow L2. True: -A, False: +A
-                    content['statEnergyL3'] = bool((content['status'] >> 8) & 64)        # Current flow L3. True: -A, False: +A
-                    content['statRotaryField'] = bool((content['status'] >> 8) & 128)    # True: rotary field not L1->L2->L3, False: ok
-                    content['statBackstop'] = bool((content['status'] >> 8) & 256)       # True: backstop active, False: backstop not active
-                    content['statCalFault'] = bool((content['status'] >> 8) & 512)       # True: calibration relevant fatal fault, False: ok
-                    content['statVoltageL1'] = bool((content['status'] >> 8) & 1024)     # True: Voltage L1 present, False: not present
-                    content['statVoltageL2'] = bool((content['status'] >> 8) & 2048)     # True: Voltage L2 present, False: not present
-                    content['statVoltageL3'] = bool((content['status'] >> 8) & 4096)     # True: Voltage L3 present, False: not present
+    def __call__(self, frame=None):
+        if frame is None:
+            res = self.result
+            self.result = {}
+            return res
+        else:
+            self.parse_frame(frame)
+            return self.result
 
-                # TODO: for backward compatibility - check if really needed
-                content['obis'] = code
-                # Convert some special OBIS values into nicer format
-                # EMH ED300L: add additional OBIS codes
-                if content['obis'] == '1-0:0.2.0*0':
-                    content['value'] = content['valueRaw'].decode()     # Firmware as UTF-8 string
-                if content['obis'] == '1-0:96.50.1*1' or content['obis'] == '129-129:199.130.3*255':
-                    content['value'] = content['valueRaw'].decode()     # Manufacturer code as UTF-8 string
-                if content['obis'] == '1-0:96.1.0*255' or content['obis'] == '1-0:0.0.9*255':
-                    content['value'] = to_hex(content['valueRaw'])
-                if content['obis'] == '1-0:96.5.0*255':
-                    content['value'] = bin(content['valueRaw'] >> 8)    # Status as binary string, so not decoded into status bits as above
-                # end TODO
+    def parse_frame(self, frame):
+        """ parse single SML frame and add data to result dict """
+        obis_values = frame.get_obis()
+        for entry in obis_values:
+            code = entry.obis.obis_code
+            if code not in self.result:
+                self.result[code] = []
+            content = {
+                'value': entry.get_value(),
+                'name': OBIS_NAMES.get(entry.obis),
+                'valueRaw': entry.get_value()
+            }
+            if entry.scaler:
+                content['scaler'] = entry.scaler
+                content['value'] = round(content['value'] * 10 ** content['scaler'], 1)
+            if entry.status:
+                content['status'] = entry.status
+            if entry.val_time:
+                content['valTime'] = entry.val_time
+                content['actTime'] = time.ctime(config.get('date_offset', 0) + entry.val_time)
+            if entry.value_signature:
+                content['signature'] = entry.value_signature
+            if entry.unit:
+                content['unit'] = smlConst.UNITS.get(entry.unit)
+                content['unitCode'] = entry.unit
 
-                result[code].append(content)
-                logger.debug(f"found {code} with {content}")
-        except Exception as e:
-            detail = traceback.format_exc()
-            logger.warning(f'parsing data failed with error: {e}; details are {detail}')
-            # at least return what was decoded up to now
-            return result
+            # Decoding status information if present
+            if 'status' in content:
+                # for bitwise operation, true-ish result means bit is set
+                content['statRun'] = bool((content['status'] >> 8) & 1)              # True: meter is counting, False: standstill
+                content['statFraudMagnet'] = bool((content['status'] >> 8) & 2)      # True: magnetic manipulation detected, False: ok
+                content['statFraudCover'] = bool((content['status'] >> 8) & 4)       # True: cover manipulation detected, False: ok
+                content['statEnergyTotal'] = bool((content['status'] >> 8) & 8)      # Current flow total. True: -A, False: +A
+                content['statEnergyL1'] = bool((content['status'] >> 8) & 16)        # Current flow L1. True: -A, False: +A
+                content['statEnergyL2'] = bool((content['status'] >> 8) & 32)        # Current flow L2. True: -A, False: +A
+                content['statEnergyL3'] = bool((content['status'] >> 8) & 64)        # Current flow L3. True: -A, False: +A
+                content['statRotaryField'] = bool((content['status'] >> 8) & 128)    # True: rotary field not L1->L2->L3, False: ok
+                content['statBackstop'] = bool((content['status'] >> 8) & 256)       # True: backstop active, False: backstop not active
+                content['statCalFault'] = bool((content['status'] >> 8) & 512)       # True: calibration relevant fatal fault, False: ok
+                content['statVoltageL1'] = bool((content['status'] >> 8) & 1024)     # True: Voltage L1 present, False: not present
+                content['statVoltageL2'] = bool((content['status'] >> 8) & 2048)     # True: Voltage L2 present, False: not present
+                content['statVoltageL3'] = bool((content['status'] >> 8) & 4096)     # True: Voltage L3 present, False: not present
 
-    return result
+            # TODO: for backward compatibility - check if really needed
+            content['obis'] = code
+            # Convert some special OBIS values into nicer format
+            # EMH ED300L: add additional OBIS codes
+            if content['obis'] == '1-0:0.2.0*0':
+                content['value'] = content['valueRaw'].decode()     # Firmware as UTF-8 string
+            if content['obis'] == '1-0:96.50.1*1' or content['obis'] == '129-129:199.130.3*255':
+                content['value'] = content['valueRaw'].decode()     # Manufacturer code as UTF-8 string
+            if content['obis'] == '1-0:96.1.0*255' or content['obis'] == '1-0:0.0.9*255':
+                content['value'] = to_hex(content['valueRaw'])
+            if content['obis'] == '1-0:96.5.0*255':
+                content['value'] = bin(content['valueRaw'] >> 8)    # Status as binary string, so not decoded into status bits as above
+            # end TODO
+
+            self.result[code].append(content)
+            logger.debug(f"found {code} with {content}")
+
+
+#
+# cyclic parser
+#
+
+
+class SmlParser():
+    def __init__(self):
+        self.fp = SmlFrameParser()
+
+    def __call__(self, data: bytes) -> dict:
+        return self.parse(data)
+
+    def parse(self, data: bytes) -> dict:
+        """ parse data returned from device read """
+        stream = SmlStreamReader()
+        stream.add(data)
+
+        while True:
+            try:
+                frame = stream.get_frame()
+                if frame is None:
+                    break
+
+                self.fp(frame)
+
+            except Exception as e:
+                detail = traceback.format_exc()
+                logger.warning(f'parsing data failed with error: {e}; details are {detail}')
+                # at least return what was decoded up to now
+                return self.fp()
+
+        return self.fp()
 
     # old frame parser, possibly remove later (needs add'l helper and not-presend "parse" routine)
     # if START_SEQUENCE in data:
@@ -403,65 +507,13 @@ def query(config) -> dict:
     # for the performance of the serial read we need to save the current time
     starttime = time.time()
     runtime = starttime
-    result = {}
-    lock = Lock()
-    sock = None
 
-    if not ('serial_port' in config or ('host' in config and 'port' in config)):
-        logger.warning(f'configuration {config} is missing source config (serialport or host and port)')
+    try:
+        reader = SmlReader(logger, config)
+    except ValueError as e:
+        logger.error(f'error on opening connection: {e}')
         return {}
-
-    buffersize = config.get('sml', {'buffersize': 1024}).get('buffersize', 1024)
-
-    logger.debug(f"config='{config}'")
-
-    #
-    # open the serial communication
-    #
-
-    locked = lock.acquire(blocking=False)
-    if not locked:
-        logger.error('could not get lock for serial/network access. Is another scheduled/manual action still active?')
-        return result
-
-    try:  # lock release
-
-        sock, target = get_sock(config)
-        if not sock:
-            # error already logged, just go
-            return result
-        runtime = time.time()
-        logger.debug(f"time to open {target}: {format_time(time.time() - runtime)}")
-
-        #
-        # read data from device
-        #
-
-        response = bytes()
-        try:
-            response = read(sock, buffersize)
-            if len(response) == 0:
-                logger.error('reading data from device returned 0 bytes!')
-                return result
-            else:
-                logger.debug(f'read {len(response)} bytes')
-
-        except Exception as e:
-            logger.error(f'reading data from {target} failed with error: {e}')
-
-    except Exception:
-        # passthrough, this is only for releasing the lock
-        raise
-    finally:
-        #
-        # clean up connection
-        #
-        try:
-            sock.close()
-        except Exception:
-            pass
-        sock = None
-        lock.release()
+    result = reader()
 
     logger.debug(f"time for reading OBIS data: {format_time(time.time() - runtime)}")
     runtime = time.time()
@@ -473,7 +525,8 @@ def query(config) -> dict:
     # parse data
     #
 
-    return parse(response, config)
+    parser = SmlParser()
+    return parser(result)
 
 
 def discover(config: dict) -> bool:
@@ -486,9 +539,7 @@ def discover(config: dict) -> bool:
     # reduced baud rates or changed parameters, but there would need to be
     # the need for this.
     # For now, let's see how well this works...
-    result = query(config)
-
-    return bool(result)
+    return bool(query(config))
 
 
 if __name__ == '__main__':
@@ -517,7 +568,8 @@ if __name__ == '__main__':
             'querycode': '?',
             'baudrate_min': 300,
             'use_checksum': True,
-            'onlylisten': False
+            'onlylisten': False,
+            'normalize': True
         },
         'sml': {
             'buffersize': 1024
