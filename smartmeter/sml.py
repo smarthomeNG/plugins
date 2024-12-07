@@ -359,52 +359,52 @@ class SmlFrameParser():
             if code not in self.result:
                 self.result[code] = []
             content = {
+                'obis': code,
                 'value': entry.get_value(),
-                'name': OBIS_NAMES.get(entry.obis),
-                'valueRaw': entry.get_value()
+                'valueRaw': entry.get_value(),
+                'name': OBIS_NAMES.get(entry.obis)
             }
             if entry.scaler:
                 content['scaler'] = entry.scaler
                 content['value'] = round(content['value'] * 10 ** content['scaler'], 1)
-            if entry.status:
-                content['status'] = entry.status
+            if entry.unit:
+                content['unit'] = smlConst.UNITS.get(entry.unit)
+                content['unitCode'] = entry.unit
             if entry.val_time:
                 content['valTime'] = entry.val_time
                 content['actTime'] = time.ctime(config.get('date_offset', 0) + entry.val_time)
             if entry.value_signature:
                 content['signature'] = entry.value_signature
-            if entry.unit:
-                content['unit'] = smlConst.UNITS.get(entry.unit)
-                content['unitCode'] = entry.unit
-
-            # Decoding status information if present
-            if 'status' in content:
+            if entry.status:
+                content['status'] = entry.status
+                # Decoding status information if present
                 # for bitwise operation, true-ish result means bit is set
-                content['statRun'] = bool((content['status'] >> 8) & 1)              # True: meter is counting, False: standstill
-                content['statFraudMagnet'] = bool((content['status'] >> 8) & 2)      # True: magnetic manipulation detected, False: ok
-                content['statFraudCover'] = bool((content['status'] >> 8) & 4)       # True: cover manipulation detected, False: ok
-                content['statEnergyTotal'] = bool((content['status'] >> 8) & 8)      # Current flow total. True: -A, False: +A
-                content['statEnergyL1'] = bool((content['status'] >> 8) & 16)        # Current flow L1. True: -A, False: +A
-                content['statEnergyL2'] = bool((content['status'] >> 8) & 32)        # Current flow L2. True: -A, False: +A
-                content['statEnergyL3'] = bool((content['status'] >> 8) & 64)        # Current flow L3. True: -A, False: +A
-                content['statRotaryField'] = bool((content['status'] >> 8) & 128)    # True: rotary field not L1->L2->L3, False: ok
-                content['statBackstop'] = bool((content['status'] >> 8) & 256)       # True: backstop active, False: backstop not active
-                content['statCalFault'] = bool((content['status'] >> 8) & 512)       # True: calibration relevant fatal fault, False: ok
-                content['statVoltageL1'] = bool((content['status'] >> 8) & 1024)     # True: Voltage L1 present, False: not present
-                content['statVoltageL2'] = bool((content['status'] >> 8) & 2048)     # True: Voltage L2 present, False: not present
-                content['statVoltageL3'] = bool((content['status'] >> 8) & 4096)     # True: Voltage L3 present, False: not present
+                try:
+                    content['statRun'] = bool((content['status'] >> 8) & 1)              # True: meter is counting, False: standstill
+                    content['statFraudMagnet'] = bool((content['status'] >> 8) & 2)      # True: magnetic manipulation detected, False: ok
+                    content['statFraudCover'] = bool((content['status'] >> 8) & 4)       # True: cover manipulation detected, False: ok
+                    content['statEnergyTotal'] = bool((content['status'] >> 8) & 8)      # Current flow total. True: -A, False: +A
+                    content['statEnergyL1'] = bool((content['status'] >> 8) & 16)        # Current flow L1. True: -A, False: +A
+                    content['statEnergyL2'] = bool((content['status'] >> 8) & 32)        # Current flow L2. True: -A, False: +A
+                    content['statEnergyL3'] = bool((content['status'] >> 8) & 64)        # Current flow L3. True: -A, False: +A
+                    content['statRotaryField'] = bool((content['status'] >> 8) & 128)    # True: rotary field not L1->L2->L3, False: ok
+                    content['statBackstop'] = bool((content['status'] >> 8) & 256)       # True: backstop active, False: backstop not active
+                    content['statCalFault'] = bool((content['status'] >> 8) & 512)       # True: calibration relevant fatal fault, False: ok
+                    content['statVoltageL1'] = bool((content['status'] >> 8) & 1024)     # True: Voltage L1 present, False: not present
+                    content['statVoltageL2'] = bool((content['status'] >> 8) & 2048)     # True: Voltage L2 present, False: not present
+                    content['statVoltageL3'] = bool((content['status'] >> 8) & 4096)     # True: Voltage L3 present, False: not present
+                except Exception:
+                    pass
 
-            # TODO: for backward compatibility - check if really needed
-            content['obis'] = code
             # Convert some special OBIS values into nicer format
             # EMH ED300L: add additional OBIS codes
-            if content['obis'] == '1-0:0.2.0*0':
+            if code == '1-0:0.2.0*0':
                 content['value'] = content['valueRaw'].decode()     # Firmware as UTF-8 string
-            if content['obis'] == '1-0:96.50.1*1' or content['obis'] == '129-129:199.130.3*255':
+            if code in ('1-0:96.50.1*1', '129-129:199.130.3*255'):
                 content['value'] = content['valueRaw'].decode()     # Manufacturer code as UTF-8 string
-            if content['obis'] == '1-0:96.1.0*255' or content['obis'] == '1-0:0.0.9*255':
+            if code in ('1-0:96.1.0*255', '1-0:0.0.9*255'):
                 content['value'] = to_hex(content['valueRaw'])
-            if content['obis'] == '1-0:96.5.0*255':
+            if code == '1-0:96.5.0*255':
                 content['value'] = bin(content['valueRaw'] >> 8)    # Status as binary string, so not decoded into status bits as above
             # end TODO
 
@@ -444,38 +444,6 @@ class SmlParser():
                 return self.fp()
 
         return self.fp()
-
-    # old frame parser, possibly remove later (needs add'l helper and not-presend "parse" routine)
-    # if START_SEQUENCE in data:
-    #     prev, _, data = data.partition(START_SEQUENCE)
-    #     logger.debug(f'start sequence marker {to_hex(START_SEQUENCE)} found')
-    #     if END_SEQUENCE in data:
-    #         data, _, remainder = data.partition(END_SEQUENCE)
-    #         logger.debug(f'end sequence marker {to_hex(END_SEQUENCE)} found')
-    #         logger.debug(f'packet size is {len(data)}')
-    #         if len(remainder) > 3:
-    #             filler = remainder[0]
-    #             logger.debug(f'{filler} fill byte(s) ')
-    #             checksum = int.from_bytes(remainder[1:3], byteorder='little')
-    #             logger.debug(f'Checksum is {to_hex(checksum)}')
-    #             buffer = bytearray()
-    #             buffer += START_SEQUENCE + data + END_SEQUENCE + remainder[0:1]
-    #             logger.debug(f'Buffer length is {len(buffer)}')
-    #             logger.debug(f'buffer is: {to_hex(buffer)}')
-    #             crc16 = Crc(width=16, poly=poly, reflect_in=reflect_in, xor_in=xor_in, reflect_out=reflect_out, xor_out=xor_out)
-    #             crc_calculated = crc16.table_driven(buffer)
-    #             if swap_crc_bytes:
-    #                 logger.debug(f'calculated swapped checksum is {to_hex(swap16(crc_calculated))}, given CRC is {to_hex(checksum)}')
-    #                 crc_calculated = swap16(crc_calculated)
-    #             else:
-    #                 logger.debug(f'calculated checksum is {to_hex(crc_calculated)}, given CRC is {to_hex(checksum)}')
-    #             data_is_valid = crc_calculated == checksum
-    #         else:
-    #             logger.debug('not enough bytes read at end to satisfy checksum calculation')
-    #     else:
-    #         logger.debug('no End sequence marker found in data')
-    # else:
-    #     logger.debug('no Start sequence marker found in data')
 
 
 def query(config) -> dict:

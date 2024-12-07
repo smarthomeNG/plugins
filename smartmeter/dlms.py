@@ -35,7 +35,6 @@ __docformat__ = 'reStructuredText'
 
 import logging
 import time
-from jinja2.ext import ExprStmtExtension
 import serial
 import socket  # not needed, just for code portability
 
@@ -74,6 +73,21 @@ ACK = 0x06  # acknowledge
 CR = 0x0D  # carriage return
 LF = 0x0A  # linefeed
 BCC = 0x00  # Block check Character will contain the checksum immediately following the data packet
+
+OBIS_NAMES = {
+    **smlConst.OBIS_NAMES,
+    '010000020000': 'Firmware Version, Firmware Prüfsumme CRC, Datum',
+    '0100010800ff': 'Bezug Zählerstand Total',
+    '0100010801ff': 'Bezug Zählerstand Tarif 1',
+    '0100010802ff': 'Bezug Zählerstand Tarif 2',
+    '0100011100ff': 'Total-Zählerstand',
+    '0100020800ff': 'Einspeisung Zählerstand Total',
+    '0100020801ff': 'Einspeisung Zählerstand Tarif 1',
+    '0100020802ff': 'Einspeisung Zählerstand Tarif 2',
+    '0100600100ff': 'Server-ID',
+    '010060320101': 'Hersteller-Identifikation',
+    '0100605a0201': 'Prüfsumme',
+}
 
 # serial config
 S_BITS = serial.SEVENBITS
@@ -414,6 +428,24 @@ def check_protocol(data: bytes, only_listen=False, use_checksum=True) -> Union[s
     return res
 
 
+def hex_obis(code: str) -> str:
+    """ convert obis to hex """
+
+    # form x.x.x.x.x.x from x-x:x.x.x*x
+    l1 = code.replace(':', '.').replace('-', '.').replace('*', '.').split('.')
+    # fill missing fields
+    if len(l1) in (3, 5):
+        l1 = l1 + ['255']
+    if len(l1) == 4:
+        l1 = ['1', '0'] + l1
+
+    # fix for DLMS testing, codes from SmlLib all have pattern '1-0:x.y.z*255'
+    l1[1] = '0'
+
+    # convert to string, take care for letters instead of numbers
+    return ''.join(['{:02x}'.format(x) for x in [int(y) if y.isnumeric() else ord(y) for y in (l1)]])
+
+
 def parse(data: str, normalize: bool = True) -> dict:
     """ parse data returned from device read """
 
@@ -432,11 +464,10 @@ def parse(data: str, normalize: bool = True) -> dict:
             else:
                 # ok, found some values to the right, lets isolate them
                 values = arguments[1:]
-                obis_code = arguments[0]
-
-                temp_values = values
-                values = []
-                for s in temp_values:
+                code = arguments[0]
+                name = OBIS_NAMES.get(hex_obis(code))
+                content = []
+                for s in values:
                     s = s.replace(')', '')
                     if len(s) > 0:
                         # we now should have a list with values that may contain a number
@@ -453,17 +484,32 @@ def parse(data: str, normalize: bool = True) -> dict:
                             # normalize SI units if possible to return values analogue to SML (e.g. Wh instead of kWh)
                             v, u, uc = get_unit_code(v, u, normalize)
 
+                            values = {
+                                'value': v,
+                                'valueRaw': v,
+                                'obis': code,
+                                'unit': u
+                            }
                             if uc:
-                                values.append({'value': v, 'unit': u, 'unitCode': uc})
-                            else:
-                                values.append({'value': v, 'unit': u})
+                                values['unitCode'] = uc
+                            if name:
+                                values['name'] = name
+                            content.append(values)
                         else:
                             # just a value, no unit
                             v = vu[0]
-                            values.append({'value': v})
+                            values = {
+                                'value': v,
+                                'valueRaw': v,
+                                'obis': code
+                            }
+                            if name:
+                                values['name'] = name
+                            content.append(values)
                 # uncomment the following line to check the generation of the values dictionary
-                logger.debug(f"{line:40} ---> {values}")
-                result[obis_code] = values
+                # logger.dbghigh(f"{line:40} ---> {content}")
+                result[code] = content
+                logger.debug(f"found {code} with {content}")
         logger.debug("finished processing lines")
     except Exception as e:
         logger.debug(f"error while extracting data: '{e}'")

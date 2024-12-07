@@ -129,46 +129,8 @@ parameters:
         description:
             de: 'Unix timestamp der Smartmeter Inbetriebnahme (nur SML)'
             en: 'Unix timestamp of Smartmeter start-up after installation (SML only)'
-    # the following parameters are for the old frame parser
-    # poly:
-    #     type: int
-    #     default: 0x1021
-    #     description:
-    #         de: 'Polynom für die crc Berechnung (nur SML)'
-    #         en: 'Polynomial for crc calculation (SML only)'
-    # reflect_in:
-    #     type: bool
-    #     default: true
-    #     description:
-    #         de: 'Umkehren der Bitreihenfolge für die Eingabe (nur SML)'
-    #         en: 'Reflect the octets in the input (SML only)'
-    # xor_in:
-    #     type: int
-    #     default: 0xffff
-    #     description:
-    #         de: 'Initialer Wert für XOR Berechnung (nur SML)'
-    #         en: 'Initial value for XOR calculation (SML only)'
-    # reflect_out:
-    #     type: bool
-    #     default: true
-    #     description:
-    #         de: 'Umkehren der Bitreihenfolge der Checksumme vor der Anwendung des XOR Wertes (nur SML)'
-    #         en: 'Reflect the octet of checksum before application of XOR value (SML only)'
-    # xor_out:
-    #     type: int
-    #     default: 0xffff
-    #     description:
-    #         de: 'XOR Berechnung der CRC mit diesem Wert (nur SML)'
-    #         en: 'XOR final CRC value with this value (SML only)'
-    # swap_crc_bytes:
-    #     type: bool
-    #     default: false
-    #     description:
-    #         de: 'Bytereihenfolge der berechneten Checksumme vor dem Vergleich mit der vorgegeben Checksumme tauschen (nur SML)'
-    #         en: 'Swap bytes of calculated checksum prior to comparison with given checksum (SML only)'
 
 item_attributes:
-    # Definition of item attributes defined by this plugin
     obis_code:
         type: str
         description:
@@ -197,19 +159,19 @@ item_attributes:
             - scaler            # 10**x scaler for valueRaw
             - signature         # meter signature
             - status            # status bit field
-            - statRun           # meter is running
-            - statFraudMagnet   # fraud magnet activated
-            - statFraudCover    # fraud cover triggered
-            - statEnergyTotal   # 
-            - statEnergyL1      # 
-            - statEnergyL2      # 
-            - statEnergyL3      # 
-            - statRotaryField   # 
-            - statBackstop      # 
-            - statCalFault      # 
-            - statVoltageL1     # 
-            - statVoltageL2     # 
-            - statVoltageL3     # 
+            - statRun           # meter is counting
+            - statFraudMagnet   # magnetic manipulation detected
+            - statFraudCover    # cover manipulation detected
+            - statEnergyTotal   # Current flow total. True: -A, False: +A
+            - statEnergyL1      # Current flow L1. True: -A, False: +A
+            - statEnergyL2      # Current flow L2. True: -A, False: +A
+            - statEnergyL3      # Current flow L3. True: -A, False: +A
+            - statRotaryField   # rotary field faulty = not L1->L2->L3
+            - statBackstop      # backstop active
+            - statCalFault      # calibration relevant fatal fault
+            - statVoltageL1     # Voltage L1 present
+            - statVoltageL2     # Voltage L2 present
+            - statVoltageL3     # Voltage L3 present
         description:
             de: >
                 Eigenschaft des gelesenen Wertes:

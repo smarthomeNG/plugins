@@ -1,2 +1,2 @@
-pyserial
-smllib
+pyserial>=3.2.1
+SmlLib>=1.3

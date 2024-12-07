@@ -33,7 +33,7 @@ import sys
 
 # find out if we can import serial - if not, the plugin might not start anyway
 # serial is not needed in the plugin itself, but in the modules SML and DLMS,
-# which will import the serial module by themselves
+# which will import the serial module by themselves, if serial is configured
 try:
     import serial  # noqa
     REQUIRED_PACKAGE_IMPORTED = True
@@ -158,17 +158,10 @@ class Smartmeter(SmartPlugin, Conversion):
         self._config['dlms']['normalize'] = self.get_parameter_value('normalize')
 
         # SML only
-        # disabled parameters are for old frame parser
         self._config['sml'] = {}
         self._config['sml']['buffersize'] = self.get_parameter_value('buffersize')            # 1024
         self._config['sml']['device'] = self.get_parameter_value('device_type')
         self._config['sml']['date_offset'] = self.get_parameter_value('date_offset')          # 0
-        # self._config['sml']['poly'] = self.get_parameter_value('poly')                        # 0x1021
-        # self._config['sml']['reflect_in'] = self.get_parameter_value('reflect_in')            # True
-        # self._config['sml']['xor_in'] = self.get_parameter_value('xor_in')                    # 0xffff
-        # self._config['sml']['reflect_out'] = self.get_parameter_value('reflect_out')          # True
-        # self._config['sml']['xor_out'] = self.get_parameter_value('xor_out')                  # 0xffff
-        # self._config['sml']['swap_crc_bytes'] = self.get_parameter_value('swap_crc_bytes')    # False
 
         #
         # general plugin parameters
