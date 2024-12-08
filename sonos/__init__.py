@@ -2994,7 +2994,7 @@ class Sonos(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = "1.8.8"
+    PLUGIN_VERSION = "1.8.9"
 
     def __init__(self, sh):
         """Initializes the plugin."""
@@ -3007,14 +3007,14 @@ class Sonos(SmartPlugin):
             self._tts = self.get_parameter_value("tts")
             self._snippet_duration_offset = float(self.get_parameter_value("snippet_duration_offset"))
             self._discover_cycle = self.get_parameter_value("discover_cycle")
-            self.webif_pagelength = self.get_parameter_value('webif_pagelength')
             local_webservice_path = self.get_parameter_value("local_webservice_path")
             local_webservice_path_snippet = self.get_parameter_value("local_webservice_path_snippet")
             webservice_ip = self.get_parameter_value("webservice_ip")
             webservice_port = self.get_parameter_value("webservice_port")
             speaker_ips = self.get_parameter_value("speaker_ips")
+            self._pause_item_path = self.get_parameter_value('pause_item')
         except KeyError as e:
-            self.logger.critical(f"Plugin '{self.get_shortname()}': Inconsistent plugin (invalid metadata definition: {e} not defined)")
+            self.logger.critical(f"Plugin '{self.get_fullname()}': Inconsistent plugin (invalid metadata definition: {e} not defined)")
             self._init_complete = False
             return
 
@@ -3054,6 +3054,10 @@ class Sonos(SmartPlugin):
 
     def run(self):
         self.logger.debug("Run method called")
+
+        # let the plugin change the state of pause_item
+        if self._pause_item:
+            self._pause_item(False, self.get_fullname())
         
         # do initial speaker discovery and set scheduler
         self._discover()
@@ -3063,13 +3067,16 @@ class Sonos(SmartPlugin):
         self.alive = True
 
     def stop(self):
-        self.logger.debug("Stop method called")
+        self.logger.dbghigh(self.translate("Methode '{method}' aufgerufen", {'method': 'stop()'}))
+
+        # let the plugin change the state of pause_item
+        if self._pause_item:
+            self._pause_item(True, self.get_fullname())
         
         if self.webservice:
             self.webservice.stop() 
         
-        if self.scheduler_get('sonos_discover_scheduler'):
-            self.scheduler_remove('sonos_discover_scheduler')
+        self.scheduler_remove_all()
         
         for uid, speaker in sonos_speaker.items():
             speaker.dispose()
@@ -3084,6 +3091,12 @@ class Sonos(SmartPlugin):
         :param item: item to parse
         :return: update function or None
         """
+
+        if item.property.path == self._pause_item_path:
+            self.logger.debug(f'pause item {item.property.path} registered')
+            self._pause_item = item
+            self.add_item(item, updating=True)
+            return self.update_item
         
         item_config = dict()
 
@@ -3100,7 +3113,7 @@ class Sonos(SmartPlugin):
 
             if self.has_iattr(item.conf, 'sonos_recv'):
                 # create Speaker instance if not exists
-                _initialize_speaker(uid, self.logger, self.get_shortname())
+                _initialize_speaker(uid, self.logger, self.get_fullname())
 
                 # to make code smaller, map sonos_cmd value to the Speaker property by name
                 item_attribute = self.get_iattr_value(item.conf, 'sonos_recv')
@@ -3147,22 +3160,22 @@ class Sonos(SmartPlugin):
                     self.logger.warning("volume_dpt3 item has no volume parent item. Ignoring!")
                     return
 
-            # make sure there is a child helper item
-            child_helper = None
+            # make sure there is a child volume helper item
+            volume_helper_item = None
             for child in item.return_children():
                 if self.has_iattr(child.conf, 'sonos_attrib'):
                     if self.get_iattr_value(child.conf, 'sonos_attrib').lower() == 'dpt3_helper':
-                        child_helper = child
+                        volume_helper_item = child
                         break
 
-            if child_helper is None:
-                self.logger.warning("volume_dpt3 item has no helper item. Ignoring!")
+            if volume_helper_item is None:
+                self.logger.warning("volume_dpt3 item has no volume helper item. Ignoring!")
                 return
 
             dpt3_step = self.get_iattr_value(item.conf, 'sonos_dpt3_step')
             dpt3_time = self.get_iattr_value(item.conf, 'sonos_dpt3_time')
 
-            item_config.update({'volume_item': parent_item, 'helper': child_helper, 'dpt3_step': dpt3_step, 'dpt3_time': dpt3_time})
+            item_config.update({'volume_item': parent_item, 'helper_item': volume_helper_item, 'dpt3_step': dpt3_step, 'dpt3_time': dpt3_time})
             self.add_item(item, config_data_dict=item_config, updating=True)
             return self._handle_dpt3
 
@@ -3226,36 +3239,31 @@ class Sonos(SmartPlugin):
             zone.snap.restore(fade=fade_back)
 
     def _handle_dpt3(self, item, caller=None, source=None, dest=None):
-        if caller != self.get_shortname():
+        """Handle relative volumen change via a received relative dim command (dpt3) by making use of internal fadeing"""
 
+        if caller != self.get_fullname():
             item_config = self.get_item_config(item)
             volume_item = item_config['volume_item']
-            volume_helper = item_config['helper']
+            volume_helper_item = item_config['helper']
             vol_step = item_config['dpt3_step']
             vol_time = item_config['dpt3_time']
-            vol_max = self._resolve_max_volume_command(item)
-
-            if vol_max < 0:
-                vol_max = 100
-
-            current_volume = int(volume_item())
-            if current_volume < 0:
-                current_volume = 0
-            if current_volume > 100:
-                current_volume = 100
-
-            volume_helper(current_volume)
+            vol_max = max(0, self._resolve_max_volume_command(item)) or 100
+            _current_volume = max(0, min(100, int(volume_item())))
+            volume_helper_item(_current_volume, self.get_fullname())
 
             if item()[1] == 1:
+                self.logger.debug(f"Starte relative Lautstärkeänderung.")
                 if item()[0] == 1:
                     # up
-                    volume_helper.fade(vol_max, vol_step, vol_time)
+                    self.logger.debug(f"erhöhe Lautstärke mit {vol_step} Stufe(n) pro {vol_time}s")
+                    volume_helper_item.fade(vol_max, vol_step, vol_time)
                 else:
                     # down
-                    volume_helper.fade(0 - vol_step, vol_step, vol_time)
+                    self.logger.debug(f"reduziere Lautstärke mit {vol_step} Stufe(n) pro {vol_time}s")
+                    volume_helper_item.fade(0 - vol_step, vol_step, vol_time)
             else:
-                volume_helper(int(volume_helper() + 1))
-                volume_helper(int(volume_helper() - 1))
+                self.logger.debug(f"Stoppe relative Lautstärkeänderung.")
+                volume_helper_item(int(volume_helper_item()), self.get_fullname())
 
     def _check_webservice_ip(self, webservice_ip: str) -> bool:
         if not webservice_ip == '' and not webservice_ip == '0.0.0.0':
@@ -3283,7 +3291,7 @@ class Sonos(SmartPlugin):
         else:
             self.logger.error(f"Your webservice_port parameter is invalid. '{webservice_port}' is not within port range 1024-65535. TTS disabled!")
             return False
-            
+
         return True
 
     def _check_local_webservice_path(self, local_webservice_path: str) -> bool:
@@ -3457,10 +3465,19 @@ class Sonos(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        
-        if self.alive and caller != self.get_fullname():
 
-            self.logger.debug(f"update_item called for {item.path()} with value {item()}")
+        # check for pause item
+        if item is self._pause_item and caller != self.get_fullname():
+            self.logger.debug(f'pause item changed to {item()}')
+            if item() and self.alive:
+                self.stop()
+            elif not item() and not self.alive:
+                self.run()
+            return
+
+        # check for sonos item
+        if self.alive and caller != self.get_fullname():
+            self.logger.debug(f"update_item called for {item.path()} with value {item()} {caller=}")
             item_config = self.get_item_config(item)
             command = item_config.get('sonos_send', '').lower()
             uid = item_config.get('uid')
@@ -3780,7 +3797,7 @@ class Sonos(SmartPlugin):
                             # sonos_speaker[uid].check_subscriptions()
                 else:
                     self.logger.warning(f"Initializing new speaker with uid={uid} and ip={zone.ip_address}")
-                    _initialize_speaker(uid, self.logger, self.get_shortname())
+                    _initialize_speaker(uid, self.logger, self.get_fullname())
                     sonos_speaker[uid].soco = zone
 
                 sonos_speaker[uid].is_initialized = True
