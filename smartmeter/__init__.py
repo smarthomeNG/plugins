@@ -28,6 +28,7 @@ __version__ = '2.0'
 __revision__ = '0.1'
 __docformat__ = 'reStructuredText'
 
+from inspect import Attribute
 import threading
 import sys
 
@@ -326,8 +327,17 @@ class Smartmeter(SmartPlugin, Conversion):
                     for item in items:
                         conf = self.get_item_config(item)
                         index = conf.get('index', 0)
+
                         # new default: if we don't find prop, we don't change the respective item
-                        itemValue = vlist[index].get(prop)
+                        itemValue = None
+                        try:
+                            itemValue = vlist[index].get(prop)
+                        except IndexError:
+                            self.logger.warning(f'data {vlist} doesn\'t have {index} elements. Check index setting...')
+                            continue
+                        except AttributeError:
+                            self.logger.warning(f'got empty result for {obis}, something went wrong.')
+
                         # skip item assignment to save time and cpu cycles
                         if itemValue is not None:
                             try:

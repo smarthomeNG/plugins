@@ -339,7 +339,8 @@ class SmlReader():
 
 
 class SmlFrameParser():
-    def __init__(self):
+    def __init__(self, config: dict):
+        self.config = config
         self.result = {}
 
     def __call__(self, frame=None):
@@ -372,7 +373,7 @@ class SmlFrameParser():
                 content['unitCode'] = entry.unit
             if entry.val_time:
                 content['valTime'] = entry.val_time
-                content['actTime'] = time.ctime(config.get('date_offset', 0) + entry.val_time)
+                content['actTime'] = time.ctime(self.config.get('date_offset', 0) + entry.val_time)
             if entry.value_signature:
                 content['signature'] = entry.value_signature
             if entry.status:
@@ -398,12 +399,6 @@ class SmlFrameParser():
 
             # Convert some special OBIS values into nicer format
             # EMH ED300L: add additional OBIS codes
-            if code == '1-0:0.2.0*0':
-                content['value'] = content['valueRaw'].decode()     # Firmware as UTF-8 string
-            if code in ('1-0:96.50.1*1', '129-129:199.130.3*255'):
-                content['value'] = content['valueRaw'].decode()     # Manufacturer code as UTF-8 string
-            if code in ('1-0:96.1.0*255', '1-0:0.0.9*255'):
-                content['value'] = to_hex(content['valueRaw'])
             if code == '1-0:96.5.0*255':
                 content['value'] = bin(content['valueRaw'] >> 8)    # Status as binary string, so not decoded into status bits as above
             # end TODO
@@ -418,8 +413,8 @@ class SmlFrameParser():
 
 
 class SmlParser():
-    def __init__(self):
-        self.fp = SmlFrameParser()
+    def __init__(self, config: dict):
+        self.fp = SmlFrameParser(config)
 
     def __call__(self, data: bytes) -> dict:
         return self.parse(data)
@@ -493,7 +488,7 @@ def query(config) -> dict:
     # parse data
     #
 
-    parser = SmlParser()
+    parser = SmlParser(config)
     return parser(result)
 
 
