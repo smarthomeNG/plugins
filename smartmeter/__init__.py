@@ -28,7 +28,6 @@ __version__ = '2.0'
 __revision__ = '0.1'
 __docformat__ = 'reStructuredText'
 
-from inspect import Attribute
 import threading
 import sys
 
@@ -93,27 +92,129 @@ class Smartmeter(SmartPlugin, Conversion):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
+        self.connected = False
+        self.alive = False
+        self._lock = threading.Lock()
+
+        # store "wanted" obis codes
+        self.obis_codes = []
+
+        # store last response(s)
+        self.obis_results = {}
+
+        # set or discovered protocol (SML/DLMS)
+        self.protocol = None
+
+        # protocol auto-detected?
+        self.proto_detected = False
+
         # load parameters from config
-        self._protocol = None
-        self._proto_detect = False
-        self.load_parameters()
+        self._load_parameters()
 
         # quit if errors on parameter read
         if not self._init_complete:
             return
 
-        self.connected = False
-        self.alive = False
-
-        self._items = {}            # all items by obis code by obis prop
-        self._readout_items = []    # all readout items
-        self.obis_codes = []
-
-        self._lock = threading.Lock()
-
         # self.init_webinterface(WebInterface)
 
-    def load_parameters(self):
+    def discover(self, protocol=None) -> bool:
+        """
+        try to identify protocol of smartmeter
+
+        if protocol is given, only test this protocol
+        otherwise, test DLMS and SML
+        """
+        if not protocol:
+            disc_protos = ['DLMS', 'SML']
+        else:
+            disc_protos = [protocol]
+
+        for proto in disc_protos:
+            if self._get_module(proto).discover(self._config):
+                self.protocol = proto
+                if len(disc_protos) > 1:
+                    self.proto_detected = True
+                return True
+
+        return False
+
+    def query(self, assign_values: bool = True, protocol=None) -> dict:
+        """
+        query smartmeter resp. listen for data
+
+        if protocol is given, try to use the given protocol
+        otherwise, use self._protocol as default
+
+        if assign_values is set, assign received values to items
+        if assign_values is not set, just return the results
+        """
+        if not protocol:
+            protocol = self.protocol
+        ref = self._get_module(protocol)
+
+        result = {}
+        if self._lock.acquire(blocking=False):
+            self.logger.debug('lock acquired')
+            try:
+                result = ref.query(self._config)
+                if not result:
+                    self.logger.warning('no results from smartmeter query received')
+                else:
+                    self.logger.debug(f'got result: {result}')
+                    if assign_values:
+                        self._update_values(result)
+            except Exception as e:
+                self.logger.error(f'error: {e}', exc_info=True)
+            finally:
+                self._lock.release()
+                self.logger.debug('lock released')
+        else:
+            self.logger.warning('device query is alrady running. Check connection and/or use longer query interval time.')
+
+        return result
+
+    def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug('run method called')
+
+        # TODO: reload parameters - why?
+        self._load_parameters()
+
+        if not self.protocol:
+            self.discover()
+
+        self.alive = True
+        if self.protocol:
+            self.logger.info(f'{"detected" if self.proto_detected else "set"} protocol {self.protocol}')
+        else:
+            # skip cycle / crontab scheduler if no protocol set (only manual control from web interface)
+            self.logger.error('unable to auto-detect device protocol (SML/DLMS). Try manual disconvery via standalone mode or Web Interface.')
+            return
+
+        # Setup scheduler for device poll loop, if protocol set
+        if (self.cycle or self.crontab) and self.protocol:
+            if self.crontab:
+                next = None  # adhere to the crontab
+            else:
+                # no crontab given so we might just query immediately
+                next = shtime.now()
+            self.scheduler_add(self.get_fullname(), self.poll_device, prio=5, cycle=self.cycle, cron=self.crontab, next=next)
+        self.logger.debug('run method finished')
+
+    def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug('stop method called')
+        self.alive = False
+        try:
+            self.scheduler_remove(self.get_fullname())
+        except Exception:
+            pass
+
+    def _load_parameters(self):
 
         #
         # connection configuration
@@ -150,7 +251,8 @@ class Smartmeter(SmartPlugin, Conversion):
 
         # get mode (SML/DLMS) if set by user
         # if not set, try to get at runtime
-        self._protocol = self.get_parameter_value('protocol').upper()
+        if not self.protocol:
+            self.protocol = self.get_parameter_value('protocol').upper()
 
         # DLMS only
         self._config['dlms'] = {}
@@ -181,62 +283,17 @@ class Smartmeter(SmartPlugin, Conversion):
         if not (self.cycle or self.crontab):
             self.logger.warning(f'{self.get_fullname()}: no update cycle or crontab set. The smartmeter will not be queried automatically')
 
-    def _get_module(self):
+    def _get_module(self, protocol=None):
         """ return module reference for SML/DMLS module """
-        name = __name__ + '.' + str(self._protocol).lower()
+        if not protocol:
+            protocol = self.protocol
+        name = __name__ + '.' + str(protocol).lower()
         ref = sys.modules.get(name)
         if not ref:
             self.logger.warning(f"couldn't get reference for module {name}...")
         return ref
 
-    def run(self):
-        """
-        Run method for the plugin
-        """
-        self.logger.debug('run method called')
-
-        # TODO: reload parameters - why?
-        self.load_parameters()
-
-        if not self._protocol:
-            # TODO: call DLMS/SML discovery routines to find protocol
-            if sml.discover(self._config):
-                self._protocol = 'SML'
-                self._proto_detect = True
-            elif dlms.discover(self._config):
-                self._protocol = 'DLMS'
-                self._proto_detect = True
-
-        self.alive = True
-        if self._protocol:
-            self.logger.info(f'{"detected" if self._proto_detect else "set"} protocol {self._protocol}')
-        else:
-            self.logger.error('unable to auto-detect device protocol (SML/DLMS). Try manual disconvery via standalone mode or Web Interface.')
-            # skip cycle / crontab scheduler if no protocol set (only manual control from web interface)
-            return
-
-        # Setup scheduler for device poll loop, if protocol set
-        if (self.cycle or self.crontab) and self._protocol:
-            if self.crontab:
-                next = None  # adhere to the crontab
-            else:
-                # no crontab given so we might just query immediately
-                next = shtime.now()
-            self.scheduler_add(self.get_fullname(), self.poll_device, prio=5, cycle=self.cycle, cron=self.crontab, next=next)
-        self.logger.debug('run method finished')
-
-    def stop(self):
-        """
-        Stop method for the plugin
-        """
-        self.logger.debug('stop method called')
-        self.alive = False
-        try:
-            self.scheduler_remove(self.get_fullname())
-        except Exception:
-            pass
-
-    def to_mapping(self, obis: str, index: Any) -> str:
+    def _to_mapping(self, obis: str, index: Any) -> str:
         return f'{obis}{SEP}{index}'
 
     def parse_item(self, item: Item) -> Union[Callable, None]:
@@ -263,13 +320,12 @@ class Smartmeter(SmartPlugin, Conversion):
                     vtype = None
             index = self.get_iattr_value(item.conf, OBIS_INDEX, default=0)
 
-            self.add_item(item, {'property': prop, 'index': index, 'vtype': vtype}, self.to_mapping(obis, index))
+            self.add_item(item, {'property': prop, 'index': index, 'vtype': vtype}, self._to_mapping(obis, index))
             self.obis_codes.append(obis)
             self.logger.debug(f'Attach {item.property.path} with obis={obis}, prop={prop} and index={index}')
 
         if self.has_iattr(item.conf, OBIS_READOUT):
-            self.add_item(item)
-            self._readout_items.append(item)
+            self.add_item(item, mapping='readout')
             self.logger.debug(f'Attach {item.property.path} for readout')
 
     def _is_obis_code_wanted(self, code: str) -> bool:
@@ -288,22 +344,7 @@ class Smartmeter(SmartPlugin, Conversion):
         if not self._get_module():
             return
 
-        if self._lock.acquire(blocking=False):
-            self.logger.debug('lock acquired')
-            try:
-                result = self._get_module().query(self._config)
-                if not result:
-                    self.logger.warning('no results from smartmeter query received')
-                else:
-                    self.logger.debug(f'got result: {result}')
-                    self._update_values(result)
-            except Exception as e:
-                self.logger.error(f'error: {e}', exc_info=True)
-            finally:
-                self._lock.release()
-                self.logger.debug('lock released')
-        else:
-            self.logger.warning('device query is alrady running. Check connection and/or use longer query interval time.')
+        self.query()
 
     def _update_values(self, result: dict):
         """
@@ -312,8 +353,10 @@ class Smartmeter(SmartPlugin, Conversion):
         :param Values: list of dictionaries with Value / Unit entries
         """
         # self.logger.debug(f'running _update_values with {result}')
+        self.obis_results.update(result)
+
         if 'readout' in result:
-            for item in self._readout_items:
+            for item in self.get_items_for_mapping('readout'):
                 item(result['readout'], self.get_fullname())
                 self.logger.debug(f'set item {item} to readout {result["readout"]}')
             del result['readout']
@@ -323,7 +366,7 @@ class Smartmeter(SmartPlugin, Conversion):
             if not self._is_obis_code_wanted(obis):
                 continue
             for idx, vdict in enumerate(vlist):
-                for item in self.get_items_for_mapping(self.to_mapping(obis, idx)):
+                for item in self.get_items_for_mapping(self._to_mapping(obis, idx)):
                     conf = self.get_item_config(item)
                     # self.logger.debug(f'processing item {item} with {conf} for index {idx}...')
                     if conf.get('index', 0) == idx:
