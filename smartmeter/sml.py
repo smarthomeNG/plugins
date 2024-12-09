@@ -97,7 +97,7 @@ if TESTING:
         from sml_test import RESULT
     else:
         from .sml_test import RESULT
-    logger.error('SML testing mode enabled, no serial communication, no real results!')
+    logger.error(f'SML testing mode enabled, no serial communication, no real results! Dataset is {len(RESULT)} bytes long.')
 else:
     RESULT = b''
 
@@ -151,6 +151,7 @@ def format_time(timedelta):
 
 class SmlReader():
     def __init__(self, logger, config: dict):
+        print('init')
         self.config = config
         self.sock = None
         self.logger = logger
@@ -174,14 +175,12 @@ class SmlReader():
         #
         # open the serial communication
         #
-
         locked = self.lock.acquire(blocking=False)
         if not locked:
             logger.error('could not get lock for serial/network access. Is another scheduled/manual action still active?')
             return b''
 
         try:  # lock release
-
             runtime = time.time()
             self.get_sock()
             if not self.sock:
@@ -192,7 +191,6 @@ class SmlReader():
             #
             # read data from device
             #
-
             response = bytes()
             try:
                 response = self.read()
@@ -218,7 +216,6 @@ class SmlReader():
                 pass
             self.sock = None
             self.lock.release()
-
         return response
 
     def _read(self) -> bytes:
@@ -272,7 +269,7 @@ class SmlReader():
         """ open serial or network socket """
 
         if TESTING:
-            self.sock = None
+            self.sock = 1
             self.target = '(test input)'
             return
 

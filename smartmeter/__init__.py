@@ -45,7 +45,7 @@ from lib.model.smartplugin import SmartPlugin
 from lib.item.item import Item
 from lib.shtime import Shtime
 from collections.abc import Callable
-from typing import Union
+from typing import (Union, Any)
 
 from . import dlms
 from . import sml
@@ -72,6 +72,9 @@ PROPS = [
     'statRun', 'statFraudMagnet', 'statFraudCover', 'statEnergyTotal', 'statEnergyL1', 'statEnergyL2', 'statEnergyL3',
     'statRotaryField', 'statBackstop', 'statCalFault', 'statVoltageL1', 'statVoltageL2', 'statVoltageL3', 'obis'
 ]
+
+# mapping separator. set to something not probable to be in obis, index or prop
+SEP = '-#-'
 
 
 class Smartmeter(SmartPlugin, Conversion):
@@ -233,6 +236,9 @@ class Smartmeter(SmartPlugin, Conversion):
         except Exception:
             pass
 
+    def to_mapping(self, obis: str, index: Any) -> str:
+        return f'{obis}{SEP}{index}'
+
     def parse_item(self, item: Item) -> Union[Callable, None]:
         """
         Default plugin parse_item method. Is called when the plugin is initialized.
@@ -246,21 +252,20 @@ class Smartmeter(SmartPlugin, Conversion):
             if prop not in PROPS:
                 self.logger.warning(f'item {item}: invalid property {prop} requested for obis {obis}, setting default "value"')
                 prop = 'value'
-            index = self.get_iattr_value(item.conf, OBIS_INDEX, default=0)
             vtype = self.get_iattr_value(item.conf, OBIS_VTYPE, default='')
-            if vtype in ('int', 'num', 'float', 'str'):
-                if vtype != item.type():
-                    self.logger.warning(f'item {item}: item type is {item.type()}, but obis_vtype is {vtype}, please fix item definition')
+            if vtype:
+                if prop.startswith('value'):
+                    if vtype in ('int', 'num', 'float', 'str') and vtype != item.type():
+                        self.logger.warning(f'item {item}: item type is {item.type()}, but obis_vtype is "{vtype}", please fix item definition')
+                        vtype = None
+                else:
+                    self.logger.warning(f'item {item} has obis_vtype set, which is only valid for "value" property, not "{prop}", ignoring.')
+                    vtype = None
+            index = self.get_iattr_value(item.conf, OBIS_INDEX, default=0)
 
-            self.add_item(item, {'property': prop, 'index': index, 'vtype': vtype}, obis)
-
-            if obis not in self._items:
-                self._items[obis] = {}
-            if prop not in self._items[obis]:
-                self._items[obis][prop] = []
-            self._items[obis][prop].append(item)
+            self.add_item(item, {'property': prop, 'index': index, 'vtype': vtype}, self.to_mapping(obis, index))
             self.obis_codes.append(obis)
-            self.logger.debug(f'Attach {item.property.path} with obis={obis} and prop={prop}')
+            self.logger.debug(f'Attach {item.property.path} with obis={obis}, prop={prop} and index={index}')
 
         if self.has_iattr(item.conf, OBIS_READOUT):
             self.add_item(item)
@@ -286,14 +291,6 @@ class Smartmeter(SmartPlugin, Conversion):
         if self._lock.acquire(blocking=False):
             self.logger.debug('lock acquired')
             try:
-                #
-                # module.query needs to return a dict:
-                # {
-                #     'readout':    '<full readout str>', (only for dlms?)
-                #     'obis1':    [{'value': val0, optional 'unit': unit1}, {'value': val1, optional 'unit': unit1'}]
-                #     'obis2':    [{...}]
-                # }
-                #
                 result = self._get_module().query(self._config)
                 if not result:
                     self.logger.warning('no results from smartmeter query received')
@@ -314,47 +311,40 @@ class Smartmeter(SmartPlugin, Conversion):
         :param Code: OBIS Code
         :param Values: list of dictionaries with Value / Unit entries
         """
+        # self.logger.debug(f'running _update_values with {result}')
         if 'readout' in result:
             for item in self._readout_items:
                 item(result['readout'], self.get_fullname())
                 self.logger.debug(f'set item {item} to readout {result["readout"]}')
             del result['readout']
 
+        # check all obis codes
         for obis, vlist in result.items():
-            if obis in self._items:
-                entry = self._items[obis]
-                for prop, items in entry.items():
-                    for item in items:
-                        conf = self.get_item_config(item)
-                        index = conf.get('index', 0)
-
-                        # new default: if we don't find prop, we don't change the respective item
-                        itemValue = None
+            if not self._is_obis_code_wanted(obis):
+                continue
+            for idx, vdict in enumerate(vlist):
+                for item in self.get_items_for_mapping(self.to_mapping(obis, idx)):
+                    conf = self.get_item_config(item)
+                    # self.logger.debug(f'processing item {item} with {conf} for index {idx}...')
+                    if conf.get('index', 0) == idx:
+                        prop = conf.get('property', 'value')
+                        val = None
                         try:
-                            itemValue = vlist[index].get(prop)
-                        except IndexError:
-                            self.logger.warning(f'data {vlist} doesn\'t have {index} elements. Check index setting...')
+                            val = vdict[prop]
+                        except KeyError:
+                            self.logger.warning(f'item {item} wants property {prop} which has not been recceived')
                             continue
-                        except AttributeError:
-                            self.logger.warning(f'got empty result for {obis}, something went wrong.')
 
-                        # skip item assignment to save time and cpu cycles
-                        if itemValue is not None:
+                        # skip processing if val is None, save cpu cycles
+                        if val is not None:
                             try:
-                                val = vlist[index][prop]
                                 converter = conf['vtype']
                                 itemValue = self._convert_value(val, converter)
                                 # self.logger.debug(f'conversion yielded {itemValue} from {val} for converter "{converter}"')
-                            except IndexError:
-                                self.logger.warning(f'value for index {index} not found in {vlist["value"]}, skipping...')
-                                continue
-                            except KeyError as e:
-                                self.logger.warning(f'key  error while setting item {item} for obis code {obis} to value "{itemValue}": {e}')
-                            except NameError as e:
-                                self.logger.warning(f'name  error while setting item {item} for obis code {obis} to value "{itemValue}": {e}')
-
-                            item(itemValue, self.get_fullname())
-                            self.logger.debug(f'set item {item} for obis code {obis}:{prop} to value "{itemValue}"')
+                                item(itemValue, self.get_fullname())
+                                self.logger.debug(f'set item {item} for obis code {obis}:{prop} to value {itemValue}')
+                            except ValueError as e:
+                                self.logger.error(f'error while converting value {val} for item {item}, obis code {obis}: {e}')
                         else:
                             self.logger.debug(f'for item {item} and obis code {obis}:{prop} no content was received')
 
