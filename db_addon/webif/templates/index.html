@@ -68,17 +68,17 @@
 <!-- Additional script tag for plugin specific javascript code go into this block -->
 {% block pluginscripts %}
 <script>
-  function togglePlayPause(id, suspended) {
+  function togglePlayPause(id, paused) {
     const escapedId = $.escapeSelector(id);
     const buttonElement = $("#" + escapedId);
     const icon = buttonElement.find('i');
     recalcElement = $("#" + escapedId.replace(/_button_playpause$/, "_button_recalc"));
 
-    if (suspended == "true") {
+    if (paused == "true") {
       // Change to pause icon
       recalcElement.prop("disabled", true);
       if (id.startsWith("plugin"))
-        buttonElement.val(id.replace(/_button_playpause$/, "") + ":suspend_plugin_calculation,False");
+        buttonElement.val(id.replace(/_button_playpause$/, "") + ":pause_plugin,False");
       else
         buttonElement.val(id.replace(/_button_playpause$/, "") + ":suspend_item_calculation,False");
       icon.removeClass('fa-play').addClass('fa-pause');
@@ -87,7 +87,7 @@
     } else {
       // Change to play icon
       if (id.startsWith("plugin"))
-        buttonElement.val(id.replace(/_button_playpause$/, "") + ":suspend_plugin_calculation,True");
+        buttonElement.val(id.replace(/_button_playpause$/, "") + ":pause_plugin,True");
       else
         buttonElement.val(id.replace(/_button_playpause$/, "") + ":suspend_item_calculation,True");
       recalcElement.prop("disabled", false);
@@ -304,7 +304,7 @@
 			<td class="py-1" width="150px"><strong>{{ _('Treiber') }}</strong></td>
 			<td class="py-1">{{ p.db_driver }}</td>
 			<td class="py-1" width="150px"><strong>{{ _('Startup Delay') }}</strong></td>
-			<td class="py-1">{{ (p.startup_run_delay) }}s</td>
+			<td class="py-1">{{ (p.startup_run_delay) }}s  {{paused}} </td>
 		</tr>
 		{% set first = True %}
         {% if p._db %}

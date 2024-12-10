@@ -27,176 +27,178 @@ FILENAME_PLUGIN = 'plugin.yaml'
 
 DOC_FILE_NAME = 'user_doc.rst'
 
-PLUGIN_VERSION = '1.2.6'
+PLUGIN_VERSION = '1.2.10'
 
 ITEM_ATTRIBUTES = {
     'db_addon_fct': {
-        'verbrauch_heute':                         {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages)'},
-        'verbrauch_tag':                           {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages)'},
-        'verbrauch_woche':                         {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Verbrauch in der aktuellen Woche'},
-        'verbrauch_monat':                         {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Verbrauch im aktuellen Monat'},
-        'verbrauch_jahr':                          {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Verbrauch im aktuellen Jahr'},
-        'verbrauch_last_24h':                      {'cat': 'verbrauch',     'sub_cat': 'last',       'item_type': 'num',   'cycle': 'hourly',    'params': False,  'description': 'Verbrauch innerhalb letzten 24h'},
-        'verbrauch_last_7d':                       {'cat': 'verbrauch',     'sub_cat': 'last',       'item_type': 'num',   'cycle': 'hourly',    'params': False,  'description': 'Verbrauch innerhalb letzten 7 Tage'},
-        'verbrauch_heute_minus1':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch gestern (heute -1 Tag) (Differenz zwischen Wert am Ende des gestrigen Tages und dem Wert am Ende des Tages davor)'},
-        'verbrauch_heute_minus2':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch vorgestern (heute -2 Tage)'},
-        'verbrauch_heute_minus3':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch heute -3 Tage'},
-        'verbrauch_heute_minus4':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch heute -4 Tage'},
-        'verbrauch_heute_minus5':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch heute -5 Tage'},
-        'verbrauch_heute_minus6':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch heute -6 Tage'},
-        'verbrauch_heute_minus7':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch heute -7 Tage'},
-        'verbrauch_heute_minus8':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch heute -8 Tage'},
-        'verbrauch_tag_minus1':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch gestern (heute -1 Tag) (Differenz zwischen Wert am Ende des gestrigen Tages und dem Wert am Ende des Tages davor)'},
-        'verbrauch_tag_minus2':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch vorgestern (heute -2 Tage)'},
-        'verbrauch_tag_minus3':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch heute -3 Tage'},
-        'verbrauch_tag_minus4':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch heute -4 Tage'},
-        'verbrauch_tag_minus5':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch heute -5 Tage'},
-        'verbrauch_tag_minus6':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch heute -6 Tage'},
-        'verbrauch_tag_minus7':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch heute -7 Tage'},
-        'verbrauch_tag_minus8':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch heute -8 Tage'},
-        'verbrauch_woche_minus1':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': False,  'description': 'Verbrauch Vorwoche (aktuelle Woche -1)'},
-        'verbrauch_woche_minus2':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': False,  'description': 'Verbrauch aktuelle Woche -2 Wochen'},
-        'verbrauch_woche_minus3':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': False,  'description': 'Verbrauch aktuelle Woche -3 Wochen'},
-        'verbrauch_woche_minus4':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': False,  'description': 'Verbrauch aktuelle Woche -4 Wochen'},
-        'verbrauch_monat_minus1':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Verbrauch Vormonat (aktueller Monat -1)'},
-        'verbrauch_monat_minus2':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Verbrauch aktueller Monat -2 Monate'},
-        'verbrauch_monat_minus3':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Verbrauch aktueller Monat -3 Monate'},
-        'verbrauch_monat_minus4':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Verbrauch aktueller Monat -4 Monate'},
-        'verbrauch_monat_minus12':                 {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Verbrauch aktueller Monat -12 Monate'},
-        'verbrauch_jahr_minus1':                   {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': False,  'description': 'Verbrauch Vorjahr (aktuelles Jahr -1 Jahr)'},
-        'verbrauch_jahr_minus2':                   {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': False,  'description': 'Verbrauch aktuelles Jahr -2 Jahre'},
-        'verbrauch_jahr_minus3':                   {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': False,  'description': 'Verbrauch aktuelles Jahr -3 Jahre'},
-        'verbrauch_rolling_12m_heute_minus1':      {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Tages'},
-        'verbrauch_rolling_12m_tag_minus1':        {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Tages'},
-        'verbrauch_rolling_12m_woche_minus1':      {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'cycle': 'weekly',    'params': False,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende der letzten Woche'},
-        'verbrauch_rolling_12m_monat_minus1':      {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Monats'},
-        'verbrauch_rolling_12m_jahr_minus1':       {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'cycle': 'yearly',    'params': False,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Jahres'},
-        'verbrauch_jahreszeitraum_minus1':         {'cat': 'verbrauch',     'sub_cat': 'jahrzeit',   'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch seit dem 1.1. bis zum heutigen Tag des Vorjahres'},
-        'verbrauch_jahreszeitraum_minus2':         {'cat': 'verbrauch',     'sub_cat': 'jahrzeit',   'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch seit dem 1.1. bis zum heutigen Tag vor 2 Jahren'},
-        'verbrauch_jahreszeitraum_minus3':         {'cat': 'verbrauch',     'sub_cat': 'jahrzeit',   'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Verbrauch seit dem 1.1. bis zum heutigen Tag vor 3 Jahren'},
-        'zaehlerstand_heute_minus1':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Zählerstand / Wert am Ende des letzten Tages (heute -1 Tag)'},
-        'zaehlerstand_heute_minus2':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Zählerstand / Wert am Ende des vorletzten Tages (heute -2 Tag)'},
-        'zaehlerstand_heute_minus3':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Zählerstand / Wert am Ende des vorvorletzten Tages (heute -3 Tag)'},
-        'zaehlerstand_tag_minus1':                 {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Zählerstand / Wert am Ende des letzten Tages (heute -1 Tag)'},
-        'zaehlerstand_tag_minus2':                 {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Zählerstand / Wert am Ende des vorletzten Tages (heute -2 Tag)'},
-        'zaehlerstand_tag_minus3':                 {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Zählerstand / Wert am Ende des vorvorletzten Tages (heute -3 Tag)'},
-        'zaehlerstand_woche_minus1':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': False,  'description': 'Zählerstand / Wert am Ende der vorvorletzten Woche (aktuelle Woche -1 Woche)'},
-        'zaehlerstand_woche_minus2':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': False,  'description': 'Zählerstand / Wert am Ende der vorletzten Woche (aktuelle Woche -2 Wochen)'},
-        'zaehlerstand_woche_minus3':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': False,  'description': 'Zählerstand / Wert am Ende der aktuellen Woche -3 Wochen'},
-        'zaehlerstand_monat_minus1':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Zählerstand / Wert am Ende des letzten Monates (aktueller Monat -1 Monat)'},
-        'zaehlerstand_monat_minus2':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Zählerstand / Wert am Ende des vorletzten Monates (aktueller Monat -2 Monate)'},
-        'zaehlerstand_monat_minus3':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Zählerstand / Wert am Ende des aktuellen Monats -3 Monate'},
-        'zaehlerstand_jahr_minus1':                {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': False,  'description': 'Zählerstand / Wert am Ende des letzten Jahres (aktuelles Jahr -1 Jahr)'},
-        'zaehlerstand_jahr_minus2':                {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': False,  'description': 'Zählerstand / Wert am Ende des vorletzten Jahres (aktuelles Jahr -2 Jahre)'},
-        'zaehlerstand_jahr_minus3':                {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': False,  'description': 'Zählerstand / Wert am Ende des aktuellen Jahres -3 Jahre'},
-        'minmax_last_24h_min':                     {'cat': 'wertehistorie', 'sub_cat': 'last',       'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'minimaler Wert der letzten 24h'},
-        'minmax_last_24h_max':                     {'cat': 'wertehistorie', 'sub_cat': 'last',       'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'maximaler Wert der letzten 24h'},
-        'minmax_last_24h_avg':                     {'cat': 'wertehistorie', 'sub_cat': 'last',       'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'durchschnittlicher Wert der letzten 24h'},
-        'minmax_last_7d_min':                      {'cat': 'wertehistorie', 'sub_cat': 'last',       'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'minimaler Wert der letzten 7 Tage'},
-        'minmax_last_7d_max':                      {'cat': 'wertehistorie', 'sub_cat': 'last',       'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'maximaler Wert der letzten 7 Tage'},
-        'minmax_last_7d_avg':                      {'cat': 'wertehistorie', 'sub_cat': 'last',       'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'durchschnittlicher Wert der letzten 7 Tage'},
-        'minmax_heute_min':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Minimalwert seit Tagesbeginn'},
-        'minmax_heute_max':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Maximalwert seit Tagesbeginn'},
-        'minmax_heute_avg':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Durchschnittswert seit Tagesbeginn'},
-        'minmax_heute_minus1_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Minimalwert gestern (heute -1 Tag)'},
-        'minmax_heute_minus1_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Maximalwert gestern (heute -1 Tag)'},
-        'minmax_heute_minus1_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Durchschnittswert gestern (heute -1 Tag)'},
-        'minmax_heute_minus2_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Minimalwert vorgestern (heute -2 Tage)'},
-        'minmax_heute_minus2_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Maximalwert vorgestern (heute -2 Tage)'},
-        'minmax_heute_minus2_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Durchschnittswert vorgestern (heute -2 Tage)'},
-        'minmax_heute_minus3_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Minimalwert heute vor 3 Tagen'},
-        'minmax_heute_minus3_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Maximalwert heute vor 3 Tagen'},
-        'minmax_heute_minus3_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Durchschnittswert heute vor 3 Tagen'},
-        'minmax_tag_min':                          {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Minimalwert seit Tagesbeginn'},
-        'minmax_tag_max':                          {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Maximalwert seit Tagesbeginn'},
-        'minmax_tag_avg':                          {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Durchschnittswert seit Tagesbeginn'},
-        'minmax_tag_minus1_min':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Minimalwert gestern (heute -1 Tag)'},
-        'minmax_tag_minus1_max':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Maximalwert gestern (heute -1 Tag)'},
-        'minmax_tag_minus1_avg':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Durchschnittswert gestern (heute -1 Tag)'},
-        'minmax_tag_minus2_min':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Minimalwert vorgestern (heute -2 Tage)'},
-        'minmax_tag_minus2_max':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Maximalwert vorgestern (heute -2 Tage)'},
-        'minmax_tag_minus2_avg':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Durchschnittswert vorgestern (heute -2 Tage)'},
-        'minmax_tag_minus3_min':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Minimalwert heute vor 3 Tagen'},
-        'minmax_tag_minus3_max':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Maximalwert heute vor 3 Tagen'},
-        'minmax_tag_minus3_avg':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Durchschnittswert heute vor 3 Tagen'},
-        'minmax_woche_min':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Minimalwert seit Wochenbeginn'},
-        'minmax_woche_max':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Maximalwert seit Wochenbeginn'},
-        'minmax_woche_minus1_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': False,  'description': 'Minimalwert Vorwoche (aktuelle Woche -1)'},
-        'minmax_woche_minus1_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': False,  'description': 'Maximalwert Vorwoche (aktuelle Woche -1)'},
-        'minmax_woche_minus1_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': False,  'description': 'Durchschnittswert Vorwoche (aktuelle Woche -1)'},
-        'minmax_woche_minus2_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': False,  'description': 'Minimalwert aktuelle Woche -2 Wochen'},
-        'minmax_woche_minus2_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': False,  'description': 'Maximalwert aktuelle Woche -2 Wochen'},
-        'minmax_woche_minus2_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': False,  'description': 'Durchschnittswert aktuelle Woche -2 Wochen'},
-        'minmax_monat_min':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Minimalwert seit Monatsbeginn'},
-        'minmax_monat_max':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Maximalwert seit Monatsbeginn'},
-        'minmax_monat_minus1_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Minimalwert Vormonat (aktueller Monat -1)'},
-        'minmax_monat_minus1_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Maximalwert Vormonat (aktueller Monat -1)'},
-        'minmax_monat_minus1_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Durchschnittswert Vormonat (aktueller Monat -1)'},
-        'minmax_monat_minus2_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Minimalwert aktueller Monat -2 Monate'},
-        'minmax_monat_minus2_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Maximalwert aktueller Monat -2 Monate'},
-        'minmax_monat_minus2_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': False,  'description': 'Durchschnittswert aktueller Monat -2 Monate'},
-        'minmax_jahr_min':                         {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Minimalwert seit Jahresbeginn'},
-        'minmax_jahr_max':                         {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Maximalwert seit Jahresbeginn'},
-        'minmax_jahr_minus1_min':                  {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': False,  'description': 'Minimalwert Vorjahr (aktuelles Jahr -1 Jahr)'},
-        'minmax_jahr_minus1_max':                  {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': False,  'description': 'Maximalwert Vorjahr (aktuelles Jahr -1 Jahr)'},
-        'minmax_jahr_minus1_avg':                  {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': False,  'description': 'Durchschnittswert Vorjahr (aktuelles Jahr -1 Jahr)'},
-        'tagesmitteltemperatur_heute':             {'cat': 'tagesmittel',   'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Tagesmitteltemperatur heute'},
-        'tagesmitteltemperatur_heute_minus1':      {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Tagesmitteltemperatur des letzten Tages (heute -1 Tag)'},
-        'tagesmitteltemperatur_heute_minus2':      {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Tagesmitteltemperatur des vorletzten Tages (heute -2 Tag)'},
-        'tagesmitteltemperatur_heute_minus3':      {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Tagesmitteltemperatur des vorvorletzten Tages (heute -3 Tag)'},
-        'tagesmitteltemperatur_tag':               {'cat': 'tagesmittel',   'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Tagesmitteltemperatur heute'},
-        'tagesmitteltemperatur_tag_minus1':        {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Tagesmitteltemperatur des letzten Tages (heute -1 Tag)'},
-        'tagesmitteltemperatur_tag_minus2':        {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Tagesmitteltemperatur des vorletzten Tages (heute -2 Tag)'},
-        'tagesmitteltemperatur_tag_minus3':        {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': False,  'description': 'Tagesmitteltemperatur des vorvorletzten Tages (heute -3 Tag)'},
-        'serie_minmax_monat_min_15m':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'monthly',   'params': False,  'description': 'monatlicher Minimalwert der letzten 15 Monate (gleitend)'},
-        'serie_minmax_monat_max_15m':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'monthly',   'params': False,  'description': 'monatlicher Maximalwert der letzten 15 Monate (gleitend)'},
-        'serie_minmax_monat_avg_15m':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'monthly',   'params': False,  'description': 'monatlicher Mittelwert der letzten 15 Monate (gleitend)'},
-        'serie_minmax_woche_min_30w':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'weekly',    'params': False,  'description': 'wöchentlicher Minimalwert der letzten 30 Wochen (gleitend)'},
-        'serie_minmax_woche_max_30w':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'weekly',    'params': False,  'description': 'wöchentlicher Maximalwert der letzten 30 Wochen (gleitend)'},
-        'serie_minmax_woche_avg_30w':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'weekly',    'params': False,  'description': 'wöchentlicher Mittelwert der letzten 30 Wochen (gleitend)'},
-        'serie_minmax_tag_min_30d':                {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'daily',     'params': False,  'description': 'täglicher Minimalwert der letzten 30 Tage (gleitend)'},
-        'serie_minmax_tag_max_30d':                {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'daily',     'params': False,  'description': 'täglicher Maximalwert der letzten 30 Tage (gleitend)'},
-        'serie_minmax_tag_avg_30d':                {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'daily',     'params': False,  'description': 'täglicher Mittelwert der letzten 30 Tage (gleitend)'},
-        'serie_verbrauch_tag_30d':                 {'cat': 'serie',         'sub_cat': 'verbrauch',  'item_type': 'list',  'cycle': 'daily',     'params': False,  'description': 'Verbrauch pro Tag der letzten 30 Tage'},
-        'serie_verbrauch_woche_30w':               {'cat': 'serie',         'sub_cat': 'verbrauch',  'item_type': 'list',  'cycle': 'weekly',    'params': False,  'description': 'Verbrauch pro Woche der letzten 30 Wochen'},
-        'serie_verbrauch_monat_18m':               {'cat': 'serie',         'sub_cat': 'verbrauch',  'item_type': 'list',  'cycle': 'monthly',   'params': False,  'description': 'Verbrauch pro Monat der letzten 18 Monate'},
-        'serie_zaehlerstand_tag_30d':              {'cat': 'serie',         'sub_cat': 'zaehler',    'item_type': 'list',  'cycle': 'daily',     'params': False,  'description': 'Zählerstand am Tagesende der letzten 30 Tage'},
-        'serie_zaehlerstand_woche_30w':            {'cat': 'serie',         'sub_cat': 'zaehler',    'item_type': 'list',  'cycle': 'weekly',    'params': False,  'description': 'Zählerstand am Wochenende der letzten 30 Wochen'},
-        'serie_zaehlerstand_monat_18m':            {'cat': 'serie',         'sub_cat': 'zaehler',    'item_type': 'list',  'cycle': 'monthly',   'params': False,  'description': 'Zählerstand am Monatsende der letzten 18 Monate'},
-        'serie_waermesumme_monat_24m':             {'cat': 'serie',         'sub_cat': 'summe',      'item_type': 'list',  'cycle': 'monthly',   'params': False,  'description': 'monatliche Wärmesumme der letzten 24 Monate'},
-        'serie_kaeltesumme_monat_24m':             {'cat': 'serie',         'sub_cat': 'summe',      'item_type': 'list',  'cycle': 'monthly',   'params': False,  'description': 'monatliche Kältesumme der letzten 24 Monate'},
-        'serie_tagesmittelwert_0d':                {'cat': 'serie',         'sub_cat': 'mittel_d',   'item_type': 'list',  'cycle': 'daily',     'params': False,  'description': 'Tagesmittelwert für den aktuellen Tag'},
-        'serie_tagesmittelwert_stunde_0d':         {'cat': 'serie',         'sub_cat': 'mittel_h',   'item_type': 'list',  'cycle': 'daily',     'params': False,  'description': 'Stundenmittelwert für den aktuellen Tag'},
-        'serie_tagesmittelwert_stunde_30_0d':      {'cat': 'serie',         'sub_cat': 'mittel_h1',  'item_type': 'list',  'cycle': 'daily',     'params': False,  'description': 'Stundenmittelwert für den aktuellen Tag'},
-        'serie_tagesmittelwert_tag_stunde_30d':    {'cat': 'serie',         'sub_cat': 'mittel_d_h', 'item_type': 'list',  'cycle': 'daily',     'params': False,  'description': 'Stundenmittelwert pro Tag der letzten 30 Tage (bspw. zur Berechnung der Tagesmitteltemperatur basierend auf den Mittelwert der Temperatur pro Stunde'},
-        'general_oldest_value':                    {'cat': 'gen',           'sub_cat': None,         'item_type': 'num',   'cycle': None,        'params': False,  'description': 'Ausgabe des ältesten Wertes des entsprechenden "Parent-Items" mit database Attribut'},
-        'general_oldest_log':                      {'cat': 'gen',           'sub_cat': None,         'item_type': 'list',  'cycle': None,        'params': False,  'description': 'Ausgabe des Timestamp des ältesten Eintrages des entsprechenden "Parent-Items" mit database Attribut'},
-        'kaeltesumme':                             {'cat': 'summe',         'sub_cat': None,         'item_type': 'num',   'cycle': 'daily',     'params': True,   'description': 'Berechnet die Kältesumme für einen Zeitraum, db_addon_params: (year=optional, month=optional)'},
-        'waermesumme':                             {'cat': 'summe',         'sub_cat': None,         'item_type': 'num',   'cycle': 'daily',     'params': True,   'description': 'Berechnet die Wärmesumme für einen Zeitraum, db_addon_params: (year=optional, month=optional)'},
-        'gruenlandtempsumme':                      {'cat': 'summe',         'sub_cat': None,         'item_type': 'num',   'cycle': 'daily',     'params': True,   'description': 'Berechnet die Grünlandtemperatursumme für einen Zeitraum, db_addon_params: (year=optional)'},
-        'wachstumsgradtage':                       {'cat': 'summe',         'sub_cat': None,         'item_type': 'num',   'cycle': 'daily',     'params': True,   'description': 'Berechnet die Wachstumsgradtage auf Basis der stündlichen Durchschnittswerte eines Tages für das laufende Jahr mit an Angabe des Temperaturschwellenwertes (threshold=Schwellentemperatur)'},
-        'wuestentage':                             {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der Wüstentage des Jahres, db_addon_params: (year=optional)'},
-        'heisse_tage':                             {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der heissen Tage des Jahres, db_addon_params: (year=optional)'},
-        'tropennaechte':                           {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der Tropennächte des Jahres, db_addon_params: (year=optional)'},
-        'sommertage':                              {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der Sommertage des Jahres, db_addon_params: (year=optional)'},
-        'heiztage':                                {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der Heiztage des Jahres, db_addon_params: (year=optional)'},
-        'vegetationstage':                         {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der Vegatationstage des Jahres, db_addon_params: (year=optional)'},
-        'frosttage':                               {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der Frosttage des Jahres, db_addon_params: (year=optional)'},
-        'eistage':                                 {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': True,   'description': 'Berechnet die Anzahl der Eistage des Jahres, db_addon_params: (year=optional)'},
-        'tagesmitteltemperatur':                   {'cat': 'complex',       'sub_cat': None,         'item_type': 'list',  'cycle': 'daily',     'params': True,   'description': 'Berechnet die Tagesmitteltemperatur auf Basis der stündlichen Durchschnittswerte eines Tages für die angegebene Anzahl von Tagen (timeframe=day, count=integer)'},
-        'db_request':                              {'cat': 'complex',       'sub_cat': None,         'item_type': 'list',  'cycle': 'group',     'params': True,   'description': 'Abfrage der DB: db_addon_params: (func=mandatory, item=mandatory, timespan=mandatory, start=optional, end=optional, count=optional, group=optional, group2=optional)'},
-        'minmax':                                  {'cat': 'complex',       'sub_cat': None,         'item_type': 'num',   'cycle': 'timeframe', 'params': True,   'description': 'Berechnet einen min/max/avg Wert für einen bestimmen Zeitraum:  db_addon_params: (func=mandatory, timeframe=mandatory, start=mandatory)'},
-        'minmax_last':                             {'cat': 'complex',       'sub_cat': None,         'item_type': 'num',   'cycle': 'timeframe', 'params': True,   'description': 'Berechnet einen min/max/avg Wert für ein bestimmtes Zeitfenster von jetzt zurück:  db_addon_params: (func=mandatory, timeframe=mandatory, start=mandatory, end=mandatory)'},
-        'verbrauch':                               {'cat': 'complex',       'sub_cat': None,         'item_type': 'num',   'cycle': 'timeframe', 'params': True,   'description': 'Berechnet einen Verbrauchswert für einen bestimmen Zeitraum:  db_addon_params: (timeframe=mandatory, start=mandatory end=mandatory)'},
-        'zaehlerstand':                            {'cat': 'complex',       'sub_cat': None,         'item_type': 'num',   'cycle': 'timeframe', 'params': True,   'description': 'Berechnet einen Zählerstand für einen bestimmen Zeitpunkt:  db_addon_params: (timeframe=mandatory, start=mandatory)'},
+        'verbrauch_heute':                         {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages)'},
+        'verbrauch_tag':                           {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages)'},
+        'verbrauch_woche':                         {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Verbrauch in der aktuellen Woche'},
+        'verbrauch_monat':                         {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Verbrauch im aktuellen Monat'},
+        'verbrauch_jahr':                          {'cat': 'verbrauch',     'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Verbrauch im aktuellen Jahr'},
+        'verbrauch_last_24h':                      {'cat': 'verbrauch',     'sub_cat': 'last',       'item_type': 'num',   'cycle': 'hourly',    'params': None,  'description': 'Verbrauch innerhalb letzten 24h'},
+        'verbrauch_last_7d':                       {'cat': 'verbrauch',     'sub_cat': 'last',       'item_type': 'num',   'cycle': 'hourly',    'params': None,  'description': 'Verbrauch innerhalb letzten 7 Tage'},
+        'verbrauch_heute_minus1':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch gestern (heute -1 Tag) (Differenz zwischen Wert am Ende des gestrigen Tages und dem Wert am Ende des Tages davor)'},
+        'verbrauch_heute_minus2':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch vorgestern (heute -2 Tage)'},
+        'verbrauch_heute_minus3':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch heute -3 Tage'},
+        'verbrauch_heute_minus4':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch heute -4 Tage'},
+        'verbrauch_heute_minus5':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch heute -5 Tage'},
+        'verbrauch_heute_minus6':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch heute -6 Tage'},
+        'verbrauch_heute_minus7':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch heute -7 Tage'},
+        'verbrauch_heute_minus8':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch heute -8 Tage'},
+        'verbrauch_tag_minus1':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch gestern (heute -1 Tag) (Differenz zwischen Wert am Ende des gestrigen Tages und dem Wert am Ende des Tages davor)'},
+        'verbrauch_tag_minus2':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch vorgestern (heute -2 Tage)'},
+        'verbrauch_tag_minus3':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch heute -3 Tage'},
+        'verbrauch_tag_minus4':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch heute -4 Tage'},
+        'verbrauch_tag_minus5':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch heute -5 Tage'},
+        'verbrauch_tag_minus6':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch heute -6 Tage'},
+        'verbrauch_tag_minus7':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch heute -7 Tage'},
+        'verbrauch_tag_minus8':                    {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch heute -8 Tage'},
+        'verbrauch_woche_minus1':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': None,  'description': 'Verbrauch Vorwoche (aktuelle Woche -1)'},
+        'verbrauch_woche_minus2':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': None,  'description': 'Verbrauch aktuelle Woche -2 Wochen'},
+        'verbrauch_woche_minus3':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': None,  'description': 'Verbrauch aktuelle Woche -3 Wochen'},
+        'verbrauch_woche_minus4':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': None,  'description': 'Verbrauch aktuelle Woche -4 Wochen'},
+        'verbrauch_monat_minus1':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Verbrauch Vormonat (aktueller Monat -1)'},
+        'verbrauch_monat_minus2':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Verbrauch aktueller Monat -2 Monate'},
+        'verbrauch_monat_minus3':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Verbrauch aktueller Monat -3 Monate'},
+        'verbrauch_monat_minus4':                  {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Verbrauch aktueller Monat -4 Monate'},
+        'verbrauch_monat_minus12':                 {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Verbrauch aktueller Monat -12 Monate'},
+        'verbrauch_jahr_minus1':                   {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': None,  'description': 'Verbrauch Vorjahr (aktuelles Jahr -1 Jahr)'},
+        'verbrauch_jahr_minus2':                   {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': None,  'description': 'Verbrauch aktuelles Jahr -2 Jahre'},
+        'verbrauch_jahr_minus3':                   {'cat': 'verbrauch',     'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': None,  'description': 'Verbrauch aktuelles Jahr -3 Jahre'},
+        'verbrauch_rolling_12m_heute_minus1':      {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Tages'},
+        'verbrauch_rolling_12m_tag_minus1':        {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Tages'},
+        'verbrauch_rolling_12m_woche_minus1':      {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'cycle': 'weekly',    'params': None,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende der letzten Woche'},
+        'verbrauch_rolling_12m_monat_minus1':      {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Monats'},
+        'verbrauch_rolling_12m_jahr_minus1':       {'cat': 'verbrauch',     'sub_cat': 'rolling',    'item_type': 'num',   'cycle': 'yearly',    'params': None,  'description': 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Jahres'},
+        'verbrauch_jahreszeitraum_minus1':         {'cat': 'verbrauch',     'sub_cat': 'jahrzeit',   'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch seit dem 1.1. bis zum heutigen Tag des Vorjahres'},
+        'verbrauch_jahreszeitraum_minus2':         {'cat': 'verbrauch',     'sub_cat': 'jahrzeit',   'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch seit dem 1.1. bis zum heutigen Tag vor 2 Jahren'},
+        'verbrauch_jahreszeitraum_minus3':         {'cat': 'verbrauch',     'sub_cat': 'jahrzeit',   'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Verbrauch seit dem 1.1. bis zum heutigen Tag vor 3 Jahren'},
+        'zaehlerstand_heute_minus1':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Zählerstand / Wert am Ende des letzten Tages (heute -1 Tag)'},
+        'zaehlerstand_heute_minus2':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Zählerstand / Wert am Ende des vorletzten Tages (heute -2 Tag)'},
+        'zaehlerstand_heute_minus3':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Zählerstand / Wert am Ende des vorvorletzten Tages (heute -3 Tag)'},
+        'zaehlerstand_tag_minus1':                 {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Zählerstand / Wert am Ende des letzten Tages (heute -1 Tag)'},
+        'zaehlerstand_tag_minus2':                 {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Zählerstand / Wert am Ende des vorletzten Tages (heute -2 Tag)'},
+        'zaehlerstand_tag_minus3':                 {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Zählerstand / Wert am Ende des vorvorletzten Tages (heute -3 Tag)'},
+        'zaehlerstand_woche_minus1':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': None,  'description': 'Zählerstand / Wert am Ende der vorvorletzten Woche (aktuelle Woche -1 Woche)'},
+        'zaehlerstand_woche_minus2':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': None,  'description': 'Zählerstand / Wert am Ende der vorletzten Woche (aktuelle Woche -2 Wochen)'},
+        'zaehlerstand_woche_minus3':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': None,  'description': 'Zählerstand / Wert am Ende der aktuellen Woche -3 Wochen'},
+        'zaehlerstand_monat_minus1':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Zählerstand / Wert am Ende des letzten Monates (aktueller Monat -1 Monat)'},
+        'zaehlerstand_monat_minus2':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Zählerstand / Wert am Ende des vorletzten Monates (aktueller Monat -2 Monate)'},
+        'zaehlerstand_monat_minus3':               {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Zählerstand / Wert am Ende des aktuellen Monats -3 Monate'},
+        'zaehlerstand_jahr_minus1':                {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': None,  'description': 'Zählerstand / Wert am Ende des letzten Jahres (aktuelles Jahr -1 Jahr)'},
+        'zaehlerstand_jahr_minus2':                {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': None,  'description': 'Zählerstand / Wert am Ende des vorletzten Jahres (aktuelles Jahr -2 Jahre)'},
+        'zaehlerstand_jahr_minus3':                {'cat': 'zaehler',       'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': None,  'description': 'Zählerstand / Wert am Ende des aktuellen Jahres -3 Jahre'},
+        'minmax_last_24h_min':                     {'cat': 'wertehistorie', 'sub_cat': 'last',       'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'minimaler Wert der letzten 24h'},
+        'minmax_last_24h_max':                     {'cat': 'wertehistorie', 'sub_cat': 'last',       'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'maximaler Wert der letzten 24h'},
+        'minmax_last_24h_avg':                     {'cat': 'wertehistorie', 'sub_cat': 'last',       'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'durchschnittlicher Wert der letzten 24h'},
+        'minmax_last_7d_min':                      {'cat': 'wertehistorie', 'sub_cat': 'last',       'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'minimaler Wert der letzten 7 Tage'},
+        'minmax_last_7d_max':                      {'cat': 'wertehistorie', 'sub_cat': 'last',       'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'maximaler Wert der letzten 7 Tage'},
+        'minmax_last_7d_avg':                      {'cat': 'wertehistorie', 'sub_cat': 'last',       'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'durchschnittlicher Wert der letzten 7 Tage'},
+        'minmax_heute_min':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Minimalwert seit Tagesbeginn'},
+        'minmax_heute_max':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Maximalwert seit Tagesbeginn'},
+        'minmax_heute_avg':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Durchschnittswert seit Tagesbeginn'},
+        'minmax_heute_minus1_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Minimalwert gestern (heute -1 Tag)'},
+        'minmax_heute_minus1_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Maximalwert gestern (heute -1 Tag)'},
+        'minmax_heute_minus1_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Durchschnittswert gestern (heute -1 Tag)'},
+        'minmax_heute_minus2_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Minimalwert vorgestern (heute -2 Tage)'},
+        'minmax_heute_minus2_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Maximalwert vorgestern (heute -2 Tage)'},
+        'minmax_heute_minus2_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Durchschnittswert vorgestern (heute -2 Tage)'},
+        'minmax_heute_minus3_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Minimalwert heute vor 3 Tagen'},
+        'minmax_heute_minus3_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Maximalwert heute vor 3 Tagen'},
+        'minmax_heute_minus3_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Durchschnittswert heute vor 3 Tagen'},
+        'minmax_tag_min':                          {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Minimalwert seit Tagesbeginn'},
+        'minmax_tag_max':                          {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Maximalwert seit Tagesbeginn'},
+        'minmax_tag_avg':                          {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Durchschnittswert seit Tagesbeginn'},
+        'minmax_tag_minus1_min':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Minimalwert gestern (heute -1 Tag)'},
+        'minmax_tag_minus1_max':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Maximalwert gestern (heute -1 Tag)'},
+        'minmax_tag_minus1_avg':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Durchschnittswert gestern (heute -1 Tag)'},
+        'minmax_tag_minus2_min':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Minimalwert vorgestern (heute -2 Tage)'},
+        'minmax_tag_minus2_max':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Maximalwert vorgestern (heute -2 Tage)'},
+        'minmax_tag_minus2_avg':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Durchschnittswert vorgestern (heute -2 Tage)'},
+        'minmax_tag_minus3_min':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Minimalwert heute vor 3 Tagen'},
+        'minmax_tag_minus3_max':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Maximalwert heute vor 3 Tagen'},
+        'minmax_tag_minus3_avg':                   {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Durchschnittswert heute vor 3 Tagen'},
+        'minmax_woche_min':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Minimalwert seit Wochenbeginn'},
+        'minmax_woche_max':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Maximalwert seit Wochenbeginn'},
+        'minmax_woche_minus1_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': None,  'description': 'Minimalwert Vorwoche (aktuelle Woche -1)'},
+        'minmax_woche_minus1_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': None,  'description': 'Maximalwert Vorwoche (aktuelle Woche -1)'},
+        'minmax_woche_minus1_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': None,  'description': 'Durchschnittswert Vorwoche (aktuelle Woche -1)'},
+        'minmax_woche_minus2_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': None,  'description': 'Minimalwert aktuelle Woche -2 Wochen'},
+        'minmax_woche_minus2_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': None,  'description': 'Maximalwert aktuelle Woche -2 Wochen'},
+        'minmax_woche_minus2_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'weekly',    'params': None,  'description': 'Durchschnittswert aktuelle Woche -2 Wochen'},
+        'minmax_monat_min':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Minimalwert seit Monatsbeginn'},
+        'minmax_monat_max':                        {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Maximalwert seit Monatsbeginn'},
+        'minmax_monat_minus1_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Minimalwert Vormonat (aktueller Monat -1)'},
+        'minmax_monat_minus1_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Maximalwert Vormonat (aktueller Monat -1)'},
+        'minmax_monat_minus1_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Durchschnittswert Vormonat (aktueller Monat -1)'},
+        'minmax_monat_minus2_min':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Minimalwert aktueller Monat -2 Monate'},
+        'minmax_monat_minus2_max':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Maximalwert aktueller Monat -2 Monate'},
+        'minmax_monat_minus2_avg':                 {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'monthly',   'params': None,  'description': 'Durchschnittswert aktueller Monat -2 Monate'},
+        'minmax_jahr_min':                         {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Minimalwert seit Jahresbeginn'},
+        'minmax_jahr_max':                         {'cat': 'wertehistorie', 'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Maximalwert seit Jahresbeginn'},
+        'minmax_jahr_minus1_min':                  {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': None,  'description': 'Minimalwert Vorjahr (aktuelles Jahr -1 Jahr)'},
+        'minmax_jahr_minus1_max':                  {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': None,  'description': 'Maximalwert Vorjahr (aktuelles Jahr -1 Jahr)'},
+        'minmax_jahr_minus1_avg':                  {'cat': 'wertehistorie', 'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'yearly',    'params': None,  'description': 'Durchschnittswert Vorjahr (aktuelles Jahr -1 Jahr)'},
+        'tagesmitteltemperatur_heute':             {'cat': 'tagesmittel',   'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Tagesmitteltemperatur heute'},
+        'tagesmitteltemperatur_heute_minus1':      {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Tagesmitteltemperatur des letzten Tages (heute -1 Tag)'},
+        'tagesmitteltemperatur_heute_minus2':      {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Tagesmitteltemperatur des vorletzten Tages (heute -2 Tag)'},
+        'tagesmitteltemperatur_heute_minus3':      {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Tagesmitteltemperatur des vorvorletzten Tages (heute -3 Tag)'},
+        'tagesmitteltemperatur_tag':               {'cat': 'tagesmittel',   'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Tagesmitteltemperatur heute'},
+        'tagesmitteltemperatur_tag_minus1':        {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Tagesmitteltemperatur des letzten Tages (heute -1 Tag)'},
+        'tagesmitteltemperatur_tag_minus2':        {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Tagesmitteltemperatur des vorletzten Tages (heute -2 Tag)'},
+        'tagesmitteltemperatur_tag_minus3':        {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Tagesmitteltemperatur des vorvorletzten Tages (heute -3 Tag)'},
+        'tagesmittelwert_tag':                     {'cat': 'tagesmittel',   'sub_cat': 'onchange',   'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Tagesmittelwert heute'},
+        'tagesmittelwert_tag_minus1':              {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Tagesmittelwert des letzten Tages (heute -1 Tag)'},
+        'tagesmittelwert_tag_minus2':              {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Tagesmittelwert des vorletzten Tages (heute -2 Tag)'},
+        'tagesmittelwert_tag_minus3':              {'cat': 'tagesmittel',   'sub_cat': 'timeframe',  'item_type': 'num',   'cycle': 'daily',     'params': None,  'description': 'Tagesmittelwert des vorvorletzten Tages (heute -3 Tag)'},
+        'serie_minmax_monat_min_15m':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'monthly',   'params': None,  'description': 'monatlicher Minimalwert der letzten 15 Monate (gleitend)'},
+        'serie_minmax_monat_max_15m':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'monthly',   'params': None,  'description': 'monatlicher Maximalwert der letzten 15 Monate (gleitend)'},
+        'serie_minmax_monat_avg_15m':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'monthly',   'params': None,  'description': 'monatlicher Mittelwert der letzten 15 Monate (gleitend)'},
+        'serie_minmax_woche_min_30w':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'weekly',    'params': None,  'description': 'wöchentlicher Minimalwert der letzten 30 Wochen (gleitend)'},
+        'serie_minmax_woche_max_30w':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'weekly',    'params': None,  'description': 'wöchentlicher Maximalwert der letzten 30 Wochen (gleitend)'},
+        'serie_minmax_woche_avg_30w':              {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'weekly',    'params': None,  'description': 'wöchentlicher Mittelwert der letzten 30 Wochen (gleitend)'},
+        'serie_minmax_tag_min_30d':                {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'daily',     'params': None,  'description': 'täglicher Minimalwert der letzten 30 Tage (gleitend)'},
+        'serie_minmax_tag_max_30d':                {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'daily',     'params': None,  'description': 'täglicher Maximalwert der letzten 30 Tage (gleitend)'},
+        'serie_minmax_tag_avg_30d':                {'cat': 'serie',         'sub_cat': 'minmax',     'item_type': 'list',  'cycle': 'daily',     'params': None,  'description': 'täglicher Mittelwert der letzten 30 Tage (gleitend)'},
+        'serie_verbrauch_tag_30d':                 {'cat': 'serie',         'sub_cat': 'verbrauch',  'item_type': 'list',  'cycle': 'daily',     'params': None,  'description': 'Verbrauch pro Tag der letzten 30 Tage'},
+        'serie_verbrauch_woche_30w':               {'cat': 'serie',         'sub_cat': 'verbrauch',  'item_type': 'list',  'cycle': 'weekly',    'params': None,  'description': 'Verbrauch pro Woche der letzten 30 Wochen'},
+        'serie_verbrauch_monat_18m':               {'cat': 'serie',         'sub_cat': 'verbrauch',  'item_type': 'list',  'cycle': 'monthly',   'params': None,  'description': 'Verbrauch pro Monat der letzten 18 Monate'},
+        'serie_zaehlerstand_tag_30d':              {'cat': 'serie',         'sub_cat': 'zaehler',    'item_type': 'list',  'cycle': 'daily',     'params': None,  'description': 'Zählerstand am Tagesende der letzten 30 Tage'},
+        'serie_zaehlerstand_woche_30w':            {'cat': 'serie',         'sub_cat': 'zaehler',    'item_type': 'list',  'cycle': 'weekly',    'params': None,  'description': 'Zählerstand am Wochenende der letzten 30 Wochen'},
+        'serie_zaehlerstand_monat_18m':            {'cat': 'serie',         'sub_cat': 'zaehler',    'item_type': 'list',  'cycle': 'monthly',   'params': None,  'description': 'Zählerstand am Monatsende der letzten 18 Monate'},
+        'serie_waermesumme_monat_24m':             {'cat': 'serie',         'sub_cat': 'summe',      'item_type': 'list',  'cycle': 'monthly',   'params': None,  'description': 'monatliche Wärmesumme der letzten 24 Monate'},
+        'serie_kaeltesumme_monat_24m':             {'cat': 'serie',         'sub_cat': 'summe',      'item_type': 'list',  'cycle': 'monthly',   'params': None,  'description': 'monatliche Kältesumme der letzten 24 Monate'},
+        'serie_tagesmittelwert_0d':                {'cat': 'serie',         'sub_cat': 'mittel_d',   'item_type': 'list',  'cycle': 'daily',     'params': None,  'description': 'Tagesmittelwert für den aktuellen Tag'},
+        'serie_tagesmittelwert_stunde_0d':         {'cat': 'serie',         'sub_cat': 'mittel_h',   'item_type': 'list',  'cycle': 'daily',     'params': None,  'description': 'Stundenmittelwert für den aktuellen Tag'},
+        'serie_tagesmittelwert_stunde_30_0d':      {'cat': 'serie',         'sub_cat': 'mittel_h1',  'item_type': 'list',  'cycle': 'daily',     'params': None,  'description': 'Stundenmittelwert für den aktuellen Tag'},
+        'serie_tagesmittelwert_tag_stunde_30d':    {'cat': 'serie',         'sub_cat': 'mittel_d_h', 'item_type': 'list',  'cycle': 'daily',     'params': None,  'description': 'Stundenmittelwert pro Tag der letzten 30 Tage (bspw. zur Berechnung der Tagesmitteltemperatur basierend auf den Mittelwert der Temperatur pro Stunde'},
+        'general_oldest_value':                    {'cat': 'gen',           'sub_cat': None,         'item_type': 'num',   'cycle': None,        'params': None,  'description': 'Ausgabe des ältesten Wertes des entsprechenden "Parent-Items" mit database Attribut'},
+        'general_oldest_log':                      {'cat': 'gen',           'sub_cat': None,         'item_type': 'list',  'cycle': None,        'params': None,  'description': 'Ausgabe des Timestamp des ältesten Eintrages des entsprechenden "Parent-Items" mit database Attribut'},
+        'kaeltesumme':                             {'cat': 'summe',         'sub_cat': None,         'item_type': 'num',   'cycle': 'daily',     'params': ([], ['year', 'month', 'result'], {}),                               'description': 'Berechnet die Kältesumme für einen Zeitraum, db_addon_params: (year=optional, month=optional, ignore_value_list=optional, result=optional)'},
+        'waermesumme':                             {'cat': 'summe',         'sub_cat': None,         'item_type': 'num',   'cycle': 'daily',     'params': ([], ['year', 'month', 'threshold', 'result'], {}),                  'description': 'Berechnet die Wärmesumme für einen Zeitraum, db_addon_params: (year=optional, month=optional, ignore_value_list=optional, threshold=optional, result=optional)'},
+        'gruenlandtempsumme':                      {'cat': 'summe',         'sub_cat': None,         'item_type': 'num',   'cycle': 'daily',     'params': ([], ['year', 'month', 'result'], {}),                               'description': 'Berechnet die Grünlandtemperatursumme für einen Zeitraum, db_addon_params: (year=optional, ignore_value_list=optional, result=optional)'},
+        'wachstumsgradtage':                       {'cat': 'summe',         'sub_cat': None,         'item_type': 'num',   'cycle': 'daily',     'params': ([], ['year', 'month', 'threshold', 'result'], {}),                  'description': 'Berechnet die Wachstumsgradtage auf Basis der stündlichen Durchschnittswerte eines Tages für das laufende Jahr mit an Angabe des Temperaturschwellenwertes, db_addon_params: (year=optional, ignore_value_list=optional, variant=optional, threshold=optional, result=optional)'},
+        'wuestentage':                             {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': ([], ['year', 'month'], {}),                                         'description': 'Berechnet die Anzahl der Wüstentage des Jahres, db_addon_params: (year=optional)'},
+        'heisse_tage':                             {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': ([], ['year', 'month'], {}),                                         'description': 'Berechnet die Anzahl der heissen Tage des Jahres, db_addon_params: (year=optional)'},
+        'tropennaechte':                           {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': ([], ['year', 'month'], {}),                                         'description': 'Berechnet die Anzahl der Tropennächte des Jahres, db_addon_params: (year=optional)'},
+        'sommertage':                              {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': ([], ['year', 'month'], {}),                                         'description': 'Berechnet die Anzahl der Sommertage des Jahres, db_addon_params: (year=optional)'},
+        'heiztage':                                {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': ([], ['year', 'month'], {}),                                         'description': 'Berechnet die Anzahl der Heiztage des Jahres, db_addon_params: (year=optional)'},
+        'vegetationstage':                         {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': ([], ['year', 'month'], {}),                                         'description': 'Berechnet die Anzahl der Vegatationstage des Jahres, db_addon_params: (year=optional)'},
+        'frosttage':                               {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': ([], ['year', 'month'], {}),                                         'description': 'Berechnet die Anzahl der Frosttage des Jahres, db_addon_params: (year=optional)'},
+        'eistage':                                 {'cat': 'summe',         'sub_cat': 'kenntage',   'item_type': 'num',   'cycle': 'daily',     'params': ([], ['year', 'month'], {}),                                         'description': 'Berechnet die Anzahl der Eistage des Jahres, db_addon_params: (year=optional)'},
+        'tagesmittelwert':                         {'cat': 'tagesmittel',   'sub_cat': 'complex',    'item_type': 'list',  'cycle': 'daily',     'params': (['timeframe', 'start', 'end'], [], {'data_con_func': 'avg_hour'}),  'description': 'Berechnet die Tagesmittelwert auf Basis der stündlichen Durchschnittswerte eines Tages für die angegebene Anzahl von Tagen (timeframe=day, count=integer)'},
+        'db_request':                              {'cat': 'complex',       'sub_cat': None,         'item_type': 'list',  'cycle': 'group',     'params': (['func', 'timeframe'], ['start', 'end', 'group', 'group2', 'ignore_value_list', 'use_oldest_entry'], {}),  'description': 'Abfrage der DB: db_addon_params: (func=mandatory, item=mandatory, timespan=mandatory, start=optional, end=optional, count=optional, group=optional, group2=optional)'},
+        'minmax':                                  {'cat': 'wertehistorie', 'sub_cat': 'complex',    'item_type': 'num',   'cycle': 'timeframe', 'params': (['func', 'timeframe', 'start'], ['end'], {}),                       'description': 'Ermittelt einen min/max/avg Wert für einen bestimmen Zeitraum:  db_addon_params: (func=mandatory, timeframe=mandatory, start=mandatory, end=optional)'},
+        'verbrauch':                               {'cat': 'verbrauch',     'sub_cat': 'complex',    'item_type': 'num',   'cycle': 'timeframe', 'params': (['timeframe', 'start', 'end'], [], {}),                             'description': 'Berechnet einen Verbrauchswert für einen bestimmen Zeitraum:  db_addon_params: (timeframe=mandatory, start=mandatory end=mandatory)'},
+        'zaehlerstand':                            {'cat': 'zaehler',       'sub_cat': 'complex',    'item_type': 'num',   'cycle': 'timeframe', 'params': (['timeframe', 'start'], [], {}),                                    'description': 'Ermittelt einen Zählerstand für einen bestimmen Zeitpunkt:  db_addon_params: (timeframe=mandatory, start=mandatory)'},
     },
     'db_addon_info': {
-        'db_version':                              {'cat': 'info',                                   'item_type': 'str',   'cycle': None,        'params': False,  'description': 'Version der verbundenen Datenbank'},
+        'db_version':                              {'cat': 'info',          'sub_cat': None,         'item_type': 'str',   'cycle': None,        'params': None,  'description': 'Version der verbundenen Datenbank'},
     },                                                                                               
     'db_addon_admin': {                                                                              
-        'suspend':                                 {'cat': 'admin',                                  'item_type': 'bool',  'cycle': None,        'params': False,  'description': 'Unterbricht die Aktivitäten des Plugin'},
-        'recalc_all':                              {'cat': 'admin',                                  'item_type': 'bool',  'cycle': None,        'params': False,  'description': 'Startet einen Neuberechnungslauf aller on-demand Items'},
-        'clean_cache_values':                      {'cat': 'admin',                                  'item_type': 'bool',  'cycle': None,        'params': False,  'description': 'Löscht Plugin-Cache und damit alle im Plugin zwischengespeicherten Werte'},
+        'recalc_all':                              {'cat': 'admin',         'sub_cat': None,         'item_type': 'bool',  'cycle': None,        'params': None,  'description': 'Startet einen Neuberechnungslauf aller on-demand Items'},
+        'clean_cache_values':                      {'cat': 'admin',         'sub_cat': None,         'item_type': 'bool',  'cycle': None,        'params': None,  'description': 'Löscht Plugin-Cache und damit alle im Plugin zwischengespeicherten Werte'},
     },
 }
 
@@ -246,26 +248,16 @@ def get_attrs(sub_dict: dict = {}) -> list:
 def export_item_attributes_py():
 
     print()
-    print(f"A) Start generation of {FILENAME_ATTRIBUTES}")
+    print(f"## Start generation of {FILENAME_ATTRIBUTES}")
 
     ATTRS = dict()
-    ATTRS['ONCHANGE_ATTRIBUTES'] = get_attrs(sub_dict={'on': 'change'})
-    ATTRS['ONCHANGE_HOURLY_ATTRIBUTES'] = get_attrs(sub_dict={'on': 'change', 'calc': 'hourly'})
-    ATTRS['ONCHANGE_DAILY_ATTRIBUTES'] = get_attrs(sub_dict={'on': 'change', 'calc': 'daily'})
-    ATTRS['ONCHANGE_WEEKLY_ATTRIBUTES'] = get_attrs(sub_dict={'on': 'change', 'calc': 'weekly'})
-    ATTRS['ONCHANGE_MONTHLY_ATTRIBUTES'] = get_attrs(sub_dict={'on': 'change', 'calc': 'monthly'})
-    ATTRS['ONCHANGE_YEARLY_ATTRIBUTES'] = get_attrs(sub_dict={'on': 'change', 'calc': 'yearly'})
-    ATTRS['ONDEMAND_ATTRIBUTES'] = get_attrs(sub_dict={'on': 'demand'})
-    ATTRS['ONDEMAND_HOURLY_ATTRIBUTES'] = get_attrs(sub_dict={'on': 'demand', 'calc': 'hourly'})
-    ATTRS['ONDEMAND_DAILY_ATTRIBUTES'] = get_attrs(sub_dict={'on': 'demand', 'calc': 'daily'})
-    ATTRS['ONDEMAND_WEEKLY_ATTRIBUTES'] = get_attrs(sub_dict={'on': 'demand', 'calc': 'weekly'})
-    ATTRS['ONDEMAND_MONTHLY_ATTRIBUTES'] = get_attrs(sub_dict={'on': 'demand', 'calc': 'monthly'})
-    ATTRS['ONDEMAND_YEARLY_ATTRIBUTES'] = get_attrs(sub_dict={'on': 'demand', 'calc': 'yearly'})
-    ATTRS['ALL_HOURLY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'hourly'})
-    ATTRS['ALL_DAILY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'daily'})
-    ATTRS['ALL_WEEKLY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'weekly'})
-    ATTRS['ALL_MONTHLY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'monthly'})
-    ATTRS['ALL_YEARLY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'yearly'})
+    ATTRS['ONCHANGE_ATTRIBUTES'] = get_attrs(sub_dict={'cycle': None})
+    ATTRS['ONDEMAND_HOURLY_ATTRIBUTES'] = get_attrs(sub_dict={'cycle': 'hourly'})
+    ATTRS['ONDEMAND_DAILY_ATTRIBUTES'] = get_attrs(sub_dict={'cycle': 'daily'})
+    ATTRS['ONDEMAND_WEEKLY_ATTRIBUTES'] = get_attrs(sub_dict={'cycle': 'weekly'})
+    ATTRS['ONDEMAND_MONTHLY_ATTRIBUTES'] = get_attrs(sub_dict={'cycle': 'monthly'})
+    ATTRS['ONDEMAND_YEARLY_ATTRIBUTES'] = get_attrs(sub_dict={'cycle': 'yearly'})
+    ATTRS['ONDEMAND_ATTRIBUTES'] = ATTRS['ONDEMAND_HOURLY_ATTRIBUTES'] + ATTRS['ONDEMAND_DAILY_ATTRIBUTES'] + ATTRS['ONDEMAND_WEEKLY_ATTRIBUTES'] + ATTRS['ONDEMAND_MONTHLY_ATTRIBUTES'] + ATTRS['ONDEMAND_YEARLY_ATTRIBUTES']
     ATTRS['ALL_PARAMS_ATTRIBUTES'] = get_attrs(sub_dict={'params': True})
     ATTRS['ALL_VERBRAUCH_ATTRIBUTES'] = get_attrs(sub_dict={'cat': 'verbrauch'})
     ATTRS['VERBRAUCH_ATTRIBUTES_ONCHANGE'] = get_attrs(sub_dict={'cat': 'verbrauch', 'sub_cat': 'onchange'})
@@ -331,8 +323,11 @@ def create_plugin_yaml_item_attribute_valids(attribute):
         valid_list_item_type = f"""{valid_list_item_type}\n\
           - '{ITEM_ATTRIBUTES[attribute][db_addon_fct]['item_type']:<}'"""
 
+        cycle = ITEM_ATTRIBUTES[attribute][db_addon_fct]['cycle']
+        if not cycle:
+            cycle = ""
         valid_list_calculation = f"""{valid_list_calculation}\n\
-          - '{ITEM_ATTRIBUTES[attribute][db_addon_fct]['calc']:<}'"""
+          - '{cycle:<}'"""
 
     valid_list_calculation = f"""{valid_list_calculation}\n\r"""
 
@@ -343,7 +338,7 @@ def update_plugin_yaml_item_attributes():
     """Update 'valid_list', 'valid_list_description', 'valid_list_item_type' and 'valid_list_calculation' of item attributes in plugin.yaml"""
 
     print()
-    print(f"B) Start updating valid for attributes in {FILENAME_PLUGIN}")
+    print(f"## Start updating valid for attributes in {FILENAME_PLUGIN}")
 
     for attribute in ITEM_ATTRIBUTES:
 
@@ -376,7 +371,7 @@ def update_plugin_yaml_item_attributes():
 def check_plugin_yaml_structs():
     # check structs for wrong attributes
     print()
-    print(f'C) Checking used attributes in structs defined in {FILENAME_PLUGIN} ')
+    print(f'## Checking used attributes in structs defined in {FILENAME_PLUGIN} ')
 
     # open plugin.yaml and update
     yaml = ruamel.yaml.YAML()
@@ -413,7 +408,7 @@ def check_plugin_yaml_structs():
 def update_user_doc():
     # Update user_doc.rst
     print()
-    print(f'D) Start updating DB-Addon-Attributes and descriptions in {DOC_FILE_NAME}!"')
+    print(f'## Start updating DB-Addon-Attributes and descriptions in {DOC_FILE_NAME}!"')
     attribute_list = [
         "Dieses Kapitel wurde automatisch durch Ausführen des Skripts in der Datei 'item_attributes_master.py' erstellt.\n", "\n",
         "Nachfolgend eine Auflistung der möglichen Attribute für das Plugin im Format: Attribute: Beschreibung | Berechnungszyklus | Item-Type\n",
@@ -428,7 +423,7 @@ def update_user_doc():
 
         for db_addon_fct in ITEM_ATTRIBUTES[attribute]:
             attribute_list.append(f"- {db_addon_fct}: {ITEM_ATTRIBUTES[attribute][db_addon_fct]['description']} "
-                                  f"| Berechnung: {ITEM_ATTRIBUTES[attribute][db_addon_fct]['calc']} "
+                                  f"| Berechnung: {ITEM_ATTRIBUTES[attribute][db_addon_fct]['cycle']} "
                                   f"| Item-Type: {ITEM_ATTRIBUTES[attribute][db_addon_fct]['item_type']}\n")
             attribute_list.append("\n")
 
@@ -437,9 +432,9 @@ def update_user_doc():
 
     start = end = None
     for i, line in enumerate(lines):
-        if 'db_addon Item-Attribute' in line:
+        if 'Verfügbare Item-Attribute' in line:
             start = i + 3
-        if 'Hinweise' in line:
+        if 'Beispiele für vordefinierte Auswertungen' in line:
             end = i - 1
 
     part1 = lines[0:start]
@@ -450,7 +445,7 @@ def update_user_doc():
         for line in new_lines:
             file.write(line)
 
-    print(f"   Successfully updated Foshk-Attributes in {DOC_FILE_NAME}!")
+    print(f"   Successfully updated DB-Addon-Attributes in {DOC_FILE_NAME}!")
 
 
 if __name__ == '__main__':
@@ -458,7 +453,7 @@ if __name__ == '__main__':
     print(f'Start automated update and check of {FILENAME_PLUGIN} with generation of {FILENAME_ATTRIBUTES} and update of {DOC_FILE_NAME}.')
     print('-------------------------------------------------------------')
 
-    export_item_attributes_py()
+    # export_item_attributes_py()
 
     update_plugin_yaml_item_attributes()
 
