@@ -66,7 +66,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                                      overlap='compress', compound='false', imagepath='{}'.format(self.__img_path))
         self.__graph.set_node_defaults(color='lightgray', style='filled', shape='box',
                                        fontname='Helvetica', fontsize='10', pin='true')
-        self.__graph.set_edge_defaults(color='darkgray', style='filled', shape='box',
+        self.__graph.set_edge_defaults(color='darkgray', style='filled', shape='box', labeldistance=2.5,
                                        fontname='Helvetica', fontsize='10', len=0.1)
         self.__graph.set_graph_defaults(sep=+0.15)
         self.__nodes = {}
@@ -100,7 +100,7 @@ class WebInterface(StateEngineTools.SeItemChild):
         # label_type: on_enter, on_stay, on_leave, on_pass
         # active: if action is currently run
 
-        actionlabel = actionstart = '<<table border="0" cellpadding="1" cellborder="0">'
+        actionlabel = actionstart = '<<table border="0" cellpadding="2" cellborder="0">'
         action_tooltip = ''
         types = [label_type] if label_type in ['actions_leave', 'actions_pass'] else ['actions_enter_or_stay', label_type]
         tooltip_count = 0
@@ -210,8 +210,8 @@ class WebInterface(StateEngineTools.SeItemChild):
                     if condition not in conditions_done:
                         current_clean = ", ".join(f"{k} = {v}" for k, v in current.items())
                         text = " Current {}".format(current_clean) if current is not None and len(current) > 0 else " Not evaluated."
-                        conditionlist += ('<tr><td align="center" colspan="2"><table border="0" cellpadding="0" '
-                                          'cellborder="0"><tr class="conditionheader"><td></td><td align="center">{}:{}</td>'
+                        conditionlist += ('<tr class="conditionheader"><td align="center" colspan="2"><table border="0" cellpadding="0" '
+                                          'cellborder="0"><tr><td></td><td align="center">{}:{}</td>'
                                           '<td></td></tr><tr class="conditionline">'
                                           '<td width="40%"></td><td align="center" border="1" height="1"></td>'
                                           '<td width="40%"></td></tr></table></td></tr>').format(condition.upper(), text)
@@ -317,7 +317,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     match_info = '<img src="sign_true.png" />' if match_info == 'yes'\
                                  else '<img src="sign_false.png" />' if match_info == 'no'\
                                  else '<img src="sign_warn.png" />' if match_info and len(match_info) > 0 \
-                                 else ''
+                                 else '<img src="sign_empty.png" />'
                     conditionlist += '</td><td>{}</td></tr>'.format(match_info)
         conditionlist += '<tr><td></td><td></td></tr></table>>'
         return conditionlist, condition_tooltip, tooltip_count
@@ -332,7 +332,7 @@ class WebInterface(StateEngineTools.SeItemChild):
         color_stay = "gray" if (cond1 and cond2 and cond5) or \
                                (cond_stay and cond4 and cond5) else "olivedrab" if cond4 else "indianred2"
 
-        label = 'first enter' if action_type in ['actions_enter', 'actions_enter_or_stay'] else 'staying at state'
+        label = 'first enter' if action_type in ['actions_enter', 'actions_enter_or_stay'] else 'staying'
 
         position = '{},{}!'.format(12.6 * self.__widthfactor, new_y)
         color = color_enter if label == 'first enter' else color_stay
@@ -343,7 +343,7 @@ class WebInterface(StateEngineTools.SeItemChild):
         if self.__nodes.get('{}_{}_state_actions_enter_edge'.format(state, conditionset)) is None:
             self.__nodes['{}_{}_state_{}_edge'.format(state, conditionset, action_type)] = \
                 pydotplus.Edge(self.__nodes['{}_{}'.format(state, conditionset)], self.__nodes['{}_{}_state_{}'.format(
-                    state, conditionset, action_type)], style='bold', taillabel="    True",  tooltip='first enter')
+                    state, conditionset, action_type)], style='bold', taillabel="True",  tooltip='first enter')
             self.__graph.add_edge(self.__nodes['{}_{}_state_{}_edge'.format(state, conditionset, action_type)])
         else:
             self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}_state_actions_enter'.format(state, conditionset)],
@@ -351,7 +351,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                                                  style='bold', label="False    "))
         self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}_state_{}'.format(state, conditionset, action_type)],
                                              self.__nodes['{}_{}_{}'.format(state, conditionset, action_type)],
-                                             style='bold', taillabel="    True"))
+                                             style='bold', taillabel="True"))
         try:
             if action_type == 'actions_enter':
                 self.__nodes['{}_{}_actions_enter'.format(state, conditionset)].obj_dict['attributes']['fillcolor'] = color
@@ -364,12 +364,15 @@ class WebInterface(StateEngineTools.SeItemChild):
             pass
 
     def drawgraph(self, filename):
-        new_y = 2
+        new_y = 0
         previous_state = ''
         previous_conditionset = ''
         above_nodeheights = []
+        last_action_nodeheight = 0
         for i, state in enumerate(self.__states):
             #self._log_debug('Adding state for webif {}', self.__states[state])
+            #if not isinstance(self.__states[state], (OrderedDict, dict)):
+            #    continue
             if isinstance(self.__states[state], (OrderedDict, dict)):
                 self.__conditionset_count = len(self.__states[state].get('conditionsets'))
                 if self.__conditionset_count == 0:
@@ -380,11 +383,11 @@ class WebInterface(StateEngineTools.SeItemChild):
                     list_index = 0
                 color = "olivedrab" if state == self.__active_state \
                     else "gray" if i > list_index else "indianred2"
-                
+
                 if not i == 0:
-                    new_y -= above_nodeheights[i-1] * self.__heightfactor
+                    new_y -= max(float(above_nodeheights[-1] + 0.3), 0.46, float(last_action_nodeheight)) * self.__heightfactor # half elipse added at end
                     position = '{},{}!'.format(0, new_y)
-                    
+
                     condition_node = 'pass' if self.__nodes.get('{}_pass'.format(previous_state)) \
                             else 'leave' if self.__nodes.get('{}_leave'.format(previous_state)) \
                             else list(self.__states[previous_state]['conditionsets'].keys())[-1]
@@ -418,7 +421,6 @@ class WebInterface(StateEngineTools.SeItemChild):
                 self.__graph.add_node(self.__nodes[state])
                 self.__graph.add_node(self.__nodes['{}_right'.format(state)])
                 conditionset_nodeheights = []
-                actions_nodeheights = []
                 actionlist_enter = ''
                 actionlist_stay = ''
                 actionlist_leave = ''
@@ -440,6 +442,10 @@ class WebInterface(StateEngineTools.SeItemChild):
                 action_tooltip_stay = ""
                 action_tooltip_leave = ""
                 action_tooltip_pass = ""
+                action_y = new_y
+                actions_nodeheights = {}
+                nodeheight = 0
+
                 for j, conditionset in enumerate(self.__states[state]['conditionsets']):
                     cond3 = conditionset == ''
                     try:
@@ -488,16 +494,19 @@ class WebInterface(StateEngineTools.SeItemChild):
                             self._actionlabel(state, 'actions_pass', conditionset, active)
 
                     conditionlist, condition_tooltip, condition_tooltip_count = self._conditionlabel(state, conditionset)
-                    nodeheight = 1 + len(re.findall(r'<tr class="conditionheader">', conditionlist)) * 0.23
-                    nodeheight += len(re.findall(r'<tr class="conditionline">', conditionlist)) * 0.16
-                    nodeheight += len(re.findall(r'<tr class="conditionentry">', conditionlist)) * 0.23
-                    nodeheight /= 2
-                    new_y -= nodeheight * self.__heightfactor
+                    titles = len(re.findall(r'<tr class="conditionheader">', conditionlist))
+                    entries = len(re.findall(r'<tr class="conditionentry">', conditionlist))
+                    nodeheight = 0.958 + 0.5 + 0.479 # main header, last line, spacing on top and bottom
+                    nodeheight += titles * 1.292 # each title
+                    nodeheight += entries * 1 #each entry
+                    nodeheight /= 5.7
+                    nodeheight = round(nodeheight, 4)
                     conditionset_nodeheights.append(nodeheight)
+                    new_y -= nodeheight * self.__heightfactor
                     if j > 0:
-                        new_y -= conditionset_nodeheights[j-1] * self.__heightfactor
+                        new_y -= max(float(actions_nodeheights.get(j-1, 0.0) + 0.2), conditionset_nodeheights[j-1] + 0.2) * self.__heightfactor
                     else:
-                        new_y -= 0.8 * self.__heightfactor
+                        new_y -= 0.46 * self.__heightfactor # half ellipse on top
                     position = '{},{}!'.format(10 * self.__widthfactor, new_y)
                     label = 'no condition' if conditionset == '' else conditionset
                     self.__nodes['{}_{}'.format(state, conditionset)] = pydotplus.Node(
@@ -514,16 +523,25 @@ class WebInterface(StateEngineTools.SeItemChild):
                             shape="rect", label=conditionlist, pos=position, tooltip=condition_tooltip, xlabel=xlabel)
                         self.__graph.add_node(self.__nodes['{}_{}_conditions'.format(state, conditionset)])
                         # Create a dotted line between conditionlist and conditionset name
-                        parenthesis_edge = pydotplus.Edge(self.__nodes['{}_{}_conditions'.format(state, conditionset)], self.__nodes['{}_{}'.format(state, conditionset)], arrowhead="none", color="black", style="dotted", constraint="false")
+                        parenthesis_edge = pydotplus.Edge(self.__nodes['{}_{}_conditions'.format(state, conditionset)],
+                                                          self.__nodes['{}_{}'.format(state, conditionset)],
+                                                          arrowhead="none", color="black", style="dotted", constraint="false")
                         self.__graph.add_edge(parenthesis_edge)
                     self.__graph.add_node(self.__nodes['{}_{}'.format(state, conditionset)])
-
+                    action_y = new_y
                     new_x = 17.5 * self.__widthfactor
+                    nodeheights = 0
+                    nodeheight = 0
+
                     if not actionlist_enter == '':
-                        nodeheight = 0.2 + len(re.findall(r'<tr class="actionentry">', actionlist_stay)) * 0.26
-                        nodeheight /= 2
-                        actions_nodeheights.append(nodeheight)
-                        position = '{},{}!'.format(new_x, new_y)
+                        nodeheight = 0.644
+                        nodeheight += len(re.findall(r'<tr class="actionentry">', actionlist_enter)) * 0.67
+                        nodeheight /= 5.7
+                        nodeheight = round(nodeheight, 4)
+                        nodeheight = max(0.4, nodeheight)
+                        nodeheights += nodeheight
+                        last_action_nodeheight = nodeheight
+                        position = '{},{}!'.format(new_x, action_y)
                         xlabel = '1 tooltip' if action_tooltip_count_enter == 1\
                                  else '{} tooltips'.format(action_tooltip_count_enter)\
                                  if action_tooltip_count_enter > 1 else ''
@@ -533,17 +551,26 @@ class WebInterface(StateEngineTools.SeItemChild):
                             shape="rectangle", label=actionlist_enter, pos=position, tooltip=action_tooltip_enter,
                             xlabel=xlabel)
                         self.__graph.add_node(self.__nodes['{}_{}_actions_enter'.format(state, conditionset)])
-                        self._add_actioncondition(state, conditionset, 'actions_enter', new_y, cond1, cond2)
+                        self._add_actioncondition(state, conditionset, 'actions_enter', action_y, cond1, cond2)
 
                     if not actionlist_stay == '':
-                        nodeheight = 0.2 + max(2, len(re.findall(r'<tr class="actionentry">', actionlist_stay))) * 0.26
-                        nodeheight /= 2
-                        new_y -= nodeheight * self.__heightfactor
-                        actions_nodeheights.append(nodeheight)
-                        new_y -= actions_nodeheights[j - 1] * self.__heightfactor
+                        add_nodeheight = nodeheight
+                        action_y -= nodeheight * self.__heightfactor
+                        nodeheight = 0.644
+                        nodeheight += len(re.findall(r'<tr class="actionentry">', actionlist_stay)) * 0.67
+                        nodeheight /= 5.7
+                        nodeheight = round(nodeheight, 4)
+                        nodeheight = max(0.4, nodeheight)
+                        add_nodeheight += nodeheight
+                        if action_y != new_y:
+                            nodeheight += 0.2
+                            action_y -= nodeheight * self.__heightfactor
+                        elif j <= len(self.__states[state]['conditionsets']) - 1:
+                            add_nodeheight = 0
+                        nodeheights += nodeheight * 2 - 0.2
+                        last_action_nodeheight = nodeheight + add_nodeheight
 
-                        #new_y -= 1.5 * self.__heightfactor if not actionlist_enter == '' else 0
-                        position = '{},{}!'.format(new_x, new_y)
+                        position = '{},{}!'.format(new_x, action_y)
 
                         xlabel = '1 tooltip' if action_tooltip_count_stay == 1\
                                  else '{} tooltips'.format(action_tooltip_count_stay)\
@@ -554,21 +581,25 @@ class WebInterface(StateEngineTools.SeItemChild):
                             shape="rectangle", label=actionlist_stay, pos=position, tooltip=action_tooltip_stay,
                             xlabel=xlabel)
                         self.__graph.add_node(self.__nodes['{}_{}_actions_stay'.format(state, conditionset)])
-                        self._add_actioncondition(state, conditionset, 'actions_stay', new_y, cond1, cond2)
+                        self._add_actioncondition(state, conditionset, 'actions_stay', action_y, cond1, cond2)
 
-                    position = '{},{}!'.format(17.5 * self.__widthfactor, new_y)
+                    actions_nodeheights[j] = nodeheights
+                    position = '{},{}!'.format(17.5 * self.__widthfactor, action_y)
                     cond1 = self.__nodes.get('{}_{}_actions_enter'.format(state, conditionset)) is None
                     cond2 = self.__nodes.get('{}_{}_actions_stay'.format(state, conditionset)) is None
                     cond3 = self.__nodes.get('{}_{}_actions_leave'.format(state, conditionset)) is None
                     cond4 = self.__nodes.get('{}_{}_actions_pass'.format(state, conditionset)) is None
                     if cond1 and cond2 and cond3 and cond4:
+                        actions_nodeheights[j] = 0.5
+                        last_action_nodeheight = 0.5
+                        nodeheight= 0.5
                         self.__nodes['{}_{}_right'.format(state, conditionset)] = pydotplus.Node('{}_{}_right'.format(
                             state, conditionset), shape="circle", width="0.7", pos=position, label="", fillcolor="black",
                             style="filled", tooltip="No Action")
                         self.__graph.add_node(self.__nodes['{}_{}_right'.format(state, conditionset)])
                         self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}'.format(state, conditionset)],
                                                              self.__nodes['{}_{}_right'.format(state, conditionset)],
-                                                             style='bold', taillabel="    True", tooltip='action on enter'))
+                                                             style='bold', taillabel="True", tooltip='action on enter'))
                     if self.__states[state].get('is_copy_for'):
                         xlabel = "can currently release {}\n\r".format(self.__states[state].get('is_copy_for'))
                     elif self.__states[state].get('releasedby'):
@@ -589,12 +620,21 @@ class WebInterface(StateEngineTools.SeItemChild):
                                                              style='bold', color='black', tooltip='check next conditionset'))
                     previous_conditionset = self.__nodes['{}_{}'.format(state, conditionset)]
 
+                end_node_heights = 0
                 if len(actions_leave) > 0:
-                    new_y -= 1 * self.__heightfactor if j == 0 else 2 * self.__heightfactor
-                    position = '{},{}!'.format(10 * self.__widthfactor, new_y)
+                    action_y -= nodeheight * self.__heightfactor
+                    nodeheight = 0.8
+                    nodeheight += len(re.findall(r'<tr class="actionentry">', actionlist_leave)) * 0.67
+                    nodeheight /= 5.7
+                    nodeheight = round(nodeheight, 4)
+                    end_node_heights += max(0.5, nodeheight) + last_action_nodeheight
+                    last_action_nodeheight = max(1.0, nodeheight)
+                    action_y -= max(0.5, nodeheight) * self.__heightfactor
+                    new_y = action_y
+                    position = '{},{}!'.format(10 * self.__widthfactor, action_y)
                     try:
                         cond2 = i >= list(self.__states.keys()).index(self.__active_state)
-                    except Exception as ex:
+                    except Exception:
                         cond2 = True
                     cond3 = True if self.__states[state].get('leave') is True else False
                     color = "gray" if cond2 and not cond3 else "olivedrab" if cond3 else "indianred2"
@@ -605,7 +645,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     self.__graph.add_edge(pydotplus.Edge(previous_conditionset, self.__nodes['{}_leave'.format(state)],
                                                          style='bold', color='black', tooltip='check leave'))
 
-                    position = '{},{}!'.format(new_x, new_y)
+                    position = '{},{}!'.format(new_x, action_y)
                     xlabel = '1 tooltip' if action_tooltip_count_leave == 1\
                              else '{} tooltips'.format(action_tooltip_count_leave)\
                              if action_tooltip_count_leave > 1 else ''
@@ -619,12 +659,23 @@ class WebInterface(StateEngineTools.SeItemChild):
                     self.__graph.add_node(self.__nodes['{}_actions_leave'.format(state)])
                     self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_leave'.format(state)],
                                                          self.__nodes['{}_actions_leave'.format(state)], style='bold',
-                                                         taillabel="    True",  tooltip='run leave actions'))
+                                                         taillabel="True",  tooltip='run leave actions'))
                     previous_conditionset = self.__nodes['{}_leave'.format(state)]
+                    nodeheight += 0.2
 
                 if len(actions_pass) > 0:
-                    new_y -= 1 * self.__heightfactor if j == 0 else 2 * self.__heightfactor
-                    position = '{},{}!'.format(10 * self.__widthfactor, new_y)
+                    action_y -= nodeheight * self.__heightfactor
+                    nodeheight = 0.8
+                    nodeheight += len(re.findall(r'<tr class="actionentry">', actionlist_pass)) * 0.67
+                    nodeheight /= 5.7
+                    nodeheight = round(nodeheight, 4)
+                    if end_node_heights == 0:
+                        end_node_heights += last_action_nodeheight
+                    last_action_nodeheight = max(1.0, nodeheight)
+                    end_node_heights += max(0.5, nodeheight)
+                    action_y -= max(0.5, nodeheight) * self.__heightfactor
+                    new_y = action_y
+                    position = '{},{}!'.format(10 * self.__widthfactor, action_y)
                     try:
                         cond2 = i >= list(self.__states.keys()).index(self.__active_state)
                     except Exception:
@@ -638,7 +689,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     self.__graph.add_edge(pydotplus.Edge(previous_conditionset, self.__nodes['{}_pass'.format(state)],
                                                          style='bold', color='black', tooltip='check pass'))
 
-                    position = '{},{}!'.format(new_x, new_y)
+                    position = '{},{}!'.format(new_x, action_y)
                     xlabel = '1 tooltip' if action_tooltip_count_pass == 1\
                              else '{} tooltips'.format(action_tooltip_count_pass)\
                              if action_tooltip_count_pass > 1 else ''
@@ -653,7 +704,9 @@ class WebInterface(StateEngineTools.SeItemChild):
                     self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_pass'.format(state)],
                                                          self.__nodes['{}_actions_pass'.format(state)], style='bold',
                                                          taillabel="    True",  tooltip='run pass actions'))
-                above_nodeheights.append(conditionset_nodeheights[-1])
+                last_height = conditionset_nodeheights[-1] - end_node_heights + 0.1
+                conditionset_nodeheights.append(last_height)
+                above_nodeheights = conditionset_nodeheights
                 previous_state = state
 
         result = self.__graph.write_svg(filename, prog='neato')
