@@ -432,7 +432,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                     try:
                         _matching = cond.fullmatch(_updated_current_condition)
                         if _matching:
-                            self._log_debug("Given {} '{}' matches current one: '{}'", condition, _orig_cond.pattern, _updated_current_condition)
+                            self._log_debug("Given {} '{}' matching current one: '{}'", condition, _orig_cond.pattern, _updated_current_condition)
                             _condition_met.append(_updated_current_condition)
                             _conditions_met_count += 1
                             _conditions_met_type.append(condition)
