@@ -46,8 +46,8 @@ from lib.shtime import Shtime
 from collections.abc import Callable
 from typing import (Union, Any)
 
-from . import dlms
-from . import sml
+from . import dlms  # noqa
+from . import sml  # noqa
 from .conversion import Conversion
 try:
     from .webif import WebInterface
@@ -115,7 +115,7 @@ class Smartmeter(SmartPlugin, Conversion):
         if not self._init_complete:
             return
 
-        # self.init_webinterface(WebInterface)
+        self.init_webinterface(WebInterface)
 
     def discover(self, protocol=None) -> bool:
         """

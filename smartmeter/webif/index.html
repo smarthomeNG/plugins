@@ -1,0 +1,355 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 10000 %}
+
+<!-- set dataSet if you need specific data to be updated automatically. Also see init.py in plugin webif!-->
+{% set dataSet = 'devices_info' %}
+
+<!-- set update_params if you need to provide additional parameters for the auto-update function-->
+{% set update_params = item_id %}
+
+<!-- if you don't need any buttons in the header, disable them completely-->
+{% set buttons = true %}
+
+<!-- if you don't need any auto-refresh elements in the header, disable them-->
+{% set autorefresh_buttons = true %}
+
+<!-- if you don't need the reload_button in the header, disable it-->
+{% set reload_button = true %}
+
+<!-- if you don't need the close in the header, disable it-->
+{% set close_button = true %}
+
+<!-- for some situations it might be useful to know the number of datatable rows shown on the current page.
+Activate that function if needed, otherwise just remove the line to increase performance -->
+{% set row_count = true %}
+
+<!-- if new values should be retrieved using automatic page update right in the beginning and on page changes -->
+{% set initial_update = true %}
+
+<!--
+	Additional styles go into this block. Examples are for datatables
+-->
+{% block pluginstyles %}
+<style>
+  table th.item {
+    width: 450px;
+  }
+  table th.type {
+    width: 50px;
+  }
+  table th.attribute {
+    width: 180px;
+  }
+  table th.attribute_val {
+    width: 220px;
+  }
+  table th.value {
+    width: 100px;
+  }
+  table th.last {
+    width: 150px;
+  }
+  /*
+  These are used for highligt effect in web interface when a value changes. If you don't want to overwrite the
+  default color, you can remove the entries here as the classes are already defined in smarthomeng.css
+  */
+  .shng_effect_highlight {
+    background-color: #FFFFE0;
+  }
+  .shng_effect_standard {
+    background-color: none;
+  }
+</style>
+{% endblock pluginstyles %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			console.log(objResponse);
+			myProto = document.getElementById(dataSet);
+			for (item in objResponse['items']) {
+                shngInsertText(item+'_value', objResponse['items'][item]['value'], 'maintable', 5);
+                shngInsertText(item+'_last_update', objResponse['items'][item]['last_update'], 'maintable', 5);
+                shngInsertText(item+'_last_change', objResponse['items'][item]['last_change'], 'maintable', 5);
+            }
+      // Redraw datatable after cell updates
+      // $('#maintable').DataTable().draw(false);
+		}
+	}
+</script>
+<!--
+	This part is used to implement datatable JS for the tables. It allows resorting tables by column, etc.
+	For each table you have to implement the code part $('#<table_id>').DataTable(..); where the <table_id> matches the id of a table tag
+-->
+<script>
+    $(document).ready( function () {
+		/*
+		loading defaults from /modules/http/webif/gstatic/datatables/datatables.defaults.js
+		You can copy that file, put it in your plugin directory, rename the "bind" function and
+		trigger that function here instead of datatables_defaults if you want to change the behaviour.
+		Of course you can also overwrite defaults by putting the option declarations in {} below.
+		*/
+		$(window).trigger('datatables_defaults');
+		try {
+			/*
+			Copy this part for every datatable on your page. Adjust options if necessary.
+			*/
+			maintable = $('#maintable').DataTable( {
+			  columnDefs: [
+				  { responsivePriority: 1, targets: 1 },
+				  { responsivePriority: 2, targets: -1 },
+				  {
+					title: '',
+					targets: [0], "className": ""
+						},
+				  {
+					title: '{{ _('Item') }}',
+					targets: [1], "className": "item"
+						},
+				  {
+					title: '{{ _('Typ') }}',
+					targets: [2], "className": "type"
+						},
+				  {
+					title: '{{ _('OBIS Code') }}',
+					targets: [3], "className": "attribute"
+						},
+				  {
+					title: '{{ _('OBIS Index') }}',
+					targets: [4], "className": "attribute"
+						},
+				  {
+					title: '{{ _('OBIS Prop') }}',
+					targets: [5], "className": "attribute"
+						},
+				  {
+					title: '{{ _('OBIS Type') }}',
+					targets: [6], "className": "attribute"
+						},
+				  {
+					title: '{{ _('Wert') }}',
+					targets: [7], "className": "truncate value"
+				  },
+				  {
+					title: '{{ _('Letztes Update') }}',
+					targets: [8], "className": "last"
+				  },
+				  {
+					title: '{{ _('Letzter Change') }}',
+					targets: [9], "className": "last"
+				  }
+			  ].concat($.fn.dataTable.defaults.columnDefs),
+			  });
+			obis_data = $('#obis_data').DataTable( {
+			  columnDefs: [
+				  { responsivePriority: 1, targets: 1 },
+				  { responsivePriority: 2, targets: -1 },
+				  {
+					title: '',
+					targets: [0], "className": ""
+						},
+				  {
+					title: '{{ _('OBIS Code') }}',
+					targets: [1], "className": "item"
+						},
+				  {
+					title: '{{ _('Data') }}',
+					targets: [2], "className": "type"
+						},
+			  ].concat($.fn.dataTable.defaults.columnDefs),
+			  });
+			status = $('#status').DataTable( {
+			  columnDefs: [
+				  { responsivePriority: 1, targets: 1 },
+				  { responsivePriority: 2, targets: -1 },
+				  {
+					title: '',
+					targets: [0], "className": ""
+						},
+				  {
+					title: '{{ _('Stats') }}',
+					targets: [1], "className": "item"
+						},
+				  {
+					title: '{{ _('Wert') }}',
+					targets: [2], "className": "type"
+						},
+			  ].concat($.fn.dataTable.defaults.columnDefs),
+			  });
+		}
+		catch (e) {
+			console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
+		}
+    /*
+    This part creates tooltips for buttons/inputs that have the class "button-tooltip"
+    */
+    const tooltipList = ['Nach Devices suchen'];
+    createTooltips(tooltipList);
+    /*
+    This part reads cookies for the attribute "sort_order" and activates the resepctive button after page load
+    */
+    order = getCookie('sort_order');
+    if (order == '')
+      order = 'time-desc';
+    const button = document.getElementById(order);
+    button.click();
+	});
+</script>
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>Connection</strong></td>
+			<td class="py-1">{% if p._config['host'] %}{{ p._config['host'] }}{{ _(':') }}{{ p._config['port'] }}{% else %}{{ p._config['serial_port'] }}{% endif %}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>Timeout</strong></td>
+			<td class="py-1">{{ p._config['timeout']  }}s</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>Protokoll</strong></td>
+			<td class="py-1">{{ p.protocol }}</td>
+			<td></td>
+			<td class="py-1"><strong>Baudrate</strong></td>
+			<td class="py-1">{{ p._config['baudrate'] }}</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>Verbunden</strong></td>
+			<td class="py-1">{% if p.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td></td>
+			<td class="py-1"><strong>Abfrageintervall</strong></td>
+			<td class="py-1">{% if p.cycle %}{{ p.cycle }}s{% endif %}{% if p.crontab %}{{ p.crontab }}{% endif %}</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+{% block buttons %}
+	<div>
+    	<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Lesevorgang starten') }}')) { jQuery.get('read_data'); }">{{ _('Lesevorgang starten') }}</button>
+	</div>
+{% endblock %}
+
+
+{% set tabcount = 3 %}
+
+
+{% if item_count==0 %}
+	{% set start_tab = 2 %}
+{% endif %}
+
+
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% block bodytab1 %}
+	<table id="maintable" class="dataTableAdditional m-2">
+		<tbody>
+			{% for item in items %}
+				<tr>
+					<td></td>
+					<td class="py-1" id="{{ item._path }}">{{ item.property.path }}</td>
+					<td class="py-1">{{ item._type }}</td>
+				   	<td class="py-1">{{ item.conf['obis_code'] }}</td>
+					<td class="py-1">{{ item.conf['obis_index'] }}</td>
+					<td class="py-1">{{ item.conf['obis_property'] }}</td>
+					<td class="py-1">{{ item.conf['obis_vtype'] }}</td>
+				   	<td class="py-1" id="{{ item._path }}_value">{{ item.property.value }}</td>
+				 	<td class="py-1" id="{{ item._path }}_last_update" style="text-align: center">&nbsp;</td>
+                	<td class="py-1" id="{{ item._path }}_last_change" style="text-align: center">&nbsp;</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endblock bodytab1 %}
+
+
+
+{% set tab2title = "<strong>" "OBIS Data</strong> (" ~ len(p.obis_results) ~ ")" %}
+{% block bodytab2 %}
+	<table id="obis_data" class="dataTableAdditional m-2">
+		<tbody>
+			{% for entry in p.obis_results %}
+				 <tr>
+				   <td></td>
+				   <td class="py-1">{{ entry }}</td>
+				   <td class="py-1">{{ p.obis_results[entry][0] }}</td>
+				 </tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endblock bodytab2 %}
+
+
+
+{% set tab3title = "<strong>" "Zählerstatus</strong>" %}
+{% block bodytab3 %}
+	<table id="status" class="dataTableAdditional m-2">
+        <tbody>
+            {% for key, value in p.obis_results['1-0:1.8.0*255'][0].items() %}
+                {% if key in ['statRun', 'statFraudMagnet', 'statFraudCover', 'statEnergyTotal', 'statEnergyL1', 'statEnergyL2', 'statEnergyL3', 'statVoltageL1', 'statVoltageL2', 'statVoltageL3', 'statRotaryField', 'statBackstop', 'statCalFault'] %}
+                    <tr>
+                        <td></td>
+                        <td class="py-1">
+                            {% if key == 'statRun' %}
+                                {{ _('Zähler in Betrieb') }}
+                            {% elif key == 'statFraudMagnet' %}
+                                {{ _('magnetische Manipulation') }}
+                            {% elif key == 'statFraudCover' %}
+                                {{ _('Manipulation der Abdeckung') }}
+                            {% elif key == 'statEnergyTotal' %}
+                                {{ _('Stromfluss gesamt') }}
+                            {% elif key == 'statEnergyL1' %}
+                                {{ _('Stromfluss L1') }}
+                            {% elif key == 'statEnergyL2' %}
+                                {{ _('Stromfluss L2') }}
+                            {% elif key == 'statEnergyL3' %}
+                                {{ _('Stromfluss L3') }}
+                            {% elif key == 'statVoltageL1' %}
+                                {{ _('Spannung an L1') }}
+                            {% elif key == 'statVoltageL2' %}
+                                {{ _('Spannung an L2') }}
+                            {% elif key == 'statVoltageL3' %}
+                                {{ _('Spannung an L3') }}
+                            {% elif key == 'statRotaryField' %}
+                                {{ _('Drehfeld') }}
+                            {% elif key == 'statBackstop' %}
+                                {{ _('Backstop') }}
+                            {% elif key == 'statCalFault' %}
+                                {{ _('Fataler Fehler') }}
+                            {% endif %}
+                        </td>
+                        <td class="py-1">
+                            {% if key in ['statRun', 'statFraudMagnet', 'statFraudCover'] %}
+                                {% if value %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}
+                            {% elif key in ['statEnergyTotal', 'statEnergyL1', 'statEnergyL2', 'statEnergyL3'] %}
+                                {% if value %}{{ _('-A') }}{% else %}{{ _('+A') }}{% endif %}
+                            {% elif key in ['statVoltageL1', 'statVoltageL2', 'statVoltageL3'] %}
+                                {% if value %}{{ _('OK') }}{% else %}{{ _('NOK') }}{% endif %}
+                            {% elif key == 'statRotaryField' %}
+                                {% if value %}{{ _('NOK') }}{% else %}{{ _('OK') }}{% endif %}
+                            {% elif key == 'statBackstop' %}
+                                {% if value %}{{ _('Active') }}{% else %}{{ _('Nein') }}{% endif %}
+                            {% elif key == 'statCalFault' %}
+                                {% if value %}{{ _('FAULT') }}{% else %}{{ _('Keiner') }}{% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+	</table>
+{% endblock bodytab3 %}
