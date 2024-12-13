@@ -294,13 +294,8 @@ class Russound(SmartPlugin):
         self._client.send(cmd.encode())
 #
 
-    def found_terminator(self, resp):
-        try:
-            resp = resp.decode()
-        except Exception as e:
-            self.logger.error("found_terminator: exception in decode: {}".format(e))
-            return
-
+    def found_terminator(self, client, resp):  # client is the Tcp_Client ref
+        """ callback method for lib.network Tcp_Client, aka "data received" """
         try:
             self.logger.debug("Parse response: {0}".format(resp))
             if resp[0] == 'S':
