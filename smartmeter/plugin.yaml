@@ -45,6 +45,12 @@ parameters:
         description:
             de: 'Port für die Kommunikation (nur SML)'
             en: 'Port for communication (SML only)'
+    autoreconnect:
+        type: bool
+        default: true
+        description:
+            de: 'Bei Beenden der Verbindung automatisch erneut verbinden (nur bei asyncio Betrieb)'
+            en: 'automatically reconnect on disconnect (only with asyncio operation)'
     timeout:
         type: int
         default: 2
@@ -70,6 +76,12 @@ parameters:
         description:
             de: 'Abfragen des Smartmeters mit Festlegung via Crontab'
             en: 'Queries of smartmeter by means of a crontab'
+    poll:
+        type: bool
+        default: true
+        description:
+            de: 'Gerät regelmäßig (cycle/crontab) abfragen statt asynchronem Empfang (nur SML)'
+            en: 'periodically query device (cycle/crontab) instead of asynchronous receive (SML only)'
 
     # DLMS parameters
     baudrate_min:

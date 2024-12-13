@@ -28,6 +28,7 @@ __version__ = '2.0'
 __revision__ = '0.1'
 __docformat__ = 'reStructuredText'
 
+import asyncio
 import threading
 import sys
 
@@ -49,10 +50,7 @@ from typing import (Union, Any)
 from . import dlms  # noqa
 from . import sml  # noqa
 from .conversion import Conversion
-try:
-    from .webif import WebInterface
-except ImportError:
-    pass
+from .webif import WebInterface
 
 shtime = Shtime.get_instance()
 
@@ -93,6 +91,7 @@ class Smartmeter(SmartPlugin, Conversion):
         super().__init__()
 
         self.connected = False
+        self._autoreconnect = self.get_parameter_value('autoreconnect')
         self.alive = False
         self._lock = threading.Lock()
 
@@ -107,6 +106,9 @@ class Smartmeter(SmartPlugin, Conversion):
 
         # protocol auto-detected?
         self.proto_detected = False
+
+        self.async_connected = False
+        self.use_asyncio = False
 
         # load parameters from config
         self._load_parameters()
@@ -194,13 +196,16 @@ class Smartmeter(SmartPlugin, Conversion):
             return
 
         # Setup scheduler for device poll loop, if protocol set
-        if (self.cycle or self.crontab) and self.protocol:
-            if self.crontab:
-                next = None  # adhere to the crontab
-            else:
-                # no crontab given so we might just query immediately
-                next = shtime.now()
-            self.scheduler_add(self.get_fullname(), self.poll_device, prio=5, cycle=self.cycle, cron=self.crontab, next=next)
+        if self.use_asyncio:
+            self.start_asyncio(self.plugin_coro())
+        else:
+            if (self.cycle or self.crontab) and self.protocol:
+                if self.crontab:
+                    next = None  # adhere to the crontab
+                else:
+                    # no crontab given so we might just query immediately
+                    next = shtime.now()
+                self.scheduler_add(self.get_fullname(), self.poll_device, prio=5, cycle=self.cycle, cron=self.crontab, next=next)
         self.logger.debug('run method finished')
 
     def stop(self):
@@ -209,10 +214,13 @@ class Smartmeter(SmartPlugin, Conversion):
         """
         self.logger.debug('stop method called')
         self.alive = False
-        try:
-            self.scheduler_remove(self.get_fullname())
-        except Exception:
-            pass
+        if self.use_asyncio:
+            self.stop_asyncio()
+        else:
+            try:
+                self.scheduler_remove(self.get_fullname())
+            except Exception:
+                pass
 
     def _load_parameters(self):
 
@@ -280,7 +288,16 @@ class Smartmeter(SmartPlugin, Conversion):
         if self.crontab == '':
             self.crontab = None
 
-        if not (self.cycle or self.crontab):
+        self._config['poll'] = True
+        poll = self.get_parameter_value('poll')
+        if not poll:
+            if self.protocol == 'SML':
+                self.use_asyncio = True
+                self._config['poll'] = False
+            else:
+                self.logger.warning(f'async listening requested but protocol is {self.protocol} instead of SML, reverting to polling')
+
+        if not self.use_asyncio and not (self.cycle or self.crontab):
             self.logger.warning(f'{self.get_fullname()}: no update cycle or crontab set. The smartmeter will not be queried automatically')
 
     def _get_module(self, protocol=None):
@@ -390,6 +407,41 @@ class Smartmeter(SmartPlugin, Conversion):
                                 self.logger.error(f'error while converting value {val} for item {item}, obis code {obis}: {e}')
                         else:
                             self.logger.debug(f'for item {item} and obis code {obis}:{prop} no content was received')
+
+    async def plugin_coro(self):
+        """
+        Coroutine for the session that starts the serial connection and listens
+        """
+        self.logger.info("plugin_coro started")
+        try:
+            self.reader = sml.SmlAsyncReader(self.logger, self, self._config)
+        except ImportError as e:
+            # serial_asyncio not loaded/present
+            self.logger.error(e)
+            return
+
+        # start listener and queue listener in parallel
+        await asyncio.gather(self.reader.stop_on_queue(), self._run_listener())
+
+        # reader quit, exit loop
+        self.alive = False
+        self.logger.info("plugin_coro finished")
+
+    async def _run_listener(self):
+        """ call async listener and restart if requested """
+        while self.alive:
+            # reader created, run reader
+            try:
+                await self.reader.listen()
+            except Exception as e:
+                self.logger.warning(f'while running listener, the following error occured: {e}')
+
+            if not self._autoreconnect:
+                self.logger.debug('listener quit, autoreconnect not set, exiting')
+                break
+
+            self.logger.debug('listener quit, autoreconnecting after 2 seconds...')
+            await asyncio.sleep(2)
 
     @property
     def item_list(self):

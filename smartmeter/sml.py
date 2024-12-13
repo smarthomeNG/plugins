@@ -33,9 +33,15 @@ __version__ = "2.0"
 __revision__ = "0.1"
 __docformat__ = 'reStructuredText'
 
+import asyncio
 import errno
 import logging
 import serial
+try:
+    import serial_asyncio
+    ASYNC_IMPORTED = True
+except ImportError:
+    ASYNC_IMPORTED = False
 import socket
 import time
 import traceback
@@ -43,8 +49,9 @@ import traceback
 from smllib.reader import SmlStreamReader
 from smllib import const as smlConst
 from threading import Lock
-from typing import Union
+from typing import (Union, Coroutine)
 
+from lib.model.smartplugin import SmartPlugin
 
 """
 This module implements the query of a smartmeter using the SML protocol.
@@ -76,6 +83,9 @@ OBIS_NAMES = {
 S_BITS = serial.EIGHTBITS
 S_PARITY = serial.PARITY_NONE
 S_STOP = serial.STOPBITS_ONE
+
+# serial lock for sync and async readers alike
+LOCK = Lock()
 
 
 if __name__ == '__main__':
@@ -143,6 +153,131 @@ def format_time(timedelta):
     elif timedelta > 0.000000001:
         return f"{timedelta * 1000000000.0:.2f} ns"
 
+#
+# asyncio reader
+#
+
+
+class SmlAsyncReader():
+
+    def __init__(self, logger, plugin: SmartPlugin, config: dict):
+        self.buf = bytes()
+        self.logger = logger
+
+        if not ASYNC_IMPORTED:
+            raise ImportError('pyserial_asyncio not installed, running asyncio not possible.')
+        self.config = config
+        self.transport = None
+        self.stream = SmlStreamReader()
+        self.fp = SmlFrameParser(config)
+        self.frame_lock = Lock()
+
+        # set from plugin
+        self.plugin = plugin
+        self.data_callback = plugin._update_values
+
+        if not ('serial_port' in config or ('host' in config and 'port' in config)):
+            raise ValueError(f'configuration {config} is missing source config (serialport or host and port)')
+
+        self.serial_port = config.get('serial_port')
+        self.host = config.get('host')
+        self.port = config.get('port')
+        self.timeout = config.get('timeout', 2)
+        self.baudrate = config.get('baudrate', 9600)
+        self.target = '(not set)'
+        self.buffersize = config.get('sml', {'buffersize': 1024}).get('buffersize', 1024)
+        self.listening = False
+        self.reader = None
+
+    async def listen(self):
+        result = LOCK.acquire(blocking=False)
+        if not result:
+            self.logger.error('couldn\'t acquire lock, polling/manual access active?')
+            return
+
+        self.logger.debug('acquired lock')
+        try:  # LOCK
+            if self.serial_port:
+                self.reader, _ = await serial_asyncio.open_serial_connection(
+                    url=self.serial_port,
+                    baudrate=self.baudrate,
+                    bytesize=S_BITS,
+                    parity=S_PARITY,
+                    stopbits=S_STOP,
+                )
+                self.target = f'async_serial://{self.serial_port}'
+            else:
+                self.reader, _ = await asyncio.open_connection(self.host, self.port)
+                self.target = f'async_tcp://{self.host}:{self.port}'
+
+            self.logger.debug(f'target is {self.target}')
+            if self.reader is None and not TESTING:
+                self.logger.error('error on setting up async listener, reader is None')
+                return
+
+            self.async_connected = True
+            self.listening = True
+            self.logger.debug('starting to listen')
+            while self.listening and self.plugin.alive:
+                if TESTING:
+                    chunk = RESULT
+                else:
+                    try:
+                        chunk = await self.reader.read(self.buffersize)
+                    except serial.serialutil.SerialException:
+                        # possibly port closed from remote site? happens with socat...
+                        chunk = b''
+                if chunk == b'':
+                    self.logger.debug('read reached EOF, quitting')
+                    break
+                self.logger.debug(f'read {chunk} ({len(chunk)} bytes), buf is {self.buf}')
+                self.buf += chunk
+
+                if len(self.buf) < 100:
+                    continue
+                try:
+                    self.stream.add(self.buf)
+                except Exception as e:
+                    self.logger.error(f'Writing data to SmlStreamReader failed with exception {e}')
+                else:
+                    self.buf = bytes()
+                    # get frames as long as frames are detected
+                    while True:
+                        try:
+                            frame = self.stream.get_frame()
+                            if frame is None:
+                                break
+
+                            self.fp(frame)
+                        except Exception as e:
+                            detail = traceback.format_exc()
+                            self.logger.warning(f'Preparing and parsing data failed with exception {e}: and detail: {detail}')
+
+                    # get data from frameparser and call plugin
+                    if self.data_callback:
+                        self.data_callback(self.fp())
+
+                # just in case of many errors, reset buffer
+                # with SmlStreamParser, this should not happen anymore, but who knows...
+                if len(self.buf) > 100000:
+                    self.logger.error("Buffer got to large, doing buffer reset")
+                    self.buf = bytes()
+        finally:
+            # cleanup
+            try:
+                self.reader.feed_eof()
+            except Exception:
+                pass
+            self.async_connected = False
+            LOCK.release()
+
+    async def stop_on_queue(self):
+        """ wait for STOP in queue and signal reader to terminate """
+        self.logger.debug('task waiting for STOP from queue...')
+        await self.plugin. wait_for_asyncio_termination()
+        self.logger.debug('task received STOP, halting listener')
+        self.listening = False
+
 
 #
 # single-shot reader
@@ -159,6 +294,8 @@ class SmlReader():
         if not ('serial_port' in config or ('host' in config and 'port' in config)):
             raise ValueError(f'configuration {config} is missing source config (serialport or host and port)')
 
+        if not config.get('poll') and not ASYNC_IMPORTED:
+            raise ValueError('async configured but pyserial_asyncio not imported. Aborting.')
         self.serial_port = config.get('serial_port')
         self.host = config.get('host')
         self.port = config.get('port')
@@ -166,7 +303,6 @@ class SmlReader():
         self.baudrate = config.get('baudrate', 9600)
         self.target = '(not set)'
         self.buffersize = config.get('sml', {'buffersize': 1024}).get('buffersize', 1024)
-        self.lock = Lock()
 
         logger.debug(f"config='{config}'")
 
@@ -175,7 +311,7 @@ class SmlReader():
         #
         # open the serial communication
         #
-        locked = self.lock.acquire(blocking=False)
+        locked = LOCK.acquire(blocking=False)
         if not locked:
             logger.error('could not get lock for serial/network access. Is another scheduled/manual action still active?')
             return b''
@@ -215,7 +351,7 @@ class SmlReader():
             except Exception:
                 pass
             self.sock = None
-            self.lock.release()
+            LOCK.release()
         return response
 
     def _read(self) -> bytes:
