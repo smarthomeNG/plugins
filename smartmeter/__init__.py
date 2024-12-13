@@ -30,6 +30,7 @@ __docformat__ = 'reStructuredText'
 
 import asyncio
 import threading
+import time
 import sys
 
 # find out if we can import serial - if not, the plugin might not start anyway
@@ -109,6 +110,10 @@ class Smartmeter(SmartPlugin, Conversion):
 
         self.async_connected = False
         self.use_asyncio = False
+
+        # update items only every x seconds
+        self.timefilter = -1
+        self._last_item_update = -1
 
         # load parameters from config
         self._load_parameters()
@@ -297,6 +302,14 @@ class Smartmeter(SmartPlugin, Conversion):
             else:
                 self.logger.warning(f'async listening requested but protocol is {self.protocol} instead of SML, reverting to polling')
 
+        if self.use_asyncio:
+            self.timefilter = self.get_parameter_value('time_filter')
+            if self.timefilter == -1:
+                self.timefilter = self.cycle
+            if self.timefilter < 0:
+                self.timefilter = 0
+        self._config['timefilter'] = self.timefilter
+
         if not self.use_asyncio and not (self.cycle or self.crontab):
             self.logger.warning(f'{self.get_fullname()}: no update cycle or crontab set. The smartmeter will not be queried automatically')
 
@@ -372,12 +385,18 @@ class Smartmeter(SmartPlugin, Conversion):
         # self.logger.debug(f'running _update_values with {result}')
         self.obis_results.update(result)
 
+        # if "update items only every x seconds" is set:
+        if self.timefilter > 0 and self._last_item_update + self.timefilter > time.time():
+            self.logger.debug(f'timefilter active, {int(self._last_item_update + self.timefilter - time.time())} seconds remaining')
+            return
+
         if 'readout' in result:
             for item in self.get_items_for_mapping('readout'):
                 item(result['readout'], self.get_fullname())
                 self.logger.debug(f'set item {item} to readout {result["readout"]}')
             del result['readout']
 
+        update = -1
         # check all obis codes
         for obis, vlist in result.items():
             if not self._is_obis_code_wanted(obis):
@@ -402,11 +421,15 @@ class Smartmeter(SmartPlugin, Conversion):
                                 itemValue = self._convert_value(val, converter)
                                 # self.logger.debug(f'conversion yielded {itemValue} from {val} for converter "{converter}"')
                                 item(itemValue, self.get_fullname())
+                                if update < 0:
+                                    update = time.time()
                                 self.logger.debug(f'set item {item} for obis code {obis}:{prop} to value {itemValue}')
                             except ValueError as e:
                                 self.logger.error(f'error while converting value {val} for item {item}, obis code {obis}: {e}')
                         else:
                             self.logger.debug(f'for item {item} and obis code {obis}:{prop} no content was received')
+        if update > 0:
+            self._last_item_update = update
 
     async def plugin_coro(self):
         """

@@ -10,7 +10,7 @@ plugin:
         de: 'Unterstützung für Smartmeter, die DLMS (Device Language Message Specification, IEC 62056-21) oder SML (Smart Message Language) nutzen und OBIS Codes liefern'
         en: 'Support for smartmeter using DLMS (Device Language Message Specification, IEC 62056-21) or SML (Smart Message Language) and delivering OBIS codes'
     maintainer: Morg
-    tester: bmxp, onkelandy
+    tester: bmxp, onkelandy, sisamiwe
     state: develop
     keywords: smartmeter ehz dlms sml obis smartmeter
     multi_instance: true           # plugin supports multi instance
@@ -49,8 +49,8 @@ parameters:
         type: bool
         default: true
         description:
-            de: 'Bei Beenden der Verbindung automatisch erneut verbinden (nur bei asyncio Betrieb)'
-            en: 'automatically reconnect on disconnect (only with asyncio operation)'
+            de: 'Bei Beenden der Verbindung automatisch erneut verbinden (nur bei ständigem Empfang)'
+            en: 'automatically reconnect on disconnect (only with continuous listening)'
     timeout:
         type: int
         default: 2
@@ -80,9 +80,23 @@ parameters:
         type: bool
         default: true
         description:
-            de: 'Gerät regelmäßig (cycle/crontab) abfragen statt asynchronem Empfang (nur SML)'
-            en: 'periodically query device (cycle/crontab) instead of asynchronous receive (SML only)'
-
+            de: 'Gerät regelmäßig abfragen (cycle/crontab) statt ständigem Empfang (nur SML)'
+            en: 'periodically query device (cycle/crontab) instead of continuous listen (SML only)'
+    time_filter:
+        type: int
+        default: 0
+        description:
+            de: 'Im "ständig empfangen"-Modus Item-Updates nur alle x Sekunden senden.'
+            en: 'In continuous listen mode only update items every x seconds.'
+        description_long:
+            de: >
+                Im "ständig empfangen"-Modus Item-Updates nur alle x Sekunden senden.
+                x = 0: alle Updates senden.
+                x = -1: den Wert von "cycle" verwenden.
+            en: >
+                In continuous listen mode only update items every x seconds.
+                x = 0: send all updates
+                x = -1: use "cycle" parameter for x
     # DLMS parameters
     baudrate_min:
         type: int
@@ -131,10 +145,12 @@ parameters:
             en: 'Size of read buffer. At least twice the size of maximum message length (SML only)'
     device_type:
         type: str
-        default: 'raw'
+        default: ''
+        valid_list:
+            - ''  # needs to be edited if new corrections are added
         description:
-            de: 'Name des Gerätes (nur SML)'
-            en: 'Name of Smartmeter (SML only)'
+            de: 'Typ des Gerätes, ggf. notwendig für spezielle Behandlung (nur SML)'
+            en: 'type of smartmeter, possibly necessary for quirks (SML only)'
     date_offset:
         type: int
         default: 0
@@ -249,8 +265,8 @@ item_attributes:
     obis_readout:
         type: str
         description:
-            de: 'Der komplette Auslesepuffer wird für eigene Untersuchungen gespeichert'
-            en: 'the complete readout will be saved for own examinations'
+            de: 'Der komplette Auslesepuffer wird für eigene Untersuchungen gespeichert (nur DLMS)'
+            en: 'the complete readout will be saved for own examinations (DLMS only)'
 
 logic_parameters: NONE
 
