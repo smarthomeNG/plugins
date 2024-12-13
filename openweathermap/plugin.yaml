@@ -450,12 +450,12 @@ item_structs:
             beaufort_nr:
                 name: wind speed as beaufort number
                 type: num
-                owm_matchstring: current/wind_speed/beaufort
+                owm_matchstring@instance: current/wind_speed/beaufort
 
             beaufort_string:
                 name: wind speed as beaufort string
                 type: str
-                owm_matchstring: current/wind_speed/description
+                owm_matchstring@instance: current/wind_speed/description
 
         wind_gust:
             name: (where available) Wind gust. Units default metre/sec, metric metre/sec, imperial miles/hour.
@@ -465,14 +465,12 @@ item_structs:
             beaufort_nr:
                 name: wind gusts as beaufort number
                 type: num
-                eval: sh.plugins.return_plugin('openweathermap').get_beaufort_number(sh....wind_gust())
-                eval_trigger: ...wind_gust
+                owm_matchstring@instance: current/wind_gust/beaufort
 
             beaufort_string:
                 name: wind gusts as beaufort string
                 type: str
-                eval: sh.plugins.return_plugin('openweathermap').get_beaufort_description( sh...beaufort_nr() )
-                eval_trigger: ..beaufort_nr
+                owm_matchstring@instance: current/wind_gust/description
 
         wind_deg:
             name: Wind direction, degrees (meteorological)
@@ -630,13 +628,11 @@ item_structs:
             beaufort_nr:
                 name: wind speed as beaufort number
                 type: num
-                eval: sh.plugins.return_plugin('openweathermap').get_beaufort_number(sh...())
-                eval_trigger: ..
+                owm_matchstring@instance: current/wind_speed/beaufort
             beaufort_string:
                 name: wind speed as beaufort string
                 type: str
-                eval: sh.plugins.return_plugin('openweathermap').get_beaufort_description( sh...beaufort_nr() )
-                eval_trigger: ..beaufort_nr
+                owm_matchstring@instance: current/wind_speed/description
 
         wind_gust:
             name: (where available) Wind gust. Units default metre/sec, metric metre/sec, imperial miles/hour.
@@ -646,13 +642,11 @@ item_structs:
             beaufort_nr:
                 name: wind gusts as beaufort number
                 type: num
-                eval: sh.plugins.return_plugin('openweathermap').get_beaufort_number(sh...())
-                eval_trigger: ..
+                owm_matchstring@instance: current/wind_gust/beaufort
             beaufort_string:
                 name: wind gusts as beaufort string
                 type: str
-                eval: sh.plugins.return_plugin('openweathermap').get_beaufort_description( sh...beaufort_nr() )
-                eval_trigger: ..beaufort_nr
+                owm_matchstring@instance: current/wind_gust/description
 
         wind_deg:
             name: Wind direction, degrees (meteorological)

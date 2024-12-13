@@ -396,6 +396,21 @@ class OpenWeatherMap(SmartPlugin):
                 else:
                     raise Exception(f"Cannot make sense of {s}")
                 s = updated_s
+            elif (s.startswith("current/") or s.startswith("daily/") or s.startswith("day/") or s.startswith("hour/")) and (s.endswith('/wind_gust/beaufort') or s.endswith('/wind_gust/description')):
+                wrk_typ = "onecall [bft-calculation]"
+                mps_string = s.replace('/wind_gust/beaufort', '/wind_gust')
+                mps_string = mps_string.replace(
+                    '/wind_gust/description', '/wind_gust')
+                wind_mps, updated_s = self.__get_val_from_dict(
+                    mps_string, wrk, correlation_hint, owm_matchstring)
+                bft_val = self.get_beaufort_number(wind_mps)
+                if s.endswith('/beaufort'):
+                    ret_val = bft_val
+                elif s.endswith('/description'):
+                    ret_val = self.get_beaufort_description(bft_val)
+                else:
+                    raise Exception(f"Cannot make sense of {s}")
+                s = updated_s
             else:
                 ret_val, s = self.__get_val_from_dict(s, wrk, correlation_hint, owm_matchstring)
         except Exception as e:
