@@ -576,8 +576,11 @@ class UZSU(SmartPlugin):
         else:
             self.logger.info(f'Dry run of scheduler calculation for item {item} to get calculated sunset/rise entries. Source: {source}')
             self._schedule(item, caller='dry_run')
-
-        if self._items[item] != self.itemsApi.return_item(str(item)) and cond:
+        try:
+            current_value = self.itemsApi.return_item(str(item)).property.value
+        except:
+            current_value = None
+        if cond and self._items[item] != current_value:
             self._update_item(item, 'UZSU Plugin', 'update')
 
     def _update_item(self, item, caller="", comment="", entryindex=None):
