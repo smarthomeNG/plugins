@@ -122,6 +122,7 @@ class UZSU(SmartPlugin):
         self._suncalculation_cron = self.get_parameter_value('suncalculation_cron')
         self._sh = smarthome
         self._items = {}
+        self._series = {}
         self._lastvalues = {}
         self._planned = {}
         self._webdata = {'sunCalculated': {}, 'items': {}}
@@ -604,6 +605,8 @@ class UZSU(SmartPlugin):
             self.logger.debug(f'Updated sunset/rise calculations for item {item} caller: {caller} comment: {comment}')
         else:
             self.logger.debug(f'Issues with updating sunset/rise calculations for item {item} caller: {caller} comment: {comment}, issue: {success}')
+        for entry in self._items[item]['list']:
+            entry['activeToday'] = False
         item(self._items[item], caller, comment)
         self._webdata['items'][item.property.path].update({'interpolation': self._items[item].get('interpolation')})
         self._webdata['items'][item.property.path].update({'active': str(self._items[item].get('active'))})
@@ -672,7 +675,6 @@ class UZSU(SmartPlugin):
         _next = None
         _value = None
         _entryindex = None
-        _series = {}
         self._update_sun(item, caller=_caller)
         self._add_dicts(item)
         if not self._items[item]['interpolation'].get('itemtype') or \
@@ -686,17 +688,20 @@ class UZSU(SmartPlugin):
         elif self._items[item].get('active') is True or _caller == "dry_run":
             self._itpl[item] = OrderedDict()
             for i, entry in enumerate(self._items[item]['list']):
-                next, value, next_series = self._get_time(entry, 'next', item, i, _caller)
-                previous, previousvalue, previous_series = self._get_time(entry, 'previous', item, i, _caller)
-                status = "running" if next_series + previous_series >= 3 else "starting" if next_series >= 1 else "-"
-                _series.update({i: status})
+                next, value, series_finished = self._get_time(entry, 'next', item, i, _caller)
+                previous, previousvalue, series_started = self._get_time(entry, 'previous', item, i, _caller)
+                cond_running = series_finished is False and series_started is True
+                cond_finished = series_finished is True and self._series.get(i) in ["running", "preparing"]
+                cond_preparing = series_finished is False and not series_started
+                series_status = "preparing" if cond_preparing else "running" if cond_running else "finished" if cond_finished else "-"
+                self._series[i] = series_status
                 cond1 = next is None and previous is not None
                 cond2 = previous is not None and next is not None and previous < next
                 if cond1 or cond2:
                     next = previous
                     value = previousvalue
                 if next is not None:
-                    self.logger.debug(f'uzsu active entry for item {item} with datetime {next}, value {value} and tzinfo {next.tzinfo}. Series {_series}')
+                    self.logger.debug(f'uzsu active entry for item {item} with datetime {next}, value {value} and tzinfo {next.tzinfo}. Series {self._series}')
                 if _next is None:
                     _next = next
                     _value = value
@@ -709,13 +714,12 @@ class UZSU(SmartPlugin):
                 else:
                     self.logger.debug(f'uzsu active entry for item {item} keep {_next}, value {_value} and tzinfo {_next.tzinfo}')
                 if self._items[item]["list"][i].get("series"):
-                    series_previous = self._items[item]["list"][i]["series"].get("status")
-                    series_status = _series.get(i)
-                    self._items[item]["list"][i]["series"]["status"] = series_status
-                    if self._items[item]["list"][i].get("once") and series_status != "running" and series_previous == "running":
+                    #series_status = self._series.get(i)
+                    if self._items[item]["list"][i].get("once") and series_status == "finished":
+                        self.logger.debug(f'Deactivating list entry {i} because series is finished and set to once')
                         self._items[item]["list"][i]["active"] = False
                         _next = None
-                        self.logger.debug(f'Deactivating uzsu entry {i} because series is finished and set to once')
+                        self._series[i] = "waiting"
                         self._update_item(item, 'UZSU Plugin', 'once', i)
 
         elif not self._items[item].get('list') and self._items[item].get('active') is True:
@@ -795,13 +799,13 @@ class UZSU(SmartPlugin):
                 self.logger.debug(f'will add scheduler named uzsu_{item.property.path} with datetime {_next} and tzinfo {_next.tzinfo} and value {_value} based on list index {_entryindex}')
                 self._planned.update({item: {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M:%S')}})
                 self._webdata['items'][item.property.path].update({'planned': {'value': _value, 'time': _next.strftime('%d.%m.%Y %H:%M')}})
-                self._webdata['items'][item.property.path].update({'seriesrunning': 'True' if _series.get(_entryindex) == "running" else 'False'})
+                self._webdata['items'][item.property.path].update({'seriesrunning': 'True' if self._series.get(_entryindex) == "running" else 'False'})
                 self._update_count['done'] = self._update_count.get('done', 0) + 1
                 self._update_item(item, 'UZSU Plugin', 'add_scheduler')
                 self.scheduler_add(item.property.path, self._set,
                                    value={'item': item, 'value': _value, 'caller': 'Scheduler',
                                           'entryindex': _entryindex, 'interpolated': _interpolated,
-                                          'seriesstatus': _series.get(_entryindex)}, next=_next)
+                                          'seriesstatus': self._series.get(_entryindex)}, next=_next)
                 if self._update_count.get('done') == self._update_count.get('todo'):
                     self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
                     self._update_count = {'done': 0, 'todo': 0}
@@ -829,6 +833,9 @@ class UZSU(SmartPlugin):
             self.logger.debug(
                 f'Deactivating list entry {self._items[item]["list"][entryindex]} of item {item} as it has "once" set to True')
             update = 'once'
+        if entryindex:
+            self._series[entryindex] = seriesstatus
+            self.logger.debug(f"Updated series index {entryindex} to {seriesstatus}. Series is now {self._series}")
         if update is not None:
             self._update_item(item, 'UZSU Plugin', update, entryindex)
         if self._items[item].get('once'):
@@ -859,16 +866,15 @@ class UZSU(SmartPlugin):
             time = None
         try:
             if not isinstance(entry, dict):
-                return None, None, 0
+                return None, None, None
             if 'value' not in entry:
-                return None, None, 0
+                return None, None, None
             if 'active' not in entry:
-                return None, None, 0
+                return None, None, None
             if 'time' not in entry:
-                return None, None, 0
+                return None, None, None
             value = entry['value']
             next = None
-            series = 0
             active = True if caller == "dry_run" else entry['active']
             today = datetime.today()
             tomorrow = today + timedelta(days=1)
@@ -876,7 +882,7 @@ class UZSU(SmartPlugin):
             weekbefore = today - timedelta(days=7)
             time = entry['time']
             if not active:
-                return None, None, 0
+                return None, None, None
             if 'rrule' in entry and 'series' not in time:
                 if entry['rrule'] == '':
                     entry['rrule'] = 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU'
@@ -905,7 +911,7 @@ class UZSU(SmartPlugin):
                 while self.alive:
                     dt = rrule.before(dt) if timescan == 'previous' else rrule.after(dt)
                     if dt is None:
-                        return None, None, 0
+                        return None, None, None
                     if 'sun' in time:
                         sleep(0.01)
                         next = self._sun(datetime.combine(dt.date(),
@@ -921,12 +927,11 @@ class UZSU(SmartPlugin):
                         self._itpl[item][next.timestamp() * 1000.0] = value
                         if next - timedelta(seconds=1) > datetime.now().replace(tzinfo=self._timezone):
                             self.logger.debug(f'{item}: Return from rrule {timescan}: {next}, value {value}.')
-                            return next, value, series
+                            return next, value, None
                         else:
                             self.logger.debug(f"{item}: Not returning {timescan} rrule {next} because it's in the past.")
             if 'sun' in time and 'series' not in time:
-                next = self._sun(datetime.combine(today, datetime.min.time()).replace(
-                    tzinfo=self._timezone), time, timescan)
+                next = self._sun(datetime.combine(today, datetime.min.time()).replace(tzinfo=self._timezone), time, timescan)
                 cond_future = next > datetime.now(self._timezone)
                 if cond_future:
                     self.logger.debug(f'{item}: Result parsing time today (sun) {time}: {next}')
@@ -951,9 +956,8 @@ class UZSU(SmartPlugin):
                 # Get next Time for Series
                 next = self._series_get_time(entry, timescan)
                 if next is None:
-                    return None, None, 0
+                    return None, None, False
                 self._itpl[item][next.timestamp() * 1000.0] = value
-                series += 1
                 rstr = str(entry['rrule']).replace('\n', ';')
                 self.logger.debug(f'{item}: Looking for {timescan} series-related time. Found rrule: {rstr} with start-time {entry["series"]["timeSeriesMin"]}. Next: {next}')
 
@@ -966,26 +970,25 @@ class UZSU(SmartPlugin):
             if next and cond_today and cond_next:
                 self._itpl[item][next.timestamp() * 1000.0] = value
                 self.logger.debug(f'{item}: Return next today: {next}, value {value}')
-                series += 1
-                return next, value, series
+                return next, value, False if 'series' in time else None
             if next and cond_tomorrow and cond_next:
                 self._itpl[item][next.timestamp() * 1000.0] = value
                 self.logger.debug(f'{item}: Return next tomorrow: {next}, value {value}')
-                return next, value, series
-            if 'series' in time and next and cond_next:
+                return next, value, True if 'series' in time else None
+            if 'series' in time and cond_next:
                 self.logger.debug(f'{item}: Return next for series: {next}, value {value}')
-                return next, value, series
+                return next, value, True
             if next and cond_today and cond_previous_today:
                 self._itpl[item][(next - timedelta(seconds=1)).timestamp() * 1000.0] = value
                 self.logger.debug(f'{item}: Not returning previous today {next} because it‘s in the past.')
-                return None, None, series
+                return None, None, True
             if next and cond_yesterday and cond_previous_yesterday:
                 self._itpl[item][(next - timedelta(days=1)).timestamp() * 1000.0] = value
                 self.logger.debug(f'{item}: Not returning previous yesterday {next} because it‘s in the past.')
-                return None, None, series
+                return None, None, False
         except Exception as e:
             self.logger.error(f'{item}: Error "{time}" parsing time: {e}')
-        return None, None, 0
+        return None, None, None
 
     def _series_calculate(self, item, caller=None, source=None):
         """
