@@ -84,9 +84,6 @@ S_BITS = serial.EIGHTBITS
 S_PARITY = serial.PARITY_NONE
 S_STOP = serial.STOPBITS_ONE
 
-# serial lock for sync and async readers alike
-LOCK = Lock()
-
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
@@ -163,6 +160,7 @@ class SmlAsyncReader():
     def __init__(self, logger, plugin: SmartPlugin, config: dict):
         self.buf = bytes()
         self.logger = logger
+        self.lock = config['lock']
 
         if not ASYNC_IMPORTED:
             raise ImportError('pyserial_asyncio not installed, running asyncio not possible.')
@@ -190,7 +188,7 @@ class SmlAsyncReader():
         self.reader = None
 
     async def listen(self):
-        result = LOCK.acquire(blocking=False)
+        result = self.lock.acquire(blocking=False)
         if not result:
             self.logger.error('couldn\'t acquire lock, polling/manual access active?')
             return
@@ -215,7 +213,7 @@ class SmlAsyncReader():
                 self.logger.error('error on setting up async listener, reader is None')
                 return
 
-            self.async_connected = True
+            self.plugin.connected = True
             self.listening = True
             self.logger.debug('starting to listen')
             while self.listening and self.plugin.alive:
@@ -230,12 +228,13 @@ class SmlAsyncReader():
                 if chunk == b'':
                     self.logger.debug('read reached EOF, quitting')
                     break
-                self.logger.debug(f'read {chunk} ({len(chunk)} bytes), buf is {self.buf}')
+                # self.logger.debug(f'read {chunk} ({len(chunk)} bytes), buf is {self.buf}')
                 self.buf += chunk
 
                 if len(self.buf) < 100:
                     continue
                 try:
+                    # self.logger.debug(f'adding {len(self.buf)} bytes to stream')
                     self.stream.add(self.buf)
                 except Exception as e:
                     self.logger.error(f'Writing data to SmlStreamReader failed with exception {e}')
@@ -246,8 +245,10 @@ class SmlAsyncReader():
                         try:
                             frame = self.stream.get_frame()
                             if frame is None:
+                                # self.logger.debug('didn\'t get frame')
                                 break
 
+                            # self.logger.debug('got frame')
                             self.fp(frame)
                         except Exception as e:
                             detail = traceback.format_exc()
@@ -268,8 +269,8 @@ class SmlAsyncReader():
                 self.reader.feed_eof()
             except Exception:
                 pass
-            self.async_connected = False
-            LOCK.release()
+            self.plugin.connected = False
+            self.lock.release()
 
     async def stop_on_queue(self):
         """ wait for STOP in queue and signal reader to terminate """
@@ -286,9 +287,9 @@ class SmlAsyncReader():
 
 class SmlReader():
     def __init__(self, logger, config: dict):
-        print('init')
         self.config = config
         self.sock = None
+        self.lock = config['lock']
         self.logger = logger
 
         if not ('serial_port' in config or ('host' in config and 'port' in config)):
@@ -311,7 +312,7 @@ class SmlReader():
         #
         # open the serial communication
         #
-        locked = LOCK.acquire(blocking=False)
+        locked = self.lock.acquire(blocking=False)
         if not locked:
             logger.error('could not get lock for serial/network access. Is another scheduled/manual action still active?')
             return b''
@@ -351,7 +352,7 @@ class SmlReader():
             except Exception:
                 pass
             self.sock = None
-            LOCK.release()
+            self.lock.release()
         return response
 
     def _read(self) -> bytes:
@@ -403,7 +404,6 @@ class SmlReader():
 
     def get_sock(self):
         """ open serial or network socket """
-
         if TESTING:
             self.sock = 1
             self.target = '(test input)'
@@ -413,38 +413,50 @@ class SmlReader():
             #
             # open the serial communication
             #
-            try:  # open serial
-                self.sock = serial.Serial(
-                    self.serial_port,
-                    self.baudrate,
-                    S_BITS,
-                    S_PARITY,
-                    S_STOP,
-                    timeout=self.timeout
-                )
-                if not self.serial_port == self.sock.name:
-                    logger.debug(f"Asked for {self.serial_port} as serial port, but really using now {self.sock.name}")
-                self.target = f'serial://{self.sock.name}'
+            count = 0
+            while count < 3:
+                try:  # open serial
+                    count += 1
+                    self.sock = serial.Serial(
+                        self.serial_port,
+                        self.baudrate,
+                        S_BITS,
+                        S_PARITY,
+                        S_STOP,
+                        timeout=self.timeout
+                    )
+                    if not self.serial_port == self.sock.name:
+                        logger.debug(f"Asked for {self.serial_port} as serial port, but really using now {self.sock.name}")
+                    self.target = f'serial://{self.sock.name}'
 
-            except FileNotFoundError:
-                logger.error(f"Serial port '{self.serial_port}' does not exist, please check your port")
-                return None, ''
-            except serial.SerialException:
-                if self.sock is None:
-                    logger.error(f"Serial port '{self.serial_port}' could not be opened")
-                else:
-                    logger.error(f"Serial port '{self.serial_port}' could be opened but somehow not accessed")
-                return None, ''
-            except OSError:
-                logger.error(f"Serial port '{self.serial_port}' does not exist, please check the spelling")
-                return None, ''
-            except Exception as e:
-                logger.error(f"unforeseen error occurred: '{e}'")
-                return None, ''
+                except FileNotFoundError:
+                    logger.error(f"Serial port '{self.serial_port}' does not exist, please check your port")
+                    return None, ''
+                except serial.SerialException:
+                    if self.sock is None:
+                        if count < 3:
+                            # count += 1
+                            logger.error(f"Serial port '{self.serial_port}' could not be opened, retrying {count}/3...")
+                            time.sleep(3)
+                            continue
+                        else:
+                            logger.error(f"Serial port '{self.serial_port}' could not be opened")
+                    else:
+                        logger.error(f"Serial port '{self.serial_port}' could be opened but somehow not accessed")
+                    return None, ''
+                except OSError:
+                    logger.error(f"Serial port '{self.serial_port}' does not exist, please check the spelling")
+                    return None, ''
+                except Exception as e:
+                    logger.error(f"unforeseen error occurred: '{e}'")
+                    return None, ''
 
             if self.sock is None:
-                # this should not happen...
-                logger.error("unforeseen error occurred, serial object was not initialized.")
+                if count == 3:
+                    logger.error("retries unsuccessful, serial port could not be opened, giving up.")
+                else:
+                    # this should not happen...
+                    logger.error("retries unsuccessful or unforeseen error occurred, serial object was not initialized.")
                 return None, ''
 
             if not self.sock.is_open:
@@ -536,7 +548,9 @@ class SmlFrameParser():
                 content['value'] = bin(content['valueRaw'] >> 8)    # Status as binary string, so not decoded into status bits as above
             # end TODO
 
-            self.result[code].append(content)
+            # don't return multiple code, only the last one -> overwrite earlier data
+            # self.result[code].append(content)
+            self.result[code] = [content]
             logger.debug(f"found {code} with {content}")
 
 
@@ -653,6 +667,7 @@ if __name__ == '__main__':
 
     # complete default dict
     config = {
+        'lock': Lock(),
         'serial_port': '',
         'host': '',
         'port': 0,

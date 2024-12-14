@@ -108,7 +108,6 @@ class Smartmeter(SmartPlugin, Conversion):
         # protocol auto-detected?
         self.proto_detected = False
 
-        self.async_connected = False
         self.use_asyncio = False
 
         # update items only every x seconds
@@ -138,10 +137,13 @@ class Smartmeter(SmartPlugin, Conversion):
 
         for proto in disc_protos:
             if self._get_module(proto).discover(self._config):
+                self.logger.info(f'discovery of {protocol} was successful')
                 self.protocol = proto
                 if len(disc_protos) > 1:
                     self.proto_detected = True
                 return True
+            else:
+                self.logger.info(f'discovery of {protocol} was unsuccessful')
 
         return False
 
@@ -160,23 +162,16 @@ class Smartmeter(SmartPlugin, Conversion):
         ref = self._get_module(protocol)
 
         result = {}
-        if self._lock.acquire(blocking=False):
-            self.logger.debug('lock acquired')
-            try:
-                result = ref.query(self._config)
-                if not result:
-                    self.logger.warning('no results from smartmeter query received')
-                else:
-                    self.logger.debug(f'got result: {result}')
-                    if assign_values:
-                        self._update_values(result)
-            except Exception as e:
-                self.logger.error(f'error: {e}', exc_info=True)
-            finally:
-                self._lock.release()
-                self.logger.debug('lock released')
-        else:
-            self.logger.warning('device query is alrady running. Check connection and/or use longer query interval time.')
+        try:
+            result = ref.query(self._config)
+            if not result:
+                self.logger.warning('no results from smartmeter query received')
+            else:
+                self.logger.debug(f'got result: {result}')
+                if assign_values:
+                    self._update_values(result)
+        except Exception as e:
+            self.logger.error(f'error: {e}', exc_info=True)
 
         return result
 
@@ -233,6 +228,9 @@ class Smartmeter(SmartPlugin, Conversion):
         # connection configuration
         #
         self._config = {}
+
+        # not really a config value, but easier than having another parameter everywhere
+        self._config['lock'] = self._lock
 
         # first try connections; abort loading plugin if no connection is configured
         self._config['serial_port'] = self.get_parameter_value('serialport')
@@ -304,7 +302,7 @@ class Smartmeter(SmartPlugin, Conversion):
 
         if self.use_asyncio:
             self.timefilter = self.get_parameter_value('time_filter')
-            if self.timefilter == -1:
+            if self.timefilter == -1 and self.cycle is not None:
                 self.timefilter = self.cycle
             if self.timefilter < 0:
                 self.timefilter = 0

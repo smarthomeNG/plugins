@@ -212,7 +212,7 @@ def format_time(timedelta: float) -> str:
         return f"{timedelta * 10 ** 9:.2f} ns"
 
 
-def read_data_block_from_serial(the_serial: serial.Serial, end_byte: bytes = b'\n', start_byte: bytes = b'', max_read_time: int = -1) -> bytes:
+def read_data_block_from_serial(the_serial: serial.Serial, end_byte: bytes = b'\n', start_byte: bytes = b'', max_read_time: int = -1, discover: bool = False) -> bytes:
     """
     This function reads some bytes from serial interface
     it returns an array of bytes if a timeout occurs or a given end byte is encountered
@@ -229,13 +229,20 @@ def read_data_block_from_serial(the_serial: serial.Serial, end_byte: bytes = b'\
     if TESTING:
         return RESULT.encode()
 
+    # in discover mode, stop trying after 20 secs
+    # reading SML yields bytes, but doesn't trigger returning data
+    if discover:
+        max_read_time = 20
+
     logger.debug(f"start to read data from serial device, start is {start_byte}, end is '{end_byte}, time is {max_read_time}")
     response = bytes()
     starttime = time.time()
     start_found = False
+    end_bytes = 0
     ch = bytes()
     try:
-        while True:
+        # try to stop looking if 10 end bytes were found but no start bytes
+        while not discover or end_bytes < 10:
             ch = the_serial.read()
             # logger.debug(f"Read {ch}")
             runtime = time.time()
@@ -244,11 +251,13 @@ def read_data_block_from_serial(the_serial: serial.Serial, end_byte: bytes = b'\
             if start_byte != b'':
                 if ch == start_byte:
                     logger.debug('start byte found')
+                    end_bytes = 0
                     response = bytes()
                     start_found = True
             response += ch
             if ch == end_byte:
-                logger.debug('end byte found')
+                end_bytes += 1
+                logger.debug(f'end byte found ({end_bytes})')
                 if start_byte is not None and not start_found:
                     response = bytes()
                     continue
@@ -256,6 +265,7 @@ def read_data_block_from_serial(the_serial: serial.Serial, end_byte: bytes = b'\
                     break
             if (response[-1] == end_byte):
                 logger.debug('end byte at end of response found')
+                end_bytes = 0
                 break
             if max_read_time is not None:
                 if runtime - starttime > max_read_time and max_read_time > 0:
@@ -517,7 +527,7 @@ def parse(data: str, normalize: bool = True) -> dict:
     return result
 
 
-def query(config) -> Union[dict, None]:
+def query(config, discover: bool = False) -> Union[dict, None]:
     """
     This function will
     1. open a serial communication line to the smartmeter
@@ -551,7 +561,7 @@ def query(config) -> Union[dict, None]:
     # for the performance of the serial read we need to save the current time
     starttime = time.time()
     runtime = starttime
-    lock = Lock()
+    lock = config['lock']
     sock = None
 
     if not ('serial_port' in config or ('host' in config and 'port' in config)):
@@ -627,7 +637,7 @@ def query(config) -> Union[dict, None]:
             logger.debug(f"time to send first request to smartmeter: {format_time(time.time() - runtime)}")
 
             # now get first response
-            response = read_data_block_from_serial(sock)
+            response = read_data_block_from_serial(sock, discover=discover)
             if not response:
                 logger.debug("no response received upon first request")
                 return
@@ -641,7 +651,7 @@ def query(config) -> Union[dict, None]:
                 logger.debug("request message was echoed, need to read the identification message")
                 # now read the capabilities and type/brand line from Smartmeter
                 # e.g. b'/LGZ5\\2ZMD3104407.B32\r\n'
-                response = read_data_block_from_serial(sock)
+                response = read_data_block_from_serial(sock, discover=discover)
             else:
                 logger.debug("request message was not equal to response, treating as identification message")
 
@@ -749,11 +759,11 @@ def query(config) -> Union[dict, None]:
 
             # now read the huge data block with all the OBIS codes
             logger.debug("Reading OBIS data from smartmeter")
-            response = read_data_block_from_serial(sock, b'')
+            response = read_data_block_from_serial(sock, b'', discover=discover)
         else:
             # only listen mode, starts with / and last char is !
             # data will be in between those two
-            response = read_data_block_from_serial(sock, b'!', b'/')
+            response = read_data_block_from_serial(sock, b'!', b'/', discover=discover)
 
             identification_message = str(response, 'utf-8').splitlines()[0]
 
@@ -769,6 +779,11 @@ def query(config) -> Union[dict, None]:
         # passthrough, this is only for releasing the lock
         raise
     finally:
+        try:
+            sock.close()
+            logger.debug(f'{target} closed')
+        except Exception:
+            pass
         lock.release()
 
     logger.debug(f"time for reading OBIS data: {format_time(time.time() - runtime)}")
@@ -799,7 +814,7 @@ def discover(config: dict) -> bool:
     # reduced baud rates or changed parameters, but there would need to be
     # the need for this.
     # For now, let's see how well this works...
-    result = query(config)
+    result = query(config, discover=True)
 
     # result should have one key 'readout' with the full answer and a separate
     # key for every read OBIS code. If no OBIS codes are read/converted, we can
@@ -831,6 +846,7 @@ if __name__ == '__main__':
 
     # complete default dict
     config = {
+        'lock': Lock(),
         'serial_port': '',
         'host': '',
         'port': 0,
