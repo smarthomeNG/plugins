@@ -80,9 +80,17 @@ Activate that function if needed, otherwise just remove the line to increase per
                 shngInsertText(item+'_value', objResponse['items'][item]['value'], 'maintable', 5);
                 shngInsertText(item+'_last_update', objResponse['items'][item]['last_update'], 'maintable', 5);
                 shngInsertText(item+'_last_change', objResponse['items'][item]['last_change'], 'maintable', 5);
+
+			for (obis in objResponse['obis_results']) {
+                var obis_data = objResponse['obis_results'][obis][0];
+				console.log("DOM: " + obis+'_value');
+				console.log("VAL: " + JSON.stringify(obis_data));
+                shngInsertText(obis+'_value', JSON.stringify(obis_data), 'obis_data_table', 5);
+            }
             }
       // Redraw datatable after cell updates
       // $('#maintable').DataTable().draw(false);
+        $('#obis_data_table').DataTable().draw(false);
 		}
 	}
 </script>
@@ -92,6 +100,80 @@ Activate that function if needed, otherwise just remove the line to increase per
 -->
 <script>
     $(document).ready( function () {
+		// Handler für einfachen Button - das "click"-Element wird abgefangen
+        $("#detect").click(function(e) {
+
+            // keine HTML-Aktion ausführen (z.B. Formular senden)
+            e.preventDefault();
+
+            console.log('Sending smartmeter command: detect');
+
+            // festen Wert per AJAX senden
+            $.post('submit', {cmd: "detect"}, function(data) {
+
+            	console.log("Return from plugin: cmd=detect, data=" + data);
+                for (var row in data) {
+					console.log("row=" + row + ", data=" + data.row);
+                }
+
+                // Ergebnis in Feld #fromip schreiben. Der dritte Parameter muss mit der Tabellen-ID identisch sein.
+                shngInsertText('protocol', data.protocol, 'headtable')
+            });
+            return false ;
+          });
+		$("#query").click(function(e) {
+
+            // keine HTML-Aktion ausführen (z.B. Formular senden)
+            e.preventDefault();
+
+            console.log('Sending smartmeter command: query');
+
+            // festen Wert per AJAX senden
+            $.post('submit', {cmd: "query"}, function(data) {
+
+            	console.log("Return from plugin: cmd=query, data=" + data);
+                
+                for (var obis in data) {
+                    var obis_data = data[obis][0];
+					console.log("obis=" + obis, "data=" + JSON.stringify(obis_data));
+					
+                    if (!document.getElementById(obis+'_value')) {
+                    	if ( $.fn.dataTable.isDataTable('#obis_data_table') ) {
+                        	
+                            // Define target table
+                            var table_to_update = $('#obis_data_table').DataTable();
+                            
+                            // Create a new row object
+                            var newRow = ['', obis, JSON.stringify(obis_data)];
+                            
+                            // Add the row to the table and get the node
+                            var rowNode = table_to_update.row.add(newRow).draw(false).node();
+                            
+                            // Assign IDs to the cells
+                            $(rowNode).children('td').each(function(index, cell) {
+                                if (index === 1) {
+                                    $(cell).attr('id', obis);
+                                } else {
+                                    $(cell).attr('id', obis + '_value');
+                                }
+                            });
+                            
+                        	shngInsertText(obis+'_value', JSON.stringify(obis_data), 'obis_data_table', 10);
+                              
+                            }
+                        }
+                    else
+                        {
+                        console.log("Update existing table row; id="+obis+'_value');
+                        shngInsertText(obis+'_value', JSON.stringify(obis_data), 'obis_data_table', 10);
+                        }
+                    }
+                $('#obis_data_table').DataTable().draw(false);
+            });
+            return false ;
+          });
+
+    	// Handler responsive Tabelle und deren Überschriften
 		/*
 		loading defaults from /modules/http/webif/gstatic/datatables/datatables.defaults.js
 		You can copy that file, put it in your plugin directory, rename the "bind" function and
@@ -100,9 +182,6 @@ Activate that function if needed, otherwise just remove the line to increase per
 		*/
 		$(window).trigger('datatables_defaults');
 		try {
-			/*
-			Copy this part for every datatable on your page. Adjust options if necessary.
-			*/
 			maintable = $('#maintable').DataTable( {
 			  columnDefs: [
 				  { responsivePriority: 1, targets: 1 },
@@ -149,7 +228,8 @@ Activate that function if needed, otherwise just remove the line to increase per
 				  }
 			  ].concat($.fn.dataTable.defaults.columnDefs),
 			  });
-			obis_data = $('#obis_data').DataTable( {
+
+			obis_data_table = $('#obis_data_table').DataTable( {
 			  columnDefs: [
 				  { responsivePriority: 1, targets: 1 },
 				  { responsivePriority: 2, targets: -1 },
@@ -163,11 +243,12 @@ Activate that function if needed, otherwise just remove the line to increase per
 						},
 				  {
 					title: '{{ _('Data') }}',
-					targets: [2], "className": "type"
+					targets: [2], "className": ""
 						},
 			  ].concat($.fn.dataTable.defaults.columnDefs),
 			  });
-			status = $('#status').DataTable( {
+
+			status_table = $('#status_table').DataTable( {
 			  columnDefs: [
 				  { responsivePriority: 1, targets: 1 },
 				  { responsivePriority: 2, targets: -1 },
@@ -185,6 +266,7 @@ Activate that function if needed, otherwise just remove the line to increase per
 						},
 			  ].concat($.fn.dataTable.defaults.columnDefs),
 			  });
+			headtable = $('#headtable').DataTable( {} );
 		}
 		catch (e) {
 			console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
@@ -195,7 +277,7 @@ Activate that function if needed, otherwise just remove the line to increase per
     const tooltipList = ['Nach Devices suchen'];
     createTooltips(tooltipList);
     /*
-    This part reads cookies for the attribute "sort_order" and activates the resepctive button after page load
+    This part reads cookies for the attribute "sort_order" and activates the respective button after page load
     */
     order = getCookie('sort_order');
     if (order == '')
@@ -213,26 +295,26 @@ Activate that function if needed, otherwise just remove the line to increase per
 		<tr>
 			<td class="py-1"><strong>Connection</strong></td>
 			<td class="py-1">{% if p._config['host'] %}{{ p._config['host'] }}{{ _(':') }}{{ p._config['port'] }}{% else %}{{ p._config['serial_port'] }}{% endif %}</td>
-			<td class="py-1" width="50px"></td>
 			<td class="py-1"><strong>Timeout</strong></td>
 			<td class="py-1">{{ p._config['timeout']  }}s</td>
+			<td class="py-1" width="50px"></td>
 			<td class="py-1" width="50px"></td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>Protokoll</strong></td>
-			<td class="py-1">{{ p.protocol }}</td>
-			<td></td>
+			<td class="py-1" id="protocol">{{ p.protocol }}</td>
 			<td class="py-1"><strong>Baudrate</strong></td>
 			<td class="py-1">{{ p._config['baudrate'] }}</td>
+			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>Verbunden</strong></td>
-			<td class="py-1">{% if p.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
-			<td></td>
+			<td class="py-1">{% if p.use_asyncio %}{% if p.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}{% else %}{{ _('-') }}{% endif %}</td>
 			<td class="py-1"><strong>Abfrageintervall</strong></td>
 			<td class="py-1">{% if p.cycle %}{{ p.cycle }}s{% endif %}{% if p.crontab %}{{ p.crontab }}{% endif %}</td>
-			<td></td>
+			<td class="py-1"><strong>Async-Verwendung</strong></td>
+			<td class="py-1">{% if p.use_asyncio %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
 		</tr>
 	</tbody>
 </table>
@@ -241,14 +323,17 @@ Activate that function if needed, otherwise just remove the line to increase per
 
 {% block buttons %}
 	<div>
-    	<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Lesevorgang starten') }}')) { jQuery.get('read_data'); }">{{ _('Lesevorgang starten') }}</button>
+		{% if not p.protocol %}
+			<button id="detect" class="btn btn-shng btn-sm" type="button">{{_('Discovery starten')}}</button>
+		{% endif %}
+		<button id="query" class="btn btn-shng btn-sm" type="button">{{_('Abfrage starten')}}</button>
 	</div>
 {% endblock %}
 
 
 {% set tabcount = 3 %}
 
-
+{% set start_tab = 2 %}
 {% if item_count==0 %}
 	{% set start_tab = 2 %}
 {% endif %}
@@ -280,13 +365,13 @@ Activate that function if needed, otherwise just remove the line to increase per
 
 {% set tab2title = "<strong>" "OBIS Data</strong> (" ~ len(p.obis_results) ~ ")" %}
 {% block bodytab2 %}
-	<table id="obis_data" class="dataTableAdditional m-2">
+	<table id="obis_data_table" class="dataTableAdditional m-2">
 		<tbody>
-			{% for entry in p.obis_results %}
+			{% for obis in p.obis_results %}
 				 <tr>
-				   <td></td>
-				   <td class="py-1">{{ entry }}</td>
-				   <td class="py-1">{{ p.obis_results[entry][0] }}</td>
+					 <td></td>
+				   	 <td class="py-1" id="{{ obis }}">{{ obis }}</td>
+					 <td class="py-1" id="{{ obis }}_value">''</td>
 				 </tr>
 			{% endfor %}
 		</tbody>
@@ -297,8 +382,9 @@ Activate that function if needed, otherwise just remove the line to increase per
 
 {% set tab3title = "<strong>" "Zählerstatus</strong>" %}
 {% block bodytab3 %}
-	<table id="status" class="dataTableAdditional m-2">
+	<table id="status_table" class="dataTableAdditional m-2">
         <tbody>
+		{% if '1-0:1.8.0*255' in p.obis_results %}
             {% for key, value in p.obis_results['1-0:1.8.0*255'][0].items() %}
                 {% if key in ['statRun', 'statFraudMagnet', 'statFraudCover', 'statEnergyTotal', 'statEnergyL1', 'statEnergyL2', 'statEnergyL3', 'statVoltageL1', 'statVoltageL2', 'statVoltageL3', 'statRotaryField', 'statBackstop', 'statCalFault'] %}
                     <tr>
@@ -350,6 +436,7 @@ Activate that function if needed, otherwise just remove the line to increase per
                     </tr>
                 {% endif %}
             {% endfor %}
+		{% endif %}
         </tbody>
 	</table>
 {% endblock bodytab3 %}

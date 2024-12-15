@@ -24,15 +24,22 @@
 #
 #########################################################################
 
+import datetime
+import time
+import os
 import json
-import cherrypy
 
+from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
 
 
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
+
+import cherrypy
+import csv
+from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
@@ -49,6 +56,7 @@ class WebInterface(SmartPluginWebIf):
         self.logger = plugin.logger
         self.webif_dir = webif_dir
         self.plugin = plugin
+        self.items = Items.get_instance()
 
         self.tplenv = self.init_template_environment()
 
@@ -78,18 +86,11 @@ class WebInterface(SmartPluginWebIf):
         :param dataSet: Dataset for which the data should be returned (standard: None)
         :return: dict with the data needed to update the web page.
         """
+
         # if dataSets are used, define them here
         if dataSet == 'overview':
-            # get the new data from the plugin variable called _webdata
-
-            data = {}
-            for obis, value in self.plugin.obis_results.items():
-                if isinstance(value, list):
-                    value = value[0]
-                data[obis] = value
-
             try:
-                data = json.dumps(data)
+                data = json.dumps(self.plugin.obis_results)
                 return data
             except Exception as e:
                 self.logger.error(f"get_data_html overview exception: {e}")
@@ -115,6 +116,26 @@ class WebInterface(SmartPluginWebIf):
 
         if dataSet is None:
             return
+
+    @cherrypy.expose
+    def submit(self, cmd=None):
+
+        self.logger.warning(f"submit:  {cmd=}")
+        result = None
+
+        if cmd == "detect":
+            result = {'discovery_successful': self.plugin.discover(), 'protocol': self.plugin.protocol}
+
+        elif cmd == 'query':
+            result = self.plugin.query(assign_values=False)
+
+        self.logger.warning(f"submit:  {result=}")
+
+        if result is not None:
+            # JSON zurücksenden
+            cherrypy.response.headers['Content-Type'] = 'application/json'
+            self.logger.debug(f"Result for web interface: {result}")
+            return json.dumps(result).encode('utf-8')
 
     @cherrypy.expose
     def read_data(self):
