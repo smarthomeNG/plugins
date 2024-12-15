@@ -36,8 +36,6 @@ class piusv(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
-    # Handle
-    piusv_handle = smbus.SMBus(1)
 
     PLUGIN_VERSION = '0.1.0'
 
@@ -89,7 +87,7 @@ class piusv(SmartPlugin):
         value = 256*parameters[index] + parameters[index+1]
         return value
 
-# Statusbyte auslesen 
+# Statusbyte auslesen
     def get_status(self):
 
         try:
@@ -103,8 +101,8 @@ class piusv(SmartPlugin):
             self.logger.error("get_status: error reading to piusv")
             return(0)
         return status
- 
-# Firmware auslesen 
+
+# Firmware auslesen
     def get_firmware(self):
 
         version = ''
@@ -126,6 +124,9 @@ class piusv(SmartPlugin):
         Run method for the plugin
         """
         self.logger.debug("Run method called")
+        # Handle
+        self.piusv_handle = smbus.SMBus(1)
+
         # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well)
         self.scheduler_add('poll_device', self.poll_device, cycle=self.poll_cycle)
         self.alive = True
@@ -224,7 +225,6 @@ class piusv(SmartPlugin):
         return self.get_status()
 
     def piusv_firmware(self):
-#        return 'hallo'
         return self.get_firmware()
 
     @property
@@ -234,8 +234,3 @@ class piusv(SmartPlugin):
     @property
     def log_level(self):
         return self.logger.getEffectiveLevel()
-
-    @property
-    def rpi_sn(self):
-        return '1234'
-
