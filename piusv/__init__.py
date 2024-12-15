@@ -54,6 +54,7 @@ class piusv(SmartPlugin):
         self._item_dict = {}
         self._cyclic_update_active = False
         self.alive = False
+        self.suspended = False
 
         # check if shNG is running on Raspberry Pi
         try:
@@ -188,6 +189,9 @@ class piusv(SmartPlugin):
         # check if another cyclic cmd run is still active
         if self._cyclic_update_active:
             self.logger.warning('Triggered cyclic poll_device, but previous cyclic run is still active. Therefore request will be skipped.')
+            return
+        elif self.suspended:
+            self.logger.warning('Triggered cyclic poll_device, but Plugin in suspended. Therefore request will be skipped.')
             return
         else:
             self.logger.info('Triggering cyclic poll_device')
