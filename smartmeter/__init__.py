@@ -160,6 +160,9 @@ class Smartmeter(SmartPlugin, Conversion):
         if not protocol:
             protocol = self.protocol
         ref = self._get_module(protocol)
+        if not ref:
+            self.logger.error(f'could not get module for protocol {protocol}, aborting.')
+            return {}
 
         result = {}
         try:
@@ -294,11 +297,8 @@ class Smartmeter(SmartPlugin, Conversion):
         self._config['poll'] = True
         poll = self.get_parameter_value('poll')
         if not poll:
-            if self.protocol == 'SML':
-                self.use_asyncio = True
-                self._config['poll'] = False
-            else:
-                self.logger.warning(f'async listening requested but protocol is {self.protocol} instead of SML, reverting to polling')
+            self.use_asyncio = True
+            self._config['poll'] = False
 
         if self.use_asyncio:
             self.timefilter = self.get_parameter_value('time_filter')
@@ -364,14 +364,9 @@ class Smartmeter(SmartPlugin, Conversion):
 
     def poll_device(self):
         """
-        This function aquires a lock, calls the 'query device' method of the
-        respective module and upon successful data readout it calls the update function
-        If it is not possible it passes on, issuing a warning about increasing the query interval
+        This function just calls the 'query device' method of the
+        respective module
         """
-        self.logger.debug(f'poll_device called, module is {self._get_module()}')
-        if not self._get_module():
-            return
-
         self.query()
 
     def _update_values(self, result: dict):
@@ -435,7 +430,7 @@ class Smartmeter(SmartPlugin, Conversion):
         """
         self.logger.info("plugin_coro started")
         try:
-            self.reader = sml.SmlAsyncReader(self.logger, self, self._config)
+            self.reader = self._get_module().AsyncReader(self.logger, self, self._config)
         except ImportError as e:
             # serial_asyncio not loaded/present
             self.logger.error(e)

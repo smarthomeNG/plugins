@@ -49,7 +49,7 @@ import traceback
 from smllib.reader import SmlStreamReader
 from smllib import const as smlConst
 from threading import Lock
-from typing import (Union, Coroutine)
+from typing import Union
 
 from lib.model.smartplugin import SmartPlugin
 
@@ -155,7 +155,7 @@ def format_time(timedelta):
 #
 
 
-class SmlAsyncReader():
+class AsyncReader():
 
     def __init__(self, logger, plugin: SmartPlugin, config: dict):
         self.buf = bytes()
