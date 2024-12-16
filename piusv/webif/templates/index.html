@@ -12,10 +12,24 @@
         Additional script tag for plugin specific javascript code go into this block
 -->
 {% block pluginscripts %}
+
+<script>
+    function handleUpdatedData(response, dataSet=null) {
+	if (dataSet === 'devices_info' || dataSet === null) {
+		objResponse = JSON.parse(response);
+		for (item in objResponse['items']) {
+			shngInsertText (item+'_value', objResponse['items'][item]['value'], 'maintable', 1);
+		        shngInsertText (item+'_last_update', objResponse['items'][item]['last_update'], 'maintable', 1);
+		        shngInsertText (item+'_last_change', objResponse['items'][item]['last_change'], 'maintable', 1);
+		}
+	}
+
+    }
+</script>
 {% endblock pluginscripts %}
 
 {% block headtable %}
-<span id='suspended' style="display:none">{{ p.suspended }}</span>
+<span id='suspended' style="display:inone">{{ p.suspended }}</span>
 
 <table class="table table-striped table-hover">
     <tbody>
