@@ -53,7 +53,11 @@ from typing import (Union, Tuple, Any)
 try:
     from lib.model.smartplugin import SmartPlugin
 except ImportError:
-    pass
+    class SmartPlugin():
+        pass
+
+    class SmartPluginWebIf():
+        pass
 
 
 """

@@ -55,7 +55,11 @@ from typing import Union
 try:
     from lib.model.smartplugin import SmartPlugin
 except ImportError:
-    pass
+    class SmartPlugin():
+        pass
+
+    class SmartPluginWebIf():
+        pass
 
 """
 This module implements the query of a smartmeter using the SML protocol.
