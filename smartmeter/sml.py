@@ -51,7 +51,11 @@ from smllib import const as smlConst
 from threading import Lock
 from typing import Union
 
-from lib.model.smartplugin import SmartPlugin
+# only for syntax/type checking
+try:
+    from lib.model.smartplugin import SmartPlugin
+except ImportError:
+    pass
 
 """
 This module implements the query of a smartmeter using the SML protocol.
