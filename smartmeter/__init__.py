@@ -194,9 +194,12 @@ class Smartmeter(SmartPlugin, Conversion):
             data = self.obis_results
 
         try:
-            id = data['1-0:96.1.0*255']['value']
-        except (IndexError, AttributeError):
-            id = int(time.time())
+            id = data['1-0:96.1.0*255'][0]['value']
+        except (KeyError, IndexError, AttributeError):
+            try:
+                id = data['1-0:0.0.9*255'][0]['value']
+            except (KeyError, IndexError, AttributeError):
+                id = int(time.time())
 
         if not file:
             dir = self._sh._items_dir
@@ -209,7 +212,9 @@ class Smartmeter(SmartPlugin, Conversion):
         result = {}
         for nr, code in enumerate(data):
             item = f'item_{nr}'
-            d = data[code]
+            if len(data[code]) == 0:
+                continue
+            d = data[code][0]
             name = d.get('name', '')
             unit = d.get('unit')
             if isinstance(d['value'], str):

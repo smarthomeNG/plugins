@@ -5,7 +5,7 @@ plugin:
     version: '0.0.1'                 # Plugin version
     sh_minversion: '1.10'             # minimum shNG version to use this plugin
     py_minversion: '3.9'             # minimum Python version to use for this plugin, due to f-strings
-    type: gateway                  # plugin type (gateway, interface, protocol, system, web)
+    type: interface                  # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Unterstützung für Smartmeter, die DLMS (Device Language Message Specification, IEC 62056-21) oder SML (Smart Message Language) nutzen und OBIS Codes liefern'
         en: 'Support for smartmeter using DLMS (Device Language Message Specification, IEC 62056-21) or SML (Smart Message Language) and delivering OBIS codes'
