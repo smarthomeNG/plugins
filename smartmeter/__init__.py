@@ -29,6 +29,7 @@ __revision__ = '0.1'
 __docformat__ = 'reStructuredText'
 
 import asyncio
+import os
 import threading
 import time
 import sys
@@ -45,6 +46,7 @@ except Exception:
 from lib.model.smartplugin import SmartPlugin
 from lib.item.item import Item
 from lib.shtime import Shtime
+from lib.shyaml import yaml_save
 from collections.abc import Callable
 from typing import (Union, Any)
 
@@ -177,6 +179,68 @@ class Smartmeter(SmartPlugin, Conversion):
             self.logger.error(f'error: {e}', exc_info=True)
 
         return result
+
+    def create_items(self, data: dict = {}, file: str = '') -> bool:
+        """ 
+        create itemdefinitions from read obis numbers
+
+        dict should be the result dict, or (if empty) self.obis_results will be used
+        file is the filename to write. default is:
+        <items_dir>/smartmeter-<meter id>.yaml
+
+        return indicates success or error
+        """
+        if not data:
+            data = self.obis_results
+
+        try:
+            id = data['1-0:96.1.0*255']['value']
+        except (IndexError, AttributeError):
+            id = int(time.time())
+
+        if not file:
+            dir = self._sh._items_dir
+            file = os.path.join(dir, f'smartmeter-{id}')
+
+        if os.path.exists(file):
+            self.logger.warning(f'output file {file} exists, not overwriting.')
+            return False
+
+        result = {}
+        for nr, code in enumerate(data):
+            item = f'item_{nr}'
+            d = data[code]
+            name = d.get('name', '')
+            unit = d.get('unit')
+            if isinstance(d['value'], str):
+                typ = 'str'
+            elif type(d['value']) in (int, float):
+                typ = 'num'
+            else:
+                typ = 'foo'
+
+            result[item] = {
+                'type': typ,
+                'cache': True,
+                'remark': name,
+                'obis_code': code,
+            }
+
+            if unit:
+                result[item]['unit'] = {
+                    'type': 'str',
+                    'cache': True,
+                    'obis_code': '..:.',
+                    'obis_property': 'unit'
+                }
+
+        try:
+            yaml_save(file, result)
+        except Exception as e:
+            self.logger.warning(f'saving item file {file} failed with error: {e}')
+            return False
+
+        return True
 
     def run(self):
         """
