@@ -210,7 +210,7 @@ class piusv(SmartPlugin):
 
         pass
 
-    def v_batt(self):
+    def u_batt(self):
         return self.get_parameter(0)
 
     def i_rasp(self):

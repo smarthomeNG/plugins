@@ -44,7 +44,7 @@ item_attributes:
             de: 'Funktion des piusv Plugins'
             en: 'Function of piusv Plugins'
         valid_list:
-            - 'v_batt'
+            - 'u_batt'
             - 'i_rasp'
             - 'u_rasp'
             - 'u_usb'
@@ -73,9 +73,9 @@ item_structs:
             type: bool
             piusv_sys: update
 
-        v_batt:
+        u_batt:
             type: num
-            piusv_func: v_batt
+            piusv_func: u_batt
             visu_acl: ro
 
         i_rasp:
@@ -115,9 +115,9 @@ item_structs:
             type: bool
             piusv_sys: update
 
-        v_batt:
+        u_batt:
             type: num
-            piusv_func: v_batt
+            piusv_func: u_batt
             visu_acl: ro
 
         i_rasp:
@@ -153,7 +153,7 @@ item_structs:
 item_attribute_prefixes: NONE
 
 plugin_functions:
-    v_batt:
+    u_batt:
         type: int
         description:
             de: 'Batteriespannung'
