@@ -205,7 +205,7 @@ class Smartmeter(SmartPlugin, Conversion):
 
         if not file:
             dir = self._sh._items_dir
-            file = os.path.join(dir, f'smartmeter-{id}')
+            file = os.path.join(dir, f'smartmeter-{id}.yaml')
 
         if os.path.exists(file):
             self.logger.warning(f'output file {file} exists, not overwriting.')
@@ -242,7 +242,7 @@ class Smartmeter(SmartPlugin, Conversion):
                 }
 
         try:
-            yaml_save(file, result)
+            yaml_save(file, {id: result})
         except Exception as e:
             self.logger.warning(f'saving item file {file} failed with error: {e}')
             return False
