@@ -192,6 +192,8 @@ class Smartmeter(SmartPlugin, Conversion):
         """
         if not data:
             data = self.obis_results
+        if not data:
+            return False
 
         try:
             id = data['1-0:96.1.0*255'][0]['value']
