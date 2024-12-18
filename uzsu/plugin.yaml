@@ -138,9 +138,7 @@ item_structs:
                 status:
                     type: bool
                     eval: sh....activate()
-                    eval_trigger:
-                      - ..
-                      - ...
+                    eval_trigger: ...
                     on_change: .. = value
                     crontab: init = 0
             next:
