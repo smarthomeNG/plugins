@@ -629,6 +629,8 @@ class UZSU(SmartPlugin):
             self.logger.debug(f'Issues with updating sunset/rise calculations for item {item} caller: {caller} comment: {comment}, issue: {success}')
         #item(self._items[item], caller, comment)
         self._webdata['items'][item.property.path].update({'interpolation': self._items[item].get('interpolation')})
+        if self._webdata['items'][item.property.path].get('interpolationrunning') is None:
+            self._webdata['items'][item.property.path].update({'interpolationrunning': 'False'})
         self._webdata['items'][item.property.path].update({'active': str(self._items[item].get('active'))})
         _suncalc = self._items[item].get('SunCalculated')
         self._webdata['items'][item.property.path].update({'sun': _suncalc})
@@ -838,9 +840,10 @@ class UZSU(SmartPlugin):
                 self._update_item(item, 'UZSU Plugin', 'reset_interpolation')
             if _caller != "dry_run":
                 self.logger.debug(f'will add scheduler named uzsu_{item.property.path} with datetime {_next} and tzinfo {_next.tzinfo} and value {_value} based on list index {_entryindex}')
-                self._planned.update({item: {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M:%S')}})
-                self._webdata['items'][item.property.path].update({'planned': {'value': _value, 'time': _next.strftime('%d.%m.%Y %H:%M')}})
+                self._planned.update({item: {'value': _value, 'next': _next.strftime('%d.%m.%Y %H:%M:%S')}})
+                self._webdata['items'][item.property.path].update({'planned': {'value': _value, 'time': _next.strftime('%d.%m.%Y %H:%M:%S')}})
                 self._webdata['items'][item.property.path].update({'seriesrunning': 'True' if self._series[item].get(_entryindex) == "running" else 'False'})
+                self._webdata['items'][item.property.path].update({'interpolationrunning': str(_interpolated)})
                 self._update_count['done'] = self._update_count.get('done', 0) + 1
                 update = 'init' if update == 'init' else 'add_scheduler'
                 self._update_item(item, 'UZSU Plugin', 'add_scheduler')
@@ -1495,7 +1498,6 @@ class UZSU(SmartPlugin):
         :item:          uzsu item
         :return:        sanitized dict from uzsu item
         """
-
         return html.escape(json.dumps(self._items[item]))
 
     def get_items(self):

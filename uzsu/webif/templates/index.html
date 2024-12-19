@@ -39,30 +39,32 @@
         planned = objResponse['items'][item]['planned']['value'];
         lastvalue = objResponse['items'][item]['lastvalue'];
         seriesrunning = objResponse['items'][item]['seriesrunning'];
-        if (objResponse['items'][item]['active'] == 'True' && planned == '-') {color = 'red';}
-        else if (planned == '-' || objResponse['items'][item]['active'] == 'False' ){color = 'gray';}
-        else if (seriesrunning == 'True'){color = '#FEC34D';}
-        else {color = 'green'}
-
+        if (objResponse['items'][item]['active'] === 'True' && planned === '-') {color = 'red';}
+        else if (planned === '-' || objResponse['items'][item]['active'] === 'False' ){color = 'gray';}
+        else if (seriesrunning === 'True'){color = '#FEC34D';}
+        else {color = 'green';}
+        {intpl_color = color;}
         if (objResponse['items'][item]['depend']['item'] == null) {
           depend_text = '{{ _('Item existiert nicht!') }}';
           color = 'red';
+          intpl_color = 'red';
         }
         else {
           depend_text = objResponse['items'][item]['depend']['item'] + '&nbsp;(' + objResponse['items'][item]['interpolation']['itemtype'] + ')';
         }
 
-        if (objResponse['items'][item]['interpolation'] == undefined) {
+        if (objResponse['items'][item]['interpolation'] === undefined) {
           intpl_text = "{{ _('fehlt!') }}";
           bit_text = "{{ _('fehlt!') }}";
           color = 'red';
+          intpl_color = 'red';
         }
         else {
-          if (objResponse['items'][item]['interpolation']['itemtype'] == 'bool') {
-            if (planned == 1) {planned = 'True';}
-            else if (planned == 0) {planned = 'False';}
-            if (lastvalue == 1) {lastvalue = 'True';}
-            else if (lastvalue == 0) {lastvalue = 'False';}
+          if (objResponse['items'][item]['interpolation']['itemtype'] === 'bool') {
+            if (planned === 1) {planned = 'True';}
+            else if (planned === 0) {planned = 'False';}
+            if (lastvalue === 1) {lastvalue = 'True';}
+            else if (lastvalue === 0) {lastvalue = 'False';}
           }
           if (objResponse['items'][item]['interpolation']['initage'] === '') {
             bit_text = '0';
@@ -70,8 +72,10 @@
           else {
             bit_text = objResponse['items'][item]['interpolation']['initage'];
           }
-          if (objResponse['items'][item]['interpolation']['interval'] == '' || objResponse['items'][item]['interpolation']['interval'] == undefined) {
-            if (objResponse['items'][item]['interpolation']['type'] == 'none') {
+          if (objResponse['items'][item]['interpolationrunning'] !== 'True')
+             intpl_color = 'gray';
+          if (objResponse['items'][item]['interpolation']['interval'] === '' || objResponse['items'][item]['interpolation']['interval'] === undefined) {
+            if (objResponse['items'][item]['interpolation']['type'] === 'none') {
               interval = '';
             }
             else {
@@ -79,15 +83,21 @@
             }
           }
           else {
-            if (objResponse['items'][item]['interpolation']['type'] == 'none') {
+            if (objResponse['items'][item]['interpolation']['type'] === 'none') {
               interval = '';
             }
             else {
-            interval = ' (' + objResponse['items'][item]['interpolation']['interval'] + ')';
+                if (objResponse['items'][item]['interpolation']['perday'] === true) {
+                    perday = ', per day';
+                }
+                else {
+                    perday = '';
+                }
+                interval = ' (' + objResponse['items'][item]['interpolation']['interval'] + perday + ')';
             }
           }
           intpl_text = objResponse['items'][item]['interpolation']['type'] + interval;
-          if (objResponse['items'][item]['sun'] == undefined) {
+          if (objResponse['items'][item]['sun'] === undefined) {
             sunrise_text = '';
             sunset_text = '';
           }
@@ -112,15 +122,16 @@
           }
         }
         $('#' + $.escapeSelector(item)).css({'color': color});
+        $('#' + $.escapeSelector(item + '_interpolation')).css({'color': intpl_color});
         shngInsertText (item+'_interpolation', intpl_text, 'maintable', 10);
         shngInsertText (item+'_backintime', bit_text, 'maintable', 10);
         shngInsertText (item+'_dict', objResponse['items'][item]['dict'], 'maintable');
         shngInsertText (item+'_dependvalue', objResponse['items'][item]['depend']['value'], 'maintable', 10);
         shngInsertText (item+'_nextvalue', planned, 'maintable', 10);
-        if (objResponse['items'][item]['planned']['time'] == '-')
+        if (objResponse['items'][item]['planned']['time'] === '-')
           shngInsertText (item+'_nexttime', '-', 'maintable', 10);
         else
-          shngInsertText (item+'_nexttime', '&#x202a;'+objResponse['items'][item]['planned']['time']+'&#x202c;', 'maintable', 10);
+          shngInsertText (item+'_nexttime', '&#8234;'+objResponse['items'][item]['planned']['time']+'&#8236;', 'maintable', 10);
         shngInsertText (item+'_dependitem', depend_text, 'maintable');
         shngInsertText (item+'_lastvalue', lastvalue, 'maintable', 10);
         shngInsertText ('sunrise', sunrise_text, null, 2);
@@ -204,6 +215,7 @@
         {% else %}
           {% set color = 'green' %}
         {% endif %}
+        {% set intpl_color = color %}
         <tr id="{{ item }}" style="color: {{ color }}">
           <td></td>
           <td class="py-1" id="{{ item }}_path">{{ item }}</td>
@@ -221,25 +233,35 @@
               {% endif %}
             </td>
             <td class="py-1" id="{{ item }}_nextvalue">
-              {{ p._webdata['items'][item]['planned']['value'] }}
+              {{ p._webdata['items'][item]['planned']['value'] | replace('.0', '') }}
             </td>
             <td class="py-1" id="{{ item }}_nexttime">
               {% if p._webdata['items'][item]['planned']['time'] == '-' %}
               -
               {% else %}
-                &#x202a;{{ p._webdata['items'][item]['planned']['time'] }}&#x202c;
+                &#8234;{{ p._webdata['items'][item]['planned']['time'] }}&#8236;
               {% endif %}
             </td>
             <td class="py-1" id="{{ item }}_lastvalue">
                 {{ p._webdata['items'][item]['lastvalue'] }}
             </td>
-            <td class="py-1" id="{{ item }}_interpolation">
+            {% if p._webdata['items'][item]['interpolation'] is not defined %}
+                {% set intpl_color = 'red' %}
+            {% elif p._webdata['items'][item]['interpolationrunning'] != 'True' %}
+                {% set intpl_color = 'gray' %}
+            {% endif %}
+            <td class="py-1" id="{{ item }}_interpolation" style="color: {{ intpl_color }}">
               {% if p._webdata['items'][item]['interpolation'] is not defined %}
                 {{ _('fehlt!') }}
               {% elif p._webdata['items'][item]['interpolation']['type'] %}
                 {{ p._webdata['items'][item]['interpolation']['type'] }}
                 {% if p._webdata['items'][item]['interpolation']['type'] != 'none' and p._webdata['items'][item]['interpolation']['interval'] %}
-                  ({{ p._webdata['items'][item]['interpolation']['interval'] }})
+                    {% if p._webdata['items'][item]['interpolation']['perday'] == true %}
+                        {% set perday = ', per day' %}
+                    {% else %}
+                        {% set perday = '' %}
+                    {% endif %}
+                  ({{ p._webdata['items'][item]['interpolation']['interval'] }}{{ perday }})
                 {% endif %}
               {% else %}-
               {% endif %}
