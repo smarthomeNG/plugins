@@ -121,11 +121,16 @@ Interpolation
 
 .. important::
 
-      Wenn die Interpolation aktiviert ist, wird das UZSU Item im gegebenen Intervall aktualisiert, auch wenn der nächste UZSU Eintrag über die Tagesgrenze hinaus geht. Gibt es beispielsweise heute um 23:00 einen Eintrag mit dem Wert 100 und morgen um 1:00 einen Eintrag mit dem Wert 0, wird zwischen den beiden Zeitpunkten der Wert kontinuierlich abnehmen. Bei linearer Interpolation wird um Mitternacht der Wert 50 geschrieben.
+      Wenn die Interpolation aktiviert und der "per day" Parameter auf False gesetzt ist, wird das UZSU Item im gegebenen Intervall
+      aktualisiert, auch wenn der nächste UZSU Eintrag über die Tagesgrenze hinaus geht. Gibt es beispielsweise heute um 23:00 einen
+      Eintrag mit dem Wert 100 und morgen um 1:00 einen Eintrag mit dem Wert 0, wird zwischen den beiden Zeitpunkten der Wert
+      kontinuierlich abnehmen. Bei linearer Interpolation wird um Mitternacht der Wert 50 geschrieben.
+      Dieses Verhalten kann durch Setzen von ``perday`` auf True insofern geändert werden, dass dann nur die Einträge des aktuellen
+      Tages für die Interpolation herangezogen werden. Vor dem ersten und nach dem letzten Tageseintrag wird nicht interpoliert.
 
 Interpolation ist ein eigenes Dict innerhalb des UZSU Dictionary mit folgenden Einträgen:
 
--  **type**: string, setzt die mathematische Interpolationsfunktion cubic, linear oder none. Ist der Wert cubic oder linear gesetzt, wird der für die aktuelle Zeit interpolierte Wert sowohl beim Pluginstart als auch im entsprechenden Intervall gesetzt.
+-  **type**: string (Standard 'none'), setzt die mathematische Interpolationsfunktion cubic, linear oder none. Ist der Wert cubic oder linear gesetzt, wird der für die aktuelle Zeit interpolierte Wert sowohl beim Pluginstart als auch im entsprechenden Intervall gesetzt.
 
 -  **interval**: integer, setzt den zeitlichen Abstand (in Sekunden) der automatischen UZSU Auslösungen
 
@@ -133,7 +138,9 @@ Interpolation ist ein eigenes Dict innerhalb des UZSU Dictionary mit folgenden E
 
 -  **itemtype**: Der Item-Typ des uzsu_item, das durch die UZSU gesetzt werden soll. Dieser Wert wird beim Pluginstart automatisch ermittelt und sollte nicht verändert werden.
 
--  **initizialized**: bool, wird beim Pluginstart automatisch gesetzt, sobald ein gültiger Eintrag innerhalb der initage Zeit gefunden wurde und diese Initialisierung tatsächlich ausgeführt wurde.
+-  **initizialized**: bool, wird beim Pluginstart automatisch gesetzt, sobald ein gültiger Eintrag innerhalb der initage Zeit gefunden  und diese Initialisierung tatsächlich ausgeführt wurde.
+
+-  **perday**: bool (Standard False), bestimmt, ob die Interpolation nur Schaltpunkte des aktuellen Tages berücksichtigen soll (True) oder sämtliche Einträge, die unter Umständen über die ganze Woche verteilt sind (False).
 
 Ist die Interpolation und die Einmal-Funktion (global oder für einen Eintrag) aktiviert, so werden so viele interpolierte Schaltvorgänge durchgeführt, bis der tatsächlich hinterlegte Wert erreich ist. Erst dann wird der Eintrag oder die UZSU deaktiviert.
 
@@ -143,6 +150,7 @@ Pluginfunktionen
 Detaillierte Informationen zu den Funktionen des Plugins sind unter :doc:`/plugins_doc/config/uzsu` zu finden.
 Sämtliche Pluginfunktionen funktionieren auch als Itemfunktionen für UZSU Items. Dabei muss beim Funktionsaufruf das Item nicht angegeben werden.
 Beispiel: Die Pluginfunktion sh.uzsu.activate(True, sh.test.uzsu) ist identisch mit dem Aufruf sh.test.uzsu.activate(True)
+Es wird allerdings empfohlen, den ersten Ansatz zu wählen, um etwaige Überschneidungen mit anderen Itemfunktionen zu vermeiden.
 
 
 Web Interface
@@ -188,10 +196,11 @@ Folgender Python Aufruf bzw. Dictionary Eintrag schaltet das Licht jeden zweiten
    sh.eg.wohnen.leuchte.uzsu({'active':True, 'list':[
    {'value':100, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2', 'time': '16:30'},
    {'value':0, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2', 'time': '17:30'}],
-   'interpolation': {'interval': 5, 'type': 'cubic', 'initialized': False, 'itemtype': 'num', 'initage': 0}, 'sunrise': '07:45', 'sunset': '17:23', 'SunCalculated': {'sunrise':
+   'interpolation': {'interval': 5, 'type': 'cubic', 'initialized': False, 'itemtype': 'num', 'initage': 0, 'perday': False}, 
+   'sunrise': '07:45', 'sunset': '17:23', 'SunCalculated': {'sunrise':
    {'TU': '07:36', 'WE': '07:38', 'TH': '07:34', 'FR': '07:32', 'SA': '07:30', 'SU': '07:28', 'MO': '07:26'},
-   'sunset': {'TU': '17:16', 'WE': '17:18', 'TH': '17:20', 'FR': '17:22', 'SA': '17:23', 'SU': '17:25', 'MO': '17:27'}},
-   'plugin_version': '1.6.1'})
+   'sunset': {'TU': '17:16', 'WE': '17:18', 'TH': '17:20', 'FR': '17:22', 'SA': '17:23', 'SU': '17:25', 'MO': '17:27'}}
+   })
 
 
 Datenformat
