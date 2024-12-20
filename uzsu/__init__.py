@@ -242,7 +242,8 @@ class UZSU(SmartPlugin):
                 _sunset = _sunset.astimezone(self._timezone)
             self._items[item]['sunrise'] = f'{_sunrise.hour:02}:{_sunrise.minute:02}'
             self._items[item]['sunset'] = f'{_sunset.hour:02}:{_sunset.minute:02}'
-            self.logger.debug(f'Updated sun entries for item {item}, triggered by {caller}. sunrise: {self._items[item]["sunrise"]}, sunset: {self._items[item]["sunset"]}')
+            self.logger.debug(f'Updated sun entries for item {item}, triggered by {caller}. '
+                              f'sunrise: {self._items[item]["sunrise"]}, sunset: {self._items[item]["sunset"]}')
             success = True
         except Exception as e:
             success = f'Not updated sun entries for item {item}. Error {e}'
@@ -265,7 +266,8 @@ class UZSU(SmartPlugin):
             self._update_item(item, 'UZSU Plugin', 'update_sun')
             self._write_dict_to_item(item, 'UZSU Plugin', 'update_sun')
         elif update is True and not entry.get('calculated') == entryvalue:
-            self.logger.debug(f'Updated calculated time for item {item} entry {self._items[item]["list"][entryindex]} with value {entryvalue}.')
+            self.logger.debug(f'Updated calculated time for item {item} entry '
+                              f'{self._items[item]["list"][entryindex]} with value {entryvalue}.')
             self._items[item]['list'][entryindex]['calculated'] = entryvalue
             self._update_item(item, 'UZSU Plugin', 'update_sun')
             self._write_dict_to_item(item, 'UZSU Plugin', 'update_sun')
@@ -369,7 +371,8 @@ class UZSU(SmartPlugin):
             self._items[item]['interpolation']['interval'] = abs(int(interval))
             self._items[item]['interpolation']['initage'] = abs(int(backintime))
             self._items[item]['interpolation']['perday'] = bool(perday)
-            self.logger.info(f'Item {item} interpolation is set via logic to: type={intpl_type}, interval={abs(interval)}, backintime={backintime}, perday={perday}')
+            self.logger.info(f'Item {item} interpolation is set via logic to: '
+                             f'type={intpl_type}, interval={abs(interval)}, backintime={backintime}, perday={perday}')
             self._update_item(item, 'UZSU Plugin', 'logic')
             self._write_dict_to_item(item, 'UZSU Plugin', 'logic')
             return self._items[item].get('interpolation')
@@ -536,7 +539,8 @@ class UZSU(SmartPlugin):
                             self._items[item]['list'][self._items[item]['list'].index(entry)].update({'active': False})
                             time = entry['time']
                             oldvalue, newvalue = entry['value'], new['value']
-                            self.logger.warning(f'Set old entry for item "{item}" at {time} with value {oldvalue} to inactive because newer active entry with value {newvalue} found.')
+                            self.logger.warning(f'Set old entry for item "{item}" at {time} with value {oldvalue} '
+                                                f'to inactive because newer active entry with value {newvalue} found.')
 
     def _check_rruleandplanned(self, item):
         if self._items[item].get('list'):
@@ -621,12 +625,14 @@ class UZSU(SmartPlugin):
         if success is True:
             self.logger.debug(f'Updated seriesCalculated for item {item} caller: {caller} comment: {comment}')
         else:
-            self.logger.debug(f'Issues with updating seriesCalculated for item {item} caller: {caller} comment: {comment}, issue: {success}')
+            self.logger.debug(f'Issues with updating seriesCalculated for item {item} '
+                              f'caller: {caller} comment: {comment}, issue: {success}')
         success = self._update_sun(item, caller="_update_item")
         if success is True:
             self.logger.debug(f'Updated sunset/rise calculations for item {item} caller: {caller} comment: {comment}')
         else:
-            self.logger.debug(f'Issues with updating sunset/rise calculations for item {item} caller: {caller} comment: {comment}, issue: {success}')
+            self.logger.debug(f'Issues with updating sunset/rise calculations for item {item} '
+                              f'caller: {caller} comment: {comment}, issue: {success}')
         #item(self._items[item], caller, comment)
         self._webdata['items'][item.property.path].update({'interpolation': self._items[item].get('interpolation')})
         if self._webdata['items'][item.property.path].get('interpolationrunning') is None:
@@ -722,29 +728,34 @@ class UZSU(SmartPlugin):
                 cond_preparing = series_finished is False and not series_started
                 series_status = "preparing" if cond_preparing else "running" if cond_running else "finished" if cond_finished else "-"
                 self._series[item][i] = series_status
-                self.logger.debug(f"{item}, i {i} series_finished {series_finished} series_started {series_started} cond_running {cond_running} series_status {series_status}")
+                self.logger.debug(f"{item}, i {i} series_finished {series_finished} series_started {series_started} "
+                                  f"cond_running {cond_running} series_status {series_status}")
                 cond1 = next is None and previous is not None
                 cond2 = previous is not None and next is not None and previous < next
                 if cond1 or cond2:
                     next = previous
                     value = previousvalue
                 if next is not None:
-                    self.logger.debug(f'uzsu active entry for item {item} with datetime {next}, value {value} and tzinfo {next.tzinfo}. Series {self._series[item]}')
+                    self.logger.debug(f'uzsu active entry for item {item} with datetime {next}, '
+                                      f'value {value} and tzinfo {next.tzinfo}. Series {self._series[item]}')
                 if _next is None:
                     _next = next
                     _value = value
                     _entryindex = i
                 elif next and next < _next:
-                    self.logger.debug(f'uzsu active entry for item {item} using now {next}, value {value} and tzinfo {next.tzinfo}')
+                    self.logger.debug(f'uzsu active entry for item {item} using now {next}, '
+                                      f'value {value} and tzinfo {next.tzinfo}')
                     _next = next
                     _value = value
                     _entryindex = i
                 else:
-                    self.logger.debug(f'uzsu active entry for item {item} keep {_next}, value {_value} and tzinfo {_next.tzinfo}')
+                    self.logger.debug(f'uzsu active entry for item {item} keep {_next}, '
+                                      f'value {_value} and tzinfo {_next.tzinfo}')
                 if self._items[item]["list"][i].get("series"):
                     #series_status = self._series.get(i)
                     if self._items[item]["list"][i].get("once") and series_status == "finished":
-                        self.logger.debug(f'Deactivating list entry {i} for item {item} because series is finished and set to once')
+                        self.logger.debug(f'Deactivating list entry {i} for item {item} '
+                                          f'because series is finished and set to once')
                         self._items[item]["list"][i]["active"] = False
                         _next = None
                         self._series[item][i] = "waiting"
@@ -823,7 +834,8 @@ class UZSU(SmartPlugin):
                     _value_now = self._interpolate(self._itpl[item], entry_now, _interpolation.lower() == 'linear')
                     if _caller != "dry_run" and _interpolated and _value:
                         self._set(item=item, value=_value_now, caller=_caller, interpolated=_interpolated)
-                        self.logger.info(f'Updated: {item}, {_interpolation.lower()} interpolation value: {_value_now}, based on dict: {self._itpl[item]}. Next: {_next}, value: {_value}')
+                        self.logger.info(f'Updated: {item}, {_interpolation.lower()} interpolation value: {_value_now}, '
+                                         f'based on dict: {self._itpl[item]}. Next: {_next}, value: {_value}')
                     if _value is None:
                         _value = _oldvalue
                         _next = _oldnext
@@ -839,7 +851,8 @@ class UZSU(SmartPlugin):
                 update = 'init' if update == 'init' else 'reset_interpolation'
                 self._update_item(item, 'UZSU Plugin', 'reset_interpolation')
             if _caller != "dry_run":
-                self.logger.debug(f'will add scheduler named uzsu_{item.property.path} with datetime {_next} and tzinfo {_next.tzinfo} and value {_value} based on list index {_entryindex}')
+                self.logger.debug(f'will add scheduler named uzsu_{item.property.path} with datetime {_next} and '
+                                  f'tzinfo {_next.tzinfo} and value {_value} based on list index {_entryindex}')
                 self._planned.update({item: {'value': _value, 'next': _next.strftime('%d.%m.%Y %H:%M:%S')}})
                 self._webdata['items'][item.property.path].update({'planned': {'value': _value, 'time': _next.strftime('%d.%m.%Y %H:%M:%S')}})
                 self._webdata['items'][item.property.path].update({'seriesrunning': 'True' if self._series[item].get(_entryindex) == "running" else 'False'})
@@ -1012,7 +1025,8 @@ class UZSU(SmartPlugin):
                     return None, None, False
                 self._itpl[item][next.timestamp() * 1000.0] = value
                 rstr = str(entry['rrule']).replace('\n', ';')
-                self.logger.debug(f'{item}: Looking for {timescan} series-related time. Found rrule: {rstr} with start-time {entry["series"]["timeSeriesMin"]}. Next: {next}')
+                self.logger.debug(f'{item}: Looking for {timescan} series-related time. Found rrule: {rstr} '
+                                  f'with start-time {entry["series"]["timeSeriesMin"]}. Next: {next}')
 
             cond_today = False if next is None else next.date() == today.date()
             cond_yesterday = False if next is None else next.date() - timedelta(days=1) == yesterday.date()
@@ -1095,7 +1109,8 @@ class UZSU(SmartPlugin):
                         if int(daycount) * interval >= 1440:
                             org_daycount = daycount
                             daycount = int(1439 / interval)
-                            self.logger.warning(f'Cut your SerieCount to {daycount} - because interval {interval} x SerieCount {org_daycount} is more than 24h')
+                            self.logger.warning(f'Cut your SerieCount to {daycount} - because interval {interval} '
+                                                f'x SerieCount {org_daycount} is more than 24h')
 
                     if 'sun' not in mydict['series']['timeSeriesMin']:
                         starttime = datetime.strptime(mydict['series']['timeSeriesMin'], "%H:%M")
@@ -1133,7 +1148,8 @@ class UZSU(SmartPlugin):
                     else:
                         new_daycount = int((timediff.total_seconds() // 60) // interval + 1)
                         if int(daycount) > new_daycount:
-                            self.logger.warning(f'Cut your SerieCount to {new_daycount} - because interval {interval} x SerieCount {daycount} is not possible between {starttime} and {endtime}')
+                            self.logger.warning(f'Cut your SerieCount to {new_daycount} - because interval {interval} '
+                                                f'x SerieCount {daycount} is not possible between {starttime} and {endtime}')
                             daycount = new_daycount
 
                     #####################
@@ -1170,7 +1186,11 @@ class UZSU(SmartPlugin):
                         except Exception:
                             max_interval = endtime - starttime
                             if exceptions == 0:
-                                self.logger.info(f'Item {item}: Between starttime {datetime.strftime(starttime, "%H:%M")} and endtime {datetime.strftime(endtime, "%H:%M")} is a maximum valid interval of {max_interval.seconds // 3600:02d}:{max_interval.seconds % 3600//60:02d}. {mydict["series"]["timeSeriesIntervall"]} is set too high for a continuous series trigger. The UZSU will only be scheduled for the start time.')
+                                self.logger.info(f'Item {item}: Between starttime {datetime.strftime(starttime, "%H:%M")} '
+                                                 f'and endtime {datetime.strftime(endtime, "%H:%M")} is a maximum '
+                                                 f'valid interval of {max_interval.seconds // 3600:02d}:{max_interval.seconds % 3600//60:02d}. '
+                                                 f'{mydict["series"]["timeSeriesIntervall"]} is set too high for a continuous series trigger. '
+                                                 f'The UZSU will only be scheduled for the start time.')
                             exceptions += 1
                             max_interval = int(max_interval.total_seconds() / 60)
                             myrulenext = f'FREQ=MINUTELY;COUNT=1;INTERVAL={max_interval}'
@@ -1210,14 +1230,16 @@ class UZSU(SmartPlugin):
                                 mytpl['seriesMax'] = f'{endtime.hour:02d}:{endtime.minute:02d}'
                             mytpl['maxCountCalculated'] = count if exceptions == 0 else 0
                             mytpl['seriesDay'] = actday
-                            self.logger.debug(f'Mytpl for last time of day: {mytpl}, count {count} daycount {original_daycount}, interval {interval}')
+                            self.logger.debug(f'Mytpl for last time of day: {mytpl}, count {count} daycount '
+                                              f'{original_daycount}, interval {interval}')
                             mynewlist.append(mytpl)
 
                     if mynewlist:
                         self._items[item]['list'][i]['seriesCalculated'] = mynewlist
                         self.logger.debug(f'Series for item {item} calculated: {self._items[item]["list"][i]["seriesCalculated"]}')
                 except Exception as e:
-                    self.logger.warning(f'Error: {e}. Series entry {mydict} for item {item} could not be calculated. Skipping series calculation')
+                    self.logger.warning(f'Error: {e}. Series entry {mydict} for item {item} could not be calculated. '
+                                        f'Skipping series calculation')
                     continue
             return True
 
@@ -1323,7 +1345,10 @@ class UZSU(SmartPlugin):
             else:
                 new_daycount = int((timediff.total_seconds() // 60) // interval + 1)
                 if int(daycount) > new_daycount:
-                    self.logger.warning(f'Cut your SerieCount to {new_daycount} - because interval {interval} x SerieCount {daycount} is not possible between {datetime.strftime(starttime, "%H:%M")} and {datetime.strftime(endtime, "%H:%M")}')
+                    self.logger.warning(f'Cut your SerieCount to {new_daycount} - because interval {interval} '
+                                        f'x SerieCount {daycount} is not possible between '
+                                        f'{datetime.strftime(starttime, "%H:%M")} and '
+                                        f'{datetime.strftime(endtime, "%H:%M")}')
                     daycount = new_daycount
         mylist = OrderedDict()
         actrrule = mydict['rrule'] + ';COUNT=9'
