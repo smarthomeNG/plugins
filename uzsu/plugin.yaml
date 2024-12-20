@@ -125,9 +125,6 @@ item_structs:
                 remark: The last set value if UZSU is active
                 type: foo
                 visu_acl: ro
-                eval: sh...lastvalue('uzsu_dict_updated')
-                crontab: init = None
-                eval_trigger: ..
 
             active:
                 remark: Use this item to easily turn on or off your UZSU
@@ -145,8 +142,6 @@ item_structs:
                 remark: The next value and time
                 type: dict
                 visu_acl: ro
-                eval: sh...planned()
-                eval_trigger: ..
                 initial_value: "{'value': '-', 'next': '-'}"
 
                 value:

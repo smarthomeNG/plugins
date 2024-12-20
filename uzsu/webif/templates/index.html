@@ -128,10 +128,10 @@
         shngInsertText (item+'_dict', objResponse['items'][item]['dict'], 'maintable');
         shngInsertText (item+'_dependvalue', objResponse['items'][item]['depend']['value'], 'maintable', 10);
         shngInsertText (item+'_nextvalue', planned, 'maintable', 10);
-        if (objResponse['items'][item]['planned']['time'] === '-')
+        if (objResponse['items'][item]['planned']['next'] === '-')
           shngInsertText (item+'_nexttime', '-', 'maintable', 10);
         else
-          shngInsertText (item+'_nexttime', '&#8234;'+objResponse['items'][item]['planned']['time']+'&#8236;', 'maintable', 10);
+          shngInsertText (item+'_nexttime', '&#8234;'+objResponse['items'][item]['planned']['next']+'&#8236;', 'maintable', 10);
         shngInsertText (item+'_dependitem', depend_text, 'maintable');
         shngInsertText (item+'_lastvalue', lastvalue, 'maintable', 10);
         shngInsertText ('sunrise', sunrise_text, null, 2);
@@ -236,10 +236,10 @@
               {{ p._webdata['items'][item]['planned']['value'] | replace('.0', '') }}
             </td>
             <td class="py-1" id="{{ item }}_nexttime">
-              {% if p._webdata['items'][item]['planned']['time'] == '-' %}
+              {% if p._webdata['items'][item]['planned']['next'] == '-' %}
               -
               {% else %}
-                &#8234;{{ p._webdata['items'][item]['planned']['time'] }}&#8236;
+                &#8234;{{ p._webdata['items'][item]['planned']['next'] }}&#8236;
               {% endif %}
             </td>
             <td class="py-1" id="{{ item }}_lastvalue">
