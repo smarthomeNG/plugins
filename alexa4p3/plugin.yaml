@@ -157,12 +157,6 @@ item_attributes:
         description:
             de: 'Wert für das Stufenweise erhöhen eines Range-Controllers - z.b. Rolladen fahre hoch  - Wert von range_delta wird verwendet'
             en: 'Value to increase Value step by step for a range-controller - example : lift blind - value of range_delta will be used'
-    alexa_item_range:
-        type: str
-        mandatory: False
-        description:
-            de: 'Bereich in dem das Item angesteuert werden kann - Bsp.: 3000-6500'
-            en: 'Range to set the item to - example 3000-6500'
     alexa_color_temp_delta:
         type: num
         mandatory: False
