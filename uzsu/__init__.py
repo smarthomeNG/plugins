@@ -120,6 +120,7 @@ class UZSU(SmartPlugin):
         self._interpolation_precision = self.get_parameter_value('interpolation_precision')
         self._backintime = self.get_parameter_value('backintime')
         self._suncalculation_cron = self.get_parameter_value('suncalculation_cron')
+        self._ignore_once_entries = self.get_parameter_value('ignore_once_entries')
         self._sh = smarthome
         self._items = {}
         self._series = {}
@@ -315,7 +316,7 @@ class UZSU(SmartPlugin):
                         last_item = child
             except Exception as e:
                 self.logger.warning(f"Item '{item}' has issues setting last value: {e}")
-        self.logger.debug(f'Last value of item {itempath} is: {lastvalue}.{by_test}, write {write} last_item {last_item}')
+        self.logger.debug(f'Last value of item {itempath} is: {lastvalue}.{by_test}, write {write}')
         if last_item is not None:
             last_item(lastvalue, PLUGIN_TAG, by)
         return lastvalue
@@ -753,7 +754,7 @@ class UZSU(SmartPlugin):
         update = None
         self._update_sun(item, caller=_caller)
         self._add_dicts(item)
-        cond_activetoday = self._items[item].get('activeToday') is True and self._items[item]['interpolation'].get('perday')
+        cond_activetoday = self._ignore_once_entries is False and self._items[item].get('activeToday') is True
         if not self._items[item]['interpolation'].get('itemtype') or \
                 self._items[item]['interpolation']['itemtype'] == 'none':
             self._items[item]['interpolation']['itemtype'] = self._get_type(item)
@@ -988,7 +989,7 @@ class UZSU(SmartPlugin):
                 return None, None, None
             value = entry['value']
             next = None
-            cond_activetoday = entry.get('activeToday') is True and timescan == 'previous'
+            cond_activetoday = self._ignore_once_entries is False and entry.get('activeToday') is True and timescan == 'previous'
             active = True if caller == "dry_run" or cond_activetoday else entry.get('active')
             today = datetime.today()
             tomorrow = today + timedelta(days=1)

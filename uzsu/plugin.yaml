@@ -40,6 +40,13 @@ parameters:
             de: 'Falls True, werden Einträge mit exakt den selben Einstellungen, aber unterschiedlichem Wert durch einen neu getätigten Eintrag ersetzt'
             en: 'If True, existing entries with exactly the same settings except the value get replaced by the new entry'
 
+    ignore_once_entries:
+        type: bool
+        default: False
+        description:
+            de: 'Falls False, werden Einträge, die durch "Once" heute inaktiv geschaltet wurden, für eine etwaige Interpolation oder Berechnung des letzten Werts herangezogen.'
+            en: 'If False, entries that were deactivated today due to “Once” will be considered for any interpolation or calculation of the last value.'
+
     suncalculation_cron:
         type: str
         default: '0 0 * *'
