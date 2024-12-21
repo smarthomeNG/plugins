@@ -241,6 +241,31 @@ plugin_functions:
                 description:
                     de: "Das Item-Objekt"
                     en: "An item object"
+    set_activetoday:
+        type: bool
+        description:
+            de: 'Alle activeToday Einträge, die durch Einmalausführung gesetzt worden sind, werden auf den entsprechenden Wert gesetzt.'
+            en: 'All activeToday entries that have been set due to once evaluations are set to the specified value.'
+        description_long:
+            de: 'Setzen der activeToday Einträge eines Items.\n
+                - False: Setzen der Einträge auf False, praktisch ein Reset\n
+                - True: Setzen der Einträge auf True - im Normalfall nicht hilfreich, lediglich für Debuggingzwecke\n
+                '
+            en: 'Delete the activeToday entries of an item.\n
+                - False: Setting the entries to False, practically resetting them\n
+                - True: setting the entries to True - usually not helpful except for debugging purposes\n
+                '
+        parameters:
+            set:
+                type: bool
+                description:
+                    de: "True, um die activeToday Einträge zu aktivieren, False um sie zu deaktivieren/zurückzusetzen."
+                    en: "True to activate the activeToday entries, False to deactivate/reset them."
+            item:
+                type: foo
+                description:
+                    de: "Das Item-Objekt"
+                    en: "An item object"
     itpl:
         type: dict
         description:

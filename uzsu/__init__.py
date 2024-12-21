@@ -141,7 +141,7 @@ class UZSU(SmartPlugin):
         self.scheduler_add('uzsu_sunupdate', self._update_all_suns,
                            value={'caller': 'Scheduler:UZSU'}, cron=self._suncalculation_cron)
         self.logger.info(f"Adding sun update schedule for {self._suncalculation_cron}")
-        self.scheduler_add('uzsu_resetactivetoday', self._reset_activetoday, cron='55 59 23 * * *')
+        self.scheduler_add('uzsu_resetactivetoday', self.set_activetoday, value={'set': False}, cron='55 59 23 * * *')
         _invaliditems = []
         update = ''
         for item in self._items:
@@ -177,7 +177,6 @@ class UZSU(SmartPlugin):
             # set activeToday to false if entry is in the future (and wasn't reset correctly at midnight)
             for i, entry in enumerate(self._items[item].get('list')):
                 next, _, _ = self._get_time(entry, 'next', item, i, 'dry_run')
-                self.logger.debug(f'this entry {entry} next {next}')
                 if next and next.time() > datetime.now().time() and entry.get('activeToday'):
                     entry['activeToday'] = False
                     update = 'activeToday'
@@ -207,15 +206,6 @@ class UZSU(SmartPlugin):
         self.logger.debug("stop method called")
         self.scheduler_remove_all()
         self.alive = False
-
-    def _reset_activetoday(self):
-        """
-        Set activeToday to False for all list entries (for smartVISU)
-        """
-        for item in self._items:
-            for entry in self._items[item].get('list'):
-                entry['activeToday'] = False
-            self._write_dict_to_item(item, 'reset_activetoday')
 
     def _update_all_suns(self, caller=None):
         """
@@ -397,6 +387,34 @@ class UZSU(SmartPlugin):
             self._write_dict_to_item(item, 'logic')
             return self._items[item].get('interpolation')
 
+    def set_activetoday(self, set=False, item=None):
+        """
+        Set activeToday to False for all list entries (for smartVISU)
+        """
+        if item is None:
+            items_to_change = self._items
+        elif self._items.get(item) is None:
+            try:
+                self.logger.warning(f'Item {item.property.path} is no valid UZSU item!')
+            except:
+                self.logger.warning(f'Item {item} does not exist!')
+            return None
+        else:
+            items_to_change = [item]
+        if isinstance(set, str):
+            if set.lower() in ['1', 'yes', 'true', 'on']:
+                reset = True
+            elif set.lower() in ['0', 'no', 'false', 'off']:
+                reset = False
+            else:
+                self.logger.warning(f'Value to reset activeToday of item "{item}" has to be boolean.')
+        if isinstance(set, bool):
+            for item in items_to_change:
+                for entry in self._items[item].get('list'):
+                    entry['activeToday'] = set
+                self.logger.debug(f'Item "{item}": set all activeToday entries to {set}')
+                self._write_dict_to_item(item, 'set_activetoday')
+
     def clear(self, clear=False, item=None):
         if self._items.get(item) is None:
             try:
@@ -524,6 +542,7 @@ class UZSU(SmartPlugin):
             item.resume = functools.partial(self.resume, item=item)
             item.interpolation = functools.partial(self.interpolation, item=item)
             item.clear = functools.partial(self.clear, item=item)
+            item.set_activetoday = functools.partial(self.set_activetoday, item=item)
             item.planned = functools.partial(self.planned, item=item)
             item.itpl = functools.partial(self.itpl, item=item)
 
