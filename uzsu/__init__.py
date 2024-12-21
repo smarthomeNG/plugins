@@ -1049,14 +1049,15 @@ class UZSU(SmartPlugin):
             if 'sun' in time and 'series' not in time:
                 next = self._sun(datetime.combine(today, datetime.min.time()).replace(tzinfo=self._timezone), time, timescan)
                 cond_future = next > datetime.now(self._timezone)
+                cond_istoday = next.date() == datetime.now().date()
                 if cond_future:
                     self.logger.debug(f'{item}: Result parsing time today (sun) {time}: {next}')
                     if entryindex is not None:
                         self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
                 else:
-                    if caller != "dry_run" and not self._items[item]['interpolation'].get('perday'):
+                    if caller != "dry_run" and (not self._items[item]['interpolation'].get('perday') or cond_istoday):
                         self._itpl[item][next.timestamp() * 1000.0] = value
-                    self.logger.debug(f'{item}: Include previous today (sun): {next}, value {value} for interpolation.')
+                        self.logger.debug(f'{item}: Include previous today (sun): {next}, value {value} for interpolation.')
                     if entryindex is not None:
                         self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
                     next = self._sun(datetime.combine(tomorrow, datetime.min.time()).replace(
@@ -1074,8 +1075,10 @@ class UZSU(SmartPlugin):
                 next = self._series_get_time(entry, timescan)
                 if next is None:
                     return None, None, False
-                if caller != "dry_run":
+                cond_istoday = next.date() == datetime.now().date()
+                if caller != "dry_run" and (not self._items[item]['interpolation'].get('perday') or cond_istoday):
                     self._itpl[item][next.timestamp() * 1000.0] = value
+                    self.logger.debug(f'{item}: Include {timescan} of series: {next} for interpolation.')
                 rstr = str(entry['rrule']).replace('\n', ';')
                 self.logger.debug(f'{item}: Looking for {timescan} series-related time. Found rrule: {rstr} '
                                   f'with start-time {entry["series"]["timeSeriesMin"]}. Next: {next}')
