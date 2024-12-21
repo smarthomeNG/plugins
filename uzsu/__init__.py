@@ -928,7 +928,7 @@ class UZSU(SmartPlugin):
         if entryindex is not None and item:
             self._series[item][entryindex] = seriesstatus
             self.logger.debug(f"Updated series index {entryindex} for item {item} to {seriesstatus}. Series is now {self._series[item]}")
-        if self._items[item].get('once') and not interpolated and seriesstatus == "-":
+        if self._items[item].get('once') and not interpolated:
             self._items[item]['active'] = False
             update = 'globalonce'
             self.logger.debug(f'Deactivating UZSU for item {item} as it has "once" set to True')
