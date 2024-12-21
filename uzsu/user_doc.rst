@@ -16,7 +16,7 @@ Dieses Plugin ermöglicht gezielte Schaltvorgänge von Items zu bestimmten Uhrze
 Sonnenstand. Die automatischen Schaltungen können dabei pro Wochentag separat definiert werden.
 
 Außerdem ermöglicht eine Interpolationsfunktion das Errechnen von Werten zwischen zwei manuell
-angelegten Schaltzeiten, wodurch z.B. Lichtkurven über den Tagesverlauf umgesetzt werden können
+angelegten Schaltzeiten, wodurch z.B. Lichtkurven über den Tagesverlauf umgesetzt werden können.
 
 
 Einführung
@@ -24,6 +24,11 @@ Einführung
 
 Die Funktionsweise der universellen Zeitschaltuhr wird auf dem `SmarthomeNG Blog <https://www.smarthomeng.de/tag/uzsu>`_
 beschrieben. Dort finden sich auch einige praktische Beispiele.
+
+Setzen mehrere UZSU Einträge einen Wert zum selben Zeitpunkt, hat der früher definierte Listeneintrag Vorrang,
+weitere später gereihte Schaltvorgänge werden nicht ausgeführt.
+Beispiel: Erster Eintrag in der Liste setzt um 20:02 Uhr den Wert auf 0, der zweite Eintrag würde den Wert zur selben Zeit,
+also 20:02 Uhr auf 100 setzen. De facto wird um 20:02 Uhr der Wert auf 0 gesetzt, der zweite Eintrag wird ignoriert.
 
 
 Konfiguration
