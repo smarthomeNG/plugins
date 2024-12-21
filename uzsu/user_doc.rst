@@ -98,6 +98,15 @@ Für die universelle Zeitschaltuhr können folgende Einstellungen vorgenommen we
 * Aktivieren: Eintrag aktivieren oder deaktivieren.
 * Einmal-Schaltung ("Once"): Sowohl auf globaler Ebene als auch pro Eintrag kann eingestellt werden, dass ein Schaltvorgang nur ein Mal ausgeführt wird.
 
+Einmal-Schaltung
+----------------
+
+Für jeden Eintrag in der UZSU Liste kann eingestellt werden, ob der Eintrag nur ein einziges Mal aktiv sein soll, oder "normal" aktiv bleibt.
+Bei aktiviertem "1x" bei einem Eintrag wird dieser sofort nach dem ersten Schaltvorgang deaktiviert, es sei denn, es handelt sich um eine Serie.
+Diese wird komplett bis zum Ende abgearbeitet und erst dann deaktiviert.
+
+Die globale Einmal-Schaltung sorgt für eine Deaktivierung der UZSU direkt nach dem nächsten Schaltvorgang, unabhängig davon, ob dieser durch eine Serie oder einen
+Standardeintrag ausgelöst wurde. Serien werden in dem Fall also nicht bis zum Ende abgearbeitet.
 
 Experteneinstellungen
 ---------------------
@@ -214,7 +223,7 @@ Jedes USZU Item wird als dict-Typ gespeichert. Darin enthalten sind einige allge
 
 -  **active**: ``True`` wenn die UZSU aktiviert ist, ``False`` wenn keine Aktualisierungen vorgenommen werden sollen. Dieser Wert kann über die Pluginfunktion activate gesteuert werden.
 
--  **once**: ``True`` wenn die UZSU oder ein Eintrag nach einmaligem Schalten deaktiviert werden soll, ``False`` wenn ein Eintrag oder die UZSU öfters evaluiert werden soll.
+-  **once**: ``True`` wenn ein Eintrag nach einmaligem Schalten deaktiviert werden soll, ``False`` wenn ein Eintrag weiterhin evaluiert werden bzw. aktiv bleiben soll. Serien bleiben bis zur letzten Schaltung aktiv.
 
 -  **time**: Zeit als String. Entweder eine direkte Zeitangabe wie ``17:00`` oder eine Kombination mit Sonnenauf- und Untergang wie bei einem crontab, z.B. ``17:00<sunset``, ``sunrise>8:00``, ``17:00<sunset``.
 
