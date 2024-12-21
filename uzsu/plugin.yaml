@@ -202,8 +202,8 @@ plugin_functions:
     lastvalue:
         type: foo
         description:
-            de: 'Abfrage des zuletzt gesetzten Werts. Kann z.B. beim Aktivieren der UZSU genutzt werden, um sofort auf den gewünschten Wert zu schalten.'
-            en: 'Query the last value. Can be used to immediately set the correct value after activating an UZSU.'
+            de: 'Abfrage des zuletzt gesetzten/evaluierten Werts. Kann z.B. beim Aktivieren der UZSU genutzt werden, um sofort auf den gewünschten Wert zu schalten.'
+            en: 'Query the last calculated/set value. Can be used to immediately set the correct value after activating an UZSU.'
         parameters:
             by:
                 type: str

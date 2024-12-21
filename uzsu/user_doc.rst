@@ -170,7 +170,7 @@ Das Webinterface bietet folgende Informationen:
 
 -  **Nächstes Update**: geplanter nächster Zeitpunkt der Schaltung
 
--  **Letzter Wert**: zuletzt berechneter Wert (relevant bei Interpolation). Dies ist NICHT ident mit property.last_value!
+-  **Letzter Wert**: zuletzt berechneter Wert. Dies ist NICHT ident mit property.last_value!
 
 -  **Interpolation**: Interpolationstyp und Intervall
 

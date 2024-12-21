@@ -317,7 +317,6 @@ class UZSU(SmartPlugin):
             lastvalue = None
             itempath = None
         by_test = f' Queried by {by}' if by else ""
-        self.logger.debug(f'Last value of item {itempath} is: {lastvalue}.{by_test}')
         last_item = None
         if write is True:
             try:
@@ -326,7 +325,8 @@ class UZSU(SmartPlugin):
                         last_item = child
             except Exception as e:
                 self.logger.warning(f"Item '{item}' has issues setting last value: {e}")
-        if last_item:
+        self.logger.debug(f'Last value of item {itempath} is: {lastvalue}.{by_test}, write {write} last_item {last_item}')
+        if last_item is not None:
             last_item(lastvalue, PLUGIN_TAG, by)
         return lastvalue
 
@@ -337,10 +337,13 @@ class UZSU(SmartPlugin):
             except:
                 self.logger.warning(f'Item {item} does not exist!')
             return None
-        self.activate(True, item)
-        lastvalue = self.lastvalue(by='logic', item=item)
-        self._set(item=item, value=lastvalue, caller='logic')
-        self.logger.info(f'Resuming item {item}: Activated and value set to {lastvalue}. Active value: {activevalue}')
+        self.activate(activevalue, item)
+        if activevalue:
+            lastvalue = self.lastvalue(by='resume', item=item)
+            self._set(item=item, value=lastvalue, caller='logic')
+            self.logger.info(f'Resuming item {item}: Activated and value set to {lastvalue}.')
+        else:
+            lastvalue = None
         return lastvalue
 
     def activate(self, activevalue=None, item=None, caller='logic'):
@@ -462,7 +465,7 @@ class UZSU(SmartPlugin):
         else:
             self.logger.info(f'Nothing planned for item "{item}": {self._planned.get(item)}.')
         self._webdata['items'][item.property.path].update({'planned': _planned_value})
-        if next_item:
+        if next_item is not None:
             next_item(_planned_value, PLUGIN_TAG, 'planned')
         return None if _planned_value == {'value': '-', 'next': '-'} else self._planned[item]
 
