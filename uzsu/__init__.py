@@ -718,11 +718,9 @@ class UZSU(SmartPlugin):
             d_next = float(data[ts_next])
 
             if linear:
-
                 # linear interpolation
                 value = d_last + ((d_next - d_last) / (ts_next - ts_last)) * (time - ts_last)
             else:
-
                 # cubic interpolation with m0/m1 = 0
                 t = (time - ts_last) / (ts_next - ts_last)
                 value = (2 * t ** 3 - 3 * t ** 2 + 1) * d_last + (-2 * t ** 3 + 3 * t ** 2) * d_next
@@ -799,16 +797,16 @@ class UZSU(SmartPlugin):
                 else:
                     self.logger.debug(f'uzsu active entry for item {item} keep {_next}, '
                                       f'value {_value} and tzinfo {_next.tzinfo}')
-                if self._items[item]["list"][i].get("series"):
-                    #series_status = self._series.get(i)
-                    if self._items[item]["list"][i].get("once") and series_status == "finished":
-                        self.logger.debug(f'Deactivating list entry {i} for item {item} '
-                                          f'because series is finished and set to once')
-                        self._items[item]["list"][i]["active"] = False
-                        _next = None
-                        self._series[item][i] = "waiting"
-                        update = 'once'
-                        self._update_item(item,  'once')
+                cond_once = self._items[item]["list"][i].get("once") and series_status == "finished"
+                if self._items[item]["list"][i].get("series") and cond_once:
+                    self.logger.debug(f'Deactivating list entry {i} for item {item} '
+                                      f'because series is finished and set to once')
+                    self._items[item]["list"][i]["active"] = False
+                    _next = None
+                    self._series[item][i] = "waiting"
+                    update = 'once'
+                    self._update_item(item,  'once')
+            self.logger.debug(f'uzsu for item {item} final next {_next}, value {_value} and tzinfo {_next.tzinfo}')
 
         elif not self._items[item].get('list') and self._items[item].get('active') is True:
             self.logger.warning(f'item "{item}" is active but has no entries.')
@@ -884,7 +882,7 @@ class UZSU(SmartPlugin):
                         self._set(item=item, value=_value_now, caller=_caller, interpolated=_interpolated)
                         self.logger.info(f'Updated: {item}, {_interpolation.lower()} interpolation value: {_value_now}, '
                                          f'based on dict: {self._itpl[item]}. Next: {_next}, value: {_value}')
-                    if _value is None:
+                    if _value is None or _interpolated is False:
                         _value = _oldvalue
                         _next = _oldnext
                         _interpolated = False
@@ -893,7 +891,7 @@ class UZSU(SmartPlugin):
                 except Exception as e:
                     self.logger.error(f'Error {_interpolation.lower()} interpolation for item {item} with interpolation list {self._itpl[item]}: {e}')
             if cond5 and _value < 0:
-                self.logger.warning(f'value {_value} for item "{item}" is negative. This might be due to not enough values set in the UZSU.')
+                self.logger.info(f'value {_value} for item "{item}" is negative. This might be due to not enough values set in the UZSU.')
             if _reset_interpolation is True:
                 self._items[item]['interpolation']['type'] = 'none'
                 update = 'init' if update == 'init' else 'reset_interpolation'
