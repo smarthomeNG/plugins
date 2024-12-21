@@ -969,7 +969,7 @@ class UZSU(SmartPlugin):
                 return None, None, None
             value = entry['value']
             next = None
-            cond_activetoday = entry.get('activeToday') is True and self._items[item]['interpolation'].get('perday')
+            cond_activetoday = entry.get('activeToday') is True and timescan == 'previous'
             active = True if caller == "dry_run" or cond_activetoday else entry.get('active')
             today = datetime.today()
             tomorrow = today + timedelta(days=1)
