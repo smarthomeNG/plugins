@@ -678,6 +678,7 @@ class GithubPlugin(SmartPlugin):
 
         # abort if worktree isn't clean
         if local.is_dirty() or local.untracked_files != []:
+            self.logger.debug(f'repo {name}: dirty: {local.is_dirty()}, untracked files: {local.untracked_files}')
             self.repos[name]['clean'] = False
             return False
 
@@ -685,8 +686,9 @@ class GithubPlugin(SmartPlugin):
         try:
             remote = self.gh.get_repo(entry['owner'], entry['gh_repo'])
             r_branch = remote.get_branch(branch=entry['branch'])
-            l_head = local.heads[entry['branch']].commit.hexsha
             r_head = r_branch.commit.sha
+
+            l_head = local.heads[entry['branch']].commit.hexsha
         except AttributeError:
             if exc:
                 f = self.loggerr
@@ -699,6 +701,16 @@ class GithubPlugin(SmartPlugin):
             return False
 
         clean = l_head == r_head
+        if not clean:
+            try:
+                _ = list(repo.iter_commits(r_head))
+                # as clean is excluded, we must be ahead. Possibly out changes are not saved, so stay as "not clean""
+                pass
+            except git.exc.GitCommandError:
+                # commit not in local, we are not clean and not ahead, so we are behind
+                # being beind with clean worktree means nothing gets lost or overwritten. Allow operations
+                clean = True
+
         self.repos[name]['clean'] = clean
         return clean
 
