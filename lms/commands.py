@@ -9,6 +9,10 @@ commands = {
         'listenmode': {'read': True, 'write': True, 'write_cmd': 'listen {RAW_VALUE:01}', 'item_type': 'bool', 'dev_datatype': 'LMSonoff', 'reply_pattern': r'listen (\d)', 'item_attrs': {'custom1': ''}},
         'playercount': {'read': True, 'write': False, 'read_cmd': 'player count ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'player count (\d+)', 'item_attrs': {'initial': True, 'custom1': ''}},
         'favoritescount': {'read': True, 'write': False, 'read_cmd': 'favorites items', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'favorites items\s+ count:(\d+)', 'item_attrs': {'initial': True, 'custom1': ''}},
+        'syncgroups': {
+            'members': {'read': True, 'write': False, 'read_cmd': 'syncgroups ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'syncgroups sync_members:(.*) sync_member_names:', 'item_attrs': {'initial': True, 'custom1': ''}},
+            'names': {'read': True, 'write': False, 'read_cmd': 'syncgroups ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'syncgroups sync_members:.* sync_member_names:(.*)', 'item_attrs': {'initial': False, 'custom1': ''}},
+        }
     },
     'database': {
         'rescan': {
@@ -82,14 +86,12 @@ commands = {
         'info': {
             'playlists': {
                 'count': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} playlists', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': r'{CUSTOM_PATTERN1} playlists\s+count:(\d+)', 'item_attrs': {'initial': True}},
-                'names': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} playlists name', 'item_type': 'dict', 'dev_datatype': 'LMSPlaylists', 'reply_pattern': r'{CUSTOM_PATTERN1} playlists name\s+(.*)\s+count:(?:\d+)', 'item_attrs': {'initial': True}},
-
+                'names': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} playlists name', 'item_type': 'dict', 'dev_datatype': 'LMSPlaylists', 'reply_pattern': r'{CUSTOM_PATTERN1} playlists name\s+(.*)\s+count:(?:\d+)', 'item_attrs': {'initial': True}}
             },
             'status': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} status', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'{CUSTOM_PATTERN1} status\s+(.*)', 'item_attrs': {'initial': True}},
             'connected': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} connected ?', 'item_type': 'bool', 'dev_datatype': 'LMSConnection', 'reply_pattern': [r'{CUSTOM_PATTERN1} (?:connected|client) (\d|disconnect|reconnect)', '{CUSTOM_PATTERN1} status(?:.*)player_connected:([^\s]+)']},
             'ip': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} ip ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': ['{CUSTOM_PATTERN1} ip (.*)', '{CUSTOM_PATTERN1} status(?:.*)player_ip:([^:\s]+)']},
             'name': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} name ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': ['{CUSTOM_PATTERN1} name (.*)', '{CUSTOM_PATTERN1} status(?:.*)player_name:([^\s]+)']},
-            'syncgroups': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} syncgroups ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} syncgroups (\d+)', 'item_attrs': {'initial': True}},
             'signalstrength': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} signalstrength ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': ['{CUSTOM_PATTERN1} signalstrength (\d+)', '{CUSTOM_PATTERN1} status(?:.*)signalstrength:([^\s]+)']},
             'genre': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} genre ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} genre (.*)'},
             'artist': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} artist ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} artist (.*)'},

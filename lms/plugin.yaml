@@ -311,6 +311,34 @@ item_structs:
             sqb_read_initial@instance: true
             sqb_custom1@instance: ''
 
+        syncgroups:
+
+            read:
+                type: bool
+                enforce_updates: true
+                sqb_read_group_trigger@instance: server.syncgroups
+
+            members:
+                type: str
+                sqb_command@instance: server.syncgroups.members
+                sqb_read@instance: true
+                sqb_write@instance: false
+                sqb_read_group@instance:
+                -   server
+                -   server.syncgroups
+                sqb_read_initial@instance: true
+                sqb_custom1@instance: ''
+
+            names:
+                type: str
+                sqb_command@instance: server.syncgroups.names
+                sqb_read@instance: true
+                sqb_write@instance: false
+                sqb_read_group@instance:
+                -   server
+                -   server.syncgroups
+                sqb_custom1@instance: ''
+
     database:
 
         read:
@@ -967,16 +995,6 @@ item_structs:
                 -   player
                 -   player.info
 
-            syncgroups:
-                type: num
-                sqb_command@instance: player.info.syncgroups
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   player
-                -   player.info
-                sqb_read_initial@instance: true
-
             signalstrength:
                 type: num
                 sqb_command@instance: player.info.signalstrength
@@ -1097,6 +1115,36 @@ item_structs:
                 -   ALL.server
                 sqb_read_initial@instance: true
                 sqb_custom1@instance: ''
+
+            syncgroups:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    sqb_read_group_trigger@instance: ALL.server.syncgroups
+
+                members:
+                    type: str
+                    sqb_command@instance: server.syncgroups.members
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    sqb_read_group@instance:
+                    -   ALL
+                    -   ALL.server
+                    -   ALL.server.syncgroups
+                    sqb_read_initial@instance: true
+                    sqb_custom1@instance: ''
+
+                names:
+                    type: str
+                    sqb_command@instance: server.syncgroups.names
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    sqb_read_group@instance:
+                    -   ALL
+                    -   ALL.server
+                    -   ALL.server.syncgroups
+                    sqb_custom1@instance: ''
 
         database:
 
@@ -1781,17 +1829,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
-
-                syncgroups:
-                    type: num
-                    sqb_command@instance: player.info.syncgroups
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
-                    sqb_read_initial@instance: true
 
                 signalstrength:
                     type: num
