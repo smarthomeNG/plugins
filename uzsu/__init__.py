@@ -645,13 +645,6 @@ class UZSU(SmartPlugin):
         else:
             self.logger.info(f'Dry run of scheduler calculation for item {item} to get calculated sunset/rise entries. Source: {source}')
             self._schedule(item, caller='dry_run')
-        try:
-            current_value = self.itemsApi.return_item(str(item)).property.value
-        except:
-            current_value = None
-        if cond and self._items[item] != current_value:
-            self._update_item(item,  'update')
-            #self._write_dict_to_item(item, 'update')
 
     def _write_dict_to_item(self, item, comment=""):
         try:
@@ -681,7 +674,6 @@ class UZSU(SmartPlugin):
         else:
             self.logger.debug(f'Issues with updating sunset/rise calculations for item {item} '
                               f'comment: {comment}, issue: {success}')
-        #item(self._items[item], PLUGIN_TAG, comment)
         self._webdata['items'][item.property.path].update({'interpolation': self._items[item].get('interpolation')})
         if self._webdata['items'][item.property.path].get('interpolationrunning') is None:
             self._webdata['items'][item.property.path].update({'interpolationrunning': 'False'})
@@ -694,6 +686,8 @@ class UZSU(SmartPlugin):
             _uzsuitem, _itemvalue = self._get_dependant(item)
             item_id = None if _uzsuitem is None else _uzsuitem.property.path
             self._webdata['items'][item.property.path].update({'depend': {'item': item_id, 'value': str(_itemvalue)}})
+        if not comment.startswith('schedule_'):
+            self._write_dict_to_item(item, comment)
 
     def _interpolate(self, data: dict, time: float, linear=True, use_precision=True):
         """
@@ -821,8 +815,8 @@ class UZSU(SmartPlugin):
             if _interval < 0:
                 _interval = abs(int(_interval))
                 self._items[item]['interpolation']['interval'] = _interval
-                update = 'intervalchange'
-                self._update_item(item,  'intervalchange')
+                update = 'schedule_intervalchange'
+                self._update_item(item, update)
             _interpolation = self._items[item]['interpolation'].get('type')
             _interpolation = self._interpolation_type if not _interpolation else _interpolation
             _initage = self._items[item]['interpolation'].get('initage')
@@ -859,8 +853,8 @@ class UZSU(SmartPlugin):
             if not cond2 and cond3 and cond4:
                 self.logger.info(f'Looking if there was a value set after {_timediff} for item {item}')
                 self._items[item]['interpolation']['initialized'] = True
-                update = 'init'
-                self._update_item(item,  'init')
+                update = 'schedule_init'
+                self._update_item(item, update)
             if cond1 and not cond2 and cond3 and cond6:
                 self._set(item=item, value=_initvalue, caller=_caller)
                 self.logger.info(f'Updated item {item} on startup with value {_initvalue} from time {datetime.fromtimestamp(_inittime/1000.0)}')
@@ -895,8 +889,8 @@ class UZSU(SmartPlugin):
                 self.logger.info(f'value {_value} for item "{item}" is negative. This might be due to not enough values set in the UZSU.')
             if _reset_interpolation is True:
                 self._items[item]['interpolation']['type'] = 'none'
-                update = 'init' if update == 'init' else 'reset_interpolation'
-                self._update_item(item,  'reset_interpolation')
+                update = 'schedule_reset_interpolation'
+                self._update_item(item, update)
             if _caller != "dry_run":
                 self.logger.debug(f'will add scheduler named uzsu_{item.property.path} with datetime {_next} and '
                                   f'tzinfo {_next.tzinfo} and value {_value} based on list index {_entryindex}')
@@ -905,8 +899,8 @@ class UZSU(SmartPlugin):
                 self._webdata['items'][item.property.path].update({'seriesrunning': 'True' if self._series[item].get(_entryindex) == "running" else 'False'})
                 self._webdata['items'][item.property.path].update({'interpolationrunning': str(_interpolated)})
                 self._update_count['done'] = self._update_count.get('done', 0) + 1
-                update = 'init' if update == 'init' else 'add_scheduler'
-                self._update_item(item,  'add_scheduler')
+                update = 'schedule_add_scheduler'
+                self._update_item(item, update)
                 self.scheduler_add(item.property.path, self._set,
                                    value={'item': item, 'value': _value, 'caller': 'Scheduler',
                                           'entryindex': _entryindex, 'interpolated': _interpolated,
@@ -917,7 +911,10 @@ class UZSU(SmartPlugin):
         elif self._items[item].get('active') is True and self._items[item].get('list'):
             self._planned.update({item: None})
             self._webdata['items'][item.property.path].update({'planned': {'value': '-', 'next': '-'}})
-        if update is not None:
+        if update is None:
+            self.logger.debug("Updating item...")
+            self._update_item(item, 'schedule')
+        else:
             self.planned(item, True)
             self.lastvalue(by=update, item=item, write=True)
             self._write_dict_to_item(item, update)
