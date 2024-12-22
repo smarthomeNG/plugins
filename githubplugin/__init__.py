@@ -39,6 +39,10 @@ from github import Github
 from git import Repo
 
 
+#
+# this is NOT the plugin class...
+#
+
 class GitHubHelper(object):
     """ Helper class for handling the GitHub API """
 
@@ -268,6 +272,11 @@ class GitHubHelper(object):
         return sorted(plugins)
 
 
+#
+# this IS the plugin class :)
+#
+
+
 class GithubPlugin(SmartPlugin):
     """
     This class supports testing foreign plugins by letting the user select a
@@ -275,7 +284,7 @@ class GithubPlugin(SmartPlugin):
     that fork. Additionally, the specified plugin will be soft-linked into the
     "live" plugins repo worktree as a private plugin.
     """
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '1.0.1'
     REPO_DIR = 'priv_repos'
 
     def loggerr(self, msg):
@@ -321,6 +330,9 @@ class GithubPlugin(SmartPlugin):
             os.mkdir(self.repo_path)
 
         self.gh_apikey = self.get_parameter_value('app_token')
+        self.supermode = self.get_parameter_value('supermode') == "'I KNOW WHAT I'M DOING!'"
+        if self.supermode:
+            self.logger.warning('supermode active, be very careful...')
         self.gh = GitHubHelper(self._sh.shtime, apikey=self.gh_apikey, logger=self.logger)
 
         self.init_webinterface(WebInterface)
@@ -338,10 +350,10 @@ class GithubPlugin(SmartPlugin):
             return
 
         self.logger.debug('checking plugin links')
-        pathlist = Path(self.plg_path).glob('priv_*')
+        pathlist = Path(self.plg_path).glob('*')
         for item in pathlist:
             if not item.is_symlink():
-                self.logger.debug(f'ignoring {item}, is not symlink')
+                # self.logger.debug(f'ignoring {item}, is not symlink')
                 continue
             target = os.path.join(self.plg_path, os.readlink(str(item)))
             if not os.path.isdir(target):
@@ -373,8 +385,7 @@ class GithubPlugin(SmartPlugin):
             repo_path = os.path.join(self.repo_path, owner)
             wt_path = os.path.join(self.repo_path, f'{owner}_wt_{branch}')
 
-            # use part of link name after ".../plugins/priv_"
-            name = str(item)[len(self.plg_path) + 6:]
+            name = str(item)[len(self.plg_path) + 1:]
 
             self.repos[name] = {
                 'plugin': plugin,
@@ -391,6 +402,7 @@ class GithubPlugin(SmartPlugin):
                 'repo': repo,
             }
             self.repos[name]['clean'] = self.is_repo_clean(name, exc)
+            self.logger.info(f'added plugin {plugin} with name {name} in {item}')
 
     def check_for_repo_name(self, name) -> bool:
         """ check if name exists in repos or link exists """
@@ -403,12 +415,21 @@ class GithubPlugin(SmartPlugin):
     def create_repo(self, name, owner, plugin, branch=None, rename=False) -> bool:
         """ create repo from given parameters """
 
-        if not rename:
-            try:
-                self.check_for_repo_name(name)
-            except Exception as e:
-                self.loggerr(e)
+        if any(x in name for x in ['/', '..']) or name == self.REPO_DIR:
+            self.loggerr(f'Invalid characters in name {name} (no dirs, not "{self.REPO_DIR}")')
+            return False
+
+        if not self.supermode:
+            if not name.startswith('priv_'):
+                self.loggerr(f'Invalid name, must start with "priv_"')
                 return False
+
+            if not rename:
+                try:
+                    self.check_for_repo_name(name)
+                except Exception as e:
+                    self.loggerr(e)
+                    return False
 
         if not owner or not plugin:
             self.loggerr(f'Insufficient parameters, github user {owner} or plugin {plugin} empty, unable to fetch repo, aborting.')
@@ -439,7 +460,7 @@ class GithubPlugin(SmartPlugin):
         repo['rel_wt_path'] = os.path.join('..', f'{owner}_wt_{branch}')
 
         # set link location from plugin name
-        repo['link'] = os.path.join(self.plg_path, f'priv_{name}')
+        repo['link'] = os.path.join(self.plg_path, name)
         repo['rel_link_path'] = os.path.join(self.REPO_DIR, f'{owner}_wt_{branch}', plugin)
 
         # make plugins/priv_repos if not present
@@ -472,6 +493,7 @@ class GithubPlugin(SmartPlugin):
                 repo['repo'] = Repo.clone_from(repo['url'], repo['repo_path'])
             except Exception as e:
                 self.loggerr(f'error while cloning: {e}')
+                return False
 
         # fetch repo data
         self.logger.debug('fetching from origin...')
@@ -515,24 +537,44 @@ class GithubPlugin(SmartPlugin):
 
         repo['clean'] = True
 
-        if rename:
-            self.logger.debug(f'renaming old link priv_{name}')
-            if not self._move_old_link(name):
-                self.loggerr(f'unable to move old link priv_{name}, installation needs to be repaired manually')
+        # try to rename if requested or in supermode
+        if rename or self.supermode:
+            self.logger.debug(f'renaming old link {repo["link"]}')
+            if not self._move_old_link(repo['link']):
+                # moving not possible...
+                if not self.supermode:
+                    # quit in normal mode
+                    self.loggerr(f'unable to move old link {repo["link"]}, installation needs to be repaired manually')
+                    return False
+                else:
+                    # delete in supermode
+                    self.logger.warning(f'unable to move old link {repo["link"]}, deleting it')
+                    if os.path.isdir(repo['link']):
+                        self._rmtree(repo['link'])
+                    else:
+                        os.path.delete(repo['link'])
+                    if os.path.exists(repo['link']):
+                        self.loggerr(f'error removing old link/dir {repo["link"]}')
+                        return False
 
         self.logger.debug(f'creating link {repo["link"]} to {repo["rel_link_path"]}...')
         try:
             os.symlink(repo['rel_link_path'], repo['link'])
         except FileExistsError:
             self.loggerr(f'plugin link {repo["link"]} was created by someone else while we were setting up repo. Not overwriting, check link file manually')
+            return False
 
         self.repos[name] = repo
 
         return True
 
     def _move_old_link(self, name) -> bool:
+        if not self.supermode and not os.path.basename(name).startswith('priv_'):
+            self.loggerr(f'unable to move plugin with illegal name {name}')
+            return False
+
         """ rename old plugin link or folder and repo entry """
-        link = os.path.join(self.plg_path, f'priv_{name}')
+        link = os.path.join(self.plg_path, name)
         if not os.path.exists(link):
             self.logger.debug(f'old link/folder not found: {link}')
             return True
@@ -553,7 +595,7 @@ class GithubPlugin(SmartPlugin):
             os.rename(link, newlink)
             self.logger.debug(f'renamed {link} to {newlink}')
             try:
-                # try to move repo entry to new name
+                # try to move repo entry to new name (if repo exists)
                 # ignore if repo name is not existent
                 name_new = f'{name}_{ver}'
                 self.repos[name_new] = self.repos[name]

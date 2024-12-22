@@ -216,6 +216,9 @@ class WebInterface(SmartPluginWebIf):
             json = cherrypy.request.json
             plugin = json.get('plugin')
 
+            if self.plugin.supermode:
+                return {"operation": "request", "result": "success", "name": plugin}
+
             count = ''
             while os.path.exists(os.path.join(self.plugin.plg_path, f'priv_{plugin}{count}')) and int('0' + count) < 20:
                 count = str(int('0' + count) + 1)

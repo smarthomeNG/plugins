@@ -145,8 +145,8 @@
 								</select>
 								<button id='btn-ref-plugin' type="button" class="btn btn-shng btn-sm" onclick="javascript:refetch('plugin');">&#8635;</i></button>
 							</td>
-							<td style='padding-left: 15px;'>Pluginname: priv_</td>
-							<td><input id='name' disabled /></td>
+							<td style='padding-left: 15px;'>Pluginname: </td>
+							<td><input id='name' disabled/></td>
 							<td style='padding-left: 15px;'>
 								<button id='btn-plugin' disabled type="button" class="btn btn-shng btn-sm" onclick="javascript:selectPlugin(this);">Auswählen</button>					
 							</td>
@@ -168,6 +168,9 @@
 {{ super() }}
 <script type="text/javascript">
 
+	var supermode = {% if p.supermode %}true{% else %}false{% endif %};
+	var plg_prefix = "{% if not p.supermode %}priv_{% endif %}";
+	
 	var rateInterval = null;
 
 	function handleUpdatedData(response, dataSet='overview') {
@@ -456,15 +459,17 @@
 		var plugin = document.getElementById('plugin').value;
 
 		if (plugin != '') {
-			document.getElementById('name').value = plugin;
-			sendData("getNameSuggestion", {"plugin": plugin},
-				function(response) {},
-				function(response) {
-					if (response["name"] != undefined && response["name"] != "") {
-						document.getElementById('name').value = response["name"];;
+			document.getElementById('name').value = plg_prefix + plugin;
+			if (!supermode) {
+				sendData("getNameSuggestion", {"plugin": plugin},
+					function(response) {},
+					function(response) {
+						if (response["name"] != undefined && response["name"] != "") {
+							document.getElementById('name').value = plg_prefix + response["name"];
+						}
 					}
-				}
-			);
+				);
+			};
 			document.getElementById('name').disabled = false;
 			document.getElementById('btn-plugin').disabled = false;
 		}		
