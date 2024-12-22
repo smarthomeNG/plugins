@@ -107,6 +107,7 @@ class lms(SmartDevicePlugin):
             trigger_read('info.playlists.names')
         # set alarm
         if command == f'player.control.alarms{CUSTOM_SEP}{custom}':
+            return
             # This does not really work currently. The created string is somehow correct.
             # However, much more logic has to be included to add/update/delete alarms, etc.
             try:
@@ -115,7 +116,7 @@ class lms(SmartDevicePlugin):
                     alarm = f"id:{i} "
                     for k, v in d.items():
                         alarm += f"{k}:{v} "
-                    alarm = f"alarm add {alarm.strip()}"
+                    alarm = f"add {alarm.strip()}"
                     self.logger.debug(f"Set alarm: {alarm}")
                     self.send_command('player.control.set_alarm' + CUSTOM_SEP + custom, alarm)
             except Exception as e:
