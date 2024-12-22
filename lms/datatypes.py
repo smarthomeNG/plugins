@@ -8,7 +8,7 @@ import re
 # handle feedback if rescan is running or not
 class DT_LMSRescan(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
-        return True if data == "1" else False
+        return False if data in ["0", "done"] else True
 
 
 class DT_LMSWipecache(DT.Datatype):

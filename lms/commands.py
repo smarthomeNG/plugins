@@ -12,10 +12,10 @@ commands = {
     },
     'database': {
         'rescan': {
-            'start': {'read': False, 'write': True, 'write_cmd': 'rescan {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'cmd_settings': {'valid_list': ['playlists', 'onlinelibrary', 'external', 'full']}, 'item_attrs': {'attributes': {'remark': 'playlists|onlinelibrary|external|full|full file://some/path'}, 'custom1': ''}},
-            'running': {'read': True, 'write': False, 'read_cmd': 'rescan ?', 'item_type': 'bool', 'dev_datatype': 'LMSRescan', 'reply_pattern': 'rescan (.*)', 'item_attrs': {'cycle': '120', 'initial': True, 'custom1': ''}},
-            'progress': {'read': True, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'scanner notify progress:(.*)', 'item_attrs': {'custom1': ''}},
-            'runningtime': {'read': True, 'read_cmd': 'rescanprogress totaltime', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'rescanprogress totaltime .* rescan:([0-9]{2}:[0-9]{2}:[0-9]{2})', 'item_attrs': {'custom1': ''}},
+            'start': {'read': False, 'write': True, 'write_cmd': 'rescan {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'cmd_settings': {'valid_list_re': ['playlists', 'onlinelibrary', 'external', 'full', r'full file://.*']}, 'item_attrs': {'attributes': {'remark': 'playlists|onlinelibrary|external|full|full file://some/path'}, 'custom1': ''}},
+            'running': {'read': True, 'write': False, 'read_cmd': 'rescan ?', 'item_type': 'bool', 'dev_datatype': 'LMSRescan', 'reply_pattern': ['rescanprogress rescan:(.*)', 'rescan (.*)', 'scanner notify progress:(.*)'], 'item_attrs': {'cycle': '120', 'initial': True, 'custom1': ''}},
+            'progress': {'read': True, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'scanner notify progress:(.*)', 'item_attrs': {'custom1': '', 'item_template': 'rescanprogress'}},
+            'runningtime': {'read': True, 'read_cmd': 'rescanprogress totaltime', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '(?:rescanprogress totaltime.*)?rescan:(0|[0-9]{2}:[0-9]{2}:[0-9]{2})', 'item_attrs': {'custom1': ''}},
             'fail': {'read': True, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'rescanprogress totaltime rescan:0 lastscanfailed:(.*)', 'item_attrs': {'custom1': ''}},
             'abortscan': {'read': True, 'write': True, 'write_cmd': 'abortscan', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': 'abortscan', 'item_attrs': {'custom1': ''}},
             'wipecache': {'read': True, 'write': True, 'write_cmd': 'wipecache', 'item_type': 'bool', 'dev_datatype': 'LMSWipecache', 'reply_pattern': 'wipecache', 'item_attrs': {'custom1': ''}}
@@ -117,6 +117,33 @@ lookups = {
 }
 
 item_templates = {
+    'rescanprogress': {
+        'start':
+            {
+                'type': 'num',
+                'eval_trigger': '..',
+                'eval': '0 if len(sh...()) == 0 else sh...().split("||")[0]'
+            },
+        'info':
+            {
+                'type': 'str',
+                'eval_trigger': '..',
+                'eval': '0 if len(sh...()) < 3 else sh...().split("||")[2]'
+            },
+        'step':
+            {
+                'type': 'num',
+                'eval_trigger': '..',
+                'eval': '0 if len(sh...()) < 4 else sh...().split("||")[3]'
+            },
+        'totalsteps':
+            {
+                'type': 'num',
+                'eval_trigger': '..',
+                'eval': '0 if len(sh...()) <5 else sh...().split("||")[4]'
+            },
+
+    },
     'duration': {
         'duration_format':
             {

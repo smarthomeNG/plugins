@@ -352,6 +352,26 @@ item_structs:
                 sqb_write@instance: false
                 sqb_custom1@instance: ''
 
+                start:
+                    type: num
+                    eval_trigger: '..'
+                    eval: 0 if len(sh...()) == 0 else sh...().split("||")[0]
+
+                info:
+                    type: str
+                    eval_trigger: '..'
+                    eval: 0 if len(sh...()) < 3 else sh...().split("||")[2]
+
+                step:
+                    type: num
+                    eval_trigger: '..'
+                    eval: 0 if len(sh...()) < 4 else sh...().split("||")[3]
+
+                totalsteps:
+                    type: num
+                    eval_trigger: '..'
+                    eval: 0 if len(sh...()) <5 else sh...().split("||")[4]
+
             runningtime:
                 type: str
                 sqb_command@instance: database.rescan.runningtime
@@ -1119,6 +1139,26 @@ item_structs:
                     sqb_read@instance: true
                     sqb_write@instance: false
                     sqb_custom1@instance: ''
+
+                    start:
+                        type: num
+                        eval_trigger: '..'
+                        eval: 0 if len(sh...()) == 0 else sh...().split("||")[0]
+
+                    info:
+                        type: str
+                        eval_trigger: '..'
+                        eval: 0 if len(sh...()) < 3 else sh...().split("||")[2]
+
+                    step:
+                        type: num
+                        eval_trigger: '..'
+                        eval: 0 if len(sh...()) < 4 else sh...().split("||")[3]
+
+                    totalsteps:
+                        type: num
+                        eval_trigger: '..'
+                        eval: 0 if len(sh...()) <5 else sh...().split("||")[4]
 
                 runningtime:
                     type: str
