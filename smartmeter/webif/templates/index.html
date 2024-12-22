@@ -71,6 +71,46 @@ Activate that function if needed, otherwise just remove the line to increase per
 -->
 {% block pluginscripts %}
 <script>
+  function updateButton(buttonElement, success, hide = false) {
+      
+	const originalHTML = buttonElement.html();
+      
+	if (success == "btn-success")
+      buttonElement
+        .prop("disabled", true)
+        .addClass(success);
+    else
+      buttonElement
+        .prop("disabled", true)
+        .addClass(success);
+
+	// After 2 seconds, revert the button to its original state
+    setTimeout(function() {
+      buttonElement
+        .prop("disabled", false)
+        .html(originalHTML)
+        .removeClass(success)
+
+	  if (hide)
+	  	buttonElement.hide();
+    }, 2000);
+  }
+</script>
+
+<script>
+	function jsonToKeyValueLines(jsonData) {
+		let output = "";
+		for (const key in jsonData) {
+		  if (jsonData.hasOwnProperty(key)) {
+			output += `${key}: ${jsonData[key]}<br>`;
+		  }
+		}
+		console.log("jsonToKeyValueLines: " + output)
+		return output;
+	}
+</script>
+
+<script>
 	function handleUpdatedData(response, dataSet=null) {
 		if (dataSet === 'devices_info' || dataSet === null) {
 			var objResponse = JSON.parse(response);
@@ -80,16 +120,17 @@ Activate that function if needed, otherwise just remove the line to increase per
                 shngInsertText(item+'_value', objResponse['items'][item]['value'], 'maintable', 5);
                 shngInsertText(item+'_last_update', objResponse['items'][item]['last_update'], 'maintable', 5);
                 shngInsertText(item+'_last_change', objResponse['items'][item]['last_change'], 'maintable', 5);
+			}
 
 			for (obis in objResponse['obis_results']) {
                 var obis_data = objResponse['obis_results'][obis][0];
+				var obis_data_formatted = jsonToKeyValueLines(obis_data);
 				console.log("DOM: " + obis+'_value');
-				console.log("VAL: " + JSON.stringify(obis_data));
-                shngInsertText(obis+'_value', JSON.stringify(obis_data), 'obis_data_table', 5);
-            }
+				console.log("VAL: " + obis_data_formatted);
+                shngInsertText(obis+'_value', obis_data_formatted, 'obis_data_table', 5);
             }
       // Redraw datatable after cell updates
-      // $('#maintable').DataTable().draw(false);
+        $('#maintable').DataTable().draw(false);
         $('#obis_data_table').DataTable().draw(false);
 		}
 	}
@@ -100,78 +141,107 @@ Activate that function if needed, otherwise just remove the line to increase per
 -->
 <script>
     $(document).ready( function () {
-		// Handler für einfachen Button - das "click"-Element wird abgefangen
-        $("#detect").click(function(e) {
+		// Handler für Formular - das "submit"-Element (Senden) wird abgefangen
+		$("#button_pressed").submit(function(e) {
 
-            // keine HTML-Aktion ausführen (z.B. Formular senden)
-            e.preventDefault();
+			// keine HTML-Aktion ausführen (z.B. Formular senden)
+			e.preventDefault();
+			let value = $("#button").val();
+			const id = $("#button_id").val();
+			const escapedId = $.escapeSelector(id);
+			const buttonElement = $("#" + escapedId);
 
-            console.log('Sending smartmeter command: detect');
+			console.log('Sending smartmeter plugin cmd: ' + id);
+			
+			// die Kennung des gedrückten Buttons per AJAX senden
+			$.post('submit', {cmd: id}, function(data) {
+				console.log("Return value from plugin: cmd=" + id + ", data=" + JSON.stringify(data));
 
-            // festen Wert per AJAX senden
-            $.post('submit', {cmd: "detect"}, function(data) {
+				if (id === 'detect') {
+					// Update button based on discovery success
+					if (data.discovery_successful) {
+						updateButton(buttonElement, 'btn-success', "true");
+						alert('Ermittlung des Smartmeter-Protokoll erfolgreich!');
+					} else {
+						updateButton(buttonElement, 'btn-danger');
+						alert('Ermittlung des Smartmeter-Protokoll fehlgeschlagen!');
+					}
 
-            	console.log("Return from plugin: cmd=detect, data=" + data);
-                for (var row in data) {
-					console.log("row=" + row + ", data=" + data.row);
-                }
+					// Update datatables
+					shngInsertText('protocol', data.protocol, 'headtable');
 
-                // Ergebnis in Feld #fromip schreiben. Der dritte Parameter muss mit der Tabellen-ID identisch sein.
-                shngInsertText('protocol', data.protocol, 'headtable')
-            });
-            return false ;
-          });
-		$("#query").click(function(e) {
+					}
 
-            // keine HTML-Aktion ausführen (z.B. Formular senden)
-            e.preventDefault();
+				if (id == 'query') {
 
-            console.log('Sending smartmeter command: query');
+					// Update button
+					if (data) {
+						updateButton(buttonElement, "btn-success");
+						alert('Auslesen des Smartmeter erfolgreich!');
+				
+					} else {
+						updateButton(buttonElement, "btn-danger");
+						alert('Auslesen des Smartmeter fehlgeschlagen!');
+					}
 
-            // festen Wert per AJAX senden
-            $.post('submit', {cmd: "query"}, function(data) {
+					// Update datatables
+					for (var obis in data) {
+                    	var obis_data = data[obis][0];
+						var obis_data_formatted = jsonToKeyValueLines(obis_data);
 
-            	console.log("Return from plugin: cmd=query, data=" + data);
-                
-                for (var obis in data) {
-                    var obis_data = data[obis][0];
-					console.log("obis=" + obis, "data=" + JSON.stringify(obis_data));
-					
-                    if (!document.getElementById(obis+'_value')) {
-                    	if ( $.fn.dataTable.isDataTable('#obis_data_table') ) {
-                        	
-                            // Define target table
-                            var table_to_update = $('#obis_data_table').DataTable();
-                            
-                            // Create a new row object
-                            var newRow = ['', obis, JSON.stringify(obis_data)];
-                            
-                            // Add the row to the table and get the node
-                            var rowNode = table_to_update.row.add(newRow).draw(false).node();
-                            
-                            // Assign IDs to the cells
-                            $(rowNode).children('td').each(function(index, cell) {
-                                if (index === 1) {
-                                    $(cell).attr('id', obis);
-                                } else {
-                                    $(cell).attr('id', obis + '_value');
-                                }
-                            });
-                            
-                        	shngInsertText(obis+'_value', JSON.stringify(obis_data), 'obis_data_table', 10);
-                              
-                            }
-                        }
-                    else
-                        {
-                        console.log("Update existing table row; id="+obis+'_value');
-                        shngInsertText(obis+'_value', JSON.stringify(obis_data), 'obis_data_table', 10);
-                        }
-                    }
-                $('#obis_data_table').DataTable().draw(false);
-            });
-            return false ;
-          });
+						console.log("obis=" + obis, "data=" + obis_data_formatted);
+						if (!document.getElementById(obis+'_value')) {
+							if ( $.fn.dataTable.isDataTable('#obis_data_table') ) {
+								// Define target table
+								var table_to_update = $('#obis_data_table').DataTable();
+								// Create a new row object
+								var newRow = ['', obis, obis_data_formatted];
+								// Add the row to the table and get the node
+								var rowNode = table_to_update.row.add(newRow).draw(false).node();
+								// Assign IDs to the cells
+								$(rowNode).children('td').each(function(index, cell) {
+									if (index === 1) {
+										$(cell).attr('id', obis);
+									} else {
+										$(cell).attr('id', obis + '_value');
+									}
+								});
+								shngInsertText(obis+'_value', obis_data_formatted, 'obis_data_table', 10);
+								}
+							}
+						else
+							{
+							console.log("Update existing table row; id="+obis+'_value');
+							shngInsertText(obis+'_value', obis_data_formatted, 'obis_data_table', 10);
+							}
+						}
+						$('#obis_data_table').DataTable().draw(false);
+
+					}
+			
+				if (id == 'create_items') {
+
+					// Update button
+					if (data === true) {
+						updateButton(buttonElement, "btn-success", "true");
+						alert('Item Erstellung erfolgreich!');
+					} else {
+						updateButton(buttonElement, "btn-danger");
+						alert('Item Erstellung fehlgeschlagen!');
+					}
+
+					// Update datatables
+					shngInsertText('protocol', data.protocol, 'headtable');
+
+					}
+
+			}).fail(function(jqXHR, textStatus, errorThrown) {
+				// Error callback
+				console.error("AJAX request failed:", textStatus, errorThrown);
+				updateButton(buttonElement, "btn-danger");
+				});
+			return false ;
+		});
 
     	// Handler responsive Tabelle und deren Überschriften
 		/*
@@ -262,7 +332,7 @@ Activate that function if needed, otherwise just remove the line to increase per
 						},
 				  {
 					title: '{{ _('Wert') }}',
-					targets: [2], "className": "type"
+					targets: [2], "className": ""
 						},
 			  ].concat($.fn.dataTable.defaults.columnDefs),
 			  });
@@ -309,12 +379,12 @@ Activate that function if needed, otherwise just remove the line to increase per
 			<td></td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>Verbunden</strong></td>
-			<td class="py-1">{% if p.use_asyncio %}{% if p.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}{% else %}{{ _('-') }}{% endif %}</td>
-			<td class="py-1"><strong>Abfrageintervall</strong></td>
-			<td class="py-1">{% if p.cycle %}{{ p.cycle }}s{% endif %}{% if p.crontab %}{{ p.crontab }}{% endif %}</td>
-			<td class="py-1"><strong>Async-Verwendung</strong></td>
-			<td class="py-1">{% if p.use_asyncio %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1">{% if p.use_asyncio %}<strong>Verbunden</strong>{% else %}{{ '' }}{% endif %}</td>
+			<td class="py-1">{% if p.use_asyncio %}{% if p.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}{% endif %}</td>
+			<td class="py-1"><strong>Abfrage</strong></td>
+			<td class="py-1">{% if p.cycle %} {{ p.cycle }}s {% elif p.crontab %} {{ p.crontab }} {% elif p.use_asyncio %} {{ _('kontinuierlich') }} {% endif %}</td>
+			<td></td>
+			<td></td>
 		</tr>
 	</tbody>
 </table>
@@ -324,16 +394,21 @@ Activate that function if needed, otherwise just remove the line to increase per
 {% block buttons %}
 	<div>
 		{% if not p.protocol %}
-			<button id="detect" class="btn btn-shng btn-sm" type="button">{{_('Discovery starten')}}</button>
+			<button id="detect" type="button" class="btn btn-shng btn-sm" title="Erkenne Smartmeter Protokoll" onclick="$('#button_id').val(this.id);$('#button').val(this.value);$('#button_pressed').submit();"><i class="fas"></i>{{_('Discovery starten')}}</button>
 		{% endif %}
-		<button id="query" class="btn btn-shng btn-sm" type="button">{{_('Abfrage starten')}}</button>
+		<button id="query" type="button" class="btn btn-shng btn-sm" title="Smartmeter auslesen" onclick="$('#button_id').val(this.id);$('#button').val(this.value);$('#button_pressed').submit();"><i class="fas"></i>{{_('Smartmeter auslesen')}}</button>
+		<button id="create_items" type="button" class="btn btn-shng btn-sm" title="Items erstellen" onclick="$('#button_id').val(this.id);$('#button').val(this.value);$('#button_pressed').submit();"><i class="fas"></i>{{_('Items erstellen')}}</button>
 	</div>
+    <form id="button_pressed" action="" method="post">
+    <input type="hidden" id="button" name="button" value="" />
+    <input type="hidden" id="button_id" name="button_id" value="">
+</form>
 {% endblock %}
 
 
 {% set tabcount = 3 %}
 
-{% set start_tab = 2 %}
+{% set start_tab = 1 %}
 {% if item_count==0 %}
 	{% set start_tab = 2 %}
 {% endif %}
@@ -348,10 +423,10 @@ Activate that function if needed, otherwise just remove the line to increase per
 					<td></td>
 					<td class="py-1" id="{{ item._path }}">{{ item.property.path }}</td>
 					<td class="py-1">{{ item._type }}</td>
-				   	<td class="py-1">{{ item.conf['obis_code'] }}</td>
-					<td class="py-1">{{ item.conf['obis_index'] }}</td>
-					<td class="py-1">{{ item.conf['obis_property'] }}</td>
-					<td class="py-1">{{ item.conf['obis_vtype'] }}</td>
+					<td class="py-1">{{ p.get_iattr_value(item.conf, 'obis_code', '') }}</td>
+					<td class="py-1">{{ p.get_iattr_value(item.conf, 'obis_index', '0') }}</td>
+					<td class="py-1">{{ p.get_iattr_value(item.conf, 'obis_property', 'value') }}</td>
+					<td class="py-1">{{ p.get_iattr_value(item.conf, 'obis_vtype', '-') }}</td>
 				   	<td class="py-1" id="{{ item._path }}_value">{{ item.property.value }}</td>
 				 	<td class="py-1" id="{{ item._path }}_last_update" style="text-align: center">&nbsp;</td>
                 	<td class="py-1" id="{{ item._path }}_last_change" style="text-align: center">&nbsp;</td>
@@ -368,11 +443,10 @@ Activate that function if needed, otherwise just remove the line to increase per
 	<table id="obis_data_table" class="dataTableAdditional m-2">
 		<tbody>
 			{% for obis in p.obis_results %}
-				 <tr>
-					 <td></td>
-				   	 <td class="py-1" id="{{ obis }}">{{ obis }}</td>
-					 <td class="py-1" id="{{ obis }}_value">''</td>
-				 </tr>
+				<tr>
+					<td></td>
+					<td class="py-1" id="{{ obis }}">{{ obis }}</td> 
+					<td class="py-1" id="{{ obis }}_value">''</tr>
 			{% endfor %}
 		</tbody>
 	</table>
@@ -380,7 +454,11 @@ Activate that function if needed, otherwise just remove the line to increase per
 
 
 
-{% set tab3title = "<strong>" "Zählerstatus</strong>" %}
+{% if p.protocol in ['SML', 'sml'] %}
+    {% set tab3title = "<strong>" "Zählerstatus</strong>" %}
+{% else %}
+    {% set tab3title = "hidden" %}
+{% endif %}
 {% block bodytab3 %}
 	<table id="status_table" class="dataTableAdditional m-2">
         <tbody>

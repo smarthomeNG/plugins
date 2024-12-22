@@ -28,6 +28,7 @@ import datetime
 import time
 import os
 import json
+import pprint
 
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
@@ -74,7 +75,8 @@ class WebInterface(SmartPluginWebIf):
         return tmpl.render(p=self.plugin,
                            webif_pagelength=pagelength,
                            items=self.plugin.get_item_list(),
-                           item_count=len(self.plugin.get_item_list()))
+                           item_count=len(self.plugin.get_item_list()),
+                             )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -120,7 +122,7 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     def submit(self, cmd=None):
 
-        self.logger.warning(f"submit:  {cmd=}")
+        self.logger.debug(f"submit:  {cmd=}")
         result = None
 
         if cmd == "detect":
@@ -129,7 +131,8 @@ class WebInterface(SmartPluginWebIf):
         elif cmd == 'query':
             result = self.plugin.query(assign_values=False)
 
-        self.logger.warning(f"submit:  {result=}")
+        elif cmd == 'create_items':
+            result = self.plugin.create_items()
 
         if result is not None:
             # JSON zurücksenden
@@ -140,3 +143,4 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     def read_data(self):
         self.plugin.query(assign_values=False)
+
