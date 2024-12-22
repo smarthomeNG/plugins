@@ -804,9 +804,10 @@ class UZSU(SmartPlugin):
                     self._items[item]["list"][i]["active"] = False
                     _next = None
                     self._series[item][i] = "waiting"
-                    update = 'once'
-                    self._update_item(item,  'once')
-            self.logger.debug(f'uzsu for item {item} final next {_next}, value {_value} and tzinfo {_next.tzinfo}')
+                    update = 'schedule_once'
+                    self._update_item(item, update)
+            tz_text =  '' if _next is None else f' and tzinfo {_next.tzinfo}'
+            self.logger.debug(f'uzsu for item {item} final next {_next}, value {_value}{tz_text}')
 
         elif not self._items[item].get('list') and self._items[item].get('active') is True:
             self.logger.warning(f'item "{item}" is active but has no entries.')
