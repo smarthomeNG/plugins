@@ -83,7 +83,7 @@ class Smartmeter(SmartPlugin, Conversion):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '0.0.1'
+    PLUGIN_VERSION = '0.9.0'
 
     def __init__(self, sh):
         """
