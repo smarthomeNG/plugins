@@ -642,14 +642,14 @@ class UZSU(SmartPlugin):
             self._schedule(item, caller='update')
         elif 'sun' in source:
             self.logger.info(f'Not running dry run of scheduler calculation for item {item} because of {source} source')
-        else:
-            self.logger.info(f'Dry run of scheduler calculation for item {item} to get calculated sunset/rise entries. Source: {source}')
+        elif source != 'schedule':
+            self.logger.info(f'Dry run of scheduler calculation for item {item} to get calculated sunset/rise entries. '
+                             f'Caller: {caller}, Source: {source}')
             self._schedule(item, caller='dry_run')
 
     def _write_dict_to_item(self, item, comment=""):
         try:
             current_value = item.property.value
-            #current_value = self.itemsApi.return_item(str(item)).property.value
         except:
             current_value = None
         if self._items[item] != current_value:
