@@ -606,6 +606,7 @@ item_structs:
                 sqb_command@instance: player.control.set_alarm
                 sqb_read@instance: true
                 sqb_write@instance: true
+                on_change: ..alarms.query = True
 
             alarms:
                 type: dict
@@ -1424,6 +1425,7 @@ item_structs:
                     sqb_command@instance: player.control.set_alarm
                     sqb_read@instance: true
                     sqb_write@instance: true
+                    on_change: ..alarms.query = True
 
                 alarms:
                     type: dict
