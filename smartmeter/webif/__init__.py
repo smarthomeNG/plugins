@@ -74,9 +74,8 @@ class WebInterface(SmartPluginWebIf):
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
                            webif_pagelength=pagelength,
-                           items=self.plugin.get_item_list(),
                            item_count=len(self.plugin.get_item_list()),
-                             )
+                        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -102,9 +101,15 @@ class WebInterface(SmartPluginWebIf):
 
             # add item data
             for item in self.plugin.get_item_list():
-                item_dict = {'value': item.property.value,
+                item_dict = {'typ': item.property.type,
+                    		 'obis_code': self.plugin.get_iattr_value(item.conf, 'obis_code', ''),
+                             'obis_index': self.plugin.get_iattr_value(item.conf, 'obis_index', '0'),
+                             'obis_property': self.plugin.get_iattr_value(item.conf, 'obis_property', 'value'),
+                             'obis_vtype': self.plugin.get_iattr_value(item.conf, 'obis_vtype', '-'),
+                             'value': item.property.value,
                              'last_update': item.property.last_update.strftime('%d.%m.%Y %H:%M:%S'),
-                             'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')}
+                             'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S'),
+                             }
 
                 data['items'][item.property.path] = item_dict
 
@@ -139,8 +144,4 @@ class WebInterface(SmartPluginWebIf):
             cherrypy.response.headers['Content-Type'] = 'application/json'
             self.logger.debug(f"Result for web interface: {result}")
             return json.dumps(result).encode('utf-8')
-
-    @cherrypy.expose
-    def read_data(self):
-        self.plugin.query(assign_values=False)
 
