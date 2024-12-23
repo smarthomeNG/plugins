@@ -553,7 +553,7 @@ class SmlFrameParser():
             # Convert some special OBIS values into nicer format
             # EMH ED300L: add additional OBIS codes
             if code == '1-0:96.5.0*255':
-                content['value'] = bin(content['valueRaw'] >> 8)    # Status as binary string, so not decoded into status bits as above
+                content['value'] = bin(int(content['valueRaw'], 16) >> 8)    # Status as binary string, so not decoded into status bits as above
             # end TODO
 
             # don't return multiple code, only the last one -> overwrite earlier data
