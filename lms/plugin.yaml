@@ -857,7 +857,7 @@ item_structs:
                 sqb_read@instance: true
                 sqb_write@instance: true
                 enforce_updates: true
-                eval: True if value else None
+                autotimer: 1s = 0
 
             delete:
                 type: str
@@ -1673,7 +1673,7 @@ item_structs:
                     sqb_read@instance: true
                     sqb_write@instance: true
                     enforce_updates: true
-                    eval: True if value else None
+                    autotimer: 1s = 0
 
                 delete:
                     type: str
