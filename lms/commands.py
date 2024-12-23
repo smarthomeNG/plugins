@@ -32,7 +32,7 @@ commands = {
     },
     'player': {
         'control': {
-            'power': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} power ?', 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} power {RAW_VALUE:01}', 'dev_datatype': 'LMSonoff', 'reply_pattern': [r'^{CUSTOM_PATTERN1} (?:prefset server\s)?power (\d)$', r'^{CUSTOM_PATTERN1} status(?:.*)power:([^\s]+)$'], 'item_attrs': {'enforce': True}},
+            'power': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} power ?', 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} power {RAW_VALUE:01}', 'dev_datatype': 'LMSonoff', 'reply_pattern': [r'^{CUSTOM_PATTERN1} (?:prefset server\s)?power (\d)$', r'^{CUSTOM_PATTERN1} status(?:.*)power:([^\s]+)$'], 'item_attrs': {'initial': True, 'enforce': True}},
             'playmode': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} mode ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} mode {VALUE}', 'dev_datatype': 'LMSPlayMode', 'cmd_settings': {'valid_list_ci': ['PLAY', 'PAUSE', 'STOP']}, 'reply_pattern': [r'^{CUSTOM_PATTERN1} mode {VALID_LIST_CI}$', r'^{CUSTOM_PATTERN1} playlist (pause \d|stop)$', r'^{CUSTOM_PATTERN1} status(?:.*)mode:([^\s]+)$'], 'item_attrs': {'enforce': True}},
             'playpause': {'read': True, 'write': True, 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} {VALUE}', 'dev_datatype': 'LMSPlay', 'reply_pattern': [r'^{CUSTOM_PATTERN1} (?:playlist\s)?(play|pause)(?:\s3)?$', r'^{CUSTOM_PATTERN1} pause (0|1)'], 'item_attrs': {'enforce': True}},
             'stop': {'read': True, 'write': True, 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} {VALUE}', 'dev_datatype': 'LMSStop', 'reply_pattern': r'^{CUSTOM_PATTERN1} (?:playlist\s)?(stop)$', 'item_attrs': {'enforce': True}},

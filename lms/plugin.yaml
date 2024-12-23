@@ -492,6 +492,7 @@ item_structs:
                 -   player
                 -   player.control
                 enforce_updates: true
+                sqb_read_initial@instance: true
 
             playmode:
                 type: str
@@ -1291,6 +1292,7 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.control
                     enforce_updates: true
+                    sqb_read_initial@instance: true
 
                 playmode:
                     type: str
