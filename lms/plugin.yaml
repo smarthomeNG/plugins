@@ -9,10 +9,10 @@ plugin:
     tester: Morg
     state: develop
     keywords: iot device logitechmediaserver lms sdp av
-    version: '1.5.3'
+    version: '1.6.0'
     sh_minversion: '1.9.5'
     py_minversion: '3.7'
-    sdp_minversion: '1.0.3'
+    sdp_minversion: '1.0.4'
     multi_instance: false
     restartable: true
     classname: lms
@@ -289,7 +289,6 @@ item_structs:
             sqb_command@instance: server.listenmode
             sqb_read@instance: true
             sqb_write@instance: true
-            sqb_custom1@instance: ''
 
         playercount:
             type: num
@@ -299,7 +298,6 @@ item_structs:
             sqb_read_group@instance:
             -   server
             sqb_read_initial@instance: true
-            sqb_custom1@instance: ''
 
         favoritescount:
             type: num
@@ -309,7 +307,6 @@ item_structs:
             sqb_read_group@instance:
             -   server
             sqb_read_initial@instance: true
-            sqb_custom1@instance: ''
 
         syncgroups:
 
@@ -327,7 +324,6 @@ item_structs:
                 -   server
                 -   server.syncgroups
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
 
             names:
                 type: str
@@ -337,7 +333,6 @@ item_structs:
                 sqb_read_group@instance:
                 -   server
                 -   server.syncgroups
-                sqb_custom1@instance: ''
 
     database:
 
@@ -358,7 +353,6 @@ item_structs:
                 sqb_command@instance: database.rescan.start
                 sqb_read@instance: false
                 sqb_write@instance: true
-                sqb_custom1@instance: ''
                 remark: playlists|onlinelibrary|external|full|full file://some/path
 
             running:
@@ -371,14 +365,12 @@ item_structs:
                 -   database.rescan
                 sqb_read_initial@instance: true
                 sqb_read_cycle@instance: '120'
-                sqb_custom1@instance: ''
 
             progress:
                 type: str
                 sqb_command@instance: database.rescan.progress
                 sqb_read@instance: true
                 sqb_write@instance: false
-                sqb_custom1@instance: ''
 
                 start:
                     type: num
@@ -408,28 +400,24 @@ item_structs:
                 sqb_read_group@instance:
                 -   database
                 -   database.rescan
-                sqb_custom1@instance: ''
 
             fail:
                 type: str
                 sqb_command@instance: database.rescan.fail
                 sqb_read@instance: true
                 sqb_write@instance: false
-                sqb_custom1@instance: ''
 
             abortscan:
                 type: bool
                 sqb_command@instance: database.rescan.abortscan
                 sqb_read@instance: true
                 sqb_write@instance: true
-                sqb_custom1@instance: ''
 
             wipecache:
                 type: bool
                 sqb_command@instance: database.rescan.wipecache
                 sqb_read@instance: true
                 sqb_write@instance: true
-                sqb_custom1@instance: ''
 
         totalgenres:
             type: num
@@ -439,7 +427,6 @@ item_structs:
             sqb_read_group@instance:
             -   database
             sqb_read_initial@instance: true
-            sqb_custom1@instance: ''
 
         totalduration:
             type: num
@@ -449,7 +436,6 @@ item_structs:
             sqb_read_group@instance:
             -   database
             sqb_read_initial@instance: true
-            sqb_custom1@instance: ''
 
             duration_format:
                 type: str
@@ -464,7 +450,6 @@ item_structs:
             sqb_read_group@instance:
             -   database
             sqb_read_initial@instance: true
-            sqb_custom1@instance: ''
 
         totalalbums:
             type: num
@@ -474,7 +459,6 @@ item_structs:
             sqb_read_group@instance:
             -   database
             sqb_read_initial@instance: true
-            sqb_custom1@instance: ''
 
         totalsongs:
             type: num
@@ -484,7 +468,6 @@ item_structs:
             sqb_read_group@instance:
             -   database
             sqb_read_initial@instance: true
-            sqb_custom1@instance: ''
 
     player:
 
@@ -1093,7 +1076,6 @@ item_structs:
                 sqb_command@instance: server.listenmode
                 sqb_read@instance: true
                 sqb_write@instance: true
-                sqb_custom1@instance: ''
 
             playercount:
                 type: num
@@ -1104,7 +1086,6 @@ item_structs:
                 -   ALL
                 -   ALL.server
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
 
             favoritescount:
                 type: num
@@ -1115,7 +1096,6 @@ item_structs:
                 -   ALL
                 -   ALL.server
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
 
             syncgroups:
 
@@ -1134,7 +1114,6 @@ item_structs:
                     -   ALL.server
                     -   ALL.server.syncgroups
                     sqb_read_initial@instance: true
-                    sqb_custom1@instance: ''
 
                 names:
                     type: str
@@ -1145,7 +1124,6 @@ item_structs:
                     -   ALL
                     -   ALL.server
                     -   ALL.server.syncgroups
-                    sqb_custom1@instance: ''
 
         database:
 
@@ -1166,7 +1144,6 @@ item_structs:
                     sqb_command@instance: database.rescan.start
                     sqb_read@instance: false
                     sqb_write@instance: true
-                    sqb_custom1@instance: ''
                     remark: playlists|onlinelibrary|external|full|full file://some/path
 
                 running:
@@ -1180,14 +1157,12 @@ item_structs:
                     -   ALL.database.rescan
                     sqb_read_initial@instance: true
                     sqb_read_cycle@instance: '120'
-                    sqb_custom1@instance: ''
 
                 progress:
                     type: str
                     sqb_command@instance: database.rescan.progress
                     sqb_read@instance: true
                     sqb_write@instance: false
-                    sqb_custom1@instance: ''
 
                     start:
                         type: num
@@ -1218,28 +1193,24 @@ item_structs:
                     -   ALL
                     -   ALL.database
                     -   ALL.database.rescan
-                    sqb_custom1@instance: ''
 
                 fail:
                     type: str
                     sqb_command@instance: database.rescan.fail
                     sqb_read@instance: true
                     sqb_write@instance: false
-                    sqb_custom1@instance: ''
 
                 abortscan:
                     type: bool
                     sqb_command@instance: database.rescan.abortscan
                     sqb_read@instance: true
                     sqb_write@instance: true
-                    sqb_custom1@instance: ''
 
                 wipecache:
                     type: bool
                     sqb_command@instance: database.rescan.wipecache
                     sqb_read@instance: true
                     sqb_write@instance: true
-                    sqb_custom1@instance: ''
 
             totalgenres:
                 type: num
@@ -1250,7 +1221,6 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
 
             totalduration:
                 type: num
@@ -1261,7 +1231,6 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
 
                 duration_format:
                     type: str
@@ -1277,7 +1246,6 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
 
             totalalbums:
                 type: num
@@ -1288,7 +1256,6 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
 
             totalsongs:
                 type: num
@@ -1299,7 +1266,6 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
 
         player:
 
