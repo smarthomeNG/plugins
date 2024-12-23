@@ -8,7 +8,7 @@ import re
 # handle feedback if rescan is running or not
 class DT_LMSRescan(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
-        return True if data == "1" else False
+        return False if data in ["0", "done"] else True
 
 
 class DT_LMSWipecache(DT.Datatype):
@@ -73,4 +73,10 @@ class DT_LMSStop(DT.Datatype):
 
 class DT_LMSonoff(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
-        return True if data == "1" else False
+        return True if data == "1" else False if data == "0" else None
+
+class DT_LMSConvertSpaces(DT.Datatype):
+    def get_send_data(self, data, type=None, **kwargs):
+        return data.replace(" ", "%20")
+    def get_shng_data(self, data, type=None, **kwargs):
+        return data.replace("%20", " ")

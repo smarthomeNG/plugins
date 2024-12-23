@@ -50,7 +50,7 @@ import urllib.parse
 class lms(SmartDevicePlugin):
     """ Device class for Logitech Mediaserver/Squeezebox function. """
 
-    PLUGIN_VERSION = '1.5.3'
+    PLUGIN_VERSION = '1.6.0'
 
     def _set_device_defaults(self):
         self.custom_commands = 1
@@ -107,6 +107,7 @@ class lms(SmartDevicePlugin):
             trigger_read('info.playlists.names')
         # set alarm
         if command == f'player.control.alarms{CUSTOM_SEP}{custom}':
+            return
             # This does not really work currently. The created string is somehow correct.
             # However, much more logic has to be included to add/update/delete alarms, etc.
             try:
@@ -115,7 +116,7 @@ class lms(SmartDevicePlugin):
                     alarm = f"id:{i} "
                     for k, v in d.items():
                         alarm += f"{k}:{v} "
-                    alarm = f"alarm add {alarm.strip()}"
+                    alarm = f"add {alarm.strip()}"
                     self.logger.debug(f"Set alarm: {alarm}")
                     self.send_command('player.control.set_alarm' + CUSTOM_SEP + custom, alarm)
             except Exception as e:
@@ -142,6 +143,10 @@ class lms(SmartDevicePlugin):
         if command == f'player.playlist.id{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command id {command} data {data} value {value} custom {custom} by {by}")
             trigger_read('player.playlist.name')
+
+        if command == f'player.control.sync{CUSTOM_SEP}{custom}':
+            self.logger.debug(f"Got command sync {command} data {data} value {value} custom {custom} by {by}")
+            trigger_read('server.syncgroups.members')
 
         # update on new song
         if command == f'player.info.title{CUSTOM_SEP}{custom}':

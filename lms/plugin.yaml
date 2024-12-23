@@ -1,17 +1,18 @@
 
 plugin:
     type: interface
+
     description:
-      de: Logitech Mediaserver
-      en: Logitech Mediaserver
+        de: Logitech Mediaserver
+        en: Logitech Mediaserver
     maintainer: OnkelAndy
     tester: Morg
     state: develop
     keywords: iot device logitechmediaserver lms sdp av
-    version: '1.5.3'
+    version: '1.6.0'
     sh_minversion: '1.9.5'
     py_minversion: '3.7'
-    sdp_minversion: '1.0.3'
+    sdp_minversion: '1.0.4'
     multi_instance: false
     restartable: true
     classname: lms
@@ -139,12 +140,12 @@ parameters:
             en: number of sending retries
 
         description_long:
-            de: |
+            de: |4
                 Anzahl Sendeversuche\n
                 Kommt keine (passende) Antwort nach dem Senden
                 eines Commands zurück, wird das Kommando nochmals
                 gesendet, sofern der Wert über 0 liegt.
-            en: |
+            en: |4
                 number of sending retries\n
                 If no (suiting) answer is received after sending
                 a command the command is resent as long as this
@@ -160,12 +161,12 @@ parameters:
             en: wait time between sending retry rounds
 
         description_long:
-            de: |
+            de: |4
                 Pause zwischen Durchgängen von Sendeversuchen\n
                 Sind Send Retries aktiv, wird ein Scheduler erstellt,
                 der im angegebenen Sekundentakt Kommandos erneut sendet,
                 zu denen keine (passenden) Antworten erhalten wurden.
-            en: |
+            en: |4
                 wait time between sending retry rounds\n
                 If send retries are active, a scheduler gets added
                 that resends commands in the given cycle value (in seconds)
@@ -246,7 +247,7 @@ item_attributes:
             en: The lookup table with the given name will be assigned to the item in dict or list format once on startup.
 
         description_long:
-            de: |-
+            de: |4-
                 Der Inhalt der Lookup-Tabelle mit dem angegebenen Namen wird beim
                 Start einmalig als dict oder list in das Item geschrieben.
 
@@ -256,7 +257,7 @@ item_attributes:
                 - rev liefert die Tabelle SmartHomeNG -> Gerät
                 - rci liefert die Tabelle SmarthomeNG -> Gerät in Kleinbuchstaben
                 - list liefert die Liste der Namen für SmartHomeNG (z.B. für Auswahllisten in der Visu)
-            en: |-
+            en: |4-
                 The lookup table with the given name will be assigned to the item
                 in dict or list format once on startup.
 
@@ -288,7 +289,6 @@ item_structs:
             sqb_command@instance: server.listenmode
             sqb_read@instance: true
             sqb_write@instance: true
-            sqb_custom1@instance: ''
 
         playercount:
             type: num
@@ -298,7 +298,6 @@ item_structs:
             sqb_read_group@instance:
             -   server
             sqb_read_initial@instance: true
-            sqb_custom1@instance: ''
 
         favoritescount:
             type: num
@@ -308,7 +307,32 @@ item_structs:
             sqb_read_group@instance:
             -   server
             sqb_read_initial@instance: true
-            sqb_custom1@instance: ''
+
+        syncgroups:
+
+            read:
+                type: bool
+                enforce_updates: true
+                sqb_read_group_trigger@instance: server.syncgroups
+
+            members:
+                type: str
+                sqb_command@instance: server.syncgroups.members
+                sqb_read@instance: true
+                sqb_write@instance: false
+                sqb_read_group@instance:
+                -   server
+                -   server.syncgroups
+                sqb_read_initial@instance: true
+
+            names:
+                type: str
+                sqb_command@instance: server.syncgroups.names
+                sqb_read@instance: true
+                sqb_write@instance: false
+                sqb_read_group@instance:
+                -   server
+                -   server.syncgroups
 
     database:
 
@@ -329,7 +353,6 @@ item_structs:
                 sqb_command@instance: database.rescan.start
                 sqb_read@instance: false
                 sqb_write@instance: true
-                sqb_custom1@instance: ''
                 remark: playlists|onlinelibrary|external|full|full file://some/path
 
             running:
@@ -342,14 +365,32 @@ item_structs:
                 -   database.rescan
                 sqb_read_initial@instance: true
                 sqb_read_cycle@instance: '120'
-                sqb_custom1@instance: ''
 
             progress:
                 type: str
                 sqb_command@instance: database.rescan.progress
                 sqb_read@instance: true
                 sqb_write@instance: false
-                sqb_custom1@instance: ''
+
+                start:
+                    type: num
+                    eval_trigger: '..'
+                    eval: 0 if len(sh...()) == 0 else sh...().split("||")[0]
+
+                info:
+                    type: str
+                    eval_trigger: '..'
+                    eval: 0 if len(sh...()) < 3 else sh...().split("||")[2]
+
+                step:
+                    type: num
+                    eval_trigger: '..'
+                    eval: 0 if len(sh...()) < 4 else sh...().split("||")[3]
+
+                totalsteps:
+                    type: num
+                    eval_trigger: '..'
+                    eval: 0 if len(sh...()) <5 else sh...().split("||")[4]
 
             runningtime:
                 type: str
@@ -359,28 +400,24 @@ item_structs:
                 sqb_read_group@instance:
                 -   database
                 -   database.rescan
-                sqb_custom1@instance: ''
 
             fail:
                 type: str
                 sqb_command@instance: database.rescan.fail
                 sqb_read@instance: true
                 sqb_write@instance: false
-                sqb_custom1@instance: ''
 
             abortscan:
                 type: bool
                 sqb_command@instance: database.rescan.abortscan
                 sqb_read@instance: true
                 sqb_write@instance: true
-                sqb_custom1@instance: ''
 
             wipecache:
                 type: bool
                 sqb_command@instance: database.rescan.wipecache
                 sqb_read@instance: true
                 sqb_write@instance: true
-                sqb_custom1@instance: ''
 
         totalgenres:
             type: num
@@ -390,7 +427,6 @@ item_structs:
             sqb_read_group@instance:
             -   database
             sqb_read_initial@instance: true
-            sqb_custom1@instance: ''
 
         totalduration:
             type: num
@@ -400,7 +436,6 @@ item_structs:
             sqb_read_group@instance:
             -   database
             sqb_read_initial@instance: true
-            sqb_custom1@instance: ''
 
             duration_format:
                 type: str
@@ -415,7 +450,6 @@ item_structs:
             sqb_read_group@instance:
             -   database
             sqb_read_initial@instance: true
-            sqb_custom1@instance: ''
 
         totalalbums:
             type: num
@@ -425,7 +459,6 @@ item_structs:
             sqb_read_group@instance:
             -   database
             sqb_read_initial@instance: true
-            sqb_custom1@instance: ''
 
         totalsongs:
             type: num
@@ -435,7 +468,6 @@ item_structs:
             sqb_read_group@instance:
             -   database
             sqb_read_initial@instance: true
-            sqb_custom1@instance: ''
 
     player:
 
@@ -460,6 +492,7 @@ item_structs:
                 -   player
                 -   player.control
                 enforce_updates: true
+                sqb_read_initial@instance: true
 
             playmode:
                 type: str
@@ -557,6 +590,7 @@ item_structs:
                 sqb_command@instance: player.control.set_alarm
                 sqb_read@instance: true
                 sqb_write@instance: true
+                on_change: ..alarms.query = True
 
             alarms:
                 type: dict
@@ -677,7 +711,13 @@ item_structs:
                 type: str
                 sqb_command@instance: player.playlist.rename
                 sqb_read@instance: false
-                sqb_write@instance: false
+                sqb_write@instance: true
+
+            rename_current:
+                type: str
+                sqb_command@instance: player.playlist.rename_current
+                sqb_read@instance: false
+                sqb_write@instance: true
 
             repeat:
                 type: str
@@ -687,6 +727,7 @@ item_structs:
                 sqb_read_group@instance:
                 -   player
                 -   player.playlist
+                sqb_read_initial@instance: true
                 remark: 0 = Off, 1 = Song, 2 = Playlist
 
                 lookup:
@@ -701,6 +742,7 @@ item_structs:
                 sqb_read_group@instance:
                 -   player
                 -   player.playlist
+                sqb_read_initial@instance: true
                 remark: 0 = Off, 1 = Song, 2 = Album
 
                 lookup:
@@ -756,6 +798,7 @@ item_structs:
                 sqb_read@instance: true
                 sqb_write@instance: true
                 enforce_updates: true
+                remark: <Genre> <Artist> <Album>. You can use * for any of the entries. Spaces need to be replaced by %20
 
             loadtracks:
                 type: str
@@ -814,7 +857,7 @@ item_structs:
                 sqb_read@instance: true
                 sqb_write@instance: true
                 enforce_updates: true
-                eval: True if value else None
+                autotimer: 1s = 0
 
             delete:
                 type: str
@@ -939,16 +982,6 @@ item_structs:
                 -   player
                 -   player.info
 
-            syncgroups:
-                type: num
-                sqb_command@instance: player.info.syncgroups
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   player
-                -   player.info
-                sqb_read_initial@instance: true
-
             signalstrength:
                 type: num
                 sqb_command@instance: player.info.signalstrength
@@ -1046,7 +1079,6 @@ item_structs:
                 sqb_command@instance: server.listenmode
                 sqb_read@instance: true
                 sqb_write@instance: true
-                sqb_custom1@instance: ''
 
             playercount:
                 type: num
@@ -1057,7 +1089,6 @@ item_structs:
                 -   ALL
                 -   ALL.server
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
 
             favoritescount:
                 type: num
@@ -1068,7 +1099,34 @@ item_structs:
                 -   ALL
                 -   ALL.server
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
+
+            syncgroups:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    sqb_read_group_trigger@instance: ALL.server.syncgroups
+
+                members:
+                    type: str
+                    sqb_command@instance: server.syncgroups.members
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    sqb_read_group@instance:
+                    -   ALL
+                    -   ALL.server
+                    -   ALL.server.syncgroups
+                    sqb_read_initial@instance: true
+
+                names:
+                    type: str
+                    sqb_command@instance: server.syncgroups.names
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    sqb_read_group@instance:
+                    -   ALL
+                    -   ALL.server
+                    -   ALL.server.syncgroups
 
         database:
 
@@ -1089,7 +1147,6 @@ item_structs:
                     sqb_command@instance: database.rescan.start
                     sqb_read@instance: false
                     sqb_write@instance: true
-                    sqb_custom1@instance: ''
                     remark: playlists|onlinelibrary|external|full|full file://some/path
 
                 running:
@@ -1103,14 +1160,32 @@ item_structs:
                     -   ALL.database.rescan
                     sqb_read_initial@instance: true
                     sqb_read_cycle@instance: '120'
-                    sqb_custom1@instance: ''
 
                 progress:
                     type: str
                     sqb_command@instance: database.rescan.progress
                     sqb_read@instance: true
                     sqb_write@instance: false
-                    sqb_custom1@instance: ''
+
+                    start:
+                        type: num
+                        eval_trigger: '..'
+                        eval: 0 if len(sh...()) == 0 else sh...().split("||")[0]
+
+                    info:
+                        type: str
+                        eval_trigger: '..'
+                        eval: 0 if len(sh...()) < 3 else sh...().split("||")[2]
+
+                    step:
+                        type: num
+                        eval_trigger: '..'
+                        eval: 0 if len(sh...()) < 4 else sh...().split("||")[3]
+
+                    totalsteps:
+                        type: num
+                        eval_trigger: '..'
+                        eval: 0 if len(sh...()) <5 else sh...().split("||")[4]
 
                 runningtime:
                     type: str
@@ -1121,28 +1196,24 @@ item_structs:
                     -   ALL
                     -   ALL.database
                     -   ALL.database.rescan
-                    sqb_custom1@instance: ''
 
                 fail:
                     type: str
                     sqb_command@instance: database.rescan.fail
                     sqb_read@instance: true
                     sqb_write@instance: false
-                    sqb_custom1@instance: ''
 
                 abortscan:
                     type: bool
                     sqb_command@instance: database.rescan.abortscan
                     sqb_read@instance: true
                     sqb_write@instance: true
-                    sqb_custom1@instance: ''
 
                 wipecache:
                     type: bool
                     sqb_command@instance: database.rescan.wipecache
                     sqb_read@instance: true
                     sqb_write@instance: true
-                    sqb_custom1@instance: ''
 
             totalgenres:
                 type: num
@@ -1153,7 +1224,6 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
 
             totalduration:
                 type: num
@@ -1164,7 +1234,6 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
 
                 duration_format:
                     type: str
@@ -1180,7 +1249,6 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
 
             totalalbums:
                 type: num
@@ -1191,7 +1259,6 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
 
             totalsongs:
                 type: num
@@ -1202,7 +1269,6 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial@instance: true
-                sqb_custom1@instance: ''
 
         player:
 
@@ -1228,6 +1294,7 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.control
                     enforce_updates: true
+                    sqb_read_initial@instance: true
 
                 playmode:
                     type: str
@@ -1328,6 +1395,7 @@ item_structs:
                     sqb_command@instance: player.control.set_alarm
                     sqb_read@instance: true
                     sqb_write@instance: true
+                    on_change: ..alarms.query = True
 
                 alarms:
                     type: dict
@@ -1453,7 +1521,13 @@ item_structs:
                     type: str
                     sqb_command@instance: player.playlist.rename
                     sqb_read@instance: false
-                    sqb_write@instance: false
+                    sqb_write@instance: true
+
+                rename_current:
+                    type: str
+                    sqb_command@instance: player.playlist.rename_current
+                    sqb_read@instance: false
+                    sqb_write@instance: true
 
                 repeat:
                     type: str
@@ -1464,6 +1538,7 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.playlist
+                    sqb_read_initial@instance: true
                     remark: 0 = Off, 1 = Song, 2 = Playlist
 
                     lookup:
@@ -1479,6 +1554,7 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.playlist
+                    sqb_read_initial@instance: true
                     remark: 0 = Off, 1 = Song, 2 = Album
 
                     lookup:
@@ -1537,6 +1613,7 @@ item_structs:
                     sqb_read@instance: true
                     sqb_write@instance: true
                     enforce_updates: true
+                    remark: <Genre> <Artist> <Album>. You can use * for any of the entries. Spaces need to be replaced by %20
 
                 loadtracks:
                     type: str
@@ -1596,7 +1673,7 @@ item_structs:
                     sqb_read@instance: true
                     sqb_write@instance: true
                     enforce_updates: true
-                    eval: True if value else None
+                    autotimer: 1s = 0
 
                 delete:
                     type: str
@@ -1726,17 +1803,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
-
-                syncgroups:
-                    type: num
-                    sqb_command@instance: player.info.syncgroups
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
-                    sqb_read_initial@instance: true
 
                 signalstrength:
                     type: num
