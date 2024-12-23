@@ -55,7 +55,7 @@ CUSTOM_INPUT_NAME_COMMAND = 'custom_inputnames'
 class denon(SmartDevicePlugin):
     """ Device class for Denon AV. """
 
-    PLUGIN_VERSION = '1.0.1'
+    PLUGIN_VERSION = '1.1.0'
 
     def _set_device_defaults(self):
         self._use_callbacks = True
