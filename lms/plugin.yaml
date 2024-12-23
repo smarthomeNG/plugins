@@ -727,6 +727,7 @@ item_structs:
                 sqb_read_group@instance:
                 -   player
                 -   player.playlist
+                sqb_read_initial@instance: true
                 remark: 0 = Off, 1 = Song, 2 = Playlist
 
                 lookup:
@@ -741,6 +742,7 @@ item_structs:
                 sqb_read_group@instance:
                 -   player
                 -   player.playlist
+                sqb_read_initial@instance: true
                 remark: 0 = Off, 1 = Song, 2 = Album
 
                 lookup:
@@ -1536,6 +1538,7 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.playlist
+                    sqb_read_initial@instance: true
                     remark: 0 = Off, 1 = Song, 2 = Playlist
 
                     lookup:
@@ -1551,6 +1554,7 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.playlist
+                    sqb_read_initial@instance: true
                     remark: 0 = Off, 1 = Song, 2 = Album
 
                     lookup:
