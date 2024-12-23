@@ -24,7 +24,7 @@ plugin:
     keywords: scheduler uzsu trigger series
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1364692-supportthread-für-uzsu-plugin
 
-    version: 2.0.2                 # Plugin version
+    version: 2.1.0                 # Plugin version
     sh_minversion: '1.6'             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -39,6 +39,13 @@ parameters:
         description:
             de: 'Falls True, werden Einträge mit exakt den selben Einstellungen, aber unterschiedlichem Wert durch einen neu getätigten Eintrag ersetzt'
             en: 'If True, existing entries with exactly the same settings except the value get replaced by the new entry'
+
+    ignore_once_entries:
+        type: bool
+        default: False
+        description:
+            de: 'Falls False, werden Einträge, die durch "Once" heute inaktiv geschaltet wurden, für eine etwaige Interpolation oder Berechnung des letzten Werts herangezogen.'
+            en: 'If False, entries that were deactivated today due to “Once” will be considered for any interpolation or calculation of the last value.'
 
     suncalculation_cron:
         type: str
@@ -125,9 +132,6 @@ item_structs:
                 remark: The last set value if UZSU is active
                 type: foo
                 visu_acl: ro
-                eval: sh...lastvalue('uzsu_dict_updated')
-                crontab: init = None
-                eval_trigger: ..
 
             active:
                 remark: Use this item to easily turn on or off your UZSU
@@ -138,17 +142,13 @@ item_structs:
                 status:
                     type: bool
                     eval: sh....activate()
-                    eval_trigger:
-                      - ..
-                      - ...
+                    eval_trigger: ...
                     on_change: .. = value
                     crontab: init = 0
             next:
                 remark: The next value and time
                 type: dict
                 visu_acl: ro
-                eval: sh...planned()
-                eval_trigger: ..
                 initial_value: "{'value': '-', 'next': '-'}"
 
                 value:
@@ -209,8 +209,8 @@ plugin_functions:
     lastvalue:
         type: foo
         description:
-            de: 'Abfrage des zuletzt gesetzten Werts. Kann z.B. beim Aktivieren der UZSU genutzt werden, um sofort auf den gewünschten Wert zu schalten.'
-            en: 'Query the last value. Can be used to immediately set the correct value after activating an UZSU.'
+            de: 'Abfrage des zuletzt gesetzten/evaluierten Werts. Kann z.B. beim Aktivieren der UZSU genutzt werden, um sofort auf den gewünschten Wert zu schalten.'
+            en: 'Query the last calculated/set value. Can be used to immediately set the correct value after activating an UZSU.'
         parameters:
             by:
                 type: str
@@ -243,6 +243,31 @@ plugin_functions:
                 description:
                     de: "True, um die UZSU Einträge zu löschen."
                     en: "True to clear the UZSU entries."
+            item:
+                type: foo
+                description:
+                    de: "Das Item-Objekt"
+                    en: "An item object"
+    set_activetoday:
+        type: bool
+        description:
+            de: 'Alle activeToday Einträge, die durch Einmalausführung gesetzt worden sind, werden auf den entsprechenden Wert gesetzt.'
+            en: 'All activeToday entries that have been set due to once evaluations are set to the specified value.'
+        description_long:
+            de: 'Setzen der activeToday Einträge eines Items.\n
+                - False: Setzen der Einträge auf False, praktisch ein Reset\n
+                - True: Setzen der Einträge auf True - im Normalfall nicht hilfreich, lediglich für Debuggingzwecke\n
+                '
+            en: 'Delete the activeToday entries of an item.\n
+                - False: Setting the entries to False, practically resetting them\n
+                - True: setting the entries to True - usually not helpful except for debugging purposes\n
+                '
+        parameters:
+            set:
+                type: bool
+                description:
+                    de: "True, um die activeToday Einträge zu aktivieren, False um sie zu deaktivieren/zurückzusetzen."
+                    en: "True to activate the activeToday entries, False to deactivate/reset them."
             item:
                 type: foo
                 description:
