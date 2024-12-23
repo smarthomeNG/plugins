@@ -144,6 +144,10 @@ class lms(SmartDevicePlugin):
             self.logger.debug(f"Got command id {command} data {data} value {value} custom {custom} by {by}")
             trigger_read('player.playlist.name')
 
+        if command == f'player.control.sync{CUSTOM_SEP}{custom}':
+            self.logger.debug(f"Got command sync {command} data {data} value {value} custom {custom} by {by}")
+            trigger_read('server.syncgroups.members')
+
         # update on new song
         if command == f'player.info.title{CUSTOM_SEP}{custom}':
             # trigger_read('player.control.playmode')

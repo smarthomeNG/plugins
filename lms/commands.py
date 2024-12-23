@@ -10,8 +10,8 @@ commands = {
         'playercount': {'read': True, 'write': False, 'read_cmd': 'player count ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^player count (\d+)', 'custom_disable': True, 'item_attrs': {'initial': True}},
         'favoritescount': {'read': True, 'write': False, 'read_cmd': 'favorites items', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^favorites items\s+ count:(\d+)', 'custom_disable': True, 'item_attrs': {'initial': True}},
         'syncgroups': {
-            'members': {'read': True, 'write': False, 'read_cmd': 'syncgroups ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^syncgroups sync_members:(.*) sync_member_names:', 'custom_disable': True, 'item_attrs': {'initial': True}},
-            'names': {'read': True, 'write': False, 'read_cmd': 'syncgroups ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^syncgroups sync_members:.* sync_member_names:(.*)', 'custom_disable': True, 'item_attrs': {'initial': False}},
+            'members': {'read': True, 'write': False, 'read_cmd': 'syncgroups ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^syncgroups sync_members:(.*) sync_member_names:', r'^syncgroups(.*)?$'], 'custom_disable': True, 'item_attrs': {'initial': True}},
+            'names': {'read': True, 'write': False, 'read_cmd': 'syncgroups ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^syncgroups sync_members:.* sync_member_names:(.*)', r'^syncgroups(.*)?$'], 'custom_disable': True, 'item_attrs': {'initial': False}},
         }
     },
     'database': {
