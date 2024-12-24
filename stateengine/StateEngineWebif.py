@@ -33,6 +33,23 @@ except Exception:
 class WebInterface(StateEngineTools.SeItemChild):
     # Constructor
     # abitem: parent SeItem instance
+
+    @property
+    def width(self):
+        return self.__widthfactor
+
+    @width.setter
+    def width(self, value):
+        self.__widthfactor = value
+
+    @property
+    def height(self):
+        return self.__heightfactor
+
+    @height.setter
+    def height(self, value):
+        self.__heightfactor = value
+
     def __init__(self, abitem):
         super().__init__(abitem)
 
@@ -46,13 +63,15 @@ class WebInterface(StateEngineTools.SeItemChild):
         self.__active_state = abitem.laststate
 
         self.__graph = pydotplus.Dot('StateEngine', graph_type='digraph', splines='false',
-                                     overlap='scale', compound='false', imagepath='{}'.format(self.__img_path))
+                                     overlap='compress', compound='false', imagepath='{}'.format(self.__img_path))
         self.__graph.set_node_defaults(color='lightgray', style='filled', shape='box',
-                                       fontname='Helvetica', fontsize='10')
-        self.__graph.set_edge_defaults(color='darkgray', style='filled', shape='box',
-                                       fontname='Helvetica', fontsize='10')
+                                       fontname='Helvetica', fontsize='10', pin='true')
+        self.__graph.set_edge_defaults(color='darkgray', style='filled', shape='box', labeldistance=2.5,
+                                       fontname='Helvetica', fontsize='10', len=0.1)
+        self.__graph.set_graph_defaults(sep=+0.15)
         self.__nodes = {}
-        self.__scalefactor = 0.1
+        self.__heightfactor = 1
+        self.__widthfactor = 1
         self.__textlimit = 105
         self.__conditionset_count = 0
 
@@ -81,7 +100,7 @@ class WebInterface(StateEngineTools.SeItemChild):
         # label_type: on_enter, on_stay, on_leave, on_pass
         # active: if action is currently run
 
-        actionlabel = actionstart = '<<table border="0" cellpadding="1" cellborder="0">'
+        actionlabel = actionstart = '<<table border="0" cellpadding="2" cellborder="0">'
         action_tooltip = ''
         types = [label_type] if label_type in ['actions_leave', 'actions_pass'] else ['actions_enter_or_stay', label_type]
         tooltip_count = 0
@@ -146,7 +165,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     if _success == 'True' and active \
                     else '<td width="10"></td></tr>'
                 if not action2 == 'None':
-                    actionlabel += '<tr><td align="center"><font color="{}">{} {} {} {}</font></td>'.format(fontcolor, action1, action2, action3, additionaltext)
+                    actionlabel += '<tr class="actionentry"><td align="center"><font color="{}">{} {} {} {}</font></td>'.format(fontcolor, action1, action2, action3, additionaltext)
                     actionlabel += '{}'.format(success_info)
 
         actionlabel += '</table>>'
@@ -163,7 +182,7 @@ class WebInterface(StateEngineTools.SeItemChild):
         if _empty_set:
             return '', '', 0
         conditionlist = '<<table border="0" cellpadding="5" cellborder="0">'
-        conditionlist += '<tr><td align="center" colspan="4" bgcolor="white">{}</td></tr>'.format(conditionset)
+        conditionlist += '<tr class="conditionset"><td align="center" colspan="4" bgcolor="white">{}</td></tr>'.format(conditionset)
         tooltip_count = 0
         for k, condition in enumerate(self.__states[state]['conditionsets'].get(conditionset)):
             condition_dict = self.__states[state]['conditionsets'][conditionset].get(condition)
@@ -191,12 +210,13 @@ class WebInterface(StateEngineTools.SeItemChild):
                     if condition not in conditions_done:
                         current_clean = ", ".join(f"{k} = {v}" for k, v in current.items())
                         text = " Current {}".format(current_clean) if current is not None and len(current) > 0 else " Not evaluated."
-                        conditionlist += ('<tr><td align="center" colspan="4"><table border="0" cellpadding="0" '
-                                          'cellborder="0"><tr><td></td><td align="center">{}:{}</td><td></td></tr><tr>'
+                        conditionlist += ('<tr class="conditionheader"><td align="center" colspan="2"><table border="0" cellpadding="0" '
+                                          'cellborder="0"><tr><td></td><td align="center">{}:{}</td>'
+                                          '<td></td></tr><tr class="conditionline">'
                                           '<td width="40%"></td><td align="center" border="1" height="1"></td>'
                                           '<td width="40%"></td></tr></table></td></tr>').format(condition.upper(), text)
                     conditions_done.append(condition)
-                    conditionlist += '<tr><td align="center"><b>'
+                    conditionlist += '<tr class="conditionentry"><td align="center"><b>'
                     info_status = str(condition_dict.get('status') or 'n/a')
                     info_item = str(condition_dict.get('item') or 'n/a')
                     info_eval = str(condition_dict.get('eval') or 'n/a')
@@ -257,7 +277,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     else:
                         info = "n/a"
 
-                    conditionlist += '{}</b></td>'.format(info)
+                    conditionlist += '{}</b>'.format(info)
                     comparison = "&#62;=" if not min_none and compare == "min"\
                                  else "&#60;=" if not max_none and compare == "max"\
                                  else "older" if not agemin_none and compare == "agemin"\
@@ -280,7 +300,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                         match_info = match.get('value') if compare in ["min", "max", "value"]\
                                      else match.get('age') if compare in ["agemin", "agemax", "age"]\
                                      else match.get(compare)
-                    conditionlist += '<td align="center" width="5">{}</td><td align="center">'.format(comparison)
+                    conditionlist += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{}&nbsp;&nbsp;&nbsp;'.format(comparison)
                     conditionlist += '"{}"'.format(info) if not item_none and not status_none \
                         and not eval_none and not status_eval_none else ''
 
@@ -297,9 +317,9 @@ class WebInterface(StateEngineTools.SeItemChild):
                     match_info = '<img src="sign_true.png" />' if match_info == 'yes'\
                                  else '<img src="sign_false.png" />' if match_info == 'no'\
                                  else '<img src="sign_warn.png" />' if match_info and len(match_info) > 0 \
-                                 else ''
+                                 else '<img src="sign_empty.png" />'
                     conditionlist += '</td><td>{}</td></tr>'.format(match_info)
-        conditionlist += '<tr><td></td><td></td><td></td><td></td></tr></table>>'
+        conditionlist += '<tr><td></td><td></td></tr></table>>'
         return conditionlist, condition_tooltip, tooltip_count
 
     def _add_actioncondition(self, state, conditionset, action_type, new_y, cond1, cond2):
@@ -312,9 +332,9 @@ class WebInterface(StateEngineTools.SeItemChild):
         color_stay = "gray" if (cond1 and cond2 and cond5) or \
                                (cond_stay and cond4 and cond5) else "olivedrab" if cond4 else "indianred2"
 
-        label = 'first enter' if action_type in ['actions_enter', 'actions_enter_or_stay'] else 'staying at state'
+        label = 'first enter' if action_type in ['actions_enter', 'actions_enter_or_stay'] else 'staying'
 
-        position = '{},{}!'.format(0.38, new_y)
+        position = '{},{}!'.format(12.6 * self.__widthfactor, new_y)
         color = color_enter if label == 'first enter' else color_stay
         self.__nodes['{}_{}_state_{}'.format(state, conditionset, action_type)] = \
             pydotplus.Node('{}_{}_state_{}'.format(state, conditionset, action_type), style="filled", fillcolor=color,
@@ -323,7 +343,7 @@ class WebInterface(StateEngineTools.SeItemChild):
         if self.__nodes.get('{}_{}_state_actions_enter_edge'.format(state, conditionset)) is None:
             self.__nodes['{}_{}_state_{}_edge'.format(state, conditionset, action_type)] = \
                 pydotplus.Edge(self.__nodes['{}_{}'.format(state, conditionset)], self.__nodes['{}_{}_state_{}'.format(
-                    state, conditionset, action_type)], style='bold', taillabel="    True",  tooltip='first enter')
+                    state, conditionset, action_type)], style='bold', taillabel="True",  tooltip='first enter')
             self.__graph.add_edge(self.__nodes['{}_{}_state_{}_edge'.format(state, conditionset, action_type)])
         else:
             self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}_state_actions_enter'.format(state, conditionset)],
@@ -331,7 +351,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                                                  style='bold', label="False    "))
         self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}_state_{}'.format(state, conditionset, action_type)],
                                              self.__nodes['{}_{}_{}'.format(state, conditionset, action_type)],
-                                             style='bold', taillabel="    True"))
+                                             style='bold', taillabel="True"))
         try:
             if action_type == 'actions_enter':
                 self.__nodes['{}_{}_actions_enter'.format(state, conditionset)].obj_dict['attributes']['fillcolor'] = color
@@ -344,277 +364,349 @@ class WebInterface(StateEngineTools.SeItemChild):
             pass
 
     def drawgraph(self, filename):
-        new_y = 2
+        new_y = 0
         previous_state = ''
         previous_conditionset = ''
+        above_nodeheights = []
+        last_action_nodeheight = 0
         for i, state in enumerate(self.__states):
             #self._log_debug('Adding state for webif {}', self.__states[state])
-            if isinstance(self.__states[state], (OrderedDict, dict)):
-                self.__conditionset_count = len(self.__states[state].get('conditionsets'))
-                if self.__conditionset_count == 0:
-                    self.__states[state]['conditionsets'][''] = ''
-                try:
-                    list_index = list(self.__states.keys()).index(self.__active_state)
-                except Exception:
-                    list_index = 0
-                color = "olivedrab" if state == self.__active_state \
-                    else "gray" if i > list_index else "indianred2"
+            if not isinstance(self.__states[state], (OrderedDict, dict)):
+                continue
+            self.__conditionset_count = len(self.__states[state].get('conditionsets'))
+            if self.__conditionset_count == 0:
+                self.__states[state]['conditionsets'][''] = ''
+            try:
+                list_index = list(self.__states.keys()).index(self.__active_state)
+            except Exception:
+                list_index = 0
+            color = "olivedrab" if state == self.__active_state \
+                else "gray" if i > list_index else "indianred2"
 
-                new_y -= 1 * self.__scalefactor
+            if not i == 0:
+                new_y -= max(float(above_nodeheights[-1] + 0.3), 0.46, float(last_action_nodeheight)) * self.__heightfactor # half elipse added at end
                 position = '{},{}!'.format(0, new_y)
-                if not i == 0:
-                    condition_node = 'pass' if self.__nodes.get('{}_pass'.format(previous_state)) \
-                            else 'leave' if self.__nodes.get('{}_leave'.format(previous_state)) \
-                            else list(self.__states[previous_state]['conditionsets'].keys())[-1]
-                    lastnode = self.__nodes['{}_{}'.format(previous_state, condition_node)]
-                    self.__nodes['{}_above'.format(state)] = pydotplus.Node('{}_above'.format(state), pos=position,
-                                                                            shape="square", width="0", label="")
-                    self.__graph.add_node(self.__nodes['{}_above'.format(state)])
-                    position = '{},{}!'.format(0.3, new_y)
-                    self.__nodes['{}_above_right'.format(state)] = pydotplus.Node('{}_above_right'.format(state),
-                                                                                  pos=position, shape="square", width="0", label="")
-                    self.__graph.add_node(self.__nodes['{}_above_right'.format(state)])
-                    self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_above'.format(state)],
-                                                         self.__nodes['{}_above_right'.format(state)], style='bold',
-                                                         color='black', label="", dir="none"))
-                    self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_above_right'.format(state)], lastnode,
-                                                         style='bold', color='black', label="False   ", dir="none"))
-                    self.__graph.add_edge(pydotplus.Edge(state, self.__nodes['{}_above'.format(state)], style='bold',
-                                                         color='black', label="", dir="back"))
-                new_y -= 1 * self.__scalefactor
-                position = '{},{}!'.format(0, new_y)
-                #self._log_debug('state: {} {}',state, position)
 
-                self.__nodes[state] = pydotplus.Node(state, pos=position, pin=True, notranslate=True, style="filled",
-                                                     fillcolor=color, shape="ellipse",
-                                                     label='<<table border="0"><tr><td>{}</td></tr><hr/><tr>'
-                                                           '<td>{}</td></tr></table>>'.format(
-                                                            state, self.__states[state]['name']))
-                position = '{},{}!'.format(0.3, new_y)
-                self.__nodes['{}_right'.format(state)] = pydotplus.Node('{}_right'.format(state), pos=position,
+                condition_node = 'pass' if self.__nodes.get('{}_pass'.format(previous_state)) \
+                        else 'leave' if self.__nodes.get('{}_leave'.format(previous_state)) \
+                        else list(self.__states[previous_state]['conditionsets'].keys())[-1]
+                lastnode = self.__nodes['{}_{}'.format(previous_state, condition_node)]
+                self.__nodes['{}_above'.format(state)] = pydotplus.Node('{}_above'.format(state), pos=position,
                                                                         shape="square", width="0", label="")
-                self.__graph.add_node(self.__nodes[state])
-                self.__graph.add_node(self.__nodes['{}_right'.format(state)])
-                conditionset_positions = []
-                actionlist_enter = ''
-                actionlist_stay = ''
-                actionlist_leave = ''
-                actionlist_pass = ''
-                condition_tooltip = ''
-                action_tooltip = ''
-                j = 0
-                new_x = 0.55
-                actions_enter = self.__states[state].get('actions_enter') or []
-                actions_enter_or_stay = self.__states[state].get('actions_enter_or_stay') or []
-                actions_stay = self.__states[state].get('actions_stay') or []
-                actions_leave = self.__states[state].get('actions_leave') or []
-                actions_pass = self.__states[state].get('actions_pass') or []
-                action_tooltip_count_enter = 0
-                action_tooltip_count_stay = 0
-                action_tooltip_count_leave = 0
-                action_tooltip_count_pass = 0
-                action_tooltip_enter = ""
-                action_tooltip_stay = ""
-                action_tooltip_leave = ""
-                action_tooltip_pass = ""
-                for j, conditionset in enumerate(self.__states[state]['conditionsets']):
-                    cond3 = conditionset == ''
-                    try:
-                        cond1 = i >= list(self.__states.keys()).index(self.__active_state)
-                    except Exception:
-                        cond1 = True
-                    try:
-                        cond4 = i == list(self.__states.keys()).index(self.__active_state)
-                    except Exception:
-                        cond4 = True
-                    #self._log_debug('i {}, index of active state {}', i, list(self.__states.keys()).index(self.__active_state))
-                    try:
-                        cond2 = (j > list(self.__states[state]['conditionsets'].keys()).index(self.__active_conditionset)
-                                 or i > list(self.__states.keys()).index(self.__active_state))
-                    except Exception:
-                        cond2 = False if cond3 and cond4 else True
-                    color = "gray" if cond1 and cond2 else "olivedrab" \
-                        if (conditionset == self.__active_conditionset or cond3) and state == self.__active_state else "indianred2"
-                    try:
-                        cond5 = i >= list(self.__states.keys()).index(self.__active_state)
-                    except Exception:
-                        cond5 = True
+                self.__graph.add_node(self.__nodes['{}_above'.format(state)])
+                position = '{},{}!'.format(10 * self.__widthfactor, new_y)
+                self.__nodes['{}_above_right'.format(state)] = pydotplus.Node('{}_above_right'.format(state),
+                                                                              pos=position, shape="square", width="0", label="")
+                self.__graph.add_node(self.__nodes['{}_above_right'.format(state)])
+                self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_above'.format(state)],
+                                                     self.__nodes['{}_above_right'.format(state)], style='bold',
+                                                     color='black', label="", dir="none"))
+                self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_above_right'.format(state)], lastnode,
+                                                     style='bold', color='black', label="False   ", dir="none"))
+                self.__graph.add_edge(pydotplus.Edge(state, self.__nodes['{}_above'.format(state)], style='bold',
+                                                     color='black', label="", dir="back"))
+            new_y -= 1.5 * self.__heightfactor
+            position = '{},{}!'.format(0, new_y)
+            #self._log_debug('state: {} {}',state, position)
 
-                    cond6 = conditionset in ['', self.__active_conditionset] and state == self.__active_state
-                    cond_enter = True if self.__states[state].get('enter') is True else False
-                    cond_stay = True if self.__states[state].get('stay') is True else False
-                    active = True if cond_enter and cond6 else False
+            self.__nodes[state] = pydotplus.Node(state, pos=position, pin=True, notranslate=True, style="filled",
+                                                 fillcolor=color, shape="ellipse",
+                                                 label='<<table border="0"><tr><td>{}</td></tr><hr/><tr>'
+                                                       '<td>{}</td></tr></table>>'.format(
+                                                        state, self.__states[state]['name']))
+            position = '{},{}!'.format(10 * self.__widthfactor, new_y)
+            self.__nodes['{}_right'.format(state)] = pydotplus.Node('{}_right'.format(state), pos=position,
+                                                                    shape="square", width="0", label="")
+            self.__graph.add_node(self.__nodes[state])
+            self.__graph.add_node(self.__nodes['{}_right'.format(state)])
+            conditionset_nodeheights = []
+            actionlist_enter = ''
+            actionlist_stay = ''
+            actionlist_leave = ''
+            actionlist_pass = ''
+            condition_tooltip = ''
+            action_tooltip = ''
+            j = 0
+            new_x = 0.55
+            actions_enter = self.__states[state].get('actions_enter') or []
+            actions_enter_or_stay = self.__states[state].get('actions_enter_or_stay') or []
+            actions_stay = self.__states[state].get('actions_stay') or []
+            actions_leave = self.__states[state].get('actions_leave') or []
+            actions_pass = self.__states[state].get('actions_pass') or []
+            action_tooltip_count_enter = 0
+            action_tooltip_count_stay = 0
+            action_tooltip_count_leave = 0
+            action_tooltip_count_pass = 0
+            action_tooltip_enter = ""
+            action_tooltip_stay = ""
+            action_tooltip_leave = ""
+            action_tooltip_pass = ""
+            action_y = new_y
+            actions_nodeheights = {}
+            nodeheight = 0
 
-                    if len(actions_enter) > 0 or len(actions_enter_or_stay) > 0:
-                        actionlist_enter, action_tooltip_enter, action_tooltip_count_enter = \
-                            self._actionlabel(state, 'actions_enter', conditionset, active)
-                    active = True if cond_stay and cond6 else False
-                    if len(actions_stay) > 0 or len(actions_enter_or_stay) > 0:
-                        actionlist_stay, action_tooltip_stay, action_tooltip_count_stay = \
-                            self._actionlabel(state, 'actions_stay', conditionset, active)
-                    cond_leave = True if self.__states[state].get('leave') is True else False
-                    active = True if cond_leave else False
+            for j, conditionset in enumerate(self.__states[state]['conditionsets']):
+                cond3 = conditionset == ''
+                try:
+                    cond1 = i >= list(self.__states.keys()).index(self.__active_state)
+                except Exception:
+                    cond1 = True
+                try:
+                    cond4 = i == list(self.__states.keys()).index(self.__active_state)
+                except Exception:
+                    cond4 = True
+                #self._log_debug('i {}, index of active state {}', i, list(self.__states.keys()).index(self.__active_state))
+                try:
+                    cond2 = (j > list(self.__states[state]['conditionsets'].keys()).index(self.__active_conditionset)
+                             or i > list(self.__states.keys()).index(self.__active_state))
+                except Exception:
+                    cond2 = False if cond3 and cond4 else True
+                color = "gray" if cond1 and cond2 else "olivedrab" \
+                    if (conditionset == self.__active_conditionset or cond3) and state == self.__active_state else "indianred2"
+                try:
+                    cond5 = i >= list(self.__states.keys()).index(self.__active_state)
+                except Exception:
+                    cond5 = True
 
-                    if len(actions_leave) > 0:
-                        actionlist_leave, action_tooltip_leave, action_tooltip_count_leave = \
-                            self._actionlabel(state, 'actions_leave', conditionset, active)
-                    cond_pass = True if self.__states[state].get('pass') is True else False
-                    active = False if (cond5 and not cond_pass) or cond_leave else True
-                    if len(actions_pass) > 0:
-                        actionlist_pass, action_tooltip_pass, action_tooltip_count_pass = \
-                            self._actionlabel(state, 'actions_pass', conditionset, active)
+                cond6 = conditionset in ['', self.__active_conditionset] and state == self.__active_state
+                cond_enter = True if self.__states[state].get('enter') is True else False
+                cond_stay = True if self.__states[state].get('stay') is True else False
+                active = True if cond_enter and cond6 else False
 
-                    new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
-                    position = '{},{}!'.format(0.3, new_y)
-                    conditionset_positions.append(new_y)
-                    conditionlist, condition_tooltip, condition_tooltip_count = self._conditionlabel(state, conditionset)
-
-                    label = 'no condition' if conditionset == '' else conditionset
-                    self.__nodes['{}_{}'.format(state, conditionset)] = pydotplus.Node(
-                        '{}_{}'.format(state, conditionset), style="filled", fillcolor=color, shape="diamond",
-                        label=label, pos=position)
-                    #self._log_debug('Node {} {} drawn. Conditionlist {}', state, conditionset, conditionlist)
-                    position = '{},{}!'.format(0.1, new_y)
-                    xlabel = '1 tooltip' if condition_tooltip_count == 1\
-                             else '{} tooltips'.format(condition_tooltip_count)\
-                             if condition_tooltip_count > 1 else ''
-                    if not conditionlist == '':
-                        self.__nodes['{}_{}_conditions'.format(state, conditionset)] = pydotplus.Node(
-                            '{}_{}_conditions'.format(state, conditionset), style="filled", fillcolor=color,
-                            shape="rect", label=conditionlist, pos=position, tooltip=condition_tooltip, xlabel=xlabel)
-                        self.__graph.add_node(self.__nodes['{}_{}_conditions'.format(state, conditionset)])
-                        # Create a dotted line between conditionlist and conditionset name
-                        parenthesis_edge = pydotplus.Edge(self.__nodes['{}_{}_conditions'.format(state, conditionset)], self.__nodes['{}_{}'.format(state, conditionset)], arrowhead="none", color="black", style="dotted", constraint="false")
-                        self.__graph.add_edge(parenthesis_edge)
-                    self.__graph.add_node(self.__nodes['{}_{}'.format(state, conditionset)])
-
-                    new_x = 0.55
-                    if not actionlist_enter == '':
-                        position = '{},{}!'.format(new_x, new_y)
-                        xlabel = '1 tooltip' if action_tooltip_count_enter == 1\
-                                 else '{} tooltips'.format(action_tooltip_count_enter)\
-                                 if action_tooltip_count_enter > 1 else ''
-                        #self._log_debug('action enter: {}', position)
-                        self.__nodes['{}_{}_actions_enter'.format(state, conditionset)] = pydotplus.Node(
-                            '{}_{}_actions_enter'.format(state, conditionset), style="filled", fillcolor=color,
-                            shape="rectangle", label=actionlist_enter, pos=position, tooltip=action_tooltip_enter,
-                            xlabel=xlabel)
-                        self.__graph.add_node(self.__nodes['{}_{}_actions_enter'.format(state, conditionset)])
-                        self._add_actioncondition(state, conditionset, 'actions_enter', new_y, cond1, cond2)
-
-                    if not actionlist_stay == '':
-                        new_y -= 0.05 if not actionlist_enter == '' else 0
-                        position = '{},{}!'.format(new_x, new_y)
-                        xlabel = '1 tooltip' if action_tooltip_count_stay == 1\
-                                 else '{} tooltips'.format(action_tooltip_count_stay)\
-                                 if action_tooltip_count_stay > 1 else ''
-                        #self._log_debug('action stay: {}', position)
-                        self.__nodes['{}_{}_actions_stay'.format(state, conditionset)] = pydotplus.Node(
-                            '{}_{}_actions_stay'.format(state, conditionset), style="filled", fillcolor=color,
-                            shape="rectangle", label=actionlist_stay, pos=position, tooltip=action_tooltip_stay,
-                            xlabel=xlabel)
-                        self.__graph.add_node(self.__nodes['{}_{}_actions_stay'.format(state, conditionset)])
-                        self._add_actioncondition(state, conditionset, 'actions_stay', new_y, cond1, cond2)
-
-                    position = '{},{}!'.format(0.55, new_y)
-                    cond1 = self.__nodes.get('{}_{}_actions_enter'.format(state, conditionset)) is None
-                    cond2 = self.__nodes.get('{}_{}_actions_stay'.format(state, conditionset)) is None
-                    cond3 = self.__nodes.get('{}_{}_actions_leave'.format(state, conditionset)) is None
-                    cond4 = self.__nodes.get('{}_{}_actions_pass'.format(state, conditionset)) is None
-                    if cond1 and cond2 and cond3 and cond4:
-                        self.__nodes['{}_{}_right'.format(state, conditionset)] = pydotplus.Node('{}_{}_right'.format(
-                            state, conditionset), shape="circle", width="0.7", pos=position, label="", fillcolor="black",
-                            style="filled", tooltip="No Action")
-                        self.__graph.add_node(self.__nodes['{}_{}_right'.format(state, conditionset)])
-                        self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}'.format(state, conditionset)],
-                                                             self.__nodes['{}_{}_right'.format(state, conditionset)],
-                                                             style='bold', taillabel="    True", tooltip='action on enter'))
-                    if self.__states[state].get('is_copy_for'):
-                        xlabel = "can currently release {}\n\r".format(self.__states[state].get('is_copy_for'))
-                    elif self.__states[state].get('releasedby'):
-                        xlabel = "can currently get released by {}\n\r".format(self.__states[state].get('releasedby'))
-                    else:
-                        xlabel = ""
-                    if j == 0:
-                        self.__graph.add_edge(pydotplus.Edge(self.__nodes[state], self.__nodes['{}_right'.format(state)],
-                                                             style='bold', color='black', dir='none',
-                                                             xlabel=xlabel, edgetooltip='check first conditionset'))
-                        self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_right'.format(state)],
-                                                             self.__nodes['{}_{}'.format(state, conditionset)],
-                                                             style='bold', color='black', tooltip='check first conditionset'))
-                        #self._log_debug('Drew line from state')
-                    else:
-                        self.__graph.add_edge(pydotplus.Edge(previous_conditionset,
-                                                             self.__nodes['{}_{}'.format(state, conditionset)],
-                                                             style='bold', color='black', tooltip='check next conditionset'))
-                    previous_conditionset = self.__nodes['{}_{}'.format(state, conditionset)]
+                if len(actions_enter) > 0 or len(actions_enter_or_stay) > 0:
+                    actionlist_enter, action_tooltip_enter, action_tooltip_count_enter = \
+                        self._actionlabel(state, 'actions_enter', conditionset, active)
+                active = True if cond_stay and cond6 else False
+                if len(actions_stay) > 0 or len(actions_enter_or_stay) > 0:
+                    actionlist_stay, action_tooltip_stay, action_tooltip_count_stay = \
+                        self._actionlabel(state, 'actions_stay', conditionset, active)
+                cond_leave = True if self.__states[state].get('leave') is True else False
+                active = True if cond_leave else False
 
                 if len(actions_leave) > 0:
-                    new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
-                    position = '{},{}!'.format(0.3, new_y)
-                    try:
-                        cond2 = i >= list(self.__states.keys()).index(self.__active_state)
-                    except Exception as ex:
-                        cond2 = True
-                    cond3 = True if self.__states[state].get('leave') is True else False
-                    color = "gray" if cond2 and not cond3 else "olivedrab" if cond3 else "indianred2"
-                    self.__nodes['{}_leave'.format(state)] = pydotplus.Node('{}_leave'.format(state),
-                                                                            style="filled", fillcolor=color, shape="diamond",
-                                                                            label='leave', pos=position)
-                    self.__graph.add_node(self.__nodes['{}_leave'.format(state)])
-                    self.__graph.add_edge(pydotplus.Edge(previous_conditionset, self.__nodes['{}_leave'.format(state)],
-                                                         style='bold', color='black', tooltip='check leave'))
-
-                    position = '{},{}!'.format(new_x, new_y)
-                    xlabel = '1 tooltip' if action_tooltip_count_leave == 1\
-                             else '{} tooltips'.format(action_tooltip_count_leave)\
-                             if action_tooltip_count_leave > 1 else ''
-                    #self._log_debug('action leave: {}', position)
-                    self.__nodes['{}_actions_leave'.format(state)] = pydotplus.Node('{}_actions_leave'.format(state),
-                                                                                    style="filled", fillcolor=color,
-                                                                                    shape="rectangle", label=actionlist_leave,
-                                                                                    pos=position, align="center",
-                                                                                    tooltip=action_tooltip_leave,
-                                                                                    xlabel=xlabel)
-                    self.__graph.add_node(self.__nodes['{}_actions_leave'.format(state)])
-                    self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_leave'.format(state)],
-                                                         self.__nodes['{}_actions_leave'.format(state)], style='bold',
-                                                         taillabel="    True",  tooltip='run leave actions'))
-                    previous_conditionset = self.__nodes['{}_leave'.format(state)]
-
+                    actionlist_leave, action_tooltip_leave, action_tooltip_count_leave = \
+                        self._actionlabel(state, 'actions_leave', conditionset, active)
+                cond_pass = True if self.__states[state].get('pass') is True else False
+                active = False if (cond5 and not cond_pass) or cond_leave else True
                 if len(actions_pass) > 0:
-                    new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
-                    position = '{},{}!'.format(0.3, new_y)
-                    try:
-                        cond2 = i >= list(self.__states.keys()).index(self.__active_state)
-                    except Exception:
-                        cond2 = True
-                    cond3 = True if self.__states[state].get('pass') is True else False
-                    color = "gray" if cond2 and not cond3 else "olivedrab" if cond3 else "indianred2"
-                    self.__nodes['{}_pass'.format(state)] = pydotplus.Node('{}_pass'.format(state),
-                                                                           style="filled", fillcolor=color, shape="diamond",
-                                                                           label='pass', pos=position)
-                    self.__graph.add_node(self.__nodes['{}_pass'.format(state)])
-                    self.__graph.add_edge(pydotplus.Edge(previous_conditionset, self.__nodes['{}_pass'.format(state)],
-                                                         style='bold', color='black', tooltip='check pass'))
+                    actionlist_pass, action_tooltip_pass, action_tooltip_count_pass = \
+                        self._actionlabel(state, 'actions_pass', conditionset, active)
 
-                    position = '{},{}!'.format(new_x, new_y)
-                    xlabel = '1 tooltip' if action_tooltip_count_pass == 1\
-                             else '{} tooltips'.format(action_tooltip_count_pass)\
-                             if action_tooltip_count_pass > 1 else ''
-                    #self._log_debug('action pass: {}', position)
-                    self.__nodes['{}_actions_pass'.format(state)] = pydotplus.Node('{}_actions_pass'.format(state),
-                                                                                   style="filled", fillcolor=color,
-                                                                                   shape="rectangle", label=actionlist_pass,
-                                                                                   pos=position, align="center",
-                                                                                   tooltip=action_tooltip_pass,
-                                                                                   xlabel=xlabel)
-                    self.__graph.add_node(self.__nodes['{}_actions_pass'.format(state)])
-                    self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_pass'.format(state)],
-                                                         self.__nodes['{}_actions_pass'.format(state)], style='bold',
-                                                         taillabel="    True",  tooltip='run pass actions'))
+                conditionlist, condition_tooltip, condition_tooltip_count = self._conditionlabel(state, conditionset)
+                titles = len(re.findall(r'<tr class="conditionheader">', conditionlist))
+                entries = len(re.findall(r'<tr class="conditionentry">', conditionlist))
+                nodeheight = 0.958 + 0.5 + 0.479 # main header, last line, spacing on top and bottom
+                nodeheight += titles * 1.292 # each title
+                nodeheight += entries * 1 #each entry
+                nodeheight /= 5.7
+                nodeheight = round(nodeheight, 4)
+                conditionset_nodeheights.append(nodeheight)
+                new_y -= nodeheight * self.__heightfactor
+                if j > 0:
+                    new_y -= max(float(actions_nodeheights.get(j-1, 0.0) + 0.2), conditionset_nodeheights[j-1] + 0.2) * self.__heightfactor
+                else:
+                    new_y -= 0.46 * self.__heightfactor # half ellipse on top
+                position = '{},{}!'.format(10 * self.__widthfactor, new_y)
+                label = 'no condition' if conditionset == '' else conditionset
+                self.__nodes['{}_{}'.format(state, conditionset)] = pydotplus.Node(
+                    '{}_{}'.format(state, conditionset), style="filled", fillcolor=color, shape="diamond",
+                    label=label, pos=position)
+                #self._log_debug('Node {} {} drawn. Conditionlist {}', state, conditionset, conditionlist)
+                position = '{},{}!'.format(3 * self.__widthfactor, new_y)
+                xlabel = '1 tooltip' if condition_tooltip_count == 1\
+                         else '{} tooltips'.format(condition_tooltip_count)\
+                         if condition_tooltip_count > 1 else ''
+                if not conditionlist == '':
+                    self.__nodes['{}_{}_conditions'.format(state, conditionset)] = pydotplus.Node(
+                        '{}_{}_conditions'.format(state, conditionset), style="filled", fillcolor=color,
+                        shape="rect", label=conditionlist, pos=position, tooltip=condition_tooltip, xlabel=xlabel)
+                    self.__graph.add_node(self.__nodes['{}_{}_conditions'.format(state, conditionset)])
+                    # Create a dotted line between conditionlist and conditionset name
+                    parenthesis_edge = pydotplus.Edge(self.__nodes['{}_{}_conditions'.format(state, conditionset)],
+                                                      self.__nodes['{}_{}'.format(state, conditionset)],
+                                                      arrowhead="none", color="black", style="dotted", constraint="false")
+                    self.__graph.add_edge(parenthesis_edge)
+                self.__graph.add_node(self.__nodes['{}_{}'.format(state, conditionset)])
+                action_y = new_y
+                new_x = 17.5 * self.__widthfactor
+                nodeheights = 0
+                nodeheight = 0
 
-                previous_state = state
+                if not actionlist_enter == '':
+                    nodeheight = 0.644
+                    nodeheight += len(re.findall(r'<tr class="actionentry">', actionlist_enter)) * 0.67
+                    nodeheight /= 5.7
+                    nodeheight = round(nodeheight, 4)
+                    nodeheight = max(0.4, nodeheight)
+                    nodeheights += nodeheight
+                    last_action_nodeheight = nodeheight
+                    position = '{},{}!'.format(new_x, action_y)
+                    xlabel = '1 tooltip' if action_tooltip_count_enter == 1\
+                             else '{} tooltips'.format(action_tooltip_count_enter)\
+                             if action_tooltip_count_enter > 1 else ''
+                    #self._log_debug('action enter: {}', position)
+                    self.__nodes['{}_{}_actions_enter'.format(state, conditionset)] = pydotplus.Node(
+                        '{}_{}_actions_enter'.format(state, conditionset), style="filled", fillcolor=color,
+                        shape="rectangle", label=actionlist_enter, pos=position, tooltip=action_tooltip_enter,
+                        xlabel=xlabel)
+                    self.__graph.add_node(self.__nodes['{}_{}_actions_enter'.format(state, conditionset)])
+                    self._add_actioncondition(state, conditionset, 'actions_enter', action_y, cond1, cond2)
 
-        result = self.__graph.write_svg(filename, prog='fdp')
+                if not actionlist_stay == '':
+                    add_nodeheight = nodeheight
+                    action_y -= nodeheight * self.__heightfactor
+                    nodeheight = 0.644
+                    nodeheight += len(re.findall(r'<tr class="actionentry">', actionlist_stay)) * 0.67
+                    nodeheight /= 5.7
+                    nodeheight = round(nodeheight, 4)
+                    nodeheight = max(0.4, nodeheight)
+                    add_nodeheight += nodeheight
+                    if action_y != new_y:
+                        nodeheight += 0.2
+                        action_y -= nodeheight * self.__heightfactor
+                    elif j <= len(self.__states[state]['conditionsets']) - 1:
+                        add_nodeheight = 0
+                    nodeheights += nodeheight * 2 - 0.2
+                    last_action_nodeheight = nodeheight + add_nodeheight
+
+                    position = '{},{}!'.format(new_x, action_y)
+
+                    xlabel = '1 tooltip' if action_tooltip_count_stay == 1\
+                             else '{} tooltips'.format(action_tooltip_count_stay)\
+                             if action_tooltip_count_stay > 1 else ''
+                    #self._log_debug('action stay: {}', position)
+                    self.__nodes['{}_{}_actions_stay'.format(state, conditionset)] = pydotplus.Node(
+                        '{}_{}_actions_stay'.format(state, conditionset), style="filled", fillcolor=color,
+                        shape="rectangle", label=actionlist_stay, pos=position, tooltip=action_tooltip_stay,
+                        xlabel=xlabel)
+                    self.__graph.add_node(self.__nodes['{}_{}_actions_stay'.format(state, conditionset)])
+                    self._add_actioncondition(state, conditionset, 'actions_stay', action_y, cond1, cond2)
+
+                actions_nodeheights[j] = nodeheights
+                position = '{},{}!'.format(17.5 * self.__widthfactor, action_y)
+                cond1 = self.__nodes.get('{}_{}_actions_enter'.format(state, conditionset)) is None
+                cond2 = self.__nodes.get('{}_{}_actions_stay'.format(state, conditionset)) is None
+                cond3 = self.__nodes.get('{}_{}_actions_leave'.format(state, conditionset)) is None
+                cond4 = self.__nodes.get('{}_{}_actions_pass'.format(state, conditionset)) is None
+                if cond1 and cond2 and cond3 and cond4:
+                    actions_nodeheights[j] = 0.5
+                    last_action_nodeheight = 0.5
+                    nodeheight= 0.5
+                    self.__nodes['{}_{}_right'.format(state, conditionset)] = pydotplus.Node('{}_{}_right'.format(
+                        state, conditionset), shape="circle", width="0.7", pos=position, label="", fillcolor="black",
+                        style="filled", tooltip="No Action")
+                    self.__graph.add_node(self.__nodes['{}_{}_right'.format(state, conditionset)])
+                    self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}'.format(state, conditionset)],
+                                                         self.__nodes['{}_{}_right'.format(state, conditionset)],
+                                                         style='bold', taillabel="True", tooltip='action on enter'))
+                if self.__states[state].get('is_copy_for'):
+                    xlabel = "can currently release {}\n\r".format(self.__states[state].get('is_copy_for'))
+                elif self.__states[state].get('releasedby'):
+                    xlabel = "can currently get released by {}\n\r".format(self.__states[state].get('releasedby'))
+                else:
+                    xlabel = ""
+                if j == 0:
+                    self.__graph.add_edge(pydotplus.Edge(self.__nodes[state], self.__nodes['{}_right'.format(state)],
+                                                         style='bold', color='black', dir='none',
+                                                         xlabel=xlabel, edgetooltip='check first conditionset'))
+                    self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_right'.format(state)],
+                                                         self.__nodes['{}_{}'.format(state, conditionset)],
+                                                         style='bold', color='black', tooltip='check first conditionset'))
+                    #self._log_debug('Drew line from state')
+                else:
+                    self.__graph.add_edge(pydotplus.Edge(previous_conditionset,
+                                                         self.__nodes['{}_{}'.format(state, conditionset)],
+                                                         style='bold', color='black', tooltip='check next conditionset'))
+                previous_conditionset = self.__nodes['{}_{}'.format(state, conditionset)]
+
+            end_node_heights = 0
+            if len(actions_leave) > 0:
+                action_y -= nodeheight * self.__heightfactor
+                nodeheight = 0.8
+                nodeheight += len(re.findall(r'<tr class="actionentry">', actionlist_leave)) * 0.67
+                nodeheight /= 5.7
+                nodeheight = round(nodeheight, 4)
+                end_node_heights += max(0.5, nodeheight) + last_action_nodeheight
+                last_action_nodeheight = max(1.0, nodeheight)
+                action_y -= max(0.5, nodeheight) * self.__heightfactor
+                new_y = action_y
+                position = '{},{}!'.format(10 * self.__widthfactor, action_y)
+                try:
+                    cond2 = i >= list(self.__states.keys()).index(self.__active_state)
+                except Exception:
+                    cond2 = True
+                cond3 = True if self.__states[state].get('leave') is True else False
+                color = "gray" if cond2 and not cond3 else "olivedrab" if cond3 else "indianred2"
+                self.__nodes['{}_leave'.format(state)] = pydotplus.Node('{}_leave'.format(state),
+                                                                        style="filled", fillcolor=color, shape="diamond",
+                                                                        label='leave', pos=position)
+                self.__graph.add_node(self.__nodes['{}_leave'.format(state)])
+                self.__graph.add_edge(pydotplus.Edge(previous_conditionset, self.__nodes['{}_leave'.format(state)],
+                                                     style='bold', color='black', tooltip='check leave'))
+
+                position = '{},{}!'.format(new_x, action_y)
+                xlabel = '1 tooltip' if action_tooltip_count_leave == 1\
+                         else '{} tooltips'.format(action_tooltip_count_leave)\
+                         if action_tooltip_count_leave > 1 else ''
+                #self._log_debug('action leave: {}', position)
+                self.__nodes['{}_actions_leave'.format(state)] = pydotplus.Node('{}_actions_leave'.format(state),
+                                                                                style="filled", fillcolor=color,
+                                                                                shape="rectangle", label=actionlist_leave,
+                                                                                pos=position, align="center",
+                                                                                tooltip=action_tooltip_leave,
+                                                                                xlabel=xlabel)
+                self.__graph.add_node(self.__nodes['{}_actions_leave'.format(state)])
+                self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_leave'.format(state)],
+                                                     self.__nodes['{}_actions_leave'.format(state)], style='bold',
+                                                     taillabel="True",  tooltip='run leave actions'))
+                previous_conditionset = self.__nodes['{}_leave'.format(state)]
+                nodeheight += 0.2
+
+            if len(actions_pass) > 0:
+                action_y -= nodeheight * self.__heightfactor
+                nodeheight = 0.8
+                nodeheight += len(re.findall(r'<tr class="actionentry">', actionlist_pass)) * 0.67
+                nodeheight /= 5.7
+                nodeheight = round(nodeheight, 4)
+                if end_node_heights == 0:
+                    end_node_heights += last_action_nodeheight
+                last_action_nodeheight = max(1.0, nodeheight)
+                end_node_heights += max(0.5, nodeheight)
+                action_y -= max(0.5, nodeheight) * self.__heightfactor
+                new_y = action_y
+                position = '{},{}!'.format(10 * self.__widthfactor, action_y)
+                try:
+                    cond2 = i >= list(self.__states.keys()).index(self.__active_state)
+                except Exception:
+                    cond2 = True
+                cond3 = True if self.__states[state].get('pass') is True else False
+                color = "gray" if cond2 and not cond3 else "olivedrab" if cond3 else "indianred2"
+                self.__nodes['{}_pass'.format(state)] = pydotplus.Node('{}_pass'.format(state),
+                                                                       style="filled", fillcolor=color, shape="diamond",
+                                                                       label='pass', pos=position)
+                self.__graph.add_node(self.__nodes['{}_pass'.format(state)])
+                self.__graph.add_edge(pydotplus.Edge(previous_conditionset, self.__nodes['{}_pass'.format(state)],
+                                                     style='bold', color='black', tooltip='check pass'))
+
+                position = '{},{}!'.format(new_x, action_y)
+                xlabel = '1 tooltip' if action_tooltip_count_pass == 1\
+                         else '{} tooltips'.format(action_tooltip_count_pass)\
+                         if action_tooltip_count_pass > 1 else ''
+                #self._log_debug('action pass: {}', position)
+                self.__nodes['{}_actions_pass'.format(state)] = pydotplus.Node('{}_actions_pass'.format(state),
+                                                                               style="filled", fillcolor=color,
+                                                                               shape="rectangle", label=actionlist_pass,
+                                                                               pos=position, align="center",
+                                                                               tooltip=action_tooltip_pass,
+                                                                               xlabel=xlabel)
+                self.__graph.add_node(self.__nodes['{}_actions_pass'.format(state)])
+                self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_pass'.format(state)],
+                                                     self.__nodes['{}_actions_pass'.format(state)], style='bold',
+                                                     taillabel="    True",  tooltip='run pass actions'))
+            last_height = conditionset_nodeheights[-1] - end_node_heights + 0.1
+            conditionset_nodeheights.append(last_height)
+            above_nodeheights = conditionset_nodeheights
+            previous_state = state
+
+        result = self.__graph.write_svg(filename, prog='neato')
         return result

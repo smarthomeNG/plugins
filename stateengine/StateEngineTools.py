@@ -23,7 +23,7 @@ from . import StateEngineLogger
 import datetime
 from ast import literal_eval
 import re
-from lib.item.items import Items
+from lib.item import Items
 
 
 # General class for everything that is below the SeItem Class
@@ -410,7 +410,7 @@ def get_original_caller(smarthome, elog, caller, source, item=None, eval_keyword
     else:
         original_source = "None"
     while partition_strip(original_caller, ":")[0] in eval_keyword:
-        original_item = smarthome.return_item(original_source)
+        original_item = smarthome.items.return_item(original_source)
         if original_item is None:
             elog.info("get_caller({0}, {1}): original item not found", caller, source)
             break
