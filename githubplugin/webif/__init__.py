@@ -65,6 +65,8 @@ class WebInterface(SmartPluginWebIf):
         for repo in repos:
             if 'repo' in repos[repo]:
                 del repos[repo]['repo']
+            repos[repo]['lc'] = repos[repo]['lcommit'][-8:]
+            repos[repo]['rc'] = repos[repo]['rcommit'][-8:]
 
         return repos
 
@@ -110,7 +112,6 @@ class WebInterface(SmartPluginWebIf):
                            webif_pagelength=pagelength,
                            repos=self.collect_repos(),
                            forklist=self.plugin.get_github_forklist_sorted(),
-                           forks=self.plugin.gh.forks,
                            pulls=pulls,
                            auth=self.plugin.gh_apikey != '',
                            conn=self.plugin.gh._github is not None,
