@@ -518,9 +518,10 @@ class SmlFrameParser():
                 'valueRaw': entry.get_value(),
                 'name': OBIS_NAMES.get(entry.obis)
             }
-            if entry.scaler:
-                content['scaler'] = entry.scaler
-                content['value'] = round(content['value'] * 10 ** content['scaler'], 1)
+            # skip scaler calculation as the smllib has done this already
+            # if entry.scaler:
+            #    content['scaler'] = entry.scaler
+            #    content['value'] = round(content['value'] * 10 ** content['scaler'], 1)
             if entry.unit:
                 content['unit'] = smlConst.UNITS.get(entry.unit)
                 content['unitCode'] = entry.unit
