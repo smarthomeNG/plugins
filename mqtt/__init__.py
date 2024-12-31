@@ -37,7 +37,7 @@ class Mqtt2(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.0.5'
+    PLUGIN_VERSION = '2.0.6'
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -119,13 +119,33 @@ class Mqtt2(MqttPlugin):
                         with the item, caller, source and dest as arguments and in case of the knx plugin the value
                         can be sent to the knx with a knx write function within the knx plugin.
         """
+        # check for topic prefixes
+        topic_prefix_in = ''
+        topic_prefix_out = ''
+        if self.has_iattr(item.conf, 'mqtt_topic_prefix'):
+            topic_prefix_in = self.get_iattr_value(item.conf, 'mqtt_topic_prefix')
+            topic_prefix_out = self.get_iattr_value(item.conf, 'mqtt_topic_prefix')
+        if self.has_iattr(item.conf, 'mqtt_topic_prefix_in'):
+            topic_prefix_in = self.get_iattr_value(item.conf, 'mqtt_topic_prefix_in')
+        if self.has_iattr(item.conf, 'mqtt_topic_prefix_out'):
+            topic_prefix_out = self.get_iattr_value(item.conf, 'mqtt_topic_prefix_out')
+        if topic_prefix_in != '' and topic_prefix_in[-1] != '/':
+            topic_prefix_in += '/'
+        if topic_prefix_out != '' and topic_prefix_out[-1] != '/':
+            topic_prefix_out += '/'
+
         # first checking for mqtt-topic attributes 'mqtt_topic', 'mqtt_topic_in' and 'mqtt_topic_out'
         if self.has_iattr(item.conf, 'mqtt_topic'):
             item.conf['mqtt_topic_in' + self.at_instance_name] = self.get_iattr_value(item.conf, 'mqtt_topic')
             item.conf['mqtt_topic_out' + self.at_instance_name] = self.get_iattr_value(item.conf, 'mqtt_topic')
 
+        if self.has_iattr(item.conf, 'mqtt_topic_in'):
+            item.conf['mqtt_topic_in' + self.at_instance_name] = topic_prefix_in + self.get_iattr_value(item.conf, 'mqtt_topic_in')
+        if self.has_iattr(item.conf, 'mqtt_topic_out'):
+            item.conf['mqtt_topic_out' + self.at_instance_name] = topic_prefix_out + self.get_iattr_value(item.conf, 'mqtt_topic_out')
+
         if self.has_iattr(item.conf, 'mqtt_topic_init'):
-            item.conf['mqtt_topic_out' + self.at_instance_name] = self.get_iattr_value(item.conf, 'mqtt_topic_init')
+            item.conf['mqtt_topic_out' + self.at_instance_name] = topic_prefix_out + self.get_iattr_value(item.conf, 'mqtt_topic_init')
 
         # check other mqtt attributes, if a topic attribute has been specified
         if self.has_iattr(item.conf, 'mqtt_topic_in') or self.has_iattr(item.conf, 'mqtt_topic_out'):

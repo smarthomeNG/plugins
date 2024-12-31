@@ -11,7 +11,7 @@ plugin:
     keywords: iot
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1089334-neues-mqtt-plugin
 
-    version: 2.0.5                 # Plugin version
+    version: 2.0.6                 # Plugin version
     sh_minversion: '1.7'             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # since the plugin connects to the mqtt module, multi instance makes no sense
@@ -22,6 +22,12 @@ parameters: NONE
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    mqtt_topic_prefix:
+        type: str
+        description:
+            de: 'Präfix für Sende- und Empfangs-Topic'
+            en: 'Prefix for topic for send and receive'
+
     mqtt_topic:
         type: str
         description:
@@ -37,6 +43,12 @@ item_attributes:
                  or mqtt_topic_in.
                 '
 
+    mqtt_topic_prefix_in:
+        type: str
+        description:
+            de: 'Präfix für Empfangs-Topic'
+            en: 'Prefix for topic for receive'
+
     mqtt_topic_in:
         type: str
         description:
@@ -51,11 +63,17 @@ item_attributes:
                  with this topic, the payload is used to set the item's value.
                 "
 
+    mqtt_topic_prefix_out:
+        type: str
+        description:
+            de: 'Präfix für Sende-Topic'
+            en: 'Prefix for topic for sending'
+
     mqtt_topic_out:
         type: str
         description:
             de: 'Topic für Senden'
-            en: 'Topic for send'
+            en: 'Topic for sending'
         description_long:
             de: 'mqtt_topic_out definiert das MQTT Topic unter dem der Wert des Items als
                  Payload publiziert wird.
