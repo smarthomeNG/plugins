@@ -1,2 +1,2 @@
-pcomfortcloud
+pcomfortcloud>=0.1.0
 bs4

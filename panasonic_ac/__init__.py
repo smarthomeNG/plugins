@@ -84,7 +84,7 @@ class PanComfortCloud(SmartPlugin):
         # cycle time in seconds, only needed, if hardware/interface needs to be
         # polled for value changes by adding a scheduler entry in the run method of this plugin
         # (maybe you want to make it a plugin parameter?)
-        self._cycle = 30
+        self._cycle = self.get_parameter_value('cycle')
 
         # if you want to use an item to toggle plugin execution, enable the
         # definition in plugin.yaml and uncomment the following line
@@ -150,7 +150,12 @@ class PanComfortCloud(SmartPlugin):
             device_status = self.session.get_device(id)['parameters']
         except Exception as ex:
             device_status = {}
-            self.logger.dbghigh(f"- Status of device (index={index}) cannot be read - Exception {ex}")
+
+            import sys
+            ex_type, ex_value, ex_traceback = sys.exc_info()
+
+            self.logger.dbghigh(f"- Status of device (index={index}) cannot be read - Exception {ex} ({type(ex)}), {dir(ex)=}")
+            self.logger.dbghigh(f"   - {ex_value=}")
         return device_status
 
 
@@ -404,6 +409,7 @@ class PanComfortCloud(SmartPlugin):
         for idx, device in enumerate(self._devices):
             index = idx + 1
             self._devices[str(index)]['parameters'] = self.pcc_getdevicestatus(index)
+            self.logger.dbghigh(f"poll_device: Polling Panasonic Comfort Cloud for device '{self._devices[str(index)]['name']}' - Got parameters={self._devices[str(index)]['parameters']}")
 
             # Items updaten
             mapping_root = str(index) + mapping_delimiter

@@ -36,6 +36,13 @@ parameters:
             de: 'Login Password für die Panasonic Comfort Cloud'
             en: 'Login password for the Panasonic comfort cloud'
 
+    cycle:
+        type: int
+        default: 60
+        description:
+            de: 'Poll Cycle'
+            en: 'Poll Cycle'
+
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
 
