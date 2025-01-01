@@ -75,6 +75,7 @@ class lms(SmartDevicePlugin):
                 self._parameters['web_host'] = host
             else:
                 self._parameters['web_host'] = f'http://{host}'
+        self._parameters['CURRENT_LIST_ID'] = {}
 
     def on_connect(self, by=None):
         self.logger.debug("Activating listen mode after connection.")
@@ -95,16 +96,24 @@ class lms(SmartDevicePlugin):
         def trigger_read(command):
             self.send_command(command + CUSTOM_SEP + custom)
 
+        if command == f'database.players':
+            self.logger.debug(f"Got command players {command} data {data} value {value} by {by}")
+            for player in value.keys():
+                self._dispatch_callback('player.info.modelname' + CUSTOM_SEP + player, value[player].get('modelname'), by)
+                self._dispatch_callback('player.info.firmware' + CUSTOM_SEP + player, value[player].get('firmware'), by)
+                self._dispatch_callback('player.info.playernames' + CUSTOM_SEP + player, value, by)
+
+        if command == f'database.playlists':
+            self.logger.debug(f"Got command playlists {command} data {data} value {value} by {by}")
+            for player in self._custom_values.get(1):
+                self._dispatch_callback('player.info.playlists' + CUSTOM_SEP + player, value, by)
+
         if not custom:
             return
 
-        if command == f'player.info.playlists.names{CUSTOM_SEP}{custom}':
-            self.logger.debug(f"Got command playlist names {command} data {data} value {value} custom {custom} by {by}")
-            trigger_read('player.playlist.id')
-            trigger_read('player.playlist.name')
+        if command == f'player.playlist.rename{CUSTOM_SEP}{custom}':
+            trigger_read('player.info.all_playlists')
 
-        if command == 'playlist.rename':
-            trigger_read('info.playlists.names')
         # set alarm
         if command == f'player.control.alarms{CUSTOM_SEP}{custom}':
             return
@@ -142,6 +151,7 @@ class lms(SmartDevicePlugin):
 
         if command == f'player.playlist.id{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command id {command} data {data} value {value} custom {custom} by {by}")
+            self._parameters['CURRENT_LIST_ID'][custom] = value
             trigger_read('player.playlist.name')
 
         if command == f'player.control.sync{CUSTOM_SEP}{custom}':
