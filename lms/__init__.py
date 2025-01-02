@@ -43,6 +43,7 @@ else:
 from lib.model.sdp.globals import (CUSTOM_SEP, PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_RECURSIVE, PLUGIN_ATTR_CMD_CLASS, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_CONN_TERMINATOR)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 from lib.model.sdp.command import SDPCommandParseStr
+from lib.item import Items
 
 import urllib.parse
 
@@ -53,6 +54,7 @@ class lms(SmartDevicePlugin):
     PLUGIN_VERSION = '1.6.0'
 
     def _set_device_defaults(self):
+        self.items = Items.get_instance()
         self.custom_commands = 1
         self._token_pattern = '([0-9a-fA-F]{2}[-:]){5}[0-9a-fA-F]{2}'
         # for substitution in reply_pattern
@@ -78,8 +80,12 @@ class lms(SmartDevicePlugin):
         self._parameters['CURRENT_LIST_ID'] = {}
 
     def on_connect(self, by=None):
-        self.logger.debug("Activating listen mode after connection.")
+        self.logger.debug(f"Activating listen mode after connection.")
         self.send_command('server.listenmode', True)
+        if not self.items.match_items('*.database.players'):
+            self.logger.debug(f"Querying players.")
+            self.send_command('player.info.playernames', None)
+
 
     def _transform_send_data(self, data=None, **kwargs):
         if isinstance(data, dict):
