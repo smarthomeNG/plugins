@@ -1,0 +1,54 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @author      Wolfram v. Hülsen
+* @copyright   2018 - 2024
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+
+/**
+* Displays the status of the PiUSV
+*
+* @param {id=} unique id for this widget(optional)
+* @param {item} main item path for piusv struct 
+* 
+*/
+
+{% macro info(id, item) %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
+	<style>
+		.small-led>.symbol svg		{
+			width:18px!important;
+			height:18px!important;
+			vertical-align: top;
+			margin-top: 2px;
+		}
+		td.text_label {
+			width: 32%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+	</style>
+	<table style="min-width: 40%;">
+		<tr style="display:flex;">
+			<td class="text_label">Versorgungsspannung:</td>
+			<td style="width:15%;">{{basic.print('', item~'.u_ext', '%01,3f V','VAR1/1000' ) }}</td>
+			<td class="text_label">Batteriespannung:</td>
+			<td style="width:15%;">{{basic.print('', item~'.u_batt', '%01,3f V','VAR1/1000') }}</td>
+		</tr>
+		<tr style="display:flex;">
+			<td class="text_label">Spannung RPI:</td>
+			<td style="width:15%;">{{basic.print('', item~'.u_rasp', '%01,3f V','VAR1/1000' ) }}</td>
+			<td class="text_label">Strom RPI:</td>
+			<td style="width:15%;">{{basic.print('', item~'.i_rasp', 'mA' ) }}</td>
+		</tr>
+	</table>	
+	<br/>
+	<span class="small-led">{{ basic.symbol('', item~'.piusv_status', '', 'status_led', [0,1], 'VAR1 & 1', ['#C80101', '#01A001']) }}</span>Externe Versorgung<br>
+	<span class="small-led">{{ basic.symbol('', item~'.piusv_status', '', 'status_led', [0,2], 'VAR1 & 2', ['lightgrey', '#01A001']) }}</span>Batteriebetrieb<br>
+	<span class="small-led">{{ basic.symbol('', item~'.piusv_status', '', 'status_led', [0,4], 'VAR1 & 4', ['lightgray', '#C80101']) }}</span>Batterie niedrig<br>
+	<span class="small-led">{{ basic.symbol('', item~'.piusv_status', '', 'status_led', [0,8], 'VAR1 & 8', ['lightgray', '#01A001']) }}</span>Batterie laden<br>
+	<span class="small-led">{{ basic.symbol('', item~'.piusv_status', '', 'status_led', [0,16], 'VAR1 & 16', ['#C80101', '#01A001']) }}</span>Batterie voll<br>
+
+{% endmacro %}
