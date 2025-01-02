@@ -796,7 +796,7 @@ item_structs:
 
                 lookup:
                     type: list
-                    sqb_lookup@instance: REPEAT#list
+                    sqb_lookup@instance: TEST#list
 
             shuffle:
                 type: str
@@ -1009,20 +1009,11 @@ item_structs:
                 -   player
                 -   player.info
 
-                lu_fwd:
+                lookup:
                     type: dict
                     eval_trigger: '..'
                     eval: '{value["name"]: key for key, value in sh...().items()}'
-
-                lu_rev:
-                    type: dict
-                    eval_trigger: '..'
-                    eval: '{key: value["name"] for key, value in sh...().items()}'
-
-                lu_ci:
-                    type: dict
-                    eval_trigger: '..'
-                    eval: '{value["name"].lower(): key for key, value in sh...().items()}'
+                    sqb_lookup@instance: TEST#fwd
 
             playlists:
                 type: dict
@@ -1033,39 +1024,17 @@ item_structs:
                 -   player
                 -   player.info
 
-                ids:
+                lu_ids:
+                    type: dict
+                    eval_trigger: '...'
+                    eval: '{key: value["id"] for key, value in sh....().items()}'
+                    sqb_lookup@instance: PLAYLIST_IDS#fwd
 
-                    lu_fwd:
-                        type: dict
-                        eval_trigger: '...'
-                        eval: '{key: value["id"] for key, value in sh....().items()}'
-
-                    lu_rev:
-                        type: dict
-                        eval_trigger: '...'
-                        eval: '{value["id"]: key for key, value in sh....().items()}'
-
-                    lu_ci:
-                        type: dict
-                        eval_trigger: '...'
-                        eval: '{key.lower(): value["id"] for key, value in sh....().items()}'
-
-                urls:
-
-                    lu_fwd:
-                        type: dict
-                        eval_trigger: '...'
-                        eval: '{key: value["url"] for key, value in sh....().items()}'
-
-                    lu_rev:
-                        type: dict
-                        eval_trigger: '...'
-                        eval: '{value["url"]: key for key, value in sh....().items()}'
-
-                    lu_ci:
-                        type: dict
-                        eval_trigger: '...'
-                        eval: '{key.lower(): value["url"] for key, value in sh....().items()}'
+                lu_urls:
+                    type: dict
+                    eval_trigger: '...'
+                    eval: '{key: value["url"] for key, value in sh....().items()}'
+                    sqb_lookup@instance: PLAYLIST_URLS#fwd
 
             status:
                 type: str
@@ -1745,7 +1714,7 @@ item_structs:
 
                     lookup:
                         type: list
-                        sqb_lookup@instance: REPEAT#list
+                        sqb_lookup@instance: TEST#list
 
                 shuffle:
                     type: str
@@ -1966,20 +1935,11 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.info
 
-                    lu_fwd:
+                    lookup:
                         type: dict
                         eval_trigger: '..'
                         eval: '{value["name"]: key for key, value in sh...().items()}'
-
-                    lu_rev:
-                        type: dict
-                        eval_trigger: '..'
-                        eval: '{key: value["name"] for key, value in sh...().items()}'
-
-                    lu_ci:
-                        type: dict
-                        eval_trigger: '..'
-                        eval: '{value["name"].lower(): key for key, value in sh...().items()}'
+                        sqb_lookup@instance: TEST#fwd
 
                 playlists:
                     type: dict
@@ -1991,39 +1951,17 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.info
 
-                    ids:
+                    lu_ids:
+                        type: dict
+                        eval_trigger: '...'
+                        eval: '{key: value["id"] for key, value in sh....().items()}'
+                        sqb_lookup@instance: PLAYLIST_IDS#fwd
 
-                        lu_fwd:
-                            type: dict
-                            eval_trigger: '...'
-                            eval: '{key: value["id"] for key, value in sh....().items()}'
-
-                        lu_rev:
-                            type: dict
-                            eval_trigger: '...'
-                            eval: '{value["id"]: key for key, value in sh....().items()}'
-
-                        lu_ci:
-                            type: dict
-                            eval_trigger: '...'
-                            eval: '{key.lower(): value["id"] for key, value in sh....().items()}'
-
-                    urls:
-
-                        lu_fwd:
-                            type: dict
-                            eval_trigger: '...'
-                            eval: '{key: value["url"] for key, value in sh....().items()}'
-
-                        lu_rev:
-                            type: dict
-                            eval_trigger: '...'
-                            eval: '{value["url"]: key for key, value in sh....().items()}'
-
-                        lu_ci:
-                            type: dict
-                            eval_trigger: '...'
-                            eval: '{key.lower(): value["url"] for key, value in sh....().items()}'
+                    lu_urls:
+                        type: dict
+                        eval_trigger: '...'
+                        eval: '{key: value["url"] for key, value in sh....().items()}'
+                        sqb_lookup@instance: PLAYLIST_URLS#fwd
 
                 status:
                     type: str

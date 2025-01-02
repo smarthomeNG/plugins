@@ -66,9 +66,9 @@ commands = {
             'sleep': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} sleep ?', 'write_cmd': '{CUSTOM_ATTR1} sleep {VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} sleep (.*[^?])', 'item_attrs': {'initial': True}}
         },
         'playlist': {
-            'repeat': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist repeat ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist repeat {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlist repeat {LOOKUP}$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist repeat:{LOOKUP}$'], 'lookup': 'REPEAT', 'item_attrs': {'initial': True, 'attributes': {'remark': '0 = Off, 1 = Song, 2 = Playlist'}, 'lookup_item': True}},
             'rename_current': {'read': False, 'write': True, 'item_type': 'str', 'write_cmd': 'playlists rename playlist_id:{CUSTOM_PARAM1:CURRENT_LIST_ID} newname:{VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^playlists rename playlist_id:(?:\d+) newname:(.*)', 'custom_disabled': True},
             'delete_current': {'read': False, 'write': True, 'write_cmd': 'playlists delete playlist_id:{CUSTOM_PARAM1:CURRENT_LIST_ID}', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': r'^playlists delete playlist_id:(\d+)', 'custom_disabled': True, 'item_attrs': {'enforce': True, 'attributes': {'autotimer': '1s = 0', 'remark': 'Be careful, instantly deletes the current playlist!'}}},
+            'repeat': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist repeat ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist repeat {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlist repeat {LOOKUP}$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist repeat:{LOOKUP}$'], 'lookup': 'TEST', 'item_attrs': {'initial': True, 'attributes': {'remark': '0 = Off, 1 = Song, 2 = Playlist'}, 'lookup_item': True}},
             'shuffle': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist shuffle ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist shuffle {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlist shuffle {LOOKUP}$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist shuffle:{LOOKUP}$'], 'lookup': 'SHUFFLE', 'item_attrs': {'initial': True, 'attributes': {'remark': '0 = Off, 1 = Song, 2 = Album'}, 'lookup_item': True}},
             'index': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist index ?', 'write_cmd': '{CUSTOM_ATTR1} playlist index {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlist (?:index|newsong .*) (\d+)$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist index:(\d*[^\s]+)', r'^{CUSTOM_PATTERN1} prefset server currentSong (\d+)$', r'^{CUSTOM_PATTERN1} playlist jump (\d+)', r'^{CUSTOM_PATTERN1} play (\d*)'], 'item_attrs': {'initial': True}},
             'name': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist name ?', 'write_cmd': '{CUSTOM_ATTR1} playlist name {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlistcontrol cmd:load playlist_name:(.*) count:(?:\d+)$', r'^{CUSTOM_PATTERN1} playlist name (.*[^?])', r'^{CUSTOM_PATTERN1} playlist playlistsinfo id:(?:\d+) name:(.*) modified:']},
@@ -126,72 +126,36 @@ lookups = {
         '0': 'OFF',
         '1': 'SONG',
         '2': 'ALBUM'
+    },
+    'TEST': {
     }
 }
 
 item_templates = {
     'players': {
-        'lu_fwd':
+        'lookup':
             {
                 'type': 'dict',
                 'eval_trigger': '..',
-                'eval': '{value["name"]: key for key, value in sh...().items()}'
-            },
-        'lu_rev':
-            {
-                'type': 'dict',
-                'eval_trigger': '..',
-                'eval': '{key: value["name"] for key, value in sh...().items()}'
-            },
-        'lu_ci':
-            {
-                'type': 'dict',
-                'eval_trigger': '..',
-                'eval': '{value["name"].lower(): key for key, value in sh...().items()}'
+                'eval': '{value["name"]: key for key, value in sh...().items()}',
+                'sqb_lookup@instance': 'TEST#fwd'
             }
     },
     'playlists': {
-        'ids':
+        'lu_ids':
             {
-                'lu_fwd':
-                    {
-                        'type': 'dict',
-                        'eval_trigger': '...',
-                        'eval': '{key: value["id"] for key, value in sh....().items()}'
-                    },
-                'lu_rev':
-                    {
-                        'type': 'dict',
-                        'eval_trigger': '...',
-                        'eval': '{value["id"]: key for key, value in sh....().items()}'
-                    },
-                'lu_ci':
-                    {
-                        'type': 'dict',
-                        'eval_trigger': '...',
-                        'eval': '{key.lower(): value["id"] for key, value in sh....().items()}'
-                    }
+                'type': 'dict',
+                'eval_trigger': '...',
+                'eval': '{key: value["id"] for key, value in sh....().items()}',
+                'sqb_lookup@instance': 'PLAYLIST_IDS#fwd'
+
             },
-        'urls':
+        'lu_urls':
             {
-                'lu_fwd':
-                    {
-                        'type': 'dict',
-                        'eval_trigger': '...',
-                        'eval': '{key: value["url"] for key, value in sh....().items()}'
-                    },
-                'lu_rev':
-                    {
-                        'type': 'dict',
-                        'eval_trigger': '...',
-                        'eval': '{value["url"]: key for key, value in sh....().items()}'
-                    },
-                'lu_ci':
-                    {
-                        'type': 'dict',
-                        'eval_trigger': '...',
-                        'eval': '{key.lower(): value["url"] for key, value in sh....().items()}'
-                    }
+                'type': 'dict',
+                'eval_trigger': '...',
+                'eval': '{key: value["url"] for key, value in sh....().items()}',
+                'sqb_lookup@instance': 'PLAYLIST_URLS#fwd'
             },
     },
     'rescanprogress': {
