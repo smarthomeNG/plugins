@@ -84,7 +84,7 @@ class lms(SmartDevicePlugin):
         self.send_command('server.listenmode', True)
         if not self.items.match_items('*.database.players'):
             self.logger.debug(f"Querying players.")
-            self.send_command('player.info.playernames', None)
+            self.send_command('player.info.players', None)
 
 
     def _transform_send_data(self, data=None, **kwargs):
@@ -107,7 +107,7 @@ class lms(SmartDevicePlugin):
             for player in value.keys():
                 self._dispatch_callback('player.info.modelname' + CUSTOM_SEP + player, value[player].get('modelname'), by)
                 self._dispatch_callback('player.info.firmware' + CUSTOM_SEP + player, value[player].get('firmware'), by)
-                self._dispatch_callback('player.info.playernames' + CUSTOM_SEP + player, value, by)
+                self._dispatch_callback('player.info.players' + CUSTOM_SEP + player, value, by)
 
         if command == f'database.playlists':
             self.logger.debug(f"Got command playlists {command} data {data} value {value} by {by}")
@@ -118,7 +118,7 @@ class lms(SmartDevicePlugin):
             return
 
         if command == f'player.playlist.rename{CUSTOM_SEP}{custom}':
-            trigger_read('player.info.all_playlists')
+            trigger_read('player.info.playlists')
 
         # set alarm
         if command == f'player.control.alarms{CUSTOM_SEP}{custom}':

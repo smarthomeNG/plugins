@@ -68,7 +68,7 @@ commands = {
         'playlist': {
             'rename_current': {'read': False, 'write': True, 'item_type': 'str', 'write_cmd': 'playlists rename playlist_id:{CUSTOM_PARAM1:CURRENT_LIST_ID} newname:{VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^playlists rename playlist_id:(?:\d+) newname:(.*)', 'custom_disabled': True},
             'delete_current': {'read': False, 'write': True, 'write_cmd': 'playlists delete playlist_id:{CUSTOM_PARAM1:CURRENT_LIST_ID}', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': r'^playlists delete playlist_id:(\d+)', 'custom_disabled': True, 'item_attrs': {'enforce': True, 'attributes': {'autotimer': '1s = 0', 'remark': 'Be careful, instantly deletes the current playlist!'}}},
-            'repeat': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist repeat ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist repeat {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlist repeat {LOOKUP}$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist repeat:{LOOKUP}$'], 'lookup': 'TEST', 'item_attrs': {'initial': True, 'attributes': {'remark': '0 = Off, 1 = Song, 2 = Playlist'}, 'lookup_item': True}},
+            'repeat': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist repeat ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist repeat {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlist repeat {LOOKUP}$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist repeat:{LOOKUP}$'], 'lookup': 'REPEAT', 'item_attrs': {'initial': True, 'attributes': {'remark': '0 = Off, 1 = Song, 2 = Playlist'}, 'lookup_item': True}},
             'shuffle': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist shuffle ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist shuffle {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlist shuffle {LOOKUP}$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist shuffle:{LOOKUP}$'], 'lookup': 'SHUFFLE', 'item_attrs': {'initial': True, 'attributes': {'remark': '0 = Off, 1 = Song, 2 = Album'}, 'lookup_item': True}},
             'index': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist index ?', 'write_cmd': '{CUSTOM_ATTR1} playlist index {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlist (?:index|newsong .*) (\d+)$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist index:(\d*[^\s]+)', r'^{CUSTOM_PATTERN1} prefset server currentSong (\d+)$', r'^{CUSTOM_PATTERN1} playlist jump (\d+)', r'^{CUSTOM_PATTERN1} play (\d*)'], 'item_attrs': {'initial': True}},
             'name': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist name ?', 'write_cmd': '{CUSTOM_ATTR1} playlist name {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlistcontrol cmd:load playlist_name:(.*) count:(?:\d+)$', r'^{CUSTOM_PATTERN1} playlist name (.*[^?])', r'^{CUSTOM_PATTERN1} playlist playlistsinfo id:(?:\d+) name:(.*) modified:']},
@@ -95,7 +95,7 @@ commands = {
             'customskip': {'read': False, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} customskip setfilter filter{VALUE}.cs.xml', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'cache': True}}}
         },
         'info': {
-            'playernames': {'read': True, 'write': False, 'read_cmd': 'players 0 100', 'item_type': 'dict', 'dev_datatype': 'LMSPlayers', 'reply_pattern': r'^players 0 100 (.*)', 'custom_disabled': True, 'item_attrs': {'initial': False, 'item_template': 'players'}},
+            'players': {'read': True, 'write': False, 'read_cmd': 'players 0 100', 'item_type': 'dict', 'dev_datatype': 'LMSPlayers', 'reply_pattern': r'^players 0 100 (.*)', 'item_attrs': {'initial': False, 'item_template': 'players'}},
             'playlists': {'read': True, 'write': False, 'read_cmd': 'playlists 0 1000 tags:u', 'item_type': 'dict', 'dev_datatype': 'LMSPlaylists', 'reply_pattern': r'^playlists 0 1000(?: tags:[u,s])? (.*)', 'item_attrs': {'initial': False, 'item_template': 'playlists'}},
             'status': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} status', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'^{CUSTOM_PATTERN1} status\s+(.*)', 'item_attrs': {'initial': True}},
             'connected': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} connected ?', 'item_type': 'bool', 'dev_datatype': 'LMSConnection', 'reply_pattern': [r'^{CUSTOM_PATTERN1} (?:connected|client) (\d|disconnect|reconnect)', r'^{CUSTOM_PATTERN1} status(?:.*)player_connected:([^\s]+)']},
@@ -128,33 +128,29 @@ lookups = {
         '2': 'ALBUM'
     },
     'TEST': {
+        '0': 'OFF'
     }
 }
 
 item_templates = {
     'players': {
-        'lookup':
+        'on_change': '.lu_names = {key: value["name"] for key, value in sh..self().items()}',
+        'lu_names':
             {
                 'type': 'dict',
-                'eval_trigger': '..',
-                'eval': '{value["name"]: key for key, value in sh...().items()}',
                 'sqb_lookup@instance': 'TEST#fwd'
             }
     },
     'playlists': {
+        'on_change': ['.lu_ids = {value["id"]: key for key, value in sh..self().items()}', '.lu_urls = {value["url"]: key for key, value in sh..self().items()}'],
         'lu_ids':
             {
                 'type': 'dict',
-                'eval_trigger': '...',
-                'eval': '{key: value["id"] for key, value in sh....().items()}',
                 'sqb_lookup@instance': 'PLAYLIST_IDS#fwd'
-
             },
         'lu_urls':
             {
                 'type': 'dict',
-                'eval_trigger': '...',
-                'eval': '{key: value["url"] for key, value in sh....().items()}',
                 'sqb_lookup@instance': 'PLAYLIST_URLS#fwd'
             },
     },

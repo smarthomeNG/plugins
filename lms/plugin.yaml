@@ -796,7 +796,7 @@ item_structs:
 
                 lookup:
                     type: list
-                    sqb_lookup@instance: TEST#list
+                    sqb_lookup@instance: REPEAT#list
 
             shuffle:
                 type: str
@@ -1000,19 +1000,18 @@ item_structs:
                 enforce_updates: true
                 sqb_read_group_trigger@instance: player.info
 
-            playernames:
+            players:
                 type: dict
-                sqb_command@instance: player.info.playernames
+                sqb_command@instance: player.info.players
                 sqb_read@instance: true
                 sqb_write@instance: false
                 sqb_read_group@instance:
                 -   player
                 -   player.info
+                on_change: '.lu_names = {key: value["name"] for key, value in sh..self().items()}'
 
-                lookup:
+                lu_names:
                     type: dict
-                    eval_trigger: '..'
-                    eval: '{value["name"]: key for key, value in sh...().items()}'
                     sqb_lookup@instance: TEST#fwd
 
             playlists:
@@ -1023,17 +1022,16 @@ item_structs:
                 sqb_read_group@instance:
                 -   player
                 -   player.info
+                on_change:
+                -   '.lu_ids = {value["id"]: key for key, value in sh..self().items()}'
+                -   '.lu_urls = {value["url"]: key for key, value in sh..self().items()}'
 
                 lu_ids:
                     type: dict
-                    eval_trigger: '...'
-                    eval: '{key: value["id"] for key, value in sh....().items()}'
                     sqb_lookup@instance: PLAYLIST_IDS#fwd
 
                 lu_urls:
                     type: dict
-                    eval_trigger: '...'
-                    eval: '{key: value["url"] for key, value in sh....().items()}'
                     sqb_lookup@instance: PLAYLIST_URLS#fwd
 
             status:
@@ -1714,7 +1712,7 @@ item_structs:
 
                     lookup:
                         type: list
-                        sqb_lookup@instance: TEST#list
+                        sqb_lookup@instance: REPEAT#list
 
                 shuffle:
                     type: str
@@ -1925,20 +1923,19 @@ item_structs:
                     enforce_updates: true
                     sqb_read_group_trigger@instance: ALL.player.info
 
-                playernames:
+                players:
                     type: dict
-                    sqb_command@instance: player.info.playernames
+                    sqb_command@instance: player.info.players
                     sqb_read@instance: true
                     sqb_write@instance: false
                     sqb_read_group@instance:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
+                    on_change: '.lu_names = {key: value["name"] for key, value in sh..self().items()}'
 
-                    lookup:
+                    lu_names:
                         type: dict
-                        eval_trigger: '..'
-                        eval: '{value["name"]: key for key, value in sh...().items()}'
                         sqb_lookup@instance: TEST#fwd
 
                 playlists:
@@ -1950,17 +1947,16 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
+                    on_change:
+                    -   '.lu_ids = {value["id"]: key for key, value in sh..self().items()}'
+                    -   '.lu_urls = {value["url"]: key for key, value in sh..self().items()}'
 
                     lu_ids:
                         type: dict
-                        eval_trigger: '...'
-                        eval: '{key: value["id"] for key, value in sh....().items()}'
                         sqb_lookup@instance: PLAYLIST_IDS#fwd
 
                     lu_urls:
                         type: dict
-                        eval_trigger: '...'
-                        eval: '{key: value["url"] for key, value in sh....().items()}'
                         sqb_lookup@instance: PLAYLIST_URLS#fwd
 
                 status:
