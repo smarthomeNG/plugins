@@ -331,7 +331,7 @@ item_structs:
                 sqb_read_group_trigger@instance: server.syncgroups
 
             members:
-                type: str
+                type: list
                 sqb_command@instance: server.syncgroups.members
                 sqb_read@instance: true
                 sqb_write@instance: false
@@ -341,7 +341,7 @@ item_structs:
                 sqb_read_initial@instance: true
 
             names:
-                type: str
+                type: list
                 sqb_command@instance: server.syncgroups.names
                 sqb_read@instance: true
                 sqb_write@instance: false
@@ -677,7 +677,14 @@ item_structs:
                 sqb_read_group@instance:
                 -   player
                 -   player.control
+                enforce_updates: true
                 sqb_read_initial@instance: true
+
+            syncstatus:
+                type: list
+                sqb_command@instance: player.control.syncstatus
+                sqb_read@instance: false
+                sqb_write@instance: false
 
             unsync:
                 type: bool
@@ -1012,7 +1019,7 @@ item_structs:
 
                 lu_names:
                     type: dict
-                    sqb_lookup@instance: TEST#fwd
+                    sqb_lookup@instance: PLAYERS#fwd
 
             playlists:
                 type: dict
@@ -1225,7 +1232,7 @@ item_structs:
                     sqb_read_group_trigger@instance: ALL.server.syncgroups
 
                 members:
-                    type: str
+                    type: list
                     sqb_command@instance: server.syncgroups.members
                     sqb_read@instance: true
                     sqb_write@instance: false
@@ -1236,7 +1243,7 @@ item_structs:
                     sqb_read_initial@instance: true
 
                 names:
-                    type: str
+                    type: list
                     sqb_command@instance: server.syncgroups.names
                     sqb_read@instance: true
                     sqb_write@instance: false
@@ -1589,7 +1596,14 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.control
+                    enforce_updates: true
                     sqb_read_initial@instance: true
+
+                syncstatus:
+                    type: list
+                    sqb_command@instance: player.control.syncstatus
+                    sqb_read@instance: false
+                    sqb_write@instance: false
 
                 unsync:
                     type: bool
@@ -1936,7 +1950,7 @@ item_structs:
 
                     lu_names:
                         type: dict
-                        sqb_lookup@instance: TEST#fwd
+                        sqb_lookup@instance: PLAYERS#fwd
 
                 playlists:
                     type: dict

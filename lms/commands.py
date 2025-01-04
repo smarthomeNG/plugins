@@ -12,8 +12,8 @@ commands = {
         'playercount': {'read': True, 'write': False, 'read_cmd': 'player count ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': [r'^player count (\d+)', r'^players 0 100 count:(\d+) '], 'custom_disabled': True},
         'favoritescount': {'read': True, 'write': False, 'read_cmd': 'favorites items', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^favorites items\s+count:(\d+)', 'custom_disabled': True, 'item_attrs': {'initial': True}},
         'syncgroups': {
-            'members': {'read': True, 'write': False, 'read_cmd': 'syncgroups ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^syncgroups sync_members:(.*) sync_member_names:', r'^syncgroups(.*)?$'], 'custom_disabled': True, 'item_attrs': {'initial': True}},
-            'names': {'read': True, 'write': False, 'read_cmd': 'syncgroups ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^syncgroups sync_members:.* sync_member_names:(.*)', r'^syncgroups(.*)?$'], 'custom_disabled': True, 'item_attrs': {'initial': False}},
+            'members': {'read': True, 'write': False, 'read_cmd': 'syncgroups ?', 'item_type': 'list', 'dev_datatype': 'LMSSyncmembers', 'reply_pattern': r'^syncgroups\s?(.*)?$', 'custom_disabled': True, 'item_attrs': {'initial': True}},
+            'names': {'read': True, 'write': False, 'read_cmd': 'syncgroups ?', 'item_type': 'list', 'dev_datatype': 'LMSSyncnames', 'reply_pattern': r'^syncgroups\s?(.*)?$', 'custom_disabled': True, 'item_attrs': {'initial': False}},
         },
         'playlists': {
             'rename': {'read': False, 'write': True, 'write_cmd': 'playlists rename {VALUE}', 'item_type': 'str', 'dev_datatype': 'LMSPlaylistrename', 'reply_pattern': r'^playlists rename\s+(.*)', 'custom_disabled': True, 'item_attrs': {'attributes': {'remark': 'needed value:<playlist_id> <newname> with a space inbetween'}}},
@@ -54,7 +54,8 @@ commands = {
             'volumedown': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume -{VALUE}', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'cache': True, 'enforce_updates': True, 'initial_value': 1}}},
             'set_alarm': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} alarm {VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} alarm (.*)', 'item_attrs': {'attributes': {'on_change': '..alarms.query = True'}}},
             'alarms': {'read': True, 'write': False, 'item_type': 'dict', 'read_cmd': '{CUSTOM_ATTR1} alarms 0 100 all', 'dev_datatype': 'LMSAlarms', 'reply_pattern': r'^{CUSTOM_PATTERN1} alarms 0 100 all fade:\d+ count:\d+\s?(.*)?', 'item_attrs': {'initial': True, 'read_groups': [{'name': 'player.control.alarms', 'trigger': 'query'}]}},
-            'sync': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} sync ?', 'write_cmd': '{CUSTOM_ATTR1} sync {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} sync (.*)', 'item_attrs': {'initial': True}},
+            'sync': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} sync ?', 'write_cmd': '{CUSTOM_ATTR1} sync {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} sync (?:.*,)?{LOOKUP}(?:,.*)?', r'^{CUSTOM_PATTERN1} sync (\-)'], 'lookup': 'PLAYERS', 'item_attrs': {'initial': True, 'enforce': True}},
+            'syncstatus': {'read': False, 'write': False, 'item_type': 'list', 'dev_datatype': 'raw'},
             'unsync': {'read': False, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} sync -', 'item_type': 'bool', 'dev_datatype': 'LMSonoff', 'item_attrs': {'attributes': {'autotimer': '1s = 0'}}},
             'display': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} display ? ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} display {VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} display\s?(.*)', 'item_attrs': {'initial': True}},
             'connect': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} connect {VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} connect (.*)', 'item_attrs': {'attributes': {'remark': 'ip|www.mysqueezebox.com|www.test.mysqueezebox.com'}}},
@@ -127,8 +128,8 @@ lookups = {
         '1': 'SONG',
         '2': 'ALBUM'
     },
-    'TEST': {
-        '0': 'OFF'
+    'PLAYERS': {
+        '-': 'NONE'
     }
 }
 
@@ -138,7 +139,7 @@ item_templates = {
         'lu_names':
             {
                 'type': 'dict',
-                'sqb_lookup@instance': 'TEST#fwd'
+                'sqb_lookup@instance': 'PLAYERS#fwd'
             }
     },
     'playlists': {

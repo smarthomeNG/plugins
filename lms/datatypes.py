@@ -32,6 +32,28 @@ class DT_LMSPlay(DT.Datatype):
         return True if data in ["play", "0"] else False
 
 
+class DT_LMSSyncnames(DT.Datatype):
+    def get_shng_data(self, data, type=None, **kwargs):
+        pattern=r"sync_member_names:([^s]+(?: [^s]+)*)(?= sync_members|$)"
+        return re.findall(pattern, data)
+
+
+class DT_LMSSyncmembers(DT.Datatype):
+    def get_shng_data(self, data, type=None, **kwargs):
+        pattern=r"sync_members:([^s]+(?: [^s]+)*)(?= sync_member_names|$)"
+        return re.findall(pattern, data)
+
+
+class DT_LMSSyncstatus(DT.Datatype):
+    def get_shng_data(self, data, type=None, **kwargs):
+        if data in ["-", "?"]:
+            return []
+        elif data:
+            return data.split(",")
+        else:
+            return []
+
+
 class DT_LMSAlarms(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
         dic = {}
@@ -90,6 +112,7 @@ class DT_LMSPlayers(DT.Datatype):
             player_id = player_data.pop('playerid', None)
             if player_id:
                 players_dict[player_id] = player_data
+        players_dict['-'] = {'ip:': None, 'name': 'NONE', 'model': None, 'firmware': None}
         return players_dict
 
 class DT_LMSPlaylists(DT.Datatype):

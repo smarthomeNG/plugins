@@ -24,6 +24,7 @@
 import builtins
 import os
 import sys
+import re
 
 if __name__ == '__main__':
     builtins.SDP_standalone = True
@@ -105,6 +106,8 @@ class lms(SmartDevicePlugin):
         if command == f'database.players':
             self.logger.debug(f"Got command players {command} data {data} value {value} by {by}")
             for player in value.keys():
+                if player == '-':
+                    continue
                 self._dispatch_callback('player.info.modelname' + CUSTOM_SEP + player, value[player].get('modelname'), by)
                 self._dispatch_callback('player.info.firmware' + CUSTOM_SEP + player, value[player].get('firmware'), by)
                 self._dispatch_callback('player.info.players' + CUSTOM_SEP + player, value, by)
@@ -113,6 +116,25 @@ class lms(SmartDevicePlugin):
             self.logger.debug(f"Got command playlists {command} data {data} value {value} by {by}")
             for player in self._custom_values.get(1):
                 self._dispatch_callback('player.info.playlists' + CUSTOM_SEP + player, value, by)
+
+        if command == f'server.syncgroups.members' and data:
+            def find_player_index(target, mac_list):
+                for index, item in enumerate(mac_list):
+                    if re.search(rf'\b{re.escape(target)}\b', item):
+                        return index  # Return the index where the match is found
+                return -1
+
+            self.logger.debug(f"Got command syncgroups {command} data {data} value {value} by {by}")
+            for player in self._custom_values.get(1):
+                idx = find_player_index(player, value)
+                self.logger.debug(f"Testing player {player} vs value {value} idx {idx}")
+                if idx >= 0:
+                    synced = value[idx].split(",")
+                    synced.remove(player)
+                    self.logger.debug(f"Updating syncstatus of player {player} to {synced}")
+                    self._dispatch_callback('player.control.syncstatus' + CUSTOM_SEP + player, synced, by)
+                else:
+                    self._dispatch_callback('player.control.syncstatus' + CUSTOM_SEP + player, [], by)
 
         if not custom:
             return
@@ -162,7 +184,7 @@ class lms(SmartDevicePlugin):
 
         if command == f'player.control.sync{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command sync {command} data {data} value {value} custom {custom} by {by}")
-            trigger_read('server.syncgroups.members')
+            self.send_command('server.syncgroups.members')
 
         # update on new song
         if command == f'player.info.title{CUSTOM_SEP}{custom}':
