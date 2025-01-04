@@ -28,6 +28,7 @@
 import os
 from shutil import rmtree
 from pathlib import Path
+from typing import Tuple, Union
 
 from lib.model.smartplugin import SmartPlugin
 from lib.shyaml import yaml_load
@@ -37,19 +38,24 @@ from .gperror import GPError
 from github import Auth
 from github import Github
 from git import Repo
+from git.exc import GitCommandError
 
+
+#
+# this is NOT the plugin class...
+#
 
 class GitHubHelper(object):
     """ Helper class for handling the GitHub API """
 
-    def loggerr(self, msg):
+    def loggerr(self, msg: str):
         """ log error message and raise GPError to signal WebIf """
 
         # TODO: this need to be reworked if WebIf errors should be displayed in German or translated
         self.logger.error(msg)
         raise GPError(msg)
 
-    def __init__(self, dt, logger, repo='plugins', apikey='', auth=None, **kwargs):
+    def __init__(self, dt, logger, repo: str = 'plugins', apikey: str = '', auth: Union[Auth.Token, None] = None, **kwargs):
         self.dt = dt
         self.logger = logger
         self.apikey = apikey
@@ -129,7 +135,7 @@ class GitHubHelper(object):
 
         return [allow, remain, backoff]
 
-    def get_repo(self, user, repo):
+    def get_repo(self, user: str, repo: str):
         if not self._github:
             self.login()
 
@@ -145,7 +151,7 @@ class GitHubHelper(object):
         self.git_repo = self.get_repo('smarthomeNG', self.repo)
         return True
 
-    def get_pulls(self, fetch=False) -> bool:
+    def get_pulls(self, fetch: bool = False) -> bool:
         if not self._github:
             self.login()
 
@@ -176,7 +182,7 @@ class GitHubHelper(object):
 
         return True
 
-    def get_forks(self, fetch=False) -> bool:
+    def get_forks(self, fetch: bool = False) -> bool:
         if not self._github:
             self.login()
 
@@ -198,7 +204,7 @@ class GitHubHelper(object):
 
         return True
 
-    def get_branches_from(self, fork=None, owner='', fetch=False) -> dict:
+    def get_branches_from(self, fork: Union[Repo, None] = None, owner: str = '', fetch: bool = False) -> dict:
 
         if fork is None and owner:
             try:
@@ -229,7 +235,7 @@ class GitHubHelper(object):
         self.forks[fork.owner.login]['branches'] = b_list
         return b_list
 
-    def get_plugins_from(self, fork=None, owner='', branch='', fetch=False) -> list:
+    def get_plugins_from(self, fork: Union[Repo, None] = None, owner: str = '', branch: str = '', fetch: bool = False) -> list:
 
         if not branch:
             return []
@@ -268,6 +274,11 @@ class GitHubHelper(object):
         return sorted(plugins)
 
 
+#
+# this IS the plugin class :)
+#
+
+
 class GithubPlugin(SmartPlugin):
     """
     This class supports testing foreign plugins by letting the user select a
@@ -275,10 +286,10 @@ class GithubPlugin(SmartPlugin):
     that fork. Additionally, the specified plugin will be soft-linked into the
     "live" plugins repo worktree as a private plugin.
     """
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '1.0.1'
     REPO_DIR = 'priv_repos'
 
-    def loggerr(self, msg):
+    def loggerr(self, msg: str):
         """ log error message and raise GPError to signal WebIf """
         self.logger.error(msg)
         raise GPError(msg)
@@ -304,7 +315,9 @@ class GithubPlugin(SmartPlugin):
         #     'link': os.path.join('plugins', f'priv_{plugin}'),    # absoluter Pfad-/Dateiname des Plugin-Symlinks
         #     'rel_link_path': os.path.join(wt_path, plugin),       # Ziel der Plugin-Symlinks: relativer Pfad des Ziel-Pluginordners "unterhalb" von plugins/
         #     'repo': repo,                                         # git.Repo(path)
-        #     'clean': bool                                         # repo is clean and synced?
+        #     'clean': bool,                                        # repo is clean and synced?
+        #     'lcommit': str,                                       # local commit head
+        #     'rcommit': str                                        # remote commit head
         #   },
         #   '<id2>': {...}
         # }
@@ -321,6 +334,9 @@ class GithubPlugin(SmartPlugin):
             os.mkdir(self.repo_path)
 
         self.gh_apikey = self.get_parameter_value('app_token')
+        self.supermode = self.get_parameter_value('supermode') == "'I KNOW WHAT I'M DOING!'"
+        if self.supermode:
+            self.logger.warning('supermode active, be very careful...')
         self.gh = GitHubHelper(self._sh.shtime, apikey=self.gh_apikey, logger=self.logger)
 
         self.init_webinterface(WebInterface)
@@ -329,7 +345,7 @@ class GithubPlugin(SmartPlugin):
     # methods for handling local repos
     #
 
-    def read_repos_from_dir(self, exc=False):
+    def read_repos_from_dir(self, exc: bool = False):
         # clear stored repos
         self.repos = {}
 
@@ -338,10 +354,10 @@ class GithubPlugin(SmartPlugin):
             return
 
         self.logger.debug('checking plugin links')
-        pathlist = Path(self.plg_path).glob('priv_*')
+        pathlist = Path(self.plg_path).glob('*')
         for item in pathlist:
             if not item.is_symlink():
-                self.logger.debug(f'ignoring {item}, is not symlink')
+                # self.logger.debug(f'ignoring {item}, is not symlink')
                 continue
             target = os.path.join(self.plg_path, os.readlink(str(item)))
             if not os.path.isdir(target):
@@ -373,8 +389,7 @@ class GithubPlugin(SmartPlugin):
             repo_path = os.path.join(self.repo_path, owner)
             wt_path = os.path.join(self.repo_path, f'{owner}_wt_{branch}')
 
-            # use part of link name after ".../plugins/priv_"
-            name = str(item)[len(self.plg_path) + 6:]
+            name = str(item)[len(self.plg_path) + 1:]
 
             self.repos[name] = {
                 'plugin': plugin,
@@ -389,10 +404,18 @@ class GithubPlugin(SmartPlugin):
                 'link': str(item),
                 'rel_link_path': str(target),
                 'repo': repo,
+                'lcommit': '',
+                'rcommit': ''
             }
             self.repos[name]['clean'] = self.is_repo_clean(name, exc)
 
-    def check_for_repo_name(self, name) -> bool:
+            # fill head commits for local and remote branches
+            if not self.repos[name]['lcommit'] or not self.repos[name]['rcommit']:
+                self.get_head_commits(name)
+
+            self.logger.info(f'added plugin {plugin} with name {name} in {item}')
+
+    def check_for_repo_name(self, name: str) -> bool:
         """ check if name exists in repos or link exists """
         if name in self.repos or os.path.exists(os.path.join(self.plg_path, 'priv_' + name)):
             self.loggerr(f'name {name} already taken, delete old plugin first or choose a different name.')
@@ -400,15 +423,24 @@ class GithubPlugin(SmartPlugin):
 
         return True
 
-    def create_repo(self, name, owner, plugin, branch=None, rename=False) -> bool:
+    def create_repo(self, name: str, owner: str, plugin: str, branch: str = '', rename: bool = False) -> bool:
         """ create repo from given parameters """
 
-        if not rename:
-            try:
-                self.check_for_repo_name(name)
-            except Exception as e:
-                self.loggerr(e)
+        if any(x in name for x in ['/', '..']) or name == self.REPO_DIR:
+            self.loggerr(f'Invalid characters in name {name} (no dirs, not "{self.REPO_DIR}")')
+            return False
+
+        if not self.supermode:
+            if not name.startswith('priv_'):
+                self.loggerr(f'Name {name} invalid, must start with "priv_"')
                 return False
+
+            if not rename:
+                try:
+                    self.check_for_repo_name(name)
+                except Exception as e:
+                    self.loggerr(e.__repr__())
+                    return False
 
         if not owner or not plugin:
             self.loggerr(f'Insufficient parameters, github user {owner} or plugin {plugin} empty, unable to fetch repo, aborting.')
@@ -439,7 +471,7 @@ class GithubPlugin(SmartPlugin):
         repo['rel_wt_path'] = os.path.join('..', f'{owner}_wt_{branch}')
 
         # set link location from plugin name
-        repo['link'] = os.path.join(self.plg_path, f'priv_{name}')
+        repo['link'] = os.path.join(self.plg_path, name)
         repo['rel_link_path'] = os.path.join(self.REPO_DIR, f'{owner}_wt_{branch}', plugin)
 
         # make plugins/priv_repos if not present
@@ -472,6 +504,7 @@ class GithubPlugin(SmartPlugin):
                 repo['repo'] = Repo.clone_from(repo['url'], repo['repo_path'])
             except Exception as e:
                 self.loggerr(f'error while cloning: {e}')
+                return False
 
         # fetch repo data
         self.logger.debug('fetching from origin...')
@@ -515,24 +548,45 @@ class GithubPlugin(SmartPlugin):
 
         repo['clean'] = True
 
-        if rename:
-            self.logger.debug(f'renaming old link priv_{name}')
-            if not self._move_old_link(name):
-                self.loggerr(f'unable to move old link priv_{name}, installation needs to be repaired manually')
+        # try to rename if requested or in supermode
+        if rename or self.supermode:
+            self.logger.debug(f'renaming old link {repo["link"]}')
+            if not self._move_old_link(repo['link']):
+                # moving not possible...
+                if not self.supermode:
+                    # quit in normal mode
+                    self.loggerr(f'unable to move old link {repo["link"]}, installation needs to be repaired manually')
+                    return False
+                else:
+                    # delete in supermode
+                    self.logger.warning(f'unable to move old link {repo["link"]}, deleting it')
+                    if os.path.isdir(repo['link']):
+                        self._rmtree(repo['link'])
+                    else:
+                        os.path.delete(repo['link'])
+                    if os.path.exists(repo['link']):
+                        self.loggerr(f'error removing old link/dir {repo["link"]}')
+                        return False
 
         self.logger.debug(f'creating link {repo["link"]} to {repo["rel_link_path"]}...')
         try:
             os.symlink(repo['rel_link_path'], repo['link'])
         except FileExistsError:
             self.loggerr(f'plugin link {repo["link"]} was created by someone else while we were setting up repo. Not overwriting, check link file manually')
+            return False
 
         self.repos[name] = repo
+        self.get_head_commits(name)
 
         return True
 
-    def _move_old_link(self, name) -> bool:
+    def _move_old_link(self, name: str) -> bool:
+        if not self.supermode and not os.path.basename(name).startswith('priv_'):
+            self.loggerr(f'unable to move plugin with illegal name {name}')
+            return False
+
         """ rename old plugin link or folder and repo entry """
-        link = os.path.join(self.plg_path, f'priv_{name}')
+        link = os.path.join(self.plg_path, name)
         if not os.path.exists(link):
             self.logger.debug(f'old link/folder not found: {link}')
             return True
@@ -553,7 +607,7 @@ class GithubPlugin(SmartPlugin):
             os.rename(link, newlink)
             self.logger.debug(f'renamed {link} to {newlink}')
             try:
-                # try to move repo entry to new name
+                # try to move repo entry to new name (if repo exists)
                 # ignore if repo name is not existent
                 name_new = f'{name}_{ver}'
                 self.repos[name_new] = self.repos[name]
@@ -567,7 +621,7 @@ class GithubPlugin(SmartPlugin):
             self.loggerr(f'error renaming old plugin: {e}')
             return False
 
-    def _rmtree(self, path):
+    def _rmtree(self, path: str):
         """ remove path tree, also try to remove .DS_Store if present """
         try:
             rmtree(path)
@@ -585,7 +639,7 @@ class GithubPlugin(SmartPlugin):
                 # Try again, but finally give up if error persists
                 rmtree(path)
 
-    def remove_plugin(self, name) -> bool:
+    def remove_plugin(self, name: str) -> bool:
         """ remove plugin link, worktree and if not longer needed, local repo """
         if name not in self.repos:
             self.loggerr(f'plugin entry {name} not found.')
@@ -667,7 +721,31 @@ class GithubPlugin(SmartPlugin):
     # github API methods
     #
 
-    def is_repo_clean(self, name: str, exc=False) -> bool:
+    def get_head_commits(self, name: str, exc: bool = False) -> bool:
+        """ tries to get current local and remote head commits """
+
+        entry = self.repos[name]
+        local = entry['repo']
+
+        # get remote and local branch heads
+        try:
+            remote = self.gh.get_repo(entry['owner'], entry['gh_repo'])
+            r_branch = remote.get_branch(branch=entry['branch'])
+            entry['rcommit'] = r_branch.commit.sha
+            entry['lcommit'] = local.heads[entry['branch']].commit.hexsha
+            return True
+        except AttributeError:
+            if exc:
+                f = self.loggerr
+            else:
+                f = self.logger.warning
+            f(f'error while getting commits for {name}. Rate limit active?')
+            return False
+        except Exception as e:
+            self.loggerr(f'error while getting commits for {name}: {e}')
+            return False
+
+    def is_repo_clean(self, name: str, exc: bool = False) -> bool:
         """ checks if worktree is clean and local and remote branches are in sync """
         if name not in self.repos:
             self.loggerr(f'repo {name} not found')
@@ -682,31 +760,16 @@ class GithubPlugin(SmartPlugin):
             self.repos[name]['clean'] = False
             return False
 
-        # get remote and local branch heads
-        try:
-            remote = self.gh.get_repo(entry['owner'], entry['gh_repo'])
-            r_branch = remote.get_branch(branch=entry['branch'])
-            r_head = r_branch.commit.sha
-
-            l_head = local.heads[entry['branch']].commit.hexsha
-        except AttributeError:
-            if exc:
-                f = self.loggerr
-            else:
-                f = self.logger.warning
-            f(f'error while checking sync status for {name}. Rate limit active?')
-            return False
-        except Exception as e:
-            self.loggerr(f'error while checking sync status for {name}: {e}')
+        if not self.get_head_commits(name, exc):
             return False
 
-        clean = l_head == r_head
+        clean = entry['lcommit'] == entry['rcommit']
         if not clean:
             try:
-                _ = list(repo.iter_commits(r_head))
+                _ = list(local.iter_commits(entry['rcommit']))
                 # as clean is excluded, we must be ahead. Possibly out changes are not saved, so stay as "not clean""
                 pass
-            except git.exc.GitCommandError:
+            except GitCommandError:
                 # commit not in local, we are not clean and not ahead, so we are behind
                 # being beind with clean worktree means nothing gets lost or overwritten. Allow operations
                 clean = True
@@ -742,9 +805,11 @@ class GithubPlugin(SmartPlugin):
 
         try:
             org.pull()
+            self.get_head_commits(name)
             return True
         except Exception as e:
             self.loggerr(f'error while pulling: {e}')
+            return False
 
     def setup_github(self) -> bool:
         """ login to github and set repo """
@@ -756,21 +821,21 @@ class GithubPlugin(SmartPlugin):
 
         return self.gh.set_repo()
 
-    def fetch_github_forks(self, fetch=False) -> bool:
+    def fetch_github_forks(self, fetch: bool = False) -> bool:
         """ fetch forks from github API """
         if self.gh:
             return self.gh.get_forks(fetch=fetch)
         else:
             return False
 
-    def fetch_github_pulls(self, fetch=False) -> bool:
+    def fetch_github_pulls(self, fetch: bool = False) -> bool:
         """ fetch PRs from github API """
         if self.gh:
             return self.gh.get_pulls(fetch=fetch)
         else:
             return False
 
-    def fetch_github_branches_from(self, fork=None, owner='', fetch=False) -> dict:
+    def fetch_github_branches_from(self, fork: Union[Repo, None] = None, owner: str = '', fetch: bool = False) -> dict:
         """
         fetch branches for given fork from github API
 
@@ -779,11 +844,11 @@ class GithubPlugin(SmartPlugin):
         """
         return self.gh.get_branches_from(fork=fork, owner=owner, fetch=fetch)
 
-    def fetch_github_plugins_from(self, fork=None, owner='', branch='', fetch=False) -> list:
+    def fetch_github_plugins_from(self, fork: Union[Repo, None] = None, owner: str = '', branch: str = '', fetch: bool = False) -> list:
         """ fetch plugin names for selected fork/branch """
         return self.gh.get_plugins_from(fork=fork, owner=owner, branch=branch, fetch=fetch)
 
-    def get_github_forks(self, owner=None) -> dict:
+    def get_github_forks(self, owner: str = '') -> dict:
         """ return forks or single fork for given owner """
         if owner:
             return self.gh.forks.get(owner, {})
@@ -811,7 +876,7 @@ class GithubPlugin(SmartPlugin):
 
         return sforkstop + sforks
 
-    def get_github_pulls(self, number=None) -> dict:
+    def get_github_pulls(self, number: int = 0) -> dict:
         """ return pulls or single pull for given number """
         if number:
             return self.gh.pulls.get(number, {})
@@ -823,7 +888,7 @@ class GithubPlugin(SmartPlugin):
     #
 
     # unused right now, possibly remove?
-    def create_repo_from_gh(self, number=0, owner='', branch=None, plugin='') -> bool:
+    def create_repo_from_gh(self, number: int = 0, owner: str = '', branch: Union[Repo, str, None] = None, plugin: str = '') -> bool:
         """
         call init/create methods to download new repo and create worktree
 
@@ -917,7 +982,7 @@ class GithubPlugin(SmartPlugin):
     # helper methods
     #
 
-    def _get_last_3_path_parts(self, path):
+    def _get_last_3_path_parts(self, path: str) -> Tuple[str, str, str]:
         """ return last 3 parts of a path """
         try:
             head, l3 = os.path.split(path)
