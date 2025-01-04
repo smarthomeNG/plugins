@@ -27,12 +27,6 @@
 #  along with SmartHomeNG.py. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-
-__license__ = "GPL"
-__version__ = "2.0"
-__revision__ = "0.1"
-__docformat__ = 'reStructuredText'
-
 import asyncio
 import logging
 import time
@@ -246,129 +240,131 @@ def format_time(timedelta: float) -> str:
         return f"{timedelta * 10 ** 9:.2f} ns"
 
 
+# TODO: asyncio for DLMS disabled until real testing has succeeded
+# #
+# # asyncio reader
+# #
+# 
+# 
+# class AsyncReader():
+# 
+#     def __init__(self, logger, plugin: SmartPlugin, config: dict):
+#         self.buf = bytes()
+#         self.logger = logger
+#         self.lock = config['lock']
+# 
+#         if not ASYNC_IMPORTED:
+#             raise ImportError('pyserial_asyncio not installed, running asyncio not possible.')
+# 
+#         if 'serial_port' not in config:
+#             raise ValueError(f'configuration {config} is missing serial port config')
+# 
+#         self.serial_port = config.get('serial_port')
+#         self.timeout = config.get('timeout', 2)
+#         self.baudrate = config.get('baudrate', 300)
+#         if not config['dlms'].get('only_listen', False):
+#             self.logger.warning('asyncio operation can only listen, smartmeter will not be triggered!')
+# 
+#         self.target = '(not set)'
+#         self.listening = False
+#         self.reader = None
+# 
+#         self.config = config
+#         self.transport = None
+#         self.protocol = DlmsProtocol(logger, config)
+# 
+#         # set from plugin
+#         self.plugin = plugin
+#         self.data_callback = plugin._update_values
+# 
+#     async def listen(self):
+#         result = self.lock.acquire(blocking=False)
+#         if not result:
+#             self.logger.error('couldn\'t acquire lock, polling/manual access active?')
+#             return
+# 
+#         self.logger.debug('acquired lock')
+#         try:  # LOCK
+#             self.reader, _ = await serial_asyncio.open_serial_connection(
+#                 url=self.serial_port,
+#                 baudrate=self.baudrate,
+#                 bytesize=S_BITS,
+#                 parity=S_PARITY,
+#                 stopbits=S_STOP,
+#             )
+#             self.target = f'async_serial://{self.serial_port}'
+#             self.logger.debug(f'target is {self.target}')
+# 
+#             if self.reader is None and not TESTING:
+#                 self.logger.error('error on setting up async listener, reader is None')
+#                 return
+# 
+#             self.plugin.connected = True
+#             self.listening = True
+#             self.logger.debug('starting to listen')
+# 
+#             buf = bytes()
+# 
+#             while self.listening and self.plugin.alive:
+# 
+#                 if TESTING:
+#                     # make this bytes...
+#                     data = RESULT.encode()
+#                 else:
+#                     data = await self.reader.readuntil(b'!')
+# 
+#                 # check we got a start byte if buf is empty
+#                 if len(buf) == 0:
+#                     if b'/' not in data:
+#                         self.logger.warning('incomplete data received, no start byte, discarding')
+#                         continue
+#                     else:
+#                         # trim data to start byte
+#                         data = data[data.find(b'/'):]
+# 
+#                 # add data to buffer
+#                 buf += data
+# 
+#                 # check if we have an end byte
+#                 if b'!' not in buf:
+#                     if len(buf) > 100000:
+#                         self.logger.warning(f'got {len(buf)} characters without end byte, discarding data')
+#                         buf = bytes()
+#                     continue
+# 
+#                 # get data from start (b'/') to end (b'!') into data
+#                 # leave the remainder in buf
+#                 data, _, buf = buf.partition(b'!')
+# 
+#                 # we should have data beginning with b'/' and ending with b'!'
+#                 identification_message = str(data, 'utf-8').splitlines()[0]
+#                 manid = identification_message[1:4]
+#                 manname = manufacturer_ids.get(manid, 'unknown')
+#                 self.logger.debug(f"manufacturer for {manid} is {manname} (out of {len(manufacturer_ids)} given manufacturers)")
+# 
+#                 response = self.protocol(data.decode())
+# 
+#                 # get data from frameparser and call plugin
+#                 if response and self.data_callback:
+#                     self.data_callback(response)
+# 
+#         finally:
+#             # cleanup
+#             try:
+#                 self.reader.feed_eof()
+#             except Exception:
+#                 pass
+#             self.plugin.connected = False
+#             self.lock.release()
+# 
+#     async def stop_on_queue(self):
+#         """ wait for STOP in queue and signal reader to terminate """
+#         self.logger.debug('task waiting for STOP from queue...')
+#         await self.plugin. wait_for_asyncio_termination()
+#         self.logger.debug('task received STOP, halting listener')
+#         self.listening = False
 #
-# asyncio reader
-#
-
-
-class AsyncReader():
-
-    def __init__(self, logger, plugin: SmartPlugin, config: dict):
-        self.buf = bytes()
-        self.logger = logger
-        self.lock = config['lock']
-
-        if not ASYNC_IMPORTED:
-            raise ImportError('pyserial_asyncio not installed, running asyncio not possible.')
-
-        if 'serial_port' not in config:
-            raise ValueError(f'configuration {config} is missing serial port config')
-
-        self.serial_port = config.get('serial_port')
-        self.timeout = config.get('timeout', 2)
-        self.baudrate = config.get('baudrate', 300)
-        if not config['dlms'].get('only_listen', False):
-            self.logger.warning('asyncio operation can only listen, smartmeter will not be triggered!')
-
-        self.target = '(not set)'
-        self.listening = False
-        self.reader = None
-
-        self.config = config
-        self.transport = None
-        self.protocol = DlmsProtocol(logger, config)
-
-        # set from plugin
-        self.plugin = plugin
-        self.data_callback = plugin._update_values
-
-    async def listen(self):
-        result = self.lock.acquire(blocking=False)
-        if not result:
-            self.logger.error('couldn\'t acquire lock, polling/manual access active?')
-            return
-
-        self.logger.debug('acquired lock')
-        try:  # LOCK
-            self.reader, _ = await serial_asyncio.open_serial_connection(
-                url=self.serial_port,
-                baudrate=self.baudrate,
-                bytesize=S_BITS,
-                parity=S_PARITY,
-                stopbits=S_STOP,
-            )
-            self.target = f'async_serial://{self.serial_port}'
-            self.logger.debug(f'target is {self.target}')
-
-            if self.reader is None and not TESTING:
-                self.logger.error('error on setting up async listener, reader is None')
-                return
-
-            self.plugin.connected = True
-            self.listening = True
-            self.logger.debug('starting to listen')
-
-            buf = bytes()
-
-            while self.listening and self.plugin.alive:
-
-                if TESTING:
-                    # make this bytes...
-                    data = RESULT.encode()
-                else:
-                    data = await self.reader.readuntil(b'!')
-
-                # check we got a start byte if buf is empty
-                if len(buf) == 0:
-                    if b'/' not in data:
-                        self.logger.warning('incomplete data received, no start byte, discarding')
-                        continue
-                    else:
-                        # trim data to start byte
-                        data = data[data.find(b'/'):]
-
-                # add data to buffer
-                buf += data
-
-                # check if we have an end byte
-                if b'!' not in buf:
-                    if len(buf) > 100000:
-                        self.logger.warning(f'got {len(buf)} characters without end byte, discarding data')
-                        buf = bytes()
-                    continue
-
-                # get data from start (b'/') to end (b'!') into data
-                # leave the remainder in buf
-                data, _, buf = buf.partition(b'!')
-
-                # we should have data beginning with b'/' and ending with b'!'
-                identification_message = str(data, 'utf-8').splitlines()[0]
-                manid = identification_message[1:4]
-                manname = manufacturer_ids.get(manid, 'unknown')
-                self.logger.debug(f"manufacturer for {manid} is {manname} (out of {len(manufacturer_ids)} given manufacturers)")
-
-                response = self.protocol(data.decode())
-
-                # get data from frameparser and call plugin
-                if response and self.data_callback:
-                    self.data_callback(response)
-
-        finally:
-            # cleanup
-            try:
-                self.reader.feed_eof()
-            except Exception:
-                pass
-            self.plugin.connected = False
-            self.lock.release()
-
-    async def stop_on_queue(self):
-        """ wait for STOP in queue and signal reader to terminate """
-        self.logger.debug('task waiting for STOP from queue...')
-        await self.plugin. wait_for_asyncio_termination()
-        self.logger.debug('task received STOP, halting listener')
-        self.listening = False
-
+# TODO end
 
 #
 # single-shot reader

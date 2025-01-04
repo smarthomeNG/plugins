@@ -23,11 +23,6 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-__license__ = 'GPL'
-__version__ = '2.0'
-__revision__ = '0.1'
-__docformat__ = 'reStructuredText'
-
 import asyncio
 import os
 import threading
@@ -83,6 +78,7 @@ class Smartmeter(SmartPlugin, Conversion):
     the update functions for the items
     """
 
+    # move to 1.0.0 as soon as DLMS asyncio is tested
     PLUGIN_VERSION = '0.9.0'
 
     def __init__(self, sh):
@@ -368,8 +364,12 @@ class Smartmeter(SmartPlugin, Conversion):
         self._config['poll'] = True
         poll = self.get_parameter_value('poll')
         if not poll:
-            self.use_asyncio = True
-            self._config['poll'] = False
+            # TODO: remove if/else as soon as async DLMS is tested with live device
+            if self.protocol == 'SML':
+                self.use_asyncio = True
+                self._config['poll'] = False
+            else:
+                self.logger.warning('async mode requested, but not yet available for DLMS. Plugin will be polling regularly...')
 
         if self.use_asyncio:
             self.timefilter = self.get_parameter_value('time_filter')

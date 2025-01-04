@@ -27,12 +27,6 @@
 #  along with SmartHomeNG.py. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-
-__license__ = "GPL"
-__version__ = "2.0"
-__revision__ = "0.1"
-__docformat__ = 'reStructuredText'
-
 import asyncio
 import errno
 import logging
