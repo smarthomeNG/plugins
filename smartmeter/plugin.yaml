@@ -1,0 +1,275 @@
+%YAML 1.1
+---
+plugin:
+    classname: Smartmeter
+    version: '0.9.0'                 # Plugin version
+    sh_minversion: '1.10.0.3'             # minimum shNG version to use this plugin
+    py_minversion: '3.9'             # minimum Python version to use for this plugin, due to f-strings
+    type: interface                  # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Unterstützung für Smartmeter, die DLMS (Device Language Message Specification, IEC 62056-21) oder SML (Smart Message Language) nutzen und OBIS Codes liefern'
+        en: 'Support for smartmeter using DLMS (Device Language Message Specification, IEC 62056-21) or SML (Smart Message Language) and delivering OBIS codes'
+    maintainer: Morg
+    tester: bmxp, onkelandy, sisamiwe
+    state: develop
+    keywords: smartmeter ehz dlms sml obis smartmeter
+    multi_instance: true           # plugin supports multi instance
+    restartable: true
+    # support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1002464-support-thread-für-dlms-plugin
+
+parameters:
+    protocol:
+        type: str
+        valid_list:
+            - DLMS
+            - SML
+            - dlms
+            - sml
+            - ''
+        default: ''
+        description:
+            de: 'Protokoll zur Kommunikation mit dem Smartmeter. Leerer Wert bedeutet automatische Erkennung (soweit erfolgreich).'
+            en: 'protocol for communicating with the smartmeter. Empty value means try to detect protocol automagically.'
+    serialport:
+        type: str
+        description:
+            de: 'Serieller Port, an dem das Smartmeter angeschlossen ist'
+            en: 'serial port at which the smartmeter is attached'
+    host:
+        type: str
+        description:
+            de: 'Host der eine IP Schnittstelle bereitstellt (nur SML)'
+            en: 'Host that provides an IP interface (SML only)'
+    port:
+        type: int
+        description:
+            de: 'Port für die Kommunikation (nur SML)'
+            en: 'Port for communication (SML only)'
+    autoreconnect:
+        type: bool
+        default: true
+        description:
+            de: 'Bei Beenden der Verbindung automatisch erneut verbinden (nur bei ständigem Empfang)'
+            en: 'automatically reconnect on disconnect (only with continuous listening)'
+    timeout:
+        type: int
+        default: 2
+        description:
+            de: 'Timeout in Sekunden nach dem der Lesevorgang automatisch beendet wird'
+            en: 'timeout in seconds for automatic abortion of readout'
+    baudrate:
+        type: int
+        valid_min: 50
+        default: 9600
+        description:
+            de: 'Baudrate, bei der die Kommunikation erfolgen soll'
+            en: 'Baudrate at which the communikation should take place'
+    cycle:
+        type: int
+        valid_min: 0
+        default: 60
+        description:
+            de: 'Zeitlicher Abstand zwischen zwei Abfragen des Smartmeters in Sekunden, setzen auf 0 schaltet cycle aus'
+            en: 'Time between two queries of smartmeter in seconds, set to zero will switch off usage of cycle'
+    crontab:
+        type: str
+        description:
+            de: 'Abfragen des Smartmeters mit Festlegung via Crontab'
+            en: 'Queries of smartmeter by means of a crontab'
+    poll:
+        type: bool
+        default: true
+        description:
+            de: 'Gerät regelmäßig abfragen (cycle/crontab) statt ständigem Empfang (nur SML)'
+            en: 'periodically query device (cycle/crontab) instead of continuous listen (SML only)'
+    time_filter:
+        type: int
+        default: 0
+        description:
+            de: 'Im "ständig empfangen"-Modus Item-Updates nur alle x Sekunden senden.'
+            en: 'In continuous listen mode only update items every x seconds.'
+        description_long:
+            de: >
+                Im "ständig empfangen"-Modus Item-Updates nur alle x Sekunden senden.
+                x = 0: alle Updates senden.
+                x = -1: den Wert von "cycle" verwenden.
+            en: >
+                In continuous listen mode only update items every x seconds.
+                x = 0: send all updates
+                x = -1: use "cycle" parameter for x
+    # DLMS parameters
+    baudrate_min:
+        type: int
+        valid_min: 50
+        default: 300
+        description:
+            de: 'Baudrate, bei der die Kommunikation zuerst erfolgen soll (nur DLMS)'
+            en: 'Baudrate at which the communication should be initiated (DLMS only)'
+    device_address:
+        type: str
+        default: ''
+        description:
+            de: 'Interne Unteradresse des Smartmeters (nur DLMS)'
+            en: 'Internal subadress of smartmeter (DLMS only)'
+    querycode:
+        type: str
+        default: '?'
+        description:
+            de: 'Abfragecode für den Smartmeter, default ist `?`, einige Smartmeter akzeptieren z.B. `2` (nur DLMS)'
+            en: 'querycode of smartmeter, defaults to `?`, some smartmeter accept e.g. `2` (DLMS only)'
+    use_checksum:
+        type: bool
+        default: true
+        description:
+            de: 'Wenn wahr, wird eine Prüfsumme über die ausgelesenen Daten gebildet (nur DLMS)'
+            en: 'if true then a checksum will be calculated of the readout result'
+    only_listen:
+        type: bool
+        default: false
+        description:
+            de: 'Manche Smartmeter können nicht abgefragt werden sondern senden von sich aus Informationen. Für diese Smartmeter auf True setzen und die Baudrate anpassen (nur DLMS)'
+            en: 'Some smartmeter can not be queried, they send information without request. For those devices set to True and adjust baudrate'
+    normalize:
+        type: bool
+        default: true
+        description:
+            de: 'Wenn Einheiten mit Zehnerpräfix geliefert werden, werden Einheit und Wert in die entsprechende Basiseinheit konvertiert (z.B. 12.7 kWh -> 12700 Wh)'
+            en: 'if units are read with power of ten prefix, unit and value will be converted to the corresponding base unit (e.g. 12.7 kWh -> 12700 Wh)'
+
+    # SML parameters
+    buffersize:
+        type: int
+        default: 1024
+        description:
+            de: 'Größe des Lesepuffers. Mindestens doppelte Größe der maximalen Nachrichtenlänge in Bytes (nur SML)'
+            en: 'Size of read buffer. At least twice the size of maximum message length (SML only)'
+    device_type:
+        type: str
+        default: ''
+        valid_list:
+            - ''  # needs to be edited if new corrections are added
+        description:
+            de: 'Typ des Gerätes, ggf. notwendig für spezielle Behandlung (nur SML)'
+            en: 'type of smartmeter, possibly necessary for quirks (SML only)'
+    date_offset:
+        type: int
+        default: 0
+        description:
+            de: 'Unix timestamp der Smartmeter Inbetriebnahme (nur SML)'
+            en: 'Unix timestamp of Smartmeter start-up after installation (SML only)'
+
+item_attributes:
+    obis_code:
+        type: str
+        description:
+            de: OBIS-Code, dessen Wert gelesen werden soll
+            en: obis code to be read
+    obis_index:
+        type: int
+        default: 0
+        valid_min: 0
+        valid_max: 10
+        description:
+            de: Index des OBIS-Werts, der gelesen werden soll
+            en: index of the obis value to be read
+    obis_property:
+        type: str
+        default: value
+        valid_list:
+            - value             # value, possibly corrected (scaler, normalized unit)
+            - valueRaw          # value as sent from meter
+            - unit              # unit as str
+            - unitCode          # unit code from smllib.const.UNITS
+            - name              # 
+            - obis              # obis code
+            - valTime           # time as sent from meter
+            - actTime           # time corrected for meter time base
+            - scaler            # 10**x scaler for valueRaw
+            - signature         # meter signature
+            - status            # status bit field
+            - statRun           # meter is counting
+            - statFraudMagnet   # magnetic manipulation detected
+            - statFraudCover    # cover manipulation detected
+            - statEnergyTotal   # Current flow total. True: -A, False: +A
+            - statEnergyL1      # Current flow L1. True: -A, False: +A
+            - statEnergyL2      # Current flow L2. True: -A, False: +A
+            - statEnergyL3      # Current flow L3. True: -A, False: +A
+            - statRotaryField   # rotary field faulty = not L1->L2->L3
+            - statBackstop      # backstop active
+            - statCalFault      # calibration relevant fatal fault
+            - statVoltageL1     # Voltage L1 present
+            - statVoltageL2     # Voltage L2 present
+            - statVoltageL3     # Voltage L3 present
+        description:
+            de: >
+                Eigenschaft des gelesenen Wertes:
+                * value: korrigierter Wert (Skalierungsfaktor, SI-Basiseinheit)
+                * valueRaw: vom Gerät gelieferter (Roh-)Wert
+                * unit: zurückgegebene Einheit des Wertes
+                * unitCode: Code der Einheit gem. smllib.const.UNITS
+                * scaler: Multiplikationsfaktor für valueRaw
+                * status: Status-Bitfeld
+                * valTime: Zeitstempel des Wertes
+                * actTime: korrigierter Zeitstempel des Wertes
+                * signature: tbd
+                Nicht alle Eigenschaften sind in jedem Datenpunkt vorhanden.
+            en: >
+                property of the read data:
+                * value: corrected value (scaler, SI base units)
+                * valueRaw: value as read from meter
+                * unit: read unit of value
+                * unitCode: code for unit as given in smllib.const.UNITS
+                * scaler: multiplicative factor for valueRaw
+                * status: meter status bitfield
+                * valTime: timestamp for value
+                * actTime: corrected timestamp for value
+                * signature: tbd
+                Not all properties are present for all data points.
+    obis_vtype:
+        type: str
+        default: ''
+        valid_list:
+            - str
+            - num
+            - int
+            - float
+            - ZST12
+            - ZST10
+            - D6
+            - Z6
+            - Z4
+            - ''
+        description:
+            de: >
+                Konvertierungsart des gelesenen Wertes:
+                * str: eine Zeichenkette
+                * num: numerisch, entweder Ganzzahl oder Fließkommazahl
+                * int: Ganzzahl
+                * float: Fließkommazahl
+                * ZST12: Datum und Zeit codiert als YYMMDDhhmmss
+                * ZST10: Datum und Zeit codiert als YYMMDDhhmm
+                * D6: Datum codiert als YYMMDD
+                * Z4: Zeit codiert als hhmm
+                * Z6: Zeit codiert als hhmmss
+            en: >
+                type conversion of read value:
+                * str: a string
+                * num: a number, integer or floating point number
+                * int: an integer number
+                * float: a floating point number
+                * ZST12: date and time coded as YYMMDDhhmmss
+                * ZST10: date and time coded as YYMMDDhhmm
+                * D6: date coded as YYMMDD
+                * Z4: time coded as hhmm
+                * Z6: time coded as hhmmss                
+    obis_readout:
+        type: str
+        description:
+            de: 'Der komplette Auslesepuffer wird für eigene Untersuchungen gespeichert (nur DLMS)'
+            en: 'the complete readout will be saved for own examinations (DLMS only)'
+
+logic_parameters: NONE
+
+plugin_functions: NONE
+
+item_structs: NONE
