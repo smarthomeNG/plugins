@@ -2994,7 +2994,7 @@ class Sonos(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = "1.8.9"
+    PLUGIN_VERSION = "1.8.10"
 
     def __init__(self, sh):
         """Initializes the plugin."""
@@ -3244,7 +3244,7 @@ class Sonos(SmartPlugin):
         if caller != self.get_fullname():
             item_config = self.get_item_config(item)
             volume_item = item_config['volume_item']
-            volume_helper_item = item_config['helper']
+            volume_helper_item = item_config['helper_item']
             vol_step = item_config['dpt3_step']
             vol_time = item_config['dpt3_time']
             vol_max = max(0, self._resolve_max_volume_command(item)) or 100
@@ -3826,7 +3826,7 @@ class Sonos(SmartPlugin):
                 sonos_speaker[uid].dispose()
 
         # Extract number of online speakers:
-        self.SoCo_nr_speakers = online_speaker_count 
+        self.SoCo_nr_speakers = online_speaker_count
 
     def _is_speaker_up(self, uid: str, ip_address: str) -> bool:
         """
