@@ -1,327 +1,1289 @@
 {% extends "base_plugin.html" %}
+
 {% set logo_frame = false %}
 
 <!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
-{% set update_interval = [(((10 * item_count) / 1000) | round | int) * 1000, 5000]|max %}
+{% set update_interval = 0 %}
 
-<!-- Additional styles go into this block. Examples are for datatables -->
+<!-- for data-heavy plugins it might be useful to set the update interval based on the amount of data -->
+{% set update_interval = (200 * (log_array | length)) %}
+
+<!-- set dataSet if you need specific data to be updated automatically. Also see init.py in plugin webif!-->
+{% set dataSet = 'devices_info' %}
+
+<!-- set update_params if you need to provide additional parameters for the auto-update function-->
+{% set update_params = item_id %}
+
+<!-- if you don't need any buttons in the header, disable them completely-->
+{% set buttons = true %}
+
+<!-- if you don't need any auto-refresh elements in the header, disable them-->
+{% set autorefresh_buttons = true %}
+
+<!-- if you don't need the reload_button in the header, disable it-->
+{% set reload_button = true %}
+
+<!-- if you don't need the close in the header, disable it-->
+{% set close_button = true %}
+
+<!-- for some situations it might be useful to know the number of datatable rows shown on the current page.
+Activate that function if needed, otherwise just remove the line to increase performance -->
+{% set row_count = false %}
+
+<!-- if new values should be retrieved using automatic page update right in the beginning and on page changes -->
+{% set initial_update = false %}
+
+<!--
+	Additional styles go into this block. Examples are for datatables
+-->
 {% block pluginstyles %}
-<style>
-  table th.value {
-    width: 100px;
-  }
-  table th.relais, th.typ, th.lastvalue {
-    width: 90px;
-  }
-  table th.online {
-    width: 100px;
-  }
-  table th.details-control {
-    width: 20px;
-  }
-  table th.device {
-    width: 150px;
-  }
-  table th.plus {
-    width: 20px;
-  }
-  table th.hidden {
-    display: none;
-    width: 5px;
-  }
-  table th.zigbee_data {
-    width: 400px;
-  }
-  .shng_effect_highlight {
-    background-color: #FFFFE0;
-  }
-  .shng_effect_standard {
-    background-color: none;
-  }
-</style>
+	<style>
+		table th.value {
+			width: 100px;
+			}
+		table th.relais, th.typ, th.lastvalue {
+			width: 90px;
+			}
+		table th.online {
+			width: 100px;
+			}
+		table th.details-control {
+			width: 20px;
+			}
+		table th.device {
+			width: 150px;
+			}
+		table th.plus {
+			width: 20px;
+			}
+		table th.hidden {
+			display: none;
+			width: 5px;
+			}
+		table th.zigbee_data {
+			width: 400px;
+			}
+		table th.total_width {
+			width: 100%%;
+			}
+		.shng_effect_highlight {
+			background-color: #FFFFE0;
+			}
+		.shng_effect_standard {
+			background-color: none;
+			}
+		.data-changed {
+			background-color: lightyellow !important;
+			transition: background-color 1s ease;
+		}
+	</style>
 {% endblock pluginstyles %}
 
-<!-- Additional script tag for plugin specific javascript code go into this block -->
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
 {% block pluginscripts %}
-<script>
-    $(document).ready( function () {
-        // Handler responsive Tabelle und deren Überschriften
-        /*
-        loading defaults from /modules/http/webif/gstatic/datatables/datatables.defaults.js
-        You can copy that file, put it in your plugin directory, rename the "bind" function and
-        trigger that function here instead of datatables_defaults if you want to change the behaviour.
-        Of course you can also overwrite defaults by putting the option declarations in {} below.
-        */
+	<!-- handleUpdatedData -->
+	<script>
+		function handleUpdatedData(response, dataSet=null) {
 
-        $(window).trigger('datatables_defaults');
-        try {
-            itemtable = $('#itemtable').DataTable( {
-            columnDefs: [   
-                { responsivePriority: 1, targets: 1 },
-                { responsivePriority: 2, targets: -1 },
-                { title: '', targets: 0, "className": "" },
-                { title: '{{ _('Item') }}', targets: 1, "className": "item" },
-                { title: '{{ _('Typ') }}', targets: 2, "className": "type" },
-                { title: '{{ _('Wert') }}', targets: 3, "className": "value" },
-                { title: '{{ _('Tasmota Topic') }}', targets: 4, "className": "" },
-                { title: '{{ _('Relais') }}', targets: 5, "className": "relais" },
-                { title: '{{ _('Letztes Update') }}', targets: 6, "className": "last" },
-                { title: '{{ _('Letzter Change') }}', targets: 7, "className": "last" }
-                ].concat($.fn.dataTable.defaults.columnDefs),
-            });
+			if (dataSet === 'items_info') {
+				var objResponse = JSON.parse(response);
+				myProto = document.getElementById(dataSet);
+				console.log("myProto=" + myProto)
+				
+				// Update Item Values
+				UpdateTable_Items('itemtable', objResponse[dataSet]);
 
-            devicetable = $('#devicetable').DataTable( {
-                "columns": [
-                    {"className": "plus"},
-                    { title: '{{ _('Tasmota Topic') }}', responsivePriority: 1 },
-                    { title: "Online" },
-                    { title: "Friendy Name", responsivePriority: 2 },
-                    { title: "MAC Adresse" },
-                    { title: "IP Adresse" },
-                    { title: "Uptime" },
-                    { title: "Sensoren" },
-                    { title: "Firmware" },
-                    { title: "Module" },
-                    { title: "Wifi Signal" },
-                    { title: "Details" },
-                ],
-                "order": [[1, 'asc']]
-            });
-            
-            energytable = $('#energytable').DataTable( { 
-                columnDefs: [   
-                { responsivePriority: 1, targets: 1 },
-                { responsivePriority: 2, targets: -1 },
-                ].concat($.fn.dataTable.defaults.columnDefs),
-            });
+			} 
+			else if (dataSet === 'devices_info') {
+				var objResponse = JSON.parse(response);
+				myProto = document.getElementById(dataSet);
+				console.log("myProto=" + myProto)
 
-            environtable = $('#environtable').DataTable( { 
-                columnDefs: [   
-                { responsivePriority: 1, targets: 1 },
-                { responsivePriority: 2, targets: -1 },
-                ].concat($.fn.dataTable.defaults.columnDefs),
-            });
-
-            othersensortable = $('#othersensortable').DataTable( { 
-                columnDefs: [   
-                { responsivePriority: 1, targets: 1 },
-                { responsivePriority: 2, targets: -1 },
-                ].concat($.fn.dataTable.defaults.columnDefs),
-            });
-
-            lightstable = $('#lightstable').DataTable( { 
-                columnDefs: [   
-                { responsivePriority: 1, targets: 1 },
-                { responsivePriority: 2, targets: -1 },
-                ].concat($.fn.dataTable.defaults.columnDefs),
-            });
-
-            rftable = $('#rftable').DataTable( { 
-                columnDefs: [   
-                { responsivePriority: 1, targets: 1 },
-                { responsivePriority: 2, targets: -1 },
-                ].concat($.fn.dataTable.defaults.columnDefs),
-            });
-
-            zigbeetable = $('#zigbeetable').DataTable( {
-                "columns": [
-                    {"className": "plus"},
-                    { title: "{{ _('Device ID') }}", responsivePriority: 1 },
-                    { title: "{{ _('IEEEAddr') }}" , responsivePriority: 2},
-                    { title: "{{ _('Hersteller') }}" },
-                    { title: "{{ _('ModelId') }}" },
-                    { title: "{{ _('LinkQuality') }}" },
-                    { title: "{{ _('Battery %') }}" },
-                    { title: "{{ _('LastSeen') }}" },
-                    { title: "{{ _('Data') }}" },
-
-                ],
-                "order": [[1, 'asc']]
-            });
-            
-            brokertable = $('#brokertable').DataTable( { 
-                columnDefs: [   
-                { responsivePriority: 1, targets: 1 },
-                { responsivePriority: 2, targets: -1 },
-                ].concat($.fn.dataTable.defaults.columnDefs),
-            });
-
-            brokermontable = $('#brokermontable').DataTable( { 
-                columnDefs: [   
-                { responsivePriority: 1, targets: 1 },
-                { responsivePriority: 2, targets: -1 },
-                ].concat($.fn.dataTable.defaults.columnDefs),
-            });
-
-        }
-        catch (e) {
-            console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
-        }
-        /*
-        This part creates tooltips for buttons/inputs that have the class "button-tooltip"
-        */
-        const tooltipList = ['Nach Devices suchen'];
-        createTooltips(tooltipList);
-        /*
-        This part reads cookies for the attribute "sort_order" and activates the respective button after page load
-        */
-        order = getCookie('sort_order');
-        if (order == '')
-            order = 'time-desc';
-        const button = document.getElementById(order);
-        button.click();
-    });
-</script>
-
-
-<script>
-	function handleUpdatedData(response, dataSet=null) {
-		if (dataSet === 'devices_info' || dataSet === null) {
-			var objResponse = JSON.parse(response);
-			myProto = document.getElementById(dataSet);
-
-            for (var item in objResponse['item_values']) {
-
-                const item_val = objResponse['item_values'][item];
-				shngInsertText (item+'_value', item_val.value, 'itemtable', 5);
-				shngInsertText (item+'_last_update', item_val.last_update, 'itemtable', 5);
-				shngInsertText (item+'_last_change', item_val.last_change, 'itemtable', 5);
+				// Update Tasmota Devices
+				UpdateTable_Device(objResponse[dataSet]);
+				// Update headtable
+				shngUpdateText_NEW('tasmota_count', Object.keys(objResponse['device_values']).length, null, 5);
 			}
+			else if (dataSet === 'zigbee_info') {
+				var objResponse = JSON.parse(response);
+				myProto = document.getElementById(dataSet);
+				console.log("myProto=" + myProto)
 
-            for (var device in objResponse['device_values']) {
-
-                const device_val = objResponse['device_values'][device];
-				shngInsertText (device+'_online', device_val.online , 'devicetable', 5);
-				shngInsertText (device+'_uptime', device_val.uptime , 'devicetable', 5);
-				shngInsertText (device+'_fw', device_val.fw_ver , 'devicetable', 5);
-                shngInsertText (device+'_wifi', device_val.wifi_signal +' dbm', 'devicetable', 5);
-
-                const sensors = device_val['sensors'];
-			    if (sensors) {
-			        if (sensors.ENERGY) {
-				        shngInsertText (device+'_voltage', sensors.ENERGY.voltage + 'V', 'energytable', 5);
-                        shngInsertText (device+'_current', osensors.ENERGY.current + 'A', 'energytable', 5);
-                        shngInsertText (device+'_power', sensors.ENERGY.power + 'W', 'energytable', 5);
-                        shngInsertText (device+'_apparent_power', sensors.ENERGY.apparent_power + 'W', 'energytable', 5);
-                        shngInsertText (device+'_reactive_power', sensors.ENERGY.reactive_power + 'VA', 'energytable', 5);
-                        shngInsertText (device+'_today', sensors.ENERGY.today + 'kWh', 'energytable', 5);
-                        shngInsertText (device+'_yesterday', sensors.ENERGY.yesterday + 'kWh', 'energytable', 5);
-                        shngInsertText (device+'_total', sensors.ENERGY.total + 'kWh', 'energytable', 5);
-                        shngInsertText (device+'_total_starttime', sensors.ENERGY.total_starttime, 'energytable', 5);
-	                }
-                    if (sensors.DS18B20) {
-				        shngInsertText (device+'_DS18B20_temp', sensors.DS18B20.temperature + '°C', 'environtable'), 5;
-	                }
-                    if (sensors.AM2301) {
-				        shngInsertText (device+'_AM2301_temp', sensors.AM2301.temperature + '°C', 'environtable', 5);
-                        shngInsertText (device+'_AM2301_hum', sensors.AM2301.humidity + '%rH', 'environtable', 5);
-                        shngInsertText (device+'_AM2301_dew', sensors.AM2301.dewpoint + '°C', 'environtable', 5);
-	                }
-	                if (sensors.SHT3X) {
-				        shngInsertText (device+'_SHT3X_temp', sensors.SHT3X.temperature + '°C', 'environtable', 5);
-                        shngInsertText (device+'_SHT3X_hum', sensors.SHT3X.humidity + '%rH', 'environtable', 5);
-                        shngInsertText (device+'_SHT3X_dew', sensors.SHT3X.dewpoint + '°C', 'environtable', 5);
-	                }
-                }
-
-                const lights = device_val['lights'];
-			    if (lights) {
-
-                    shngInsertText (device+'_hsb', lights.hsb, 'lightstable', 5);
-                    shngInsertText (device+'_dimmer', lights.dimmer, 'lightstable', 5);
-                    shngInsertText (device+'_color', lights.color, 'lightstable', 5);
-                    shngInsertText (device+'_ct', lights.ct, 'lightstable', 5);
-                    shngInsertText (device+'_scheme', lights.scheme, 'lightstable', 5);
-                    shngInsertText (device+'_fade', lights.fade, 'lightstable', 5);
-                    shngInsertText (device+'_speed', lights.speed, 'lightstable', 5);
-                    shngInsertText (device+'_ledtable', lights.ledtable, 'lightstable', 5);
-                }
-                
-                const rf = device_val['rf'];
-                if (rf) {
-                    shngInsertText (device+'_rf_received', rf.rf_received, 'rftable', 5);
-                    shngInsertText (device+'_rf_send_result', rf.rf_send_result, 'rftable', 5);
-                    shngInsertText (device+'_rfkey_result', rf.rfkey_result, 'rftable', 5);
-                }
+				// Update Zigbee Devices
+				UpdateTable_Zigbee(objResponse[dataSet]);
+				// Update headtable
+				shngUpdateText_NEW('zigbee_count', Object.keys(objResponse[dataSet]).length, null, 5);
 			}
+			else if (dataSet === 'broker_info') {
+				var objResponse = JSON.parse(response);
+				myProto = document.getElementById(dataSet);
+				console.log("myProto=" + myProto)
 
-            for (var zigbee_device in objResponse['tasmota_zigbee_devices']) {
-                const zigbee_device_data = objResponse['tasmota_zigbee_devices'][zigbee_device];
-                shngInsertText (zigbee_device+'_manufacturer', zigbee_device_datamanufacturer, 'zigbeetable', 5);
-                shngInsertText (zigbee_device+'_modelid', zigbee_device_datamodelid, 'zigbeetable', 5);
-                shngInsertText (zigbee_device+'_linkquality', zigbee_device_datalinkquality, 'zigbeetable', 5);
-                shngInsertText (zigbee_device+'_batterypercentage', zigbee_device_databatterypercentage, 'zigbeetable', 5);
-                shngInsertText (zigbee_device+'_lastseenepoch', zigbee_device_datalastseenepoch, 'zigbeetable', 5);
-                shngInsertText (zigbee_device+'_data', zigbee_device_data, 'zigbeetable', 5);
+				// Update Broker Info
+				UpdateTable_Broker(objResponse[dataSet]);
 			}
+			else if (dataSet === 'details_info') {
+				var objResponse = JSON.parse(response);
+				myProto = document.getElementById(dataSet);
+				console.log("myProto=" + myProto)
 
-			shngInsertText ('broker_uptime', objResponse['broker_uptime'], 'brokertable', 5);
-			shngInsertText ('version', objResponse['broker_info']['version'], 'brokertable', 5);
-			shngInsertText ('active_clients', objResponse['broker_info']['active_clients'], 'brokertable', 5);
-			shngInsertText ('subscriptions', objResponse['broker_info']['subscriptions'], 'brokertable', 5);
-			shngInsertText ('stored_messages', objResponse['broker_info']['stored_messages'], 'brokertable', 5);
-			shngInsertText ('retained_messages', objResponse['broker_info']['retained_messages'], 'brokertable', 5);
+				// Update Tasmota Device Details
+				UpdateTable_DeviceDetails(objResponse['devices_info']);
 
-			shngInsertText ('msg_rcv_1min', objResponse['broker_info']['msg_rcv_1min'], 'brokermontable', 5);
-			shngInsertText ('msg_rcv_5min', objResponse['broker_info']['msg_rcv_5min'], 'brokermontable', 5);
-			shngInsertText ('msg_rcv_15min', objResponse['broker_info']['msg_rcv_15min'], 'brokermontable', 5);
-			shngInsertText ('msg_snt_1min', objResponse['broker_info']['msg_snt_1min'], 'brokermontable', 5);
-			shngInsertText ('msg_snt_5min', objResponse['broker_info']['msg_snt_5min'], 'brokermontable', 5);
-			shngInsertText ('msg_snt_15min', objResponse['broker_info']['msg_snt_15min'], 'brokermontable', 5);
+				// Update Zigbee Device Details
+				UpdateTable_ZigbeeDetails(objResponse['zigbee_info']);
+			}
 		}
-	}
-</script>
+	</script>
+
+	<!-- UpdateTables -->
+	<script>
+		function UpdateTable_Items(tableId, tableData) {
+			// console.log('UpdateTable_Items: ' + JSON.stringify(tableData))
+			
+			for (var item_path in tableData) {
+				var item_data = tableData[item_path];
+				console.log("UpdateTable_Items: item_path=" + item_path + " item_data=" + JSON.stringify(item_data));
+
+				// Define row content
+				var newRowContent = [
+					'',
+					item_path,
+					item_data.type || "-", 
+					JSON.stringify(item_data.value), 
+					item_data.topic || "-", 
+					item_data.relais || "-", 
+					item_data.last_update || "-", 
+					item_data.last_change || "-", 
+				];
+				
+				// Define cell ids content
+				var newRowCellIds = [
+					'',
+					item_path,
+					'', 
+					item_path + '_value', 
+					'',
+					'',
+					item_path + '_last_update', 
+					item_path + '_last_change', 
+				];
+
+				shngUpdateTable(tableId, item_path, newRowContent, newRowCellIds);
+			};
+		};
+	
+		function UpdateTable_Device(devices_data) {
+
+			const DeviceTableId = 'devicetable'
+			const DeviceDetailsTableId = 'tasmota_device_details_table'
+
+			function getSensorList(data) {
+				if (data && data.sensors && Object.keys(data.sensors).length > 0) {
+					return Object.keys(data.sensors).join(', ');
+				} else {
+					return "-";
+				}
+			}
+
+			for (var device in devices_data) {
+				const device_data = devices_data[device];
+				console.log("UpdateTable_Device: Tasmota device=" + device + "; data=" + JSON.stringify(device_data));
+				const device_data_formatted = jsonToKeyValueLines(device_data);
+
+				if (!device_data?.fw_ver) {
+					console.warn("Device: " + device + " identified to be not a interviewed Tasmota Device" );
+					continue;
+				}
+
+				//	
+				// Work DeviceTable
+				//
+				console.log("Create table row @" + DeviceTableId + " for " + device);
+					
+				// Define row content
+				var newRowContentDevice = [
+					'', 
+					`<a class="text-shng" href="http://${device_data.ip}" target="_blank">${device}</a>`, 
+					device_data.online || "-", 
+					device_data.friendly_name || "-", 
+					device_data.mac || "-", 
+					device_data.ip || "-", 
+					device_data.uptime || "-", 
+					getSensorList(device_data), 
+					device_data.fw_ver || "-", 
+					device_data.module || "-", 
+					device_data.wifi_signal || "-", 
+					`
+					<button id="ping" type="button" class="btn actionbutton btn-shng btn-sm" title="{{ _('Statusabfrage auslösen') }}" 
+							onclick="$('#button_id').val('tasmota_status');$('#button').val('${device}');$('#button_pressed').submit();">
+					<i class="fas fa-redo"></i>
+					</button>
+					`,
+				];
+
+				// Define cell ids content
+				var newRowCellIdsDevice = [
+					'',
+					device,
+					device + '_online',
+					'',
+					'',
+					'',
+					device + '_uptime',
+					'',
+					device + '_fw',
+					'',
+					device + '_wifi',
+					'',
+				];
+
+				shngUpdateTable(DeviceTableId, device, newRowContentDevice, newRowCellIdsDevice);
+
+				//	
+				// Work Sensortables
+				//
+				UpdataTable_Sensors(device, device_data.ip, device_data.sensors);
+
+				//	
+				// Work Lighttables
+				//
+				UpdataTable_Lights(device, device_data.ip, device_data.lights);
+				
+				//	
+				// Work RFtables
+				//
+				UpdataTable_RF(device, device_data.ip, device_data.rf);
+			}
+		}
+
+		function UpdateTable_DeviceDetails(devices_data) {
+
+			const DeviceDetailsTableId = 'tasmota_device_details_table'
+
+			function getSensorList(data) {
+				if (data && data.sensors && Object.keys(data.sensors).length > 0) {
+					return Object.keys(data.sensors).join(', ');
+				} else {
+					return "-";
+				}
+			}
+
+			for (var device in devices_data) {
+				const device_data = devices_data[device];
+				console.log("UpdateTable_Device: Tasmota device=" + device + "; data=" + JSON.stringify(device_data));
+				const device_data_formatted = jsonToKeyValueLines(device_data);
+
+				if (!device_data?.fw_ver) {
+					console.warn("Device: " + device + " identified to be not a interviewed Tasmota Device" );
+					continue;
+				}
+
+				//	
+				// Work DeviceDetailsTable
+				//
+				console.log("Create table row @" + DeviceDetailsTableId + " for " + device);
+				
+				// Define row content
+				var newRowContentDetails = [
+					'', 
+					'', 
+					device, 
+					device_data_formatted || "-",
+				];
+
+				// Define cell ids content
+				var newRowCellIdsDetails = [
+					'', 
+					'', 
+					device, 
+					device + '_data',
+				];
+
+				shngUpdateTable(DeviceDetailsTableId, device, newRowContentDetails, newRowCellIdsDetails);
+			}
+		}
+
+		function UpdataTable_Sensors(device, device_ip, sensors) {
+
+			const EnergyTableId = 'energytable1'
+			const EnvironTableId = 'environtable1'
+			const OtherSensorTableId = 'othersensortable1'
+
+
+			if (Object.keys(sensors).length > 0) {
+				if (sensors.ENERGY) {
+					console.log("Create table row @" + EnergyTableId + " for " + device);
+				
+					// Define row content
+					var newRowContentDevice = [
+						'', 
+						`<a class="text-shng" href="http://${device_ip}" target="_blank">${device}</a>`, 
+						formatValueWithUnit(sensors.ENERGY.voltage, 'V'), 
+						formatValueWithUnit(sensors.ENERGY.current, 'A'), 
+						formatValueWithUnit(sensors.ENERGY.power, 'W'), 
+						formatValueWithUnit(sensors.ENERGY.apparent_power, 'VA'), 
+						formatValueWithUnit(sensors.ENERGY.reactive_power, 'VA'), 
+						formatValueWithUnit(sensors.ENERGY.today, 'kWh'), 
+						formatValueWithUnit(sensors.ENERGY.yesterday, 'kWh'), 
+						formatValueWithUnit(sensors.ENERGY.total, 'kWh'), 
+						sensors.ENERGY.total_starttime || "-", 
+					];
+	
+					// Define cell ids content
+					var newRowCellIdsDevice = [
+						'',
+						device,
+						device + '_voltage',
+						device + '_current',
+						device + '_power',
+						device + '_apparent_power',
+						device + '_reactive_power',
+						device + '_today',
+						device + '_yesterday',
+						device + '_total',
+						device + '_total_starttime',
+					];
+	
+					shngUpdateTable(EnergyTableId, device, newRowContentDevice, newRowCellIdsDevice);
+				}
+				else if (sensors.DS18B20) {
+					console.log("Create table row @" + EnvironTableId + " for " + device);
+		
+					// Define row content
+					var newRowContentDevice = [
+						'', 
+						`<a class="text-shng" href="http://${device_ip}" target="_blank">${device}</a>`, 
+						formatValueWithUnit(sensors.DS18B20.temperature, '°C'), 
+						"-",
+						"-",
+						sensors.DS18B20.id || "-", 
+					];
+	
+					// Define cell ids content
+					var newRowCellIdsDevice = [
+						'',
+						device,
+						device + '_DS18B20_temp',
+						'',
+						'',
+						device + '_DS18B20_id',
+					];
+	
+					shngUpdateTable(EnvironTableId, device, newRowContentDevice, newRowCellIdsDevice);
+				}
+				else if (sensors.AM2301) {
+					console.log("Create table row @" + EnvironTableId + " for " + device);
+		
+					// Define row content
+					var newRowContentDevice = [
+						'', 
+						`<a class="text-shng" href="http://${device_ip}" target="_blank">${device}</a>`, 
+						formatValueWithUnit(sensors.AM2301.temperature, '°C'),
+						formatValueWithUnit(sensors.AM2301.humidity, '%rH'), 
+						formatValueWithUnit(sensors.AM2301.dewpoint, '°C'), 
+						"-",
+					];
+	
+					// Define cell ids content
+					var newRowCellIdsDevice = [
+						'',
+						device,
+						device + '_AM2301_temp',
+						device + '_AM2301_hum',
+						device + '_AM2301_dew',
+						'',
+					];
+	
+					shngUpdateTable(EnvironTableId, device, newRowContentDevice, newRowCellIdsDevice);
+				}
+				else if (sensors.SHT3X) {
+					console.log("Create table row @" + EnvironTableId + " for " + device);
+		
+					// Define row content
+					var newRowContentDevice = [
+						'', 
+						`<a class="text-shng" href="http://${device_ip}" target="_blank">${device}</a>`, 
+						formatValueWithUnit(sensors.SHT3X.temperature, '°C'),
+						formatValueWithUnit(sensors.SHT3X.humidity, '%rH'), 
+						formatValueWithUnit(sensors.SHT3X.dewpoint, '°C'), 
+						"-",
+					];
+	
+					// Define cell ids content
+					var newRowCellIdsDevice = [
+						'',
+						device,
+						device + '_SHT3X_temp',
+						device + '_SHT3X_hum',
+						device + '_SHT3X_dew',
+						'',
+					];
+					
+					shngUpdateTable(EnvironTableId, device, newRowContentDevice, newRowCellIdsDevice);
+				}
+				else {
+
+					for (sensor in sensors) {
+
+						console.log("Create table row @" + OtherSensorTableId + " for " + device);
+		
+						// Define row content
+						var newRowContentDevice = [
+							'', 
+							`<a class="text-shng" href="http://${device_data.ip}" target="_blank">${device}</a>`, 
+							sensor,
+							sensors.sensor || "-", , 
+						];
+		
+						// Define cell ids content
+						var newRowCellIdsDevice = [
+							'',
+							device,
+							device + '_' + sensor,
+							device + '_' + sensor + '_details',
+						];
+						
+						shngUpdateTable(OtherSensorTableId, 2, newRowContentDevice, newRowCellIdsDevice);
+					}
+				}
+			}
+		}
+
+		function UpdataTable_Lights(device, device_ip, lights) {
+
+			const LightsTableId = 'lightstable1'
+
+			if (Object.keys(lights).length > 0) {
+				console.log("Create table row @" + LightsTableId + " for " + device);
+				
+				// Define row content
+				var newRowContentDevice = [
+					'', 
+					`<a class="text-shng" href="http://${device_ip}" target="_blank">${device}</a>`, 
+					lights.hsb || "-",
+					formatValueWithUnit(lights.dimmer, '%'), 
+					lights.color || "-",
+					lights.ct || "-",
+					lights.scheme || "-",
+					lights.fade || "-",
+					lights.speed || "-",
+					lights.ledtable || "-",
+				];
+
+				// Define cell ids content
+				var newRowCellIdsDevice = [
+					'',
+					device,
+					device + '_hsb',
+					device + '_dimmer',
+					device + '_color',
+					device + '_ct',
+					device + '_scheme',
+					device + '_fade',
+					device + '_speed',
+					device + '_ledtable',
+				];
+
+				shngUpdateTable(LightsTableId, device, newRowContentDevice, newRowCellIdsDevice);
+			}
+		}
+
+		function UpdataTable_RF(device, device_ip, rf_data) {
+
+			const RfTableId = 'rftable1'
+
+			if (Object.keys(rf_data).length > 0) {
+				console.log("Create table row @" + RfTableId + " for " + device);
+				
+				// Define row content
+				var newRowContentDevice = [
+					'', 
+					`<a class="text-shng" href="http://${device_ip}" target="_blank">${device}</a>`, 
+					JSON.stringify(rf_data.rf_received) || "-",
+					JSON.stringify(rf_data.rf_send_result) || "-",
+					JSON.stringify(rf_data.rfkey_result) || "-",
+				];
+
+				// Define cell ids content
+				var newRowCellIdsDevice = [
+					'',
+					device,
+					device + '_rf_received',
+					device + '_rf_send_result',
+					device + '_rfkey_result',
+				];
+
+				shngUpdateTable(RfTableId, device, newRowContentDevice, newRowCellIdsDevice);
+			}
+		}
+
+		function UpdateTable_Zigbee(zigbee_data) {
+
+			const ZigbeeTableId = 'zigbeetable'
+			const ZigbeeDetailsTableId = 'zigbee_device_details_table'
+			
+			for (var zigbee_device in zigbee_data) {
+				const zigbee_device_data = zigbee_data[zigbee_device];
+
+				// Define row content
+				var newRowContent = [
+					'', 
+					zigbee_device, 
+					zigbee_device_data.ieeeaddr || "-", 
+					zigbee_device_data.manufacturer || "-", 
+					zigbee_device_data.modelid || "-", 
+					zigbee_device_data.linkquality || "-", 
+					zigbee_device_data.batterypercentage || "-", 
+					zigbee_device_data.lastseenepoch || "-",
+					`
+					<button id="ping" type="button" class="btn actionbutton btn-shng btn-sm" title="{{ _('Statusabfrage auslösen') }}" 
+							onclick="$('#button_id').val('zb_ping');$('#button').val('${zigbee_device}');$('#button_pressed').submit();">
+					<i class="fas fa-redo"></i>
+					</button>
+					`,
+					];
+
+				// Define cell ids content
+				var newRowCellIds = [
+					'', 
+					zigbee_device,
+					'', 
+					'',
+					'',
+					zigbee_device + '_linkquality', 
+					zigbee_device + '_batterypercentage',
+					zigbee_device + '_lastseenepoch',
+					'',
+				];
+
+				shngUpdateTable(ZigbeeTableId, zigbee_device, newRowContent, newRowCellIds)
+			};
+		}
+
+		function UpdateTable_ZigbeeDetails(zigbee_data) {
+
+			const ZigbeeDetailsTableId = 'zigbee_device_details_table'
+			
+			for (var zigbee_device in zigbee_data) {
+				const zigbee_device_data = zigbee_data[zigbee_device];
+				const zigbee_device_data_formatted = jsonToKeyValueLines(zigbee_device_data);
+
+				console.log("Create table row @" + ZigbeeDetailsTableId + " for " + zigbee_device);
+				
+				// Define row content
+				var newRowContent = [
+					'', 
+					'', 
+					zigbee_device, 
+					zigbee_device_data_formatted || "-",
+				];
+
+				// Define cell ids content
+				var newRowCellIds = [
+					'',
+					'', 
+					zigbee_device,
+					zigbee_device + '_data', 
+				];
+
+				shngUpdateTable(ZigbeeDetailsTableId, zigbee_device, newRowContent, newRowCellIds)
+			};
+		}
+
+		function UpdateTable_Broker(tableData) {
+			console.log('UpdateTable_Broker: ' + JSON.stringify(tableData));
+
+			const brokerTableId = 'brokertable2'
+			const brokerMonTableId = 'brokermontable2'
+
+			const brokerInfo = ["broker_uptime", "version", "active_clients", "subscriptions", "stored_messages", "retained_messages"];
+			const brokerMonInfoRcv = ["msg_rcv_1min", "msg_rcv_5min", "msg_rcv_15min"];
+			const brokerMonInfoSnt = ["msg_snt_1min", "msg_snt_5min", "msg_snt_15min"];
+
+
+			for (var info in tableData) {
+				var info_data = tableData[info];
+				console.log("UpdateTable_Broker: info=" + info + " info_data=" + JSON.stringify(info_data));
+
+				if (brokerInfo.includes(info)) {
+
+					// Define row content
+					var newRowContent = [
+						'',
+						info,
+						info_data || "-", 
+					];
+					
+					// Define cell ids content
+					var newRowCellIds = [
+						'',
+						info,
+						info+'_data', 
+					];
+
+					shngUpdateTable(brokerTableId, 1, newRowContent, newRowCellIds);
+
+				};
+			};
+
+			if (brokerMonInfoRcv.some(key => tableData.hasOwnProperty(key))) {
+
+				const row_id = "brokerMonRcv"
+
+				// Define row content
+				var newRowContent = [
+					'',
+					'Durchschnittlich Messages je Minute empfangen',
+					tableData.msg_rcv_1min || "-",
+					tableData.msg_rcv_5min || "-",
+					tableData.msg_rcv_15min || "-",
+				];
+				
+				// Define cell ids content
+				var newRowCellIds = [
+					'',
+					row_id,
+					row_id+'_1', 
+					row_id+'_5', 
+					row_id+'_15', 
+				];
+
+				shngUpdateTable(brokerMonTableId, 1, newRowContent, newRowCellIds, 5, 'row');
+			}
+
+			if (brokerMonInfoSnt.some(key => tableData.hasOwnProperty(key))) {
+
+				const row_id = "brokerMonSnt"
+
+				// Define row content
+				var newRowContent = [
+					'',
+					'Durchschnittlich Messages je Minute gesendet',
+					tableData.msg_snt_1min || "-",
+					tableData.msg_snt_5min || "-",
+					tableData.msg_snt_15min || "-",
+				];
+				
+				// Define cell ids content
+				var newRowCellIds = [
+					'',
+					row_id,
+					row_id+'_1', 
+					row_id+'_5', 
+					row_id+'_15', 
+				];
+
+				shngUpdateTable(brokerMonTableId, 1, newRowContent, newRowCellIds, 5, 'row');
+			}
+
+		};
+	</script>
+
+	<!-- shngUpdateTable -->
+	<script>
+		/**
+		* Updates a given datatable by updating existing row data or adding new row
+		* @param {string} table id of datatable
+		* @param {string} id of the datatable cell representing row
+		* @param {list} list of new row content
+		* @param {list} list of new cell ids for row
+		* @param {number} duration of highlight effect in seconds (integer)
+		* @param {string} update just cells or row
+		*/
+		function shngUpdateTable(tableId, rowId, newRowContent, newRowCellIds, highlight = 5, update = 'cell') {
+
+			function getRowIdxByCellId(table, targetId) {
+				const rows = table.rows({ search: 'applied' }).data();
+				for (let i = 0; i < rows.length; i++) {
+					const row = table.row(i).node(); 
+					for (let j = 0; j < row.cells.length; j++) {
+						const cell = row.cells[j];
+						if (cell.id === targetId) {
+							return i; // Found the target ID
+						}
+					}
+				}
+				return false; // Target ID not found
+			};
+
+			function markElementAsChanged($element, duration = 3) { // duration in milliseconds
+				// console.log("markElementAsChanged: element=" + $element.length + " duration=" + duration)
+				$element.addClass('data-changed'); // Add the CSS class
+			
+				setTimeout(() => {
+					$element.removeClass('data-changed'); // Remove the class after the duration
+				}, duration * 1000);
+			}
+
+			// Get datatable instance
+			const table = $('#' + tableId).DataTable();
+
+			// Get column count of datatable
+			let columnCount = table.columns().count();
+
+			// Change given column index to targetId
+			targetId = newRowCellIds[rowId] ?? rowId;
+
+			// Sanity checks
+			// check if new content column count matches table column count
+			if (columnCount !== newRowCellIds.length) {
+				console.error("Error on " + tableId + ": newRowContent and datatable columns must have the same length.");
+				return;
+			};
+
+			// Check if newRowContent and newRowCellIds have the same length
+			if (newRowContent.length !== newRowCellIds.length) {
+				console.error("Error on " + tableId + ": newRowContent and newRowCellIds must have the same length.");
+				return;
+			};
+
+			// Check if cell id representing the row exists in given table by getting row index
+			const rowIdx = getRowIdxByCellId(table, targetId)
+
+			// If row exists update data
+			if (rowIdx !== false) {
+				// console.log("Update row @" + tableId + " for " + targetId + " with content " +  newRowContent + " on RowIndex: " + rowIdx);
+				console.log("Update row @" + tableId + " for " + targetId + " on RowIndex: " + rowIdx);
+
+				// get old row data
+				let oldRowData = table.row(rowIdx).data();
+				// console.log("shngUpdateTable: oldRowData=" + oldRowData + " for targetId=" + targetId)
+
+				// update just the cell with changed content
+				if (update === 'cell') {
+					// Compare old an new cell content and update in case of mismatch
+					for (const [colIdx, oldValue] of Object.entries(oldRowData)) {
+						if (oldValue !== newRowContent[colIdx]) {
+							// console.log("shngUpdateTable: Update cell with oldCellData=" + oldRowData[colIdx] + " and newCellData=" + newRowContent[colIdx])
+							let cell = table.cell(rowIdx, colIdx);
+							cell.data(newRowContent[colIdx]).draw(false);
+							markElementAsChanged($(cell.node()), highlight);
+						}
+						else {
+							// console.log("shngUpdateTable: cell data identical with columnIdx=" + colIdx + " and oldCellData=newCellData=" + oldRowData[colIdx])
+						}
+					}
+				// update complete row with changed content
+				} else {
+					// Compare old an new row content and update in case of mismatch
+					if (JSON.stringify(oldRowData) !== JSON.stringify(newRowContent)) {
+						// console.log("shngUpdateTable: Update row with newRowData=" + newRowContent + " for targetId=" + targetId)
+						let row = table.row(rowIdx);
+						row.data(newRowContent).draw(false); // redraw false to not reset paging
+						markElementAsChanged($(row.node()), highlight);
+					} else {
+						// console.log("shngUpdateTable: No new content for row represented by targetId=" + targetId)
+					}
+				}
+
+			} else {
+				// console.log("Insert row @" + tableId + " for targetId=" + targetId + " with content " +  newRowContent + " and cell_ids " + newRowCellIds);
+				console.log("Insert row @" + tableId + " for targetId=" + targetId);
+	
+				// Add the row to the table and get the node
+				var rowNode = table.row.add(newRowContent).draw().node();
+	
+				// Assign IDs to the cells using DataTable API
+				for (let j = 0; j < rowNode.cells.length; j++) {
+					var cell_id = newRowCellIds[j]
+					if (cell_id) {
+						rowNode.cells[j].id = cell_id;
+					};
+				};
+	
+				// Redraw the table to display the new row
+				// table.draw(false); 
+			}
+		}
+	</script>
+
+	<!-- shngUpdateText_NEW -->
+	<script>
+		/**
+		* inserts text into a dom element. To be used for ajax updates
+		* @param {string} id of the dom element
+		* @param {string} text to insert
+		* @param {string} table id of datatable
+		* @param {number} duration of highlight effect in seconds (integer)
+		*/
+		function shngUpdateText_NEW(id, text, table_id=null, highlight=0) {
+		
+			function sanitize(text, spaces=false, quotes=false, entities=true, trim=true, normalize=true) {
+				text = text.toString();
+				if (spaces) text = text.replace(/\s\s+/g, ' ');
+				if (quotes) text = text.replaceAll('"', '&quot;');
+				if (entities) text = text.replace(/[\u00A0-\u9999]/g, function(i) { return '&#'+i.charCodeAt(0)+';'; });
+				if (trim) text = text.trim();
+				if (normalize) text = text.normalize("NFKC");
+				return text;
+			}
+			
+			function checkAllCellsForId(tableId, targetId) {
+				const table = $('#' + tableId).DataTable();
+				const rows = table.rows().data();
+				
+				for (let i = 0; i < rows.length; i++) {
+					const row = table.row(i).node(); 
+					for (let j = 0; j < row.cells.length; j++) {
+						const cell = row.cells[j];
+						if (cell.id === targetId) {
+							return table.cell(i, j);
+						}
+					}
+				}
+				return null; // If no match found
+			}
+
+			if (text == null || typeof text == 'undefined') {
+				console.log("shngUpdateText_NEW: Text for id " + id + " is undefined. Doing nothing.");
+				return;
+			}
+
+			text = text.toString();
+
+			if (table_id == null) {
+				console.log("shngUpdateText_NEW: table_id not given; update id=" + id + " with text=" + text)
+				element = $("#" + $.escapeSelector(id));
+				
+				if (highlight > 0) {
+					let old_text = sanitize($('#' + $.escapeSelector(id)).text(), true);
+					let alternative_old_text = sanitize(old_text, false, true);
+					let new_content = (old_text !== sanitize(text)) && (alternative_old_text !== sanitize(text));
+					// compare old value of cell with new one and highlight
+					if (old_text != "..." && new_content) {
+						startAnimation(element, highlight);
+					}
+				}
+				console.log("shngUpdateText_NEW: update HTML element")
+				// update HTML element
+				element.html(text);
+			} else {
+				try {
+					// check if cell id exists on current page
+					const cell = checkAllCellsForId(table_id, id);
+					
+					if ( cell ) {
+						const cell_content = cell.data();
+						console.log("shngUpdateText_NEW: cell_content=" + cell_content + " for id=" + id)
+
+						// fix HTML entities and quotation
+						let old_text = sanitize(cell_content, true);
+						let alternative_old_text = sanitize(old_text, false, true);
+						let new_content = (old_text !== sanitize(text)) && (alternative_old_text !== sanitize(text));
+			
+						if (highlight > 0) {
+							// compare old value of cell with new one and highlight
+							if (old_text != "..." && new_content) {
+								startAnimation($(cell.node()), highlight);
+							}
+						}
+						
+						// update datatable cell
+						if (new_content) {
+							let table = $('#' + table_id).DataTable();
+							cell.data(text).invalidate();
+							table.responsive.rebuild();
+							table.responsive.recalc();
+							console.log("Updating table because new cell data found: " + text + " for id " + id + ", old text: " + old_text);
+						} else {
+							console.log("shngUpdateText_NEW: no new content"); 
+						}
+					} else {
+						console.warn("shngUpdateText_NEW: Element for " + id + " to update not found");    
+					}
+				} catch (e) {
+					console.warn("shngUpdateText_NEW: Problem setting cell with id " + id + " of table " + table_id + ". Error: " + e);
+				}
+			}
+		}
+
+		/**
+		* Creates a highlight effect by transitioning from one CSS class to another.
+		* Needs jquery ui effect "switchClass"
+		* @param {string} $element dom element
+		* @param {number} highlight duration of effect in seconds (fade off)
+		*/
+		function startAnimation($element, highlight) {
+			console.log("startAnimation: element=" + JSON.stringify($element));
+			$element.stop(true, false);
+			$element.css({ 'background-color' : '' });
+			$element.switchClass("shng_effect_standard", "shng_effect_highlight", highlight*10)
+			.delay(highlight*20).switchClass("shng_effect_highlight", "shng_effect_standard", highlight*1000, 'easeInOutQuad');
+			$element.promise().done( function() {
+				$element.removeClass('shng_effect_standard');$element.removeClass('shng_effect_highlight');
+			});
+		}
+	</script>
+
+	<!-- Helper -->
+	<script>
+		function jsonToKeyValueLines(jsonData) {
+			let output = "";
+			for (const key in jsonData) {
+				if (jsonData.hasOwnProperty(key)) {
+					output += `${key}: ${JSON.stringify(jsonData[key])}<br>`;
+				}
+			}
+			// console.log("jsonToKeyValueLines: " + output)
+			return output;
+		}
+
+		function format_child_row(row_data) {
+			return (
+				'<dl>' +
+				'<dt>Details:</dt>' +
+				'<dd>' +
+				row_data[3] +
+				'</dd>' +
+				'</dl>'
+			);
+		}
+
+		function formatValueWithUnit(value, unit) {
+			return value != null ? value + " " + unit : "-"; // Use != null to check for both null and undefined
+		  }
+	</script>
+
+	<!-- setDataSetByActiveTab -->
+	<script>
+		function setDataSetByActiveTab() {
+
+			activeTabId = window.activeTab
+			console.info("checkActiveTab1 activeTab=" + activeTabId)
+
+			switch (activeTabId) {
+				case 'bodytab_1':
+					window.refresh.update({dataSet:'items_info', update_params:'item_id', update_active: true});
+					break;
+				case 'bodytab_2':
+					window.refresh.update({dataSet:'devices_info', update_active: true});
+					break;
+				case 'bodytab_3':
+					window.refresh.update({dataSet:'devices_info', update_active: true});
+					break;
+				case 'bodytab_4':
+					window.refresh.update({dataSet:'zigbee_info', update_active: true});
+					break;
+				case 'bodytab_5':
+					window.refresh.update({dataSet:'broker_info', update_active: true});
+					break;
+				case 'bodytab_6':
+					window.refresh.update({dataSet:'details_info', update_active: true});
+					break;
+				default:
+					console.warn(`Unknown tab with ID: ${activeTabId}`);
+					break;
+			}
+		}
+	</script>
+
+	<!-- Datatable creation -->
+	<script>
+		$(document).ready( function () {
+			/*
+			loading defaults from /modules/http/webif/gstatic/datatables/datatables.defaults.js
+			You can copy that file, put it in your plugin directory, rename the "bind" function and
+			trigger that function here instead of datatables_defaults if you want to change the behaviour.
+			Of course you can also overwrite defaults by putting the option declarations in {} below.
+			*/
+			$(window).trigger('datatables_defaults');
+
+			try {
+				itemtable = $('#itemtable').DataTable( {
+					columns: [   
+						{ title: '', className: "plus" },
+						{ title: '{{ _('Item') }}', className: "item", responsivePriority: 1},
+						{ title: '{{ _('Typ') }}', className: "type" },
+						{ title: '{{ _('Wert') }}', className: "value" },
+						{ title: '{{ _('Tasmota Topic') }}'},
+						{ title: '{{ _('Relais') }}', className: "relais" },
+						{ title: '{{ _('Letztes Update') }}', className: "last" },
+						{ title: '{{ _('Letzter Change') }}', className: "last", responsivePriority: 2 }
+					],
+					order: [[1, 'asc']]
+				} );
+
+				devicetable = $('#devicetable').DataTable( {
+					columns: [
+						{ title: '', className: "plus"},
+						{ title: '{{ _('Tasmota Topic') }}', responsivePriority: 1 },
+						{ title: "Online" },
+						{ title: "Friendy Name", responsivePriority: 2 },
+						{ title: "MAC Adresse" },
+						{ title: "IP Adresse" },
+						{ title: "Uptime" },
+						{ title: "Sensoren" },
+						{ title: "Firmware" },
+						{ title: "Module" },
+						{ title: "Wifi Signal" },
+						{ title: "BTN" },
+					],
+					order: [[1, 'asc']]
+				} );
+				
+				energytable1 = $('#energytable1').DataTable( {
+					columns: [
+						{ title: '', className: "plus"},
+						{ title: '{{ _('Device') }}', responsivePriority: 1 },
+						{ title: '{{ _('Spannung') }}' },
+						{ title: '{{ _('Strom') }}'},
+						{ title: '{{ _('Leistung') }}' },
+						{ title: '{{ _('Scheinleistung') }}' },
+						{ title: '{{ _('Blindleistung') }}' },
+						{ title: '{{ _('Heute') }}' },
+						{ title: '{{ _('Gestern') }}' },
+						{ title: '{{ _('Gesamt') }}' },
+						{ title: '{{ _('Gesamt - Startzeit') }}' },
+					],
+					order: [[1, 'asc']]
+				} );
+
+				environtable1 = $('#environtable1').DataTable( {
+					columns: [
+						{ title: '', className: "plus"},
+						{ title: '{{ _('Device') }}', responsivePriority: 1 },
+						{ title: '{{ _('Temperatur') }}' },
+						{ title: '{{ _('Luftfeuchtigkeit') }}'},
+						{ title: '{{ _('Taupunkt') }}' },
+						{ title: '{{ _('1w-ID') }}' },
+					],
+					order: [[1, 'asc']]
+				} );
+
+				othersensortable1 = $('#othersensortable1').DataTable( {
+					columns: [
+						{ title: '', className: "plus"},
+						{ title: '{{ _('Device') }}', responsivePriority: 1 },
+						{ title: '{{ _('Sensor') }}', responsivePriority: 1 },
+						{ title: '{{ _('Sensor Details') }}' },
+					],
+					order: [[1, 'asc']]
+				} );
+
+				lightstable1 = $('#lightstable1').DataTable( {
+					columns: [
+						{ title: '', className: "plus"},
+						{ title: '{{ _('Device') }}', responsivePriority: 1 },
+						{ title: '{{ _('HSB') }}' },
+						{ title: '{{ _('Dimmer') }}'},
+						{ title: '{{ _('Color') }}' },
+						{ title: '{{ _('CT') }}' },
+						{ title: '{{ _('Scheme') }}' },
+						{ title: '{{ _('Fade') }}' },
+						{ title: '{{ _('Speed') }}' },
+						{ title: '{{ _('LED-Table') }}' },
+					],
+					order: [[1, 'asc']]
+				} );
+
+				rftable1 = $('#rftable1').DataTable( {
+					columns: [
+						{ title: '', className: "plus"},
+						{ title: '{{ _('Device') }}', responsivePriority: 1 },
+						{ title: '{{ _('RF-Received') }}' },
+						{ title: '{{ _('RF-Send Result') }}'},
+						{ title: '{{ _('RF-Key Result') }}' },
+					],
+					order: [[1, 'asc']]
+				} );
+
+				zigbeetable = $('#zigbeetable').DataTable( {
+					"columns": [
+						{"className": "plus"},
+						{ title: "{{ _('Device ID') }}", responsivePriority: 1 },
+						{ title: "{{ _('IEEEAddr') }}" , responsivePriority: 2},
+						{ title: "{{ _('Hersteller') }}" },
+						{ title: "{{ _('ModelId') }}" },
+						{ title: "{{ _('LinkQuality') }}" },
+						{ title: "{{ _('Battery %') }}" },
+						{ title: "{{ _('LastSeen') }}" },
+						{ title: "{{ _('BTN') }}" },
+					],
+					"order": [[1, 'asc']]
+				} );
+
+				brokertable2 = $('#brokertable2').DataTable( {
+					columns: [   
+						{ title: '', className: "plus" },
+						{ title: '{{ _('Merkmal') }}', responsivePriority: 1},
+						{ title: '{{ _('Wert') }}', responsivePriority: 2 }
+					],
+					order: [[1, 'asc']]
+				} );
+
+				brokermontable2 = $('#brokermontable2').DataTable( {
+					columns: [   
+						{ title: '', className: "plus" },
+						{ title: '{{ _('Message Durchsatz') }}', responsivePriority: 1},
+						{ title: '{{ _('letzte Minute') }}', responsivePriority: 2 },
+						{ title: '{{ _('letzte 5 Minuten') }}', responsivePriority: 1},
+						{ title: '{{ _('letzte 15 Minuten') }}', responsivePriority: 2 },
+					],
+					order: [[1, 'asc']]
+				} );
+
+				tasmota_device_details_table = $('#tasmota_device_details_table').DataTable( {
+					// data: dataSet,
+					columns: [
+						{ className: "plus" },
+						{ className: 'dt-control', orderable: false, data: null, defaultContent: '', width: "50px"},
+						{ title: "{{ _('Tasmota Device') }}", responsivePriority: 1},
+						{ title: "{{ _('Data') }}", visible: false,},
+					],
+					order: [[2, 'asc']],
+					paging: false,
+					fixedColumns: true,
+				} );
+
+				// Add event listener for opening and closing details
+				tasmota_device_details_table.on('click', 'td.dt-control', function (e) {
+					let tr = $(this).closest('tr');
+					let row = tasmota_device_details_table.row(tr);
+				
+					if (row.child.isShown()) {
+						// This row is already open - close it
+						row.child.hide();
+						tr.removeClass('shown');
+					}
+					else {
+						// Open this row
+						row.child(format_child_row(row.data())).show();
+						tr.addClass('shown');
+					}
+				});
+
+				zigbee_device_details_table = $('#zigbee_device_details_table').DataTable( {
+					columns: [
+						{"className": "plus"},
+						{ className: 'dt-control', orderable: false, data: null, defaultContent: '', width: "50px"},
+						{ title: "{{ _('Zigbee Device') }}", responsivePriority: 1 },
+						{ title: "{{ _('Data') }}", visible: false, data: null},
+					],
+					order: [[2, 'asc']],
+					paging: false,
+					fixedColumns: true,
+				} );
+
+				// Add event listener for opening and closing details
+				zigbee_device_details_table.on('click', 'td.dt-control', function (e) {
+					let tr = e.target.closest('tr');
+					let row = zigbee_device_details_table.row(tr);
+				
+					if (row.child.isShown()) {
+						// This row is already open - close it
+						row.child.hide();
+					}
+					else {
+						// Open this row
+						row.child(format_child_row(row.data())).show();
+					}
+				});
+
+				// Get Active tab and set dataSet resepctivly
+				setDataSetByActiveTab();
+
+				// Handle tab changes (both when data-toggle is present and when it's not):
+				$('#webif-tabs a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+					setDataSetByActiveTab();
+				});
+				$('#webif-tabs .nav-link:not([data-toggle="tab"])').on('click', function(e){
+					e.preventDefault();
+					setDataSetByActiveTab();
+				})
+
+				// Inital data update with dataSet for active Tab
+				setTimeout(function() { shngGetUpdatedData(); }, 200);
+
+			}
+			catch (e) {
+				console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
+			}
+		/*
+		This part creates tooltips for buttons/inputs that have the class "button-tooltip"
+		*/
+		const tooltipList = ['Nach Devices suchen'];
+		createTooltips(tooltipList);
+		/*
+		This part reads cookies for the attribute "sort_order" and activates the resepctive button after page load
+		*/
+		order = getCookie('sort_order');
+		if (order == '')
+		order = 'time-desc';
+		const button = document.getElementById(order);
+		button.click();
+		});
+	</script>
 {% endblock pluginscripts %}
 
+
 {% block headtable %}
-<table class="table table-striped table-hover">
-	<tbody>
-		<tr>
-            <td class="py-1"><strong>{{_('Broker Host')}}</strong></td>
-            <td class="py-1">{{ p.broker_config.host }}</td>
-            <td class="py-1" width="50px"></td>
-            <td class="py-1"><strong>{{_('Broker Port')}}</strong></td>
-            <td class="py-1">{{ p.broker_config.port }}</td>
-            <td class="py-1" width="50px"></td>
-        </tr>
-        <tr>
-            <td class="py-1"><strong>{{_('Benutzer')}}</strong></td>
-            <td class="py-1">{{ p.broker_config.user }}</td>
-            <td class="py-1"></td>
-            <td class="py-1"><strong>{{_('Passwort')}}</strong></td>
-            <td class="py-1">
-            {% if p.broker_config.password %}
-                {% for letter in p.broker_config.password %}*{% endfor %}
-            {% endif %}
-            </td>
-            <td class="py-1"></td>
-        </tr>
-        <tr>
-            <td class="py-1"><strong>{{_('QoS')}}</strong></td>
-            <td class="py-1">{{ p.broker_config.qos }}</td>
-            <td class="py-1"></td>
-            <td class="py-1"><strong>{{_('full_topic')}}</strong></td>
-            <td class="py-1">{{ p.full_topic }}</td>
-            <td class="py-1"></td>
-        </tr>
-    </tbody>
-</table>
+	<table class="table table-striped table-hover">
+		<tbody>
+			<tr>
+				<td class="py-1"><strong>{{_('Broker Host')}}</strong></td>
+				<td class="py-1">{{ broker_config.host }}</td>
+				<td class="py-1"><strong>{{_('Broker Port')}}</strong></td>
+				<td class="py-1">{{ broker_config.port }}</td>
+				<td class="py-1"><strong>{{_('Anzahl Geräte')}}</strong></td>
+				<td class="py-1" id="tasmota_count">{{ len(p.tasmota_devices) }}</td>
+			</tr>
+			<tr>
+				<td class="py-1"><strong>{{_('Benutzer')}}</strong></td>
+				<td class="py-1">{{ broker_config.user }}</td>
+				<td class="py-1"><strong>{{_('Passwort')}}</strong></td>
+				<td class="py-1">
+				{% if broker_config.password %}
+					{% for letter in broker_config.password %}*{% endfor %}
+				{% endif %}
+				</td>
+				<td class="py-1"><strong>{{_('Anzahl Zigbee')}}</strong></td>
+				<td class="py-1" id="zigbee_count">{{ len(p.tasmota_zigbee_devices) }}</td>
+			</tr>
+			<tr>
+				<td class="py-1"><strong>{{_('QoS')}}</strong></td>
+				<td class="py-1">{{ broker_config.qos }}</td>
+				<td class="py-1"><strong>{{_('full_topic')}}</strong></td>
+				<td class="py-1">{{ full_topic }}</td>
+				<td class="py-1"></td>
+				<td class="py-1"></td>
+			</tr>
+		</tbody>
+	</table>
 {% endblock headtable %}
 
-<!--Additional buttons for the web interface (if any are needed) - displayed below the headtable-section-->
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
 {% block buttons %}
+	<div>
+		<button id="zbstatus" type="button" class="btn btn-shng btn-sm" title="Abfragen der Zigbee-Geräte" onclick="$('#button_id').val(this.id);$('#button').val(this.value);$('#button_pressed').submit();"><i class="fas"></i>{{_('Zigbee-Geräte abfragen')}}</button>
+	</div>
+    <form id="button_pressed" action="" method="post">
+    	<input type="hidden" id="button" name="button" value="" />
+    	<input type="hidden" id="button_id" name="button_id" value="">
+	</form>
 {% endblock %}
 
-<!--Define the number of tabs for the body of the web interface (1 - 3)-->
+<!--
+	Define the number of tabs for the body of the web interface (1 - 6)
+-->
 {% set tabcount = 6 %}
 
-<!--Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)-->
-{% if p.tasmota_items != [] %}
-	{% set start_tab = 4 %}
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if not item_count %}
+	{% set start_tab = 6 %}
 {% endif %}
 
+
 <!--Set TabTitle-->
-{% if items != [] %}
+{% if item_count %}
     {% set tab1title = _("<strong>" " Items</strong>") %}
 {% else %}
     {% set tab1title = "hidden" %}
@@ -331,7 +1293,7 @@
 
 {% set tab3title = _("<strong>" ~ _('Sensor Data') ~ "</strong>") %}
 
-{% if p.tasmota_zigbee_devices %}
+{% if zigbee %}
     {% set tab4title = _("<strong>" ~ _('Zigbee Devices') ~ "</strong>") %}
 {% else %}
     {% set tab4title = "hidden" %}
@@ -345,426 +1307,102 @@
     {% set tab6title = "hidden" %}
 {% endif %}
 
-<!--Content block for Webinterface tabs-->
+<!--Content blocks for Webinterface tabs-->
 {% block bodytab1 %}
-<caption><h3><strong>Item Information</strong></h3></caption>
-<table id="itemtable" class="dataTableAdditional m-2">
-    <tbody>
-        {% for item in items %}
-            <tr>
-                {%  if p.get_iattr_value(item.conf, 'tasmota_relay') is in ['1', '2', '3', '4', '5', '6', '7', '8'] %}
-                    {% set relais = p.get_iattr_value(item.conf, 'tasmota_relay') %}
-                {%  elif p.get_iattr_value(item.conf, 'tasmota_attr') == 'relay' %}
-                    {% set relais = "1" %}
-                {% else %}
-                    {% set relais = "-" %}
-                {% endif %}
-
-                <td></td>
-                <td class="py-1">{{ item._path }}</td>
-                <td class="py-1">{{ item._type }}</td>
-                <td class="py-1" id="{{ item._path }}_value">{{ item() }}</td>
-                <td class="py-1"> {{ item() }}</td>
-                <td class="py-1">{{ relais }}</td>
-                <td class="py-1" id="{{ item._path }}_last_update">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                <td class="py-1" id="{{ item._path }}_last_change">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+	<caption><h3><strong>Item Information</strong></h3></caption>
+	<table id="itemtable" class="dataTableAdditional m-2">
+	</table>
 {% endblock %}
 
 
 {% block bodytab2 %}
-<div>
-    <caption><h3><strong>Device Information</strong></h3></caption>
-</div>
-<table id="devicetable" class="dataTableAdditional m-2">
-    <tbody>
-        {% for device in p.tasmota_devices %}
-            {% if 'fw_ver' in p.tasmota_devices[device] %}  <!-- Nur die Devices darstellen, die wirklich TASMOTA Devices sind; Zur Prüfung wird die Firmware hergenommen -->
-                <tr>
-                    {% set device_data = p.tasmota_devices[device] %}
-
-                    {# Set the 'sensors' variable to a comma-separated list of sensor keys, or a hyphen if no sensors are available #}
-                    {% if device_data.sensors %}
-                        {% set sensors = device_data.sensors.keys() | join(', ') %}
-                    {% else %}
-                        {% set sensors = "-" %}
-                    {% endif %}
-
-                    {# Set the 'sensors' variable to a comma-separated list of sensor keys, or a hyphen if no sensors are available #}
-                    {% if device_data.sensors %}
-                        {% set sensors = device_data.sensors.keys() | join(', ') %}
-                    {% else %}
-                        {% set sensors = "-" %}
-                    {% endif %}
-
-                    <td></td>
-                    <td class="py-1"><a class="text-shng" href="http://{{ device_data.ip }}" target="_blank">{{ device }}</a></td>
-                    <td class="py-1" id="{{ device }}_online">{{ device_data.online }}</td>
-                    <td class="py-1">{{ device_data.friendly_name }}</td>
-                    <td class="py-1">{{ device_data.mac }}</td>
-                    <td class="py-1">{{ device_data.ip }}</td>
-                    <td class="py-1" id="{{ device }}_uptime">{{ device_data.uptime }}</td>
-                    <td class="py-1"> {{ sensors }}</td>
-                    <td class="py-1" id="{{ device }}_fw">{{ device_data.fw_ver }}</td>
-                    <td class="py-1">{{ device_data.module }}</td>
-                    <td class="py-1" id="{{ device }}_wifi">{%  if device_data.wifi_signal %}{{ device_data.wifi_signal }} dBm {% endif %}</td>
-                    <td class="py-1">{{ device_data.discovery_config  }}</td>
-                </tr>
-            {% endif %}
-        {% endfor %}
-    </tbody>
-</table>
+	<caption><h3><strong>Device Information</strong></h3></caption>
+	<table id="devicetable" class="dataTableAdditional m-2">
+	</table>
 {% endblock %}
 
 
 {% block bodytab3 %}
-{% if p.has_energy_sensor() %}
-    <caption><h3><strong>ENERGY SENSORS</strong></h3></caption>
-    <table id="energytable">
-        <thead>
-            <tr>
-                <th class="plus"></th>
-                <th>{{ _('Device') }}</th>
-                <th>{{ _('Spannung') }}</th>
-                <th>{{ _('Strom') }}</th>
-                <th>{{ _('Leistung') }}</th>
-                <!--
-                <th>{{ _('Schein Leistung') }}</th>
-                <th>{{ _('Blind Leistung') }}</th>
-                -->
-                <th>{{ _('Heute') }}</th>
-                <th>{{ _('Gestern') }}</th>
-                <th>{{ _('Gesamt') }}</th>
-                <th width="200">{{ _('Gesamt - Startzeit') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for device in p.tasmota_devices %}
-                {% if p.tasmota_devices[device]['sensors']['ENERGY'] %}
-                    <tr>
-                        {% set energy_data = p.tasmota_devices[device]['sensors']['ENERGY'] %}
-                        <td></td>
-                        <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
-                        <td class="py-1" id="{{ device }}_voltage">{{ energy_data.voltage }}V.</td>
-                        <td class="py-1" id="{{ device }}_current">{{ energy_data.current }}A.</td>
-                        <td class="py-1" id="{{ device }}_power">{{ energy_data.power }}W</td>
-                <!--
-                        <td class="py-1" id="{{ device }}_apparent_power">{{ p.tasmota_devices[device]['sensors']['ENERGY'].apparent_power }}W</td>
-                        <td class="py-1" id="{{ device }}_reactive_power">{{ p.tasmota_devices[device]['sensors']['ENERGY'].reactive_power }}VA</td>
-                -->
-                        <td class="py-1" id="{{ device }}_today">{{ energy_data.today }}kWh</td>
-                        <td class="py-1" id="{{ device }}_yesterday">{{ energy_data.yesterday }}kWh</td>
-                        <td class="py-1" id="{{ device }}_total">{{ energy_data.total}}kWh</td>
-                        <td class="py-1" id="{{ device }}_total_starttime">{{ energy_data.total_starttime }}</td>
-                    </tr>
-                    {% endif %}
-            {% endfor %}
-        </tbody>
-    </table>
-    </br>
-    </br>
-{% endif %}
+	{% if p.has_energy_sensor() %}
+		<caption><h3><strong>ENERGY SENSORS</strong></h3></caption>
+		<table id="energytable1" class="dataTableAdditional m-2">
+		</table>
 
-{% if p.has_env_sensor() %}
-    <caption><h3><strong>ENVIRONMENTAL SENSORS</strong></h3></caption>
-    <table id="environtable">
-        <thead>
-            <tr>
-                <th class="plus"></th>
-                <th>{{ _('Device') }}</th>
-                <th>{{ _('Temperatur') }}</th>
-                <th>{{ _('Luftfeuchtigkeit') }}</th>
-                <th>{{ _('Taupunkt') }}</th>
-                <th>{{ _('1w-ID') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for device in p.tasmota_devices %}
-                {% if 'DS18B20' in p.tasmota_devices[device].sensors or 'AM2301' in p.tasmota_devices[device].sensors or 'SHT3X' in p.tasmota_devices[device].sensors%}
-                    <tr>
-                        <td></td>
-                        <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
-                        {% if p.tasmota_devices[device].sensors.DS18B20 %}
-                            <td class="py-1" id="{{ device }}_DS18B20_temp">{{ p.tasmota_devices[device].sensors.DS18B20.temperature }}°C</td>
-                            <td class="py-1">-</td>
-                            <td class="py-1">-</td>
-                            <td class="py-1">{{ p.tasmota_devices[device].sensors.DS18B20.id }}</td>
-                        {% elif p.tasmota_devices[device].sensors.AM2301 %}
-                            <td class="py-1" id="{{ device }}_AM2301_temp">{{ p.tasmota_devices[device].sensors.AM2301.temperature }}°C</td>
-                            <td class="py-1" id="{{ device }}_AM2301_hum">{{ p.tasmota_devices[device].sensors.AM2301.humidity }}%rH</td>
-                            <td class="py-1" id="{{ device }}_AM2301_dew">{{ p.tasmota_devices[device].sensors.AM2301.dewpoint }}°C</td>
-                            <td class="py-1">-</td>
-                        {% elif p.tasmota_devices[device].sensors.SHT3X %}
-                            <td class="py-1" id="{{ device }}_SHT3X_temp">{{ p.tasmota_devices[device]['sensors']['SHT3X'].temperature }}°C</td>
-                            <td class="py-1" id="{{ device }}_SHT3X_hum">{{ p.tasmota_devices[device]['sensors']['SHT3X'].humidity }}%rH</td>
-                            <td class="py-1" id="{{ device }}_SHT3X_dew">{{ p.tasmota_devices[device]['sensors']['SHT3X'].dewpoint }}°C</td>
-                            <td class="py-1">-</td>
-                        {% else %}
-                            <td class="py-1">-</td>
-                            <td class="py-1">-</td>
-                            <td class="py-1">-</td>
-                            <td class="py-1">-</td>
-                        {% endif %}
-                    </tr>
-                {% endif %}
-            {% endfor %}
-            
-        </tbody>
-    </table>
-    </br>
-    </br>
-{% endif %}
+		</br>
+		</br>
+	{% endif %}
 
-{% if p.has_other_sensor() %}
-    <caption><h3><strong>OTHER SENSORS</strong></h3></caption>
-    <table id="othersensortable">
-        <thead>
-            <tr>
-                <th class="plus"></th>
-                <th>{{ _('Sensor') }}</th>
-                <th>{{ _('Sensor Details') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for device in p.tasmota_devices %}
-                {% for sensor in p.tasmota_devices[device].sensors %}
-                    {% if sensor not in p.SENSORS %}
-                        <tr>
-                            <td></td>
-                            <td class="py-1">{{ sensor }}</td>
-                            <td class="py-1" id="{{ device }}_{{ sensor }}">{{ p.tasmota_devices[device].sensors[sensor] }}</td>
-                        </tr>
-                    {% endif %}
-                {% endfor %}
-            {% endfor %}
-        </tbody>
-    </table>
-{% endif %}
+	{% if p.has_env_sensor() %}
+		<caption><h3><strong>ENVIRONMENTAL SENSORS</strong></h3></caption>
+		<table id="environtable1" class="dataTableAdditional m-2">
+		</table>
 
-{% if p.has_lights() %}
-    <caption><h3><strong>LIGHTS</strong></h3></caption>
-    <table id="lightstable">
-        <thead>
-            <tr>
-                <th></th>
-                <th>{{ _('Device') }}</th>
-                <th>{{ _('HSB') }}</th>
-                <th>{{ _('Dimmer') }}</th>
-                <th>{{ _('Color') }}</th>
-                <th>{{ _('CT') }}</th>
-                <th>{{ _('Scheme') }}</th>
-                <th>{{ _('Fade') }}</th>
-                <th>{{ _('Speed') }}</th>
-                <th>{{ _('LED-Table') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for device in p.tasmota_devices %}
-                {% if p.tasmota_devices[device].lights %}
-                    <tr>
-                        {% set light_data = p.tasmota_devices[device].lights %}
-                        <td></td>
-                        <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
-                        <td class="py-1" id="{{ device }}_hsb">{{ light_data.hsb }}.</td>
-                        <td class="py-1" id="{{ device }}_dimmer">{{ light_data.dimmer }}.</td>
-                        <td class="py-1" id="{{ device }}_color">{{ light_data.color }}.</td>
-                        <td class="py-1" id="{{ device }}_ct">{{ light_data.ct }}.</td>
-                        <td class="py-1" id="{{ device }}_scheme">{{ light_data.scheme }}.</td>
-                        <td class="py-1" id="{{ device }}_fade">{{ light_data.fade }}.</td>
-                        <td class="py-1" id="{{ device }}_speed">{{ light_data.speed }}.</td>
-                        <td class="py-1" id="{{ device }}_ledtable">{{ light_data.ledtable }}.</td>
-                    </tr>
-                {% endif %}
-            {% endfor %}
-        </tbody>
-    </table>
-    
-    </br>
-    </br>
-{% endif %}
+		</br>
+		</br>
+	{% endif %}
 
-{% if p.has_rf() %}
-    <caption><h3><strong>RF</strong></h3></caption>
-    <table id="rftable">
-        <thead>
-            <tr>
-                <th></th>
-                <th>{{ _('Device') }}</th>
-                <th>{{ _('RF-Received') }}</th>
-                <th>{{ _('RF-Send Result') }}</th>
-                <th>{{ _('RF-Key Result') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for device in p.tasmota_devices %}
-                {% if p.tasmota_devices[device].rf%}
-                    <tr>
-                        {% set rf_data = p.tasmota_devices[device].rf %}
-                        <td></td>
-                        <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
-                        <td class="py-1" id="{{ device }}_rf_received">{{ rf_data.rf_received }}</td>
-                        <td class="py-1" id="{{ device }}_rf_send_result">{{ rf_data.rf_send_result }}</td>
-                        <td class="py-1" id="{{ device }}_rfkey_result">{{ rf_data.rfkey_result }}</td>
-                    </tr>
-                {% endif %}
-            {% endfor %}
-        </tbody>
-    </table>
+	{% if p.has_other_sensor() %}
+		<caption><h3><strong>OTHER SENSORS</strong></h3></caption>
+		<table id="othersensortable1" class="dataTableAdditional m-2">
+		</table>
 
-    </br>
-    </br>
-{% endif %}
+		</br>
+		</br>
+	{% endif %}
+
+	{% if p.has_lights() %}
+		<caption><h3><strong>LIGHTS</strong></h3></caption>
+		<table id="lightstable1" class="dataTableAdditional m-2">
+		</table>
+		
+		</br>
+		</br>
+	{% endif %}
+
+	{% if p.has_rf() %}
+		<caption><h3><strong>RF</strong></h3></caption>
+		<table id="rftable1" class="dataTableAdditional m-2">
+		</table>
+
+		</br>
+		</br>
+	{% endif %}
 {% endblock %}
 
 
 {% block bodytab4 %}
-<caption><h3><strong>Zigbee Information</strong></h3></caption>
-<table id="zigbeetable">
-    <tbody>
-        {% for device in p.tasmota_zigbee_devices %}
-            <tr>
-                {% set zigbee_data = p.tasmota_zigbee_devices[device] %}
-                <td></td>
-                <td class="py-1">{{ device }}</td>
-                <td class="py-1">{{ zigbee_data.ieeeaddr }}</td>
-                <td class="py-1" id="{{ device }}_manufacturer">{{ zigbee_data.manufacturer }}</td>
-                <td class="py-1" id="{{ device }}_modelid">{{ zigbee_data.modelid }}</td>
-                <td class="py-1" id="{{ device }}_linkquality">{{ zigbee_data.linkquality }}</td>
-                <td class="py-1" id="{{ device }}_batterypercentage">{{ zigbee_data.batterypercentage }}</td>
-                <td class="py-1" id="{{ device }}_lastseenepoch">{{ zigbee_data.lastseenepoch }}</td>
-                <td class="py-1" id="{{ device }}_data">{{ zigbee_data }}</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+	<caption><h3><strong>Zigbee Information</strong></h3></caption>
+	<table id="zigbeetable">
+		<tbody>
+		</tbody>
+	</table>
 {% endblock %}
 
 
 {% block bodytab5 %}
-<caption><h3><strong>Broker Information</strong></h3></caption>
-<table id="brokertable" class="table table-striped table-hover pluginList">
-    <thead>
-        <tr>
-            <th></th>
-            <th class="py-1">{{ _('Merkmal') }}</th>
-            <th class="py-1">{{ _('Wert') }}</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td></td>
-            <td>{{ 'Broker Version' }}</td>
-            <td id="version">{{ p._broker.version }}</td>
-        </tr>
-        <tr>
-            <td></td>
-            <td>{{ 'Active Clients' }}</td>
-            <td id="active_clients">{{ p._broker.active_clients }}</td>
-        </tr>
-        <tr>
-            <td></td>
-            <td>{{ 'Subscriptions' }}</td>
-            <td id="subscriptions">{{ p._broker.subscriptions }}</td>
-        </tr>
-        <tr>
-            <td></td>
-            <td>{{ 'Messages stored' }}</td>
-            <td id="stored_messages">{{ p._broker.stored_messages }}</td>
-        </tr>
-        <tr>
-            <td></td>
-            <td>{{ 'Retained Messages' }}</td>
-            <td id="retained_messages">{{ p._broker.retained_messages }}</td>
-        </tr>
-        
-        {% if p.broker_monitoring %}
-            <tr>
-                <td></td>
-                <td>{{ _('Laufzeit') }}</td>
-                <td id="broker_uptime">{{ p.broker_uptime() }}</td>
-            </tr>
-        {% endif %}
-    </tbody>
-</table>
+	<caption><h3><strong>Broker Information</strong></h3></caption>
+	<table id="brokertable2" class="dataTableAdditional m-2">
+	</table>
 
-{% if p.broker_monitoring %}
-    </br>
-    </br>
-    <caption><h3><strong>Broker Monitor</strong></h3></caption>
-    <table id="brokermontable" class="table table-striped table-hover pluginList">
-        <thead>
-            <th></th>
-            <th class="py-1">{{ _('Message Durchsatz') }}</th>
-            <th class="py-1">{{ _('letzte Minute') }}</th>
-            <th class="py-1">{{ _('letzte 5 Min.') }}</th>
-            <th class="py-1">{{ _('letzte 15 Min.') }}</th>
-        </thead>
-        <tbody>
-            <tr>
-                <td></td>
-                <td>{{ _('Durchschnittlich Messages je Minute empfangen') }}</td>
-                <td id="msg_rcv_1min"> &nbsp; &nbsp; {{ p._broker.msg_rcv_1min }}</td>
-                <td id="msg_rcv_5min"> &nbsp; &nbsp; {{ p._broker.msg_rcv_5min }}</td>
-                <td id="msg_rcv_15min"> &nbsp; &nbsp; {{ p._broker.msg_rcv_15min }}</td>
-            </tr>
-            <tr>
-                <td></td>
-                <td>{{ _('Durchschnittlich Messages je Minute gesendet') }}</td>
-                <td id="msg_snt_1min"> &nbsp; &nbsp; {{ p._broker.msg_snt_1min }}</td>
-                <td id="msg_snt_5min"> &nbsp; &nbsp; {{ p._broker.msg_snt_5min }}</td>
-                <td id="msg_snt_15min"> &nbsp; &nbsp; {{ p._broker.msg_snt_15min }}</td>
-            </tr>
-        </tbody>
-    </table>
-{% endif %}
-
+	{% if p.broker_monitoring %}
+		</br>
+		</br>
+		<caption><h3><strong>Broker Monitor</strong></h3></caption>
+		<table id="brokermontable2" class="dataTableAdditional m-2">
+		</table>
+	{% endif %}
 {% endblock %}
 
 
 {% block bodytab6 %}
-<caption><h3><strong>Tasmota Device Details</strong></h3></caption>
-<table id="" class="table table-striped table-hover pluginList">
-    <thead>
-        <tr class="shng_heading">
-            <th>{{ _('Tasmota Device') }}</th>
-            <th>{{ _('Tasmota Device Details') }}</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for device in p.tasmota_devices %}
-            <tr>
-                <td>{{ device }}</td>
-                <td>{{ p.tasmota_devices[device] }}</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+	<caption><h3><strong>Tasmota Device Details</strong></h3></caption>
+	<table id="tasmota_device_details_table" class="dataTableAdditional m-2">
+	</table>
 
+	</br>
+	</br>
 
-</br>
-</br>
-
-<caption><h3><strong>Tasmota ZigbeeDevice Details</strong></h3></caption>
-<table id="" class="table table-striped table-hover pluginList">
-    <thead>
-        <tr class="shng_heading">
-            <th>{{ _('Zigbee Device') }}</th>
-            <th>{{ _('Zigbee Device Details') }}</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for device in p.tasmota_zigbee_devices %}
-            <tr>
-                <td>{{ device }}</td>
-                <td>{{ p.tasmota_zigbee_devices[device] }}</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+	<caption><h3><strong>Tasmota Zigbee-Device Details</strong></h3></caption>
+	<table id="zigbee_device_details_table" class="dataTableAdditional m-2">
+	</table>
 {% endblock %}
-
-
-
