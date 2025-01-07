@@ -105,12 +105,13 @@ class lms(SmartDevicePlugin):
 
         if command == f'database.players':
             self.logger.debug(f"Got command players {command} data {data} value {value} by {by}")
-            for player in value.keys():
+            for player in self._custom_values.get(1):
                 if player == '-':
                     continue
-                self._dispatch_callback('player.info.modelname' + CUSTOM_SEP + player, value[player].get('modelname'), by)
-                self._dispatch_callback('player.info.firmware' + CUSTOM_SEP + player, value[player].get('firmware'), by)
-                self._dispatch_callback('player.info.players' + CUSTOM_SEP + player, value, by)
+                elif player in value.keys():
+                    self._dispatch_callback('player.info.modelname' + CUSTOM_SEP + player, value[player].get('modelname'), by)
+                    self._dispatch_callback('player.info.firmware' + CUSTOM_SEP + player, value[player].get('firmware'), by)
+                    self._dispatch_callback('player.info.players' + CUSTOM_SEP + player, value, by)
 
         if command == f'database.playlists':
             self.logger.debug(f"Got command playlists {command} data {data} value {value} by {by}")
@@ -127,7 +128,6 @@ class lms(SmartDevicePlugin):
             self.logger.debug(f"Got command syncgroups {command} data {data} value {value} by {by}")
             for player in self._custom_values.get(1):
                 idx = find_player_index(player, value)
-                self.logger.debug(f"Testing player {player} vs value {value} idx {idx}")
                 if idx >= 0:
                     synced = value[idx].split(",")
                     synced.remove(player)
