@@ -38,7 +38,7 @@ Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
 
 - Daemmerung: Höhe des Raffstores: 100(%), Lamellendrehung: 25(%)
 - Nachfuehren: Höhe des Raffstores: 100(%), Lamellendrehung: je nach Sonnenausrichtung, aber erst, wenn eine Mindeständerung von 10 Grad vorhanden ist.
-- Sonder: Ausführen der Logic myLogic mit dem Wert 42 und einer Verzögerung von 10 Sekunden.
+- Sonder: Ausführen der Logic myLogic mit dem Wert 42 und einer Verzögerung von 10 Sekunden. Setzen eines Bool-Items auf True.
 
 .. code-block:: yaml
 
@@ -47,6 +47,7 @@ Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
         automatik:
             struct: stateengine.general
             rules:
+                se_item_boolean: raffstore1.updown # Definition eines boolschen Items
                 se_item_height: raffstore1.hoehe # Definition des zu ändernden Höhe-Items
                 se_item_lamella: raffstore1.lamelle # Definition des zu ändernden Lamellen-Items
                 se_status_lamella: raffstore1.lamelle.status # Definition des Lamellen Statusitems
@@ -76,6 +77,9 @@ Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
                         - 'logic: myLogic'
                         - 'value: 42'
                         - 'delay: 10'
+                    se_action_boolean:
+                        - 'function: set'
+                        - 'to: value:True'
                     <...>
 
 Aufbau von Aktionen

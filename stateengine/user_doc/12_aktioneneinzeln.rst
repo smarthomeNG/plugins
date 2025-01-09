@@ -285,10 +285,11 @@ Beispiel zu Aktionen
                    se_mindelta_height: 10
                    se_item_lamella: beispiel.raffstore1.lamelle
                    se_mindelta_lamella: 5
+                   se_item_updown: beispiel.raffstore.updown
 
                    Daemmerung:
                        <...>
-                       se_set_height: value:100
+                       se_set_updown: value:True
                        se_set_lamella: value:25
                        <...>
                    Nacht:
