@@ -15,8 +15,9 @@ commands = {
             'members': {'read': True, 'write': False, 'read_cmd': 'syncgroups ?', 'item_type': 'list', 'dev_datatype': 'LMSSyncmembers', 'reply_pattern': r'^syncgroups\s?(.*)?$', 'custom_disabled': True, 'item_attrs': {'initial': True}},
             'names': {'read': True, 'write': False, 'read_cmd': 'syncgroups ?', 'item_type': 'list', 'dev_datatype': 'LMSSyncnames', 'reply_pattern': r'^syncgroups\s?(.*)?$', 'custom_disabled': True, 'item_attrs': {'initial': False}},
         },
+        'players': {'read': True, 'write': False, 'read_cmd': 'players 0 100', 'item_type': 'dict', 'dev_datatype': 'LMSPlayers', 'reply_pattern': r'^players 0 100 (.*)', 'custom_disabled': True, 'item_attrs': {'initial': True, 'item_template': 'players'}},
         'playlists': {
-            'rename': {'read': False, 'write': True, 'write_cmd': 'playlists rename {VALUE}', 'item_type': 'str', 'dev_datatype': 'LMSPlaylistrename', 'reply_pattern': r'^playlists rename\s+(.*)', 'custom_disabled': True, 'item_attrs': {'attributes': {'remark': 'needed value:<playlist_id> <newname> with a space inbetween'}}},
+            'rename': {'read': False, 'write': True, 'write_cmd': 'playlists rename {VALUE}', 'item_type': 'str', 'dev_datatype': 'LMSPlaylistrename', 'reply_pattern': r'^playlists rename\s+(.*)', 'custom_disabled': True, 'item_attrs': {'attributes': {'remark': '"needed value:<playlist_id> <newname> with a space inbetween"'}}},
             'delete': {'read': False, 'write': True, 'write_cmd': 'playlists delete playlist_id:{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^playlists delete playlist_id:(\d+)', 'custom_disabled': True},
         },
     },
@@ -36,8 +37,7 @@ commands = {
         'totalalbums': {'read': True, 'write': False, 'read_cmd': 'info total albums ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^info total albums (\d+)', 'custom_disabled': True, 'item_attrs': {'initial': True}},
         'totalsongs': {'read': True, 'write': False, 'read_cmd': 'info total songs ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^info total songs (\d+)', 'custom_disabled': True, 'item_attrs': {'initial': True}},
         'totalplaylists': {'read': True, 'write': False, 'read_cmd': 'playlists 0 1000 tags:u', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^playlists 0 1000(?: tags:[u,s])? count:(\d+)', 'custom_disabled': True},
-        'players': {'read': True, 'write': False, 'read_cmd': 'players 0 100', 'item_type': 'dict', 'dev_datatype': 'LMSPlayers', 'reply_pattern': r'^players 0 100 (.*)', 'custom_disabled': True, 'item_attrs': {'initial': True}},
-        'playlists': {'read': True, 'write': False, 'read_cmd': 'playlists 0 1000 tags:u', 'item_type': 'dict', 'dev_datatype': 'LMSPlaylists', 'reply_pattern': r'^playlists 0 1000(?: tags:[u,s])? (.*)', 'item_attrs': {'initial': True}},
+        'playlists': {'read': True, 'write': False, 'read_cmd': 'playlists 0 1000 tags:u', 'item_type': 'dict', 'dev_datatype': 'LMSPlaylists', 'reply_pattern': r'^playlists 0 1000(?: tags:[u,s])? (.*)', 'item_attrs': {'initial': True, 'item_template': 'playlists'}},
     },
     'player': {
         'control': {
@@ -54,8 +54,8 @@ commands = {
             'volumedown': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume -{VALUE}', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'cache': True, 'enforce_updates': True, 'initial_value': 1}}},
             'set_alarm': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} alarm {VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} alarm (.*)', 'item_attrs': {'attributes': {'on_change': '..alarms.query = True'}}},
             'alarms': {'read': True, 'write': False, 'item_type': 'dict', 'read_cmd': '{CUSTOM_ATTR1} alarms 0 100 all', 'dev_datatype': 'LMSAlarms', 'reply_pattern': r'^{CUSTOM_PATTERN1} alarms 0 100 all fade:\d+ count:\d+\s?(.*)?', 'item_attrs': {'initial': True, 'read_groups': [{'name': 'player.control.alarms', 'trigger': 'query'}]}},
-            'sync': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} sync ?', 'write_cmd': '{CUSTOM_ATTR1} sync {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} sync (?:.*,)?{LOOKUP}(?:,.*)?', r'^{CUSTOM_PATTERN1} sync (\-)'], 'lookup': 'PLAYERS', 'item_attrs': {'initial': True, 'enforce': True}},
-            'syncstatus': {'read': False, 'write': False, 'item_type': 'list', 'dev_datatype': 'raw'},
+            'sync': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} sync ?', 'write_cmd': '{CUSTOM_ATTR1} sync {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} sync (?:.*,)?{LOOKUP}(?:,.*)?', r'^{CUSTOM_PATTERN1} sync (\-)'], 'lookup': 'PLAYERS', 'item_attrs': {'initial': True, 'enforce': True, 'attributes': {'remark':'This can be either a name or MAC address of a connected player. Make sure to include the server struct to fill the lookup table correctly.'}}},
+            'sync_status': {'read': False, 'write': False, 'item_type': 'list', 'dev_datatype': 'raw'},
             'unsync': {'read': False, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} sync -', 'item_type': 'bool', 'dev_datatype': 'LMSonoff', 'item_attrs': {'attributes': {'autotimer': '1s = 0'}}},
             'display': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} display ? ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} display {VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} display\s?(.*)', 'item_attrs': {'initial': True}},
             'connect': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} connect {VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} connect (.*)', 'item_attrs': {'attributes': {'remark': 'ip|www.mysqueezebox.com|www.test.mysqueezebox.com'}}},
@@ -69,8 +69,8 @@ commands = {
         'playlist': {
             'rename_current': {'read': False, 'write': True, 'item_type': 'str', 'write_cmd': 'playlists rename playlist_id:{CUSTOM_PARAM1:CURRENT_LIST_ID} newname:{VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^playlists rename playlist_id:(?:\d+) newname:(.*)', 'custom_disabled': True},
             'delete_current': {'read': False, 'write': True, 'write_cmd': 'playlists delete playlist_id:{CUSTOM_PARAM1:CURRENT_LIST_ID}', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': r'^playlists delete playlist_id:(\d+)', 'custom_disabled': True, 'item_attrs': {'enforce': True, 'attributes': {'autotimer': '1s = 0', 'remark': 'Be careful, instantly deletes the current playlist!'}}},
-            'repeat': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist repeat ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist repeat {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlist repeat {LOOKUP}$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist repeat:{LOOKUP}$'], 'lookup': 'REPEAT', 'item_attrs': {'initial': True, 'attributes': {'remark': '0 = Off, 1 = Song, 2 = Playlist'}, 'lookup_item': True}},
-            'shuffle': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist shuffle ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist shuffle {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlist shuffle {LOOKUP}$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist shuffle:{LOOKUP}$'], 'lookup': 'SHUFFLE', 'item_attrs': {'initial': True, 'attributes': {'remark': '0 = Off, 1 = Song, 2 = Album'}, 'lookup_item': True}},
+            'repeat': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist repeat ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist repeat {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} prefset server repeat {LOOKUP}$', r'^{CUSTOM_PATTERN1} playlist repeat {LOOKUP}$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist repeat:{LOOKUP}$'], 'lookup': 'REPEAT', 'item_attrs': {'initial': True, 'attributes': {'remark': '0 = Off, 1 = Song, 2 = Playlist'}, 'lookup_item': True}},
+            'shuffle': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist shuffle ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist shuffle {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} prefset server shuffle {LOOKUP}$', r'^{CUSTOM_PATTERN1} playlist shuffle {LOOKUP}$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist shuffle:{LOOKUP}$'], 'lookup': 'SHUFFLE', 'item_attrs': {'initial': True, 'attributes': {'remark': '0 = Off, 1 = Song, 2 = Album'}, 'lookup_item': True}},
             'index': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist index ?', 'write_cmd': '{CUSTOM_ATTR1} playlist index {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlist (?:index|newsong .*) (\d+)$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist index:(\d*[^\s]+)', r'^{CUSTOM_PATTERN1} prefset server currentSong (\d+)$', r'^{CUSTOM_PATTERN1} playlist jump (\d+)', r'^{CUSTOM_PATTERN1} play (\d*)'], 'item_attrs': {'initial': True}},
             'name': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist name ?', 'write_cmd': '{CUSTOM_ATTR1} playlist name {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlistcontrol cmd:load playlist_name:(.*) count:(?:\d+)$', r'^{CUSTOM_PATTERN1} playlist name (.*[^?])', r'^{CUSTOM_PATTERN1} playlist playlistsinfo id:(?:\d+) name:(.*) modified:']},
             'url': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} playlist playlistsinfo', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist playlistsinfo id:(?:\d+) name:(?:.*) modified:(?:0|1) url:(.*)'},
@@ -96,8 +96,6 @@ commands = {
             'customskip': {'read': False, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} customskip setfilter filter{VALUE}.cs.xml', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'cache': True}}}
         },
         'info': {
-            'players': {'read': True, 'write': False, 'read_cmd': 'players 0 100', 'item_type': 'dict', 'dev_datatype': 'LMSPlayers', 'reply_pattern': r'^players 0 100 (.*)', 'item_attrs': {'initial': False, 'item_template': 'players'}},
-            'playlists': {'read': True, 'write': False, 'read_cmd': 'playlists 0 1000 tags:u', 'item_type': 'dict', 'dev_datatype': 'LMSPlaylists', 'reply_pattern': r'^playlists 0 1000(?: tags:[u,s])? (.*)', 'item_attrs': {'initial': False, 'item_template': 'playlists'}},
             'status': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} status', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'^{CUSTOM_PATTERN1} status\s+(.*)', 'item_attrs': {'initial': True}},
             'connected': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} connected ?', 'item_type': 'bool', 'dev_datatype': 'LMSConnection', 'reply_pattern': [r'^{CUSTOM_PATTERN1} (?:connected|client) (\d|disconnect|reconnect)', r'^{CUSTOM_PATTERN1} status(?:.*)player_connected:([^\s]+)']},
             'ip': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} ip ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} ip (.*)', r'^{CUSTOM_PATTERN1} status(?:.*)player_ip:([^:\s]+)']},
@@ -139,7 +137,11 @@ item_templates = {
         'lu_names':
             {
                 'type': 'dict',
-                'sqb_lookup@instance': 'PLAYERS#fwd'
+                'sqb_lookup@instance': 'PLAYERS#fwd',
+                'lookup': {
+                    'type': 'list',
+                    'sqb_lookup@instance': 'PLAYERS#list'
+                }
             }
     },
     'playlists': {
@@ -147,12 +149,20 @@ item_templates = {
         'lu_ids':
             {
                 'type': 'dict',
-                'sqb_lookup@instance': 'PLAYLIST_IDS#fwd'
+                'sqb_lookup@instance': 'PLAYLIST_IDS#fwd',
+                'lookup': {
+                    'type': 'list',
+                    'sqb_lookup@instance': 'PLAYLIST_IDS#list'
+                }
             },
         'lu_urls':
             {
                 'type': 'dict',
-                'sqb_lookup@instance': 'PLAYLIST_URLS#fwd'
+                'sqb_lookup@instance': 'PLAYLIST_URLS#fwd',
+                'lookup': {
+                    'type': 'list',
+                    'sqb_lookup@instance': 'PLAYLIST_URLS#list'
+                }
             },
     },
     'rescanprogress': {

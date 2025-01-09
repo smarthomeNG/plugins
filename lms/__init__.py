@@ -44,7 +44,6 @@ else:
 from lib.model.sdp.globals import (CUSTOM_SEP, PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_RECURSIVE, PLUGIN_ATTR_CMD_CLASS, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_CONN_TERMINATOR)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 from lib.model.sdp.command import SDPCommandParseStr
-from lib.item import Items
 
 import urllib.parse
 
@@ -55,7 +54,6 @@ class lms(SmartDevicePlugin):
     PLUGIN_VERSION = '1.6.0'
 
     def _set_device_defaults(self):
-        self.items = Items.get_instance()
         self.custom_commands = 1
         self._token_pattern = '([0-9a-fA-F]{2}[-:]){5}[0-9a-fA-F]{2}'
         # for substitution in reply_pattern
@@ -83,10 +81,6 @@ class lms(SmartDevicePlugin):
     def on_connect(self, by=None):
         self.logger.debug(f"Activating listen mode after connection.")
         self.send_command('server.listenmode', True)
-        if not self.items.match_items('*.database.players'):
-            self.logger.debug(f"Querying players.")
-            self.send_command('player.info.players', None)
-
 
     def _transform_send_data(self, data=None, **kwargs):
         if isinstance(data, dict):
@@ -103,7 +97,7 @@ class lms(SmartDevicePlugin):
         def trigger_read(command):
             self.send_command(command + CUSTOM_SEP + custom)
 
-        if command == f'database.players':
+        if command == f'server.players':
             self.logger.debug(f"Got command players {command} data {data} value {value} by {by}")
             for player in self._custom_values.get(1):
                 if player == '-':
@@ -111,7 +105,6 @@ class lms(SmartDevicePlugin):
                 elif player in value.keys():
                     self._dispatch_callback('player.info.modelname' + CUSTOM_SEP + player, value[player].get('modelname'), by)
                     self._dispatch_callback('player.info.firmware' + CUSTOM_SEP + player, value[player].get('firmware'), by)
-                    self._dispatch_callback('player.info.players' + CUSTOM_SEP + player, value, by)
 
         if command == f'database.playlists':
             self.logger.debug(f"Got command playlists {command} data {data} value {value} by {by}")
@@ -132,9 +125,10 @@ class lms(SmartDevicePlugin):
                     synced = value[idx].split(",")
                     synced.remove(player)
                     self.logger.debug(f"Updating syncstatus of player {player} to {synced}")
-                    self._dispatch_callback('player.control.syncstatus' + CUSTOM_SEP + player, synced, by)
+                    self._dispatch_callback('player.control.sync_status' + CUSTOM_SEP + player, synced, by)
                 else:
-                    self._dispatch_callback('player.control.syncstatus' + CUSTOM_SEP + player, [], by)
+                    self._dispatch_callback('player.control.sync_status' + CUSTOM_SEP + player, [], by)
+                    self._dispatch_callback('player.control.sync' + CUSTOM_SEP + player, '-', by)
 
         if not custom:
             return

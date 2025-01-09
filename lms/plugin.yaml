@@ -349,6 +349,24 @@ item_structs:
                 -   server
                 -   server.syncgroups
 
+        players:
+            type: dict
+            sqb_command@instance: server.players
+            sqb_read@instance: true
+            sqb_write@instance: false
+            sqb_read_group@instance:
+            -   server
+            sqb_read_initial@instance: true
+            on_change: '.lu_names = {key: value["name"] for key, value in sh..self().items()}'
+
+            lu_names:
+                type: dict
+                sqb_lookup@instance: PLAYERS#fwd
+
+                lookup:
+                    type: list
+                    sqb_lookup@instance: PLAYERS#list
+
         playlists:
 
             read:
@@ -361,7 +379,7 @@ item_structs:
                 sqb_command@instance: server.playlists.rename
                 sqb_read@instance: false
                 sqb_write@instance: true
-                remark: needed value:<playlist_id> <newname> with a space inbetween
+                remark: '"needed value:<playlist_id> <newname> with a space inbetween"'
 
             delete:
                 type: str
@@ -512,15 +530,6 @@ item_structs:
             sqb_read_group@instance:
             -   database
 
-        players:
-            type: dict
-            sqb_command@instance: database.players
-            sqb_read@instance: true
-            sqb_write@instance: false
-            sqb_read_group@instance:
-            -   database
-            sqb_read_initial@instance: true
-
         playlists:
             type: dict
             sqb_command@instance: database.playlists
@@ -529,6 +538,25 @@ item_structs:
             sqb_read_group@instance:
             -   database
             sqb_read_initial@instance: true
+            on_change:
+            -   '.lu_ids = {value["id"]: key for key, value in sh..self().items()}'
+            -   '.lu_urls = {value["url"]: key for key, value in sh..self().items()}'
+
+            lu_ids:
+                type: dict
+                sqb_lookup@instance: PLAYLIST_IDS#fwd
+
+                lookup:
+                    type: list
+                    sqb_lookup@instance: PLAYLIST_IDS#list
+
+            lu_urls:
+                type: dict
+                sqb_lookup@instance: PLAYLIST_URLS#fwd
+
+                lookup:
+                    type: list
+                    sqb_lookup@instance: PLAYLIST_URLS#list
 
     player:
 
@@ -679,10 +707,11 @@ item_structs:
                 -   player.control
                 enforce_updates: true
                 sqb_read_initial@instance: true
+                remark: This can be either a name or MAC address of a connected player. Make sure to include the server struct to fill the lookup table correctly.
 
-            syncstatus:
+            sync_status:
                 type: list
-                sqb_command@instance: player.control.syncstatus
+                sqb_command@instance: player.control.sync_status
                 sqb_read@instance: false
                 sqb_write@instance: false
 
@@ -1007,40 +1036,6 @@ item_structs:
                 enforce_updates: true
                 sqb_read_group_trigger@instance: player.info
 
-            players:
-                type: dict
-                sqb_command@instance: player.info.players
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   player
-                -   player.info
-                on_change: '.lu_names = {key: value["name"] for key, value in sh..self().items()}'
-
-                lu_names:
-                    type: dict
-                    sqb_lookup@instance: PLAYERS#fwd
-
-            playlists:
-                type: dict
-                sqb_command@instance: player.info.playlists
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   player
-                -   player.info
-                on_change:
-                -   '.lu_ids = {value["id"]: key for key, value in sh..self().items()}'
-                -   '.lu_urls = {value["url"]: key for key, value in sh..self().items()}'
-
-                lu_ids:
-                    type: dict
-                    sqb_lookup@instance: PLAYLIST_IDS#fwd
-
-                lu_urls:
-                    type: dict
-                    sqb_lookup@instance: PLAYLIST_URLS#fwd
-
             status:
                 type: str
                 sqb_command@instance: player.info.status
@@ -1252,6 +1247,25 @@ item_structs:
                     -   ALL.server
                     -   ALL.server.syncgroups
 
+            players:
+                type: dict
+                sqb_command@instance: server.players
+                sqb_read@instance: true
+                sqb_write@instance: false
+                sqb_read_group@instance:
+                -   ALL
+                -   ALL.server
+                sqb_read_initial@instance: true
+                on_change: '.lu_names = {key: value["name"] for key, value in sh..self().items()}'
+
+                lu_names:
+                    type: dict
+                    sqb_lookup@instance: PLAYERS#fwd
+
+                    lookup:
+                        type: list
+                        sqb_lookup@instance: PLAYERS#list
+
             playlists:
 
                 read:
@@ -1264,7 +1278,7 @@ item_structs:
                     sqb_command@instance: server.playlists.rename
                     sqb_read@instance: false
                     sqb_write@instance: true
-                    remark: needed value:<playlist_id> <newname> with a space inbetween
+                    remark: '"needed value:<playlist_id> <newname> with a space inbetween"'
 
                 delete:
                     type: str
@@ -1423,16 +1437,6 @@ item_structs:
                 -   ALL
                 -   ALL.database
 
-            players:
-                type: dict
-                sqb_command@instance: database.players
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   ALL
-                -   ALL.database
-                sqb_read_initial@instance: true
-
             playlists:
                 type: dict
                 sqb_command@instance: database.playlists
@@ -1442,6 +1446,25 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial@instance: true
+                on_change:
+                -   '.lu_ids = {value["id"]: key for key, value in sh..self().items()}'
+                -   '.lu_urls = {value["url"]: key for key, value in sh..self().items()}'
+
+                lu_ids:
+                    type: dict
+                    sqb_lookup@instance: PLAYLIST_IDS#fwd
+
+                    lookup:
+                        type: list
+                        sqb_lookup@instance: PLAYLIST_IDS#list
+
+                lu_urls:
+                    type: dict
+                    sqb_lookup@instance: PLAYLIST_URLS#fwd
+
+                    lookup:
+                        type: list
+                        sqb_lookup@instance: PLAYLIST_URLS#list
 
         player:
 
@@ -1598,10 +1621,11 @@ item_structs:
                     -   ALL.player.control
                     enforce_updates: true
                     sqb_read_initial@instance: true
+                    remark: This can be either a name or MAC address of a connected player. Make sure to include the server struct to fill the lookup table correctly.
 
-                syncstatus:
+                sync_status:
                     type: list
-                    sqb_command@instance: player.control.syncstatus
+                    sqb_command@instance: player.control.sync_status
                     sqb_read@instance: false
                     sqb_write@instance: false
 
@@ -1936,42 +1960,6 @@ item_structs:
                     type: bool
                     enforce_updates: true
                     sqb_read_group_trigger@instance: ALL.player.info
-
-                players:
-                    type: dict
-                    sqb_command@instance: player.info.players
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
-                    on_change: '.lu_names = {key: value["name"] for key, value in sh..self().items()}'
-
-                    lu_names:
-                        type: dict
-                        sqb_lookup@instance: PLAYERS#fwd
-
-                playlists:
-                    type: dict
-                    sqb_command@instance: player.info.playlists
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
-                    on_change:
-                    -   '.lu_ids = {value["id"]: key for key, value in sh..self().items()}'
-                    -   '.lu_urls = {value["url"]: key for key, value in sh..self().items()}'
-
-                    lu_ids:
-                        type: dict
-                        sqb_lookup@instance: PLAYLIST_IDS#fwd
-
-                    lu_urls:
-                        type: dict
-                        sqb_lookup@instance: PLAYLIST_URLS#fwd
 
                 status:
                     type: str

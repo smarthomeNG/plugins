@@ -132,7 +132,7 @@ class DT_LMSPlaylists(DT.Datatype):
 
 class DT_LMSPlaylistrename(DT.Datatype):
     def get_send_data(self, data, type=None, **kwargs):
-        values = data.split(' ').strip()
+        values = data.split(' ')
         try:
             data = f'playlist_id:{values[0]} newname:{values[1]}'
         except Exception:
