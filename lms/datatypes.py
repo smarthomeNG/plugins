@@ -4,6 +4,8 @@
 import lib.model.sdp.datatypes as DT
 import re
 from urllib.parse import unquote
+from lib.shtime import Shtime
+from datetime import datetime, timezone
 
 
 # handle feedback if rescan is running or not
@@ -89,15 +91,18 @@ class DT_LMSStop(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
         return True if data == "stop" else False
 
+
 class DT_LMSonoff(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
         return True if data == "1" else False if data == "0" else None
+
 
 class DT_LMSConvertSpaces(DT.Datatype):
     def get_send_data(self, data, type=None, **kwargs):
         return data.replace(" ", "%20")
     def get_shng_data(self, data, type=None, **kwargs):
         return data.replace("%20", " ")
+
 
 class DT_LMSPlayers(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
@@ -115,6 +120,7 @@ class DT_LMSPlayers(DT.Datatype):
         players_dict['-'] = {'ip:': None, 'name': 'NONE', 'model': None, 'firmware': None}
         return players_dict
 
+
 class DT_LMSPlaylists(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
         entries = re.findall(r"id:(\d+)\s+playlist:([\_\-.\w%]+) (.*?)(?=id:\d+|$| count:\d+)", data)
@@ -129,6 +135,7 @@ class DT_LMSPlaylists(DT.Datatype):
             playlists_dict[name] = details
 
         return playlists_dict
+
 
 class DT_LMSPlaylistrename(DT.Datatype):
     def get_send_data(self, data, type=None, **kwargs):
@@ -147,3 +154,43 @@ class DT_LMSPlaylistrename(DT.Datatype):
         else:
             result = data
         return result
+
+
+class DT_LMSSubscribe(DT.Datatype):
+    def get_shng_data(self, data, type=None, **kwargs):
+        if data == '-':
+            return False
+        else:
+            return True
+    def get_send_data(self, data, type=None, **kwargs):
+        if data is True:
+            return '0'
+        else:
+            return '-'
+
+
+class DT_LMSClear(DT.Datatype):
+    def get_shng_data(self, data, type=None, **kwargs):
+        return True if data == "clear" else False
+    def get_send_data(self, data, type=None, **kwargs):
+        return "clear" if data is True else "playlistsinfo"
+
+
+class DT_LMSDeletePlaylist(DT.Datatype):
+    def get_shng_data(self, data, type=None, **kwargs):
+        try:
+            int(data)
+            return True
+        except ValueError:
+            return False
+    def get_send_data(self, data, type=None, **kwargs):
+        return True
+
+
+class DT_LMSTime(DT.Datatype):
+    def get_shng_data(self, data, type=None, **kwargs):
+        if not isinstance(data, float):
+            return data
+        epoch_seconds = data / 1000
+        time = datetime.fromtimestamp(epoch_seconds, tz=Shtime.get_instance().tzinfo())
+        return time.strftime('%H:%M:%S')

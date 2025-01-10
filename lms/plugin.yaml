@@ -298,7 +298,7 @@ item_structs:
             sqb_command@instance: server.restart
             sqb_read@instance: false
             sqb_write@instance: true
-            autotimer: 1s = 0
+            enforce_updates: true
 
         listenmode:
             type: bool
@@ -406,7 +406,7 @@ item_structs:
                 sqb_command@instance: database.rescan.start
                 sqb_read@instance: false
                 sqb_write@instance: true
-                remark: playlists|onlinelibrary|external|full|full file://some/path
+                remark: '"playlists|onlinelibrary|external|full|full file://some/path"'
 
             running:
                 type: bool
@@ -425,15 +425,15 @@ item_structs:
                 sqb_read@instance: true
                 sqb_write@instance: false
 
-                start:
-                    type: num
+                starttime:
+                    type: str
                     eval_trigger: '..'
-                    eval: 0 if len(sh...()) == 0 else sh...().split("||")[0]
+                    eval: '- if len(sh...()) == 0 else shtime.datetime_transform(float(sh.squeezebox.rescan.progress().split("||")[0])).strftime("%d.%m.%Y %H:%M:%S")'
 
                 info:
                     type: str
                     eval_trigger: '..'
-                    eval: 0 if len(sh...()) < 3 else sh...().split("||")[2]
+                    eval: '- if len(sh...()) < 3 else sh...().split("||")[2]'
 
                 step:
                     type: num
@@ -465,12 +465,15 @@ item_structs:
                 sqb_command@instance: database.rescan.abortscan
                 sqb_read@instance: true
                 sqb_write@instance: true
+                enforce_updates: true
 
             wipecache:
                 type: bool
                 sqb_command@instance: database.rescan.wipecache
                 sqb_read@instance: true
                 sqb_write@instance: true
+                enforce_updates: true
+                remark: Be aware - this starts a complete library rescan
 
         totalgenres:
             type: num
@@ -720,7 +723,7 @@ item_structs:
                 sqb_command@instance: player.control.unsync
                 sqb_read@instance: false
                 sqb_write@instance: true
-                autotimer: 1s = 0
+                enforce_updates: true
 
             display:
                 type: str
@@ -809,6 +812,7 @@ item_structs:
                 sqb_command@instance: player.playlist.rename_current
                 sqb_read@instance: false
                 sqb_write@instance: true
+                enforce_updates: true
 
             delete_current:
                 type: bool
@@ -816,7 +820,6 @@ item_structs:
                 sqb_read@instance: false
                 sqb_write@instance: true
                 enforce_updates: true
-                autotimer: 1s = 0
                 remark: Be careful, instantly deletes the current playlist!
 
             repeat:
@@ -857,7 +860,6 @@ item_structs:
                 sqb_read_group@instance:
                 -   player
                 -   player.playlist
-                sqb_read_initial@instance: true
 
             name:
                 type: str
@@ -966,7 +968,6 @@ item_structs:
                 sqb_read@instance: true
                 sqb_write@instance: true
                 enforce_updates: true
-                autotimer: 1s = 0
                 remark: Might go berserk, use with care!
 
             deletesong:
@@ -1036,6 +1037,12 @@ item_structs:
                 enforce_updates: true
                 sqb_read_group_trigger@instance: player.info
 
+            status_subscribe:
+                type: bool
+                sqb_command@instance: player.info.status_subscribe
+                sqb_read@instance: true
+                sqb_write@instance: true
+
             status:
                 type: str
                 sqb_command@instance: player.info.status
@@ -1044,7 +1051,6 @@ item_structs:
                 sqb_read_group@instance:
                 -   player
                 -   player.info
-                sqb_read_initial@instance: true
 
             connected:
                 type: bool
@@ -1192,7 +1198,7 @@ item_structs:
                 sqb_command@instance: server.restart
                 sqb_read@instance: false
                 sqb_write@instance: true
-                autotimer: 1s = 0
+                enforce_updates: true
 
             listenmode:
                 type: bool
@@ -1305,7 +1311,7 @@ item_structs:
                     sqb_command@instance: database.rescan.start
                     sqb_read@instance: false
                     sqb_write@instance: true
-                    remark: playlists|onlinelibrary|external|full|full file://some/path
+                    remark: '"playlists|onlinelibrary|external|full|full file://some/path"'
 
                 running:
                     type: bool
@@ -1325,15 +1331,15 @@ item_structs:
                     sqb_read@instance: true
                     sqb_write@instance: false
 
-                    start:
-                        type: num
+                    starttime:
+                        type: str
                         eval_trigger: '..'
-                        eval: 0 if len(sh...()) == 0 else sh...().split("||")[0]
+                        eval: '- if len(sh...()) == 0 else shtime.datetime_transform(float(sh.squeezebox.rescan.progress().split("||")[0])).strftime("%d.%m.%Y %H:%M:%S")'
 
                     info:
                         type: str
                         eval_trigger: '..'
-                        eval: 0 if len(sh...()) < 3 else sh...().split("||")[2]
+                        eval: '- if len(sh...()) < 3 else sh...().split("||")[2]'
 
                     step:
                         type: num
@@ -1366,12 +1372,15 @@ item_structs:
                     sqb_command@instance: database.rescan.abortscan
                     sqb_read@instance: true
                     sqb_write@instance: true
+                    enforce_updates: true
 
                 wipecache:
                     type: bool
                     sqb_command@instance: database.rescan.wipecache
                     sqb_read@instance: true
                     sqb_write@instance: true
+                    enforce_updates: true
+                    remark: Be aware - this starts a complete library rescan
 
             totalgenres:
                 type: num
@@ -1634,7 +1643,7 @@ item_structs:
                     sqb_command@instance: player.control.unsync
                     sqb_read@instance: false
                     sqb_write@instance: true
-                    autotimer: 1s = 0
+                    enforce_updates: true
 
                 display:
                     type: str
@@ -1726,6 +1735,7 @@ item_structs:
                     sqb_command@instance: player.playlist.rename_current
                     sqb_read@instance: false
                     sqb_write@instance: true
+                    enforce_updates: true
 
                 delete_current:
                     type: bool
@@ -1733,7 +1743,6 @@ item_structs:
                     sqb_read@instance: false
                     sqb_write@instance: true
                     enforce_updates: true
-                    autotimer: 1s = 0
                     remark: Be careful, instantly deletes the current playlist!
 
                 repeat:
@@ -1777,7 +1786,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.playlist
-                    sqb_read_initial@instance: true
 
                 name:
                     type: str
@@ -1890,7 +1898,6 @@ item_structs:
                     sqb_read@instance: true
                     sqb_write@instance: true
                     enforce_updates: true
-                    autotimer: 1s = 0
                     remark: Might go berserk, use with care!
 
                 deletesong:
@@ -1961,6 +1968,12 @@ item_structs:
                     enforce_updates: true
                     sqb_read_group_trigger@instance: ALL.player.info
 
+                status_subscribe:
+                    type: bool
+                    sqb_command@instance: player.info.status_subscribe
+                    sqb_read@instance: true
+                    sqb_write@instance: true
+
                 status:
                     type: str
                     sqb_command@instance: player.info.status
@@ -1970,7 +1983,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
-                    sqb_read_initial@instance: true
 
                 connected:
                     type: bool

@@ -81,6 +81,12 @@ class lms(SmartDevicePlugin):
     def on_connect(self, by=None):
         self.logger.debug(f"Activating listen mode after connection.")
         self.send_command('server.listenmode', True)
+        self.logger.debug(f"Subscribing all players to playlist changes.")
+        for player in self._custom_values.get(1):
+            if player == '-':
+                continue
+            else:
+                self.send_command('player.info.status_subscribe' + CUSTOM_SEP + player, True)
 
     def _transform_send_data(self, data=None, **kwargs):
         if isinstance(data, dict):
@@ -90,7 +96,7 @@ class lms(SmartDevicePlugin):
 
     def _transform_received_data(self, data):
         # fix weird representation of MAC address (%3A = :), etc.
-        return urllib.parse.unquote_plus(data)
+        return data.replace("%3A", ":").replace("%2F", "/") # urllib.parse.unquote(data)
 
     def _process_additional_data(self, command, data, value, custom, by):
 
@@ -106,10 +112,9 @@ class lms(SmartDevicePlugin):
                     self._dispatch_callback('player.info.modelname' + CUSTOM_SEP + player, value[player].get('modelname'), by)
                     self._dispatch_callback('player.info.firmware' + CUSTOM_SEP + player, value[player].get('firmware'), by)
 
-        if command == f'database.playlists':
-            self.logger.debug(f"Got command playlists {command} data {data} value {value} by {by}")
-            for player in self._custom_values.get(1):
-                self._dispatch_callback('player.info.playlists' + CUSTOM_SEP + player, value, by)
+        if command == f'database.rescan.running' and value is False:
+            self.logger.debug(f"Got command rescan not running, {command} data {data} value {value} by {by}")
+            self._dispatch_callback('database.rescan.progress', "", by)
 
         if command == f'server.syncgroups.members' and data:
             def find_player_index(target, mac_list):
@@ -133,8 +138,17 @@ class lms(SmartDevicePlugin):
         if not custom:
             return
 
-        if command == f'player.playlist.rename{CUSTOM_SEP}{custom}':
-            trigger_read('player.info.playlists')
+        if command == f'player.playlist.rename_current{CUSTOM_SEP}{custom}':
+            self.logger.debug(f"Got command rename_current {command}, re-reading playlists")
+            self.send_command('database.playlists')
+
+        if command == f'player.playlist.delete_current{CUSTOM_SEP}{custom}':
+            self.logger.debug(f"Got command delete_current {command}, re-reading playlists")
+            self.send_command('database.playlists')
+
+        if command == f'player.playlist.clear{CUSTOM_SEP}{custom}':
+            self.logger.debug(f"Got command playlist clear {command}")
+            trigger_read('player.info.status')
 
         # set alarm
         if command == f'player.control.alarms{CUSTOM_SEP}{custom}':
@@ -175,6 +189,7 @@ class lms(SmartDevicePlugin):
             self.logger.debug(f"Got command id {command} data {data} value {value} custom {custom} by {by}")
             self._parameters['CURRENT_LIST_ID'][custom] = value
             trigger_read('player.playlist.name')
+            trigger_read('player.playlist.url')
 
         if command == f'player.control.sync{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command sync {command} data {data} value {value} custom {custom} by {by}")
