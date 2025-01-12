@@ -428,12 +428,12 @@ item_structs:
                 starttime:
                     type: str
                     eval_trigger: '..'
-                    eval: '- if len(sh...()) == 0 else shtime.datetime_transform(float(sh.squeezebox.rescan.progress().split("||")[0])).strftime("%d.%m.%Y %H:%M:%S")'
+                    eval: '"-" if len(sh...()) == 0 else shtime.datetime_transform(float(sh.squeezebox.rescan.progress().split("||")[0])).strftime("%d.%m.%Y %H:%M:%S")'
 
                 info:
                     type: str
                     eval_trigger: '..'
-                    eval: '- if len(sh...()) < 3 else sh...().split("||")[2]'
+                    eval: '"-" if len(sh...()) < 3 else sh...().split("||")[2]'
 
                 step:
                     type: num
@@ -1334,12 +1334,12 @@ item_structs:
                     starttime:
                         type: str
                         eval_trigger: '..'
-                        eval: '- if len(sh...()) == 0 else shtime.datetime_transform(float(sh.squeezebox.rescan.progress().split("||")[0])).strftime("%d.%m.%Y %H:%M:%S")'
+                        eval: '"-" if len(sh...()) == 0 else shtime.datetime_transform(float(sh.squeezebox.rescan.progress().split("||")[0])).strftime("%d.%m.%Y %H:%M:%S")'
 
                     info:
                         type: str
                         eval_trigger: '..'
-                        eval: '- if len(sh...()) < 3 else sh...().split("||")[2]'
+                        eval: '"-" if len(sh...()) < 3 else sh...().split("||")[2]'
 
                     step:
                         type: num

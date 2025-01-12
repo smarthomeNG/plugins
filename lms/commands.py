@@ -26,7 +26,7 @@ commands = {
             'start': {'read': False, 'write': True, 'write_cmd': 'rescan {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'cmd_settings': {'valid_list_re': ['playlists', 'onlinelibrary', 'external', 'full', r'full file://.*']}, 'custom_disabled': True, 'item_attrs': {'attributes': {'remark': '"playlists|onlinelibrary|external|full|full file://some/path"'}}},
             'running': {'read': True, 'write': False, 'read_cmd': 'rescan ?', 'item_type': 'bool', 'dev_datatype': 'LMSRescan', 'reply_pattern': [r'^rescanprogress rescan:(.*)', r'^rescan (.*)', r'^scanner notify progress:(.*)'], 'custom_disabled': True, 'item_attrs': {'cycle': '120', 'initial': True}},
             'progress': {'read': True, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^scanner notify progress:(.*)', 'custom_disabled': True, 'item_attrs': {'item_template': 'rescanprogress'}},
-            'runningtime': {'read': True, 'read_cmd': 'rescanprogress totaltime', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^(?:rescanprogress totaltime.*)?rescan:(0|[0-9]{2}:[0-9]{2}:[0-9]{2})', 'custom_disabled': True},
+            'runningtime': {'read': True, 'read_cmd': 'rescanprogress totaltime', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^rescanprogress totaltime rescan:(0)$', r'^rescanprogress totaltime rescan.*?totaltime:([0-9]{2}:[0-9]{2}:[0-9]{2})'], 'custom_disabled': True},
             'fail': {'read': True, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^rescanprogress totaltime rescan:0 lastscanfailed:(.*)', 'custom_disabled': True},
             'abortscan': {'read': True, 'write': True, 'write_cmd': 'abortscan', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': r'^abortscan$', 'custom_disabled': True, 'item_attrs': {'enforce': True}},
             'wipecache': {'read': True, 'write': True, 'write_cmd': 'wipecache', 'item_type': 'bool', 'dev_datatype': 'LMSWipecache', 'reply_pattern': r'^wipecache$', 'custom_disabled': True, 'item_attrs': {'enforce': True, 'attributes': {'remark': 'Be aware - this starts a complete library rescan'}}}
@@ -48,11 +48,11 @@ commands = {
             'mute': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} mixer muting ?', 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} mixer muting {RAW_VALUE:01}', 'dev_datatype': 'LMSonoff', 'reply_pattern': [r'^{CUSTOM_PATTERN1} mixer muting$', r'^{CUSTOM_PATTERN1} (?:mixer muting|prefset server mute) (\d)'], 'item_attrs': {'initial': True, 'enforce': True}},
             'volume': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} mixer volume ?', 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} (?:mixer volume |prefset server volume )(\-?\d{1,3})', r'^{CUSTOM_PATTERN1} status(?:.*)mixer volume:([^\s]+)']},
             'volume_fading': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume {VALUE}', 'dev_datatype': 'str', 'item_attrs': {'item_template': 'volume_fading'}},
-            'volume_low': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume {VALUE}', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'cache': True, 'enforce_updates': True, 'initial_value': 60}}},
-            'volume_high': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume {VALUE}', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'cache': True, 'enforce_updates': True, 'initial_value': 80}}},
-            'volumeup': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume +{VALUE}', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'cache': True, 'enforce_updates': True, 'initial_value': 1}}},
-            'volumedown': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume -{VALUE}', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'cache': True, 'enforce_updates': True, 'initial_value': 1}}},
-            'set_alarm': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} alarm {VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} alarm (.*)', 'item_attrs': {'attributes': {'on_change': '..alarms.query = True'}}},
+            'volume_low': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume {VALUE}', 'dev_datatype': 'str', 'send_retries': 0, 'item_attrs': {'attributes': {'cache': True, 'enforce_updates': True, 'initial_value': 60}}},
+            'volume_high': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume {VALUE}', 'dev_datatype': 'str', 'send_retries': 0, 'item_attrs': {'attributes': {'cache': True, 'enforce_updates': True, 'initial_value': 80}}},
+            'volumeup': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume +{VALUE}', 'dev_datatype': 'str', 'send_retries': 0, 'item_attrs': {'attributes': {'cache': True, 'enforce_updates': True, 'initial_value': 1}}},
+            'volumedown': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume -{VALUE}', 'dev_datatype': 'str', 'send_retries': 0, 'item_attrs': {'attributes': {'cache': True, 'enforce_updates': True, 'initial_value': 1}}},
+            'set_alarm': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} alarm {VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} alarm (.*)', 'send_retries': 0, 'item_attrs': {'attributes': {'on_change': '..alarms.query = True'}}},
             'alarms': {'read': True, 'write': False, 'item_type': 'dict', 'read_cmd': '{CUSTOM_ATTR1} alarms 0 100 all', 'dev_datatype': 'LMSAlarms', 'reply_pattern': r'^{CUSTOM_PATTERN1} alarms 0 100 all fade:\d+ count:\d+\s?(.*)?', 'item_attrs': {'initial': True, 'read_groups': [{'name': 'player.control.alarms', 'trigger': 'query'}]}},
             'sync': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} sync ?', 'write_cmd': '{CUSTOM_ATTR1} sync {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} sync (?:.*,)?{LOOKUP}(?:,.*)?', r'^{CUSTOM_PATTERN1} sync (\-)'], 'lookup': 'PLAYERS', 'item_attrs': {'initial': True, 'enforce': True, 'attributes': {'remark':'This can be either a name or MAC address of a connected player. Make sure to include the server struct to fill the lookup table correctly.'}}},
             'sync_status': {'read': False, 'write': False, 'item_type': 'list', 'dev_datatype': 'raw'},
@@ -129,6 +129,12 @@ lookups = {
     },
     'PLAYERS': {
         '-': 'NONE'
+    },
+    'PLAYLIST_IDS': {
+        '-': 'NONE'
+    },
+    'PLAYLIST_URLS': {
+        '-': 'NONE'
     }
 }
 
@@ -171,13 +177,13 @@ item_templates = {
             {
                 'type': 'str',
                 'eval_trigger': '..',
-                'eval': '- if len(sh...()) == 0 else shtime.datetime_transform(float(sh.squeezebox.rescan.progress().split("||")[0])).strftime("%d.%m.%Y %H:%M:%S")'
+                'eval': '"-" if len(sh...()) == 0 else shtime.datetime_transform(float(sh.squeezebox.rescan.progress().split("||")[0])).strftime("%d.%m.%Y %H:%M:%S")'
             },
         'info':
             {
                 'type': 'str',
                 'eval_trigger': '..',
-                'eval': '- if len(sh...()) < 3 else sh...().split("||")[2]'
+                'eval': '"-" if len(sh...()) < 3 else sh...().split("||")[2]'
             },
         'step':
             {
