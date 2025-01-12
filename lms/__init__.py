@@ -96,7 +96,10 @@ class lms(SmartDevicePlugin):
 
     def _transform_received_data(self, data):
         # fix weird representation of MAC address (%3A = :), etc.
-        return data.replace("%3A", ":").replace("%2F", "/") # urllib.parse.unquote(data)
+        data_temp = data.replace("%20", "PPLACEHOLDERR")
+        data = urllib.parse.unquote(data_temp)
+        data = data.replace("PPLACEHOLDERR", "%20")
+        return urllib.parse.unquote(data)
 
     def _process_additional_data(self, command, data, value, custom, by):
 
@@ -115,6 +118,10 @@ class lms(SmartDevicePlugin):
         if command == f'database.rescan.running' and value is False:
             self.logger.debug(f"Got command rescan not running, {command} data {data} value {value} by {by}")
             self._dispatch_callback('database.rescan.progress', "", by)
+
+        if command == f'database.rescan.progress':
+            self.logger.debug(f"Got command rescan progress, check runningtime, {command} data {data} value {value} by {by}")
+            self.send_command('database.rescan.runningtime')
 
         if command == f'server.syncgroups.members' and data:
             def find_player_index(target, mac_list):

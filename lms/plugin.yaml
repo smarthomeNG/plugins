@@ -561,6 +561,62 @@ item_structs:
                     type: list
                     sqb_lookup@instance: PLAYLIST_URLS#list
 
+    player_plugins:
+
+        read:
+            type: bool
+            enforce_updates: true
+            sqb_read_group_trigger@instance: player_plugins
+
+        customskip:
+
+            read:
+                type: bool
+                enforce_updates: true
+                sqb_read_group_trigger@instance: player_plugins.customskip
+
+            active:
+                type: str
+                sqb_command@instance: player_plugins.customskip.active
+                sqb_read@instance: true
+                sqb_write@instance: true
+                sqb_read_group@instance:
+                -   player_plugins
+                -   player_plugins.customskip
+                sqb_read_initial@instance: true
+
+            remove:
+                type: bool
+                sqb_command@instance: player_plugins.customskip.remove
+                sqb_read@instance: false
+                sqb_write@instance: true
+
+    server_plugins:
+
+        read:
+            type: bool
+            enforce_updates: true
+            sqb_read_group_trigger@instance: server_plugins
+
+        trackstat:
+
+            read:
+                type: bool
+                enforce_updates: true
+                sqb_read_group_trigger@instance: server_plugins.trackstat
+
+            get_rating:
+                type: str
+                sqb_command@instance: server_plugins.trackstat.get_rating
+                sqb_read@instance: true
+                sqb_write@instance: true
+
+            set_rating:
+                type: str
+                sqb_command@instance: server_plugins.trackstat.set_rating
+                sqb_read@instance: false
+                sqb_write@instance: true
+
     player:
 
         read:
@@ -1023,13 +1079,6 @@ item_structs:
                 -   player
                 -   player.playlist
 
-            customskip:
-                type: str
-                sqb_command@instance: player.playlist.customskip
-                sqb_read@instance: false
-                sqb_write@instance: true
-                cache: true
-
         info:
 
             read:
@@ -1155,12 +1204,6 @@ item_structs:
                 sqb_read_group@instance:
                 -   player
                 -   player.info
-
-            trackstat:
-                type: str
-                sqb_command@instance: player.info.trackstat
-                sqb_read@instance: true
-                sqb_write@instance: false
 
             albumarturl:
                 type: str
@@ -1474,6 +1517,63 @@ item_structs:
                     lookup:
                         type: list
                         sqb_lookup@instance: PLAYLIST_URLS#list
+
+        player_plugins:
+
+            read:
+                type: bool
+                enforce_updates: true
+                sqb_read_group_trigger@instance: ALL.player_plugins
+
+            customskip:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    sqb_read_group_trigger@instance: ALL.player_plugins.customskip
+
+                active:
+                    type: str
+                    sqb_command@instance: player_plugins.customskip.active
+                    sqb_read@instance: true
+                    sqb_write@instance: true
+                    sqb_read_group@instance:
+                    -   ALL
+                    -   ALL.player_plugins
+                    -   ALL.player_plugins.customskip
+                    sqb_read_initial@instance: true
+
+                remove:
+                    type: bool
+                    sqb_command@instance: player_plugins.customskip.remove
+                    sqb_read@instance: false
+                    sqb_write@instance: true
+
+        server_plugins:
+
+            read:
+                type: bool
+                enforce_updates: true
+                sqb_read_group_trigger@instance: ALL.server_plugins
+
+            trackstat:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    sqb_read_group_trigger@instance: ALL.server_plugins.trackstat
+
+                get_rating:
+                    type: str
+                    sqb_command@instance: server_plugins.trackstat.get_rating
+                    sqb_read@instance: true
+                    sqb_write@instance: true
+
+                set_rating:
+                    type: str
+                    sqb_command@instance: server_plugins.trackstat.set_rating
+                    sqb_read@instance: false
+                    sqb_write@instance: true
 
         player:
 
@@ -1954,13 +2054,6 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.playlist
 
-                customskip:
-                    type: str
-                    sqb_command@instance: player.playlist.customskip
-                    sqb_read@instance: false
-                    sqb_write@instance: true
-                    cache: true
-
             info:
 
                 read:
@@ -2097,12 +2190,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
-
-                trackstat:
-                    type: str
-                    sqb_command@instance: player.info.trackstat
-                    sqb_read@instance: true
-                    sqb_write@instance: false
 
                 albumarturl:
                     type: str

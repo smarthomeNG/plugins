@@ -39,6 +39,18 @@ commands = {
         'totalplaylists': {'read': True, 'write': False, 'read_cmd': 'playlists 0 1000 tags:u', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^playlists 0 1000(?: tags:[u,s])?(?:.*)count:(\d+)', 'custom_disabled': True},
         'playlists': {'read': True, 'write': False, 'read_cmd': 'playlists 0 1000 tags:u', 'item_type': 'dict', 'dev_datatype': 'LMSPlaylists', 'reply_pattern': r'^playlists 0 1000(?: tags:[u,s])? (.*)', 'item_attrs': {'initial': True, 'item_template': 'playlists'}},
     },
+    'server_plugins': {
+        'trackstat': {
+            'get_rating': {'read': True, 'write': True, 'write_cmd': 'trackstat getrating {VALUE}', 'item_type': 'str', 'dev_datatype': 'LMSConvertSpaces', 'reply_pattern': r'^trackstat getrating (.*)', 'send_retries': 0, 'custom_disabled': True},
+            'set_rating': {'read': False, 'write': True, 'write_cmd': 'trackstat setrating {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^trackstat setrating (.*)', 'send_retries': 0, 'custom_disabled': True},
+       },
+    },
+     'player_plugins': {
+        'customskip': {
+            'active': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} customskip setfilter {VALUE}.cs.xml', 'read_cmd': '{CUSTOM_ATTR1} playerpref plugin.customskip3:filter ?', 'reply_pattern': [r'^{CUSTOM_PATTERN1} prefset plugin.customskip3 filter (.*).cs.xml$', r'^{CUSTOM_PATTERN1} prefset plugin.customskip3 filter (0)$', r'{CUSTOM_PATTERN1} playerpref plugin.customskip3:filter (.*).cs.xml'], 'dev_datatype': 'str', 'item_attrs': {'initial': True}},
+            'remove': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} customskip clearfilter', 'dev_datatype': 'str'},
+        },
+    },
     'player': {
         'control': {
             'power': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} power ?', 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} power {RAW_VALUE:01}', 'dev_datatype': 'LMSonoff', 'reply_pattern': [r'^{CUSTOM_PATTERN1} (?:prefset server\s)?power (\d)$', r'^{CUSTOM_PATTERN1} status(?:.*)power:([^\s]+)(?:.*)?$'], 'item_attrs': {'initial': True, 'enforce': True}},
@@ -93,7 +105,6 @@ commands = {
             'next': {'read': False, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist index +{VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'item_attrs': {'enforce': True, 'attributes': {'initial_value': 1}}},
             'previous': {'read': False, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist index -{VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'item_attrs': {'enforce': True, 'attributes': {'initial_value': 1}}},
             'modified': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} playlist modified ?', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlist modified (0|1)', r'^{CUSTOM_PATTERN1} playlist playlistsinfo id:(?:\d+) name:(?:.*) modified:(0|1)']},
-            'customskip': {'read': False, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} customskip setfilter filter{VALUE}.cs.xml', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'cache': True}}}
         },
         'info': {
             'status_subscribe': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} status 0 1 tags:g subscribe:{VALUE}', 'item_type': 'bool', 'dev_datatype': 'LMSSubscribe', 'reply_pattern': r'^{CUSTOM_PATTERN1} status 0 1 tags:g subscribe:([\-\d+])\s'},
@@ -110,7 +121,6 @@ commands = {
             'title': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} current_title ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} (?:current_title|playlist newsong) (.*?)(?:\s\d+)?$', 'item_attrs': {'initial': True}},
             'path': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} path ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} path (.*)', r'^{CUSTOM_PATTERN1} playlist open (.*)', r'^{CUSTOM_PATTERN1} playlist play (.*)']},
             'duration': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} duration ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} duration (\d+)'},
-            'trackstat': {'read': True, 'write': False, 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'^{CUSTOM_PATTERN1} trackstat changedstatistic (.*)'},
             'albumarturl': {'read': True, 'write': False, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '^(https?://.*)', 'item_attrs': {'attributes': {'remark': 'This item gets automatically defined and overwritten based on (web_)host and web_port'}}}
         }
     }
