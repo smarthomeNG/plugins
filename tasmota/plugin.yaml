@@ -12,8 +12,8 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/tasmota/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1520293-support-thread-für-das-tasmota-plugin
 
-    version: 1.5.2                 # Plugin version
-    sh_minversion: '1.9.3'           # minimum shNG version to use this plugin
+    version: 1.6.0                 # Plugin version
+    sh_minversion: 1.10.0.3        # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion:                # minimum Python version to use for this plugin
     multi_instance: True           # plugin supports multi instance
@@ -37,7 +37,6 @@ parameters:
         description:
             de: 'Zeitabstand in Sekunden in dem die Tasmota Devices Telemetrie Daten senden sollen'
             en: 'Timeperiod in seconds in which Tasmota devices shall send telemetry data'
-
 
 item_attributes:
     tasmota_topic:
@@ -128,5 +127,3 @@ item_structs: NONE
 plugin_functions: NONE
 
 logic_parameters: NONE
-
-

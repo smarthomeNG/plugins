@@ -66,23 +66,19 @@ class WebInterface(SmartPluginWebIf):
         """
         self.plugin.get_broker_info()
 
-        pagelength = self.plugin.get_parameter_value('webif_pagelength')
         tmpl = self.tplenv.get_template('index.html')
 
-        items = self.plugin.get_item_list()
-
         return tmpl.render(p=self.plugin,
-                           webif_pagelength=pagelength,
-                           items=items,
-                           item_count=len(items),
-                           plugin_shortname=self.plugin.get_shortname(),
-                           plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(),
+                           webif_pagelength=self.plugin.get_parameter_value('webif_pagelength'),
+                           item_count=len(self.plugin.get_item_list()),
+                           zigbee = True if self.plugin.tasmota_zigbee_devices else False,
+                           broker_config = self.plugin.broker_config,
+                           full_topic = self.plugin.full_topic,
                            maintenance=True if self.plugin.log_level == 10 else False,
                            )
 
     @cherrypy.expose
-    def get_data_html(self, dataSet=None):
+    def get_data_html(self, dataSet=None, params=None):
         """
         Return data to update the webpage
 
@@ -91,37 +87,94 @@ class WebInterface(SmartPluginWebIf):
         :param dataSet: Dataset for which the data should be returned (standard: None)
         :return: dict with the data needed to update the web page.
         """
-        if dataSet is None:
-            # get the new data
-            self.plugin.get_broker_info()
-            data = dict()
-            data['broker_info'] = self.plugin._broker
-            data['broker_uptime'] = self.plugin.broker_uptime()
-
-            data['item_values'] = {}
+        
+        self.logger.debug(f"get_data_html: {dataSet=}, {params=}")
+        
+        data = dict()
+        
+        if dataSet == "items_info":
+            data[dataSet] = {}
             for item in self.plugin.get_item_list():
-                data['item_values'][item.property.path] = {}
-                data['item_values'][item.property.path]['value'] = item.property.value
-                data['item_values'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                data['item_values'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                item_data = {
+                    'value': item.property.value,
+                    'type': item.property.type,
+                    'topic': self.plugin.get_iattr_value(item.conf, 'tasmota_topic'),
+                    'relais': self._get_relay_value(item),
+                    'last_update': item.property.last_update.strftime('%d.%m.%Y %H:%M:%S'),
+                    'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S'),
+                }
+                data['items_info'][item.property.path] = item_data
+         
+        elif dataSet == "devices_info":
+            data[dataSet] = {}
+            for device_name, device_data in self.plugin.tasmota_devices.items():
+                device_data = device_data.copy()
+                device_data.pop('discovery_config', None)
+                data[dataSet][device_name] = device_data
+                
+        elif dataSet == "zigbee_info":
+            data[dataSet] = self.plugin.tasmota_zigbee_devices.copy()
 
-            data['device_values'] = {}
-            for device in self.plugin.tasmota_devices:
-                data['device_values'][device] = {}
-                data['device_values'][device]['online'] = self.plugin.tasmota_devices[device].get('online', '-')
-                data['device_values'][device]['uptime'] = self.plugin.tasmota_devices[device].get('uptime', '-')
-                data['device_values'][device]['fw_ver'] = self.plugin.tasmota_devices[device].get('fw_ver', '-')
-                data['device_values'][device]['wifi_signal'] = self.plugin.tasmota_devices[device].get('wifi_signal', '-')
-                data['device_values'][device]['sensors'] = self.plugin.tasmota_devices[device].get('sensors', '-')
-                data['device_values'][device]['lights'] = self.plugin.tasmota_devices[device].get('lights', '-')
-                data['device_values'][device]['rf'] = self.plugin.tasmota_devices[device].get('rf', '-')
+        elif dataSet == "broker_info":
+            self.plugin.get_broker_info()
+            data[dataSet] = self.plugin._broker.copy()
+            data[dataSet]['broker_uptime'] = self.plugin.broker_uptime()
+            
+        elif dataSet == "details_info":
+            data['devices_info'] = {}
+            for device_name, device_data in self.plugin.tasmota_devices.items():
+                device_data = device_data.copy()
+                device_data.pop('discovery_config', None)
+                data['devices_info'][device_name] = device_data
+            data['zigbee_info'] = self.plugin.tasmota_zigbee_devices.copy()
 
-            data['tasmota_zigbee_devices'] = self.plugin.tasmota_zigbee_devices
+         # return it as json the web page
+        try:
+            return json.dumps(data, default=str)
+        except Exception as e:
+            self.logger.error("get_data_html exception: {}".format(e))
+            return {}
 
-            # return it as json the web page
-            try:
-                return json.dumps(data, default=str)
-            except Exception as e:
-                self.logger.error("get_data_html exception: {}".format(e))
-                return {}
-        return
+
+    @cherrypy.expose
+    def submit(self, cmd=None, params=None):
+
+        self.logger.debug(f"submit:  {cmd=}, {params=}")
+        result = None
+
+        if cmd == "zbstatus":
+            result = self.plugin._poll_zigbee_devices()
+            
+        elif cmd == "tasmota_status":
+            result = self.plugin._interview_device(params)
+            
+        elif cmd == "zb_ping":
+            result = self.plugin._poll_zigbee_device(params)
+ 
+        self.logger.debug(f"submit:  {cmd=}, {params=} --> {result=}")
+
+        if result is not None:
+            # JSON zurücksenden
+            cherrypy.response.headers['Content-Type'] = 'application/json'
+            self.logger.debug(f"Result for web interface: {result}")
+            return json.dumps(result).encode('utf-8')
+        
+    def _get_relay_value(self, item):
+        """
+        Determines the relay value based on item configuration.
+
+        Args:
+            item: The item object containing configuration data.
+        Returns:
+            The relay value as a string.
+        """
+
+        relay = self.plugin.get_iattr_value(item.conf, 'tasmota_relay') 
+        if relay in ['1', '2', '3', '4', '5', '6', '7', '8']:
+            return relay
+
+        if self.plugin.get_iattr_value(item.conf, 'tasmota_attr') == 'relay':
+            return "1"
+
+        return "-"
+        
