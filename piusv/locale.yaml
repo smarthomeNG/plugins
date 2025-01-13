@@ -1,0 +1,17 @@
+# translations for the web interface
+plugin_translations:
+    'Value':
+        de: 'Wert'
+        en: 'Value'
+    'Attribute':
+        de: 'Attribut'
+        en: 'Attribute'
+    'Last Change':
+        de: 'Letzte Änderung'
+        en: 'Last Change'
+    'Last Update':
+        de: 'Letztes Update'
+        en: 'Last Update'
+    'Type':
+        de: 'Typ'
+        en: 'Type'
