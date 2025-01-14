@@ -102,7 +102,7 @@ class lms(SmartDevicePlugin):
         data_temp = data.replace("%20", "PPLACEHOLDERR")
         data = urllib.parse.unquote(data_temp)
         data = data.replace("PPLACEHOLDERR", "%20")
-        return urllib.parse.unquote(data)
+        return data
 
     def _process_additional_data(self, command: str, data: Any, value: Any, custom: int, by: str | None = None):
 
