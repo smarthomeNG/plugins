@@ -17,16 +17,17 @@ commands = {
         },
         'players': {'read': True, 'write': False, 'read_cmd': 'players 0 100', 'item_type': 'dict', 'dev_datatype': 'LMSPlayers', 'reply_pattern': r'^players 0 100 (.*)', 'custom_disabled': True, 'item_attrs': {'initial': True, 'item_template': 'players'}},
         'playlists': {
+            'available': {'read': True, 'write': False, 'read_cmd': 'playlists 0 1000 tags:u', 'item_type': 'dict', 'dev_datatype': 'LMSPlaylists', 'reply_pattern': r'^playlists 0 1000(?: tags:[u,s])? (.*)', 'item_attrs': {'initial': True, 'item_template': 'playlists'}},
             'rename': {'read': False, 'write': True, 'write_cmd': 'playlists rename {VALUE}', 'item_type': 'str', 'dev_datatype': 'LMSPlaylistrename', 'reply_pattern': r'^playlists rename\s+(.*?)(?:\s+overwritten_playlist_id:.*)?$', 'custom_disabled': True, 'item_attrs': {'attributes': {'remark': '"needed value:<playlist_id> <newname> with a space inbetween"'}}},
-            'delete': {'read': False, 'write': True, 'write_cmd': 'playlists delete playlist_id:{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^playlists delete playlist_id:(\d+)', 'custom_disabled': True},
+            'delete': {'read': True, 'write': True, 'write_cmd': 'playlists delete playlist_id:{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^playlists delete playlist_id:{LOOKUP}', 'custom_disabled': True, 'lookup': 'PLAYLIST_IDS', 'item_attrs': {'enforce': True, 'item_template': 'playlist_delete'}},
         },
     },
     'database': {
         'rescan': {
-            'start': {'read': False, 'write': True, 'write_cmd': 'rescan {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'cmd_settings': {'valid_list_re': ['playlists', 'onlinelibrary', 'external', 'full', r'full file://.*']}, 'custom_disabled': True, 'item_attrs': {'attributes': {'remark': '"playlists|onlinelibrary|external|full|full file://some/path"'}}},
-            'running': {'read': True, 'write': False, 'read_cmd': 'rescan ?', 'item_type': 'bool', 'dev_datatype': 'LMSRescan', 'reply_pattern': [r'^rescanprogress rescan:(.*)', r'^rescan (.*)', r'^scanner notify progress:(.*)'], 'custom_disabled': True, 'item_attrs': {'cycle': '120', 'initial': True}},
-            'progress': {'read': True, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^scanner notify progress:(.*)', 'custom_disabled': True, 'item_attrs': {'item_template': 'rescanprogress'}},
-            'runningtime': {'read': True, 'read_cmd': 'rescanprogress totaltime', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^rescanprogress totaltime rescan:(0)$', r'^rescanprogress totaltime rescan.*?totaltime:([0-9]{2}:[0-9]{2}:[0-9]{2})'], 'custom_disabled': True},
+            'start': {'read': False, 'write': True, 'write_cmd': 'rescan {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'cmd_settings': {'valid_list_re': ['playlists', 'onlinelibrary', 'external', 'full', r'full file://.*']}, 'custom_disabled': True, 'item_attrs': {'enforce': True, 'attributes': {'remark': '"playlists|onlinelibrary|external|full|full file://some/path"'}}},
+            'running': {'read': True, 'write': False, 'read_cmd': 'rescan ?', 'item_type': 'bool', 'dev_datatype': 'LMSRescan', 'reply_pattern': [r'^rescanprogress rescan:(.*)', r'^rescan (.*)', r'^scanner notify progress:(.*)', r'^scanner notify (exit)'], 'custom_disabled': True, 'item_attrs': {'cycle': '120', 'initial': True}},
+            'progress': {'read': True, 'write': False, 'read_cmd': 'rescanprogress', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^scanner notify progress:(.*)', 'custom_disabled': True, 'item_attrs': {'item_template': 'rescanprogress'}},
+            'runningtime': {'read': True, 'read_cmd': 'rescanprogress totaltime', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^rescanprogress(?: totaltime)? rescan:(0)$', r'^rescanprogress(?: totaltime)? rescan.*?totaltime:([0-9]{2}:[0-9]{2}:[0-9]{2})'], 'custom_disabled': True},
             'fail': {'read': True, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^rescanprogress totaltime rescan:0 lastscanfailed:(.*)', 'custom_disabled': True},
             'abortscan': {'read': True, 'write': True, 'write_cmd': 'abortscan', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': r'^abortscan$', 'custom_disabled': True, 'item_attrs': {'enforce': True}},
             'wipecache': {'read': True, 'write': True, 'write_cmd': 'wipecache', 'item_type': 'bool', 'dev_datatype': 'LMSWipecache', 'reply_pattern': r'^wipecache$', 'custom_disabled': True, 'item_attrs': {'enforce': True, 'attributes': {'remark': 'Be aware - this starts a complete library rescan'}}}
@@ -37,7 +38,6 @@ commands = {
         'totalalbums': {'read': True, 'write': False, 'read_cmd': 'info total albums ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^info total albums (\d+)', 'custom_disabled': True, 'item_attrs': {'initial': True}},
         'totalsongs': {'read': True, 'write': False, 'read_cmd': 'info total songs ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^info total songs (\d+)', 'custom_disabled': True, 'item_attrs': {'initial': True}},
         'totalplaylists': {'read': True, 'write': False, 'read_cmd': 'playlists 0 1000 tags:u', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^playlists 0 1000(?: tags:[u,s])?(?:.*)count:(\d+)', 'custom_disabled': True},
-        'playlists': {'read': True, 'write': False, 'read_cmd': 'playlists 0 1000 tags:u', 'item_type': 'dict', 'dev_datatype': 'LMSPlaylists', 'reply_pattern': r'^playlists 0 1000(?: tags:[u,s])? (.*)', 'item_attrs': {'initial': True, 'item_template': 'playlists'}},
     },
     'server_plugins': {
         'trackstat': {
@@ -79,7 +79,7 @@ commands = {
             'sleep': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} sleep ?', 'write_cmd': '{CUSTOM_ATTR1} sleep {VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} sleep (.*[^?])', 'item_attrs': {'initial': True}}
         },
         'playlist': {
-            'rename_current': {'read': False, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlists rename playlist_id:{CUSTOM_PARAM1:CURRENT_LIST_IDa} newname:{VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlists rename playlist_id:\d+\s+newname:([^\s]+)(?:\s+overwritten_playlist_id:\d+)?$', 'item_attrs': {'enforce': True}},
+            'rename_current': {'read': False, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlists rename playlist_id:{CUSTOM_PARAM1:CURRENT_LIST_ID} newname:{VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlists rename playlist_id:\d+\s+newname:([^\s]+)(?:\s+overwritten_playlist_id:\d+)?$', 'item_attrs': {'enforce': True}},
             'delete_current': {'read': False, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlists delete playlist_id:{CUSTOM_PARAM1:CURRENT_LIST_ID}', 'item_type': 'bool', 'dev_datatype': 'LMSDeletePlaylist', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlists delete playlist_id:(\d+)', 'send_retries': 0, 'item_attrs': {'enforce': True, 'attributes': {'remark': 'Be careful, instantly deletes the current playlist!'}}},
             'repeat': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist repeat ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist repeat {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} prefset server repeat {LOOKUP}$', r'^{CUSTOM_PATTERN1} playlist repeat {LOOKUP}$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist repeat:{LOOKUP}$'], 'lookup': 'REPEAT', 'item_attrs': {'initial': True, 'attributes': {'remark': '0 = Off, 1 = Song, 2 = Playlist'}, 'lookup_item': True}},
             'shuffle': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist shuffle ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist shuffle {VALUE}', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} prefset server shuffle {LOOKUP}$', r'^{CUSTOM_PATTERN1} playlist shuffle {LOOKUP}$', r'^{CUSTOM_PATTERN1} status(?:.*)playlist shuffle:{LOOKUP}$'], 'lookup': 'SHUFFLE', 'item_attrs': {'initial': True, 'attributes': {'remark': '0 = Off, 1 = Song, 2 = Album'}, 'lookup_item': True}},
@@ -90,17 +90,17 @@ commands = {
             'save': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist save {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist save (.*)', 'item_attrs': {'enforce': True}},
             'load': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlistcontrol cmd:load playlist_name:{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlistcontrol cmd:load playlist_name:(.*) count:(?:\d+)', r'^{CUSTOM_PATTERN1} playlist resume (.*)', r'^{CUSTOM_PATTERN1} playlist loadtracks playlist.name:(.*)\s'], 'item_attrs': {'enforce': True}},
             'loadalbum': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist loadalbum {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist loadalbum (.*)', 'item_attrs': {'enforce': True, 'attributes': {'remark': '<Genre> <Artist> <Album>. You can use * for any of the entries. Spaces need to be replaced by %20'}}},
-            'loadtracks': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist loadtracks {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist loadtracks\s+(.*=[^\s]+)', 'item_attrs': {'enforce': True}},
-            'add': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist add {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist add (.*)', 'item_attrs': {'enforce': True}},
-            'addalbum': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist addalbum {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist addalbum (.*)', 'item_attrs': {'enforce': True}},
-            'addtracks': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist addtracks {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist addtracks\s+(.*=[^\s]+)', 'item_attrs': {'enforce': True}},
-            'insertalbum': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist insertalbum {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist insertalbum (.*)', 'item_attrs': {'enforce': True}},
-            'inserttracks': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist insert {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist insert (.*)', 'item_attrs': {'enforce': True}},
+            'loadtracks': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist loadtracks {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist loadtracks\s+(.*=[^\s]+)', 'item_attrs': {'enforce': True, 'attributes': {'remark': 'loads and plays all songs matching the specified searchparam criteria directly'}}},
+            'additem': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist add {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist add (.*)', 'item_attrs': {'enforce': True, 'attributes': {'remark': 'provide specified song URL, playlist or directory'}}},
+            'addalbum': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist addalbum {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist addalbum (.*)', 'item_attrs': {'enforce': True, 'attributes': {'remark': '<Genre> <Artist> <Album>. You can use * for any of the entries. Spaces need to be replaced by %20'}}},
+            'addtracks': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist addtracks {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist addtracks\s+(.*=[^\s]+)', 'item_attrs': {'enforce': True, 'attributes': {'remark': 'appends all songs matching the specified searchparam criteria onto the end of the playlist'}}},
+            'insertalbum': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist insertalbum {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist insertalbum (.*)', 'item_attrs': {'enforce': True, 'attributes': {'remark': '<Genre> <Artist> <Album>. You can use * for any of the entries. Spaces need to be replaced by %20'}}},
+            'insertitem': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist insert {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist insert (.*)', 'item_attrs': {'enforce': True, 'attributes': {'remark': 'provide specified song URL, playlist or directory'}}},
+            'deletesong': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist delete {VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist delete (.*)', 'item_attrs': {'enforce': True, 'attributes': {'remark': 'provide songindex that should be deleted'}}},
+            'deletealbum': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist deletealbum {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist deletealbum (.*)', 'item_attrs': {'enforce': True, 'attributes': {'remark': '<Genre> <Artist> <Album>. You can use * for any of the entries. Spaces need to be replaced by %20'}}},
+            'deleteitem': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist deleteitem {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist deleteitem (.*)', 'item_attrs': {'enforce': True, 'attributes': {'remark': 'provide specified song URL, playlist or directory'}}},
             'tracks': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} playlist tracks ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': [r'^{CUSTOM_PATTERN1} playlistcontrol cmd:load .* count:(\d+)', r'^{CUSTOM_PATTERN1} playlist_tracks (\d+[^?])', r'^{CUSTOM_PATTERN1} status(?:.*)playlist_tracks:(\d*[^\s]+)']},
             'clear': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist {VALUE}', 'item_type': 'bool', 'dev_datatype': 'LMSClear', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist (clear)$', 'send_retries': 0, 'item_attrs': {'enforce': True, 'attributes': {'remark': 'Might go berserk, use with care!'}}},
-            'deletesong': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist delete {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist delete (.*)', 'item_attrs': {'enforce': True, 'attributes': {'remark': 'provide songindex that should be deleted'}}},
-            'deleteitem': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist deleteitem {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist deleteitem (.*)', 'item_attrs': {'enforce': True}},
-            'deletealbum': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist deletealbum {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist deletealbum (.*)', 'item_attrs': {'enforce': True}},
             'preview': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist preview {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^{CUSTOM_PATTERN1} playlist preview (.*)'},
             'next': {'read': False, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist index +{VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'item_attrs': {'enforce': True, 'attributes': {'initial_value': 1}}},
             'previous': {'read': False, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist index -{VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'item_attrs': {'enforce': True, 'attributes': {'initial_value': 1}}},
@@ -182,7 +182,22 @@ item_templates = {
                 }
             },
     },
+    'playlist_delete': {
+        'lookup': {
+            'type': 'list',
+            'eval': 'sh....available.lu_ids.lookup.property.value',
+            'eval_trigger': '...available.lu_ids.lookup'
+        }
+    },
     'rescanprogress': {
+        'poll':
+            {
+                'type': 'bool',
+                'eval': 'True if sh....running() == True else None',
+                'enforce_updates': True,
+                'cycle': '20',
+                'sqb_read_group_trigger': 'database.rescan'
+            },
         'starttime':
             {
                 'type': 'str',

@@ -122,9 +122,9 @@ class lms(SmartDevicePlugin):
             self.logger.debug(f"Got command rescan not running, {command} data {data} value {value} by {by}")
             self._dispatch_callback('database.rescan.progress', "", by)
 
-        if command == f'database.rescan.progress':
-            self.logger.debug(f"Got command rescan progress, check runningtime, {command} data {data} value {value} by {by}")
-            self.send_command('database.rescan.runningtime')
+        if command == f'server.playlists.delete':
+            self.logger.debug(f"Got command delete playlist {command}, re-reading playlists")
+            self.send_command('server.playlists.available')
 
         if command == f'server.syncgroups.members' and data:
             def find_player_index(target, mac_list):
@@ -150,15 +150,23 @@ class lms(SmartDevicePlugin):
 
         if command == f'player.playlist.rename_current{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command rename_current {command}, re-reading playlists")
-            self.send_command('database.playlists')
+            self.send_command('server.playlists.available')
 
         if command == f'player.playlist.delete_current{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command delete_current {command}, re-reading playlists")
-            self.send_command('database.playlists')
+            self.send_command('server.playlists.available')
+
+        if command == f'player.playlist.save{CUSTOM_SEP}{custom}':
+            self.logger.debug(f"Got command save playlist {command}, re-reading playlists")
+            self.send_command('server.playlists.available')
 
         if command == f'player.playlist.clear{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command playlist clear {command}")
             trigger_read('player.info.status')
+
+        if command == f'player.playlist.tracks{CUSTOM_SEP}{custom}':
+            self.logger.debug(f"Got command playlist tracks, most likely because playlist was changed. Check modified {command}")
+            trigger_read('player.playlist.modified')
 
         # set alarm
         if command == f'player.control.alarms{CUSTOM_SEP}{custom}':

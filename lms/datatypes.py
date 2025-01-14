@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 # handle feedback if rescan is running or not
 class DT_LMSRescan(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
-        return False if data in ["0", "done"] else True
+        return False if data in ["0", "done", "exit"] else True
 
 
 class DT_LMSWipecache(DT.Datatype):
@@ -123,7 +123,7 @@ class DT_LMSPlayers(DT.Datatype):
 
 class DT_LMSPlaylists(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
-        entries = re.findall(r"id:(\d+)\s+playlist:([\_\-.\w%]+) (.*?)(?=id:\d+|$| count:\d+)", data)
+        entries = re.findall(r"id:(\d+)\s+playlist:([\_\-.\w% ]+)\s(.*?)(?=id:\d+|$| count:\d+)", data)
 
         playlists_dict = {}
         for playlist_id, name, extra in entries:
