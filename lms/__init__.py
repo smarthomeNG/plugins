@@ -20,6 +20,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SmartHomeNG  If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
+from __future__ import annotations
+from typing import Any, Tuple
 
 import builtins
 import os
@@ -41,7 +43,8 @@ if __name__ == '__main__':
 else:
     builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import (CUSTOM_SEP, PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_RECURSIVE, PLUGIN_ATTR_CMD_CLASS, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_CONN_TERMINATOR)
+from lib.model.sdp.globals import (CUSTOM_SEP, PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_RECURSIVE, PLUGIN_ATTR_CMD_CLASS,
+                                   PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_CONN_TERMINATOR)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 from lib.model.sdp.command import SDPCommandParseStr
 
@@ -101,7 +104,7 @@ class lms(SmartDevicePlugin):
         data = data.replace("PPLACEHOLDERR", "%20")
         return urllib.parse.unquote(data)
 
-    def _process_additional_data(self, command, data, value, custom, by):
+    def _process_additional_data(self, command: str, data: Any, value: Any, custom: int, by: str | None = None):
 
         def trigger_read(command):
             self.send_command(command + CUSTOM_SEP + custom)
