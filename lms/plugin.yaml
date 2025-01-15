@@ -864,12 +864,12 @@ item_structs:
                 enforce_updates: true
                 initial_value: 10
 
-            playsong:
+            playitem:
                 type: str
-                sqb_command@instance: player.control.playsong
+                sqb_command@instance: player.control.playitem
                 sqb_read@instance: false
                 sqb_write@instance: true
-                remark: song URL, playlist or directory
+                remark: provide specified song URL, playlist or directory. Gets player right away.
 
             sleep:
                 type: num
@@ -1886,12 +1886,12 @@ item_structs:
                     enforce_updates: true
                     initial_value: 10
 
-                playsong:
+                playitem:
                     type: str
-                    sqb_command@instance: player.control.playsong
+                    sqb_command@instance: player.control.playitem
                     sqb_read@instance: false
                     sqb_write@instance: true
-                    remark: song URL, playlist or directory
+                    remark: provide specified song URL, playlist or directory. Gets player right away.
 
                 sleep:
                     type: num
