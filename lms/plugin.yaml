@@ -9,7 +9,7 @@ plugin:
     tester: Morg
     state: develop
     keywords: iot device logitechmediaserver lms sdp av
-    version: '1.6.0'
+    version: '2.0.0'
     sh_minversion: '1.9.5'
     py_minversion: '3.7'
     sdp_minversion: '1.0.4'
@@ -243,7 +243,7 @@ item_attributes:
         type: str
 
         description:
-            de: Command, der ein valid_list(_re/_ci) definiert hat. Der Inhalt dieses Items ersetzt die Liste des entsprechenden Befehls.
+            de: Kommando, das eine valid_list(_re/_ci) definiert hat. Der Inhalt dieses Items ersetzt die Liste des entsprechenden Befehls.
             en: Command that has a valid_list(_re/_ci) parameter defined. The content of this item replaces the list of the respective command.
 
     sqb_lookup:
@@ -1003,7 +1003,7 @@ item_structs:
             additem:
                 type: str
                 sqb_command@instance: player.playlist.additem
-                sqb_read@instance: true
+                sqb_read@instance: false
                 sqb_write@instance: true
                 enforce_updates: true
                 remark: provide specified song URL, playlist or directory
@@ -1011,7 +1011,7 @@ item_structs:
             addalbum:
                 type: str
                 sqb_command@instance: player.playlist.addalbum
-                sqb_read@instance: true
+                sqb_read@instance: false
                 sqb_write@instance: true
                 enforce_updates: true
                 remark: <Genre> <Artist> <Album>. You can use * for any of the entries. Spaces need to be replaced by %20
@@ -1019,7 +1019,7 @@ item_structs:
             addtracks:
                 type: str
                 sqb_command@instance: player.playlist.addtracks
-                sqb_read@instance: true
+                sqb_read@instance: false
                 sqb_write@instance: true
                 enforce_updates: true
                 remark: appends all songs matching the specified searchparam criteria onto the end of the playlist
@@ -1027,7 +1027,7 @@ item_structs:
             insertalbum:
                 type: str
                 sqb_command@instance: player.playlist.insertalbum
-                sqb_read@instance: true
+                sqb_read@instance: false
                 sqb_write@instance: true
                 enforce_updates: true
                 remark: <Genre> <Artist> <Album>. You can use * for any of the entries. Spaces need to be replaced by %20
@@ -1035,7 +1035,7 @@ item_structs:
             insertitem:
                 type: str
                 sqb_command@instance: player.playlist.insertitem
-                sqb_read@instance: true
+                sqb_read@instance: false
                 sqb_write@instance: true
                 enforce_updates: true
                 remark: provide specified song URL, playlist or directory
@@ -1043,7 +1043,7 @@ item_structs:
             deletesong:
                 type: num
                 sqb_command@instance: player.playlist.deletesong
-                sqb_read@instance: true
+                sqb_read@instance: false
                 sqb_write@instance: true
                 enforce_updates: true
                 remark: provide songindex that should be deleted
@@ -1051,7 +1051,7 @@ item_structs:
             deletealbum:
                 type: str
                 sqb_command@instance: player.playlist.deletealbum
-                sqb_read@instance: true
+                sqb_read@instance: false
                 sqb_write@instance: true
                 enforce_updates: true
                 remark: <Genre> <Artist> <Album>. You can use * for any of the entries. Spaces need to be replaced by %20
@@ -1059,7 +1059,7 @@ item_structs:
             deleteitem:
                 type: str
                 sqb_command@instance: player.playlist.deleteitem
-                sqb_read@instance: true
+                sqb_read@instance: false
                 sqb_write@instance: true
                 enforce_updates: true
                 remark: provide specified song URL, playlist or directory
@@ -1119,131 +1119,160 @@ item_structs:
                 enforce_updates: true
                 sqb_read_group_trigger@instance: player.info
 
-            status_subscribe:
-                type: bool
-                sqb_command@instance: player.info.status_subscribe
-                sqb_read@instance: true
-                sqb_write@instance: true
+            player:
 
-            status:
-                type: str
-                sqb_command@instance: player.info.status
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   player
-                -   player.info
+                read:
+                    type: bool
+                    enforce_updates: true
+                    sqb_read_group_trigger@instance: player.info.player
 
-            connected:
-                type: bool
-                sqb_command@instance: player.info.connected
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   player
-                -   player.info
+                status_subscribe:
+                    type: bool
+                    sqb_command@instance: player.info.player.status_subscribe
+                    sqb_read@instance: true
+                    sqb_write@instance: true
 
-            ip:
-                type: str
-                sqb_command@instance: player.info.ip
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   player
-                -   player.info
+                status:
+                    type: str
+                    sqb_command@instance: player.info.player.status
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    sqb_read_group@instance:
+                    -   player
+                    -   player.info
+                    -   player.info.player
 
-            modelname:
-                type: str
-                sqb_command@instance: player.info.modelname
-                sqb_read@instance: false
-                sqb_write@instance: false
+                connected:
+                    type: bool
+                    sqb_command@instance: player.info.player.connected
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    sqb_read_group@instance:
+                    -   player
+                    -   player.info
+                    -   player.info.player
 
-            firmware:
-                type: str
-                sqb_command@instance: player.info.firmware
-                sqb_read@instance: false
-                sqb_write@instance: false
+                ip:
+                    type: str
+                    sqb_command@instance: player.info.player.ip
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    sqb_read_group@instance:
+                    -   player
+                    -   player.info
+                    -   player.info.player
 
-            name:
-                type: str
-                sqb_command@instance: player.info.name
-                sqb_read@instance: true
-                sqb_write@instance: true
-                sqb_read_group@instance:
-                -   player
-                -   player.info
+                modelname:
+                    type: str
+                    sqb_command@instance: player.info.player.modelname
+                    sqb_read@instance: false
+                    sqb_write@instance: false
 
-            signalstrength:
-                type: num
-                sqb_command@instance: player.info.signalstrength
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   player
-                -   player.info
+                firmware:
+                    type: str
+                    sqb_command@instance: player.info.player.firmware
+                    sqb_read@instance: false
+                    sqb_write@instance: false
 
-            genre:
-                type: str
-                sqb_command@instance: player.info.genre
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   player
-                -   player.info
+                name:
+                    type: str
+                    sqb_command@instance: player.info.player.name
+                    sqb_read@instance: true
+                    sqb_write@instance: true
+                    sqb_read_group@instance:
+                    -   player
+                    -   player.info
+                    -   player.info.player
 
-            artist:
-                type: str
-                sqb_command@instance: player.info.artist
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   player
-                -   player.info
+                signalstrength:
+                    type: num
+                    sqb_command@instance: player.info.player.signalstrength
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    sqb_read_group@instance:
+                    -   player
+                    -   player.info
+                    -   player.info.player
 
-            album:
-                type: str
-                sqb_command@instance: player.info.album
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   player
-                -   player.info
-                sqb_read_initial@instance: true
+                albumarturl:
+                    type: str
+                    sqb_command@instance: player.info.player.albumarturl
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    remark: This item gets automatically defined and overwritten based on (web_)host and web_port
 
-            title:
-                type: str
-                sqb_command@instance: player.info.title
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   player
-                -   player.info
-                sqb_read_initial@instance: true
+            currentsong:
 
-            path:
-                type: str
-                sqb_command@instance: player.info.path
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   player
-                -   player.info
+                read:
+                    type: bool
+                    enforce_updates: true
+                    sqb_read_group_trigger@instance: player.info.currentsong
 
-            duration:
-                type: num
-                sqb_command@instance: player.info.duration
-                sqb_read@instance: true
-                sqb_write@instance: false
-                sqb_read_group@instance:
-                -   player
-                -   player.info
+                genre:
+                    type: str
+                    sqb_command@instance: player.info.currentsong.genre
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    sqb_read_group@instance:
+                    -   player
+                    -   player.info
+                    -   player.info.currentsong
 
-            albumarturl:
-                type: str
-                sqb_command@instance: player.info.albumarturl
-                sqb_read@instance: true
-                sqb_write@instance: false
-                remark: This item gets automatically defined and overwritten based on (web_)host and web_port
+                artist:
+                    type: str
+                    sqb_command@instance: player.info.currentsong.artist
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    sqb_read_group@instance:
+                    -   player
+                    -   player.info
+                    -   player.info.currentsong
+
+                album:
+                    type: str
+                    sqb_command@instance: player.info.currentsong.album
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    sqb_read_group@instance:
+                    -   player
+                    -   player.info
+                    -   player.info.currentsong
+
+                title:
+                    type: str
+                    sqb_command@instance: player.info.currentsong.title
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    sqb_read_group@instance:
+                    -   player
+                    -   player.info
+                    -   player.info.currentsong
+                    sqb_read_initial@instance: true
+
+                path:
+                    type: str
+                    sqb_command@instance: player.info.currentsong.path
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    sqb_read_group@instance:
+                    -   player
+                    -   player.info
+                    -   player.info.currentsong
+
+                duration:
+                    type: num
+                    sqb_command@instance: player.info.currentsong.duration
+                    sqb_read@instance: true
+                    sqb_write@instance: false
+                    sqb_read_group@instance:
+                    -   player
+                    -   player.info
+                    -   player.info.currentsong
+
+                    duration_format:
+                        type: str
+                        eval: "'{}d {}h {}i {}s'.format(int(sh...()//86400), int((sh...()%86400)//3600), int((sh...()%3600)//60), round((sh...()%3600)%60))"
+                        eval_trigger: '..'
 
     ALL:
 
@@ -2003,7 +2032,7 @@ item_structs:
                 additem:
                     type: str
                     sqb_command@instance: player.playlist.additem
-                    sqb_read@instance: true
+                    sqb_read@instance: false
                     sqb_write@instance: true
                     enforce_updates: true
                     remark: provide specified song URL, playlist or directory
@@ -2011,7 +2040,7 @@ item_structs:
                 addalbum:
                     type: str
                     sqb_command@instance: player.playlist.addalbum
-                    sqb_read@instance: true
+                    sqb_read@instance: false
                     sqb_write@instance: true
                     enforce_updates: true
                     remark: <Genre> <Artist> <Album>. You can use * for any of the entries. Spaces need to be replaced by %20
@@ -2019,7 +2048,7 @@ item_structs:
                 addtracks:
                     type: str
                     sqb_command@instance: player.playlist.addtracks
-                    sqb_read@instance: true
+                    sqb_read@instance: false
                     sqb_write@instance: true
                     enforce_updates: true
                     remark: appends all songs matching the specified searchparam criteria onto the end of the playlist
@@ -2027,7 +2056,7 @@ item_structs:
                 insertalbum:
                     type: str
                     sqb_command@instance: player.playlist.insertalbum
-                    sqb_read@instance: true
+                    sqb_read@instance: false
                     sqb_write@instance: true
                     enforce_updates: true
                     remark: <Genre> <Artist> <Album>. You can use * for any of the entries. Spaces need to be replaced by %20
@@ -2035,7 +2064,7 @@ item_structs:
                 insertitem:
                     type: str
                     sqb_command@instance: player.playlist.insertitem
-                    sqb_read@instance: true
+                    sqb_read@instance: false
                     sqb_write@instance: true
                     enforce_updates: true
                     remark: provide specified song URL, playlist or directory
@@ -2043,7 +2072,7 @@ item_structs:
                 deletesong:
                     type: num
                     sqb_command@instance: player.playlist.deletesong
-                    sqb_read@instance: true
+                    sqb_read@instance: false
                     sqb_write@instance: true
                     enforce_updates: true
                     remark: provide songindex that should be deleted
@@ -2051,7 +2080,7 @@ item_structs:
                 deletealbum:
                     type: str
                     sqb_command@instance: player.playlist.deletealbum
-                    sqb_read@instance: true
+                    sqb_read@instance: false
                     sqb_write@instance: true
                     enforce_updates: true
                     remark: <Genre> <Artist> <Album>. You can use * for any of the entries. Spaces need to be replaced by %20
@@ -2059,7 +2088,7 @@ item_structs:
                 deleteitem:
                     type: str
                     sqb_command@instance: player.playlist.deleteitem
-                    sqb_read@instance: true
+                    sqb_read@instance: false
                     sqb_write@instance: true
                     enforce_updates: true
                     remark: provide specified song URL, playlist or directory
@@ -2121,141 +2150,170 @@ item_structs:
                     enforce_updates: true
                     sqb_read_group_trigger@instance: ALL.player.info
 
-                status_subscribe:
-                    type: bool
-                    sqb_command@instance: player.info.status_subscribe
-                    sqb_read@instance: true
-                    sqb_write@instance: true
+                player:
 
-                status:
-                    type: str
-                    sqb_command@instance: player.info.status
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        sqb_read_group_trigger@instance: ALL.player.info.player
 
-                connected:
-                    type: bool
-                    sqb_command@instance: player.info.connected
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
+                    status_subscribe:
+                        type: bool
+                        sqb_command@instance: player.info.player.status_subscribe
+                        sqb_read@instance: true
+                        sqb_write@instance: true
 
-                ip:
-                    type: str
-                    sqb_command@instance: player.info.ip
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
+                    status:
+                        type: str
+                        sqb_command@instance: player.info.player.status
+                        sqb_read@instance: true
+                        sqb_write@instance: false
+                        sqb_read_group@instance:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.info
+                        -   ALL.player.info.player
 
-                modelname:
-                    type: str
-                    sqb_command@instance: player.info.modelname
-                    sqb_read@instance: false
-                    sqb_write@instance: false
+                    connected:
+                        type: bool
+                        sqb_command@instance: player.info.player.connected
+                        sqb_read@instance: true
+                        sqb_write@instance: false
+                        sqb_read_group@instance:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.info
+                        -   ALL.player.info.player
 
-                firmware:
-                    type: str
-                    sqb_command@instance: player.info.firmware
-                    sqb_read@instance: false
-                    sqb_write@instance: false
+                    ip:
+                        type: str
+                        sqb_command@instance: player.info.player.ip
+                        sqb_read@instance: true
+                        sqb_write@instance: false
+                        sqb_read_group@instance:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.info
+                        -   ALL.player.info.player
 
-                name:
-                    type: str
-                    sqb_command@instance: player.info.name
-                    sqb_read@instance: true
-                    sqb_write@instance: true
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
+                    modelname:
+                        type: str
+                        sqb_command@instance: player.info.player.modelname
+                        sqb_read@instance: false
+                        sqb_write@instance: false
 
-                signalstrength:
-                    type: num
-                    sqb_command@instance: player.info.signalstrength
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
+                    firmware:
+                        type: str
+                        sqb_command@instance: player.info.player.firmware
+                        sqb_read@instance: false
+                        sqb_write@instance: false
 
-                genre:
-                    type: str
-                    sqb_command@instance: player.info.genre
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
+                    name:
+                        type: str
+                        sqb_command@instance: player.info.player.name
+                        sqb_read@instance: true
+                        sqb_write@instance: true
+                        sqb_read_group@instance:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.info
+                        -   ALL.player.info.player
 
-                artist:
-                    type: str
-                    sqb_command@instance: player.info.artist
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
+                    signalstrength:
+                        type: num
+                        sqb_command@instance: player.info.player.signalstrength
+                        sqb_read@instance: true
+                        sqb_write@instance: false
+                        sqb_read_group@instance:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.info
+                        -   ALL.player.info.player
 
-                album:
-                    type: str
-                    sqb_command@instance: player.info.album
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
-                    sqb_read_initial@instance: true
+                    albumarturl:
+                        type: str
+                        sqb_command@instance: player.info.player.albumarturl
+                        sqb_read@instance: true
+                        sqb_write@instance: false
+                        remark: This item gets automatically defined and overwritten based on (web_)host and web_port
 
-                title:
-                    type: str
-                    sqb_command@instance: player.info.title
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
-                    sqb_read_initial@instance: true
+                currentsong:
 
-                path:
-                    type: str
-                    sqb_command@instance: player.info.path
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        sqb_read_group_trigger@instance: ALL.player.info.currentsong
 
-                duration:
-                    type: num
-                    sqb_command@instance: player.info.duration
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    sqb_read_group@instance:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.info
+                    genre:
+                        type: str
+                        sqb_command@instance: player.info.currentsong.genre
+                        sqb_read@instance: true
+                        sqb_write@instance: false
+                        sqb_read_group@instance:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.info
+                        -   ALL.player.info.currentsong
 
-                albumarturl:
-                    type: str
-                    sqb_command@instance: player.info.albumarturl
-                    sqb_read@instance: true
-                    sqb_write@instance: false
-                    remark: This item gets automatically defined and overwritten based on (web_)host and web_port
+                    artist:
+                        type: str
+                        sqb_command@instance: player.info.currentsong.artist
+                        sqb_read@instance: true
+                        sqb_write@instance: false
+                        sqb_read_group@instance:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.info
+                        -   ALL.player.info.currentsong
+
+                    album:
+                        type: str
+                        sqb_command@instance: player.info.currentsong.album
+                        sqb_read@instance: true
+                        sqb_write@instance: false
+                        sqb_read_group@instance:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.info
+                        -   ALL.player.info.currentsong
+
+                    title:
+                        type: str
+                        sqb_command@instance: player.info.currentsong.title
+                        sqb_read@instance: true
+                        sqb_write@instance: false
+                        sqb_read_group@instance:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.info
+                        -   ALL.player.info.currentsong
+                        sqb_read_initial@instance: true
+
+                    path:
+                        type: str
+                        sqb_command@instance: player.info.currentsong.path
+                        sqb_read@instance: true
+                        sqb_write@instance: false
+                        sqb_read_group@instance:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.info
+                        -   ALL.player.info.currentsong
+
+                    duration:
+                        type: num
+                        sqb_command@instance: player.info.currentsong.duration
+                        sqb_read@instance: true
+                        sqb_write@instance: false
+                        sqb_read_group@instance:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.info
+                        -   ALL.player.info.currentsong
+
+                        duration_format:
+                            type: str
+                            eval: "'{}d {}h {}i {}s'.format(int(sh...()//86400), int((sh...()%86400)//3600), int((sh...()%3600)//60), round((sh...()%3600)%60))"
+                            eval_trigger: '..'
 plugin_functions: NONE
 logic_parameters: NONE

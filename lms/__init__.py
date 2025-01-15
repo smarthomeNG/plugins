@@ -54,7 +54,7 @@ import urllib.parse
 class lms(SmartDevicePlugin):
     """ Device class for Logitech Mediaserver/Squeezebox function. """
 
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '2.0.0'
 
     def _set_device_defaults(self):
         self.custom_commands = 1
@@ -89,7 +89,7 @@ class lms(SmartDevicePlugin):
             if player == '-':
                 continue
             else:
-                self.send_command('player.info.status_subscribe' + CUSTOM_SEP + player, True)
+                self.send_command('player.info.player.status_subscribe' + CUSTOM_SEP + player, True)
 
     def _transform_send_data(self, data=None, **kwargs):
         if isinstance(data, dict):
@@ -115,8 +115,8 @@ class lms(SmartDevicePlugin):
                 if player == '-':
                     continue
                 elif player in value.keys():
-                    self._dispatch_callback('player.info.modelname' + CUSTOM_SEP + player, value[player].get('modelname'), by)
-                    self._dispatch_callback('player.info.firmware' + CUSTOM_SEP + player, value[player].get('firmware'), by)
+                    self._dispatch_callback('player.info.player.modelname' + CUSTOM_SEP + player, value[player].get('modelname'), by)
+                    self._dispatch_callback('player.info.player.firmware' + CUSTOM_SEP + player, value[player].get('firmware'), by)
 
         if command == f'database.rescan.running' and value is False:
             self.logger.debug(f"Got command rescan not running, {command} data {data} value {value} by {by}")
@@ -162,7 +162,7 @@ class lms(SmartDevicePlugin):
 
         if command == f'player.playlist.clear{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command playlist clear {command}")
-            trigger_read('player.info.status')
+            trigger_read('player.info.player.status')
 
         if command == f'player.playlist.tracks{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command playlist tracks, most likely because playlist was changed. Check modified {command}")
@@ -186,7 +186,7 @@ class lms(SmartDevicePlugin):
                 self.logger.error(f"Error setting alarm: {e}")
 
         # set album art URL
-        if command == f'player.info.album{CUSTOM_SEP}{custom}':
+        if command == f'player.info.currentsong.album{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command album {command} data {data} value {value} custom {custom} by {by}")
             host = self._parameters['web_host']
             port = self._parameters['web_port']
@@ -195,7 +195,7 @@ class lms(SmartDevicePlugin):
             else:
                 url = f'{host}:{port}/music/current/cover.jpg?player={custom}'
             self.logger.debug(f"Setting albumarturl to {url}")
-            self._dispatch_callback('player.info.albumarturl' + CUSTOM_SEP + custom, url, by)
+            self._dispatch_callback('player.info.player.albumarturl' + CUSTOM_SEP + custom, url, by)
 
         # set playlist ID
         if command == f'player.playlist.load{CUSTOM_SEP}{custom}':
@@ -214,7 +214,7 @@ class lms(SmartDevicePlugin):
             self.send_command('server.syncgroups.members')
 
         # update on new song
-        if command == f'player.info.title{CUSTOM_SEP}{custom}':
+        if command == f'player.info.currentsong.title{CUSTOM_SEP}{custom}':
             # trigger_read('player.control.playmode')
             # trigger_read('player.playlist.index')
             trigger_read('player.info.duration')
@@ -226,22 +226,13 @@ class lms(SmartDevicePlugin):
         # update on new song
         if command == f'player.control.playpause{CUSTOM_SEP}{custom}' and value:
             trigger_read('player.control.playmode')
-            trigger_read('player.info.duration')
-            trigger_read('player.info.album')
-            trigger_read('player.info.artist')
-            trigger_read('player.info.genre')
-            trigger_read('player.info.path')
+            self.read_all_commands('player.info.currentsong' + CUSTOM_SEP + custom)
 
         # update on new song
         if command == f'player.playlist.index{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command index {command} data {data} value {value} custom {custom} by {by}")
             trigger_read('player.control.playmode')
-            trigger_read('player.info.duration')
-            trigger_read('player.info.album')
-            trigger_read('player.info.artist')
-            trigger_read('player.info.genre')
-            trigger_read('player.info.path')
-            trigger_read('player.info.title')
+            self.read_all_commands('player.info.currentsong' + CUSTOM_SEP + custom)
 
         # update current time info
         if command in [f'player.control.forward{CUSTOM_SEP}{custom}', f'player.control.rewind{CUSTOM_SEP}{custom}']:
