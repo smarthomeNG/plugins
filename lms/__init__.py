@@ -217,11 +217,11 @@ class lms(SmartDevicePlugin):
         if command == f'player.info.currentsong.title{CUSTOM_SEP}{custom}':
             # trigger_read('player.control.playmode')
             # trigger_read('player.playlist.index')
-            trigger_read('player.info.duration')
-            trigger_read('player.info.album')
-            trigger_read('player.info.artist')
-            trigger_read('player.info.genre')
-            trigger_read('player.info.path')
+            trigger_read('player.info.currentsong.duration')
+            trigger_read('player.info.currentsong.album')
+            trigger_read('player.info.currentsong.artist')
+            trigger_read('player.info.currentsong.genre')
+            trigger_read('player.info.currentsong.path')
 
         # update on new song
         if command == f'player.control.playpause{CUSTOM_SEP}{custom}' and value:
