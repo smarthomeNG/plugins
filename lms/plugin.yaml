@@ -356,6 +356,12 @@ item_structs:
                 -   server
                 -   server.syncgroups
 
+        newclient:
+            type: str
+            sqb_command@instance: server.newclient
+            sqb_read@instance: true
+            sqb_write@instance: false
+
         players:
             type: dict
             sqb_command@instance: server.players
@@ -1357,6 +1363,12 @@ item_structs:
                     -   ALL
                     -   ALL.server
                     -   ALL.server.syncgroups
+
+            newclient:
+                type: str
+                sqb_command@instance: server.newclient
+                sqb_read@instance: true
+                sqb_write@instance: false
 
             players:
                 type: dict
