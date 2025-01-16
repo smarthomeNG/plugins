@@ -18,7 +18,7 @@ commands = {
         'newclient': {'read': True, 'write': False, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^({CUSTOM_PATTERN1}) client new$', 'custom_disabled': True},
         'players': {'read': True, 'write': False, 'read_cmd': 'players 0 100', 'item_type': 'dict', 'dev_datatype': 'LMSPlayers', 'reply_pattern': r'^players 0 100 (.*)', 'custom_disabled': True, 'item_attrs': {'initial': True, 'item_template': 'players'}},
         'playlists': {
-            'available': {'read': True, 'write': False, 'read_cmd': 'playlists 0 1000 tags:u', 'item_type': 'dict', 'dev_datatype': 'LMSPlaylists', 'reply_pattern': r'^playlists 0 1000(?: tags:[u,s])? (.*)', 'item_attrs': {'initial': True, 'item_template': 'playlists'}},
+            'available': {'read': True, 'write': False, 'read_cmd': 'playlists 0 1000 tags:u', 'item_type': 'dict', 'dev_datatype': 'LMSPlaylists', 'reply_pattern': r'^playlists 0 1000(?: tags:[u,s])? (.*)', 'custom_disabled': True, 'item_attrs': {'initial': True, 'item_template': 'playlists'}},
             'rename': {'read': False, 'write': True, 'write_cmd': 'playlists rename {VALUE}', 'item_type': 'str', 'dev_datatype': 'LMSPlaylistrename', 'reply_pattern': r'^playlists rename\s+(.*?)(?:\s+overwritten_playlist_id:.*)?$', 'custom_disabled': True, 'item_attrs': {'attributes': {'remark': '"needed value:<playlist_id> <newname> with a space inbetween"'}}},
             'delete': {'read': True, 'write': True, 'write_cmd': 'playlists delete playlist_id:{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^playlists delete playlist_id:{LOOKUP}', 'custom_disabled': True, 'lookup': 'PLAYLIST_IDS', 'item_attrs': {'enforce': True, 'item_template': 'playlist_delete'}},
         },
