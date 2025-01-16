@@ -15,6 +15,7 @@ commands = {
             'members': {'read': True, 'write': False, 'read_cmd': 'syncgroups ?', 'item_type': 'list', 'dev_datatype': 'LMSSyncmembers', 'reply_pattern': r'^syncgroups\s?(.*)?$', 'custom_disabled': True, 'item_attrs': {'initial': True}},
             'names': {'read': True, 'write': False, 'read_cmd': 'syncgroups ?', 'item_type': 'list', 'dev_datatype': 'LMSSyncnames', 'reply_pattern': r'^syncgroups\s?(.*)?$', 'custom_disabled': True, 'item_attrs': {'initial': False}},
         },
+        'newclient': {'read': True, 'write': False, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^({CUSTOM_PATTERN1}) client new$', 'custom_disabled': True},
         'players': {'read': True, 'write': False, 'read_cmd': 'players 0 100', 'item_type': 'dict', 'dev_datatype': 'LMSPlayers', 'reply_pattern': r'^players 0 100 (.*)', 'custom_disabled': True, 'item_attrs': {'initial': True, 'item_template': 'players'}},
         'playlists': {
             'available': {'read': True, 'write': False, 'read_cmd': 'playlists 0 1000 tags:u', 'item_type': 'dict', 'dev_datatype': 'LMSPlaylists', 'reply_pattern': r'^playlists 0 1000(?: tags:[u,s])? (.*)', 'item_attrs': {'initial': True, 'item_template': 'playlists'}},

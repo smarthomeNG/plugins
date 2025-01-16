@@ -109,6 +109,10 @@ class lms(SmartDevicePlugin):
         def trigger_read(command):
             self.send_command(command + CUSTOM_SEP + custom)
 
+        if command == f'server.newclient':
+            self.logger.debug(f"Got new client connection {command}, re-reading players")
+            self.send_command('server.players')
+
         if command == f'server.players':
             self.logger.debug(f"Got command players {command} data {data} value {value} by {by}")
             for player in self._custom_values.get(1):
