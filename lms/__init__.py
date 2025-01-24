@@ -99,9 +99,9 @@ class lms(SmartDevicePlugin):
 
     def _transform_received_data(self, data):
         # fix weird representation of MAC address (%3A = :), etc.
-        data_temp = data.replace("%20", "PPLACEHOLDERR")
+        data_temp = data.replace("%20", "PPLACcCEHOLDERR")
         data = urllib.parse.unquote(data_temp)
-        data = data.replace("PPLACEHOLDERR", "%20")
+        data = data.replace("PPLACcCEHOLDERR", "%20")
         return data
 
     def _process_additional_data(self, command: str, data: Any, value: Any, custom: int, by: str | None = None):

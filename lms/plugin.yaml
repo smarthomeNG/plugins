@@ -722,6 +722,7 @@ item_structs:
                 sqb_read_group@instance:
                 -   player
                 -   player.control
+                sqb_read_initial@instance: true
 
             volume_fading:
                 type: num
@@ -924,6 +925,7 @@ item_structs:
                 -   player
                 -   player.playlist
                 sqb_read_initial@instance: true
+                initial_value: OFF
                 remark: 0 = Off, 1 = Song, 2 = Playlist
 
                 lookup:
@@ -939,6 +941,7 @@ item_structs:
                 -   player
                 -   player.playlist
                 sqb_read_initial@instance: true
+                initial_value: OFF
                 remark: 0 = Off, 1 = Song, 2 = Album
 
                 lookup:
@@ -1752,6 +1755,7 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.control
+                    sqb_read_initial@instance: true
 
                 volume_fading:
                     type: num
@@ -1960,6 +1964,7 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.playlist
                     sqb_read_initial@instance: true
+                    initial_value: OFF
                     remark: 0 = Off, 1 = Song, 2 = Playlist
 
                     lookup:
@@ -1976,6 +1981,7 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.playlist
                     sqb_read_initial@instance: true
+                    initial_value: OFF
                     remark: 0 = Off, 1 = Song, 2 = Album
 
                     lookup:

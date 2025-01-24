@@ -61,7 +61,8 @@ Das struct `lms.player` (sowie das optionale `lms.player_plugins`) wird dann
 pro Abspielgerät genutzt, wobei hier wichtig ist, mittels `lms.sqb_custom1` die MAC Adresse
 des Players mit anzugeben.
 
-In Version 2.0.0 wurde die interne Struktur der Structs etwas abgeändert.
+In Version 2.0.0 wurde die interne Struktur der Structs etwas abgeändert, weshalb Zugriffe auf die Items in
+der Visu, in Logiken, etc. angepasst werden müssen.
 
 .. code-block:: yaml
 
