@@ -204,14 +204,14 @@ class lms(SmartDevicePlugin):
         # set playlist ID
         if command == f'player.playlist.load{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command load {command} data {data} value {value} custom {custom} by {by}")
-            trigger_read('player.playlist.id')
+            trigger_read('player.playlist.current_id')
             trigger_read('player.control.playmode')
 
-        if command == f'player.playlist.id{CUSTOM_SEP}{custom}':
+        if command == f'player.playlist.current_id{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command id {command} data {data} value {value} custom {custom} by {by}")
             self._parameters['CURRENT_LIST_ID'][custom] = value
-            trigger_read('player.playlist.name')
-            trigger_read('player.playlist.url')
+            trigger_read('player.playlist.current_name')
+            trigger_read('player.playlist.current_url')
 
         if command == f'player.control.sync{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command sync {command} data {data} value {value} custom {custom} by {by}")
@@ -225,7 +225,7 @@ class lms(SmartDevicePlugin):
             trigger_read('player.info.currentsong.album')
             trigger_read('player.info.currentsong.artist')
             trigger_read('player.info.currentsong.genre')
-            trigger_read('player.info.currentsong.path')
+            trigger_read('player.info.currentsong.file_path')
 
         # update on new song
         if command == f'player.control.playpause{CUSTOM_SEP}{custom}' and value:
