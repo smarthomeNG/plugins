@@ -99,9 +99,9 @@ class lms(SmartDevicePlugin):
 
     def _transform_received_data(self, data):
         # fix weird representation of MAC address (%3A = :), etc.
-        data_temp = data.replace("%20", "PPLACEHOLDERR")
+        data_temp = data.replace("%20", "PPLACcCEHOLDERR")
         data = urllib.parse.unquote(data_temp)
-        data = data.replace("PPLACEHOLDERR", "%20")
+        data = data.replace("PPLACcCEHOLDERR", "%20")
         return data
 
     def _process_additional_data(self, command: str, data: Any, value: Any, custom: int, by: str | None = None):
@@ -110,7 +110,16 @@ class lms(SmartDevicePlugin):
             self.send_command(command + CUSTOM_SEP + custom)
 
         if command == f'server.newclient':
-            self.logger.debug(f"Got new client connection {command}, re-reading players")
+            self.logger.debug(f"Got new client connection {command}, re-reading players.")
+            self.send_command('server.players')
+            if value in self._custom_values.get(1):
+                self.logger.debug(f"Subscribing to updates: {value}")
+                self.send_command('player.info.player.status_subscribe' + CUSTOM_SEP + value, True)
+                self.read_all_commands('player.info.currentsong' + CUSTOM_SEP + value)
+                self.read_all_commands('player.control' + CUSTOM_SEP + value)
+
+        if command == f'server.forgetclient':
+            self.logger.debug(f"Got forget client connection {command}: {value}, re-reading players")
             self.send_command('server.players')
 
         if command == f'server.players':
@@ -151,6 +160,14 @@ class lms(SmartDevicePlugin):
 
         if not custom:
             return
+
+        if command == f'player.info.player.connected{CUSTOM_SEP}{custom}':
+            self.logger.debug(f"Got client (dis)connection {command}: {value}, re-reading players")
+            self.send_command('server.players')
+
+        if command == f'player.info.player.name{CUSTOM_SEP}{custom}':
+            self.logger.debug(f"Got name {command}: {value}, re-reading players")
+            self.send_command('server.players')
 
         if command == f'player.playlist.rename_current{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command rename_current {command}, re-reading playlists")
@@ -204,14 +221,14 @@ class lms(SmartDevicePlugin):
         # set playlist ID
         if command == f'player.playlist.load{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command load {command} data {data} value {value} custom {custom} by {by}")
-            trigger_read('player.playlist.id')
+            trigger_read('player.playlist.current_id')
             trigger_read('player.control.playmode')
 
-        if command == f'player.playlist.id{CUSTOM_SEP}{custom}':
+        if command == f'player.playlist.current_id{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command id {command} data {data} value {value} custom {custom} by {by}")
             self._parameters['CURRENT_LIST_ID'][custom] = value
-            trigger_read('player.playlist.name')
-            trigger_read('player.playlist.url')
+            trigger_read('player.playlist.current_name')
+            trigger_read('player.playlist.current_url')
 
         if command == f'player.control.sync{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command sync {command} data {data} value {value} custom {custom} by {by}")
@@ -225,7 +242,7 @@ class lms(SmartDevicePlugin):
             trigger_read('player.info.currentsong.album')
             trigger_read('player.info.currentsong.artist')
             trigger_read('player.info.currentsong.genre')
-            trigger_read('player.info.currentsong.path')
+            trigger_read('player.info.currentsong.file_path')
 
         # update on new song
         if command == f'player.control.playpause{CUSTOM_SEP}{custom}' and value:

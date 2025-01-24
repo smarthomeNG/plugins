@@ -362,6 +362,12 @@ item_structs:
             sqb_read@instance: true
             sqb_write@instance: false
 
+        forgetclient:
+            type: str
+            sqb_command@instance: server.forgetclient
+            sqb_read@instance: true
+            sqb_write@instance: false
+
         players:
             type: dict
             sqb_command@instance: server.players
@@ -632,9 +638,9 @@ item_structs:
                 enforce_updates: true
                 sqb_read_group_trigger@instance: player_plugins.customskip
 
-            active:
+            active_filter:
                 type: str
-                sqb_command@instance: player_plugins.customskip.active
+                sqb_command@instance: player_plugins.customskip.active_filter
                 sqb_read@instance: true
                 sqb_write@instance: true
                 sqb_read_group@instance:
@@ -642,9 +648,9 @@ item_structs:
                 -   player_plugins.customskip
                 sqb_read_initial@instance: true
 
-            remove:
+            remove_filter:
                 type: bool
-                sqb_command@instance: player_plugins.customskip.remove
+                sqb_command@instance: player_plugins.customskip.remove_filter
                 sqb_read@instance: false
                 sqb_write@instance: true
 
@@ -716,6 +722,7 @@ item_structs:
                 sqb_read_group@instance:
                 -   player
                 -   player.control
+                sqb_read_initial@instance: true
 
             volume_fading:
                 type: num
@@ -918,6 +925,7 @@ item_structs:
                 -   player
                 -   player.playlist
                 sqb_read_initial@instance: true
+                initial_value: OFF
                 remark: 0 = Off, 1 = Song, 2 = Playlist
 
                 lookup:
@@ -933,6 +941,7 @@ item_structs:
                 -   player
                 -   player.playlist
                 sqb_read_initial@instance: true
+                initial_value: OFF
                 remark: 0 = Off, 1 = Song, 2 = Album
 
                 lookup:
@@ -948,27 +957,27 @@ item_structs:
                 -   player
                 -   player.playlist
 
-            name:
+            current_name:
                 type: str
-                sqb_command@instance: player.playlist.name
+                sqb_command@instance: player.playlist.current_name
                 sqb_read@instance: true
                 sqb_write@instance: true
                 sqb_read_group@instance:
                 -   player
                 -   player.playlist
 
-            url:
+            current_url:
                 type: str
-                sqb_command@instance: player.playlist.url
+                sqb_command@instance: player.playlist.current_url
                 sqb_read@instance: true
                 sqb_write@instance: false
                 sqb_read_group@instance:
                 -   player
                 -   player.playlist
 
-            id:
+            current_id:
                 type: num
-                sqb_command@instance: player.playlist.id
+                sqb_command@instance: player.playlist.current_id
                 sqb_read@instance: true
                 sqb_write@instance: true
                 sqb_read_group@instance:
@@ -1255,9 +1264,9 @@ item_structs:
                     -   player.info.currentsong
                     sqb_read_initial@instance: true
 
-                path:
+                file_path:
                     type: str
-                    sqb_command@instance: player.info.currentsong.path
+                    sqb_command@instance: player.info.currentsong.file_path
                     sqb_read@instance: true
                     sqb_write@instance: false
                     sqb_read_group@instance:
@@ -1367,6 +1376,12 @@ item_structs:
             newclient:
                 type: str
                 sqb_command@instance: server.newclient
+                sqb_read@instance: true
+                sqb_write@instance: false
+
+            forgetclient:
+                type: str
+                sqb_command@instance: server.forgetclient
                 sqb_read@instance: true
                 sqb_write@instance: false
 
@@ -1651,9 +1666,9 @@ item_structs:
                     enforce_updates: true
                     sqb_read_group_trigger@instance: ALL.player_plugins.customskip
 
-                active:
+                active_filter:
                     type: str
-                    sqb_command@instance: player_plugins.customskip.active
+                    sqb_command@instance: player_plugins.customskip.active_filter
                     sqb_read@instance: true
                     sqb_write@instance: true
                     sqb_read_group@instance:
@@ -1662,9 +1677,9 @@ item_structs:
                     -   ALL.player_plugins.customskip
                     sqb_read_initial@instance: true
 
-                remove:
+                remove_filter:
                     type: bool
-                    sqb_command@instance: player_plugins.customskip.remove
+                    sqb_command@instance: player_plugins.customskip.remove_filter
                     sqb_read@instance: false
                     sqb_write@instance: true
 
@@ -1740,6 +1755,7 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.control
+                    sqb_read_initial@instance: true
 
                 volume_fading:
                     type: num
@@ -1948,6 +1964,7 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.playlist
                     sqb_read_initial@instance: true
+                    initial_value: OFF
                     remark: 0 = Off, 1 = Song, 2 = Playlist
 
                     lookup:
@@ -1964,6 +1981,7 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.playlist
                     sqb_read_initial@instance: true
+                    initial_value: OFF
                     remark: 0 = Off, 1 = Song, 2 = Album
 
                     lookup:
@@ -1980,9 +1998,9 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.playlist
 
-                name:
+                current_name:
                     type: str
-                    sqb_command@instance: player.playlist.name
+                    sqb_command@instance: player.playlist.current_name
                     sqb_read@instance: true
                     sqb_write@instance: true
                     sqb_read_group@instance:
@@ -1990,9 +2008,9 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.playlist
 
-                url:
+                current_url:
                     type: str
-                    sqb_command@instance: player.playlist.url
+                    sqb_command@instance: player.playlist.current_url
                     sqb_read@instance: true
                     sqb_write@instance: false
                     sqb_read_group@instance:
@@ -2000,9 +2018,9 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.playlist
 
-                id:
+                current_id:
                     type: num
-                    sqb_command@instance: player.playlist.id
+                    sqb_command@instance: player.playlist.current_id
                     sqb_read@instance: true
                     sqb_write@instance: true
                     sqb_read_group@instance:
@@ -2301,9 +2319,9 @@ item_structs:
                         -   ALL.player.info.currentsong
                         sqb_read_initial@instance: true
 
-                    path:
+                    file_path:
                         type: str
-                        sqb_command@instance: player.info.currentsong.path
+                        sqb_command@instance: player.info.currentsong.file_path
                         sqb_read@instance: true
                         sqb_write@instance: false
                         sqb_read_group@instance:
