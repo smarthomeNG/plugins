@@ -110,7 +110,16 @@ class lms(SmartDevicePlugin):
             self.send_command(command + CUSTOM_SEP + custom)
 
         if command == f'server.newclient':
-            self.logger.debug(f"Got new or removed client connection {command}, re-reading players")
+            self.logger.debug(f"Got new client connection {command}, re-reading players.")
+            self.send_command('server.players')
+            if value in self._custom_values.get(1):
+                self.logger.debug(f"Subscribing to updates: {value}")
+                self.send_command('player.info.player.status_subscribe' + CUSTOM_SEP + value, True)
+                self.read_all_commands('player.info.currentsong' + CUSTOM_SEP + value)
+                self.read_all_commands('player.control' + CUSTOM_SEP + value)
+
+        if command == f'server.forgetclient':
+            self.logger.debug(f"Got forget client connection {command}: {value}, re-reading players")
             self.send_command('server.players')
 
         if command == f'server.players':
@@ -151,6 +160,14 @@ class lms(SmartDevicePlugin):
 
         if not custom:
             return
+
+        if command == f'player.info.player.connected{CUSTOM_SEP}{custom}':
+            self.logger.debug(f"Got client (dis)connection {command}: {value}, re-reading players")
+            self.send_command('server.players')
+
+        if command == f'player.info.player.name{CUSTOM_SEP}{custom}':
+            self.logger.debug(f"Got name {command}: {value}, re-reading players")
+            self.send_command('server.players')
 
         if command == f'player.playlist.rename_current{CUSTOM_SEP}{custom}':
             self.logger.debug(f"Got command rename_current {command}, re-reading playlists")
