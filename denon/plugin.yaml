@@ -516,16 +516,7 @@ item_structs:
             -   general
             -   custom_inputnames
             denon_read_initial@instance: true
-            cache: true
-
-            reverse:
-                type: dict
-                eval: '{} if sh...() == {} else {v: k for (k, v) in sh...().items()}'
-
-                update:
-                    type: bool
-                    eval: sh...timer(2, {})
-                    eval_trigger: '...'
+            denon_lookup@instance: INPUT#fwd
 
             update:
                 type: bool
@@ -857,12 +848,10 @@ item_structs:
                 -   zone1
                 -   zone1.control
                 denon_read_initial@instance: true
-                on_change:
-                -   .custom_name = sh.....general.custom_inputnames().get(value, '')
 
-                custom_name:
-                    type: str
-                    on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
+                lookup:
+                    type: list
+                    denon_lookup@instance: INPUT#list
 
             listeningmode:
                 type: str
@@ -1468,12 +1457,6 @@ item_structs:
                 denon_read_group@instance:
                 -   zone2
                 -   zone2.control
-                on_change:
-                -   .custom_name = sh.....general.custom_inputnames().get(value, '')
-
-                custom_name:
-                    type: str
-                    on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
 
             sleep:
                 type: num
@@ -1697,12 +1680,6 @@ item_structs:
                 denon_read_group@instance:
                 -   zone3
                 -   zone3.control
-                on_change:
-                -   .custom_name = sh.....general.custom_inputnames().get(value, '')
-
-                custom_name:
-                    type: str
-                    on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
 
         settings:
 
@@ -1842,16 +1819,7 @@ item_structs:
                 -   ALL.general
                 -   custom_inputnames
                 denon_read_initial@instance: true
-                cache: true
-
-                reverse:
-                    type: dict
-                    eval: '{} if sh...() == {} else {v: k for (k, v) in sh...().items()}'
-
-                    update:
-                        type: bool
-                        eval: sh...timer(2, {})
-                        eval_trigger: '...'
+                denon_lookup@instance: INPUT#fwd
 
                 update:
                     type: bool
@@ -2086,12 +2054,10 @@ item_structs:
                     -   ALL.zone1
                     -   ALL.zone1.control
                     denon_read_initial@instance: true
-                    on_change:
-                    -   .custom_name = sh.....general.custom_inputnames().get(value, '')
 
-                    custom_name:
-                        type: str
-                        on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
+                    lookup:
+                        type: list
+                        denon_lookup@instance: INPUT#list
 
                 listeningmode:
                     type: str
@@ -2538,12 +2504,6 @@ item_structs:
                     -   ALL
                     -   ALL.zone2
                     -   ALL.zone2.control
-                    on_change:
-                    -   .custom_name = sh.....general.custom_inputnames().get(value, '')
-
-                    custom_name:
-                        type: str
-                        on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
 
                 sleep:
                     type: num
@@ -2791,16 +2751,7 @@ item_structs:
                 -   AVR-X6300H.general
                 -   custom_inputnames
                 denon_read_initial@instance: true
-                cache: true
-
-                reverse:
-                    type: dict
-                    eval: '{} if sh...() == {} else {v: k for (k, v) in sh...().items()}'
-
-                    update:
-                        type: bool
-                        eval: sh...timer(2, {})
-                        eval_trigger: '...'
+                denon_lookup@instance: INPUT#fwd
 
                 update:
                     type: bool
@@ -3114,12 +3065,10 @@ item_structs:
                     -   AVR-X6300H.zone1
                     -   AVR-X6300H.zone1.control
                     denon_read_initial@instance: true
-                    on_change:
-                    -   .custom_name = sh.....general.custom_inputnames().get(value, '')
 
-                    custom_name:
-                        type: str
-                        on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
+                    lookup:
+                        type: list
+                        denon_lookup@instance: INPUT#list
 
                 listeningmode:
                     type: str
@@ -3686,12 +3635,6 @@ item_structs:
                     -   AVR-X6300H
                     -   AVR-X6300H.zone2
                     -   AVR-X6300H.zone2.control
-                    on_change:
-                    -   .custom_name = sh.....general.custom_inputnames().get(value, '')
-
-                    custom_name:
-                        type: str
-                        on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
 
                 sleep:
                     type: num
@@ -3929,12 +3872,6 @@ item_structs:
                     -   AVR-X6300H
                     -   AVR-X6300H.zone3
                     -   AVR-X6300H.zone3.control
-                    on_change:
-                    -   .custom_name = sh.....general.custom_inputnames().get(value, '')
-
-                    custom_name:
-                        type: str
-                        on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
 
             settings:
 
@@ -4079,16 +4016,7 @@ item_structs:
                 -   AVR-X4300H.general
                 -   custom_inputnames
                 denon_read_initial@instance: true
-                cache: true
-
-                reverse:
-                    type: dict
-                    eval: '{} if sh...() == {} else {v: k for (k, v) in sh...().items()}'
-
-                    update:
-                        type: bool
-                        eval: sh...timer(2, {})
-                        eval_trigger: '...'
+                denon_lookup@instance: INPUT#fwd
 
                 update:
                     type: bool
@@ -4323,12 +4251,10 @@ item_structs:
                     -   AVR-X4300H.zone1
                     -   AVR-X4300H.zone1.control
                     denon_read_initial@instance: true
-                    on_change:
-                    -   .custom_name = sh.....general.custom_inputnames().get(value, '')
 
-                    custom_name:
-                        type: str
-                        on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
+                    lookup:
+                        type: list
+                        denon_lookup@instance: INPUT#list
 
                 listeningmode:
                     type: str
@@ -4919,12 +4845,6 @@ item_structs:
                     -   AVR-X4300H
                     -   AVR-X4300H.zone2
                     -   AVR-X4300H.zone2.control
-                    on_change:
-                    -   .custom_name = sh.....general.custom_inputnames().get(value, '')
-
-                    custom_name:
-                        type: str
-                        on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
 
                 sleep:
                     type: num
@@ -5162,12 +5082,6 @@ item_structs:
                     -   AVR-X4300H
                     -   AVR-X4300H.zone3
                     -   AVR-X4300H.zone3.control
-                    on_change:
-                    -   .custom_name = sh.....general.custom_inputnames().get(value, '')
-
-                    custom_name:
-                        type: str
-                        on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
 
             settings:
 
@@ -5312,16 +5226,7 @@ item_structs:
                 -   AVR-X3300W.general
                 -   custom_inputnames
                 denon_read_initial@instance: true
-                cache: true
-
-                reverse:
-                    type: dict
-                    eval: '{} if sh...() == {} else {v: k for (k, v) in sh...().items()}'
-
-                    update:
-                        type: bool
-                        eval: sh...timer(2, {})
-                        eval_trigger: '...'
+                denon_lookup@instance: INPUT#fwd
 
                 update:
                     type: bool
@@ -5587,12 +5492,10 @@ item_structs:
                     -   AVR-X3300W.zone1
                     -   AVR-X3300W.zone1.control
                     denon_read_initial@instance: true
-                    on_change:
-                    -   .custom_name = sh.....general.custom_inputnames().get(value, '')
 
-                    custom_name:
-                        type: str
-                        on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
+                    lookup:
+                        type: list
+                        denon_lookup@instance: INPUT#list
 
                 listeningmode:
                     type: str
@@ -6160,12 +6063,6 @@ item_structs:
                     -   AVR-X3300W
                     -   AVR-X3300W.zone2
                     -   AVR-X3300W.zone2.control
-                    on_change:
-                    -   .custom_name = sh.....general.custom_inputnames().get(value, '')
-
-                    custom_name:
-                        type: str
-                        on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
 
                 sleep:
                     type: num
@@ -6342,16 +6239,7 @@ item_structs:
                 -   AVR-X2300W.general
                 -   custom_inputnames
                 denon_read_initial@instance: true
-                cache: true
-
-                reverse:
-                    type: dict
-                    eval: '{} if sh...() == {} else {v: k for (k, v) in sh...().items()}'
-
-                    update:
-                        type: bool
-                        eval: sh...timer(2, {})
-                        eval_trigger: '...'
+                denon_lookup@instance: INPUT#fwd
 
                 update:
                     type: bool
@@ -6617,12 +6505,10 @@ item_structs:
                     -   AVR-X2300W.zone1
                     -   AVR-X2300W.zone1.control
                     denon_read_initial@instance: true
-                    on_change:
-                    -   .custom_name = sh.....general.custom_inputnames().get(value, '')
 
-                    custom_name:
-                        type: str
-                        on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
+                    lookup:
+                        type: list
+                        denon_lookup@instance: INPUT#list
 
                 listeningmode:
                     type: str
@@ -7189,12 +7075,6 @@ item_structs:
                     -   AVR-X2300W
                     -   AVR-X2300W.zone2
                     -   AVR-X2300W.zone2.control
-                    on_change:
-                    -   .custom_name = sh.....general.custom_inputnames().get(value, '')
-
-                    custom_name:
-                        type: str
-                        on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
 
                 sleep:
                     type: num
@@ -7304,16 +7184,7 @@ item_structs:
                 -   AVR-X1300W.general
                 -   custom_inputnames
                 denon_read_initial@instance: true
-                cache: true
-
-                reverse:
-                    type: dict
-                    eval: '{} if sh...() == {} else {v: k for (k, v) in sh...().items()}'
-
-                    update:
-                        type: bool
-                        eval: sh...timer(2, {})
-                        eval_trigger: '...'
+                denon_lookup@instance: INPUT#fwd
 
                 update:
                     type: bool
@@ -7579,12 +7450,10 @@ item_structs:
                     -   AVR-X1300W.zone1
                     -   AVR-X1300W.zone1.control
                     denon_read_initial@instance: true
-                    on_change:
-                    -   .custom_name = sh.....general.custom_inputnames().get(value, '')
 
-                    custom_name:
-                        type: str
-                        on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
+                    lookup:
+                        type: list
+                        denon_lookup@instance: INPUT#list
 
                 listeningmode:
                     type: str
@@ -8067,12 +7936,6 @@ item_structs:
                     -   AVR-X1300W
                     -   AVR-X1300W.zone2
                     -   AVR-X1300W.zone2.control
-                    on_change:
-                    -   .custom_name = sh.....general.custom_inputnames().get(value, '')
-
-                    custom_name:
-                        type: str
-                        on_change: sh...(sh......general.custom_inputnames.reverse().get(value, ''))
 
                 sleep:
                     type: num

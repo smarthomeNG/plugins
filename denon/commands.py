@@ -61,7 +61,7 @@ commands = {
         'region': {'read': True, 'write': False, 'read_cmd': 'SYMODTUN ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SYMODTUN\s(.*)', 'item_attrs': {'initial': True}},
     },
     'general': {
-        'custom_inputnames': {'read': True, 'write': False, 'read_cmd': 'SSFUN ?', 'item_type': 'dict', 'dev_datatype': 'DenonCustominput', 'reply_pattern': r'^SSFUN(.*)', 'item_attrs': {'read_groups': [{'name': 'custom_inputnames', 'trigger': 'update'}], 'initial': True, 'item_template': 'custom_inputnames'}},
+        'custom_inputnames': {'read': True, 'write': False, 'read_cmd': 'SSFUN ?', 'item_type': 'dict', 'dev_datatype': 'DenonCustominput', 'reply_pattern': r'^SSFUN(.*)', 'item_attrs': {'read_groups': [{'name': 'custom_inputnames', 'trigger': 'update'}], 'initial': True, 'attributes': {'denon_lookup@instance': 'INPUT#fwd'}}},
         'power': {'read': True, 'write': True, 'read_cmd': 'PW?', 'write_cmd': 'PW{VALUE}', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': r'^PW{LOOKUP}', 'lookup': 'POWER'},
         'setupmenu': {'read': True, 'write': True, 'read_cmd': 'MNMEN?', 'write_cmd': 'MNMEN {VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': r'^MNMEN (ON|OFF)'},
         'display': {'read': True, 'write': False, 'read_cmd': 'NSE', 'item_type': 'str', 'dev_datatype': 'DenonDisplay', 'reply_pattern': r'^NSE(.*)'},
@@ -107,7 +107,7 @@ commands = {
             'volumeup': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'MVUP', 'dev_datatype': 'raw'},
             'volumedown': {'read': False, 'write': True, 'write_cmd': 'MVDOWN', 'item_type': 'bool', 'dev_datatype': 'raw'},
             'volumemax': {'opcode': '{VALUE}', 'read': True, 'write': False, 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^MVMAX (\d{2,3})', 'item_attrs': {'read_group_levels': 0}},
-            'input': {'read': True, 'write': True, 'read_cmd': 'SI?', 'write_cmd': 'SI{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SI{LOOKUP}', 'lookup': 'INPUT', 'item_attrs': {'item_template': 'input', 'initial': True, 'lookup_item': True}},
+            'input': {'read': True, 'write': True, 'read_cmd': 'SI?', 'write_cmd': 'SI{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SI{LOOKUP}', 'lookup': 'INPUT', 'item_attrs': {'initial': True, 'lookup_item': True}},
             'listeningmode': {'read': True, 'write': True, 'cmd_settings': {'valid_list_ci': ['MOVIE', 'MUSIC', 'GAME', 'DIRECT', 'PURE DIRECT', 'STEREO', 'AUTO', 'DOLBY DIGITAL', 'DOLBY SURROUND', 'DTS SURROUND', 'NEURAL:X', 'AURO3D', 'AURO2DSURR', 'MCH STEREO', 'ROCK ARENA', 'JAZZ CLUB', 'MONO MOVIE', 'MATRIX', 'VIDEO GAME', 'VIRTUAL', 'LEFT', 'RIGHT']}, 'read_cmd': 'MS?', 'write_cmd': 'MS{RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^\x00?MS(.*)', 'item_attrs': {'initial': True}},
             'sleep': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'SLP?', 'write_cmd': 'SLP{VALUE}', 'dev_datatype': 'convert0', 'reply_pattern': r'^SLP(\d{3}|OFF)', 'cmd_settings': {'force_min': 0, 'force_max': 120}, 'item_attrs': {'initial': True}},
             'standby': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'STBY?', 'write_cmd': 'STBY{VALUE}', 'dev_datatype': 'DenonStandby1', 'reply_pattern': r'^STBY(\d{2}M|OFF)', 'cmd_settings': {'valid_list_ci': [0, 15, 30, 60]}, 'item_attrs': {'initial': True}},
@@ -180,7 +180,7 @@ commands = {
             'volume': {'read': True, 'write': True, 'read_cmd': 'Z2?', 'write_cmd': 'Z2{VALUE}', 'item_type': 'num', 'dev_datatype': 'DenonVol', 'reply_pattern': r'^Z2(\d{2,3})', 'cmd_settings': {'force_min': 0.0, 'valid_max': 98.0}},
             'volumeup': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'Z2UP', 'dev_datatype': 'raw'},
             'volumedown': {'read': False, 'write': True, 'write_cmd': 'Z2DOWN', 'item_type': 'bool', 'dev_datatype': 'raw'},
-            'input': {'read': True, 'write': True, 'read_cmd': 'Z2?', 'write_cmd': 'Z2{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^Z2{LOOKUP}', 'lookup': 'INPUT', 'item_attrs': {'item_template': 'input'}},
+            'input': {'read': True, 'write': True, 'read_cmd': 'Z2?', 'write_cmd': 'Z2{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^Z2{LOOKUP}', 'lookup': 'INPUT'},
             'sleep': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z2SLP?', 'write_cmd': 'Z2SLP{VALUE}', 'dev_datatype': 'convert0', 'reply_pattern': r'^Z2SLP(\d{3}|OFF)', 'cmd_settings': {'force_min': 0, 'force_max': 120}},
             'standby': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z2STBY?', 'write_cmd': 'Z2STBY{VALUE}', 'dev_datatype': 'DenonStandby', 'reply_pattern': r'^Z2STBY(\dH|OFF)', 'cmd_settings': {'valid_list_ci': [0, 2, 4, 8]}},
         },
@@ -214,7 +214,7 @@ commands = {
             'volumedown': {'read': False, 'write': True, 'write_cmd': 'Z3DOWN', 'item_type': 'bool', 'dev_datatype': 'raw'},
             'sleep': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z3SLP?', 'write_cmd': 'Z3SLP{VALUE}', 'dev_datatype': 'convert0', 'reply_pattern': r'^Z3SLP(\d{3}|OFF)', 'cmd_settings': {'force_min': 0, 'valid_max': 120}},
             'standby': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z3STBY?', 'write_cmd': 'Z3STBY{VALUE}', 'dev_datatype': 'DenonStandby', 'reply_pattern': r'^Z3STBY(\dH|OFF)', 'cmd_settings': {'valid_list_ci': [0, 2, 4, 8]}},
-            'input': {'read': True, 'write': True, 'read_cmd': 'Z3?', 'write_cmd': 'Z3{RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^Z3{LOOKUP}', 'lookup': 'INPUT3', 'item_attrs': {'item_template': 'input'}}
+            'input': {'read': True, 'write': True, 'read_cmd': 'Z3?', 'write_cmd': 'Z3{RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^Z3{LOOKUP}', 'lookup': 'INPUT3'}
         },
         'settings': {
             'sound': {
@@ -403,28 +403,6 @@ lookups = {
             'IPD': 'IPD',
             'IRP': 'IRP',
             'FVP': 'FVP'
-        }
-    }
-}
-
-item_templates = {
-    'custom_inputnames': {
-        'cache': True,
-        'reverse': {
-            'type': 'dict',
-            'eval': '{} if sh...() == {} else {v: k for (k, v) in sh...().items()}',
-            'update': {
-                'type': 'bool',
-                'eval': 'sh...timer(2, {})',
-                'eval_trigger': '...'
-            }
-        }
-    },
-    'input': {
-        'on_change': [".custom_name = sh.....general.custom_inputnames().get(value, '')"],
-        'custom_name': {
-            'type': 'str',
-            'on_change': "sh...(sh......general.custom_inputnames.reverse().get(value, ''))"
         }
     }
 }
