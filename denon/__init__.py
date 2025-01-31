@@ -21,10 +21,12 @@
 #  along with SmartHomeNG  If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
+from __future__ import annotations
 import builtins
 import os
 import sys
 import time
+from typing import Any
 
 if __name__ == '__main__':
     builtins.SDP_standalone = True
@@ -49,13 +51,11 @@ from lib.model.sdp.command import SDPCommandParseStr
 
 builtins.SDP_standalone = False
 
-CUSTOM_INPUT_NAME_COMMAND = 'custom_inputnames'
-
 
 class denon(SmartDevicePlugin):
     """ Device class for Denon AV. """
 
-    PLUGIN_VERSION = '1.1.0'
+    PLUGIN_VERSION = '1.2.0'
 
     def _set_device_defaults(self):
         self._use_callbacks = True
@@ -82,7 +82,7 @@ class denon(SmartDevicePlugin):
             data['payload'] = f'{data.get("payload", "")}{data["limit_response"].decode("unicode-escape")}'
         return data
 
-    def _process_additional_data(self, command, data, value, custom, by):
+    def _process_additional_data(self, command: str, data: Any, value: Any, custom: int, by: str | None = None):
         zone = 0
         if command == 'zone1.control.power':
             zone = 1
