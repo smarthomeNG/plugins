@@ -151,7 +151,7 @@ parameters:
                 a command the command is resent as long as this
                 value is more than 0.
 
-    sendretry_cycle:
+    send_retries_cycle:
         type: num
         valid_min: 1
         default: 1
