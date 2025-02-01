@@ -61,7 +61,7 @@ commands = {
         'region': {'read': True, 'write': False, 'read_cmd': 'SYMODTUN ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SYMODTUN\s(.*)', 'item_attrs': {'initial': True}},
     },
     'general': {
-        'custom_inputnames': {'read': True, 'write': False, 'read_cmd': 'SSFUN ?', 'item_type': 'dict', 'dev_datatype': 'DenonCustominput', 'reply_pattern': r'^SSFUN(.*)', 'item_attrs': {'read_groups': [{'name': 'custom_inputnames', 'trigger': 'update'}], 'initial': True, 'attributes': {'denon_lookup@instance': 'INPUT#fwd'}}},
+        'custom_inputnames': {'read': True, 'write': False, 'read_cmd': 'SSFUN ?', 'item_type': 'dict', 'dev_datatype': 'DenonCustominput', 'reply_pattern': r'^SSFUN(.*)', 'item_attrs': {'enforce': True, 'item_template': 'custom_inputnames', 'read_groups': [{'name': 'custom_inputnames', 'trigger': 'update'}], 'initial': True, 'attributes': {'denon_lookup@instance': 'INPUT#fwd'}}},
         'power': {'read': True, 'write': True, 'read_cmd': 'PW?', 'write_cmd': 'PW{VALUE}', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': r'^PW{LOOKUP}', 'lookup': 'POWER'},
         'setupmenu': {'read': True, 'write': True, 'read_cmd': 'MNMEN?', 'write_cmd': 'MNMEN {VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': r'^MNMEN (ON|OFF)'},
         'display': {'read': True, 'write': False, 'read_cmd': 'NSE', 'item_type': 'str', 'dev_datatype': 'DenonDisplay', 'reply_pattern': r'^NSE(.*)'},
@@ -404,5 +404,16 @@ lookups = {
             'IRP': 'IRP',
             'FVP': 'FVP'
         }
+    }
+}
+
+item_templates = {
+    'custom_inputnames': {
+        'on_change': 'sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None',
+        'finished':
+            {
+                'type': 'bool',
+                'eval': 'sh...(sh...property.value)'
+            }
     }
 }

@@ -515,8 +515,14 @@ item_structs:
             denon_read_group@instance:
             -   general
             -   custom_inputnames
+            enforce_updates: true
             denon_read_initial@instance: true
             denon_lookup@instance: INPUT#fwd
+            on_change: sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None
+
+            finished:
+                type: bool
+                eval: sh...(sh...property.value)
 
             update:
                 type: bool
@@ -1818,8 +1824,14 @@ item_structs:
                 -   ALL
                 -   ALL.general
                 -   custom_inputnames
+                enforce_updates: true
                 denon_read_initial@instance: true
                 denon_lookup@instance: INPUT#fwd
+                on_change: sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None
+
+                finished:
+                    type: bool
+                    eval: sh...(sh...property.value)
 
                 update:
                     type: bool
@@ -2750,8 +2762,14 @@ item_structs:
                 -   AVR-X6300H
                 -   AVR-X6300H.general
                 -   custom_inputnames
+                enforce_updates: true
                 denon_read_initial@instance: true
                 denon_lookup@instance: INPUT#fwd
+                on_change: sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None
+
+                finished:
+                    type: bool
+                    eval: sh...(sh...property.value)
 
                 update:
                     type: bool
@@ -4015,8 +4033,14 @@ item_structs:
                 -   AVR-X4300H
                 -   AVR-X4300H.general
                 -   custom_inputnames
+                enforce_updates: true
                 denon_read_initial@instance: true
                 denon_lookup@instance: INPUT#fwd
+                on_change: sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None
+
+                finished:
+                    type: bool
+                    eval: sh...(sh...property.value)
 
                 update:
                     type: bool
@@ -5225,8 +5249,14 @@ item_structs:
                 -   AVR-X3300W
                 -   AVR-X3300W.general
                 -   custom_inputnames
+                enforce_updates: true
                 denon_read_initial@instance: true
                 denon_lookup@instance: INPUT#fwd
+                on_change: sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None
+
+                finished:
+                    type: bool
+                    eval: sh...(sh...property.value)
 
                 update:
                     type: bool
@@ -6238,8 +6268,14 @@ item_structs:
                 -   AVR-X2300W
                 -   AVR-X2300W.general
                 -   custom_inputnames
+                enforce_updates: true
                 denon_read_initial@instance: true
                 denon_lookup@instance: INPUT#fwd
+                on_change: sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None
+
+                finished:
+                    type: bool
+                    eval: sh...(sh...property.value)
 
                 update:
                     type: bool
@@ -7183,8 +7219,14 @@ item_structs:
                 -   AVR-X1300W
                 -   AVR-X1300W.general
                 -   custom_inputnames
+                enforce_updates: true
                 denon_read_initial@instance: true
                 denon_lookup@instance: INPUT#fwd
+                on_change: sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None
+
+                finished:
+                    type: bool
+                    eval: sh...(sh...property.value)
 
                 update:
                     type: bool
