@@ -160,10 +160,10 @@ item_templates = {
         'lu_names':
             {
                 'type': 'dict',
-                'sqb_lookup@instance': 'PLAYERS#fwd',
+                'lms_lookup@instance': 'PLAYERS#fwd',
                 'lookup': {
                     'type': 'list',
-                    'sqb_lookup@instance': 'PLAYERS#list'
+                    'lms_lookup@instance': 'PLAYERS#list'
                 }
             }
     },
@@ -172,19 +172,19 @@ item_templates = {
         'lu_ids':
             {
                 'type': 'dict',
-                'sqb_lookup@instance': 'PLAYLIST_IDS#fwd',
+                'lms_lookup@instance': 'PLAYLIST_IDS#fwd',
                 'lookup': {
                     'type': 'list',
-                    'sqb_lookup@instance': 'PLAYLIST_IDS#list'
+                    'lms_lookup@instance': 'PLAYLIST_IDS#list'
                 }
             },
         'lu_urls':
             {
                 'type': 'dict',
-                'sqb_lookup@instance': 'PLAYLIST_URLS#fwd',
+                'lms_lookup@instance': 'PLAYLIST_URLS#fwd',
                 'lookup': {
                     'type': 'list',
-                    'sqb_lookup@instance': 'PLAYLIST_URLS#list'
+                    'lms_lookup@instance': 'PLAYLIST_URLS#list'
                 }
             },
     },
@@ -202,7 +202,7 @@ item_templates = {
                 'eval': 'True if sh....running() == True else None',
                 'enforce_updates': True,
                 'cycle': '20',
-                'sqb_read_group_trigger': 'database.rescan'
+                'lms_read_group_trigger': 'database.rescan'
             },
         'starttime':
             {
@@ -245,7 +245,7 @@ item_templates = {
                 'eval': 'True if sh....playmode() == "play" else None',
                 'enforce_updates': True,
                 'cycle': '10',
-                'sqb_read_group_trigger': 'player.control.time_poll'
+                'lms_read_group_trigger': 'player.control.time_poll'
             }
     },
     'volume_fading': {
