@@ -180,7 +180,7 @@ commands = {
             'volume': {'read': True, 'write': True, 'read_cmd': 'Z2?', 'write_cmd': 'Z2{VALUE}', 'item_type': 'num', 'dev_datatype': 'DenonVol', 'reply_pattern': r'^Z2(\d{2,3})', 'cmd_settings': {'force_min': 0.0, 'valid_max': 98.0}},
             'volumeup': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'Z2UP', 'dev_datatype': 'raw'},
             'volumedown': {'read': False, 'write': True, 'write_cmd': 'Z2DOWN', 'item_type': 'bool', 'dev_datatype': 'raw'},
-            'input': {'read': True, 'write': True, 'read_cmd': 'Z2?', 'write_cmd': 'Z2{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^Z2{LOOKUP}', 'lookup': 'INPUT'},
+            'input': {'read': True, 'write': True, 'read_cmd': 'Z2?', 'write_cmd': 'Z2{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^Z2{LOOKUP}', 'lookup': 'INPUT', 'item_attrs': {'lookup_item': True}},
             'sleep': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z2SLP?', 'write_cmd': 'Z2SLP{VALUE}', 'dev_datatype': 'convert0', 'reply_pattern': r'^Z2SLP(\d{3}|OFF)', 'cmd_settings': {'force_min': 0, 'force_max': 120}},
             'standby': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z2STBY?', 'write_cmd': 'Z2STBY{VALUE}', 'dev_datatype': 'DenonStandby', 'reply_pattern': r'^Z2STBY(\dH|OFF)', 'cmd_settings': {'valid_list_ci': [0, 2, 4, 8]}},
         },
@@ -214,7 +214,7 @@ commands = {
             'volumedown': {'read': False, 'write': True, 'write_cmd': 'Z3DOWN', 'item_type': 'bool', 'dev_datatype': 'raw'},
             'sleep': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z3SLP?', 'write_cmd': 'Z3SLP{VALUE}', 'dev_datatype': 'convert0', 'reply_pattern': r'^Z3SLP(\d{3}|OFF)', 'cmd_settings': {'force_min': 0, 'valid_max': 120}},
             'standby': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z3STBY?', 'write_cmd': 'Z3STBY{VALUE}', 'dev_datatype': 'DenonStandby', 'reply_pattern': r'^Z3STBY(\dH|OFF)', 'cmd_settings': {'valid_list_ci': [0, 2, 4, 8]}},
-            'input': {'read': True, 'write': True, 'read_cmd': 'Z3?', 'write_cmd': 'Z3{RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^Z3{LOOKUP}', 'lookup': 'INPUT3'}
+            'input': {'read': True, 'write': True, 'read_cmd': 'Z3?', 'write_cmd': 'Z3{RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^Z3{LOOKUP}', 'lookup': 'INPUT3', 'item_attrs': {'lookup_item': True}}
         },
         'settings': {
             'sound': {
@@ -409,11 +409,11 @@ lookups = {
 
 item_templates = {
     'custom_inputnames': {
-        'on_change': 'sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None',
+        'on_change': 'sh..finished.timer(0, True) if sh..self.property.last_update_by.startswith("denon") else None',
         'finished':
             {
                 'type': 'bool',
-                'eval': 'sh...(sh...property.value)'
+                'eval': 'sh...(sh...property.value, "finished")'
             }
-    }
+    },
 }

@@ -101,6 +101,13 @@ class denon(SmartDevicePlugin):
             self.send_command(f'zone{zone}.control.volume')
             self.send_command(f'zone{zone}.control.listeningmode')
 
+        if command == 'general.custom_finished':
+            for zone in [1, 2, 3, 4]:
+                self.logger.debug(f"Updating input of zone {zone}. {self._commands}")
+                if f'zone{zone}.control.input' in self._commands.keys():
+                    self.send_command(f'zone{zone}.control.input')
+
+
 
 if __name__ == '__main__':
     s = Standalone(denon, sys.argv[0])

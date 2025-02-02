@@ -518,11 +518,11 @@ item_structs:
             enforce_updates: true
             denon_read_initial@instance: true
             denon_lookup@instance: INPUT#fwd
-            on_change: sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None
+            on_change: sh..finished.timer(0, True) if sh..self.property.last_update_by.startswith("denon") else None
 
             finished:
                 type: bool
-                eval: sh...(sh...property.value)
+                eval: sh...(sh...property.value, "finished")
 
             update:
                 type: bool
@@ -1464,6 +1464,10 @@ item_structs:
                 -   zone2
                 -   zone2.control
 
+                lookup:
+                    type: list
+                    denon_lookup@instance: INPUT#list
+
             sleep:
                 type: num
                 denon_command@instance: zone2.control.sleep
@@ -1687,6 +1691,10 @@ item_structs:
                 -   zone3
                 -   zone3.control
 
+                lookup:
+                    type: list
+                    denon_lookup@instance: INPUT3#list
+
         settings:
 
             read:
@@ -1827,11 +1835,11 @@ item_structs:
                 enforce_updates: true
                 denon_read_initial@instance: true
                 denon_lookup@instance: INPUT#fwd
-                on_change: sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None
+                on_change: sh..finished.timer(0, True) if sh..self.property.last_update_by.startswith("denon") else None
 
                 finished:
                     type: bool
-                    eval: sh...(sh...property.value)
+                    eval: sh...(sh...property.value, "finished")
 
                 update:
                     type: bool
@@ -2517,6 +2525,10 @@ item_structs:
                     -   ALL.zone2
                     -   ALL.zone2.control
 
+                    lookup:
+                        type: list
+                        denon_lookup@instance: INPUT#list
+
                 sleep:
                     type: num
                     denon_command@instance: zone2.control.sleep
@@ -2765,11 +2777,11 @@ item_structs:
                 enforce_updates: true
                 denon_read_initial@instance: true
                 denon_lookup@instance: INPUT#fwd
-                on_change: sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None
+                on_change: sh..finished.timer(0, True) if sh..self.property.last_update_by.startswith("denon") else None
 
                 finished:
                     type: bool
-                    eval: sh...(sh...property.value)
+                    eval: sh...(sh...property.value, "finished")
 
                 update:
                     type: bool
@@ -3654,6 +3666,10 @@ item_structs:
                     -   AVR-X6300H.zone2
                     -   AVR-X6300H.zone2.control
 
+                    lookup:
+                        type: list
+                        denon_lookup@instance: INPUT#list
+
                 sleep:
                     type: num
                     denon_command@instance: zone2.control.sleep
@@ -3891,6 +3907,10 @@ item_structs:
                     -   AVR-X6300H.zone3
                     -   AVR-X6300H.zone3.control
 
+                    lookup:
+                        type: list
+                        denon_lookup@instance: INPUT3#list
+
             settings:
 
                 read:
@@ -4036,11 +4056,11 @@ item_structs:
                 enforce_updates: true
                 denon_read_initial@instance: true
                 denon_lookup@instance: INPUT#fwd
-                on_change: sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None
+                on_change: sh..finished.timer(0, True) if sh..self.property.last_update_by.startswith("denon") else None
 
                 finished:
                     type: bool
-                    eval: sh...(sh...property.value)
+                    eval: sh...(sh...property.value, "finished")
 
                 update:
                     type: bool
@@ -4870,6 +4890,10 @@ item_structs:
                     -   AVR-X4300H.zone2
                     -   AVR-X4300H.zone2.control
 
+                    lookup:
+                        type: list
+                        denon_lookup@instance: INPUT#list
+
                 sleep:
                     type: num
                     denon_command@instance: zone2.control.sleep
@@ -5107,6 +5131,10 @@ item_structs:
                     -   AVR-X4300H.zone3
                     -   AVR-X4300H.zone3.control
 
+                    lookup:
+                        type: list
+                        denon_lookup@instance: INPUT3#list
+
             settings:
 
                 read:
@@ -5252,11 +5280,11 @@ item_structs:
                 enforce_updates: true
                 denon_read_initial@instance: true
                 denon_lookup@instance: INPUT#fwd
-                on_change: sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None
+                on_change: sh..finished.timer(0, True) if sh..self.property.last_update_by.startswith("denon") else None
 
                 finished:
                     type: bool
-                    eval: sh...(sh...property.value)
+                    eval: sh...(sh...property.value, "finished")
 
                 update:
                     type: bool
@@ -6094,6 +6122,10 @@ item_structs:
                     -   AVR-X3300W.zone2
                     -   AVR-X3300W.zone2.control
 
+                    lookup:
+                        type: list
+                        denon_lookup@instance: INPUT#list
+
                 sleep:
                     type: num
                     denon_command@instance: zone2.control.sleep
@@ -6271,11 +6303,11 @@ item_structs:
                 enforce_updates: true
                 denon_read_initial@instance: true
                 denon_lookup@instance: INPUT#fwd
-                on_change: sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None
+                on_change: sh..finished.timer(0, True) if sh..self.property.last_update_by.startswith("denon") else None
 
                 finished:
                     type: bool
-                    eval: sh...(sh...property.value)
+                    eval: sh...(sh...property.value, "finished")
 
                 update:
                     type: bool
@@ -7112,6 +7144,10 @@ item_structs:
                     -   AVR-X2300W.zone2
                     -   AVR-X2300W.zone2.control
 
+                    lookup:
+                        type: list
+                        denon_lookup@instance: INPUT#list
+
                 sleep:
                     type: num
                     denon_command@instance: zone2.control.sleep
@@ -7222,11 +7258,11 @@ item_structs:
                 enforce_updates: true
                 denon_read_initial@instance: true
                 denon_lookup@instance: INPUT#fwd
-                on_change: sh..finished.timer(1, True) if sh..self.property.last_update_by.startswith("denon") else None
+                on_change: sh..finished.timer(0, True) if sh..self.property.last_update_by.startswith("denon") else None
 
                 finished:
                     type: bool
-                    eval: sh...(sh...property.value)
+                    eval: sh...(sh...property.value, "finished")
 
                 update:
                     type: bool
@@ -7978,6 +8014,10 @@ item_structs:
                     -   AVR-X1300W
                     -   AVR-X1300W.zone2
                     -   AVR-X1300W.zone2.control
+
+                    lookup:
+                        type: list
+                        denon_lookup@instance: INPUT#list
 
                 sleep:
                     type: num
