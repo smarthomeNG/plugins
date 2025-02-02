@@ -47,6 +47,9 @@ from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION,
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 from lib.model.sdp.command import SDPCommandParseStr
 
+from lib.item.items import Items
+from lib.item.item import Item
+
 # from .webif import WebInterface
 
 builtins.SDP_standalone = False
@@ -82,6 +85,32 @@ class denon(SmartDevicePlugin):
             data['payload'] = f'{data.get("payload", "")}{data["limit_response"].decode("unicode-escape")}'
         return data
 
+    def update_item(self, item: Item, caller: str | None = None, source: str | None = None, dest: str | None = None):
+        super().update_item(item, caller=caller, source=source, dest=dest)
+        cond_custominputnames = item.conf.get('denon_command') == 'general.custom_inputnames'
+        cond_commandexists = f'general.custom_inputnames' in self._commands._commands
+        cond_caller = caller != self.get_fullname()
+        if self.alive and cond_custominputnames and cond_commandexists and cond_caller:
+            self.logger.debug(f'Custom input command dictionary got changed by {caller} - updating inputs of all zones.')
+            itemsApi = Items.get_instance()
+            input3 = itemsApi.return_item(f'{item.property.path}.input3')
+            input3_dict = item.property.value
+            input3_dict['QUICK1'] = 'QUICK1'
+            input3_dict['QUICK2'] = 'QUICK2'
+            input3_dict['QUICK3'] = 'QUICK3'
+            input3_dict['QUICK4'] = 'QUICK4'
+            input3_dict['QUICK5'] = 'QUICK5'
+            input3_dict['QUICK1 MEMORY'] = 'QUICK1 MEMORY'
+            input3_dict['QUICK2 MEMORY'] = 'QUICK2 MEMORY'
+            input3_dict['QUICK3 MEMORY'] = 'QUICK3 MEMORY'
+            input3_dict['QUICK4 MEMORY'] = 'QUICK4 MEMORY'
+            input3_dict['QUICK5 MEMORY'] = 'QUICK5 MEMORY'
+            input3(input3_dict, "custom_inputnames")
+
+            for zone in range(1, 5):
+                if f'zone{zone}.control.input' in self._commands._commands:
+                    self.send_command(f'zone{zone}.control.input')
+
     def _process_additional_data(self, command: str, data: Any, value: Any, custom: int, by: str | None = None):
         zone = 0
         if command == 'zone1.control.power':
@@ -100,13 +129,6 @@ class denon(SmartDevicePlugin):
             self.send_command(f'zone{zone}.control.input')
             self.send_command(f'zone{zone}.control.volume')
             self.send_command(f'zone{zone}.control.listeningmode')
-
-        if command == 'general.custom_finished':
-            for zone in [1, 2, 3, 4]:
-                self.logger.debug(f"Updating input of zone {zone}. {self._commands}")
-                if f'zone{zone}.control.input' in self._commands.keys():
-                    self.send_command(f'zone{zone}.control.input')
-
 
 
 if __name__ == '__main__':
