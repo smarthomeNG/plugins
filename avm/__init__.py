@@ -953,7 +953,7 @@ class FritzDevice:
                 continue
 
             # read items with cycle == 0 just at init
-            if cycle == 0 and self.initial_read_done and not read_all:
+            if (not cycle and self.initial_read_done) or not read_all:
                 self.logger.debug(f"Item {item.property.path} just read at init. No further update.")
                 continue
 
