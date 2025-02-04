@@ -90,28 +90,46 @@ class denon(SmartDevicePlugin):
         cond_commandexists = f'general.custom_inputnames' in self._commands._commands
         cond_caller = caller not in [self.get_fullname(), "custom_inputnames"]
         if self.alive and cond_custominputnames and cond_commandexists and cond_caller:
+            self.logger.debug(f'Custom input command dictionary got changed by {caller}')
             try:
                 dict1 = self.get_lookup("INPUT", "fwd")
                 dict2 = item.property.value
                 merged_dict = {key: dict2[key] if key in dict2 else value for key, value in dict1.items()}
-                self.logger.debug(f'Custom input command dictionary got changed by {caller} - updated input lookup to: {merged_dict}')
+                self.logger.debug(f'Updated input lookup to: {merged_dict}')
                 item(merged_dict, "custom_inputnames")
             except Exception as e:
-                self.logger.debug(
-                    f'Custom input command dictionary got changed by {caller} - issue updating input lookup: {e}')
+                self.logger.debug(f'Issue updating input lookup: {e}')
             try:
                 itemsApi = Items.get_instance()
                 input3 = itemsApi.return_item(f'{item.property.path}.input3')
                 dict1 = self.get_lookup("INPUT3", "fwd")
                 dict2 = item.property.value
                 merged_dict = {key: dict2[key] if key in dict2 else value for key, value in dict1.items()}
-                self.logger.debug(f'Custom input command dictionary got changed by {caller} - updated input3 lookup to: {merged_dict}')
+                self.logger.debug(f'Updated input3 lookup to: {merged_dict}')
                 input3(merged_dict, "custom_inputnames")
             except Exception as e:
-                self.logger.debug(
-                    f'Custom input command dictionary got changed by {caller} - issue updating input lookup: {e}')
-            self.logger.debug(
-                f'Querying input of all zones.')
+                self.logger.debug(f'Issue updating input3 lookup: {e}')
+            try:
+                dict1 = self.get_lookup("VIDEOSELECT", "fwd")
+                dict2 = item.property.value
+                merged_dict = {key: dict2[key] if key in dict2 else value for key, value in dict1.items()}
+                table = "VIDEOSELECT"
+                self.logger.debug(f'Updating videoselect lookup to: {merged_dict}')
+                self._commands.update_lookup_table(table, merged_dict)
+                for mode in ('rev', 'rci', 'list'):
+                    try:
+                        self.logger.debug(f'trying to set item for lookup {table} and mode {mode}.')
+                        lu_items = self._items_by_lookup[table][mode]
+                        if not isinstance(lu_items, list):
+                            lu_items = [lu_items]
+                        for lu_item in lu_items:
+                            lu_item(self.get_lookup(table, mode), self.get_fullname())
+                            self.logger.debug(f'Set lu_item {lu_item}')
+                    except (KeyError, AttributeError):
+                        pass
+            except Exception as e:
+                self.logger.debug(f'Issue updating videoselect lookup: {e}')
+            self.logger.debug('Querying input of all zones.')
             for zone in range(1, 5):
                 if f'zone{zone}.control.input' in self._commands._commands:
                     self.send_command(f'zone{zone}.control.input')

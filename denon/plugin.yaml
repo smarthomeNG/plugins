@@ -567,6 +567,10 @@ item_structs:
             -   general
             denon_read_initial@instance: true
 
+            lookup:
+                type: list
+                denon_lookup@instance: SOUNDMODE#list
+
         allzonestereo:
             type: bool
             denon_command@instance: general.allzonestereo
@@ -584,6 +588,10 @@ item_structs:
             denon_read_group@instance:
             -   general
             denon_read_initial@instance: true
+
+            lookup:
+                type: list
+                denon_lookup@instance: INPUTSIGNAL#list
 
         inputrate:
             type: num
@@ -1379,6 +1387,10 @@ item_structs:
                     -   zone1.settings
                     -   zone1.settings.video
 
+                    lookup:
+                        type: list
+                        denon_lookup@instance: RESOLUTION#list
+
                 videoprocessingmode:
                     type: str
                     denon_command@instance: zone1.settings.video.videoprocessingmode
@@ -1389,6 +1401,10 @@ item_structs:
                     -   zone1.settings
                     -   zone1.settings.video
 
+                    lookup:
+                        type: list
+                        denon_lookup@instance: VIDEOPROCESS#list
+
                 videoresolution:
                     type: str
                     denon_command@instance: zone1.settings.video.videoresolution
@@ -1398,6 +1414,10 @@ item_structs:
                     -   zone1
                     -   zone1.settings
                     -   zone1.settings.video
+
+                    lookup:
+                        type: list
+                        denon_lookup@instance: RESOLUTION#list
 
                 pictureenhancer:
                     type: num
@@ -1418,6 +1438,10 @@ item_structs:
                     -   zone1
                     -   zone1.settings
                     -   zone1.settings.video
+
+                    lookup:
+                        type: list
+                        denon_lookup@instance: VIDEOSELECT#list
 
     zone2:
 
@@ -1895,6 +1919,10 @@ item_structs:
                 -   ALL.general
                 denon_read_initial@instance: true
 
+                lookup:
+                    type: list
+                    denon_lookup@instance: SOUNDMODE#list
+
             inputsignal:
                 type: str
                 denon_command@instance: general.inputsignal
@@ -1904,6 +1932,10 @@ item_structs:
                 -   ALL
                 -   ALL.general
                 denon_read_initial@instance: true
+
+                lookup:
+                    type: list
+                    denon_lookup@instance: INPUTSIGNAL#list
 
             inputrate:
                 type: num
@@ -2771,6 +2803,10 @@ item_structs:
                 -   AVR-X6300H.general
                 denon_read_initial@instance: true
 
+                lookup:
+                    type: list
+                    denon_lookup@instance: SOUNDMODE#list
+
             inputsignal:
                 type: str
                 denon_command@instance: general.inputsignal
@@ -2780,6 +2816,10 @@ item_structs:
                 -   AVR-X6300H
                 -   AVR-X6300H.general
                 denon_read_initial@instance: true
+
+                lookup:
+                    type: list
+                    denon_lookup@instance: INPUTSIGNAL#list
 
             inputrate:
                 type: num
@@ -3448,6 +3488,10 @@ item_structs:
                         -   AVR-X6300H.zone1.settings
                         -   AVR-X6300H.zone1.settings.video
 
+                        lookup:
+                            type: list
+                            denon_lookup@instance: RESOLUTION#list
+
                     videoprocessingmode:
                         type: str
                         denon_command@instance: zone1.settings.video.videoprocessingmode
@@ -3459,6 +3503,10 @@ item_structs:
                         -   AVR-X6300H.zone1.settings
                         -   AVR-X6300H.zone1.settings.video
 
+                        lookup:
+                            type: list
+                            denon_lookup@instance: VIDEOPROCESS#list
+
                     videoresolution:
                         type: str
                         denon_command@instance: zone1.settings.video.videoresolution
@@ -3469,6 +3517,10 @@ item_structs:
                         -   AVR-X6300H.zone1
                         -   AVR-X6300H.zone1.settings
                         -   AVR-X6300H.zone1.settings.video
+
+                        lookup:
+                            type: list
+                            denon_lookup@instance: RESOLUTION#list
 
                     pictureenhancer:
                         type: num
@@ -3491,6 +3543,10 @@ item_structs:
                         -   AVR-X6300H.zone1
                         -   AVR-X6300H.zone1.settings
                         -   AVR-X6300H.zone1.settings.video
+
+                        lookup:
+                            type: list
+                            denon_lookup@instance: VIDEOSELECT#list
 
         zone2:
 
@@ -4160,6 +4216,10 @@ item_structs:
                 -   AVR-X6300H-NA.general
                 denon_read_initial@instance: true
 
+                lookup:
+                    type: list
+                    denon_lookup@instance: SOUNDMODE#list
+
             inputsignal:
                 type: str
                 denon_command@instance: general.inputsignal
@@ -4169,6 +4229,10 @@ item_structs:
                 -   AVR-X6300H-NA
                 -   AVR-X6300H-NA.general
                 denon_read_initial@instance: true
+
+                lookup:
+                    type: list
+                    denon_lookup@instance: INPUTSIGNAL#list
 
             inputrate:
                 type: num
@@ -4833,6 +4897,10 @@ item_structs:
                         -   AVR-X6300H-NA.zone1.settings
                         -   AVR-X6300H-NA.zone1.settings.video
 
+                        lookup:
+                            type: list
+                            denon_lookup@instance: RESOLUTION#list
+
                     videoprocessingmode:
                         type: str
                         denon_command@instance: zone1.settings.video.videoprocessingmode
@@ -4844,6 +4912,10 @@ item_structs:
                         -   AVR-X6300H-NA.zone1.settings
                         -   AVR-X6300H-NA.zone1.settings.video
 
+                        lookup:
+                            type: list
+                            denon_lookup@instance: VIDEOPROCESS#list
+
                     videoresolution:
                         type: str
                         denon_command@instance: zone1.settings.video.videoresolution
@@ -4854,6 +4926,10 @@ item_structs:
                         -   AVR-X6300H-NA.zone1
                         -   AVR-X6300H-NA.zone1.settings
                         -   AVR-X6300H-NA.zone1.settings.video
+
+                        lookup:
+                            type: list
+                            denon_lookup@instance: RESOLUTION#list
 
                     pictureenhancer:
                         type: num
@@ -4876,6 +4952,10 @@ item_structs:
                         -   AVR-X6300H-NA.zone1
                         -   AVR-X6300H-NA.zone1.settings
                         -   AVR-X6300H-NA.zone1.settings.video
+
+                        lookup:
+                            type: list
+                            denon_lookup@instance: VIDEOSELECT#list
 
         zone2:
 
@@ -5376,6 +5456,10 @@ item_structs:
                 -   AVR-X4300H.general
                 denon_read_initial@instance: true
 
+                lookup:
+                    type: list
+                    denon_lookup@instance: SOUNDMODE#list
+
             inputsignal:
                 type: str
                 denon_command@instance: general.inputsignal
@@ -5385,6 +5469,10 @@ item_structs:
                 -   AVR-X4300H
                 -   AVR-X4300H.general
                 denon_read_initial@instance: true
+
+                lookup:
+                    type: list
+                    denon_lookup@instance: INPUTSIGNAL#list
 
             inputrate:
                 type: num
@@ -6077,6 +6165,10 @@ item_structs:
                         -   AVR-X4300H.zone1.settings
                         -   AVR-X4300H.zone1.settings.video
 
+                        lookup:
+                            type: list
+                            denon_lookup@instance: RESOLUTION#list
+
                     videoprocessingmode:
                         type: str
                         denon_command@instance: zone1.settings.video.videoprocessingmode
@@ -6088,6 +6180,10 @@ item_structs:
                         -   AVR-X4300H.zone1.settings
                         -   AVR-X4300H.zone1.settings.video
 
+                        lookup:
+                            type: list
+                            denon_lookup@instance: VIDEOPROCESS#list
+
                     videoresolution:
                         type: str
                         denon_command@instance: zone1.settings.video.videoresolution
@@ -6098,6 +6194,10 @@ item_structs:
                         -   AVR-X4300H.zone1
                         -   AVR-X4300H.zone1.settings
                         -   AVR-X4300H.zone1.settings.video
+
+                        lookup:
+                            type: list
+                            denon_lookup@instance: RESOLUTION#list
 
                     pictureenhancer:
                         type: num
@@ -6120,6 +6220,10 @@ item_structs:
                         -   AVR-X4300H.zone1
                         -   AVR-X4300H.zone1.settings
                         -   AVR-X4300H.zone1.settings.video
+
+                        lookup:
+                            type: list
+                            denon_lookup@instance: VIDEOSELECT#list
 
         zone2:
 
@@ -6629,6 +6733,10 @@ item_structs:
                 -   AVR-X3300W.general
                 denon_read_initial@instance: true
 
+                lookup:
+                    type: list
+                    denon_lookup@instance: SOUNDMODE#list
+
             inputsignal:
                 type: str
                 denon_command@instance: general.inputsignal
@@ -6638,6 +6746,10 @@ item_structs:
                 -   AVR-X3300W
                 -   AVR-X3300W.general
                 denon_read_initial@instance: true
+
+                lookup:
+                    type: list
+                    denon_lookup@instance: INPUTSIGNAL#list
 
             inputrate:
                 type: num
@@ -7329,6 +7441,10 @@ item_structs:
                         -   AVR-X3300W.zone1.settings
                         -   AVR-X3300W.zone1.settings.video
 
+                        lookup:
+                            type: list
+                            denon_lookup@instance: RESOLUTION#list
+
                     videoprocessingmode:
                         type: str
                         denon_command@instance: zone1.settings.video.videoprocessingmode
@@ -7340,6 +7456,10 @@ item_structs:
                         -   AVR-X3300W.zone1.settings
                         -   AVR-X3300W.zone1.settings.video
 
+                        lookup:
+                            type: list
+                            denon_lookup@instance: VIDEOPROCESS#list
+
                     videoresolution:
                         type: str
                         denon_command@instance: zone1.settings.video.videoresolution
@@ -7350,6 +7470,10 @@ item_structs:
                         -   AVR-X3300W.zone1
                         -   AVR-X3300W.zone1.settings
                         -   AVR-X3300W.zone1.settings.video
+
+                        lookup:
+                            type: list
+                            denon_lookup@instance: RESOLUTION#list
 
                     pictureenhancer:
                         type: num
@@ -7372,6 +7496,10 @@ item_structs:
                         -   AVR-X3300W.zone1
                         -   AVR-X3300W.zone1.settings
                         -   AVR-X3300W.zone1.settings.video
+
+                        lookup:
+                            type: list
+                            denon_lookup@instance: VIDEOSELECT#list
 
         zone2:
 
@@ -7672,6 +7800,10 @@ item_structs:
                 -   AVR-X2300W.general
                 denon_read_initial@instance: true
 
+                lookup:
+                    type: list
+                    denon_lookup@instance: SOUNDMODE#list
+
             inputsignal:
                 type: str
                 denon_command@instance: general.inputsignal
@@ -7681,6 +7813,10 @@ item_structs:
                 -   AVR-X2300W
                 -   AVR-X2300W.general
                 denon_read_initial@instance: true
+
+                lookup:
+                    type: list
+                    denon_lookup@instance: INPUTSIGNAL#list
 
             inputrate:
                 type: num
@@ -8371,6 +8507,10 @@ item_structs:
                         -   AVR-X2300W.zone1.settings
                         -   AVR-X2300W.zone1.settings.video
 
+                        lookup:
+                            type: list
+                            denon_lookup@instance: RESOLUTION#list
+
                     videoprocessingmode:
                         type: str
                         denon_command@instance: zone1.settings.video.videoprocessingmode
@@ -8382,6 +8522,10 @@ item_structs:
                         -   AVR-X2300W.zone1.settings
                         -   AVR-X2300W.zone1.settings.video
 
+                        lookup:
+                            type: list
+                            denon_lookup@instance: VIDEOPROCESS#list
+
                     videoresolution:
                         type: str
                         denon_command@instance: zone1.settings.video.videoresolution
@@ -8392,6 +8536,10 @@ item_structs:
                         -   AVR-X2300W.zone1
                         -   AVR-X2300W.zone1.settings
                         -   AVR-X2300W.zone1.settings.video
+
+                        lookup:
+                            type: list
+                            denon_lookup@instance: RESOLUTION#list
 
                     pictureenhancer:
                         type: num
@@ -8414,6 +8562,10 @@ item_structs:
                         -   AVR-X2300W.zone1
                         -   AVR-X2300W.zone1.settings
                         -   AVR-X2300W.zone1.settings.video
+
+                        lookup:
+                            type: list
+                            denon_lookup@instance: VIDEOSELECT#list
 
         zone2:
 
@@ -8647,6 +8799,10 @@ item_structs:
                 -   AVR-X1300W.general
                 denon_read_initial@instance: true
 
+                lookup:
+                    type: list
+                    denon_lookup@instance: SOUNDMODE#list
+
             inputsignal:
                 type: str
                 denon_command@instance: general.inputsignal
@@ -8656,6 +8812,10 @@ item_structs:
                 -   AVR-X1300W
                 -   AVR-X1300W.general
                 denon_read_initial@instance: true
+
+                lookup:
+                    type: list
+                    denon_lookup@instance: INPUTSIGNAL#list
 
             inputrate:
                 type: num

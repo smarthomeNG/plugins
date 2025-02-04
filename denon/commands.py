@@ -73,9 +73,9 @@ commands = {
         'power': {'read': True, 'write': True, 'read_cmd': 'PW?', 'write_cmd': 'PW{VALUE}', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': r'^PW{LOOKUP}', 'lookup': 'POWER'},
         'setupmenu': {'read': True, 'write': True, 'read_cmd': 'MNMEN?', 'write_cmd': 'MNMEN {VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': r'^MNMEN (ON|OFF)'},
         'display': {'read': True, 'write': False, 'read_cmd': 'NSE', 'item_type': 'str', 'dev_datatype': 'DenonDisplay', 'reply_pattern': r'^NSE(.*)'},
-        'soundmode': {'read': True, 'write': False, 'read_cmd': 'SSSMG ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSSMG {LOOKUP}', 'lookup': 'SOUNDMODE', 'item_attrs': {'initial': True}},
+        'soundmode': {'read': True, 'write': False, 'read_cmd': 'SSSMG ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSSMG {LOOKUP}', 'lookup': 'SOUNDMODE', 'item_attrs': {'initial': True, 'lookup_item': True}},
         'allzonestereo': {'read': True, 'write': False, 'read_cmd': 'MNZST?', 'write_cmd': 'MNZST {VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': r'^MNZST {ON|OFF}', 'item_attrs': {'initial': True}},
-        'inputsignal': {'read': True, 'write': False, 'read_cmd': 'SSINFAISSIG ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSINFAISSIG {LOOKUP}', 'lookup': 'INPUTSIGNAL', 'item_attrs': {'initial': True}},
+        'inputsignal': {'read': True, 'write': False, 'read_cmd': 'SSINFAISSIG ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSINFAISSIG {LOOKUP}', 'lookup': 'INPUTSIGNAL', 'item_attrs': {'initial': True, 'lookup_item': True}},
         'inputrate': {'read': True, 'write': False, 'read_cmd': 'SSINFAISFSV ?', 'item_type': 'num', 'dev_datatype': 'convert0', 'reply_pattern': r'^SSINFAISFSV (\d{2,3}|NON)', 'item_attrs': {'initial': True}},
         'inputformat': {'read': True, 'write': False, 'read_cmd': 'SSINFAISFOR ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSINFAISFOR (.*)', 'item_attrs': {'initial': True}},
         'inputresolution': {'read': True, 'write': False, 'read_cmd': 'SSINFSIGRES ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSINFSIGRES I(.*)', 'item_attrs': {'initial': True}},
@@ -116,7 +116,7 @@ commands = {
             'volume': {'read': True, 'write': True, 'read_cmd': 'MV?', 'write_cmd': 'MV{VALUE}', 'item_type': 'num', 'dev_datatype': 'DenonVol', 'reply_pattern': r'^MV(\d{2,3})', 'cmd_settings': {'force_min': 0.0, 'valid_max': 98.0}, 'item_attrs': {'initial': True}},
             'volumeup': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'MVUP', 'dev_datatype': 'raw'},
             'volumedown': {'read': False, 'write': True, 'write_cmd': 'MVDOWN', 'item_type': 'bool', 'dev_datatype': 'raw'},
-            'volumemax': {'opcode': '{VALUE}', 'read': True, 'write': False, 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^MVMAX (\d{2,3})', 'item_attrs': {'read_group_levels': 0}},
+            'volumemax': {'opcode': '{VALUE}', 'read': True, 'write': False, 'item_type': 'num', 'dev_datatype': 'DenonVol', 'reply_pattern': r'^MVMAX (\d{2,3})', 'item_attrs': {'read_group_levels': 0}},
             'input': {'read': True, 'write': True, 'read_cmd': 'SI?', 'write_cmd': 'SI{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SI{LOOKUP}', 'lookup': 'INPUT', 'item_attrs': {'lookup_item': True}},
             'listeningmode': {'read': True, 'write': True, 'cmd_settings': {'valid_list_ci': ['MOVIE', 'MUSIC', 'GAME', 'DIRECT', 'PURE DIRECT', 'STEREO', 'AUTO', 'DOLBY DIGITAL', 'DOLBY SURROUND', 'DTS SURROUND', 'NEURAL:X', 'AURO3D', 'AURO2DSURR', 'MCH STEREO', 'ROCK ARENA', 'JAZZ CLUB', 'MONO MOVIE', 'MATRIX', 'VIDEO GAME', 'VIRTUAL', 'LEFT', 'RIGHT']}, 'read_cmd': 'MS?', 'write_cmd': 'MS{RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^\x00?MS(.*)', 'item_attrs': {'initial': True}},
             'sleep': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'SLP?', 'write_cmd': 'SLP{VALUE}', 'dev_datatype': 'convert0', 'reply_pattern': r'^SLP(\d{3}|OFF)', 'cmd_settings': {'force_min': 0, 'force_max': 120}, 'item_attrs': {'initial': True}},
@@ -175,11 +175,11 @@ commands = {
             'video': {
                 'aspectratio': {'read': True, 'write': True, 'read_cmd': 'VSASP ?', 'write_cmd': 'VSASP{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^VSASP{LOOKUP}', 'lookup': 'ASPECT'},
                 'hdmimonitor': {'read': True, 'write': True, 'cmd_settings': {'force_min': 0, 'force_max': 2}, 'read_cmd': 'VSMONI ?', 'write_cmd': 'VSMONI{VALUE}', 'item_type': 'num', 'dev_datatype': 'convertAuto', 'reply_pattern': r'^VSMONI(AUTO|1|2)'},
-                'hdmiresolution': {'read': True, 'write': True, 'read_cmd': 'VSSCH ?', 'write_cmd': 'VSSCH{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^VSSCH{LOOKUP}', 'lookup': 'RESOLUTION'},
-                'videoprocessingmode': {'read': True, 'write': True, 'item_type': 'str', 'read_cmd': 'VSVPM ?', 'write_cmd': 'VSVPM{VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^VSVPM{LOOKUP}', 'lookup': 'VIDEOPROCESS'},
-                'videoresolution': {'read': True, 'write': True, 'read_cmd': 'VSSC ?', 'write_cmd': 'VSSC{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^VSSC{LOOKUP}', 'lookup': 'RESOLUTION'},
+                'hdmiresolution': {'read': True, 'write': True, 'read_cmd': 'VSSCH ?', 'write_cmd': 'VSSCH{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^VSSCH{LOOKUP}', 'lookup': 'RESOLUTION', 'item_attrs': {'lookup_item': True}},
+                'videoprocessingmode': {'read': True, 'write': True, 'item_type': 'str', 'read_cmd': 'VSVPM ?', 'write_cmd': 'VSVPM{VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^VSVPM{LOOKUP}', 'lookup': 'VIDEOPROCESS', 'item_attrs': {'lookup_item': True}},
+                'videoresolution': {'read': True, 'write': True, 'read_cmd': 'VSSC ?', 'write_cmd': 'VSSC{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^VSSC{LOOKUP}', 'lookup': 'RESOLUTION', 'item_attrs': {'lookup_item': True}},
                 'pictureenhancer': {'read': True, 'write': True, 'read_cmd': 'PVENH ?', 'item_type': 'num', 'cmd_settings': {'force_min': 0, 'force_max': 12}, 'write_cmd': 'PVENH {RAW_VALUE:02}', 'dev_datatype': 'int', 'reply_pattern': r'^PVENH (\d{2})'},
-                'videoinput': {'read': True, 'write': True, 'cmd_settings': {'valid_list_ci': ['DVD', 'BD', 'TV', 'SAT/CBL', 'MPLAY', 'GAME', 'AUX1', 'AUX2', 'CD', 'ON', 'OFF']}, 'read_cmd': 'SV?', 'write_cmd': 'SV{RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SV{VALID_LIST_CI}'}
+                'videoinput': {'read': True, 'write': True, 'read_cmd': 'SV?', 'write_cmd': 'SV{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SV{LOOKUP}', 'lookup': 'VIDEOSELECT', 'item_attrs': {'lookup_item': True}}
             }
         }
     },
@@ -192,7 +192,7 @@ commands = {
             'volumedown': {'read': False, 'write': True, 'write_cmd': 'Z2DOWN', 'item_type': 'bool', 'dev_datatype': 'raw'},
             'input': {'read': True, 'write': True, 'read_cmd': 'Z2?', 'write_cmd': 'Z2{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^Z2{LOOKUP}', 'lookup': 'INPUT', 'item_attrs': {'lookup_item': True}},
             'sleep': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z2SLP?', 'write_cmd': 'Z2SLP{VALUE}', 'dev_datatype': 'convert0', 'reply_pattern': r'^Z2SLP(\d{3}|OFF)', 'cmd_settings': {'force_min': 0, 'force_max': 120}},
-            'standby': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z2STBY?', 'write_cmd': 'Z2STBY{VALUE}', 'dev_datatype': 'DenonStandby', 'reply_pattern': r'^Z2STBY(\dH|OFF)', 'cmd_settings': {'valid_list_ci': [0, 2, 4, 8]}},
+            'standby': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z2STBY?', 'write_cmd': 'Z2STBY{VALUE}', 'dev_datatype': 'DenonStandby', 'reply_pattern': r'^Z2STBY(\dH|OFF)', 'cmd_settings': {'valid_list': [0, 2, 4, 8]}},
         },
         'settings': {
             'sound': {
@@ -223,7 +223,7 @@ commands = {
             'volumeup': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'Z3UP', 'dev_datatype': 'raw'},
             'volumedown': {'read': False, 'write': True, 'write_cmd': 'Z3DOWN', 'item_type': 'bool', 'dev_datatype': 'raw'},
             'sleep': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z3SLP?', 'write_cmd': 'Z3SLP{VALUE}', 'dev_datatype': 'convert0', 'reply_pattern': r'^Z3SLP(\d{3}|OFF)', 'cmd_settings': {'force_min': 0, 'valid_max': 120}},
-            'standby': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z3STBY?', 'write_cmd': 'Z3STBY{VALUE}', 'dev_datatype': 'DenonStandby', 'reply_pattern': r'^Z3STBY(\dH|OFF)', 'cmd_settings': {'valid_list_ci': [0, 2, 4, 8]}},
+            'standby': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z3STBY?', 'write_cmd': 'Z3STBY{VALUE}', 'dev_datatype': 'DenonStandby', 'reply_pattern': r'^Z3STBY(\dH|OFF)', 'cmd_settings': {'valid_list': [0, 2, 4, 8]}},
             'input': {'read': True, 'write': True, 'read_cmd': 'Z3?', 'write_cmd': 'Z3{RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^Z3{LOOKUP}', 'lookup': 'INPUT3', 'item_attrs': {'lookup_item': True}}
         },
         'settings': {
@@ -320,6 +320,17 @@ lookups = {
             'GAME': 'Game',
             'AUTO': 'Auto'
         },
+        'VIDEOSELECT': {
+            'DVD': 'DVD',
+            'BD': 'BD',
+            'TV': 'TV',
+            'SAT/CBL': 'SAT/CBL',
+            'MPLAY': 'MPLAY',
+            'GAME': 'GAME',
+            'AUX1': 'AUX1',
+            'ON': 'ON',
+            'OFF': 'OFF'
+        },
         'INPUT': {
             'SOURCE': 'SOURCE',
             'DVD': 'DVD',
@@ -367,7 +378,11 @@ lookups = {
         },
         'INPUT3': {
             'TUNER': 'TUNER'
-        }
+        },
+        'VIDEOSELECT': {
+            'AUX2': 'AUX2',
+            'CD': 'CD'
+        },
     },
     'AVR-X6300H-NA': {
         'INPUT': {
@@ -378,14 +393,22 @@ lookups = {
         },
         'INPUT3': {
             'HDRADIO': 'HDRADIO'
-        }
+        },
+        'VIDEOSELECT': {
+            'AUX2': 'AUX2',
+            'CD': 'CD'
+        },
     },
     'AVR-X4300H': {
         'INPUT': {
             'PHONO': 'PHONO',
             'CD': 'CD',
             'AUX2': 'AUX2'
-        }
+        },
+        'VIDEOSELECT': {
+            'AUX2': 'AUX2',
+            'CD': 'CD'
+        },
     },
     'AVR-X3300W': {
         'INPUT': {
@@ -399,7 +422,11 @@ lookups = {
             'IPD': 'IPD',
             'IRP': 'IRP',
             'FVP': 'FVP'
-        }
+        },
+        'VIDEOSELECT': {
+            'AUX2': 'AUX2',
+            'CD': 'CD'
+        },
     },
     'AVR-X2300W': {
         'INPUT': {
@@ -413,7 +440,11 @@ lookups = {
             'IPD': 'IPD',
             'IRP': 'IRP',
             'FVP': 'FVP'
-        }
+        },
+        'VIDEOSELECT': {
+            'AUX2': 'AUX2',
+            'CD': 'CD'
+        },
     },
     'AVR-X1300W': {
         'INPUT': {
