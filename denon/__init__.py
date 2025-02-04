@@ -86,30 +86,37 @@ class denon(SmartDevicePlugin):
         return data
 
     def update_item(self, item: Item, caller: str | None = None, source: str | None = None, dest: str | None = None):
-        super().update_item(item, caller=caller, source=source, dest=dest)
         cond_custominputnames = item.conf.get('denon_command') == 'general.custom_inputnames'
         cond_commandexists = f'general.custom_inputnames' in self._commands._commands
-        cond_caller = caller != self.get_fullname()
+        cond_caller = caller not in [self.get_fullname(), "custom_inputnames"]
         if self.alive and cond_custominputnames and cond_commandexists and cond_caller:
-            self.logger.debug(f'Custom input command dictionary got changed by {caller} - updating inputs of all zones.')
-            itemsApi = Items.get_instance()
-            input3 = itemsApi.return_item(f'{item.property.path}.input3')
-            input3_dict = item.property.value
-            input3_dict['QUICK1'] = 'QUICK1'
-            input3_dict['QUICK2'] = 'QUICK2'
-            input3_dict['QUICK3'] = 'QUICK3'
-            input3_dict['QUICK4'] = 'QUICK4'
-            input3_dict['QUICK5'] = 'QUICK5'
-            input3_dict['QUICK1 MEMORY'] = 'QUICK1 MEMORY'
-            input3_dict['QUICK2 MEMORY'] = 'QUICK2 MEMORY'
-            input3_dict['QUICK3 MEMORY'] = 'QUICK3 MEMORY'
-            input3_dict['QUICK4 MEMORY'] = 'QUICK4 MEMORY'
-            input3_dict['QUICK5 MEMORY'] = 'QUICK5 MEMORY'
-            input3(input3_dict, "custom_inputnames")
-
+            try:
+                dict1 = self.get_lookup("INPUT", "fwd")
+                dict2 = item.property.value
+                merged_dict = {key: dict2[key] if key in dict2 else value for key, value in dict1.items()}
+                self.logger.debug(f'Custom input command dictionary got changed by {caller} - updated input lookup to: {merged_dict}')
+                item(merged_dict, "custom_inputnames")
+            except Exception as e:
+                self.logger.debug(
+                    f'Custom input command dictionary got changed by {caller} - issue updating input lookup: {e}')
+            try:
+                itemsApi = Items.get_instance()
+                input3 = itemsApi.return_item(f'{item.property.path}.input3')
+                dict1 = self.get_lookup("INPUT3", "fwd")
+                dict2 = item.property.value
+                merged_dict = {key: dict2[key] if key in dict2 else value for key, value in dict1.items()}
+                self.logger.debug(f'Custom input command dictionary got changed by {caller} - updated input3 lookup to: {merged_dict}')
+                input3(merged_dict, "custom_inputnames")
+            except Exception as e:
+                self.logger.debug(
+                    f'Custom input command dictionary got changed by {caller} - issue updating input lookup: {e}')
+            self.logger.debug(
+                f'Querying input of all zones.')
             for zone in range(1, 5):
                 if f'zone{zone}.control.input' in self._commands._commands:
                     self.send_command(f'zone{zone}.control.input')
+        else:
+            super().update_item(item, caller=caller, source=source, dest=dest)
 
     def _process_additional_data(self, command: str, data: Any, value: Any, custom: int, by: str | None = None):
         zone = 0
