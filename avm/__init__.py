@@ -921,8 +921,6 @@ class FritzDevice:
     def cyclic_item_update(self, read_all: bool = False):
         """Updates Item Values"""
 
-        self.logger.debug(f"tr064 cyclic_item_update: {read_all=}")
-
         if not self._plugin_instance.alive:
             return
 
@@ -953,7 +951,7 @@ class FritzDevice:
                 continue
 
             # read items with cycle == 0 just at init
-            if (not cycle and self.initial_read_done) or not read_all:
+            if cycle == 0 and self.initial_read_done and not read_all:
                 self.logger.debug(f"Item {item.property.path} just read at init. No further update.")
                 continue
 
@@ -1989,7 +1987,7 @@ class FritzHome:
             next_time = item_config['next_update']
 
             # Just read items with cycle == 0 at init
-            if (not cycle and self.initial_read_done) or not read_all:
+            if cycle == 0 and self.initial_read_done and not read_all:
                 self.logger.debug(f"Item={item.property.path} just read at init. No further update.")
                 continue
 
