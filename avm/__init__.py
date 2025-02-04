@@ -113,7 +113,7 @@ class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = '2.2.2'
+    PLUGIN_VERSION = '2.2.3'
 
     # ToDo: FritzHome.handle_updated_item: implement 'saturation'
     # ToDo: FritzHome.handle_updated_item: implement 'unmapped_hue'
@@ -206,8 +206,7 @@ class AVM(SmartPlugin):
                 # just in case it already exists...
                 if self.scheduler_get(f'poll_{target}'):
                     self.scheduler_remove(f'poll_{target}')
-                dt = self.shtime.now() + datetime.timedelta(seconds=workercycle)
-                self.scheduler_add(f'poll_{target}', fct, cycle=workercycle, prio=5, offset=offset, next=dt)
+                self.scheduler_add(f'poll_{target}', fct, cycle=workercycle, prio=5, offset=offset)
                 self.logger.info(f'{target}: Added cyclic worker thread ({workercycle} sec cycle). Shortest item update cycle found: {shortestcycle} sec')
                 return True
             else:
@@ -216,12 +215,9 @@ class AVM(SmartPlugin):
         self.logger.debug("Run method called")
         if self.fritz_device:
             create_cyclic_scheduler(target='tr064', items=self.get_tr064_items(), fct=self.fritz_device.cyclic_item_update, offset=2)
-            self.fritz_device.cyclic_item_update(read_all=True)
 
         if self._aha_http_interface and self.fritz_device and self.fritz_device.is_fritzbox() and self.fritz_home:
-            # add scheduler for updating items
             create_cyclic_scheduler(target='aha', items=self.get_aha_items(), fct=self.fritz_home.cyclic_item_update, offset=4)
-            self.fritz_home.cyclic_item_update(read_all=True)
 
         if self.monitoring_service:
             self.monitoring_service.set_callmonitor_item_values_initially()
@@ -770,6 +766,7 @@ class FritzDevice:
         self.default_connection_service = None
         self.client = None
         self.client_igd = None
+        self.initial_read_done = False
 
         # get client objects
         try:
@@ -922,6 +919,8 @@ class FritzDevice:
     def cyclic_item_update(self, read_all: bool = False):
         """Updates Item Values"""
 
+        self.logger.debug(f"tr064 cyclic_item_update: {read_all=}")
+
         if not self._plugin_instance.alive:
             return
 
@@ -952,7 +951,7 @@ class FritzDevice:
                 continue
 
             # read items with cycle == 0 just at init
-            if cycle == 0 and not read_all:
+            if cycle == 0 and self.initial_read_done and not read_all:
                 self.logger.debug(f"Item {item.property.path} just read at init. No further update.")
                 continue
 
@@ -980,6 +979,9 @@ class FritzDevice:
 
         # clear data cache dict after update cycle
         self._clear_data_cache()
+        
+        # set initial_read_done to True
+        self.initial_read_done = True
 
         self.logger.debug(f"Update of {item_count} TR064-Items took {int(time.time()) - current_time}s")
 
@@ -1949,6 +1951,7 @@ class FritzHome:
         self.use_device_statistics = False
         self.last_device_statistics_update = 0
         self.device_statistics_min_grid = 0
+        self.initial_read_done = False
 
         # Login to test, if login is possible and get first sid
         self.login()
@@ -1984,8 +1987,8 @@ class FritzHome:
             next_time = item_config['next_update']
 
             # Just read items with cycle == 0 at init
-            if not read_all and not cycle:
-                # self.logger.debug(f"Item={item.property.path} just read at init. No further update.")
+            if (not cycle and self.initial_read_done) or not read_all:
+                self.logger.debug(f"Item={item.property.path} just read at init. No further update.")
                 continue
 
             # check if item is already due
@@ -2017,6 +2020,9 @@ class FritzHome:
 
             # set next due date
             item_config['next_update'] = update_time + cycle
+            
+        # set initial_read_done to True
+        self.initial_read_done = True
 
         self.logger.debug(f"Update of {item_count} AHA-Items took {int(time.time()) - update_time}s")
 
