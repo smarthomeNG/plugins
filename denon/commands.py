@@ -72,7 +72,7 @@ commands = {
         'inputformat': {'read': True, 'write': False, 'read_cmd': 'SSINFAISFOR ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSINFAISFOR (.*)', 'item_attrs': {'initial': True}},
         'inputresolution': {'read': True, 'write': False, 'read_cmd': 'SSINFSIGRES ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSINFSIGRES I(.*)', 'item_attrs': {'initial': True}},
         'outputresolution': {'read': True, 'write': False, 'read_cmd': 'SSINFSIGRES ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSINFSIGRES O(.*)', 'item_attrs': {'read_group_levels': 0}},
-        'ecomode': {'read': True, 'write': True, 'cmd_settings': {'valid_list_ci': ['ON', 'OFF', 'AUTO']}, 'read_cmd': 'ECO?', 'write_cmd': 'ECO{RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^ECO{VALID_LIST_CI}'},
+        'ecomode': {'read': True, 'write': True, 'cmd_settings': {'valid_list_ci': ['ON', 'OFF', 'AUTO']}, 'read_cmd': 'ECO?', 'write_cmd': 'ECO{RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^ECO{VALID_LIST_CI}', 'item_attrs': {'initial': True}},
     },
     'tuner': {
         'title': {'read': True, 'write': False, 'read_cmd': 'NSE', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^NSE1(.*)', 'item_attrs': {'initial': True}},
@@ -90,7 +90,7 @@ commands = {
             'channel': {'read': True, 'write': True, 'read_cmd': 'TFHD?', 'item_type': 'num', 'write_cmd': 'TFHD{RAW_VALUE:06}', 'dev_datatype': 'num', 'reply_pattern': r'^TFHD(\d{6})', 'item_attrs': {'initial': True}},
             'channelup': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'TFHDUP', 'dev_datatype': 'raw'},
             'channeldown': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'TFHDDOWN', 'dev_datatype': 'raw'},
-            'multicastchannel': {'read': True, 'write': True, 'read_cmd': 'TFHD?', 'item_type': 'num', 'write_cmd': 'TFHDMC{RAW_VALUE:01}', 'dev_datatype': 'num', 'reply_pattern': r'^TFHDMC(\d{1})'},
+            'multicastchannel': {'read': True, 'write': True, 'read_cmd': 'TFHD?', 'item_type': 'num', 'write_cmd': 'TFHDMC{RAW_VALUE:01}', 'dev_datatype': 'num', 'reply_pattern': r'^TFHDMC(\d{1})', 'item_attrs': {'read_group_levels': 0}},
             'presetmemory': {'read': True, 'write': True, 'item_type': 'num', 'write_cmd': 'TPHDMEM{RAW_VALUE:02}', 'dev_datatype': 'convert0', 'reply_pattern': r'^TPHDMEM(\d{2}|OFF)'},
             'preset': {'read': True, 'write': True, 'read_cmd': 'TPHD?', 'item_type': 'num', 'write_cmd': 'TPHD{RAW_VALUE:02}', 'dev_datatype': 'convert0', 'reply_pattern': r'^TPHD(\d{2}|OFF)'},
             'presetup': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'TPHDUP', 'dev_datatype': 'raw'},
@@ -169,7 +169,7 @@ commands = {
                 'videoprocessingmode': {'read': True, 'write': True, 'item_type': 'str', 'read_cmd': 'VSVPM ?', 'write_cmd': 'VSVPM{VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'^VSVPM{LOOKUP}', 'lookup': 'VIDEOPROCESS'},
                 'videoresolution': {'read': True, 'write': True, 'read_cmd': 'VSSC ?', 'write_cmd': 'VSSC{VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^VSSC{LOOKUP}', 'lookup': 'RESOLUTION'},
                 'pictureenhancer': {'read': True, 'write': True, 'read_cmd': 'PVENH ?', 'item_type': 'num', 'cmd_settings': {'force_min': 0, 'force_max': 12}, 'write_cmd': 'PVENH {RAW_VALUE:02}', 'dev_datatype': 'int', 'reply_pattern': r'^PVENH (\d{2})'},
-                'videoinput': {'read': True, 'write': True, 'cmd_settings': {'valid_list_ci': ['DVD', 'BD', 'TV', 'SAT/CBL', 'MPLAY', 'GAME' 'AUX1', 'AUX2', 'CD', 'ON', 'OFF']}, 'read_cmd': 'SV?', 'write_cmd': 'SV{RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SV{VALID_LIST_CI}'}
+                'videoinput': {'read': True, 'write': True, 'cmd_settings': {'valid_list_ci': ['DVD', 'BD', 'TV', 'SAT/CBL', 'MPLAY', 'GAME', 'AUX1', 'AUX2', 'CD', 'ON', 'OFF']}, 'read_cmd': 'SV?', 'write_cmd': 'SV{RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SV{VALID_LIST_CI}'}
             }
         }
     },
