@@ -10,25 +10,33 @@ lookups.
 
 models = {
     'ALL': ['general.custom_inputnames', 'general.power', 'general.setupmenu', 'general.soundmode', 'general.inputsignal', 'general.inputrate', 'general.inputformat', 'general.inputresolution', 'general.outputresolution', 'general.ecomode',
-            'tuner.preset', 'tuner.presetup', 'tuner.presetdown', 'tuner.frequency', 'tuner.frequencyup', 'tuner.frequencydown', 'tuner.band', 'tuner.tuningmode',
             'zone1.control',
             'zone1.settings.sound.general.audioinput', 'zone1.settings.sound.general.cinema_eq', 'zone1.settings.sound.general.hdmiaudioout', 'zone1.settings.sound.general.dynamicrange', 'zone1.settings.sound.general.subwoofertoggle', 'zone1.settings.sound.general.subwoofer', 'zone1.settings.sound.general.subwooferup', 'zone1.settings.sound.general.subwooferdown', 'zone1.settings.sound.general.lfe', 'zone1.settings.sound.general.lfeup', 'zone1.settings.sound.general.lfedown', 'zone1.settings.sound.tone_control',
             'zone1.settings.sound.channel_level.front_left', 'zone1.settings.sound.channel_level.front_right', 'zone1.settings.sound.channel_level.front_height_left', 'zone1.settings.sound.channel_level.front_height_right', 'zone1.settings.sound.channel_level.front_center', 'zone1.settings.sound.channel_level.surround_left', 'zone1.settings.sound.channel_level.surround_right', 'zone1.settings.sound.channel_level.surroundback_left', 'zone1.settings.sound.channel_level.surroundback_right', 'zone1.settings.sound.channel_level.rear_height_left', 'zone1.settings.sound.channel_level.rear_height_right', 'zone1.settings.sound.channel_level.subwoofer',
             'zone2.control', 'zone2.settings.sound.general.hdmiout'],
-    'AVR-X6300H': ['info', 'tuner.hd', 'zone1.settings.sound.channel_level.subwoofer2', 'zone1.settings.sound.general.speakersetup', 'zone1.settings.sound.general.dialogenhance',
+    'AVR-X6300H': ['info', 'zone1.settings.sound.channel_level.subwoofer2', 'zone1.settings.sound.general.speakersetup', 'zone1.settings.sound.general.dialogenhance',
+                   'tuner.preset', 'tuner.presetmemory', 'tuner.presetup', 'tuner.presetdown', 'tuner.frequency', 'tuner.stationname', 'tuner.frequencyup', 'tuner.frequencydown', 'tuner.band', 'tuner.tuningmode',
                    'zone1.settings.video',
                    'zone2.settings.sound.tone_control', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.general.HPF',
                    'zone3'],
-    'AVR-X4300H': ['zone1.settings.sound.channel_level.subwoofer2', 'zone1.settings.video', 'zone1.settings.sound.general.dialogtoggle', 'zone1.settings.sound.general.dialog', 'zone1.settings.sound.general.dialogup', 'zone1.settings.sound.general.dialogdown', 'zone1.settings.sound.general.speakersetup',
+    'AVR-X6300H-NA': ['info', 'tuner.hd', 'zone1.settings.sound.channel_level.subwoofer2', 'zone1.settings.sound.general.speakersetup', 'zone1.settings.sound.general.dialogenhance',
+                   'zone1.settings.video',
                    'zone2.settings.sound.tone_control', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.general.HPF',
                    'zone3'],
-    'AVR-X3300W': ['tuner.title', 'tuner.album', 'tuner.artist', 'general.display',
+    'AVR-X4300H': ['tuner.preset', 'tuner.presetmemory', 'tuner.presetup', 'tuner.presetdown', 'tuner.frequency', 'tuner.stationname', 'tuner.frequencyup', 'tuner.frequencydown', 'tuner.band', 'tuner.tuningmode',
+                   'zone1.settings.sound.channel_level.subwoofer2', 'zone1.settings.video', 'zone1.settings.sound.general.dialogtoggle', 'zone1.settings.sound.general.dialog', 'zone1.settings.sound.general.dialogup', 'zone1.settings.sound.general.dialogdown', 'zone1.settings.sound.general.speakersetup',
+                   'zone2.settings.sound.tone_control', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.general.HPF',
+                   'zone3'],
+    'AVR-X3300W': ['tuner.preset', 'tuner.presetmemory', 'tuner.presetup', 'tuner.presetdown', 'tuner.frequency', 'tuner.stationname', 'tuner.frequencyup', 'tuner.frequencydown', 'tuner.band', 'tuner.tuningmode',
+                   'tuner.title', 'tuner.album', 'tuner.artist', 'general.display',
                    'zone1.settings.sound.channel_level.subwoofer2', 'zone1.settings.video.aspectratio', 'zone1.settings.video.hdmiresolution', 'zone1.settings.video.videoresolution', 'zone1.settings.video.videoinput', 'zone1.settings.video.pictureenhancer', 'zone1.settings.video.videoprocessingmode',
                    'zone1.settings.sound.general.dialogtoggle', 'zone1.settings.sound.general.dialog', 'zone1.settings.sound.general.dialogup', 'zone1.settings.sound.general.dialogdown', 'zone2.settings.sound.tone_control', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.general.HPF'],
-    'AVR-X2300W': ['tuner.title', 'tuner.album', 'tuner.artist', 'general.display',
+    'AVR-X2300W': ['tuner.preset', 'tuner.presetmemory', 'tuner.presetup', 'tuner.presetdown', 'tuner.frequency', 'tuner.stationname', 'tuner.frequencyup', 'tuner.frequencydown', 'tuner.band', 'tuner.tuningmode',
+                   'tuner.title', 'tuner.album', 'tuner.artist', 'general.display',
                    'zone1.settings.video', 'zone1.settings.sound.general.dialogtoggle', 'zone1.settings.sound.general.dialog', 'zone1.settings.sound.general.dialogup', 'zone1.settings.sound.general.dialogdown',
                    'zone2.settings.sound.channel_level'],
-    'AVR-X1300W': ['tuner.title', 'tuner.album', 'tuner.artist', 'general.display',
+    'AVR-X1300W': ['tuner.preset', 'tuner.presetmemory', 'tuner.presetup', 'tuner.presetdown', 'tuner.frequency', 'tuner.stationname', 'tuner.frequencyup', 'tuner.frequencydown', 'tuner.band', 'tuner.tuningmode',
+                   'tuner.title', 'tuner.album', 'tuner.artist', 'general.display',
                    'zone1.settings.sound.general.dialogtoggle', 'zone1.settings.sound.general.dialog', 'zone1.settings.sound.general.dialogup', 'zone1.settings.sound.general.dialogdown']
 }
 
@@ -78,10 +86,12 @@ commands = {
         'title': {'read': True, 'write': False, 'read_cmd': 'NSE', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^NSE1(.*)', 'item_attrs': {'initial': True}},
         'album': {'read': True, 'write': False, 'read_cmd': 'NSE', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^NSE4(.*)', 'item_attrs': {'read_group_levels': 0}},
         'artist': {'read': True, 'write': False, 'read_cmd': 'NSE', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^NSE2(.*)', 'item_attrs': {'read_group_levels': 0}},
+        'presetmemory': {'read': True, 'write': True, 'item_type': 'num', 'write_cmd': 'TPANMEM{RAW_VALUE:02}', 'dev_datatype': 'convert0', 'reply_pattern': r'^TPANMEM(\d{2})'},
         'preset': {'read': True, 'write': True, 'read_cmd': 'TPAN?', 'item_type': 'num', 'write_cmd': 'TPAN{RAW_VALUE:02}', 'dev_datatype': 'convert0', 'reply_pattern': r'^TPAN(\d{2}|OFF)', 'item_attrs': {'initial': True}},
         'presetup': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'TPANUP', 'dev_datatype': 'raw'},
         'presetdown': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'TPANDOWN', 'dev_datatype': 'raw'},
         'frequency': {'read': True, 'write': True, 'read_cmd': 'TFAN?', 'item_type': 'num', 'write_cmd': 'TFAN{RAW_VALUE:06}', 'dev_datatype': 'num', 'reply_pattern': r'^TFAN(\d{6})', 'item_attrs': {'initial': True}},
+        'stationname': {'read': True, 'write': False, 'read_cmd': 'TFANNAME?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^TFANNAME(.*)', 'item_attrs': {'initial': True}},
         'frequencyup': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'TFANUP', 'dev_datatype': 'raw'},
         'frequencydown': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'TFANDOWN', 'dev_datatype': 'raw'},
         'band': {'read': True, 'write': True, 'cmd_settings': {'valid_list_ci': ['AM', 'FM']}, 'read_cmd': 'TMAN?', 'item_type': 'str', 'write_cmd': 'TMAN{RAW_VALUE_UPPER}', 'dev_datatype': 'raw', 'reply_pattern': r'^TMAN{VALID_LIST_CI}', 'item_attrs': {'initial': True}},
@@ -312,21 +322,18 @@ lookups = {
         },
         'INPUT': {
             'SOURCE': 'SOURCE',
-            'TUNER': 'TUNER',
             'DVD': 'DVD',
             'BD': 'BD',
             'TV': 'TV',
             'SAT/CBL': 'SAT/CBL',
             'MPLAY': 'MPLAY',
             'GAME': 'GAME',
-            'HDRADIO': 'HDRADIO',
             'NET': 'NET',
             'AUX1': 'AUX1',
             'BT': 'BT'
         },
         'INPUT3': {
             'SOURCE': 'SOURCE',
-            'TUNER': 'TUNER',
             'PHONO': 'PHONO',
             'CD': 'CD',
             'DVD': 'DVD',
@@ -338,7 +345,7 @@ lookups = {
             'NET': 'NET',
             'AUX1': 'AUX1',
             'AUX2': 'AUX2',
-            'BT': 'BT',
+            'BT': 'Bluetooth',
             'QUICK1': 'QUICK1',
             'QUICK2': 'QUICK2',
             'QUICK3': 'QUICK3',
@@ -355,7 +362,22 @@ lookups = {
         'INPUT': {
             'PHONO': 'PHONO',
             'CD': 'CD',
-            'AUX2': 'AUX2'
+            'AUX2': 'AUX2',
+            'TUNER': 'TUNER'
+        },
+        'INPUT3': {
+            'TUNER': 'TUNER'
+        }
+    },
+    'AVR-X6300H-NA': {
+        'INPUT': {
+            'PHONO': 'PHONO',
+            'CD': 'CD',
+            'AUX2': 'AUX2',
+            'HDRADIO': 'HDRADIO'
+        },
+        'INPUT3': {
+            'HDRADIO': 'HDRADIO'
         }
     },
     'AVR-X4300H': {
