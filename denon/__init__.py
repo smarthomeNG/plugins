@@ -155,6 +155,12 @@ class denon(SmartDevicePlugin):
             self.send_command(f'zone{zone}.control.volume')
             self.send_command(f'zone{zone}.control.listeningmode')
 
+        if command == 'general.inputrate' and value != 0:
+            self.send_command(f'general.inputsignal')
+            self.send_command(f'general.inputformat')
+            self.send_command(f'general.inputresolution')
+            self.send_command(f'general.outputresolution')
+
 
 if __name__ == '__main__':
     s = Standalone(denon, sys.argv[0])

@@ -541,6 +541,7 @@ item_structs:
             denon_write@instance: true
             denon_read_group@instance:
             -   general
+            denon_read_initial@instance: true
 
         setupmenu:
             type: bool
@@ -587,11 +588,6 @@ item_structs:
             denon_write@instance: false
             denon_read_group@instance:
             -   general
-            denon_read_initial@instance: true
-
-            lookup:
-                type: list
-                denon_lookup@instance: INPUTSIGNAL#list
 
         inputrate:
             type: num
@@ -600,7 +596,20 @@ item_structs:
             denon_write@instance: false
             denon_read_group@instance:
             -   general
+            -   general.inputrate.input_poll
             denon_read_initial@instance: true
+
+            poll:
+                type: bool
+                eval: True if sh....power() is True else None
+                enforce_updates: 'true'
+                cycle: '5'
+                denon_read_group_trigger: general.inputrate.input_poll
+
+                interval:
+                    type: num
+                    initial_value: 5
+                    cache: true
 
         inputformat:
             type: str
@@ -1899,6 +1908,7 @@ item_structs:
                 denon_read_group@instance:
                 -   ALL
                 -   ALL.general
+                denon_read_initial@instance: true
 
             setupmenu:
                 type: bool
@@ -1931,11 +1941,6 @@ item_structs:
                 denon_read_group@instance:
                 -   ALL
                 -   ALL.general
-                denon_read_initial@instance: true
-
-                lookup:
-                    type: list
-                    denon_lookup@instance: INPUTSIGNAL#list
 
             inputrate:
                 type: num
@@ -1945,7 +1950,20 @@ item_structs:
                 denon_read_group@instance:
                 -   ALL
                 -   ALL.general
+                -   general.inputrate.input_poll
                 denon_read_initial@instance: true
+
+                poll:
+                    type: bool
+                    eval: True if sh....power() is True else None
+                    enforce_updates: 'true'
+                    cycle: '5'
+                    denon_read_group_trigger: general.inputrate.input_poll
+
+                    interval:
+                        type: num
+                        initial_value: 5
+                        cache: true
 
             inputformat:
                 type: str
@@ -2783,6 +2801,7 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X6300H
                 -   AVR-X6300H.general
+                denon_read_initial@instance: true
 
             setupmenu:
                 type: bool
@@ -2815,11 +2834,6 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X6300H
                 -   AVR-X6300H.general
-                denon_read_initial@instance: true
-
-                lookup:
-                    type: list
-                    denon_lookup@instance: INPUTSIGNAL#list
 
             inputrate:
                 type: num
@@ -2829,7 +2843,20 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X6300H
                 -   AVR-X6300H.general
+                -   general.inputrate.input_poll
                 denon_read_initial@instance: true
+
+                poll:
+                    type: bool
+                    eval: True if sh....power() is True else None
+                    enforce_updates: 'true'
+                    cycle: '5'
+                    denon_read_group_trigger: general.inputrate.input_poll
+
+                    interval:
+                        type: num
+                        initial_value: 5
+                        cache: true
 
             inputformat:
                 type: str
@@ -4196,6 +4223,7 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X6300H-NA
                 -   AVR-X6300H-NA.general
+                denon_read_initial@instance: true
 
             setupmenu:
                 type: bool
@@ -4228,11 +4256,6 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X6300H-NA
                 -   AVR-X6300H-NA.general
-                denon_read_initial@instance: true
-
-                lookup:
-                    type: list
-                    denon_lookup@instance: INPUTSIGNAL#list
 
             inputrate:
                 type: num
@@ -4242,7 +4265,20 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X6300H-NA
                 -   AVR-X6300H-NA.general
+                -   general.inputrate.input_poll
                 denon_read_initial@instance: true
+
+                poll:
+                    type: bool
+                    eval: True if sh....power() is True else None
+                    enforce_updates: 'true'
+                    cycle: '5'
+                    denon_read_group_trigger: general.inputrate.input_poll
+
+                    interval:
+                        type: num
+                        initial_value: 5
+                        cache: true
 
             inputformat:
                 type: str
@@ -5436,6 +5472,7 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X4300H
                 -   AVR-X4300H.general
+                denon_read_initial@instance: true
 
             setupmenu:
                 type: bool
@@ -5468,11 +5505,6 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X4300H
                 -   AVR-X4300H.general
-                denon_read_initial@instance: true
-
-                lookup:
-                    type: list
-                    denon_lookup@instance: INPUTSIGNAL#list
 
             inputrate:
                 type: num
@@ -5482,7 +5514,20 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X4300H
                 -   AVR-X4300H.general
+                -   general.inputrate.input_poll
                 denon_read_initial@instance: true
+
+                poll:
+                    type: bool
+                    eval: True if sh....power() is True else None
+                    enforce_updates: 'true'
+                    cycle: '5'
+                    denon_read_group_trigger: general.inputrate.input_poll
+
+                    interval:
+                        type: num
+                        initial_value: 5
+                        cache: true
 
             inputformat:
                 type: str
@@ -6704,6 +6749,7 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X3300W
                 -   AVR-X3300W.general
+                denon_read_initial@instance: true
 
             setupmenu:
                 type: bool
@@ -6745,11 +6791,6 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X3300W
                 -   AVR-X3300W.general
-                denon_read_initial@instance: true
-
-                lookup:
-                    type: list
-                    denon_lookup@instance: INPUTSIGNAL#list
 
             inputrate:
                 type: num
@@ -6759,7 +6800,20 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X3300W
                 -   AVR-X3300W.general
+                -   general.inputrate.input_poll
                 denon_read_initial@instance: true
+
+                poll:
+                    type: bool
+                    eval: True if sh....power() is True else None
+                    enforce_updates: 'true'
+                    cycle: '5'
+                    denon_read_group_trigger: general.inputrate.input_poll
+
+                    interval:
+                        type: num
+                        initial_value: 5
+                        cache: true
 
             inputformat:
                 type: str
@@ -7771,6 +7825,7 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X2300W
                 -   AVR-X2300W.general
+                denon_read_initial@instance: true
 
             setupmenu:
                 type: bool
@@ -7812,11 +7867,6 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X2300W
                 -   AVR-X2300W.general
-                denon_read_initial@instance: true
-
-                lookup:
-                    type: list
-                    denon_lookup@instance: INPUTSIGNAL#list
 
             inputrate:
                 type: num
@@ -7826,7 +7876,20 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X2300W
                 -   AVR-X2300W.general
+                -   general.inputrate.input_poll
                 denon_read_initial@instance: true
+
+                poll:
+                    type: bool
+                    eval: True if sh....power() is True else None
+                    enforce_updates: 'true'
+                    cycle: '5'
+                    denon_read_group_trigger: general.inputrate.input_poll
+
+                    interval:
+                        type: num
+                        initial_value: 5
+                        cache: true
 
             inputformat:
                 type: str
@@ -8770,6 +8833,7 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X1300W
                 -   AVR-X1300W.general
+                denon_read_initial@instance: true
 
             setupmenu:
                 type: bool
@@ -8811,11 +8875,6 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X1300W
                 -   AVR-X1300W.general
-                denon_read_initial@instance: true
-
-                lookup:
-                    type: list
-                    denon_lookup@instance: INPUTSIGNAL#list
 
             inputrate:
                 type: num
@@ -8825,7 +8884,20 @@ item_structs:
                 denon_read_group@instance:
                 -   AVR-X1300W
                 -   AVR-X1300W.general
+                -   general.inputrate.input_poll
                 denon_read_initial@instance: true
+
+                poll:
+                    type: bool
+                    eval: True if sh....power() is True else None
+                    enforce_updates: 'true'
+                    cycle: '5'
+                    denon_read_group_trigger: general.inputrate.input_poll
+
+                    interval:
+                        type: num
+                        initial_value: 5
+                        cache: true
 
             inputformat:
                 type: str

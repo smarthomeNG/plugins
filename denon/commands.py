@@ -70,13 +70,13 @@ commands = {
     },
     'general': {
         'custom_inputnames': {'read': True, 'write': False, 'read_cmd': 'SSFUN ?', 'item_type': 'dict', 'dev_datatype': 'DenonCustominput', 'reply_pattern': r'^SSFUN(.*)', 'item_attrs': {'enforce': True, 'item_template': 'custom_inputnames', 'read_groups': [{'name': 'custom_inputnames', 'trigger': 'update'}], 'initial': True, 'attributes': {'denon_lookup@instance': 'INPUT#fwd'}}},
-        'power': {'read': True, 'write': True, 'read_cmd': 'PW?', 'write_cmd': 'PW{VALUE}', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': r'^PW{LOOKUP}', 'lookup': 'POWER'},
+        'power': {'read': True, 'write': True, 'read_cmd': 'PW?', 'write_cmd': 'PW{VALUE}', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': r'^PW{LOOKUP}', 'lookup': 'POWER', 'item_attrs': {'initial': True}},
         'setupmenu': {'read': True, 'write': True, 'read_cmd': 'MNMEN?', 'write_cmd': 'MNMEN {VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': r'^MNMEN (ON|OFF)'},
         'display': {'read': True, 'write': False, 'read_cmd': 'NSE', 'item_type': 'str', 'dev_datatype': 'DenonDisplay', 'reply_pattern': r'^NSE(.*)'},
         'soundmode': {'read': True, 'write': False, 'read_cmd': 'SSSMG ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSSMG {LOOKUP}', 'lookup': 'SOUNDMODE', 'item_attrs': {'initial': True, 'lookup_item': True}},
         'allzonestereo': {'read': True, 'write': False, 'read_cmd': 'MNZST?', 'write_cmd': 'MNZST {VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': r'^MNZST {ON|OFF}', 'item_attrs': {'initial': True}},
-        'inputsignal': {'read': True, 'write': False, 'read_cmd': 'SSINFAISSIG ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSINFAISSIG {LOOKUP}', 'lookup': 'INPUTSIGNAL', 'item_attrs': {'initial': True, 'lookup_item': True}},
-        'inputrate': {'read': True, 'write': False, 'read_cmd': 'SSINFAISFSV ?', 'item_type': 'num', 'dev_datatype': 'convert0', 'reply_pattern': r'^SSINFAISFSV (\d{2,3}|NON)', 'item_attrs': {'initial': True}},
+        'inputsignal': {'read': True, 'write': False, 'read_cmd': 'SSINFAISSIG ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSINFAISSIG {LOOKUP}', 'lookup': 'INPUTSIGNAL'},
+        'inputrate': {'read': True, 'write': False, 'read_cmd': 'SSINFAISFSV ?', 'item_type': 'num', 'dev_datatype': 'convert0', 'reply_pattern': r'^SSINFAISFSV (\d{2,3}|NON)', 'item_attrs': {'initial': True, 'item_template': 'input_poll', 'read_groups': [{'name': 'general.inputrate.input_poll', 'trigger': 'poll'}]}},
         'inputformat': {'read': True, 'write': False, 'read_cmd': 'SSINFAISFOR ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSINFAISFOR (.*)', 'item_attrs': {'initial': True}},
         'inputresolution': {'read': True, 'write': False, 'read_cmd': 'SSINFSIGRES ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSINFSIGRES I(.*)', 'item_attrs': {'initial': True}},
         'outputresolution': {'read': True, 'write': False, 'read_cmd': 'SSINFSIGRES ?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^SSINFSIGRES O(.*)', 'item_attrs': {'read_group_levels': 0}},
@@ -473,5 +473,20 @@ item_templates = {
                 'type': 'dict',
                 'denon_lookup@instance': 'INPUT3#fwd'
             }
+    },
+    'input_poll': {
+        'poll': {
+            'type': 'bool',
+            'eval': 'True if sh....power() is True else None',
+            'enforce_updates': True,
+            'cycle': '5',
+            'denon_read_group_trigger': 'general.inputrate.input_poll',
+            'interval':
+                {
+                    'type': 'num',
+                    'initial_value': 5,
+                    'cache': True
+                }
+        },
     },
 }
