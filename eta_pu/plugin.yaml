@@ -5,16 +5,16 @@ plugin:
     description:
         de: 'Anbindung der REST-Schnittstelle von ETA Heizungen (http://www.eta.co.at)'
         en: 'ETA Pellet Unit PU (http://www.eta.co.at) with remote access enabled (there are 3 modes available: none, readonly, read/write)'
-    maintainer: '? (Brootux)'
-    tester: 'psilo909, ?'
+    maintainer: 'psilo909'
+    tester: 'psilo909'
     state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.1.1                 # Plugin version
-    sh_minversion: '1.1'             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    version: 1.1.2                 # Plugin version
+    sh_minversion: '1.9'           # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     restartable: unknown
     classname: ETA_PU              # class containing the plugin
