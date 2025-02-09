@@ -126,17 +126,16 @@ class ETA_PU(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = "1.1.1"
 
-    def __init__(self, smarthome, address, port, setpath, setname):
-        self._sh = smarthome
+    def __init__(self, sh, *args, **kwargs):
         self._cycle = 30
         self.logger = logging.getLogger(__name__)
         self._uri = dict()
         self._error = None
         self._objects = dict()
-        self._request = Request(address, port)
+        self._request = Request(self.get_parameter_value('address'), self.get_parameter_value('port'))
         self._request.timeout = 2
-        self._setpath = setpath
-        self._setname = setname
+        self._setpath = self.get_parameter_value('setpath')
+        self._setname = self.get_parameter_value('setname')
 
     def run(self):
         self.rebuild_set()
@@ -246,7 +245,7 @@ class ETA_PU(SmartPlugin):
     '''
     def fetch_xml(self, uri):
         url = 'http://{0}:{1}{2}'.format(self._request.address, self._request.port, uri)
-        xml = self._sh.tools.fetch_url(url, timeout=2)
+        xml = self.get_sh().tools.fetch_url(url, timeout=2)
         try:
                 return ET.fromstring(xml)
         except:
