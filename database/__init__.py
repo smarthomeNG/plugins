@@ -978,8 +978,8 @@ class Database(SmartPlugin):
         :type orphan_id: int
         :type to: int
         """
-        log_info = self.logger.warning  # info
-        log_debug = self.logger.error  # debug
+        log_info = self.logger.info  # warning  # info
+        log_debug = self.logger.debug  # error  # debug
         try:
             log_info(f'reassigning orphaned data from (old) id {orphan_id} to (new) id {to}')
             cur = self._db_maint.cursor()
