@@ -350,6 +350,7 @@ item_structs:
             denon_read_group@instance:
             -   info
             denon_read_initial@instance: true
+            cache: true
 
         model:
             type: str
@@ -359,12 +360,14 @@ item_structs:
             denon_read_group@instance:
             -   info
             denon_read_initial@instance: true
+            cache: true
 
         serialnumber:
             type: num
             denon_command@instance: info.serialnumber
             denon_read@instance: true
             denon_write@instance: false
+            cache: true
 
         main:
             type: str
@@ -455,18 +458,21 @@ item_structs:
             denon_command@instance: info.mac
             denon_read@instance: true
             denon_write@instance: false
+            cache: true
 
         wifimac:
             type: str
             denon_command@instance: info.wifimac
             denon_read@instance: true
             denon_write@instance: false
+            cache: true
 
         btmac:
             type: str
             denon_command@instance: info.btmac
             denon_read@instance: true
             denon_write@instance: false
+            cache: true
 
         audyif:
             type: num
@@ -479,6 +485,7 @@ item_structs:
             denon_command@instance: info.productid
             denon_read@instance: true
             denon_write@instance: false
+            cache: true
 
         packageid:
             type: num
@@ -500,6 +507,7 @@ item_structs:
             denon_read_group@instance:
             -   info
             denon_read_initial@instance: true
+            cache: true
 
     general:
 
@@ -2606,6 +2614,7 @@ item_structs:
                 -   AVR-X6300H
                 -   AVR-X6300H.info
                 denon_read_initial@instance: true
+                cache: true
 
             model:
                 type: str
@@ -2616,12 +2625,14 @@ item_structs:
                 -   AVR-X6300H
                 -   AVR-X6300H.info
                 denon_read_initial@instance: true
+                cache: true
 
             serialnumber:
                 type: num
                 denon_command@instance: info.serialnumber
                 denon_read@instance: true
                 denon_write@instance: false
+                cache: true
 
             main:
                 type: str
@@ -2712,18 +2723,21 @@ item_structs:
                 denon_command@instance: info.mac
                 denon_read@instance: true
                 denon_write@instance: false
+                cache: true
 
             wifimac:
                 type: str
                 denon_command@instance: info.wifimac
                 denon_read@instance: true
                 denon_write@instance: false
+                cache: true
 
             btmac:
                 type: str
                 denon_command@instance: info.btmac
                 denon_read@instance: true
                 denon_write@instance: false
+                cache: true
 
             audyif:
                 type: num
@@ -2736,6 +2750,7 @@ item_structs:
                 denon_command@instance: info.productid
                 denon_read@instance: true
                 denon_write@instance: false
+                cache: true
 
             packageid:
                 type: num
@@ -2758,6 +2773,7 @@ item_structs:
                 -   AVR-X6300H
                 -   AVR-X6300H.info
                 denon_read_initial@instance: true
+                cache: true
 
         general:
 
@@ -4028,6 +4044,7 @@ item_structs:
                 -   AVR-X6300H-NA
                 -   AVR-X6300H-NA.info
                 denon_read_initial@instance: true
+                cache: true
 
             model:
                 type: str
@@ -4038,12 +4055,14 @@ item_structs:
                 -   AVR-X6300H-NA
                 -   AVR-X6300H-NA.info
                 denon_read_initial@instance: true
+                cache: true
 
             serialnumber:
                 type: num
                 denon_command@instance: info.serialnumber
                 denon_read@instance: true
                 denon_write@instance: false
+                cache: true
 
             main:
                 type: str
@@ -4134,18 +4153,21 @@ item_structs:
                 denon_command@instance: info.mac
                 denon_read@instance: true
                 denon_write@instance: false
+                cache: true
 
             wifimac:
                 type: str
                 denon_command@instance: info.wifimac
                 denon_read@instance: true
                 denon_write@instance: false
+                cache: true
 
             btmac:
                 type: str
                 denon_command@instance: info.btmac
                 denon_read@instance: true
                 denon_write@instance: false
+                cache: true
 
             audyif:
                 type: num
@@ -4158,6 +4180,7 @@ item_structs:
                 denon_command@instance: info.productid
                 denon_read@instance: true
                 denon_write@instance: false
+                cache: true
 
             packageid:
                 type: num
@@ -4180,6 +4203,7 @@ item_structs:
                 -   AVR-X6300H-NA
                 -   AVR-X6300H-NA.info
                 denon_read_initial@instance: true
+                cache: true
 
         general:
 
