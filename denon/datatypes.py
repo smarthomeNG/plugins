@@ -49,6 +49,22 @@ class DT_DenonVol(DT.Datatype):
             return data
 
 
+class DT_DenonFrequency(DT.Datatype):
+    def get_send_data(self, data, **kwargs):
+        rounded_value = round(data * 10) / 10  # Round to 1 decimal place
+        last_digit = int(str(rounded_value)[-1])  # Get last decimal place
+        # Force second decimal place to be either 0 or 5
+        if last_digit < 5:
+            rounded_value = round(rounded_value, 1)  # Keep as is (X.X0)
+        else:
+            rounded_value = round(rounded_value + 0.05, 1)  # Force to X.X5
+
+        num = int(round(rounded_value * 100))  # Convert to integer
+        return f"{num:06d}"  # Ensure 6-digit format with leading zeros
+
+    def get_shng_data(self, data, type=None, **kwargs):
+        return int(data) / 100
+
 class DT_DenonStandby(DT.Datatype):
     def get_send_data(self, data, **kwargs):
         return 'OFF' if data == 0 else f"{data:01}H"

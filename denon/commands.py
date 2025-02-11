@@ -90,7 +90,7 @@ commands = {
         'preset': {'read': True, 'write': True, 'read_cmd': 'TPAN?', 'item_type': 'num', 'write_cmd': 'TPAN{RAW_VALUE:02}', 'dev_datatype': 'convert0', 'reply_pattern': r'^TPAN(\d{2}|OFF)', 'item_attrs': {'initial': True}},
         'presetup': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'TPANUP', 'dev_datatype': 'raw'},
         'presetdown': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'TPANDOWN', 'dev_datatype': 'raw'},
-        'frequency': {'read': True, 'write': True, 'read_cmd': 'TFAN?', 'item_type': 'num', 'write_cmd': 'TFAN{RAW_VALUE:06}', 'dev_datatype': 'num', 'reply_pattern': r'^TFAN(\d{6})', 'item_attrs': {'initial': True}},
+        'frequency': {'read': True, 'write': True, 'read_cmd': 'TFAN?', 'item_type': 'num', 'write_cmd': 'TFAN{VALUE}', 'dev_datatype': 'DenonFrequency', 'reply_pattern': r'^TFAN(\d{6})', 'send_retries': 0, 'item_attrs': {'initial': True}},
         'stationname': {'read': True, 'write': False, 'read_cmd': 'TFANNAME?', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'^TFANNAME(.*)', 'item_attrs': {'initial': True}},
         'frequencyup': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'TFANUP', 'dev_datatype': 'raw'},
         'frequencydown': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'TFANDOWN', 'dev_datatype': 'raw'},
