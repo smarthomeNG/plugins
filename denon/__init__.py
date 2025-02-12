@@ -43,7 +43,7 @@ if __name__ == '__main__':
 else:
     builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, PLUGIN_ATTR_CMD_CLASS, CONN_NULL, CONN_NET_TCP_CLI, CONN_SER_ASYNC)
+from lib.model.sdp.globals import (PLUGIN_ATTR_MODEL, PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, PLUGIN_ATTR_CMD_CLASS, CONN_NULL, CONN_NET_TCP_CLI, CONN_SER_ASYNC)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 from lib.model.sdp.command import SDPCommandParseStr
 
@@ -150,7 +150,12 @@ class denon(SmartDevicePlugin):
             self.send_command(f'zone{zone}.control.mute')
             self.send_command(f'zone{zone}.control.sleep')
             self.send_command(f'zone{zone}.control.standby')
+            if self._parameters[PLUGIN_ATTR_MODEL] == '':
+                self.read_all_commands(f'ALL.zone{zone}.settings')
+            else:
+                self.read_all_commands(f'{self._parameters[PLUGIN_ATTR_MODEL]}.zone{zone}.settings')
         if zone == 1 and value is True:
+            time.sleep(1)
             self.send_command(f'zone{zone}.control.input')
             self.send_command(f'zone{zone}.control.volume')
             self.send_command(f'zone{zone}.control.listeningmode')
