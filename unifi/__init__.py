@@ -40,6 +40,7 @@ import traceback
 
 class UniFiConst(object):
     PARAMETER_URL = 'unifi_controller_url'
+    PARAMETER_TYPE = 'unifi_controller_type'
     PARAMETER_USER = 'unifi_user'
     PARAMETER_PWD = 'unifi_password'
     PARAMETER_SITE_ID = 'unifi_site_id'
@@ -305,6 +306,7 @@ class UniFiControllerClient(SmartPlugin):
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self._unifi_controller_url = self.get_parameter_value(UniFiConst.PARAMETER_URL)
+        self._unifi_controller_type = self.get_parameter_value(UniFiConst.PARAMETER_TYPE)
         self._unifi_user = self.get_parameter_value(UniFiConst.PARAMETER_USER)
         self._unifi_password = self.get_parameter_value(UniFiConst.PARAMETER_PWD)
         self._unifi_site_id = self.get_parameter_value(UniFiConst.PARAMETER_SITE_ID)
@@ -313,6 +315,7 @@ class UniFiControllerClient(SmartPlugin):
                                                           password=self._unifi_password,
                                                           site=self._unifi_site_id,
                                                           baseurl=self._unifi_controller_url,
+                                                          unifitype=self._unifi_controller_type,
                                                           verify_ssl=False))
 
         # cycle time in seconds, only needed, if hardware/interface needs to be

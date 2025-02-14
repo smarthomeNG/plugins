@@ -28,6 +28,16 @@ parameters:
             de: 'Basis URL des Controller, z.B. https://unifi:8443'
             en: 'Base URL of the controller, e.g. https://unifi:8443'
 
+    unifi_controller_type:
+        type: str
+        default: 'software'
+        valid_list:
+          - 'device'
+          - 'software'
+        description:
+            de: 'Basis URL des Controller, z.B. https://unifi:8443'
+            en: 'Base URL of the controller, e.g. https://unifi:8443'
+
     unifi_user:
         type: str
         mandatory: True
