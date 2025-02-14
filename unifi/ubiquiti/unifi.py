@@ -98,7 +98,7 @@ class API(object):
 
             if not r.ok:
                 if current_status_code == 401:
-                    raise LoggedInException("Invalid login, or login has expired")
+                    raise LoggedInException(f"Invalid login while getting, or login has expired. r: {r} {current_status_code}")
 
             data = r.json()['data']
             return data
@@ -117,7 +117,7 @@ class API(object):
             current_status_code = r.status_code
             if not r.ok:
                 if current_status_code == 401:
-                    raise LoggedInException("Invalid login, or login has expired")
+                    raise LoggedInException("Invalid login while putting, or login has expired")
                 else:
                     raise LoggedInException("code {}".format(current_status_code))
 
@@ -322,7 +322,7 @@ class API(object):
                 break
         if not poFound:
             raise DataException("Could not match any port in data to given port-number {}".format(port_number))
-        port_prof = poData[poIndex]['portconf_id']
+        port_prof = poData[poIndex].get('portconf_id')
 
         profiles = self._get_port_profiles()
         if len(profiles) == 0:

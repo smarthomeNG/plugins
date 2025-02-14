@@ -292,7 +292,7 @@ class UniFiControllerClient(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.3'
+    PLUGIN_VERSION = '1.6.4'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -366,7 +366,7 @@ class UniFiControllerClient(SmartPlugin):
         if defaulting:
             self._model.append_item_issue(item, "2: " + msg, 2)
         else:
-            self._model.append_item_issue(item, "1: "+msg, 1)
+            self._model.append_item_issue(item, "1: " + msg, 1)
 
         if enable_logging:
             self.logger.info(msg + " in item " + item.property.path)
