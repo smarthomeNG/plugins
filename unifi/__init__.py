@@ -138,7 +138,9 @@ class UniFiControllerClientModel():
     def _generate_item_key(self, source:str):
         step1 = source.lower().replace(' ', '_')
         step2 = re.sub('[^0-9a-z_]+', '_', step1)
-        return step2.replace("___", "_").replace("__", "_")
+        step3 = step2.replace("___", "_").replace("__", "_")
+        step4 = step3.strip("_")
+        return step4
 
     def _get_device_node_item(self, node_data, parent_type=""):
         n = node_data['node']
