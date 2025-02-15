@@ -103,14 +103,21 @@ class DT_PioChannelVol(DT.Datatype):
 
 class DT_PioName(DT.Datatype):
     def get_send_data(self, data, **kwargs):
-        return f"{len(data):02}{data}"
+        return f'"{data}"{len(data):02}'
 
-class DT_onoff(DT.Datatype):
+class DT_PioOnoff(DT.Datatype):
     def get_send_data(self, data, **kwargs):
         return 'O' if data else 'F'
 
     def get_shng_data(self, data, type=None, **kwargs):
         if type is None or type == 'bool':
             return True if data == '0' else False
+
+        return super().get_shng_data(data, type)
+
+class DT_PioBool(DT.Datatype):
+    def get_shng_data(self, data, type=None, **kwargs):
+        if type is None or type == 'bool':
+            return True if data == '1' else False if data == '0' else None
 
         return super().get_shng_data(data, type)

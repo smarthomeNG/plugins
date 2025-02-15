@@ -21,10 +21,12 @@
 #  along with SmartHomeNG  If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
+from __future__ import annotations
 import builtins
 import os
 import sys
 import time
+from typing import Any
 
 if __name__ == '__main__':
 
@@ -75,24 +77,27 @@ class pioneer(SmartDevicePlugin):
             data['payload'] = f'{data.get("payload", "")}{data["limit_response"].decode("unicode-escape")}'
         return data
 
-    def _process_additional_data(self, command, data, value, custom, by):
-        cond1 = command == 'zone1.control.power' or command == 'zone2.control.power' or command == 'zone3.control.power'
-        if cond1 and value:
+    def _process_additional_data(self, command: str, data: Any, value: Any, custom: int, by: str | None = None):
+        def read_group(cmd):
+            if self._parameters[PLUGIN_ATTR_MODEL] == '':
+                self.read_all_commands(f'ALL.{cmd}')
+            else:
+                self.read_all_commands(f'{self._parameters[PLUGIN_ATTR_MODEL]}.{cmd}')
+
+        if command in ['zone1.control.power', 'zone2.control.power', 'zone3.control.power'] and value:
             self.logger.debug(f"Device is turned on by command {command}. Requesting settings.")
             time.sleep(1)
-            if self._parameters[PLUGIN_ATTR_MODEL] == '':
-                self.read_all_commands('ALL.general.settings')
-            else:
-                self.read_all_commands(f'{self._parameters[PLUGIN_ATTR_MODEL]}.general.settings')
-            #self.send_command('general.settings.language')
-            #self.send_command('general.settings.speakersystem')
-            #self.send_command('general.settings.surroundposition')
-            #self.send_command('general.settings.xover')
-            #self.send_command('general.settings.xcurve')
-            #self.send_command('general.settings.hdmi.control')
-            #self.send_command('general.settings.hdmi.controlmode')
-            #self.send_command('general.settings.hdmi.arc')
-            #self.send_command('general.settings.hdmi.standbythrough')
+            read_group('general.settings')
+
+        if command in ['zone1.control.input', 'zone2.control.input', 'zone3.control.input']:
+            if value == 'INTERNET RADIO':
+                self.logger.debug(f"Zone is set to internet radio, checking tuner info.")
+                time.sleep(1)
+                read_group('tuner')
+            if value == 'TUNER':
+                self.logger.debug(f"Zone is set to tuner, checking tuner preset.")
+                time.sleep(1)
+                self.send_command('tuner.tunerpreset')
 
 
 if __name__ == '__main__':
