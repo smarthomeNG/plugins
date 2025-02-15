@@ -33,6 +33,7 @@ commands = {
             'initialvolume': {'read': True, 'write': True, 'read_cmd': '?SUC', 'write_cmd': '{VALUE}SUC', 'item_type': 'num', 'dev_datatype': 'PioInitVol', 'reply_pattern': r'^SUC(\d{3})', 'item_attrs': {'initial': True}},
             'mutelevel': {'read': True, 'write': True, 'read_cmd': '?SUE', 'write_cmd': '{VALUE}SUE', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': r'^SUE{LOOKUP}', 'lookup': 'MUTELEVEL', 'item_attrs': {'initial': True}},
             'hdmi': {
+                'hdzone': {'read': True, 'write': True, 'read_cmd': '?SVZ', 'write_cmd': '{RAW_VALUE:01}SVZ', 'item_type': 'bool', 'dev_datatype': 'PioBool', 'reply_pattern': r'^SVZ(\d{1})', 'item_attrs': {'initial': True}},
                 'control': {'read': True, 'write': True, 'read_cmd': '?STQ', 'write_cmd': '{RAW_VALUE:01}STQ', 'item_type': 'bool', 'dev_datatype': 'PioBool', 'reply_pattern': r'^STQ(\d{1})', 'item_attrs': {'initial': True}},
                 'controlmode': {'read': True, 'write': True, 'read_cmd': '?STR', 'write_cmd': '{RAW_VALUE:01}STR', 'item_type': 'bool', 'dev_datatype': 'PioBool', 'reply_pattern': r'^STR(\d{1})', 'item_attrs': {'initial': True}},
                 'arc': {'read': True, 'write': True, 'read_cmd': '?STT', 'write_cmd': '{RAW_VALUE:01}STT', 'item_type': 'bool', 'dev_datatype': 'PioBool', 'reply_pattern': r'^STT(\d{1})', 'item_attrs': {'initial': True}},
@@ -125,7 +126,7 @@ commands = {
     },
     'zone3': {
         'control': {
-            'power': {'read': True, 'write': True, 'read_cmd': '?BP', 'write_cmd': 'BP{VALUE}', 'item_type': 'bool', 'dev_datatype': 'PioOnoff', 'reply_pattern': r'^BPR(\d{1})', 'item_attrs': {'item_template': 'power'}},
+            'power': {'read': True, 'write': True, 'read_cmd': '?BP', 'write_cmd': 'BP{VALUE}', 'item_type': 'bool', 'dev_datatype': 'PioOnoff', 'reply_pattern': r'^BPR(\d{1})', 'item_attrs': {'item_template': 'power', 'attributes': {'remark': 'For some receivers it might be necessary to change speakersystem to Zone 2 and hdzone for HDMI on.'}}},
             'mute': {'read': True, 'write': True, 'read_cmd': '?Z3M', 'item_type': 'bool', 'write_cmd': 'Z3M{VALUE}', 'dev_datatype': 'PioOnoff', 'reply_pattern': r'^Z3MUT(\d{1})'},
             'volume': {'read': True, 'write': True, 'read_cmd': '?YV', 'write_cmd': '{RAW_VALUE:02}YV', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'^YV(\d{2})', 'cmd_settings': {'force_min': 0, 'valid_max': 81}, },
             'volumeup': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'YU', 'dev_datatype': 'raw'},

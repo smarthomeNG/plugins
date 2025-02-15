@@ -513,6 +513,17 @@ item_structs:
                     enforce_updates: true
                     pioneer_read_group_trigger@instance: general.settings.hdmi
 
+                hdzone:
+                    type: bool
+                    pioneer_command@instance: general.settings.hdmi.hdzone
+                    pioneer_read@instance: true
+                    pioneer_write@instance: true
+                    pioneer_read_group@instance:
+                    -   general
+                    -   general.settings
+                    -   general.settings.hdmi
+                    pioneer_read_initial@instance: true
+
                 control:
                     type: bool
                     pioneer_command@instance: general.settings.hdmi.control
@@ -987,10 +998,6 @@ item_structs:
                         -   zone1.settings.sound
                         -   zone1.settings.sound.general
 
-                        lookup:
-                            type: list
-                            pioneer_lookup@instance: PLAYINGMODE#list
-
                     speakers:
                         type: num
                         pioneer_command@instance: zone1.settings.sound.general.speakers
@@ -1216,6 +1223,7 @@ item_structs:
                 pioneer_read_group@instance:
                 -   zone3
                 -   zone3.control
+                remark: For some receivers it might be necessary to change speakersystem to Zone 2 and hdzone for HDMI on.
                 pioneer_read_initial: true
                 on_change: sh....read.timer(sh..readdelay(), True) if value else None
 
@@ -1513,6 +1521,18 @@ item_structs:
                         type: bool
                         enforce_updates: true
                         pioneer_read_group_trigger@instance: ALL.general.settings.hdmi
+
+                    hdzone:
+                        type: bool
+                        pioneer_command@instance: general.settings.hdmi.hdzone
+                        pioneer_read@instance: true
+                        pioneer_write@instance: true
+                        pioneer_read_group@instance:
+                        -   ALL
+                        -   ALL.general
+                        -   ALL.general.settings
+                        -   ALL.general.settings.hdmi
+                        pioneer_read_initial@instance: true
 
                     control:
                         type: bool
@@ -2017,10 +2037,6 @@ item_structs:
                             -   ALL.zone1.settings.sound
                             -   ALL.zone1.settings.sound.general
 
-                            lookup:
-                                type: list
-                                pioneer_lookup@instance: PLAYINGMODE#list
-
                         speakers:
                             type: num
                             pioneer_command@instance: zone1.settings.sound.general.speakers
@@ -2371,6 +2387,18 @@ item_structs:
                         type: bool
                         enforce_updates: true
                         pioneer_read_group_trigger@instance: SC-LX87.general.settings.hdmi
+
+                    hdzone:
+                        type: bool
+                        pioneer_command@instance: general.settings.hdmi.hdzone
+                        pioneer_read@instance: true
+                        pioneer_write@instance: true
+                        pioneer_read_group@instance:
+                        -   SC-LX87
+                        -   SC-LX87.general
+                        -   SC-LX87.general.settings
+                        -   SC-LX87.general.settings.hdmi
+                        pioneer_read_initial@instance: true
 
                     control:
                         type: bool
@@ -2875,10 +2903,6 @@ item_structs:
                             -   SC-LX87.zone1.settings.sound
                             -   SC-LX87.zone1.settings.sound.general
 
-                            lookup:
-                                type: list
-                                pioneer_lookup@instance: PLAYINGMODE#list
-
                         speakers:
                             type: num
                             pioneer_command@instance: zone1.settings.sound.general.speakers
@@ -3104,6 +3128,7 @@ item_structs:
                     -   SC-LX87
                     -   SC-LX87.zone3
                     -   SC-LX87.zone3.control
+                    remark: For some receivers it might be necessary to change speakersystem to Zone 2 and hdzone for HDMI on.
                     pioneer_read_initial: true
                     on_change: sh....read.timer(sh..readdelay(), True) if value else None
 
@@ -3465,6 +3490,18 @@ item_structs:
                         type: bool
                         enforce_updates: true
                         pioneer_read_group_trigger@instance: SC-LX77.general.settings.hdmi
+
+                    hdzone:
+                        type: bool
+                        pioneer_command@instance: general.settings.hdmi.hdzone
+                        pioneer_read@instance: true
+                        pioneer_write@instance: true
+                        pioneer_read_group@instance:
+                        -   SC-LX77
+                        -   SC-LX77.general
+                        -   SC-LX77.general.settings
+                        -   SC-LX77.general.settings.hdmi
+                        pioneer_read_initial@instance: true
 
                     control:
                         type: bool
@@ -3969,10 +4006,6 @@ item_structs:
                             -   SC-LX77.zone1.settings.sound
                             -   SC-LX77.zone1.settings.sound.general
 
-                            lookup:
-                                type: list
-                                pioneer_lookup@instance: PLAYINGMODE#list
-
                         speakers:
                             type: num
                             pioneer_command@instance: zone1.settings.sound.general.speakers
@@ -4198,6 +4231,7 @@ item_structs:
                     -   SC-LX77
                     -   SC-LX77.zone3
                     -   SC-LX77.zone3.control
+                    remark: For some receivers it might be necessary to change speakersystem to Zone 2 and hdzone for HDMI on.
                     pioneer_read_initial: true
                     on_change: sh....read.timer(sh..readdelay(), True) if value else None
 
@@ -4559,6 +4593,18 @@ item_structs:
                         type: bool
                         enforce_updates: true
                         pioneer_read_group_trigger@instance: SC-LX57.general.settings.hdmi
+
+                    hdzone:
+                        type: bool
+                        pioneer_command@instance: general.settings.hdmi.hdzone
+                        pioneer_read@instance: true
+                        pioneer_write@instance: true
+                        pioneer_read_group@instance:
+                        -   SC-LX57
+                        -   SC-LX57.general
+                        -   SC-LX57.general.settings
+                        -   SC-LX57.general.settings.hdmi
+                        pioneer_read_initial@instance: true
 
                     control:
                         type: bool
@@ -5063,10 +5109,6 @@ item_structs:
                             -   SC-LX57.zone1.settings.sound
                             -   SC-LX57.zone1.settings.sound.general
 
-                            lookup:
-                                type: list
-                                pioneer_lookup@instance: PLAYINGMODE#list
-
                         speakers:
                             type: num
                             pioneer_command@instance: zone1.settings.sound.general.speakers
@@ -5292,6 +5334,7 @@ item_structs:
                     -   SC-LX57
                     -   SC-LX57.zone3
                     -   SC-LX57.zone3.control
+                    remark: For some receivers it might be necessary to change speakersystem to Zone 2 and hdzone for HDMI on.
                     pioneer_read_initial: true
                     on_change: sh....read.timer(sh..readdelay(), True) if value else None
 
@@ -5628,6 +5671,18 @@ item_structs:
                         type: bool
                         enforce_updates: true
                         pioneer_read_group_trigger@instance: SC-2023.general.settings.hdmi
+
+                    hdzone:
+                        type: bool
+                        pioneer_command@instance: general.settings.hdmi.hdzone
+                        pioneer_read@instance: true
+                        pioneer_write@instance: true
+                        pioneer_read_group@instance:
+                        -   SC-2023
+                        -   SC-2023.general
+                        -   SC-2023.general.settings
+                        -   SC-2023.general.settings.hdmi
+                        pioneer_read_initial@instance: true
 
                     control:
                         type: bool
@@ -6132,10 +6187,6 @@ item_structs:
                             -   SC-2023.zone1.settings.sound
                             -   SC-2023.zone1.settings.sound.general
 
-                            lookup:
-                                type: list
-                                pioneer_lookup@instance: PLAYINGMODE#list
-
                         speakers:
                             type: num
                             pioneer_command@instance: zone1.settings.sound.general.speakers
@@ -6361,6 +6412,7 @@ item_structs:
                     -   SC-2023
                     -   SC-2023.zone3
                     -   SC-2023.zone3.control
+                    remark: For some receivers it might be necessary to change speakersystem to Zone 2 and hdzone for HDMI on.
                     pioneer_read_initial: true
                     on_change: sh....read.timer(sh..readdelay(), True) if value else None
 
@@ -6667,6 +6719,18 @@ item_structs:
                         type: bool
                         enforce_updates: true
                         pioneer_read_group_trigger@instance: SC-1223.general.settings.hdmi
+
+                    hdzone:
+                        type: bool
+                        pioneer_command@instance: general.settings.hdmi.hdzone
+                        pioneer_read@instance: true
+                        pioneer_write@instance: true
+                        pioneer_read_group@instance:
+                        -   SC-1223
+                        -   SC-1223.general
+                        -   SC-1223.general.settings
+                        -   SC-1223.general.settings.hdmi
+                        pioneer_read_initial@instance: true
 
                     control:
                         type: bool
@@ -7171,10 +7235,6 @@ item_structs:
                             -   SC-1223.zone1.settings.sound
                             -   SC-1223.zone1.settings.sound.general
 
-                            lookup:
-                                type: list
-                                pioneer_lookup@instance: PLAYINGMODE#list
-
                         speakers:
                             type: num
                             pioneer_command@instance: zone1.settings.sound.general.speakers
@@ -7560,6 +7620,18 @@ item_structs:
                         type: bool
                         enforce_updates: true
                         pioneer_read_group_trigger@instance: VSX-1123.general.settings.hdmi
+
+                    hdzone:
+                        type: bool
+                        pioneer_command@instance: general.settings.hdmi.hdzone
+                        pioneer_read@instance: true
+                        pioneer_write@instance: true
+                        pioneer_read_group@instance:
+                        -   VSX-1123
+                        -   VSX-1123.general
+                        -   VSX-1123.general.settings
+                        -   VSX-1123.general.settings.hdmi
+                        pioneer_read_initial@instance: true
 
                     control:
                         type: bool
@@ -8064,10 +8136,6 @@ item_structs:
                             -   VSX-1123.zone1.settings.sound
                             -   VSX-1123.zone1.settings.sound.general
 
-                            lookup:
-                                type: list
-                                pioneer_lookup@instance: PLAYINGMODE#list
-
                         speakers:
                             type: num
                             pioneer_command@instance: zone1.settings.sound.general.speakers
@@ -8363,6 +8431,18 @@ item_structs:
                         type: bool
                         enforce_updates: true
                         pioneer_read_group_trigger@instance: VSX-923.general.settings.hdmi
+
+                    hdzone:
+                        type: bool
+                        pioneer_command@instance: general.settings.hdmi.hdzone
+                        pioneer_read@instance: true
+                        pioneer_write@instance: true
+                        pioneer_read_group@instance:
+                        -   VSX-923
+                        -   VSX-923.general
+                        -   VSX-923.general.settings
+                        -   VSX-923.general.settings.hdmi
+                        pioneer_read_initial@instance: true
 
                     control:
                         type: bool
@@ -8866,10 +8946,6 @@ item_structs:
                             -   VSX-923.zone1.settings
                             -   VSX-923.zone1.settings.sound
                             -   VSX-923.zone1.settings.sound.general
-
-                            lookup:
-                                type: list
-                                pioneer_lookup@instance: PLAYINGMODE#list
 
                         speakers:
                             type: num
