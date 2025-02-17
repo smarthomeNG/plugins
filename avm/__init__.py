@@ -113,7 +113,7 @@ class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = '2.2.2'
+    PLUGIN_VERSION = '2.2.3'
 
     # ToDo: FritzHome.handle_updated_item: implement 'saturation'
     # ToDo: FritzHome.handle_updated_item: implement 'unmapped_hue'
@@ -206,8 +206,7 @@ class AVM(SmartPlugin):
                 # just in case it already exists...
                 if self.scheduler_get(f'poll_{target}'):
                     self.scheduler_remove(f'poll_{target}')
-                dt = self.shtime.now() + datetime.timedelta(seconds=workercycle)
-                self.scheduler_add(f'poll_{target}', fct, cycle=workercycle, prio=5, offset=offset, next=dt)
+                self.scheduler_add(f'poll_{target}', fct, cycle=workercycle, prio=5, offset=offset)
                 self.logger.info(f'{target}: Added cyclic worker thread ({workercycle} sec cycle). Shortest item update cycle found: {shortestcycle} sec')
                 return True
             else:
@@ -216,12 +215,9 @@ class AVM(SmartPlugin):
         self.logger.debug("Run method called")
         if self.fritz_device:
             create_cyclic_scheduler(target='tr064', items=self.get_tr064_items(), fct=self.fritz_device.cyclic_item_update, offset=2)
-            self.fritz_device.cyclic_item_update(read_all=True)
 
         if self._aha_http_interface and self.fritz_device and self.fritz_device.is_fritzbox() and self.fritz_home:
-            # add scheduler for updating items
             create_cyclic_scheduler(target='aha', items=self.get_aha_items(), fct=self.fritz_home.cyclic_item_update, offset=4)
-            self.fritz_home.cyclic_item_update(read_all=True)
 
         if self.monitoring_service:
             self.monitoring_service.set_callmonitor_item_values_initially()
@@ -572,113 +568,115 @@ class AVM(SmartPlugin):
         return self.logger.getEffectiveLevel()
 
     def monitoring_service_connect(self):
-        self.monitoring_service.connect()
+        if self.monitoring_service:
+            self.monitoring_service.connect()
 
     def monitoring_service_disconnect(self):
-        self.monitoring_service.disconnect()
+        if self.monitoring_service:
+            self.monitoring_service.disconnect()
 
     @NoAttributeError
     def start_call(self, phone_number):
-        return self.fritz_device.start_call(phone_number)
+        return self.fritz_device.start_call(phone_number) if self.fritz_device else None
 
     @NoAttributeError
     def cancel_call(self):
-        return self.fritz_device.cancel_call()
+        return self.fritz_device.cancel_call() if self.fritz_device else None
 
     @NoAttributeError
     def get_call_origin(self):
-        return self.fritz_device.get_call_origin()
+        return self.fritz_device.get_call_origin() if self.fritz_device else None
 
     @NoAttributeError
     def set_call_origin(self, phone_name: str):
-        return self.fritz_device.set_call_origin(phone_name)
+        return self.fritz_device.set_call_origin(phone_name) if self.fritz_device else None
 
     @NoAttributeError
     def get_calllist(self, filter_incoming: str = ''):
         if filter_incoming :
-            return self.fritz_device.get_calllist(filter_incoming)
+            return self.fritz_device.get_calllist(filter_incoming) if self.fritz_device else None
         else :
-            return self.fritz_device.get_calllist_from_cache()
+            return self.fritz_device.get_calllist_from_cache() if self.fritz_device else None
 
     @NoAttributeError
     def get_phone_name(self, index: int = 1):
-        return self.fritz_device.get_phone_name(index)
+        return self.fritz_device.get_phone_name(index) if self.fritz_device else None
 
     @NoAttributeError
     def get_phone_numbers_by_name(self, name: str = '', phonebook_id: int = 0):
-        return self.fritz_device.get_phone_numbers_by_name(name, phonebook_id)
+        return self.fritz_device.get_phone_numbers_by_name(name, phonebook_id) if self.fritz_device else None
 
     @NoAttributeError
     def get_contact_name_by_phone_number(self, phone_number: str = '', phonebook_id: int = 0):
-        return self.fritz_device.get_contact_name_by_phone_number(phone_number, phonebook_id)
+        return self.fritz_device.get_contact_name_by_phone_number(phone_number, phonebook_id) if self.fritz_device else None
 
     @NoAttributeError
     def get_device_log_from_lua(self):
-        return self.fritz_home.get_device_log_from_lua()
+        return self.fritz_home.get_device_log_from_lua() if self.fritz_home else None
 
     @NoAttributeError
     def get_device_log_from_lua_separated(self):
-        return self.fritz_home.get_device_log_from_lua_separated()
+        return self.fritz_home.get_device_log_from_lua_separated() if self.fritz_home else None
 
     @NoAttributeError
     def get_device_log_from_tr064(self):
-        return self.fritz_device.get_device_log_from_tr064()
+        return self.fritz_device.get_device_log_from_tr064() if self.fritz_device else None
 
     @NoAttributeError
     def get_host_details(self, index: int):
-        return self.fritz_device.get_host_details(index)
+        return self.fritz_device.get_host_details(index) if self.fritz_device else None
 
     @NoAttributeError
     def get_hosts(self, only_active: bool = False):
-        return self.fritz_device.get_hosts(only_active)
+        return self.fritz_device.get_hosts(only_active) if self.fritz_device else None
 
     @NoAttributeError
     def get_hosts_dict(self, only_active: bool = False):
-        return self.fritz_device.get_hosts_dict(only_active)
+        return self.fritz_device.get_hosts_dict(only_active) if self.fritz_device else None
 
     @NoAttributeError
     def get_hosts_list(self, identifier_list: list = None, filter_dict: dict = None) -> Union[list, None]:
-        return self.fritz_device.get_hosts_list(identifier_list, filter_dict)
+        return self.fritz_device.get_hosts_list(identifier_list, filter_dict) if self.fritz_device else None
 
     @NoAttributeError
     def get_mesh_topology(self):
-        return self.fritz_device.get_mesh_topology()
+        return self.fritz_device.get_mesh_topology() if self.fritz_device else None
 
     @NoAttributeError
     def is_host_active(self, mac_address: str):
-        return self.fritz_device.is_host_active(mac_address)
+        return self.fritz_device.is_host_active(mac_address) if self.fritz_device else None
 
     @NoAttributeError
     def reboot(self):
-        return self.fritz_device.reboot()
+        return self.fritz_device.reboot() if self.fritz_device else None
 
     @NoAttributeError
     def reconnect(self):
-        return self.fritz_device.reconnect()
+        return self.fritz_device.reconnect() if self.fritz_device else None
 
     @NoAttributeError
     def wol(self, mac_address: str):
-        return self.fritz_device.wol(mac_address)
+        return self.fritz_device.wol(mac_address) if self.fritz_device else None
 
     @NoAttributeError
     def get_number_of_deflections(self):
-        return self.fritz_device.get_number_of_deflections()
+        return self.fritz_device.get_number_of_deflections() if self.fritz_device else None
 
     @NoAttributeError
     def get_deflection(self, deflection_id: int = 0):
-        return self.fritz_device.get_deflection(deflection_id)
+        return self.fritz_device.get_deflection(deflection_id) if self.fritz_device else None
 
     @NoAttributeError
     def get_deflections(self):
-        return self.fritz_device.get_deflections()
+        return self.fritz_device.get_deflections() if self.fritz_device else None
 
     @NoAttributeError
     def set_deflection_enable(self, deflection_id: int = 0, new_enable: bool = False):
-        return self.fritz_device.set_deflection(deflection_id, new_enable)
+        return self.fritz_device.set_deflection(deflection_id, new_enable) if self.fritz_device else None
 
     @NoAttributeError
     def set_tam(self, tam_index: int = 0, new_enable: bool = False):
-        return self.fritz_device.set_tam(tam_index, new_enable)
+        return self.fritz_device.set_tam(tam_index, new_enable) if self.fritz_device else None
 
     def get_aha_items(self):
         return self.get_item_list(filter_key='interface', filter_value='aha')
@@ -770,6 +768,7 @@ class FritzDevice:
         self.default_connection_service = None
         self.client = None
         self.client_igd = None
+        self.initial_read_done = False
 
         # get client objects
         try:
@@ -952,7 +951,7 @@ class FritzDevice:
                 continue
 
             # read items with cycle == 0 just at init
-            if cycle == 0 and not read_all:
+            if cycle == 0 and self.initial_read_done and not read_all:
                 self.logger.debug(f"Item {item.property.path} just read at init. No further update.")
                 continue
 
@@ -980,6 +979,9 @@ class FritzDevice:
 
         # clear data cache dict after update cycle
         self._clear_data_cache()
+
+        # set initial_read_done to True
+        self.initial_read_done = True
 
         self.logger.debug(f"Update of {item_count} TR064-Items took {int(time.time()) - current_time}s")
 
@@ -1949,6 +1951,7 @@ class FritzHome:
         self.use_device_statistics = False
         self.last_device_statistics_update = 0
         self.device_statistics_min_grid = 0
+        self.initial_read_done = False
 
         # Login to test, if login is possible and get first sid
         self.login()
@@ -1984,8 +1987,8 @@ class FritzHome:
             next_time = item_config['next_update']
 
             # Just read items with cycle == 0 at init
-            if not read_all and not cycle:
-                # self.logger.debug(f"Item={item.property.path} just read at init. No further update.")
+            if cycle == 0 and self.initial_read_done and not read_all:
+                self.logger.debug(f"Item={item.property.path} just read at init. No further update.")
                 continue
 
             # check if item is already due
@@ -2017,6 +2020,9 @@ class FritzHome:
 
             # set next due date
             item_config['next_update'] = update_time + cycle
+
+        # set initial_read_done to True
+        self.initial_read_done = True
 
         self.logger.debug(f"Update of {item_count} AHA-Items took {int(time.time()) - update_time}s")
 
