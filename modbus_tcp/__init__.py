@@ -3,7 +3,7 @@
 #########################################################################
 # Copyright 2022 De Filippis Ivan
 # Copyright 2022 Ronny Schulz
-# Copyright 2023 Bernd Meiners
+# Copyright 2023-2025 Bernd Meiners
 #########################################################################
 # This file is part of SmartHomeNG.
 #
@@ -35,17 +35,26 @@ from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.payload import BinaryPayloadBuilder
 
 from pymodbus.client.tcp import ModbusTcpClient
+from pymodbus import ModbusException
 
 import logging
 
 AttrAddress = 'modBusAddress'
 AttrType = 'modBusDataType'
+
 AttrFactor = 'modBusFactor'
 AttrByteOrder = 'modBusByteOrder'
 AttrWordOrder = 'modBusWordOrder'
 AttrSlaveUnit = 'modBusUnit'
 AttrObjectType = 'modBusObjectType'
 AttrDirection = 'modBusDirection'
+
+BAD_VALUE_SINT16 = 0x8000
+BAD_VALUE_SINT32 = 0x80000000
+
+BAD_VALUE_UINT16 = 0xFFFF
+BAD_VALUE_UINT32 = 0xFFFFFFFF
+BAD_VALUE_UINT64 = 0xFFFFFFFFFFFFFFFF
 
 
 class modbus_tcp(SmartPlugin):
@@ -54,7 +63,7 @@ class modbus_tcp(SmartPlugin):
     devices.
     """
 
-    PLUGIN_VERSION = '1.0.13'
+    PLUGIN_VERSION = '1.0.14'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -166,11 +175,7 @@ class modbus_tcp(SmartPlugin):
             if self.has_iattr(item.conf, AttrObjectType):
                 objectType = self.get_iattr_value(item.conf, AttrObjectType)
 
-            reg = str(objectType)  # dictionary key: objectType.regAddr.slaveUnit // HoldingRegister.528.1
-            reg += '.'
-            reg += str(regAddr)
-            reg += '.'
-            reg += str(slaveUnit)
+            reg = self.makedictkey(objectType,regAddr,slaveUnit)
 
             if self.has_iattr(item.conf, AttrDirection):
                 dataDirection = self.get_iattr_value(item.conf, AttrDirection)
@@ -227,13 +232,14 @@ class modbus_tcp(SmartPlugin):
 
     def poll_device(self):
         """
-        Polls for updates of the device
-
-        This method is only needed, if the device (hardware/interface) does not propagate
-        changes on it's own, but has to be polled to get the actual status.
+        Poll data from modbus device
         It is called by the scheduler which is set within run() method.
         """
         if not self.alive:
+            return
+            
+        if self.lock.locked():
+            self.log_error(f"poll_device already called an not ready for next poll")
             return
 
         with self.lock:
@@ -256,37 +262,48 @@ class modbus_tcp(SmartPlugin):
                 self.connected = False
                 return
 
-        startTime = datetime.now()
-        regCount = 0
-        try:
+            startTime = datetime.now()
+            regCount = 0
+
             for reg, regPara in self._regToRead.items():
-                with self.lock:
-                    value = self.__read_Registers(regPara)
+                try:
+                    raw_value = self.__read_Registers(regPara)
                     # self.logger.debug(f"value read: {value} type: {type(value)}")
-                    if value is not None:
-                        item = regPara['item']
-                        if regPara['factor'] != 1:
-                            value = value * regPara['factor']
-                            # self.logger.debug(f"value {value} multiply by: {regPara['factor']}")
-                        item(value, self.get_fullname())
-                        regCount += 1
+                except ModbusException as e:
+                    self.logger.error(f"ModbusException raised while reading: {e}")
+                    break
 
-                        if 'read_dt' in regPara:
-                            regPara['last_read_dt'] = regPara['read_dt']
+                if raw_value is None:
+                    continue
 
-                        if 'value' in regPara:
-                            regPara['last_value'] = regPara['value']
+                if self.is_NaN( raw_value, regPara['dataType']):
+                    self.logger.debug(f"value read: {raw_value} type: {type(value)} is a bad Value")
+                    continue
+                    
+                value = raw_value
+                if regPara['factor'] != 1 and isinstance(value, (int, float)):
+                    value *= regPara['factor']
+                    # self.logger.debug(f"value {value} multiply by: {regPara['factor']}")
+                    
+                item = regPara['item']
+                item(value, self.get_fullname())
+                regCount += 1
 
-                        regPara['read_dt'] = datetime.now()
-                        regPara['value'] = value
+                if 'read_dt' in regPara:
+                    regPara['last_read_dt'] = regPara['read_dt']
+
+                if 'value' in regPara:
+                    regPara['last_value'] = regPara['value']
+
+                regPara['read_dt'] = datetime.now()
+                regPara['value'] = value
+
             endTime = datetime.now()
             duration = endTime - startTime
             if regCount > 0:
                 self._pollStatus['last_dt'] = datetime.now()
                 self._pollStatus['regCount'] = regCount
             self.logger.debug(f"poll_device: {regCount} register read required {duration} seconds")
-        except Exception as e:
-            self.logger.error(f"something went wrong in the poll_device function: {e}")
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -340,11 +357,9 @@ class modbus_tcp(SmartPlugin):
             # else:
                 # self.logger.debug(f'update_item:{item} default modBusObjectTyp: {objectType}')
 
-            reg = str(objectType)  # Dict-key: HoldingRegister.528.1 *** objectType.regAddr.slaveUnit ***
-            reg += '.'
-            reg += str(regAddr)
-            reg += '.'
-            reg += str(slaveUnit)
+            # Dict-key construction: objectType.regAddr.slaveUnit  e.g. HoldingRegister.528.1
+            reg = self.makedictkey(objectType,regAddr,slaveUnit)
+            
             if reg in self._regToWrite:
                 with self.lock:
                     regPara = self._regToWrite[reg]
@@ -374,6 +389,15 @@ class modbus_tcp(SmartPlugin):
                         self.logger.error(f"something went wrong in the __write_Registers function: {e}")
 
     def __write_Registers(self, regPara, value):
+        """Writes a given value to the register given in dict regPara
+
+        Args:
+            regPara (dict): key/value for object type, address, slaveUnit, datatype
+            value: the value to be written to the register
+
+        Returns:
+            _type_: _description_
+        """
         objectType = regPara['objectType']
         address = regPara['regAddr']
         slaveUnit = regPara['slaveUnit']
@@ -448,6 +472,7 @@ class modbus_tcp(SmartPlugin):
             return
         else:
             return
+
         if result.isError():
             self.logger.error(f"write error: {result} {objectType}.{address}.{slaveUnit} (address.slaveUnit)")
             return None
@@ -467,10 +492,18 @@ class modbus_tcp(SmartPlugin):
         # regPara['write_dt'] = datetime.now()
         # regPara['write_value'] = value
 
-    def __read_Registers(self, regPara):
+    def __read_Registers(self, regPara: dict):
+        """Reads a register from modbus with parameters in passed dict
+
+        Args:
+            regPara (dict): key/value for object type, address, slaveUnit, datatype
+
+        Returns:
+            int/float/string: the read value
+        """
         objectType = regPara['objectType']
         dataTypeStr = regPara['dataType']
-        dataType = ''.join(filter(str.isalpha, dataTypeStr))
+        dataType = ''.join(filter(str.isalpha, dataTypeStr))    # get the base type from eg. 'uint32' --> 'uint'
         bo = regPara['byteOrder']
         wo = regPara['wordOrder']
         slaveUnit = regPara['slaveUnit']
@@ -479,7 +512,7 @@ class modbus_tcp(SmartPlugin):
         value = None
 
         try:
-            bits = int(''.join(filter(str.isdigit, dataTypeStr)))
+            bits = int(''.join(filter(str.isdigit, dataTypeStr))) # get only bits from e.g.  'uint32' --> 32
         except:
             bits = 16
 
@@ -494,17 +527,18 @@ class modbus_tcp(SmartPlugin):
 
         # self.logger.debug(f"read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}")
         if objectType == 'Coil':
-            result = self._Mclient.read_coils(address, registerCount, slave=slaveUnit)
+            result = self._Mclient.read_coils(address, count=registerCount, slave=slaveUnit)
         elif objectType == 'DiscreteInput':
-            result = self._Mclient.read_discrete_inputs(address, registerCount, slave=slaveUnit)
+            result = self._Mclient.read_discrete_inputs(address, count=registerCount, slave=slaveUnit)
         elif objectType == 'InputRegister':
-            result = self._Mclient.read_input_registers(address, registerCount, slave=slaveUnit)
+            result = self._Mclient.read_input_registers(address, count=registerCount, slave=slaveUnit)
         elif objectType == 'HoldingRegister':
-            result = self._Mclient.read_holding_registers(address, registerCount, slave=slaveUnit)
+            result = self._Mclient.read_holding_registers(address, count=registerCount, slave=slaveUnit)
         else:
             self.logger.error(f"{AttrObjectType} not supported: {objectType}")
             return
 
+        # https://pymodbus.readthedocs.io/en/latest/source/client.html#client-response-handling
         if result.isError():
             self.logger.error(f"read error: {result} {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}")
             return
@@ -558,3 +592,24 @@ class modbus_tcp(SmartPlugin):
                 return decoder.decode_bits()
         else:
             self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
+
+    @staticmethod
+    def is_NaN( value, dataType: str) -> bool:
+        """
+        Check if a returned value is a bad value and return True if it is
+        """
+        if dataType == 'int16':
+           return value == BAD_VALUE_SINT16
+        elif dataType == 'int32':
+           return value == BAD_VALUE_SINT32
+        elif dataType == 'uint16':
+           return value == BAD_VALUE_UINT16
+        elif dataType == 'uint32':
+            return value == BAD_VALUE_UINT32
+        elif dataType == 'uint64':
+           return value == BAD_VALUE_UINT64
+
+    @staticmethod
+    def makedictkey(objectType: str, regAddr, slaveUnit) -> str:
+        # dictionary key: objectType.regAddr.slaveUnit // HoldingRegister.528.1
+        return f"{str(objectType)}.{str(regAddr)}.{str(slaveUnit)}"
