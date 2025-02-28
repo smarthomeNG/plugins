@@ -40,6 +40,7 @@ import traceback
 
 class UniFiConst(object):
     PARAMETER_URL = 'unifi_controller_url'
+    PARAMETER_TYPE = 'unifi_controller_type'
     PARAMETER_USER = 'unifi_user'
     PARAMETER_PWD = 'unifi_password'
     PARAMETER_SITE_ID = 'unifi_site_id'
@@ -138,7 +139,9 @@ class UniFiControllerClientModel():
     def _generate_item_key(self, source:str):
         step1 = source.lower().replace(' ', '_')
         step2 = re.sub('[^0-9a-z_]+', '_', step1)
-        return step2.replace("___", "_").replace("__", "_")
+        step3 = step2.replace("___", "_").replace("__", "_")
+        step4 = step3.strip("_")
+        return step4
 
     def _get_device_node_item(self, node_data, parent_type=""):
         n = node_data['node']
@@ -289,7 +292,7 @@ class UniFiControllerClient(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.3'
+    PLUGIN_VERSION = '1.6.4'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -303,6 +306,7 @@ class UniFiControllerClient(SmartPlugin):
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self._unifi_controller_url = self.get_parameter_value(UniFiConst.PARAMETER_URL)
+        self._unifi_controller_type = self.get_parameter_value(UniFiConst.PARAMETER_TYPE)
         self._unifi_user = self.get_parameter_value(UniFiConst.PARAMETER_USER)
         self._unifi_password = self.get_parameter_value(UniFiConst.PARAMETER_PWD)
         self._unifi_site_id = self.get_parameter_value(UniFiConst.PARAMETER_SITE_ID)
@@ -311,6 +315,7 @@ class UniFiControllerClient(SmartPlugin):
                                                           password=self._unifi_password,
                                                           site=self._unifi_site_id,
                                                           baseurl=self._unifi_controller_url,
+                                                          unifitype=self._unifi_controller_type,
                                                           verify_ssl=False))
 
         # cycle time in seconds, only needed, if hardware/interface needs to be
@@ -361,7 +366,7 @@ class UniFiControllerClient(SmartPlugin):
         if defaulting:
             self._model.append_item_issue(item, "2: " + msg, 2)
         else:
-            self._model.append_item_issue(item, "1: "+msg, 1)
+            self._model.append_item_issue(item, "1: " + msg, 1)
 
         if enable_logging:
             self.logger.info(msg + " in item " + item.property.path)

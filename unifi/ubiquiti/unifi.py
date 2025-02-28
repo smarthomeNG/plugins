@@ -41,7 +41,7 @@ class API(object):
     _device_cache = {}
     _request_count = 0
 
-    def __init__(self, username: str = "ubnt", password: str = "ubnt", site: str = "default", baseurl: str = "https://unifi:8443", verify_ssl: bool = True):
+    def __init__(self, username: str = "ubnt", password: str = "ubnt", site: str = "default", baseurl: str = "https://unifi:8443", verify_ssl: bool = True, unifitype: str = "software"):
         """
         Initiates tha api with default settings if none other are set.
 
@@ -55,7 +55,18 @@ class API(object):
         self._login_data['password'] = password
         self._site = site
         self._verify_ssl = verify_ssl
-        self._baseurl = baseurl
+        self._headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0"
+        }
+        if unifitype == 'device':
+            self._baseurl = f'{baseurl}/proxy/network'
+            self._loginurl = f'{baseurl}/api/auth/login'
+        else:
+            self._baseurl = baseurl
+            self._loginurl = f'{baseurl}/api/login'
+        self._unifitype = unifitype
         self._session = Session()
         self._request_count = 0
 
@@ -87,7 +98,7 @@ class API(object):
 
             if not r.ok:
                 if current_status_code == 401:
-                    raise LoggedInException("Invalid login, or login has expired")
+                    raise LoggedInException(f"Invalid login while getting, or login has expired. r: {r} {current_status_code}")
 
             data = r.json()['data']
             return data
@@ -106,7 +117,7 @@ class API(object):
             current_status_code = r.status_code
             if not r.ok:
                 if current_status_code == 401:
-                    raise LoggedInException("Invalid login, or login has expired")
+                    raise LoggedInException("Invalid login while putting, or login has expired")
                 else:
                     raise LoggedInException("code {}".format(current_status_code))
 
@@ -127,8 +138,8 @@ class API(object):
         if self._is_logged_in:
             return
 
-        current_status_code = self._session.post("{}/api/login".format(
-            self._baseurl), data=json.dumps(self._login_data), verify=self._verify_ssl).status_code
+        current_status_code = self._session.post("{}".format(
+            self._loginurl), data=json.dumps(self._login_data), headers=self._headers, verify=self._verify_ssl).status_code
         self._request_count = self._request_count + 1
         if current_status_code == 400:
             raise LoggedInException("Failed to log in to api with provided credentials")
@@ -311,7 +322,7 @@ class API(object):
                 break
         if not poFound:
             raise DataException("Could not match any port in data to given port-number {}".format(port_number))
-        port_prof = poData[poIndex]['portconf_id']
+        port_prof = poData[poIndex].get('portconf_id')
 
         profiles = self._get_port_profiles()
         if len(profiles) == 0:
