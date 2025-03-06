@@ -51,7 +51,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.14'
+    PLUGIN_VERSION = '1.6.15'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -209,7 +209,7 @@ class Database(SmartPlugin):
                         with the item, caller, source and dest as arguments and in case of the knx plugin the value
                         can be sent to the knx with a knx write function within the knx plugin.
         """
-        if self.has_iattr(item.conf, 'database'):
+        if self.has_iattr(item.conf, 'database') and self.get_iattr_value(item.conf, 'database') not in ['no', 'false']:
             self._webdata.update({item.property.path: {}})
             self._handled_items.append(item)
             if self.has_iattr(item.conf, 'database_maxage'):
