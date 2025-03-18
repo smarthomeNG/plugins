@@ -43,6 +43,7 @@ from datetime import datetime
 from dateutil import tz
 
 from lib.model.smartplugin import SmartPlugin
+from lib.shtime import Shtime
 
 BCAST_ADDR = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
 ZERO_ADDR = bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
@@ -186,6 +187,8 @@ class SMA(SmartPlugin):
     PLUGIN_VERSION = "1.3.2"
 
     def __init__(self, sh, **kwargs):
+        self.shtime = Shtime.get_instance()
+
         # TODO: self._own_bt_addr setzen
         self._inv_bt_addr = self.get_parameter_value('bt_addr')
         self._inv_password = self.get_parameter_value('password')
@@ -665,7 +668,7 @@ class SMA(SmartPlugin):
         msg += SMANET2_HDR + bytes([0x10, 0xA0]) + BCAST_ADDR + bytes([0x00, 0x00]) + self._inv_bt_addr_le + bytes([0x00] + [0x00] + [0, 0, 0, 0]) + (self._send_count | 0x8000).to_bytes(2, byteorder='little')
         msg += int(0xF000020A).to_bytes(4, byteorder='little') + int(0x00236D00).to_bytes(4, byteorder='little') + int(0x00236D00).to_bytes(4, byteorder='little') + int(0x00236D00).to_bytes(4, byteorder='little')
         local_time = int(time.time()).to_bytes(4, byteorder='little')
-        msg += local_time + local_time + local_time + round((datetime.now() - datetime.utcnow()).total_seconds()).to_bytes(4, byteorder='little') + local_time + bytes([0x01, 0x00, 0x00, 0x00])
+        msg += local_time + local_time + local_time + round((datetime.now() - self.shtime.utcnow()).total_seconds()).to_bytes(4, byteorder='little') + local_time + bytes([0x01, 0x00, 0x00, 0x00])
 #        msg += local_time + local_time + local_time + time.localtime().tm_gmtoff.to_bytes(4, byteorder='little') + local_time + bytes([0x01, 0x00, 0x00, 0x00])
         # send msg to inverter
         self._send_msg(msg)
