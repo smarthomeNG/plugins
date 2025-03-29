@@ -29,7 +29,7 @@ Dort können Plugins angezeigt, installiert und entfernt  sowie durch einen pull
 Das Plugin legt im Verzeichnis `plugins` das Unterverzeichnis `priv_repos` an, in dem die heruntergeladenen Daten abgelegt werden. Für jedes Plugin werden die folgenden Dateien bzw. Verzeichnisse benötigt:
 
 - ein Repository ("git clone") in `plugins/priv_repos/<Autor>/`; dieser Ordner kann durch mehrere Plugins genutzt werden,
-- ein Ornder mit Worktree-Daten für den jeweiligen Branch in `plugins/priv_repos/<Autor>_wt_<Branch>/`,
+- ein Ordner mit Worktree-Daten für den jeweiligen Branch in `plugins/priv_repos/<Autor>_wt_<Branch>/`,
 - eine Verknüpfung/Symlink `plugins/priv_<Name>`, die auf den Plugin-Ordner im Worktree verlinkt.
 
 Dabei ist Name ein Bezeichner, der vom Nutzer selbst festgelegt werden kann. Dieser wird dann in der Form `priv_<Name>` auch in der `etc/plugin.yaml` als Bezeichner für das Plugin verwendet.
