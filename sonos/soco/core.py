@@ -73,6 +73,7 @@ AUDIO_INPUT_FORMATS = {
     84934658: "Multichannel PCM 5.1",
     84934713: "Dolby 5.1",
     84934714: "Dolby Digital Plus 5.1",
+    84934716: "Dolby TrueHD 5.1",
     84934718: "Dolby Multichannel PCM 5.1",
     84934721: "DTS 5.1",
 }
@@ -1961,10 +1962,7 @@ class SoCo(_SocoSingletonBase):
             )
             index = trackinfo.find(" - ")
 
-            if index > -1:
-                radio_track["artist"] = trackinfo[:index].strip()
-                radio_track["title"] = trackinfo[index + 3 :].strip()
-            elif "TYPE=SNG|" in trackinfo:
+            if "TYPE=SNG|" in trackinfo:
                 # Examples from services:
                 #  Apple Music radio:
                 #   "TYPE=SNG|TITLE Couleurs|ARTIST M83|ALBUM Saturdays = Youth"
@@ -1977,6 +1975,9 @@ class SoCo(_SocoSingletonBase):
                     radio_track["artist"] = tags["ARTIST"]
                 if tags.get("ALBUM"):
                     radio_track["album"] = tags["ALBUM"]
+            elif index > -1:
+                radio_track["artist"] = trackinfo[:index].strip()
+                radio_track["title"] = trackinfo[index + 3 :].strip()
             else:
                 # Might find some kind of title anyway in metadata
                 title = metadata.findtext(".//{http://purl.org/dc/elements/1.1/}title")
@@ -2988,6 +2989,7 @@ SOURCES = {
 SOUNDBARS = (
     "arc",
     "arc sl",
+    "arc ultra",
     "beam",
     "playbase",
     "playbar",

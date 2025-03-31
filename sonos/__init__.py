@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2016-       pfischi, aschwith, sisamiwe                    #
+#  Copyright 2016-2025   pfischi, aschwith, sisamiwe                    #
 #########################################################################
 #  This file is part of SmartHomeNG.   
 #
@@ -2293,11 +2293,16 @@ class Speaker(object):
         if not self.is_coordinator:
             sonos_speaker[self.coordinator].play_sonos_radio(station_name, start)
         else:
-            result, msg = self._play_radio(station_name=station_name, music_service='Sonos Radio', start=start)
-            if not result:
-                self.logger.warning(msg)
+            try:
+                result, msg = self._play_radio(station_name=station_name, music_service='Sonos Radio', start=start)
+            except SoCoUPnPException as ex:
+                self.logger.warning(f"Exception in play_sonos_radio() a): {ex}")
                 return False
-            return True
+            else:
+                if not result:
+                    self.logger.warning(msg)
+                    return False
+                return True
     
     def _play_tunein(self, station_name: str, music_service: str = 'TuneIn', start: bool = True) -> tuple:
         """
@@ -2994,7 +2999,7 @@ class Sonos(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = "1.8.10"
+    PLUGIN_VERSION = "1.8.11"
 
     def __init__(self, sh):
         """Initializes the plugin."""
@@ -3028,6 +3033,7 @@ class Sonos(SmartPlugin):
         self.zones = {}                     # dict to hold zone information via soco objects
         self.alive = False                  # plugin alive property
         self.webservice = None              # webservice thread
+        self._pause_item = None
         
         # handle fixed speaker ips
         if speaker_ips:
@@ -3822,7 +3828,11 @@ class Sonos(SmartPlugin):
         # dispose every speaker that was not found
         for uid in set(sonos_speaker.keys()) - set(handled_speaker.keys()):
             if sonos_speaker[uid].soco is not None:
-                self.logger.warning(f"Removing/disposing undiscovered speaker: {sonos_speaker[uid].ip_address}, {uid}")
+                try:
+                    speaker_ip = sonos_speaker[uid].ip_address
+                except:
+                    speaker_ip = "unknown ip"
+                self.logger.warning(f"Removing/disposing undiscovered speaker: {speaker_ip}, {uid}")
                 sonos_speaker[uid].dispose()
 
         # Extract number of online speakers:
