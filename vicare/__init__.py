@@ -117,6 +117,7 @@ class Vicare(SmartPlugin):
 
     def stop(self):
         self.logger.debug("Stop method called")
+        self.onlineStatue = False
         self.alive = False
         self.scheduler_remove('poll_backend')
 
@@ -251,6 +252,11 @@ class Vicare(SmartPlugin):
 
         if response.status_code == 200:
             self.logger.info(f"Refresh token request successfull")
+        # Invalid grant:
+        elif response.status_code == 400:   
+            self.logger.error(f"Refresh token request was unsuccessfull and marked as invalid grant. Status code: {response.status_code}")
+            self.logger.warning(f"Refresh token request was unsuccessfull. Response: {response.text}")
+            return False
         else:
             self.logger.warning(f"Refresh token request was unsuccessfull. Status code: {response.status_code}")
             self.logger.warning(f"Refresh token request was unsuccessfull. Response: {response.text}")
