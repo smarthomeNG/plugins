@@ -1,7 +1,7 @@
 plugin_translations:
     'Nuki Items':  {'de': '=', 'en': '='}
-    'Erkannte Nuki IDs':  {'de': '=', 'en': 'Detected Nuki IDs'}
-    'Token':  {'de': '=', 'en': '='}
+    'Nuki IDs (via Nuki Bridge)':  {'de': '=', 'en': '='}
+    'Bridge Token':  {'de': '=', 'en': '='}
     'Callback URL (SHNG)':     {'de': '=', 'en': '='}
     'NoWait':  {'de': '=', 'en': '='}
     'Base URL (Nuki Bridge)':  {'de': '=', 'en': '='}
@@ -18,6 +18,7 @@ plugin_translations:
     'Possible Lock Actions':  {'de': 'Mögliche Aktionen des Schlosses', 'en': '='}
     'unlock':  {'de': 'Aufsperren', 'en': '='}
     'lock':  {'de': 'Abschließen', 'en': '='}
+    'fullLock': {'de': 'Vollabschließen', 'en': 'Full Lock'}
     'unlatch':  {'de': 'Entriegeln', 'en': '='}
     'lockAndGo':  {'de': 'Lock And Go', 'en': 'Lock And Go'}
     'lockAndGoWithUnlatch':  {'de': 'Lock And Go mit Entriegeln', 'en': 'Lock And Go with unlatch'}
@@ -43,4 +44,6 @@ plugin_translations:
     'Batteries are good. No need to replace it.':  {'de': 'Die Batterien sind gut, sie müssen nicht getauscht werden.', 'en': '='}
     'Batteries are low. Please replace as soon as possible!':  {'de': 'Die Batterieladung ist niedrig. Bitte so bald als möglich austauschen!', 'en': '='}
     'Send': {'de': 'Abschicken', 'en': '='}
+    'onlyMQTT': {'de': 'Nur via MQTT', 'en': 'Only via MQTT'}
+    'Modus des Plugins': {'de': '=', 'en': 'Mode of the Plugin'}
     'none': {'de': 'keine Aktion', 'en': 'no action'}

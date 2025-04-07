@@ -8,9 +8,19 @@
 {% block headtable %}
 <table class="table table-striped table-hover">
 	<tbody>
-
+        <tr>
+            <td class="py-1"><strong>{{  _('Modus des Plugins') }}</strong></td>
+            <td class="py-1">
+                {% if p._mode == 1 %}{{  _('MQTT') }}{% endif %}
+                {% if p._mode == 2 %}{{  _('Nuki Bridge') }}{% endif %}
+                {% if p._mode == 3 %}{{  _('MQTT + Nuki Bridge') }}{% endif %}
+            </td>
+            <td class="py-1">{% if p._mode != 1 %}<strong>{{ _('API Request Lock') }}:</strong>{% endif %}</td>
+            <td class="py-1">{% if p._mode != 1 %}{{ p._nuki_lock.locked() }}{% endif %}</td>
+        </tr>
+    {% if p._mode != 1 %}
 		<tr>
-			<td class="py-1"><strong>{{ _('Token') }}</strong></td>
+			<td class="py-1"><strong>{{ _('Bridge Token') }}</strong></td>
 			<td class="py-1">{{ p._token }}</td>
 			<td class="py-1"><strong>{{ _('Callback URL (SHNG)') }}</strong></td>
 			<td class="py-1">{{ p.get_callback_url() }}</td>
@@ -22,10 +32,10 @@
 			<td class="py-1">{{ p._base_url }}</td>
 		</tr>
         <tr>
-            <td class="py-1"><strong>{{  _('Erkannte Nuki IDs') }}</strong></td>
-            <td class="py-1" colspan="2">{% for item in paired_nukis %}{{ item }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
-            <td class="py-1"><strong>{{ _('API Request Lock') }}</strong>: {{ p._nuki_lock.locked() }}</td>
+            <td class="py-1"><strong>{{  _('Nuki IDs (via Nuki Bridge)') }}</strong></td>
+            <td class="py-1" colspan="3">{% for item in paired_nukis %}{{ item }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
         </tr>
+    {% endif %}
 	</tbody>
 </table>
 {% endblock %}
@@ -134,20 +144,27 @@
             {% endfor %}
 
             {% for item, value in p.get_battery_items().items() %}
-            switch (objResponse['{{ item.id() }}_value']) {
-                case 0:
-                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('Batteries are good. No need to replace it.') }})';
-                    break;
-                case 1:
-                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('Batteries are low. Please replace as soon as possible!') }})';
-                    break;
-                default:
-                    break;
-            }
-            shngInsertText ('{{ item.id() }}_value', newValue);
-            shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update']);
-            shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change']);
-            {% endfor %}
+                newValue = ''
+                if (!'{{ item.property.nuki_trigger }}'.includes('mqtt_battery_charge_state')) {
+                    switch (objResponse['{{ item.id() }}_value']) {
+                        case 0:
+                            newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('Batteries are good. No need to replace it.') }})';
+                            break;
+                        case 1:
+                            newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('Batteries are low. Please replace as soon as possible!') }})';
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                if ('{{ item.property.nuki_trigger }}'.includes('mqtt_battery_charge_state')) {
+                    newValue = objResponse['{{ item.id() }}_value'] + ' %';
+                }
+
+                shngInsertText ('{{ item.id() }}_value', newValue);
+                shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update']);
+                shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change']);
+                {% endfor %}
         }
     }
 </script>
@@ -171,7 +188,7 @@
 			<tbody>
 				{% for item, value in p.get_event_items().items() %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">{{ item.property.path }}{% if 'mqtt' in item.property.nuki_trigger %} (MQTT){% endif %}</td>
 						<td class="py-1">{{ item.property.type }}</td>
 						<td class="py-1">{{ value }}</td>
 						<td id="{{ item.id() }}_value" class="py-1">
@@ -226,7 +243,9 @@
 			<tbody>
 				{% for item, value in p.get_door_items().items() %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">
+                            {{ item.property.path }}{% if 'mqtt' in item.property.nuki_trigger %} (MQTT){% endif %}
+                        </td>
 						<td class="py-1">{{ item.property.type }}</td>
 						<td class="py-1">{{ value }}</td>
 						<td id="{{ item.id() }}_value" class="py-1">
@@ -286,6 +305,7 @@
 							{% if item() == 3 %}({{ _('unlatch') }}){% endif %}
 							{% if item() == 4 %}({{ _('lockAndGo') }}){% endif %}
 							{% if item() == 5 %}({{ _('lockAndGoWithUnlatch') }}){% endif %}
+                            {% if item() == 6 %}({{ _('fullLock') }}){% endif %}
 						</td>
 						<td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
@@ -298,7 +318,10 @@
 										<option value="3" {% if item() == 3 %}selected{% endif %}>{{ _('unlatch') }}</option>
 										<option value="4" {% if item() == 4 %}selected{% endif %}>{{ _('lockAndGo') }}</option>
 										<option value="5" {% if item() == 5 %}selected{% endif %}>{{ _('lockAndGoWithUnlatch') }}</option>
-									</select>
+									    {% if 'mqtt' in item.property.nuki_trigger %}
+                                        <option value="6" {% if item() == 5 %}selected{% endif %}>{{ _('fullLock') }}</option>
+                                        {% endif %}
+                                    </select>
 									<div class="input-group-append">
 										<button class="btn btn-outline-secondary" type="button" onClick="$.get( 'triggerAction?path={{ item.path() }}&value='+$('#nuki_actions_{{ value }}').val());">{{ _('Send') }}</button>
 								    </div>
@@ -317,7 +340,8 @@
 				2: {{ _('lock') }}&nbsp;&nbsp;-&nbsp;&nbsp;
 				3: {{ _('unlatch') }}&nbsp;&nbsp;-&nbsp;&nbsp;
 				4: {{ _('lockAndGo') }}&nbsp;&nbsp;-&nbsp;&nbsp;
-				5: {{ _('lockAndGoWithUnlatch') }}
+				5: {{ _('lockAndGoWithUnlatch') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+                6: {{ _('fullLock') }} ({{ _('onlyMQTT') }})
 			</p>
 		  </div>
 		</div><br/>
@@ -337,13 +361,17 @@
 			<tbody>
 				{% for item, value in p.get_battery_items().items() %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">{{ item.property.path }}{% if 'mqtt' in item.property.nuki_trigger %} (MQTT){% endif %}</td>
 						<td class="py-1">{{ item.property.type }}</td>
 						<td class="py-1">{{ value }}</td>
 						<td id="{{ item.id() }}_value" class="py-1">
 							{{ item() }}
-							{% if item() == 0 %}({{ _('Batteries are good. No need to replace it.') }}){% endif %}
-							{% if item() == 1 %}({{ _('Batteries are low. Please replace as soon as possible!') }}){% endif %}
+                            {% if 'mqtt_battery_charge_state' not in item.property.nuki_trigger %}
+                                {% if item() == 0 %}({{ _('Batteries are good. No need to replace it.') }}){% endif %}
+                                {% if item() == 1 %}({{ _('Batteries are low. Please replace as soon as possible!') }}){% endif %}
+                            {% elif 'mqtt_battery_charge_state' in item.property.nuki_trigger %}
+                                %
+                            {% endif %}
 						</td>
 						<td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
