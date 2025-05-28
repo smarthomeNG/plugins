@@ -241,7 +241,7 @@ class WebInterface(SmartPluginWebIf):
             # fill status with data of the outdoor sensor
             value_dict['data'] = ''
             try:
-                value_dict['data'] = sensor.light.light_level
+                value_dict['data'] = f"{sensor.light.light_level:,}".replace(",",".") + ' Lux'
             except: pass
             try:
                 value_dict['data'] = sensor.motion.motion
