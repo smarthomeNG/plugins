@@ -1,7 +1,7 @@
 # Metadata for the plugin
 plugin:
     # Global plugin attributes
-    type: unknown                   # plugin type (gateway, interface, protocol, system, web)
+    type: system                   # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Plugin zur Anzeige von Informationen von ESPHome Devices'
         en: 'Plugin to display informationen about ESPHome devices'
