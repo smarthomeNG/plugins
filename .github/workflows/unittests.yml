@@ -11,7 +11,7 @@ on:
       - 'develop'
 jobs:
   build:
-    runs-on: ubuntu-20.04 #latest
+    runs-on: ubuntu-22.04 #latest
     strategy:
       fail-fast: false
       matrix:

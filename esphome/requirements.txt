@@ -1,0 +1,2 @@
+aioesphomeapi>=24.6.2
+#aioesphomeapi>=25.3.0
