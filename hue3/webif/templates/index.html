@@ -165,6 +165,9 @@ Activate that function if needed, otherwise just remove the line to increase per
 				if (status === '' && sensors[sensor]['battery_state'] !== '') {
 					status = sensors[sensor]['battery_state'] + ', level=' + sensors[sensor]['battery_level'] + '%';
 				}
+				if (status === '' ) {
+					status = sensors[sensor]['data'];
+				}
 
 				let newRow = sensorstable.row.add([null, id, idv1, device_id, name, type, status]).sort().draw(false).node();
 //				let newRow = sensorstable.row.add([null, id, idv1, name, devicemodelid, devicemanufacturername, deviceproductname, deviceswversion, devicehwplatform, devicelights, deviceservices, deviceproductarchetype, certified, devicearchetype]).sort().draw(false).node();

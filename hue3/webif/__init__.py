@@ -238,6 +238,18 @@ class WebInterface(SmartPluginWebIf):
                 value_dict['battery_level'] = ''
                 value_dict['battery_state'] = ''
 
+            # fill status with data of the outdoor sensor
+            value_dict['data'] = ''
+            try:
+                value_dict['data'] = sensor.light.light_level
+            except: pass
+            try:
+                value_dict['data'] = sensor.motion.motion
+            except: pass
+            try:
+                value_dict['data'] = str(sensor.temperature.temperature) + ' °C'
+            except: pass
+
             try:
                 value_dict['device_id'] = sensor.owner.rid
                 value_dict['device_name'] = ''

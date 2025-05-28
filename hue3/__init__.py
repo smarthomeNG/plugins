@@ -59,7 +59,7 @@ class HueApiV2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '3.0.1'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '3.0.2'    # (must match the version specified in plugin.yaml)
 
     hue_sensor_state_values          = ['daylight', 'temperature', 'presence', 'lightlevel', 'status']
 
@@ -245,6 +245,14 @@ class HueApiV2(SmartPlugin):
             elif event_item.type.value == 'homekit':
                 self.logger.notice(f"handle_event: 'update': Event-item type '{event_item.type.value}'  -  status '{event_item.status.value}'")
                 pass
+            # event_item types for sensors of resource-type of 'sensor'
+            elif event_item.type.value == 'light_level':
+                self.update_lightlevel_items_from_event(event_item, initialize=initialize)
+            elif event_item.type.value == 'motion':
+                self.update_motion_items_from_event(event_item, initialize=initialize)
+            elif event_item.type.value == 'temperature':
+                self.update_temperature_items_from_event(event_item, initialize=initialize)
+            # further event_item types
             elif event_item.type.value == 'geofence_client':
                 pass
             elif event_item.type.value == 'entertainment':
@@ -361,6 +369,11 @@ class HueApiV2(SmartPlugin):
                     self.update_items_with_mapping(event_item, mapping_root, 'connectivity', event_item.status.value, initialize)
                     self.update_items_with_mapping(event_item, mapping_root, 'reachable', str(event_item.status.value) == 'connected', initialize)
                     break
+                elif sensor.type.value in ['light_level', 'motion', 'temperature']:
+                    mapping_root = sensor.id + mapping_delimiter + 'sensor' + mapping_delimiter
+                    self.update_items_with_mapping(event_item, mapping_root, 'connectivity', event_item.status.value, initialize)
+                    self.update_items_with_mapping(event_item, mapping_root, 'reachable', str(event_item.status.value) == 'connected', initialize)
+                    break
             else:  # no button found
                 status = event_item.status.value
                 device = self._get_device(event_item.owner.rid)
@@ -438,6 +451,51 @@ class HueApiV2(SmartPlugin):
 
 #        self.update_items_with_mapping(event_item, mapping_root, 'power_status', event_item.power_state.battery_state.value, initialize)
 #        self.update_items_with_mapping(event_item, mapping_root, 'battery_level', event_item.power_state.battery_level, initialize)
+
+        return
+
+
+    def update_lightlevel_items_from_event(self, event_item, initialize=False):
+
+        mapping_root = event_item.id + mapping_delimiter + 'sensor' + mapping_delimiter
+        self.update_items_with_mapping(event_item, mapping_root, 'lightlevel', event_item.light.light_level, initialize)
+
+        if initialize:
+            #            self.logger.notice(f"update_device_items_from_event: {event_item.id=}  -  {event_item}  -  {initialize=}")
+            self.update_items_with_mapping(event_item, mapping_root, 'name', self._get_device_name(event_item.id))
+
+        #        self.update_items_with_mapping(event_item, mapping_root, 'power_status', event_item.power_state.battery_state.value, initialize)
+        #        self.update_items_with_mapping(event_item, mapping_root, 'battery_level', event_item.power_state.battery_level, initialize)
+
+        return
+
+
+    def update_motion_items_from_event(self, event_item, initialize=False):
+
+        mapping_root = event_item.id + mapping_delimiter + 'sensor' + mapping_delimiter
+        self.update_items_with_mapping(event_item, mapping_root, 'motion', event_item.motion.motion, initialize)
+
+        if initialize:
+            #            self.logger.notice(f"update_device_items_from_event: {event_item.id=}  -  {event_item}  -  {initialize=}")
+            self.update_items_with_mapping(event_item, mapping_root, 'name', self._get_device_name(event_item.id))
+
+        #        self.update_items_with_mapping(event_item, mapping_root, 'power_status', event_item.power_state.battery_state.value, initialize)
+        #        self.update_items_with_mapping(event_item, mapping_root, 'battery_level', event_item.power_state.battery_level, initialize)
+
+        return
+
+
+    def update_temperature_items_from_event(self, event_item, initialize=False):
+
+        mapping_root = event_item.id + mapping_delimiter + 'sensor' + mapping_delimiter
+        self.update_items_with_mapping(event_item, mapping_root, 'temperature', event_item.temperature.temperature, initialize)
+
+        if initialize:
+            #            self.logger.notice(f"update_device_items_from_event: {event_item.id=}  -  {event_item}  -  {initialize=}")
+            self.update_items_with_mapping(event_item, mapping_root, 'name', self._get_device_name(event_item.id))
+
+        #        self.update_items_with_mapping(event_item, mapping_root, 'power_status', event_item.power_state.battery_state.value, initialize)
+        #        self.update_items_with_mapping(event_item, mapping_root, 'battery_level', event_item.power_state.battery_level, initialize)
 
         return
 
@@ -522,7 +580,6 @@ class HueApiV2(SmartPlugin):
             config_data['name'] = ''    # to be filled during initialization of v2bridge
 
             config_data['item'] = item
-
 #            mapping = config_data['id_v1'] + mapping_delimiter + config_data['resource'] + mapping_delimiter + config_data['function']
             mapping = config_data['id'] + mapping_delimiter + config_data['resource'] + mapping_delimiter + config_data['function']
 

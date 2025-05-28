@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586861-support-thread-für-das-hue2-plugin
 
-    version: 3.0.1                  # Plugin version (must match the version specified in __init__.py)
+    version: 3.0.2                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: '1.10.0'         # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -110,6 +110,7 @@ item_attributes:
           - sunriseoffset
           - sunsetoffset
           - temperature
+          - motion
           - presence
           - lightlevel
           - status
@@ -145,8 +146,9 @@ item_attributes:
               - "Tageslicht: sunriseoffset -> num r/o (resource: sensor)"
               - "Tageslicht: sunsetoffset -> num r/o (resource: sensor)"
               - "Temperatur -> num r/o (resource: sensor)"
+              - "Bewegung -> bool, r/o (resource: sensor)"
               - "Präsenz -> bool, r/o (resource: sensor)"
-              - "Sensor 'lightlevel' -> num r/o (resource: sensor)"
+              - "Sensor 'lightlevel' -> num, r/o (resource: sensor)"
               - "Sensor 'status' -> num, r/o (resource: sensor)"
               - "Event, welches der Button sendet -> str, r/o (resource: button)"
               - "True, wenn der Button gerade gedrückt wurde -> bool, r/o (resource: button)"
@@ -178,6 +180,7 @@ item_attributes:
               - "Sensor 'daylight': sunriseoffset -> num r/o (resource: sensor)"
               - "Sensor 'daylight': sunsetoffset -> num r/o (resource: sensor)"
               - "Sensor 'temperature' -> num r/o (resource: sensor)"
+              - "Sensor 'motion' -> bool, r/o (resource: sensor)"
               - "Sensor 'presence' -> bool, r/o (resource: sensor)"
               - "Sensor 'lightlevel' -> num r/o (resource: sensor)"
               - "Sensor 'status' -> num, r/o (resource: sensor)"
