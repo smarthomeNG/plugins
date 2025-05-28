@@ -20,4 +20,4 @@ qhue
 #zeroconf<=0.52.0
 
 #for testing: to resolve conflict with internal requirement of 'aioesphomeapi' (zeroconf>=0.132.2,<1.0)
-#zeroconf<1.0
+zeroconf<1.0
