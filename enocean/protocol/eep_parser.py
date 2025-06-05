@@ -182,13 +182,23 @@ class EEP_Parser():
         self.logger.debug(f"Occupancy: PIR:{result['PIR']} illumination: {result['ILL']}lx, voltage: {result['SVC']}V")
         return result
 
+    def _parse_eep_A5_07_01(self, payload, status):
+        # movement sensor, for example eltako FB55B
+        self.logger.debug("Parsing A5_07_01: Movement sensor")
+        result = {}
+        result['MOV'] = 0 if (payload[2] < 127) else 1    # movement
+        # self.logger.debug(f"Movement: {result['MOV']}")
+        return result
+
+
     def _parse_eep_A5_08_01(self, payload, status):
         # Brightness and movement sensor, for example eltako FBH65TFB
         self.logger.debug("Parsing A5_08_01: Movement sensor")
         result = {}
-        result['BRI'] = payload[1] / 255.0 * 2048          # brightness in lux
+        result['VCC'] = payload[0] / 255.0 * 5.1           # battery voltage in V
+        result['BRI'] = payload[1] / 255.0 * 510           # brightness in lux
         result['MOV'] = not (payload[3] & 0x02) == 0x02    # movement
-        # self.logger.debug(f"Movement: {result['MOV']}, brightness: {result['BRI']}")
+        # self.logger.debug(f"Movement: {result['MOV']}, brightness: {result['BRI']}, voltage: {result['VCC']}")
         return result
 
     def _parse_eep_A5_11_04(self, payload, status):

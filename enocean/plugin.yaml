@@ -132,6 +132,8 @@ item_attributes:
         - 'FBH63TF'
         - 'NodOn-STP-2-1-03'
         - 'SecuSignal'
+        - 'FB55EB-wg'
+        - 'FBH63AP'
 
     block_switch:
         type: str
