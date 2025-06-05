@@ -117,7 +117,6 @@ class Vicare(SmartPlugin):
 
     def stop(self):
         self.logger.debug("Stop method called")
-        self.onlineStatue = False
         self.alive = False
         self.scheduler_remove('poll_backend')
 
@@ -252,11 +251,6 @@ class Vicare(SmartPlugin):
 
         if response.status_code == 200:
             self.logger.info(f"Refresh token request successfull")
-        # Invalid grant:
-        elif response.status_code == 400:   
-            self.logger.error(f"Refresh token request was unsuccessfull and marked as invalid grant. Status code: {response.status_code}")
-            self.logger.warning(f"Refresh token request was unsuccessfull. Response: {response.text}")
-            return False
         else:
             self.logger.warning(f"Refresh token request was unsuccessfull. Status code: {response.status_code}")
             self.logger.warning(f"Refresh token request was unsuccessfull. Response: {response.text}")
@@ -291,7 +285,7 @@ class Vicare(SmartPlugin):
         try:
             responseGetToken = self.session.post(TOKEN_URL, headers = headers, data = data, verify=False, timeout=4)
         except Exception as e:
-            self.logger.error(f"Exception occured during retrieve token: {e}")
+            self.logger.error(f"Exception occurred during retrieve token: {e}")
             return False
 
         if responseGetToken is None:
@@ -381,7 +375,7 @@ class Vicare(SmartPlugin):
         try:
             response = self.session.get(url, headers = headers, verify=False, timeout=4)
         except Exception as e:
-            self.logger.warning(f"Exception occured during pollUrlInterface: {e}")
+            self.logger.warning(f"Exception occurred during pollUrlInterface: {e}")
         return response
 
     def checkErrors(self, response):
@@ -390,7 +384,7 @@ class Vicare(SmartPlugin):
         if 'error' in responseJson:
             if 'message' in responseJson:
                 message = responseJson['message']
-                self.logger.error(f"Error occured: {message}")
+                self.logger.error(f"Error occurred: {message}")
             return True
         return False
 
@@ -620,13 +614,13 @@ class Vicare(SmartPlugin):
                             try:
                                 value = properties[path[0]]
                             except Exception as e:
-                                self.logger.error(f"Exception occured in path for item {item}: {e}")
+                                self.logger.error(f"Exception occurred in path for item {item}: {e}")
                             else:
                                 for k in range(1,length_path):
                                     try:
                                         value = value[path[k]]
                                     except Exception as e:
-                                        self.logger.error(f"Exception occured in path loop for item {item}: {e}")
+                                        self.logger.error(f"Exception occurred in path loop for item {item}: {e}")
                                         value = None
                                 
                                     #self.logger.debug(f"Debug k={k}, value: {value}")
