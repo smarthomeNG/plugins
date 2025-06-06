@@ -1,1 +1,2 @@
-RPi.GPIO
+lgpio
+gpiozero
