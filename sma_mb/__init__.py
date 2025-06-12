@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2017-      Klaus Bühl                           kla.b@gmx.de
-#  Copyright 2021-      Martin Sinn                         m.sinn@gmx.de
-#  Copyright 2022-      Ronny Schulz                      r.schulz@gmx.de
+# Copyright 2017-      Klaus Bühl                           kla.b@gmx.de
+# Copyright 2021-      Martin Sinn                         m.sinn@gmx.de
+# Copyright 2022-      Ronny Schulz                      r.schulz@gmx.de
+# Copyright 2025       Bernd Meiners
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -31,6 +32,7 @@
 
 from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
+import threading
 
 from .webif import WebInterface
 
@@ -39,6 +41,7 @@ import time
 from pymodbus.client.tcp import ModbusTcpClient
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
+from pymodbus.exceptions import ModbusException
 
 # If a needed package is imported, which might be not installed in the Python environment,
 # add it to a requirements.txt file within the plugin's directory
@@ -53,7 +56,7 @@ class SMAModbus(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '1.5.4'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = '1.6.0'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
 
     def __init__(self, sh):
         """
@@ -75,12 +78,20 @@ class SMAModbus(SmartPlugin):
         self._host = self.get_parameter_value('host')
         self._port = self.get_parameter_value('port')
 
-        # cycle time in seconds, only needed, if hardware/interface needs to be
-        # polled for value changes by adding a scheduler entry in the run method of this plugin
-        self._cycle = self.get_parameter_value('cycle')
+        self._cycle = self.get_parameter_value('cycle')      # the frequency in seconds how often the device should be accessed
+        if self._cycle == 0:
+            self._cycle = None
+        self._crontab = self.get_parameter_value('crontab')  # the more complex way to specify the device query frequency
+        if self._crontab == '':
+            self._crontab = None
+        if not (self._cycle or self._crontab):
+            self.logger.error(f"{self.get_fullname()}: no update cycle or crontab set. Modbus will not be queried automatically")
+
+        self._slaveUnit = self.get_parameter_value('slaveUnit')
+
 
         # Initialization code goes here
-
+        self.lock = threading.Lock()
         self._items = {}
         self._datatypes = {}
 
@@ -91,21 +102,27 @@ class SMAModbus(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
-        # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well)
-        self.scheduler_add('poll_SMAModbus', self.poll_device, cycle=self._cycle)
+        self.logger.debug(f"Plugin '{self.get_fullname()}': run method called")
+        if self.alive: 
+            return
 
         self.alive = True
-        # if you need to create child threads, do not make them daemon = True!
-        # They will not shutdown properly. (It's a python bug)
 
+        if self._cycle or self._crontab:
+            self.error_count = 0  # Initialize error count
+            self.scheduler_add('poll_device_' + self._host, self.poll_device, cycle=self._cycle, cron=self._crontab, prio=5)
+        self.logger.debug(f"Plugin '{self.get_fullname()}': run method finished ")
+        
     def stop(self):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
-        self.scheduler_remove('poll_SMAModbus')
+        self.logger.debug(f"Plugin '{self.get_fullname()}': stop method called")
         self.alive = False
+        self.scheduler_remove('poll_device_' + self._host)
+
+        self.logger.debug(f"Plugin '{self.get_fullname()}': stop method finished")
+
 
     def parse_item(self, item):
         """
@@ -126,6 +143,7 @@ class SMAModbus(SmartPlugin):
             modbus_datatype = self.get_iattr_value(item.conf, 'smamb_datatype')
             if modbus_datatype is None:
                 modbus_datatype = 'U32'
+                
             self._items[modbus_register]=item
             self._datatypes[modbus_register]=modbus_datatype
             self.logger.debug(f"item: {item.property.path} added with modbus_register '{modbus_register}', datatype '{modbus_datatype}'")
@@ -164,71 +182,92 @@ class SMAModbus(SmartPlugin):
 
     def poll_device(self):
         """
-        Polls for updates of the device
+        Polls for updates from the SMA modbus device
 
-        This method is only needed, if the device (hardware/interface) does not propagate
-        changes on it's own, but has to be polled to get the actual status.
-        It is called by the scheduler which is set within run() method.
+        This method is called by the scheduler which is set within run() method.
         """
-        client = ModbusTcpClient(self._host, self._port)
-        if not client.connect():
-            self.logger.warning(
-                f"poll_device: Unable to establish connection to host {self._host}")
+        if self.lock.locked():
+            self.logger.error(f"poll_device already called and not ready for next poll - please adjust cycle or crontab")
             return
 
-        for read_parameter in self._items:
+        with self.lock:
 
-            if self._datatypes[read_parameter] in ['S32', 'U32']:
-                register_count = 2
-            elif self._datatypes[read_parameter] in ['S16', 'U16']:
-                register_count = 1
-            elif self._datatypes[read_parameter] in ['S64', 'U64']:
-                register_count = 4
-            elif self._datatypes[read_parameter] == 'STR08':
-                register_count = 8
-            elif self._datatypes[read_parameter] == 'STR12':
-                register_count = 12
-            elif self._datatypes[read_parameter] == 'STR16':
-                register_count = 16
-            else:
-                register_count = 2
-            try:
-                result = client.read_holding_registers((int(read_parameter)), register_count, slave=3)
-            except Exception as e:
-                self.logger.error(f"poll_device: Item {self._items[read_parameter].property.path} - Error trying to get result, got Exception {e}")
-            else:
-                decoder = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=Endian.BIG)
-                if self._datatypes[read_parameter] == 'S16':
-                    decoded = {'value': decoder.decode_16bit_int()}
-                elif self._datatypes[read_parameter] == 'U16':
-                    decoded = {'value': decoder.decode_16bit_uint()}
-                elif self._datatypes[read_parameter] == 'S32':
-                    sint = decoder.decode_32bit_int()
-                    if sint == -2147483648:
-                        sint = 0
-                    decoded = {'value': sint}
-                elif self._datatypes[read_parameter] == 'U32':
-                    decoded = {'value': decoder.decode_32bit_uint()}
-                elif self._datatypes[read_parameter] == 'S64':
-                    decoded = {'value': decoder.decode_64bit_int()}
-                elif self._datatypes[read_parameter] == 'U64':
-                    decoded = {'value': decoder.decode_64bit_uint()}
-                elif self._datatypes[read_parameter] == 'STR08':
-                    decoded = {'value': decoder.decode_string(size=16).rstrip(b'\0').decode('utf-8')}
-                elif self._datatypes[read_parameter] == 'STR12':
-                    decoded = {'value': decoder.decode_string(size=24).rstrip(b'\0').decode('utf-8')}
-                elif self._datatypes[read_parameter] == 'STR16':
-                    decoded = {'value': decoder.decode_string(size=32).rstrip(b'\0').decode('utf-8')}
+            client = ModbusTcpClient(self._host, port=self._port) 
+
+            MODBUS_EXCEPTIONS = {
+                1: "Illegal Function",
+                2: "Illegal Data Address",
+                3: "Illegal Data Value",
+                4: "Slave Device Failure",
+                5: "Acknowledge",
+                6: "Slave Device Busy",
+                10: "Gateway Path Unavailable",
+                11: "Gateway Target Device Failed to Respond"
+            }
+            
+            if not client.connect():
+                self.logger.warning(f"poll_device: Unable to establish connection to host {self._host}")
+                return
+
+            for modbus_address in self._items: 
+                # shorten the datatype read parameter 
+                dtype = self._datatypes[modbus_address]
+                # get the size in bytes to read to register_count
+                size_map = {
+                    'S16': 1, 'U16': 1,
+                    'S32': 2, 'U32': 2,
+                    'S64': 4, 'U64': 4,
+                    'STR08': 8, 'STR12': 12, 'STR16': 16 }
+                register_count = size_map.get(dtype, 2)
+                    
+                try:
+                    result = client.read_holding_registers((int(modbus_address)), count=register_count, slave=self._slaveUnit)
+
+                    if result is None:
+                        self.logger.warning(f"poll_device: result=None for register {modbus_address}")
+                        continue
+                    
+                    if result.isError():
+                        code = result.exception_code
+                        msg = MODBUS_EXCEPTIONS.get(code, "Unknown error")
+                        self.logger.error(f"Error code {code}: {msg} for register {modbus_address}")
+                        continue
+                    
+                except ModbusException as e:
+                    self.logger.error(f"ModbusException in poll_device(): Item {self._items[modbus_address].property.path} - Error trying to get result, got Exception {e}")
+
+                except Exception as e:
+                    self.logger.error(f"poll_device: Item {self._items[modbus_address].property.path} - Error trying to get result, got Exception {e}")
                 else:
-                    decoded = {'value': decoder.decode_32bit_uint()}
+                    if dtype == 'S16':
+                        value = client.convert_from_registers(result.registers, data_type=client.DATATYPE.INT16)
+                    elif dtype == 'U16':
+                        value = client.convert_from_registers(result.registers, data_type=client.DATATYPE.UINT16)
+                    elif dtype == 'S32':
+                        value = client.convert_from_registers(result.registers, data_type=client.DATATYPE.INT32)
+                        if value == -2147483648:
+                            value = 0
+                    elif dtype == 'U32':
+                        value = client.convert_from_registers(result.registers, data_type=client.DATATYPE.UINT32)
+                    elif dtype == 'S64':
+                        value = client.convert_from_registers(result.registers, data_type=client.DATATYPE.INT64)
+                    elif dtype == 'U64':
+                        value = client.convert_from_registers(result.registers, data_type=client.DATATYPE.UINT64)
+                    elif dtype == 'STR08':
+                        value = client.convert_from_registers(result.registers, data_type=client.DATATYPE.STRING)
+                    elif dtype == 'STR12':
+                        value = client.convert_from_registers(result.registers, data_type=client.DATATYPE.STRING)
+                    elif dtype == 'STR16':
+                        value = client.convert_from_registers(result.registers, data_type=client.DATATYPE.STRING)
+                    else:
+                        value = client.convert_from_registers(result.registers, data_type=client.DATATYPE.UINT32)
 
-                valueend = decoded.get("value")
-                self.logger.debug(f"value is {valueend} key is {read_parameter} self._item is {self._items[read_parameter].property.path}")
-                if read_parameter in self._items:
-                    #  self. logger.debug("update item {0} with {1}".format(self._items[read_parameter], value))
-                    item = self._items[read_parameter]
-                    item(valueend, self.get_shortname(), source='smamb_register')
+                    self.logger.debug(f"value is {value} key is {modbus_address} self._item is {self._items[modbus_address].property.path}")
+                    if modbus_address in self._items:
+                        #  self. logger.debug("update item {0} with {1}".format(self._items[modbus_address], value))
+                        item = self._items[modbus_address]
+                        item(value, self.get_shortname(), source='smamb_register')
 
-        client.close()
-        return
+            client.close()
+            return
 
