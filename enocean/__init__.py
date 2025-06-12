@@ -245,7 +245,7 @@ class EnOcean(SmartPlugin):
             self.logger.debug("update_item method called")
 
         # self.logger.warning(f"Debug: update item: caller: {caller}, shortname: {self.get_shortname()}, item: {item.id()}")
-        if caller != self.get_shortname():
+        if caller != self.get_shortname() and caller != ('eval:'+self.get_shortname()):
 
             if self.log_for_debug:
                 self.logger.debug(f'Item {item} updated externally.')
