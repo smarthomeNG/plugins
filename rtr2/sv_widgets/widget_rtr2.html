@@ -64,13 +64,30 @@
 		{% set label_values = ['Sollwert',label,'Stellwert', add_label, add_label2] %}
 	{% endif %}
 
+	<!--
+		# plot.period(id,
+		#   item[],
+		#   mode, tmin, tmax, ymin[], ymax[], count,
+		#   label[],
+		#   color[], exposure[],
+		#   axis,
+		#   zoom,
+		#   assign[], opposite[],
+		#   ycolor[], ytype[],
+		#
+		#   unit, chartoptions,
+		#   stacking, stacks,
+		#   export, source
+		# )
+	-->
 	{{ plot.period(item_rtr~"_plotid",
 		temp_items,
 		mode_values, '96h', '', [17,-1], [32, 48], '',
 		label_values,
 		color_values, exposure_values,
 		['','', ''],
-		'5i', [1,1,2], [0,1],
+		'5i',
+        [1,1,2], [0,1],
 		['',''])
 	}}
 
