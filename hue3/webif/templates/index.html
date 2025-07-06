@@ -169,7 +169,7 @@ Activate that function if needed, otherwise just remove the line to increase per
 					status = sensors[sensor]['data'];
 				}
 
-				let newRow = sensorstable.row.add([null, id, idv1, device_id, name, type, status]).sort().draw(false).node();
+				let newRow = sensorstable.row.add([null, id, idv1, name, type, status, device_id]).sort().draw(false).node();
 //				let newRow = sensorstable.row.add([null, id, idv1, name, devicemodelid, devicemanufacturername, deviceproductname, deviceswversion, devicehwplatform, devicelights, deviceservices, deviceproductarchetype, certified, devicearchetype]).sort().draw(false).node();
 			}
 
@@ -386,20 +386,20 @@ Activate that function if needed, otherwise just remove the line to increase per
 						targets: [2], "className": "aligncenter"
 					},
 					{
-						title: "{{ _('Sensor Id') }}",
-						targets: [3], "className": "deviceid",
-					},
-					{
 						title: "{{ _('Sensorname') }}",
-						targets: [4], "className": "devicename"
+						targets: [3], "className": "devicename"
 					},
 					{
 						title: "{{ _('Typ') }}",
-						targets: [5], "className": "devicename"
+						targets: [4], "className": "devicename"
 					},
 					{
 						title: "{{ _('Status') }}",
-						targets: [6], "className": "devicename"
+						targets: [5], "className": "devicename"
+					},
+					{
+						title: "{{ _('Device Id') }}",
+						targets: [6], "className": "deviceid",
 					}
 				].concat($.fn.dataTable.defaults.columnDefs),
 				pageLength: webif_pagelength,
@@ -509,7 +509,7 @@ In the example the update is deactivated on the 12th of December 2022 (what migh
 		<tr>
 			<td class="py-1"><strong>Bridge Serial</strong></td>
 			{% if p.bridge_is_configured() %}
-				<td class="py-1">{{ p.bridge_ip }}</td>
+				<td class="py-1">{{ p.bridge_serial }}</td>
 			{% else %}
 				<td class="py-1">{{ _('nicht konfiguriert') }}</td>
 
