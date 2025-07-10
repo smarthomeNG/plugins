@@ -992,6 +992,7 @@ class UZSU(SmartPlugin):
             yesterday = today - timedelta(days=1)
             weekbefore = today - timedelta(days=7)
             time = entry['time']
+            next_day = False
             if not active:
                 return None, None, None
             if 'rrule' in entry and 'series' not in time:
@@ -1008,12 +1009,12 @@ class UZSU(SmartPlugin):
                     except ValueError:
                         self.logger.debug(f"{item}: Could not create rrule from rrule: '{entry['rrule']}' and time: '{time}'")
                         if 'sun' in time:
-                            rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(
-                                weekbefore, self._sun(datetime.combine(weekbefore.date(),
-                                                                       datetime.min.time()).replace(tzinfo=self._timezone),
-                                                      time, timescan).time()))
+                            sun = self._sun(datetime.combine(weekbefore.date(),
+                                            datetime.min.time()).replace(tzinfo=self._timezone),time, timescan)
+                            rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(weekbefore, sun.time()))
                             rstr = str(rrule).replace('\n', ';')
-                            self.logger.debug(f'{item}: Looking for {timescan} sun-related time. Found rrule: {rstr}')
+                            next_day = True if weekbefore.date() < sun.date() else False
+                            self.logger.debug(f'{item}: Looking for {timescan} sun-related time. Found rrule: {rstr}.')
                         else:
                             rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(weekbefore, datetime.min.time()))
                             rstr = str(rrule).replace('\n', ';')
@@ -1033,7 +1034,8 @@ class UZSU(SmartPlugin):
                     else:
                         next = datetime.combine(dt.date(), parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
                         self._update_suncalc(item, entry, entryindex, None)
-                    if next and next.date() == dt.date():
+                    compare_date = None if not next else next.date() - timedelta(days=1) if next_day else next.date()
+                    if next and compare_date == dt.date():
                         cond_istoday = next.date() == datetime.now().date()
                         if caller != "dry_run" and (not self._items[item]['interpolation'].get('perday') or cond_istoday):
                             self._itpl[item][next.timestamp() * 1000.0] = value
