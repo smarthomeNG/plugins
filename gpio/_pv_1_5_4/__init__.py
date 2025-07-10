@@ -24,8 +24,8 @@ from lib.model.smartplugin import *
 import threading
 import datetime
 import time
-
-from gpiozero import Button, LED
+from bin.smarthome import VERSION
+import RPi.GPIO as PiGPIO
 from lib.utils import Utils
 from .webif import WebInterface
 
@@ -35,7 +35,7 @@ class GPIO(SmartPlugin, Utils):
     Main class of the plugin.
     '''
 
-    PLUGIN_VERSION = '2.0.0'
+    PLUGIN_VERSION = '1.5.4'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh):
@@ -43,6 +43,8 @@ class GPIO(SmartPlugin, Utils):
         Initializes the plugin.
         '''
         super().__init__()
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
         self.init_webinterface(WebInterface)
 
         try:
@@ -50,61 +52,47 @@ class GPIO(SmartPlugin, Utils):
             self._item_values = {'in': {}, 'out': {}}
             self.alive = False
             self._items = []
-            self._buttons = {}
-            self._leds = {}
             self._itemsdict = {}
             self._initdict = {}
             self._lock = threading.Lock()
 
             # read parameters
             self._mode = self.get_parameter_value('mode').upper()
-            self._bouncetime = self.get_parameter_value('bouncetime') / 1000
+            self._bouncetime = self.get_parameter_value('bouncetime')
             self._initretries = self.get_parameter_value('initretries')
             pud_param = self.get_parameter_value('pullupdown')
             if pud_param.upper() == 'UP':
-                self._pullupdown = True
+                self._pullupdown = PiGPIO.PUD_UP
             elif pud_param.upper() == 'DOWN':
-                self._pullupdown = False
+                self._pullupdown = PiGPIO.PUD_DOWN
             else:
                 self._pullupdown = None
 
+            # init gpio
+            PiGPIO.setwarnings(False)
+            if self._mode == 'BCM':
+                PiGPIO.setmode(PiGPIO.BCM)
+            else:
+                PiGPIO.setmode(PiGPIO.BOARD)
             updown = self._get_pud_msg(self._pullupdown, 'global ')
             self.logger.debug(f'Mode set to {self._mode}, bouncetime is {self._bouncetime}, {updown}')
 
 
-        except Exception as e:
-            self.logger.error(f'Error initializing GPIO plugin: {e}')
+        except Exception:
             self._init_complete = False
 
-    def physical_to_gpio(self, pin):
-        BOARD_TO_GPIO = {
-            3: 2,    5: 3,
-            7: 4,    8: 14,   10: 15,
-            11: 17,  12: 18,  13: 27,
-            15: 22,  16: 23,  18: 24,
-            19: 10,  21: 9,   22: 25,
-            23: 11,  24: 8,   26: 7,
-            27: 0,   28: 1,
-            29: 5,   31: 6,   32: 12,
-            33: 13,  35: 19,  36: 16,
-            37: 26,  38: 20,  40: 21
-        }
-        return BOARD_TO_GPIO.get(pin, None)
-
-    def process_gpio_event(self, pin, pressed):
+    def process_gpio_event(self, pin):
         '''
         Callback method for GPIO event detection. Sets associated item to gpio pin value.
 
-        :param pin: Pin number according to GPIO mode configured in plugin.yaml
-        :type pin: int
-        :param pressed: True or False depending on button.is_pressed or not
-        :type pressed: bool
+        :param sensor: Pin number according to GPIO mode configured in plugin.yaml
+        :type sensor: int
         '''
         if not self.alive:
             return
 
         try:
-            value = pressed
+            value = PiGPIO.input(pin)
             self._itemsdict[pin](value ^ self._is_item_inverted(None, pin), self.get_shortname(), 'pin_change')
             self.logger.info(f'Read pin {pin} with value {value} after event_detection')
         except Exception as e:
@@ -117,24 +105,32 @@ class GPIO(SmartPlugin, Utils):
         self.logger.debug('run method called')
 
         # initialize GPIO event detection
-        for pin, btn in self._buttons.items():
-            for attempt in range(self._initretries):
-                try:
-                    btn.when_pressed = lambda p=pin: self.process_gpio_event(p, True)
-                    btn.when_released = lambda p=pin: self.process_gpio_event(p, False)
-                    self.logger.info(f'Adding event detection for input GPIO pin {pin}, initial value is {btn.is_pressed}')
-                except RuntimeError as err:
-                    self.logger.warning(f'Problem adding event detection for input pin {pin}: RuntimeError {err}. Retry {attempt + 1}/{self._initretries}')
-                    time.sleep(2)
-                except ValueError as err:
-                    self.logger.warning(f'Problem adding event detection for input pin {pin}: ValueError {err}. Retry {attempt + 1}/{self._initretries}')
-                except Exception as err:
-                    self.logger.warning(f'Problem adding event detection for input pin {pin}: {err}. Retry {attempt + 1}/{self._initretries}')
+        for item in self._items:
+            if self.has_iattr(item.conf, 'gpio_in'):
+                pin = int(self.get_iattr_value(item.conf, 'gpio_in'))
+
+                # for some historical reason, maybe this has to be repeated
+                # quit if successful or wrong values were passed
+
+## as this may delay plugin startup considerably, anyone able to pinpoint possible
+## reasons for first-time-failures please report this, thanks in advance! SH
+                err = None
+                for attempt in range(self._initretries):
+                    time.sleep(1)
+                    try:
+                        PiGPIO.add_event_detect(pin, PiGPIO.BOTH, callback=self.process_gpio_event, bouncetime=self._bouncetime)
+                        self.logger.info(f'Adding event detection for input pin {pin}, initial value is {item()}')
+                    except RuntimeError as err:
+                        self.logger.warning(f'Problem adding event detection for input pin {pin}: RuntimeError {err}. Retry {attempt + 1}/{self._initretries}')
+                        time.sleep(2)
+                    except ValueError as err:
+                        self.logger.warning(f'Problem adding event detection for input pin {pin}: ValueError {err}. Retry {attempt + 1}/{self._initretries}')
+                    except Exception as err:
+                        self.logger.warning(f'Problem adding event detection for input pin {pin}: {err}. Retry {attempt + 1}/{self._initretries}')
+                    else:
+                        break
                 else:
-                    break
-                time.sleep(1)
-            else:
-                self.logger.error(f'Not adding event detection for input pin {pin}, given up')
+                    self.logger.error(f'Not adding event detection for input pin {pin}, given up')
         self.alive = True
 
     def stop(self):
@@ -144,11 +140,17 @@ class GPIO(SmartPlugin, Utils):
         self.alive = False
         self._item_values = {'in': {}, 'out': {}}
 
+        # reset used ouput pins
+        PiGPIO.cleanup()
+        self.logger.debug('Used GPIO ports cleaned up')
+
         # remove event detectors
-        for btn in self._buttons.values():
-            btn.close()
-        for led in self._leds.values():
-            led.close()
+        for item in self._items:
+            if self.has_iattr(item.conf, 'gpio_in'):
+                try:
+                    PiGPIO.remove_event_detect(int(self.get_iattr_value(item.conf, 'gpio_in')))
+                except:
+                    pass
 
     def parse_item(self, item):
         '''
@@ -163,12 +165,11 @@ class GPIO(SmartPlugin, Utils):
         pud_add = 'global '
         if self.has_iattr(item.conf, 'gpio_pud'):
             pud_param = self.get_iattr_value(item.conf, 'gpio_pud')
-
             if pud_param.upper() == 'UP':
-                pullupdown = True
+                pullupdown = PiGPIO.PUD_UP
                 pud_add = ''
             elif pud_param.upper() == 'DOWN':
-                pullupdown = False
+                pullupdown = PiGPIO.PUD_DOWN
                 pud_add = ''
             else:
                 pullupdown = None
@@ -176,53 +177,57 @@ class GPIO(SmartPlugin, Utils):
         # configure as input
         if self.has_iattr(item.conf, 'gpio_in'):
             in_pin = int(self.get_iattr_value(item.conf, 'gpio_in'))
-            gpio_pin = in_pin
-            if self._mode == "BOARD":
-                gpio_pin = self.physical_to_gpio(in_pin)
+
+            # if set, include pullupdown parameter
             if pullupdown:
-                button = Button(gpio_pin, pull_up=pullupdown, bounce_time=self._bouncetime)
+                PiGPIO.setup(in_pin, PiGPIO.IN, pull_up_down=pullupdown)
             else:
-                button = Button(gpio_pin, bounce_time=self._bouncetime)
-            self._buttons.update({gpio_pin: button})
+                PiGPIO.setup(in_pin, PiGPIO.IN)
+            # event_detection is setup on run()
 
             try:
-                value = button.is_pressed
-                self._initdict[gpio_pin] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+                value = PiGPIO.input(in_pin)
+                self._initdict[in_pin] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
             except Exception:
-                self._initdict[gpio_pin] = False
+                self._initdict[in_pin] = False
             item(value, self.get_shortname(), 'init')
             updown = self._get_pud_msg(pullupdown, pud_add)
-            self.logger.debug(f'{item} assigned to input on pin {in_pin} (GPIO: {gpio_pin}), {updown}')
+            self.logger.debug(f'{item} assigned to input on pin {in_pin}, {updown}')
             self._items.append(item)
-            self._update_item_values(item, 'in', gpio_pin, value)
-            self._itemsdict[gpio_pin] = item
+            self._update_item_values(item, 'in', in_pin, value)
+            self._itemsdict[in_pin] = item
             return
 
         # configure as output
         if self.has_iattr(item.conf, 'gpio_out'):
             out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
-            gpio_pin = out_pin
-            if self._mode == "BOARD":
-                gpio_pin = self.physical_to_gpio(out_pin)
 
             # test if initial value is set
             if self.has_iattr(item.conf, 'gpio_init'):
+
                 # as gpio_init is set, force output to initial_value
                 value = self.to_bool(self.get_iattr_value(item.conf, 'gpio_init'))
                 pin_value = self._get_gpio_value(value, item)
-                led = LED(gpio_pin, initial_value=pin_value)
-                self._update_item_values(item, 'out', gpio_pin, pin_value)
-                self.logger.debug(f'{item} (output on pin {out_pin} - GPIO pin {gpio_pin}) set to initial value {value}')
+                PiGPIO.setup(out_pin, PiGPIO.OUT, initial=pin_value)
+                self._update_item_values(item, 'out', out_pin, pin_value)
+                self.logger.debug(f'{item} (output on pin {out_pin}) set to initial value {value}')
             else:
-                led = LED(gpio_pin)
-                value = led.is_lit
 
+                # no initial value set, try to read the current value from pin
+                # by setting up as input, reading, and setting up as output
+                if pullupdown:
+                    PiGPIO.setup(out_pin, PiGPIO.IN, pull_up_down=pullupdown)
+                else:
+                    PiGPIO.setup(out_pin, PiGPIO.IN)
+                value = self._get_gpio_value(PiGPIO.input(out_pin), item)
+                self.logger.debug(f'{item} (output on pin {out_pin}) reads initial value {value}')
+                PiGPIO.setup(out_pin, PiGPIO.OUT)
             # set item to initial value or current pin value
             item(value, self.get_shortname(), 'init')
-            self.logger.debug(f'{item} assigned to output on pin {out_pin} (GPIO: {gpio_pin})')
+
+            self.logger.debug(f'{item} assigned to output on pin {out_pin}')
             self._items.append(item)
-            self._itemsdict[gpio_pin] = item
-            self._leds.update({gpio_pin: led})
+            self._itemsdict[out_pin] = item
             return self.update_item
 
     def parse_logic(self, logic):
@@ -243,13 +248,10 @@ class GPIO(SmartPlugin, Utils):
             if self.has_iattr(item.conf, 'gpio_out'):
                 self.logger.debug(f'{item} updated by {caller}.')
                 out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
-                gpio_pin = out_pin
-                if self._mode == "BOARD":
-                    gpio_pin = self.physical_to_gpio(out_pin)
                 value = self._get_gpio_value(item(), item)
-                self.logger.info(f'Setting pin {out_pin} (GPIO: {gpio_pin}) to {value} for {item}')
-                self._update_item_values(item, 'out', gpio_pin, value)
-                self._set_gpio(gpio_pin, value)
+                self.logger.info(f'Setting pin {out_pin} to {value} for {item}')
+                self._update_item_values(item, 'out', out_pin, value)
+                self._set_gpio(out_pin, value)
             else:
                 self.logger.error(f'{item} updated by {caller}, but no gpio_out set up')
 
@@ -287,7 +289,7 @@ class GPIO(SmartPlugin, Utils):
         :return: Value safe for GPIO output/setup methods
         '''
         inverted = self._is_item_inverted(item, pin)
-        self.logger.debug(f'Pin: {pin}, inverted: {inverted}, value:{value}')
+        self.logger.debug(f'Pin {pin}, inverted: {inverted}, value:{value}')
 
         return (inverted ^ value)
 
@@ -302,22 +304,17 @@ class GPIO(SmartPlugin, Utils):
         '''
         self._lock.acquire()
         try:
-            led = self._leds.get(pin)
-            if value is True:
-                led.on()
-            else:
-                led.off()
-
-            self.logger.debug(f'GPIO pin {pin} successfully set to {value}')
+            PiGPIO.output(pin, value)
+            self.logger.debug(f'Pin {pin} successfully set to {value}')
         except:
-            self.logger.error(f'Setting GPIO pin {pin} to {value} failed!')
+            self.logger.error(f'Setting pin {pin} to {value} failed!')
         finally:
             self._lock.release()
 
     def _get_pud_msg(self, pud, add=''):
-        if pud is True:
+        if pud == PiGPIO.PUD_UP:
             return add + 'pullup enabled'
-        elif pud is False:
+        elif pud == PiGPIO.PUD_DOWN:
             return add + 'pulldown enabled'
         else:
             return 'no ' + add + 'pullup/pulldown set'

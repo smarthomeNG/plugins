@@ -7,7 +7,7 @@ plugin:
         en: 'GPIO support for Raspberry Pi, **since SmarthomeNG v1.3**'
     description_long:
         de: 'GPIO-Unterstützung für den Raspberry Pi.\n
-            Dieses Plugin unterstützt über das gpiozero und lgpio-Modul das Einbinden von externen Sensoren und Aktoren,
+            Dieses Plugin unterstützt über das RPi.GPIO-Modul das Einbinden von externen Sensoren und Aktoren,
             die direkt am Raspberry Pi angeschlossen werden. Damit ist es beispielsweise möglich,
             den Zustand von Reedkontakten einzulesen oder LEDs zu aktivieren und beispielsweise eine
             `Posteinwurferkennung <https://redaktion.knx-user-forum.de/posteinwurferkennung/>`_ zu basteln.
@@ -16,7 +16,7 @@ plugin:
             '
         en: 'GPIO support for the Raspberry Pi.\n
             This plugin supports the implementation of external sensors and actors directly connected to the
-            Raspberry Pi using the gpiozero and lgpio modules. This makes it possible to get values of reed sensors or
+            Raspberry Pi using the RPi.GPIO module. This makes it possible to get values of reed sensors or
             activate LED lights like it is used for `smart mailboxes <https://redaktion.knx-user-forum.de/posteinwurferkennung/>`_.
             The GPIOs of the Raspberry Pi <=3+ are limited to digital signals. If you want to attach a distance
             sensor or other hardware providing analog signals you have to use additional hardware.
@@ -26,11 +26,11 @@ plugin:
     state: ready
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1842450-support-thread-f%C3%BCr-das-gpio-plugin
     requirements:
-        de: 'gpiozero and lgpio Python Module'
-        en: 'gpiozero and lgpio python modules'
+        de: 'RPi.GPIO Python Modul'
+        en: 'RPi.GPIO python module'
     keywords: iot gpio raspberrypi
 
-    version: 2.0.0                 # Plugin version
+    version: 1.5.4                 # Plugin version
     sh_minversion: '1.4'             # minimum shNG version to use this plugin
     multi_instance: false          # plugin supports multi instance
     restartable: unknown
@@ -58,10 +58,9 @@ parameters:
                 Define the GPIO PIN Mode that you use to declare the pin numbers.
                 `More info on GPIO headers <https://www.raspberrypi-spy.co.uk/2012/06/simple-guide-to-the-rpi-gpio-header-and-pins/>`_
                 '
-
     initretries:
         type: int
-        default: 2
+        default: 10
         description:
             de: 'Anzahl an Versuchen zum Pluginstart, Listen-Events für die Pins zu erstellen.'
             en: 'Amount of retries to create the listen events at plugin start.'
