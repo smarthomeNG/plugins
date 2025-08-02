@@ -7,4 +7,6 @@ gtts
 ifaddr
 appdirs
 #lxml<=4.9.4
-lxml>=4.9.2,<=4.9.4
+#lxml>=4.9.2,<=4.9.4
+lxml>=4.9.2,<=4.9.4;python_version<='3.12'
+lxml>=5.0.0,<=5.4.0;python_version>='3.13'
