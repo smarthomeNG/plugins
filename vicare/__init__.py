@@ -34,11 +34,16 @@ import string
 # Necessary python package for funktion "generate_code_verifier":
 from authlib.common.security import generate_token
 
-AUTHORIZE_URL = 'https://iam.viessmann.com/idp/v3/authorize'
-TOKEN_URL = 'https://iam.viessmann.com/idp/v3/token'
+#AUTHORIZE_URL = 'https://iam.viessmann.com/idp/v3/authorize'
+AUTHORIZE_URL = 'https://iam.viessmann-climatesolutions.com/idp/v3/authorize'
+#TOKEN_URL = 'https://iam.viessmann.com/idp/v3/token'
+TOKEN_URL = 'https://iam.viessmann-climatesolutions.com/idp/v3/token'
+#API_URL = 'https://api.viessmann.com'
+API_URL = 'https://api.viessmann-climatesolutions.com'
+
 
 class Vicare(SmartPlugin):
-    PLUGIN_VERSION = '1.9.5'
+    PLUGIN_VERSION = '1.9.6'
 
     def __init__(self, sh):
         """
@@ -390,7 +395,9 @@ class Vicare(SmartPlugin):
 
 
     def pollInstallationId(self):
-        url = f"https://api.viessmann.com/iot/v1/equipment/installations"
+        #old url = f"https://api.viessmann.com/iot/v1/equipment/installations"
+        url = f"{API_URL}/iot/v1/equipment/installations"
+
         response = self.pollUrlInterface(url)
         
         if response is None:
@@ -423,7 +430,9 @@ class Vicare(SmartPlugin):
                     self.logger.info(f"InstallationId is {self.installationId}")
 
     def pollSerial(self):
-        url = f"https://api.viessmann.com/iot/v1/equipment/gateways"
+        #old url = f"https://api.viessmann.com/iot/v1/equipment/gateways"
+        url = f"{API_URL}/iot/v1/equipment/gateways"
+
         response = self.pollUrlInterface(url)
 
         if response is None:
@@ -457,7 +466,9 @@ class Vicare(SmartPlugin):
             self.logger.debug(f"pollSerial, invalid installationId, aborting!")
             return
 
-        url = f"https://api.viessmann.com/iot/v1/equipment/installations/{self.installationId}/gateways/{self.gatewaySerial}/devices"
+        #old url = f"https://api.viessmann.com/iot/v1/equipment/installations/{self.installationId}/gateways/{self.gatewaySerial}/devices"
+        url = f"{API_URL}/iot/v1/equipment/installations/{self.installationId}/gateways/{self.gatewaySerial}/devices"
+
         response = self.pollUrlInterface(url)
         
         if response is None:
@@ -538,7 +549,9 @@ class Vicare(SmartPlugin):
             self.logger.debug(f"pollFeatures, invalid deviceId, aborting!")
             return
 
-        url = f"https://api.viessmann.com/iot/v2/features/installations/{self.installationId}/gateways/{self.gatewaySerial}/devices/{self.deviceId}/features"
+        #old url = f"https://api.viessmann.com/iot/v2/features/installations/{self.installationId}/gateways/{self.gatewaySerial}/devices/{self.deviceId}/features"
+        url = f"{API_URL}/iot/v2/features/installations/{self.installationId}/gateways/{self.gatewaySerial}/devices/{self.deviceId}/features"
+
         response = self.pollUrlInterface(url)
         if response is None:
             return
