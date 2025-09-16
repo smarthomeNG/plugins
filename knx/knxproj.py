@@ -26,7 +26,6 @@ import copy
 import logging
 
 from pathlib import Path
-from collections import OrderedDict
 import xmltodict
 
 logger = logging.getLogger("knxproject")
@@ -309,4 +308,5 @@ def _parse_knxproject(filename, password=None):
     except Exception as e: 
         print("Error {} occurred".format(e))
     return GAs
+
 
