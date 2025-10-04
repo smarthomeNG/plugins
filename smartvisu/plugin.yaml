@@ -12,10 +12,10 @@ plugin:
     #documentation: ''
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586800-support-thread-für-das-smartvisu-plugin
 
-    version: 1.8.16                # Plugin version
-    sh_minversion: '1.9.3.5'         # minimum shNG version to use this plugin
+    version: 1.8.17                # Plugin version
+    sh_minversion: '1.9.3.5'       # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    py_minversion: '3.6'             # minimum Python version to use for this plugin
+    py_minversion: '3.6'           # minimum Python version to use for this plugin
 #    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: True
@@ -124,6 +124,13 @@ item_attributes:
         description:
             de: "Setzen Sie 'sv_page' auf einen der angegebenen Werte, um eine Seite für dieses Item zu generieren. Jedes Widget unterhalb dieses Elements wird auf der Seite angezeigt"
             en: 'Set sv_page to to one of the listed values generate a page for this item. Every widget beneath this item will be included in the page'
+
+    sv_page_in_navi:
+        type: bool
+        default: True
+        description:
+            de: "Wenn auf True gesetzt, die generierte Visu-Seite in die Navigation aufnehmen"
+            en: "If true, Add generated visu-page to navigation"
 
     sv_blocksize:
         type: str

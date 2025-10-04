@@ -46,7 +46,7 @@ from .svinstallwidgets import SmartVisuInstallWidgets
 
 class SmartVisu(SmartPlugin):
 
-    PLUGIN_VERSION="1.8.16"
+    PLUGIN_VERSION="1.8.17"
     ALLOW_MULTIINSTANCE = True
 
     visu_definition = None
@@ -66,31 +66,37 @@ class SmartVisu(SmartPlugin):
         #self.logger = logging.getLogger(__name__)
         self._sh = sh
 
-        self.default_acl = self.get_parameter_value('default_acl')
-        self.smartvisu_dir = self.get_parameter_value('smartvisu_dir')
-        self._generate_pages = self.get_parameter_value('generate_pages')
-        self.overwrite_templates = self.get_parameter_value('overwrite_templates')
-        self.visu_style = self.get_parameter_value('visu_style').lower()
+        # get plugin parameter values
+        self.smartvisu_dir = self.get_parameter_value('smartvisu_dir')                  # str
+        self._generate_pages = self.get_parameter_value('generate_pages')               # bool
+        self.overwrite_templates = self.get_parameter_value('overwrite_templates')      # bool
+        self.visu_style = self.get_parameter_value('visu_style').lower()                # str (std, blk)
+        self.default_acl = self.get_parameter_value('default_acl')                      # str (rw, ro, deny)
+        self._handle_widgets = self.get_parameter_value('handle_widgets')                       # bool
+        self._create_masteritem_file = self.get_parameter_value('create_masteritem_file')       # bool
+        self.list_deprecated_warnings = self.get_parameter_value('list_deprecated_warnings')    # bool
+
+        self.protocol_over_reverseproxy = False # parameter not yet implemented
+        #self.protocol_over_reverseproxy = self.get_parameter_value('protocol_over_reverseproxy')
+
+        # check parameter values
         if not self.visu_style in ['std','blk']:
             self.visu_style = 'std'
             self.logger.error("smartVISU: Invalid value '" + self.get_parameter_value('visu_style') + "' configured for attribute visu_style in plugin.conf, using '" + str(self.visu_style) + "' instead")
-        self._handle_widgets = self.get_parameter_value('handle_widgets')
-        self._create_masteritem_file = self.get_parameter_value('create_masteritem_file')
-        self.list_deprecated_warnings = self.get_parameter_value('list_deprecated_warnings')
-        self.protocol_over_reverseproxy = False
-        #self.protocol_over_reverseproxy = self.get_parameter_value('protocol_over_reverseproxy')
+
 
         self.smartvisu_version = self.get_smartvisu_version()
+
         # don't complain if dir not given
         if self.smartvisu_dir and self.smartvisu_version == '':
             self.logger.error("Could not determine smartVISU version!")
         self.smartvisu_is_configured = self.sv_is_configured()
-        self.logger.info(f"sv version={self.smartvisu_version}, sv_is_configured={self.smartvisu_is_configured}")
+        self.logger.info(f"Found smartVISU version={self.smartvisu_version}, visu is configured: {self.smartvisu_is_configured}")
 
         self.deprecated_widgets = []
         self.removed_widgets = []
-        self.deprecated_plugin_widgets = []  # List of plugin-widgets that use deprecated widgets
-        self.removed_plugin_widgets = []  # List of plugin-widgets that use removed widgets
+        self.deprecated_plugin_widgets = [] # List of plugin-widgets that use deprecated widgets
+        self.removed_plugin_widgets = []    # List of plugin-widgets that use removed widgets
         self.d_usage = {}
         self.r_usage = {}
 
@@ -129,7 +135,7 @@ class SmartVisu(SmartPlugin):
         # skip directory handling if all relevant handling options are disabled
         if self.smartvisu_dir and (self._generate_pages or self._handle_widgets or self._create_masteritem_file):
             if not os.path.isdir(os.path.join(self.smartvisu_dir, 'pages')):
-                self.logger.error("Could not find valid smartVISU directory: {}".format(self.smartvisu_dir))
+                self.logger.error(f"Could not find valid smartVISU directory: {self.smartvisu_dir}")
             else:
                 self.logger.info(f"Starting smartVISU v{self.smartvisu_version} handling for visu in {self.smartvisu_dir}")
                 if self._handle_widgets:

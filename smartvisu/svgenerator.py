@@ -39,6 +39,7 @@ class SmartVisuGenerator:
         self.logger = plugin_instance.logger
         self._sh = plugin_instance._sh
 
+        # get plugin parameter values
         self.smartvisu_dir = plugin_instance.smartvisu_dir
         self.smartvisu_version = plugin_instance.smartvisu_version
         self.overwrite_templates = plugin_instance.overwrite_templates
@@ -48,8 +49,10 @@ class SmartVisuGenerator:
             self.logger.warning("SmartVisuGenerator: visu_style '{0}' unknown, using visu_style '{1}'".format(plugin_instance.visu_style, self.visu_style))
         self.list_deprecated_warnings = plugin_instance.list_deprecated_warnings
 
+
         self.logger.info("Generating pages for smartVISU v{}".format(self.smartvisu_version))
 
+        # get template directory of this plugin
         self.thisplg_dir = os.path.dirname(os.path.abspath(__file__))
         self.shng_tpldir = os.path.join(self.thisplg_dir, 'tplNG')
 
@@ -225,8 +228,9 @@ class SmartVisuGenerator:
             # Add entry to navigation list for page
 
             if not item.conf['sv_page'] in self.valid_sv_page_entries:
-                self.logger.warning("{}: 'sv_page' attribute contains unknown value '{}'".format(item.property.path, item.conf['sv_page']))
+                self.logger.warning(f"{item.property.path}: 'sv_page' attribute contains unknown value '{item.conf['sv_page']}'")
             else:
+                # find out to which navigation menu the page belongs
                 separator = False
                 menu = item.conf['sv_page']
                 if menu == 'overview':
@@ -259,6 +263,9 @@ class SmartVisuGenerator:
                                                    img_name=self.get_attribute('sv_img', item), nav_aside=nav_aside, nav_aside2=nav_aside2)
 
                 self.create_page(item, menu_entry)
+
+                # determine, if generated page should be added to the navigation
+                menu_entry['add_to_nav_menu'] = item.conf.get('sv_page_in_navi', True)
                 self.add_menuentry_to_list(menu, menu_entry)
 
         # after processing all pages: write navigation files
@@ -340,29 +347,26 @@ class SmartVisuGenerator:
         #self.logger.notice(f"write_navigation_and_pages: {menu=}, {navigation_file=}")
         nav_list = ''
         for menu_entry in self.navigation[menu]:
-            #parse_list = [('{{ visu_page }}', menu_entry['page']), ('{{ visu_name }}', menu_entry['name']),
-            #              ('{{ visu_img }}', menu_entry['img']),
-            #              ('{{ visu_aside }}', menu_entry['nav_aside']),
-            #              ('{{ visu_aside2 }}', menu_entry['nav_aside2']),
-            #              ('item.name', menu_entry['name']), ("'item", "'" + menu_entry['page'])
-            #              ]
             parse_list = [('{{ visu_page }}', menu_entry['page']), ('{{ visu_name }}', menu_entry['name']),
                           ('{{ visu_img }}', menu_entry['img']),
                           ('{{ visu_aside }}', menu_entry['nav_aside']),
                           ('{{ visu_aside2 }}', menu_entry['nav_aside2']),
                           ('item.name', menu_entry['name']), ("'item", "'" + menu_entry['item_path'])
                           ]
-            if menu_entry['separator'] is True:
-                nav_list += self.parse_tpl('navi_sep.html', [('{{ name }}', menu_entry['name'])])
-            else:
-                #menu_entry['html'] = self.parse_tpl('navi.html', parse_list)
-                if self.smartvisu_version >= '3.3' and menu_entry['img'].lower().endswith('.svg'):
-                    #self.logger.notice(f" - nav_list svg entry: {menu_entry['img']=}, parse_list={parse_list}")
-                    nav_list += self.parse_tpl('navi_svg.html', parse_list)
+
+            # build navigation list, excluding pages with add_to_nav_menu == False
+            if  menu_entry.get('add_to_nav_menu', True):
+                if menu_entry['separator'] is True:
+                    nav_list += self.parse_tpl('navi_sep.html', [('{{ name }}', menu_entry['name'])])
                 else:
-                    #self.logger.notice(f" - nav_list png entry: {menu_entry['img']=}, parse_list={parse_list}")
-                    self.logger.debug(f" - nav_list entry: entry={self.parse_tpl('navi.html', parse_list)}")
-                    nav_list += self.parse_tpl('navi.html', parse_list)
+                    if self.smartvisu_version >= '3.3' and menu_entry['img'].lower().endswith('.svg'):
+                        #self.logger.notice(f" - nav_list svg entry: {menu_entry['img']=}, parse_list={parse_list}")
+                        nav_list += self.parse_tpl('navi_svg.html', parse_list)
+                    else:
+                        #self.logger.notice(f" - nav_list png entry: {menu_entry['img']=}, parse_list={parse_list}")
+                        self.logger.debug(f" - nav_list entry: entry={self.parse_tpl('navi.html', parse_list)}")
+                        nav_list += self.parse_tpl('navi.html', parse_list)
+
 
             # build page code
             if menu_entry['separator'] is False:
@@ -472,9 +476,8 @@ class SmartVisuGenerator:
         Copy templates from this plugin to the location inside smartVISU from which they are
         used during the generation of the visu pages
         """
-        self.shng_tpldir = os.path.join(self.thisplg_dir, 'tplNG')
         if not os.path.isdir(self.shng_tpldir):
-            self.logger.warning("copy_templates: Could not find source directory {}".format(self.shng_tpldir))
+            self.logger.warning(f"copy_templates: Could not find source directory {self.shng_tpldir}")
             return
 
         if self.smartvisu_version >= '2.9':
