@@ -1,0 +1,18 @@
+
+	<style>
+		#button1:after {
+			background-image: url("{{ icon0 }}/{{ navicon1 }}.svg");
+		}
+
+		#button2:after {
+			background-image: url("{{ icon0 }}/{{ navicon2 }}.svg");
+		}
+
+	</style>
+	<div data-role="navbar" class="nav-custom">
+		<ul>
+			<li><a href="index.php?page=room.{{ room1 }}" id="button1" class="ui-btn-icon-top {{ activeclass1 }}">{{ text1 }}</a></li>
+			<li><a href="index.php?page=room.{{ room2 }}" id="button2" class="ui-btn-icon-top {{ activeclass2 }}">{{ text2 }}</a></li>
+		</ul>
+	</div>
+

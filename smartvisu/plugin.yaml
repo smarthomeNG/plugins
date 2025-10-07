@@ -12,7 +12,7 @@ plugin:
     #documentation: ''
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586800-support-thread-für-das-smartvisu-plugin
 
-    version: 1.8.17                # Plugin version
+    version: 1.8.18                # Plugin version
     sh_minversion: '1.9.3.5'       # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: '3.6'           # minimum Python version to use for this plugin
@@ -196,23 +196,33 @@ item_attributes:
             de: 'Ermöglicht die Angabe eines Widgets, das auf der rechten Seite der Navigationsleiste für einen Raum angezeigt wird. (untere Zeile) - Relative Item-Referenzen werden unterstützt.'
             en: 'allows the specification of a widget, that is being displayed at the right side of the navigation bar for a room. (lower line) - Relative item references are supported.'
 
+    sv_heading_buttons:
+        type: list
+    description:
+        de: "Definition von Buttons, die als 'Radiobuttons' oben auf der Seite angezeigt werden. 
+             'sv_heading_buttons' ist eine Liste, die drei Listen enthält. Die Länge jeder der drei Listen 
+             entspricht der Anzahl der Buttons (2 bis 5) in der Top-Navigation. Die erste Liste enthält den Text 
+             der Buttons. Die zweite Liste enthält den jeweiligen Raumnamen zu dem navigiert werden soll. Die 
+             dritte Liste enthält die Namen der Icons (ohne Extension)."
+        en: 'Definition of buttons which are positioned at the top of the page as radiobuttons'
+
     sv_heading_left:
         type: str
         description:
-            de: 'erlaubt die Angabe eines Widgets, das oben auf einer Raumseite angezeigt wird. Dieses Widget wird angezeigt, ohne in einem Block gekapselt zu sein. Das Widget ist nach links ausgerichtet'
+            de: 'erlaubt die Angabe eines Widgets, das oben auf einer Raumseite angezeigt wird. Dieses Widget wird angezeigt, ohne in einem Block gekapselt zu sein. Das Widget ist nach links ausgerichtet. Achtung: heading_left wird nur ausgewertet, wenn heading_buttons nicht definiert ist.'
             en: 'allows the specification of a widget, hat is being displayed at the top of a room-page. This widget is shown without being encapsulated in a block. The widget is aligned to to the left'
 
     sv_heading_center:
         type: str
         description:
-            de: 'erlaubt die Angabe eines Widgets, das oben auf einer Raumseite angezeigt wird. Dieses Widget wird angezeigt, ohne in einem Block gekapselt zu sein. Das Widget wird zentriert'
+            de: 'erlaubt die Angabe eines Widgets, das oben auf einer Raumseite angezeigt wird. Dieses Widget wird angezeigt, ohne in einem Block gekapselt zu sein. Das Widget wird zentriert. Achtung: heading_center wird nur ausgewertet, wenn heading_buttons nicht definiert ist.'
             en: 'allows the specification of a widget, hat is being displayed at the top of a room-page. This widget is shown without being encapsulated in a block. The widget is aligned to to the center'
 
     sv_heading_right:
         type: str
         description:
-            de: 'erlaubt die Angabe eines Widgets, das oben auf einer Raumseite angezeigt wird. Dieses Widget wird angezeigt, ohne in einem Block gekapselt zu sein. Das Widget ist nach rechts ausgerichtet'
-            en: 'allows the specification of a widget, hat is being displayed at the top of a room-page. This widget is shown without being encapsulated in a block. The widget is aligned to to the right'
+            de: 'Erlaubt die Angabe eines Widgets, das oben auf einer Raumseite angezeigt wird. Dieses Widget wird angezeigt, ohne in einem Block gekapselt zu sein. Das Widget ist nach rechts ausgerichtet. Achtung: heading_right wird nur ausgewertet, wenn heading_buttons nicht definiert ist.'
+            en: 'Allows the specification of a widget, hat is being displayed at the top of a room-page. This widget is shown without being encapsulated in a block. The widget is aligned to to the right'
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin

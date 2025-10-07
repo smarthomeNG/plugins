@@ -105,7 +105,89 @@ class SmartVisuGenerator:
                 self.add_menuentry_to_list(menu, menu_entry)
             self.logger.debug("initialize_visu_menu: '{}' menu_entry={}".format(menu, menu_entry))
 
+
+    def check_heading_buttons_attribute(self, room):
+        """
+        Test if the attribute contains a list of three lists
+        """
+        if 'sv_heading_buttons' in room.conf:
+            heading_buttons = room.conf['sv_heading_buttons']
+            if not isinstance(heading_buttons, list) or len(heading_buttons) < 2:
+                self.logger.warning(f"sv_page '{room}': Fehlerhafte Definition im Attribut 'sv_heading_buttons'")
+                return 0
+
+            heading_buttons_text = heading_buttons[0]
+            if not isinstance(heading_buttons_text, list):
+                self.logger.warning(f"sv_page '{room}': Fehlerhafte Definition im Attribut 'sv_heading_buttons' - Text Definition ist keine Liste")
+                return 0
+
+            heading_buttons_room = heading_buttons[1]
+            if not isinstance(heading_buttons_room, list):
+                self.logger.warning(f"sv_page '{room}': Fehlerhafte Definition im Attribut 'sv_heading_buttons' - Seitennamen sind keine Liste")
+                return 0
+
+            #heading_buttons_icon = heading_buttons[2]
+
+        return len(heading_buttons_text)
+
+
+    def handle_heading_buttons(self, room):
+        """
+        Handling of sv_heading_buttons attribute
+        """
+        heading = ''
+
+        # Check if attribute is formatting correct
+        if 'sv_heading_buttons' in room.conf:
+            button_count = self.check_heading_buttons_attribute(room)
+            if button_count > 0:
+                heading_buttons_text = room.conf['sv_heading_buttons'][0]
+                heading_buttons_room = room.conf['sv_heading_buttons'][1]
+                heading_buttons_icon = room.conf['sv_heading_buttons'][2]
+
+                # Determine activ Button and set html class for it
+                heading_buttons_active = [''] * button_count
+
+                for i in range(0, len(heading_buttons_active)):
+                    if heading_buttons_room[i] == room.property.name:
+                        heading_buttons_active[i] = 'ui-btn-active ui-state-persist'   # active = 'ui-btn-active ui-state-persist'
+
+                # Replace placeholders in heading-template
+                tpl_fn = 'heading_' + str(button_count) + 'buttons.html'
+                heading = self.parse_tpl_from_file(tpl_fn, [('{{ text1 }}', heading_buttons_text[0]),
+                                                            ('{{ room1 }}', heading_buttons_room[0]),
+                                                            ('{{ navicon1 }}', heading_buttons_icon[0]),
+                                                            ('{{ activeclass1 }}', heading_buttons_active[0])])
+                heading = self.parse_tpl(heading, [('{{ text2 }}', heading_buttons_text[1]),
+                                                   ('{{ room2 }}', heading_buttons_room[1]),
+                                                   ('{{ navicon2 }}', heading_buttons_icon[1]),
+                                                   ('{{ activeclass2 }}', heading_buttons_active[1])])
+
+                if button_count > 2:
+                    heading = self.parse_tpl(heading, [('{{ text3 }}', heading_buttons_text[2]),
+                                                       ('{{ room3 }}', heading_buttons_room[2]),
+                                                       ('{{ navicon3 }}', heading_buttons_icon[2]),
+                                                       ('{{ activeclass3 }}', heading_buttons_active[2])])
+
+                if button_count > 3:
+                    heading = self.parse_tpl(heading, [('{{ text4 }}', heading_buttons_text[3]),
+                                                       ('{{ room4 }}', heading_buttons_room[3]),
+                                                       ('{{ navicon4 }}', heading_buttons_icon[3]),
+                                                       ('{{ activeclass4 }}', heading_buttons_active[3])])
+
+                if button_count > 4:
+                    heading = self.parse_tpl(heading, [('{{ text5 }}', heading_buttons_text[4]),
+                                                       ('{{ room5 }}', heading_buttons_room[4]),
+                                                       ('{{ navicon5 }}', heading_buttons_icon[4]),
+                                                       ('{{ activeclass5 }}', heading_buttons_active[4])])
+
+        return heading
+
+
     def handle_heading_attributes(self, room):
+        """
+        Handling of sv_heading_left, sv_heading_center and sv_heading_right attributes
+        """
         if 'sv_heading_right' in room.conf:
             heading_right = room.conf['sv_heading_right']
         else:
@@ -118,11 +200,12 @@ class SmartVisuGenerator:
             heading_left = room.conf['sv_heading_left']
         else:
             heading_left = ''
+
+        heading = ''
         if heading_right != '' or heading_center != '' or heading_left != '':
-            heading = self.parse_tpl('heading.html', [('{{ visu_heading_right }}', heading_right), ('{{ visu_heading_center }}', heading_center), ('{{ visu_heading_left }}', heading_left)])
-        else:
-            heading = ''
+            heading = self.parse_tpl_from_file('heading.html', [('{{ visu_heading_right }}', heading_right), ('{{ visu_heading_center }}', heading_center), ('{{ visu_heading_left }}', heading_left)])
         return heading
+    
 
     def get_widgetblocksize(self, item):
         """
@@ -148,6 +231,7 @@ class SmartVisuGenerator:
             attrvalue = ''
         return attrvalue
 
+
     def create_page(self, room, menu_entry):
         """
         Interpretation of the room-specific item-attributes.
@@ -160,10 +244,13 @@ class SmartVisuGenerator:
         """
         block_style = 'std'  # 'std' or 'noh'
         widgetblocktemplate = 'widgetblock_' + self.visu_style + '_' + block_style + '.html'
+        # for set of two blocks in a widget:
         widgetblocktemplate2 = 'widgetblock2_' + self.visu_style + '_' + block_style + '.html'
         widgets = ''
 
-        heading = self.handle_heading_attributes(room)
+        heading = self.handle_heading_buttons(room)
+        if heading == '':
+            heading = self.handle_heading_attributes(room)
 
         if 'sv_widget' in room.conf:
             items = [room]
@@ -191,28 +278,25 @@ class SmartVisuGenerator:
             if isinstance(item.conf['sv_widget'], list):
                 self.logger.warning("room: sv_widget: IsList")
                 for widget in item.conf['sv_widget']:
-                    #widgets += self.parse_tpl(widgetblocktemplate, [('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('item.name', str(item)), ("'item", "'" + item.property.path)])
-                    widgets += self.parse_tpl(widgetblocktemplate, [('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('item.name', str(item)), ("'item", "'" + item.property.path)])
+                    widgets += self.parse_tpl_from_file(widgetblocktemplate, [('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('item.name', str(item)), ("'item", "'" + item.property.path)])
             else:
-                widget = self.get_attribute('sv_widget', item)
-                name1 = self.get_attribute('sv_name1', item)
-                if name1 == '':
-                    name1 = item
-
                 blocksize = self.get_widgetblocksize(item)
 
+                widget = self.get_attribute('sv_widget', item)
                 widget2 = self.get_attribute('sv_widget2', item)
                 if widget2 == '':
-                    #widgets += self.parse_tpl(widgetblocktemplate, [('{{ visu_name }}', str(name1)), ('{{ blocksize }}', str(blocksize)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('item.name', str(item)), ("'item", "'" + item.property.path)])
-                    widgets += self.parse_tpl(widgetblocktemplate, [('{{ visu_name }}', str(name1)), ('{{ blocksize }}', str(blocksize)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('item.name', str(item)), ("'item", "'" + item.property.path)])
+                    name1 = self.get_attribute('sv_name1', item)
+                    if name1 == '':
+                        name1 = item
+                    widgets += self.parse_tpl_from_file(widgetblocktemplate, [('{{ visu_name }}', str(name1)), ('{{ blocksize }}', str(blocksize)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('item.name', str(item)), ("'item", "'" + item.property.path)])
                 else:
                     name2 = self.get_attribute('sv_name2', item)
-                    #widgets += self.parse_tpl(widgetblocktemplate2, [('{{ visu_name }}', str(name1)), ('{{ visu_name2 }}', str(name2)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('{{ visu_widget2 }}', widget2), ('item.name', str(item)), ("'item", "'" + item.property.path)])
-                    widgets += self.parse_tpl(widgetblocktemplate2, [('{{ visu_name }}', str(name1)), ('{{ visu_name2 }}', str(name2)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('{{ visu_widget2 }}', widget2), ('item.name', str(item)), ("'item", "'" + item.property.path)])
+                    widgets += self.parse_tpl_from_file(widgetblocktemplate2, [('{{ visu_name }}', str(name1)), ('{{ visu_name2 }}', str(name2)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('{{ visu_widget2 }}', widget2), ('item.name', str(item)), ("'item", "'" + item.property.path)])
 
         menu_entry['heading'] = heading
         menu_entry['content'] += widgets
         return r
+
 
     def pages(self):
         if not self.remove_oldpages():
@@ -278,6 +362,7 @@ class SmartVisuGenerator:
         self.copy_tpl('rooms_lite.html')
         self.copy_tpl('category.html')
         self.copy_tpl('index.html')
+        self.copy_tpl('visu.css')
         self.copy_tpl('infoblock.html')
 
 
@@ -342,6 +427,26 @@ class SmartVisuGenerator:
 
 #########################################################################
 
+    def build_and_write_page_file(self, menu, menu_entry):
+        """
+        Build and write file for a single room
+        """
+
+        # build page for a single room
+        page = self.parse_tpl_from_file(menu + '_page.html',[('{{ visu_name }}', menu_entry['name']), ('{{ visu_img }}', menu_entry['img'])] )
+        #if menu_entry['page'] == 'room.Kochen':
+        #    self.logger.notice(f"'build_and_write_page_file: {menu_entry['page']}' heading: {menu_entry['heading']}")
+        #    #self.logger.notice(f"build_and_write_page_file: '{menu_entry['page']}' visu_widgets: {menu_entry['content']}")
+        page = self.parse_tpl(page, [('{{ visu_heading }}', menu_entry['heading'])] )
+        page = self.parse_tpl(page, [('{{ visu_widgets }}', menu_entry['content'])] )
+
+        # write page to file
+        self.logger.debug(f"build_and_write_page_file: Writing page '{menu_entry['page'] + '.html'}'")
+        self.write_parseresult(menu_entry['page'] + '.html', page)
+
+        return
+
+
     def write_navigation_and_pages(self, menu, navigation_file):
 
         #self.logger.notice(f"write_navigation_and_pages: {menu=}, {navigation_file=}")
@@ -357,29 +462,23 @@ class SmartVisuGenerator:
             # build navigation list, excluding pages with add_to_nav_menu == False
             if  menu_entry.get('add_to_nav_menu', True):
                 if menu_entry['separator'] is True:
-                    nav_list += self.parse_tpl('navi_sep.html', [('{{ name }}', menu_entry['name'])])
+                    nav_list += self.parse_tpl_from_file('navi_sep.html', [('{{ name }}', menu_entry['name'])])
                 else:
                     if self.smartvisu_version >= '3.3' and menu_entry['img'].lower().endswith('.svg'):
                         #self.logger.notice(f" - nav_list svg entry: {menu_entry['img']=}, parse_list={parse_list}")
-                        nav_list += self.parse_tpl('navi_svg.html', parse_list)
+                        nav_list += self.parse_tpl_from_file('navi_svg.html', parse_list)
                     else:
                         #self.logger.notice(f" - nav_list png entry: {menu_entry['img']=}, parse_list={parse_list}")
-                        self.logger.debug(f" - nav_list entry: entry={self.parse_tpl('navi.html', parse_list)}")
-                        nav_list += self.parse_tpl('navi.html', parse_list)
+                        self.logger.debug(f" - nav_list entry: entry={self.parse_tpl_from_file('navi.html', parse_list)}")
+                        nav_list += self.parse_tpl_from_file('navi.html', parse_list)
 
 
             # build page code
             if menu_entry['separator'] is False:
-                # build and write file for a single room
-                r = self.parse_tpl(menu+'_page.html', [('{{ visu_name }}', menu_entry['name']), ('{{ visu_widgets }}', menu_entry['content']),
-                                                       ('{{ visu_img }}', menu_entry['img']), ('{{ visu_heading }}', menu_entry['heading'])])
-
-                # write page file
-                self.logger.debug("write_navigation_and_pages: Writing page '{}'".format(menu_entry['page'] + '.html'))
-                self.write_parseresult(menu_entry['page'] + '.html', r)
+                self.build_and_write_page_file(menu, menu_entry)
 
         # write navigation menu file
-        self.write_parseresult(navigation_file, self.parse_tpl('navigation.html', [('{{ visu_navis }}', nav_list)]))
+        self.write_parseresult(navigation_file, self.parse_tpl_from_file('navigation.html', [('{{ visu_navis }}', nav_list)]))
 
         return
 
@@ -389,7 +488,7 @@ class SmartVisuGenerator:
     #     for entry in self.navigation[menu]:
     #         nav_lis += entry['html']
     #
-    #     nav = self.parse_tpl(template_file, [('{{ visu_navis }}', nav_lis)])
+    #     nav = self.parse_tpl_from_file(template_file, [('{{ visu_navis }}', nav_lis)])
     #     self.write_parseresult(navigation_file, nav)
     #     return
 
@@ -397,33 +496,54 @@ class SmartVisuGenerator:
         """
         Replace strings in a template
 
-        :param template: template filename
+        :param template: template
         :param replace: list of sets, where each set contains the string to replace and the replacement string
 
         :return: resulting string with replacement(s)
         """
-        self.logger.debug("try to parse template file '{0}'".format(template))
-        try:
-            with open(self.gen_tpldir + '/' + template, 'r', encoding='utf-8') as f:
-                tpl = f.read()
-                tpl = tpl.lstrip('\ufeff')  # remove BOM
-        except Exception as e:
-            self.logger.error("Could not read template file '{0}': {1}".format(template, e))
-            return ''
         for s, r in replace:
             if r is None:
                 rs = ''
             else:
                 rs = r
-                tpl = tpl.replace(s, rs)
+                template = template.replace(s, rs)
+
+        return template
+
+
+    def parse_tpl_from_file(self, template_file, replace):
+        """
+        Read template file and replace strings in that template
+
+        :param template_file: template filename
+        :param replace:       list of sets, where each set contains the string to replace and the replacement string
+
+        :return: resulting string with replacement(s)
+        """
+        self.logger.debug(f"try to parse template file '{template_file}'")
+        try:
+            with open(os.path.join(self.gen_tpldir, template_file), 'r', encoding='utf-8') as f:
+                tpl = f.read()
+                tpl = tpl.lstrip('\ufeff')  # remove BOM
+        except Exception as e:
+            self.logger.error(f"Could not read template file '{template_file}': {e}")
+            return ''
+
+        tpl = self.parse_tpl(tpl, replace)
+
         return tpl
 
+
     def write_parseresult(self, htmlfile, parseresult):
+        """
+        Write the parsed result to the pages directory in smartVISU
+        """
         try:
-            with open(self.pages_dir + '/' + htmlfile, 'w') as f:
+            with open(os.path.join(self.pages_dir, htmlfile), 'w') as f:
                 f.write(parseresult)
         except Exception as e:
-            self.logger.warning("Could not write to {0}/{1}: {2}".format(self.pages_dir, htmlfile, e))
+            self.logger.warning(f"Could not write to {self.pages_dir}/{htmlfile}: {e}")
+
 
     def copy_tpl(self, tplname, destname=''):
         if destname == '':
@@ -431,14 +551,17 @@ class SmartVisuGenerator:
         try:
             shutil.copy(os.path.join(self.gen_tpldir, tplname), os.path.join(self.pages_dir, destname))
         except Exception as e:
-            self.logger.error("Could not copy {0} from {1} to {2}".format(tplname, self.gen_tpldir, self.pages_dir))
+            self.logger.error(f"Could not copy {tplname} from {self.gen_tpldir} to {self.pages_dir}")
 
 
 #########################################################################
 
     def remove_oldpages(self):
+        """
+        Remove the pages that were generated during a previous run of this plugin
+        """
         if not os.path.isdir(self.tmpdir):
-            self.logger.warning("Could not find directory: {0}".format(self.tmpdir))
+            self.logger.warning(f"Could not find directory: {self.tmpdir}")
             return False
         # clear temp directory
         for dn in os.listdir(self.tmpdir):
@@ -449,7 +572,7 @@ class SmartVisuGenerator:
                 if os.path.isdir(dp):
                     shutil.rmtree(dp)
             except Exception as e:
-                self.logger.warning("Could not delete directory {0}: {1}".format(dp, e))
+                self.logger.warning(f"Could not delete directory {dp}: {e}")
         # create output directory
         try:
             os.mkdir(self.pages_dir)
@@ -457,7 +580,7 @@ class SmartVisuGenerator:
             pass
         # remove old dynamic files
         if not os.path.isdir(self.pages_dir):
-            self.logger.warning("Could not find/create directory: {0}".format(self.pages_dir))
+            self.logger.warning(f"Could not find/create directory: {self.pages_dir}")
             return False
         for fn in os.listdir(self.pages_dir):
             fp = os.path.join(self.pages_dir, fn)
@@ -465,7 +588,7 @@ class SmartVisuGenerator:
                 if os.path.isfile(fp):
                     os.unlink(fp)
             except Exception as e:
-                self.logger.warning("Could not delete file {0}: {1}".format(fp, e))
+                self.logger.warning(f"Could not delete file {fp}: {e}")
         return True
 
 
@@ -483,10 +606,11 @@ class SmartVisuGenerator:
         if self.smartvisu_version >= '2.9':
             for fn in os.listdir(self.shng_tpldir):
                 if (self.overwrite_templates) or (not os.path.isfile(os.path.join(self.gen_tpldir, fn))):
-                    self.logger.debug("copy_templates: Copying template '{}' from plugin to smartVISU v{} ({})".format(fn, self.smartvisu_version, self.gen_tpldir))
+                    self.logger.debug(f"copy_templates: Copying template '{fn}' from plugin to smartVISU v{self.smartvisu_version} ({self.gen_tpldir})")
                     shutil.copy2(os.path.join(self.shng_tpldir, fn), self.gen_tpldir)
-            shutil.copy2(os.path.join(self.sv_tpldir, 'index.html'), self.gen_tpldir)
-            shutil.copy2(os.path.join(self.sv_tpldir, 'rooms.html'), self.gen_tpldir)
+            shutil.copy2(os.path.join(self.sv_tpldir, 'index.html'), self.pages_dir)
+            shutil.copy2(os.path.join(self.sv_tpldir, 'rooms.html'), self.pages_dir)
+            shutil.copy2(os.path.join(self.sv_tpldir, 'visu.css'), self.pages_dir)
             if self.smartvisu_version >= '3.2':
                 shutil.copy2(os.path.join(self.sv_tpldir, 'infoblock.html'), self.gen_tpldir)
 
@@ -499,9 +623,9 @@ class SmartVisuGenerator:
             # Open file for twig import statements (for root.html)
             for fn in os.listdir(self.shng_tpldir):
                 if (self.overwrite_templates) or (not os.path.isfile(os.path.join(self.gen_tpldir, fn))):
-                    self.logger.debug("copy_templates: Copying template '{}' from plugin to smartVISU v{}".format(fn, self.smartvisu_version))
+                    self.logger.debug(f"copy_templates: Copying template '{fn}' from plugin to smartVISU v{self.smartvisu_version}")
                     try:
                         shutil.copy2(os.path.join(self.shng_tpldir, fn), self.gen_tpldir)
                     except Exception as e:
-                        self.logger.error("Could not copy {0} from {1} to {2}".format(fn, self.shng_tpldir, self.gen_tpldir))
+                        self.logger.error(f"Could not copy {fn} from {self.shng_tpldir} to {self.gen_tpldir}")
         return
