@@ -97,11 +97,12 @@ class SmartVisuGenerator:
         for entry in nav_config.get(menu, {}):
             self.logger.debug("initialize_visu_menu: '{}' entry={}".format(menu, entry))
             name = entry.get('name', '')
+            display_name = entry.get('display_name', '')
             item_path = entry.get('path', '')
             separator = entry.get('separator', False)
             img = entry.get('img', None)
             if name != '':
-                menu_entry = self.create_menuentry(menu, name, item_path, separator, img, entry.get('nav_aside', None), entry.get('nav_aside2', None), True)
+                menu_entry = self.create_menuentry(menu, name, display_name, item_path, separator, img, entry.get('nav_aside', None), entry.get('nav_aside2', None), True)
                 self.add_menuentry_to_list(menu, menu_entry)
             self.logger.debug("initialize_visu_menu: '{}' menu_entry={}".format(menu, menu_entry))
 
@@ -151,35 +152,52 @@ class SmartVisuGenerator:
                 for i in range(0, len(heading_buttons_active)):
                     if heading_buttons_room[i] == room.property.name:
                         heading_buttons_active[i] = 'ui-btn-active ui-state-persist'   # active = 'ui-btn-active ui-state-persist'
+                    if len(heading_buttons_icon) == 0 and len(heading_buttons_active) < 4:
+                        heading_buttons_active[i] += ' ui-btn-largetext'   # active = 'ui-btn-active ui-state-persist'
 
                 # Replace placeholders in heading-template
-                tpl_fn = 'heading_' + str(button_count) + 'buttons.html'
-                heading = self.parse_tpl_from_file(tpl_fn, [('{{ text1 }}', heading_buttons_text[0]),
-                                                            ('{{ room1 }}', heading_buttons_room[0]),
-                                                            ('{{ navicon1 }}', heading_buttons_icon[0]),
-                                                            ('{{ activeclass1 }}', heading_buttons_active[0])])
-                heading = self.parse_tpl(heading, [('{{ text2 }}', heading_buttons_text[1]),
-                                                   ('{{ room2 }}', heading_buttons_room[1]),
-                                                   ('{{ navicon2 }}', heading_buttons_icon[1]),
-                                                   ('{{ activeclass2 }}', heading_buttons_active[1])])
+                if len(heading_buttons_icon) == 0:
+                    tpl_fn = 'heading_' + str(button_count) + 'textbuttons.html'
+                    heading = self.parse_tpl_from_file(tpl_fn, [('{{ text1 }}', heading_buttons_text[0]),
+                                                                ('{{ room1 }}', heading_buttons_room[0]),
+                                                                ('{{ activeclass1 }}', heading_buttons_active[0])])
+                    heading = self.parse_tpl(heading, [('{{ text2 }}', heading_buttons_text[1]),
+                                                       ('{{ room2 }}', heading_buttons_room[1]),
+                                                       ('{{ activeclass2 }}', heading_buttons_active[1])])
 
-                if button_count > 2:
-                    heading = self.parse_tpl(heading, [('{{ text3 }}', heading_buttons_text[2]),
-                                                       ('{{ room3 }}', heading_buttons_room[2]),
-                                                       ('{{ navicon3 }}', heading_buttons_icon[2]),
-                                                       ('{{ activeclass3 }}', heading_buttons_active[2])])
+                    if button_count > 2:
+                        heading = self.parse_tpl(heading, [('{{ text3 }}', heading_buttons_text[2]),
+                                                           ('{{ room3 }}', heading_buttons_room[2]),
+                                                           ('{{ activeclass3 }}', heading_buttons_active[2])])
 
-                if button_count > 3:
-                    heading = self.parse_tpl(heading, [('{{ text4 }}', heading_buttons_text[3]),
-                                                       ('{{ room4 }}', heading_buttons_room[3]),
-                                                       ('{{ navicon4 }}', heading_buttons_icon[3]),
-                                                       ('{{ activeclass4 }}', heading_buttons_active[3])])
+                else:
+                    tpl_fn = 'heading_' + str(button_count) + 'buttons.html'
+                    heading = self.parse_tpl_from_file(tpl_fn, [('{{ text1 }}', heading_buttons_text[0]),
+                                                                ('{{ room1 }}', heading_buttons_room[0]),
+                                                                ('{{ navicon1 }}', heading_buttons_icon[0]),
+                                                                ('{{ activeclass1 }}', heading_buttons_active[0])])
+                    heading = self.parse_tpl(heading, [('{{ text2 }}', heading_buttons_text[1]),
+                                                       ('{{ room2 }}', heading_buttons_room[1]),
+                                                       ('{{ navicon2 }}', heading_buttons_icon[1]),
+                                                       ('{{ activeclass2 }}', heading_buttons_active[1])])
 
-                if button_count > 4:
-                    heading = self.parse_tpl(heading, [('{{ text5 }}', heading_buttons_text[4]),
-                                                       ('{{ room5 }}', heading_buttons_room[4]),
-                                                       ('{{ navicon5 }}', heading_buttons_icon[4]),
-                                                       ('{{ activeclass5 }}', heading_buttons_active[4])])
+                    if button_count > 2:
+                        heading = self.parse_tpl(heading, [('{{ text3 }}', heading_buttons_text[2]),
+                                                           ('{{ room3 }}', heading_buttons_room[2]),
+                                                           ('{{ navicon3 }}', heading_buttons_icon[2]),
+                                                           ('{{ activeclass3 }}', heading_buttons_active[2])])
+
+                    if button_count > 3:
+                        heading = self.parse_tpl(heading, [('{{ text4 }}', heading_buttons_text[3]),
+                                                           ('{{ room4 }}', heading_buttons_room[3]),
+                                                           ('{{ navicon4 }}', heading_buttons_icon[3]),
+                                                           ('{{ activeclass4 }}', heading_buttons_active[3])])
+
+                    if button_count > 4:
+                        heading = self.parse_tpl(heading, [('{{ text5 }}', heading_buttons_text[4]),
+                                                           ('{{ room5 }}', heading_buttons_room[4]),
+                                                           ('{{ navicon5 }}', heading_buttons_icon[4]),
+                                                           ('{{ activeclass5 }}', heading_buttons_active[4])])
 
         return heading
 
@@ -263,6 +281,7 @@ class SmartVisuGenerator:
             items.extend(self.items.find_children(room, 'sv_widget'))
         elif room.conf['sv_page'] == 'overview':
             items.extend(self.items.find_items('sv_item_type'))
+        menu_entry['display_name'] = room.conf.get('sv_display_name', str(room))
 
         r = ''
         for item in items:
@@ -343,7 +362,8 @@ class SmartVisuGenerator:
                     else:
                         nav_aside2 += item.conf['sv_nav_aside2']
 
-                menu_entry = self.create_menuentry(menu=menu, entry_name=str(item), item_path=item.property.path, separator=separator,
+                display_name = item.conf.get('sv_display_name', str(item))
+                menu_entry = self.create_menuentry(menu=menu, entry_name=str(item), display_name=display_name, item_path=item.property.path, separator=separator,
                                                    img_name=self.get_attribute('sv_img', item), nav_aside=nav_aside, nav_aside2=nav_aside2)
 
                 self.create_page(item, menu_entry)
@@ -368,7 +388,7 @@ class SmartVisuGenerator:
 
 #########################################################################
 
-    def create_menuentry(self, menu, entry_name, item_path, separator, img_name, nav_aside, nav_aside2, from_navconfig=False):
+    def create_menuentry(self, menu, entry_name, display_name, item_path, separator, img_name, nav_aside, nav_aside2, from_navconfig=False):
         for menu_entry in self.navigation[menu]:
             if menu_entry['name'] == entry_name:
                 if menu_entry.get('img', '') == '' and menu_entry.get('img_set', False) is False:
@@ -383,6 +403,7 @@ class SmartVisuGenerator:
 
         menu_entry = {}
         menu_entry['name'] = entry_name
+        menu_entry['display_name'] = display_name
         menu_entry['item_path'] = item_path
         menu_entry['separator'] = separator
         menu_entry['page'] = menu + '.' + entry_name
@@ -433,7 +454,7 @@ class SmartVisuGenerator:
         """
 
         # build page for a single room
-        page = self.parse_tpl_from_file(menu + '_page.html',[('{{ visu_name }}', menu_entry['name']), ('{{ visu_img }}', menu_entry['img'])] )
+        page = self.parse_tpl_from_file(menu + '_page.html',[('{{ visu_name }}', menu_entry['display_name']), ('{{ visu_img }}', menu_entry['img'])] )
         #if menu_entry['page'] == 'room.Kochen':
         #    self.logger.notice(f"'build_and_write_page_file: {menu_entry['page']}' heading: {menu_entry['heading']}")
         #    #self.logger.notice(f"build_and_write_page_file: '{menu_entry['page']}' visu_widgets: {menu_entry['content']}")
@@ -452,7 +473,7 @@ class SmartVisuGenerator:
         #self.logger.notice(f"write_navigation_and_pages: {menu=}, {navigation_file=}")
         nav_list = ''
         for menu_entry in self.navigation[menu]:
-            parse_list = [('{{ visu_page }}', menu_entry['page']), ('{{ visu_name }}', menu_entry['name']),
+            parse_list = [('{{ visu_page }}', menu_entry['page']), ('{{ visu_name }}', menu_entry['display_name']),
                           ('{{ visu_img }}', menu_entry['img']),
                           ('{{ visu_aside }}', menu_entry['nav_aside']),
                           ('{{ visu_aside2 }}', menu_entry['nav_aside2']),
