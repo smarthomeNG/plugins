@@ -26,7 +26,6 @@ import copy
 import logging
 
 from pathlib import Path
-from collections import OrderedDict
 import xmltodict
 
 logger = logging.getLogger("knxproject")
@@ -265,7 +264,7 @@ def _parse_knxproject(filename, password=None):
         top = ga_dict.get('GroupRange',None)
         if top is None: return GAs
 
-        if isinstance(top, OrderedDict):
+        if not isinstance(top, list):
             # if there is only one child defined in xml, an ordered dict is
             # returned here instead of a list
             # so we need to convert it to a list
@@ -277,7 +276,7 @@ def _parse_knxproject(filename, password=None):
             middle_dict = middle.get('GroupRange',None)
             if middle_dict is None: continue
 
-            if isinstance( middle_dict, OrderedDict):
+            if not isinstance( middle_dict, list):
                 # same as above
                 middle_ga = [middle_dict]
             else:
@@ -288,7 +287,7 @@ def _parse_knxproject(filename, password=None):
 
                 if last_dict is None: continue
 
-                if isinstance( last_dict, OrderedDict):
+                if not isinstance( last_dict, list):
                     # same as above
                     last_ga = [last_dict]
                 else:
@@ -309,3 +308,5 @@ def _parse_knxproject(filename, password=None):
     except Exception as e: 
         print("Error {} occurred".format(e))
     return GAs
+
+
