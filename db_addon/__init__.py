@@ -59,7 +59,7 @@ class DatabaseAddOn(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.2.10'
+    PLUGIN_VERSION = '1.2.11'
 
     def __init__(self, sh):
         """
@@ -469,6 +469,12 @@ class DatabaseAddOn(SmartPlugin):
             # add additional params
             if additional_params:
                 new_db_addon_params.update(additional_params)
+                    
+            ### NEW 1.2.11 ###
+            if 'start' in new_db_addon_params and 'end' not in new_db_addon_params:
+                new_db_addon_params['end'] = new_db_addon_params['start']
+                if self.debug_log.prepare:
+                    self.logger.debug(f"'end' parameter has been added")
 
             return new_db_addon_params
 
@@ -1685,12 +1691,14 @@ class DatabaseAddOn(SmartPlugin):
         Die Vorgehensweise ist:
             - Abfrage des letzten Eintrages vor dem Beginn des Zeitraums
         """
-
+        # change db query function
+        query_params.update({'func': 'next'})
+        
+        # log final query_params
         if self.debug_log.prepare:
             self.logger.debug(f"called with {query_params=}")
 
         # get last value of timeframe
-        query_params.update({'func': 'next'})
         last_value = self._query_item(**query_params)[0][1]
 
         if self.debug_log.prepare:
