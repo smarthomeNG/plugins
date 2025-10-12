@@ -34,7 +34,7 @@ class Tasmota(MqttPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.1'
 
     LIGHT_MSG = ['HSBColor', 'Dimmer', 'Color', 'CT', 'Scheme', 'Fade', 'Speed', 'LedTable', 'White']
 
@@ -1418,11 +1418,15 @@ class Tasmota(MqttPlugin):
 
         """
         self.logger.debug(f"_handle_wifi: received payload={payload}")
-        wifi_signal = payload.get('Signal')
-        if wifi_signal:
-            if isinstance(wifi_signal, str) and wifi_signal.isdigit():
-                wifi_signal = int(wifi_signal)
-            self.tasmota_devices[device]['wifi_signal'] = wifi_signal
+        try:
+            wifi_signal = payload.get('Signal')
+        except AttributeError:
+            pass
+        else:
+            if wifi_signal:
+                if isinstance(wifi_signal, str) and wifi_signal.isdigit():
+                    wifi_signal = int(wifi_signal)
+                self.tasmota_devices[device]['wifi_signal'] = wifi_signal
 
     def _handle_setting(self, device: str, payload: dict) -> None:
         """
