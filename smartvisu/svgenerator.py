@@ -140,17 +140,23 @@ class SmartVisuGenerator:
 
         # Check if attribute is formatting correct
         if 'sv_heading_buttons' in room.conf:
+            page_type = room.conf['sv_page']
             button_count = self.check_heading_buttons_attribute(room)
             if button_count > 0:
                 heading_buttons_text = room.conf['sv_heading_buttons'][0]
                 heading_buttons_room = room.conf['sv_heading_buttons'][1]
-                heading_buttons_icon = room.conf['sv_heading_buttons'][2]
+                if len(room.conf['sv_heading_buttons']) > 2:
+                    heading_buttons_icon = room.conf['sv_heading_buttons'][2]
+                else:
+                    heading_buttons_icon = []          # create empty list, if no icons are defined
 
                 # Determine activ Button and set html class for it
                 heading_buttons_active = [''] * button_count
 
+                for i in range (0, len(heading_buttons_room)):
+                    heading_buttons_room[i] = heading_buttons_room[i].replace(' ', '_').replace('/', '_')
                 for i in range(0, len(heading_buttons_active)):
-                    if heading_buttons_room[i] == room.property.name:
+                    if heading_buttons_room[i] == room.property.name.replace(' ', '_').replace('/', '_'):
                         heading_buttons_active[i] = 'ui-btn-active ui-state-persist'   # active = 'ui-btn-active ui-state-persist'
                     if len(heading_buttons_icon) == 0 and len(heading_buttons_active) < 4:
                         heading_buttons_active[i] += ' ui-btn-largetext'   # active = 'ui-btn-active ui-state-persist'
@@ -159,43 +165,43 @@ class SmartVisuGenerator:
                 if len(heading_buttons_icon) == 0:
                     tpl_fn = 'heading_' + str(button_count) + 'textbuttons.html'
                     heading = self.parse_tpl_from_file(tpl_fn, [('{{ text1 }}', heading_buttons_text[0]),
-                                                                ('{{ room1 }}', heading_buttons_room[0]),
+                                                                ('{{ page1 }}', page_type + '.' + heading_buttons_room[0]),
                                                                 ('{{ activeclass1 }}', heading_buttons_active[0])])
                     heading = self.parse_tpl(heading, [('{{ text2 }}', heading_buttons_text[1]),
-                                                       ('{{ room2 }}', heading_buttons_room[1]),
+                                                       ('{{ page2 }}', page_type + '.' + heading_buttons_room[1]),
                                                        ('{{ activeclass2 }}', heading_buttons_active[1])])
 
                     if button_count > 2:
                         heading = self.parse_tpl(heading, [('{{ text3 }}', heading_buttons_text[2]),
-                                                           ('{{ room3 }}', heading_buttons_room[2]),
+                                                           ('{{ page3 }}', page_type + '.' + heading_buttons_room[2]),
                                                            ('{{ activeclass3 }}', heading_buttons_active[2])])
 
                 else:
                     tpl_fn = 'heading_' + str(button_count) + 'buttons.html'
                     heading = self.parse_tpl_from_file(tpl_fn, [('{{ text1 }}', heading_buttons_text[0]),
-                                                                ('{{ room1 }}', heading_buttons_room[0]),
+                                                                ('{{ page1 }}', page_type + '.' + heading_buttons_room[0]),
                                                                 ('{{ navicon1 }}', heading_buttons_icon[0]),
                                                                 ('{{ activeclass1 }}', heading_buttons_active[0])])
                     heading = self.parse_tpl(heading, [('{{ text2 }}', heading_buttons_text[1]),
-                                                       ('{{ room2 }}', heading_buttons_room[1]),
+                                                       ('{{ page2 }}', page_type + '.' + heading_buttons_room[1]),
                                                        ('{{ navicon2 }}', heading_buttons_icon[1]),
                                                        ('{{ activeclass2 }}', heading_buttons_active[1])])
 
                     if button_count > 2:
                         heading = self.parse_tpl(heading, [('{{ text3 }}', heading_buttons_text[2]),
-                                                           ('{{ room3 }}', heading_buttons_room[2]),
+                                                           ('{{ page3 }}', page_type + '.' + heading_buttons_room[2]),
                                                            ('{{ navicon3 }}', heading_buttons_icon[2]),
                                                            ('{{ activeclass3 }}', heading_buttons_active[2])])
 
                     if button_count > 3:
                         heading = self.parse_tpl(heading, [('{{ text4 }}', heading_buttons_text[3]),
-                                                           ('{{ room4 }}', heading_buttons_room[3]),
+                                                           ('{{ page4 }}', page_type + '.' + heading_buttons_room[3]),
                                                            ('{{ navicon4 }}', heading_buttons_icon[3]),
                                                            ('{{ activeclass4 }}', heading_buttons_active[3])])
 
                     if button_count > 4:
                         heading = self.parse_tpl(heading, [('{{ text5 }}', heading_buttons_text[4]),
-                                                           ('{{ room5 }}', heading_buttons_room[4]),
+                                                           ('{{ page5 }}', page_type + '.' + heading_buttons_room[4]),
                                                            ('{{ navicon5 }}', heading_buttons_icon[4]),
                                                            ('{{ activeclass5 }}', heading_buttons_active[4])])
 
