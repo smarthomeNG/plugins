@@ -26,7 +26,7 @@
 import logging
 from lib.model.smartplugin import SmartPlugin
 
-from pymodbus3.client.sync import ModbusTcpClient
+from pymodbus.client import ModbusTcpClient
 
 VARLIST = {
     "outside_temp"              : {"var": "v00104", "length": 8, "type": float, "read": True, "write": False},
@@ -114,7 +114,7 @@ VARLIST = {
 
 class HeliosTCP(SmartPlugin):
 
-    PLUGIN_VERSION = "1.0.2"
+    PLUGIN_VERSION = "1.0.3"
     MODBUS_SLAVE = 180
     PORT = 502
     START_REGISTER = 1
