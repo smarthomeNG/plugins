@@ -261,9 +261,9 @@ class HueApiV2(SmartPlugin):
                 self.logger.info(f"handle_event: 'update': Event-item type '{event_item.type.value}' is unhandled  -  scene '{event_item.metadata.name}'  -  event={event_item}")
                 pass
             else:
-                self.logger.notice(f"handle_event: 'update': Event-item type '{event_item.type.value}' is unhandled  -  event={event_item}")
+                self.logger.info(f"handle_event: 'update': Event-item type '{event_item.type.value}' is unhandled  -  event={event_item}")
         else:
-            self.logger.notice(f"handle_event: Eventtype {event_type.value} is unhandled  -  event={event_item}")
+            self.logger.info(f"handle_event: Eventtype {event_type.value} is unhandled  -  event={event_item}")
         return
 
 
