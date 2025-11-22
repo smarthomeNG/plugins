@@ -37,6 +37,8 @@ from pymodbus.payload import BinaryPayloadBuilder
 from pymodbus.client.tcp import ModbusTcpClient
 from pymodbus import ModbusException
 
+import struct
+
 import logging
 
 AttrAddress = 'modBusAddress'
@@ -63,7 +65,7 @@ class modbus_tcp(SmartPlugin):
     devices.
     """
 
-    PLUGIN_VERSION = '1.0.14'
+    PLUGIN_VERSION = '1.0.15'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -210,6 +212,10 @@ class modbus_tcp(SmartPlugin):
                 self._regToWrite.update({reg: regPara})
                 self.logger.info(f"parse item: {item} Attributes {regPara}")
                 return self.update_item
+            elif dataDirection == 'write':
+                self._regToWrite.update({reg: regPara})
+                self.logger.info(f"parse item: {item} Attributes {regPara}")
+                return self.update_item
             else:
                 self.logger.warning("Invalid data direction -> default(read) is used")
                 self._regToRead.update({reg: regPara})
@@ -338,7 +344,7 @@ class modbus_tcp(SmartPlugin):
 
         if self.has_iattr(item.conf, AttrDirection):
             dataDirection = self.get_iattr_value(item.conf, AttrDirection)
-            if not dataDirection == 'read_write':
+            if not (dataDirection == 'read_write' or dataDirection == 'write'):
                 self.logger.debug(f'update_item: {item} Writing is not allowed - selected dataDirection:{dataDirection}')
                 return
             # else:
@@ -554,44 +560,47 @@ class modbus_tcp(SmartPlugin):
 
         self.logger.debug(f"read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount} result:{result}")
 
-        if dataType.lower() == 'uint':
-            if bits == 16:
-                return decoder.decode_16bit_uint()
-            elif bits == 32:
-                return decoder.decode_32bit_uint()
-            elif bits == 64:
-                return decoder.decode_64bit_uint()
+        try:
+            if dataType.lower() == 'uint':
+                if bits == 16:
+                    return decoder.decode_16bit_uint()
+                elif bits == 32:
+                    return decoder.decode_32bit_uint()
+                elif bits == 64:
+                    return decoder.decode_64bit_uint()
+                else:
+                    self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
+            elif dataType.lower() == 'int':
+                if bits == 16:
+                    return decoder.decode_16bit_int()
+                elif bits == 32:
+                    return decoder.decode_32bit_int()
+                elif bits == 64:
+                    return decoder.decode_64bit_int()
+                else:
+                    self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
+            elif dataType.lower() == 'float':
+                if bits == 32:
+                    return decoder.decode_32bit_float()
+                elif bits == 64:
+                    return decoder.decode_64bit_float()
+                else:
+                    self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
+            elif dataType.lower() == 'string':
+                # bei string: bits = bytes !! string16 -> 16Byte
+                ret = decoder.decode_string(bits)
+                return str(ret, 'ASCII')
+            elif dataType.lower() == 'bit':
+                if objectType == 'Coil' or objectType == 'DiscreteInput':
+                    # self.logger.debug(f"read bit value: {value}")
+                    return value
+                else:
+                    self.logger.debug(f"read bits values: {value.decode_bits()}")
+                    return decoder.decode_bits()
             else:
                 self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
-        elif dataType.lower() == 'int':
-            if bits == 16:
-                return decoder.decode_16bit_int()
-            elif bits == 32:
-                return decoder.decode_32bit_int()
-            elif bits == 64:
-                return decoder.decode_64bit_int()
-            else:
-                self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
-        elif dataType.lower() == 'float':
-            if bits == 32:
-                return decoder.decode_32bit_float()
-            elif bits == 64:
-                return decoder.decode_64bit_float()
-            else:
-                self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
-        elif dataType.lower() == 'string':
-            # bei string: bits = bytes !! string16 -> 16Byte
-            ret = decoder.decode_string(bits)
-            return str(ret, 'ASCII')
-        elif dataType.lower() == 'bit':
-            if objectType == 'Coil' or objectType == 'DiscreteInput':
-                # self.logger.debug(f"read bit value: {value}")
-                return value
-            else:
-                self.logger.debug(f"read bits values: {value.decode_bits()}")
-                return decoder.decode_bits()
-        else:
-            self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
+        except struct.error as e:
+            self.logger.error(f"unable to unpack data for datatype={dataType.lower()} for read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}")
 
     @staticmethod
     def is_NaN( value, dataType: str) -> bool:
