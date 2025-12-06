@@ -1,4 +1,4 @@
-requests
+#requests requirement moved to core
 requests-file
 # pyjq:
 #   The most recent version (2.6 released August 2022) is compatible with Python 3.10

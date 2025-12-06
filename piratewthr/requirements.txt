@@ -1,1 +1,1 @@
-requests
+#requests requirement moved to core

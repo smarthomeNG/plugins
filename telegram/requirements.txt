@@ -1,2 +1,2 @@
 python-telegram-bot>=20.2
-requests
+#requests requirement moved to core
