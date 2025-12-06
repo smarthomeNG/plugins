@@ -1,8 +1,13 @@
 # translations for the web interface
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'Wert 2':         {'de': '=', 'en': 'Value 2'}
-    'Wert 4':         {'de': '=', 'en': 'Value 4'}
+    'Datenverzeichnis':     {'de': '=', 'en': 'Data Directory'}
+    'Datentyp':             {'de': '=', 'en': 'type of data'}
+    'Step':                 {'de': '=', 'en': 'Step / Cycle'}
+    'Minimum aufzeichnen':  {'de': '=', 'en': 'record minimum'}
+    'Maximum aufzeichnen':  {'de': '=', 'en': 'record maximum'}
+    'No Series':            {'de': '=', 'en': 'no series'}
+    'Datensatzname':        {'de': '=', 'en': 'dataset name'}
 
     # Alternative format for translations of longer texts:
     'Hier kommt der Inhalt des Webinterfaces hin.':

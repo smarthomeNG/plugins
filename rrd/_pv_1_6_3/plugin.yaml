@@ -9,12 +9,12 @@ plugin:
     tester: nobody                  # Who tests this plugin?
     state: develop                  # change to ready when done with development
     keywords: database round robin time slice counter gauge rrdtool
+    documentation: https://github.com/smarthomeNG/plugins/blob/develop/rrd/userdoc.rst        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/rrd-plugin
 
-    version: 1.7.0                  # Plugin version
-    sh_minversion: '1.10'           # minimum shNG version to use this plugin
+    version: 1.6.3                  # Plugin version
+    sh_minversion: '1.5'              # minimum shNG version to use this plugin
     #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    py_minversion: '3.8'            # minimum Python version to use for this plugin
     multi_instance: False           # plugin supports multi instance
     restartable: True
     classname: RRD                  # class containing the plugin

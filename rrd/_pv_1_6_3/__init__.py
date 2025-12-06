@@ -2,14 +2,15 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
-#  Copyright 2020,2025 Bernd Meiners                Bernd.Meiners@mail.de
+#  Copyright 2020 Bernd Meiners                     Bernd.Meiners@mail.de
 #  Copyright 2025 ghciv6
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
 #  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  rrd plugin to run with SmartHomeNG version 1.10 and upwards.
+#  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
+#  upwards.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -26,10 +27,9 @@
 #
 #########################################################################
 
-from lib.model.smartplugin import SmartPlugin
+from lib.module import Modules
+from lib.model.smartplugin import *
 from lib.item import Items
-
-from .webif import WebInterface
 
 import datetime
 import functools
@@ -51,7 +51,7 @@ class RRD(SmartPlugin):
     Documentation can be found at `<https://pythonhosted.org/rrdtool/>`_
     """
 
-    PLUGIN_VERSION = '1.7.0'
+    PLUGIN_VERSION = '1.6.3'
 
     def __init__(self, sh):
         """
@@ -60,6 +60,10 @@ class RRD(SmartPlugin):
 
         # Call init code of parent class (SmartPlugin)
         super().__init__()
+
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         rrd_dir = self.get_parameter_value('rrd_dir')
@@ -83,10 +87,6 @@ class RRD(SmartPlugin):
             self.logger.error(f"{self.get_fullname()}: Unable to import Python package 'rrdtool'")
             return
 
-        self.init_webinterface(WebInterface)
-        # if plugin should not start without web interface
-        # if not self.init_webinterface():
-        #     self._init_complete = False
         return
 
     def run(self):
@@ -203,7 +203,7 @@ class RRD(SmartPlugin):
             return
         query = [f"{rrd['rrdb']}"]
         # prepare consolidation function
-        if func == 'avg' or func == 'raw':
+        if func == 'avg':
             query.append('AVERAGE')
         elif func == 'max':
             if not rrd['max']:
@@ -242,7 +242,7 @@ class RRD(SmartPlugin):
 
         # postprocess values
         if sid is None:
-            sid = f"{item}|{func}|{start}|{end}|{count}"
+            sid = f"{item}|{func}|{start}|{end}|{count}")
         reply = {'cmd': 'series', 'series': None, 'sid': sid}
         istart, iend, istep = meta
         mstart = istart * 1000
@@ -266,7 +266,7 @@ class RRD(SmartPlugin):
         """
         Reads a single value from rrd.
 
-        :param func: String with consolidating function 'avg' (or 'raw'), 'min', 'max', 'last' to use
+        :param func: String with consolidating function 'avg', 'min', 'max', 'last' to use
         :param start: String containing a start time
         :param end: String containing a start time
         """
@@ -278,7 +278,7 @@ class RRD(SmartPlugin):
 
         # prepare consolidation function
         query = [f"{rrd['rrdb']}"]
-        if func == 'avg' or func == 'raw':
+        if func == 'avg':
             query.append('AVERAGE')
         elif func == 'max':
             if rrd['max']:
@@ -321,7 +321,7 @@ class RRD(SmartPlugin):
         values = [v[0] for v in data if v[0] is not None]
 
         # postprocess for consolidation
-        if func == 'avg' or func == 'raw':
+        if func == 'avg':
             if len(values) > 0:
                 return sum(values) / len(values)
         elif func == 'min':
@@ -348,20 +348,20 @@ class RRD(SmartPlugin):
 
         args.append(f"DS:{item_id}:{rrd['type']}:{str(2 * rrd['step'])}:U:U")
         if rrd['min']:
-            args.append(f"RRA:MIN:0.5:{int(86400 / rrd['step'])}:1825")  # 24h/5y
+            args.append(f'RRA:MIN:0.5:{int(86400 / rrd['step'])}:1825')  # 24h/5y
         if rrd['max']:
-            args.append(f"RRA:MAX:0.5:{int(86400 / rrd['step'])}:1825")  # 24h/5y
+            args.append(f'RRA:MAX:0.5:{int(86400 / rrd['step']}:1825'))  # 24h/5y
         args.extend(['--step', str(rrd['step'])])
 
         if rrd['type'] == 'GAUGE':
-            args.append(f"RRA:AVERAGE:0.5:1:{int(86400 / rrd['step']) * 7 + 8}")    # 7 days
-            args.append(f"RRA:AVERAGE:0.5:{int(1800 / rrd['step'])}:1536")          # 0.5h/32 days
-            args.append(f"RRA:AVERAGE:0.5:{int(21600 / rrd['step'])}:1600")         # 6h/400 days
-            args.append(f"RRA:AVERAGE:0.5:{int(86400 / rrd['step'])}:1826")         # 24h/5y
-            args.append(f"RRA:AVERAGE:0.5:{int(604800 / rrd['step'])}:1300")        # 7d/25y
+            args.append(f'RRA:AVERAGE:0.5:1:{int(86400 / rrd['step']) * 7 + 8}')    # 7 days
+            args.append(f'RRA:AVERAGE:0.5:{int(1800 / rrd['step'])}:1536')          # 0.5h/32 days
+            args.append(f'RRA:AVERAGE:0.5:{int(21600 / rrd['step'])}:1600')         # 6h/400 days
+            args.append(f'RRA:AVERAGE:0.5:{int(86400 / rrd['step'])}:1826')         # 24h/5y
+            args.append(f'RRA:AVERAGE:0.5:{int(604800 / rrd['step'])}:1300')        # 7d/25y
         elif rrd['type'] == 'COUNTER':
-            args.append(f"RRA:AVERAGE:0.5:{int(86400 / rrd['step'])}:1826")         # 24h/5y
-            args.append(f"RRA:AVERAGE:0.5:{int(604800 / rrd['step'])}:1300")        # 7d/25y
+            args.append(f'RRA:AVERAGE:0.5:{int(86400 / rrd['step'])}:1826')         # 24h/5y
+            args.append(f'RRA:AVERAGE:0.5:{int(604800 / rrd['step'])}:1300')        # 7d/25y
         try:
             rrdtool.create(*args)
             self.logger.debug(f"Creating rrd ({rrd['rrdb']}) for {rrd['item']}.")
