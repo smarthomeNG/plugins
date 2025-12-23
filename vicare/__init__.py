@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2023 Alexander Schwithal
+#  Copyright 2025 Alexander Schwithal
 #########################################################################
 #  This file is part of SmartHomeNG.   
 #
@@ -34,16 +34,12 @@ import string
 # Necessary python package for funktion "generate_code_verifier":
 from authlib.common.security import generate_token
 
-#AUTHORIZE_URL = 'https://iam.viessmann.com/idp/v3/authorize'
 AUTHORIZE_URL = 'https://iam.viessmann-climatesolutions.com/idp/v3/authorize'
-#TOKEN_URL = 'https://iam.viessmann.com/idp/v3/token'
 TOKEN_URL = 'https://iam.viessmann-climatesolutions.com/idp/v3/token'
-#API_URL = 'https://api.viessmann.com'
 API_URL = 'https://api.viessmann-climatesolutions.com'
 
-
 class Vicare(SmartPlugin):
-    PLUGIN_VERSION = '1.9.6'
+    PLUGIN_VERSION = '1.9.7'
 
     def __init__(self, sh):
         """
@@ -395,8 +391,7 @@ class Vicare(SmartPlugin):
 
 
     def pollInstallationId(self):
-        #old url = f"https://api.viessmann.com/iot/v1/equipment/installations"
-        url = f"{API_URL}/iot/v1/equipment/installations"
+        url = f"{API_URL}/iot/v2/equipment/installations"
 
         response = self.pollUrlInterface(url)
         
@@ -430,8 +425,7 @@ class Vicare(SmartPlugin):
                     self.logger.info(f"InstallationId is {self.installationId}")
 
     def pollSerial(self):
-        #old url = f"https://api.viessmann.com/iot/v1/equipment/gateways"
-        url = f"{API_URL}/iot/v1/equipment/gateways"
+        url = f"{API_URL}/iot/v2/equipment/gateways"
 
         response = self.pollUrlInterface(url)
 
@@ -440,7 +434,7 @@ class Vicare(SmartPlugin):
         if response.status_code == 200:
             self.logger.debug(f"pollSerial request successfull")
         else:
-            self.logger.warning(f"pollSerial request was unsuccessfull. Status code: {response.status_code}")
+            self.logger.warning(f"pollSerial request was unsuccessfull. Status code: {response.status_code}, Text: {response.text}")
             return
     
         if response.json() is not None:
@@ -466,8 +460,7 @@ class Vicare(SmartPlugin):
             self.logger.debug(f"pollSerial, invalid installationId, aborting!")
             return
 
-        #old url = f"https://api.viessmann.com/iot/v1/equipment/installations/{self.installationId}/gateways/{self.gatewaySerial}/devices"
-        url = f"{API_URL}/iot/v1/equipment/installations/{self.installationId}/gateways/{self.gatewaySerial}/devices"
+        url = f"{API_URL}/iot/v2/equipment/installations/{self.installationId}/gateways/{self.gatewaySerial}/devices"
 
         response = self.pollUrlInterface(url)
         
@@ -476,7 +469,7 @@ class Vicare(SmartPlugin):
         if response.status_code == 200:
             self.logger.debug(f"pollDevices request successfull: {response.text}")
         else:
-            self.logger.warning(f"pollDevices request was unsuccessfull. Status code: {response.status_code}")
+            self.logger.warning(f"pollDevicesrequest was unsuccessfull. Status code: {response.status_code}, Text: {response.text}")
             return
     
         if response.json() is not None:
@@ -549,7 +542,6 @@ class Vicare(SmartPlugin):
             self.logger.debug(f"pollFeatures, invalid deviceId, aborting!")
             return
 
-        #old url = f"https://api.viessmann.com/iot/v2/features/installations/{self.installationId}/gateways/{self.gatewaySerial}/devices/{self.deviceId}/features"
         url = f"{API_URL}/iot/v2/features/installations/{self.installationId}/gateways/{self.gatewaySerial}/devices/{self.deviceId}/features"
 
         response = self.pollUrlInterface(url)
@@ -794,7 +786,6 @@ class Vicare(SmartPlugin):
         oauth_session = OAuth2Session(self.clientID, redirect_uri=self.redirectUrl, scope=VIESSMANN_SCOPE, code_challenge_method='S256')
         authorization_url, _ = oauth_session.create_authorization_url(AUTHORIZE_URL, code_verifier=codeVerifier)
         self.logger.warning(f"Authorization URL is: {authorization_url}")
-
 
         self.logger.warning(f"Debug: Sending authorization pos...")
         header = {'Content-Type': 'application/x-www-form-urlencoded'}
