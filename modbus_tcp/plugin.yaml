@@ -40,10 +40,10 @@ parameters:
     cycle:
         type: int
         default: 300
-        valid_min: 0
+        valid_min: -1
         description:
-            de: 'Update Zyklus in Sekunden. Wenn der Wert 0 ist, wird keine Abfrage über cycle ausgeführt'
-            en: 'Update cycle in seconds. If value is 0 then no query will be made by means of cycle'
+            de: 'Update Zyklus in Sekunden. Wenn der Wert 0 ist, wird keine Abfrage über cycle ausgeführt, wenn er negativ ist, wird sofort wieder ausgeführt'
+            en: 'Update cycle in seconds. If value is 0 then no query will be made by means of cycle, if negative, it will be executed immediately'
 
     crontab:
         type: str
