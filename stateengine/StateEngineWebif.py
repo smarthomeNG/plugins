@@ -203,13 +203,18 @@ class WebInterface(StateEngineTools.SeItemChild):
 
             for compare in condition_dict:
                 cond1 = not condition_dict.get(compare) == 'None'
-                excluded_values = ['item', 'eval', 'negate', 'agenegate', 'changedbynegate',
+                excluded_values = ['item', 'eval', 'negate', 'agenegate', 'changedbynegate', 'ignore',
                                    'updatedbynegate', 'triggeredbynegate', 'status', 'current', 'match', 'status_eval']
 
                 if cond1 and compare not in excluded_values:
                     if condition not in conditions_done:
                         current_clean = ", ".join(f"{k} = {v}" for k, v in current.items())
-                        text = " Current {}".format(current_clean) if current is not None and len(current) > 0 else " Not evaluated."
+                        if current is not None and len(current) > 0:
+                            text = f" Current {current_clean}"
+                        elif condition_dict.get('ignore') == 'True':
+                            text = " Ignored"
+                        else:
+                            text = " Not evaluated."
                         conditionlist += ('<tr class="conditionheader"><td align="center" colspan="2"><table border="0" cellpadding="0" '
                                           'cellborder="0"><tr><td></td><td align="center">{}:{}</td>'
                                           '<td></td></tr><tr class="conditionline">'
@@ -223,6 +228,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     info_status_eval = str(condition_dict.get('status_eval') or 'n/a')
                     info_compare = str(condition_dict.get(compare) or '')
                     info_compare = self._strip_regex(info_compare)
+
                     if not status_none:
                         textlength = len(info_status)
                         if textlength > self.__textlimit:
@@ -314,7 +320,9 @@ class WebInterface(StateEngineTools.SeItemChild):
                     conditionlist += ' (negate)' if condition_dict.get('negate') == 'True' and "age" \
                                      not in compare and not compare == "value" else ''
                     conditionlist += ' (negate)' if condition_dict.get('agenegate') == 'True' and "age" in compare else ''
-                    match_info = '<img src="sign_true.png" />' if match_info == 'yes'\
+                    ignore_info = str(condition_dict.get('ignore') or 'n/a')
+                    match_info = '<img src="sign_ignore.png" />' if ignore_info == 'True'\
+                                 else '<img src="sign_true.png" />' if match_info == 'yes'\
                                  else '<img src="sign_false.png" />' if match_info == 'no'\
                                  else '<img src="sign_warn.png" />' if match_info and len(match_info) > 0 \
                                  else '<img src="sign_empty.png" />'

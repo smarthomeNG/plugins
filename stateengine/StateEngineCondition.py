@@ -49,6 +49,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__min = StateEngineValue.SeValue(self._abitem, "min")
         self.__max = StateEngineValue.SeValue(self._abitem, "max")
         self.__negate = False
+        self.__ignore = False
         self.__agemin = StateEngineValue.SeValue(self._abitem, "agemin")
         self.__agemax = StateEngineValue.SeValue(self._abitem, "agemax")
         self.__changedby = StateEngineValue.SeValue(self._abitem, "changedby", True)
@@ -149,7 +150,7 @@ class SeCondition(StateEngineTools.SeItemChild):
 
     # set a certain function to a given value
     # func: Function to set ('item', 'eval', 'status_eval', 'value', 'min', 'max', 'negate', 'changedby', 'updatedby',
-    # 'triggeredby','changedbynegate', 'updatedbynegate', 'triggeredbynegate','agemin', 'agemax' or 'agenegate')
+    # 'triggeredby','changedbynegate', 'updatedbynegate', 'triggeredbynegate','agemin', 'agemax', 'agenegate' or 'ignore')
     # value: Value for function
     def set(self, func, value):
         issue = None
@@ -186,6 +187,8 @@ class SeCondition(StateEngineTools.SeItemChild):
             self.__triggeredbynegate = value
         elif func == "se_negate":
             self.__negate = value
+        elif func == "se_ignore":
+            self.__ignore = value
         elif func == "se_agenegate":
             self.__agenegate = value
         elif func != "se_item" and func != "se_eval" and func != "se_status_eval" and func != "se_status":
@@ -215,7 +218,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             _status = self.__status
         result = {'item': _item, 'status': _status, 'eval': _eval_result, 'status_eval': _status_eval_result,
                   'value': _value_result,
-                  'min': str(self.__min),
+                  'min': str(self.__min), 'ignore': str(self.__ignore),
                   'max': str(self.__max), 'agemin': str(self.__agemin), 'agemax': str(self.__agemax),
                   'negate': str(self.__negate), 'agenegate': str(self.__agenegate),
                   'changedby': str(self.__changedby), 'updatedby': str(self.__updatedby),
@@ -350,6 +353,13 @@ class SeCondition(StateEngineTools.SeItemChild):
             return True
         self._log_debug("Condition '{0}': Checking all relevant stuff", self.__name)
         self._log_increase_indent()
+        if self.__ignore is True:
+            self._log_info(f"Condition '{self.__name}' gets ignored because se_ignore is set")
+            self._abitem.update_webif(self.__webif_key('ignore'), str(self.__ignore))
+            self._log_decrease_indent()
+            return True
+        else:
+            self._abitem.update_webif(self.__webif_key('ignore'), str(self.__ignore))
         if not self.__check_value():
             self._log_decrease_indent()
             return False
@@ -422,6 +432,8 @@ class SeCondition(StateEngineTools.SeItemChild):
         value_result = self.__value.get_for_webif(val)
         min_result = self.__min.write_to_logger()
         max_result = self.__max.write_to_logger()
+        if self.__ignore is not None:
+            self._log_info("ignore: {0}", self.__ignore)
         if self.__negate is not None:
             self._log_info("negate: {0}", self.__negate)
         agemin = self.__agemin.write_to_logger()
@@ -438,7 +450,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         if self.__updatedbynegate is not None and not self.__triggeredby.is_empty():
             self._log_info("triggeredby negate: {0}", self.__triggeredbynegate)
         return {self.name: {'item': item, 'status': status, 'eval': eval_result, 'status_eval': status_eval_result,
-                            'value': value_result, 'min': str(min_result), 'max': str(max_result), 'agemin': str(agemin),
+                            'value': value_result, 'ignore': str(self.__ignore), 'min': str(min_result), 'max': str(max_result), 'agemin': str(agemin),
                             'agemax': str(agemax), 'negate': str(self.__negate), 'agenegate': str(self.__agenegate),
                             'changedby': str(changedby), 'updatedby': str(updatedby),
                             'triggeredby': str(triggeredby), 'triggeredbynegate': str(self.__triggeredbynegate),
@@ -451,6 +463,8 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__value.set_cast(cast_func)
         self.__min.set_cast(cast_func)
         self.__max.set_cast(cast_func)
+        if self.__ignore is not None:
+            self.__ignore = StateEngineTools.cast_bool(self.__ignore)
         if self.__negate is not None:
             self.__negate = StateEngineTools.cast_bool(self.__negate)
         self.__agemin.set_cast(StateEngineTools.cast_num)
@@ -617,8 +631,9 @@ class SeCondition(StateEngineTools.SeItemChild):
                 self._abitem.update_webif(self.__webif_key('max'), str(max_value))
                 self._log_info(text, self.__name, min_value, max_value, self.__negate, current)
                 if diff_len != 0:
-                    self._log_debug("Min and max are always evaluated as valuepairs. "
-                                    "If needed you can also provide 'novalue' as a list value")
+                    self._log_debug(f"Min and max are always evaluated as valuepairs. "
+                                    "If needed you can also provide 'novalue' as a list value. "
+                                    "Current min: {min_value}, current max: {max_value}")
                 self._log_increase_indent()
                 _notmatching = 0
                 for i, _ in enumerate(min_value):
