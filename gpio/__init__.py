@@ -51,7 +51,6 @@ class GPIO(SmartPlugin, Utils):
 
         self._mode = self.get_parameter_value('mode').upper()
         self._bouncetime = self.get_parameter_value('bouncetime') / 1000
-        self._initretries = self.get_parameter_value('initretries')
         pud_param = self.get_parameter_value('pullupdown')
         if pud_param.upper() == 'UP':
                 self._pullupdown = gpiod.line.Bias.PULL_UP

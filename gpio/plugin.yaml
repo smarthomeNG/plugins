@@ -69,13 +69,6 @@ parameters:
             de: 'Pfad zum GPIO Chipdevice, 0 verweist auf /dev/gpiochip0'
             en: 'Path to the GPIO chip device, 0 links to /dev/gpiochip0'
 
-    initretries:
-        type: int
-        default: 2
-        description:
-            de: 'Anzahl an Versuchen zum Pluginstart, Listen-Events für die Pins zu erstellen.'
-            en: 'Amount of retries to create the listen events at plugin start.'
-
     bouncetime:
         type: int
         default: 300
