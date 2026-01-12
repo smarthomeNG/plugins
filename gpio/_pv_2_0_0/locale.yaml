@@ -1,0 +1,18 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'IN Items':         {'de': '=', 'en': '='}
+    'OUT Items':        {'de': '=', 'en': '='}
+    'Item':             {'de': '=', 'en': '='}
+    'Pin IN':           {'de': '=', 'en': '='}
+    'Pin OUT':          {'de': '=', 'en': '='}
+    'Wert':             {'de': '=', 'en': 'Value'}
+    'Init':             {'de': '=', 'en': '='}
+
+    # Alternative format for translations of longer texts:
+    'Die folgenden Items sind dem GPIO Plugin als IN Pin zugewiesen:':
+        de: '='
+        en: 'The following items are assigned to the GPIO plugin as inputs:'
+    'Die folgenden Items sind dem GPIO Plugin als OUT Pin zugewiesen:':
+        de: '='
+        en: 'The following items are assigned to the GPIO plugin as outputs:'
