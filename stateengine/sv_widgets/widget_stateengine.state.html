@@ -27,12 +27,12 @@
 
   <div class="twig">Example:<br>
 		<code class="prettyprint">{% filter trim|escape|nl2br %}{% verbatim %}
-      {{ stateengine.state('updatestuff', 'stateengine_item', 'lockitem', 'releaseitem', 'icons/ws/secur_locked.svg, icons/ws/time_manual_mode.svg, icons/ws/time_automatic.svg', 'locked,suspended,standard', 'popupstuff') }}
+      {{ stateengine.state('updatestuff', 'stateengine_item', 'lockitem', 'releaseitem', ['icons/ws/secur_locked.svg', 'icons/ws/time_manual_mode.svg', 'icons/ws/time_automatic.svg'], ['locked','suspended','standard'], 'popupstuff', 'icon', 'locked', 'suspended') }}
 		{% endverbatim %}{% endfilter %}</code>
 	</div>
 	<div class="html">
     {{ basic.select('', 'stateengine_item', '', ['locked', 'suspended', 'standard'], '', ['locked', 'suspended', 'standard']) }}
-    {{ stateengine.state('updatestuff', 'stateengine_item', 'lockitem', 'releaseitem', 'icons/ws/secur_locked.svg, icons/ws/time_manual_mode.svg, icons/ws/time_automatic.svg', 'locked,suspended,standard', 'popupstuff') }}
+    {{ stateengine.state('updatestuff', 'stateengine_item', 'lockitem', 'releaseitem', ['icons/ws/secur_locked.svg', 'icons/ws/time_manual_mode.svg', 'icons/ws/time_automatic.svg'], ['locked','suspended','standard'], 'popupstuff', 'icon', 'locked', 'suspended') }}
 	</div>
 
 </div>

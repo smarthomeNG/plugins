@@ -7,31 +7,34 @@ $.widget("sv.stateengine", $.sv.widget, {
   options: {
   },
   _create: function() {
-    console.log('Short press lock '+this.element.attr('rel'));
     this._super();
     var shortpressEvent = function(event) {
         try {
-          list_val = list_val;
-          idx = idx;
+          list_val = this.element.attr('data-vals').explode();
+          idx = this.element.val();
         }
         catch {
-          list_val = ['locked'];
+          list_val = [this.element.attr('data-lockname')];
           idx = 0;
+
         }
+
         if (this.element.attr('lock-item') == '' && this.element.attr('release-item') == '') {
         $("#"+this.element.attr('rel')).popup( "open" );
         }
-        else if (list_val[idx] == 'locked' && this.element.attr('lock-item') != ''){
-            io.write(this.element.attr('lock-item'), (this.element.val() == this.element.attr('data-val-on') ? this.element.attr('data-val-off') : this.element.attr('data-val-on')) );
-            console.log('Short press lock '+this.element.attr('rel'));
+        else if (this.element.attr('data-value') == this.element.attr('data-lockname') && this.element.attr('lock-item') != ''){
+            console.log('Stateengine: Short press lock '+this.element.attr('lock-item'));
+            io.write(this.element.attr('lock-item'), this.element.attr('data-val-off'));
+
         }
-        else if (list_val[idx] == 'suspended' && this.element.attr('release-item') != ''){
+        else if (this.element.attr('data-value') == this.element.attr('data-suspendname') && this.element.attr('release-item') != ''){
+            console.log('Stateengine: Short press release '+this.element.attr('release-item'));
             io.write(this.element.attr('release-item'), true );
-            console.log('Short press release '+this.element.attr('rel'));
+
         }
         else {
-            io.write(this.element.attr('lock-item'), (this.element.val() == this.element.attr('data-val-on') ? this.element.attr('data-val-off') : this.element.attr('data-val-on')) );
-            console.log('Short press else '+this.element.val()+', setting lock item '+ this.element.attr('lock-item'));
+            console.log('Stateengine: Short press else '+this.element.val()+', setting lock item '+ this.element.attr('lock-item'));
+            io.write(this.element.attr('lock-item'), this.element.attr('data-val-on') );
         }
     }
 
@@ -42,7 +45,7 @@ $.widget("sv.stateengine", $.sv.widget, {
           event.preventDefault();
           event.stopPropagation();
           event.stopImmediatePropagation();
-          console.log('Long press '+this.element.attr('rel'));
+          console.log('Stateengine: Long press '+this.element.attr('rel'));
 
           $("#"+this.element.attr('rel')).popup( "open" );
           return false;
@@ -65,12 +68,13 @@ $.widget("sv.stateengine", $.sv.widget, {
     idx = list_val.indexOf(response.toString());
 
     // update the image
-   this.element.children().hide()
-   this.element.find('[data-val="' + response.toString() + '"]').show();
-    console.log('ID '+this.element.attr('id')+' image '+list_img[idx]);
+    this.element.children().hide()
+    this.element.find('[data-val="' + response.toString() + '"]').show();
+    console.log('Stateengine: Element with ID '+this.element.attr('id')+', image '+list_img[idx]);
 
     // memorise the index for next use
     this.element.val(idx);
+    this.element.attr('data-value', list_val[idx]);
   }
 
 });
