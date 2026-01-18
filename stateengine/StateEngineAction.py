@@ -600,42 +600,80 @@ class SeActionBase(StateEngineTools.SeItemChild):
 
         self._log_decrease_indent(50)
         self._log_increase_indent()
+        vals = {
+            'state': state,
+            'actionname': actionname,
+            'namevar': self._name,
+            'repeat_text': repeat_text,
+            'value': None,
+            'current_condition': current_condition,
+            'previous_condition': previous_condition,
+            'previousstate_condition': previousstate_condition,
+            'next_condition': next_condition
+        }
         if delay == 0:
             self._log_info("Action '{}': Running.", namevar)
-            self.real_execute(state, actionname, namevar, repeat_text, None, False, current_condition, previous_condition, previousstate_condition, next_condition)
+            self.real_execute(
+                state, actionname, namevar, repeat_text,
+                None, False,  # False = kein Instant Eval
+                current_condition, previous_condition,
+                previousstate_condition, next_condition
+            )
         else:
             instanteval = None if self.__instanteval is None else self.__instanteval.get()
-            self._log_info("Action '{0}': Add {1} second timer '{2}' "
-                           "for delayed execution.{3} Instant Eval: {4}", self._name, delay,
-                           self._scheduler_name, repeat_text, instanteval)
+
+            self._log_info(
+                "Action '{0}': Add {1} second timer '{2}' for delayed execution.{3} Instant Eval: {4}",
+                self._name, delay, self._scheduler_name, repeat_text, instanteval
+            )
+
             next_run = self.shtime.now() + datetime.timedelta(seconds=delay)
+
             if instanteval is True:
                 self._log_increase_indent()
                 self._log_debug("Evaluating value for delayed action '{}'.", namevar)
-                value = self.real_execute(state, actionname, namevar, repeat_text, None, True, current_condition, previous_condition, previousstate_condition, next_condition)
-                self._log_debug("Value for delayed action is going to be '{}'.", value)
-                self._log_decrease_indent()
-            else:
-                value = None
-            self._abitem.add_scheduler_entry(self._scheduler_name)
-            self.update_webif_actionstatus(state, self._name, 'Scheduled')
-            self._se_plugin.scheduler_add(self._scheduler_name, self._delayed_execute,
-                                          value={'actionname': actionname, 'namevar': self._name,
-                                                 'repeat_text': repeat_text, 'value': value,
-                                                 'current_condition': current_condition,
-                                                 'previous_condition': previous_condition,
-                                                 'previousstate_condition': previousstate_condition,
-                                                 'next_condition': next_condition, 'state': state}, next=next_run)
 
-    def _delayed_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None, state=None, caller=None):
-        if state:
-            self._log_debug("Putting delayed action '{}' from state '{}' into queue. Caller: {}", namevar, state, caller)
-            self.__queue.put(["delayedaction", self, actionname, namevar, repeat_text, value, current_condition, previous_condition, previousstate_condition, next_condition, state])
-        else:
-            self._log_debug("Putting delayed action '{}' into queue. Caller: {}", namevar, caller)
-            self.__queue.put(["delayedaction", self, actionname, namevar, repeat_text, value, current_condition, previous_condition, previousstate_condition, next_condition])
+                vals['value'] = self.real_execute(
+                    state, actionname, self._name, repeat_text,
+                    None, True,
+                    current_condition, previous_condition,
+                    previousstate_condition, next_condition
+                )
+
+                self._log_debug("Value for delayed action is going to be '{}'.", vals['value'])
+                self._log_decrease_indent()
+
+            self.update_webif_actionstatus(state, self._name, 'Scheduled')
+
+            self._abitem.scheduler_add(
+                self._scheduler_name,
+                self,
+                value=vals,
+                next=next_run
+            )
+
+    def delayed_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None, state=None, caller=None):
+        self._log_debug(
+            "Putting action '{}'{} into queue. Caller: {}", namevar,
+            f" from state '{state}'" if state else "", caller
+        )
+
+        self.__queue.put([
+            "delayedaction",
+            self,
+            actionname,
+            namevar,
+            repeat_text,
+            value,
+            current_condition,
+            previous_condition,
+            previousstate_condition,
+            next_condition,
+            state
+        ])
         if not self._abitem.update_lock.locked():
             self._log_debug("Running queue")
+            self._log_increase_indent()
             self._abitem.run_queue()
 
     # Really execute the action (needs to be implemented in derived classes)

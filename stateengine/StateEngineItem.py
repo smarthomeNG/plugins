@@ -488,6 +488,19 @@ class SeItem:
         else:
             self.__templates[template] = value
 
+    def scheduler_add(self, name, action, value=None, next=None):
+        self.__logger.debug("Scheduling action {} with name {} at {}", action, name, next)
+
+        self.__se_plugin._action_scheduler.add(self, name, action, value, next)
+
+        if next:
+            self.__se_plugin.scheduler_trigger('actionscheduler', dt=next)
+
+    def scheduler_remove(self, name):
+        self.__logger.debug("Removing scheduled action '{}'", name)
+
+        self.__se_plugin._action_scheduler.remove(self, name)
+
     def add_scheduler_entry(self, name):
         if name not in self.__active_schedulers:
             self.__active_schedulers.append(name)
@@ -579,12 +592,11 @@ class SeItem:
                 self.__logger.debug("No jobs in queue left or plugin not active anymore")
                 break
             elif job[0] == "delayedaction":
-                self.__logger.debug("Job {}", job)
-                (_, action, actionname, namevar, repeat_text, value, current_condition, previous_condition,
-                 previousstate_condition, next_condition, state) = job
+                _, action, actionname, namevar, repeat_text, value, current_condition, previous_condition, previousstate_condition, next_condition, state = job
                 self.__logger.info(
                     "Running delayed action: {0} based on current_condition {1} / previous_condition {2} / previousstate_condition {3} or next condition {4}",
-                    actionname, current_condition, previous_condition, previousstate_condition, next_condition)
+                    actionname, current_condition, previous_condition, previousstate_condition, next_condition
+                )
                 action.real_execute(state, actionname, namevar, repeat_text, value, False, current_condition, previous_condition, previousstate_condition, next_condition)
             else:
                 (_, item, caller, source, dest) = job
