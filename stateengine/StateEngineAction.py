@@ -124,6 +124,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
         return _issue
 
     def update_instanteval(self, value):
+        if self.__instanteval is None:
+            self.__instanteval = StateEngineValue.SeValue(self._abitem, "instanteval", False, "bool")
         _issue = self._update_value(self.__instanteval, value, 'instanteval')
         return _issue
 
