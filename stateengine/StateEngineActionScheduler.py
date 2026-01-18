@@ -35,7 +35,7 @@ class ActionScheduler:
         self._next_wakeup = None
 
     # ---------- API für Items ----------
-    def add(self, abitem, name, action, value, next_run):
+    def add(self, abitem, name, action, value, next_run, overwrite, callback=None):
         self._queue.put((
             'add',
             abitem,
@@ -43,11 +43,12 @@ class ActionScheduler:
             {
                 'action': action,
                 'value': value or {},
-                'next': next_run
-            }
+                'next': next_run,
+                'overwrite': overwrite
+            },
+            callback
         ))
         self._mark_dirty()
-        self._schedule_wakeup(next_run)
 
     def remove(self, abitem, name, callback=None):
         self._queue.put(('remove', abitem, name, callback))
@@ -62,14 +63,6 @@ class ActionScheduler:
             self._dirty = True
             self._se_plugin.scheduler_trigger('actionscheduler')
 
-    def _schedule_wakeup(self, next_run):
-        if next_run is None:
-            return
-
-        if self._next_wakeup is None or next_run < self._next_wakeup:
-            self._next_wakeup = next_run
-            self._se_plugin.scheduler_trigger('actionscheduler', dt=next_run)
-
     # ---------- Scheduler Loop ----------
     def run(self):
         self._dirty = False
@@ -80,9 +73,22 @@ class ActionScheduler:
             cmd = self._queue.get()
 
             if cmd[0] == 'add':
-                _, abitem, name, entry = cmd
+                _, abitem, name, entry, callback = cmd
+                key = (abitem, name)
                 with self._lock:
-                    self._scheduled[(abitem, name)] = entry
+                    if key in self._scheduled and entry.get('overwrite', True) is False:
+                        new_next = self._scheduled[key]['next']
+                        added = False
+                    else:
+                        self._scheduled[key] = entry
+                        new_next = entry.get('next')
+                        added = True
+
+                if callback:
+                    try:
+                        callback(added, new_next)
+                    except Exception as e:
+                        self.logger.debug(f"Add callback failed for '{name}': {e}")
 
             elif cmd[0] == 'remove':
                 _, abitem, name, callback = cmd
@@ -92,7 +98,7 @@ class ActionScheduler:
                     try:
                         callback(removed)
                     except Exception as e:
-                        self.logger.debug(f"Remove callback failed: {e}")
+                        self.logger.debug(f"Remove callback failed for '{name}': {e}")
 
             elif cmd[0] == 'remove_all':
                 _, abitem, callback = cmd
@@ -125,6 +131,12 @@ class ActionScheduler:
                     self.logger.debug(f"Scheduled action '{name}' executing")
                 '''
                 action.delayed_execute(**vals)
+        next_times = []
+
         with self._lock:
             for entry in self._scheduled.values():
-                self._schedule_wakeup(entry['next'])
+                next_times.append(entry['next'])
+
+        if next_times:
+            next_wakeup = min(next_times)
+            self._se_plugin.scheduler_trigger('actionscheduler', dt=next_wakeup)

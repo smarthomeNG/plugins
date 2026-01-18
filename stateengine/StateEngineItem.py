@@ -215,6 +215,7 @@ class SeItem:
         self.__cache = {}
         self.__last_run = {}
         self.__pass_repeat = {}
+        self._delayedactions_text = []
         self.__default_instant_leaveaction = StateEngineValue.SeValue(self, "Default Instant Leave Action", False, "bool")
         self.__instant_leaveaction = StateEngineValue.SeValue(self, "Instant Leave Action", False, "num")
         try:
@@ -488,9 +489,14 @@ class SeItem:
         else:
             self.__templates[template] = value
 
-    def scheduler_add(self, name, action, value=None, next=None):
-        self.__logger.debug("Scheduling action {} with name {} at {}", action, name, next)
-        self.__se_plugin._action_scheduler.add(self, name, action, value, next)
+    def scheduler_add(self, name, action, value=None, next=None, overwrite=True):
+        def _log_result(added, new_next):
+            if added:
+                self._delayedactions_text.append(f"Scheduling action {action} with name '{name}' at {next}.")
+            else:
+                self._delayedactions_text.append(f"Scheduled action '{name}' already exists, overwrite is set to {overwrite}. Will run at {new_next}")
+
+        self.__se_plugin._action_scheduler.add(self, name, action, value, next, overwrite=overwrite, callback=_log_result)
 
     def scheduler_remove(self, name):
         def _log_result(removed):
@@ -767,11 +773,14 @@ class SeItem:
                             text = "No matching state found, staying at {0} ('{1}') based on conditionset {2} ('{3}')"
                             self.__logger.info(text, last_state.id, last_state.name, _last_conditionset_id,
                                                _last_conditionset_name)
-                        last_state.run_stay(self.__repeat_actions.get())
-                    if self.update_lock.locked():
-                        self.update_lock.release()
+                        last_state.run_stay(self.__repeat_actions.get())                
                     self.__logger.decrease_indent(50)
                     self.__logger.debug("State evaluation finished")
+                    for entry in self._delayedactions_text:
+                        self.__logger.debug("{}", entry)
+                    self._delayedactions_text = []
+                    if self.update_lock.locked():
+                        self.update_lock.release()
                     self.__logger.info("State evaluation queue empty.")
                     self.__handle_releasedby(new_state, last_state, _instant_leaveaction)
 
