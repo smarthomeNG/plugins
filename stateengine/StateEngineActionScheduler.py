@@ -81,5 +81,8 @@ class ActionScheduler:
 
             action = entry['action']
             vals = entry.get('value', {})
-            self.logger.develop(f"Scheduled action '{name}' executing")
+            try:
+                self.logger.develop(f"Scheduled action '{name}' executing")
+            except Exception:
+                self.logger.debug(f"Scheduled action '{name}' executing")
             action.delayed_execute(**vals)
