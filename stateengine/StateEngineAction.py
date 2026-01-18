@@ -75,6 +75,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self.__delay = StateEngineValue.SeValue(self._abitem, "delay")
         self.__repeat = None
         self.__instanteval = None
+        self.__overwrite = None
         self.nextconditionset = StateEngineValue.SeValue(self._abitem, "nextconditionset", True, "regex")
         self.conditionset = StateEngineValue.SeValue(self._abitem, "conditionset", True, "regex")
         self.previousconditionset = StateEngineValue.SeValue(self._abitem, "previousconditionset", True, "regex")
@@ -127,6 +128,12 @@ class SeActionBase(StateEngineTools.SeItemChild):
         if self.__instanteval is None:
             self.__instanteval = StateEngineValue.SeValue(self._abitem, "instanteval", False, "bool")
         _issue = self._update_value(self.__instanteval, value, 'instanteval')
+        return _issue
+
+    def update_overwrite(self, value):
+        if self.__overwrite is None:
+            self.__overwrite = StateEngineValue.SeValue(self._abitem, "overwrite", False, "bool")
+        _issue = self._update_value(self.__overwrite, value, 'overwrite')
         return _issue
 
     def update_mindelta(self, value):
@@ -208,6 +215,10 @@ class SeActionBase(StateEngineTools.SeItemChild):
             instanteval = self.__instanteval.write_to_logger()
         else:
             instanteval = False
+        if self.__overwrite is not None:
+            overwrite = self.__overwrite.write_to_logger()
+        else:
+            overwrite = None
         if self.nextconditionset is not None:
             nextconditionset = self.nextconditionset.write_to_logger()
         else:
@@ -232,7 +243,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._info_dict.update({'function': str(self._function), 'nextconditionset': nextconditionset,
                                  'conditionset': conditionset, 'repeat': str(repeat), 'delay': str(delay), 'mode': mode,
                                  'order': str(order), 'previousconditionset': previousconditionset,
-                                 'instanteval': str(instanteval), 'previousstate_conditionset': previousstate_conditionset,
+                                 'instanteval': str(instanteval), 'overwrite': str(overwrite), 'previousstate_conditionset': previousstate_conditionset,
                                  'actionstatus': {}})
 
     def set_source(self, current_condition, previous_condition, previousstate_condition, next_condition):
@@ -624,10 +635,10 @@ class SeActionBase(StateEngineTools.SeItemChild):
             )
         else:
             instanteval = None if self.__instanteval is None else self.__instanteval.get()
-
+            overwrite = None if self.__overwrite is None else self.__overwrite.get()
             self._log_info(
-                "Action '{0}': Add {1} second timer '{2}' for delayed execution.{3} Instant Eval: {4}",
-                self._name, delay, self._scheduler_name, repeat_text, instanteval
+                "Action '{0}': Add {1} second timer '{2}' for delayed execution.{3} Instant Eval: {4}. Overwrite: {5}",
+                self._name, delay, self._scheduler_name, repeat_text, instanteval, overwrite
             )
 
             next_run = self.shtime.now() + datetime.timedelta(seconds=delay)
@@ -652,7 +663,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 self._scheduler_name,
                 self,
                 value=vals,
-                next=next_run
+                next=next_run,
+                overwrite=overwrite
             )
 
     def delayed_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, current_condition=None, previous_condition=None, previousstate_condition=None, next_condition=None, state=None, caller=None):
