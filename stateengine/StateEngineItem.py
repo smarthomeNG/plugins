@@ -490,16 +490,27 @@ class SeItem:
 
     def scheduler_add(self, name, action, value=None, next=None):
         self.__logger.debug("Scheduling action {} with name {} at {}", action, name, next)
-
         self.__se_plugin._action_scheduler.add(self, name, action, value, next)
 
-        if next:
-            self.__se_plugin.scheduler_trigger('actionscheduler', dt=next)
-
     def scheduler_remove(self, name):
-        self.__logger.debug("Removing scheduled action '{}'", name)
+        def _log_result(removed):
+            if removed:
+                self.__logger.debug("Removed scheduled action '{}'", name)
+            else:
+                self.__logger.develop("Scheduled action '{}' not found – nothing to remove", name)
+        if not name:
+            return
+        self.__logger.develop("Requesting removal of scheduler '{}'", name)
+        self.__se_plugin._action_scheduler.remove(self, name, callback=_log_result)
+        #self.__se_plugin.scheduler_trigger('actionscheduler')
 
-        self.__se_plugin._action_scheduler.remove(self, name)
+    def scheduler_remove_all(self):
+        def _log_result(count):
+            self.__logger.debug("Removed {} scheduled actions for item {}", count, self.id)
+
+        self.__logger.develop("Requesting removal of all schedulers for item {}", self.id)
+        self.__se_plugin._action_scheduler.remove_all(self, callback=_log_result)
+        #self.__se_plugin.scheduler_trigger('actionscheduler')
 
     def add_scheduler_entry(self, name):
         if name not in self.__active_schedulers:

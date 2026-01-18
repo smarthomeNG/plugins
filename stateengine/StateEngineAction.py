@@ -612,6 +612,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
             'next_condition': next_condition
         }
         if delay == 0:
+            self._abitem.scheduler_remove(self._scheduler_name)
             self._log_info("Action '{}': Running.", namevar)
             self.real_execute(
                 state, actionname, namevar, repeat_text,

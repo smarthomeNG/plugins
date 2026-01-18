@@ -69,7 +69,8 @@ class StateEngine(SmartPlugin):
         self.init_webinterface(WebInterface)
         self.__sh.stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.__sh, self.logger)
         try:
-            self._action_scheduler = StateEngineActionScheduler.ActionScheduler(self.__sh, self.logger)
+            self._action_scheduler = StateEngineActionScheduler.ActionScheduler(self.__sh, self, self.logger)
+            self.scheduler_add('actionscheduler', self._action_scheduler.run, cron='init')
             log_level = self.get_parameter_value("log_level")
             startup_log_level = self.get_parameter_value("startup_log_level")
             log_directory = self.get_parameter_value("log_directory")
@@ -152,8 +153,8 @@ class StateEngine(SmartPlugin):
 
         if len(self._items) > 0:
             self.logger.info("Using StateEngine for {} items".format(len(self._items)))
-            self.scheduler_add('actionscheduler', self._action_scheduler.run, cron='init')
         else:
+            self.scheduler_remove('actionscheduler')
             self.logger.info("StateEngine deactivated because no items have been found.")
 
         self.__cli = StateEngineCliCommands.SeCliCommands(self.__sh, self._items, self.logger)

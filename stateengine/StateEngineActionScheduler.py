@@ -19,15 +19,20 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 from queue import Queue
+from threading import RLock
 
 
 class ActionScheduler:
 
-    def __init__(self, smarthome, logger):
+    def __init__(self, smarthome, se_plugin, logger):
         self._queue = Queue()
         self._scheduled = {}
         self._sh = smarthome
+        self._se_plugin = se_plugin
         self.logger = logger
+        self._lock = RLock()
+        self._dirty = False
+        self._next_wakeup = None
 
     # ---------- API für Items ----------
     def add(self, abitem, name, action, value, next_run):
@@ -41,15 +46,34 @@ class ActionScheduler:
                 'next': next_run
             }
         ))
+        self._mark_dirty()
+        self._schedule_wakeup(next_run)
 
-    def remove(self, abitem, name):
-        self._queue.put(('remove', abitem, name))
+    def remove(self, abitem, name, callback=None):
+        self._queue.put(('remove', abitem, name, callback))
+        self._mark_dirty()
 
-    def remove_all(self, abitem):
-        self._queue.put(('remove_all', abitem))
+    def remove_all(self, abitem, callback=None):
+        self._queue.put(('remove_all', abitem, callback))
+        self._mark_dirty()
+
+    def _mark_dirty(self):
+        if not self._dirty:
+            self._dirty = True
+            self._se_plugin.scheduler_trigger('actionscheduler')
+
+    def _schedule_wakeup(self, next_run):
+        if next_run is None:
+            return
+
+        if self._next_wakeup is None or next_run < self._next_wakeup:
+            self._next_wakeup = next_run
+            self._se_plugin.scheduler_trigger('actionscheduler', dt=next_run)
 
     # ---------- Scheduler Loop ----------
     def run(self):
+        self._dirty = False
+        self._next_wakeup = None
         now = self._sh.shtime.now()
 
         while not self._queue.empty():
@@ -57,32 +81,50 @@ class ActionScheduler:
 
             if cmd[0] == 'add':
                 _, abitem, name, entry = cmd
-                self._scheduled[(abitem, name)] = entry
+                with self._lock:
+                    self._scheduled[(abitem, name)] = entry
 
             elif cmd[0] == 'remove':
-                _, abitem, name = cmd
-                self._scheduled.pop((abitem, name), None)
+                _, abitem, name, callback = cmd
+                with self._lock:
+                    removed = self._scheduled.pop((abitem, name), None) is not None
+                if callback:
+                    try:
+                        callback(removed)
+                    except Exception as e:
+                        self.logger.debug(f"Remove callback failed: {e}")
 
             elif cmd[0] == 'remove_all':
-                _, abitem = cmd
-                for key in list(self._scheduled.keys()):
-                    if key[0] is abitem:
-                        self._scheduled.pop(key, None)
+                _, abitem, callback = cmd
+                removed = 0
+                with self._lock:
+                    for key in list(self._scheduled.keys()):
+                        if key[0] is abitem:
+                            self._scheduled.pop(key, None)
+                            removed += 1
+                if callback:
+                    callback(removed)
 
         execute = []
-
-        for key, entry in self._scheduled.items():
-            if now >= entry['next']:
-                execute.append(key)
+        with self._lock:
+            for key, entry in self._scheduled.items():
+                if now >= entry['next']:
+                    execute.append(key)
         for (abitem, name) in execute:
-            entry = self._scheduled.pop((abitem, name), None)
-            if not entry:
-                continue
+            with self._lock:
+                entry = self._scheduled.pop((abitem, name), None)
+                if not entry:
+                    continue
 
-            action = entry['action']
-            vals = entry.get('value', {})
-            try:
-                self.logger.develop(f"Scheduled action '{name}' executing")
-            except Exception:
-                self.logger.debug(f"Scheduled action '{name}' executing")
-            action.delayed_execute(**vals)
+                action = entry['action']
+                vals = entry.get('value', {})
+                '''
+                try:
+                    self.logger.develop(f"Scheduled action '{name}' executing")
+                except Exception:
+                    self.logger.debug(f"Scheduled action '{name}' executing")
+                '''
+                action.delayed_execute(**vals)
+        with self._lock:
+            for entry in self._scheduled.values():
+                self._schedule_wakeup(entry['next'])
