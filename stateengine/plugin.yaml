@@ -39,7 +39,7 @@ plugin:
     state: ready
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: '2.2.1'
+    version: '2.2.2'
     sh_minversion: '1.6'
     multi_instance: False
     classname: StateEngine
@@ -1506,6 +1506,12 @@ item_attribute_prefixes:
         description:
             de: 'Bedingung: Invertieren eines zuvor (mittels min, max oder value) definierten Bedingungswertes'
             en: 'Condition: Invert a condition value previously defined (by min, max or value)'
+
+    se_ignore_:
+        type: bool
+        description:
+            de: 'Die Bedingung mit entsprechendem Namen wird ignoriert. Sinnvoll beim Einsatz von se_use oder mehreren Structs.'
+            en: 'The condition with the relevant name gets ignored. Useful when using se_use or multiple structs.'
 
     se_agemin_:
         type: foo

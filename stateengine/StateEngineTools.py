@@ -355,7 +355,7 @@ def convert_str_to_list(value, force=True):
 # returns: OrderedDict or original value
 def convert_str_to_dict(value):
     if isinstance(value, str) and value.startswith("["):
-        value = re.split('(, (?![^(]*\)))', value.strip(']['))
+        value = re.split(r'(, (?![^(]*\)))', value.strip(']['))
         value = [s for s in value if s != ', ']
         result = []
         for s in value:

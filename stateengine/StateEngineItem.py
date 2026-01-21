@@ -215,6 +215,7 @@ class SeItem:
         self.__cache = {}
         self.__last_run = {}
         self.__pass_repeat = {}
+        self._delayedactions_text = []
         self.__default_instant_leaveaction = StateEngineValue.SeValue(self, "Default Instant Leave Action", False, "bool")
         self.__instant_leaveaction = StateEngineValue.SeValue(self, "Instant Leave Action", False, "num")
         try:
@@ -488,6 +489,35 @@ class SeItem:
         else:
             self.__templates[template] = value
 
+    def scheduler_add(self, name, action, value=None, next=None, overwrite=True):
+        def _log_result(added, new_next):
+            if added:
+                self._delayedactions_text.append(f"Scheduling action {action} with name '{name}' at {next}.")
+            else:
+                self._delayedactions_text.append(f"Scheduled action '{name}' already exists, overwrite is set to {overwrite}. Will run at {new_next}")
+
+        self.__se_plugin._action_scheduler.add(self, name, action, value, next, overwrite=overwrite, callback=_log_result)
+
+    def scheduler_remove(self, name):
+        def _log_result(removed):
+            if removed:
+                self.__logger.debug("Removed scheduled action '{}'", name)
+            else:
+                self.__logger.develop("Scheduled action '{}' not found – nothing to remove", name)
+        if not name:
+            return
+        self.__logger.develop("Requesting removal of scheduler '{}'", name)
+        self.__se_plugin._action_scheduler.remove(self, name, callback=_log_result)
+        #self.__se_plugin.scheduler_trigger('actionscheduler')
+
+    def scheduler_remove_all(self):
+        def _log_result(count):
+            self.__logger.debug("Removed {} scheduled actions for item {}", count, self.id)
+
+        self.__logger.develop("Requesting removal of all schedulers for item {}", self.id)
+        self.__se_plugin._action_scheduler.remove_all(self, callback=_log_result)
+        #self.__se_plugin.scheduler_trigger('actionscheduler')
+
     def add_scheduler_entry(self, name):
         if name not in self.__active_schedulers:
             self.__active_schedulers.append(name)
@@ -579,12 +609,11 @@ class SeItem:
                 self.__logger.debug("No jobs in queue left or plugin not active anymore")
                 break
             elif job[0] == "delayedaction":
-                self.__logger.debug("Job {}", job)
-                (_, action, actionname, namevar, repeat_text, value, current_condition, previous_condition,
-                 previousstate_condition, next_condition, state) = job
+                _, action, actionname, namevar, repeat_text, value, current_condition, previous_condition, previousstate_condition, next_condition, state = job
                 self.__logger.info(
                     "Running delayed action: {0} based on current_condition {1} / previous_condition {2} / previousstate_condition {3} or next condition {4}",
-                    actionname, current_condition, previous_condition, previousstate_condition, next_condition)
+                    actionname, current_condition, previous_condition, previousstate_condition, next_condition
+                )
                 action.real_execute(state, actionname, namevar, repeat_text, value, False, current_condition, previous_condition, previousstate_condition, next_condition)
             else:
                 (_, item, caller, source, dest) = job
@@ -744,11 +773,14 @@ class SeItem:
                             text = "No matching state found, staying at {0} ('{1}') based on conditionset {2} ('{3}')"
                             self.__logger.info(text, last_state.id, last_state.name, _last_conditionset_id,
                                                _last_conditionset_name)
-                        last_state.run_stay(self.__repeat_actions.get())
-                    if self.update_lock.locked():
-                        self.update_lock.release()
+                        last_state.run_stay(self.__repeat_actions.get())                
                     self.__logger.decrease_indent(50)
                     self.__logger.debug("State evaluation finished")
+                    for entry in self._delayedactions_text:
+                        self.__logger.debug("{}", entry)
+                    self._delayedactions_text = []
+                    if self.update_lock.locked():
+                        self.update_lock.release()
                     self.__logger.info("State evaluation queue empty.")
                     self.__handle_releasedby(new_state, last_state, _instant_leaveaction)
 
