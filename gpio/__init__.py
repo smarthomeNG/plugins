@@ -126,6 +126,8 @@ class GPIO(SmartPlugin, Utils):
         if item is None:
             return f'GPIO {gpio}'
         board = getattr(item, '_board_pin', '?')
+        if board == gpio:
+            return f'Pin {board}'
         return f'Pin {board} (GPIO {gpio})'
 
     def _to_gpiod_value(self, value):
