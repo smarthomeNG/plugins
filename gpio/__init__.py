@@ -100,9 +100,9 @@ class GPIO(SmartPlugin, Utils):
         try:
             value = pressed
             self._itemsdict[pin](value ^ self._is_item_inverted(None, pin), self.get_shortname(), 'pin_change')
-            self.logger.info(f'Read pin {pin} with value {value} after event_detection')
+            self.logger.info(f'Read {self._pin_str(pin)} with value {value} after event_detection')
         except Exception as e:
-            self.logger.error(f'Problem reading pin {pin} after event_detection: {e}')
+            self.logger.error(f'Problem reading {self._pin_str(pin)} after event_detection: {e}')
 
     def _get_pud_msg(self, pud, add=''):
         '''
@@ -120,6 +120,13 @@ class GPIO(SmartPlugin, Utils):
             return add + 'pulldown enabled'
         else:
             return 'no ' + add + 'pullup/pulldown set'
+
+    def _pin_str(self, gpio):
+        item = self._itemsdict.get(gpio)
+        if item is None:
+            return f'GPIO {gpio}'
+        board = getattr(item, '_board_pin', '?')
+        return f'Pin {board} (GPIO {gpio})'
 
     def _to_gpiod_value(self, value):
         """
@@ -174,8 +181,7 @@ class GPIO(SmartPlugin, Utils):
                 raise ValueError('Both values are None, one needed')
             item = self._itemsdict[pin]
 
-        inverted = self.has_iattr(item.conf, 'gpio_invert') and self._to_bool(self.get_iattr_value(item.conf, 'gpio_invert'))
-        return inverted
+        return item._inverted
 
     def _get_gpio_value(self, value, item=None, pin=None):
         '''
@@ -191,10 +197,7 @@ class GPIO(SmartPlugin, Utils):
         '''
         value = self._to_bool(value)
         inverted = self._is_item_inverted(item, pin)
-        gpio_pin = pin
-        if self._mode == "BOARD":
-            gpio_pin = self.physical_to_gpio(pin)
-        self.logger.debug(f'Pin: {pin} (GPIO: {gpio_pin}), inverted: {inverted}, value:{value}')
+        self.logger.debug(f'{self._pin_str(pin)}, inverted: {inverted}, value:{value}')
 
         return (inverted ^ value)
 
@@ -246,10 +249,17 @@ class GPIO(SmartPlugin, Utils):
         if self.has_iattr(item.conf, 'gpio_in'):
             in_pin = int(self.get_iattr_value(item.conf, 'gpio_in'))
             gpio_pin = in_pin
-
             # BOARD → GPIO umrechnen
             if self._mode == "BOARD":
                 gpio_pin = self.physical_to_gpio(in_pin)
+            if gpio_pin is None:
+                self.logger.error(f'Invalid BOARD pin {in_pin}, no GPIO mapping')
+                return
+            item._gpio_pin = gpio_pin
+            item._board_pin = in_pin
+            item._inverted = self.has_iattr(item.conf, 'gpio_invert') and self._to_bool(self.get_iattr_value(item.conf, 'gpio_invert'))
+            if gpio_pin not in self._itemsdict:
+                self._itemsdict[gpio_pin] = item
 
             # LineSettings bauen (ersetzt Button())
             settings = gpiod.LineSettings(
@@ -267,7 +277,7 @@ class GPIO(SmartPlugin, Utils):
                     config={gpio_pin: settings}
                 )
             except Exception as e:
-                self.logger.error(f"Failed to request GPIO {gpio_pin}: {e}")
+                self.logger.error(f"Failed to request {self._pin_str(gpio_pin)}: {e}")
                 return
 
             self._buttons[gpio_pin] = request
@@ -275,7 +285,7 @@ class GPIO(SmartPlugin, Utils):
             # Initialwert
             try:
                 pin_value = bool(request.get_value(gpio_pin))
-                value = self._get_gpio_value(pin_value, item, in_pin)
+                value = self._get_gpio_value(pin_value, item, gpio_pin)
                 self._initdict[gpio_pin] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
             except Exception:
                 value = False
@@ -285,21 +295,27 @@ class GPIO(SmartPlugin, Utils):
             item(value, self.get_shortname(), 'init')
 
             updown = self._get_pud_msg(pullupdown, pud_add)
-            self.logger.debug(f'{item} assigned to input on pin {in_pin} (GPIO: {gpio_pin}), init value {value}, {updown}')
+            self.logger.debug(f'{item} assigned to input on {self._pin_str(gpio_pin)}, init value {value}, {updown}')
 
             self._items.append(item)
             self._update_item_values(item, 'in', gpio_pin, value)
-            self._itemsdict[gpio_pin] = item
             return
 
         # Output
         if self.has_iattr(item.conf, 'gpio_out'):
             out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
             gpio_pin = out_pin
-
             # BOARD → GPIO umrechnen
             if self._mode == "BOARD":
                 gpio_pin = self.physical_to_gpio(out_pin)
+            if gpio_pin is None:
+                self.logger.error(f'Invalid BOARD pin {out_pin}, no GPIO mapping')
+                return
+            item._gpio_pin = gpio_pin
+            item._board_pin = out_pin
+            item._inverted = self.has_iattr(item.conf, 'gpio_invert') and self._to_bool(self.get_iattr_value(item.conf, 'gpio_invert'))
+            if gpio_pin not in self._itemsdict:
+                self._itemsdict[gpio_pin] = item
 
             # LineSettings für OUTPUT (ersetzt LED())
             settings = gpiod.LineSettings(
@@ -314,57 +330,47 @@ class GPIO(SmartPlugin, Utils):
                     config={gpio_pin: settings}
                 )
             except Exception as e:
-                self.logger.error(f"Failed to request GPIO {gpio_pin} as output: {e}")
+                self.logger.error(f"Failed to request {self._pin_str(gpio_pin)} as output: {e}")
                 return
 
             # Initialwert setzen
             if self.has_iattr(item.conf, 'gpio_init'):
                 value = self.to_bool(self.get_iattr_value(item.conf, 'gpio_init'))
-                pin_value = self._get_gpio_value(value, item, out_pin)
+                pin_value = self._get_gpio_value(value, item, gpio_pin)
                 request.set_value(gpio_pin, self._to_gpiod_value(pin_value))
                 self._update_item_values(item, 'out', gpio_pin, pin_value)
-                self.logger.debug(f'{item} (output on pin {out_pin} - GPIO {gpio_pin}) set to initial value {value}')
+                self.logger.debug(f'{item} (output on {self._pin_str(gpio_pin)}) set to initial value {value}')
             else:
                 # aktuellen Pin-Zustand lesen
                 try:
                     pin_value = bool(request.get_value(gpio_pin))
                 except Exception:
                     pin_value = False
-                value = self._get_gpio_value(pin_value, item, out_pin)
+                value = self._get_gpio_value(pin_value, item, gpio_pin)
 
             # Item initialisieren
             item(value, self.get_shortname(), 'init')
 
-            self.logger.debug(f'{item} assigned to output on pin {out_pin} (GPIO: {gpio_pin})')
+            self.logger.debug(f'{item} assigned to output on {self._pin_str(gpio_pin)}')
 
             self._items.append(item)
-            self._itemsdict[gpio_pin] = item
-            self._leds[gpio_pin] = request
-
+            self._leds[gpio_pin] = {'request': request, 'settings': settings}
             return self.update_item
 
     def _set_gpio(self, pin, value):
-        '''
-        Set GPIO pin to value, prevent concurrent access
-
-        :param pin: Pin to modify
-        :type pin: int
-        :param value: Value to assign to pin
-        :type value: bool
-        '''
         self._lock.acquire()
-        gpio_pin = pin
-        if self._mode == "BOARD":
-            gpio_pin = self.physical_to_gpio(pin)
         try:
-            request = self._leds.get(gpio_pin)
-            if request:
-                request.set_value(gpio_pin, self._to_gpiod_value(value))
-                self.logger.debug(f'Pin {pin} (GPIO: {gpio_pin}) successfully set to {value}')
-            else:
-                self.logger.error(f'No GPIO request for pin {pin} (GPIO: {gpio_pin})')
-        except:
-            self.logger.error(f'Setting GPIO pin {pin} (GPIO: {gpio_pin}) to {value} failed!')
+            entry = self._leds.get(pin)
+            if not entry:
+                self.logger.error(f'No GPIO request for {self._pin_str(pin)}')
+                return
+
+            entry['request'].set_value(pin, self._to_gpiod_value(value))
+
+            self.logger.debug(f'{self._pin_str(pin)} successfully set to {value}')
+
+        except Exception as e:
+            self.logger.error(f'Setting {self._pin_str(pin)} to {value} failed: {e}')
         finally:
             self._lock.release()
 
@@ -379,22 +385,26 @@ class GPIO(SmartPlugin, Utils):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         '''
-        if item is not None and caller != self.get_shortname():
-            if self.has_iattr(item.conf, 'gpio_out'):
-                self.logger.debug(f'{item} updated by {caller}.')
-                out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
-                gpio_pin = out_pin
-                if self._mode == "BOARD":
-                    gpio_pin = self.physical_to_gpio(out_pin)
-                value = self._get_gpio_value(item(), item, out_pin)
-                self.logger.info(f'Setting pin {out_pin} (GPIO: {gpio_pin}) to {value} for {item}')
-                self._update_item_values(item, 'out', gpio_pin, value)
-                self._set_gpio(out_pin, value)
-            else:
-                self.logger.error(f'{item} updated by {caller}, but no gpio_out set up')
+        self.logger.debug(f'update item {item} called by {caller}')
+        if item is None:
+            return
+
+        gpio = getattr(item, '_gpio_pin', None)
+        entry = self._leds.get(gpio)
+        if entry is None or 'request' not in entry:
+            self.logger.error(
+                f'{item} updated by {caller}, but no gpio_out set up for {self._pin_str(gpio)}'
+            )
+            return
+
+        value = self._get_gpio_value(item(), item, gpio)
+
+        self.logger.info(f'Setting {self._pin_str(gpio)} to {value} for {item}')
+        self._update_item_values(item, 'out', gpio, value)
+        self._set_gpio(gpio, value)
 
     def _gpio_event_worker(self, pin, request):
-        self.logger.debug(f"GPIO event worker started for pin {pin}")
+        self.logger.debug(f'GPIO event worker started for {self._pin_str(pin)}')
         while self.alive:
             try:
                 if not request.wait_edge_events(timeout=1.0):
@@ -402,7 +412,7 @@ class GPIO(SmartPlugin, Utils):
 
                 events = request.read_edge_events()
             except Exception as e:
-                self.logger.error(f"GPIO {pin} event wait failed: {e}")
+                self.logger.error(f"{self._pin_str(pin)} event wait failed: {e}")
                 continue
 
             for event in events:
@@ -410,11 +420,10 @@ class GPIO(SmartPlugin, Utils):
                     pin_value = bool(request.get_value(pin))
                     value = self._get_gpio_value(pin_value, None, pin)
                     self.process_gpio_event(pin, value)
-                    #self.logger.debug(f"GPIO {pin} event={event.event_type} value={value}")
+                    #self.logger.debug(f"{self._pin_str(pin)} event={event.event_type} value={value}")
 
                 except Exception as e:
-                    self.logger.error(f"GPIO {pin} read failed: {e}")
-
+                    self.logger.error(f"{self._pin_str(pin)} read failed: {e}")
 
     def run(self):
         """
@@ -452,17 +461,17 @@ class GPIO(SmartPlugin, Utils):
         for pin, request in list(self._buttons.items()):
             try:
                 request.release()
-                self.logger.debug(f'Released input GPIO {pin}')
+                self.logger.debug(f'Released input {self._pin_str(pin)}')
             except Exception as e:
-                self.logger.warning(f'Failed to release input GPIO {pin}: {e}')
+                self.logger.warning(f'Failed to release input {self._pin_str(pin)}: {e}')
 
         # Output GPIOs freigeben
-        for pin, request in list(self._leds.items()):
+        for pin, entry in list(self._leds.items()):
             try:
-                request.release()
-                self.logger.debug(f'Released output GPIO {pin}')
+                entry['request'].release()
+                self.logger.debug(f'Released output {self._pin_str(pin)}')
             except Exception as e:
-                self.logger.warning(f'Failed to release output GPIO {pin}: {e}')
+                self.logger.warning(f'Failed to release output {self._pin_str(pin)}: {e}')
 
         self._buttons.clear()
         self._leds.clear()
