@@ -160,6 +160,21 @@ parameters:
             de: 'Legt optional ein Passwort für den Zugriff auf eine knxproj Datei fest'
             en: 'Set a pasword to be able to unzip a knxproj file'
 
+    pollcycle:
+        type: num
+        default: 0
+        description:
+            de: >
+              Angabe in Sekunden. Ist der Wert höher 0, wird ein globaler Scheduler aktiviert,
+              der im gegebenen Minutentakt die Items mit knx_poll abfrägt.
+              knx_poll Intervalle der Items werden insofern berücksichtigt, als dass sie nur
+              dann gepollt werden, wenn das Polling schon "überfällig" ist.
+            en: >
+              Value in seconds. If the value is greater than 0, a global scheduler is activated
+              that polls items with knx_poll at the specified interval in minutes.
+              Item-specific knx_poll intervals are respected;
+              items are only polled when their next scheduled poll is "overdue"
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     knx_dpt:
