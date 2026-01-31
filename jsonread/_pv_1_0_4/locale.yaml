@@ -1,0 +1,8 @@
+# translations for the web interface
+plugin_translations:
+    'Item':                                       {'de': '=', 'en': '='}
+    'jsonread_filter':                            {'de': '=', 'en': '='}
+    'Wert':                                       {'de': '=', 'en': 'Value'}
+    'Letzte Auslesung':                           {'de': '=', 'en': 'Last Reading'}
+    'Items definiert':                            {'de': '=', 'en': 'Items defined'}
+    'Letzte Auslesung einfache jq Abfragesyntax': {'de': '=', 'en': 'Last Reading simple jq query syntax'}
