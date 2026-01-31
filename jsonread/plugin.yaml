@@ -10,7 +10,7 @@ plugin:
     state: ready
     keywords: json
     documentation: http://smarthomeng.de/user/plugins_doc/config/jsonread.html
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/not-yet
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/2077534-supportthread-f%C3%BCr-das-jsronread-plugin
 
     version: 2.0.0                 # Plugin version
 
