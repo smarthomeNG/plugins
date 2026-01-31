@@ -58,11 +58,11 @@ class JSONREAD(SmartPlugin):
     def run(self):
         self.logger.debug("Run method called")
         self.alive = True
-        self.scheduler_add(self.get_fullname(), self.poll_device, cycle=self._cycle)
+        self.scheduler_add("poll", self.poll_device, cycle=self._cycle)
 
     def stop(self):
         self.logger.debug("Stop method called")
-        self.scheduler_remove(self.get_fullname())
+        self.scheduler_remove_all()
         self.alive = False
 
     def pathes(self, d, stem=""):
