@@ -3,21 +3,19 @@ plugin:
     # Global plugin attributes
     type: web               # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'json Parser Plugin basierend auf jq'
-        en: 'json parser plugin based on jq'
+        de: 'json Parser Plugin ohne weitere Module'
+        en: 'json parser plugin ohne weitere Module'
     maintainer: onkelandy
     tester: bmxp
     state: ready
-    keywords: json jq
-    documentation: http://smarthomeng.de/user/plugins_doc/config/not-yet.html
+    keywords: json
+    documentation: http://smarthomeng.de/user/plugins_doc/config/jsonread.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/not-yet
 
-    version: 1.0.4                 # Plugin version
+    version: 2.0.0                 # Plugin version
+
+    py_minversion: 3.9            # minimum Python version to use for this plugin
     sh_minversion: '1.4'             # minimum shNG version to use this plugin
-    #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    #py_minversion: 3.6            # minimum Python version to use for this plugin
-    py_maxversion: '3.11'            # maximum Python version to use for this plugin (leave empty if latest)
-    py_versioncomment: "Die aktuellste Version (2.6.0, released August 2022) des benötigten Packages 'pyjq' ist nicht kompatibel mit Python 3.12"
     restartable: True
     multi_instance: True           # plugin supports multi instance
     classname: JSONREAD            # class containing the plugin
@@ -42,7 +40,6 @@ parameters:
 
 
 item_attributes:
-    # Definition of item attributes defined by this plugin
     jsonread_filter:
         type: str
         description:
@@ -50,14 +47,7 @@ item_attributes:
             en: 'JQ path to select a value from JSON dataset. The Item will then receive this value'
 
 item_structs: NONE
-    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
-
-#item_attribute_prefixes:
-    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
-    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
 
 logic_parameters: NONE
-    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
 
 plugin_functions: NONE
-    # Definition of function interface of the plugin
