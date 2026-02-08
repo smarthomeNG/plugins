@@ -51,11 +51,13 @@ function mainpage() {
 			for (var item in objResponse['in']) {
         if (objResponse['in'][item]['value'] == 1) {val = 'True';}
         else if (objResponse['in'][item]['value'] == 0) {val = 'False';}
+        else {val = objResponse['in'][item]['value'];}
 				shngInsertText (item+'_invalue', val, 'table_in', 10);
 			}
       for (var item in objResponse['out']) {
         if (objResponse['out'][item]['value'] == 1) {val = 'True';}
         else if (objResponse['out'][item]['value'] == 0) {val = 'False';}
+        else {val = objResponse['out'][item]['value'];}
         shngInsertText (item+'_outvalue', val, 'table_out', 10);
       }
 		}
