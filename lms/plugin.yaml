@@ -1214,7 +1214,7 @@ item_structs:
                     lms_command@instance: player.info.player.albumarturl
                     lms_read@instance: true
                     lms_write@instance: false
-                    remark: This item gets automatically defined and overwritten based on (web_)host and web_port
+                    remark: This item gets automatically defined and overwritten based on 'web_host'/'host' and 'web_port'
 
             currentsong:
 
