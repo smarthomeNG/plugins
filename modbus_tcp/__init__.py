@@ -601,6 +601,7 @@ class modbus_tcp(SmartPlugin):
                 self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
         except struct.error as e:
             self.logger.error(f"unable to unpack data for datatype={dataType.lower()} for read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}")
+            raise ModbusException(f"Exception: unable to unpack data for datatype={dataType.lower()} for read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}")
 
     @staticmethod
     def is_NaN( value, dataType: str) -> bool:
