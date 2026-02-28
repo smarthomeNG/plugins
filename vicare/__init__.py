@@ -39,7 +39,7 @@ TOKEN_URL = 'https://iam.viessmann-climatesolutions.com/idp/v3/token'
 API_URL = 'https://api.viessmann-climatesolutions.com'
 
 class Vicare(SmartPlugin):
-    PLUGIN_VERSION = '1.9.7'
+    PLUGIN_VERSION = '1.9.8'
 
     def __init__(self, sh):
         """
@@ -549,6 +549,14 @@ class Vicare(SmartPlugin):
             return
         if response.status_code == 200:
             self.logger.debug(f"pollFeatures: request successfull, response: {response.text}")
+        elif response.status_code == 401:
+            self.logger.warning(f"pollFeatures request was unauthorized (Status code: {response.status_code})")
+            if not response.text == "":
+                self.logger.warning(f"pollFeatures Debug response: {response}, response.text: {response.text}")
+        elif response.status_code == 403:
+            self.logger.warning(f"pollFeatures request was forbidden (Status code: {response.status_code})")
+            if not response.text == "":
+                self.logger.warning(f"pollFeatures Debug response: {response}, response.text: {response.text}")
         else:
             self.logger.warning(f"pollFeatures request was unsuccessfull. Status code: {response.status_code}")
             if not response.text == "":
