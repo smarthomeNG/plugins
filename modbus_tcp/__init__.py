@@ -30,6 +30,7 @@ import threading
 import asyncio
 import struct
 import logging
+import time
 from .webif import WebInterface
 
 from pymodbus.constants import Endian
@@ -112,13 +113,7 @@ class modbus_tcp(SmartPlugin):
         # Threading lock for data shared between SmartHomeNG thread(s) and asyncio thread
         self.lock = threading.Lock()
 
-        # Async infrastructure (own event loop thread)
-        self._loop = None
-        self._loop_thread = None
-        self._loop_started_evt = threading.Event()
-
-        self._stop_evt_async = None           # asyncio.Event created inside our loop
-        self._async_main_task = None          # main coroutine task
+        # Async infrastructure (SmartPlugin-managed event loop thread)
         self._connection_task = None          # background reconnect/connection keeper
         self._reader_task = None              # continuous acquisition task
         self._client_lock = None              # asyncio.Lock to serialize requests on one TCP connection
@@ -140,21 +135,20 @@ class modbus_tcp(SmartPlugin):
     def run(self):
         """
         Start plugin:
-          - create own asyncio loop in a dedicated thread
-          - build Modbus connection
+          - start SmartPlugin-managed asyncio loop
           - start async connection management and (depending on cycle) acquisition task
           - optionally schedule "flush" to items for cycle > 0
         """
         self.logger.debug(f"Plugin '{self.get_fullname()}': run method called")
         if self.alive:
             return
-        self.alive = True
 
-        # Start our own event loop thread
-        self._start_asyncio_thread()
+        # Start asyncio loop in its own thread (SmartPlugin)
+        self.start_asyncio(self.plugin_coro())
 
-        # Build connection + tasks inside our asyncio loop (NOT blocking here)
-        self._submit_coro(self._async_start(), descr="async_start")
+        # Wait briefly until asyncio loop is running and plugin_coro set alive
+        while not self.alive:
+            time.sleep(0.1)
 
         # Scheduler is only used as "flush trigger" for buffered mode (cycle > 0).
         # For cycle == 0/None: no incoming data is processed (no reads, no flush).
@@ -175,10 +169,9 @@ class modbus_tcp(SmartPlugin):
         """
         Stop plugin:
           - stop scheduler flush
-          - stop async tasks, close client, stop loop thread cleanly
+          - stop async tasks, close client, stop loop thread cleanly (SmartPlugin)
         """
         self.logger.debug(f"Plugin '{self.get_fullname()}': stop method called")
-        self.alive = False
 
         # Remove flush scheduler (if added)
         try:
@@ -186,25 +179,8 @@ class modbus_tcp(SmartPlugin):
         except Exception:
             pass
 
-        # Stop async side and loop thread
-        try:
-            if self._loop and self._loop.is_running():
-                fut = asyncio.run_coroutine_threadsafe(self._async_stop(), self._loop)
-                try:
-                    fut.result(timeout=5)
-                except Exception:
-                    pass
-
-                # stop loop
-                self._loop.call_soon_threadsafe(self._loop.stop)
-
-            if self._loop_thread and self._loop_thread.is_alive():
-                self._loop_thread.join(timeout=5)
-        finally:
-            self._loop = None
-            self._loop_thread = None
-            self._aclient = None
-            self.connected = False
+        # Stop asyncio loop and thread (SmartPlugin)
+        self.stop_asyncio()
 
         self.logger.debug(f"Plugin '{self.get_fullname()}': stop method finished")
 
@@ -357,8 +333,11 @@ class modbus_tcp(SmartPlugin):
                 self.logger.debug(f'update_item:{item} value:{item()} regToWrite: {reg}')
 
                 # IMPORTANT ASYNC TRANSITION:
-                # schedule non-blocking write coroutine onto our own asyncio loop
-                self._submit_coro(self.__write_Registers_async(regPara, item()), descr=f"write_{reg}")
+                # schedule non-blocking write coroutine onto SmartPlugin asyncio loop
+                try:
+                    self.run_asyncio_coro(self._schedule_write(regPara, item()), timeout=1)
+                except Exception as e:
+                    self.logger.error(f"update_item: scheduling async write failed: {e}")
 
     # ---------------------------------------------------------------------
     # Logging helper
@@ -444,80 +423,17 @@ class modbus_tcp(SmartPlugin):
         self.logger.debug(f"flush_buffer_to_items: wrote {regCount} buffered values")
 
     # ---------------------------------------------------------------------
-    # Async loop thread management
+    # Async start/stop + tasks (SmartPlugin asyncio)
     # ---------------------------------------------------------------------
 
-    def _start_asyncio_thread(self):
-        if self._loop_thread and self._loop_thread.is_alive():
-            return
-
-        self._loop_started_evt.clear()
-        self._loop = asyncio.new_event_loop()
-        self._loop_thread = threading.Thread(
-            target=self._asyncio_thread_worker,
-            name=f"modbus_tcp_asyncio_{self._host}",
-            daemon=True
-        )
-        self._loop_thread.start()
-        # Wait briefly until loop is running
-        self._loop_started_evt.wait(timeout=5)
-
-    def _asyncio_thread_worker(self):
+    async def plugin_coro(self):
         """
-        Runs in dedicated thread.
-        Own event loop: required by task.
+        Coroutine for the asyncio session that communicates with the Modbus device.
+        It will only terminate when the plugin is stopped.
         """
-        asyncio.set_event_loop(self._loop)
-        self._loop_started_evt.set()
-        try:
-            self._loop.run_forever()
-        finally:
-            # Best-effort cleanup of pending tasks
-            try:
-                pending = asyncio.all_tasks(loop=self._loop)
-                for t in pending:
-                    t.cancel()
-                if pending:
-                    self._loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
-            except Exception:
-                pass
-            try:
-                self._loop.close()
-            except Exception:
-                pass
+        self.logger.info("plugin_coro started")
 
-    def _submit_coro(self, coro, descr="coro"):
-        """
-        Thread-safe scheduling of a coroutine onto our private event loop.
-        Never blocks SmartHomeNG threads.
-        """
-        if not self._loop or not self._loop.is_running():
-            self.logger.error(f"{self.get_fullname()}: cannot submit {descr}, asyncio loop not running")
-            return None
-        fut = asyncio.run_coroutine_threadsafe(coro, self._loop)
-
-        def _done_callback(f):
-            try:
-                exc = f.exception()
-                if exc:
-                    self.logger.error(f"{self.get_fullname()}: async task '{descr}' failed: {exc}")
-            except Exception as e:
-                self.logger.error(f"{self.get_fullname()}: async task '{descr}' callback error: {e}")
-
-        fut.add_done_callback(_done_callback)
-        return fut
-
-    # ---------------------------------------------------------------------
-    # Async start/stop + tasks
-    # ---------------------------------------------------------------------
-
-    async def _async_start(self):
-        """
-        Executed inside plugin's own asyncio loop thread.
-        Must create client + connection in run() context (requirement).
-        """
         # Create async primitives in the correct loop
-        self._stop_evt_async = asyncio.Event()
         self._client_lock = asyncio.Lock()
 
         # Create client in our loop thread (important for asyncio transports)
@@ -537,33 +453,32 @@ class modbus_tcp(SmartPlugin):
                 f"{self.get_fullname()}: cycle is None/0 -> no incoming data processing (no reads, no item updates)"
             )
 
-    async def _async_stop(self):
-        """
-        Executed inside plugin's own asyncio loop thread.
-        Cancels tasks and closes client.
-        """
+        self.alive = True
+        self.logger.info("plugin_coro: Plugin is running (self.alive=True)")
+
+        # wait until STOP is received
+        await self.wait_for_asyncio_termination()
+
+        # Cancel tasks and close client
+        for task in [self._reader_task, self._connection_task]:
+            if task and not task.done():
+                task.cancel()
         try:
-            if self._stop_evt_async:
-                self._stop_evt_async.set()
+            if self._aclient:
+                self._aclient.close()
+        except Exception:
+            pass
 
-            # Cancel tasks
-            for task in [self._reader_task, self._connection_task, self._async_main_task]:
-                if task and not task.done():
-                    task.cancel()
+        self._reader_task = None
+        self._connection_task = None
+        self._aclient = None
+        self.connected = False
 
-            # Close client
-            try:
-                if self._aclient:
-                    self._aclient.close()
-            except Exception:
-                pass
+        self.alive = False
+        self.logger.info("plugin_coro: Plugin is stopped (self.alive=False)")
 
-            self.connected = False
-        finally:
-            self._reader_task = None
-            self._connection_task = None
-            self._async_main_task = None
-            self._aclient = None
+        self.logger.info("plugin_coro finished")
+        return
 
     async def _connection_keeper(self):
         """
@@ -571,7 +486,7 @@ class modbus_tcp(SmartPlugin):
         Runs forever until stop event is set.
         """
         backoff = 1.0
-        while self.alive and self._stop_evt_async and (not self._stop_evt_async.is_set()):
+        while self.alive:
             try:
                 if self._aclient is None:
                     self._aclient = AsyncModbusTcpClient(self._host, port=self._port)
@@ -621,7 +536,7 @@ class modbus_tcp(SmartPlugin):
         """
         Wait until connected or stop/alive condition ends.
         """
-        while self.alive and self._stop_evt_async and (not self._stop_evt_async.is_set()) and (not self.connected):
+        while self.alive and (not self.connected):
             await asyncio.sleep(0.2)
         return self.connected
 
@@ -633,7 +548,7 @@ class modbus_tcp(SmartPlugin):
           - cycle > 0: buffered in self._latest_values (only latest per item)
           - cycle < 0: written immediately to items (no buffering)
         """
-        while self.alive and self._stop_evt_async and (not self._stop_evt_async.is_set()):
+        while self.alive:
             try:
                 # Wait for connection (reconnect handled by connection_keeper)
                 if not await self._wait_connected():
@@ -648,7 +563,7 @@ class modbus_tcp(SmartPlugin):
                     regs = list(self._regToRead.items())
 
                 for reg, regPara in regs:
-                    if not self.alive or self._stop_evt_async.is_set():
+                    if not self.alive:
                         break
 
                     try:
@@ -724,6 +639,13 @@ class modbus_tcp(SmartPlugin):
     # ---------------------------------------------------------------------
     # Async Modbus IO (read/write) - based on original logic, but await-based
     # ---------------------------------------------------------------------
+
+    async def _schedule_write(self, regPara, value):
+        """
+        Schedule a Modbus write without blocking the caller.
+        """
+        asyncio.create_task(self.__write_Registers_async(regPara, value))
+        return True
 
     async def __write_Registers_async(self, regPara, value):
         """
