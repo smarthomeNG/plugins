@@ -427,7 +427,7 @@ Activate that function if needed, otherwise just remove the line to increase per
 			<td class="py-1"><strong>Connection</strong></td>
 			<td class="py-1">{% if p._config['host'] %}{{ p._config['host'] }}{{ _(':') }}{{ p._config['port'] }}{% else %}{{ p._config['serial_port'] }}{% endif %}</td>
 			<td class="py-1"><strong>Timeout</strong></td>
-			<td class="py-1">{{ p._config['timeout']  }}s</td>
+			<td class="py-1">{{ p._config['timeout']  }} s</td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>Protokoll</strong></td>
@@ -439,7 +439,7 @@ Activate that function if needed, otherwise just remove the line to increase per
 			<td class="py-1">{% if p.use_asyncio %}<strong>Verbunden</strong>{% else %}{{ '' }}{% endif %}</td>
 			<td class="py-1">{% if p.use_asyncio %}{% if p.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}{% endif %}</td>
 			<td class="py-1"><strong>Abfrage</strong></td>
-			<td class="py-1">{% if p.cycle %} {{ p.cycle }}s {% elif p.crontab %} {{ p.crontab }} {% elif p.use_asyncio %} {{ _('kontinuierlich') }} {% endif %}</td>
+			<td class="py-1">{% if p.use_asyncio %} {{ _('kontinuierlich') }} {% elif p.cycle %} {{ p.cycle }} s {% elif p.crontab %} {{ p.crontab }}  {% endif %}</td>
 		</tr>
 	</tbody>
 </table>

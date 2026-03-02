@@ -519,7 +519,7 @@ class DlmsReader():
         host = self.config.get('host')
         port = self.config.get('port')
         timeout = self.config.get('timeout', 2)
-        baudrate = self.config.get('DLMS', {'baudate_min': 300}).get('baudrate_min', 300)
+        baudrate = self.config.get('DLMS', {}).get('baudrate_min', 300)
 
         if TESTING:
             self.target = '(test input)'
@@ -539,7 +539,7 @@ class DlmsReader():
                     timeout=timeout
                 )
                 if not serial_port == self.sock.name:
-                    logger.debug(f"Asked for {serial_port} as serial port, but really using now {sock.name}")
+                    logger.debug(f"Asked for {serial_port} as serial port, but really using now {self.sock.name}")
                 self.target = f'serial://{self.sock.name}'
 
             except FileNotFoundError:
