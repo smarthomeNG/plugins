@@ -65,6 +65,7 @@ Erfolgreich getestet wurden bisher:
 - ZPA GH302 (SML)
 - Iskra MT681 (SML)
 - Landis & Gyr E320 (SML)
+- efr SGM-D4-A920N (SML)
 - (wird bei Vorliegen weiterer Testergebnisse ergänzt)
 
 
@@ -103,10 +104,24 @@ SmartMeter jede Sekunde Daten liefern:
 Einrichtungsverfahren:
 ----------------------
 
-Das vom DLMS-Plugin früher teilweise notwendige Einrichtungsverfahren per Standalone-Modus wird
-nicht mehr unterstützt. Ohne Angabe des Kommunikationsprotokolls in der
-**plugin.yaml** versucht das Plugin, automatisch das korrekte Protokoll zu ermitteln.
-Sofern dies gelingt, wird es automatisch genutzt und im Web-Interface angezeigt.
+Das Plugin unterstützt die Diagnoseabfrage von SML- und DLMS-SmartMetern über die
+Kommandozeile. Dazu ist aus dem SmartHomeNG-Basisordner das jeweilige Modul des
+Plugins aufzurufen:
+
+``python3 plugins/smartmeter/dlms.py --help``
+
+bzw.
+
+``python3 plugins/smartmeter/sml.py --help``
+
+Die Module geben jeweils die unterstützten Optionen aus.
+
+Eine manuelle Identifizierung ist allerdings normalerweise nicht mehr notwendig.
+Ohne Angabe des Kommunikationsprotokolls in der **plugin.yaml** versucht das
+Plugin automatisch, das korrekte Protokoll zu ermitteln. Sofern dies gelingt,
+wird es automatisch genutzt und im Web-Interface angezeigt.
+Sollte die Identifizierung fehlschlagen, wird die Log-Ausgabe im Web-Interface
+angezeigt.
 
 Das manuelle Eintragen des Protokolls in die plugin.yaml kann beim Start von
 SmartHomeNG den Start des Plugins beschleunigen, da nicht jedesmal automatisch
