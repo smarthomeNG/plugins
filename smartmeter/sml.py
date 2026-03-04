@@ -773,8 +773,6 @@ if __name__ == '__main__':
     logger.info("==================================================================")
 
     result = discover(config)
-    if 'discover_log' in config:
-        print(f'====== discover log ======\n{config['discover_log']}====== end of log ======')
         
     if not result:
         logger.info(f"No results from query, maybe a problem with the serial port '{config['serial_port']}' given.")
