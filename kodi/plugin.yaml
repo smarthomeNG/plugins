@@ -4,7 +4,7 @@ plugin:
     description: Kodi Mediacenter
     maintainer: Morg
     tester: OnkelAndy
-    state: develop
+    state: ready
     keywords: iot device mediacenter kodi xmbc sdp
     version: 1.7.3
     sh_minversion: '1.9.5'

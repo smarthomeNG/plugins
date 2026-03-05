@@ -7,7 +7,7 @@ plugin:
         en: 'Plugin to control devices which are linked to Zigbee Gateway equipped with Zigbee2MQTT firmware. Communication is handled through the MQTT module of SmartHomeNG.'
     maintainer: Sebastian Helms
     tester: Sebastian Helms        # Who tests this plugin?
-    state: develop                 # change to ready when done with development
+    state: ready                 # change to ready when done with development
     keywords: iot
     documentation: ''
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1856775-support-thread-f%C3%BCr-das-zigbee2mqtt-plugin

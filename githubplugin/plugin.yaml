@@ -7,7 +7,7 @@ plugin:
         en: 'Plugin to install plugins from foreign GitHub repositories'
     maintainer: Morg42
 #    tester:                         # Who tests this plugin?
-    state: develop                  # Initial 'develop'. change to 'ready' when done with development
+    state: ready                  # Initial 'develop'. change to 'ready' when done with development
     keywords: git github plugin
 #    documentation: ''              # An url to optional plugin doc - NOT the url to user_doc!!!
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
