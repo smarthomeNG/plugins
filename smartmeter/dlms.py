@@ -31,6 +31,8 @@ import asyncio
 import logging
 import time
 import serial
+import io
+
 try:
     import serial_asyncio
     ASYNC_IMPORTED = True
@@ -238,6 +240,52 @@ def format_time(timedelta: float) -> str:
         return f"{timedelta * 10 ** 6:.2f} µs"
     else:
         return f"{timedelta * 10 ** 9:.2f} ns"
+
+
+#
+# string logger
+#
+
+
+class StringLogger():
+
+    def __init__(self):
+        ### Create the logger
+        self.logger = logging.getLogger('sml_string_logger')
+        self.logger.setLevel(logging.DEBUG)
+
+        ### Setup the console handler with a StringIO object
+        self.log_capture_string = io.StringIO()
+        self.ch = logging.StreamHandler(self.log_capture_string)
+        self.ch.setLevel(logging.DEBUG)
+
+        ### Optionally add a formatter
+        formatter = logging.Formatter('%(levelname)s: %(message)s')
+        self.ch.setFormatter(formatter)
+
+        ### Add the console handler to the logger
+        self.logger.addHandler(self.ch)
+
+    def __call__(self):
+        return self.log_capture_string.getvalue()
+
+    def close(self):
+        self.log_capture_string.close()
+
+    def debug(self, *args, **kwargs):
+        self.logger.debug(*args, **kwargs)
+
+    def info(self, *args, **kwargs):
+        self.logger.info(*args, **kwargs)
+
+    def warning(self, *args, **kwargs):
+        self.logger.warning(*args, **kwargs)
+
+    def error(self, *args, **kwargs):
+        self.logger.error(*args, **kwargs)
+
+    def critical(self, *args, **kwargs):
+        self.logger.critical(*args, **kwargs)
 
 
 # TODO: asyncio for DLMS disabled until real testing has succeeded
@@ -519,7 +567,7 @@ class DlmsReader():
         host = self.config.get('host')
         port = self.config.get('port')
         timeout = self.config.get('timeout', 2)
-        baudrate = self.config.get('DLMS', {'baudate_min': 300}).get('baudrate_min', 300)
+        baudrate = self.config.get('DLMS', {}).get('baudrate_min', 300)
 
         if TESTING:
             self.target = '(test input)'
@@ -539,7 +587,7 @@ class DlmsReader():
                     timeout=timeout
                 )
                 if not serial_port == self.sock.name:
-                    logger.debug(f"Asked for {serial_port} as serial port, but really using now {sock.name}")
+                    logger.debug(f"Asked for {serial_port} as serial port, but really using now {self.sock.name}")
                 self.target = f'serial://{self.sock.name}'
 
             except FileNotFoundError:
@@ -969,7 +1017,7 @@ class DlmsProtocol():
         return result
 
 
-def query(config, discover: bool = False) -> Union[dict, None]:
+def query(config, discover: bool = False, logger=logger) -> Union[dict, None]:
     """
     This function will
     1. open a serial communication line to the smartmeter
@@ -1022,7 +1070,8 @@ def discover(config: dict) -> bool:
     # reduced baud rates or changed parameters, but there would need to be
     # the need for this.
     # For now, let's see how well this works...
-    result = query(config, discover=True)
+    str_log = StringLogger()
+    result = query(config, discover=True, logger=str_log)
 
     # result should have one key 'readout' with the full answer and a separate
     # key for every read OBIS code. If no OBIS codes are read/converted, we can
@@ -1030,6 +1079,7 @@ def discover(config: dict) -> bool:
     if result:
         return len(result) > 1
     else:
+        config['discover_log'] = str_log()
         return False
 
 
@@ -1107,7 +1157,7 @@ if __name__ == '__main__':
     logger.info("This is Smartmeter Plugin, DLMS module, running in standalone mode")
     logger.info("==================================================================")
 
-    result = query(config)
+    result = discover(config)
 
     if not result:
         logger.info(f"No results from query, maybe a problem with the serial port '{config['serial_port']}' given.")

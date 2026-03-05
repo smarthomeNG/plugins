@@ -115,6 +115,9 @@ class Smartmeter(SmartPlugin, Conversion):
         # load parameters from config
         self._load_parameters()
 
+        self.discovery_logs = {}
+        self.item_file = None
+
         # quit if errors on parameter read
         if not self._init_complete:
             return
@@ -133,6 +136,8 @@ class Smartmeter(SmartPlugin, Conversion):
         else:
             disc_protos = [protocol]
 
+        self.discovery_logs = {proto: None for proto in disc_protos}
+
         for proto in disc_protos:
             if self._get_module(proto).discover(self._config):
                 self.logger.info(f'discovery of {protocol} was successful')
@@ -141,6 +146,7 @@ class Smartmeter(SmartPlugin, Conversion):
                     self.proto_detected = True
                 return True
             else:
+                self.discovery_logs[proto] = self._config.pop('discover_log', '')
                 self.logger.info(f'discovery of {protocol} was unsuccessful')
 
         return False
@@ -166,7 +172,7 @@ class Smartmeter(SmartPlugin, Conversion):
         try:
             result = ref.query(self._config)
             if not result:
-                self.logger.warning('no results from smartmeter query received')
+                self.logger.info('no results from smartmeter query received')
             else:
                 self.logger.debug(f'got result: {result}')
                 if assign_values:
@@ -191,6 +197,7 @@ class Smartmeter(SmartPlugin, Conversion):
         if not data:
             return False
 
+        # try to get smartmeter serial, fallback to time string
         try:
             id = data['1-0:96.1.0*255'][0]['value']
         except (KeyError, IndexError, AttributeError):
@@ -239,6 +246,7 @@ class Smartmeter(SmartPlugin, Conversion):
 
         try:
             yaml_save(file, {id: result})
+            self.item_file = file
         except Exception as e:
             self.logger.warning(f'saving item file {file} failed with error: {e}')
             return False

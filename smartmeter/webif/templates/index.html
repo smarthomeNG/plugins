@@ -307,11 +307,11 @@ Activate that function if needed, otherwise just remove the line to increase per
 					  if (data.discovery_successful) {
 						updateButton(buttonElement, 'btn-success', "true");
 						alert('Ermittlung des Smartmeter-Protokoll erfolgreich!');
+					  shngInsertText('protocol', data.protocol || '', 'headtable');
 					  } else {
 						updateButton(buttonElement, 'btn-danger');
-						alert('Ermittlung des Smartmeter-Protokoll fehlgeschlagen!');
+						alert('Ermittlung des Smartmeter-Protokoll fehlgeschlagen!\n' + data.log);
 					  }
-					  shngInsertText('protocol', data.protocol || '', 'headtable');
 					  break;
 				
 					case 'query':
@@ -332,9 +332,9 @@ Activate that function if needed, otherwise just remove the line to increase per
 					  break;
 				
 					case 'create_items':
-					  if (data === true) {
+					  if (data.success === true) {
 						updateButton(buttonElement, "btn-success", "true");
-						alert('Item Erstellung erfolgreich!');
+						alert('Item Erstellung erfolgreich, Items geschrieben in ' + data.file + '!');
 					  } else {
 						updateButton(buttonElement, "btn-danger");
 						alert('Item Erstellung fehlgeschlagen!');
@@ -367,15 +367,15 @@ Activate that function if needed, otherwise just remove the line to increase per
 			maintable = $('#maintable').DataTable( {
 			  "columns": [
 				  {"className": "plus"},
-				  {title: '{{ _('Item') }}', "className": "item", responsivePriority: 1},
-				  {title: '{{ _('Typ') }}', "className": "type"},
-				  {title: '{{ _('OBIS Code') }}', "className": "attribute", responsivePriority: 2},
-				  {title: '{{ _('OBIS Index') }}', "className": "attribute"},
-				  {title: '{{ _('OBIS Prop') }}', "className": "attribute"},
-				  {title: '{{ _('OBIS Type') }}', "className": "attribute"},
-				  {title: '{{ _('Wert') }}', "className": "truncate value"},
-				  {title: '{{ _('Letztes Update') }}', "className": "last"},
-				  {title: '{{ _('Letzter Change') }}', "className": "last"}
+				  {title: "{{ _('Item') }}", "className": "item", responsivePriority: 1},
+				  {title: "{{ _('Typ') }}", "className": "type"},
+				  {title: "{{ _('OBIS Code') }}", "className": "attribute", responsivePriority: 2},
+				  {title: "{{ _('OBIS Index') }}", "className": "attribute"},
+				  {title: "{{ _('OBIS Prop') }}", "className": "attribute"},
+				  {title: "{{ _('OBIS Type') }}", "className": "attribute"},
+				  {title: "{{ _('Wert') }}", "className": "truncate value"},
+				  {title: "{{ _('Letztes Update') }}", "className": "last"},
+				  {title: "{{ _('Letzter Change') }}", "className": "last"}
 			  ],
 			  "order": [[1, 'asc']]
 			  });
@@ -427,7 +427,7 @@ Activate that function if needed, otherwise just remove the line to increase per
 			<td class="py-1"><strong>Connection</strong></td>
 			<td class="py-1">{% if p._config['host'] %}{{ p._config['host'] }}{{ _(':') }}{{ p._config['port'] }}{% else %}{{ p._config['serial_port'] }}{% endif %}</td>
 			<td class="py-1"><strong>Timeout</strong></td>
-			<td class="py-1">{{ p._config['timeout']  }}s</td>
+			<td class="py-1">{{ p._config['timeout']  }} s</td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>Protokoll</strong></td>
@@ -439,7 +439,7 @@ Activate that function if needed, otherwise just remove the line to increase per
 			<td class="py-1">{% if p.use_asyncio %}<strong>Verbunden</strong>{% else %}{{ '' }}{% endif %}</td>
 			<td class="py-1">{% if p.use_asyncio %}{% if p.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}{% endif %}</td>
 			<td class="py-1"><strong>Abfrage</strong></td>
-			<td class="py-1">{% if p.cycle %} {{ p.cycle }}s {% elif p.crontab %} {{ p.crontab }} {% elif p.use_asyncio %} {{ _('kontinuierlich') }} {% endif %}</td>
+			<td class="py-1">{% if p.use_asyncio %} {{ _('kontinuierlich') }} {% elif p.cycle %} {{ p.cycle }} s {% elif p.crontab %} {{ p.crontab }}  {% endif %}</td>
 		</tr>
 	</tbody>
 </table>

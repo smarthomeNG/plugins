@@ -31,6 +31,8 @@ import asyncio
 import errno
 import logging
 import serial
+import io
+
 try:
     import serial_asyncio
     ASYNC_IMPORTED = True
@@ -90,6 +92,7 @@ S_STOP = serial.STOPBITS_ONE
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
     logger.debug(f"init standalone {__name__}")
+
 else:
     logger = logging.getLogger(__name__)
     logger.debug(f"init plugin component {__name__}")
@@ -151,6 +154,53 @@ def format_time(timedelta):
         return f"{timedelta*1000000.0:.2f} µs"
     elif timedelta > 0.000000001:
         return f"{timedelta * 1000000000.0:.2f} ns"
+
+
+#
+# string logger
+#
+
+
+class StringLogger():
+
+    def __init__(self):
+        ### Create the logger
+        self.logger = logging.getLogger('sml_string_logger')
+        self.logger.setLevel(logging.DEBUG)
+
+        ### Setup the console handler with a StringIO object
+        self.log_capture_string = io.StringIO()
+        self.ch = logging.StreamHandler(self.log_capture_string)
+        self.ch.setLevel(logging.DEBUG)
+
+        ### Optionally add a formatter
+        formatter = logging.Formatter('%(levelname)s: %(message)s')
+        self.ch.setFormatter(formatter)
+
+        ### Add the console handler to the logger
+        self.logger.addHandler(self.ch)
+
+    def __call__(self):
+        return self.log_capture_string.getvalue()
+
+    def close(self):
+        self.log_capture_string.close()
+
+    def debug(self, *args, **kwargs):
+        self.logger.debug(*args, **kwargs)
+
+    def info(self, *args, **kwargs):
+        self.logger.info(*args, **kwargs)
+
+    def warning(self, *args, **kwargs):
+        self.logger.warning(*args, **kwargs)
+
+    def error(self, *args, **kwargs):
+        self.logger.error(*args, **kwargs)
+
+    def critical(self, *args, **kwargs):
+        self.logger.critical(*args, **kwargs)
+
 
 #
 # asyncio reader
@@ -307,7 +357,7 @@ class SmlReader():
         self.target = '(not set)'
         self.buffersize = config.get('sml', {'buffersize': 1024}).get('buffersize', 1024)
 
-        logger.debug(f"config='{config}'")
+        self.logger.debug(f"config='{config}'")
 
     def __call__(self) -> bytes:
 
@@ -316,7 +366,7 @@ class SmlReader():
         #
         locked = self.lock.acquire(blocking=False)
         if not locked:
-            logger.error('could not get lock for serial/network access. Is another scheduled/manual action still active?')
+            self.logger.error('could not get lock for serial/network access. Is another scheduled/manual action still active?')
             return b''
 
         try:  # lock release
@@ -325,7 +375,7 @@ class SmlReader():
             if not self.sock:
                 # error already logged, just go
                 return b''
-            logger.debug(f"time to open {self.target}: {format_time(time.time() - runtime)}")
+            self.logger.debug(f"time to open {self.target}: {format_time(time.time() - runtime)}")
 
             #
             # read data from device
@@ -334,13 +384,13 @@ class SmlReader():
             try:
                 response = self.read()
                 if len(response) == 0:
-                    logger.error('reading data from device returned 0 bytes!')
+                    self.logger.info('reading data from device returned 0 bytes!')
                     return b''
                 else:
-                    logger.debug(f'read {len(response)} bytes')
+                    self.logger.debug(f'read {len(response)} bytes')
 
             except Exception as e:
-                logger.error(f'reading data from {self.target} failed with error: {e}')
+                self.logger.error(f'reading data from {self.target} failed with error: {e}')
 
         except Exception:
             # passthrough, this is only for releasing the lock
@@ -428,41 +478,41 @@ class SmlReader():
                         timeout=self.timeout
                     )
                     if not self.serial_port == self.sock.name:
-                        logger.debug(f"Asked for {self.serial_port} as serial port, but really using now {self.sock.name}")
+                        self.logger.debug(f"Asked for {self.serial_port} as serial port, but really using now {self.sock.name}")
                     self.target = f'serial://{self.sock.name}'
 
                 except FileNotFoundError:
-                    logger.error(f"Serial port '{self.serial_port}' does not exist, please check your port")
+                    self.logger.error(f"Serial port '{self.serial_port}' does not exist, please check your port")
                     return None, ''
                 except serial.SerialException:
                     if self.sock is None:
                         if count < 3:
                             # count += 1
-                            logger.error(f"Serial port '{self.serial_port}' could not be opened, retrying {count}/3...")
+                            self.logger.error(f"Serial port '{self.serial_port}' could not be opened, retrying {count}/3...")
                             time.sleep(3)
                             continue
                         else:
-                            logger.error(f"Serial port '{self.serial_port}' could not be opened")
+                            self.logger.error(f"Serial port '{self.serial_port}' could not be opened")
                     else:
-                        logger.error(f"Serial port '{self.serial_port}' could be opened but somehow not accessed")
+                        self.logger.error(f"Serial port '{self.serial_port}' could be opened but somehow not accessed")
                     return None, ''
                 except OSError:
-                    logger.error(f"Serial port '{self.serial_port}' does not exist, please check the spelling")
+                    self.logger.error(f"Serial port '{self.serial_port}' does not exist, please check the spelling")
                     return None, ''
                 except Exception as e:
-                    logger.error(f"unforeseen error occurred: '{e}'")
+                    self.logger.error(f"unforeseen error occurred: '{e}'")
                     return None, ''
 
             if self.sock is None:
                 if count == 3:
-                    logger.error("retries unsuccessful, serial port could not be opened, giving up.")
+                    self.logger.error("retries unsuccessful, serial port could not be opened, giving up.")
                 else:
                     # this should not happen...
-                    logger.error("retries unsuccessful or unforeseen error occurred, serial object was not initialized.")
+                    self.logger.error("retries unsuccessful or unforeseen error occurred, serial object was not initialized.")
                 return None, ''
 
             if not self.sock.is_open:
-                logger.error(f"serial port '{self.serial_port}' could not be opened with given parameters, maybe wrong baudrate?")
+                self.logger.error(f"serial port '{self.serial_port}' could not be opened with given parameters, maybe wrong baudrate?")
                 return None, ''
 
         elif self.host:
@@ -476,7 +526,7 @@ class SmlReader():
             self.target = f'tcp://{self.host}:{self.port}'
 
         else:
-            logger.error('neither serialport nor host/port was given, no action possible.')
+            self.logger.error('neither serialport nor host/port was given, no action possible.')
             return None, ''
 
 
@@ -592,7 +642,7 @@ class SmlParser():
         return self.fp()
 
 
-def query(config) -> dict:
+def query(config, logger=logger) -> dict:
     """
     This function will
     1. open a serial communication line to the smartmeter
@@ -653,7 +703,11 @@ def discover(config: dict) -> bool:
     # reduced baud rates or changed parameters, but there would need to be
     # the need for this.
     # For now, let's see how well this works...
-    return bool(query(config))
+    str_log = StringLogger()
+    result = bool(query(config, str_log))
+    if not result:
+        config['discover_log'] = str_log()
+    return result
 
 
 if __name__ == '__main__':
@@ -718,8 +772,8 @@ if __name__ == '__main__':
     logger.info("This is Smartmeter Plugin, SML module, running in standalone mode")
     logger.info("==================================================================")
 
-    result = query(config)
-
+    result = discover(config)
+        
     if not result:
         logger.info(f"No results from query, maybe a problem with the serial port '{config['serial_port']}' given.")
     elif len(result) > 1:
