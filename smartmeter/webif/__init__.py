@@ -145,7 +145,13 @@ class WebInterface(SmartPluginWebIf):
             result = self.plugin.query(assign_values=False)
 
         elif cmd == 'create_items':
-            result = {'success': self.plugin.create_items(), 'file': self.plugin.item_file}
+            try:
+                result = {'success': self.plugin.create_items(), 'file': self.plugin.item_file, 'err': ''}
+            except FileExistsError:
+                result = {'success': False, 'file': '', 'err': f'Datei {self.plugin.item_file} bereits vorhanden, bitte erst löschen oder umbennen.'}
+                self.logger.warning(result)
+            except Exception as e:
+                self.logger.error(e)
 
         if result is not None:
             # JSON zurücksenden

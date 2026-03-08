@@ -305,39 +305,43 @@ Activate that function if needed, otherwise just remove the line to increase per
 				switch (id) {
 					case 'detect':
 					  if (data.discovery_successful) {
-						updateButton(buttonElement, 'btn-success', "true");
-						alert('Ermittlung des Smartmeter-Protokoll erfolgreich!');
-					  shngInsertText('protocol', data.protocol || '', 'headtable');
+							updateButton(buttonElement, 'btn-success', "true");
+							alert('Ermittlung des Smartmeter-Protokoll erfolgreich!');
+						  shngInsertText('protocol', data.protocol || '', 'headtable');
 					  } else {
-						updateButton(buttonElement, 'btn-danger');
-						alert('Ermittlung des Smartmeter-Protokoll fehlgeschlagen!\n' + data.log);
+							updateButton(buttonElement, 'btn-danger');
+							alert('Ermittlung des Smartmeter-Protokoll fehlgeschlagen!\n' + data.log);
 					  }
 					  break;
 				
 					case 'query':
 					  if (data) {
-						updateButton(buttonElement, "btn-success");
-						alert('Auslesen des Smartmeter erfolgreich!');
-				
-						for (const obis in data) {
-						  const obis_data = data[obis][0];
-						  const obis_data_formatted = jsonToKeyValueLines(obis_data);
-						  console.log("obis=" + obis, "data=" + obis_data_formatted);
-						  createOrUpdateTableRowObis('obis_data_table', obis, obis_data_formatted); 
-						}
+							updateButton(buttonElement, "btn-success");
+							alert('Auslesen des Smartmeter erfolgreich!');
+					
+							for (const obis in data) {
+							  const obis_data = data[obis][0];
+							  const obis_data_formatted = jsonToKeyValueLines(obis_data);
+							  console.log("obis=" + obis, "data=" + obis_data_formatted);
+							  createOrUpdateTableRowObis('obis_data_table', obis, obis_data_formatted); 
+							}
 					  } else {
-						updateButton(buttonElement, "btn-danger");
-						alert('Auslesen des Smartmeter fehlgeschlagen!');
+							updateButton(buttonElement, "btn-danger");
+							alert('Auslesen des Smartmeter fehlgeschlagen!');
 					  }
 					  break;
 				
 					case 'create_items':
 					  if (data.success === true) {
-						updateButton(buttonElement, "btn-success", "true");
-						alert('Item Erstellung erfolgreich, Items geschrieben in ' + data.file + '!');
+							updateButton(buttonElement, "btn-success", "true");
+							alert('Item Erstellung erfolgreich, Items geschrieben in ' + data.file + '!');
 					  } else {
-						updateButton(buttonElement, "btn-danger");
-						alert('Item Erstellung fehlgeschlagen!');
+							updateButton(buttonElement, "btn-danger");
+							if (data.err) {
+								alert(data.err)
+							} else {
+								alert('Item Erstellung fehlgeschlagen!');
+							}
 					  }
 					  shngInsertText('protocol', data.protocol || '', 'headtable');
 					  break;
