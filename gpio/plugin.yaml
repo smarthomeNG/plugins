@@ -22,7 +22,7 @@ plugin:
             sensor or other hardware providing analog signals you have to use additional hardware.
             '
     maintainer: onkelandy
-    tester: cmalo, ohinckel, morg
+    tester: cmalo, ohinckel, Morg
     state: ready
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1842450-support-thread-f%C3%BCr-das-gpio-plugin
     requirements:

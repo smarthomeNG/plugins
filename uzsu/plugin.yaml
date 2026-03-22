@@ -18,8 +18,8 @@ plugin:
              Furthermore the interpolation function allows the calculation of values between two manual
              settings. You can use this feature for smooth light curves based on the time of the day.
              '
-    maintainer: cmalo, bmxp, onkelandy, andrek, morg42
-    tester: Sandman60, cmalo, schuma, morg42
+    maintainer: cmalo, bmxp, onkelandy, andrek, Morg
+    tester: Sandman60, cmalo, schuma, Morg
     state: ready
     keywords: scheduler uzsu trigger series
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1364692-supportthread-für-uzsu-plugin

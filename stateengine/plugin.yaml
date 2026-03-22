@@ -35,7 +35,7 @@ plugin:
              - Python Modul pydotplus: ``pip3 install pydotplus``\n
              '
     maintainer: onkelandy
-    tester: 'Morg42, bmxp'
+    tester: 'Morg, bmxp'
     state: ready
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
