@@ -14,7 +14,7 @@ casambi
 
 Dieses Plugin (casambi_bt) unterstützt Casambi und Occhio Lichter und verbindet sich direkt lokal per Bluetooth mit den Leuchten. 
 Die Kommunikation erfolgt über Bluetooth Low Energy (BLE). Die Casambi Produkte sind in vielen
-Geräten verbaut, beispielsweise von Occhio. Zur Steuerung der Casambi Produkte nicht lokal sondern �ber das Casambi Backend
+Geräten verbaut, beispielsweise von Occhio. Zur Steuerung der Casambi Produkte nicht lokal sondern über das Casambi Backend
 bitte das andere Plugin casambi verwenden.
 
 Dieses Plugin basiert auf dem Open Source Python Projekt von L.Kempf
@@ -28,7 +28,7 @@ Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/co
 Gateway Hardware
 ================
 
-Es wird ein Rechner mit Bluetooth benoetigt
+Es wird ein Rechner mit Bluetooth benötigt
 
 Anforderungen
 =============
@@ -39,7 +39,7 @@ Das Casambi_bt Plugin benötigt die MAC Adresse und das Passwort einer lokal per
 Beispiele
 =========
 
-Beispiel für einen Dimmer (Occhio Sento) mit zusätzlichen Möglichkeiten für heller-dunkler und vertikales dimmen.
+Beispiel für einen Dimmer (Occhio Sento) mit zusätzlichen Möglichkeiten für heller-dunkler und vertikales Dimmen.
 
 .. code:: yaml
 
@@ -113,12 +113,6 @@ Web Interface
 
 Das casambi_bt Plugin verfügt über ein Webinterface, auf dem die Casambi Items dargestellt werden.
 
-.. important::
-
-   Das Webinterface des Plugins kann mit SmartHomeNG v1.4.2 und davor **nicht** genutzt werden.
-   Es wird dann nicht geladen. Diese Einschränkung gilt nur für das Webinterface. Ansonsten gilt
-   für das Plugin die in den Metadaten angegebene minimale SmartHomeNG Version.
-
 
 Aufruf des Webinterfaces
 ------------------------
@@ -132,7 +126,7 @@ Außerdem kann das Webinterface direkt über ``http://smarthome.local:8383/casam
 Beispiele
 ---------
 
-Folgende Informationen können im Webinterface angezeigt werden:
+Folgende Informationen kÃ¶nnen im Webinterface angezeigt werden:
 
 Oben rechts werden allgemeine Parameter zum Plugin wie der Status des AsyncIO Tasks sowie die Anzahl der per Bluetooth gefundenen Leuchten angezeigt.
 

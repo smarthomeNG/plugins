@@ -5,7 +5,7 @@ plugin:
     description:
         de: 'Plugin zur Installation von Plugins aus fremden GitHub-Repositories'
         en: 'Plugin to install plugins from foreign GitHub repositories'
-    maintainer: Morg42
+    maintainer: Morg
 #    tester:                         # Who tests this plugin?
     state: ready                  # Initial 'develop'. change to 'ready' when done with development
     keywords: git github plugin

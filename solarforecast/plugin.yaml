@@ -6,7 +6,7 @@ plugin:
         de: 'Plugin zur Anbindung an eine Web-basierte Solaretragsvorhersage'
         en: 'Plugin to connect to a web-based solar forecast service'
     maintainer: Alexander Schwithal (aschwith)
-    tester: henfri, Haiphong, Morg42
+    tester: henfri, Haiphong, Morg
     state: development                  # change to ready when done with development
     keywords: solar.forecast, solar
 #    documentation:

@@ -57,8 +57,8 @@ plugin:
              \n
              New control functions will be implemented as requested and as far as suitable devices are available for testing. Generally, the plugins architecture allows adding any valid control sequence described in the standard. For not yet implemented control directived, a general pass-thru option is available for sending arbitrary control sequences to the device.\n
              '
-    maintainer: Morg42
-    tester: Morg42
+    maintainer: Morg
+    tester: Morg
     state: ready
     keywords: iot yxc yamaha media musiccast
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
