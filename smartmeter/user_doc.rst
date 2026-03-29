@@ -61,6 +61,7 @@ Unterstützte Hardware
 - SmartMeter mit SML-Protokollunterstützung
 
 Erfolgreich getestet wurden bisher:
+
 - EMH eHZB (SML)
 - ZPA GH302 (SML)
 - Iskra MT681 (SML)
