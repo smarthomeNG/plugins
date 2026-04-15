@@ -2,6 +2,7 @@
 """The core module contains the SoCo class that implements
 the main entry to the SoCo functionality
 """
+
 import datetime
 import logging
 import re
@@ -76,6 +77,8 @@ AUDIO_INPUT_FORMATS = {
     84934716: "Dolby TrueHD 5.1",
     84934718: "Dolby Multichannel PCM 5.1",
     84934721: "DTS 5.1",
+    118489090: "Multichannel PCM 7.1",
+    118489146: "Dolby Digital Plus 7.1",
 }
 
 _LOG = logging.getLogger(__name__)
@@ -554,6 +557,14 @@ class SoCo(_SocoSingletonBase):
             self._is_soundbar = any(model_name.endswith(s) for s in SOUNDBARS)
 
         return self._is_soundbar
+
+    @property
+    def is_arc_ultra_soundbar(self):
+        """bool: Is this zone an arc ultra sound bar?"""
+        if not self.speaker_info:
+            self.get_speaker_info()
+
+        return self.speaker_info["model_name"].lower().endswith(ARC_ULTRA_PRODUCT_NAME)
 
     @property
     def play_mode(self):
@@ -1478,6 +1489,41 @@ class SoCo(_SocoSingletonBase):
         self.dialog_mode = dialog_level
 
     @property
+    def speech_enhance_enabled(self):
+        """bool: The speaker's speech enhancement mode.
+
+        True if on, False if off, None if not supported.
+        """
+        if not self.is_arc_ultra_soundbar:
+            return None
+
+        response = self.renderingControl.GetEQ(
+            [("InstanceID", 0), ("EQType", "SpeechEnhanceEnabled")]
+        )
+        return bool(int(response["CurrentValue"]))
+
+    @speech_enhance_enabled.setter
+    def speech_enhance_enabled(self, speech_mode):
+        """Switch on/off the arc ultra soundbar speech enhancement.
+
+        :param speech_mode: Enable or disable dialog mode
+        :type speech_mode: bool
+        :raises NotSupportedException: If the device does not support
+        speech enhancement.
+        """
+        if not self.is_arc_ultra_soundbar:
+            raise NotSupportedException(
+                "The device not a arc ultra and doesn't support speech_enhance_enabled."
+            )
+        self.renderingControl.SetEQ(
+            [
+                ("InstanceID", 0),
+                ("EQType", "SpeechEnhanceEnabled"),
+                ("DesiredValue", int(speech_mode)),
+            ]
+        )
+
+    @property
     def trueplay(self):
         """bool: Whether Trueplay is enabled on this device.
         True if on, False if off.
@@ -1668,12 +1714,14 @@ class SoCo(_SocoSingletonBase):
         The trick seems to be (only tested on a two-speaker setup) to tell each
         speaker which to join. There's probably a bit more to it if multiple
         groups have been defined.
+        Args:
+            kwargs: additional arguments such as timeout.
         """
         # Tell every other visible zone to join this one
         # pylint: disable = expression-not-assigned
         [zone.join(self) for zone in self.visible_zones if zone is not self]
 
-    def join(self, master):
+    def join(self, master, **kwargs):
         """Join this speaker to another "master" speaker."""
 
         self.avTransport.SetAVTransportURI(
@@ -1681,19 +1729,24 @@ class SoCo(_SocoSingletonBase):
                 ("InstanceID", 0),
                 ("CurrentURI", "x-rincon:{}".format(master.uid)),
                 ("CurrentURIMetaData", ""),
-            ]
+            ],
+            **kwargs,
         )
         self.zone_group_state.clear_cache()
 
-    def unjoin(self):
+    def unjoin(self, **kwargs):
         """Remove this speaker from a group.
 
         Seems to work ok even if you remove what was previously the group
         master from it's own group. If the speaker was not in a group also
         returns ok.
+        Args:
+            kwargs: additional arguments such as timeout.
         """
 
-        self.avTransport.BecomeCoordinatorOfStandaloneGroup([("InstanceID", 0)])
+        self.avTransport.BecomeCoordinatorOfStandaloneGroup(
+            [("InstanceID", 0)], **kwargs
+        )
         self.zone_group_state.clear_cache()
 
     def create_stereo_pair(self, rh_slave_speaker):
@@ -1731,6 +1784,56 @@ class SoCo(_SocoSingletonBase):
         self.deviceProperties.RemoveBondedZones(
             [("ChannelMapSet", ""), ("KeepGrouped", "0")]
         )
+
+    @only_on_soundbars
+    def _set_satellite_mapping(self, channel_map):
+        """Set the satellite channel mapping for this soundbar.
+
+        This is used internally by :meth:`add_satellite_speakers`. The
+        channel-map string format is:
+        ``RINCON_<soundbar>:LF,RF;RINCON_<right>:RR;RINCON_<left>:LR``
+
+        Channel abbreviations:
+        - LF = left front
+        - RF = right front
+        - LR = left rear
+        - RR = right rear
+
+        Args:
+            channel_map (str): The channel mapping string.
+        """
+        self.deviceProperties.AddHTSatellite([("ChannelMapSet", channel_map)])
+
+    @only_on_soundbars
+    def add_satellite_speakers(self, left_rear, right_rear):
+        """Add rear satellite speakers to this soundbar.
+
+        Args:
+            left_rear (SoCo): The speaker to use as the left rear satellite.
+            right_rear (SoCo): The speaker to use as the right rear satellite.
+
+        Raises:
+            NotSupportedException: If this device is not a soundbar.
+        """
+        channel_map = "{soundbar}:LF,RF;{right}:RR;{left}:LR".format(
+            soundbar=self.uid, right=right_rear.uid, left=left_rear.uid
+        )
+        self._set_satellite_mapping(channel_map)
+
+    @only_on_soundbars
+    def separate_satellite_speakers(self):
+        """Remove all satellite speakers from this soundbar.
+
+        Warning:
+            This will reset the Trueplay tuning for the device.
+
+        Raises:
+            NotSupportedException: If this device is not a soundbar.
+        """
+        satellites = [dev for dev in self.group.members if dev.is_satellite]
+        for satellite in satellites:
+            _LOG.debug("Removing satellite %s from %s", satellite.uid, self.uid)
+            self.deviceProperties.RemoveHTSatellite([("SatRoomUUID", satellite.uid)])
 
     def switch_to_line_in(self, source=None):
         """Switch the speaker's input to line-in.
@@ -2594,16 +2697,12 @@ class SoCo(_SocoSingletonBase):
             )
         except SoCoUPnPException as err:
             if "Error 402 received" in str(err):
-                raise ValueError(
-                    "invalid sleep_time_seconds, must be integer \
-                    value between 0 and 86399 inclusive or None"
-                ) from err
+                raise ValueError("invalid sleep_time_seconds, must be integer \
+                    value between 0 and 86399 inclusive or None") from err
             raise
         except ValueError as error:
-            raise ValueError(
-                "invalid sleep_time_seconds, must be integer \
-                value between 0 and 86399 inclusive or None"
-            ) from error
+            raise ValueError("invalid sleep_time_seconds, must be integer \
+                value between 0 and 86399 inclusive or None") from error
 
     @only_on_master
     def get_sleep_timer(self):
@@ -2996,6 +3095,8 @@ SOUNDBARS = (
     "ray",
     "sonos amp",
 )
+
+ARC_ULTRA_PRODUCT_NAME = "arc ultra"
 
 if config.SOCO_CLASS is None:
     config.SOCO_CLASS = SoCo
