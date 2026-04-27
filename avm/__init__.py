@@ -4571,4 +4571,6 @@ def request_response_to_xml(request):
     """
     Parse request response to element object
     """
-    return ET.fromstring(request.content)
+    # added parser with resolve_entities option in response to CVE-2026-41066
+    xmlparser = ET.XMLParser(resolve_entities='internal')
+    return ET.fromstring(request.content, parser=xmlparser)

@@ -75,6 +75,9 @@ class Yamaha(SmartPlugin):
         self.mcast_buffer = 1024
         self.mcast_service = "urn:schemas-yamaha-com:service:X_YamahaRemoteControl:1"
 
+        # added parser with resolve_entities option in response to CVE-2026-41066
+        self._xmlparser = etree.XMLParser(resolve_entities='internal')
+
         # On initialization error use:
         if not REQUIRED_PACKAGE_IMPORTED:
             self._init_complete = False
@@ -194,7 +197,8 @@ class Yamaha(SmartPlugin):
             notice.text = 'On'
         else:
             notice.text = 'Off'
-        tree = etree.ElementTree(root)
+        # added parser option in response to CVE-2026-41066
+        tree = etree.ElementTree(root, parser=self._xmlparser)
         return self._return_document(tree)
 
     def _power(self, value, cmd='PUT'):
@@ -209,7 +213,8 @@ class Yamaha(SmartPlugin):
             power.text = 'Standby'
         elif value == 'GetParam':
             power.text = value
-        tree = etree.ElementTree(root)
+        # added parser option in response to CVE-2026-41066
+        tree = etree.ElementTree(root, parser=self._xmlparser)
         return self._return_document(tree)
 
     def _input(self, value, cmd='PUT'):
@@ -219,7 +224,8 @@ class Yamaha(SmartPlugin):
         input = etree.SubElement(system, 'Input')
         input_sel = etree.SubElement(input, 'Input_Sel')
         input_sel.text = value
-        tree = etree.ElementTree(root)
+        # added parser option in response to CVE-2026-41066
+        tree = etree.ElementTree(root, parser=self._xmlparser)
         return self._return_document(tree)
 
     def _volume(self, value, cmd='PUT'):
@@ -237,7 +243,8 @@ class Yamaha(SmartPlugin):
             exponent.text = '1'
             unit = etree.SubElement(level, 'Unit')
             unit.text = 'dB'
-        tree = etree.ElementTree(root)
+        # added parser option in response to CVE-2026-41066
+        tree = etree.ElementTree(root, parser=self._xmlparser)
         return self._return_document(tree)
 
     def _mute(self, value, cmd='PUT'):
@@ -252,7 +259,8 @@ class Yamaha(SmartPlugin):
             mute.text = 'Off'
         elif value == 'GetParam':
             mute.text = value
-        tree = etree.ElementTree(root)
+        # added parser option in response to CVE-2026-41066
+        tree = etree.ElementTree(root, parser=self._xmlparser)
         return self._return_document(tree)
 
     def _validate_inputs(self):
@@ -261,7 +269,8 @@ class Yamaha(SmartPlugin):
         system = etree.SubElement(root, 'System')
         state = etree.SubElement(system, 'Config')
         state.text = 'GetParam'
-        tree = etree.ElementTree(root)
+        # added parser option in response to CVE-2026-41066
+        tree = etree.ElementTree(root, parser=self._xmlparser)
         return self._return_document(tree)
 
     def _get_state(self):
@@ -270,7 +279,8 @@ class Yamaha(SmartPlugin):
         system = etree.SubElement(root, 'Main_Zone')
         state = etree.SubElement(system, 'Basic_Status')
         state.text = 'GetParam'
-        tree = etree.ElementTree(root)
+        # added parser option in response to CVE-2026-41066
+        tree = etree.ElementTree(root, parser=self._xmlparser)
         return self._return_document(tree)
 
     def _get_value(self, notify_cmd, yamaha_host):
@@ -292,7 +302,8 @@ class Yamaha(SmartPlugin):
 
     def _return_value(self, state, cmd):
         try:
-            tree = etree.parse(StringIO(state))
+            # added parser option in response to CVE-2026-41066
+            tree = etree.parse(StringIO(state), parser=self._xmlparser)
         except Exception:
             return "Invalid data received"
         if cmd == 'input':

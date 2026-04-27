@@ -37,6 +37,9 @@ class Action:
         self.namespaces = IGD_SERVICE_NAMESPACE if 'igd' in description_file else TR064_SERVICE_NAMESPACE
         self.control_namespace = IGD_CONTROL_NAMESPACE if 'igd' in description_file else TR064_CONTROL_NAMESPACE
 
+        # added parser with resolve_entities option in response to CVE-2026-41066
+        self._xmlparser = ET.XMLParser(resolve_entities='internal')
+
         ET.register_namespace('s', 'http://schemas.xmlsoap.org/soap/envelope/')
         ET.register_namespace('h', 'http://soap-authentication.org/digest/2001/10/')
 
@@ -92,7 +95,8 @@ class Action:
                                 verify=self.verify)
         if request.status_code != 200:
             try:
-                xml = ET.parse(BytesIO(request.content))
+                # added parser option in response to CVE-2026-41066
+                xml = ET.parse(BytesIO(request.content), parser=self._xmlparser)
             except Exception:
                 return request.status_code
             try:
@@ -104,7 +108,8 @@ class Action:
             return error_code if error_code is not None else request.status_code
 
         # Translate response and prepare dict
-        xml = ET.parse(BytesIO(request.content))
+        # added parser option in response to CVE-2026-41066
+        xml = ET.parse(BytesIO(request.content), parser=self._xmlparser)
         response = AttributeDict()
         for arg in list(xml.find('.//{{{}}}{}Response'.format(self.service_type, self.name))):
             name = self.out_arguments[arg.tag]

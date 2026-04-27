@@ -27,6 +27,9 @@ class Service:
         self.description_file = description_file
         self.namespaces = IGD_SERVICE_NAMESPACE if 'igd' in description_file else TR064_SERVICE_NAMESPACE
 
+        # added parser with resolve_entities option in response to CVE-2026-41066
+        self._xmlparser = ET.XMLParser(resolve_entities='internal')
+
     def __getattr__(self, name):
         if name not in self.actions:
             self._fetch_actions(self.scpdurl)
@@ -40,7 +43,8 @@ class Service:
         """Fetch action description."""
         request = requests.get('{0}{1}'.format(self.base_url, scpdurl), verify=self.verify)
         if request.status_code == 200:
-            xml = ET.parse(BytesIO(request.content))
+            # added parser option in response to CVE-2026-41066
+            xml = ET.parse(BytesIO(request.content), parser=self._xmlparser)
 
             for action in xml.findall('./actionList/action', namespaces=self.namespaces):
                 name = action.findtext('name', namespaces=self.namespaces)
