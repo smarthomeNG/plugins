@@ -55,6 +55,8 @@ class Zigbee2Mqtt(MqttPlugin):
 
         # Call init code of parent class (MqttPlugin)
         super().__init__()
+        if not self._init_complete:
+            return
 
         # self.logger = logging.getLogger(__name__)
 
@@ -861,6 +863,5 @@ class Zigbee2Mqtt(MqttPlugin):
         try:
             item_xy({'x': x, 'y': y}, caller)
             item_brightness(bright * 254, caller)
-        except (ValueError, TypeError):
-            self.logger.warning(f"Error on assigning values {x},{y}, {bright} to items {item_xy} and {item_brightness}")
-            return
+        except (ValueError, TypeError) as e:
+            self.logger.warning(f"Error on assigning values {x},{y}, {bright} to items {item_xy} and {item_brightness}: {e}")
