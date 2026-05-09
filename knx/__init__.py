@@ -47,7 +47,7 @@ from .webif import WebInterface
 
 class KNX(SmartPlugin):
 
-    PLUGIN_VERSION = "1.8.5"
+    PLUGIN_VERSION = "1.9.0"
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes
@@ -68,6 +68,7 @@ class KNX(SmartPlugin):
         self.provider = self.get_parameter_value('provider')
         self.host = self.get_parameter_value('host')
         self.port = self.get_parameter_value('port')
+        self.pollcycle = int(self.get_parameter_value('pollcycle'))
         self.loglevel_knxd_cache_problems = self.get_parameter_value('loglevel_knxd_cache_problems')
 
         from bin.smarthome import VERSION
@@ -243,30 +244,33 @@ class KNX(SmartPlugin):
                 self.logger.debug(self.translate('reading knxd group for ga: {}').format(ga))
             self._send(pkt)
 
+    def _poll_scheduler(self):
+        for item in self._startup_polling:
+            _ga = self._startup_polling[item].get('ga')
+            _interval = int(self._startup_polling[item].get('interval')) - 1
+            _earlier = _interval and self.shtime.now() - timedelta(seconds=_interval)
+            _lastpoll = self._startup_polling[item].get('lastpoll')
+            _donot_poll = self.pollcycle > 0 and _lastpoll and _earlier and _earlier <= _lastpoll
+            if _donot_poll:
+                if self.logger.isEnabledFor(logging.DEVELOP):
+                    self.logger.develop("Not polling {}".format(item))
+                continue
+            else:
+                self._poll(**{ITEM: item, 'ga':_ga, 'interval':_interval})
+
     def _poll(self, **kwargs):
         if ITEM in kwargs:
             item = kwargs[ITEM]
+            self._startup_polling[item]['lastpoll'] = self.shtime.now()
         else:
             item = 'unknown item'
+
         if 'ga' in kwargs:
             self.groupread(kwargs['ga'])
             if self._log_own_packets is True and self.alive:
                 self._busmonitor(self._bm_format_poll.format(self.get_instance_name(), 'POLL', kwargs["ga"]))
         else:
             self.logger.warning(self.translate('problem polling {}, no known ga').format(item))
-
-        if 'interval' in kwargs and 'ga' in kwargs:
-            try:
-                ga = kwargs['ga']
-                interval = int(kwargs['interval'])
-                next = self.shtime.now() + timedelta(seconds=interval)
-                self.scheduler_add(f'KNX poll {item}', self._poll,
-                                    value={'caller': self.get_shortname(),
-                                    'instance': self.get_instance_name(),
-                                    ITEM: item, 'ga': ga, 'interval': interval},
-                                    next=next)
-            except Exception as ex:
-                self.logger.error(f"_poll function got an error {ex}")
 
     def _send_time(self):
         self.send_time(self.time_ga, self.date_ga)
@@ -546,13 +550,23 @@ class KNX(SmartPlugin):
             self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
         self.alive = True
         self._client.connect()
-        # moved from __init__() for proper restart behaviour
         for item in self._startup_polling:
             _ga = self._startup_polling[item].get('ga')
-            _interval = self._startup_polling[item].get('interval')
+            _interval = int(self._startup_polling[item].get('interval'))
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug("KNX Startup Poll for item '{}': ga {}, interval {}".format(item, _ga, _interval))
             self._poll(**{ITEM: item, 'ga':_ga, 'interval':_interval})
+            if self.pollcycle == 0:
+                self.scheduler_add(f'poll {item}', self._poll,
+                                    value={'caller': self.get_shortname(),
+                                    'instance': self.get_instance_name(),
+                                    ITEM: item, 'ga': _ga},
+                                    cycle=_interval)
+
+        if self.pollcycle > 0:
+            if self.logger.isEnabledFor(logging.INFO):
+                self.logger.info("Global poll scheduler created with cycle interval of {}s.".format(self.pollcycle))
+            self.scheduler_add(f'global poll scheduler', self._poll_scheduler, cycle=self.pollcycle)
 
         if self._send_time_do:
             self.scheduler_add('KNX[{0}] time'.format(self.get_instance_name()), self._send_time, prio=5, cycle=int(self._send_time_do))
@@ -667,11 +681,13 @@ class KNX(SmartPlugin):
             if len(knx_poll) == 2:
                 poll_ga = knx_poll[0]
                 poll_interval = float(knx_poll[1])
-
-                self.logger.info(
-                    "Item {} is polled on GA {} every {} seconds".format(item, poll_ga, poll_interval))
-                randomwait = random.randrange(15)
-                next = self.shtime.now() + timedelta(seconds=poll_interval + randomwait)
+                if self.pollcycle > 0:
+                    self.logger.info(
+                        "Item {} is polled on GA {} maximum every {} seconds."
+                        "This is dependant on the global scheduler cylce {}s".format(item, poll_ga, poll_interval, self.pollcycle))
+                else:
+                    self.logger.info(
+                        "Item {} is polled on GA {} every {} seconds".format(item, poll_ga, poll_interval))
                 self._startup_polling.update({item: {'ga': poll_ga, 'interval': poll_interval}})
             else:
                 self.logger.warning("Ignoring knx_poll for item {}: We need two parameters, one for the GA and one for the polling interval.".format(item))
