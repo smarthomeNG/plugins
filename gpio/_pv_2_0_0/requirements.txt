@@ -1,0 +1,2 @@
+lgpio;python_version<='3.12'
+gpiozero

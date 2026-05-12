@@ -6,7 +6,7 @@ plugin:
     description:                   # Alternative: description in multiple languages
         de: 'Items über Netzwerkanfragen (UDP/TCP/HTTP GET) ändern und Daten per UDP senden'
         en: 'Change items via network requests (UDP/TCP/HTTP GET) and send data via UDP'
-    maintainer: morg
+    maintainer: Morg
     tester: onkelandy, psilo909
     state: ready
     keywords: network TCP UDP HTTP GET

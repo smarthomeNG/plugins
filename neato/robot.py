@@ -375,7 +375,7 @@ class Robot:
         try:
             locale.setlocale(locale.LC_TIME, 'en_US.utf8')
         except locale.Error as e:
-            self.logger.error("Robot: Locale setting error. Please install locale en_US.utf8: "+e)
+            self.logger.error(f"Robot: Locale setting error. Please install locale en_US.utf8: {e}")
             return None
         date = time.strftime('%a, %d %b %Y %H:%M:%S', time.gmtime()) + ' GMT'
         locale.setlocale(locale.LC_TIME, saved_locale)

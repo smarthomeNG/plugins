@@ -39,7 +39,7 @@ TOKEN_URL = 'https://iam.viessmann-climatesolutions.com/idp/v3/token'
 API_URL = 'https://api.viessmann-climatesolutions.com'
 
 class Vicare(SmartPlugin):
-    PLUGIN_VERSION = '1.9.7'
+    PLUGIN_VERSION = '1.9.9'
 
     def __init__(self, sh):
         """
@@ -549,6 +549,14 @@ class Vicare(SmartPlugin):
             return
         if response.status_code == 200:
             self.logger.debug(f"pollFeatures: request successfull, response: {response.text}")
+        elif response.status_code == 401:
+            self.logger.warning(f"pollFeatures request was unauthorized (Status code: {response.status_code})")
+            if not response.text == "":
+                self.logger.debug(f"pollFeatures Debug response: {response}, response.text: {response.text}")
+        elif response.status_code == 403:
+            self.logger.warning(f"pollFeatures request was forbidden (Status code: {response.status_code})")
+            if not response.text == "":
+                self.logger.warning(f"pollFeatures Debug response: {response}, response.text: {response.text}")
         else:
             self.logger.warning(f"pollFeatures request was unsuccessfull. Status code: {response.status_code}")
             if not response.text == "":
@@ -685,35 +693,39 @@ class Vicare(SmartPlugin):
                         self.logger.info(f"Feature: {i+1} isEnabled: {isEnabled}")
                 if 'commands' in featureItem:
                     commandsItem = featureItem['commands']
+
                     if not commandsItem == {} and isEnabled and log_features:
-                        self.logger.info(f"Debug: Available commands: {commandsItem}")
-                
-                    length_path = len(vicare_tx_path)
-                    controlItem = commandsItem 
-                    for k in range(0,length_path):
-                        #self.logger.debug(f"Debug loop: k={k},txpath:{vicare_tx_path[k]}, Item: {controlItem}")
-                        tag = tag = vicare_tx_path[k]
-                        try:
-                            controlItem = controlItem[vicare_tx_path[k]]
-                        except Exception as e:
-                            self.logger.error(f"Exception occurred: {e}")
+                        self.logger.debug(f"Available commands for enabled item: {commandsItem}")
+                                        
+                    #Only extract commands via specified command path, if commandsItem is not empty:
+                    if not commandsItem == {}:
+                        length_path = len(vicare_tx_path)
+                        controlItem = commandsItem 
+                        for k in range(0,length_path):
+                            #self.logger.debug(f"Debug loop: k={k},txpath:{vicare_tx_path[k]}, Item: {controlItem}")
+                            tag = vicare_tx_path[k]
+                            try:
+                                controlItem = controlItem[vicare_tx_path[k]]
+                            except Exception as e:
+                                self.logger.error(f"Exception occurred during controlItem decoding: {e}")
+                                self.logger.debug(f"Additional debug info for exception: k:{k}, vicare_tx_path:{vicare_tx_path}, tag:{tag}")
+                                self.logger.debug(f"Additional debug info for exception2: commandsItem:{commandsItem }, controlItem :{controlItem}")
 
-                        if 'uri' in controlItem :
-                            uri = controlItem['uri']
-                        if 'isExecutable' in controlItem :
-                            isExecutable = controlItem['isExecutable']
-                        if 'type' in controlItem:
-                            type = controlItem['type']
-                        if 'constraints' in controlItem:
-                            if 'min' in controlItem['constraints']:
-                                min = controlItem['constraints']['min']
-                            if 'max' in controlItem['constraints']:
-                                max = controlItem['constraints']['max']
-                            if 'stepping' in controlItem['constraints']:
-                                stepping = controlItem['constraints']['stepping']
-                            if 'enum' in controlItem['constraints']:
-                                enumList = controlItem['constraints']['enum']
-
+                            if 'uri' in controlItem :
+                                uri = controlItem['uri']
+                            if 'isExecutable' in controlItem :
+                                isExecutable = controlItem['isExecutable']
+                            if 'type' in controlItem:
+                                type = controlItem['type']
+                            if 'constraints' in controlItem:
+                                if 'min' in controlItem['constraints']:
+                                    min = controlItem['constraints']['min']
+                                if 'max' in controlItem['constraints']:
+                                    max = controlItem['constraints']['max']
+                                if 'stepping' in controlItem['constraints']:
+                                    stepping = controlItem['constraints']['stepping']
+                                if 'enum' in controlItem['constraints']:
+                                    enumList = controlItem['constraints']['enum']
 
                 if not uri == '' and isExecutable:
                     self.logger.debug(f"Debug: Execute command with uri,tag,type, min, max, stepping, enumList: {uri},{tag},{type},{min},{max},{stepping},{enumList}")

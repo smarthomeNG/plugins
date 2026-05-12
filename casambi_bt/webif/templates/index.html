@@ -1,0 +1,130 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 0 %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>Bluetooth Verbindung</strong></td>
+			<td class="py-1">{{ p.get_cas_connection_status_as_bool() }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Anzahl Geraete') }}</strong></td>
+			<td class="py-1">{{ p.numberDevices }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>-</strong></td>
+			<td class="py-1">-</td>
+			<td></td>
+			<td class="py-1"><strong>-</strong></td>
+			<td class="py-1">-</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>AsyncIO Status</strong></td>
+			<td class="py-1">{{ p.get_asyncio_state_as_string() }}</td>
+			<td></td>
+			<td class="py-1"><strong></strong></td>
+			<td class="py-1"></td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 1 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>Casambi Units (" ~ p.get_casa_units_length() ~ ") </strong>" %}
+
+{% block bodytab1 %}
+<div class="container-fluid m-2">
+	{{ _('Liste der detektierten Casambi Bluetooth Units:') }}
+<table class="table table-striped table-hover pluginList">
+	<thead>
+	<tr>
+		<th>{{ _('Name') }}</th>
+		<th>{{ _('Device ID') }}</th>
+		<th>{{ _('UUID') }}</th>
+		<th>{{ _('Eingeschaltet') }}</th>
+		<th>{{ _('Online') }}</th>
+		<th>{{ _('Firmware') }}</th>
+		<th>{{ _('State') }}</th>
+	</tr>
+	</thead>
+	{% for unit in p.get_casa_units() %}
+			<tr>
+				<td class="py-1">{{ unit.name }}</td>
+				<td class="py-1">{{ unit.deviceId }}</td>
+				<td class="py-1">{{ unit.uuid}}</td>
+				<td class="py-1">{{ unit.is_on}}</td>
+				<td class="py-1">{{ unit.online}}</td>
+				<td class="py-1">{{ unit.firmwareVersion }}</td>
+				<td class="py-1">{{ unit.state}}</td>
+			</tr>
+	{% endfor %}
+</table>
+
+</div>
+{% endblock bodytab1 %}
+
+{% set tab2title = "<strong> " ~ _('BT Networks') ~ " </strong>" %}
+{% block bodytab2 %}
+
+<div class="mb-2">
+	{{ _('Die folgenden Geraete wurden im Bluetooh Netzwerk gefunden') }}:
+</div>
+<table class="table table-striped table-hover pluginList">
+	<thead>
+	<tr>
+		<th>{{ _('Name') }}</th>
+		<th>{{ _('MAC Adress') }}</th>
+		<th>{{ _('Details') }}</th>
+	</tr>
+	</thead>
+	{% for u in p._devices %}
+		
+			<tr>
+				<td class="py-1">{{ u.name }}</td>
+				<td class="py-1">{{ u.address}}</td>
+				<td class="py-1">{{ u.details}}</td>
+			</tr>
+		
+	{% endfor %}
+</table>
+{% endblock bodytab2 %}
+
+
+

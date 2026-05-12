@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2020-     <AUTHOR>                                   <EMAIL>
+#  Copyright 2016- <Onkel Andy>                    <onkelandy@hotmail.com>
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de

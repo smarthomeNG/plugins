@@ -1,0 +1,66 @@
+{
+    "Body": {
+        "Data": {
+            "DeviceStatus": {
+                "InverterState": "Sleeping"
+            },
+            "IAC": {
+                "Unit": "A",
+                "Value": 0.0
+            },
+            "IAC_L1": {
+                "Unit": "A",
+                "Value": 0.0
+            },
+            "IAC_L2": {
+                "Unit": "A",
+                "Value": 0.0
+            },
+            "IAC_L3": {
+                "Unit": "A",
+                "Value": 0.0
+            },
+            "IDC": {
+                "Unit": "A",
+                "Value": 0.0
+            },
+            "IDC_2": {
+                "Unit": "A",
+                "Value": 0.0
+            },
+            "PAC": {
+                "Unit": "W",
+                "Value": 0.0
+            },
+            "SAC": {
+                "Unit": "VA",
+                "Value": 0.0
+            },
+            "UAC": {
+                "Unit": "V",
+                "Value": 0.0
+            },
+            "UDC": {
+                "Unit": "V",
+                "Value": 75.19073486328
+            },
+            "UDC_2": {
+                "Unit": "V",
+                "Value": 75.34899902344
+            }
+        }
+    },
+    "Head": {
+        "RequestArguments": {
+            "DataCollection": "CommonInverterData",
+            "DeviceClass": "Inverter",
+            "Scope": "Device"
+        },
+        "Status": {
+            "Code": 0,
+            "Reason": "",
+            "UserMessage": ""
+        },
+        "Timestamp": "2020-01-01T12:00:30+00:00"
+    }
+}

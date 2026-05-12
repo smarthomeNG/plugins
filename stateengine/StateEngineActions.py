@@ -40,6 +40,7 @@ class SeActions(StateEngineTools.SeItemChild):
         self.__unassigned_delays = {}
         self.__unassigned_repeats = {}
         self.__unassigned_instantevals = {}
+        self.__unassigned_overwrites = {}
         self.__unassigned_orders = {}
         self.__unassigned_nextconditionsets = {}
         self.__unassigned_conditionsets = {}
@@ -112,10 +113,18 @@ class SeActions(StateEngineTools.SeItemChild):
             elif func == "se_instanteval":
                 # set instant calculation
                 if name not in self.__actions:
-                    # If we do not have the action yet (repeat-attribute before action-attribute), ...
+                    # If we do not have the action yet (instanteval-attribute before action-attribute), ...
                     self.__unassigned_instantevals[name] = value
                 else:
                     _issue = self.__actions[name].update_instanteval(value)
+                return _count, _issue
+            elif func == "se_overwrite":
+                # set overwriting delayed actions
+                if name not in self.__actions:
+                    # If we do not have the action yet (overwrite-attribute before action-attribute), ...
+                    self.__unassigned_overwrites[name] = value
+                else:
+                    _issue = self.__actions[name].update_overwrite(value)
                 return _count, _issue
             elif func == "se_repeat":
                 # set repeat
@@ -300,6 +309,12 @@ class SeActions(StateEngineTools.SeItemChild):
                 _issue_list.append(_issue)
             del self.__unassigned_instantevals[name]
 
+        if name in self.__unassigned_overwrites:
+            _issue = action.update_overwrite(self.__unassigned_overwrites[name])
+            if _issue:
+                _issue_list.append(_issue)
+            del self.__unassigned_overwrites[name]
+
         if name in self.__unassigned_mindeltas:
             _issue = action.update_mindelta(self.__unassigned_mindeltas[name])
             if _issue:
@@ -369,7 +384,7 @@ class SeActions(StateEngineTools.SeItemChild):
             self._log_warning("Removed action {0} because: {1}.", name, e)
 
         parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'nextconditionset': None, 'conditionset': None,
-                     'previousconditionset': None, 'previousstate_conditionset': None, 'mode': None, 'instanteval': None, 'mindelta': None, 'minagedelta': None}
+                     'previousconditionset': None, 'previousstate_conditionset': None, 'mode': None, 'instanteval': None, 'overwrite': None, 'mindelta': None, 'minagedelta': None}
         _issue = None
         _issue_list = []
         # value_list needs to be string or list
@@ -513,10 +528,13 @@ class SeActions(StateEngineTools.SeItemChild):
         except ValueError as ex:
             remove_action(ex)
             return _issue_list
-
         # add additional parameters
         if parameter['instanteval'] is not None:
             _issue = self.__actions[name].update_instanteval(parameter['instanteval'])
+            if _issue:
+                _issue_list.append(_issue)
+        if parameter['overwrite'] is not None:
+            _issue = self.__actions[name].update_overwrite(parameter['overwrite'])
             if _issue:
                 _issue_list.append(_issue)
         if parameter['repeat'] is not None:

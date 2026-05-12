@@ -1,0 +1,13 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Valide':         {'de': '=', 'en': 'valid'}
+    'Invalide':       {'de': '=', 'en': 'invalid'}
+    'Online':         {'de': '=', 'en': 'online'}
+    'Offline':        {'de': '=', 'en': 'offline'}
+    'Anzahl Netzwerke':
+        'de': '='
+        'en': 'Number Networks'
+    'Liste der Casambi Items:':
+        'de': '='
+        'en': 'List of Casambi items:'

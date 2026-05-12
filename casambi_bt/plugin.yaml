@@ -1,0 +1,74 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Interface plugin fuer Casambi lokal via Bluetooth'
+        en: 'Interface plugin for Casambi locally via Bluetooth'
+    maintainer: aschwith
+    tester: unknown                
+    state: develop                    # change to ready when done with development
+    keywords: casambi, occhio air, 
+#   documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: www.knx-user-forum.de/forum/supportforen/smarthome-py/2082021-support-thread-für-das-casambi-bluetooth-plugin
+    version: 1.0.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: '1.7'            # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.11             # minimum python version for this plugin  
+    multi_instance: False           # plugin supports multi instance
+    restartable: yes
+    classname: Casambi_bt           # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    mac: 
+        type: str
+        description:
+            de: 'MAC-Adresse (12-stelliger hex Wert, z.B. AA:BB:CD:EF:12:34)'
+            en: 'MAC address (12-digit hex value, e.g. AA:BB:CD:EF:12:34)'
+    password: 
+        type: str
+        hide: true
+        description:
+            de: 'Kennwort des lokalen Casmbi Netzwerks'
+            en: 'Password of local Casambi network'
+
+item_attributes: 
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    casambi_bt_id:
+        type: int
+        valid_min: 0
+        description:
+            de: 'Casambi Geraete ID'
+            en: 'Casambi device id'
+
+    casambi_bt_tx_key:
+        type: str
+        description:
+            de: 'Key fuer das Senden von Kommandos ins Casambi Netzwerk'
+            en: 'Key for sending commands into the Casambi network'
+        valid_list:
+        - 'ON'
+        - 'DIMMER'
+        - 'VERTICAL'
+        - 'CCT'
+
+    casambi_bt_rx_key:
+        type: str
+        description:
+            de: 'Key fuer den Empfang von Statusinformationen'
+            en: 'Key for receiving status informations'
+        valid_list:
+        - 'ON'
+        - 'DIMMER'
+        - 'VERTICAL'
+        - 'CCT'
+        - 'BACKEND_ONLINE_STAT'
+
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+

@@ -131,13 +131,27 @@ class WebInterface(SmartPluginWebIf):
         result = None
 
         if cmd == "detect":
-            result = {'discovery_successful': self.plugin.discover(), 'protocol': self.plugin.protocol}
+
+            # try to soft-format the discovery log messages...
+            logmsg = ''
+            for key, content in self.plugin.discovery_logs.items():
+                logmsg += f'{key}:\n'
+                lines = content.split('\n')
+                for line in lines:
+                    logmsg += f'  {line}\n'
+            result = {'discovery_successful': self.plugin.discover(), 'protocol': self.plugin.protocol, 'log': logmsg}
 
         elif cmd == 'query':
             result = self.plugin.query(assign_values=False)
 
         elif cmd == 'create_items':
-            result = self.plugin.create_items()
+            try:
+                result = {'success': self.plugin.create_items(), 'file': self.plugin.item_file, 'err': ''}
+            except FileExistsError:
+                result = {'success': False, 'file': '', 'err': f'Datei {self.plugin.item_file} bereits vorhanden, bitte erst löschen oder umbennen.'}
+                self.logger.warning(result)
+            except Exception as e:
+                self.logger.error(e)
 
         if result is not None:
             # JSON zurücksenden

@@ -191,6 +191,7 @@ item_attributes:
               - "..."
               - "..."
               - "..."
+              - "..."
 
     rtr2_settings:
         type: list

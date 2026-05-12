@@ -44,7 +44,9 @@ class Client:
         # request = requests.get(f'{self.base_url}/{description_file}', verify=self.verify)
 
         if request.status_code == 200:
-            xml = ET.parse(BytesIO(request.content))
+            # added parser with resolve_entities option in response to CVE-2026-41066
+            xmlparser = ET.XMLParser(resolve_entities='internal')
+            xml = ET.parse(BytesIO(request.content), parser=xmlparser)
 
             for device in xml.findall('.//device', namespaces=self.namespaces):
                 name = device.findtext('deviceType', namespaces=self.namespaces).split(':')[-2]

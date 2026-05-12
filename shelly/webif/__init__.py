@@ -114,7 +114,10 @@ class WebInterface(MqttPluginWebIf):
                 value_dict['shelly_id'] = device
                 value_dict['shelly_type'] = self.plugin.shelly_devices[device].get('app', '')
                 value_dict['shelly_gen'] = 'Gen' + self.plugin.shelly_devices[device].get('gen', '?')
-                value_dict['shelly_online'] = self.ja_nein(self.plugin.shelly_devices[device]['online'])
+                if 'online' in self.plugin.shelly_devices[device]:
+                    value_dict['shelly_online'] = self.ja_nein(self.plugin.shelly_devices[device]['online'])
+                else:
+                    value_dict['shelly_online'] = 'Unbekannt'
                 value_dict['shelly_mac'] = self.plugin.shelly_devices[device]['mac']
                 value_dict['shelly_ip'] = self.plugin.shelly_devices[device]['ip']
                 value_dict['shelly_fw'] = self.plugin.shelly_devices[device]['fw_ver']

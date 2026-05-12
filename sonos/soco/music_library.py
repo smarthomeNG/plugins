@@ -7,7 +7,6 @@ The Music Library is the collection of music stored on your local network.
 For access to third party music streaming services, see the
 `music_service` module."""
 
-
 import logging
 
 from urllib.parse import quote as quote_url
@@ -560,7 +559,7 @@ class MusicLibrary:
             complete_result=True,
         )
 
-        reduced = [item for item in result if item.__class__ == DidlMusicAlbum]
+        reduced = [item for item in result if isinstance(item, DidlMusicAlbum)]
         # It is necessary to update the list of items in two places, due to
         # a bug in SearchResult
         result[:] = reduced

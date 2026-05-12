@@ -395,6 +395,7 @@ class ZoneGroupState:
 
 def normalize_zgs_xml(xml):
     """Normalize the ZoneGroupState payload and return an lxml ElementTree instance."""
-    parser = LXML.XMLParser(remove_blank_text=True)  # pylint:disable=I1101
+    # added resolve_entities in response to CVE-2026-41066 
+    parser = LXML.XMLParser(remove_blank_text=True, resolve_entities='internal')  # pylint:disable=I1101
     tree = LXML.fromstring(xml, parser)  # pylint:disable=I1101
     return ZGS_TRANSFORM(tree)

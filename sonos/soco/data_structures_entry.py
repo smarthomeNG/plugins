@@ -29,7 +29,8 @@ def from_didl_string(string):
         list: A list of one or more instances of `DidlObject` or a subclass
     """
     items = []
-    parser = ET.XMLParser(recover=True, encoding="utf-8")
+    # added resolve_entities in response to CVE-2026-41066 
+    parser = ET.XMLParser(recover=True, encoding="utf-8", resolve_entities='internal')
     root = ET.fromstring(string.encode("utf-8"), parser=parser)
     for elt in root:
         if elt.tag.endswith("item") or elt.tag.endswith("container"):

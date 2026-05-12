@@ -37,7 +37,7 @@ from .webif import WebInterface
 
 
 class TankerKoenig(SmartPlugin):
-    PLUGIN_VERSION = "2.0.5"
+    PLUGIN_VERSION = "2.0.6"
 
     _base_url = 'https://creativecommons.tankerkoenig.de/json'
     _detail_url_suffix = 'detail.php'
@@ -271,7 +271,7 @@ class TankerKoenig(SmartPlugin):
             return {}
         _price_dict = _station_id_prices.get('prices', None)
         for station_id in station_ids:
-            if station_id not in _price_dict:
+            if _price_dict and isinstance(_price_dict, dict) and (station_id not in _price_dict):
                 self.logger.notice(f"Plugin '{self.get_fullname()}': No result for station with id {station_id}. Check manually!")
 
         if _price_dict and isinstance(_price_dict, dict):

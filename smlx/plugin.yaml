@@ -6,7 +6,7 @@ plugin:
         de: 'Auslesen von Stromzählern mit SML-Protokoll'
         en: 'Readout of smartmeter with SML protocol'
     maintainer: bmxp
-    tester: sisamiwe, morg         # Who tests this plugin?
+    tester: sisamiwe, Morg         # Who tests this plugin?
     state: ready                   # change to ready when done with development
     keywords: sml smartmeter
     documentation: https://www.smarthomeng.de/developer/plugins/smlx/user_doc.html
