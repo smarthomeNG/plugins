@@ -109,14 +109,17 @@ class Database(SmartPlugin):
             self._prefix += '_'
         self._dump_cycle = self.get_parameter_value('cycle')
         self._removeold_cycle = self.get_parameter_value('removeold_cycle')
-        if self._removeold_cycle == self._dump_cycle:
+        # Guard against None (e.g. in test environments where get_parameter_value
+        # returns None), and ensure the two scheduler cycles are not identical so
+        # they don't compete for the same scheduler slot.
+        if self._removeold_cycle is not None and self._removeold_cycle == self._dump_cycle:
             self._removeold_cycle += 2
         self._precision = self.get_parameter_value('precision')
         self._time_precision = self.get_parameter_value('time_precision')
         self.count_logentries = self.get_parameter_value('count_logentries')
         self.max_delete_logentries = self.get_parameter_value('max_delete_logentries')
         self.max_reassign_logentries = self.get_parameter_value('max_reassign_logentries')
-        self._default_maxage = float(self.get_parameter_value('default_maxage'))
+        self._default_maxage = float(self.get_parameter_value('default_maxage') or 0)
 
         self._copy_database = self.get_parameter_value('copy_database')
         self._copy_database_name = self.get_parameter_value('copy_database_name')
@@ -329,6 +332,37 @@ class Database(SmartPlugin):
                 self.logger.warning("Negative duration clamped to 0: start: {0}, end {1}, prevChange: {2}, lastChange: {3}, item: {4}".format(start , end, item.prev_change(), item.last_change(), item ))
                 end = start  # clamp — negative duration must not be stored
 
+            # ── Gap detection ────────────────────────────────────────────────
+            # If db_mark_invalid() was called previously and the open buffer
+            # entry is a no-data gap (value is None), this new valid measurement
+            # implicitly re-validates the item.  We must NOT use the standard
+            # step-1a duration formula here because that computes
+            #   end - item.prev_change()
+            # which reaches back to the last Python-value change *before* the
+            # gap started, making the gap duration appear longer than it really
+            # was.  Instead the gap is closed using its own start timestamp.
+            in_gap = (
+                getattr(self, '_gap_items', {}).get(item) is not None
+                and self._buffer[item]
+                and self._buffer[item][-1][1] is None       # still open
+                and self._buffer[item][-1][2] is None       # is a gap entry
+            )
+            if in_gap:
+                gap = self._buffer[item][-1]
+                # Close the gap with the correct duration relative to gap start
+                self._buffer[item][-1] = (gap[0], end - gap[0], None)
+                # Clear gap tracking — implicitly re-validated by the new value
+                del self._gap_items[item]
+                self.logger.info(
+                    f"update_item: implicit re-validation for '{item.property.path}' "
+                    f"— no-data gap closed (duration {self._seconds(end - gap[0])} s)"
+                )
+                # Skip step 1b: there is no meaningful prev_value to record
+                # during a gap period.  Go straight to step 2.
+                self._buffer[item].append((end, None, item()))
+                return
+
+            # ── Normal path ──────────────────────────────────────────────────
             # Determine, if DB buffer has a valid "last" value:
             if len(self._buffer[item]) == 0 or self._buffer[item][-1][1] is not None:
                 last = None
@@ -345,7 +379,7 @@ class Database(SmartPlugin):
                     self.logger.warning(f"Debug 1a): Rewriting valid last value, start: {last[0]}, duration: {end - start}, value: {last[2]} to item '{item}'.")
                 self._buffer[item][-1] = (last[0], end - start, last[2])
             else:
-		# Step 1b): Append new value with none duration
+                # Step 1b): Append new value with none duration
 
                 #If item is configured to be initialized via database init (see database: init in item.yaml), do not update previous value if the latter qual to the regular initial_value.
                 # This is because configuring database: init aims at avoiding the regular item initial value to appear inside the DB:

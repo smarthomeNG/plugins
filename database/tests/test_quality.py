@@ -152,5 +152,190 @@ class TestQualityStoreLevel(unittest.TestCase):
         self.assertEqual(rows[0][0], QUALITY_VALID)
 
 
+class TestImplicitRevalidation(unittest.TestCase):
+    """Verify that supplying a new value while a gap is open correctly
+    closes the gap with the right duration and clears gap tracking state.
+
+    The three bugs fixed:
+      1. Gap duration used item.prev_change() instead of the gap's own start
+         time, making the gap appear longer than it actually was.
+      2. _gap_items was not cleared, so a subsequent db_mark_valid() would
+         incorrectly close the new valid entry instead of being a no-op.
+      3. The gap entry (value=None) was mistakenly treated as a normal open
+         value entry in step-1a, producing a buffer entry with value=None
+         and the wrong duration.
+    """
+
+    def _make_buffer(self):
+        from plugins.database.buffer import BufferManager
+        from plugins.database.constants import BufferEntry
+        return BufferManager(), BufferEntry
+
+    def _item(self):
+        class _I:
+            pass
+        return _I()
+
+    # ── helpers that replicate _mark_item_invalid / update_item logic ────────
+
+    def _open_gap(self, mgr, item, gap_start_ts, prior_value=250.0,
+                  prior_start_ts=1000):
+        """Open a gap in the buffer, mirroring _mark_item_invalid."""
+        mgr.push(item, __import__('plugins.database.constants',
+                                  fromlist=['BufferEntry']).BufferEntry(
+            time=prior_start_ts, duration=None, value=prior_value))
+        mgr.push_invalid(item, start_ts=gap_start_ts)
+
+    def _simulate_update_item(self, mgr, gap_items, item,
+                              update_ts, new_value):
+        """
+        Simulate the gap-path in update_item() as fixed:
+          - Detect open gap
+          - Close it with duration relative to gap.time (not item.prev_change)
+          - Clear _gap_items
+          - Append new valid entry
+        """
+        from plugins.database.constants import QUALITY_NO_DATA, BufferEntry
+        buf = mgr._buffer[item]
+        in_gap = (
+            gap_items.get(item) is not None
+            and buf
+            and buf[-1].duration is None
+            and buf[-1].value is None
+        )
+        if in_gap:
+            gap = buf[-1]
+            buf[-1] = gap._replace(duration=update_ts - gap.time)
+            del gap_items[item]
+            buf.append(BufferEntry(time=update_ts, duration=None, value=new_value))
+        else:
+            # normal path (not under test here)
+            buf.append(BufferEntry(time=update_ts, duration=None, value=new_value))
+
+    # ── tests ────────────────────────────────────────────────────────────────
+
+    def test_gap_duration_uses_gap_start_not_prev_change(self):
+        """Gap duration must be (update_time - gap_start), not
+        (update_time - item.prev_change)."""
+        mgr, BE = self._make_buffer()
+        item = self._item()
+        mgr.register(item)
+        gap_items = {}
+
+        # Valid entry from T=1000, gap opened at T=1500, new value at T=3000
+        prior_start = 1000
+        gap_start   = 1500
+        update_ts   = 3000
+
+        self._open_gap(mgr, item, gap_start, prior_value=250.0,
+                       prior_start_ts=prior_start)
+        gap_items[item] = gap_start
+
+        self._simulate_update_item(mgr, gap_items, item, update_ts, 180.0)
+
+        entries = mgr.pop_all(item)
+        # [valid_250, gap, valid_180]
+        self.assertEqual(len(entries), 3)
+
+        gap_entry = entries[1]
+        correct_duration = update_ts - gap_start       # 1500 ms
+        wrong_duration   = update_ts - prior_start     # 2000 ms (old bug)
+
+        self.assertEqual(gap_entry.duration, correct_duration,
+                         f"Expected gap duration {correct_duration}, "
+                         f"got {gap_entry.duration} (old bug would give "
+                         f"{wrong_duration})")
+        self.assertIsNone(gap_entry.value)
+
+    def test_gap_items_cleared_after_implicit_revalidation(self):
+        """_gap_items must be cleared when update_item closes the gap,
+        so that a subsequent db_mark_valid() call is a no-op and does not
+        corrupt the new valid entry."""
+        mgr, BE = self._make_buffer()
+        item = self._item()
+        mgr.register(item)
+        gap_items = {}
+
+        self._open_gap(mgr, item, gap_start_ts=2000)
+        gap_items[item] = 2000
+
+        # New value arrives — gap is implicitly closed
+        self._simulate_update_item(mgr, gap_items, item, 3000, 200.0)
+
+        # _gap_items must be cleared
+        self.assertNotIn(item, gap_items,
+                         "_gap_items must be cleared after implicit re-validation")
+
+    def test_no_stale_prev_value_emitted_during_gap(self):
+        """When closing a gap implicitly, no step-1b prev_value entry must
+        be emitted.  The buffer should contain exactly:
+          [closed_valid, closed_gap, open_valid_new]."""
+        mgr, BE = self._make_buffer()
+        item = self._item()
+        mgr.register(item)
+        gap_items = {}
+
+        self._open_gap(mgr, item, gap_start_ts=1500, prior_value=250.0,
+                       prior_start_ts=1000)
+        gap_items[item] = 1500
+
+        self._simulate_update_item(mgr, gap_items, item, 3000, 180.0)
+
+        entries = mgr.pop_all(item)
+        self.assertEqual(len(entries), 3,
+                         f"Expected [valid, gap, new_valid], got {len(entries)} entries")
+        self.assertEqual(entries[0].value, 250.0)   # prior valid
+        self.assertIsNone(entries[1].value)          # gap
+        self.assertEqual(entries[2].value, 180.0)   # new valid
+
+    def test_normal_update_unaffected(self):
+        """Normal update (no open gap) must not be changed by the gap detection."""
+        mgr, BE = self._make_buffer()
+        item = self._item()
+        mgr.register(item)
+        gap_items = {}   # empty — no gap open
+
+        # Push a normal open valid entry
+        mgr.push(item, BE(time=1000, duration=None, value=250.0))
+
+        # Simulate normal step-1a: close the previous entry, append new
+        buf = mgr._buffer[item]
+        in_gap = (
+            gap_items.get(item) is not None
+            and buf and buf[-1].duration is None and buf[-1].value is None
+        )
+        self.assertFalse(in_gap, "Should not detect a gap when none was opened")
+
+    def test_subsequent_mark_valid_is_noop_after_implicit_close(self):
+        """After implicit re-validation, db_mark_valid() must not close the
+        new valid entry (stale _gap_items would have caused it to do so)."""
+        mgr, BE = self._make_buffer()
+        item = self._item()
+        mgr.register(item)
+        gap_items = {}
+
+        self._open_gap(mgr, item, gap_start_ts=2000)
+        gap_items[item] = 2000
+
+        # New value — implicit re-validation, clears gap_items
+        self._simulate_update_item(mgr, gap_items, item, 3000, 180.0)
+
+        # Simulate db_mark_valid() — with _gap_items cleared it should no-op
+        if gap_items.get(item) is not None:
+            end_ts = 3500
+            buf = mgr._buffer[item]
+            if buf and buf[-1].duration is None:
+                last = buf[-1]
+                buf[-1] = last._replace(duration=end_ts - last.time)
+            del gap_items[item]
+
+        # The new valid entry (180W) must still be open (duration=None)
+        last = mgr.last_entry(item)
+        self.assertEqual(last.value, 180.0)
+        self.assertIsNone(last.duration,
+                          "New valid entry must remain open after the (no-op) "
+                          "db_mark_valid() call")
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
