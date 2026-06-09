@@ -137,7 +137,1687 @@ item_attributes:
             de: 'Faktor mit dem der gelesene Register-Wert multipliziert wird'
             en: 'Factor by which the read register value is multiplied'
 
-item_structs: NONE
+item_structs:
+    huawei_smartlogger:
+      date_time:
+        type: num
+        modbusaddress@instance: 40000
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      time_zone:
+        type: num
+        modbusaddress@instance: 40005
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      local_time:
+        type: num
+        modbusaddress@instance: 40009
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      active_pv_power:
+        type: num
+        modbusaddress@instance: 40388
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+      reactive_pv_power:
+        type: num
+        modbusaddress@instance: 40390
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+      active_ess_power:
+        type: num
+        modbusaddress@instance: 40392
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+      soc:
+        type: num
+        modbusaddress@instance: 40515
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      inverter_efficiency:
+        type: num
+        modbusaddress@instance: 40685
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+    huawei_smartlogger_external_meter:
+
+      phase_a_voltage:
+        type: num
+        modbusaddress@instance: 32260
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      phase_b_voltage:
+        type: num
+        modbusaddress@instance: 32262
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      phase_c_voltage:
+        type: num
+        modbusaddress@instance: 32264
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      phase_a_current:
+        type: num
+        modbusaddress@instance: 32272
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      phase_b_current:
+        type: num
+        modbusaddress@instance: 32274
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      phase_c_current:
+        type: num
+        modbusaddress@instance: 32276
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      active_power:
+        type: num
+        modbusaddress@instance: 32278
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+      power_factor:
+        type: num
+        modbusaddress@instance: 32284
+        modbusdatatype@instance: int16
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+      total_active_electricity:
+        type: num
+        modbusaddress@instance: 32341
+        modbusdatatype@instance: int64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      total_reactive_electricity:
+        type: num
+        modbusaddress@instance: 32345
+        modbusdatatype@instance: int64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+    huawei_sdongle:
+
+      total_input_power:
+        type: num
+        modbusaddress@instance: 37498
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+      load_power:
+        type: num
+        modbusaddress@instance: 37500
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+      grid_power:
+        type: num
+        modbusaddress@instance: 37502
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+        description: positive = import from grid, negative = export to grid
+
+      total_battery_power:
+        type: num
+        modbusaddress@instance: 37504
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+        description: positive = charging, negative = discharging
+
+      total_active_power:
+        type: num
+        modbusaddress@instance: 37516
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+    huawei_meter:
+
+      meter_status:
+        type: num
+        modbusaddress@instance: 37100
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      grid_A_voltage:
+        type: num
+        modbusaddress@instance: 37101
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      grid_B_voltage:
+        type: num
+        modbusaddress@instance: 37103
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      grid_C_voltage:
+        type: num
+        modbusaddress@instance: 37105
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      active_grid_A_current:
+        type: num
+        modbusaddress@instance: 37107
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      active_grid_B_current:
+        type: num
+        modbusaddress@instance: 37109
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      active_grid_C_current:
+        type: num
+        modbusaddress@instance: 37111
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      power_meter_active_power:
+        type: num
+        modbusaddress@instance: 37113
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      power_meter_reactive_power:
+        type: num
+        modbusaddress@instance: 37115
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      active_grid_power_factor:
+        type: num
+        modbusaddress@instance: 37117
+        modbusdatatype@instance: int16
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+      active_grid_frequency:
+        type: num
+        modbusaddress@instance: 37118
+        modbusdatatype@instance: int16
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      grid_exported_energy:
+        type: num
+        modbusaddress@instance: 37119
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+        # absolute value register (exported energy)
+
+      grid_accumulated_energy:
+        type: num
+        modbusaddress@instance: 37121
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      grid_accumulated_reactive_power:
+        type: num
+        modbusaddress@instance: 37123
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      meter_type:
+        type: num
+        modbusaddress@instance: 37125
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      active_grid_A_B_voltage:
+        type: num
+        modbusaddress@instance: 37126
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      active_grid_B_C_voltage:
+        type: num
+        modbusaddress@instance: 37128
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      active_grid_C_A_voltage:
+        type: num
+        modbusaddress@instance: 37130
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      active_grid_A_power:
+        type: num
+        modbusaddress@instance: 37132
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      active_grid_B_power:
+        type: num
+        modbusaddress@instance: 37134
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      active_grid_C_power:
+        type: num
+        modbusaddress@instance: 37136
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      meter_type_check:
+        type: num
+        modbusaddress@instance: 37138
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+    huawei_inverter:
+
+      model_name:
+        type: str
+        modbusaddress@instance: 30000
+        modbusdatatype@instance: string30
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      serial_number:
+        type: str
+        modbusaddress@instance: 30015
+        modbusdatatype@instance: string20
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      pn:
+        type: str
+        modbusaddress@instance: 30025
+        modbusdatatype@instance: string20
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      firmware_version:
+        type: str
+        modbusaddress@instance: 30035
+        modbusdatatype@instance: string30
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      software_version:
+        type: str
+        modbusaddress@instance: 30050
+        modbusdatatype@instance: string30
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      protocol_version_modbus:
+        type: num
+        modbusaddress@instance: 30068
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      model_id:
+        type: num
+        modbusaddress@instance: 30070
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      nb_pv_strings:
+        type: num
+        modbusaddress@instance: 30071
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      nb_mpp_tracks:
+        type: num
+        modbusaddress@instance: 30072
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      rated_power:
+        type: num
+        modbusaddress@instance: 30073
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      p_max:
+        type: num
+        modbusaddress@instance: 30075
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      s_max:
+        type: num
+        modbusaddress@instance: 30077
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      q_max_out:
+        type: num
+        modbusaddress@instance: 30079
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      q_max_in:
+        type: num
+        modbusaddress@instance: 30081
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      p_max_real:
+        type: num
+        modbusaddress@instance: 30083
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      s_max_real:
+        type: num
+        modbusaddress@instance: 30085
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      product_sales_area:
+        type: str
+        modbusaddress@instance: 30105
+        modbusdatatype@instance: string4
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      grid_standard_code_protocol_version:
+        type: num
+        modbusaddress@instance: 30109
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      feature_mask_1:
+        type: num
+        modbusaddress@instance: 30211
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      feature_mask_2:
+        type: num
+        modbusaddress@instance: 30213
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      feature_mask_3:
+        type: num
+        modbusaddress@instance: 30215
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      feature_mask_4:
+        type: num
+        modbusaddress@instance: 30217
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      input_power:
+        type: num
+        modbusaddress@instance: 32064
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      active_power:
+        type: num
+        modbusaddress@instance: 32080
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      reactive_power:
+        type: num
+        modbusaddress@instance: 32082
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      power_factor:
+        type: num
+        modbusaddress@instance: 32084
+        modbusdatatype@instance: int16
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+      grid_frequency:
+        type: num
+        modbusaddress@instance: 32085
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      efficiency:
+        type: num
+        modbusaddress@instance: 32086
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      internal_temperature:
+        type: num
+        modbusaddress@instance: 32087
+        modbusdatatype@instance: int16
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      device_status:
+        type: num
+        modbusaddress@instance: 32089
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      startup:
+        type: num
+        modbusaddress@instance: 40200
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: write
+
+      shutdown:
+        type: num
+        modbusaddress@instance: 40201
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: write
+    huawei_storage:
+
+      maximum_charge_power:
+        type: num
+        modbusaddress@instance: 37046
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      maximum_discharge_power:
+        type: num
+        modbusaddress@instance: 37048
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      rated_capacity:
+        type: num
+        modbusaddress@instance: 37758
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      state_of_capacity:
+        type: num
+        modbusaddress@instance: 37760
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      running_status:
+        type: num
+        modbusaddress@instance: 37762
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      bus_voltage:
+        type: num
+        modbusaddress@instance: 37763
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      bus_current:
+        type: num
+        modbusaddress@instance: 37764
+        modbusdatatype@instance: int16
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      charge_discharge_power:
+        type: num
+        modbusaddress@instance: 37765
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      total_charge:
+        type: num
+        modbusaddress@instance: 37780
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      total_discharge:
+        type: num
+        modbusaddress@instance: 37782
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      current_day_charge_capacity:
+        type: num
+        modbusaddress@instance: 37784
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      current_day_discharge_capacity:
+        type: num
+        modbusaddress@instance: 37786
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      working_mode_a:
+        type: num
+        modbusaddress@instance: 47004
+        modbusdatatype@instance: int16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      time_of_use_price:
+        type: bool
+        modbusaddress@instance: 47027
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      huawei_luna2000_time_of_use_price_periods:
+        type: huawei_luna2000_time_of_use
+        modbusaddress@instance: 47255
+        modbusdirection@instance: read_write
+
+      lg_resu_time_of_use_price_periods:
+        type: lg_resu_time_of_use
+        modbusaddress@instance: 47028
+        modbusdirection@instance: read_write
+
+      lcoe:
+        type: num
+        modbusaddress@instance: 47069
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+      maximum_charging_power:
+        type: num
+        modbusaddress@instance: 47075
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      maximum_discharging_power:
+        type: num
+        modbusaddress@instance: 47077
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      power_limit_grid_tied_point:
+        type: num
+        modbusaddress@instance: 47079
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      charging_cutoff_capacity:
+        type: num
+        modbusaddress@instance: 47081
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read_write
+
+      discharging_cutoff_capacity:
+        type: num
+        modbusaddress@instance: 47082
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read_write
+
+      forced_charging_and_discharging_period:
+        type: num
+        modbusaddress@instance: 47083
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      forced_charging_and_discharging_power:
+        type: num
+        modbusaddress@instance: 47084
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      working_mode_settings:
+        type: num
+        modbusaddress@instance: 47086
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      charge_from_grid_function:
+        type: bool
+        modbusaddress@instance: 47087
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      grid_charge_cutoff_state_of_charge:
+        type: num
+        modbusaddress@instance: 47088
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read_write
+
+      forcible_charge_discharge_write:
+        type: num
+        modbusaddress@instance: 47100
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      forcible_charge_discharge_soc:
+        type: num
+        modbusaddress@instance: 47101
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read_write
+
+      backup_power_state_of_charge:
+        type: num
+        modbusaddress@instance: 47102
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read_write
+
+      fixed_charging_and_discharging_periods:
+        type: charge_discharge_periods
+        modbusaddress@instance: 47200
+        modbusdirection@instance: read_write
+
+      power_of_charge_from_grid:
+        type: num
+        modbusaddress@instance: 47242
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      maximum_power_of_charge_from_grid:
+        type: num
+        modbusaddress@instance: 47244
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      forcible_charge_discharge_setting_mode:
+        type: num
+        modbusaddress@instance: 47246
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      forcible_charge_power:
+        type: num
+        modbusaddress@instance: 47247
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      forcible_discharge_power:
+        type: num
+        modbusaddress@instance: 47249
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      lg_resu_time_of_use_charging_and_discharging_periods:
+        type: lg_resu_time_of_use
+        modbusaddress@instance: 47028
+        modbusdirection@instance: read_write
+
+      huawei_luna2000_time_of_use_charging_and_discharging_periods:
+        type: huawei_luna2000_time_of_use
+        modbusaddress@instance: 47255
+        modbusdirection@instance: read_write
+
+      excess_pv_energy_use_in_tou:
+        type: num
+        modbusaddress@instance: 47299
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      active_power_control_mode:
+        type: num
+        modbusaddress@instance: 47415
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      maximum_feed_grid_power_watt:
+        type: num
+        modbusaddress@instance: 47416
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      maximum_feed_grid_power_percent:
+        type: num
+        modbusaddress@instance: 47418
+        modbusdatatype@instance: int16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      remote_charge_discharge_control_mode:
+        type: num
+        modbusaddress@instance: 47589
+        modbusdatatype@instance: int16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      dongle_plant_maximum_charge_from_grid_power:
+        type: num
+        modbusaddress@instance: 47590
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      backup_switch_to_off_grid:
+        type: num
+        modbusaddress@instance: 47604
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      default_maximum_feed_in_power:
+        type: num
+        modbusaddress@instance: 47675
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      default_active_power_change_gradient:
+        type: num
+        modbusaddress@instance: 47677
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+    huawei_emma:
+
+      emma_software_version:
+        type: str
+        modbusaddress@instance: 30035
+        modbusdatatype@instance: string30
+        modbusdirection@instance: read
+
+      emma_model:
+        type: str
+        modbusaddress@instance: 30222
+        modbusdatatype@instance: string40
+        modbusdirection@instance: read
+
+      inverter_total_absorbed_energy:
+        type: num
+        modbusaddress@instance: 30302
+        modbusdatatype@instance: uint64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      consumption_today:
+        type: num
+        modbusaddress@instance: 30324
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      total_energy_consumption:
+        type: num
+        modbusaddress@instance: 30326
+        modbusdatatype@instance: uint64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      feed_in_to_grid_today:
+        type: num
+        modbusaddress@instance: 30330
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      total_feed_in_to_grid:
+        type: num
+        modbusaddress@instance: 30332
+        modbusdatatype@instance: uint64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      supply_from_grid_today:
+        type: num
+        modbusaddress@instance: 30336
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      total_supply_from_grid:
+        type: num
+        modbusaddress@instance: 30338
+        modbusdatatype@instance: uint64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      inverter_energy_yield_today:
+        type: num
+        modbusaddress@instance: 30342
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      inverter_total_energy_yield:
+        type: num
+        modbusaddress@instance: 30344
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      pv_yield_today:
+        type: num
+        modbusaddress@instance: 30346
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      total_pv_energy_yield:
+        type: num
+        modbusaddress@instance: 30348
+        modbusdatatype@instance: uint64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      pv_output_power:
+        type: num
+        modbusaddress@instance: 30354
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      load_power:
+        type: num
+        modbusaddress@instance: 30356
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      feed_in_power:
+        type: num
+        modbusaddress@instance: 30358
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      inverter_rated_power:
+        type: num
+        modbusaddress@instance: 30362
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      inverter_active_power:
+        type: num
+        modbusaddress@instance: 30364
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      yield_this_month:
+        type: num
+        modbusaddress@instance: 30380
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      monthly_energy_consumption:
+        type: num
+        modbusaddress@instance: 30382
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      monthly_feed_in_to_grid:
+        type: num
+        modbusaddress@instance: 30384
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      yield_this_year:
+        type: num
+        modbusaddress@instance: 30386
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      annual_energy_consumption:
+        type: num
+        modbusaddress@instance: 30388
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      yearly_feed_in_to_grid:
+        type: num
+        modbusaddress@instance: 30390
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      monthly_supply_from_grid:
+        type: num
+        modbusaddress@instance: 30394
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      yearly_supply_from_grid:
+        type: num
+        modbusaddress@instance: 30396
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      backup_time_notification_threshold:
+        type: num
+        modbusaddress@instance: 30406
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      number_of_inverters_found:
+        type: num
+        modbusaddress@instance: 30801
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      number_of_chargers_found:
+        type: num
+        modbusaddress@instance: 30804
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      emma_tou_preferred_use_of_surplus_pv_power:
+        type: num
+        modbusaddress@instance: 40001
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      emma_tou_maximunm_power_for_charging_batteries_from_grid:
+        type: num
+        modbusaddress@instance: 40002
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      emma_power_control_mode_at_grid_connection_point:
+        type: str
+        on_change: .register = sh..config_reverse(key=value)
+
+        config:
+            type: dict
+            initial_value: "{0: 'unlimited', 5: 'grid connection with zero power', 6: 'limited feed-in', 7: 'power-limited grid connected'}"
+
+        config_reverse:
+            type: dict
+            initial_value: "{'unlimited': 0, 'grid connection with zero power': 5, 'limited feed-in': 6, 'power-limited grid connected': 7}"
+
+        register:
+          type: num
+          modbusaddress@instance: 40100
+          modbusdatatype@instance: uint16
+          modbusfactor@instance: 1
+          modbusdirection@instance: read_write
+          on_change: .. = sh..config(key=value)
+
+      emma_limitation_mode:
+        description: 0 = total power, 1 = single-phase power
+        type: num
+        modbusaddress@instance: 40101
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      emma_maximum_feed_grid_power_watt:
+        type: num
+        modbusaddress@instance: 40107
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      emma_maximum_feed_grid_power_percent:
+        type: num
+        modbusaddress@instance: 40109
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      emma_3phase_imbalance_control:
+        type: bool
+        on_change: .register = 1 if value == True else 0
+
+        register:
+            type: num
+            modbusaddress@instance: 40110
+            modbusdatatype@instance: uint16
+            modbusfactor@instance: 1
+            modbusdirection@instance: read_write
+            on_change: .. = True if value == 1 else False
+
+      emma_power_supply_configuration:
+        type: str
+        on_change: .register = sh..config_reverse(key=value)
+
+        config:
+            type: dict
+            initial_value: "{0: 'None', 1: 'mains only', 2: 'mains + generator', 3: 'generator only'}"
+
+        config_reverse:
+            type: dict
+            initial_value: "{'None': 0, 'mains only': 1, 'mains + generator': 2, 'generator only': 3}"
+
+        register:
+            type: num
+            modbusaddress@instance: 41214
+            modbusdatatype@instance: uint16
+            modbusfactor@instance: 1
+            modbusdirection@instance: read_write
+            on_change: .. = sh..config(key=value)
+
+      emma_consider_mains_faulty_if:
+        description: 0 = open, 1 = closed
+        type: num
+        modbusaddress@instance: 41215
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+
+      local_time_year:
+        type: num
+        modbusaddress@instance: 40490
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read_write
+    huawei_emma_storage:
+
+      energy_charged_today:
+        type: num
+        modbusaddress@instance: 30306
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      total_charged_energy:
+        type: num
+        modbusaddress@instance: 30308
+        modbusdatatype@instance: uint64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      energy_discharged_today:
+        type: num
+        modbusaddress@instance: 30312
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      total_discharged_energy:
+        type: num
+        modbusaddress@instance: 30314
+        modbusdatatype@instance: uint64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      ess_chargeable_energy:
+        type: num
+        modbusaddress@instance: 30318
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.001
+        modbusdirection@instance: read
+
+      ess_dischargeable_energy:
+        type: num
+        modbusaddress@instance: 30320
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.001
+        modbusdirection@instance: read
+
+      rated_ess_capacity:
+        type: num
+        modbusaddress@instance: 30322
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.001
+        modbusdirection@instance: read
+
+      battery_charge_discharge_power:
+        type: num
+        modbusaddress@instance: 30360
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      state_of_capacity:
+        type: num
+        modbusaddress@instance: 30368
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      ess_chargeable_capacity:
+        type: num
+        modbusaddress@instance: 30369
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+      ess_dischargeable_capacity:
+        type: num
+        modbusaddress@instance: 30371
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.001
+        modbusdirection@instance: read
+
+      backup_power_state_of_charge:
+        type: num
+        modbusaddress@instance: 30373
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      energy_charged_this_month:
+        type: num
+        modbusaddress@instance: 30407
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      energy_discharged_this_month:
+        type: num
+        modbusaddress@instance: 30409
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      emma_ess_control_mode:
+        type: str
+        on_change: .register = sh..config_reverse(key=value)
+
+        config:
+            type: dict
+            initial_value: "{1: 'reserved', 2: 'max self-consumption', 3: 'reserved', 4: 'fully fed to grid', 5: '3rd party dispatch'}"
+
+        config_reverse:
+            type: dict
+            initial_value: "{'reserved': 1, 'max self-consumption': 2, 'reserved': 3, 'fully fed to grid': 4, '3rd party dispatch': 5}"
+
+        register:
+          type: num
+          modbusaddress@instance: 40000
+          modbusdatatype@instance: int16
+          modbusfactor@instance: 1
+          modbusdirection@instance: read_write
+          on_change: .. = sh..config(key=value)
+
+    huawei_emma_built_in_energy_sensor:
+
+      phase_a_voltage:
+        type: num
+        modbusaddress@instance: 31639
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      phase_b_voltage:
+        type: num
+        modbusaddress@instance: 31641
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      phase_c_voltage:
+        type: num
+        modbusaddress@instance: 31643
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      line_voltage_a_b:
+        type: num
+        modbusaddress@instance: 31645
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      line_voltage_b_c:
+        type: num
+        modbusaddress@instance: 31647
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      line_voltage_c_a:
+        type: num
+        modbusaddress@instance: 31649
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      phase_a_current:
+        type: num
+        modbusaddress@instance: 31651
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      phase_b_current:
+        type: num
+        modbusaddress@instance: 31653
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      phase_c_current:
+        type: num
+        modbusaddress@instance: 31655
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      active_power:
+        type: num
+        modbusaddress@instance: 31657
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      power_factor:
+        type: num
+        modbusaddress@instance: 31661
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+      apparent_power:
+        type: num
+        modbusaddress@instance: 31663
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      phase_a_active_power:
+        type: num
+        modbusaddress@instance: 31665
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      phase_b_active_power:
+        type: num
+        modbusaddress@instance: 31667
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      phase_c_active_power:
+        type: num
+        modbusaddress@instance: 31669
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      total_active_energy:
+        type: num
+        modbusaddress@instance: 31671
+        modbusdatatype@instance: int64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      total_negative_active_energy:
+        type: num
+        modbusaddress@instance: 31679
+        modbusdatatype@instance: int64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      total_positive_active_energy:
+        type: num
+        modbusaddress@instance: 31687
+        modbusdatatype@instance: int64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+    huawei_emma_external_energy_sensor:
+
+      phase_a_voltage:
+        type: num
+        modbusaddress@instance: 31895
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      phase_b_voltage:
+        type: num
+        modbusaddress@instance: 31897
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      phase_c_voltage:
+        type: num
+        modbusaddress@instance: 31899
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      line_voltage_a_b:
+        type: num
+        modbusaddress@instance: 31901
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      line_voltage_b_c:
+        type: num
+        modbusaddress@instance: 31903
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      line_voltage_c_a:
+        type: num
+        modbusaddress@instance: 31905
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      phase_a_current:
+        type: num
+        modbusaddress@instance: 31907
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      phase_b_current:
+        type: num
+        modbusaddress@instance: 31909
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      phase_c_current:
+        type: num
+        modbusaddress@instance: 31911
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      active_power:
+        type: num
+        modbusaddress@instance: 31913
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      power_factor:
+        type: num
+        modbusaddress@instance: 31917
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+      apparent_power:
+        type: num
+        modbusaddress@instance: 31919
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      phase_a_active_power:
+        type: num
+        modbusaddress@instance: 31921
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      phase_b_active_power:
+        type: num
+        modbusaddress@instance: 31923
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      phase_c_active_power:
+        type: num
+        modbusaddress@instance: 31925
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      total_active_energy:
+        type: num
+        modbusaddress@instance: 31927
+        modbusdatatype@instance: int64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      total_negative_active_energy:
+        type: num
+        modbusaddress@instance: 31935
+        modbusdatatype@instance: int64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      total_positive_active_energy:
+        type: num
+        modbusaddress@instance: 31943
+        modbusdatatype@instance: int64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+    huawei_emma_external_meter:
+
+      external_meter_running_status:
+        type: num
+        modbusaddress@instance: 30500
+        modbusdatatype@instance: uint16
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      external_meter_phase_a_voltage:
+        type: num
+        modbusaddress@instance: 30502
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      external_meter_phase_b_voltage:
+        type: num
+        modbusaddress@instance: 30504
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      external_meter_phase_c_voltage:
+        type: num
+        modbusaddress@instance: 30506
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      external_meter_line_voltage_a_b:
+        type: num
+        modbusaddress@instance: 30508
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      external_meter_line_voltage_b_c:
+        type: num
+        modbusaddress@instance: 30510
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      external_meter_line_voltage_c_a:
+        type: num
+        modbusaddress@instance: 30512
+        modbusdatatype@instance: uint32
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      external_meter_phase_a_current:
+        type: num
+        modbusaddress@instance: 30514
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      external_meter_phase_b_current:
+        type: num
+        modbusaddress@instance: 30516
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      external_meter_phase_c_current:
+        type: num
+        modbusaddress@instance: 30518
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.1
+        modbusdirection@instance: read
+
+      external_meter_active_power:
+        type: num
+        modbusaddress@instance: 30520
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      external_meter_power_factor:
+        type: num
+        modbusaddress@instance: 30524
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 0.010
+        modbusdirection@instance: read
+
+      external_meter_apparent_power:
+        type: num
+        modbusaddress@instance: 30526
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      external_meter_phase_a_active_power:
+        type: num
+        modbusaddress@instance: 30528
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      external_meter_phase_b_active_power:
+        type: num
+        modbusaddress@instance: 30530
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      external_meter_phase_c_active_power:
+        type: num
+        modbusaddress@instance: 30532
+        modbusdatatype@instance: int32
+        modbusfactor@instance: 1
+        modbusdirection@instance: read
+
+      external_meter_total_active_energy:
+        type: num
+        modbusaddress@instance: 30534
+        modbusdatatype@instance: int64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      external_meter_total_negative_active_energy:
+        type: num
+        modbusaddress@instance: 30542
+        modbusdatatype@instance: int64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
+
+      external_meter_total_positive_active_energy:
+        type: num
+        modbusaddress@instance: 30550
+        modbusdatatype@instance: int64
+        modbusfactor@instance: 0.01
+        modbusdirection@instance: read
 
 plugin_functions: NONE
 
