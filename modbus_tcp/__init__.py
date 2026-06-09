@@ -243,9 +243,9 @@ class modbus_tcp(SmartPlugin):
         """
         if not self.alive:
             return
-            
+
         if self.lock.locked():
-            self.log_error(f"poll_device already called an not ready for next poll")
+            self.log_error("poll_device already called an not ready for next poll")
             return
 
         with self.lock:
@@ -283,7 +283,7 @@ class modbus_tcp(SmartPlugin):
                     continue
 
                 if self.is_NaN( raw_value, regPara['dataType']):
-                    self.logger.debug(f"value read: {raw_value} type: {type(value)} is a bad Value")
+                    self.logger.debug(f"value read: {raw_value} type: {type(raw_value)} is a bad Value")
                     continue
 
                 value = raw_value
@@ -414,7 +414,7 @@ class modbus_tcp(SmartPlugin):
 
         try:
             bits = int(''.join(filter(str.isdigit, dataTypeStr)))  # bit-Zahl aus aus dataType z.B. uint16 = 16
-        except:
+        except Exception:
             bits = 16
 
         if regPara['factor'] != 1:
@@ -531,7 +531,7 @@ class modbus_tcp(SmartPlugin):
 
         try:
             bits = int(''.join(filter(str.isdigit, dataTypeStr))) # get only bits from e.g.  'uint32' --> 32
-        except:
+        except Exception:
             bits = 16
 
         dtype = TYPE_MAP.get(dataTypeStr.lower())

@@ -87,7 +87,7 @@ class modbus_tcp(SmartPlugin):
             self._crontab = None
         if not (self._cycle or self._crontab):
             self.logger.error(f"{self.get_fullname()}: no update cycle or crontab set. Modbus will not be queried automatically")
-        
+
         self._slaveUnit = int(self.get_parameter_value('slaveUnit'))
         self._slaveUnitRegisterDependend = False
 
@@ -453,7 +453,7 @@ class modbus_tcp(SmartPlugin):
         else:
             registerCount = int(bits / 16)
 
-        if self.connected == False:
+        if self.connected is False:
             self.logger.error(f"not connected to {self._host}:{self._port}")
             return None
 
