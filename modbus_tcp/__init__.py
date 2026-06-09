@@ -31,8 +31,8 @@ import threading
 from .webif import WebInterface
 
 from pymodbus.constants import Endian
-from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.payload import BinaryPayloadBuilder
+from pymodbus.client.mixin import ModbusClientMixin
 
 from pymodbus.client.tcp import ModbusTcpClient
 from pymodbus import ModbusException
@@ -65,7 +65,7 @@ class modbus_tcp(SmartPlugin):
     devices.
     """
 
-    PLUGIN_VERSION = '1.0.15'
+    PLUGIN_VERSION = '1.1.0'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -285,12 +285,12 @@ class modbus_tcp(SmartPlugin):
                 if self.is_NaN( raw_value, regPara['dataType']):
                     self.logger.debug(f"value read: {raw_value} type: {type(value)} is a bad Value")
                     continue
-                    
+
                 value = raw_value
                 if regPara['factor'] != 1 and isinstance(value, (int, float)):
                     value *= regPara['factor']
                     # self.logger.debug(f"value {value} multiply by: {regPara['factor']}")
-                    
+
                 item = regPara['item']
                 item(value, self.get_fullname())
                 regCount += 1
@@ -365,7 +365,7 @@ class modbus_tcp(SmartPlugin):
 
             # Dict-key construction: objectType.regAddr.slaveUnit  e.g. HoldingRegister.528.1
             reg = self.makedictkey(objectType,regAddr,slaveUnit)
-            
+
             if reg in self._regToWrite:
                 with self.lock:
                     regPara = self._regToWrite[reg]
@@ -516,11 +516,32 @@ class modbus_tcp(SmartPlugin):
         registerCount = 0
         address = regPara['regAddr']
         value = None
+        TYPE_MAP = {
+            "int16": ModbusClientMixin.DATATYPE.INT16,
+            "uint16": ModbusClientMixin.DATATYPE.UINT16,
+            "int32": ModbusClientMixin.DATATYPE.INT32,
+            "uint32": ModbusClientMixin.DATATYPE.UINT32,
+            "int64": ModbusClientMixin.DATATYPE.INT64,
+            "uint64": ModbusClientMixin.DATATYPE.UINT64,
+            "float32": ModbusClientMixin.DATATYPE.FLOAT32,
+            "float64": ModbusClientMixin.DATATYPE.FLOAT64,
+            "string": ModbusClientMixin.DATATYPE.STRING,
+            "bits": ModbusClientMixin.DATATYPE.BITS,
+        }
 
         try:
             bits = int(''.join(filter(str.isdigit, dataTypeStr))) # get only bits from e.g.  'uint32' --> 32
         except:
             bits = 16
+
+        dtype = TYPE_MAP.get(dataTypeStr.lower())
+
+        if dtype is None and dataType.lower() == "string":
+            dtype = ModbusClientMixin.DATATYPE.STRING
+
+        if dtype is None:
+            self.logger.error(f"Unsupported datatype: {dataTypeStr}")
+            return None
 
         if dataType.lower() == 'string':
             registerCount = int(bits / 2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 registerCount
@@ -548,60 +569,25 @@ class modbus_tcp(SmartPlugin):
         if result.isError():
             self.logger.error(f"read error: {result} {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}")
             return
-
+        if wo == Endian.LITTLE:
+            result.registers.reverse()
         if objectType == 'Coil':
             value = result.bits[0]
         elif objectType == 'DiscreteInput':
             value = result.bits[0]
         elif objectType == 'InputRegister':
-            decoder = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo, wordorder=wo)
+            value = self._Mclient.convert_from_registers(result.registers, data_type=dtype) #, byteorder=bo, wordorder=wo
         else:
-            decoder = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo, wordorder=wo)
+            value = self._Mclient.convert_from_registers(result.registers, data_type=dtype)
 
         self.logger.debug(f"read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount} result:{result}")
 
-        try:
-            if dataType.lower() == 'uint':
-                if bits == 16:
-                    return decoder.decode_16bit_uint()
-                elif bits == 32:
-                    return decoder.decode_32bit_uint()
-                elif bits == 64:
-                    return decoder.decode_64bit_uint()
-                else:
-                    self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
-            elif dataType.lower() == 'int':
-                if bits == 16:
-                    return decoder.decode_16bit_int()
-                elif bits == 32:
-                    return decoder.decode_32bit_int()
-                elif bits == 64:
-                    return decoder.decode_64bit_int()
-                else:
-                    self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
-            elif dataType.lower() == 'float':
-                if bits == 32:
-                    return decoder.decode_32bit_float()
-                elif bits == 64:
-                    return decoder.decode_64bit_float()
-                else:
-                    self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
-            elif dataType.lower() == 'string':
-                # bei string: bits = bytes !! string16 -> 16Byte
-                ret = decoder.decode_string(bits)
-                return str(ret, 'ASCII')
-            elif dataType.lower() == 'bit':
-                if objectType == 'Coil' or objectType == 'DiscreteInput':
-                    # self.logger.debug(f"read bit value: {value}")
-                    return value
-                else:
-                    self.logger.debug(f"read bits values: {value.decode_bits()}")
-                    return decoder.decode_bits()
-            else:
-                self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
-        except struct.error as e:
-            self.logger.error(f"unable to unpack data for datatype={dataType.lower()} for read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}")
-            raise ModbusException(f"Exception: unable to unpack data for datatype={dataType.lower()} for read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}")
+        if dataType.lower() == 'string':
+            if isinstance(value, bytes):
+                return value.decode('ascii', errors='ignore').rstrip('\x00')
+            return str(value)
+
+        return value
 
     @staticmethod
     def is_NaN( value, dataType: str) -> bool:
