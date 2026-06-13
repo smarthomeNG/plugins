@@ -28,14 +28,11 @@ from lib.model.smartplugin import SmartPlugin
 from datetime import datetime
 import threading
 import asyncio
-import struct
 import logging
 import time
 from .webif import WebInterface
 
 from pymodbus.constants import Endian
-from pymodbus.payload import BinaryPayloadDecoder
-from pymodbus.payload import BinaryPayloadBuilder
 from pymodbus import ModbusException
 
 # pymodbus async client
@@ -125,6 +122,7 @@ class modbus_tcp(SmartPlugin):
 
         # Small delay between single register reads to avoid a tight loop (still "continuous", but polite)
         self._read_inter_request_delay = 0.01
+        self._read_idle_delay = 1.0
 
         self.init_webinterface(WebInterface)
 
@@ -150,15 +148,16 @@ class modbus_tcp(SmartPlugin):
         while not self.alive:
             time.sleep(0.1)
 
-        # Scheduler is only used as "flush trigger" for buffered mode (cycle > 0).
-        # For cycle == 0/None: no incoming data is processed (no reads, no flush).
+        # Scheduler is only used as "flush trigger" for buffered mode (cycle > 0 or crontab).
+        # For cycle == 0/None without crontab: no incoming data is processed (no reads, no flush).
         # For cycle < 0: immediate writes from reader task (no flush scheduler).
-        if self._cycle_param is not None and self._cycle_param > 0:
+        flush_cycle = self._cycle_param if self._cycle_param is not None and self._cycle_param > 0 else None
+        if flush_cycle is not None or (self._crontab is not None and not self._cycle_is_immediate()):
             self.error_count = 0
             self.scheduler_add(
                 'flush_items_' + self._host,
                 self._flush_buffer_to_items,
-                cycle=self._cycle_param,
+                cycle=flush_cycle,
                 cron=self._crontab,
                 prio=5
             )
@@ -371,8 +370,9 @@ class modbus_tcp(SmartPlugin):
         """
         if not self.alive:
             return
-        # cycle==0/None => do not write anything
-        if self._cycle_param is None or self._cycle_param == 0:
+        if self._cycle_is_immediate():
+            return
+        if not self._incoming_data_enabled():
             return
 
         now = datetime.now()
@@ -444,13 +444,12 @@ class modbus_tcp(SmartPlugin):
         # Start background connection management (reconnect on drop)
         self._connection_task = asyncio.create_task(self._connection_keeper(), name="connection_keeper")
 
-        # Start acquisition task depending on cycle mode
-        # cycle in (None, 0) => do NOT process incoming data (no reads, no item writes)
-        if self._cycle_param is not None and self._cycle_param != 0:
+        # Start acquisition task depending on cycle/crontab mode
+        if self._incoming_data_enabled():
             self._reader_task = asyncio.create_task(self._acquisition_loop(), name="acquisition_loop")
         else:
             self.logger.info(
-                f"{self.get_fullname()}: cycle is None/0 -> no incoming data processing (no reads, no item updates)"
+                f"{self.get_fullname()}: cycle is None/0 and no crontab -> no incoming data processing"
             )
 
         self.alive = True
@@ -460,9 +459,12 @@ class modbus_tcp(SmartPlugin):
         await self.wait_for_asyncio_termination()
 
         # Cancel tasks and close client
-        for task in [self._reader_task, self._connection_task]:
-            if task and not task.done():
-                task.cancel()
+        tasks_to_cancel = [task for task in [self._reader_task, self._connection_task] if task and not task.done()]
+        for task in tasks_to_cancel:
+            task.cancel()
+        if tasks_to_cancel:
+            await asyncio.gather(*tasks_to_cancel, return_exceptions=True)
+
         try:
             if self._aclient:
                 self._aclient.close()
@@ -562,6 +564,10 @@ class modbus_tcp(SmartPlugin):
                 with self.lock:
                     regs = list(self._regToRead.items())
 
+                if not regs:
+                    await asyncio.sleep(self._read_idle_delay)
+                    continue
+
                 for reg, regPara in regs:
                     if not self.alive:
                         break
@@ -644,8 +650,20 @@ class modbus_tcp(SmartPlugin):
         """
         Schedule a Modbus write without blocking the caller.
         """
-        asyncio.create_task(self.__write_Registers_async(regPara, value))
+        task = asyncio.create_task(self.__write_Registers_async(regPara, value))
+        task.add_done_callback(self._log_write_task_result)
         return True
+
+    def _log_write_task_result(self, task):
+        """
+        Make sure exceptions from fire-and-forget write tasks are logged.
+        """
+        try:
+            task.result()
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            self.logger.error(f"write task failed: {e}")
 
     async def __write_Registers_async(self, regPara, value):
         """
@@ -664,7 +682,7 @@ class modbus_tcp(SmartPlugin):
 
         try:
             bits = int(''.join(filter(str.isdigit, dataTypeStr)))  # bit-Zahl aus aus dataType z.B. uint16 = 16
-        except:
+        except Exception:
             bits = 16
 
         # Wait for connection (reconnect in background)
@@ -679,52 +697,17 @@ class modbus_tcp(SmartPlugin):
             f"write {value} to {objectType}.{address}.{address} (address.slaveUnit) dataType:{dataTypeStr}"
         )
 
-        builder = BinaryPayloadBuilder(byteorder=bo, wordorder=wo)
-
-        if dataType.lower() == 'uint':
-            if bits == 16:
-                builder.add_16bit_uint(int(value))
-            elif bits == 32:
-                builder.add_32bit_uint(int(value))
-            elif bits == 64:
-                builder.add_64bit_uint(int(value))
-            else:
-                self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
+        registers = None
+        if objectType == 'Coil':
+            if not isinstance(value, bool):
+                self.logger.error(f"Value is not boolean: {value}")
                 return
-        elif dataType.lower() == 'int':
-            if bits == 16:
-                builder.add_16bit_int(int(value))
-            elif bits == 32:
-                builder.add_32bit_int(int(value))
-            elif bits == 64:
-                builder.add_64bit_int(int(value))
-            else:
-                self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
+        elif objectType in ('HoldingRegister',):
+            try:
+                registers = self._value_to_registers(value, dataType, bits, bo, wo)
+            except (TypeError, ValueError, ModbusException) as e:
+                self.logger.error(f"cannot encode value for datatype={dataTypeStr}: {e}")
                 return
-        elif dataType.lower() == 'float':
-            if bits == 32:
-                builder.add_32bit_float(value)
-            elif bits == 64:
-                builder.add_64bit_float(value)
-            else:
-                self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
-                return
-        elif dataType.lower() == 'string':
-            builder.add_string(value)
-        elif dataType.lower() == 'bit':
-            if objectType == 'Coil' or objectType == 'DiscreteInput':
-                if not isinstance(value, bool):  # test is boolean
-                    self.logger.error(f"Value is not boolean: {value}")
-                    return
-            else:
-                if set(value).issubset({'0', '1'}) and bool(value):  # test is bit-string '00110101'
-                    builder.add_bits(value)
-                else:
-                    self.logger.error(f"Value is not a bitstring: {value}")
-                    return
-        else:
-            self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
-            return
 
         # IMPORTANT ASYNC TRANSITION: actual Modbus write is awaited, never blocking a SmartHomeNG thread
         try:
@@ -732,7 +715,6 @@ class modbus_tcp(SmartPlugin):
                 if objectType == 'Coil':
                     result = await self._aclient.write_coil(address, value, slave=slaveUnit)
                 elif objectType == 'HoldingRegister':
-                    registers = builder.to_registers()
                     result = await self._aclient.write_registers(address, registers, slave=slaveUnit)
                 elif objectType == 'DiscreteInput':
                     self.logger.warning(f"this object type cannot be written {objectType}:{address} slaveUnit:{slaveUnit}")
@@ -790,7 +772,7 @@ class modbus_tcp(SmartPlugin):
         if dataType.lower() == 'string':
             registerCount = int(bits / 2)  # string: bits means bytes -> string16 = 16 bytes -> 8 registers
         else:
-            registerCount = int(bits / 16)
+            registerCount = max(1, (bits + 15) // 16)
 
         if not self.connected:
             # connection_keeper will reconnect; keep this silent-ish
@@ -815,7 +797,8 @@ class modbus_tcp(SmartPlugin):
             raise e
 
         if result is None or result.isError():
-            self.logger.error(
+            self.error_count += 1
+            self.log_error(
                 f"read error: {result} {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}"
             )
             return None
@@ -824,56 +807,16 @@ class modbus_tcp(SmartPlugin):
         if objectType == 'Coil' or objectType == 'DiscreteInput':
             return result.bits[0]
 
-        decoder = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo, wordorder=wo)
         self.logger.debug(
             f"read {objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount} result:{result}"
         )
 
         try:
-            if dataType.lower() == 'uint':
-                if bits == 16:
-                    return decoder.decode_16bit_uint()
-                elif bits == 32:
-                    return decoder.decode_32bit_uint()
-                elif bits == 64:
-                    return decoder.decode_64bit_uint()
-                else:
-                    self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
-
-            elif dataType.lower() == 'int':
-                if bits == 16:
-                    return decoder.decode_16bit_int()
-                elif bits == 32:
-                    return decoder.decode_32bit_int()
-                elif bits == 64:
-                    return decoder.decode_64bit_int()
-                else:
-                    self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
-
-            elif dataType.lower() == 'float':
-                if bits == 32:
-                    return decoder.decode_32bit_float()
-                elif bits == 64:
-                    return decoder.decode_64bit_float()
-                else:
-                    self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
-
-            elif dataType.lower() == 'string':
-                # bei string: bits = bytes !! string16 -> 16Byte
-                ret = decoder.decode_string(bits)
-                return str(ret, 'ASCII')
-
-            elif dataType.lower() == 'bit':
-                # for register-based bits (not coils/discrete inputs)
-                return decoder.decode_bits()
-
-            else:
-                self.logger.error(f"Number of bits or datatype not supported : {dataTypeStr}")
-
-        except struct.error:
+            return self._registers_to_value(result.registers, dataType, bits, bo, wo)
+        except (TypeError, ValueError, ModbusException) as e:
             self.logger.error(
                 f"unable to unpack data for datatype={dataType.lower()} for read "
-                f"{objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}"
+                f"{objectType}.{address}.{slaveUnit} (address.slaveUnit) regCount:{registerCount}: {e}"
             )
             return None
 
@@ -899,6 +842,144 @@ class modbus_tcp(SmartPlugin):
         elif dataType == 'uint64':
             return value == BAD_VALUE_UINT64
         return False
+
+    @classmethod
+    def _value_to_registers(cls, value, dataType: str, bits: int, byteOrder, wordOrder):
+        data_type = dataType.lower()
+        if data_type == 'string':
+            return AsyncModbusTcpClient.convert_to_registers(
+                cls._normalize_value_for_datatype(value, data_type),
+                AsyncModbusTcpClient.DATATYPE.STRING,
+                word_order='big',
+                string_encoding='ASCII'
+            )
+        if data_type == 'bit':
+            registers = cls._encode_register_bits(value, bits)
+        else:
+            modbus_type = cls._modbus_datatype(data_type, bits)
+            if modbus_type is None:
+                raise ValueError(f"Number of bits or datatype not supported: {dataType}{bits}")
+            registers = AsyncModbusTcpClient.convert_to_registers(
+                cls._normalize_value_for_datatype(value, data_type),
+                modbus_type,
+                word_order=cls._word_order_string(wordOrder),
+                string_encoding='ASCII'
+            )
+
+        if cls._is_little_endian(byteOrder):
+            registers = cls._swap_register_bytes(registers)
+        return registers
+
+    @classmethod
+    def _registers_to_value(cls, registers, dataType: str, bits: int, byteOrder, wordOrder):
+        data_type = dataType.lower()
+        if data_type == 'string':
+            value = AsyncModbusTcpClient.convert_from_registers(
+                registers,
+                AsyncModbusTcpClient.DATATYPE.STRING,
+                word_order='big',
+                string_encoding='ASCII'
+            )
+            return value.rstrip('\x00')
+
+        if cls._is_little_endian(byteOrder):
+            registers = cls._swap_register_bytes(registers)
+
+        if data_type == 'bit':
+            return cls._decode_register_bits(registers, bits)
+
+        modbus_type = cls._modbus_datatype(data_type, bits)
+        if modbus_type is None:
+            raise ValueError(f"Number of bits or datatype not supported: {dataType}{bits}")
+
+        value = AsyncModbusTcpClient.convert_from_registers(
+            registers,
+            modbus_type,
+            word_order=cls._word_order_string(wordOrder),
+            string_encoding='ASCII'
+        )
+        return value
+
+    def _incoming_data_enabled(self) -> bool:
+        return self._crontab is not None or (self._cycle_param is not None and self._cycle_param != 0)
+
+    def _cycle_is_immediate(self) -> bool:
+        return self._cycle_param is not None and self._cycle_param < 0
+
+    @staticmethod
+    def _normalize_value_for_datatype(value, dataType: str):
+        if dataType in ('uint', 'int'):
+            return int(value)
+        if dataType == 'float':
+            return float(value)
+        if dataType == 'string':
+            return str(value)
+        return value
+
+    @staticmethod
+    def _modbus_datatype(dataType: str, bits: int):
+        if dataType == 'string':
+            return getattr(AsyncModbusTcpClient.DATATYPE, 'STRING', None)
+
+        datatype_name = {
+            ('uint', 16): 'UINT16',
+            ('uint', 32): 'UINT32',
+            ('uint', 64): 'UINT64',
+            ('int', 16): 'INT16',
+            ('int', 32): 'INT32',
+            ('int', 64): 'INT64',
+            ('float', 32): 'FLOAT32',
+            ('float', 64): 'FLOAT64',
+        }.get((dataType, bits))
+        return getattr(AsyncModbusTcpClient.DATATYPE, datatype_name, None) if datatype_name else None
+
+    @staticmethod
+    def _word_order_string(wordOrder) -> str:
+        return 'little' if modbus_tcp._is_little_endian(wordOrder) else 'big'
+
+    @staticmethod
+    def _is_little_endian(order) -> bool:
+        if getattr(order, 'name', '').upper() == 'LITTLE':
+            return True
+        if getattr(order, 'value', None) == '<':
+            return True
+        return str(order).split('.')[-1].upper() == 'LITTLE'
+
+    @staticmethod
+    def _swap_register_bytes(registers):
+        return [((register & 0x00FF) << 8) | ((register & 0xFF00) >> 8) for register in registers]
+
+    @staticmethod
+    def _decode_register_bits(registers, bits: int):
+        values = []
+        for register in registers:
+            for bit in range(15, -1, -1):
+                values.append(bool(register & (1 << bit)))
+        return values[:bits]
+
+    @staticmethod
+    def _encode_register_bits(value, bits: int):
+        if isinstance(value, str):
+            if not value or not set(value).issubset({'0', '1'}):
+                raise ValueError(f"Value is not a bitstring: {value}")
+            bit_values = [char == '1' for char in value]
+        else:
+            try:
+                bit_values = [bool(bit) for bit in value]
+            except TypeError as e:
+                raise ValueError(f"Value is not a bitstring or bit list: {value}") from e
+
+        bit_count = max(bits, len(bit_values))
+        register_count = max(1, (bit_count + 15) // 16)
+        padded_bits = bit_values + [False] * (register_count * 16 - len(bit_values))
+        registers = []
+        for offset in range(0, len(padded_bits), 16):
+            register = 0
+            for index, bit in enumerate(padded_bits[offset:offset + 16]):
+                if bit:
+                    register |= 1 << (15 - index)
+            registers.append(register)
+        return registers
 
     @staticmethod
     def makedictkey(objectType: str, regAddr, slaveUnit) -> str:
