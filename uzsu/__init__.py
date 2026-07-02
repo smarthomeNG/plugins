@@ -1249,21 +1249,23 @@ class UZSU(SmartPlugin):
             return issue
         try:
             mydays = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
+            #loop over all entries in uzsudict.list[] 
             for i, mydict in enumerate(self._items[item]['list']):
                 try:
                     del mydict['seriesCalculated']
                 except Exception:
                     pass
+                #evaluate entries with series properties only 
                 if mydict.get('series', None) is None:
                     continue
                 try:
-                    #####################
-                    seriesbegin, seriesend, daycount, mydict = self._fix_empty_values(mydict)
-                    interval = mydict['series'].get('timeSeriesIntervall', None)
-                    seriesstart = seriesbegin
+                    #get series parameters from dict and fill missing values with defaults (also within the dict)
+                    seriesstart, seriesend, daycount, mydict = self._fix_empty_values(mydict)
+                    seriesinterval = mydict['series'].get('timeSeriesIntervall', None)
                     endtime = None
 
-                    if interval is None or interval == '':
+                    #check if all necessary parameters are available and making sense
+                    if seriesinterval is None or seriesinterval == '':
                         issue = f'Could not calculate serie for item {item} - because interval is None - {mydict}'
                         self.logger.warning(issue)
                         return issue
@@ -1273,9 +1275,7 @@ class UZSU(SmartPlugin):
                         self.logger.warning(issue)
                         return issue
 
-                    interval = int(interval.split(':')[0]) * 60 + int(
-                        mydict['series']['timeSeriesIntervall'].split(':')[1]
-                    )
+                    interval = int(seriesinterval.split(':')[0]) * 60 + int(seriesinterval.split(':')[1])
 
                     if interval == 0:
                         issue = f'Could not calculate serie because interval is ZERO - {mydict}'
@@ -1291,8 +1291,14 @@ class UZSU(SmartPlugin):
                                 f'x SerieCount {org_daycount} is more than 24h'
                             )
 
-                    if 'sun' not in mydict['series']['timeSeriesMin']:
-                        starttime = datetime.strptime(mydict['series']['timeSeriesMin'], '%H:%M')
+                    #now we have valid series definitions and can start evaluating
+                    #seriesstart: string from dict
+                    #seriesend: string from dict
+                    #interval: integer value in minutes
+                    #daycount: adjusted repeat cycles during 24h
+                    #
+                    if 'sun' not in seriesstart:
+                        starttime = datetime.strptime(seriesstart, '%H:%M')
                     else:
                         mytime = self._sun(
                             datetime.now(self._timezone).replace(hour=0, minute=0, second=0), seriesstart, 'next'
@@ -1300,7 +1306,7 @@ class UZSU(SmartPlugin):
                         starttime = f'{mytime.hour:02d}:{mytime.minute:02d}'
                         starttime = datetime.strptime(starttime, '%H:%M')
 
-                    # calculate End of Serie by Count
+                    #if no time for series end is given calculate it by the Count parameter
                     if seriesend is None:
                         endtime = starttime
                         endtime += timedelta(minutes=interval * int(daycount))
@@ -1336,6 +1342,8 @@ class UZSU(SmartPlugin):
                                 f'x SerieCount {daycount} is not possible between {starttime} and {endtime}'
                             )
                             daycount = new_daycount
+                            
+                    # at this point we have got starttime and endtime for "today" and an adjusted daycount (number of repeat cycles)
 
                     #####################
                     # advanced rule including all sun times, start and end times  and calculated max counts, etc.
@@ -1347,25 +1355,22 @@ class UZSU(SmartPlugin):
                         ),
                     )
                     mynewlist = []
-
-                    interval = int(mydict['series']['timeSeriesIntervall'].split(':')[0]) * 60 + int(
-                        mydict['series']['timeSeriesIntervall'].split(':')[1]
-                    )
                     exceptions = 0
                     for day in list(rrule):
                         if mydays[day.weekday()] not in mydict['rrule']:
                             continue
                         myrulenext = f'FREQ=MINUTELY;COUNT={daycount};INTERVAL={interval}'
 
-                        if 'sun' not in mydict['series']['timeSeriesMin']:
-                            starttime = datetime.strptime(mydict['series']['timeSeriesMin'], '%H:%M')
-                        else:
-                            seriesstart = mydict['series']['timeSeriesMin']
-                            mytime = self._sun(
-                                day.replace(hour=0, minute=0, second=0, tzinfo=self._timezone), seriesstart, 'next'
-                            )
+                        # we have starttime and endtime already but need to adapt to sun times eventually
+                        if 'sun' in seriesstart:
+                            mytime = self._sun(day.replace(hour=0, minute=0, second=0, tzinfo=self._timezone), seriesstart, 'next')
                             starttime = f'{mytime.hour:02d}:{mytime.minute:02d}'
                             starttime = datetime.strptime(starttime, '%H:%M')
+                        if seriesend is not None and 'sun' in seriesend:
+                            mytime = self._sun(day.replace(hour=0, minute=0, second=0, tzinfo=self._timezone), seriesend, 'next')
+                            endtime = f'{mytime.hour:02d}:{mytime.minute:02d}'
+                            endtime = datetime.strptime(endtime, '%H:%M')
+
                         dayrule = rrulestr(
                             myrulenext, dtstart=day.replace(hour=starttime.hour, minute=starttime.minute, second=0)
                         )
