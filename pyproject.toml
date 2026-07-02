@@ -41,3 +41,51 @@ ignore = [
 # Filename half of the test convention; conftest.py's pytest_ignore_collect enforces
 # the directory half (must live under a 'tests' subdirectory).
 python_files = ["test_*.py"]
+
+# ------------------------------------------------------------------------------
+# PYRIGHT — type checker configuration
+# Docs: https://microsoft.github.io/pyright/#/configuration
+#
+# SYNC NOTE: keep the intent of this section (reportPossiblyUnboundVariable /
+# reportUnboundVariable as errors) in sync with ../smarthome/pyproject.toml.
+#
+# Ruff's pyflakes rules (F) don't do control-flow analysis, so they miss
+# possibly-unbound locals (a name assigned on some branches/in a try block
+# but not all, then read afterwards). Pyright's reportPossiblyUnboundVariable /
+# reportUnboundVariable do — that's this section's main purpose.
+# ------------------------------------------------------------------------------
+
+[tool.pyright]
+include = ["."]
+exclude = [
+    "**/__pycache__",
+    "*/_pv_*",                    # old/superseded plugin versions kept for reference
+    "priv_*",                     # private/local-only plugins — gitignored, not part of this repo
+    "helios/files",                # sample logic scripts: sh/trigger/logic/shtime injected at exec() time
+    "wettercom/additional_files",  # sample script: sh/logger/dateutil injected at exec() time
+    "knx/Check_KNX.py",            # sample script: sh injected at exec() time
+    "asterisk/agi",                # AGI scripts: agi_callerid injected by Asterisk at exec() time
+    "executor/examples",           # example logic scripts with injected namespace
+    "roombapysh/roombapy",         # vendored third-party submodule, not first-party code
+]
+# NOTE: `exclude` above only stops pyright from independently walking a
+# directory for *unreferenced* files — per pyright's own docs, a file that a
+# plugin actually imports still gets fully analyzed and its diagnostics
+# reported, exclude or not. Since extraPaths (below) makes ../lib etc.
+# resolvable as plain first-party source (not a stub/site-packages dir
+# pyright would recognize as "library code" and hush), there is no config
+# option that resolves cross-repo imports for typing *without* also
+# reporting shng-core's own diagnostics on a plugins-repo run. Use
+# tools/pyright_scoped.py (in the shng core repo) instead of the bare
+# `pyright` binary to filter the run's output down to this repo's own
+# files — see the SYNC NOTE at the top of this file.
+venvPath = "../venvs"
+venv = "shng"
+# Plugins import core modules as "lib.item.items" etc. at runtime (the shng
+# core repo's root is on sys.path when a plugin actually loads). extraPaths
+# tells pyright's resolver about that same root so those imports resolve
+# during type checking too, without pulling shng into `include` above.
+extraPaths = [".."]
+typeCheckingMode = "basic"
+reportPossiblyUnboundVariable = "error"
+reportUnboundVariable = "error"
