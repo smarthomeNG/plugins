@@ -387,10 +387,10 @@ class SmartVisuGenerator:
 
                 widget = self.get_attribute('sv_widget', item)
                 widget2 = self.get_attribute('sv_widget2', item)
+                name1 = self.get_attribute('sv_name1', item)
+                if name1 == '':
+                    name1 = item
                 if widget2 == '':
-                    name1 = self.get_attribute('sv_name1', item)
-                    if name1 == '':
-                        name1 = item
                     widgets += self.parse_tpl_from_file(
                         widgetblocktemplate,
                         [
