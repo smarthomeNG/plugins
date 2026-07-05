@@ -694,7 +694,7 @@ class Database(SmartPlugin):
         if id is None and create:
             id = [self.insertItem(item.property.path, cur)]
 
-        if (id is None) or (COL_ITEM_ID >= len(id)):
+        if (id is None) or (COL_ITEM_ID >= len(id)) or (id[COL_ITEM_ID] is None):
             return None
         return int(id[COL_ITEM_ID])
 
@@ -1283,6 +1283,9 @@ class Database(SmartPlugin):
         self._items_total_entries = 0
         for item in self.orphanlist:
             item_id = self.id(item, create=False)
+            if item_id is None:
+                self.logger.warning(f'_count_orphanlogentries: No valid id found for orphan item {item} - skipping')
+                continue
             logcount = self.readLogCount(item_id)
             logcount_str = f'{logcount:,}'.replace(',', '.')
             self.logger.info(f'Orphan {item} (id={item_id}): {logcount_str} entries')
