@@ -879,9 +879,13 @@ class Database(SmartPlugin):
         """
         Create database item record for given item name.
 
-        Uses database-assigned auto-increment for the id rather than the
-        previous ``MAX(id) + 1`` pattern, which was prone to a race
-        condition on multi-connection setups.
+        Uses the cursor's own ``lastrowid`` right after the INSERT rather
+        than a follow-up ``SELECT id ... WHERE name=:name``. The database
+        connection is shared across threads (``check_same_thread:0``), so a
+        concurrent caller (e.g. a websocket admin series request running on
+        another thread) could interleave between the INSERT and that
+        lookup and cause it to miss, leaving the item permanently id-less.
+        ``lastrowid`` is scoped to this cursor and immune to that race.
 
         This is a public function of the plugin.
 
@@ -890,9 +894,8 @@ class Database(SmartPlugin):
         :return:     The new integer item ID.
         :rtype:      int
         """
-        self._execute(self._prepare('INSERT INTO {item}(name) VALUES(:name);'), {'name': name}, cur=cur)
-        row = self._fetchone('SELECT id FROM {item} WHERE name = :name;', {'name': name}, cur=cur)
-        return int(row[0])
+        result_cur = self._execute(self._prepare('INSERT INTO {item}(name) VALUES(:name);'), {'name': name}, cur=cur)
+        return int(result_cur.lastrowid)
 
     def updateItem(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
         """
@@ -1854,7 +1857,7 @@ class Database(SmartPlugin):
 
                     self._db.commit()
                 except Exception as e:
-                    self.logger.warning('Problem dumping {}: {}'.format(item.property.path, e))
+                    self.logger.warning('Problem dumping {}: {}'.format(item.property.path, e), exc_info=True)
                     try:
                         self._db.rollback()
                     except Exception as er:
@@ -2133,7 +2136,7 @@ class Database(SmartPlugin):
         return query.format(**self._replace)
 
     def _execute(self, query, params, cur=None):
-        self._query(self._db.execute, query, params, cur)
+        return self._query(self._db.execute, query, params, cur)
 
     def _fetchone(self, query, params={}, cur=None):
         tuples = self._query(self._db.fetchone, query, params, cur)
