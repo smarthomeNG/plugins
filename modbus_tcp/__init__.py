@@ -87,7 +87,6 @@ class modbus_tcp(SmartPlugin):
 
         # cycle reinterpretation: we keep the original value for mode decisions
         self._cycle_param = self.get_parameter_value('cycle')
-        self._cycle = self._cycle_param  # keep for scheduler flush usage when > 0
 
         self._crontab = self.get_parameter_value('crontab')
         if self._crontab == '':
@@ -109,7 +108,7 @@ class modbus_tcp(SmartPlugin):
         # Async infrastructure (SmartPlugin-managed event loop thread)
         self._connection_task = None          # background reconnect/connection keeper
         self._reader_task = None              # continuous acquisition task
-        self._scheduled_read_task = None      # crontab-triggered one-shot read task
+        self._scheduled_read_task = None      # scheduler-triggered one-shot read task
         self._client_lock = None              # asyncio.Lock to serialize requests on one TCP connection
         self._read_cycle_lock = None          # asyncio.Lock to avoid overlapping full read passes
 
@@ -132,8 +131,9 @@ class modbus_tcp(SmartPlugin):
         """
         Start plugin:
           - start SmartPlugin-managed asyncio loop
-          - start async connection management and (depending on cycle) acquisition task
-          - optionally schedule crontab-triggered read passes
+          - start async connection management
+          - optionally schedule cycle/crontab-triggered read passes
+          - start continuous acquisition task only for cycle < 0
         """
         self.logger.debug(f"Plugin '{self.get_fullname()}': run method called")
         if self.alive:
@@ -146,11 +146,13 @@ class modbus_tcp(SmartPlugin):
         while not self.alive:
             time.sleep(0.1)
 
-        if self._crontab is not None and not self._cycle_is_immediate():
+        scheduler_cycle = self._cycle_param if self._cycle_param is not None and self._cycle_param > 0 else None
+        if not self._cycle_is_immediate() and (scheduler_cycle is not None or self._crontab is not None):
             self.error_count = 0
             self.scheduler_add(
                 'poll_device_' + self._host,
                 self._trigger_async_read,
+                cycle=scheduler_cycle,
                 cron=self._crontab,
                 prio=5
             )
@@ -380,12 +382,13 @@ class modbus_tcp(SmartPlugin):
         # Start background connection management (reconnect on drop)
         self._connection_task = asyncio.create_task(self._connection_keeper(), name="connection_keeper")
 
-        # Start acquisition task depending on cycle mode. Crontab-only reads are scheduler-triggered.
-        if self._cycle_param is not None and self._cycle_param != 0:
+        # Start continuous acquisition task only for immediate mode.
+        # Positive cycle/crontab reads are triggered by SmartHomeNG scheduler.
+        if self._cycle_is_immediate():
             self._reader_task = asyncio.create_task(self._acquisition_loop(), name="acquisition_loop")
         else:
             self.logger.info(
-                f"{self.get_fullname()}: cycle is None/0 -> no cycle-based incoming data processing"
+                f"{self.get_fullname()}: no continuous incoming data processing"
             )
 
         self.alive = True
@@ -485,9 +488,7 @@ class modbus_tcp(SmartPlugin):
 
     async def _acquisition_loop(self):
         """
-        Async acquisition of Modbus values.
-          - cycle > 0: read once, update items, sleep cycle seconds
-          - cycle < 0: read continuously
+        Continuous async acquisition of Modbus values for cycle < 0 mode.
         """
         while self.alive:
             try:
@@ -498,8 +499,6 @@ class modbus_tcp(SmartPlugin):
 
                 if self._cycle_is_immediate():
                     await asyncio.sleep(0)
-                elif self._cycle_param is not None and self._cycle_param > 0:
-                    await self._sleep_while_alive(self._cycle_param)
                 else:
                     break
 
@@ -590,17 +589,9 @@ class modbus_tcp(SmartPlugin):
             self.logger.debug(f"read cycle: read {regCount} register(s) in {duration} seconds")
             return regCount
 
-    async def _sleep_while_alive(self, seconds):
-        end_time = datetime.now().timestamp() + seconds
-        while self.alive:
-            remaining = end_time - datetime.now().timestamp()
-            if remaining <= 0:
-                return
-            await asyncio.sleep(min(remaining, 1.0))
-
     def _trigger_async_read(self):
         """
-        Scheduler callback for crontab-triggered read passes.
+        Scheduler callback for cycle/crontab-triggered read passes.
         """
         if not self.alive:
             return
