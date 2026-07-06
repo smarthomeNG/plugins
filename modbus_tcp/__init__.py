@@ -87,6 +87,7 @@ class modbus_tcp(SmartPlugin):
 
         # cycle reinterpretation: we keep the original value for mode decisions
         self._cycle_param = self.get_parameter_value('cycle')
+        self._cycle = self._cycle_param
 
         self._crontab = self.get_parameter_value('crontab')
         if self._crontab == '':
@@ -109,6 +110,7 @@ class modbus_tcp(SmartPlugin):
         self._connection_task = None          # background reconnect/connection keeper
         self._reader_task = None              # continuous acquisition task
         self._scheduled_read_task = None      # scheduler-triggered one-shot read task
+        self._write_tasks = set()             # currently pending/running async write tasks
         self._client_lock = None              # asyncio.Lock to serialize requests on one TCP connection
         self._read_cycle_lock = None          # asyncio.Lock to avoid overlapping full read passes
 
@@ -121,6 +123,7 @@ class modbus_tcp(SmartPlugin):
         self._read_inter_request_delay = 0.01
         self._read_idle_delay = 1.0
         self._shutdown_timeout = 5.0
+        self._write_timeout = 10.0
 
         self.init_webinterface(WebInterface)
 
@@ -155,7 +158,7 @@ class modbus_tcp(SmartPlugin):
         if not self._cycle_is_immediate() and (scheduler_cycle is not None or self._crontab is not None):
             self.error_count = 0
             self.scheduler_add(
-                'poll_device_' + self._host,
+                self._scheduler_name(),
                 self._trigger_async_read,
                 cycle=scheduler_cycle,
                 cron=self._crontab,
@@ -174,7 +177,7 @@ class modbus_tcp(SmartPlugin):
 
         # Remove scheduler trigger (if added)
         try:
-            self.scheduler_remove('poll_device_' + self._host)
+            self.scheduler_remove(self._scheduler_name())
         except Exception:
             pass
 
@@ -420,15 +423,16 @@ class modbus_tcp(SmartPlugin):
         await self.wait_for_asyncio_termination()
         self.alive = False
 
-        try:
-            if self._aclient:
-                self._aclient.close()
-        except Exception:
-            pass
+        self._close_client()
 
         # Cancel tasks and close client
         tasks_to_cancel = [
-            task for task in [self._reader_task, self._scheduled_read_task, self._connection_task]
+            task for task in [
+                self._reader_task,
+                self._scheduled_read_task,
+                self._connection_task,
+                *self._write_tasks
+            ]
             if task and not task.done()
         ]
         for task in tasks_to_cancel:
@@ -444,18 +448,13 @@ class modbus_tcp(SmartPlugin):
                     f"Timeout while stopping Modbus async tasks after {self._shutdown_timeout} seconds"
                 )
 
-        try:
-            if self._aclient:
-                self._aclient.close()
-        except Exception:
-            pass
+        self._close_client()
 
         self._reader_task = None
         self._scheduled_read_task = None
         self._connection_task = None
-        self._aclient = None
+        self._write_tasks.clear()
         self._read_cycle_lock = None
-        self.connected = False
 
         self.alive = False
         self.logger.info("plugin_coro: Plugin is stopped (self.alive=False)")
@@ -515,12 +514,19 @@ class modbus_tcp(SmartPlugin):
                 self.logger.error(f"connection_keeper unexpected error: {e}")
                 await asyncio.sleep(2.0)
 
-    async def _wait_connected(self):
+    async def _wait_connected(self, timeout=None):
         """
         Wait until connected or stop/alive condition ends.
         """
+        start = time.monotonic()
         while self.alive and (not self.connected):
-            await asyncio.sleep(0.2)
+            if timeout is not None:
+                remaining = timeout - (time.monotonic() - start)
+                if remaining <= 0:
+                    return False
+                await asyncio.sleep(min(0.2, remaining))
+            else:
+                await asyncio.sleep(0.2)
         return self.connected
 
     async def _acquisition_loop(self):
@@ -586,12 +592,7 @@ class modbus_tcp(SmartPlugin):
                         self.logger.debug(f"read cancelled while stopping: {e}")
                         break
                     self.logger.error(f"read exception: {e}")
-                    self.connected = False
-                    try:
-                        if self._aclient:
-                            self._aclient.close()
-                    except Exception:
-                        pass
+                    self._close_client()
                     raw_value = None
 
                 if raw_value is None:
@@ -668,6 +669,7 @@ class modbus_tcp(SmartPlugin):
         Schedule a Modbus write without blocking the caller.
         """
         task = asyncio.create_task(self.__write_Registers_async(regPara, value))
+        self._write_tasks.add(task)
         task.add_done_callback(self._log_write_task_result)
         return True
 
@@ -675,6 +677,7 @@ class modbus_tcp(SmartPlugin):
         """
         Make sure exceptions from fire-and-forget write tasks are logged.
         """
+        self._write_tasks.discard(task)
         try:
             task.result()
         except asyncio.CancelledError:
@@ -703,8 +706,10 @@ class modbus_tcp(SmartPlugin):
             bits = 16
 
         # Wait for connection (reconnect in background)
-        if not await self._wait_connected():
-            self.log_error(f"write skipped (not connected): {self._host}:{self._port}")
+        if not await self._wait_connected(timeout=self._write_timeout):
+            self.log_error(
+                f"write skipped (not connected after {self._write_timeout} seconds): {self._host}:{self._port}"
+            )
             return
 
         if regPara['factor'] != 1:
@@ -730,9 +735,15 @@ class modbus_tcp(SmartPlugin):
         try:
             async with self._client_lock:
                 if objectType == 'Coil':
-                    result = await self._aclient.write_coil(address, value, slave=slaveUnit)
+                    result = await asyncio.wait_for(
+                        self._aclient.write_coil(address, value, slave=slaveUnit),
+                        timeout=self._write_timeout
+                    )
                 elif objectType == 'HoldingRegister':
-                    result = await self._aclient.write_registers(address, registers, slave=slaveUnit)
+                    result = await asyncio.wait_for(
+                        self._aclient.write_registers(address, registers, slave=slaveUnit),
+                        timeout=self._write_timeout
+                    )
                 elif objectType == 'DiscreteInput':
                     self.logger.warning(f"this object type cannot be written {objectType}:{address} slaveUnit:{slaveUnit}")
                     return
@@ -743,12 +754,7 @@ class modbus_tcp(SmartPlugin):
                     return
         except Exception as e:
             self.logger.error(f"write exception: {e}")
-            self.connected = False
-            try:
-                if self._aclient:
-                    self._aclient.close()
-            except Exception:
-                pass
+            self._close_client()
             return
 
         if result is None or result.isError():
@@ -925,6 +931,19 @@ class modbus_tcp(SmartPlugin):
 
     def _write_data_enabled(self) -> bool:
         return bool(self._regToWrite)
+
+    def _scheduler_name(self) -> str:
+        return f"poll_device_{self.get_fullname()}"
+
+    def _close_client(self):
+        client = self._aclient
+        self._aclient = None
+        self.connected = False
+        try:
+            if client:
+                client.close()
+        except Exception:
+            pass
 
     @staticmethod
     def _normalize_value_for_datatype(value, dataType: str):
