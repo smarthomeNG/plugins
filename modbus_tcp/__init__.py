@@ -103,17 +103,15 @@ class modbus_tcp(SmartPlugin):
         self._regToWrite = {}
         self._pollStatus = {}
 
-        # Buffer for cycle > 0 mode: store only latest value per reg-key
-        # { reg_key: {'value': v, 'dt': datetime, 'raw': raw} }
-        self._latest_values = {}
-
         # Threading lock for data shared between SmartHomeNG thread(s) and asyncio thread
         self.lock = threading.Lock()
 
         # Async infrastructure (SmartPlugin-managed event loop thread)
         self._connection_task = None          # background reconnect/connection keeper
         self._reader_task = None              # continuous acquisition task
+        self._scheduled_read_task = None      # crontab-triggered one-shot read task
         self._client_lock = None              # asyncio.Lock to serialize requests on one TCP connection
+        self._read_cycle_lock = None          # asyncio.Lock to avoid overlapping full read passes
 
         self._aclient = None                  # AsyncModbusTcpClient instance (created in run()/async thread)
 
@@ -135,7 +133,7 @@ class modbus_tcp(SmartPlugin):
         Start plugin:
           - start SmartPlugin-managed asyncio loop
           - start async connection management and (depending on cycle) acquisition task
-          - optionally schedule "flush" to items for cycle > 0
+          - optionally schedule crontab-triggered read passes
         """
         self.logger.debug(f"Plugin '{self.get_fullname()}': run method called")
         if self.alive:
@@ -148,16 +146,11 @@ class modbus_tcp(SmartPlugin):
         while not self.alive:
             time.sleep(0.1)
 
-        # Scheduler is only used as "flush trigger" for buffered mode (cycle > 0 or crontab).
-        # For cycle == 0/None without crontab: no incoming data is processed (no reads, no flush).
-        # For cycle < 0: immediate writes from reader task (no flush scheduler).
-        flush_cycle = self._cycle_param if self._cycle_param is not None and self._cycle_param > 0 else None
-        if flush_cycle is not None or (self._crontab is not None and not self._cycle_is_immediate()):
+        if self._crontab is not None and not self._cycle_is_immediate():
             self.error_count = 0
             self.scheduler_add(
-                'flush_items_' + self._host,
-                self._flush_buffer_to_items,
-                cycle=flush_cycle,
+                'poll_device_' + self._host,
+                self._trigger_async_read,
                 cron=self._crontab,
                 prio=5
             )
@@ -167,12 +160,18 @@ class modbus_tcp(SmartPlugin):
     def stop(self):
         """
         Stop plugin:
-          - stop scheduler flush
+          - stop scheduler trigger
           - stop async tasks, close client, stop loop thread cleanly (SmartPlugin)
         """
         self.logger.debug(f"Plugin '{self.get_fullname()}': stop method called")
 
-        # Remove flush scheduler (if added)
+        # Remove scheduler trigger (if added)
+        try:
+            self.scheduler_remove('poll_device_' + self._host)
+        except Exception:
+            pass
+
+        # Remove obsolete scheduler name from previous async implementation if present
         try:
             self.scheduler_remove('flush_items_' + self._host)
         except Exception:
@@ -359,70 +358,6 @@ class modbus_tcp(SmartPlugin):
                     self.logger.error(f"{message} [Logging suppressed every 100th error]")
 
     # ---------------------------------------------------------------------
-    # Scheduler flush for cycle > 0 (buffered writes to items)
-    # ---------------------------------------------------------------------
-
-    def _flush_buffer_to_items(self):
-        """
-        Called by SmartHomeNG scheduler every 'cycle' seconds (cycle > 0).
-        Writes the latest buffered values to items.
-        Older values are implicitly discarded because we only keep the latest value per register key.
-        """
-        if not self.alive:
-            return
-        if self._cycle_is_immediate():
-            return
-        if not self._incoming_data_enabled():
-            return
-
-        now = datetime.now()
-        regCount = 0
-
-        with self.lock:
-            # snapshot keys to minimize time under lock
-            keys = list(self._latest_values.keys())
-
-        for reg in keys:
-            with self.lock:
-                entry = self._latest_values.get(reg)
-                regPara = self._regToRead.get(reg)
-                if entry is None or regPara is None:
-                    continue
-
-                value = entry.get('value')
-                dt = entry.get('dt')
-
-                # avoid re-writing the same buffered timestamp repeatedly
-                last_item_write_dt = regPara.get('last_item_write_dt')
-                if last_item_write_dt is not None and dt is not None and dt <= last_item_write_dt:
-                    continue
-
-                regPara['last_item_write_dt'] = dt
-
-            try:
-                item = regPara['item']
-                item(value, self.get_fullname())
-                regCount += 1
-
-                with self.lock:
-                    if 'read_dt' in regPara:
-                        regPara['last_read_dt'] = regPara.get('read_dt')
-                    if 'value' in regPara:
-                        regPara['last_value'] = regPara.get('value')
-                    regPara['read_dt'] = dt if dt is not None else now
-                    regPara['value'] = value
-
-            except Exception as e:
-                self.logger.error(f"flush: cannot write item for {reg}: {e}")
-
-        if regCount > 0:
-            with self.lock:
-                self._pollStatus['last_dt'] = now
-                self._pollStatus['regCount'] = regCount
-
-        self.logger.debug(f"flush_buffer_to_items: wrote {regCount} buffered values")
-
-    # ---------------------------------------------------------------------
     # Async start/stop + tasks (SmartPlugin asyncio)
     # ---------------------------------------------------------------------
 
@@ -435,6 +370,7 @@ class modbus_tcp(SmartPlugin):
 
         # Create async primitives in the correct loop
         self._client_lock = asyncio.Lock()
+        self._read_cycle_lock = asyncio.Lock()
 
         # Create client in our loop thread (important for asyncio transports)
         self._aclient = AsyncModbusTcpClient(self._host, port=self._port)
@@ -444,12 +380,12 @@ class modbus_tcp(SmartPlugin):
         # Start background connection management (reconnect on drop)
         self._connection_task = asyncio.create_task(self._connection_keeper(), name="connection_keeper")
 
-        # Start acquisition task depending on cycle/crontab mode
-        if self._incoming_data_enabled():
+        # Start acquisition task depending on cycle mode. Crontab-only reads are scheduler-triggered.
+        if self._cycle_param is not None and self._cycle_param != 0:
             self._reader_task = asyncio.create_task(self._acquisition_loop(), name="acquisition_loop")
         else:
             self.logger.info(
-                f"{self.get_fullname()}: cycle is None/0 and no crontab -> no incoming data processing"
+                f"{self.get_fullname()}: cycle is None/0 -> no cycle-based incoming data processing"
             )
 
         self.alive = True
@@ -459,7 +395,10 @@ class modbus_tcp(SmartPlugin):
         await self.wait_for_asyncio_termination()
 
         # Cancel tasks and close client
-        tasks_to_cancel = [task for task in [self._reader_task, self._connection_task] if task and not task.done()]
+        tasks_to_cancel = [
+            task for task in [self._reader_task, self._scheduled_read_task, self._connection_task]
+            if task and not task.done()
+        ]
         for task in tasks_to_cancel:
             task.cancel()
         if tasks_to_cancel:
@@ -472,8 +411,10 @@ class modbus_tcp(SmartPlugin):
             pass
 
         self._reader_task = None
+        self._scheduled_read_task = None
         self._connection_task = None
         self._aclient = None
+        self._read_cycle_lock = None
         self.connected = False
 
         self.alive = False
@@ -544,96 +485,23 @@ class modbus_tcp(SmartPlugin):
 
     async def _acquisition_loop(self):
         """
-        Continuous async acquisition of Modbus values.
-
-        This replaces classic scheduler polling. Values are acquired asynchronously and:
-          - cycle > 0: buffered in self._latest_values (only latest per item)
-          - cycle < 0: written immediately to items (no buffering)
+        Async acquisition of Modbus values.
+          - cycle > 0: read once, update items, sleep cycle seconds
+          - cycle < 0: read continuously
         """
         while self.alive:
             try:
-                # Wait for connection (reconnect handled by connection_keeper)
-                if not await self._wait_connected():
-                    await asyncio.sleep(0.5)
-                    continue
-
-                startTime = datetime.now()
-                regCount = 0
-
-                # Iterate over a snapshot of regToRead to avoid long locks
-                with self.lock:
-                    regs = list(self._regToRead.items())
-
-                if not regs:
+                regCount = await self._read_registers_once()
+                if regCount is None:
                     await asyncio.sleep(self._read_idle_delay)
                     continue
 
-                for reg, regPara in regs:
-                    if not self.alive:
-                        break
-
-                    try:
-                        raw_value = await self.__read_Registers_async(regPara)
-                    except ModbusException as e:
-                        self.logger.error(f"ModbusException raised while reading: {e}")
-                        raw_value = None
-                    except Exception as e:
-                        # Most likely connection drop => mark disconnected and let keeper reconnect
-                        self.logger.error(f"read exception: {e}")
-                        self.connected = False
-                        try:
-                            if self._aclient:
-                                self._aclient.close()
-                        except Exception:
-                            pass
-                        raw_value = None
-
-                    if raw_value is None:
-                        await asyncio.sleep(self._read_inter_request_delay)
-                        continue
-
-                    if self.is_NaN(raw_value, regPara['dataType']):
-                        await asyncio.sleep(self._read_inter_request_delay)
-                        continue
-
-                    value = raw_value
-                    if regPara['factor'] != 1 and isinstance(value, (int, float)):
-                        value *= regPara['factor']
-
-                    dt = datetime.now()
-
-                    # cycle < 0: immediate write to item (no buffering, no scheduler delay)
-                    if self._cycle_param is not None and self._cycle_param < 0:
-                        try:
-                            item = regPara['item']
-                            item(value, self.get_fullname())
-                        except Exception as e:
-                            self.logger.error(f"immediate item write failed for {reg}: {e}")
-                        with self.lock:
-                            if 'read_dt' in regPara:
-                                regPara['last_read_dt'] = regPara.get('read_dt')
-                            if 'value' in regPara:
-                                regPara['last_value'] = regPara.get('value')
-                            regPara['read_dt'] = dt
-                            regPara['value'] = value
-
-                    # cycle > 0: buffer latest only; flush scheduler writes later
-                    else:
-                        with self.lock:
-                            self._latest_values[reg] = {'value': value, 'dt': dt, 'raw': raw_value}
-
-                    regCount += 1
-                    await asyncio.sleep(self._read_inter_request_delay)
-
-                duration = datetime.now() - startTime
-                if regCount > 0:
-                    with self.lock:
-                        self._pollStatus['last_dt'] = datetime.now()
-                        self._pollStatus['regCount'] = regCount
-                self.logger.debug(f"acquisition_loop: read {regCount} register(s) in {duration} seconds")
-
-                # Yield control; do not spin too aggressively
-                await asyncio.sleep(0)
+                if self._cycle_is_immediate():
+                    await asyncio.sleep(0)
+                elif self._cycle_param is not None and self._cycle_param > 0:
+                    await self._sleep_while_alive(self._cycle_param)
+                else:
+                    break
 
             except asyncio.CancelledError:
                 break
@@ -641,6 +509,121 @@ class modbus_tcp(SmartPlugin):
                 # Never crash the plugin
                 self.logger.error(f"acquisition_loop unexpected error: {e}")
                 await asyncio.sleep(1.0)
+
+    async def _read_registers_once(self):
+        """
+        Read all configured registers once and write successful values directly to items.
+        Returns None when there are no read items.
+        """
+        if not await self._wait_connected():
+            await asyncio.sleep(0.5)
+            return 0
+
+        if self._read_cycle_lock is not None and self._read_cycle_lock.locked():
+            self.logger.debug("read cycle already running, skipping overlapping trigger")
+            return 0
+
+        async with self._read_cycle_lock:
+            startTime = datetime.now()
+            regCount = 0
+
+            with self.lock:
+                regs = list(self._regToRead.items())
+
+            if not regs:
+                return None
+
+            for reg, regPara in regs:
+                if not self.alive:
+                    break
+
+                try:
+                    raw_value = await self.__read_Registers_async(regPara)
+                except ModbusException as e:
+                    self.logger.error(f"ModbusException raised while reading: {e}")
+                    raw_value = None
+                except Exception as e:
+                    self.logger.error(f"read exception: {e}")
+                    self.connected = False
+                    try:
+                        if self._aclient:
+                            self._aclient.close()
+                    except Exception:
+                        pass
+                    raw_value = None
+
+                if raw_value is None:
+                    await asyncio.sleep(self._read_inter_request_delay)
+                    continue
+
+                if self.is_NaN(raw_value, regPara['dataType']):
+                    await asyncio.sleep(self._read_inter_request_delay)
+                    continue
+
+                value = raw_value
+                if regPara['factor'] != 1 and isinstance(value, (int, float)):
+                    value *= regPara['factor']
+
+                dt = datetime.now()
+                try:
+                    item = regPara['item']
+                    item(value, self.get_fullname())
+                except Exception as e:
+                    self.logger.error(f"item write failed for {reg}: {e}")
+
+                with self.lock:
+                    if 'read_dt' in regPara:
+                        regPara['last_read_dt'] = regPara.get('read_dt')
+                    if 'value' in regPara:
+                        regPara['last_value'] = regPara.get('value')
+                    regPara['read_dt'] = dt
+                    regPara['value'] = value
+
+                regCount += 1
+                await asyncio.sleep(self._read_inter_request_delay)
+
+            duration = datetime.now() - startTime
+            if regCount > 0:
+                with self.lock:
+                    self._pollStatus['last_dt'] = datetime.now()
+                    self._pollStatus['regCount'] = regCount
+            self.logger.debug(f"read cycle: read {regCount} register(s) in {duration} seconds")
+            return regCount
+
+    async def _sleep_while_alive(self, seconds):
+        end_time = datetime.now().timestamp() + seconds
+        while self.alive:
+            remaining = end_time - datetime.now().timestamp()
+            if remaining <= 0:
+                return
+            await asyncio.sleep(min(remaining, 1.0))
+
+    def _trigger_async_read(self):
+        """
+        Scheduler callback for crontab-triggered read passes.
+        """
+        if not self.alive:
+            return
+        try:
+            self.run_asyncio_coro(self._schedule_triggered_read(), timeout=1)
+        except Exception as e:
+            self.logger.error(f"trigger_async_read: scheduling read failed: {e}")
+
+    async def _schedule_triggered_read(self):
+        if self._scheduled_read_task is not None and not self._scheduled_read_task.done():
+            self.logger.debug("triggered read already running")
+            return False
+        self._scheduled_read_task = asyncio.create_task(self._read_registers_once(), name="triggered_read")
+        self._scheduled_read_task.add_done_callback(self._log_read_task_result)
+        return True
+
+    def _log_read_task_result(self, task):
+        try:
+            task.result()
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            self.logger.error(f"read task failed: {e}")
 
     # ---------------------------------------------------------------------
     # Async Modbus IO (read/write) - based on original logic, but await-based
@@ -899,9 +882,6 @@ class modbus_tcp(SmartPlugin):
             string_encoding='ASCII'
         )
         return value
-
-    def _incoming_data_enabled(self) -> bool:
-        return self._crontab is not None or (self._cycle_param is not None and self._cycle_param != 0)
 
     def _cycle_is_immediate(self) -> bool:
         return self._cycle_param is not None and self._cycle_param < 0
