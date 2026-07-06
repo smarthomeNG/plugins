@@ -120,6 +120,7 @@ class modbus_tcp(SmartPlugin):
         # Small delay between single register reads to avoid a tight loop (still "continuous", but polite)
         self._read_inter_request_delay = 0.01
         self._read_idle_delay = 1.0
+        self._shutdown_timeout = 5.0
 
         self.init_webinterface(WebInterface)
 
@@ -143,7 +144,11 @@ class modbus_tcp(SmartPlugin):
         self.start_asyncio(self.plugin_coro())
 
         # Wait briefly until asyncio loop is running and plugin_coro set alive
+        start = time.monotonic()
         while not self.alive:
+            if time.monotonic() - start > 10:
+                self.logger.error(f"Plugin '{self.get_fullname()}': asyncio startup timed out")
+                return
             time.sleep(0.1)
 
         scheduler_cycle = self._cycle_param if self._cycle_param is not None and self._cycle_param > 0 else None
@@ -178,6 +183,8 @@ class modbus_tcp(SmartPlugin):
             self.scheduler_remove('flush_items_' + self._host)
         except Exception:
             pass
+
+        self.alive = False
 
         # Stop asyncio loop and thread (SmartPlugin)
         self.stop_asyncio()
@@ -379,8 +386,23 @@ class modbus_tcp(SmartPlugin):
         self.connected = False
         self.error_count = 0
 
-        # Start background connection management (reconnect on drop)
-        self._connection_task = asyncio.create_task(self._connection_keeper(), name="connection_keeper")
+        incoming_enabled = self._incoming_data_enabled()
+        write_enabled = self._write_data_enabled()
+
+        if not incoming_enabled and self._regToRead:
+            self.logger.warning(
+                f"{self.get_fullname()}: cycle is 0 and no crontab is configured; "
+                f"{len(self._regToRead)} read item(s) will keep init/cache/database values"
+            )
+
+        # Start background connection management only when reads or writes can happen.
+        if incoming_enabled or write_enabled:
+            self._connection_task = asyncio.create_task(self._connection_keeper(), name="connection_keeper")
+        else:
+            self.logger.info(
+                f"{self.get_fullname()}: no incoming data processing and no write items; "
+                f"not opening a Modbus TCP connection"
+            )
 
         # Start continuous acquisition task only for immediate mode.
         # Positive cycle/crontab reads are triggered by SmartHomeNG scheduler.
@@ -396,6 +418,13 @@ class modbus_tcp(SmartPlugin):
 
         # wait until STOP is received
         await self.wait_for_asyncio_termination()
+        self.alive = False
+
+        try:
+            if self._aclient:
+                self._aclient.close()
+        except Exception:
+            pass
 
         # Cancel tasks and close client
         tasks_to_cancel = [
@@ -405,7 +434,15 @@ class modbus_tcp(SmartPlugin):
         for task in tasks_to_cancel:
             task.cancel()
         if tasks_to_cancel:
-            await asyncio.gather(*tasks_to_cancel, return_exceptions=True)
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(*tasks_to_cancel, return_exceptions=True),
+                    timeout=self._shutdown_timeout
+                )
+            except asyncio.TimeoutError:
+                self.logger.warning(
+                    f"Timeout while stopping Modbus async tasks after {self._shutdown_timeout} seconds"
+                )
 
         try:
             if self._aclient:
@@ -539,9 +576,15 @@ class modbus_tcp(SmartPlugin):
                 try:
                     raw_value = await self.__read_Registers_async(regPara)
                 except ModbusException as e:
+                    if not self.alive:
+                        self.logger.debug(f"Modbus read cancelled while stopping: {e}")
+                        break
                     self.logger.error(f"ModbusException raised while reading: {e}")
                     raw_value = None
                 except Exception as e:
+                    if not self.alive:
+                        self.logger.debug(f"read cancelled while stopping: {e}")
+                        break
                     self.logger.error(f"read exception: {e}")
                     self.connected = False
                     try:
@@ -876,6 +919,12 @@ class modbus_tcp(SmartPlugin):
 
     def _cycle_is_immediate(self) -> bool:
         return self._cycle_param is not None and self._cycle_param < 0
+
+    def _incoming_data_enabled(self) -> bool:
+        return self._crontab is not None or (self._cycle_param is not None and self._cycle_param != 0)
+
+    def _write_data_enabled(self) -> bool:
+        return bool(self._regToWrite)
 
     @staticmethod
     def _normalize_value_for_datatype(value, dataType: str):
