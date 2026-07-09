@@ -325,6 +325,98 @@ class Database(SmartPlugin):
         else:
             return None
 
+    def remove_item(self, item):
+        """
+        Clean up plugin-internal bookkeeping for *item* before it's deleted —
+        mirrors what parse_item() set up. Called by Items.remove_item() via the
+        PLUGIN_REMOVE_ITEM hook (e.g. when admin-UI item editing recreates the
+        item under the hood, or on an ordinary item delete).
+
+        Flushes any pending buffered datapoints for *item* to the database
+        first (_dump with finalize=True), so editing/deleting an item never
+        silently drops not-yet-written log entries. Database *rows* for the
+        item's path are untouched — id() looks them up by path, so a future
+        recreate at the same path naturally finds and reuses the same row.
+        This only clears the in-memory Item-object references the plugin
+        itself holds.
+
+        :param item: Item instance being removed
+        :type item: object
+        :return: True if this item had database-plugin state to clean up
+        :rtype: bool
+        """
+        found = item.property.path in self._webdata
+        if not found:
+            return False
+
+        self._dump(finalize=True, items=[item])
+        self._buffer_lock.acquire()
+        self._buffer.pop(item, None)
+        self._buffer_lock.release()
+
+        self._webdata.pop(item.property.path, None)
+        try:
+            self._handled_items.remove(item)
+        except ValueError:
+            pass
+        try:
+            self._items_with_maxage.remove(item)
+        except ValueError:
+            pass
+
+        return True
+
+    def rename_item(self, item, old_path, new_path):
+        """
+        Re-key plugin-internal bookkeeping for an item that was renamed in
+        place (same object, only its path changed — see
+        Items.rename_item(), called via the PLUGIN_RENAME_ITEM hook).
+
+        Unlike remove_item()/parse_item(), this does NOT flush/drop the
+        item's data — it migrates it. ``item.db``/``item.series`` are
+        functools.partial objects that capture the path as a frozen
+        keyword argument at parse_item() time (see parse_item() above);
+        they're refreshed here so calling them after a rename queries
+        under the new path, not a stale, now-meaningless old one. The old
+        path's database row is an "orphan" (no in-memory item points at
+        it any more) the moment _webdata is re-keyed — reassign_orphaned_id()
+        merges its log history into the new path's row and deletes it,
+        rather than leaving it to be discovered later by build_orphanlist().
+
+        :param item: The renamed item (same object, unchanged identity)
+        :param old_path: The item's path before the rename
+        :param new_path: The item's path after the rename
+        :type old_path: str
+        :type new_path: str
+
+        :return: True if this item had database-plugin state to migrate
+        :rtype: bool
+        """
+        if old_path not in self._webdata:
+            return False
+
+        self._webdata[new_path] = self._webdata.pop(old_path)
+        item.series = functools.partial(self._series, item=new_path)
+        item.db = functools.partial(self._single, item=new_path)
+
+        old_id = self.id(old_path, create=False)
+        # id()'s create=True path always inserts via item.property.path,
+        # not the string it was passed — item.property.path already
+        # equals new_path here (Items.rename_item() mutates the path
+        # before calling this hook), so pass the item, not the string.
+        new_id = self.id(item, create=True)
+        if old_id is not None and old_id != new_id:
+            # id(create=True) never commits its own insert (a pre-existing
+            # gap — insertItem() just executes, never commits). Without an
+            # explicit commit here, that uncommitted write on self._db
+            # blocks reassign_orphaned_id()'s very first read, since it
+            # uses the separate self._db_maint connection, and SQLite
+            # allows only one writer's transaction to be open at a time.
+            self._db.commit()
+            self.reassign_orphaned_id(old_id, new_id)
+
+        return True
+
     def parse_logic(self, logic):
         """
         Default plugin parse_logic method
@@ -787,9 +879,13 @@ class Database(SmartPlugin):
         """
         Create database item record for given item name.
 
-        Uses database-assigned auto-increment for the id rather than the
-        previous ``MAX(id) + 1`` pattern, which was prone to a race
-        condition on multi-connection setups.
+        Uses the cursor's own ``lastrowid`` right after the INSERT rather
+        than a follow-up ``SELECT id ... WHERE name=:name``. The database
+        connection is shared across threads (``check_same_thread:0``), so a
+        concurrent caller (e.g. a websocket admin series request running on
+        another thread) could interleave between the INSERT and that
+        lookup and cause it to miss, leaving the item permanently id-less.
+        ``lastrowid`` is scoped to this cursor and immune to that race.
 
         This is a public function of the plugin.
 
@@ -798,9 +894,8 @@ class Database(SmartPlugin):
         :return:     The new integer item ID.
         :rtype:      int
         """
-        self._execute(self._prepare('INSERT INTO {item}(name) VALUES(:name);'), {'name': name}, cur=cur)
-        row = self._fetchone('SELECT id FROM {item} WHERE name = :name;', {'name': name}, cur=cur)
-        return int(row[0])
+        result_cur = self._execute(self._prepare('INSERT INTO {item}(name) VALUES(:name);'), {'name': name}, cur=cur)
+        return int(result_cur.lastrowid)
 
     def updateItem(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
         """
@@ -1221,15 +1316,16 @@ class Database(SmartPlugin):
             while count > 0:
                 log_debug(f'reassigning {min(count, self.max_reassign_logentries)} log entries')
                 self._execute(
-                    self._prepare('UPDATE {log} SET item_id = :newid WHERE item_id = :orphanid LIMIT :limit;'),
+                    self._prepare(
+                        'UPDATE {log} SET item_id = :newid WHERE rowid IN '
+                        '(SELECT rowid FROM {log} WHERE item_id = :orphanid LIMIT :limit);'
+                    ),
                     {'newid': to, 'orphanid': orphan_id, 'limit': self.max_reassign_logentries},
                     cur=cur,
                 )
                 count -= self.max_reassign_logentries
 
-            self._execute(
-                self._prepare('DELETE FROM  {item} WHERE id = :orphanid LIMIT 1;'), {'orphanid': orphan_id}, cur=cur
-            )
+            self._execute(self._prepare('DELETE FROM {item} WHERE id = :orphanid;'), {'orphanid': orphan_id}, cur=cur)
             log_info(f'reassigned orphaned id {orphan_id} to new id {to}')
             cur.close()
             self._db_maint.commit()
@@ -1761,7 +1857,7 @@ class Database(SmartPlugin):
 
                     self._db.commit()
                 except Exception as e:
-                    self.logger.warning('Problem dumping {}: {}'.format(item.property.path, e))
+                    self.logger.warning('Problem dumping {}: {}'.format(item.property.path, e), exc_info=True)
                     try:
                         self._db.rollback()
                     except Exception as er:
@@ -2040,7 +2136,7 @@ class Database(SmartPlugin):
         return query.format(**self._replace)
 
     def _execute(self, query, params, cur=None):
-        self._query(self._db.execute, query, params, cur)
+        return self._query(self._db.execute, query, params, cur)
 
     def _fetchone(self, query, params={}, cur=None):
         tuples = self._query(self._db.fetchone, query, params, cur)
