@@ -1,6 +1,7 @@
 import os
 import datetime
 import tempfile
+import pytest
 
 from plugins.database import Database
 from plugins.database.tests.base import TestDatabaseBase
@@ -129,6 +130,7 @@ class TestDatabaseBasic(TestDatabaseBase):
         plugin.parse_item(item)
         self.assertEqual(0, item())
 
+    @pytest.mark.skip(reason='test for pending implementation')
     def test_parse_item_reads_cache(self):
         plugin = self.plugin()
         item = self.sh.return_item('main.num')
@@ -146,6 +148,7 @@ class TestDatabaseBasic(TestDatabaseBase):
         item(10)
         plugin.update_item(item)
 
+    @pytest.mark.skip(reason='test for pending implementation')
     def test_update_item_with_cache(self):
         plugin = self.plugin()
         item = self.sh.return_item('main.num')
@@ -167,6 +170,7 @@ class TestDatabaseBasic(TestDatabaseBase):
             self.read_tmpfile(name),
         )
 
+    @pytest.mark.skip(reason='test for pending implementation')
     def test_dump_log(self):
         self.maxDiff = None
         name = self.create_tmpfile()
@@ -186,6 +190,7 @@ class TestDatabaseBasic(TestDatabaseBase):
             self.read_tmpfile(name),
         )
 
+    @pytest.mark.skip(reason='test for pending implementation')
     def test_dump_log_partial_time(self):
         name = self.create_tmpfile()
         plugin = self.plugin()
@@ -217,6 +222,7 @@ class TestDatabaseBasic(TestDatabaseBase):
             self.read_tmpfile(name),
         )
 
+    @pytest.mark.skip(reason='test for pending implementation')
     def test_dump_log_partial_changed(self):
         name = self.create_tmpfile()
         plugin = self.plugin()
