@@ -36,13 +36,11 @@ from lib.model.smartplugin import SmartPluginWebIf
 #    Webinterface of the plugin
 # ------------------------------------------
 
-import cherrypy
 import csv
 from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -71,11 +69,12 @@ class WebInterface(SmartPluginWebIf):
         """
         token = self.plugin.get_hc().token_load()
 
-        if grant_type == "authorization_code" and code is not None and state is not None:
+        if grant_type == 'authorization_code' and code is not None and state is not None:
             os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-            self.logger.error("Token expired, refreshing!")
+            self.logger.error('Token expired, refreshing!')
             self.plugin.get_hc().get_token(
-                cherrypy.url() + "?code=" + code + "&state=" + state + "&grant_type=" + grant_type)
+                cherrypy.url() + '?code=' + code + '&state=' + state + '&grant_type=' + grant_type
+            )
             token = self.plugin.get_hc().token_load()
 
         token_expiry_date = None
@@ -83,9 +82,15 @@ class WebInterface(SmartPluginWebIf):
             token_expiry_date = datetime.fromtimestamp(token['expires_at'])
 
         tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           interface=None, item_count=len(self.plugin.get_items()),
-                           plugin_info=self.plugin.get_info(), tabcount=3,
-                           tab1title="HomeConnect Items (%s)" % len(self.plugin.get_items()), token=token,
-                           token_expiry_date=token_expiry_date,
-                           p=self.plugin)
+        return tmpl.render(
+            plugin_shortname=self.plugin.get_shortname(),
+            plugin_version=self.plugin.get_version(),
+            interface=None,
+            item_count=len(self.plugin.get_items()),
+            plugin_info=self.plugin.get_info(),
+            tabcount=3,
+            tab1title='HomeConnect Items (%s)' % len(self.plugin.get_items()),
+            token=token,
+            token_expiry_date=token_expiry_date,
+            p=self.plugin,
+        )

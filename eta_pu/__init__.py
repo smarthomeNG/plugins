@@ -32,7 +32,8 @@ __ETA_ERROR__ = 'eta_pu_error'
 __ETA_URI__ = 'eta_pu_uri'
 __ETA_TYPE__ = 'eta_pu_type'
 
-class EtaValue():
+
+class EtaValue:
     def __init__(self, xml_item):
         self.logger = logging.getLogger(__name__)
         self.value = xml_item.text
@@ -53,18 +54,22 @@ class EtaValue():
     def get_data(self, uri, str_value):
         value = 0
         try:
-            value = int(str_value) # FIXME
-        except:
+            value = int(str_value)  # FIXME
+        except Exception:
             value = self.valueFromString(str_value)
             if value is None:
-                self.logger.error("unhandled strValue {0} for {1}".format(str_value, uri))
+                self.logger.error('unhandled strValue {0} for {1}'.format(str_value, uri))
                 return None
         data = value * self.scale_factor + self.adv_text_offset
         return data
-'''
+
+
+"""
 Little helper for PUT, DELETE, POST and GET request
-'''
-class Request():
+"""
+
+
+class Request:
     def __init__(self, address, port):
         self.address = address
         self.logger = logging.getLogger(__name__)
@@ -92,11 +97,11 @@ class Request():
             data = data.encode('utf-8')
             request = urllib.request.Request(url)
             # adding charset parameter to the Content-Type header.
-            request.add_header("Content-Type","application/x-www-form-urlencoded;charset=utf-8")
+            request.add_header('Content-Type', 'application/x-www-form-urlencoded;charset=utf-8')
             f = urllib.request.urlopen(request, data)
             if f.status in (http.client.OK, http.client.CREATED):
                 return f.read().decode('utf-8')
-                self.logger.warning("request failed: {0}: ".format(url))
+                self.logger.warning('request failed: {0}: '.format(url))
                 # self.logger.debug("{0} response: {1} {2}".format(req_type, f.status, f.reason))
             return None
         elif 'PUT' == req_type:
@@ -108,7 +113,7 @@ class Request():
         # success status: 201/Created for PUT request, else 200/Ok
         if resp.status in (http.client.OK, http.client.CREATED):
             return resp.read()
-        self.logger.warning("request failed for: {0}: ".format(url))
+        self.logger.warning('request failed for: {0}: '.format(url))
         # self.logger.debug("{0} response: {1} {2}".format(req_type, resp.status, resp.reason))
         return None
 
@@ -118,13 +123,15 @@ class Request():
             url += uri
         return self.__request__(req_type, url, value=value)
 
-'''
-The ETA_PU plugin class.
-'''
-class ETA_PU(SmartPlugin):
 
+"""
+The ETA_PU plugin class.
+"""
+
+
+class ETA_PU(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.1.2"
+    PLUGIN_VERSION = '1.1.2'
 
     def __init__(self, sh, *args, **kwargs):
         self._cycle = 30
@@ -142,18 +149,18 @@ class ETA_PU(SmartPlugin):
         self.scheduler_add(__ETA_PU__, self.update_status, cycle=self._cycle)
         self.alive = True
 
-
     def rebuild_set(self):
         try:
             self.del_set(self._setname)
             self.add_set(self._setname)
             self.fill_set(self._setname)
-        except:
+        except Exception:
             self.logger.error('Failed to rebuild.. ETA offline?')
- 
-    '''
+
+    """
     add the list of URIs to an existing varset
-    '''
+    """
+
     def fill_set(self, var_set):
         for uri in self._uri:
             path = '/'.join((self._setpath, var_set, uri))
@@ -165,39 +172,43 @@ class ETA_PU(SmartPlugin):
     def stop(self):
         self.alive = False
 
-    '''
+    """
     delete the default uri-set
-    '''
+    """
+
     def del_set(self, name):
         rc = 'OK'
         if None is self._request.send('DELETE', '{0}/{1}'.format(self._setpath, name)):
             rc = 'FAILED'
-        self.logger.info("deleting ETA var_set {0}: {1}".format(name, rc))
+        self.logger.info('deleting ETA var_set {0}: {1}'.format(name, rc))
 
-    '''
+    """
     add an empty uri-set
-    '''
+    """
+
     def add_set(self, name):
         rc = 'OK'
         if None is self._request.send('PUT', '{0}/{1}'.format(self._setpath, name)):
             rc = 'FAILED'
-        self.logger.info("adding gew var_set {0}: {1}".format(name, rc))
+        self.logger.info('adding gew var_set {0}: {1}'.format(name, rc))
 
-    '''
+    """
     read uri from parent item
-    '''
+    """
+
     def _get_uri(self, item):
         parent_item = item.return_parent()
         if parent_item is None:
             self.logger.error("skipping item: no parent with 'eta_pu_uri' found")
             return None
-        if False == (__ETA_URI__ in parent_item.conf):
+        if __ETA_URI__ not in parent_item.conf:
             return self._get_uri(parent_item)
         return parent_item.conf[__ETA_URI__]
 
-    '''
+    """
     parse conf file
-    '''
+    """
+
     def parse_item(self, item):
         if __ETA_TYPE__ in item.conf:
             return self.parse_type(item)
@@ -205,11 +216,12 @@ class ETA_PU(SmartPlugin):
             self.parse_error(item)
         return None
 
-    '''
+    """
     parse variables to observe:
         looking for eta_pu_type with parent having eta_pu_uri set
         returning a function that can be used to set the value of the variable
-    '''
+    """
+
     def parse_type(self, item):
         uri = self._get_uri(item).strip('/')
         if uri:
@@ -218,17 +230,19 @@ class ETA_PU(SmartPlugin):
             self._uri[uri].append(item)
         return self.update_var_item
 
-    '''
+    """
     parse fub_uris of the subsystems to observe:
         to obtain the errors of a subsystem
         entries containing eta_pu_fub = <fub_uri_of_the_subsystem>
-    '''
+    """
+
     def parse_error(self, item):
         self._error = item
 
-    '''
+    """
     update function for variables
-    '''
+    """
+
     def update_var_item(self, item, caller=None, source=None, dest=None):
         if caller == __ETA_PU__:
             return
@@ -236,26 +250,27 @@ class ETA_PU(SmartPlugin):
             # self.logger.debug('Write to ETA_PU...{} {} {}'.format(caller,source,dest))
             uri = self._get_uri(item)
             if uri:
-                data = self._objects[uri].get_data(uri,item())
+                data = self._objects[uri].get_data(uri, item())
                 self.logger.debug('write to ETA_PU: {}'.format(data))
                 self._request.send('POST', '/user/var/', uri, data)
 
-    '''
+    """
     request an uri and return the xml response
-    '''
+    """
+
     def fetch_xml(self, uri):
         url = 'http://{0}:{1}{2}'.format(self._request.address, self._request.port, uri)
         xml = self.get_sh().tools.fetch_url(url, timeout=2)
         try:
-                return ET.fromstring(xml)
-        except:
-                self.logger.error('can not parse response from ETA')
+            return ET.fromstring(xml)
+        except Exception:
+            self.logger.error('can not parse response from ETA')
         return None
 
-    '''
+    """
     helper function called by update status
     called periodically to update the var_items
-    '''
+    """
 
     def update_var_status(self):
         try:
@@ -267,8 +282,8 @@ class ETA_PU(SmartPlugin):
             for uri in self._uri.keys():
                 element = response.find(".//*[@uri='%s']" % uri)
                 if element is None:
-                     self.logger.error('element not found: {}'.format(uri))
-                     continue
+                    self.logger.error('element not found: {}'.format(uri))
+                    continue
                 # store parameters needed when update_var_item is called
                 self._objects[uri] = EtaValue(element)
                 self.logger.debug('looking for {} in respones'.format(uri))
@@ -277,20 +292,23 @@ class ETA_PU(SmartPlugin):
                     # update item value
                     # self.logger.debug(str(item.conf))
                     if item.conf[__ETA_TYPE__] == 'calc':
-                        value = int(element.text) / int(element.attrib['scaleFactor'])- int(element.attrib['advTextOffset'])
+                        value = int(element.text) / int(element.attrib['scaleFactor']) - int(
+                            element.attrib['advTextOffset']
+                        )
                     else:
                         value = element.attrib[item.conf[__ETA_TYPE__]]
                     if isinstance(item, str):
                         value = value.replace(',', '.')
                     item(value, caller=__ETA_PU__)
-        except:
+        except Exception:
             self.logger.error('Update var failed, trying to rebuild varset...')
             self.rebuild_set()
 
-    '''
+    """
     helper function called by update status
     called periodically to retrieve the list of errors
-    '''
+    """
+
     def update_errors(self):
         response = self.fetch_xml('/user/errors')
         if response is None:
@@ -302,15 +320,15 @@ class ETA_PU(SmartPlugin):
                 for error in fub:
                     # concatenate error strings
                     text = '{0}{1} {2} {3} {4}\n'.format(
-                            text, error.attrib['time'], error.attrib['priority'],
-                            error.attrib['msg'], error.text)
-            self.logger.info("Error Message from ETA: {}".format(text))
+                        text, error.attrib['time'], error.attrib['priority'], error.attrib['msg'], error.text
+                    )
+            self.logger.info('Error Message from ETA: {}'.format(text))
         # update the item
         if self._error is not None:
             self._error(text, caller=__ETA_PU__)
 
         # for all fub_/subsystem_URIs
-        #for fub in self._errors.keys():
+        # for fub in self._errors.keys():
         #    # find element with that fub_URI
         #    element = response.find(".//*[@uri='%s']" % fub)
         #    self.logger.debug('looking for {} in respones'.format(fub))
@@ -327,10 +345,10 @@ class ETA_PU(SmartPlugin):
         #    # update the item
         #    self._errors[fub](text, caller=__ETA_PU__)
 
-    '''
+    """
     called periodically to update the items
-    '''
+    """
+
     def update_status(self):
         self.update_var_status()
         self.update_errors()
-

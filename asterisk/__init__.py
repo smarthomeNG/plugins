@@ -30,8 +30,7 @@ from lib.network import Tcp_client
 
 
 class Asterisk(SmartPlugin):
-
-    PLUGIN_VERSION = "1.4.2"
+    PLUGIN_VERSION = '1.4.2'
 
     DB = 'ast_db'
     DEV = 'ast_dev'
@@ -56,6 +55,7 @@ class Asterisk(SmartPlugin):
         super().__init__()
 
         from bin.smarthome import VERSION
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
@@ -68,20 +68,27 @@ class Asterisk(SmartPlugin):
         self.terminator = b'\r\n\r\n'
         self._client = Tcp_client(self.host, self.port, terminator=self.terminator)
         self._client.set_callbacks(connected=self.handle_connect, data_received=self.found_terminator)
-        self._init_cmd = {'Action': 'Login', 'Username': self.username, 'Secret': self.password, 'Events': 'call,user,cdr'}
+        self._init_cmd = {
+            'Action': 'Login',
+            'Username': self.username,
+            'Secret': self.password,
+            'Events': 'call,user,cdr',
+        }
         self._reply_lock = threading.Condition()
         self._cmd_lock = threading.Lock()
         self._aid = 0
         self._devices = {}
         self._mailboxes = {}
         self._trigger_logics = {}
-        self._log_in = lib.log.Log(self.get_sh(), 'env.asterisk.log.in', ['start', 'name', 'number', 'duration', 'direction'])
+        self._log_in = lib.log.Log(
+            self.get_sh(), 'env.asterisk.log.in', ['start', 'name', 'number', 'duration', 'direction']
+        )
 
     def run(self):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
         if self._client.connect():
             self.alive = True
         else:
@@ -91,14 +98,13 @@ class Asterisk(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         if self._client.connected():
             self._client.close()
         self.alive = False
         self._reply_lock.acquire()
         self._reply_lock.notify()
         self._reply_lock.release()
-
 
     def parse_item(self, item):
         """
@@ -120,7 +126,6 @@ class Asterisk(SmartPlugin):
         if self.has_iattr(item.conf, Asterisk.DB):
             return self.update_item
 
-
     def parse_logic(self, logic):
         """
         Default plugin parse_logic method
@@ -131,7 +136,6 @@ class Asterisk(SmartPlugin):
                 self._trigger_logics[event] = [logic]
             else:
                 self._trigger_logics[event].append(logic)
-
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -147,13 +151,12 @@ class Asterisk(SmartPlugin):
         :param dest: if given it represents the dest
         """
         if self.alive and caller != self.get_shortname():
-            self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.property.path))
+            self.logger.debug('Update item: {}, item has been changed outside this plugin'.format(item.property.path))
             if self.has_iattr(item.conf, Asterisk.DB):
                 value = item()
                 if isinstance(value, bool):
                     value = int(item())
                 self.db_write(self.get_iattr_value(item.conf, Asterisk.DB), value)
-
 
     def handle_connect(self, client):
         self._command(self._init_cmd, reply=False)
@@ -161,7 +164,6 @@ class Asterisk(SmartPlugin):
             mbc = self.mailbox_count(mb)
             if mbc is not None:
                 self._mailboxes[mb](mbc[1])
-
 
     def _command(self, d, reply=True):
         """
@@ -179,10 +181,12 @@ class Asterisk(SmartPlugin):
             d['ActionID'] = self._aid
         # self.logger.debug("Request {0} - sending: {1}".format(self._aid, d))
         self._reply_lock.acquire()
-#
+        #
         # self.send(('\r\n'.join(['{0}: {1}'.format(key, value) for (key, value) in list(d.items())]) + '\r\n\r\n').encode())
-        self._client.send(('\r\n'.join(['{0}: {1}'.format(key, value) for (key, value) in list(d.items())]) + '\r\n\r\n').encode())
-#
+        self._client.send(
+            ('\r\n'.join(['{0}: {1}'.format(key, value) for (key, value) in list(d.items())]) + '\r\n\r\n').encode()
+        )
+        #
         if reply:
             self._reply_lock.wait(2)
         self._reply_lock.release()
@@ -195,37 +199,46 @@ class Asterisk(SmartPlugin):
         return reply
 
     def db_read(self, key):
-        """ Read from Asterisk database """
+        """Read from Asterisk database"""
         fam, sep, key = key.partition('/')
         try:
             return self._command({'Action': 'DBGet', 'Family': fam, 'Key': key})
         except Exception:
-            self.logger.warning("Asterisk: Problem reading {0}/{1}.".format(fam, key))
+            self.logger.warning('Asterisk: Problem reading {0}/{1}.'.format(fam, key))
 
     def db_write(self, key, value):
-        """ Write to Asterisk database """
+        """Write to Asterisk database"""
         fam, sep, key = key.partition('/')
         try:
             return self._command({'Action': 'DBPut', 'Family': fam, 'Key': key, 'Val': value})
         except Exception as e:
-            self.logger.warning("Asterisk: Problem updating {0}/{1} to {2}: {3}.".format(fam, key, value, e))
+            self.logger.warning('Asterisk: Problem updating {0}/{1} to {2}: {3}.'.format(fam, key, value, e))
 
     def mailbox_count(self, mailbox, context='default'):
-        """ get mailbox count tuple """
+        """get mailbox count tuple"""
         try:
             return self._command({'Action': 'MailboxCount', 'Mailbox': mailbox + '@' + context})
         except Exception as e:
-            self.logger.warning("Asterisk: Problem reading mailbox count {0}@{1}: {2}.".format(mailbox, context, e))
+            self.logger.warning('Asterisk: Problem reading mailbox count {0}@{1}: {2}.'.format(mailbox, context, e))
             return (0, 0)
 
     def call(self, source, dest, context, callerid=None):
-        cmd = {'Action': 'Originate', 'Channel': source, 'Exten': dest, 'Context': context, 'Priority': '1', 'Async': 'true'}
+        cmd = {
+            'Action': 'Originate',
+            'Channel': source,
+            'Exten': dest,
+            'Context': context,
+            'Priority': '1',
+            'Async': 'true',
+        }
         if callerid:
             cmd['Callerid'] = callerid
         try:
             self._command(cmd, reply=False)
         except Exception as e:
-            self.logger.warning("Asterisk: Problem calling {0} from {1} with context {2}: {3}.".format(dest, source, context, e))
+            self.logger.warning(
+                'Asterisk: Problem calling {0} from {1} with context {2}: {3}.'.format(dest, source, context, e)
+            )
 
     def hangup(self, hang):
         active_channels = self._command({'Action': 'CoreShowChannels'})
@@ -237,7 +250,7 @@ class Asterisk(SmartPlugin):
                 self._command({'Action': 'Hangup', 'Channel': channel}, reply=False)
 
     def found_terminator(self, client, data):
-        """called then terminator is found 
+        """called then terminator is found
 
         :param client: tcp client which is used for the connection
         :param str data: the response from asterisk server
@@ -256,8 +269,8 @@ class Asterisk(SmartPlugin):
         ```
         The following code puts everything into the dict ``event``
         It only implements a very basic inspection of the response
-        """ 
-        self.logger.debug(f"data to inspect: {data}")
+        """
+        self.logger.debug(f'data to inspect: {data}')
         event = {}
         for line in data.splitlines():
             key, sep, value = line.partition(': ')
@@ -283,7 +296,9 @@ class Asterisk(SmartPlugin):
                     self._reply_lock.release()
         if 'Event' not in event:  # ignore
             return
-        if event['Event'] == 'Newchannel':  # or data.startswith('Event: Newstate') ) and 'ChannelStateDesc: Ring' in data:
+        if (
+            event['Event'] == 'Newchannel'
+        ):  # or data.startswith('Event: Newstate') ) and 'ChannelStateDesc: Ring' in data:
             device = self._get_device(event['Channel'])
             if device in self._devices:
                 self._devices[device](True, 'Asterisk')

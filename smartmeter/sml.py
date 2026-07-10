@@ -35,6 +35,7 @@ import io
 
 try:
     import serial_asyncio
+
     ASYNC_IMPORTED = True
 except ImportError:
     ASYNC_IMPORTED = False
@@ -51,11 +52,13 @@ from typing import Union
 try:
     from lib.model.smartplugin import SmartPlugin
 except ImportError:
-    class SmartPlugin():
+
+    class SmartPlugin:
         pass
 
-    class SmartPluginWebIf():
+    class SmartPluginWebIf:
         pass
+
 
 """
 This module implements the query of a smartmeter using the SML protocol.
@@ -91,11 +94,11 @@ S_STOP = serial.STOPBITS_ONE
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
-    logger.debug(f"init standalone {__name__}")
+    logger.debug(f'init standalone {__name__}')
 
 else:
     logger = logging.getLogger(__name__)
-    logger.debug(f"init plugin component {__name__}")
+    logger.debug(f'init plugin component {__name__}')
 
 
 #
@@ -109,7 +112,9 @@ if TESTING:
         from sml_test import RESULT
     else:
         from .sml_test import RESULT
-    logger.error(f'SML testing mode enabled, no serial communication, no real results! Dataset is {len(RESULT)} bytes long.')
+    logger.error(
+        f'SML testing mode enabled, no serial communication, no real results! Dataset is {len(RESULT)} bytes long.'
+    )
 else:
     RESULT = b''
 
@@ -128,14 +133,14 @@ def to_hex(data: Union[int, str, bytes, bytearray], space: bool = True) -> str:
 
     if isinstance(data, str):
         if space:
-            return " ".join([data[i:i + 2] for i in range(0, len(data), 2)])
+            return ' '.join([data[i : i + 2] for i in range(0, len(data), 2)])
         else:
             return data
 
-    templ = "%02x"
+    templ = '%02x'
     if space:
-        templ += " "
-    return "".join(templ % b for b in data).rstrip()
+        templ += ' '
+    return ''.join(templ % b for b in data).rstrip()
 
 
 def format_time(timedelta):
@@ -145,15 +150,15 @@ def format_time(timedelta):
     :return: returns a string
     """
     if timedelta > 1000.0:
-        return f"{timedelta:.2f} s"
+        return f'{timedelta:.2f} s'
     elif timedelta > 1.0:
-        return f"{timedelta:.2f} s"
+        return f'{timedelta:.2f} s'
     elif timedelta > 0.001:
-        return f"{timedelta*1000.0:.2f} ms"
+        return f'{timedelta * 1000.0:.2f} ms'
     elif timedelta > 0.000001:
-        return f"{timedelta*1000000.0:.2f} µs"
+        return f'{timedelta * 1000000.0:.2f} µs'
     elif timedelta > 0.000000001:
-        return f"{timedelta * 1000000000.0:.2f} ns"
+        return f'{timedelta * 1000000000.0:.2f} ns'
 
 
 #
@@ -161,8 +166,7 @@ def format_time(timedelta):
 #
 
 
-class StringLogger():
-
+class StringLogger:
     def __init__(self):
         ### Create the logger
         self.logger = logging.getLogger('sml_string_logger')
@@ -207,8 +211,7 @@ class StringLogger():
 #
 
 
-class AsyncReader():
-
+class AsyncReader:
     def __init__(self, logger, plugin: SmartPlugin, config: dict):
         self.buf = bytes()
         self.logger = logger
@@ -242,18 +245,14 @@ class AsyncReader():
     async def listen(self):
         result = self.lock.acquire(blocking=False)
         if not result:
-            self.logger.error('couldn\'t acquire lock, polling/manual access active?')
+            self.logger.error("couldn't acquire lock, polling/manual access active?")
             return
 
         self.logger.debug('acquired lock')
         try:  # LOCK
             if self.serial_port:
                 self.reader, _ = await serial_asyncio.open_serial_connection(
-                    url=self.serial_port,
-                    baudrate=self.baudrate,
-                    bytesize=S_BITS,
-                    parity=S_PARITY,
-                    stopbits=S_STOP,
+                    url=self.serial_port, baudrate=self.baudrate, bytesize=S_BITS, parity=S_PARITY, stopbits=S_STOP
                 )
                 self.target = f'async_serial://{self.serial_port}'
             else:
@@ -304,7 +303,9 @@ class AsyncReader():
                             self.fp(frame)
                         except Exception as e:
                             detail = traceback.format_exc()
-                            self.logger.warning(f'Preparing and parsing data failed with exception {e}: and detail: {detail}')
+                            self.logger.warning(
+                                f'Preparing and parsing data failed with exception {e}: and detail: {detail}'
+                            )
 
                     # get data from frameparser and call plugin
                     if self.data_callback:
@@ -313,7 +314,7 @@ class AsyncReader():
                 # just in case of many errors, reset buffer
                 # with SmlStreamParser, this should not happen anymore, but who knows...
                 if len(self.buf) > 100000:
-                    self.logger.error("Buffer got to large, doing buffer reset")
+                    self.logger.error('Buffer got to large, doing buffer reset')
                     self.buf = bytes()
         finally:
             # cleanup
@@ -325,9 +326,9 @@ class AsyncReader():
             self.lock.release()
 
     async def stop_on_queue(self):
-        """ wait for STOP in queue and signal reader to terminate """
+        """wait for STOP in queue and signal reader to terminate"""
         self.logger.debug('task waiting for STOP from queue...')
-        await self.plugin. wait_for_asyncio_termination()
+        await self.plugin.wait_for_asyncio_termination()
         self.logger.debug('task received STOP, halting listener')
         self.listening = False
 
@@ -337,7 +338,7 @@ class AsyncReader():
 #
 
 
-class SmlReader():
+class SmlReader:
     def __init__(self, logger, config: dict):
         self.config = config
         self.sock = None
@@ -366,7 +367,9 @@ class SmlReader():
         #
         locked = self.lock.acquire(blocking=False)
         if not locked:
-            self.logger.error('could not get lock for serial/network access. Is another scheduled/manual action still active?')
+            self.logger.error(
+                'could not get lock for serial/network access. Is another scheduled/manual action still active?'
+            )
             return b''
 
         try:  # lock release
@@ -375,7 +378,7 @@ class SmlReader():
             if not self.sock:
                 # error already logged, just go
                 return b''
-            self.logger.debug(f"time to open {self.target}: {format_time(time.time() - runtime)}")
+            self.logger.debug(f'time to open {self.target}: {format_time(time.time() - runtime)}')
 
             #
             # read data from device
@@ -408,7 +411,7 @@ class SmlReader():
         return response
 
     def _read(self) -> bytes:
-        """ isolate the read method from the connection object """
+        """isolate the read method from the connection object"""
         if isinstance(self.sock, serial.Serial):
             return self.sock.read()
         elif isinstance(self.sock, socket.socket):
@@ -426,7 +429,7 @@ class SmlReader():
         if TESTING:
             return RESULT
 
-        self.logger.debug("start to read data from serial/network device")
+        self.logger.debug('start to read data from serial/network device')
         response = bytes()
         while True:
             try:
@@ -448,14 +451,14 @@ class SmlReader():
                 else:
                     raise
             except Exception as e:
-                self.logger.debug(f"error while reading from serial/network: {e}")
+                self.logger.debug(f'error while reading from serial/network: {e}')
                 return b''
 
-        self.logger.debug(f"finished reading data from serial/network {len(response)} bytes")
+        self.logger.debug(f'finished reading data from serial/network {len(response)} bytes')
         return response
 
     def get_sock(self):
-        """ open serial or network socket """
+        """open serial or network socket"""
         if TESTING:
             self.sock = 1
             self.target = '(test input)'
@@ -470,15 +473,12 @@ class SmlReader():
                 try:  # open serial
                     count += 1
                     self.sock = serial.Serial(
-                        self.serial_port,
-                        self.baudrate,
-                        S_BITS,
-                        S_PARITY,
-                        S_STOP,
-                        timeout=self.timeout
+                        self.serial_port, self.baudrate, S_BITS, S_PARITY, S_STOP, timeout=self.timeout
                     )
                     if not self.serial_port == self.sock.name:
-                        self.logger.debug(f"Asked for {self.serial_port} as serial port, but really using now {self.sock.name}")
+                        self.logger.debug(
+                            f'Asked for {self.serial_port} as serial port, but really using now {self.sock.name}'
+                        )
                     self.target = f'serial://{self.sock.name}'
 
                 except FileNotFoundError:
@@ -488,7 +488,9 @@ class SmlReader():
                     if self.sock is None:
                         if count < 3:
                             # count += 1
-                            self.logger.error(f"Serial port '{self.serial_port}' could not be opened, retrying {count}/3...")
+                            self.logger.error(
+                                f"Serial port '{self.serial_port}' could not be opened, retrying {count}/3..."
+                            )
                             time.sleep(3)
                             continue
                         else:
@@ -505,14 +507,18 @@ class SmlReader():
 
             if self.sock is None:
                 if count == 3:
-                    self.logger.error("retries unsuccessful, serial port could not be opened, giving up.")
+                    self.logger.error('retries unsuccessful, serial port could not be opened, giving up.')
                 else:
                     # this should not happen...
-                    self.logger.error("retries unsuccessful or unforeseen error occurred, serial object was not initialized.")
+                    self.logger.error(
+                        'retries unsuccessful or unforeseen error occurred, serial object was not initialized.'
+                    )
                 return None, ''
 
             if not self.sock.is_open:
-                self.logger.error(f"serial port '{self.serial_port}' could not be opened with given parameters, maybe wrong baudrate?")
+                self.logger.error(
+                    f"serial port '{self.serial_port}' could not be opened with given parameters, maybe wrong baudrate?"
+                )
                 return None, ''
 
         elif self.host:
@@ -535,7 +541,7 @@ class SmlReader():
 #
 
 
-class SmlFrameParser():
+class SmlFrameParser:
     def __init__(self, config: dict):
         self.config = config
         self.result = {}
@@ -550,7 +556,7 @@ class SmlFrameParser():
             return self.result
 
     def parse_frame(self, frame):
-        """ parse single SML frame and add data to result dict """
+        """parse single SML frame and add data to result dict"""
         obis_values = frame.get_obis()
         for entry in obis_values:
             code = entry.obis.obis_code
@@ -560,7 +566,7 @@ class SmlFrameParser():
                 'obis': code,
                 'value': entry.get_value(),
                 'valueRaw': entry.get_value(),
-                'name': OBIS_NAMES.get(entry.obis)
+                'name': OBIS_NAMES.get(entry.obis),
             }
             # skip scaler calculation as the smllib has done this already
             # if entry.scaler:
@@ -579,19 +585,45 @@ class SmlFrameParser():
                 # Decoding status information if present
                 # for bitwise operation, true-ish result means bit is set
                 try:
-                    content['statRun'] = bool((content['status'] >> 8) & 1)              # True: meter is counting, False: standstill
-                    content['statFraudMagnet'] = bool((content['status'] >> 8) & 2)      # True: magnetic manipulation detected, False: ok
-                    content['statFraudCover'] = bool((content['status'] >> 8) & 4)       # True: cover manipulation detected, False: ok
-                    content['statEnergyTotal'] = bool((content['status'] >> 8) & 8)      # Current flow total. True: -A, False: +A
-                    content['statEnergyL1'] = bool((content['status'] >> 8) & 16)        # Current flow L1. True: -A, False: +A
-                    content['statEnergyL2'] = bool((content['status'] >> 8) & 32)        # Current flow L2. True: -A, False: +A
-                    content['statEnergyL3'] = bool((content['status'] >> 8) & 64)        # Current flow L3. True: -A, False: +A
-                    content['statRotaryField'] = bool((content['status'] >> 8) & 128)    # True: rotary field not L1->L2->L3, False: ok
-                    content['statBackstop'] = bool((content['status'] >> 8) & 256)       # True: backstop active, False: backstop not active
-                    content['statCalFault'] = bool((content['status'] >> 8) & 512)       # True: calibration relevant fatal fault, False: ok
-                    content['statVoltageL1'] = bool((content['status'] >> 8) & 1024)     # True: Voltage L1 present, False: not present
-                    content['statVoltageL2'] = bool((content['status'] >> 8) & 2048)     # True: Voltage L2 present, False: not present
-                    content['statVoltageL3'] = bool((content['status'] >> 8) & 4096)     # True: Voltage L3 present, False: not present
+                    content['statRun'] = bool(
+                        (content['status'] >> 8) & 1
+                    )  # True: meter is counting, False: standstill
+                    content['statFraudMagnet'] = bool(
+                        (content['status'] >> 8) & 2
+                    )  # True: magnetic manipulation detected, False: ok
+                    content['statFraudCover'] = bool(
+                        (content['status'] >> 8) & 4
+                    )  # True: cover manipulation detected, False: ok
+                    content['statEnergyTotal'] = bool(
+                        (content['status'] >> 8) & 8
+                    )  # Current flow total. True: -A, False: +A
+                    content['statEnergyL1'] = bool(
+                        (content['status'] >> 8) & 16
+                    )  # Current flow L1. True: -A, False: +A
+                    content['statEnergyL2'] = bool(
+                        (content['status'] >> 8) & 32
+                    )  # Current flow L2. True: -A, False: +A
+                    content['statEnergyL3'] = bool(
+                        (content['status'] >> 8) & 64
+                    )  # Current flow L3. True: -A, False: +A
+                    content['statRotaryField'] = bool(
+                        (content['status'] >> 8) & 128
+                    )  # True: rotary field not L1->L2->L3, False: ok
+                    content['statBackstop'] = bool(
+                        (content['status'] >> 8) & 256
+                    )  # True: backstop active, False: backstop not active
+                    content['statCalFault'] = bool(
+                        (content['status'] >> 8) & 512
+                    )  # True: calibration relevant fatal fault, False: ok
+                    content['statVoltageL1'] = bool(
+                        (content['status'] >> 8) & 1024
+                    )  # True: Voltage L1 present, False: not present
+                    content['statVoltageL2'] = bool(
+                        (content['status'] >> 8) & 2048
+                    )  # True: Voltage L2 present, False: not present
+                    content['statVoltageL3'] = bool(
+                        (content['status'] >> 8) & 4096
+                    )  # True: Voltage L3 present, False: not present
                 except Exception:
                     pass
 
@@ -599,13 +631,13 @@ class SmlFrameParser():
             # EMH ED300L: add additional OBIS codes
             if code == '1-0:96.5.0*255':
                 val = int(content['valueRaw'], 16)
-                content['value'] = bin(val >> 8)    # Status as binary string, so not decoded into status bits as above
+                content['value'] = bin(val >> 8)  # Status as binary string, so not decoded into status bits as above
             # end TODO
 
             # don't return multiple code, only the last one -> overwrite earlier data
             # self.result[code].append(content)
             self.result[code] = [content]
-            logger.debug(f"found {code} with {content}")
+            logger.debug(f'found {code} with {content}')
 
 
 #
@@ -613,7 +645,7 @@ class SmlFrameParser():
 #
 
 
-class SmlParser():
+class SmlParser:
     def __init__(self, config: dict):
         self.fp = SmlFrameParser(config)
 
@@ -621,7 +653,7 @@ class SmlParser():
         return self.parse(data)
 
     def parse(self, data: bytes) -> dict:
-        """ parse data returned from device read """
+        """parse data returned from device read"""
         stream = SmlStreamReader()
         stream.add(data)
 
@@ -679,11 +711,11 @@ def query(config, logger=logger) -> dict:
         return {}
     result = reader()
 
-    logger.debug(f"time for reading OBIS data: {format_time(time.time() - runtime)}")
+    logger.debug(f'time for reading OBIS data: {format_time(time.time() - runtime)}')
     runtime = time.time()
 
     # Display performance of the serial communication
-    logger.debug(f"whole communication with smartmeter took {format_time(time.time() - starttime)}")
+    logger.debug(f'whole communication with smartmeter took {format_time(time.time() - starttime)}')
 
     #
     # parse data
@@ -694,7 +726,7 @@ def query(config, logger=logger) -> dict:
 
 
 def discover(config: dict) -> bool:
-    """ try to autodiscover SML protocol """
+    """try to autodiscover SML protocol"""
 
     # as of now, this simply tries to listen to the meter
     # called from within the plugin, the parameters are either manually set by
@@ -713,13 +745,19 @@ def discover(config: dict) -> bool:
 if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description='Query a smartmeter at a given port for SML output',
-                                     usage='use "%(prog)s --help" for more information',
-                                     formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description='Query a smartmeter at a given port for SML output',
+        usage='use "%(prog)s --help" for more information',
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
     parser.add_argument('port', help='specify the port to use for the smartmeter query, e.g. /dev/ttyUSB0 or /dev/sml0')
     parser.add_argument('-v', '--verbose', help='print verbose information', action='store_true')
-    parser.add_argument('-t', '--timeout', help='maximum time to wait for a message from the smartmeter', type=float, default=3.0)
-    parser.add_argument('-b', '--buffersize', help='maximum size of message buffer for the reply', type=int, default=1024)
+    parser.add_argument(
+        '-t', '--timeout', help='maximum time to wait for a message from the smartmeter', type=float, default=3.0
+    )
+    parser.add_argument(
+        '-b', '--buffersize', help='maximum size of message buffer for the reply', type=int, default=1024
+    )
 
     args = parser.parse_args()
 
@@ -738,11 +776,9 @@ if __name__ == '__main__':
             'baudrate_min': 300,
             'use_checksum': True,
             'onlylisten': False,
-            'normalize': True
+            'normalize': True,
         },
-        'sml': {
-            'buffersize': 1024
-        }
+        'sml': {'buffersize': 1024},
     }
 
     config['serial_port'] = args.port
@@ -769,15 +805,15 @@ if __name__ == '__main__':
         # add the handlers to the logger
         logging.getLogger().addHandler(ch)
 
-    logger.info("This is Smartmeter Plugin, SML module, running in standalone mode")
-    logger.info("==================================================================")
+    logger.info('This is Smartmeter Plugin, SML module, running in standalone mode')
+    logger.info('==================================================================')
 
     result = discover(config)
-        
+
     if not result:
         logger.info(f"No results from query, maybe a problem with the serial port '{config['serial_port']}' given.")
     elif len(result) > 1:
-        logger.info("These are the processed results of the query:")
+        logger.info('These are the processed results of the query:')
         try:
             del result['readout']
         except KeyError:
@@ -790,7 +826,7 @@ if __name__ == '__main__':
             txt = pprint.pformat(result, indent=4)
         logger.info(txt)
     elif len(result) == 1:
-        logger.info("The results of the query could not be processed; raw result is:")
+        logger.info('The results of the query could not be processed; raw result is:')
         logger.info(result)
     else:
-        logger.info("The query did not get any results. Maybe the serial port was occupied or there was an error.")
+        logger.info('The query did not get any results. Maybe the serial port was occupied or there was an error.')

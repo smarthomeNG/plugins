@@ -2,8 +2,7 @@ from .DelayModel import DelayModel
 from .BlinkModel import BlinkModel
 
 
-class TimmyModel():
-
+class TimmyModel:
     def __init__(self):
         self._items_with_delay = {}
         self._blink_models = {}
@@ -15,7 +14,7 @@ class TimmyModel():
     def append_delay_item(self, item_path, target_item, on_seconds, off_seconds):
         item_model = DelayModel(target_item, on_seconds, off_seconds)
         self._items_with_delay[item_path] = item_model
-    
+
     def append_blink_item(self, item_path, target_item, blink_pattern, blink_cycles, blink_loops):
         item_model = BlinkModel(target_item, blink_pattern, blink_cycles, blink_loops)
         self._blink_models[item_path] = item_model
@@ -31,7 +30,7 @@ class TimmyModel():
 
     def get_blink_model_for_item(self, item_path) -> BlinkModel:
         return self._blink_models[item_path]
-    
+
     """
     Interface to WebIF
     """

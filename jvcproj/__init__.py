@@ -73,21 +73,25 @@ PMGammaBl = '218901504D44420A'
 
 class Error(Exception):
     """Error"""
+
     pass
 
 
 class Closed(Exception):
     """Connection Closed"""
+
     pass
 
 
 class Timeout(Exception):
     """Command Timout"""
+
     pass
 
 
 class CommandNack(Exception):
     """JVC command not acknowledged"""
+
     pass
 
 
@@ -96,6 +100,7 @@ class JVC_DILA_Control(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
+
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = '1.0.2'
 
@@ -141,13 +146,19 @@ class JVC_DILA_Control(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         # normal items
-        if self.has_iattr(item.conf, "jvcproj_cmd"):
-            self.logger.debug("Plugin '{}': Item '{}' with value '{}' found!"
-                              .format(self.get_fullname(), item, self.get_iattr_value(item.conf, 'jvcproj_cmd')))
+        if self.has_iattr(item.conf, 'jvcproj_cmd'):
+            self.logger.debug(
+                "Plugin '{}': Item '{}' with value '{}' found!".format(
+                    self.get_fullname(), item, self.get_iattr_value(item.conf, 'jvcproj_cmd')
+                )
+            )
             return self.update_item
-        if self.has_iattr(item.conf, "jvcproj_gamma"):
-            self.logger.debug("Plugin '{}': Item '{}' with value '{}' found!"
-                              .format(self.get_fullname(), item, self.get_iattr_value(item.conf, 'jvcproj_gamma')))
+        if self.has_iattr(item.conf, 'jvcproj_gamma'):
+            self.logger.debug(
+                "Plugin '{}': Item '{}' with value '{}' found!".format(
+                    self.get_fullname(), item, self.get_iattr_value(item.conf, 'jvcproj_gamma')
+                )
+            )
             return self.update_item
 
     def parse_logic(self, logic):
@@ -165,38 +176,59 @@ class JVC_DILA_Control(SmartPlugin):
         if item() and self.alive:
             if self.has_iattr(item.conf, 'jvcproj_cmd'):
                 if self.get_iattr_value(item.conf, 'jvcproj_cmd') == 'None':
-                    self.logger.debug("Plugin '{}': no command given for update_item '{}'. Please check jvcproj_cmd!"
-                                      .format(self.get_fullname(), item))
+                    self.logger.debug(
+                        "Plugin '{}': no command given for update_item '{}'. Please check jvcproj_cmd!".format(
+                            self.get_fullname(), item
+                        )
+                    )
                     return
                 else:
-                    self.logger.debug("Plugin '{}': update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'"
-                                      .format(self.get_fullname(), item, caller, source, dest))
+                    self.logger.debug(
+                        "Plugin '{}': update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(
+                            self.get_fullname(), item, caller, source, dest
+                        )
+                    )
                 self.check_cmd(item)
             elif self.has_iattr(item.conf, 'jvcproj_gamma'):
                 if self.get_iattr_value(item.conf, 'jvcproj_gamma') == 'None':
-                    self.logger.debug("Plugin '{}': no command given for update_item '{}'. Please check jvcproj_gamma!"
-                                      .format(self.get_fullname(), item))
+                    self.logger.debug(
+                        "Plugin '{}': no command given for update_item '{}'. Please check jvcproj_gamma!".format(
+                            self.get_fullname(), item
+                        )
+                    )
                     return
                 else:
-                    self.logger.debug("Plugin '{}': update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'"
-                                      .format(self.get_fullname(), item, caller, source, dest))
+                    self.logger.debug(
+                        "Plugin '{}': update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(
+                            self.get_fullname(), item, caller, source, dest
+                        )
+                    )
                 self.check_gamma_cmd(item)
 
     def check_gamma_cmd(self, item):
         """check gamma options to import new gammatable"""
-        self.logger.debug("Plugin '{}': checking for gamma.conf an correct gamma input (must a custom gammatable) in '{}' : '{}'."
-                          .format(self.get_fullname(), item, self.get_iattr_value(item.conf, 'jvcproj_gamma')))
+        self.logger.debug(
+            "Plugin '{}': checking for gamma.conf an correct gamma input (must a custom gammatable) in '{}' : '{}'.".format(
+                self.get_fullname(), item, self.get_iattr_value(item.conf, 'jvcproj_gamma')
+            )
+        )
         _checklist = (self.get_iattr_value(item.conf, 'jvcproj_gamma').replace(' ', '')).split('|')
         if len(_checklist) != 2:
-            self.logger.debug("Plugin '{}': ERROR! Item:'{}': exactly two arguments (file and custom gamma table) must be given!"
-                              .format(self.get_fullname(), item))
+            self.logger.debug(
+                "Plugin '{}': ERROR! Item:'{}': exactly two arguments (file and custom gamma table) must be given!".format(
+                    self.get_fullname(), item
+                )
+            )
             return
         _cmdlist = []
         if self.gammaconf_dir[-1] != '/':
             self.gammaconf_dir = self.gammaconf_dir + '/'
         if os_path.isfile(self.gammaconf_dir + _checklist[0]) is False:
-            self.logger.debug("Plugin '{}': ERROR! Gamma configuration file declared in item:'{}' not found."
-                              .format(self.get_fullname(), item))
+            self.logger.debug(
+                "Plugin '{}': ERROR! Gamma configuration file declared in item:'{}' not found.".format(
+                    self.get_fullname(), item
+                )
+            )
             return
         _cmdlist.append(self.gammaconf_dir + _checklist[0])
         if _checklist[1].upper() == 'CUSTOM1' or _checklist[1].upper() == GA_CUSTOM1:
@@ -206,8 +238,11 @@ class JVC_DILA_Control(SmartPlugin):
         elif _checklist[1].upper() == 'CUSTOM3' or _checklist[1].upper() == GA_CUSTOM3:
             _cmdlist.append(GA_CUSTOM3)
         else:
-            self.logger.debug("Plugin '{}': ERROR! No valid custom gamma table declared in item:'{}'."
-                              .format(self.get_fullname(), item))
+            self.logger.debug(
+                "Plugin '{}': ERROR! No valid custom gamma table declared in item:'{}'.".format(
+                    self.get_fullname(), item
+                )
+            )
             return
         self.handleconn_gamma(_cmdlist)
 
@@ -216,19 +251,17 @@ class JVC_DILA_Control(SmartPlugin):
         table = self.load_table(data[0])
         gammadata = self.check_gammadata(table)
         if gammadata is None:
-            self.logger.debug("Plugin '{}': ERROR! No valid gammadata found in file. Aborting..."
-                              .format(self.get_fullname()))
+            self.logger.debug(
+                "Plugin '{}': ERROR! No valid gammadata found in file. Aborting...".format(self.get_fullname())
+            )
             return
         self.connect()
-        self.logger.debug("Plugin '{}': set declared custom gamma table"
-                          .format(self.get_fullname()))
+        self.logger.debug("Plugin '{}': set declared custom gamma table".format(self.get_fullname()))
         self.set(data[1])
-        self.logger.debug("Plugin '{}': set gamma correction to import value"
-                          .format(self.get_fullname()))
+        self.logger.debug("Plugin '{}': set gamma correction to import value".format(self.get_fullname()))
         self.set(GA_C_IMPORT)
         self.write_gammadata(gammadata)
-        self.logger.debug("Plugin '{}': finished! Now disconnecting!"
-                          .format(self.get_fullname()))
+        self.logger.debug("Plugin '{}': finished! Now disconnecting!".format(self.get_fullname()))
         self.disconnect()
 
     def load_table(self, data):
@@ -267,25 +300,34 @@ class JVC_DILA_Control(SmartPlugin):
 
     def check_cmd(self, item):
         """create command list and execute low level string validation for each command"""
-        self.logger.debug("Plugin '{}': create commandlist for item '{}' : '{}' and check command(s)."
-                          .format(self.get_fullname(), item, self.get_iattr_value(item.conf, 'jvcproj_cmd')))
+        self.logger.debug(
+            "Plugin '{}': create commandlist for item '{}' : '{}' and check command(s).".format(
+                self.get_fullname(), item, self.get_iattr_value(item.conf, 'jvcproj_cmd')
+            )
+        )
         _checklist = (self.get_iattr_value(item.conf, 'jvcproj_cmd').replace(' ', '')).split('|')
         _cmdlist = []
         for _cmd in _checklist:
             if _cmd.upper()[2:6] == UNIT_ID and _cmd.upper()[-2:] == END:
                 if _cmd.upper()[:2] == OPE or _cmd.upper()[:2] == REQ:
-                    self.logger.debug("Plugin '{}': adding command '{}' to execution list."
-                                      .format(self.get_fullname(), _cmd.upper()))
+                    self.logger.debug(
+                        "Plugin '{}': adding command '{}' to execution list.".format(self.get_fullname(), _cmd.upper())
+                    )
                     _cmdlist.append(_cmd.upper())
                 else:
-                    self.logger.debug("Plugin '{}': ERROR! Invalid Header found in command '{}'! Must be '{}' or '{}' !"
-                                      .format(self.get_fullname(), _cmd.upper(), OPE, REQ))
+                    self.logger.debug(
+                        "Plugin '{}': ERROR! Invalid Header found in command '{}'! Must be '{}' or '{}' !".format(
+                            self.get_fullname(), _cmd.upper(), OPE, REQ
+                        )
+                    )
             else:
-                self.logger.debug("Plugin '{}': ERROR! Invalid UNIT-ID or END found in command '{}'! UNIT-ID must be '{}'! END must be '{}' !"
-                                  .format(self.get_fullname(), _cmd.upper(), UNIT_ID, END))
-        if _cmdlist ==[]:
-            self.logger.debug("Plugin '{}': nothing to send..."
-                              .format(self.get_fullname()))
+                self.logger.debug(
+                    "Plugin '{}': ERROR! Invalid UNIT-ID or END found in command '{}'! UNIT-ID must be '{}'! END must be '{}' !".format(
+                        self.get_fullname(), _cmd.upper(), UNIT_ID, END
+                    )
+                )
+        if _cmdlist == []:
+            self.logger.debug("Plugin '{}': nothing to send...".format(self.get_fullname()))
             return
         self.handleconn_op(_cmdlist)
 
@@ -294,21 +336,21 @@ class JVC_DILA_Control(SmartPlugin):
         self.connect()
         for cmd in cmdlist:
             if cmd[:2] == REQ:  # maybe in the future??
-                self.logger.debug("Plugin '{}': WARNING! A request is not yet supported!"
-                                  .format(self.get_fullname()))
+                self.logger.debug("Plugin '{}': WARNING! A request is not yet supported!".format(self.get_fullname()))
             elif cmd[:2] == OPE:
-                self.logger.debug("Plugin '{}': sending command '{}' to '{}'"
-                                  .format(self.get_fullname(), cmd, self.host_port))
+                self.logger.debug(
+                    "Plugin '{}': sending command '{}' to '{}'".format(self.get_fullname(), cmd, self.host_port)
+                )
                 self.set(cmd)
-                self.logger.debug("Plugin '{}': operation command '{}' sent successfully!"
-                                  .format(self.get_fullname(), cmd))
+                self.logger.debug(
+                    "Plugin '{}': operation command '{}' sent successfully!".format(self.get_fullname(), cmd)
+                )
         self.disconnect('finished! Now disconnecting!')
 
     def connect(self):
         """Open network connection to projector and perform handshake"""
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.logger.debug("Plugin '{}': Connecting to host: '{}'!"
-                          .format(self.get_fullname(), self.host_port))
+        self.logger.debug("Plugin '{}': Connecting to host: '{}'!".format(self.get_fullname(), self.host_port))
         try:
             self.socket.connect(self.host_port)
         except Exception as err:
@@ -317,8 +359,9 @@ class JVC_DILA_Control(SmartPlugin):
         self.expect(b'PJ_OK')
         self.send(b'PJREQ')
         self.expect(b'PJACK')
-        self.logger.debug("Plugin '{}': handshake with host: '{}' completed."
-                          .format(self.get_fullname(), self.host_port))
+        self.logger.debug(
+            "Plugin '{}': handshake with host: '{}' completed.".format(self.get_fullname(), self.host_port)
+        )
 
     def set(self, cmd):
         try:
@@ -333,8 +376,7 @@ class JVC_DILA_Control(SmartPlugin):
 
     def disconnect(self, message='disconnecting...'):
         """Close socket"""
-        self.logger.debug("Plugin '{}': {}"
-                          .format(self.get_fullname(), message))
+        self.logger.debug("Plugin '{}': {}".format(self.get_fullname(), message))
         self.socket.close()
 
     def send(self, data):

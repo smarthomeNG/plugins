@@ -106,9 +106,22 @@ jobs:
 
       # ---  up to here, the workflow is identical for CORE and PLUGINS  ---
 
-      - name: Install SmartHomeNG all requirements
-        # all requirements are needed for pytest to run plugin tests
-        run: pip install -r requirements/all.txt
+      - name: Build test requirements for SmartHomeNG plugins
+        # only the requirements of plugins that actually have a tests/ directory are
+        # needed to run pytest - installing every plugin's requirements (requirements/all.txt)
+        # would be overkill, since pytest only ever imports the handful of tested plugins.
+        run: python3 tools/build_test_requirements.py
+
+      - name: Install SmartHomeNG plugin-test requirements
+        run: pip install -r requirements/test_plugins.txt
+
+      # --- Linting ---
+      - name: Lint with ruff
+        run: |
+          pip install "ruff>=0.4.0"
+          ruff check plugins/ --output-format=github
+        # --output-format=github annotates violations inline on the PR diff.
+        # Uses plugins/pyproject.toml — see SYNC NOTE in both pyproject.toml files.
 
       - name: '>>> Run Python Unittests for PLUGINS <<<'
         working-directory: ./plugins

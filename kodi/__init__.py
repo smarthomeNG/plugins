@@ -28,10 +28,10 @@ import sys
 if __name__ == '__main__':
     builtins.SDP_standalone = True
 
-    class SmartPlugin():
+    class SmartPlugin:
         pass
 
-    class SmartPluginWebIf():
+    class SmartPluginWebIf:
         pass
 
     BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
@@ -40,8 +40,14 @@ if __name__ == '__main__':
 else:
     builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import (JSON_MOVE_KEYS, PLUGIN_ATTR_CMD_CLASS, PLUGIN_ATTR_PROTOCOL,
-                                   PROTO_JSONRPC, PLUGIN_ATTR_CONNECTION, CONN_NET_TCP_CLI)
+from lib.model.sdp.globals import (
+    JSON_MOVE_KEYS,
+    PLUGIN_ATTR_CMD_CLASS,
+    PLUGIN_ATTR_PROTOCOL,
+    PROTO_JSONRPC,
+    PLUGIN_ATTR_CONNECTION,
+    CONN_NET_TCP_CLI,
+)
 
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 
@@ -87,12 +93,14 @@ class kodi(SmartDevicePlugin):
 
     def _set_device_defaults(self):
         self._use_callbacks = True
-        self._parameters.update({
-            JSON_MOVE_KEYS: ['playerid', 'properties'],
-            PLUGIN_ATTR_CONNECTION: CONN_NET_TCP_CLI,
-            PLUGIN_ATTR_PROTOCOL: PROTO_JSONRPC,
-            PLUGIN_ATTR_CMD_CLASS: 'SDPCommandJSON'
-        })
+        self._parameters.update(
+            {
+                JSON_MOVE_KEYS: ['playerid', 'properties'],
+                PLUGIN_ATTR_CONNECTION: CONN_NET_TCP_CLI,
+                PLUGIN_ATTR_PROTOCOL: PROTO_JSONRPC,
+                PLUGIN_ATTR_CMD_CLASS: 'SDPCommandJSON',
+            }
+        )
 
     def _post_init(self):
         self._activeplayers = []
@@ -210,7 +218,11 @@ class kodi(SmartDevicePlugin):
                     title = result_data['item'].get('label')
                 self._dispatch_callback('info.media', player_type.capitalize(), by)
                 if player_type == 'audio' and 'artist' in result_data['item']:
-                    artist = 'unknown' if len(result_data['item'].get('artist')) == 0 else result_data['item'].get('artist')[0]
+                    artist = (
+                        'unknown'
+                        if len(result_data['item'].get('artist')) == 0
+                        else result_data['item'].get('artist')[0]
+                    )
                     title = artist + ' - ' + title
                 if title:
                     self._dispatch_callback('info.title', title, by)
@@ -243,7 +255,6 @@ class kodi(SmartDevicePlugin):
 
         # not replies, but event notifications.
         elif 'method' in data:
-
             # no id, notification or other
             if data['method'] == 'Player.OnResume':
                 processed = True
@@ -303,7 +314,11 @@ class kodi(SmartDevicePlugin):
 
             elif data['method'] == 'Application.OnVolumeChanged':
                 processed = True
-                self.logger.debug('received: volume changed, got new values mute: {} and volume: {}'.format(data['params']['data']['muted'], data['params']['data']['volume']))
+                self.logger.debug(
+                    'received: volume changed, got new values mute: {} and volume: {}'.format(
+                        data['params']['data']['muted'], data['params']['data']['volume']
+                    )
+                )
                 self._dispatch_callback('control.mute', data['params']['data']['muted'], by)
                 self._dispatch_callback('control.volume', data['params']['data']['volume'], by)
 
@@ -312,8 +327,24 @@ class kodi(SmartDevicePlugin):
             self.logger.debug(f'player info query requested for playerid(s) {query_playerinfo}')
             for player_id in set(query_playerinfo):
                 self.logger.debug(f'getting player info for player #{player_id}')
-                self._connection._send_rpc_message('Player.GetItem', {'properties': ['title', 'artist'], 'playerid': player_id})
-                self._connection._send_rpc_message('Player.GetProperties', {'properties': ['speed', 'percentage', 'currentaudiostream', 'audiostreams', 'subtitleenabled', 'currentsubtitle', 'subtitles'], 'playerid': player_id})
+                self._connection._send_rpc_message(
+                    'Player.GetItem', {'properties': ['title', 'artist'], 'playerid': player_id}
+                )
+                self._connection._send_rpc_message(
+                    'Player.GetProperties',
+                    {
+                        'properties': [
+                            'speed',
+                            'percentage',
+                            'currentaudiostream',
+                            'audiostreams',
+                            'subtitleenabled',
+                            'currentsubtitle',
+                            'subtitles',
+                        ],
+                        'playerid': player_id,
+                    },
+                )
 
         if processed:
             return
@@ -332,7 +363,9 @@ class kodi(SmartDevicePlugin):
                 self.logger.debug(f'received data "{data}" for command {command} converted to value {value}')
                 self._dispatch_callback(command, value, by)
         except Exception as e:
-            self.logger.info(f'received data "{data}" for command {command}, error occurred while converting. Discarding data. Error was: {e}')
+            self.logger.info(
+                f'received data "{data}" for command {command}, error occurred while converting. Discarding data. Error was: {e}'
+            )
             return
 
     def _do_before_send(self, command, value, kwargs):
@@ -345,11 +378,15 @@ class kodi(SmartDevicePlugin):
                     self._update_status()
                 return (False, True)
             elif value is None:
-                self.logger.debug(f'Special command {command} called for reading, which is not intended. Ignoring request')
+                self.logger.debug(
+                    f'Special command {command} called for reading, which is not intended. Ignoring request'
+                )
                 return (False, True)
             else:
                 # this shouldn't happen
-                self.logger.warning(f'Special command {command} found, no action set for processing. Please inform developers. Ignoring request')
+                self.logger.warning(
+                    f'Special command {command} found, no action set for processing. Please inform developers. Ignoring request'
+                )
                 return (False, True)
 
         # add playerid to kwargs for further processing
@@ -377,9 +414,9 @@ class kodi(SmartDevicePlugin):
         else:
             return super().is_valid_command(command, read)
 
-#
-# new methods
-#
+    #
+    # new methods
+    #
 
     def notify(self, title, message, image=None, display_time=10000):
         """

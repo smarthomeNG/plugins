@@ -30,9 +30,8 @@ import shlex
 
 
 class RCswitch(SmartPlugin):
-
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.2.2"
+    PLUGIN_VERSION = '1.2.2'
 
     def __init__(self, sh, **kwargs):
         self.setupOK = True
@@ -50,32 +49,68 @@ class RCswitch(SmartPlugin):
         # Handle host, check if anything is defined in self.rcswitch_host parameter and if is valid hostname or valid IPv4 adress
         if self.rcswitch_host:
             # then check if user defined its own local host -> error
-            if ((self.rcswitch_host == gethostname()) or (self.rcswitch_host == '127.0.0.1')):
-                self.logger.error('RCswitch: rcswitch_host is defined as your own machine, not the remote address! Please check the parameter rcswitch_host, >>{}<< it seems to be not correct!'.format(self.rcswitch_host))
+            if (self.rcswitch_host == gethostname()) or (self.rcswitch_host == '127.0.0.1'):
+                self.logger.error(
+                    'RCswitch: rcswitch_host is defined as your own machine, not the remote address! Please check the parameter rcswitch_host, >>{}<< it seems to be not correct!'.format(
+                        self.rcswitch_host
+                    )
+                )
 
             # check connection to remote host and accept fingerprint
             user = None
             try:
                 # following line shall raise an error in case connection is not possible.
-                user = subprocess.check_output(shlex.split('sshpass -p {} ssh -o StrictHostKeyChecking=no {}@{} grep {} /etc/passwd'.format(self.rcswitch_password, self.rcswitch_user, self.rcswitch_host, self.rcswitch_user)), stderr=DEVNULL).decode('utf8')[:len(self.rcswitch_user)]
+                user = subprocess.check_output(
+                    shlex.split(
+                        'sshpass -p {} ssh -o StrictHostKeyChecking=no {}@{} grep {} /etc/passwd'.format(
+                            self.rcswitch_password, self.rcswitch_user, self.rcswitch_host, self.rcswitch_user
+                        )
+                    ),
+                    stderr=DEVNULL,
+                ).decode('utf8')[: len(self.rcswitch_user)]
                 # check  if rc switch is installed at the specified path on remote host
-                self.fileStat = subprocess.check_output(shlex.split('sshpass -p {} ssh {}@{} stat -c %a {}'.format(self.rcswitch_password, self.rcswitch_user, self.rcswitch_host, self.rcswitch_dir)), stderr=DEVNULL).decode('utf8')
-                self.rcswitch_dir = 'sshpass -p {} ssh {}@{} {}'.format(self.rcswitch_password, self.rcswitch_user, self.rcswitch_host, self.rcswitch_dir)
+                self.fileStat = subprocess.check_output(
+                    shlex.split(
+                        'sshpass -p {} ssh {}@{} stat -c %a {}'.format(
+                            self.rcswitch_password, self.rcswitch_user, self.rcswitch_host, self.rcswitch_dir
+                        )
+                    ),
+                    stderr=DEVNULL,
+                ).decode('utf8')
+                self.rcswitch_dir = 'sshpass -p {} ssh {}@{} {}'.format(
+                    self.rcswitch_password, self.rcswitch_user, self.rcswitch_host, self.rcswitch_dir
+                )
                 self.logger.info('RCswitch: Using {} as host.'.format(self.rcswitch_host))
             except subprocess.CalledProcessError as e:
                 self.setupOK = False
                 # give user hint where the problem is located
                 try:
-                    if (user == self.rcswitch_user):
-                        self.logger.error('RCswitch: send file of RCswitch not found at {} on {}. Check if RCswitch is installed correctly at specifed path on {}. System returned: {}'.format(self.rcswitch_dir, self.rcswitch_host, self.rcswitch_host, e))
+                    if user == self.rcswitch_user:
+                        self.logger.error(
+                            'RCswitch: send file of RCswitch not found at {} on {}. Check if RCswitch is installed correctly at specifed path on {}. System returned: {}'.format(
+                                self.rcswitch_dir, self.rcswitch_host, self.rcswitch_host, e
+                            )
+                        )
                     else:
-                        self.logger.error('RCswitch: send file of RCswitch not found at {} on {}. Additional problem with user authentication possible. System returned: {}'.format(self.rcswitch_dir, self.rcswitch_host, e))
+                        self.logger.error(
+                            'RCswitch: send file of RCswitch not found at {} on {}. Additional problem with user authentication possible. System returned: {}'.format(
+                                self.rcswitch_dir, self.rcswitch_host, e
+                            )
+                        )
                 except UnboundLocalError as e:
-                    self.logger.error('RCswitch: Cannot connect to {}. Check rcswitch_host, rcswitch_user and rcswitch_password are set (correctly). Ensure SSH server is running on {}. System returned: {}'.format(self.rcswitch_host, self.rcswitch_host, e))
+                    self.logger.error(
+                        'RCswitch: Cannot connect to {}. Check rcswitch_host, rcswitch_user and rcswitch_password are set (correctly). Ensure SSH server is running on {}. System returned: {}'.format(
+                            self.rcswitch_host, self.rcswitch_host, e
+                        )
+                    )
         else:
             # check if rc switch is installed at the specified path
             if not os.path.isfile('{}/send'.format(self.rcswitch_dir)):
-                self.logger.error('RCswitch: send file of RCswitch not found at {} on localhost. Check path, if RCswitch is installed correctly on target, and correct format of v4 IP adress (in case rcswitch_host is defined).'.format(self.rcswitch_dir))
+                self.logger.error(
+                    'RCswitch: send file of RCswitch not found at {} on localhost. Check path, if RCswitch is installed correctly on target, and correct format of v4 IP adress (in case rcswitch_host is defined).'.format(
+                        self.rcswitch_dir
+                    )
+                )
                 self.setupOK = False
             else:
                 self.logger.info('RCswitch: setup on localhost OK')
@@ -99,10 +134,14 @@ class RCswitch(SmartPlugin):
             if self.has_iattr(item.conf, 'rc_code'):
                 return self.update_item
             else:
-                self.logger.warning('RC Switch: attribute rc_code for {} missing. Item will be ignored by RCswitch plugin'.format(item))
+                self.logger.warning(
+                    'RC Switch: attribute rc_code for {} missing. Item will be ignored by RCswitch plugin'.format(item)
+                )
                 return None
         elif self.has_iattr(item.conf, 'rc_code'):
-            self.logger.warning('RC Switch: attribute rc_device for {} missing. Item will be ignored by RCswitch plugin'.format(item))
+            self.logger.warning(
+                'RC Switch: attribute rc_device for {} missing. Item will be ignored by RCswitch plugin'.format(item)
+            )
             return None
         else:
             return None
@@ -118,14 +157,32 @@ class RCswitch(SmartPlugin):
             # avoid parallel access by use of semaphore
             self.lock.acquire()
             # sending commands
-            if (rcDevice in self.mapping):  # handling of device encoded with a,A,b,...
-                subprocess.call(shlex.split('{}/send {} {} {}'.format(self.rcswitch_dir, rcCode, self.mapping[rcDevice], int(value))), stdout=DEVNULL, stderr=DEVNULL)
-                self.logger.info('RC Switch: setting device {} with system code {} to {}'.format(rcDevice, rcCode, value))
+            if rcDevice in self.mapping:  # handling of device encoded with a,A,b,...
+                subprocess.call(
+                    shlex.split(
+                        '{}/send {} {} {}'.format(self.rcswitch_dir, rcCode, self.mapping[rcDevice], int(value))
+                    ),
+                    stdout=DEVNULL,
+                    stderr=DEVNULL,
+                )
+                self.logger.info(
+                    'RC Switch: setting device {} with system code {} to {}'.format(rcDevice, rcCode, value)
+                )
             else:
                 try:  # handling of devices encoded with 1,2,3
-                    subprocess.call(shlex.split('{}/send {} {} {}'.format(self.rcswitch_dir, rcCode, int(rcDevice), int(value))), stdout=DEVNULL, stderr=DEVNULL)
-                    self.logger.info('RC Switch: setting device {} with system code {} to {}'.format(rcDevice, rcCode, value))
+                    subprocess.call(
+                        shlex.split('{}/send {} {} {}'.format(self.rcswitch_dir, rcCode, int(rcDevice), int(value))),
+                        stdout=DEVNULL,
+                        stderr=DEVNULL,
+                    )
+                    self.logger.info(
+                        'RC Switch: setting device {} with system code {} to {}'.format(rcDevice, rcCode, value)
+                    )
                 except Exception:  # invalid encoding of device
-                    self.logger.error('RC Switch: requesting invalid device {} with system code {} '.format(rcDevice, rcCode))
-            time.sleep(min(self.rcswitch_sendDuration, 10))  # give the transmitter time to complete sending of the command (but not more than 10s)
+                    self.logger.error(
+                        'RC Switch: requesting invalid device {} with system code {} '.format(rcDevice, rcCode)
+                    )
+            time.sleep(
+                min(self.rcswitch_sendDuration, 10)
+            )  # give the transmitter time to complete sending of the command (but not more than 10s)
             self.lock.release()

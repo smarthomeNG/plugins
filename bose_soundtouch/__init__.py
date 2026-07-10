@@ -24,7 +24,7 @@
 #########################################################################
 
 from lib.module import Modules
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin, logging
 from libsoundtouch import soundtouch_device
 from libsoundtouch.utils import Source, Type
 
@@ -37,6 +37,7 @@ class BoseSoundtouch(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
+
     # Plugin parameters
     PLUGIN_VERSION = '1.0.1'
     PLUGIN_PARAMETER_IP = None
@@ -73,6 +74,7 @@ class BoseSoundtouch(SmartPlugin):
         returns the value in the datatype that is defined in the metadata.
         """
         from bin.smarthome import VERSION
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
@@ -99,9 +101,14 @@ class BoseSoundtouch(SmartPlugin):
         # Connect to device
         try:
             self.device = soundtouch_device(self.PLUGIN_PARAMETER_IP, self.PLUGIN_PARAMETER_PORT)
-            self.logger.info("Initialized connection to Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "' at " + self.getSoundtouchDevice().config.device_ip)
+            self.logger.info(
+                "Initialized connection to Bose Soundtouch device '"
+                + self.getSoundtouchDevice().config.name
+                + "' at "
+                + self.getSoundtouchDevice().config.device_ip
+            )
         except Exception as e:
-            self.logger.error("Fatal error during plugin initialization.")
+            self.logger.error('Fatal error during plugin initialization.')
             self.logger.error(e)
             self._init_complete = False
 
@@ -126,7 +133,7 @@ class BoseSoundtouch(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
         # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well
         self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
 
@@ -138,7 +145,7 @@ class BoseSoundtouch(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.alive = False
 
     def parse_item(self, item):
@@ -155,7 +162,7 @@ class BoseSoundtouch(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, self.ITEM_ACTION_ATTR):
-            self.logger.debug("Parse item: {}".format(item))
+            self.logger.debug('Parse item: {}'.format(item))
             # Update item
             return self.update_item
 
@@ -178,12 +185,23 @@ class BoseSoundtouch(SmartPlugin):
         """
         if caller != self.get_shortname():
             # code to execute, only if the item has not been changed by this this plugin:
-            self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.property.path))
+            self.logger.debug('Update item: {}, item has been changed outside this plugin'.format(item.property.path))
 
             if self.has_iattr(item.conf, self.ITEM_ACTION_ATTR):
                 action = self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR)
-                self.logger.debug("Update item: was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item, caller, source, dest))
-                self.logger.debug("Update item: Action = " + action + ", Item type = " + str(type(item())) + ", Item value = " + str(item()))
+                self.logger.debug(
+                    "Update item: was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(
+                        item, caller, source, dest
+                    )
+                )
+                self.logger.debug(
+                    'Update item: Action = '
+                    + action
+                    + ', Item type = '
+                    + str(type(item()))
+                    + ', Item value = '
+                    + str(item())
+                )
 
                 # Execute logic according to requested action
                 if (action == 'status.standby' and item() is False) or (action == 'actions.power_on'):
@@ -214,7 +232,7 @@ class BoseSoundtouch(SmartPlugin):
                 elif action == 'volume.actual':
                     self.setSoundtouchVolume(item())
 
-                self.logger.debug("Update item: finished with Action = " + action)
+                self.logger.debug('Update item: finished with Action = ' + action)
             pass
 
     def poll_device(self):
@@ -236,7 +254,7 @@ class BoseSoundtouch(SmartPlugin):
 
     def updateSoundtouchStatus(self):
         status = None
-        self.logger.debug("Updating Soundtouch Status...")
+        self.logger.debug('Updating Soundtouch Status...')
         for item in self.get_sh().find_items(self.ITEM_ACTION_ATTR):
             if status is None:
                 status = self.getSoundtouchDevice().status()
@@ -260,7 +278,7 @@ class BoseSoundtouch(SmartPlugin):
 
     def updateSoundtouchVolume(self):
         volume = None
-        self.logger.debug("Updating Soundtouch Volume...")
+        self.logger.debug('Updating Soundtouch Volume...')
         for item in self.get_sh().find_items(self.ITEM_ACTION_ATTR):
             if volume is None:
                 volume = self.getSoundtouchDevice().volume()
@@ -273,7 +291,7 @@ class BoseSoundtouch(SmartPlugin):
 
     def updateSoundtouchPresets(self):
         presets = None
-        self.logger.debug("Updating Soundtouch Presets...")
+        self.logger.debug('Updating Soundtouch Presets...')
         for item in self.get_sh().find_items(self.ITEM_ACTION_ATTR):
             if presets is None:
                 presets = self.getSoundtouchDevice().presets()
@@ -323,11 +341,23 @@ class BoseSoundtouch(SmartPlugin):
         self.getSoundtouchDevice().power_off()
 
     def setSoundtouchVolume(self, volume):
-        self.logger.info("Setting volume to '" + str(volume) + "' for Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "'.")
+        self.logger.info(
+            "Setting volume to '"
+            + str(volume)
+            + "' for Bose Soundtouch device '"
+            + self.getSoundtouchDevice().config.name
+            + "'."
+        )
         self.getSoundtouchDevice().set_volume(volume)
 
     def sendSoundtouchCommand(self, command):
-        self.logger.info("Sending command '" + command + "' to Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "'.")
+        self.logger.info(
+            "Sending command '"
+            + command
+            + "' to Bose Soundtouch device '"
+            + self.getSoundtouchDevice().config.name
+            + "'."
+        )
         if command == self.BOSE_CMD_PLAY:
             self.getSoundtouchDevice().play()
         elif command == self.BOSE_CMD_PAUSE:
@@ -348,6 +378,12 @@ class BoseSoundtouch(SmartPlugin):
             self.getSoundtouchDevice().repeat_off()
 
     def selectSoundtouchPreset(self, preset_id):
-        self.logger.info("Selecting preset '" + str(preset_id) + "' for Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "'.")
+        self.logger.info(
+            "Selecting preset '"
+            + str(preset_id)
+            + "' for Bose Soundtouch device '"
+            + self.getSoundtouchDevice().config.name
+            + "'."
+        )
         presets = self.getSoundtouchDevice().presets()
         self.getSoundtouchDevice().select_preset(presets[preset_id])

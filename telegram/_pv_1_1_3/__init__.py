@@ -106,7 +106,7 @@ class Telegram(SmartPlugin):
     def parse_item(self, item):
         if ITEM_ATTR_MESSAGE in item.conf:
             self.logger.debug("parse item: {0}".format(item))
-            value = item.conf[ITEM_ATTR_MESSAGE]
+            item.conf[ITEM_ATTR_MESSAGE]
             self._items.append(item)
             return self.update_item
 
@@ -247,7 +247,7 @@ class Telegram(SmartPlugin):
             
         # /lo: show logics
         elif command == '/lo':
-            tmp_msg = "";
+            tmp_msg = ""
             tmp_msg+="Logics:\n"
             for logic in sorted(self.logics.return_loaded_logics()):    # list with the names of all logics that are currently loaded
                 data = []

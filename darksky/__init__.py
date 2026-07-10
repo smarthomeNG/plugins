@@ -28,15 +28,13 @@ import datetime
 import json
 from collections import OrderedDict
 from lib.module import Modules
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin
 
 from .webif import WebInterface
 
 
 class DarkSky(SmartPlugin):
-
-
-    PLUGIN_VERSION = "1.7.2"
+    PLUGIN_VERSION = '1.7.2'
 
     _base_forecast_url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
@@ -62,7 +60,7 @@ class DarkSky(SmartPlugin):
             self._lat = self.get_parameter_value('latitude')
             self._lon = self.get_parameter_value('longitude')
         else:
-            self.logger.debug("__init__: latitude and longitude not provided, using shng system values instead.")
+            self.logger.debug('__init__: latitude and longitude not provided, using shng system values instead.')
             self._lat = self.get_sh()._lat
             self._lon = self.get_sh()._lon
         self._lang = self.get_parameter_value('lang')
@@ -73,7 +71,6 @@ class DarkSky(SmartPlugin):
         self._items = {}
 
         self.init_webinterface(WebInterface)
-
 
     def run(self):
         self.scheduler_add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)
@@ -98,34 +95,36 @@ class DarkSky(SmartPlugin):
         """
         forecast = self.get_forecast()
         if forecast is None:
-            self.logger.error("Forecast is None! Perhaps server did not reply?")
+            self.logger.error('Forecast is None! Perhaps server did not reply?')
             return
         self._jsonData = forecast
         for s, matchStringItems in self._items.items():
             wrk = forecast
             sp = s.split('/')
-            if s == "flags/sources":
+            if s == 'flags/sources':
                 wrk = ', '.join(wrk['flags']['sources'])
-            elif s == "alerts" or s == "alerts_string":
+            elif s == 'alerts' or s == 'alerts_string':
                 if 'alerts' in wrk:
-                    if s == "alerts":
+                    if s == 'alerts':
                         wrk = wrk['alerts']
                     else:
                         alerts_string = ''
                         if 'alerts' in wrk:
                             for alert in wrk['alerts']:
-                                start_time = datetime.datetime.fromtimestamp(
-                                    int(alert['time'])
-                                ).strftime('%d.%m.%Y %H:%M')
-                                expire_time = datetime.datetime.fromtimestamp(
-                                    int(alert['expires'])
-                                ).strftime('%d.%m.%Y %H:%M')
-                                alerts_string_wrk = "<p><h1>"+alert['title']+" ("+start_time+" - "+expire_time+")</h1>"
-                                alerts_string_wrk = alerts_string_wrk + "<span>"+alert['description']+"</span></p>"
+                                start_time = datetime.datetime.fromtimestamp(int(alert['time'])).strftime(
+                                    '%d.%m.%Y %H:%M'
+                                )
+                                expire_time = datetime.datetime.fromtimestamp(int(alert['expires'])).strftime(
+                                    '%d.%m.%Y %H:%M'
+                                )
+                                alerts_string_wrk = (
+                                    '<p><h1>' + alert['title'] + ' (' + start_time + ' - ' + expire_time + ')</h1>'
+                                )
+                                alerts_string_wrk = alerts_string_wrk + '<span>' + alert['description'] + '</span></p>'
                                 alerts_string = alerts_string + alerts_string_wrk
                         wrk = alerts_string
                 else:
-                    if s == "alerts_string":
+                    if s == 'alerts_string':
                         wrk = ''
                     else:
                         wrk = []
@@ -139,22 +138,23 @@ class DarkSky(SmartPlugin):
                                 wrk = wrk[int(sp[0])]
                             else:
                                 self.logger.error(
-                                    "_update: invalid ds_matchstring '{}'; integer too large in matchstring".format(
-                                        s))
+                                    "_update: invalid ds_matchstring '{}'; integer too large in matchstring".format(s)
+                                )
                                 break
                         else:
                             self.logger.error(
-                                "_update: invalid ds_matchstring '{}'; integer expected in matchstring".format(
-                                    s))
+                                "_update: invalid ds_matchstring '{}'; integer expected in matchstring".format(s)
+                            )
                             break
                     else:
                         wrk = wrk.get(sp[0])
                     if len(sp) == 1:
                         spl = s.split('/')
                         self.logger.debug(
-                            "_update: ds_matchstring split len={}, content={} -> '{}'".format(str(len(spl)),
-                                                                                              str(spl),
-                                                                                              str(wrk)))
+                            "_update: ds_matchstring split len={}, content={} -> '{}'".format(
+                                str(len(spl)), str(spl), str(wrk)
+                            )
+                        )
                     sp.pop(0)
 
             # if a value was found, store it to item
@@ -172,38 +172,45 @@ class DarkSky(SmartPlugin):
         try:
             response = self._session.get(self._build_url())
         except Exception as e:
-            self.logger.warning("get_forecast: Exception when sending GET"
-                                " request for get_forecast: {}".format(e))
+            self.logger.warning('get_forecast: Exception when sending GET request for get_forecast: {}'.format(e))
             return
         try:
             json_obj = response.json()
         except Exception as e:
-            self.logger.warning("get_forecast: Response {} is no valid"
-                                " json format: {}".format(response, e))
+            self.logger.warning('get_forecast: Response {} is no valid json format: {}'.format(response, e))
             return
         daily_data = OrderedDict()
         if not json_obj.get('daily', False):
-            self.logger.warning("get_forecast: Response {} has no info for daily values."
-                                " Ignoring response.".format(response))
+            self.logger.warning(
+                'get_forecast: Response {} has no info for daily values. Ignoring response.'.format(response)
+            )
             return
         if not json_obj.get('hourly', False):
-            self.logger.warning("get_forecast: Response {} has no info for hourly values."
-                                " Ignoring response.".format(response))
+            self.logger.warning(
+                'get_forecast: Response {} has no info for hourly values. Ignoring response.'.format(response)
+            )
             return
 
         # add icon_visu, date and day to daily and currently
         json_obj['daily'].update({'icon_visu': self.map_icon(json_obj['daily']['icon'])})
         json_obj['hourly'].update({'icon_visu': self.map_icon(json_obj['hourly']['icon'])})
         if not json_obj.get('currently'):
-            self.logger.warning("get_forecast: Response {} has no info for current values."
-                                " Skipping update for currently values.".format(response))
+            self.logger.warning(
+                'get_forecast: Response {} has no info for current values.'
+                ' Skipping update for currently values.'.format(response)
+            )
         else:
             date_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%d.%m.%Y')
             day_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%A')
             hour_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).hour
-            json_obj['currently'].update({'date': date_entry, 'weekday': day_entry,
-                                          'hour': hour_entry, 'icon_visu':
-                                          self.map_icon(json_obj['currently']['icon'])})
+            json_obj['currently'].update(
+                {
+                    'date': date_entry,
+                    'weekday': day_entry,
+                    'hour': hour_entry,
+                    'icon_visu': self.map_icon(json_obj['currently']['icon']),
+                }
+            )
 
         # add icon_visu, date and day to each day
         for day in json_obj['daily'].get('data'):
@@ -220,7 +227,9 @@ class DarkSky(SmartPlugin):
             day_entry = datetime.datetime.fromtimestamp(hour['time']).strftime('%A')
             hour_entry = datetime.datetime.fromtimestamp(hour['time']).hour
             date_key = datetime.datetime.fromtimestamp(hour['time']).date()
-            hour.update({'date': date_entry, 'weekday': day_entry, 'hour': hour_entry, 'icon_visu': self.map_icon(hour['icon'])})
+            hour.update(
+                {'date': date_entry, 'weekday': day_entry, 'hour': hour_entry, 'icon_visu': self.map_icon(hour['icon'])}
+            )
             if json_obj['daily'].get(date_key) is None:
                 json_obj['daily'].update({date_key: {}})
             elif json_obj['daily'][date_key].get('hours') is None:
@@ -246,11 +255,15 @@ class DarkSky(SmartPlugin):
             if isinstance(entry, datetime.date):
                 try:
                     precip_probability = json_obj['daily'][entry]['precipProbability_mean']
-                    json_obj['daily'][entry]['precipProbability_mean'] = round(sum(precip_probability)/len(precip_probability), 2)
+                    json_obj['daily'][entry]['precipProbability_mean'] = round(
+                        sum(precip_probability) / len(precip_probability), 2
+                    )
                     precip_intensity = json_obj['daily'][entry]['precipIntensity_mean']
-                    json_obj['daily'][entry]['precipIntensity_mean'] = round(sum(precip_intensity)/len(precip_intensity), 2)
+                    json_obj['daily'][entry]['precipIntensity_mean'] = round(
+                        sum(precip_intensity) / len(precip_intensity), 2
+                    )
                     temperature = json_obj['daily'][entry]['temperature_mean']
-                    json_obj['daily'][entry]['temperature_mean'] = round(sum(temperature)/len(temperature), 2)
+                    json_obj['daily'][entry]['temperature_mean'] = round(sum(temperature) / len(temperature), 2)
                 except Exception:
                     pass
                 json_obj['daily']['day{}'.format(i)] = json_obj['daily'].pop(entry)
@@ -295,7 +308,7 @@ class DarkSky(SmartPlugin):
         :param item: The item to process.
         """
         if self.get_iattr_value(item.conf, 'ds_matchstring'):
-            if not self.get_iattr_value(item.conf, 'ds_matchstring') in self._items:
+            if self.get_iattr_value(item.conf, 'ds_matchstring') not in self._items:
                 self._items[self.get_iattr_value(item.conf, 'ds_matchstring')] = []
             self._items[self.get_iattr_value(item.conf, 'ds_matchstring')].append(item)
 
@@ -314,11 +327,10 @@ class DarkSky(SmartPlugin):
         url = ''
         if url_type == 'forecast':
             url = self._base_forecast_url % (self._key, self._lat, self._lon)
-            parameters = "?lang=%s" % self._lang
+            parameters = '?lang=%s' % self._lang
             if self._units is not None:
-                parameters = "%s&units=%s" % (parameters, self._units)
+                parameters = '%s&units=%s' % (parameters, self._units)
             url = '%s%s' % (url, parameters)
         else:
-            self.logger.error('_build_url: Wrong url type specified: %s' %url_type)
+            self.logger.error('_build_url: Wrong url type specified: %s' % url_type)
         return url
-

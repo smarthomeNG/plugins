@@ -25,7 +25,7 @@
 #########################################################################
 
 from lib.module import Modules
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf
 from lib.network import Tcp_server
 
 from speech import varParse, dictError
@@ -43,11 +43,12 @@ logger = logging.getLogger(__name__)
 
 
 class HTTPDispatcher(Tcp_server):
-    '''
+    """
     Encapsulation class for using lib.network.Tcp_server class with HTTP GET support
-    '''
+    """
+
     def __init__(self, parser, ip, port):
-        '''
+        """
         Initializes the class
 
         :param parser: callback function for handling data, called as parser(remoteip, 'tcp:<localip>:<localport>', '<data>')
@@ -56,27 +57,27 @@ class HTTPDispatcher(Tcp_server):
         :type ip: str
         :param port: local port to bind to
         :type port: int
-        '''
+        """
         super().__init__(port, ip, 1, b'\n')
         self.parser = parser
         self.dest = f'http:{ip}:{port}'
-        self.terminator = b"\r\n\r\n"
+        self.terminator = b'\r\n\r\n'
         self.set_callbacks(data_received=self.handle_received_data, incoming_connection=self.handle_connection)
         self.start()
 
     def handle_connection(self, server, client):
-        '''
+        """
         Handle incoming connection. Just used for debugging
 
         :param server: Tcp_server object serving the connection
         :type server: lib.network.Tcp_server
         :param client: Client object for connection
         :type client: lib.network.Client
-        '''
+        """
         self.logger.debug(f'Incoming HTTP connection from {client.name}')
 
     def handle_received_data(self, server, client, data):
-        '''
+        """
         Forward received data to parser callback
 
         :param server: Tcp_server object serving the connection
@@ -85,8 +86,10 @@ class HTTPDispatcher(Tcp_server):
         :type addr: lib.network.Client
         :param data: received data
         :type data: string
-        '''
-        self.logger.debug(f'Received packet from {client.ip}:{client.port} to {self.dest} via HTTP with content "{data}"')
+        """
+        self.logger.debug(
+            f'Received packet from {client.ip}:{client.port} to {self.dest} via HTTP with content "{data}"'
+        )
 
         # find lines starting with GET and return remaining lines "HTTP-like" and return status
         for line in data.splitlines():
@@ -103,10 +106,17 @@ class HTTPDispatcher(Tcp_server):
                 else:
                     answer = dictError['error']
                 answer_length = len(answer.encode('utf-8'))
-                logger.debug("SP: Sende Antwort: %s (%s Bytes)" % (answer, answer_length))
-                self.send(bytes("HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=UTF-8\r\nContent-Length: %s\r\n\r\n%s" % (answer_length, answer), encoding="utf-8"), close=True)
+                logger.debug('SP: Sende Antwort: %s (%s Bytes)' % (answer, answer_length))
+                self.send(
+                    bytes(
+                        'HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=UTF-8\r\nContent-Length: %s\r\n\r\n%s'
+                        % (answer_length, answer),
+                        encoding='utf-8',
+                    ),
+                    close=True,
+                )
             else:
-                logger.debug("SP: Sende Antwort: 400 Bad Request")
+                logger.debug('SP: Sende Antwort: 400 Bad Request')
                 self.send(b'HTTP/1.1 400 Bad Request\r\n\r\n', close=True)
             break
 
@@ -128,6 +138,7 @@ class Speech_Parser(SmartPlugin):
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         """
         from bin.smarthome import VERSION
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
@@ -138,12 +149,12 @@ class Speech_Parser(SmartPlugin):
         self.default_access = self.get_parameter_value('default_access')
         try:
             self.config = os.path.expanduser(self.get_parameter_value('config_file'))
-        except:
+        except Exception:
             pass
 
         # Initialization code goes here
-        dest = "http:{}:{}".format(self.ip, self.port)
-        logger.info("SP: Adding listener on: {}".format(dest))
+        dest = 'http:{}:{}'.format(self.ip, self.port)
+        logger.info('SP: Adding listener on: {}'.format(dest))
         self.dispatcher = HTTPDispatcher(self.parse_input, self.ip, self.port)
         self.listeners[dest] = {'items': {}, 'logics': {}, 'acl': self.parse(self.acl)}
 
@@ -160,7 +171,7 @@ class Speech_Parser(SmartPlugin):
 
         config_base = os.path.basename(self.config)
 
-        if config_base == "speech.py":
+        if config_base == 'speech.py':
             sys.path.append(os.path.dirname(self.config))
             global varParse, dictError
             self.logger.info("Configuration file '{}' successfully imported".format(self.config))
@@ -183,8 +194,8 @@ class Speech_Parser(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
-        self.logger.info("SP: Server Starts - %s:%s" % (self.ip, self.port))
+        self.logger.debug('Run method called')
+        self.logger.info('SP: Server Starts - %s:%s' % (self.ip, self.port))
         self.dispatcher.start()
         if not self.dispatcher.connected:
             self.logger.error(f'Could not start server on {self.ip}:{self.port}. Plugin deactivated')
@@ -195,7 +206,7 @@ class Speech_Parser(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.alive = False
         self.dispatcher.close()
 
@@ -278,54 +289,52 @@ class Speech_Parser(SmartPlugin):
                 logic = self.listeners[dest]['logics'][name]['logic']
                 logic.trigger(varText, source, value)
             else:
-                self.logger.error("SP: Unsupporter key element {}. Data: {}".format(typ, data))
+                self.logger.error('SP: Unsupporter key element {}. Data: {}'.format(typ, data))
                 return False
         else:
-            self.logger.error("SP: Destination {}, not in listeners!".format(dest))
+            self.logger.error('SP: Destination {}, not in listeners!'.format(dest))
             return False
         return True
 
     def init_webinterface(self):
-        """"
+        """ "
         Initialize the web interface for this plugin
 
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module('http')  # try/except to handle running in a core version that does not support modules
-        except:
+            self.mod_http = Modules.get_instance().get_module('http')  # try/except to handle disabled http module
+        except Exception:
             self.mod_http = None
         if self.mod_http is None:
-            self.logger.error("Not initializing the web interface")
+            self.logger.error('Not initializing the web interface')
             return False
 
-        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
+        if 'SmartPluginWebIf' not in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning('Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface')
             return False
 
         # set application configuration for cherrypy
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
         config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
+            '/': {'tools.staticdir.root': webif_dir},
+            '/static': {'tools.staticdir.on': True, 'tools.staticdir.dir': 'static'},
         }
 
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
+        self.mod_http.register_webif(
+            WebInterface(webif_dir, self),
+            self.get_shortname(),
+            config,
+            self.get_classname(),
+            self.get_instance_name(),
+            description='',
+        )
 
         return True
 
 
-class ParseText():
+class ParseText:
     parseText = False
     errorMessage = False
 
@@ -342,22 +351,24 @@ class ParseText():
                 name = varResult[0]
                 value = varResult[1]
                 typ = varResult[4]
-                logger.debug("SP: parseText: " + self.parseText)
-                logger.debug("SP: Item: " + name)
-                logger.debug("SP: Value: " + value)
-                logger.debug("SP: List: " + str(varResult[2]))
-                logger.debug("SP: Answer: " + answer)
-                logger.debug("SP: Typ: " + typ)
+                logger.debug('SP: parseText: ' + self.parseText)
+                logger.debug('SP: Item: ' + name)
+                logger.debug('SP: Value: ' + value)
+                logger.debug('SP: List: ' + str(varResult[2]))
+                logger.debug('SP: Answer: ' + answer)
+                logger.debug('SP: Typ: ' + typ)
 
                 # get status if needed
                 if value == '%status%':
                     value_received = str(self.get_item_value(name))
-                    value_received = value_received.replace('.', ',')       # Dezimal Zahlen werden mit Punkt getrennt, ersetzen durch Komma
-                    answer = answer.replace('%status%', value_received)     # Platzhalter %status% ersetzen
+                    value_received = value_received.replace(
+                        '.', ','
+                    )  # Dezimal Zahlen werden mit Punkt getrennt, ersetzen durch Komma
+                    answer = answer.replace('%status%', value_received)  # Platzhalter %status% ersetzen
 
-                return(False, [name, value, answer, typ, self.parseText])
+                return (False, [name, value, answer, typ, self.parseText])
             else:
-                logger.debug("SP: parseText: Unbekannter Befehl")
+                logger.debug('SP: parseText: Unbekannter Befehl')
                 self.errorMessage = dictError['unknown_command']
         return [self.errorMessage, False]
 
@@ -368,7 +379,7 @@ class ParseText():
         varAnswer = parseline[3]
         varList = []
         varList2 = []
-        reg_ex = ".*"
+        reg_ex = '.*'
         if len(parseline) == 5:
             varTyp = parseline[4].lower()
         else:
@@ -377,7 +388,7 @@ class ParseText():
         # Build regular expression
         for x in range(0, len(varVars)):
             reg_ex += '('
-            if type(varVars[x]) == list:
+            if isinstance(varVars[x], list):
                 for var2 in varVars[x]:
                     for word in var2[1]:
                         reg_ex += str(word) + '|'
@@ -387,13 +398,13 @@ class ParseText():
             reg_ex += '.*'
             if len(varVars) - 1 != x:
                 reg_ex += ' '
-        logger.debug("Regular Expression:\n>" + reg_ex + "<")
+        logger.debug('Regular Expression:\n>' + reg_ex + '<')
         # test regular Expression on transmitted Text
         mo = re.match(reg_ex, self.parseText, re.IGNORECASE)
 
         if mo:
             for x in range(0, len(varVars)):
-                if type(varVars[x]) == list:
+                if isinstance(varVars[x], list):
                     for y in range(0, len(varVars[x])):
                         if mo.group(x + 1).lower() in varVars[x][y][1]:
                             varList.append(str(varVars[x][y][0]))
@@ -426,7 +437,6 @@ class ParseText():
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface

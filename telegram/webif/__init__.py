@@ -43,7 +43,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -60,7 +59,6 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
-
     @cherrypy.expose
     def index(self, reload=None):
         """
@@ -73,11 +71,12 @@ class WebInterface(SmartPluginWebIf):
         tmpl = self.tplenv.get_template('index.html')
         pagelength = self.plugin.get_parameter_value('webif_pagelength')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           webif_pagelength=pagelength,
-                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
-                           item_count=0)
-
+        return tmpl.render(
+            p=self.plugin,
+            webif_pagelength=pagelength,
+            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
+            item_count=0,
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -91,7 +90,7 @@ class WebInterface(SmartPluginWebIf):
         """
         if dataSet is None:
             # get the new data
-            data = {}
+            pass
 
             # data['item'] = {}
             # for i in self.plugin.items:

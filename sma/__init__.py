@@ -51,140 +51,368 @@ ZERO_ADDR = bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
 SMANET2_HDR = bytes([0x7E, 0xFF, 0x03, 0x60, 0x65])
 
 FCSTAB = [
-    0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
-    0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
-    0x1081, 0x0108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
-    0x9cc9, 0x8d40, 0xbfdb, 0xae52, 0xdaed, 0xcb64, 0xf9ff, 0xe876,
-    0x2102, 0x308b, 0x0210, 0x1399, 0x6726, 0x76af, 0x4434, 0x55bd,
-    0xad4a, 0xbcc3, 0x8e58, 0x9fd1, 0xeb6e, 0xfae7, 0xc87c, 0xd9f5,
-    0x3183, 0x200a, 0x1291, 0x0318, 0x77a7, 0x662e, 0x54b5, 0x453c,
-    0xbdcb, 0xac42, 0x9ed9, 0x8f50, 0xfbef, 0xea66, 0xd8fd, 0xc974,
-    0x4204, 0x538d, 0x6116, 0x709f, 0x0420, 0x15a9, 0x2732, 0x36bb,
-    0xce4c, 0xdfc5, 0xed5e, 0xfcd7, 0x8868, 0x99e1, 0xab7a, 0xbaf3,
-    0x5285, 0x430c, 0x7197, 0x601e, 0x14a1, 0x0528, 0x37b3, 0x263a,
-    0xdecd, 0xcf44, 0xfddf, 0xec56, 0x98e9, 0x8960, 0xbbfb, 0xaa72,
-    0x6306, 0x728f, 0x4014, 0x519d, 0x2522, 0x34ab, 0x0630, 0x17b9,
-    0xef4e, 0xfec7, 0xcc5c, 0xddd5, 0xa96a, 0xb8e3, 0x8a78, 0x9bf1,
-    0x7387, 0x620e, 0x5095, 0x411c, 0x35a3, 0x242a, 0x16b1, 0x0738,
-    0xffcf, 0xee46, 0xdcdd, 0xcd54, 0xb9eb, 0xa862, 0x9af9, 0x8b70,
-    0x8408, 0x9581, 0xa71a, 0xb693, 0xc22c, 0xd3a5, 0xe13e, 0xf0b7,
-    0x0840, 0x19c9, 0x2b52, 0x3adb, 0x4e64, 0x5fed, 0x6d76, 0x7cff,
-    0x9489, 0x8500, 0xb79b, 0xa612, 0xd2ad, 0xc324, 0xf1bf, 0xe036,
-    0x18c1, 0x0948, 0x3bd3, 0x2a5a, 0x5ee5, 0x4f6c, 0x7df7, 0x6c7e,
-    0xa50a, 0xb483, 0x8618, 0x9791, 0xe32e, 0xf2a7, 0xc03c, 0xd1b5,
-    0x2942, 0x38cb, 0x0a50, 0x1bd9, 0x6f66, 0x7eef, 0x4c74, 0x5dfd,
-    0xb58b, 0xa402, 0x9699, 0x8710, 0xf3af, 0xe226, 0xd0bd, 0xc134,
-    0x39c3, 0x284a, 0x1ad1, 0x0b58, 0x7fe7, 0x6e6e, 0x5cf5, 0x4d7c,
-    0xc60c, 0xd785, 0xe51e, 0xf497, 0x8028, 0x91a1, 0xa33a, 0xb2b3,
-    0x4a44, 0x5bcd, 0x6956, 0x78df, 0x0c60, 0x1de9, 0x2f72, 0x3efb,
-    0xd68d, 0xc704, 0xf59f, 0xe416, 0x90a9, 0x8120, 0xb3bb, 0xa232,
-    0x5ac5, 0x4b4c, 0x79d7, 0x685e, 0x1ce1, 0x0d68, 0x3ff3, 0x2e7a,
-    0xe70e, 0xf687, 0xc41c, 0xd595, 0xa12a, 0xb0a3, 0x8238, 0x93b1,
-    0x6b46, 0x7acf, 0x4854, 0x59dd, 0x2d62, 0x3ceb, 0x0e70, 0x1ff9,
-    0xf78f, 0xe606, 0xd49d, 0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330,
-    0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
+    0x0000,
+    0x1189,
+    0x2312,
+    0x329B,
+    0x4624,
+    0x57AD,
+    0x6536,
+    0x74BF,
+    0x8C48,
+    0x9DC1,
+    0xAF5A,
+    0xBED3,
+    0xCA6C,
+    0xDBE5,
+    0xE97E,
+    0xF8F7,
+    0x1081,
+    0x0108,
+    0x3393,
+    0x221A,
+    0x56A5,
+    0x472C,
+    0x75B7,
+    0x643E,
+    0x9CC9,
+    0x8D40,
+    0xBFDB,
+    0xAE52,
+    0xDAED,
+    0xCB64,
+    0xF9FF,
+    0xE876,
+    0x2102,
+    0x308B,
+    0x0210,
+    0x1399,
+    0x6726,
+    0x76AF,
+    0x4434,
+    0x55BD,
+    0xAD4A,
+    0xBCC3,
+    0x8E58,
+    0x9FD1,
+    0xEB6E,
+    0xFAE7,
+    0xC87C,
+    0xD9F5,
+    0x3183,
+    0x200A,
+    0x1291,
+    0x0318,
+    0x77A7,
+    0x662E,
+    0x54B5,
+    0x453C,
+    0xBDCB,
+    0xAC42,
+    0x9ED9,
+    0x8F50,
+    0xFBEF,
+    0xEA66,
+    0xD8FD,
+    0xC974,
+    0x4204,
+    0x538D,
+    0x6116,
+    0x709F,
+    0x0420,
+    0x15A9,
+    0x2732,
+    0x36BB,
+    0xCE4C,
+    0xDFC5,
+    0xED5E,
+    0xFCD7,
+    0x8868,
+    0x99E1,
+    0xAB7A,
+    0xBAF3,
+    0x5285,
+    0x430C,
+    0x7197,
+    0x601E,
+    0x14A1,
+    0x0528,
+    0x37B3,
+    0x263A,
+    0xDECD,
+    0xCF44,
+    0xFDDF,
+    0xEC56,
+    0x98E9,
+    0x8960,
+    0xBBFB,
+    0xAA72,
+    0x6306,
+    0x728F,
+    0x4014,
+    0x519D,
+    0x2522,
+    0x34AB,
+    0x0630,
+    0x17B9,
+    0xEF4E,
+    0xFEC7,
+    0xCC5C,
+    0xDDD5,
+    0xA96A,
+    0xB8E3,
+    0x8A78,
+    0x9BF1,
+    0x7387,
+    0x620E,
+    0x5095,
+    0x411C,
+    0x35A3,
+    0x242A,
+    0x16B1,
+    0x0738,
+    0xFFCF,
+    0xEE46,
+    0xDCDD,
+    0xCD54,
+    0xB9EB,
+    0xA862,
+    0x9AF9,
+    0x8B70,
+    0x8408,
+    0x9581,
+    0xA71A,
+    0xB693,
+    0xC22C,
+    0xD3A5,
+    0xE13E,
+    0xF0B7,
+    0x0840,
+    0x19C9,
+    0x2B52,
+    0x3ADB,
+    0x4E64,
+    0x5FED,
+    0x6D76,
+    0x7CFF,
+    0x9489,
+    0x8500,
+    0xB79B,
+    0xA612,
+    0xD2AD,
+    0xC324,
+    0xF1BF,
+    0xE036,
+    0x18C1,
+    0x0948,
+    0x3BD3,
+    0x2A5A,
+    0x5EE5,
+    0x4F6C,
+    0x7DF7,
+    0x6C7E,
+    0xA50A,
+    0xB483,
+    0x8618,
+    0x9791,
+    0xE32E,
+    0xF2A7,
+    0xC03C,
+    0xD1B5,
+    0x2942,
+    0x38CB,
+    0x0A50,
+    0x1BD9,
+    0x6F66,
+    0x7EEF,
+    0x4C74,
+    0x5DFD,
+    0xB58B,
+    0xA402,
+    0x9699,
+    0x8710,
+    0xF3AF,
+    0xE226,
+    0xD0BD,
+    0xC134,
+    0x39C3,
+    0x284A,
+    0x1AD1,
+    0x0B58,
+    0x7FE7,
+    0x6E6E,
+    0x5CF5,
+    0x4D7C,
+    0xC60C,
+    0xD785,
+    0xE51E,
+    0xF497,
+    0x8028,
+    0x91A1,
+    0xA33A,
+    0xB2B3,
+    0x4A44,
+    0x5BCD,
+    0x6956,
+    0x78DF,
+    0x0C60,
+    0x1DE9,
+    0x2F72,
+    0x3EFB,
+    0xD68D,
+    0xC704,
+    0xF59F,
+    0xE416,
+    0x90A9,
+    0x8120,
+    0xB3BB,
+    0xA232,
+    0x5AC5,
+    0x4B4C,
+    0x79D7,
+    0x685E,
+    0x1CE1,
+    0x0D68,
+    0x3FF3,
+    0x2E7A,
+    0xE70E,
+    0xF687,
+    0xC41C,
+    0xD595,
+    0xA12A,
+    0xB0A3,
+    0x8238,
+    0x93B1,
+    0x6B46,
+    0x7ACF,
+    0x4854,
+    0x59DD,
+    0x2D62,
+    0x3CEB,
+    0x0E70,
+    0x1FF9,
+    0xF78F,
+    0xE606,
+    0xD49D,
+    0xC514,
+    0xB1AB,
+    0xA022,
+    0x92B9,
+    0x8330,
+    0x7BC7,
+    0x6A4E,
+    0x58D5,
+    0x495C,
+    0x3DE3,
+    0x2C6A,
+    0x1EF1,
+    0x0F78,
 ]
 
-attribute_to_text = {35: "Fault",
-                     51: "Closed",
-                     295: "MPP",
-                     302: "No derating",
-                     303: "Off",
-                     307: "OK",
-                     308: "On",
-                     311: "Open",
-                     336: "Contact manufacturer",
-                     337: "Contact electrically qualified person",
-                     338: "Invalid",
-                     381: "Stop",
-                     443: "Constant voltage",
-                     455: "Warning",
-                     557: "Temperature derating",
-                     884: "Not active",
-                     887: "None",
-                     1129: "Yes",
-                     1130: "No",
-                     0xFFFFFD: "NaN"
-                     }
+attribute_to_text = {
+    35: 'Fault',
+    51: 'Closed',
+    295: 'MPP',
+    302: 'No derating',
+    303: 'Off',
+    307: 'OK',
+    308: 'On',
+    311: 'Open',
+    336: 'Contact manufacturer',
+    337: 'Contact electrically qualified person',
+    338: 'Invalid',
+    381: 'Stop',
+    443: 'Constant voltage',
+    455: 'Warning',
+    557: 'Temperature derating',
+    884: 'Not active',
+    887: 'None',
+    1129: 'Yes',
+    1130: 'No',
+    0xFFFFFD: 'NaN',
+}
 
 # eval-id: eval-expression
-lri_evals = {'num32bit_scaleby1': '(lambda x: x if x not in [0x80000000, 0xFFFFFFFF] else 0)(int.from_bytes(msg[i + 8:i + 12], byteorder="little"))',
-             'num32bit_scaleby100.0': '(lambda x: x / 100.0 if x not in [0x80000000, 0xFFFFFFFF] else 0)(int.from_bytes(msg[i + 8:i + 12], byteorder="little"))',
-             'num32bit_scaleby1000.0': '(lambda x: x / 1000.0 if x not in [0x80000000, 0xFFFFFFFF] else 0)(int.from_bytes(msg[i + 8:i + 12], byteorder="little"))',
-             'num64bit_scaleby1': '(lambda x: x if x not in [0x8000000000000000, 0xFFFFFFFFFFFFFFFF] else 0)(int.from_bytes(msg[i + 8:i + 16], byteorder="little"))',
-             'sw_version_decode': '"{}{}.{}{}.{:02d}.{}".format(msg[i + 27] >> 4, msg[i + 27] & 0xf, msg[i + 26] >> 4, msg[i + 26] & 0xf, msg[i + 25], msg[i + 24] if msg[i + 24] > 5 else "NEABRS"[msg[i + 24]])',
-             'attribute_decode': '(lambda x: attribute_to_text[x[0]] if x[0] in attribute_to_text else "?")(list(__import__("itertools").dropwhile(lambda attr_tpl: (attr_tpl[1] != 1) or (attr_tpl[0] == 0xFFFFFE), [(int.from_bytes(msg[o:o + 3], byteorder="little"), msg[o + 3]) for o in range(i+8,i+40,4)]))[0])'
-             }
+lri_evals = {
+    'num32bit_scaleby1': '(lambda x: x if x not in [0x80000000, 0xFFFFFFFF] else 0)(int.from_bytes(msg[i + 8:i + 12], byteorder="little"))',
+    'num32bit_scaleby100.0': '(lambda x: x / 100.0 if x not in [0x80000000, 0xFFFFFFFF] else 0)(int.from_bytes(msg[i + 8:i + 12], byteorder="little"))',
+    'num32bit_scaleby1000.0': '(lambda x: x / 1000.0 if x not in [0x80000000, 0xFFFFFFFF] else 0)(int.from_bytes(msg[i + 8:i + 12], byteorder="little"))',
+    'num64bit_scaleby1': '(lambda x: x if x not in [0x8000000000000000, 0xFFFFFFFFFFFFFFFF] else 0)(int.from_bytes(msg[i + 8:i + 16], byteorder="little"))',
+    'sw_version_decode': '"{}{}.{}{}.{:02d}.{}".format(msg[i + 27] >> 4, msg[i + 27] & 0xf, msg[i + 26] >> 4, msg[i + 26] & 0xf, msg[i + 25], msg[i + 24] if msg[i + 24] > 5 else "NEABRS"[msg[i + 24]])',
+    'attribute_decode': '(lambda x: attribute_to_text[x[0]] if x[0] in attribute_to_text else "?")(list(__import__("itertools").dropwhile(lambda attr_tpl: (attr_tpl[1] != 1) or (attr_tpl[0] == 0xFFFFFE), [(int.from_bytes(msg[o:o + 3], byteorder="little"), msg[o + 3]) for o in range(i+8,i+40,4)]))[0])',
+}
 
 TYPE_LABEL = (0x821E00, 0x8220FF, 0x58000200)
 
 # logical ressource identifier: [eval, recordsize, [request-cmd, -start, -end]]
-lris = {0x214800: ['attribute_decode', 40, (0x51800200, 0x214800, 0x2148FF)],
-        0x251e00: ['num32bit_scaleby1', 28, (0x53800200, 0x251E00, 0x251EFF)],
-        0x260100: ['num64bit_scaleby1', 16, (0x54000200, 0x260100, 0x2622FF)],
-        0x262200: ['num64bit_scaleby1', 16, (0x54000200, 0x260100, 0x2622FF)],
-        0x263f00: ['num32bit_scaleby1', 28, (0x51000200, 0x263F00, 0x263FFF)],
-        0x411E00: ['num32bit_scaleby1', 28, (0x51000200, 0x411E00, 0x4120FF)],
-        0x411F00: ['num32bit_scaleby1', 28, (0x51000200, 0x411E00, 0x4120FF)],
-        0x412000: ['num32bit_scaleby1', 28, (0x51000200, 0x411E00, 0x4120FF)],
-        0x416400: ['attribute_decode', 40, (0x51800200, 0x416400, 0x4164FF)],
-        0x451f00: ['num32bit_scaleby100.0', 28, (0x53800200, 0x451F00, 0x4521FF)],
-        0x452100: ['num32bit_scaleby1000.0', 28, (0x53800200, 0x451F00, 0x4521FF)],
-        0x462E00: ['num64bit_scaleby1', 16, (0x54000200, 0x462E00, 0x462FFF)],
-        0x462F00: ['num64bit_scaleby1', 16, (0x54000200, 0x462E00, 0x462FFF)],
-        0x464000: ['num32bit_scaleby1', 28, (0x51000200, 0x464000, 0x4642FF)],
-        0x464100: ['num32bit_scaleby1', 28, (0x51000200, 0x464000, 0x4642FF)],
-        0x464200: ['num32bit_scaleby1', 28, (0x51000200, 0x464000, 0x4642FF)],
-        0x464800: ['num32bit_scaleby100.0', 28, (0x51000200, 0x464800, 0x4652FF)],
-        0x464900: ['num32bit_scaleby100.0', 28, (0x51000200, 0x464800, 0x4652FF)],
-        0x464A00: ['num32bit_scaleby100.0', 28, (0x51000200, 0x464800, 0x4652FF)],
-        0x465000: ['num32bit_scaleby1000.0', 28, (0x51000200, 0x464800, 0x4652FF)],
-        0x465100: ['num32bit_scaleby1000.0', 28, (0x51000200, 0x464800, 0x4652FF)],
-        0x465200: ['num32bit_scaleby1000.0', 28, (0x51000200, 0x464800, 0x4652FF)],
-        0x465300: ['num32bit_scaleby1000.0', 28, (0x51000200, 0x465300, 0x4655FF)],
-        0x465400: ['num32bit_scaleby1000.0', 28, (0x51000200, 0x465300, 0x4655FF)],
-        0x465500: ['num32bit_scaleby1000.0', 28, (0x51000200, 0x465300, 0x4655FF)],
-        0x465700: ['num32bit_scaleby100.0', 28, (0x51000200, 0x465700, 0x4657FF)],
-        0x823400: ['sw_version_decode', 40, (0x58000200, 0x823400, 0x8234FF)]
-        }
+lris = {
+    0x214800: ['attribute_decode', 40, (0x51800200, 0x214800, 0x2148FF)],
+    0x251E00: ['num32bit_scaleby1', 28, (0x53800200, 0x251E00, 0x251EFF)],
+    0x260100: ['num64bit_scaleby1', 16, (0x54000200, 0x260100, 0x2622FF)],
+    0x262200: ['num64bit_scaleby1', 16, (0x54000200, 0x260100, 0x2622FF)],
+    0x263F00: ['num32bit_scaleby1', 28, (0x51000200, 0x263F00, 0x263FFF)],
+    0x411E00: ['num32bit_scaleby1', 28, (0x51000200, 0x411E00, 0x4120FF)],
+    0x411F00: ['num32bit_scaleby1', 28, (0x51000200, 0x411E00, 0x4120FF)],
+    0x412000: ['num32bit_scaleby1', 28, (0x51000200, 0x411E00, 0x4120FF)],
+    0x416400: ['attribute_decode', 40, (0x51800200, 0x416400, 0x4164FF)],
+    0x451F00: ['num32bit_scaleby100.0', 28, (0x53800200, 0x451F00, 0x4521FF)],
+    0x452100: ['num32bit_scaleby1000.0', 28, (0x53800200, 0x451F00, 0x4521FF)],
+    0x462E00: ['num64bit_scaleby1', 16, (0x54000200, 0x462E00, 0x462FFF)],
+    0x462F00: ['num64bit_scaleby1', 16, (0x54000200, 0x462E00, 0x462FFF)],
+    0x464000: ['num32bit_scaleby1', 28, (0x51000200, 0x464000, 0x4642FF)],
+    0x464100: ['num32bit_scaleby1', 28, (0x51000200, 0x464000, 0x4642FF)],
+    0x464200: ['num32bit_scaleby1', 28, (0x51000200, 0x464000, 0x4642FF)],
+    0x464800: ['num32bit_scaleby100.0', 28, (0x51000200, 0x464800, 0x4652FF)],
+    0x464900: ['num32bit_scaleby100.0', 28, (0x51000200, 0x464800, 0x4652FF)],
+    0x464A00: ['num32bit_scaleby100.0', 28, (0x51000200, 0x464800, 0x4652FF)],
+    0x465000: ['num32bit_scaleby1000.0', 28, (0x51000200, 0x464800, 0x4652FF)],
+    0x465100: ['num32bit_scaleby1000.0', 28, (0x51000200, 0x464800, 0x4652FF)],
+    0x465200: ['num32bit_scaleby1000.0', 28, (0x51000200, 0x464800, 0x4652FF)],
+    0x465300: ['num32bit_scaleby1000.0', 28, (0x51000200, 0x465300, 0x4655FF)],
+    0x465400: ['num32bit_scaleby1000.0', 28, (0x51000200, 0x465300, 0x4655FF)],
+    0x465500: ['num32bit_scaleby1000.0', 28, (0x51000200, 0x465300, 0x4655FF)],
+    0x465700: ['num32bit_scaleby100.0', 28, (0x51000200, 0x465700, 0x4657FF)],
+    0x823400: ['sw_version_decode', 40, (0x58000200, 0x823400, 0x8234FF)],
+}
 
 # sh.py-Name: field-id
-name_to_id = {'STATUS': 0x214801,
-              'DC_STRING1_P': 0x251e01,
-              'DC_STRING2_P': 0x251e02,
-              'E_TOTAL': 0x260101,
-              'E_DAY': 0x262201,
-              'AC_P_TOTAL': 0x263f01,
-              'AC_P_MAX_NORM': 0x411E01,
-              'AC_P_MAX_WARN': 0x411F01,
-              'AC_P_MAX_ALRM': 0x412001,
-              'GRID_RELAY': 0x416401,
-              'DC_STRING1_U': 0x451f01,
-              'DC_STRING2_U': 0x451f02,
-              'DC_STRING1_I': 0x452101,
-              'DC_STRING2_I': 0x452102,
-              'OPERATING_TIME': 0x462E01,
-              'FEEDING_TIME': 0x462F01,
-              'AC_PHASE1_P': 0x464001,
-              'AC_PHASE2_P': 0x464101,
-              'AC_PHASE3_P': 0x464201,
-              'AC_PHASE1_U': 0x464801,
-              'AC_PHASE2_U': 0x464901,
-              'AC_PHASE3_U': 0x464A01,
-              'AC_PHASE1_I': 0x465001,
-              'AC_PHASE2_I': 0x465101,
-              'AC_PHASE3_I': 0x465201,
-              'AC_PHASE1_I2': 0x465301,
-              'AC_PHASE2_I2': 0x465401,
-              'AC_PHASE3_I2': 0x465501,
-              'GRID_FREQUENCY': 0x465701,
-              'SW_VERSION': 0x823401
-              }
+name_to_id = {
+    'STATUS': 0x214801,
+    'DC_STRING1_P': 0x251E01,
+    'DC_STRING2_P': 0x251E02,
+    'E_TOTAL': 0x260101,
+    'E_DAY': 0x262201,
+    'AC_P_TOTAL': 0x263F01,
+    'AC_P_MAX_NORM': 0x411E01,
+    'AC_P_MAX_WARN': 0x411F01,
+    'AC_P_MAX_ALRM': 0x412001,
+    'GRID_RELAY': 0x416401,
+    'DC_STRING1_U': 0x451F01,
+    'DC_STRING2_U': 0x451F02,
+    'DC_STRING1_I': 0x452101,
+    'DC_STRING2_I': 0x452102,
+    'OPERATING_TIME': 0x462E01,
+    'FEEDING_TIME': 0x462F01,
+    'AC_PHASE1_P': 0x464001,
+    'AC_PHASE2_P': 0x464101,
+    'AC_PHASE3_P': 0x464201,
+    'AC_PHASE1_U': 0x464801,
+    'AC_PHASE2_U': 0x464901,
+    'AC_PHASE3_U': 0x464A01,
+    'AC_PHASE1_I': 0x465001,
+    'AC_PHASE2_I': 0x465101,
+    'AC_PHASE3_I': 0x465201,
+    'AC_PHASE1_I2': 0x465301,
+    'AC_PHASE2_I2': 0x465401,
+    'AC_PHASE3_I2': 0x465501,
+    'GRID_FREQUENCY': 0x465701,
+    'SW_VERSION': 0x823401,
+}
 
 
 class SMA(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.2"
+    PLUGIN_VERSION = '1.3.2'
 
     def __init__(self, sh, **kwargs):
         self.shtime = Shtime.get_instance()
@@ -206,7 +434,7 @@ class SMA(SmartPlugin):
         self._plugin_active_item = None
 
         if not hasattr(socket, 'AF_BLUETOOTH'):
-            raise Exception("Python socket module does not support Bluetooth - see README.md how to install")
+            raise Exception('Python socket module does not support Bluetooth - see README.md how to install')
 
     def _update_values(self):
         # logger.warning("sma: signal strength = {}%%".format(self._inv_get_bt_signal_strength()))
@@ -225,11 +453,11 @@ class SMA(SmartPlugin):
             if ('LAST_UPDATE' in self._fields) and not (self._inv_last_read_timestamp_utc == 0):
                 self._inv_last_read_datetime = datetime.fromtimestamp(self._inv_last_read_timestamp_utc, tz.tzlocal())
                 # self._inv_last_read_str = self._inv_last_read_datetime.strftime("%d.%m.%Y %H:%M:%S")
-                self._inv_last_read_str = self._inv_last_read_datetime.strftime("%d.%m. %H:%M  ")
+                self._inv_last_read_str = self._inv_last_read_datetime.strftime('%d.%m. %H:%M  ')
                 for item in self._fields['LAST_UPDATE']['items']:
                     item(self._inv_last_read_str, 'SMA', self._inv_serial)
         except Exception as e:
-            self.logger.error("sma: error while updating values - {}".format(e))
+            self.logger.error('sma: error while updating values - {}'.format(e))
         self._cmd_lock.release()
 
     def run(self):
@@ -249,7 +477,7 @@ class SMA(SmartPlugin):
                 try:
                     self._btsocket = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
                     self._btsocket.connect((self._inv_bt_addr, 1))
-                    self.logger.info("sma: via bluetooth connected to {}".format(self._inv_bt_addr))
+                    self.logger.info('sma: via bluetooth connected to {}'.format(self._inv_bt_addr))
                     self._send_count = 0
                     self._inv_connect()
                     self._inv_login()
@@ -264,7 +492,7 @@ class SMA(SmartPlugin):
                             item(self._inv_serial, 'SMA', self._inv_serial)
                     self._is_connected = True
                 except Exception as e:
-                    self.logger.error("sma: establishing connection to inverter failed - {}".format(e))
+                    self.logger.error('sma: establishing connection to inverter failed - {}'.format(e))
                     # wait for 30sec and try to reconnect
                     time.sleep(30)
                     continue
@@ -275,20 +503,28 @@ class SMA(SmartPlugin):
                     if self._allowed_timedelta >= 0:
                         self._inv_send_request(lris[name_to_id['STATUS'] & 0xFFFF00][2])
                         msg = self._recv_smanet2_msg()
-                        if (msg is not None):
+                        if msg is not None:
                             host_localtime = int(time.time())
                             inv_localtime = int.from_bytes(msg[45:49], byteorder='little')
                             diff = inv_localtime - host_localtime
-                            self.logger.info("sma: inverter timestamp = {}s / host timestamp = {}s / diff = {}s".format(inv_localtime, host_localtime, diff))
+                            self.logger.info(
+                                'sma: inverter timestamp = {}s / host timestamp = {}s / diff = {}s'.format(
+                                    inv_localtime, host_localtime, diff
+                                )
+                            )
                             if (abs(diff) > self._allowed_timedelta) and not (inv_localtime == 0):
                                 self._inv_set_time()
                                 msg = self._recv_smanet2_msg()
                                 if msg is None:
-                                    self.logger.debug("sma: could not get reply while setting inverter time\n")
+                                    self.logger.debug('sma: could not get reply while setting inverter time\n')
                                 else:
-                                    self.logger.debug("sma: reply while setting inverter time - len={} data=[{}]\n".format(len(msg), ', '.join(['0x%02x' % b for b in msg[41:]])))
+                                    self.logger.debug(
+                                        'sma: reply while setting inverter time - len={} data=[{}]\n'.format(
+                                            len(msg), ', '.join(['0x%02x' % b for b in msg[41:]])
+                                        )
+                                    )
                 except Exception as e:
-                    self.logger.error("sma: adjusting inverter time failed - {}".format(e))
+                    self.logger.error('sma: adjusting inverter time failed - {}'.format(e))
                     return
                 self.scheduler_add('SMA', self._update_values, prio=5, cycle=self._update_cycle)
 
@@ -298,15 +534,15 @@ class SMA(SmartPlugin):
                 try:
                     self.scheduler_remove('SMA')
                 except Exception as e:
-                    self.logger.error("sma: removing sma.update from scheduler failed - {}".format(e))
+                    self.logger.error('sma: removing sma.update from scheduler failed - {}'.format(e))
                 else:
-                    self.logger.debug("sma: sma.update removed from scheduler")
+                    self.logger.debug('sma: sma.update removed from scheduler')
                 try:
                     self._btsocket.close()
                 except Exception as e:
-                    self.logger.error("sma: closing connection to inverter failed - {}".format(e))
+                    self.logger.error('sma: closing connection to inverter failed - {}'.format(e))
                 else:
-                    self.logger.info("sma: connection to inverter closed")
+                    self.logger.info('sma: connection to inverter closed')
                 # set to False under all circumstances to force shutdown
                 self._is_connected = False
                 self._cmd_lock.release()
@@ -324,44 +560,68 @@ class SMA(SmartPlugin):
                     i = 41
                     try:
                         while i < (len(msg) - 11):
-                            full_id = int.from_bytes(msg[i:i + 3], byteorder='little')
+                            full_id = int.from_bytes(msg[i : i + 3], byteorder='little')
                             lri = full_id & 0xFFFF00
                             cls = full_id & 0x0000FF
                             dataType = msg[i + 3]
                             if lri not in lris:
-                                self.logger.info("sma: unknown lri={:#06x} / cls={:#02x} / dataType={:#02x} - trying to continue".format(lri, cls, dataType))
+                                self.logger.info(
+                                    'sma: unknown lri={:#06x} / cls={:#02x} / dataType={:#02x} - trying to continue'.format(
+                                        lri, cls, dataType
+                                    )
+                                )
                                 if (dataType == 0x00) or (dataType == 0x40):
                                     i += 28
                                 elif (dataType == 0x08) or (dataType == 0x10):
                                     i += 40
                                 else:
-                                    self.logger.error("sma: rx - unknown datatype {:#02x}".format(dataType))
+                                    self.logger.error('sma: rx - unknown datatype {:#02x}'.format(dataType))
                                     raise
                                 continue
                             else:
-                                timestamp_utc = int.from_bytes(msg[i + 4:i + 8], byteorder='little')
-                                value = eval(lri_evals[lris[lri][0]], dict(msg=msg, i=i, attribute_to_text=attribute_to_text))
+                                timestamp_utc = int.from_bytes(msg[i + 4 : i + 8], byteorder='little')
+                                value = eval(
+                                    lri_evals[lris[lri][0]], dict(msg=msg, i=i, attribute_to_text=attribute_to_text)
+                                )
                                 i += lris[lri][1]
-                                self.logger.debug("sma: lri={:#06x} / cls={:#02x} / timestamp={} / value={}".format(lri, cls, timestamp_utc, value))
+                                self.logger.debug(
+                                    'sma: lri={:#06x} / cls={:#02x} / timestamp={} / value={}'.format(
+                                        lri, cls, timestamp_utc, value
+                                    )
+                                )
                                 if full_id in self._fields:
                                     for item in self._fields[full_id]['items']:
                                         item(value, 'SMA', self._inv_serial, '{:#06x}'.format(full_id))
                                 # update timestamp
-                                if (timestamp_utc > self._inv_last_read_timestamp_utc):
+                                if timestamp_utc > self._inv_last_read_timestamp_utc:
                                     self._inv_last_read_timestamp_utc = timestamp_utc
                     except Exception as e:
-                        self.logger.error("sma: rx: exception - {}".format(e))
-                        self.logger.error("sma: rx - exception when parsing msg - len={} data=[{}]\n".format(len(msg), ', '.join(['0x%02x' % b for b in msg])))
+                        self.logger.error('sma: rx: exception - {}'.format(e))
+                        self.logger.error(
+                            'sma: rx - exception when parsing msg - len={} data=[{}]\n'.format(
+                                len(msg), ', '.join(['0x%02x' % b for b in msg])
+                            )
+                        )
                         continue
                 elif len(msg) == 44:
                     start_id = int.from_bytes(msg[33:36], byteorder='little')
                     end_id = int.from_bytes(msg[37:40], byteorder='little')
-                    self.logger.info("sma: inverters returns \"no new data\" in id range from {:#06x} to {:#06x}".format(start_id, end_id))
+                    self.logger.info(
+                        'sma: inverters returns "no new data" in id range from {:#06x} to {:#06x}'.format(
+                            start_id, end_id
+                        )
+                    )
                 else:
-                    self.logger.warning("sma: rx - unknown/malformed response!")
-                    self.logger.warning("sma: rx - len={} data=[{}]\n".format(len(msg), ', '.join(['0x%02x' % b for b in msg])))
+                    self.logger.warning('sma: rx - unknown/malformed response!')
+                    self.logger.warning(
+                        'sma: rx - len={} data=[{}]\n'.format(len(msg), ', '.join(['0x%02x' % b for b in msg]))
+                    )
                     seq_num = int.from_bytes(msg[27:29], byteorder='little')
-                    self.logger.warning("sma: sma2-seq={} / sma2-data=[{}]\n".format(seq_num, ' '.join(['0x%02x' % b for b in msg[29:]])))
+                    self.logger.warning(
+                        'sma: sma2-seq={} / sma2-data=[{}]\n'.format(
+                            seq_num, ' '.join(['0x%02x' % b for b in msg[29:]])
+                        )
+                    )
                 self._reply_lock.acquire()
                 self._reply_lock.notifyAll()
                 self._reply_lock.release()
@@ -374,18 +634,20 @@ class SMA(SmartPlugin):
 
     def _update_plugin_active(self, item, caller=None, source=None, dest=None):
         self._plugin_active = item()
-        self.logger.debug("sma: {} set plugin_active to {}".format(item, self._plugin_active))
+        self.logger.debug('sma: {} set plugin_active to {}'.format(item, self._plugin_active))
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'sma'):
             field_name = self.get_iattr_value(item.conf, 'sma')
             if field_name in name_to_id:
                 field_id = name_to_id[field_name]
-                lri = (field_id & 0xFFFF00)
+                lri = field_id & 0xFFFF00
                 if lri not in lris:
-                    self.logger.error("sma: {} connected to field {} requires unsupported lri {:#06x}".format(item, field_name, lri))
+                    self.logger.error(
+                        'sma: {} connected to field {} requires unsupported lri {:#06x}'.format(item, field_name, lri)
+                    )
                     return None
-                self.logger.debug("sma: {} connected to field {} ({:#06x})".format(item, field_name, field_id))
+                self.logger.debug('sma: {} connected to field {} ({:#06x})'.format(item, field_name, field_id))
                 if field_id not in self._fields:
                     self._fields[field_id] = {'items': [item], 'logics': []}
                 else:
@@ -393,11 +655,11 @@ class SMA(SmartPlugin):
                 field_request = lris[lri][2]
                 if field_request not in self._requests:
                     self._requests.append(field_request)
-            elif field_name == "PLUGIN_ACTIVE":
+            elif field_name == 'PLUGIN_ACTIVE':
                 self._plugin_active_item = item
                 return self._update_plugin_active
             else:
-                self.logger.debug("sma: {0} connected to field {1})".format(item, field_name))
+                self.logger.debug('sma: {0} connected to field {1})'.format(item, field_name))
                 if field_name not in self._fields:
                     self._fields[field_name] = {'items': [item], 'logics': []}
                 else:
@@ -418,11 +680,11 @@ class SMA(SmartPlugin):
                     msg.pop(0)
             # get level 1 length and validate
             if (msg[1] ^ msg[2] ^ msg[3]) != 0x7E:
-                self.logger.warning("sma: rx: length fields invalid")
+                self.logger.warning('sma: rx: length fields invalid')
                 return None
             length = int.from_bytes(msg[1:3], byteorder='little')
             if length < 18:
-                self.logger.warning("sma: rx: length to small: {}".format(length))
+                self.logger.warning('sma: rx: length to small: {}'.format(length))
                 return None
             # get remaining bytes
             while len(msg) < length:
@@ -431,18 +693,18 @@ class SMA(SmartPlugin):
                 msg += self._btsocket.recv(length - len(msg))
             # check src and dst addr and check
             if msg[4:10] != self._inv_bt_addr_le:
-                self.logger.warning("sma: rx: unknown src addr")
+                self.logger.warning('sma: rx: unknown src addr')
                 return None
             if (msg[10:16] != self._own_bt_addr_le) and (msg[10:16] != ZERO_ADDR) and (msg[10:16] != BCAST_ADDR):
-                self.logger.warning("sma: rx: wrong dst addr")
+                self.logger.warning('sma: rx: wrong dst addr')
                 return None
 
         except socket.timeout:
             if not no_timeout_warning:
-                self.logger.warning("sma: rx: timeout exception - could not receive msg within {}s".format(timeout))
+                self.logger.warning('sma: rx: timeout exception - could not receive msg within {}s'.format(timeout))
             msg = None
         except Exception as e:
-            self.logger.error("sma: rx: exception - {}".format(e))
+            self.logger.error('sma: rx: exception - {}'.format(e))
             msg = None
         return msg
 
@@ -454,7 +716,7 @@ class SMA(SmartPlugin):
         while self.alive:
             retries -= 1
             if retries == 0:
-                self.logger.warning("sma: recv smanet2 msg - retries used up!")
+                self.logger.warning('sma: recv smanet2 msg - retries used up!')
                 return []
             smanet1_msg = self._recv_smanet1_msg(no_timeout_warning=no_timeout_warning)
             if smanet1_msg is None:
@@ -470,25 +732,29 @@ class SMA(SmartPlugin):
             return None
 
         if smanet2_msg[0:5] != SMANET2_HDR:
-            self.logger.warning("sma: no SMANET2 msg")
-            self.logger.warning("sma: recv: len={} / data=[{}]".format(len(smanet2_msg), ' '.join(['0x%02x' % b for b in smanet2_msg])))
+            self.logger.warning('sma: no SMANET2 msg')
+            self.logger.warning(
+                'sma: recv: len={} / data=[{}]'.format(len(smanet2_msg), ' '.join(['0x%02x' % b for b in smanet2_msg]))
+            )
             return None
 
         # remove escape characters
         i = 0
         while True:
             # TODO: if this works - fine, seems not to be standard Python 3?
-            if smanet2_msg[i] == 0x7d:
+            if smanet2_msg[i] == 0x7D:
                 smanet2_msg[i + 1] ^= 0x20
-                del(smanet2_msg[i])
+                del smanet2_msg[i]
             i += 1
             if i == len(smanet2_msg):
                 break
 
         crc = self._calc_crc16(smanet2_msg[1:-3])
         if crc != int.from_bytes(smanet2_msg[-3:-1], byteorder='little'):
-            self.logger.warning("sma: crc: crc16 error - {:04x}".format(crc))
-            self.logger.warning("sma: crc: len={} / data=[{}]".format(len(smanet2_msg), ' '.join(['0x%02x' % b for b in smanet2_msg])))
+            self.logger.warning('sma: crc: crc16 error - {:04x}'.format(crc))
+            self.logger.warning(
+                'sma: crc: len={} / data=[{}]'.format(len(smanet2_msg), ' '.join(['0x%02x' % b for b in smanet2_msg]))
+            )
             return None
         return smanet2_msg
 
@@ -498,7 +764,7 @@ class SMA(SmartPlugin):
         while self.alive:
             retries -= 1
             if retries == 0:
-                self.logger.warning("sma: recv msg with cmdcode - retries used up!")
+                self.logger.warning('sma: recv msg with cmdcode - retries used up!')
                 return None
             msg = self._recv_smanet1_msg()
             # get cmdcode
@@ -507,23 +773,23 @@ class SMA(SmartPlugin):
         return msg
 
     def _send_msg(self, msg):
-        if len(msg) >= 0x3a:
+        if len(msg) >= 0x3A:
             # calculate crc starting with byte 19 and append with LE byte-oder
             msg += self._calc_crc16(msg[19::]).to_bytes(2, byteorder='little')
             # add escape sequences starting with byte 19
             i = 19
             while True:
-                if msg[i] in [0x7d, 0x7e, 0x11, 0x12, 0x13]:
+                if msg[i] in [0x7D, 0x7E, 0x11, 0x12, 0x13]:
                     msg[i] ^= 0x20
-                    msg.insert(i, 0x7d)
+                    msg.insert(i, 0x7D)
                 i += 1
-                if (i == len(msg)):
+                if i == len(msg):
                     break
             # add msg delimiter
-            msg += bytes([0x7e])
+            msg += bytes([0x7E])
         # set length fields
         msg[1:3] = len(msg).to_bytes(2, byteorder='little')
-        msg[3] = msg[1] ^ msg[2] ^ 0x7e
+        msg[3] = msg[1] ^ msg[2] ^ 0x7E
         # print("tx: len={} / data=[{}]".format(len(msg), ' '.join(['0x%02x' % b for b in msg])))
         self._btsocket.send(msg)
 
@@ -548,9 +814,9 @@ class SMA(SmartPlugin):
         self._send_msg(msg)
 
         # receive msg from inverter
-        msg = self._recv_smanet1_msg_with_cmdcode([0x000a])
+        msg = self._recv_smanet1_msg_with_cmdcode([0x000A])
         # receive msg from inverter
-        msg = self._recv_smanet1_msg_with_cmdcode([0x0005, 0x000c])
+        msg = self._recv_smanet1_msg_with_cmdcode([0x0005, 0x000C])
         # receive msg from inverter
         msg = self._recv_smanet1_msg_with_cmdcode([0x0005])
 
@@ -559,7 +825,9 @@ class SMA(SmartPlugin):
 
         # extract own bluetooth addr
         self._own_bt_addr_le = msg[26:32]
-        self.logger.info("sma: own bluetooth address: {}".format(':'.join(['%02x' % b for b in self._own_bt_addr_le[::-1]])))
+        self.logger.info(
+            'sma: own bluetooth address: {}'.format(':'.join(['%02x' % b for b in self._own_bt_addr_le[::-1]]))
+        )
 
         # first SMA net2 msg
         retries = 10
@@ -572,7 +840,15 @@ class SMA(SmartPlugin):
             # sma-net2 level
             ctrl = 0xA009
             self._send_count = (self._send_count + 1) & 0x7FFF
-            msg += SMANET2_HDR + ctrl.to_bytes(2, byteorder='little') + BCAST_ADDR + bytes([0x00, 0x00]) + self._inv_bt_addr_le + bytes([0x00] + [0x00] + [0, 0, 0, 0]) + (self._send_count | 0x8000).to_bytes(2, byteorder='little')
+            msg += (
+                SMANET2_HDR
+                + ctrl.to_bytes(2, byteorder='little')
+                + BCAST_ADDR
+                + bytes([0x00, 0x00])
+                + self._inv_bt_addr_le
+                + bytes([0x00] + [0x00] + [0, 0, 0, 0])
+                + (self._send_count | 0x8000).to_bytes(2, byteorder='little')
+            )
             msg += bytes([0x00, 0x02, 0x00] + [0x00] + [0x00, 0x00, 0x00, 0x00] + [0x00, 0x00, 0x00, 0x00])
             # send msg to inverter
             self._send_msg(msg)
@@ -582,7 +858,7 @@ class SMA(SmartPlugin):
                 break
 
         if retries == 0:
-            self.logger.warning("sma: connect - retries used up!")
+            self.logger.warning('sma: connect - retries used up!')
             return
 
         # second SMA net2 msg
@@ -592,7 +868,15 @@ class SMA(SmartPlugin):
         # sma-net2 level
         ctrl = 0xA008
         self._send_count = (self._send_count + 1) & 0x7FFF
-        msg += SMANET2_HDR + ctrl.to_bytes(2, byteorder='little') + BCAST_ADDR + bytes([0x00, 0x03]) + self._inv_bt_addr_le + bytes([0x00] + [0x03] + [0, 0, 0, 0]) + (self._send_count | 0x8000).to_bytes(2, byteorder='little')
+        msg += (
+            SMANET2_HDR
+            + ctrl.to_bytes(2, byteorder='little')
+            + BCAST_ADDR
+            + bytes([0x00, 0x03])
+            + self._inv_bt_addr_le
+            + bytes([0x00] + [0x03] + [0, 0, 0, 0])
+            + (self._send_count | 0x8000).to_bytes(2, byteorder='little')
+        )
         msg += bytes([0x0E, 0x01, 0xFD, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
         # send msg
         self._send_msg(msg)
@@ -600,7 +884,7 @@ class SMA(SmartPlugin):
     def _inv_login(self):
         timestamp_utc = int(time.time())
         password_pattern = [0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88]
-        password_pattern[0:len(self._inv_password)] = [((0x88 + ord(char)) & 0xff) for char in self._inv_password]
+        password_pattern[0 : len(self._inv_password)] = [((0x88 + ord(char)) & 0xFF) for char in self._inv_password]
 
         retries = 5
         while (retries > 0) and self.alive:
@@ -612,8 +896,15 @@ class SMA(SmartPlugin):
             # sma-net2 level
             ctrl = 0xA00E
             self._send_count = (self._send_count + 1) & 0x7FFF
-            msg += SMANET2_HDR + ctrl.to_bytes(2, byteorder='little') + BCAST_ADDR + bytes([0x00, 0x01]) + self._inv_bt_addr_le + \
-                bytes([0x00] + [0x01] + [0, 0, 0, 0]) + (self._send_count | 0x8000).to_bytes(2, byteorder='little')
+            msg += (
+                SMANET2_HDR
+                + ctrl.to_bytes(2, byteorder='little')
+                + BCAST_ADDR
+                + bytes([0x00, 0x01])
+                + self._inv_bt_addr_le
+                + bytes([0x00] + [0x01] + [0, 0, 0, 0])
+                + (self._send_count | 0x8000).to_bytes(2, byteorder='little')
+            )
             msg += bytes([0x0C, 0x04, 0xFD, 0xFF, 0x07, 0x00, 0x00, 0x00, 0x84, 0x03, 0x00, 0x00])
             msg += timestamp_utc.to_bytes(4, byteorder='little')
             msg += bytes([0x00, 0x00, 0x00, 0x00] + password_pattern)
@@ -627,12 +918,12 @@ class SMA(SmartPlugin):
                 break
 
         if retries == 0:
-            self.logger.warning("sma: login - retries used up!")
+            self.logger.warning('sma: login - retries used up!')
             return
 
         # extract serial
         self._inv_serial = int.from_bytes(msg[17:21], byteorder='little')
-        self.logger.info("sma: inverter serial = {}".format(self._inv_serial))
+        self.logger.info('sma: inverter serial = {}'.format(self._inv_serial))
 
     def _inv_get_bt_signal_strength(self):
         cmdcode = 0x0003
@@ -642,7 +933,7 @@ class SMA(SmartPlugin):
         self._send_msg(msg)
         msg = self._recv_smanet1_msg_with_cmdcode([0x0004])
         # extract signal strength
-        return (msg[22] * 100.0) / 0xff
+        return (msg[22] * 100.0) / 0xFF
 
     def _inv_send_request(self, request_set):
         # send request
@@ -652,8 +943,20 @@ class SMA(SmartPlugin):
         msg += self._own_bt_addr_le + self._inv_bt_addr_le + cmdcode.to_bytes(2, byteorder='little')
         # sma-net2 level
         self._send_count = (self._send_count + 1) & 0x7FFF
-        msg += SMANET2_HDR + bytes([0x09, 0xA0]) + BCAST_ADDR + bytes([0x00, 0x00]) + self._inv_bt_addr_le + bytes([0x00] + [0x00] + [0, 0, 0, 0]) + (self._send_count | 0x8000).to_bytes(2, byteorder='little')
-        msg += request_set[0].to_bytes(4, byteorder='little') + request_set[1].to_bytes(4, byteorder='little') + request_set[2].to_bytes(4, byteorder='little')
+        msg += (
+            SMANET2_HDR
+            + bytes([0x09, 0xA0])
+            + BCAST_ADDR
+            + bytes([0x00, 0x00])
+            + self._inv_bt_addr_le
+            + bytes([0x00] + [0x00] + [0, 0, 0, 0])
+            + (self._send_count | 0x8000).to_bytes(2, byteorder='little')
+        )
+        msg += (
+            request_set[0].to_bytes(4, byteorder='little')
+            + request_set[1].to_bytes(4, byteorder='little')
+            + request_set[2].to_bytes(4, byteorder='little')
+        )
         # send msg to inverter
         # self.logger.debug("sma: requesting {:#06x}-{:#06x}...".format(request_set[1], request_set[2]))
         self._send_msg(msg)
@@ -665,10 +968,30 @@ class SMA(SmartPlugin):
         msg += self._own_bt_addr_le + self._inv_bt_addr_le + cmdcode.to_bytes(2, byteorder='little')
         # sma-net2 level
         self._send_count = (self._send_count + 1) & 0x7FFF
-        msg += SMANET2_HDR + bytes([0x10, 0xA0]) + BCAST_ADDR + bytes([0x00, 0x00]) + self._inv_bt_addr_le + bytes([0x00] + [0x00] + [0, 0, 0, 0]) + (self._send_count | 0x8000).to_bytes(2, byteorder='little')
-        msg += int(0xF000020A).to_bytes(4, byteorder='little') + int(0x00236D00).to_bytes(4, byteorder='little') + int(0x00236D00).to_bytes(4, byteorder='little') + int(0x00236D00).to_bytes(4, byteorder='little')
+        msg += (
+            SMANET2_HDR
+            + bytes([0x10, 0xA0])
+            + BCAST_ADDR
+            + bytes([0x00, 0x00])
+            + self._inv_bt_addr_le
+            + bytes([0x00] + [0x00] + [0, 0, 0, 0])
+            + (self._send_count | 0x8000).to_bytes(2, byteorder='little')
+        )
+        msg += (
+            int(0xF000020A).to_bytes(4, byteorder='little')
+            + int(0x00236D00).to_bytes(4, byteorder='little')
+            + int(0x00236D00).to_bytes(4, byteorder='little')
+            + int(0x00236D00).to_bytes(4, byteorder='little')
+        )
         local_time = int(time.time()).to_bytes(4, byteorder='little')
-        msg += local_time + local_time + local_time + round((datetime.now() - self.shtime.utcnow()).total_seconds()).to_bytes(4, byteorder='little') + local_time + bytes([0x01, 0x00, 0x00, 0x00])
-#        msg += local_time + local_time + local_time + time.localtime().tm_gmtoff.to_bytes(4, byteorder='little') + local_time + bytes([0x01, 0x00, 0x00, 0x00])
+        msg += (
+            local_time
+            + local_time
+            + local_time
+            + round((datetime.now() - self.shtime.utcnow()).total_seconds()).to_bytes(4, byteorder='little')
+            + local_time
+            + bytes([0x01, 0x00, 0x00, 0x00])
+        )
+        #        msg += local_time + local_time + local_time + time.localtime().tm_gmtoff.to_bytes(4, byteorder='little') + local_time + bytes([0x01, 0x00, 0x00, 0x00])
         # send msg to inverter
         self._send_msg(msg)

@@ -26,13 +26,13 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class Plex(SmartPlugin):
-    PLUGIN_VERSION = "1.0.1"
+    PLUGIN_VERSION = '1.0.1'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, **kwargs):
         self._displayTime = self.get_parameter_value('displaytime')
-        self.logger.info("Init Plex notifications")
-        self._images = ["info", "error", "warning"]
+        self.logger.info('Init Plex notifications')
+        self._images = ['info', 'error', 'warning']
         self._clients = []
 
     def run(self):
@@ -44,13 +44,12 @@ class Plex(SmartPlugin):
     def _push(self, host, data):
         if self.alive:
             try:
-                res = requests.post(host,
-                                    headers={
-                                        "User-Agent": "sh.py",
-                                        "Content-Type": "application/json"},
-                                    timeout=4,
-                                    data=json.dumps(data),
-                                    )
+                res = requests.post(
+                    host,
+                    headers={'User-Agent': 'sh.py', 'Content-Type': 'application/json'},
+                    timeout=4,
+                    data=json.dumps(data),
+                )
                 self.logger.debug(res)
                 response = res.text
                 del res
@@ -58,18 +57,19 @@ class Plex(SmartPlugin):
             except Exception as e:
                 self.logger.exception(e)
 
-    def notify(self, title, message, image="info"):
+    def notify(self, title, message, image='info'):
         if image not in self._images:
-            self.logger.warn("Plex image must be: {}".format(", ".join(self._images)))
+            self.logger.warn('Plex image must be: {}'.format(', '.join(self._images)))
         else:
-            data = {"jsonrpc": "2.0",
-                    "id": random.randint(1, 99),
-                    "method": "GUI.ShowNotification",
-                    "params": {"title": title, "message": message, "image": image},
-                    "displayTime": self._displayTime
-                    }
+            data = {
+                'jsonrpc': '2.0',
+                'id': random.randint(1, 99),
+                'method': 'GUI.ShowNotification',
+                'params': {'title': title, 'message': message, 'image': image},
+                'displayTime': self._displayTime,
+            }
             for host in self._clients:
-                self.logger.debug("Plex sending push notification to host {}: {}".format(host, data))
+                self.logger.debug('Plex sending push notification to host {}: {}'.format(host, data))
                 self._push(host, data)
 
     def parse_item(self, item):
@@ -79,5 +79,5 @@ class Plex(SmartPlugin):
                 port = item.conf['plex_port']
             else:
                 port = 3005
-            self.logger.info("Plex found client {}".format(item))
+            self.logger.info('Plex found client {}'.format(item))
             self._clients.append('http://' + host + ':' + str(port) + '/jsonrpc')

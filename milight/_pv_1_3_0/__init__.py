@@ -99,9 +99,9 @@ class milight():
             sock.sendto(data_s, (sockaddr[0], sockaddr[1]))
             sock.close()
             del(sock)
-        except Exception as e:
+        except Exception:
             logger.warning(
-                "miLight UDP: Problem sending data to {}:{}: ".format(self.udp_ip, self.udp_port, e))
+                "miLight UDP: Problem sending data to {}:{}: ".format(self.udp_ip, self.udp_port, ))
             pass
         else:
             logger.debug("miLight UDP: Sending data to {}:{}:{} ".format(
@@ -197,7 +197,6 @@ class milight():
 
     # disco function  - 2nd command after switch (on)
     def disco(self, group, value):
-        value = 1                     # Avoid switch off
         logger.info("disco")
         time.sleep(0.1)               # wait 100 ms
 
@@ -207,7 +206,6 @@ class milight():
         
     # disco speed up  - 2nd command after switch (on)
     def disco_up(self, group, value):
-        value = 1                      # Avoid switch off
         logger.info("disco up")
         time.sleep(0.1)               # wait 100 ms
 
@@ -217,7 +215,6 @@ class milight():
         
     # disco speed down - 2nd command after switch (on)
     def disco_down(self, group, value):
-        value = 1
         logger.info("disco down")      # Avoid switch off
 
         time.sleep(0.1)               # wait 100 ms

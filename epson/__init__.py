@@ -28,10 +28,10 @@ import sys
 if __name__ == '__main__':
     builtins.SDP_standalone = True
 
-    class SmartPlugin():
+    class SmartPlugin:
         pass
 
-    class SmartPluginWebIf():
+    class SmartPluginWebIf:
         pass
 
     BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
@@ -40,12 +40,18 @@ if __name__ == '__main__':
 else:
     builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import (PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, CONN_NULL, CONN_SER_ASYNC)
+from lib.model.sdp.globals import (
+    PLUGIN_ATTR_CONNECTION,
+    PLUGIN_ATTR_SERIAL_PORT,
+    PLUGIN_ATTR_CONN_TERMINATOR,
+    CONN_NULL,
+    CONN_SER_ASYNC,
+)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 
 
 class epson(SmartDevicePlugin):
-    """ Device class for Epson projectors. """
+    """Device class for Epson projectors."""
 
     PLUGIN_VERSION = '1.0.0'
 
@@ -54,7 +60,9 @@ class epson(SmartDevicePlugin):
         if PLUGIN_ATTR_SERIAL_PORT in self._parameters and self._parameters[PLUGIN_ATTR_SERIAL_PORT]:
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_SER_ASYNC
         else:
-            self.logger.error('No serialport set, connection not possible. Using dummy connection, plugin will not work')
+            self.logger.error(
+                'No serialport set, connection not possible. Using dummy connection, plugin will not work'
+            )
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_NULL
 
         b = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR].encode()
@@ -87,11 +95,13 @@ class epson(SmartDevicePlugin):
                     self.logger.debug(f'data "{data}" did not identify a known command, ignoring it')
                     return
                 else:
-                    self.logger.debug(f'data "{data}" did not identify a known command, forwarding it anyway for {self._unknown_command}')
+                    self.logger.debug(
+                        f'data "{data}" did not identify a known command, forwarding it anyway for {self._unknown_command}'
+                    )
                     self._dispatch_callback(self._unknown_command, data, by)
 
         # TODO: remove later?
-        assert(isinstance(commands, list))
+        assert isinstance(commands, list)
 
         # process all commands
         for command in commands:
@@ -104,12 +114,15 @@ class epson(SmartDevicePlugin):
             try:
                 value = self._commands.get_shng_data(command, data)
             except OSError as e:
-                self.logger.warning(f'received data "{data}" for command {command}, error {e} occurred while converting. Discarding data.')
+                self.logger.warning(
+                    f'received data "{data}" for command {command}, error {e} occurred while converting. Discarding data.'
+                )
             else:
                 self.logger.debug(f'received data "{data}" for command {command} converted to value {value}')
                 self._dispatch_callback(command, value, by)
 
             self._process_additional_data(base_command, data, value, custom, by)
+
 
 if __name__ == '__main__':
     s = Standalone(epson, sys.argv[0])

@@ -23,12 +23,13 @@
 #########################################################################
 
 
-__license__ = "GPL"
-__version__ = "2.0"
-__revision__ = "0.1"
+__license__ = 'GPL'
+__version__ = '2.0'
+__revision__ = '0.1'
 __docformat__ = 'reStructuredText'
 
 import datetime
+
 
 class Conversion:
     def _to_datetime_ZST10(self, text):
@@ -38,18 +39,18 @@ class Conversion:
         :return: a datetime object upon success or None if error found by malformed string
         """
         if len(text) != 10:
-            self.logger.error("too few characters for date/time code from OBIS")
+            self.logger.error('too few characters for date/time code from OBIS')
             return None
         if not text.isdigit():
-            self.logger.error("only digits allowed for date/time code from OBIS")
+            self.logger.error('only digits allowed for date/time code from OBIS')
             return None
         else:
-            year = int(text[0:2])+2000
+            year = int(text[0:2]) + 2000
             month = int(text[2:4])
             day = int(text[4:6])
             hour = int(text[6:8])
             minute = int(text[8:10])
-            return datetime.datetime(year,month,day,hour,minute,0)
+            return datetime.datetime(year, month, day, hour, minute, 0)
 
     def _to_datetime_ZST12(self, text):
         """
@@ -58,19 +59,19 @@ class Conversion:
         :return: a datetime object upon success or None if error found by malformed string
         """
         if len(text) != 12:
-            self.logger.error("too few characters for date/time code from OBIS")
+            self.logger.error('too few characters for date/time code from OBIS')
             return None
         if not text.isdigit():
-            self.logger.error("only digits allowed for date/time code from OBIS")
+            self.logger.error('only digits allowed for date/time code from OBIS')
             return None
         else:
-            year = int(text[0:2])+2000
+            year = int(text[0:2]) + 2000
             month = int(text[2:4])
             day = int(text[4:6])
             hour = int(text[6:8])
             minute = int(text[8:10])
             second = int(text[10:12])
-            return datetime.datetime(year,month,day,hour,minute,second)
+            return datetime.datetime(year, month, day, hour, minute, second)
 
     def _to_date_D6(self, text):
         """
@@ -79,16 +80,16 @@ class Conversion:
         :return: a datetime.date object upon success or None if error found by malformed string
         """
         if len(text) != 6:
-            self.logger.error("too few characters for date code from OBIS")
+            self.logger.error('too few characters for date code from OBIS')
             return None
         if not text.isdigit():
-            self.logger.error("only digits allowed for date code from OBIS")
+            self.logger.error('only digits allowed for date code from OBIS')
             return None
         else:
-            year = int(text[0:2])+2000
+            year = int(text[0:2]) + 2000
             month = int(text[2:4])
             day = int(text[4:6])
-            return datetime.date(year,month,day)
+            return datetime.date(year, month, day)
 
     def _to_time_Z4(self, text):
         """
@@ -97,15 +98,15 @@ class Conversion:
         :return: a datetime.time object upon success or None if error found by malformed string
         """
         if len(text) != 4:
-            self.logger.error("too few characters for time code from OBIS")
+            self.logger.error('too few characters for time code from OBIS')
             return None
         if not text.isdigit():
-            self.logger.error("only digits allowed for time code from OBIS")
+            self.logger.error('only digits allowed for time code from OBIS')
             return None
         else:
             hour = int(text[0:2])
             minute = int(text[2:4])
-            return datetime.time(hour,minute)
+            return datetime.time(hour, minute)
 
     def _to_time_Z6(self, text):
         """
@@ -114,18 +115,18 @@ class Conversion:
         :return: a datetime.time object upon success or None if error found by malformed string
         """
         if len(text) != 6:
-            self.logger.error("too few characters for time code from OBIS")
+            self.logger.error('too few characters for time code from OBIS')
             return None
         if not text.isdigit():
-            self.logger.error("only digits allowed for time code from OBIS")
+            self.logger.error('only digits allowed for time code from OBIS')
             return None
         else:
             hour = int(text[0:2])
             minute = int(text[2:4])
             second = int(text[4:6])
-            return datetime.time(hour,minute,second)
+            return datetime.time(hour, minute, second)
 
-    def _convert_value( self, v, converter = 'str'):
+    def _convert_value(self, v, converter='str'):
         """
         This function converts the OBIS value to a user chosen value
         :param v: the value to convert from given as string
@@ -141,8 +142,8 @@ class Conversion:
                 return float(v)
             except ValueError:
                 if ',' in v:
-                    v2 = v.replace(',','.')
-                else: 
+                    v2 = v.replace(',', '.')
+                else:
                     self.logger.error(f"Could not convert from '{v}' to a float")
                     return None
             try:
@@ -208,8 +209,8 @@ class Conversion:
                 return float(v)
             except ValueError:
                 if ',' in v:
-                    v2 = v.replace(',','.')
-                else: 
+                    v2 = v.replace(',', '.')
+                else:
                     self.logger.error(f"Could not convert from '{v}' to a num")
                     return None
             try:
@@ -219,4 +220,3 @@ class Conversion:
                 return None
 
         return v
-

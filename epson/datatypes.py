@@ -3,6 +3,7 @@
 
 import lib.model.sdp.datatypes as DT
 
+
 class DT_onoff(DT.Datatype):
     def get_send_data(self, data, **kwargs):
         return 'ON' if data else 'OFF'

@@ -43,7 +43,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -62,7 +61,6 @@ class WebInterface(SmartPluginWebIf):
         self.hm_id = self.plugin.hm_id
         self.hmip_id = self.plugin.hmip_id
 
-
     @cherrypy.expose
     def index(self, learn=None, reload=None):
         """
@@ -75,27 +73,25 @@ class WebInterface(SmartPluginWebIf):
         if learn == 'on':
             self.plugin.hm.setInstallMode(self.plugin.hm_id)
 
-        username = self.plugin.username
-        host = self.plugin.host
         devices = []
         ipdevices = []
 
         try:
             interface = self.plugin.hm.listBidcosInterfaces(self.hm_id)[0]
             # [{'DEFAULT': True, 'DESCRIPTION': '', 'ADDRESS': 'OEQ1658621', 'TYPE': 'CCU2', 'DUTY_CYCLE': 1, 'CONNECTED': True, 'FIRMWARE_VERSION': '2.8.5'}]
-        except:
+        except Exception:
             interface = None
 
         try:
             interfaceip = self.plugin.hm.listBidcosInterfaces(self.hmip_id)[0]
             # [{'DEFAULT': True, 'DESCRIPTION': '', 'ADDRESS': 'OEQ1658621', 'TYPE': 'CCU2', 'DUTY_CYCLE': 1, 'CONNECTED': True, 'FIRMWARE_VERSION': '2.8.5'}]
-        except:
+        except Exception:
             interfaceip = None
 
         # get HomeMatic devices
         for dev_id in self.plugin.hm.devices[self.hm_id]:
             dev = self.plugin.hm.devices[self.hm_id][dev_id]
-#            d_type = str(dev.__class__).replace("<class '"+dev.__module__+'.', '').replace("'>",'')
+            #            d_type = str(dev.__class__).replace("<class '"+dev.__module__+'.', '').replace("'>",'')
             d_type = self.plugin.get_hmdevicetype(dev_id)
             d = {}
             d['name'] = dev._name
@@ -109,10 +105,11 @@ class WebInterface(SmartPluginWebIf):
                 if i[2] == dev_id:
                     d['assigned'] = True
                     break
-            if d_type in ['Switch','SwitchPowermeter','ShutterContact']:
+            if d_type in ['Switch', 'SwitchPowermeter', 'ShutterContact']:
                 try:
                     d['value'] = dev.getValue('STATE')
-                except: pass
+                except Exception:
+                    pass
 
             devices.append(d)
 
@@ -122,7 +119,7 @@ class WebInterface(SmartPluginWebIf):
         # get HomeMaticIP devices
         for dev_id in self.plugin.hmip.devices[self.hmip_id]:
             dev = self.plugin.hmip.devices[self.hmip_id][dev_id]
-#            d_type = str(dev.__class__).replace("<class '"+dev.__module__+'.', '').replace("'>",'')
+            #            d_type = str(dev.__class__).replace("<class '"+dev.__module__+'.', '').replace("'>",'')
             d_type = self.plugin.get_hmdevicetype(dev_id)
             d = {}
             d['name'] = dev._name
@@ -136,10 +133,11 @@ class WebInterface(SmartPluginWebIf):
                 if i[2] == dev_id:
                     d['assigned'] = True
                     break
-            if d_type in ['Switch','SwitchPowermeter','ShutterContact']:
+            if d_type in ['Switch', 'SwitchPowermeter', 'ShutterContact']:
                 try:
                     d['value'] = dev.getValue('STATE')
-                except: pass
+                except Exception:
+                    pass
 
             ipdevices.append(d)
 
@@ -150,10 +148,16 @@ class WebInterface(SmartPluginWebIf):
         tmpl = self.tplenv.get_template('index.html')
         # The first paramter for the render method has to be specified. the base template
         # for the web interface relys on the instance of the plugin to be passed as p
-        return tmpl.render(p=self.plugin,
-                           interface=interface, interfaceip=interfaceip,
-                           devices=devices, device_count=device_count,
-                           ipdevices=ipdevices, ipdevice_count=ipdevice_count,
-                           items=sorted(self.plugin.hm_items), item_count=len(self.plugin.hm_items),
-                           hm=self.plugin.hm, hm_id=self.plugin.hm_id )
-
+        return tmpl.render(
+            p=self.plugin,
+            interface=interface,
+            interfaceip=interfaceip,
+            devices=devices,
+            device_count=device_count,
+            ipdevices=ipdevices,
+            ipdevice_count=ipdevice_count,
+            items=sorted(self.plugin.hm_items),
+            item_count=len(self.plugin.hm_items),
+            hm=self.plugin.hm,
+            hm_id=self.plugin.hm_id,
+        )

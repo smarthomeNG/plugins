@@ -81,7 +81,7 @@ try:
     for table in tables:
         try:
             rows = table.find_all('tr')
-        except AttributeError as e:
+        except AttributeError:
             r += 'No table rows found, exiting'
             raise
 

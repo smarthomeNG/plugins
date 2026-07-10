@@ -26,7 +26,6 @@ from collections import OrderedDict
 
 # Class representing a list of condition sets
 class SeConditionSets(StateEngineTools.SeItemChild):
-
     @property
     def evals_items(self):
         _result = {}
@@ -41,7 +40,7 @@ class SeConditionSets(StateEngineTools.SeItemChild):
         self.__condition_sets = OrderedDict()
 
     def __repr__(self):
-        return "{}".format(self.get())
+        return '{}'.format(self.get())
 
     def reset(self):
         self.__condition_sets = OrderedDict()
@@ -90,7 +89,7 @@ class SeConditionSets(StateEngineTools.SeItemChild):
     # returns: True = one condition set is matching or no condition sets are defined, False: no condition set matching
     def one_conditionset_matching(self, state):
         if self.count() == 0:
-            self._log_debug("No condition sets defined -> matching")
+            self._log_debug('No condition sets defined -> matching')
             return True, ''
         for name in self.__condition_sets:
             if self.__condition_sets[name].all_conditions_matching(state):

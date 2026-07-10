@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
-""" commands for dev epson
+"""commands for dev epson
 
 Most commands send a string (fixed for reading, attached data for writing)
 while parsing the response works by extracting the needed string part by
@@ -8,13 +8,28 @@ regex. Some commands translate the device data into readable values via
 lookups.
 """
 
-models = {
-    'ALL': ['power', 'source']
-}
+models = {'ALL': ['power', 'source']}
 
 commands = {
-    'power': {'read': True, 'write': True, 'read_cmd': 'PWR?', 'write_cmd': 'PWR {VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': ['^(?:\:+)?\s?PWR=0(0|1)', '^:+WR=0(0|1)'], 'item_attrs': {'cycle': '60', 'initial': True}},
-    'source': {'read': True, 'write': True, 'write_cmd': 'SOURCE {RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': 'SOURCE {LOOKUP}', 'lookup': 'SOURCE'}
+    'power': {
+        'read': True,
+        'write': True,
+        'read_cmd': 'PWR?',
+        'write_cmd': 'PWR {VALUE}',
+        'item_type': 'bool',
+        'dev_datatype': 'onoff',
+        'reply_pattern': ['^(?:\:+)?\s?PWR=0(0|1)', '^:+WR=0(0|1)'],
+        'item_attrs': {'cycle': '60', 'initial': True},
+    },
+    'source': {
+        'read': True,
+        'write': True,
+        'write_cmd': 'SOURCE {RAW_VALUE_UPPER}',
+        'item_type': 'str',
+        'dev_datatype': 'raw',
+        'reply_pattern': 'SOURCE {LOOKUP}',
+        'lookup': 'SOURCE',
+    },
 }
 
 lookups = {
@@ -36,7 +51,7 @@ lookups = {
             '41': 'Video',
             '42': 'S-Video',
             '43': 'YCbCr',
-            '44': 'YPbPr'
-            }
+            '44': 'YPbPr',
+        }
     }
 }

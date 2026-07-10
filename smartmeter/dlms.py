@@ -35,6 +35,7 @@ import io
 
 try:
     import serial_asyncio
+
     ASYNC_IMPORTED = True
 except ImportError:
     ASYNC_IMPORTED = False
@@ -43,16 +44,17 @@ import socket  # not needed, just for code portability
 from ruamel.yaml import YAML
 from smllib import const as smlConst
 from threading import Lock
-from typing import (Union, Tuple, Any)
+from typing import Union, Tuple, Any
 
 # only for syntax/type checking
 try:
     from lib.model.smartplugin import SmartPlugin
 except ImportError:
-    class SmartPlugin():
+
+    class SmartPlugin:
         pass
 
-    class SmartPluginWebIf():
+    class SmartPluginWebIf:
         pass
 
 
@@ -109,10 +111,10 @@ S_STOP = serial.STOPBITS_ONE
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
-    logger.debug(f"init standalone {__name__}")
+    logger.debug(f'init standalone {__name__}')
 else:
     logger = logging.getLogger(__name__)
-    logger.debug(f"init plugin component {__name__}")
+    logger.debug(f'init plugin component {__name__}')
 
 
 manufacturer_ids = {}
@@ -147,7 +149,7 @@ else:
 
 
 def hex_obis(code: str) -> str:
-    """ convert obis to hex """
+    """convert obis to hex"""
 
     # form x.x.x.x.x.x from x-x:x.x.x*x
     l1 = code.replace(':', '.').replace('-', '.').replace('*', '.').split('.')
@@ -165,16 +167,16 @@ def hex_obis(code: str) -> str:
 
 
 def normalize_unit(value: Union[int, float], unit: str) -> Tuple[Union[int, float], str]:
-    """ normalize units, i.e. remove prefixes and recalculate value """
+    """normalize units, i.e. remove prefixes and recalculate value"""
     # in this environment, smaller or larger prefixes don't seem sensible...
     _prefix = {
-        'u': 1e-6,   # micro
-        'm': 1e-3,   # mili
-        'c': 1e-2,   # centi
-        'd': 1e-1,   # deci
-        'k': 1e3,    # kilo
-        'M': 1e6,    # mega
-        'G': 1e9,    # giga
+        'u': 1e-6,  # micro
+        'm': 1e-3,  # mili
+        'c': 1e-2,  # centi
+        'd': 1e-1,  # deci
+        'k': 1e3,  # kilo
+        'M': 1e6,  # mega
+        'G': 1e9,  # giga
     }
 
     nval = value
@@ -231,15 +233,15 @@ def format_time(timedelta: float) -> str:
     :return: returns a string
     """
     if timedelta > 1000:
-        return f"{timedelta:.2f} s"
+        return f'{timedelta:.2f} s'
     elif timedelta > 1:
-        return f"{timedelta:.2f} s"
-    elif timedelta > 1 / 10 ** 3:
-        return f"{timedelta * 10 ** 3 :.2f} ms"
-    elif timedelta > 1 / 10 ** 6:
-        return f"{timedelta * 10 ** 6:.2f} µs"
+        return f'{timedelta:.2f} s'
+    elif timedelta > 1 / 10**3:
+        return f'{timedelta * 10**3:.2f} ms'
+    elif timedelta > 1 / 10**6:
+        return f'{timedelta * 10**6:.2f} µs'
     else:
-        return f"{timedelta * 10 ** 9:.2f} ns"
+        return f'{timedelta * 10**9:.2f} ns'
 
 
 #
@@ -247,8 +249,7 @@ def format_time(timedelta: float) -> str:
 #
 
 
-class StringLogger():
-
+class StringLogger:
     def __init__(self):
         ### Create the logger
         self.logger = logging.getLogger('sml_string_logger')
@@ -292,45 +293,45 @@ class StringLogger():
 # #
 # # asyncio reader
 # #
-# 
-# 
+#
+#
 # class AsyncReader():
-# 
+#
 #     def __init__(self, logger, plugin: SmartPlugin, config: dict):
 #         self.buf = bytes()
 #         self.logger = logger
 #         self.lock = config['lock']
-# 
+#
 #         if not ASYNC_IMPORTED:
 #             raise ImportError('pyserial_asyncio not installed, running asyncio not possible.')
-# 
+#
 #         if 'serial_port' not in config:
 #             raise ValueError(f'configuration {config} is missing serial port config')
-# 
+#
 #         self.serial_port = config.get('serial_port')
 #         self.timeout = config.get('timeout', 2)
 #         self.baudrate = config.get('baudrate', 300)
 #         if not config['dlms'].get('only_listen', False):
 #             self.logger.warning('asyncio operation can only listen, smartmeter will not be triggered!')
-# 
+#
 #         self.target = '(not set)'
 #         self.listening = False
 #         self.reader = None
-# 
+#
 #         self.config = config
 #         self.transport = None
 #         self.protocol = DlmsProtocol(logger, config)
-# 
+#
 #         # set from plugin
 #         self.plugin = plugin
 #         self.data_callback = plugin._update_values
-# 
+#
 #     async def listen(self):
 #         result = self.lock.acquire(blocking=False)
 #         if not result:
 #             self.logger.error('couldn\'t acquire lock, polling/manual access active?')
 #             return
-# 
+#
 #         self.logger.debug('acquired lock')
 #         try:  # LOCK
 #             self.reader, _ = await serial_asyncio.open_serial_connection(
@@ -342,25 +343,25 @@ class StringLogger():
 #             )
 #             self.target = f'async_serial://{self.serial_port}'
 #             self.logger.debug(f'target is {self.target}')
-# 
+#
 #             if self.reader is None and not TESTING:
 #                 self.logger.error('error on setting up async listener, reader is None')
 #                 return
-# 
+#
 #             self.plugin.connected = True
 #             self.listening = True
 #             self.logger.debug('starting to listen')
-# 
+#
 #             buf = bytes()
-# 
+#
 #             while self.listening and self.plugin.alive:
-# 
+#
 #                 if TESTING:
 #                     # make this bytes...
 #                     data = RESULT.encode()
 #                 else:
 #                     data = await self.reader.readuntil(b'!')
-# 
+#
 #                 # check we got a start byte if buf is empty
 #                 if len(buf) == 0:
 #                     if b'/' not in data:
@@ -369,33 +370,33 @@ class StringLogger():
 #                     else:
 #                         # trim data to start byte
 #                         data = data[data.find(b'/'):]
-# 
+#
 #                 # add data to buffer
 #                 buf += data
-# 
+#
 #                 # check if we have an end byte
 #                 if b'!' not in buf:
 #                     if len(buf) > 100000:
 #                         self.logger.warning(f'got {len(buf)} characters without end byte, discarding data')
 #                         buf = bytes()
 #                     continue
-# 
+#
 #                 # get data from start (b'/') to end (b'!') into data
 #                 # leave the remainder in buf
 #                 data, _, buf = buf.partition(b'!')
-# 
+#
 #                 # we should have data beginning with b'/' and ending with b'!'
 #                 identification_message = str(data, 'utf-8').splitlines()[0]
 #                 manid = identification_message[1:4]
 #                 manname = manufacturer_ids.get(manid, 'unknown')
 #                 self.logger.debug(f"manufacturer for {manid} is {manname} (out of {len(manufacturer_ids)} given manufacturers)")
-# 
+#
 #                 response = self.protocol(data.decode())
-# 
+#
 #                 # get data from frameparser and call plugin
 #                 if response and self.data_callback:
 #                     self.data_callback(response)
-# 
+#
 #         finally:
 #             # cleanup
 #             try:
@@ -404,7 +405,7 @@ class StringLogger():
 #                 pass
 #             self.plugin.connected = False
 #             self.lock.release()
-# 
+#
 #     async def stop_on_queue(self):
 #         """ wait for STOP in queue and signal reader to terminate """
 #         self.logger.debug('task waiting for STOP from queue...')
@@ -419,13 +420,14 @@ class StringLogger():
 #
 
 
-class DlmsReader():
+class DlmsReader:
     """
     read data from DLMS meter
 
     open/handle serial connection and provide read/write methods
     use DlmsProtocol for parsing data
     """
+
     def __init__(self, logger, config: dict, discover: bool = False):
         self.config = config
         self.sock = None
@@ -457,7 +459,6 @@ class DlmsReader():
             return {}
 
         try:  # lock release
-
             self.get_sock()
             if not self.sock:
                 # error already logged, just go
@@ -470,7 +471,7 @@ class DlmsReader():
             self.protocol.set_methods(self.read_data_block_from_serial, self.sock.write, self.target, self.sock)
 
             runtime = time.time()
-            self.logger.debug(f"time to open {self.target}: {format_time(time.time() - runtime)}")
+            self.logger.debug(f'time to open {self.target}: {format_time(time.time() - runtime)}')
 
             response = self.protocol()
 
@@ -489,11 +490,11 @@ class DlmsReader():
                 pass
             self.lock.release()
 
-        self.logger.debug(f"time for reading OBIS data: {format_time(time.time() - runtime)}")
+        self.logger.debug(f'time for reading OBIS data: {format_time(time.time() - runtime)}')
         runtime = time.time()
 
         # Display performance of the serial communication
-        self.logger.debug(f"whole communication with smartmeter took {format_time(time.time() - starttime)}")
+        self.logger.debug(f'whole communication with smartmeter took {format_time(time.time() - starttime)}')
 
         return response
 
@@ -516,7 +517,9 @@ class DlmsReader():
 
         # in discover mode, stop trying after 20 secs
         # reading SML yields bytes, but doesn't trigger returning data
-        self.logger.debug(f"start to read data from serial device, start is {start_byte}, end is '{end_byte}, time is 20")
+        self.logger.debug(
+            f"start to read data from serial device, start is {start_byte}, end is '{end_byte}, time is 20"
+        )
         response = bytes()
         starttime = time.time()
         start_found = False
@@ -545,7 +548,7 @@ class DlmsReader():
                         continue
                     else:
                         break
-                if (response[-1] == end_byte):
+                if response[-1] == end_byte:
                     self.logger.debug('end byte at end of response found')
                     end_bytes = 0
                     break
@@ -554,13 +557,13 @@ class DlmsReader():
                         logger.debug('max read time reached')
                         break
         except Exception as e:
-            self.logger.debug(f"error occurred while reading data block from serial: {e} ")
+            self.logger.debug(f'error occurred while reading data block from serial: {e} ')
             return b''
-        self.logger.debug(f"finished reading data from serial device after {len(response)} bytes")
+        self.logger.debug(f'finished reading data from serial device after {len(response)} bytes')
         return response
 
     def get_sock(self):
-        """ open serial or network socket """
+        """open serial or network socket"""
         self.sock = None
         self.target = '(not set)'
         serial_port = self.config.get('serial_port')
@@ -578,16 +581,9 @@ class DlmsReader():
             # open the serial communication
             #
             try:  # open serial
-                self.sock = serial.Serial(
-                    serial_port,
-                    baudrate,
-                    S_BITS,
-                    S_PARITY,
-                    S_STOP,
-                    timeout=timeout
-                )
+                self.sock = serial.Serial(serial_port, baudrate, S_BITS, S_PARITY, S_STOP, timeout=timeout)
                 if not serial_port == self.sock.name:
-                    logger.debug(f"Asked for {serial_port} as serial port, but really using now {self.sock.name}")
+                    logger.debug(f'Asked for {serial_port} as serial port, but really using now {self.sock.name}')
                 self.target = f'serial://{self.sock.name}'
 
             except FileNotFoundError:
@@ -612,11 +608,13 @@ class DlmsReader():
 
             if self.sock is None:
                 # this should not happen...
-                logger.error("unforeseen error occurred, serial object was not initialized.")
+                logger.error('unforeseen error occurred, serial object was not initialized.')
                 return
 
             if not self.sock.is_open:
-                logger.error(f"serial port '{serial_port}' could not be opened with given parameters, maybe wrong baudrate?")
+                logger.error(
+                    f"serial port '{serial_port}' could not be opened with given parameters, maybe wrong baudrate?"
+                )
                 self.sock = None
                 return
 
@@ -636,8 +634,8 @@ class DlmsReader():
             return
 
 
-class DlmsProtocol():
-    """ read and parse DLMS readout, if necessary, trigger meter to send data """
+class DlmsProtocol:
+    """read and parse DLMS readout, if necessary, trigger meter to send data"""
 
     def __init__(self, logger, config):
         self.logger = logger
@@ -651,18 +649,20 @@ class DlmsProtocol():
             self.initial_baudrate = config['dlms']['baudrate_min']
             self.query_code = config['dlms']['querycode']
             self.use_checksum = config['dlms']['use_checksum']
-            self.only_listen = config['dlms'].get('only_listen', False)    # just for the case that smartmeter transmits data without a query first
+            self.only_listen = config['dlms'].get(
+                'only_listen', False
+            )  # just for the case that smartmeter transmits data without a query first
             self.normalize = config['dlms'].get('normalize', True)
         except (KeyError, AttributeError) as e:
             self.logger.warning(f'configuration {config} is missing elements: {e}')
 
     def __read(self, end_byte: bytes = b'\n', start_byte: bytes = b'') -> bytes:
-        """ dummy stub to prevent errors """
+        """dummy stub to prevent errors"""
         self.logger.warning('self._read called without setting method - please check!')
         return b''
 
     def __write(self, data):
-        """ dummy stub to prevent errors """
+        """dummy stub to prevent errors"""
         self.logger.warning('self._write called without setting method - please check!')
 
     def set_methods(self, read, write, target: str = '', sock=None):
@@ -700,10 +700,10 @@ class DlmsProtocol():
         # 1 500 ms < tt = 2 200 ms
         # The time between two characters in a character sequence is:
         # ta < 1 500 ms
-        wait_before_acknowledge = 0.4   # wait for 400 ms before sending the request to change baudrate
-        wait_after_acknowledge = 0.4    # wait for 400 ms after sending acknowledge
+        wait_before_acknowledge = 0.4  # wait for 400 ms before sending the request to change baudrate
+        wait_after_acknowledge = 0.4  # wait for 400 ms after sending acknowledge
         start_char = b'/'
-        request_message = b"/" + self.query_code.encode('ascii') + self.device.encode('ascii') + b"!\r\n"
+        request_message = b'/' + self.query_code.encode('ascii') + self.device.encode('ascii') + b'!\r\n'
 
         if not self.only_listen:
             response = b''
@@ -713,35 +713,37 @@ class DlmsProtocol():
                 self.logger.debug(f"writing request message {request_message} to serial port '{self.target}'")
                 self._write(request_message)
             except Exception as e:
-                self.logger.warning(f"error on serial write: {e}")
+                self.logger.warning(f'error on serial write: {e}')
                 return b''
 
-            logger.debug(f"time to send first request to smartmeter: {format_time(time.time() - runtime)}")
+            logger.debug(f'time to send first request to smartmeter: {format_time(time.time() - runtime)}')
 
             # now get first response
             response = self._read()
             if not response:
-                self.logger.debug("no response received upon first request")
+                self.logger.debug('no response received upon first request')
                 return b''
 
-            self.logger.debug(f"time to receive an answer: {format_time(time.time() - runtime)}")
+            self.logger.debug(f'time to receive an answer: {format_time(time.time() - runtime)}')
             runtime = time.time()
 
             # We need to examine the read response here for an echo of the _Request_Message
             # some meters answer with an echo of the request Message
             if response == request_message:
-                self.logger.debug("request message was echoed, need to read the identification message")
+                self.logger.debug('request message was echoed, need to read the identification message')
                 # now read the capabilities and type/brand line from Smartmeter
                 # e.g. b'/LGZ5\\2ZMD3104407.B32\r\n'
                 response = self._read()
             else:
-                self.logger.debug("request message was not equal to response, treating as identification message")
+                self.logger.debug('request message was not equal to response, treating as identification message')
 
-            self.logger.debug(f"time to get first identification message from smartmeter: {format_time(time.time() - runtime)}")
+            self.logger.debug(
+                f'time to get first identification message from smartmeter: {format_time(time.time() - runtime)}'
+            )
             runtime = time.time()
 
             identification_message = response
-            self.logger.debug(f"identification message is {identification_message}")
+            self.logger.debug(f'identification message is {identification_message}')
 
             # need at least 7 bytes:
             # 1 byte "/"
@@ -752,13 +754,15 @@ class DlmsProtocol():
                 self.logger.warning(f"malformed identification message: '{identification_message}', abort query")
                 return b''
 
-            if (identification_message[0] != start_char):
-                self.logger.warning(f"identification message '{identification_message}' does not start with '/', abort query")
+            if identification_message[0] != start_char:
+                self.logger.warning(
+                    f"identification message '{identification_message}' does not start with '/', abort query"
+                )
                 return b''
 
             manid = str(identification_message[1:4], 'utf-8')
             manname = manufacturer_ids.get(manid, 'unknown')
-            self.logger.debug(f"manufacturer for {manid} is {manname} ({len(manufacturer_ids)} manufacturers known)")
+            self.logger.debug(f'manufacturer for {manid} is {manname} ({len(manufacturer_ids)} manufacturers known)')
 
             # Different smartmeters allow for different protocol modes.
             # The protocol mode decides whether the communication is fixed to a certain baudrate or might be speed up.
@@ -795,13 +799,17 @@ class DlmsProtocol():
                 baudrate_id = ''
             new_baudrate, protocol_mode = baudrates[baudrate_id]
 
-            logger.debug(f"baudrate id is '{baudrate_id}' thus protocol mode is {protocol_mode} and suggested Baudrate is {new_baudrate} Bd")
+            logger.debug(
+                f"baudrate id is '{baudrate_id}' thus protocol mode is {protocol_mode} and suggested Baudrate is {new_baudrate} Bd"
+            )
 
             if chr(identification_message[5]) == '\\':
                 if chr(identification_message[6]) == '2':
-                    self.logger.debug("HDLC protocol could be used if it was implemented")
+                    self.logger.debug('HDLC protocol could be used if it was implemented')
                 else:
-                    self.logger.debug(f"another protocol could probably be used if it was implemented, id is {identification_message[6]}")
+                    self.logger.debug(
+                        f'another protocol could probably be used if it was implemented, id is {identification_message[6]}'
+                    )
 
             # for protocol C or E we now send an acknowledge and include the new baudrate parameter
             # maybe todo
@@ -813,34 +821,38 @@ class DlmsProtocol():
             if protocol_mode == 'C':
                 # the speed change in communication is initiated from the reading device
                 time.sleep(wait_before_acknowledge)
-                self.logger.debug(f"using protocol mode C, send acknowledge {acknowledge} and tell smartmeter to switch to {new_baudrate} baud")
+                self.logger.debug(
+                    f'using protocol mode C, send acknowledge {acknowledge} and tell smartmeter to switch to {new_baudrate} baud'
+                )
                 try:
                     self._write(acknowledge)
                 except Exception as e:
-                    self.logger.warning(f"error on sending baudrate change: {e}")
+                    self.logger.warning(f'error on sending baudrate change: {e}')
                     return b''
                 time.sleep(wait_after_acknowledge)
                 # dlms_serial.flush()
                 # dlms_serial.reset_input_buffer()
-                if (new_baudrate != self.initial_baudrate):
+                if new_baudrate != self.initial_baudrate:
                     # change request to set higher baudrate
                     self.sock.baudrate = new_baudrate
 
             elif protocol_mode == 'B':
                 # the speed change in communication is initiated from the smartmeter device
                 time.sleep(wait_before_acknowledge)
-                self.logger.debug(f"using protocol mode B, smartmeter and reader will switch to {new_baudrate} baud")
+                self.logger.debug(f'using protocol mode B, smartmeter and reader will switch to {new_baudrate} baud')
                 time.sleep(wait_after_acknowledge)
                 # dlms_serial.flush()
                 # dlms_serial.reset_input_buffer()
-                if (new_baudrate != self.initial_baudrate):
+                if new_baudrate != self.initial_baudrate:
                     # change request to set higher baudrate
                     self.sock.baudrate = new_baudrate
             else:
-                self.logger.debug(f"no change of readout baudrate, smartmeter and reader will stay at {new_baudrate} baud")
+                self.logger.debug(
+                    f'no change of readout baudrate, smartmeter and reader will stay at {new_baudrate} baud'
+                )
 
             # now read the huge data block with all the OBIS codes
-            self.logger.debug("Reading OBIS data from smartmeter")
+            self.logger.debug('Reading OBIS data from smartmeter')
             response = self._read()
         else:
             # only listen mode, starts with / and last char is !
@@ -851,7 +863,9 @@ class DlmsProtocol():
                 identification_message = str(response, 'utf-8').splitlines()[0]
                 manid = identification_message[1:4]
                 manname = manufacturer_ids.get(manid, 'unknown')
-                self.logger.debug(f"manufacturer for {manid} is {manname} (out of {len(manufacturer_ids)} given manufacturers)")
+                self.logger.debug(
+                    f'manufacturer for {manid} is {manname} (out of {len(manufacturer_ids)} given manufacturers)'
+                )
             except Exception as e:
                 self.logger.info(f'error while extracting manufacturer: {e}')
 
@@ -863,7 +877,7 @@ class DlmsProtocol():
         obis = []
         endofdata_count = 0
         for linecount, line in enumerate(readout.splitlines()):
-            if linecount == 0 and line.startswith("/"):
+            if linecount == 0 and line.startswith('/'):
                 has_header = True
                 continue
 
@@ -875,15 +889,15 @@ class DlmsProtocol():
             # it is very likely that there is a faulty obis readout.
             # It might be that checksum is disabled an thus no error could be catched
             if len(line) == 0:
-                self.logger.error("incorrect format: empty line was encountered unexpectedly, aborting!")
+                self.logger.error('incorrect format: empty line was encountered unexpectedly, aborting!')
                 break
 
             # '!' as single OBIS code line means 'end of data'
-            if line.startswith("!"):
-                self.logger.debug("end of data reached")
+            if line.startswith('!'):
+                self.logger.debug('end of data reached')
                 if endofdata_count:
                     self.logger.debug(f"found {endofdata_count} end of data marker '!' in readout")
-                    if break_at_eod:    # omit the rest of data here
+                    if break_at_eod:  # omit the rest of data here
                         break
                 endofdata_count += 1
             else:
@@ -891,53 +905,55 @@ class DlmsProtocol():
         return obis
 
     def check_protocol(self, data: bytes) -> Union[str, None]:
-        """ check for proper protocol handling """
-        acknowledge = b''   # preset empty answer
+        """check for proper protocol handling"""
+        acknowledge = b''  # preset empty answer
 
         if data.startswith(acknowledge):
             if not self.only_listen:
-                self.logger.debug("acknowledge echoed from smartmeter")
-                data = data[len(acknowledge):]
+                self.logger.debug('acknowledge echoed from smartmeter')
+                data = data[len(acknowledge) :]
 
         if self.use_checksum:
             # data block in response may be capsuled within STX and ETX to provide error checking
             # thus the response will contain a sequence of
             # STX Datablock ! CR LF ETX BCC
             # which means we need at least 6 characters in response where Datablock is empty
-            self.logger.debug("trying now to calculate a checksum")
+            self.logger.debug('trying now to calculate a checksum')
 
             if data[0] == STX:
-                self.logger.debug("STX found")
+                self.logger.debug('STX found')
             else:
                 self.logger.warning(f"STX not found in response='{' '.join(hex(i) for i in data[:10])}...'")
 
             if data[-2] == ETX:
-                self.logger.debug("ETX found")
+                self.logger.debug('ETX found')
             else:
                 self.logger.warning(f"ETX not found in response='...{' '.join(hex(i) for i in data[-11:])}'")
 
             if (len(data) > 5) and (data[0] == STX) and (data[-2] == ETX):
                 # perform checks (start with char after STX, end with ETX including, checksum matches last byte (BCC))
                 BCC = data[-1]
-                self.logger.debug(f"block check character BCC is {BCC}")
+                self.logger.debug(f'block check character BCC is {BCC}')
                 checksum = 0
                 for i in data[1:-1]:
                     checksum ^= i
                 if checksum != BCC:
-                    self.logger.warning(f"checksum/protocol error: response={' '.join(hex(i) for i in data[1:-1])}, checksum={checksum}")
+                    self.logger.warning(
+                        f'checksum/protocol error: response={" ".join(hex(i) for i in data[1:-1])}, checksum={checksum}'
+                    )
                     return
                 else:
-                    self.logger.debug("checksum over data response was ok, data is valid")
+                    self.logger.debug('checksum over data response was ok, data is valid')
             else:
-                self.logger.warning("STX - ETX not found")
+                self.logger.warning('STX - ETX not found')
         else:
-            self.logger.debug("checksum calculation skipped")
+            self.logger.debug('checksum calculation skipped')
 
         if not self.only_listen:
             if len(data) > 5:
                 res = str(data[1:-4], 'ascii')
             else:
-                self.logger.debug("response did not contain enough data for OBIS decode")
+                self.logger.debug('response did not contain enough data for OBIS decode')
                 return
         else:
             res = str(data, 'ascii')
@@ -945,7 +961,7 @@ class DlmsProtocol():
         return res
 
     def parse(self, data: str) -> dict:
-        """ parse data returned from device read """
+        """parse data returned from device read"""
 
         runtime = time.time()
         result = {}
@@ -958,8 +974,8 @@ class DlmsProtocol():
                 if len(arguments) == 1:
                     # no values found at all; that seems to be a wrong OBIS code line then
                     arguments = arguments[0]
-                    values = ""
-                    self.logger.warning(f"OBIS code line without data item: {line}")
+                    values = ''
+                    self.logger.warning(f'OBIS code line without data item: {line}')
                 else:
                     # ok, found some values to the right, lets isolate them
                     values = arguments[1:]
@@ -983,12 +999,7 @@ class DlmsProtocol():
                                 # normalize SI units if possible to return values analogue to SML (e.g. Wh instead of kWh)
                                 v, u, uc = get_unit_code(v, u, self.normalize)
 
-                                values = {
-                                    'value': v,
-                                    'valueRaw': v,
-                                    'obis': code,
-                                    'unit': u
-                                }
+                                values = {'value': v, 'valueRaw': v, 'obis': code, 'unit': u}
                                 if uc:
                                     values['unitCode'] = uc
                                 if name:
@@ -997,23 +1008,19 @@ class DlmsProtocol():
                             else:
                                 # just a value, no unit
                                 v = vu[0]
-                                values = {
-                                    'value': v,
-                                    'valueRaw': v,
-                                    'obis': code
-                                }
+                                values = {'value': v, 'valueRaw': v, 'obis': code}
                                 if name:
                                     values['name'] = name
                                 content.append(values)
                     # uncomment the following line to check the generation of the values dictionary
                     # logger.dbghigh(f"{line:40} ---> {content}")
                     result[code] = content
-                    self.logger.debug(f"found {code} with {content}")
-            self.logger.debug("finished processing lines")
+                    self.logger.debug(f'found {code} with {content}')
+            self.logger.debug('finished processing lines')
         except Exception as e:
             self.logger.debug(f"error while extracting data: '{e}'")
 
-        self.logger.debug(f"parsing OBIS codes took {format_time(time.time() - runtime)}")
+        self.logger.debug(f'parsing OBIS codes took {format_time(time.time() - runtime)}')
         return result
 
 
@@ -1055,13 +1062,15 @@ def query(config, discover: bool = False, logger=logger) -> Union[dict, None]:
 
     suggested_cycle = (time.time() - starttime) + 10.0
     config['suggested_cycle'] = suggested_cycle
-    logger.debug(f"the whole query took {format_time(time.time() - starttime)}, suggested cycle thus is at least {format_time(suggested_cycle)}")
+    logger.debug(
+        f'the whole query took {format_time(time.time() - starttime)}, suggested cycle thus is at least {format_time(suggested_cycle)}'
+    )
 
     return response
 
 
 def discover(config: dict) -> bool:
-    """ try to autodiscover DLMS protocol """
+    """try to autodiscover DLMS protocol"""
 
     # as of now, this simply tries to query the meter
     # called from within the plugin, the parameters are either manually set by
@@ -1086,19 +1095,38 @@ def discover(config: dict) -> bool:
 if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description='Query a smartmeter at a given port for DLMS output',
-                                     usage='use "%(prog)s --help" for more information',
-                                     formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('port', help='specify the port to use for the smartmeter query, e.g. /dev/ttyUSB0 or /dev/dlms0')
+    parser = argparse.ArgumentParser(
+        description='Query a smartmeter at a given port for DLMS output',
+        usage='use "%(prog)s --help" for more information',
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        'port', help='specify the port to use for the smartmeter query, e.g. /dev/ttyUSB0 or /dev/dlms0'
+    )
     parser.add_argument('-v', '--verbose', help='print verbose information', action='store_true')
-    parser.add_argument('-t', '--timeout', help='maximum time to wait for a message from the smartmeter', type=float, default=3.0)
-    parser.add_argument('-b', '--baudrate', help='initial baudrate to start the communication with the smartmeter', type=int, default=300)
+    parser.add_argument(
+        '-t', '--timeout', help='maximum time to wait for a message from the smartmeter', type=float, default=3.0
+    )
+    parser.add_argument(
+        '-b',
+        '--baudrate',
+        help='initial baudrate to start the communication with the smartmeter',
+        type=int,
+        default=300,
+    )
     parser.add_argument('-d', '--device', help='give a device address to include in the query', default='')
-    parser.add_argument('-q', '--querycode', help='define alternative query code\ndefault query code is ?\nsome smartmeters provide additional information when sending\nan alternative query code, e.g. 2 instead of ?', default='?')
+    parser.add_argument(
+        '-q',
+        '--querycode',
+        help='define alternative query code\ndefault query code is ?\nsome smartmeters provide additional information when sending\nan alternative query code, e.g. 2 instead of ?',
+        default='?',
+    )
     parser.add_argument('-l', '--onlylisten', help='only listen to serial, no active query', action='store_true')
     parser.add_argument('-f', '--baudrate_fix', help='keep baudrate speed fixed', action='store_false')
-    parser.add_argument('-c', '--nochecksum', help='don\'t use a checksum', action='store_false')
-    parser.add_argument('-n', '--normalize', help='convert units to base units and recalculate value', action='store_true')
+    parser.add_argument('-c', '--nochecksum', help="don't use a checksum", action='store_false')
+    parser.add_argument(
+        '-n', '--normalize', help='convert units to base units and recalculate value', action='store_true'
+    )
 
     args = parser.parse_args()
 
@@ -1117,11 +1145,9 @@ if __name__ == '__main__':
             'baudrate_min': 300,
             'use_checksum': True,
             'onlylisten': False,
-            'normalize': True
+            'normalize': True,
         },
-        'sml': {
-            'buffersize': 1024
-        }
+        'sml': {'buffersize': 1024},
     }
 
     config['serial_port'] = args.port
@@ -1154,15 +1180,15 @@ if __name__ == '__main__':
         # add the handlers to the logger
         logging.getLogger().addHandler(ch)
 
-    logger.info("This is Smartmeter Plugin, DLMS module, running in standalone mode")
-    logger.info("==================================================================")
+    logger.info('This is Smartmeter Plugin, DLMS module, running in standalone mode')
+    logger.info('==================================================================')
 
     result = discover(config)
 
     if not result:
         logger.info(f"No results from query, maybe a problem with the serial port '{config['serial_port']}' given.")
     elif len(result) > 1:
-        logger.info("These are the processed results of the query:")
+        logger.info('These are the processed results of the query:')
         try:
             del result['readout']
         except KeyError:
@@ -1175,7 +1201,7 @@ if __name__ == '__main__':
             txt = pprint.pformat(result, indent=4)
         logger.info(txt)
     elif len(result) == 1:
-        logger.info("The results of the query could not be processed; raw result is:")
+        logger.info('The results of the query could not be processed; raw result is:')
         logger.info(result)
     else:
-        logger.info("The query did not get any results. Maybe the serial port was occupied or there was an error.")
+        logger.info('The query did not get any results. Maybe the serial port was occupied or there was an error.')

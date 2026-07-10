@@ -20,7 +20,7 @@
 #########################################################################
 
 import logging
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin
 import threading
 import datetime
 import time
@@ -28,7 +28,8 @@ import time
 import gpiod
 from lib.utils import Utils
 from .webif import WebInterface
-CONSUMER = "SmarthomeNG"
+
+CONSUMER = 'SmarthomeNG'
 
 
 class GPIO(SmartPlugin, Utils):
@@ -38,7 +39,7 @@ class GPIO(SmartPlugin, Utils):
     def __init__(self, sh):
         super().__init__()
         self.init_webinterface(WebInterface)
-        self.chip_path = f"/dev/gpiochip{self.get_parameter_value('chip')}"
+        self.chip_path = f'/dev/gpiochip{self.get_parameter_value("chip")}'
         self._item_values = {'in': {}, 'out': {}}
         self._lock = threading.Lock()
         self.alive = False
@@ -53,47 +54,69 @@ class GPIO(SmartPlugin, Utils):
         self._bouncetime = self.get_parameter_value('bouncetime') / 1000
         pud_param = self.get_parameter_value('pullupdown')
         if pud_param.upper() == 'UP':
-                self._pullupdown = gpiod.line.Bias.PULL_UP
+            self._pullupdown = gpiod.line.Bias.PULL_UP
         elif pud_param.upper() == 'DOWN':
-                self._pullupdown = gpiod.line.Bias.PULL_DOWN
+            self._pullupdown = gpiod.line.Bias.PULL_DOWN
         else:
-                self._pullupdown = gpiod.line.Bias.AS_IS
+            self._pullupdown = gpiod.line.Bias.AS_IS
         try:
             self.chip = gpiod.Chip(self.chip_path)
         except Exception as e:
-            self.logger.error(f"Error opening GPIO chip {self.chip_path}: {e}")
+            self.logger.error(f'Error opening GPIO chip {self.chip_path}: {e}')
             self._init_complete = False
         updown = self._get_pud_msg(self._pullupdown, 'global ')
         self.logger.debug(f'Mode set to {self._mode}, bouncetime is {self._bouncetime}, {updown}')
 
     def physical_to_gpio(self, pin):
-        '''
+        """
         Convert GPIO numbering based on setting.
 
         :param pin: Pin number according to GPIO mode configured in plugin.yaml
         :type pin: int
         :return: Converted pin number converted from BOARD to BCM
         :rtype: int
-        '''
+        """
         BOARD_TO_GPIO = {
-            3:2,5:3,7:4,8:14,10:15,
-            11:17,12:18,13:27,15:22,16:23,
-            18:24,19:10,21:9,22:25,23:11,
-            24:8,26:7,27:0,28:1,29:5,
-            31:6,32:12,33:13,35:19,36:16,
-            37:26,38:20,40:21
+            3: 2,
+            5: 3,
+            7: 4,
+            8: 14,
+            10: 15,
+            11: 17,
+            12: 18,
+            13: 27,
+            15: 22,
+            16: 23,
+            18: 24,
+            19: 10,
+            21: 9,
+            22: 25,
+            23: 11,
+            24: 8,
+            26: 7,
+            27: 0,
+            28: 1,
+            29: 5,
+            31: 6,
+            32: 12,
+            33: 13,
+            35: 19,
+            36: 16,
+            37: 26,
+            38: 20,
+            40: 21,
         }
         return BOARD_TO_GPIO.get(pin)
 
     def process_gpio_event(self, pin, pressed):
-        '''
+        """
         Callback method for GPIO event detection. Sets associated item to gpio pin value.
 
         :param pin: Pin number according to GPIO mode configured in plugin.yaml
         :type pin: int
         :param pressed: True or False depending on button.is_pressed or not
         :type pressed: bool
-        '''
+        """
         if not self.alive:
             return
 
@@ -105,7 +128,7 @@ class GPIO(SmartPlugin, Utils):
             self.logger.error(f'Problem reading {self._pin_str(pin)} after event_detection: {e}')
 
     def _get_pud_msg(self, pud, add=''):
-        '''
+        """
         Create log message for pullup/pulldown
         :param pud: Pullop or Pulldown
         :type pud: bool
@@ -113,7 +136,7 @@ class GPIO(SmartPlugin, Utils):
         :type pud: str
         :return: log text with correct info about pullup/down
         :rtype: str
-        '''
+        """
         if pud is True or pud == gpiod.line.Bias.PULL_UP:
             return add + 'pullup enabled'
         elif pud is False or pud == gpiod.line.Bias.PULL_DOWN:
@@ -139,14 +162,14 @@ class GPIO(SmartPlugin, Utils):
         return gpiod.line.Value.ACTIVE if val else gpiod.line.Value.INACTIVE
 
     def _to_bool(self, value):
-        '''
+        """
         Normalize GPIO values to real bool.
         Works with gpiod Value, int, str, bool.
         :param value: status of GPIO pin, most likely Active or Inactive
         :type value: str
         :return: boolean value True or False
         :rtype: bool
-        '''
+        """
         if isinstance(value, bool):
             return value
 
@@ -155,9 +178,9 @@ class GPIO(SmartPlugin, Utils):
 
         # gpiod Value.ACTIVE / INACTIVE
         val = str(value).upper()
-        if "ACTIVE" in val:
+        if 'ACTIVE' in val:
             return True
-        if "INACTIVE" in val:
+        if 'INACTIVE' in val:
             return False
 
         try:
@@ -166,7 +189,7 @@ class GPIO(SmartPlugin, Utils):
             return False
 
     def _is_item_inverted(self, item, pin=None):
-        '''
+        """
         Check if item has gpio_invert set. Item can be referred by item parameter or by
         GPIO pin associated to it.
 
@@ -175,7 +198,7 @@ class GPIO(SmartPlugin, Utils):
         :type pin: int
         :return: True if gpio_invert set for item, False otherwise
         :rtype: bool
-        '''
+        """
         if item is None:
             if pin is None:
                 # reaching this point usually means coding error.
@@ -186,7 +209,7 @@ class GPIO(SmartPlugin, Utils):
         return item._inverted
 
     def _get_gpio_value(self, value, item=None, pin=None):
-        '''
+        """
         Return valid GPIO value for output and setup methods. Calculate value
         with respect to gpio_invert parameter
 
@@ -196,15 +219,15 @@ class GPIO(SmartPlugin, Utils):
         :param pin: Pin to check for gpio_invert set in corresponding item
         :type pin: int
         :return: Value safe for GPIO output/setup methods
-        '''
+        """
         value = self._to_bool(value)
         inverted = self._is_item_inverted(item, pin)
         self.logger.debug(f'{self._pin_str(pin)}, inverted: {inverted}, value:{value}')
 
-        return (inverted ^ value)
+        return inverted ^ value
 
     def _update_item_values(self, item, in_out, pin, payload):
-        '''
+        """
         Update dict for periodic updates of the web interface
 
         :param item: item getting updated
@@ -215,7 +238,7 @@ class GPIO(SmartPlugin, Utils):
         :type pin: int
         :param payload: result from GPIO
         :type payload: bool or str
-        '''
+        """
         if not self._item_values[in_out].get(item.property.path):
             self._item_values[in_out][item.property.path] = {}
         self._item_values[in_out][item.property.path]['pin'] = pin
@@ -226,12 +249,12 @@ class GPIO(SmartPlugin, Utils):
         return
 
     def parse_item(self, item):
-        '''
+        """
         Default plugin parse_item method
 
         :param item: The item to process
         :return:    Callback method for item updates
-        '''
+        """
         # set pullup/pulldown for item
         pullupdown = self._pullupdown
         pud_add = 'global '
@@ -252,14 +275,16 @@ class GPIO(SmartPlugin, Utils):
             in_pin = int(self.get_iattr_value(item.conf, 'gpio_in'))
             gpio_pin = in_pin
             # BOARD → GPIO umrechnen
-            if self._mode == "BOARD":
+            if self._mode == 'BOARD':
                 gpio_pin = self.physical_to_gpio(in_pin)
             if gpio_pin is None:
                 self.logger.error(f'Invalid BOARD pin {in_pin}, no GPIO mapping')
                 return
             item._gpio_pin = gpio_pin
             item._board_pin = in_pin
-            item._inverted = self.has_iattr(item.conf, 'gpio_invert') and self._to_bool(self.get_iattr_value(item.conf, 'gpio_invert'))
+            item._inverted = self.has_iattr(item.conf, 'gpio_invert') and self._to_bool(
+                self.get_iattr_value(item.conf, 'gpio_invert')
+            )
             if gpio_pin not in self._itemsdict:
                 self._itemsdict[gpio_pin] = item
 
@@ -269,17 +294,13 @@ class GPIO(SmartPlugin, Utils):
                 bias=pullupdown,
                 active_low=False,
                 edge_detection=gpiod.line.Edge.BOTH,
-                debounce_period=datetime.timedelta(seconds=self._bouncetime)
+                debounce_period=datetime.timedelta(seconds=self._bouncetime),
             )
 
             try:
-                request = gpiod.request_lines(
-                    self.chip_path,
-                    consumer=CONSUMER,
-                    config={gpio_pin: settings}
-                )
+                request = gpiod.request_lines(self.chip_path, consumer=CONSUMER, config={gpio_pin: settings})
             except Exception as e:
-                self.logger.error(f"Failed to request {self._pin_str(gpio_pin)}: {e}")
+                self.logger.error(f'Failed to request {self._pin_str(gpio_pin)}: {e}')
                 return
 
             self._buttons[gpio_pin] = request
@@ -308,31 +329,26 @@ class GPIO(SmartPlugin, Utils):
             out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
             gpio_pin = out_pin
             # BOARD → GPIO umrechnen
-            if self._mode == "BOARD":
+            if self._mode == 'BOARD':
                 gpio_pin = self.physical_to_gpio(out_pin)
             if gpio_pin is None:
                 self.logger.error(f'Invalid BOARD pin {out_pin}, no GPIO mapping')
                 return
             item._gpio_pin = gpio_pin
             item._board_pin = out_pin
-            item._inverted = self.has_iattr(item.conf, 'gpio_invert') and self._to_bool(self.get_iattr_value(item.conf, 'gpio_invert'))
+            item._inverted = self.has_iattr(item.conf, 'gpio_invert') and self._to_bool(
+                self.get_iattr_value(item.conf, 'gpio_invert')
+            )
             if gpio_pin not in self._itemsdict:
                 self._itemsdict[gpio_pin] = item
 
             # LineSettings für OUTPUT (ersetzt LED())
-            settings = gpiod.LineSettings(
-                direction=gpiod.line.Direction.OUTPUT,
-                drive=gpiod.line.Drive.PUSH_PULL
-            )
+            settings = gpiod.LineSettings(direction=gpiod.line.Direction.OUTPUT, drive=gpiod.line.Drive.PUSH_PULL)
 
             try:
-                request = gpiod.request_lines(
-                    self.chip_path,
-                    consumer=CONSUMER,
-                    config={gpio_pin: settings}
-                )
+                request = gpiod.request_lines(self.chip_path, consumer=CONSUMER, config={gpio_pin: settings})
             except Exception as e:
-                self.logger.error(f"Failed to request {self._pin_str(gpio_pin)} as output: {e}")
+                self.logger.error(f'Failed to request {self._pin_str(gpio_pin)} as output: {e}')
                 return
 
             # Initialwert setzen
@@ -377,7 +393,7 @@ class GPIO(SmartPlugin, Utils):
             self._lock.release()
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        '''
+        """
         This method is called, if the value of an item has been updated by SmartHomeNG.
         It should write the changed value out to the device (hardware/interface) that
         is managed by this plugin.
@@ -386,7 +402,7 @@ class GPIO(SmartPlugin, Utils):
         :param caller: if given it represents the callers name
         :param source: if given it represents the source
         :param dest: if given it represents the dest
-        '''
+        """
         self.logger.debug(f'update item {item} called by {caller}')
         if item is None:
             return
@@ -394,9 +410,7 @@ class GPIO(SmartPlugin, Utils):
         gpio = getattr(item, '_gpio_pin', None)
         entry = self._leds.get(gpio)
         if entry is None or 'request' not in entry:
-            self.logger.error(
-                f'{item} updated by {caller}, but no gpio_out set up for {self._pin_str(gpio)}'
-            )
+            self.logger.error(f'{item} updated by {caller}, but no gpio_out set up for {self._pin_str(gpio)}')
             return
 
         value = self._get_gpio_value(item(), item, gpio)
@@ -414,7 +428,7 @@ class GPIO(SmartPlugin, Utils):
 
                 events = request.read_edge_events()
             except Exception as e:
-                self.logger.error(f"{self._pin_str(pin)} event wait failed: {e}")
+                self.logger.error(f'{self._pin_str(pin)} event wait failed: {e}')
                 continue
 
             for event in events:
@@ -422,10 +436,10 @@ class GPIO(SmartPlugin, Utils):
                     pin_value = bool(request.get_value(pin))
                     value = self._get_gpio_value(pin_value, None, pin)
                     self.process_gpio_event(pin, value)
-                    #self.logger.debug(f"{self._pin_str(pin)} event={event.event_type} value={value}")
+                    # self.logger.debug(f"{self._pin_str(pin)} event={event.event_type} value={value}")
 
                 except Exception as e:
-                    self.logger.error(f"{self._pin_str(pin)} read failed: {e}")
+                    self.logger.error(f'{self._pin_str(pin)} read failed: {e}')
 
     def run(self):
         """
@@ -436,16 +450,11 @@ class GPIO(SmartPlugin, Utils):
         self._event_threads = []
 
         for pin, request in self._buttons.items():
-            t = threading.Thread(
-                target=self._gpio_event_worker,
-                args=(pin, request),
-                daemon=True
-            )
+            t = threading.Thread(target=self._gpio_event_worker, args=(pin, request), daemon=True)
             t.start()
             self._event_threads.append(t)
 
-        self.logger.info("GPIO event threads started")
-
+        self.logger.info('GPIO event threads started')
 
     def stop(self):
         """

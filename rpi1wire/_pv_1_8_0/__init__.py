@@ -166,14 +166,13 @@ class Rpi1Wire(SmartPlugin):
             try:
                 for sn, sid in self.sensors.items():
                     if sid == self.get_iattr_value(item.conf, 'rpi1wire_id'):
-                        name = sn
                         break
             except:
                 self.logger.warning("Sensor {0} as Item defined but hardware not found".format(self.get_iattr_value(item.conf, 'rpi1wire_id')))
                 not_found = True
         else:
             if self.has_iattr(item.conf, 'rpi1wire_name'):
-                name = self.get_iattr_value(item.conf, 'rpi1wire_name')
+                self.get_iattr_value(item.conf, 'rpi1wire_name')
                 try:
                     addr = self.sensors[self.get_iattr_value(item.conf, 'rpi1wire_name')]
                 except:
@@ -336,7 +335,6 @@ class Rpi1Wire(SmartPlugin):
                             break
                 except:
                     self.logger.warning("Sensor {0} Hardware not found".format(addr))
-                    not_found = True
             if self.has_iattr(item.conf, 'rpi1wire_name'):
                 name = self.get_iattr_value(item.conf, 'rpi1wire_name')
                 try:

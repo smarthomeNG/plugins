@@ -44,7 +44,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -61,7 +60,6 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
-
     @cherrypy.expose
     def index(self, reload=None):
         """
@@ -73,10 +71,9 @@ class WebInterface(SmartPluginWebIf):
         """
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
-                           item_count=0)
-
+        return tmpl.render(
+            p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])), item_count=0
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -94,11 +91,10 @@ class WebInterface(SmartPluginWebIf):
             for ring in self.plugin._model.get_rings():
                 value = []
                 for slot in self.plugin._model.get_ring_model(ring).get_slots():
-                     value.append(slot.get_data())
-                data.append({"ring": ring, "slots": value})
+                    value.append(slot.get_data())
+                data.append({'ring': ring, 'slots': value})
             try:
                 return json.dumps(data)
             except Exception as e:
-                self.logger.error("get_data_html exception: {}".format(e))
+                self.logger.error('get_data_html exception: {}'.format(e))
         return {}
-

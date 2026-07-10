@@ -181,8 +181,6 @@ class Tasmota(MqttPlugin):
                 self.tasmota_devices[tasmota_topic]['relais'] = {}
 
             # handle the different topics from Tasmota devices
-            topic = None
-            bool_values = None
             if tasmota_attr:
                 tasmota_attr = tasmota_attr.lower()
                 
@@ -195,7 +193,7 @@ class Tasmota(MqttPlugin):
                 if tasmota_attr == 'online':
                     self.tasmota_devices[tasmota_topic]['online'] = False
                 # append to list used for web interface
-                if not item in self.tasmota_items:
+                if item not in self.tasmota_items:
                     self.tasmota_items.append(item)
             else:
                 self.logger.warning(f"parse_item: attribute tasmota_attr = {tasmota_attr} not in valid list; standard attribut used, but item not processed.")
@@ -253,7 +251,7 @@ class Tasmota(MqttPlugin):
                         hsb = list(map(int, hsb))
                         value = ','.join(str(v) for v in hsb)
                     else:
-                        self.logger.debug(f"update_item: hsb value received but not in correct format/content; expected format is list like [299, 100, 94]")
+                        self.logger.debug("update_item: hsb value received but not in correct format/content; expected format is list like [299, 100, 94]")
                     
                 elif tasmota_attr == 'rf_send':
                     # publish topic with new rf data
@@ -280,13 +278,13 @@ class Tasmota(MqttPlugin):
                     try:
                       rf_key = int(item())
                     except:
-                      self.logger.debug(f"update_item: rf_key_send received but with correct format; expected format integer or string 1-16")
+                      self.logger.debug("update_item: rf_key_send received but with correct format; expected format integer or string 1-16")
                     else:  
                       if rf_key in range(1, 17):
                         detail = 'RfKey'+str(rf_key)
                         value = 1
                       else:
-                        self.logger.debug(f"update_item: rf_key_send received but with correct content; expected format value 1-16")
+                        self.logger.debug("update_item: rf_key_send received but with correct content; expected format value 1-16")
 
                 if value is not None:
                     #self.publish_topic('cmnd', topic, detail, item(), item, bool_values=['off','on'])
@@ -445,7 +443,7 @@ class Tasmota(MqttPlugin):
                     if ledtable:
                         self.tasmota_devices[tasmota_topic]['lights']['ledtable'] = bool(ledtable)
                         
-                if {key:val for key, val in payload.items() if key.startswith('POWER')} is not None:
+                if {key:val for key, val in payload.items() if key.startswith('POWER')} != None:
                         power_dict = {key:val for key, val in payload.items() if key.startswith('POWER')}
                         self.tasmota_devices[tasmota_topic]['relais'].update(power_dict)
                         
@@ -573,7 +571,7 @@ class Tasmota(MqttPlugin):
             
             elif info_topic == 'STATUS9':
                 #self.logger.info(f"Topic={topic}, tasmota_topic={tasmota_topic}, info_topic={info_topic}")
-                StatusPTH = payload.get('StatusPTH', {})
+                payload.get('StatusPTH', {})
                 #self.logger.info(f" - StatusPTH={StatusPTH}")
 
 

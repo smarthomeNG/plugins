@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2019 Thomas Hengsberg <thomas@thomash.eu>
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
 #  upwards.
@@ -23,9 +23,10 @@
 #
 #########################################################################
 
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin
 
 from .inverter import Inverter
+
 
 class Kostalmodbus(SmartPlugin):
     PLUGIN_VERSION = '1.6.3'
@@ -33,17 +34,17 @@ class Kostalmodbus(SmartPlugin):
     _items = []
 
     def __init__(self, sh, *args, **kwargs):
-        self.inverter = Inverter(self.get_parameter_value("inverter_ip"),self.get_parameter_value("modbus_port"))
-        self._cycle = int(self.get_parameter_value("update_cycle"))
+        self.inverter = Inverter(self.get_parameter_value('inverter_ip'), self.get_parameter_value('modbus_port'))
+        self._cycle = int(self.get_parameter_value('update_cycle'))
         return
 
     def run(self):
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
         self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
         self.alive = True
 
     def stop(self):
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.alive = False
 
     def parse_item(self, item):
@@ -55,7 +56,7 @@ class Kostalmodbus(SmartPlugin):
     def poll_device(self):
         inverter_data = self.inverter.get_data()
         for item in self._items:
-            for i in range (0,len(inverter_data)):
+            for i in range(0, len(inverter_data)):
                 s = 'kostal_' + str(inverter_data[i].adrDec)
                 if self.has_iattr(item.conf, s):
                     item(self.inverter.registers[i].value)

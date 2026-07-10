@@ -45,7 +45,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -73,9 +72,11 @@ class WebInterface(SmartPluginWebIf):
 
         tmpl = self.tplenv.get_template('index.html')
         pagelength = self.plugin.get_parameter_value('webif_pagelength')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
-                           plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(),
-                           webif_pagelength=pagelength,
-                           tabcount=tabcount,
-                           p=self.plugin)
+        return tmpl.render(
+            plugin_shortname=self.plugin.get_shortname(),
+            plugin_version=self.plugin.get_version(),
+            plugin_info=self.plugin.get_info(),
+            webif_pagelength=pagelength,
+            tabcount=tabcount,
+            p=self.plugin,
+        )

@@ -42,7 +42,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -59,7 +58,6 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
-
     @cherrypy.expose
     def index(self, scan=None, connect=None, disconnect=None, reload=None):
         """
@@ -74,43 +72,46 @@ class WebInterface(SmartPluginWebIf):
             self.plugin.discovered_bridges = self.plugin.discover_bridges()
 
         if connect is not None:
-            self.logger.info("Connect: connect={}".format(connect))
+            self.logger.info('Connect: connect={}'.format(connect))
             for db in self.plugin.discovered_bridges:
                 if db['serialNumber'] == connect:
                     user = self.plugin.create_new_username(db['ip'], db['port'])
                     if user != '':
-                        self.plugin.bridge= db
+                        self.plugin.bridge = db
                         self.plugin.bridge['username'] = user
                         self.plugin.bridgeinfo = self.plugin.get_bridgeinfo()
                         self.plugin.update_plugin_config()
 
         if disconnect is not None:
-            self.logger.info("Disconnect: disconnect={}".format(disconnect))
-            self.plugin.remove_username(self.plugin.bridge['ip'], self.plugin.bridge['port'], self.plugin.bridge['username'])
+            self.logger.info('Disconnect: disconnect={}'.format(disconnect))
+            self.plugin.remove_username(
+                self.plugin.bridge['ip'], self.plugin.bridge['port'], self.plugin.bridge['username']
+            )
             self.plugin.bridge = {}
             self.plugin.bridgeinfo = {}
             self.plugin.update_plugin_config()
 
         try:
             tmpl = self.tplenv.get_template('index.html')
-        except:
+        except Exception:
             self.logger.error("Template file 'index.html' not found")
         else:
             # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-            return tmpl.render(p=self.plugin,
-                               #items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
-                               items=self.plugin.plugin_items,
-                               item_count=len(self.plugin.plugin_items),
-                               bridge=self.plugin.bridge,
-                               bridge_count=len(self.plugin.bridge),
-                               discovered_bridges=self.plugin.discovered_bridges,
-                               bridge_lights=self.plugin.bridge_lights,
-                               bridge_groups=self.plugin.bridge_groups,
-                               bridge_config=self.plugin.bridge_config,
-                               bridge_scenes=self.plugin.bridge_scenes,
-                               bridge_sensors=self.plugin.bridge_sensors,
-                               br_object=self.plugin.br)
-
+            return tmpl.render(
+                p=self.plugin,
+                # items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
+                items=self.plugin.plugin_items,
+                item_count=len(self.plugin.plugin_items),
+                bridge=self.plugin.bridge,
+                bridge_count=len(self.plugin.bridge),
+                discovered_bridges=self.plugin.discovered_bridges,
+                bridge_lights=self.plugin.bridge_lights,
+                bridge_groups=self.plugin.bridge_groups,
+                bridge_config=self.plugin.bridge_config,
+                bridge_scenes=self.plugin.bridge_scenes,
+                bridge_sensors=self.plugin.bridge_sensors,
+                br_object=self.plugin.br,
+            )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -124,7 +125,7 @@ class WebInterface(SmartPluginWebIf):
         """
         if dataSet is None:
             # get the new data
-            data = {}
+            pass
 
             # data['item'] = {}
             # for i in self.plugin.items:
@@ -136,4 +137,3 @@ class WebInterface(SmartPluginWebIf):
             # except Exception as e:
             #     self.logger.error("get_data_html exception: {}".format(e))
         return {}
-

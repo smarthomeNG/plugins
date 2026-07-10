@@ -25,8 +25,7 @@ from lib.utils import Utils
 from .constants import RORG, PACKET_TYPE
 
 
-class Packet_Data():
-
+class Packet_Data:
     def __init__(self, plugin_instance):
         """
         Init Method
@@ -42,7 +41,9 @@ class Packet_Data():
         """
         found = callable(getattr(self, '_prepare_data_for_tx_eep_' + tx_eep, None))
         if not found:
-            self.logger.error(f"enocean-CanPrepareData: missing tx_eep for pepare send data {tx_eep} - there should be a _prepare_data_for_tx_eep_{tx_eep}-function!")
+            self.logger.error(
+                f'enocean-CanPrepareData: missing tx_eep for pepare send data {tx_eep} - there should be a _prepare_data_for_tx_eep_{tx_eep}-function!'
+            )
         return found
 
     def PrepareData(self, item, tx_eep):
@@ -50,23 +51,25 @@ class Packet_Data():
         This Method calculates the Data (id_offset, rorg, payload and optional data) for the
         corresponding EnOcean Device
         """
-        self.logger.debug(f"enocean-PrepareData: data-preparer called with tx_eep = {tx_eep}")
+        self.logger.debug(f'enocean-PrepareData: data-preparer called with tx_eep = {tx_eep}')
         # Prepare ID-Offset
         if self._plugin_instance.has_iattr(item.conf, 'enocean_tx_id_offset'):
-            self.logger.debug("enocean-PrepareData: item has valid enocean_tx_id_offset")
+            self.logger.debug('enocean-PrepareData: item has valid enocean_tx_id_offset')
             id_offset = int(self._plugin_instance.get_iattr_value(item.conf, 'enocean_tx_id_offset'))
             if id_offset < 0 or id_offset > 127:
                 self.logger.error('enocean-PrepareData: ID offset out of range (0-127). Aborting.')
                 return
         else:
-            self.logger.info(f"enocean-PrepareData: {tx_eep} item has no attribute ''enocean_tx_id_offset''! Set to default = 0")
+            self.logger.info(
+                f"enocean-PrepareData: {tx_eep} item has no attribute ''enocean_tx_id_offset''! Set to default = 0"
+            )
             id_offset = 0
         # start prepare data
         rorg, payload, optional = getattr(self, '_prepare_data_for_tx_eep_' + tx_eep)(item, tx_eep)
         # self.logger.info('enocean-PrepareData: {} returns [{:#04x}], [{}], [{}]'.format(tx_eep, rorg, ', '.join('{:#04x}'.format(x) for x in payload), ', '.join('{:#04x}'.format(x) for x in optional)))
         return id_offset, rorg, payload, optional
 
-# Definitions for RORG =  A5 / ORG = 07
+    # Definitions for RORG =  A5 / ORG = 07
 
     def _prepare_data_for_tx_eep_A5_20_04(self, item, tx_eep):
         """
@@ -153,7 +156,7 @@ class Packet_Data():
             # calculate dimspeed from percent into integer
             # 0x01 --> fastest speed --> 100 %
             # 0xFF --> slowest speed --> 0 %
-            dim_speed = (255 - (254 * dim_speed/100))
+            dim_speed = 255 - (254 * dim_speed / 100)
         else:
             # use intern dim_speed of the dim device
             dim_speed = 0
@@ -203,7 +206,7 @@ class Packet_Data():
             # calculate dimspeed from percent into hex
             # 0x01 --> fastest speed --> 100 %
             # 0xFF --> slowest speed --> 0 %
-            dim_speed = (255 - (254 * dim_speed / 100))
+            dim_speed = 255 - (254 * dim_speed / 100)
         else:
             # use intern dim_speed of the dim device
             dim_speed = 0x00
@@ -260,7 +263,9 @@ class Packet_Data():
             # moving down
             command_hex_code = 0x02
         else:
-            self.logger.error(f'enocean-PrepareData: {tx_eep} sending actuator command failed: invalid command {command}')
+            self.logger.error(
+                f'enocean-PrepareData: {tx_eep} sending actuator command failed: invalid command {command}'
+            )
             return
         # define payload
         payload = [0x00, rtime, command_hex_code, int(8 + block)]
@@ -290,7 +295,7 @@ class Packet_Data():
             # calculate dimspeed from percent into hex
             # 0x01 --> fastest speed --> 100 %
             # 0xFF --> slowest speed --> 0 %
-            dim_speed = (255 - (254 * dim_speed / 100))
+            dim_speed = 255 - (254 * dim_speed / 100)
         else:
             # use intern dim_speed of the dim device
             dim_speed = 0x00
@@ -327,14 +332,16 @@ class Packet_Data():
             # stop dim
             command_hex_code = 0x32
         else:
-            self.logger.error(f'enocean-PrepareData: {tx_eep} sending actuator command failed: invalid command {command}')
+            self.logger.error(
+                f'enocean-PrepareData: {tx_eep} sending actuator command failed: invalid command {command}'
+            )
             return
         # define payload
         payload = [int(dim_speed), color_hex, command_hex_code, 0x0F]
         optional = []
         return rorg, payload, optional
 
-# Definitions for RORG = D2, EnOcean Variable Length Telegram (VLD) 
+    # Definitions for RORG = D2, EnOcean Variable Length Telegram (VLD)
 
     def _prepare_data_for_tx_eep_D2_01_07(self, item, tx_eep):
         """
@@ -394,9 +401,9 @@ class Packet_Data():
             self.logger.debug(f'enocean-PrepareData: {tx_eep} no enocean_rx_id found!')
         if self._plugin_instance.has_iattr(item.conf, 'enocean_channel'):
             schannel = self._plugin_instance.get_iattr_value(item.conf, 'enocean_channel')
-            if schannel == "A":
+            if schannel == 'A':
                 channel = 0x00
-            elif schannel == "B":
+            elif schannel == 'B':
                 channel = 0x01
             else:
                 channel = 0x1E

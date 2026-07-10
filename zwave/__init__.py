@@ -32,6 +32,7 @@ try:
     from openzwave.network import ZWaveNetwork
     from openzwave.option import ZWaveOption
     from pydispatch import dispatcher
+
     REQUIRED_PACKAGE_IMPORTED = True
 except Exception:
     REQUIRED_PACKAGE_IMPORTED = False
@@ -87,8 +88,11 @@ class ZWave(SmartPlugin):
             self._loglevel = self.get_parameter_value('loglevel')
             self._sec_strategy = self.get_parameter_value('sec_strategy')
             self._ready = False
-            self.logger.debug('Initialized: logpath={}, loglevel={}, configpath={}, device={}, sec_strategy={}'.format(
-                              self._logfile, self._loglevel, self._config_path, self._device, self._sec_strategy))
+            self.logger.debug(
+                'Initialized: logpath={}, loglevel={}, configpath={}, device={}, sec_strategy={}'.format(
+                    self._logfile, self._loglevel, self._config_path, self._device, self._sec_strategy
+                )
+            )
         except Exception as err:
             self.logger.error(err)
             self._init_complete = False
@@ -147,9 +151,7 @@ class ZWave(SmartPlugin):
         self.logger.info('use ZWave library: {}'.format(self._network.controller.library_description))
 
         while self.alive:
-
             if self._network.state != self._network.STATE_READY:
-
                 self.logger.debug('wait until network is ready... current state is: {}'.format(self._network.state_str))
                 if self._network.state == self._network.STATE_FAILED:
                     self.alive = False
@@ -163,7 +165,7 @@ class ZWave(SmartPlugin):
                 self.logger.info('Network home id : {}'.format(self._network.home_id_str))
                 self.logger.info('Nodes in network : {}'.format(self._network.nodes_count))
 
-                self.logger.info("zwave: Start refresh values")
+                self.logger.info('zwave: Start refresh values')
                 for __id in self.listenOn:
                     __val = self._network.get_value(__id)
                     self.logger.info("zwave: id : '{}', val: '{}'".format(__id, __val))
@@ -178,7 +180,7 @@ class ZWave(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("zwave: stop method called")
+        self.logger.debug('zwave: stop method called')
         self._network.stop()
         self.alive = False
 
@@ -222,8 +224,11 @@ class ZWave(SmartPlugin):
         :param dest: if given it represents the dest
         """
         if self.has_iattr(item.conf, 'zwave_node') and self.has_iattr(item.conf, 'zwave_value'):
-            self.logger.debug("zwave: update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(
-                              item, caller, source, dest))
+            self.logger.debug(
+                "zwave: update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(
+                    item, caller, source, dest
+                )
+            )
             self.logger.debug("zwave: item value is '{}' from type '{}'".format(item(), type(item())))
         try:
             self._network._manager.setValue(int(item.conf['zwave_value']), item())

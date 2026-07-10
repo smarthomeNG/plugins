@@ -71,18 +71,18 @@ class TimedCache(_BaseCache):
     Example:
         >>> from time import sleep
         >>> cache = TimedCache()
-        >>> cache.put("item", 'some', kw='args', timeout=3)
+        >>> cache.put('item', 'some', kw='args', timeout=3)
         >>> # Fetch the item again, by providing the same args and kwargs.
-        >>> assert cache.get('some', kw='args') == "item"
+        >>> assert cache.get('some', kw='args') == 'item'
         >>> # Providing different args or kwargs will not return the item.
-        >>> assert not cache.get('some', 'otherargs') == "item"
+        >>> assert not cache.get('some', 'otherargs') == 'item'
         >>> # Waiting for less than the provided timeout does not cause the
         >>> # item to expire.
         >>> sleep(2)
-        >>> assert cache.get('some', kw='args') == "item"
+        >>> assert cache.get('some', kw='args') == 'item'
         >>> # But waiting for longer does.
         >>> sleep(2)
-        >>> assert not cache.get('some', kw='args') == "item"
+        >>> assert not cache.get('some', kw='args') == 'item'
 
     Warning:
         At present, the cache can theoretically grow and grow, since entries
@@ -153,7 +153,7 @@ class TimedCache(_BaseCache):
         if not self.enabled:
             return
         # Check for a timeout keyword, store and remove it.
-        timeout = kwargs.pop("timeout", None)
+        timeout = kwargs.pop('timeout', None)
         if timeout is None:
             timeout = self.default_timeout
         cache_key = self.make_key(args, kwargs)

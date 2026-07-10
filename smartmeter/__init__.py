@@ -34,6 +34,7 @@ import sys
 # which will import the serial module by themselves, if serial is configured
 try:
     import serial  # noqa
+
     REQUIRED_PACKAGE_IMPORTED = True
 except Exception:
     REQUIRED_PACKAGE_IMPORTED = False
@@ -43,7 +44,7 @@ from lib.item.item import Item
 from lib.shtime import Shtime
 from lib.shyaml import yaml_save
 from collections.abc import Callable
-from typing import (Union, Any)
+from typing import Union, Any
 
 from . import dlms  # noqa
 from . import sml  # noqa
@@ -53,19 +54,40 @@ from .webif import WebInterface
 shtime = Shtime.get_instance()
 
 # item attributes handled by this plugin
-OBIS_CODE = 'obis_code'          # single code, '1-1:1.8.0' or '1.8.0'
-OBIS_INDEX = 'obis_index'        # optional: index of obis value, default 0
+OBIS_CODE = 'obis_code'  # single code, '1-1:1.8.0' or '1.8.0'
+OBIS_INDEX = 'obis_index'  # optional: index of obis value, default 0
 OBIS_PROPERTY = 'obis_property'  # optional: property to read ('value', 'unit', ...) default 'value''
-OBIS_VTYPE = 'obis_vtype'        # optional: type of value (str, num, int, float, ZST12, ZST10, D6, Z6, Z4, '') default ''
-OBIS_READOUT = 'obis_readout'    # complete readout (dlms only)
+OBIS_VTYPE = 'obis_vtype'  # optional: type of value (str, num, int, float, ZST12, ZST10, D6, Z6, Z4, '') default ''
+OBIS_READOUT = 'obis_readout'  # complete readout (dlms only)
 
 ITEM_ATTRS = (OBIS_CODE, OBIS_INDEX, OBIS_PROPERTY, OBIS_VTYPE, OBIS_READOUT)
 
 # obis properties
 PROPS = [
-    'value', 'unit', 'name', 'valueRaw', 'scaler', 'status', 'valTime', 'actTime', 'signature', 'unitCode',
-    'statRun', 'statFraudMagnet', 'statFraudCover', 'statEnergyTotal', 'statEnergyL1', 'statEnergyL2', 'statEnergyL3',
-    'statRotaryField', 'statBackstop', 'statCalFault', 'statVoltageL1', 'statVoltageL2', 'statVoltageL3', 'obis'
+    'value',
+    'unit',
+    'name',
+    'valueRaw',
+    'scaler',
+    'status',
+    'valTime',
+    'actTime',
+    'signature',
+    'unitCode',
+    'statRun',
+    'statFraudMagnet',
+    'statFraudCover',
+    'statEnergyTotal',
+    'statEnergyL1',
+    'statEnergyL2',
+    'statEnergyL3',
+    'statRotaryField',
+    'statBackstop',
+    'statCalFault',
+    'statVoltageL1',
+    'statVoltageL2',
+    'statVoltageL3',
+    'obis',
 ]
 
 # mapping separator. set to something not probable to be in obis, index or prop
@@ -183,7 +205,7 @@ class Smartmeter(SmartPlugin, Conversion):
         return result
 
     def create_items(self, data: dict = {}, file: str = '') -> bool:
-        """ 
+        """
         create itemdefinitions from read obis numbers
 
         dict should be the result dict, or (if empty) self.obis_results will be used
@@ -231,20 +253,10 @@ class Smartmeter(SmartPlugin, Conversion):
             else:
                 typ = 'foo'
 
-            result[item] = {
-                'type': typ,
-                'cache': True,
-                'remark': name,
-                'obis_code': code,
-            }
+            result[item] = {'type': typ, 'cache': True, 'remark': name, 'obis_code': code}
 
             if unit:
-                result[item]['unit'] = {
-                    'type': 'str',
-                    'cache': True,
-                    'obis_code': '..:.',
-                    'obis_property': 'unit'
-                }
+                result[item]['unit'] = {'type': 'str', 'cache': True, 'obis_code': '..:.', 'obis_property': 'unit'}
 
         try:
             yaml_save(file, {id: result})
@@ -271,7 +283,9 @@ class Smartmeter(SmartPlugin, Conversion):
             self.logger.info(f'{"detected" if self.proto_detected else "set"} protocol {self.protocol}')
         else:
             # skip cycle / crontab scheduler if no protocol set (only manual control from web interface)
-            self.logger.error('unable to auto-detect device protocol (SML/DLMS). Try manual disconvery via standalone mode or Web Interface.')
+            self.logger.error(
+                'unable to auto-detect device protocol (SML/DLMS). Try manual disconvery via standalone mode or Web Interface.'
+            )
             return
 
         # Setup scheduler for device poll loop, if protocol set
@@ -284,7 +298,9 @@ class Smartmeter(SmartPlugin, Conversion):
                 else:
                     # no crontab given so we might just query immediately
                     next = shtime.now()
-                self.scheduler_add(self.get_fullname(), self.poll_device, prio=5, cycle=self.cycle, cron=self.crontab, next=next)
+                self.scheduler_add(
+                    self.get_fullname(), self.poll_device, prio=5, cycle=self.cycle, cron=self.crontab, next=next
+                )
         self.logger.debug('run method finished')
 
     def stop(self):
@@ -355,9 +371,9 @@ class Smartmeter(SmartPlugin, Conversion):
 
         # SML only
         self._config['sml'] = {}
-        self._config['sml']['buffersize'] = self.get_parameter_value('buffersize')            # 1024
+        self._config['sml']['buffersize'] = self.get_parameter_value('buffersize')  # 1024
         self._config['sml']['device'] = self.get_parameter_value('device_type')
-        self._config['sml']['date_offset'] = self.get_parameter_value('date_offset')          # 0
+        self._config['sml']['date_offset'] = self.get_parameter_value('date_offset')  # 0
 
         #
         # general plugin parameters
@@ -378,7 +394,9 @@ class Smartmeter(SmartPlugin, Conversion):
                 self.use_asyncio = True
                 self._config['poll'] = False
             else:
-                self.logger.warning('async mode requested, but not yet available for DLMS. Plugin will be polling regularly...')
+                self.logger.warning(
+                    'async mode requested, but not yet available for DLMS. Plugin will be polling regularly...'
+                )
 
         if self.use_asyncio:
             self.timefilter = self.get_parameter_value('time_filter')
@@ -389,10 +407,12 @@ class Smartmeter(SmartPlugin, Conversion):
         self._config['timefilter'] = self.timefilter
 
         if not self.use_asyncio and not (self.cycle or self.crontab):
-            self.logger.warning(f'{self.get_fullname()}: no update cycle or crontab set. The smartmeter will not be queried automatically')
+            self.logger.warning(
+                f'{self.get_fullname()}: no update cycle or crontab set. The smartmeter will not be queried automatically'
+            )
 
     def _get_module(self, protocol=None):
-        """ return module reference for SML/DMLS module """
+        """return module reference for SML/DMLS module"""
         if not protocol:
             protocol = self.protocol
         name = __name__ + '.' + str(protocol).lower()
@@ -415,16 +435,22 @@ class Smartmeter(SmartPlugin, Conversion):
             obis = self.get_iattr_value(item.conf, OBIS_CODE)
             prop = self.get_iattr_value(item.conf, OBIS_PROPERTY, default='value')
             if prop not in PROPS:
-                self.logger.warning(f'item {item}: invalid property {prop} requested for obis {obis}, setting default "value"')
+                self.logger.warning(
+                    f'item {item}: invalid property {prop} requested for obis {obis}, setting default "value"'
+                )
                 prop = 'value'
             vtype = self.get_iattr_value(item.conf, OBIS_VTYPE, default='')
             if vtype:
                 if prop.startswith('value'):
                     if vtype in ('int', 'num', 'float', 'str') and vtype != item.type():
-                        self.logger.warning(f'item {item}: item type is {item.type()}, but obis_vtype is "{vtype}", please fix item definition')
+                        self.logger.warning(
+                            f'item {item}: item type is {item.type()}, but obis_vtype is "{vtype}", please fix item definition'
+                        )
                         vtype = None
                 else:
-                    self.logger.warning(f'item {item} has obis_vtype set, which is only valid for "value" property, not "{prop}", ignoring.')
+                    self.logger.warning(
+                        f'item {item} has obis_vtype set, which is only valid for "value" property, not "{prop}", ignoring.'
+                    )
                     vtype = None
             index = self.get_iattr_value(item.conf, OBIS_INDEX, default=0)
 
@@ -460,7 +486,9 @@ class Smartmeter(SmartPlugin, Conversion):
 
         # if "update items only every x seconds" is set:
         if self.timefilter > 0 and self._last_item_update + self.timefilter > time.time():
-            self.logger.debug(f'timefilter active, {int(self._last_item_update + self.timefilter - time.time())} seconds remaining')
+            self.logger.debug(
+                f'timefilter active, {int(self._last_item_update + self.timefilter - time.time())} seconds remaining'
+            )
             return
 
         if 'readout' in result:
@@ -498,7 +526,9 @@ class Smartmeter(SmartPlugin, Conversion):
                                     update = time.time()
                                 self.logger.debug(f'set item {item} for obis code {obis}:{prop} to value {itemValue}')
                             except ValueError as e:
-                                self.logger.error(f'error while converting value {val} for item {item}, obis code {obis}: {e}')
+                                self.logger.error(
+                                    f'error while converting value {val} for item {item}, obis code {obis}: {e}'
+                                )
                         else:
                             self.logger.debug(f'for item {item} and obis code {obis}:{prop} no content was received')
         if update > 0:
@@ -508,7 +538,7 @@ class Smartmeter(SmartPlugin, Conversion):
         """
         Coroutine for the session that starts the serial connection and listens
         """
-        self.logger.info("plugin_coro started")
+        self.logger.info('plugin_coro started')
         try:
             self.reader = self._get_module().AsyncReader(self.logger, self, self._config)
         except ImportError as e:
@@ -521,10 +551,10 @@ class Smartmeter(SmartPlugin, Conversion):
 
         # reader quit, exit loop
         self.alive = False
-        self.logger.info("plugin_coro finished")
+        self.logger.info('plugin_coro finished')
 
     async def _run_listener(self):
-        """ call async listener and restart if requested """
+        """call async listener and restart if requested"""
         while self.alive:
             # reader created, run reader
             try:

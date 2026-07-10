@@ -39,7 +39,7 @@
 
 import logging
 from datetime import datetime, timedelta
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf, time
 from lib.shtime import Shtime
 from lib.module import Modules
 from lib.item import Items
@@ -48,7 +48,7 @@ from lib.scheduler import Scheduler
 
 class Simulation(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.1"
+    PLUGIN_VERSION = '1.5.1'
 
     def __init__(self, sh, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ class Simulation(SmartPlugin):
         self.lastday = ''
         self.items = Items.get_instance()
         self.scheduler = Scheduler.get_instance()
-        if  len(self.get_parameter_value('callers')) == 0:
+        if len(self.get_parameter_value('callers')) == 0:
             self._callers = None
         else:
             self._callers = self.get_parameter_value('callers')
@@ -80,7 +80,7 @@ class Simulation(SmartPlugin):
         self.logger.info('Exit Simulation')
         try:
             self.file.close()
-        except:
+        except Exception:
             self.logger.error('No file to close')
         self.alive = False
 
@@ -112,7 +112,6 @@ class Simulation(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         if (item.conf['sim'] == 'track') and (self.state() == 2) and (self._callers is None or caller in self._callers):
             now = self.shtime.now()
-            day = now.day
             self.file.write(now.strftime('%a;%H:%M:%S'))
             self.file.write(';')
             self.file.write(item.property.path)
@@ -123,7 +122,8 @@ class Simulation(SmartPlugin):
             self.file.write('\n')
             self.file.flush()
             self._message_item(
-                'Last event recorded: {}<br>{}   {}'.format(now.strftime('%H:%M:%S'), item.property.path, item(), 'Simulation'))
+                'Last event recorded: {}<br>{}   {}'.format(now.strftime('%H:%M:%S'), item.property.path, item())
+            )
             return None
         if (item.conf['sim'] == 'control') and (caller != 'Simulation'):
             self.state_selector[self.state(), self.control()](self)
@@ -150,12 +150,12 @@ class Simulation(SmartPlugin):
             self._schedule_recording_start(start)
 
     # ----------------------- _schedule_recording_start ---------------------------
-    def _schedule_recording_start(self, time):
+    def _schedule_recording_start(self, start_time):
         self.state(1, 'Simulation')
         self.scheduler_remove('startrecord')
-        self._message_item('Recording starts {}'.format(time), caller='Simulation')
-        self.logger.debug('Scheduling record start {}'.format(time))
-        self.scheduler_add('startrecord', self._start_recording, next=time)
+        self._message_item('Recording starts {}'.format(start_time), caller='Simulation')
+        self.logger.debug('Scheduling record start {}'.format(start_time))
+        self.scheduler_add('startrecord', self._start_recording, next=start_time)
 
     # ----------------------------- _start_recording --------------------------------
     def _start_recording(self):
@@ -179,7 +179,7 @@ class Simulation(SmartPlugin):
         self.logger.debug('stop record')
         try:
             self.file.close()
-        except:
+        except Exception:
             self.logger.error('Not running')
 
     # ----------------------------- _start_playbacl ---------------------------------
@@ -203,7 +203,7 @@ class Simulation(SmartPlugin):
         self._message_item('Playback stopped', 'Simulation')
         try:
             self.file.close()
-        except:
+        except Exception:
             self.logger.error('No fileto close')
 
     # --------------------------------- _set_item -----------------------------------
@@ -222,7 +222,7 @@ class Simulation(SmartPlugin):
             item = self.items.return_item(target)
             try:
                 item(value, caller='Simulation')
-            except:
+            except Exception:
                 self.logger.error('Skipped unknown item: {}'.format(target))
         entry = self.file.readline()
         if entry in ['NextDay', 'NextDay\n']:
@@ -237,11 +237,10 @@ class Simulation(SmartPlugin):
             seconds = int(time.split(':')[2])
             now = self.shtime.now()
             next = now.replace(hour=hour, minute=minute, second=seconds)
-            dif = next - now
             if (self.lastday != '') and (self.lastday != day):
                 self.logger.debug('Found next day {} {} {} shitfing to tomorrow.'.format(target, value, next))
                 next = next + timedelta(1)
-            self._message_item('Next event: {}<br>{}   {}'.format(time, target, value, 'Simulation'))
+            self._message_item('Next event: {}<br>{}   {}'.format(time, target, value))
             self.logger.debug('Scheduling {} {} {}'.format(target, value, next))
             self.scheduler_add('simulate', self._set_item, value={'target': target, 'value': value}, next=next)
             self.lastday = day
@@ -269,7 +268,6 @@ class Simulation(SmartPlugin):
                 seconds = int(time.split(':')[2])
                 now = self.shtime.now()
                 next = now.replace(hour=hour, minute=minute, second=seconds)
-                dif = next - now
             else:
                 self.logger.info('End of file reached, simulation ended')
                 self._message_item('Simulation ended', 'Simulation')
@@ -307,7 +305,7 @@ class Simulation(SmartPlugin):
             self.logger.error('NoFile {}'.format(error))
             return 0
         entry = 'bla'
-        tank = 0;
+        tank = 0
         while entry != '':
             entry = self.file.readline()
             if entry in ['NextDay', 'NextDay\n']:
@@ -334,9 +332,9 @@ class Simulation(SmartPlugin):
         #        except IOError as error:
         #        self.logger.error('Canot open tempfile: {}'.format(error))
         entry = 'bla'
-        while (entry not in ['NextDay','NextDay\n']) and (entry != ''):
+        while (entry not in ['NextDay', 'NextDay\n']) and (entry != ''):
             entry = self.file.readline()
-        while (entry != ''):
+        while entry != '':
             entry = self.file.readline()
             self.tempfile.write(entry)
         self.file.close()
@@ -344,7 +342,7 @@ class Simulation(SmartPlugin):
         self.tempfile = open('/tmp/simulation.tmp', 'r')
         self.file = open(self._datafile, 'w')
         entry = 'bla'
-        while (entry != ''):
+        while entry != '':
             entry = self.tempfile.readline()
             self.file.write(entry)
         self.file.close()
@@ -353,22 +351,24 @@ class Simulation(SmartPlugin):
 
     # state_selector state, control
     #                       (0,1): _remove_first_day,
-    state_selector = {(0, 0): _do_nothing,
-                      (0, 1): _do_nothing,
-                      (0, 2): _start_playback,
-                      (0, 3): _start_record,
-                      (1, 0): _do_nothing,
-                      (1, 1): _stop_recording,
-                      (1, 2): _do_nothing,
-                      (1, 3): _start_recording,
-                      (2, 0): _do_nothing,
-                      (2, 1): _stop_recording,
-                      (2, 2): _start_playback,
-                      (2, 3): _do_nothing,
-                      (4, 0): _do_nothing,
-                      (4, 1): _stop_playback,
-                      (4, 2): _do_nothing,
-                      (4, 3): _do_nothing, }
+    state_selector = {
+        (0, 0): _do_nothing,
+        (0, 1): _do_nothing,
+        (0, 2): _start_playback,
+        (0, 3): _start_record,
+        (1, 0): _do_nothing,
+        (1, 1): _stop_recording,
+        (1, 2): _do_nothing,
+        (1, 3): _start_recording,
+        (2, 0): _do_nothing,
+        (2, 1): _stop_recording,
+        (2, 2): _start_playback,
+        (2, 3): _do_nothing,
+        (4, 0): _do_nothing,
+        (4, 1): _stop_playback,
+        (4, 2): _do_nothing,
+        (4, 3): _do_nothing,
+    }
 
     def _clear_file(self):
         self.logger.debug('Clear File')
@@ -380,38 +380,35 @@ class Simulation(SmartPlugin):
         self.tank(0)
 
     def init_webinterface(self):
-        """"
+        """ "
         Initialize the web interface for this plugin
 
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
+            self.mod_http = Modules.get_instance().get_module('http')  # try/except to handle disabled http module
+        except Exception:
             self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
 
         # set application configuration for cherrypy
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
         config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
+            '/': {'tools.staticdir.root': webif_dir},
+            '/static': {'tools.staticdir.on': True, 'tools.staticdir.dir': 'static'},
         }
 
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
+        self.mod_http.register_webif(
+            WebInterface(webif_dir, self),
+            self.get_shortname(),
+            config,
+            self.get_classname(),
+            self.get_instance_name(),
+            description='',
+        )
 
         return True
 
@@ -428,7 +425,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -477,10 +473,17 @@ class WebInterface(SmartPluginWebIf):
             simulate_entry = simulate['next']
 
         tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           interface=None, item_count=len(self.plugin.get_items()),
-                           plugin_info=self.plugin.get_info(), tabcount=1, startRecord=start_record_entry,
-                           simulate=simulate_entry,
-                           cmd=cmd, data_file_content=data_file_content,
-                           tab1title="Simulation Items (%s)" % len(self.plugin.get_items()),
-                           p=self.plugin)
+        return tmpl.render(
+            plugin_shortname=self.plugin.get_shortname(),
+            plugin_version=self.plugin.get_version(),
+            interface=None,
+            item_count=len(self.plugin.get_items()),
+            plugin_info=self.plugin.get_info(),
+            tabcount=1,
+            startRecord=start_record_entry,
+            simulate=simulate_entry,
+            cmd=cmd,
+            data_file_content=data_file_content,
+            tab1title='Simulation Items (%s)' % len(self.plugin.get_items()),
+            p=self.plugin,
+        )

@@ -28,20 +28,19 @@ from lib.model.smartplugin import SmartPlugin
 
 class Join(SmartPlugin):
     URL_PREFIX = 'https://joinjoaomgcd.appspot.com/_ah/api/'
-    SEND_URL = URL_PREFIX+'messaging/v1/sendPush?apikey='
-    LIST_URL = URL_PREFIX+'registration/v1/listDevices?apikey='
+    SEND_URL = URL_PREFIX + 'messaging/v1/sendPush?apikey='
+    LIST_URL = URL_PREFIX + 'registration/v1/listDevices?apikey='
 
-    PLUGIN_VERSION = "1.4.4"
-
+    PLUGIN_VERSION = '1.4.4'
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
         from bin.smarthome import VERSION
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
-
 
         self._api_key = self.get_parameter_value('api_key')
         self._device_id = self.get_parameter_value('device_id')
@@ -52,71 +51,97 @@ class Join(SmartPlugin):
     def stop(self):
         self.alive = False
 
-    def send(self, title=None, text=None, icon=None, find=None, smallicon=None, device_id=None, device_ids=None,
-             device_names=None, url=None, image=None, sound=None, group=None, clipboard=None, file=None,
-             callnumber=None, smsnumber=None, smstext=None, mmsfile=None, wallpaper=None, lockWallpaper=None,
-             interruptionFilter=None, mediaVolume=None, ringVolume=None, alarmVolume=None, say=None, language=None):
+    def send(
+        self,
+        title=None,
+        text=None,
+        icon=None,
+        find=None,
+        smallicon=None,
+        device_id=None,
+        device_ids=None,
+        device_names=None,
+        url=None,
+        image=None,
+        sound=None,
+        group=None,
+        clipboard=None,
+        file=None,
+        callnumber=None,
+        smsnumber=None,
+        smstext=None,
+        mmsfile=None,
+        wallpaper=None,
+        lockWallpaper=None,
+        interruptionFilter=None,
+        mediaVolume=None,
+        ringVolume=None,
+        alarmVolume=None,
+        say=None,
+        language=None,
+    ):
         req_url = self.SEND_URL + self._api_key
         if title:
-            req_url += "&title=" + title
+            req_url += '&title=' + title
         if text:
-            req_url += "&text=" + text
+            req_url += '&text=' + text
         if icon:
-            req_url += "&icon=" + icon
+            req_url += '&icon=' + icon
         if find:
-            req_url += "&find=" + find
+            req_url += '&find=' + find
         if smallicon:
-            req_url += "&smallicon=" + smallicon
+            req_url += '&smallicon=' + smallicon
         if device_ids:
-            req_url += "&deviceIds=" + device_ids
+            req_url += '&deviceIds=' + device_ids
         if device_names:
-            req_url += "&deviceNames=" + device_names
+            req_url += '&deviceNames=' + device_names
         if url:
-            req_url += "&url=" + url
+            req_url += '&url=' + url
         if image:
-            req_url += "&image=" + image
+            req_url += '&image=' + image
         if sound:
-            req_url += "&sound=" + sound
+            req_url += '&sound=' + sound
         if group:
-            req_url += "&group=" + group
+            req_url += '&group=' + group
         if clipboard:
-            req_url += "&clipboard=" + clipboard
+            req_url += '&clipboard=' + clipboard
         if file:
-            req_url += "&file=" + file
+            req_url += '&file=' + file
         if callnumber:
-            req_url += "&callnumber=" + callnumber
+            req_url += '&callnumber=' + callnumber
         if smsnumber:
-            req_url += "&smsnumber=" + smsnumber
+            req_url += '&smsnumber=' + smsnumber
         if smstext:
-            req_url += "&smstext=" + smstext
+            req_url += '&smstext=' + smstext
         if mmsfile:
-            req_url += "&mmsfile=" + mmsfile
+            req_url += '&mmsfile=' + mmsfile
         if wallpaper:
-            req_url += "&wallpaper=" + wallpaper
+            req_url += '&wallpaper=' + wallpaper
         if lockWallpaper:
-            req_url += "&lockWallpaper=" + lockWallpaper
+            req_url += '&lockWallpaper=' + lockWallpaper
         if interruptionFilter:
-            req_url += "&interruptionFilter=" + interruptionFilter
+            req_url += '&interruptionFilter=' + interruptionFilter
         if mediaVolume:
-            req_url += "&mediaVolume=" + mediaVolume
+            req_url += '&mediaVolume=' + mediaVolume
         if ringVolume:
-            req_url += "&ringVolume=" + ringVolume
+            req_url += '&ringVolume=' + ringVolume
         if alarmVolume:
-            req_url += "&alarmVolume=" + alarmVolume
+            req_url += '&alarmVolume=' + alarmVolume
         if device_id:
-            req_url += "&deviceId=" + device_id
+            req_url += '&deviceId=' + device_id
         else:
-            req_url += "&deviceId=" + self._device_id
+            req_url += '&deviceId=' + self._device_id
         if say:
-            req_url += "&say=" + say
+            req_url += '&say=' + say
         if language:
-            req_url += "&language=" + language
+            req_url += '&language=' + language
         self.logger.debug(req_url)
         try:
             requests.get(req_url)
         except Exception as e:
             self.logger.error(
-                "Exception when sending GET request towards https://joinjoaomgcd.appspot.com: %s" % str(e))
+                'Exception when sending GET request towards https://joinjoaomgcd.appspot.com: %s' % str(e)
+            )
             return
         return
 

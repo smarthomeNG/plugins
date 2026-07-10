@@ -36,7 +36,7 @@ except TypeError as e:
 except AttributeError as e:
   logger.debug("Problems fetching wetter.com forecast.  AttributeError: {}".format(e))
 
-except:
+except Exception:
   e = sys.exc_info()[0]
   logger.debug("Problems fetching wetter.com forecast:  {}".format(e))
 

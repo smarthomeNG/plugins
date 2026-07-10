@@ -29,7 +29,7 @@ from lib.module import Modules
 from lib.model.smartplugin import SmartPlugin
 
 from .webif import WebInterface
-from .beodevices import *
+from .beodevices import BeoDevices
 import plugins.beolink.beonotifications as beonotify
 
 # If a needed package is imported, which might be not installed in the Python environment,
@@ -61,7 +61,7 @@ class BeoNetlink(SmartPlugin):
 
         # Call init code of parent class (MqttPlugin)
         super().__init__()
-        if self._init_complete == False:
+        if not self._init_complete:
             return
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
@@ -86,7 +86,6 @@ class BeoNetlink(SmartPlugin):
             os.mkdir(self.datadir)
             self.logger.info('Data directory for plugin created: {}'.format(self.datadir))
 
-
         # cycle time in seconds, only needed, if hardware/interface needs to be
         # polled for value changes by adding a scheduler entry in the run method of this plugin
         # (maybe you want to make it a plugin parameter?)
@@ -102,7 +101,7 @@ class BeoNetlink(SmartPlugin):
         self.beodevices = BeoDevices(self.fromip, self.toip, self.logger, self.datadir, self.translate)
 
         self._attrib_current_number = 0  # current number of the subscription entry
-        self.beo_items = {}      # key= beo_id + '_' + beo_status + '_' + self._attrib_current_number
+        self.beo_items = {}  # key= beo_id + '_' + beo_status + '_' + self._attrib_current_number
         self._item_values = {}  # dict of dicts
 
         # The following part of the __init__ method is only needed, if a webinterface is being implemented:
@@ -120,21 +119,21 @@ class BeoNetlink(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
         # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well
         self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
 
-        #self.scheduler_add('scheduler_param_test_1', self.scheduler_param_test, value={'param1':'val1'}, cycle=30)
-        #self.scheduler_add('scheduler_param_test_2', self.scheduler_param_test, value={'value':'val2'}, cycle=30)
+        # self.scheduler_add('scheduler_param_test_1', self.scheduler_param_test, value={'param1':'val1'}, cycle=30)
+        # self.scheduler_add('scheduler_param_test_2', self.scheduler_param_test, value={'value':'val2'}, cycle=30)
 
         self.beodevices.get_devicelist()
-        #self.beodeviceinfo = self.beodevices.get_devicelist()0
-        #self.beo_keys = list(self.beodeviceinfo.keys())
-        #self.beo_keys.sort()
+        # self.beodeviceinfo = self.beodevices.get_devicelist()0
+        # self.beo_keys = list(self.beodeviceinfo.keys())
+        # self.beo_keys.sort()
 
         self.create_notification_objects()
 
-        #for beo_key in self.beodevices.beo_keys:
+        # for beo_key in self.beodevices.beo_keys:
         #    self.scheduler_add('process_notification_'+beo_key, self.process_notification, value={'id': beo_key}, cycle=2)
 
         self.alive = True
@@ -145,8 +144,8 @@ class BeoNetlink(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
-        #for beo_key in self.beodevices.beo_keys:
+        self.logger.debug('Stop method called')
+        # for beo_key in self.beodevices.beo_keys:
         #    self.scheduler_remove('process_notification_'+beo_key)
         self.scheduler_remove('poll_device')
         self.alive = False
@@ -165,7 +164,7 @@ class BeoNetlink(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, 'beo_id'):
-            self.logger.debug("parse item: {}".format(item))
+            self.logger.debug('parse item: {}'.format(item))
 
             beo_id = self.get_iattr_value(item.conf, 'beo_id').upper()
             beo_status = self.get_iattr_value(item.conf, 'beo_status')
@@ -174,11 +173,10 @@ class BeoNetlink(SmartPlugin):
                 self._attrib_current_number += 1
                 beo_item_key = beo_id + '_' + beo_status.lower() + '_' + str(self._attrib_current_number).zfill(3)
                 self.beo_items[beo_item_key] = item
-                self.logger.debug("beo_item_key: {}, item: {}".format(beo_item_key, item.property.path))
+                self.logger.debug('beo_item_key: {}, item: {}'.format(beo_item_key, item.property.path))
 
             if beo_command:
                 return self.update_item
-
 
     def parse_logic(self, logic):
         """
@@ -187,7 +185,6 @@ class BeoNetlink(SmartPlugin):
         if 'xxx' in logic.conf:
             # self.function(logic['name'])
             pass
-
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -202,19 +199,22 @@ class BeoNetlink(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        self.logger.debug("update_item: {}".format(item.property.path))
+        self.logger.debug('update_item: {}'.format(item.property.path))
 
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
+            self.logger.info('Update item: {}, item has been changed outside this plugin'.format(item.property.path))
 
             if self.has_iattr(item.conf, 'beo_id'):
-                self.logger.debug("update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item, caller, source, dest))
+                self.logger.debug(
+                    "update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(
+                        item, caller, source, dest
+                    )
+                )
 
                 beo_id = self.get_iattr_value(item.conf, 'beo_id').upper()
                 beo_command = self.get_iattr_value(item.conf, 'beo_command').lower()
-                value = item()
                 if beo_command == 'muted':
                     self.beodevices.set_speaker_muted(beo_id, item())
                     api_url = ''
@@ -248,7 +248,6 @@ class BeoNetlink(SmartPlugin):
 
         # self.put_beo_api('10.0.0.239', '/BeoZone/Zone/Stand/Active', json_elements='{"active":0}')
 
-
     def poll_device(self):
         """
         Polls for updates of the device
@@ -257,7 +256,7 @@ class BeoNetlink(SmartPlugin):
         changes on it's own, but has to be polled to get the actual status.
         It is called by the scheduler.
         """
-        self.logger.debug("poll_device: Got called")
+        self.logger.debug('poll_device: Got called')
 
         # get the value(s) from the device
         self.beodevices.update_devices_info()
@@ -269,11 +268,11 @@ class BeoNetlink(SmartPlugin):
             beo_status = item.conf['beo_status']
             if beo_status and beo_id != '':
                 # set items according to beo_status
-                #if beo_status == 'beoname':
+                # if beo_status == 'beoname':
                 #    deviceinfo = self.beodevices.beodeviceinfo[beo_id].get('FriendlyName', None)
-                #elif beo_status == 'beotype':
+                # elif beo_status == 'beotype':
                 #    deviceinfo = self.beodevices.beodeviceinfo[beo_id].get('productType', None)
-                #else:
+                # else:
                 #    deviceinfo = self.beodevices.beodeviceinfo[beo_id].get(beo_status, None)
                 beo_device = self.beodevices.beodeviceinfo.get(beo_id, None)
                 if beo_device is None:
@@ -300,8 +299,8 @@ class BeoNetlink(SmartPlugin):
 
                     else:
                         deviceinfo = self.beodevices.beodeviceinfo[beo_id].get(beo_status, None)
-                    #self.logger.info(f"poll_device: item={item.property.path}, beo_id={beo_id}, beo_status={beo_status}, self.beodevices.beodeviceinfo[beo_id]={self.beodevices.beodeviceinfo[beo_id]}")
-                    #self.logger.info(f"poll_device: item={item.property.path}, deviceinfo={deviceinfo}")
+                    # self.logger.info(f"poll_device: item={item.property.path}, beo_id={beo_id}, beo_status={beo_status}, self.beodevices.beodeviceinfo[beo_id]={self.beodevices.beodeviceinfo[beo_id]}")
+                    # self.logger.info(f"poll_device: item={item.property.path}, deviceinfo={deviceinfo}")
                     if isinstance(deviceinfo, tuple):
                         if item._type == 'num':
                             beo_value = deviceinfo[1]
@@ -311,35 +310,44 @@ class BeoNetlink(SmartPlugin):
                         beo_value = deviceinfo
 
                     if item() == beo_value:
-                        self.logger.debug("update_deviceinfo: Updated item {} with beo-{} {}".format(item.property.path, beo_status, beo_value))
+                        self.logger.debug(
+                            'update_deviceinfo: Updated item {} with beo-{} {}'.format(
+                                item.property.path, beo_status, beo_value
+                            )
+                        )
                     else:
-                        self.logger.info("update_deviceinfo: Changed item {} with beo-{} {}".format(item.property.path, beo_status, beo_value))
+                        self.logger.info(
+                            'update_deviceinfo: Changed item {} with beo-{} {}'.format(
+                                item.property.path, beo_status, beo_value
+                            )
+                        )
                     item(beo_value, self.get_shortname())
                     self._update_item_values(item, beo_value)
             else:
-                self.logger.info(f"poll_device: No beo_status")
+                self.logger.info('poll_device: No beo_status')
         return
-
 
     notification_objects = {}
 
     def create_notification_objects(self):
 
         for id in self.beodevices.beo_keys:
-            self.logger.info(f"No Instance of notification class for device '{self.beodevices.beodeviceinfo[id]['device']['FriendlyName']}', creating one")
-            self.notification_objects[id] = beonotify.beo_notifications(device_dict=self.beodevices.beodeviceinfo[id], logger_name=self.logger.name + '.notify')
+            self.logger.info(
+                f"No Instance of notification class for device '{self.beodevices.beodeviceinfo[id]['device']['FriendlyName']}', creating one"
+            )
+            self.notification_objects[id] = beonotify.beo_notifications(
+                device_dict=self.beodevices.beodeviceinfo[id], logger_name=self.logger.name + '.notify'
+            )
 
+    def process_notification(self, id=None):
 
-    def process_notification(self, id=None ):
-
-        #if self.notification_objects.get('id', None) is None:
+        # if self.notification_objects.get('id', None) is None:
         #    self.logger.notice(f"No Instance of notification class for device '{self.beodevices.beodeviceinfo[id]['FriendlyName']}', creating one")
         #    self.notification_objects[id] = beonotify.beo_notifications(device_dict=self.beodevices.beodeviceinfo[id], logger_name=self.logger.name + '.notify')
         #    self.logger.notice(f"notification_objects='{self.notification_objects}'")
 
         if self.notification_objects.get(id, None) is not None:
             self.notification_objects[id].process_stream()
-
 
     def _update_item_values(self, item, payload):
         """
@@ -357,5 +365,3 @@ class BeoNetlink(SmartPlugin):
         self._item_values[item.property.path]['last_update'] = item.last_update().strftime('%d.%m.%Y %H:%M:%S')
         self._item_values[item.property.path]['last_change'] = item.last_change().strftime('%d.%m.%Y %H:%M:%S')
         return
-
-

@@ -269,13 +269,13 @@ class DLMS(SmartPlugin):
             if not self._serialport == dlms_serial.name:
                 self.logger.debug("Asked for {} as serial port, but really using now {}".format(
                     self._serialport, dlms_serial.name))
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             self.logger.error("Serial port '{0}' does not exist, please check your port".format( self._serialport))
             return
-        except OSError as e:
+        except OSError:
             self.logger.error("Serial port '{0}' does not exist, please check the spelling".format(self._serialport))
             return
-        except serial.SerialException as e:
+        except serial.SerialException:
             if dlms_serial is None:
                 self.logger.error("Serial port '{0}' could not be opened".format(self._serialport))
             else:
@@ -317,13 +317,13 @@ class DLMS(SmartPlugin):
         # We need to examine the read response here for an echo of the _Request_Message
         # some meters answer if appropriate meter is available for answering with an echo of the request Message
         if response == Request_Message:
-            self.logger.debug("Request Message was echoed, need to read the identification message".format(response))
+            self.logger.debug("Request Message was echoed, need to read the identification message")
             # read Identification message if Request was echoed
             # now read the capabilities and type/brand line from Smartmeter
             # e.g. b'/LGZ5\\2ZMD3104407.B32\r\n'
             response = self._read_data_block_from_serial(dlms_serial)
         else:
-            self.logger.debug("Request Message was echoed, need to read the identification message".format(response))
+            self.logger.debug("Request Message was echoed, need to read the identification message")
 
         self.logger.debug("Time to get first identification message from smartmeter: "
                           "{}".format(self.format_time(time.time() - runtime)))
@@ -359,7 +359,6 @@ class DLMS(SmartPlugin):
                                       '7': "reserved", '8': "reserved", '9': "reserved"}
 
         # always '3' but it is always initiated by the metering device so it can't be encountered here
-        Baudrates_Protocol_Mode_D = { '3' : 2400}
         #Baudrates_Protocol_Mode_E is the same as Mode_C
 
         Baudrate_identification = chr(Identification_Message[4])
@@ -684,7 +683,7 @@ class DLMS(SmartPlugin):
                         #todo: error handling for key errors
                         Index = int(attribute[1]) if len(attribute)>1 else 0
                         Key = attribute[2] if len(attribute)>2 else 'Value'
-                        if not Key in ['Value', 'Unit']: Key = 'Value'
+                        if Key not in ['Value', 'Unit']: Key = 'Value'
                         Converter = attribute[3] if len(attribute)>3 else ''
                         try:
                             itemValue = Values[Index][Key]

@@ -8,8 +8,7 @@ from .OverrulingMergerMerger import OverrulingMergerMerger
 from .RingReader import RingReader
 
 
-class TextDisplayModel():
-
+class TextDisplayModel:
     def __init__(self):
         self._items_with_delay = {}
         self._message_rings = {}
@@ -23,8 +22,7 @@ class TextDisplayModel():
     """
 
     def append_message_source_to_ring(self, ring, content_source_path, content_source, is_relevant_path, is_relevant):
-        message_source = MessageSourceModel(
-            content_source_path, content_source, is_relevant_path, is_relevant)
+        message_source = MessageSourceModel(content_source_path, content_source, is_relevant_path, is_relevant)
 
         self.__prepare_ring_model(ring)
 
@@ -43,12 +41,14 @@ class TextDisplayModel():
     def get_sink_item_paths_for_ring(self, ring):
         return self._rings_to_sink_item_path[ring]
 
-    def append_message_sink_to_rings(self, item_path, source_rings, default_value=None, prioritized_mode=True, tick_time_hint=3):
+    def append_message_sink_to_rings(
+        self, item_path, source_rings, default_value=None, prioritized_mode=True, tick_time_hint=3
+    ):
         for ring in source_rings:
             self.__prepare_ring_model(ring)
             self.__store_ring_to_sink_item_path(ring, item_path)
 
-        if(prioritized_mode):
+        if prioritized_mode:
             reader = self.__read_prioritized(source_rings)
         else:
             reader = self.__read_serialized(source_rings)
@@ -69,8 +69,7 @@ class TextDisplayModel():
             if self.__any_relevant_message_in(overruling_rings):
                 return False
 
-        sink_model.reader.merger = OverrulingMergerMerger(
-            base_merger, overruling_merger, overruler)
+        sink_model.reader.merger = OverrulingMergerMerger(base_merger, overruling_merger, overruler)
         self.__register_reader_to_rings(sink_model.reader, overruling_rings)
 
     def update_source_relevance(self, source_is_relevant_path):
@@ -96,7 +95,7 @@ class TextDisplayModel():
             dm = self.get_delay_for_item(delay_model_key)
             if dm.intent_pending:
                 yield dm
-    
+
     def introspect_sink(self, sink_key):
         sink_model = self._items_with_message_sink[sink_key]
         return sink_model.introspect()
@@ -132,13 +131,13 @@ class TextDisplayModel():
     """
 
     def __prepare_ring_model(self, ring):
-        if not ring in self._message_rings:
+        if ring not in self._message_rings:
             self._message_rings[ring] = MessageRingModel(ring)
         return self._message_rings[ring]
 
     def __register_reader_to_rings(self, reader, ring_names):
         for ring_name in ring_names:
-            if not ring_name in self._ring_to_readers:
+            if ring_name not in self._ring_to_readers:
                 self._ring_to_readers[ring_name] = []
             self._ring_to_readers[ring_name].append(reader)
 

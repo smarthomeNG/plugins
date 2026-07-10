@@ -1,0 +1,231 @@
+%YAML 1.1
+# vim: set et ts=4 sts=4 sw=4 ai ff=unix nu wrap :
+---
+
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Lesen und Schreiben von Werten einer Viessmann Heizung'
+        en: 'Read and write data of a Viessmann heating system'
+    maintainer: Morg
+    tester: sisamiwe, tcr82
+    keywords: viessmann heating optolink
+    state: ready                    # change to ready when done with development
+    version: 1.2.3                  # Plugin version
+    sh_minversion: 1.6.0            # minimum shNG version to use this plugin
+    py_minversion: 3.6
+    multi_instance: false           # plugin supports multi instance
+    restartable: true
+    classname: Viessmann            # class containing the plugin
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1455991-viessmann-plugin-neuentwicklung-python-hilfe/
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    serialport:
+        type: str
+        default: ''
+        description:
+            de: 'Serieller Port, an dem der Lesekopf angeschlossen ist'
+            en: 'Serial port the device is connected to'
+
+    heating_type:
+        type: str
+        default: ''
+        description:
+            de: 'Gerätetype der Heizung'
+            en: 'Device type of heating system'
+
+    protocol:
+        type: str
+        default: 'P300'
+        valid list:
+            - 'P300'
+            - 'KW'
+        description:
+            de: 'Protokoll der Heizung'
+            en: 'Protocol of heating system'
+
+    timeout:
+        type: num
+        default: 1.5
+        description:
+            de: 'Zeitbegrenzung für das Lesen vom seriellen Port in Sekunden'
+            en: 'Timeout for serial read operations in seconds'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    viess_send:
+        type: str
+        description:
+            de: 'Änderung des Items wird mit konfiguriertem Kommando an die Heizung geschickt'
+            en: 'Changes to this item result in sending the configured command to the heating system'
+
+    viess_read:
+        type: str
+        description:
+            de: 'Liest Wert mit konfiguriertem Kommando aus der Heizung aus'
+            en: 'The item value should be read by using the configured command'
+
+    viess_read_afterwrite:
+        type: num
+        description:
+            de: 'Konfiguriert eine Verzögerung in Sekunden nachdem ein Lesekommando nach einem Schreibkommando an die Heizung geschickt wird'
+            en: 'Configures delay in seconds to issue a read command after write command'
+
+    viess_read_cycle:
+        type: num
+        description:
+            de: 'Konfiguriert ein Intervall in Sekunden für das Lesekommando'
+            en: 'Configures a interval in seconds for the read command'
+
+    viess_init:
+        type: bool
+        description:
+            de: 'Konfiguriert, ob der Wert aus der Heizung initialisiert werden soll'
+            en: 'Configures to initialize the item value with the value from the KWL system'
+
+    viess_trigger:
+        type: list(str)
+        description:
+            de: 'Konfiguriert Lesekommandos, die nach einem Schreibvorgang auf das Item aufgerufen werden'
+            en: 'Configures read commands after an update to the item'
+
+    viess_trigger_afterwrite:
+        type: num
+        description:
+            de: 'Konfiguriert eine Verzögerung in Sekunden, bis ein Trigger ausgeführt werden soll, nachdem ein Wert gesetzt wurde'
+            en: 'Configures delay in seconds to run trigger commands after item update'
+
+    viess_update:
+        type: bool
+        description:
+            de: 'Liest alle konfigurierten Items neu, wenn es auf True gesetzt wird'
+            en: 'Triggers reading of all configured items if set to True'
+
+    viess_timer:
+        type: str
+        description:
+            de: 'Liest alle Timer zur übergebenen Anwendung (z.B. Heizkreis_A1M1) und stellt diese für die Nutzung mit UZSU zur Verfügung'
+            en: 'Provides an UZSU-compatible dict with all timers for the given application (e.g. Heizkreis_A1M1)'
+
+    viess_ba_list:
+        type: bool
+        description:
+            de: 'Gibt nach der Initialisierung eine Liste aller für die konfigurierte Heizung gültigen Betriebsarten zurück'
+            en: 'Returns a list of valid operating modes for the configured device type after initialization'
+
+item_structs:
+    timer:
+        name: Schaltzeiten in Einzelzeiten fuer An und Aus
+
+        an1:
+            name: erste Anschaltzeit
+            type: str
+            visu_acl: rw
+
+        aus1:
+            name: erste Ausschaltzeit
+            type: str
+            visu_acl: rw
+
+        an2:
+            name: zweite Anschaltzeit
+            type: str
+            visu_acl: rw
+
+        aus2:
+            name: zweite Ausschaltzeit
+            type: str
+            visu_acl: rw
+
+        an3:
+            name: dritte Anschaltzeit
+            type: str
+            visu_acl: rw
+
+        aus3:
+            name: dritte Ausschaltzeit
+            type: str
+            visu_acl: rw
+
+        an4:
+            name: vierte Anschaltzeit
+            type: str
+            visu_acl: rw
+
+        aus4:
+            name: vierte Ausschaltzeit
+            type: str
+            visu_acl: rw
+
+    betriebsart:
+        name: Betriebsart in string wandeln
+
+        betriebsart_str:
+            type: str
+            eval: "'Neustart' if value == '' else ['Standby', 'Warmwasser (Schaltzeiten)', 'Heizen und Warmwasser (Schaltzeiten)', 'reduziert Heizen (dauernd)', 'normal Heizen (dauernd)'][int(value)]"
+            eval_trigger: ..
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    update_all_read_items:
+        type: NONE
+        description:
+            de: 'Stößt das Lesen aller konfigurierten Items an'
+            en: 'Triggers reading of all configured items'
+    read_addr:
+        type: foo
+        description:
+            de: 'Stößt das Lesen des angegebenen Datenpunkts an, der nicht an ein Item gebunden sein muss. Es erfolgt keine Zuweisung an ein Item. Rückgabewert ist der gelesene Wert, oder NONE bei Fehler'
+            en: 'Triggers reading of the supplied data point, which doesn''t have to be bound to an item. Result will not be assigned to an item. Return value is the read value, or NONE if an error occurred'
+        parameters:
+            addr:
+                type: str
+                description:
+                    de: 'Vierstellige Hex-Adresse des Datenpunktes'
+                    en: 'Four-digit hex address of the data point'
+    read_temp_addr:
+        type: foo
+        description:
+            de: 'Stößt das Lesen eines beliebigen Datenpunkts an, der nicht konfiguriert oder bekannt sein muss. Es erfolgt keine Zuweisung an ein Item. Rückgabewert ist der gelesene Wert, oder NONE bei Fehler'
+            en: 'Triggers reading of an arbitrary data point, which doesn''t have to be configured or known. Result will not be assigned to an item. Return value is the read value, or NONE if an error occurred'
+        parameters:
+            addr:
+                type: str
+                mandatory: yes
+                description:
+                    de: 'Vierstellige Hex-Adresse des Datenpunktes'
+                    en: 'Four-digit hex address of the data point'
+            length:
+                type: int
+                mandatory: yes
+                description:
+                    de: 'Länge der Geräteantwort in Bytes (1-8)'
+                    en: 'Lengh of device response in bytes (1-8)'
+                valid_min: 1
+                valid_max: 8
+            unit:
+                type: str
+                mandatory: yes
+                description:
+                    de: 'Einheitencode für die Konvertierung der Antwort. Muss in der Protokollkonfiguration ``unitset`` in commands.py definiert sein'
+                    en: 'Unit code for converting the response value. Needs to be defined in the protocol configuration ``unitset`` in commands.py'
+    write_addr:
+        type: foo
+        description:
+            de: 'Stößt das Schreiben des angegebenen Datenpunkts an, der nicht an ein Item gebunden sein muss. Der übergebene Wert muss zum konfigurierten Datentyp passen'
+            en: 'Triggers writing of the supplied data point, which doesn''t have to be bound to an item. The submitted value must match the configured data type'
+        parameters:
+            addr:
+                type: str
+                description:
+                    de: 'Vierstellige Hex-Adresse des Datenpunktes'
+                    en: 'Four-digit hex address of the data point'
+            value:
+                description:
+                    de: 'Zu schreibender Wert'
+                    en: 'Value to be written'

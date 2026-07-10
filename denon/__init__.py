@@ -31,10 +31,10 @@ from typing import Any
 if __name__ == '__main__':
     builtins.SDP_standalone = True
 
-    class SmartPlugin():
+    class SmartPlugin:
         pass
 
-    class SmartPluginWebIf():
+    class SmartPluginWebIf:
         pass
 
     BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
@@ -43,7 +43,17 @@ if __name__ == '__main__':
 else:
     builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import (PLUGIN_ATTR_MODEL, PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, PLUGIN_ATTR_CMD_CLASS, CONN_NULL, CONN_NET_TCP_CLI, CONN_SER_ASYNC)
+from lib.model.sdp.globals import (
+    PLUGIN_ATTR_MODEL,
+    PLUGIN_ATTR_NET_HOST,
+    PLUGIN_ATTR_CONNECTION,
+    PLUGIN_ATTR_SERIAL_PORT,
+    PLUGIN_ATTR_CONN_TERMINATOR,
+    PLUGIN_ATTR_CMD_CLASS,
+    CONN_NULL,
+    CONN_NET_TCP_CLI,
+    CONN_SER_ASYNC,
+)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 from lib.model.sdp.command import SDPCommandParseStr
 
@@ -56,7 +66,7 @@ builtins.SDP_standalone = False
 
 
 class denon(SmartDevicePlugin):
-    """ Device class for Denon AV. """
+    """Device class for Denon AV."""
 
     PLUGIN_VERSION = '1.2.0'
 
@@ -70,7 +80,9 @@ class denon(SmartDevicePlugin):
         elif PLUGIN_ATTR_SERIAL_PORT in self._parameters and self._parameters[PLUGIN_ATTR_SERIAL_PORT]:
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_SER_ASYNC
         else:
-            self.logger.error('Neither host nor serialport set, connection not possible. Using dummy connection, plugin will not work')
+            self.logger.error(
+                'Neither host nor serialport set, connection not possible. Using dummy connection, plugin will not work'
+            )
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_NULL
 
         self._parameters[PLUGIN_ATTR_CMD_CLASS] = SDPCommandParseStr
@@ -87,33 +99,33 @@ class denon(SmartDevicePlugin):
 
     def update_item(self, item: Item, caller: str | None = None, source: str | None = None, dest: str | None = None):
         cond_custominputnames = item.conf.get('denon_command') == 'general.custom_inputnames'
-        cond_commandexists = f'general.custom_inputnames' in self._commands._commands
-        cond_caller = caller not in [self.get_fullname(), "custom_inputnames"]
+        cond_commandexists = 'general.custom_inputnames' in self._commands._commands
+        cond_caller = caller not in [self.get_fullname(), 'custom_inputnames']
         if self.alive and cond_custominputnames and cond_commandexists and cond_caller:
             self.logger.debug(f'Custom input command dictionary got changed by {caller}')
             try:
-                dict1 = self.get_lookup("INPUT", "fwd")
+                dict1 = self.get_lookup('INPUT', 'fwd')
                 dict2 = item.property.value
                 merged_dict = {key: dict2[key] if key in dict2 else value for key, value in dict1.items()}
                 self.logger.debug(f'Updated input lookup to: {merged_dict}')
-                item(merged_dict, "custom_inputnames")
+                item(merged_dict, 'custom_inputnames')
             except Exception as e:
                 self.logger.debug(f'Issue updating input lookup: {e}')
             try:
                 itemsApi = Items.get_instance()
                 input3 = itemsApi.return_item(f'{item.property.path}.input3')
-                dict1 = self.get_lookup("INPUT3", "fwd")
+                dict1 = self.get_lookup('INPUT3', 'fwd')
                 dict2 = item.property.value
                 merged_dict = {key: dict2[key] if key in dict2 else value for key, value in dict1.items()}
                 self.logger.debug(f'Updated input3 lookup to: {merged_dict}')
-                input3(merged_dict, "custom_inputnames")
+                input3(merged_dict, 'custom_inputnames')
             except Exception as e:
                 self.logger.debug(f'Issue updating input3 lookup: {e}')
             try:
-                dict1 = self.get_lookup("VIDEOSELECT", "fwd")
+                dict1 = self.get_lookup('VIDEOSELECT', 'fwd')
                 dict2 = item.property.value
                 merged_dict = {key: dict2[key] if key in dict2 else value for key, value in dict1.items()}
-                table = "VIDEOSELECT"
+                table = 'VIDEOSELECT'
                 self.logger.debug(f'Updating videoselect lookup to: {merged_dict}')
                 self._commands.update_lookup_table(table, merged_dict)
                 for mode in ('rev', 'rci', 'list'):
@@ -145,7 +157,7 @@ class denon(SmartDevicePlugin):
         elif command == 'zone3.control.power':
             zone = 3
         if zone > 0 and value is True:
-            self.logger.debug(f"Device is turned on by command {command}. Requesting current state of zone {zone}.")
+            self.logger.debug(f'Device is turned on by command {command}. Requesting current state of zone {zone}.')
             time.sleep(1)
             self.send_command(f'zone{zone}.control.mute')
             self.send_command(f'zone{zone}.control.sleep')
@@ -161,10 +173,10 @@ class denon(SmartDevicePlugin):
             self.send_command(f'zone{zone}.control.listeningmode')
 
         if command == 'general.inputrate' and value != 0:
-            self.send_command(f'general.inputsignal')
-            self.send_command(f'general.inputformat')
-            self.send_command(f'general.inputresolution')
-            self.send_command(f'general.outputresolution')
+            self.send_command('general.inputsignal')
+            self.send_command('general.inputformat')
+            self.send_command('general.inputresolution')
+            self.send_command('general.outputresolution')
 
 
 if __name__ == '__main__':

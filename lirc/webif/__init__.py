@@ -43,7 +43,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -60,7 +59,6 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
-
     @cherrypy.expose
     def index(self, reload=None):
         """
@@ -73,11 +71,12 @@ class WebInterface(SmartPluginWebIf):
         tmpl = self.tplenv.get_template('index.html')
         pagelength = self.plugin.get_parameter_value('webif_pagelength')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           webif_pagelength=pagelength,
-                           item_count=len(self.plugin.get_item_list('lirc', True)),
-                           items=self.plugin.get_item_list('lirc', True))
-
+        return tmpl.render(
+            p=self.plugin,
+            webif_pagelength=pagelength,
+            item_count=len(self.plugin.get_item_list('lirc', True)),
+            items=self.plugin.get_item_list('lirc', True),
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -93,11 +92,18 @@ class WebInterface(SmartPluginWebIf):
             # get the new data
             data = {'response': self.plugin._responseStr, 'items': {}}
             for item in self.plugin.get_item_list('lirc', True):
-                data['items'].update({item.property.path: {'last_update': item.property.last_update.strftime('%d.%m.%Y %H:%M:%S'), 'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')}})
+                data['items'].update(
+                    {
+                        item.property.path: {
+                            'last_update': item.property.last_update.strftime('%d.%m.%Y %H:%M:%S'),
+                            'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S'),
+                        }
+                    }
+                )
             try:
                 return json.dumps(data)
             except Exception as e:
-                self.logger.error(f"get_data_html exception: {e}")
+                self.logger.error(f'get_data_html exception: {e}')
         return {}
 
     @cherrypy.expose
@@ -105,11 +111,11 @@ class WebInterface(SmartPluginWebIf):
         result = None
         if item is not None:
             item = self.plugin.items.return_item(item)
-            self.logger.debug(f"Sending remote signal for {item} via web interface")
+            self.logger.debug(f'Sending remote signal for {item} via web interface')
             result = self.plugin.update_item(item, caller=None, source='Web Interface', dest=None)
 
         if result is not None:
             # JSON zurücksenden
             cherrypy.response.headers['Content-Type'] = 'application/json'
-            self.logger.debug(f"Result for web interface: {result}")
+            self.logger.debug(f'Result for web interface: {result}')
             return json.dumps(result).encode('utf-8')

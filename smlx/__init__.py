@@ -34,6 +34,7 @@ from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
 
 from lib.shtime import Shtime
+
 shtime = Shtime.get_instance()
 
 
@@ -44,14 +45,60 @@ from .webif import WebInterface
 START_SEQUENCE = bytearray.fromhex('1B 1B 1B 1B 01 01 01 01')
 END_SEQUENCE = bytearray.fromhex('1B 1B 1B 1B 1A')
 UNITS = {  # Blue book @ http://www.dlms.com/documentation/overviewexcerptsofthedlmsuacolouredbooks/index.html
-          1: 'a', 2: 'mo', 3: 'wk', 4: 'd', 5: 'h', 6: 'min.', 7: 's', 8: '°', 9: '°C', 10: 'currency',
-         11: 'm', 12: 'm/s', 13: 'm³', 14: 'm³', 15: 'm³/h', 16: 'm³/h', 17: 'm³/d', 18: 'm³/d', 19: 'l', 20: 'kg',
-         21: 'N', 22: 'Nm', 23: 'Pa', 24: 'bar', 25: 'J', 26: 'J/h', 27: 'W', 28: 'VA', 29: 'var', 30: 'Wh',
-         31: 'WAh', 32: 'varh', 33: 'A', 34: 'C', 35: 'V', 36: 'V/m', 37: 'F', 38: 'Ω', 39: 'Ωm²/h', 40: 'Wb',
-         41: 'T', 42: 'A/m', 43: 'H', 44: 'Hz', 45: 'Rac', 46: 'Rre', 47: 'Rap', 48: 'V²h', 49: 'A²h', 50: 'kg/s',
-         51: 'Smho'
-         }
+    1: 'a',
+    2: 'mo',
+    3: 'wk',
+    4: 'd',
+    5: 'h',
+    6: 'min.',
+    7: 's',
+    8: '°',
+    9: '°C',
+    10: 'currency',
+    11: 'm',
+    12: 'm/s',
+    13: 'm³',
+    14: 'm³',
+    15: 'm³/h',
+    16: 'm³/h',
+    17: 'm³/d',
+    18: 'm³/d',
+    19: 'l',
+    20: 'kg',
+    21: 'N',
+    22: 'Nm',
+    23: 'Pa',
+    24: 'bar',
+    25: 'J',
+    26: 'J/h',
+    27: 'W',
+    28: 'VA',
+    29: 'var',
+    30: 'Wh',
+    31: 'WAh',
+    32: 'varh',
+    33: 'A',
+    34: 'C',
+    35: 'V',
+    36: 'V/m',
+    37: 'F',
+    38: 'Ω',
+    39: 'Ωm²/h',
+    40: 'Wb',
+    41: 'T',
+    42: 'A/m',
+    43: 'H',
+    44: 'Hz',
+    45: 'Rac',
+    46: 'Rre',
+    47: 'Rap',
+    48: 'V²h',
+    49: 'A²h',
+    50: 'kg/s',
+    51: 'Smho',
+}
 SML_SCHEDULER_NAME = 'Smlx'
+
 
 class Smlx(SmartPlugin):
     """
@@ -62,9 +109,7 @@ class Smlx(SmartPlugin):
     PLUGIN_VERSION = '1.1.8'
 
     # Lookup table for smartmeter names to data format
-    _devices = {
-                'smart-meter-gateway-com-1' : 'hex'
-                }
+    _devices = {'smart-meter-gateway-com-1': 'hex'}
 
     def __init__(self, sh):
         """
@@ -74,9 +119,9 @@ class Smlx(SmartPlugin):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
-        #load parameters from config
+        # load parameters from config
         self.load_parameters()
-        
+
         self.connected = False
         self.alive = False
         self._serial = None
@@ -95,41 +140,44 @@ class Smlx(SmartPlugin):
         if self.cycle == 0:
             self.cycle = None
 
-        self.crontab  = self.get_parameter_value('crontab')  # the more complex way to specify the device query frequency
+        self.crontab = self.get_parameter_value('crontab')  # the more complex way to specify the device query frequency
         if self.crontab == '':
             self.crontab = None
         if not (self.cycle or self.crontab):
-            self.logger.error(f"{self.get_fullname()}: no update cycle or crontab set. The smartmeter will not be queried automatically")
+            self.logger.error(
+                f'{self.get_fullname()}: no update cycle or crontab set. The smartmeter will not be queried automatically'
+            )
 
-        self.host = self.get_parameter_value('host')                        # None
-        self.port = self.get_parameter_value('port')                        # 0
-        self.serialport = self.get_parameter_value('serialport')            # None
-        device = self.get_parameter_value('device')                         # raw
-        self.timeout = self.get_parameter_value('timeout')                  # 5
-        self.buffersize = self.get_parameter_value('buffersize')            # 1024
-        self.date_offset = self.get_parameter_value('date_offset')          # 0
+        self.host = self.get_parameter_value('host')  # None
+        self.port = self.get_parameter_value('port')  # 0
+        self.serialport = self.get_parameter_value('serialport')  # None
+        device = self.get_parameter_value('device')  # raw
+        self.timeout = self.get_parameter_value('timeout')  # 5
+        self.buffersize = self.get_parameter_value('buffersize')  # 1024
+        self.date_offset = self.get_parameter_value('date_offset')  # 0
 
         # Get base values for CRC calculation
-        self.poly = self.get_parameter_value('poly')                        # 0x1021
-        self.reflect_in = self.get_parameter_value('reflect_in')            # True
-        self.xor_in = self.get_parameter_value('xor_in')                    # 0xffff
-        self.reflect_out = self.get_parameter_value('reflect_out')          # True
-        self.xor_out = self.get_parameter_value('xor_out')                  # 0xffff
-        self.swap_crc_bytes = self.get_parameter_value('swap_crc_bytes')    # False
+        self.poly = self.get_parameter_value('poly')  # 0x1021
+        self.reflect_in = self.get_parameter_value('reflect_in')  # True
+        self.xor_in = self.get_parameter_value('xor_in')  # 0xffff
+        self.reflect_out = self.get_parameter_value('reflect_out')  # True
+        self.xor_out = self.get_parameter_value('xor_out')  # 0xffff
+        self.swap_crc_bytes = self.get_parameter_value('swap_crc_bytes')  # False
 
         if device in self._devices:
             device = self._devices[device]
 
-        if device == "hex":
+        if device == 'hex':
             self._prepare = self._prepareHex
-        elif device == "raw":
+        elif device == 'raw':
             self._prepare = self._prepareRaw
         else:
-            self.logger.warning(f"Device type \"{device}\" not supported - defaulting to \"raw\"")
+            self.logger.warning(f'Device type "{device}" not supported - defaulting to "raw"')
             self._prepare = self._prepareRaw
 
-        self.logger.debug(f"Using CRC params poly={self.poly}, reflect_in={self.reflect_in}, xor_in={self.xor_in}, reflect_out={self.reflect_out}, xor_out={self.xor_out}, swap_crc_bytes={self.swap_crc_bytes}")
-
+        self.logger.debug(
+            f'Using CRC params poly={self.poly}, reflect_in={self.reflect_in}, xor_in={self.xor_in}, reflect_out={self.reflect_out}, xor_out={self.xor_out}, swap_crc_bytes={self.swap_crc_bytes}'
+        )
 
     def run(self):
         """
@@ -142,13 +190,14 @@ class Smlx(SmartPlugin):
         # Setup scheduler for device poll loop
         if self.cycle or self.crontab:
             if self.crontab:
-                next = None # adhere to the crontab
+                next = None  # adhere to the crontab
             else:
                 # no crontab given so we might just query immediately
                 next = shtime.now()
-            self.scheduler_add(self.get_fullname(), self.poll_device, prio=5, cycle=self.cycle, cron=self.crontab, next=next)
+            self.scheduler_add(
+                self.get_fullname(), self.poll_device, prio=5, cycle=self.cycle, cron=self.crontab, next=next
+            )
         self.logger.debug(f"Plugin '{self.get_fullname()}': run method finished")
-
 
     def stop(self):
         """
@@ -197,7 +246,7 @@ class Smlx(SmartPlugin):
         """
         if caller != self.get_fullname():
             # Code to execute, only if the item has not been changed by this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
+            self.logger.info('Update item: {}, item has been changed outside this plugin'.format(item.property.path))
             pass
 
     def connect(self):
@@ -206,7 +255,14 @@ class Smlx(SmartPlugin):
         try:
             if self.serialport is not None:
                 self._target = f'serial://{self.serialport}'
-                self._serial = serial.Serial(self.serialport, 9600, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE, timeout=self.timeout)
+                self._serial = serial.Serial(
+                    self.serialport,
+                    9600,
+                    serial.EIGHTBITS,
+                    serial.PARITY_NONE,
+                    serial.STOPBITS_ONE,
+                    timeout=self.timeout,
+                )
             elif self.host is not None:
                 self._target = f'tcp://{self.host}:{self.port}'
                 self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -295,10 +351,18 @@ class Smlx(SmartPlugin):
 
                     if START_SEQUENCE in data:
                         prev, _, data = data.partition(START_SEQUENCE)
-                        self.logger.debug('Start sequence marker {} found'.format(''.join(' {:02x}'.format(x) for x in START_SEQUENCE)))
+                        self.logger.debug(
+                            'Start sequence marker {} found'.format(
+                                ''.join(' {:02x}'.format(x) for x in START_SEQUENCE)
+                            )
+                        )
                         if END_SEQUENCE in data:
                             data, _, rest = data.partition(END_SEQUENCE)
-                            self.logger.debug('End sequence marker {} found'.format(''.join(' {:02x}'.format(x) for x in END_SEQUENCE)))
+                            self.logger.debug(
+                                'End sequence marker {} found'.format(
+                                    ''.join(' {:02x}'.format(x) for x in END_SEQUENCE)
+                                )
+                            )
                             self.logger.debug(f'Packet size is {len(data)}')
                             if len(rest) > 3:
                                 filler = rest[0]
@@ -309,13 +373,24 @@ class Smlx(SmartPlugin):
                                 buffer += START_SEQUENCE + data + END_SEQUENCE + rest[0:1]
                                 self.logger.debug(f'Buffer length is {len(buffer)}')
                                 self.logger.debug('Buffer: {}'.format(''.join(' {:02x}'.format(x) for x in buffer)))
-                                crc16 = algorithms.Crc(width=16, poly=self.poly, reflect_in=self.reflect_in, xor_in=self.xor_in, reflect_out=self.reflect_out, xor_out=self.xor_out)
+                                crc16 = algorithms.Crc(
+                                    width=16,
+                                    poly=self.poly,
+                                    reflect_in=self.reflect_in,
+                                    xor_in=self.xor_in,
+                                    reflect_out=self.reflect_out,
+                                    xor_out=self.xor_out,
+                                )
                                 crc_calculated = crc16.table_driven(buffer)
                                 if not self.swap_crc_bytes:
-                                    self.logger.debug(f'Calculated checksum is {to_Hex(crc_calculated)}, given CRC is {to_Hex(checksum)}')
+                                    self.logger.debug(
+                                        f'Calculated checksum is {to_Hex(crc_calculated)}, given CRC is {to_Hex(checksum)}'
+                                    )
                                     data_is_valid = crc_calculated == checksum
                                 else:
-                                    self.logger.debug(f'Calculated and swapped checksum is {to_Hex(swap16(crc_calculated))}, given CRC is {to_Hex(checksum)}')
+                                    self.logger.debug(
+                                        f'Calculated and swapped checksum is {to_Hex(swap16(crc_calculated))}, given CRC is {to_Hex(checksum)}'
+                                    )
                                     data_is_valid = swap16(crc_calculated) == checksum
                             else:
                                 self.logger.debug('Not enough bytes read at end to satisfy checksum calculation')
@@ -329,7 +404,7 @@ class Smlx(SmartPlugin):
                     return
 
                 if data_is_valid:
-                    self.logger.debug("Checksum was ok, now parse the data_package")
+                    self.logger.debug('Checksum was ok, now parse the data_package')
                     try:
                         values = self._parse(self._prepare(data))
                     except Exception as e:
@@ -348,11 +423,11 @@ class Smlx(SmartPlugin):
                                         else:
                                             item(value, self.get_shortname())
                 else:
-                    self.logger.debug("Checksum was not ok, will not parse the data_package")
+                    self.logger.debug('Checksum was not ok, will not parse the data_package')
 
                 cycletime = time.time() - start
 
-                self.logger.debug(f"Polling Smartmeter done. Poll cycle took {cycletime} seconds.")
+                self.logger.debug(f'Polling Smartmeter done. Poll cycle took {cycletime} seconds.')
             finally:
                 self.disconnect()
                 self._parse_lock.release()
@@ -369,66 +444,116 @@ class Smlx(SmartPlugin):
         packetsize = 7
         self.logger.debug('Data:{}'.format(''.join(' {:02x}'.format(x) for x in data)))
         self._dataoffset = 0
-        while self._dataoffset < len(data)-packetsize:
-
+        while self._dataoffset < len(data) - packetsize:
             # Find SML_ListEntry starting with 0x77 0x07
             # Attention! The check for != 0xff was necessary because of a possible Client-ID set to 77 07 ff ff ff ff ff ff
             # which would be accidently interpreted as an OBIS value
-            if data[self._dataoffset] == 0x77 and data[self._dataoffset+1] == 0x07 and data[self._dataoffset+2] != 0xff:
+            if (
+                data[self._dataoffset] == 0x77
+                and data[self._dataoffset + 1] == 0x07
+                and data[self._dataoffset + 2] != 0xFF
+            ):
                 packetstart = self._dataoffset
                 self._dataoffset += 1
                 try:
                     entry = {
-                      'objName'   : self._read_entity(data),
-                      'status'    : self._read_entity(data),
-                      'valTime'   : self._read_entity(data),
-                      'unit'      : self._read_entity(data),
-                      'scaler'    : self._read_entity(data),
-                      'value'     : self._read_entity(data),
-                      'signature' : self._read_entity(data)
+                        'objName': self._read_entity(data),
+                        'status': self._read_entity(data),
+                        'valTime': self._read_entity(data),
+                        'unit': self._read_entity(data),
+                        'scaler': self._read_entity(data),
+                        'value': self._read_entity(data),
+                        'signature': self._read_entity(data),
                     }
 
                     # Decoding status information if present
                     if entry['status'] is not None:
-                        entry['statRun'] = True if ((entry['status'] >> 8) & 1) == 1 else False                 # True: meter is counting, False: standstill
-                        entry['statFraudMagnet'] = True if ((entry['status'] >> 8) & 2) == 2 else False         # True: magnetic manipulation detected, False: ok
-                        entry['statFraudCover'] = True if ((entry['status'] >> 8) & 4) == 4 else False          # True: cover manipulation detected, False: ok
-                        entry['statEnergyTotal'] = True if ((entry['status'] >> 8) & 8) == 8 else False         # Current flow total. True: -A, False: +A
-                        entry['statEnergyL1'] = True if ((entry['status'] >> 8) & 16) == 16 else False          # Current flow L1. True: -A, False: +A
-                        entry['statEnergyL2'] = True if ((entry['status'] >> 8) & 32) == 32 else False          # Current flow L2. True: -A, False: +A
-                        entry['statEnergyL3'] = True if ((entry['status'] >> 8) & 64) == 64 else False          # Current flow L3. True: -A, False: +A
-                        entry['statRotaryField'] = True if ((entry['status'] >> 8) & 128) == 128 else False     # True: rotary field not L1->L2->L3, False: ok
-                        entry['statBackstop'] = True if ((entry['status'] >> 8) & 256) == 256 else False        # True: backstop active, False: backstop not active
-                        entry['statCalFault'] = True if ((entry['status'] >> 8) & 512) == 512 else False        # True: calibration relevant fatal fault, False: ok
-                        entry['statVoltageL1'] = True if ((entry['status'] >> 8) & 1024) == 1024 else False     # True: Voltage L1 present, False: not present
-                        entry['statVoltageL2'] = True if ((entry['status'] >> 8) & 2048) == 2048 else False     # True: Voltage L2 present, False: not present
-                        entry['statVoltageL3'] = True if ((entry['status'] >> 8) & 4096) == 4096 else False     # True: Voltage L3 present, False: not present
+                        entry['statRun'] = (
+                            True if ((entry['status'] >> 8) & 1) == 1 else False
+                        )  # True: meter is counting, False: standstill
+                        entry['statFraudMagnet'] = (
+                            True if ((entry['status'] >> 8) & 2) == 2 else False
+                        )  # True: magnetic manipulation detected, False: ok
+                        entry['statFraudCover'] = (
+                            True if ((entry['status'] >> 8) & 4) == 4 else False
+                        )  # True: cover manipulation detected, False: ok
+                        entry['statEnergyTotal'] = (
+                            True if ((entry['status'] >> 8) & 8) == 8 else False
+                        )  # Current flow total. True: -A, False: +A
+                        entry['statEnergyL1'] = (
+                            True if ((entry['status'] >> 8) & 16) == 16 else False
+                        )  # Current flow L1. True: -A, False: +A
+                        entry['statEnergyL2'] = (
+                            True if ((entry['status'] >> 8) & 32) == 32 else False
+                        )  # Current flow L2. True: -A, False: +A
+                        entry['statEnergyL3'] = (
+                            True if ((entry['status'] >> 8) & 64) == 64 else False
+                        )  # Current flow L3. True: -A, False: +A
+                        entry['statRotaryField'] = (
+                            True if ((entry['status'] >> 8) & 128) == 128 else False
+                        )  # True: rotary field not L1->L2->L3, False: ok
+                        entry['statBackstop'] = (
+                            True if ((entry['status'] >> 8) & 256) == 256 else False
+                        )  # True: backstop active, False: backstop not active
+                        entry['statCalFault'] = (
+                            True if ((entry['status'] >> 8) & 512) == 512 else False
+                        )  # True: calibration relevant fatal fault, False: ok
+                        entry['statVoltageL1'] = (
+                            True if ((entry['status'] >> 8) & 1024) == 1024 else False
+                        )  # True: Voltage L1 present, False: not present
+                        entry['statVoltageL2'] = (
+                            True if ((entry['status'] >> 8) & 2048) == 2048 else False
+                        )  # True: Voltage L2 present, False: not present
+                        entry['statVoltageL3'] = (
+                            True if ((entry['status'] >> 8) & 4096) == 4096 else False
+                        )  # True: Voltage L3 present, False: not present
 
                     # Add additional calculated fields
-                    entry['obis'] = f"{entry['objName'][0]}-{entry['objName'][1]}:{entry['objName'][2]}.{entry['objName'][3]}.{entry['objName'][4]}*{entry['objName'][5]}"
-                    entry['valueReal'] = round(entry['value'] * 10 ** entry['scaler'], 1) if entry['scaler'] is not None else entry['value']
-                    entry['unitName'] = UNITS[entry['unit']] if entry['unit'] is not None and entry['unit'] in UNITS else None
-                    entry['actualTime'] = time.ctime(self.date_offset + entry['valTime'][1]) if entry['valTime'] is not None else None  # Decodes valTime into date/time string
+                    entry['obis'] = (
+                        f'{entry["objName"][0]}-{entry["objName"][1]}:{entry["objName"][2]}.{entry["objName"][3]}.{entry["objName"][4]}*{entry["objName"][5]}'
+                    )
+                    entry['valueReal'] = (
+                        round(entry['value'] * 10 ** entry['scaler'], 1)
+                        if entry['scaler'] is not None
+                        else entry['value']
+                    )
+                    entry['unitName'] = (
+                        UNITS[entry['unit']] if entry['unit'] is not None and entry['unit'] in UNITS else None
+                    )
+                    entry['actualTime'] = (
+                        time.ctime(self.date_offset + entry['valTime'][1]) if entry['valTime'] is not None else None
+                    )  # Decodes valTime into date/time string
                     # For a Holley DTZ541 with faulty Firmware remove the                ^[1] from this line ^.
 
                     # Convert some special OBIS values into nicer format
                     # EMH ED300L: add additional OBIS codes
                     if entry['obis'] == '1-0:0.2.0*0':
-                        entry['valueReal'] = entry['value'].decode()     # Firmware as UTF-8 string
+                        entry['valueReal'] = entry['value'].decode()  # Firmware as UTF-8 string
                     if entry['obis'] == '1-0:96.50.1*1' or entry['obis'] == '129-129:199.130.3*255':
-                        entry['valueReal'] = entry['value'].decode()     # Manufacturer code as UTF-8 string
+                        entry['valueReal'] = entry['value'].decode()  # Manufacturer code as UTF-8 string
                     if entry['obis'] == '1-0:96.1.0*255' or entry['obis'] == '1-0:0.0.9*255':
-                        entry['valueReal'] = entry['value'].hex()        # ServerID (Seriel Number) as hex string as found on frontpanel
+                        entry['valueReal'] = entry[
+                            'value'
+                        ].hex()  # ServerID (Seriel Number) as hex string as found on frontpanel
                     if entry['obis'] == '1-0:96.5.0*255':
-                        entry['valueReal'] = bin(entry['value'] >> 8)    # Status as binary string, so not decoded into status bits as above
+                        entry['valueReal'] = bin(
+                            entry['value'] >> 8
+                        )  # Status as binary string, so not decoded into status bits as above
 
-                    entry['objName'] = entry['obis']                     # Changes objName for DEBUG output to nicer format
+                    entry['objName'] = entry['obis']  # Changes objName for DEBUG output to nicer format
 
                     self.values[entry['obis']] = entry
 
                 except Exception as e:
                     if self._dataoffset < len(data) - 1:
-                        self.logger.warning('Cannot parse entity at position {}, byte {}: {}:{}...'.format(self._dataoffset, self._dataoffset - packetstart, e, ''.join(' {:02x}'.format(x) for x in data[packetstart:packetstart+64])))
+                        self.logger.warning(
+                            'Cannot parse entity at position {}, byte {}: {}:{}...'.format(
+                                self._dataoffset,
+                                self._dataoffset - packetstart,
+                                e,
+                                ''.join(' {:02x}'.format(x) for x in data[packetstart : packetstart + 64]),
+                            )
+                        )
                         self._dataoffset = packetstart + packetsize - 1
             else:
                 self._dataoffset += 1
@@ -437,9 +562,10 @@ class Smlx(SmartPlugin):
 
     def _read_entity(self, data):
         import builtins
+
         upack = {
             5: {1: '>b', 2: '>h', 4: '>i', 8: '>q'},  # int
-            6: {1: '>B', 2: '>H', 4: '>I', 8: '>Q'}   # uint
+            6: {1: '>B', 2: '>H', 4: '>I', 8: '>Q'},  # uint
         }
 
         result = None
@@ -457,17 +583,17 @@ class Smlx(SmartPlugin):
 
         len -= 1
 
-        if len == 0:     # Skip empty optional value
+        if len == 0:  # Skip empty optional value
             return result
 
         if self._dataoffset + len >= builtins.len(data):
-            raise Exception(f"Try to read {len} bytes, but only got {builtins.len(data) - self._dataoffset}")
+            raise Exception(f'Try to read {len} bytes, but only got {builtins.len(data) - self._dataoffset}')
 
-        if type == 0:    # Octet string
-            result = data[self._dataoffset:self._dataoffset+len]
+        if type == 0:  # Octet string
+            result = data[self._dataoffset : self._dataoffset + len]
 
         elif type == 5 or type == 6:  # int or uint
-            d = data[self._dataoffset:self._dataoffset+len]
+            d = data[self._dataoffset : self._dataoffset + len]
 
             ulen = len
             if ulen not in upack[type]:  # Extend to next greather unpack unit
@@ -495,11 +621,11 @@ class Smlx(SmartPlugin):
         return data
 
     def _prepareHex(self, data):
-        data = data.decode("iso-8859-1").lower()
-        data = re.sub("[^a-f0-9]", " ", data)
-        data = re.sub("( +[a-f0-9]|[a-f0-9] +)", "", data)
+        data = data.decode('iso-8859-1').lower()
+        data = re.sub('[^a-f0-9]', ' ', data)
+        data = re.sub('( +[a-f0-9]|[a-f0-9] +)', '', data)
         data = data.encode()
-        return bytes(''.join(chr(int(data[i:i+2], 16)) for i in range(0, len(data), 2)), "iso8859-1")
+        return bytes(''.join(chr(int(data[i : i + 2], 16)) for i in range(0, len(data), 2)), 'iso8859-1')
 
     @property
     def item_list(self):
@@ -508,6 +634,7 @@ class Smlx(SmartPlugin):
     @property
     def log_level(self):
         return self.logger.getEffectiveLevel()
+
 
 ##########################################################
 #   Helper Functions
@@ -526,16 +653,12 @@ def to_Hex(data):
     if isinstance(data, int):
         return hex(data)
 
-    return "".join("%02x " % b for b in data).rstrip()
+    return ''.join('%02x ' % b for b in data).rstrip()
 
 
 def swap16(x):
-    return (((x << 8) & 0xFF00) |
-            ((x >> 8) & 0x00FF))
+    return ((x << 8) & 0xFF00) | ((x >> 8) & 0x00FF)
 
 
 def swap32(x):
-    return (((x << 24) & 0xFF000000) |
-            ((x <<  8) & 0x00FF0000) |
-            ((x >>  8) & 0x0000FF00) |
-            ((x >> 24) & 0x000000FF))
+    return ((x << 24) & 0xFF000000) | ((x << 8) & 0x00FF0000) | ((x >> 8) & 0x0000FF00) | ((x >> 24) & 0x000000FF)

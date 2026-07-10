@@ -28,20 +28,20 @@ import socket
 import time
 import struct
 import binascii
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf
 from lib.module import Modules
 
 sma_units = {
-    "W": 10,
-    "VA": 10,
-    "VAr": 10,
-    "kWh": 3600000,
-    "kVAh": 3600000,
-    "kVArh": 3600000,
-    "A": 1000,
-    "V": 1000,
-    "°": 1000,
-    "Hz": 1000,
+    'W': 10,
+    'VA': 10,
+    'VAr': 10,
+    'kWh': 3600000,
+    'kVAh': 3600000,
+    'kVArh': 3600000,
+    'A': 1000,
+    'V': 1000,
+    '°': 1000,
+    'Hz': 1000,
 }
 
 sma_channels = {
@@ -91,7 +91,7 @@ sma_channels = {
 
 class SMA_EM(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.6.1"
+    PLUGIN_VERSION = '1.6.1'
 
     # listen to the Multicast; SMA-Energymeter sends its measurements to 239.12.255.254:9522
     MCAST_GRP = '239.12.255.254'
@@ -116,7 +116,7 @@ class SMA_EM(SmartPlugin):
         self.sock.bind(('', self.MCAST_PORT))
 
         try:
-            mreq = struct.pack("4s4s", socket.inet_aton(self.MCAST_GRP), socket.inet_aton(self.ipbind))
+            mreq = struct.pack('4s4s', socket.inet_aton(self.MCAST_GRP), socket.inet_aton(self.ipbind))
             self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         except BaseException as e:
             self.logger.error('Could not connect to multicast group or bind to given interface: %s' % e)
@@ -135,14 +135,22 @@ class SMA_EM(SmartPlugin):
         Run method for the plugin
         """
         self.alive = True
-        self.scheduler_add("update_sma_em", self._update_sma_em, prio=3, cron=None, cycle=self._cycle, value=None,
-                           offset=None, next=None)
+        self.scheduler_add(
+            'update_sma_em',
+            self._update_sma_em,
+            prio=3,
+            cron=None,
+            cycle=self._cycle,
+            value=None,
+            offset=None,
+            next=None,
+        )
 
     def stop(self):
         """
         Stop method for the plugin
         """
-        self.scheduler_remove("update_sma_em")
+        self.scheduler_remove('update_sma_em')
         self.alive = False
 
     def parse_item(self, item):
@@ -438,7 +446,8 @@ class SMA_EM(SmartPlugin):
         else:
             datatype = 'unknown'
             self.logger.error(
-                'unknown datatype: measurement {} datatype {} raw_type {}'.format(measurement, datatype, raw_type))
+                'unknown datatype: measurement {} datatype {} raw_type {}'.format(measurement, datatype, raw_type)
+            )
         return measurement, datatype
 
     def decode_speedwire(self, datagram):
@@ -453,7 +462,6 @@ class SMA_EM(SmartPlugin):
             # self.logger.debug('seral: {}'.format(emID))
             emparts['serial'] = emID
             # timestamp
-            timestamp = int.from_bytes(datagram[24:28], byteorder='big')
             # self.logger.debug('timestamp: {}'.format(timestamp))
             # decode OBIS data blocks
             # start with header
@@ -461,52 +469,58 @@ class SMA_EM(SmartPlugin):
             while position < datalength:
                 # decode header
                 # self.logger.debug('pos: {}'.format(position))
-                (measurement, datatype) = self.decode_OBIS(datagram[position:position + 4])
+                (measurement, datatype) = self.decode_OBIS(datagram[position : position + 4])
                 # self.logger.debug('measurement {} datatype: {}'.format(measurement,datatype))
                 # decode values
                 # actual values
                 if datatype == 'actual':
-                    value = int.from_bytes(datagram[position + 4:position + 8], byteorder='big')
+                    value = int.from_bytes(datagram[position + 4 : position + 8], byteorder='big')
                     position += 8
                     if measurement in sma_channels.keys():
                         emparts[sma_channels[measurement][0]] = value / sma_units[sma_channels[measurement][1]]
                         emparts[sma_channels[measurement][0] + 'unit'] = sma_channels[measurement][1]
                 # counter values
                 elif datatype == 'counter':
-                    value = int.from_bytes(datagram[position + 4:position + 12], byteorder='big')
+                    value = int.from_bytes(datagram[position + 4 : position + 12], byteorder='big')
                     position += 12
                     if measurement in sma_channels.keys():
-                        emparts[sma_channels[measurement][0] + 'counter'] = value / sma_units[
-                            sma_channels[measurement][2]]
+                        emparts[sma_channels[measurement][0] + 'counter'] = (
+                            value / sma_units[sma_channels[measurement][2]]
+                        )
                         emparts[sma_channels[measurement][0] + 'counterunit'] = sma_channels[measurement][2]
                 elif datatype == 'version':
-                    value = datagram[position + 4:position + 8]
+                    value = datagram[position + 4 : position + 8]
                     if measurement in sma_channels.keys():
-                        bversion = (binascii.b2a_hex(value).decode("utf-8"))
-                        version = str(int(bversion[0:2], 16)) + "." + str(int(bversion[2:4], 16)) + "." + str(
-                            int(bversion[4:6], 16))
+                        bversion = binascii.b2a_hex(value).decode('utf-8')
+                        version = (
+                            str(int(bversion[0:2], 16))
+                            + '.'
+                            + str(int(bversion[2:4], 16))
+                            + '.'
+                            + str(int(bversion[4:6], 16))
+                        )
                         revision = str(chr(int(bversion[6:8])))
                         # revision definitions
-                        if revision == "1":
+                        if revision == '1':
                             # S – Spezial Version
-                            version = version + ".S"
-                        elif revision == "2":
+                            version = version + '.S'
+                        elif revision == '2':
                             # A – Alpha (noch kein Feature Complete, Version für Verifizierung und Validierung)
-                            version = version + ".A"
-                        elif revision == "3":
+                            version = version + '.A'
+                        elif revision == '3':
                             # B – Beta (Feature Complete, Version für Verifizierung und Validierung)
-                            version = version + ".B"
-                        elif revision == "4":
+                            version = version + '.B'
+                        elif revision == '4':
                             # R – Release Candidate / Release (Version für Verifizierung, Validierung und Feldtest / öffentliche Version)
-                            version = version + ".R"
-                        elif revision == "5":
+                            version = version + '.R'
+                        elif revision == '5':
                             # E – Experimental Version (dient zur lokalen Verifizierung)
-                            version = version + ".E"
-                        elif revision == "6":
+                            version = version + '.E'
+                        elif revision == '6':
                             # N – Keine Revision
-                            version = version + ".N"
+                            version = version + '.N'
                         # adding versionnumber to compare versions
-                        version = version + "|" + str(bversion[0:2]) + str(bversion[2:4]) + str(bversion[4:6])
+                        version = version + '|' + str(bversion[0:2]) + str(bversion[2:4]) + str(bversion[4:6])
                         emparts[sma_channels[measurement][0]] = version
                     position += 8
                 else:
@@ -540,38 +554,35 @@ class SMA_EM(SmartPlugin):
         return self._items
 
     def init_webinterface(self):
-        """"
+        """ "
         Initialize the web interface for this plugin
 
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
+            self.mod_http = Modules.get_instance().get_module('http')  # try/except to handle disabled http module
+        except Exception:
             self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
 
         # set application configuration for cherrypy
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
         config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
+            '/': {'tools.staticdir.root': webif_dir},
+            '/static': {'tools.staticdir.on': True, 'tools.staticdir.dir': 'static'},
         }
 
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
+        self.mod_http.register_webif(
+            WebInterface(webif_dir, self),
+            self.get_shortname(),
+            config,
+            self.get_classname(),
+            self.get_instance_name(),
+            description='',
+        )
 
         return True
 
@@ -586,11 +597,10 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
-        
+
         :param webif_dir: directory where the webinterface of the plugin resides
         :param plugin: instance of the plugin
         :type webif_dir: str
@@ -612,11 +622,16 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
         tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           interface=None, item_count=len(self.plugin.get_items()),
-                           plugin_info=self.plugin.get_info(), tabcount=1,
-                           tab1title="SMA EM Items (%s)" % len(self.plugin.get_items()),
-                           p=self.plugin)
+        return tmpl.render(
+            plugin_shortname=self.plugin.get_shortname(),
+            plugin_version=self.plugin.get_version(),
+            interface=None,
+            item_count=len(self.plugin.get_items()),
+            plugin_info=self.plugin.get_info(),
+            tabcount=1,
+            tab1title='SMA EM Items (%s)' % len(self.plugin.get_items()),
+            p=self.plugin,
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -632,9 +647,9 @@ class WebInterface(SmartPluginWebIf):
             # get the new data
             data = {}
             for key, item in self.plugin.get_items().items():
-                data[item.property.path + "_value"] = item()
-                data[item.property.path + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                data[item.property.path + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.property.path + '_value'] = item()
+                data[item.property.path + '_last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.property.path + '_last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
             # return it as json the the web page
             return json.dumps(data)

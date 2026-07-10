@@ -7,6 +7,7 @@ Copyright (c) 2016 Benjamin Knight / MIT License.
 
 modifications by SH for zigbee2mqtt plugin in smarthomeNG
 """
+
 import math
 import random
 from collections import namedtuple
@@ -17,25 +18,13 @@ __version__ = '0.5.1a'
 XYPoint = namedtuple('XYPoint', ['x', 'y'])
 
 # LivingColors Iris, Bloom, Aura, LightStrips
-GamutA = (
-    XYPoint(0.704, 0.296),
-    XYPoint(0.2151, 0.7106),
-    XYPoint(0.138, 0.08),
-)
+GamutA = (XYPoint(0.704, 0.296), XYPoint(0.2151, 0.7106), XYPoint(0.138, 0.08))
 
 # Hue A19 bulbs
-GamutB = (
-    XYPoint(0.675, 0.322),
-    XYPoint(0.4091, 0.518),
-    XYPoint(0.167, 0.04),
-)
+GamutB = (XYPoint(0.675, 0.322), XYPoint(0.4091, 0.518), XYPoint(0.167, 0.04))
 
 # Hue BR30, A19 (Gen 3), Hue Go, LightStrips plus
-GamutC = (
-    XYPoint(0.692, 0.308),
-    XYPoint(0.17, 0.7),
-    XYPoint(0.153, 0.048),
-)
+GamutC = (XYPoint(0.692, 0.308), XYPoint(0.17, 0.7), XYPoint(0.153, 0.048))
 
 
 def get_light_gamut(modelId):
@@ -54,7 +43,6 @@ def get_light_gamut(modelId):
 
 
 class ColorHelper:
-
     def __init__(self, gamut=GamutB):
         self.Red = gamut[0]
         self.Lime = gamut[1]
@@ -87,7 +75,7 @@ class ColorHelper:
 
     def cross_product(self, p1, p2):
         """Returns the cross product of two XYPoints."""
-        return (p1.x * p2.y - p1.y * p2.x)
+        return p1.x * p2.y - p1.y * p2.x
 
     def check_point_in_lamps_reach(self, p):
         """Check if the provided XYPoint can be recreated by a Hue lamp."""
@@ -129,11 +117,11 @@ class ColorHelper:
         lowest = dAB
         closest_point = pAB
 
-        if (dAC < lowest):
+        if dAC < lowest:
             lowest = dAC
             closest_point = pAC
 
-        if (dBC < lowest):
+        if dBC < lowest:
             lowest = dBC
             closest_point = pBC
 
@@ -164,9 +152,9 @@ class ColorHelper:
         green = green_i / 255.0
         blue = blue_i / 255.0
 
-        r = ((red + 0.055) / (1.0 + 0.055))**2.4 if (red > 0.04045) else (red / 12.92)
-        g = ((green + 0.055) / (1.0 + 0.055))**2.4 if (green > 0.04045) else (green / 12.92)
-        b = ((blue + 0.055) / (1.0 + 0.055))**2.4 if (blue > 0.04045) else (blue / 12.92)
+        r = ((red + 0.055) / (1.0 + 0.055)) ** 2.4 if (red > 0.04045) else (red / 12.92)
+        g = ((green + 0.055) / (1.0 + 0.055)) ** 2.4 if (green > 0.04045) else (green / 12.92)
+        b = ((blue + 0.055) / (1.0 + 0.055)) ** 2.4 if (blue > 0.04045) else (blue / 12.92)
 
         X = r * 0.664511 + g * 0.154324 + b * 0.162028
         Y = r * 0.283881 + g * 0.668433 + b * 0.047685
@@ -216,8 +204,7 @@ class ColorHelper:
 
         # Apply reverse gamma correction
         r, g, b = map(
-            lambda x: (12.92 * x) if (x <= 0.0031308) else ((1.0 + 0.055) * pow(x, (1.0 / 2.4)) - 0.055),
-            [r, g, b]
+            lambda x: (12.92 * x) if (x <= 0.0031308) else ((1.0 + 0.055) * pow(x, (1.0 / 2.4)) - 0.055), [r, g, b]
         )
 
         # Bring all negative components to zero
@@ -235,7 +222,6 @@ class ColorHelper:
 
 
 class Converter:
-
     def __init__(self, gamut=GamutB):
         self.color = ColorHelper(gamut)
 

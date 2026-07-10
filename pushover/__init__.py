@@ -21,7 +21,7 @@
 #  along with SmartHomeNG If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin, logging
 from lib.network import Http
 
 import time
@@ -29,13 +29,13 @@ import json
 
 
 class Pushover(SmartPlugin):
+    PLUGIN_VERSION = '1.6.2'
 
-    PLUGIN_VERSION = "1.6.2"
-
-    _url = "https://api.pushover.net/1/messages.json"
+    _url = 'https://api.pushover.net/1/messages.json'
 
     def __init__(self, sh, *args, **kwargs):
         from bin.smarthome import VERSION
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
         self._apiKey = self.get_parameter_value('apiKey')
@@ -49,7 +49,22 @@ class Pushover(SmartPlugin):
     def stop(self):
         self.alive = False
 
-    def __call__(self, title=None, message='', priority=None, retry=None, expire=None, ttl=None, sound=None, url=None, url_title=None, device=None, userKey=None, apiKey=None, attachment=None):
+    def __call__(
+        self,
+        title=None,
+        message='',
+        priority=None,
+        retry=None,
+        expire=None,
+        ttl=None,
+        sound=None,
+        url=None,
+        url_title=None,
+        device=None,
+        userKey=None,
+        apiKey=None,
+        attachment=None,
+    ):
         data = {}
 
         data['timestamp'] = int(time.time())
@@ -68,9 +83,9 @@ class Pushover(SmartPlugin):
                         data['retry'] = retry
                     else:
                         data['retry'] = 30
-                        self.logger.error("Pushover message retry need at least 30 secounds! I set it to 30!")
+                        self.logger.error('Pushover message retry need at least 30 secounds! I set it to 30!')
                 elif not retry and priority == 2:
-                    self.logger.error("Pushover message priority = 2 need retry to be set, degrade priority to 1!")
+                    self.logger.error('Pushover message priority = 2 need retry to be set, degrade priority to 1!')
                     data['priority'] = 1
 
                 if expire and priority == 2:
@@ -78,9 +93,9 @@ class Pushover(SmartPlugin):
                         data['expire'] = expire
                     else:
                         data['expire'] = 10800
-                        self.logger.error("Pushover message expire need at most 10800 secounds! I set it to 10800.")
+                        self.logger.error('Pushover message expire need at most 10800 secounds! I set it to 10800.')
                 elif not expire and priority == 2:
-                    self.logger.error("Pushover message priority = 2 need expire to be set, degrade priority to 1!")
+                    self.logger.error('Pushover message priority = 2 need expire to be set, degrade priority to 1!')
                     data['priority'] = 1
 
                 # delete not used vars
@@ -91,7 +106,7 @@ class Pushover(SmartPlugin):
                         del data['retry']
 
             else:
-                self.logger.error("Pushover message priority need to be a number between -2 and 2!")
+                self.logger.error('Pushover message priority need to be a number between -2 and 2!')
 
         if ttl:
             data['ttl'] = ttl
@@ -109,7 +124,7 @@ class Pushover(SmartPlugin):
         elif self._userKey:
             data['user'] = self._userKey
         else:
-            self.logger.error("Pushover needs a userKey")
+            self.logger.error('Pushover needs a userKey')
             return
 
         if apiKey:
@@ -117,7 +132,7 @@ class Pushover(SmartPlugin):
         elif self._apiKey:
             data['token'] = self._apiKey
         else:
-            self.logger.error("Pushover needs a apiKey")
+            self.logger.error('Pushover needs a apiKey')
             return
 
         if device:
@@ -135,12 +150,12 @@ class Pushover(SmartPlugin):
             (_status_code, _reason) = self._po.response_status()
 
             # process response
-            if (_status_code == 200 and json_data['status'] == 1):
-                self.logger.debug("Pushover returns: Notification successful submitted.")
-            elif (_status_code == 429):
-                self.logger.warning("Pushover returns: Message limits have been reached.")
+            if _status_code == 200 and json_data['status'] == 1:
+                self.logger.debug('Pushover returns: Notification successful submitted.')
+            elif _status_code == 429:
+                self.logger.warning('Pushover returns: Message limits have been reached.')
             else:
-                self.logger.warning("Pushover returns: {0} - {1}".format(_status_code, _reason))
+                self.logger.warning('Pushover returns: {0} - {1}'.format(_status_code, _reason))
 
         except Exception as e:
-            self.logger.warning("Could not send Pushover notification. Error: {}".format(e))
+            self.logger.warning('Could not send Pushover notification. Error: {}'.format(e))

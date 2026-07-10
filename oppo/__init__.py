@@ -28,10 +28,10 @@ import sys
 if __name__ == '__main__':
     builtins.SDP_standalone = True
 
-    class SmartPlugin():
+    class SmartPlugin:
         pass
 
-    class SmartPluginWebIf():
+    class SmartPluginWebIf:
         pass
 
     BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
@@ -39,14 +39,23 @@ if __name__ == '__main__':
 
 else:
     builtins.SDP_standalone = False
-from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, CONN_NET_TCP_CLI, CONN_SER_ASYNC, PLUGIN_ATTR_CMD_CLASS)
+from lib.model.sdp.globals import (
+    PLUGIN_ATTR_NET_HOST,
+    PLUGIN_ATTR_CONNECTION,
+    PLUGIN_ATTR_SERIAL_PORT,
+    PLUGIN_ATTR_CONN_TERMINATOR,
+    CONN_NET_TCP_CLI,
+    CONN_SER_ASYNC,
+    PLUGIN_ATTR_CMD_CLASS,
+)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 from lib.model.sdp.command import SDPCommandParseStr
 
 CUSTOM_INPUT_NAME_COMMAND = 'custom_inputnames'
 
+
 class oppo(SmartDevicePlugin):
-    """ Device class for Oppo.
+    """Device class for Oppo.
 
     Most of the work is done by the base class, so we only set default parameters
     for the connection (to be overwritten by device attributes from the plugin
@@ -75,7 +84,7 @@ class oppo(SmartDevicePlugin):
 
     def on_connect(self, by=None):
         verbose = self.get_items_for_mapping('general.verbose')[0].property.value
-        self.logger.debug(f"Activating verbose mode {verbose} after connection.")
+        self.logger.debug(f'Activating verbose mode {verbose} after connection.')
         self.send_command('general.verbose', verbose)
 
     def _transform_send_data(self, data=None, **kwargs):
@@ -86,12 +95,12 @@ class oppo(SmartDevicePlugin):
 
     def _process_additional_data(self, command, data, value, custom, by):
 
-        if value == "ER INVALID":
-            self.logger.warning(f"Command {command} did not work, got error response {value}. Querying current value.")
+        if value == 'ER INVALID':
+            self.logger.warning(f'Command {command} did not work, got error response {value}. Querying current value.')
             self.send_command(command)
 
         if command == 'info.status':
-            self.logger.debug(f"Got status {command} data {data} value {value} custom {custom} by {by}")
+            self.logger.debug(f'Got status {command} data {data} value {value} custom {custom} by {by}')
             if value == 'PLAY':
                 self._dispatch_callback('control.playpause', True)
                 self._dispatch_callback('control.stop', False)
@@ -102,9 +111,9 @@ class oppo(SmartDevicePlugin):
                 self._dispatch_callback('control.playpause', False)
                 self._dispatch_callback('control.stop', True)
         if command == 'info.trackinfo':
-            self.logger.debug(f"Got trackinfo {command} data {data} value {value} custom {custom} by {by}")
+            self.logger.debug(f'Got trackinfo {command} data {data} value {value} custom {custom} by {by}')
             try:
-                ct, cc, id, it  = value.split(" ")
+                ct, cc, id, it = value.split(' ')
             except ValueError:
                 pass
             else:
@@ -116,10 +125,11 @@ class oppo(SmartDevicePlugin):
                     'R': 'info.time.totalremaining',
                     'T': 'info.time.titleelapsed',
                     'C': 'info.time.titleelapsed',
-                    'K': 'info.time.titleremaining'
+                    'K': 'info.time.titleremaining',
                 }
                 if id in time_type:
                     self._dispatch_callback(time_type[id], it)
+
 
 if __name__ == '__main__':
     s = Standalone(oppo, sys.argv[0])

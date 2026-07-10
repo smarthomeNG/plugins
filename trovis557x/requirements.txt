@@ -1,4 +1,5 @@
 pymodbus >= 2.2.0
+pyserial
 
 # Generiert Fehler:
 # pymodbus>=2.2.0;python_version<"3.8"

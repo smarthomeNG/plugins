@@ -43,7 +43,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -60,7 +59,6 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
-
     @cherrypy.expose
     def index(self, reload=None):
         """
@@ -76,9 +74,7 @@ class WebInterface(SmartPluginWebIf):
         for item in self.items.return_items():
             if self.plugin.has_iattr(item.conf, 'wol_mac'):
                 plugin_items.append(item)
-        return tmpl.render(p=self.plugin,
-                           items=plugin_items,
-                           item_count=len(plugin_items))
+        return tmpl.render(p=self.plugin, items=plugin_items, item_count=len(plugin_items))
 
     @cherrypy.expose
     def do_wake_up(self, mac_addr, ip_addr):
@@ -90,11 +86,10 @@ class WebInterface(SmartPluginWebIf):
         :param dataSet: Dataset for which the data should be returned (standard: None)
         :return: dict with the data needed to update the web page.
         """
-        if ip_addr == "":
+        if ip_addr == '':
             ip_addr = None
         self.plugin.wake_on_lan(mac_addr, ip_addr)
-        self.logger.warning(f"do wake up for {mac_addr} with {ip_addr}")
-
+        self.logger.warning(f'do wake up for {mac_addr} with {ip_addr}')
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -108,7 +103,7 @@ class WebInterface(SmartPluginWebIf):
         """
         if dataSet is None:
             # get the new data
-            data = {}
+            pass
 
             # data['item'] = {}
             # for i in self.plugin.items:
@@ -120,4 +115,3 @@ class WebInterface(SmartPluginWebIf):
             # except Exception as e:
             #     self.logger.error("get_data_html exception: {}".format(e))
         return {}
-

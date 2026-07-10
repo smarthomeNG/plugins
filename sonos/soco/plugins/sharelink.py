@@ -36,35 +36,23 @@ class ShareClass:
             dict: Magic prefix/key/class values for each share type.
         """
         return {
-            "album": {
-                "prefix": "x-rincon-cpcontainer:1004206c",
-                "key": "00040000",
-                "class": "object.container.album.musicAlbum",
+            'album': {
+                'prefix': 'x-rincon-cpcontainer:1004206c',
+                'key': '00040000',
+                'class': 'object.container.album.musicAlbum',
             },
-            "episode": {
-                "prefix": "",
-                "key": "00032020",
-                "class": "object.item.audioItem.musicTrack",
+            'episode': {'prefix': '', 'key': '00032020', 'class': 'object.item.audioItem.musicTrack'},
+            'track': {'prefix': '', 'key': '00032020', 'class': 'object.item.audioItem.musicTrack'},
+            'show': {
+                'prefix': 'x-rincon-cpcontainer:1006206c',
+                'key': '1006206c',
+                'class': 'object.container.playlistContainer',
             },
-            "track": {
-                "prefix": "",
-                "key": "00032020",
-                "class": "object.item.audioItem.musicTrack",
-            },
-            "show": {
-                "prefix": "x-rincon-cpcontainer:1006206c",
-                "key": "1006206c",
-                "class": "object.container.playlistContainer",
-            },
-            "song": {
-                "prefix": "",
-                "key": "10032020",
-                "class": "object.item.audioItem.musicTrack",
-            },
-            "playlist": {
-                "prefix": "x-rincon-cpcontainer:1006206c",
-                "key": "1006206c",
-                "class": "object.container.playlistContainer",
+            'song': {'prefix': '', 'key': '10032020', 'class': 'object.item.audioItem.musicTrack'},
+            'playlist': {
+                'prefix': 'x-rincon-cpcontainer:1006206c',
+                'key': '1006206c',
+                'class': 'object.container.playlistContainer',
             },
         }
 
@@ -82,11 +70,9 @@ class SpotifyShare(ShareClass):
     """Spotify share class."""
 
     def canonical_uri(self, uri):
-        match = re.search(
-            r"spotify.*[:/](album|episode|playlist|show|track)[:/](\w+)", uri
-        )
+        match = re.search(r'spotify.*[:/](album|episode|playlist|show|track)[:/](\w+)', uri)
         if match:
-            return "spotify:" + match.group(1) + ":" + match.group(2)
+            return 'spotify:' + match.group(1) + ':' + match.group(2)
 
         return None
 
@@ -95,8 +81,8 @@ class SpotifyShare(ShareClass):
 
     def extract(self, uri):
         spotify_uri = self.canonical_uri(uri)
-        share_type = spotify_uri.split(":")[1]
-        encoded_uri = spotify_uri.replace(":", "%3a")
+        share_type = spotify_uri.split(':')[1]
+        encoded_uri = spotify_uri.replace(':', '%3a')
         return (share_type, encoded_uri)
 
 
@@ -111,9 +97,9 @@ class TIDALShare(ShareClass):
     """TIDAL share class."""
 
     def canonical_uri(self, uri):
-        match = re.search(r"https://tidal.*[:/](album|track|playlist)[:/]([\w-]+)", uri)
+        match = re.search(r'https://tidal.*[:/](album|track|playlist)[:/]([\w-]+)', uri)
         if match:
-            return "tidal:" + match.group(1) + ":" + match.group(2)
+            return 'tidal:' + match.group(1) + ':' + match.group(2)
 
         return None
 
@@ -122,8 +108,8 @@ class TIDALShare(ShareClass):
 
     def extract(self, uri):
         tidal_uri = self.canonical_uri(uri)
-        share_type = tidal_uri.split(":")[1]
-        encoded_uri = tidal_uri.replace("tidal:", "").replace(":", "%2f")
+        share_type = tidal_uri.split(':')[1]
+        encoded_uri = tidal_uri.replace('tidal:', '').replace(':', '%2f')
         return (share_type, encoded_uri)
 
 
@@ -131,11 +117,9 @@ class DeezerShare(ShareClass):
     """Deezer share class."""
 
     def canonical_uri(self, uri):
-        match = re.search(
-            r"https://www.deezer.*[:/](album|track|playlist)[:/]([\w-]+)", uri
-        )
+        match = re.search(r'https://www.deezer.*[:/](album|track|playlist)[:/]([\w-]+)', uri)
         if match:
-            return "deezer:" + match.group(1) + ":" + match.group(2)
+            return 'deezer:' + match.group(1) + ':' + match.group(2)
 
         return None
 
@@ -144,8 +128,8 @@ class DeezerShare(ShareClass):
 
     def extract(self, uri):
         deezer_uri = self.canonical_uri(uri)
-        share_type = deezer_uri.split(":")[1]
-        encoded_uri = deezer_uri.replace("deezer:", "").replace(":", "-")
+        share_type = deezer_uri.split(':')[1]
+        encoded_uri = deezer_uri.replace('deezer:', '').replace(':', '-')
         return (share_type, encoded_uri)
 
 
@@ -154,26 +138,22 @@ class AppleMusicShare(ShareClass):
 
     def canonical_uri(self, uri):
         # https://music.apple.com/dk/album/black-velvet/217502930?i=217503142
-        match = re.search(
-            r"https://music\.apple\.com/\w+/album/[^/]+/\d+\?i=(\d+)", uri
-        )
+        match = re.search(r'https://music\.apple\.com/\w+/album/[^/]+/\d+\?i=(\d+)', uri)
         if match:
-            return "song:" + match.group(1)
+            return 'song:' + match.group(1)
 
         # https://music.apple.com/dk/album/amused-to-death/975952384
-        match = re.search(r"https://music\.apple\.com/\w+/album/[^/]+/(\d+)", uri)
+        match = re.search(r'https://music\.apple\.com/\w+/album/[^/]+/(\d+)', uri)
         if match:
-            return "album:" + match.group(1)
+            return 'album:' + match.group(1)
 
         # Apple-created playlist
         # https://music.apple.com/dk/playlist/power-ballads-essentials/pl.92e04ee75ed64804b9df468b5f45a161
         # User-created playlist
         # https://music.apple.com/de/playlist/unnamed-playlist/pl.u-rR2PCrLdLJk
-        match = re.search(
-            r"https://music\.apple\.com/\w+/playlist/[^/]+/(pl\.[-a-zA-Z0-9]+)", uri
-        )
+        match = re.search(r'https://music\.apple\.com/\w+/playlist/[^/]+/(pl\.[-a-zA-Z0-9]+)', uri)
         if match:
-            return "playlist:" + match.group(1)
+            return 'playlist:' + match.group(1)
 
         return None
 
@@ -182,8 +162,8 @@ class AppleMusicShare(ShareClass):
 
     def extract(self, uri):
         uri = self.canonical_uri(uri)
-        share_type = uri.split(":")[0]
-        encoded_uri = uri.replace(":", "%3a")
+        share_type = uri.split(':')[0]
+        encoded_uri = uri.replace(':', '%3a')
         return (share_type, encoded_uri)
 
 
@@ -193,17 +173,11 @@ class ShareLinkPlugin(SoCoPlugin):
     def __init__(self, soco):
         """Initialize the plugin."""
         super().__init__(soco)
-        self.services = [
-            SpotifyShare(),
-            SpotifyUSShare(),
-            TIDALShare(),
-            DeezerShare(),
-            AppleMusicShare(),
-        ]
+        self.services = [SpotifyShare(), SpotifyUSShare(), TIDALShare(), DeezerShare(), AppleMusicShare()]
 
     @property
     def name(self):
-        return "ShareLink Plugin"
+        return 'ShareLink Plugin'
 
     def is_share_link(self, uri):
         """bool: Is the URI for a supported music service."""
@@ -233,16 +207,16 @@ class ShareLinkPlugin(SoCoPlugin):
         Returns:
             int: The index of the new item in the queue.
         """
-        fault = SoCoException("Unsupported URI: " + uri)
+        fault = SoCoException('Unsupported URI: ' + uri)
 
         for service in self.services:
             if service.canonical_uri(uri):
                 share_type, encoded_uri = service.extract(uri)
                 magic = service.magic()
 
-                enqueue_uri = magic[share_type]["prefix"] + encoded_uri
+                enqueue_uri = magic[share_type]['prefix'] + encoded_uri
 
-                dc_title = kwargs.pop("dc_title", "")
+                dc_title = kwargs.pop('dc_title', '')
                 metadata_template = (
                     '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements'
                     '/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata'
@@ -250,32 +224,32 @@ class ShareLinkPlugin(SoCoPlugin):
                     'com:metadata-1-0/" xmlns="urn:schemas-upnp-org:m'
                     'etadata-1-0/DIDL-Lite/"><item id="{item_id}" par'
                     'entID="-1" restricted="true"><dc:title>{title}</'
-                    "dc:title><upnp:class>{item_class}</upnp:class><d"
+                    'dc:title><upnp:class>{item_class}</upnp:class><d'
                     'esc id="cdudn" nameSpace="urn:schemas-rinconnetw'
                     'orks-com:metadata-1-0/">SA_RINCON{sn}_X_#Svc{sn}'
-                    "-0-Token</desc></item></DIDL-Lite>"
+                    '-0-Token</desc></item></DIDL-Lite>'
                 )
 
                 metadata = metadata_template.format(
-                    item_id=magic[share_type]["key"] + encoded_uri,
+                    item_id=magic[share_type]['key'] + encoded_uri,
                     title=dc_title,
-                    item_class=magic[share_type]["class"],
+                    item_class=magic[share_type]['class'],
                     sn=service.service_number(),
                 )
 
                 try:
                     response = self.soco.avTransport.AddURIToQueue(
                         [
-                            ("InstanceID", 0),
-                            ("EnqueuedURI", enqueue_uri),
-                            ("EnqueuedURIMetaData", metadata),
-                            ("DesiredFirstTrackNumberEnqueued", position),
-                            ("EnqueueAsNext", int(as_next)),
+                            ('InstanceID', 0),
+                            ('EnqueuedURI', enqueue_uri),
+                            ('EnqueuedURIMetaData', metadata),
+                            ('DesiredFirstTrackNumberEnqueued', position),
+                            ('EnqueueAsNext', int(as_next)),
                         ],
                         **kwargs,
                     )
 
-                    qnumber = response["FirstTrackNumberEnqueued"]
+                    qnumber = response['FirstTrackNumberEnqueued']
                     return int(qnumber)
                 except SoCoException as err:
                     # Try remaining services on failure but keep the exception

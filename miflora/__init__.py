@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2016 Marc René Frieß                   rene.friess@gmail.com
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -21,13 +21,14 @@
 #########################################################################
 
 import logging
-from miflora.miflora_poller import MiFloraPoller, \
-    MI_CONDUCTIVITY, MI_MOISTURE, MI_LIGHT, MI_TEMPERATURE, MI_BATTERY
+import sys
+from miflora.miflora_poller import MiFloraPoller, MI_CONDUCTIVITY, MI_MOISTURE, MI_LIGHT, MI_TEMPERATURE, MI_BATTERY
 from btlewrap import available_backends, BluepyBackend, GatttoolBackend, PygattBackend
-from lib.model.smartplugin import *
+from lib.model.smartplugin import Modules, SmartPlugin, SmartPluginWebIf
+
 
 class Miflora(SmartPlugin):
-    PLUGIN_VERSION = "1.6.2"
+    PLUGIN_VERSION = '1.6.2'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -49,7 +50,7 @@ class Miflora(SmartPlugin):
     def run(self):
         """
         Run method for the plugin
-        """        
+        """
         self.logger.debug("Plugin '{}': 'run' method called.".format(self.get_fullname()))
         self.scheduler_add(__name__, self._update_loop, prio=7, cycle=self._cycle)
         self.alive = True
@@ -61,8 +62,10 @@ class Miflora(SmartPlugin):
         self.logger.debug("Plugin '{}': 'stop' method called.".format(self.get_fullname()))
         try:
             self.scheduler_remove(__name__)
-        except:
-            self.logger.error("Plugin '{}': Removing of scheduler failed: {}.".format(self.get_fullname(), sys.exc_info()))
+        except Exception:
+            self.logger.error(
+                "Plugin '{}': Removing of scheduler failed: {}.".format(self.get_fullname(), sys.exc_info())
+            )
 
         self.alive = False
 
@@ -101,40 +104,38 @@ class Miflora(SmartPlugin):
         return self._items
 
     def init_webinterface(self):
-        """"
+        """ "
         Initialize the web interface for this plugin
 
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
+            self.mod_http = Modules.get_instance().get_module('http')  # try/except to handle disabled http module
+        except Exception:
             self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
 
         # set application configuration for cherrypy
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
         config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
+            '/': {'tools.staticdir.root': webif_dir},
+            '/static': {'tools.staticdir.on': True, 'tools.staticdir.dir': 'static'},
         }
 
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
+        self.mod_http.register_webif(
+            WebInterface(webif_dir, self),
+            self.get_shortname(),
+            config,
+            self.get_classname(),
+            self.get_instance_name(),
+            description='',
+        )
 
         return True
+
 
 # ------------------------------------------
 #    Webinterface of the plugin
@@ -146,7 +147,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -172,11 +172,16 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
         tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           interface=None, item_count=len(self.plugin.get_items()),
-                           plugin_info=self.plugin.get_info(), tabcount=1,
-                           tab1title="Items (%s)" % len(self.plugin.get_items()),
-                           p=self.plugin)
+        return tmpl.render(
+            plugin_shortname=self.plugin.get_shortname(),
+            plugin_version=self.plugin.get_version(),
+            interface=None,
+            item_count=len(self.plugin.get_items()),
+            plugin_info=self.plugin.get_info(),
+            tabcount=1,
+            tab1title='Items (%s)' % len(self.plugin.get_items()),
+            p=self.plugin,
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -192,9 +197,9 @@ class WebInterface(SmartPluginWebIf):
             # get the new data
             data = {}
             for item in self.plugin.get_items():
-                data[item.property.path + "_value"] = item()
-                data[item.property.path + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                data[item.property.path + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.property.path + '_value'] = item()
+                data[item.property.path + '_last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.property.path + '_last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
             # return it as json the the web page
             return json.dumps(data)

@@ -25,9 +25,10 @@ import logging
 import requests
 from lib.model.smartplugin import SmartPlugin
 
+
 class Traffic(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.1"
+    PLUGIN_VERSION = '1.5.1'
     _base_url = 'https://maps.googleapis.com/maps/api/directions/json'
 
     def __init__(self, sh, *args, **kwargs):
@@ -62,11 +63,24 @@ class Traffic(SmartPlugin):
         routes = []
         try:
             response = self._session.get(
-                '%s?language=%s&alternatives=%s&origin=%s&destination=%s&mode=%s&departure_time=%s&key=%s' % (self._base_url,
-                self._language, alternatives, origin, destination, mode, departure_time, self._apikey))
+                '%s?language=%s&alternatives=%s&origin=%s&destination=%s&mode=%s&departure_time=%s&key=%s'
+                % (
+                    self._base_url,
+                    self._language,
+                    alternatives,
+                    origin,
+                    destination,
+                    mode,
+                    departure_time,
+                    self._apikey,
+                )
+            )
         except Exception as e:
             self.logger.error(
-                "Plugin '{}': Exception when sending GET request for get_route_info: {}".format(self.get_fullname(), str(e)))
+                "Plugin '{}': Exception when sending GET request for get_route_info: {}".format(
+                    self.get_fullname(), str(e)
+                )
+            )
             return
         json_obj = response.json()
         route_information = {}
@@ -89,13 +103,15 @@ class Traffic(SmartPlugin):
                 route_information['html_instructions'] = ''
                 route_information['instructions'] = []
                 for step in leg['steps']:
-                    route_information['html_instructions'] = route_information['html_instructions']+'<p>'+step['html_instructions']+'</p>'
+                    route_information['html_instructions'] = (
+                        route_information['html_instructions'] + '<p>' + step['html_instructions'] + '</p>'
+                    )
                     route_information['instructions'].append(step['html_instructions'])
             route_information['summary'] = route['summary']
             route_information['html_warnings'] = ''
             route_information['warnings'] = []
             for warning in route['warnings']:
-                route_information['html_warnings'] = route_information['html_warnings']+'<p>'+warning+'</p>'
+                route_information['html_warnings'] = route_information['html_warnings'] + '<p>' + warning + '</p>'
                 route_information['warnings'].append(warning)
             route_information['copyrights'] = route['copyrights']
 

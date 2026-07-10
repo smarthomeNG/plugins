@@ -30,18 +30,26 @@ from typing import Any
 
 if __name__ == '__main__':
 
-    class SmartPlugin():
+    class SmartPlugin:
         pass
 
-    class SmartPluginWebIf():
+    class SmartPluginWebIf:
         pass
 
     BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
     sys.path.insert(0, BASE)
 
-from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_CMD_CLASS,
-                                   PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR,
-                                   PLUGIN_ATTR_MODEL, CONN_NET_TCP_CLI, CONN_SER_ASYNC, CONN_NULL)
+from lib.model.sdp.globals import (
+    PLUGIN_ATTR_NET_HOST,
+    PLUGIN_ATTR_CONNECTION,
+    PLUGIN_ATTR_CMD_CLASS,
+    PLUGIN_ATTR_SERIAL_PORT,
+    PLUGIN_ATTR_CONN_TERMINATOR,
+    PLUGIN_ATTR_MODEL,
+    CONN_NET_TCP_CLI,
+    CONN_SER_ASYNC,
+    CONN_NULL,
+)
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 from lib.model.sdp.command import SDPCommandParseStr
 
@@ -51,7 +59,7 @@ builtins.SDP_standalone = False
 
 
 class pioneer(SmartDevicePlugin):
-    """ Device class for Pioneer AV function. """
+    """Device class for Pioneer AV function."""
 
     PLUGIN_VERSION = '1.0.3'
 
@@ -62,7 +70,9 @@ class pioneer(SmartDevicePlugin):
         elif PLUGIN_ATTR_SERIAL_PORT in self._parameters and self._parameters[PLUGIN_ATTR_SERIAL_PORT]:
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_SER_ASYNC
         else:
-            self.logger.error('Neither host nor serialport set, connection not possible. Using dummy connection, plugin will not work')
+            self.logger.error(
+                'Neither host nor serialport set, connection not possible. Using dummy connection, plugin will not work'
+            )
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_NULL
 
         self._parameters[PLUGIN_ATTR_CMD_CLASS] = SDPCommandParseStr
@@ -85,17 +95,17 @@ class pioneer(SmartDevicePlugin):
                 self.read_all_commands(f'{self._parameters[PLUGIN_ATTR_MODEL]}.{cmd}')
 
         if command in ['zone1.control.power', 'zone2.control.power', 'zone3.control.power'] and value:
-            self.logger.debug(f"Device is turned on by command {command}. Requesting settings.")
+            self.logger.debug(f'Device is turned on by command {command}. Requesting settings.')
             time.sleep(1)
             read_group('general.settings')
 
         if command in ['zone1.control.input', 'zone2.control.input', 'zone3.control.input']:
             if value == 'INTERNET RADIO':
-                self.logger.debug(f"Zone is set to internet radio, checking tuner info.")
+                self.logger.debug('Zone is set to internet radio, checking tuner info.')
                 time.sleep(1)
                 read_group('tuner')
             if value == 'TUNER':
-                self.logger.debug(f"Zone is set to tuner, checking tuner preset.")
+                self.logger.debug('Zone is set to tuner, checking tuner preset.')
                 time.sleep(1)
                 self.send_command('tuner.tunerpreset')
 

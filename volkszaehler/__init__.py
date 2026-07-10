@@ -4,7 +4,7 @@
 # Copyright 2012-2013 KNX-User-Forum e.V.       http://knx-user-forum.de/
 # Copyright 2019 Bernd Meiners                      Bernd.Meiners@mail.de
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
 #  upwards.
@@ -25,7 +25,7 @@
 #########################################################################
 
 from lib.module import Modules
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin, logging
 
 # If a needed package is imported, which might be not installed in the Python environment,
 # add it to a requirements.txt file within the plugin's directory
@@ -57,6 +57,7 @@ class Volkszaehler(SmartPlugin):
         returns the value in the datatype that is defined in the metadata.
         """
         from bin.smarthome import VERSION
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
@@ -72,12 +73,11 @@ class Volkszaehler(SmartPlugin):
 
         return
 
-
     def run(self):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
 
         self.alive = True
 
@@ -85,7 +85,7 @@ class Volkszaehler(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.alive = False
 
     def parse_item(self, item):
@@ -99,7 +99,7 @@ class Volkszaehler(SmartPlugin):
         """
 
         if self.has_iattr(item.conf, 'vz_uuid'):
-            self.logger.debug("parse item: {}".format(item))
+            self.logger.debug('parse item: {}'.format(item))
             return self.update_item
         else:
             return None
@@ -117,13 +117,17 @@ class Volkszaehler(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-    
+
         if caller != self.get_shortname():
             # code to execute, only if the item has not been changed by this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
+            self.logger.info('Update item: {}, item has been changed outside this plugin'.format(item.property.path))
 
             if self.has_iattr(item.conf, 'vz_uuid'):
-                self.logger.debug("update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item, caller, source, dest))
+                self.logger.debug(
+                    "update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(
+                        item, caller, source, dest
+                    )
+                )
 
                 vz_uuid = self.get_iattr_value(item.conf, 'vz_uuid')
                 value = item()
@@ -137,19 +141,21 @@ class Volkszaehler(SmartPlugin):
 
                 url = self._url.format(vz_uuid)
 
-                self.logger.info("Try to sent '{0}' to host at '{1}' using UUID '{2}'".format(vz_value, self._host, vz_uuid))
+                self.logger.info(
+                    "Try to sent '{0}' to host at '{1}' using UUID '{2}'".format(vz_value, self._host, vz_uuid)
+                )
 
                 data = {}
-                headers = {'User-Agent': "SmartHomeNG", 'Content-Type': "application/x-www-form-urlencoded"}
-                data['operation'] = 'add' 
-                data['value'] = vz_value 
+                headers = {'User-Agent': 'SmartHomeNG', 'Content-Type': 'application/x-www-form-urlencoded'}
+                data['operation'] = 'add'
+                data['value'] = vz_value
 
                 try:
                     conn = http.client.HTTPConnection(self._host, timeout=4)
-                    conn.request("POST", url, urllib.parse.urlencode(data), headers)
+                    conn.request('POST', url, urllib.parse.urlencode(data), headers)
                     resp = conn.getresponse()
                     if resp.status != 200:
-                        raise Exception("{} {}".format(resp.status, resp.reason))
+                        raise Exception('{} {}'.format(resp.status, resp.reason))
                 except Exception as e:
                     self.logger.warning("Using url '{0}' at '{1}' resulted in Error: {2}".format(url, self._host, e))
                 finally:

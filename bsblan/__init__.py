@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2021 Thomas Hengsberg <thomas@thomash.eu>
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  Sample plugin for new plugins to run with SmartHomeNG version 1.7 and
 #  upwards.
@@ -26,7 +26,7 @@ from urllib.request import urlopen
 import json
 import requests
 
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin
 
 
 class Bsblan(SmartPlugin):
@@ -41,12 +41,12 @@ class Bsblan(SmartPlugin):
         return
 
     def run(self):
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
         self.scheduler_add('poll_device', self.poll_device, cycle=60)
         self.alive = True
 
     def stop(self):
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.alive = False
 
     def parse_item(self, item):
@@ -62,11 +62,11 @@ class Bsblan(SmartPlugin):
             try:
                 response = urlopen(self.url)
                 json_obj = json.loads(response.read().decode('utf-8'))
-                if json_obj[str(item.conf['bsb_lan'])]['value'] != "---":
+                if json_obj[str(item.conf['bsb_lan'])]['value'] != '---':
                     item(json_obj[str(item.conf['bsb_lan'])]['value'])
-                    item.descr.property.value = (json_obj[str(item.conf['bsb_lan'])]['desc'])
+                    item.descr.property.value = json_obj[str(item.conf['bsb_lan'])]['desc']
             except Exception as exc:
-                self.logger.error("Error getting Data from BSBLAN-Adapter: ", exc)
+                self.logger.error('Error getting Data from BSBLAN-Adapter: ', exc)
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -88,24 +88,24 @@ class Bsblan(SmartPlugin):
             # and only, if the item has not been changed by this this plugin:
             # self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
 
-
-
-            if self.has_iattr(item.conf, 'bsb_lan') and str(caller) != "Logic":
+            if self.has_iattr(item.conf, 'bsb_lan') and str(caller) != 'Logic':
                 self.logger.debug(
-                    "update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item,
-                                                                                                               caller,
-                                                                                                               source,
-                                                                                                               dest))
+                    "update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(
+                        item, caller, source, dest
+                    )
+                )
                 url = 'http://' + self.get_parameter_value('bsblan_ip') + '/JS'
-                payload = {"Parameter": str(item.conf['bsb_lan']), "Value": item.property.value, "Type": "1"}
+                payload = {'Parameter': str(item.conf['bsb_lan']), 'Value': item.property.value, 'Type': '1'}
                 headers = {'content-type': 'application/json'}
                 r = requests.post(url, data=json.dumps(payload), headers=headers)
                 response = json.loads(r.text)
 
                 # Status 0 = Fehler, 1 = OK, 2 = Parameter read-only
-                if(response["%s" % str(item.conf['bsb_lan'])]["status"] == 0):
-                    self.logger.error("Cannot set parameter value "+str(item.conf['bsb_lan']))
-                if(response["%s" % str(item.conf['bsb_lan'])]["status"] == 2):
-                    self.logger.warning("Cannot set parameter value "+str(item.conf['bsb_lan'])+". Parameter is read only.")
+                if response['%s' % str(item.conf['bsb_lan'])]['status'] == 0:
+                    self.logger.error('Cannot set parameter value ' + str(item.conf['bsb_lan']))
+                if response['%s' % str(item.conf['bsb_lan'])]['status'] == 2:
+                    self.logger.warning(
+                        'Cannot set parameter value ' + str(item.conf['bsb_lan']) + '. Parameter is read only.'
+                    )
 
             pass

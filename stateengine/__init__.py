@@ -39,6 +39,7 @@ from datetime import datetime
 
 try:
     import pydotplus
+
     VIS_ENABLED = True
 except Exception:
     VIS_ENABLED = False
@@ -60,39 +61,47 @@ class StateEngine(SmartPlugin):
         self.__cli = None
         self.vis_enabled = self._test_visualization()
         if not self.vis_enabled:
-            self.logger.warning('StateEngine is missing the PyDotPlus package or GraphViz, WebIf visualization is disabled')
+            self.logger.warning(
+                'StateEngine is missing the PyDotPlus package or GraphViz, WebIf visualization is disabled'
+            )
         self.init_webinterface(WebInterface)
         self.__sh.stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.__sh, self.logger)
         try:
-            log_level = self.get_parameter_value("log_level")
-            startup_log_level = self.get_parameter_value("startup_log_level")
-            log_directory = self.get_parameter_value("log_directory")
-            log_maxage = self.get_parameter_value("log_maxage")
-            log_level_value = StateEngineValue.SeValue(self, "Log Level", False, "num")
+            log_level = self.get_parameter_value('log_level')
+            startup_log_level = self.get_parameter_value('startup_log_level')
+            log_directory = self.get_parameter_value('log_directory')
+            log_maxage = self.get_parameter_value('log_maxage')
+            log_level_value = StateEngineValue.SeValue(self, 'Log Level', False, 'num')
             log_level_value.set(log_level)
             SeLogger.log_level = log_level_value
-            startup_log_level_value = StateEngineValue.SeValue(self, "Startup Log Level", False, "num")
+            startup_log_level_value = StateEngineValue.SeValue(self, 'Startup Log Level', False, 'num')
             startup_log_level_value.set(startup_log_level)
             SeLogger.startup_log_level = startup_log_level_value
-            log_maxage_value = StateEngineValue.SeValue(self, "Log MaxAge", False, "num")
+            log_maxage_value = StateEngineValue.SeValue(self, 'Log MaxAge', False, 'num')
             log_maxage_value.set(log_maxage)
             SeLogger.log_maxage = log_maxage_value
-            default_log_level_value = StateEngineValue.SeValue(self, "Default Log Level", False, "num")
+            default_log_level_value = StateEngineValue.SeValue(self, 'Default Log Level', False, 'num')
             default_log_level_value.set(log_level)
             SeLogger.default_log_level = default_log_level_value
-            self.logger.info("Set default log level to {}, Startup log level to {}.".format(SeLogger.log_level, SeLogger.startup_log_level))
-            self.logger.info("Init StateEngine (log_level={0}, log_directory={1})".format(log_level, log_directory))
-            StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
-            suspend_time = self.get_parameter_value("suspend_time_default")
-            suspend_time_value = StateEngineValue.SeValue(self, "Default Suspend Time", False, "num")
+            self.logger.info(
+                'Set default log level to {}, Startup log level to {}.'.format(
+                    SeLogger.log_level, SeLogger.startup_log_level
+                )
+            )
+            self.logger.info('Init StateEngine (log_level={0}, log_directory={1})'.format(log_level, log_directory))
+            StateEngineDefaults.startup_delay = self.get_parameter_value('startup_delay_default')
+            suspend_time = self.get_parameter_value('suspend_time_default')
+            suspend_time_value = StateEngineValue.SeValue(self, 'Default Suspend Time', False, 'num')
             suspend_time_value.set(suspend_time)
             StateEngineDefaults.suspend_time = suspend_time_value
-            default_instant_leaveaction = self.get_parameter_value("instant_leaveaction")
-            self.__default_instant_leaveaction = StateEngineValue.SeValue(self, "Default Instant Leave Action", False, "bool")
+            default_instant_leaveaction = self.get_parameter_value('instant_leaveaction')
+            self.__default_instant_leaveaction = StateEngineValue.SeValue(
+                self, 'Default Instant Leave Action', False, 'bool'
+            )
             self.__default_instant_leaveaction.set(default_instant_leaveaction)
 
-            StateEngineDefaults.suntracking_offset = self.get_parameter_value("lamella_offset")
-            StateEngineDefaults.lamella_open_value = self.get_parameter_value("lamella_open_value")
+            StateEngineDefaults.suntracking_offset = self.get_parameter_value('lamella_offset')
+            StateEngineDefaults.lamella_open_value = self.get_parameter_value('lamella_open_value')
             StateEngineDefaults.plugin_identification = self.get_fullname()
             StateEngineDefaults.plugin_version = self.PLUGIN_VERSION
             StateEngineDefaults.write_to_log(self.logger)
@@ -107,32 +116,34 @@ class StateEngine(SmartPlugin):
                 self.logger.info(text.format(log_directory, log_level))
 
             if log_maxage > 0:
-                self.logger.info("StateEngine extended log files will be deleted after {0} days.".format(log_maxage))
+                self.logger.info('StateEngine extended log files will be deleted after {0} days.'.format(log_maxage))
                 cron = ['init', '30 0 * *']
                 self.scheduler_add('Remove old logfiles', SeLogger.remove_old_logfiles, cron=cron, offset=0)
 
         except Exception as ex:
             self._init_complete = False
-            self.logger.warning("Problem loading Stateengine plugin: {}".format(ex))
+            self.logger.warning('Problem loading Stateengine plugin: {}'.format(ex))
             return
 
     # Parse an item
     # noinspection PyMethodMayBeStatic
     def parse_item(self, item):
         item.expand_relativepathes('se_manual_logitem', '', '')
-        if self.has_iattr(item.conf, "se_manual_include") or self.has_iattr(item.conf, "se_manual_exclude"):
-            item._eval = "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.property.path + "', caller, source)"
-        elif self.has_iattr(item.conf, "se_manual_invert"):
-            item._eval = "not sh." + item.property.path + "()"
+        if self.has_iattr(item.conf, 'se_manual_include') or self.has_iattr(item.conf, 'se_manual_exclude'):
+            item._eval = (
+                "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.property.path + "', caller, source)"
+            )
+        elif self.has_iattr(item.conf, 'se_manual_invert'):
+            item._eval = 'not sh.' + item.property.path + '()'
         return None
 
     # Initialization of plugin
     def run(self):
         # Initialize
         StateEngineStructs.global_struct = copy.deepcopy(self.itemsApi.return_struct_definitions())
-        self.logger.info("Init StateEngine items")
-        for item in self.itemsApi.find_items("se_plugin"):
-            if item.conf["se_plugin"] == "active":
+        self.logger.info('Init StateEngine items')
+        for item in self.itemsApi.find_items('se_plugin'):
+            if item.conf['se_plugin'] == 'active':
                 try:
                     abitem = StateEngineItem.SeItem(self.__sh, item, self)
                     abitem.ab_alive = True
@@ -142,12 +153,12 @@ class StateEngine(SmartPlugin):
                     abitem.startup()
                     self._items[abitem.id] = abitem
                 except ValueError as ex:
-                    self.logger.error("Problem with Item: {0}: {1}".format(item.property.path, ex))
+                    self.logger.error('Problem with Item: {0}: {1}'.format(item.property.path, ex))
 
         if len(self._items) > 0:
-            self.logger.info("Using StateEngine for {} items".format(len(self._items)))
+            self.logger.info('Using StateEngine for {} items'.format(len(self._items)))
         else:
-            self.logger.info("StateEngine deactivated because no items have been found.")
+            self.logger.info('StateEngine deactivated because no items have been found.')
 
         self.__cli = StateEngineCliCommands.SeCliCommands(self.__sh, self._items, self.logger)
         self.alive = True
@@ -155,7 +166,7 @@ class StateEngine(SmartPlugin):
 
     # Stopping of plugin
     def stop(self):
-        self.logger.debug("stop method called")
+        self.logger.debug('stop method called')
         self.scheduler_remove_all()
         for item in self._items:
             self._items[item].ab_alive = False
@@ -165,7 +176,7 @@ class StateEngine(SmartPlugin):
 
         self.alive = False
         self.__sh.stateengine_plugin_functions.ab_alive = False
-        self.logger.debug("stop method finished")
+        self.logger.debug('stop method finished')
 
     # Determine if caller/source are contained in changed_by list
     # caller: Caller to check
@@ -174,9 +185,10 @@ class StateEngine(SmartPlugin):
     def is_changed_by(self, caller, source, changed_by):
         original_caller, original_source = StateEngineTools.get_original_caller(self.__sh, self.logger, caller, source)
         for entry in changed_by:
-            entry_caller, __, entry_source = entry.partition(":")
-            if (entry_caller == original_caller or entry_caller == "*") and (
-                            entry_source == original_source or entry_source == "*"):
+            entry_caller, __, entry_source = entry.partition(':')
+            if (entry_caller == original_caller or entry_caller == '*') and (
+                entry_source == original_source or entry_source == '*'
+            ):
                 return True
         return False
 
@@ -187,9 +199,10 @@ class StateEngine(SmartPlugin):
     def not_changed_by(self, caller, source, changed_by):
         original_caller, original_source = StateEngineTools.get_original_caller(self.__sh, self.logger, caller, source)
         for entry in changed_by:
-            entry_caller, __, entry_source = entry.partition(":")
-            if (entry_caller == original_caller or entry_caller == "*") and (
-                            entry_source == original_source or entry_source == "*"):
+            entry_caller, __, entry_source = entry.partition(':')
+            if (entry_caller == original_caller or entry_caller == '*') and (
+                entry_source == original_source or entry_source == '*'
+            ):
                 return False
         return True
 
@@ -217,10 +230,14 @@ class StateEngine(SmartPlugin):
         except OSError:
             pass
         vis_file = self.path_join(self.get_plugin_dir(), 'webif/static/img/visualisations/{}.svg'.format(abitem))
-        #self.logger.debug("Getting graph: {}, {}".format(abitem, webif))
+        # self.logger.debug("Getting graph: {}, {}".format(abitem, webif))
         try:
             if graphtype == 'link':
-                return '<a href="static/img/visualisations/{}.svg"><img src="static/img/vis.png" width="30"></a>'.format(abitem)
+                return (
+                    '<a href="static/img/visualisations/{}.svg"><img src="static/img/vis.png" width="30"></a>'.format(
+                        abitem
+                    )
+                )
             elif abitem.firstrun is None:
                 webif.drawgraph(vis_file)
                 try:
@@ -228,41 +245,43 @@ class StateEngine(SmartPlugin):
                     change_datetime = datetime.fromtimestamp(change_timestamp)
                     formatted_date = change_datetime.strftime('%H:%M:%S, %d. %B')
                 except Exception:
-                    formatted_date = "Unbekannt"
-                return f'<div style="margin-bottom:15px;">{self.translate("Letzte Aktualisierung:")} {formatted_date}<br></div>\
+                    formatted_date = 'Unbekannt'
+                return (
+                    f'<div style="margin-bottom:15px;">{self.translate("Letzte Aktualisierung:")} {formatted_date}<br></div>\
                         <object type="image/svg+xml" data="static/img/visualisations/{abitem}.svg" id="visu_object">\
                         <iframe src="static/img/visualisations/{abitem}.svg">\
                         <img src="static/img/visualisations/{abitem}.svg">\
                         </iframe></object>'
+                )
             else:
                 return ''
         except pydotplus.graphviz.InvocationException as ex:
-           self.logger.error("Problem getting graph for {}. Error: {}".format(abitem, ex))
-           return '<h4>Can not show visualization. Most likely GraphViz is not installed.</h4> ' \
-                  'Current issue: ' + str(ex) + '<br/>'\
-                  'Please make sure <a href="https://graphviz.org/download/" target="_new">' \
-                  'graphviz</a> is installed.<br/>' \
-                  'On Windows add install path to your environment path AND run dot -c. ' \
-                  'Additionally copy dot.exe to fdp.exe!'
+            self.logger.error('Problem getting graph for {}. Error: {}'.format(abitem, ex))
+            return (
+                '<h4>Can not show visualization. Most likely GraphViz is not installed.</h4> '
+                'Current issue: ' + str(ex) + '<br/>'
+                'Please make sure <a href="https://graphviz.org/download/" target="_new">'
+                'graphviz</a> is installed.<br/>'
+                'On Windows add install path to your environment path AND run dot -c. '
+                'Additionally copy dot.exe to fdp.exe!'
+            )
         except Exception as ex:
-            self.logger.error("Problem getting graph for {}. Unspecified Error: {}".format(abitem, ex))
-            return '<h4>Can not show visualization.</h4> ' \
-                   'Current issue: ' + str(ex) + '<br/>'
+            self.logger.error('Problem getting graph for {}. Unspecified Error: {}'.format(abitem, ex))
+            return '<h4>Can not show visualization.</h4> Current issue: ' + str(ex) + '<br/>'
 
     def _test_visualization(self):
         if not VIS_ENABLED:
             return False
 
         img_path = self.path_join(self.get_plugin_dir(), 'webif/static/img/visualisations/se_test')
-        graph = pydotplus.Dot('StateEngine', graph_type='digraph', splines='false',
-                              overlap='scale', compound='false', imagepath=img_path)
-        graph.set_node_defaults(color='lightgray', style='filled', shape='box',
-                                fontname='Helvetica', fontsize='10')
-        graph.set_edge_defaults(color='darkgray', style='filled', shape='box',
-                                fontname='Helvetica', fontsize='10')
+        graph = pydotplus.Dot(
+            'StateEngine', graph_type='digraph', splines='false', overlap='scale', compound='false', imagepath=img_path
+        )
+        graph.set_node_defaults(color='lightgray', style='filled', shape='box', fontname='Helvetica', fontsize='10')
+        graph.set_edge_defaults(color='darkgray', style='filled', shape='box', fontname='Helvetica', fontsize='10')
 
         try:
             result = graph.write_svg(img_path, prog='fdp')
         except pydotplus.graphviz.InvocationException:
-            result =  False
+            result = False
         return result

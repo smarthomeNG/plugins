@@ -53,7 +53,7 @@ class SeCurrent:
         self.update()
 
     def __repr__(self):
-        return "SeCurrent"
+        return 'SeCurrent'
 
     # Return current weekday
     def get_weekday(self):

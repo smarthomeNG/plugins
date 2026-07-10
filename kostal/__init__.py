@@ -35,9 +35,10 @@ class Kostal(SmartPlugin):
     the values for other phases or a second DC Line-In.
     See README.md for more details
     """
+
     ALLOW_MULTIINSTANCE = True
 
-    PLUGIN_VERSION = "1.3.3"
+    PLUGIN_VERSION = '1.3.3'
 
     _key2json = {
         'operation_status': 16780032,
@@ -66,7 +67,7 @@ class Kostal(SmartPlugin):
         'ac3_w': 67109891,
         'yield_day_kwh': 251658754,
         'yield_tot_kwh': 251658753,
-        'operationtime_h': 251658496
+        'operationtime_h': 251658496,
     }
     _key2td = {
         'actot_w': 9,
@@ -84,7 +85,7 @@ class Kostal(SmartPlugin):
         'ac3_v': 96,
         'ac1_w': 57,
         'ac2_w': 81,
-        'ac3_w': 105
+        'ac3_w': 105,
     }
     _deprecated = {
         'power_current': 'actot_w',
@@ -102,7 +103,7 @@ class Kostal(SmartPlugin):
         'l3_volt': 'ac3_v',
         'l1_watt': 'ac1_w',
         'l2_watt': 'ac2_w',
-        'l3_watt': 'ac3_w'
+        'l3_watt': 'ac3_w',
     }
 
     def __init__(self, sh, **kwargs):
@@ -113,7 +114,7 @@ class Kostal(SmartPlugin):
         self.datastructure_param = self.get_parameter_value('datastructure')
         self.logger.info('Init Kostal plugin')
         self._items = {}
-        if self.datastructure_param == "html":
+        if self.datastructure_param == 'html':
             self._keytable = self._key2td
             self.datastructure = self._html
         else:
@@ -124,7 +125,7 @@ class Kostal(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.logger.debug("run method Kostal called")
+        self.logger.debug('run method Kostal called')
         self.alive = True
         self.scheduler_add('Kostal', self._refresh, cycle=self.cycle)
 
@@ -132,7 +133,7 @@ class Kostal(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("stop method Kostal called")
+        self.logger.debug('stop method Kostal called')
         self.scheduler_remove('Kostal')
         self.alive = False
 
@@ -145,7 +146,11 @@ class Kostal(SmartPlugin):
         if self.has_iattr(item.conf, 'kostal'):
             setting = self.get_iattr_value(item.conf, 'kostal')
             if setting in self._deprecated:
-                self.logger.warn('Kostal: Using deprecated setting {}, please change to {}'.format(setting, self._deprecated[setting]))
+                self.logger.warn(
+                    'Kostal: Using deprecated setting {}, please change to {}'.format(
+                        setting, self._deprecated[setting]
+                    )
+                )
                 setting = self._deprecated[setting]
             self._items[setting] = item
             return self.update_item
@@ -153,8 +158,7 @@ class Kostal(SmartPlugin):
     def _html(self):
         # HTML-OLD-Coding
         try:
-            data = self._sh.tools.fetch_url(
-                'http://' + self.ip + '/', self.user, self.passwd, timeout=2).decode()
+            data = self._sh.tools.fetch_url('http://' + self.ip + '/', self.user, self.passwd, timeout=2).decode()
             # remove all attributes for easy findall()
             data = re.sub(r'<([a-zA-Z0-9]+)(\s+[^>]*)>', r'<\1>', data)
             # search all TD elements
@@ -166,8 +170,7 @@ class Kostal(SmartPlugin):
                     if kostal_key in self._items:
                         self._items[kostal_key](value)
         except Exception as e:
-            self.logger.error(
-                'could not retrieve data from {0}: {1}'.format(self.ip, e))
+            self.logger.error('could not retrieve data from {0}: {1}'.format(self.ip, e))
             return
 
     def _json(self):
@@ -183,26 +186,25 @@ class Kostal(SmartPlugin):
                 for values in data['dxsEntries']:
                     kostal_key = str(list(self._keytable.keys())[list(self._keytable.values()).index(values['dxsId'])])
                     value = values['value']
-                    if kostal_key == "operation_status":
-                        self.logger.debug("operation_status" + str(value))
-                        if str(value) == "0":
-                            value = "off"
-                        elif str(value) == "2":
-                            value = "startup"
-                        elif str(value) == "3":
-                            value = "feed in (mpp)"
-                        elif str(value) == "6":
-                            value = "dc voltage low"
+                    if kostal_key == 'operation_status':
+                        self.logger.debug('operation_status' + str(value))
+                        if str(value) == '0':
+                            value = 'off'
+                        elif str(value) == '2':
+                            value = 'startup'
+                        elif str(value) == '3':
+                            value = 'feed in (mpp)'
+                        elif str(value) == '6':
+                            value = 'dc voltage low'
                         else:
-                            value = "unknown"
-                    if kostal_key == "yield_day_kwh":
+                            value = 'unknown'
+                    if kostal_key == 'yield_day_kwh':
                         value = float(value) / 1000
                     if kostal_key in self._items:
                         self._items[kostal_key](value)
-                        self.logger.debug("items[" + str(kostal_key) + "] = " + str(value))
+                        self.logger.debug('items[' + str(kostal_key) + '] = ' + str(value))
         except Exception as e:
-            self.logger.error(
-                'could not retrieve data from {0}: {1}'.format(self.ip, e))
+            self.logger.error('could not retrieve data from {0}: {1}'.format(self.ip, e))
             return
 
     def _refresh(self):
@@ -212,4 +214,4 @@ class Kostal(SmartPlugin):
         # run the working methods
         self.datastructure()
         cycletime = time.time() - start
-        self.logger.debug("cycle takes {0} seconds".format(cycletime))
+        self.logger.debug('cycle takes {0} seconds'.format(cycletime))

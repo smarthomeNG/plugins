@@ -602,7 +602,7 @@ class Telegram(SmartPlugin):
                         elif dicCtl['type'] == 'num':
                             if type(text) == int or float:
                                 if self.logger.isEnabledFor(logging.DEBUG):
-                                    self.logger.debug(f"control-item: answer is num ")
+                                    self.logger.debug("control-item: answer is num ")
                                 item = dicCtl['item']
                                 newValue = text
                                 if dicCtl['min'] is not None:
@@ -904,12 +904,12 @@ class Telegram(SmartPlugin):
         text = ""
         if changeType == 'toggle':
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug(f"control-item: type:toggle")
+                self.logger.debug("control-item: type:toggle")
             if question != '':
                 nd = (datetime.datetime.now()+ datetime.timedelta(seconds=timeout)).replace(tzinfo=self._sh.tzinfo())
                 self._waitAnswer = dicCtl
                 if self.logger.isEnabledFor(logging.DEBUG):
-                    self.logger.debug(f"control-item: add scheduler for answer-timout")
+                    self.logger.debug("control-item: add scheduler for answer-timout")
                 self.scheduler_add('telegram_change_item_timeout', self.telegram_change_item_timeout, value={'update': update, 'context': context}, next=nd)
                 text = question
                 self._bot.send_message(chat_id=update.message.chat.id, text=text, reply_markup={"keyboard": [['Yes', 'No']]})
@@ -927,12 +927,12 @@ class Telegram(SmartPlugin):
                 self._bot.sendMessage(chat_id=chat_id, text=text)
         if changeType == 'on':
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug(f"control-item: type:on")
+                self.logger.debug("control-item: type:on")
             if question != '':
                 nd = (datetime.datetime.now() + datetime.timedelta(seconds=timeout)).replace(tzinfo=self._sh.tzinfo())
                 self._waitAnswer = dicCtl
                 if self.logger.isEnabledFor(logging.DEBUG):
-                    self.logger.debug(f"control-item: add scheduler for answer-timout")
+                    self.logger.debug("control-item: add scheduler for answer-timout")
                 self.scheduler_add('telegram_change_item_timeout', self.telegram_change_item_timeout, value={'update': update, 'context': context}, next=nd)
                 text = question
                 self._bot.send_message(chat_id=update.message.chat.id, text=text, reply_markup={"keyboard": [['Yes', 'No']]})
@@ -943,12 +943,12 @@ class Telegram(SmartPlugin):
                     self._bot.sendMessage(chat_id=chat_id, text=text)
         if changeType == 'off':
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug(f"control-item: type:off")
+                self.logger.debug("control-item: type:off")
             if question != '':
                 nd = (datetime.datetime.now() + datetime.timedelta(seconds=timeout)).replace(tzinfo=self._sh.tzinfo())
                 self._waitAnswer = dicCtl
                 if self.logger.isEnabledFor(logging.DEBUG):
-                    self.logger.debug(f"control-item: add scheduler for answer-timout")
+                    self.logger.debug("control-item: add scheduler for answer-timout")
                 self.scheduler_add('telegram_change_item_timeout', self.telegram_change_item_timeout, value={'update': update, 'context': context}, next=nd)
                 text = question
                 self._bot.send_message(chat_id=update.message.chat.id, text=text, reply_markup={"keyboard": [['Yes', 'No']]})
@@ -961,7 +961,7 @@ class Telegram(SmartPlugin):
             nd = (datetime.datetime.now() + datetime.timedelta(seconds=timeout)).replace(tzinfo=self._sh.tzinfo())
             self._waitAnswer = dicCtl
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug(f"control-item: add scheduler for answer-timout")
+                self.logger.debug("control-item: add scheduler for answer-timout")
             self.scheduler_add('telegram_change_item_timeout', self.telegram_change_item_timeout, value={'update': update, 'context': context}, next=nd)
             if question == '':
                 text = self.translate("choose")
@@ -973,7 +973,7 @@ class Telegram(SmartPlugin):
             nd = (datetime.datetime.now() + datetime.timedelta(seconds=timeout)).replace(tzinfo=self._sh.tzinfo())
             self._waitAnswer = dicCtl
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug(f"control-item: add scheduler for answer-timout")
+                self.logger.debug("control-item: add scheduler for answer-timout")
             self.scheduler_add('telegram_change_item_timeout', self.telegram_change_item_timeout, value={'update': update, 'context': context}, next=nd)
             self._bot.sendMessage(chat_id=chat_id, text=text)
         if not text:

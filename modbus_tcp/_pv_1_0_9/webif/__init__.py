@@ -88,7 +88,7 @@ class WebInterface(SmartPluginWebIf):
         """
         if dataSet is None:
             # get the new data
-            data = {}
+            pass
 
             # data['item'] = {}
             # for i in self.plugin.items:

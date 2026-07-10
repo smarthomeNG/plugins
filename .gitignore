@@ -36,3 +36,7 @@ Thumbs.db
 
 # VSCode settings
 .vscode/settings.json
+
+# pyright stub packages (tools/pyright_stub_audit.py) — local dev aid,
+# CI lints with ruff, not pyright; regenerate with --apply-create if needed
+/typings/

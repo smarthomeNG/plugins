@@ -15,6 +15,7 @@ import http
 # however, assumes that a system will provide consistent line endings.
 end_of_field = re.compile(r'\r\n\r\n|\r\r|\n\n')
 
+
 class SSEClient(object):
     def __init__(self, url, last_id=None, retry=3000, session=None, chunk_size=1024, **kwargs):
         self.url = url
@@ -37,7 +38,7 @@ class SSEClient(object):
         self.requests_kwargs['headers']['Accept'] = 'text/event-stream'
 
         # Keep data here as it streams in
-        self.buf = u''
+        self.buf = ''
 
         self._connect()
 
@@ -61,8 +62,7 @@ class SSEClient(object):
         return self
 
     def __next__(self):
-        decoder = codecs.getincrementaldecoder(
-            self.resp.encoding)(errors='replace')
+        decoder = codecs.getincrementaldecoder(self.resp.encoding)(errors='replace')
         while not self._event_complete():
             try:
                 next_chunk = next(self.resp_iterator)
@@ -104,7 +104,6 @@ class SSEClient(object):
 
 
 class Event(object):
-
     sse_line_pattern = re.compile('(?P<name>[^:]*):?( ?(?P<value>.*))?')
 
     def __init__(self, data='', event='message', id=None, retry=None):

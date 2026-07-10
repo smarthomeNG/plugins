@@ -46,7 +46,7 @@ elif trigger_source == "ventilation.booster.logics.switch":
         logger.debug("Ventilation switched ON")
         time.sleep(10)	
     
-    if trigger_value == True:                           # Booster mode on
+    if trigger_value:                           # Booster mode on
         sh.ventilation.booster.logics.value_after_boost(sh.ventilation.rs485._fanspeed())
         sh.ventilation.rs485._fanspeed(boost_fanspeed)
         logic.trigger(dt=shtime.now()+datetime.timedelta(seconds=boost_time), value="helios_boost_off")

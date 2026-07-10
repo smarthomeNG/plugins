@@ -25,9 +25,8 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class ROOMBA_980(SmartPlugin):
-
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.0.2"
+    PLUGIN_VERSION = '1.0.2'
 
     myroomba = None
 
@@ -49,7 +48,7 @@ class ROOMBA_980(SmartPlugin):
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'roomba_980'):
             item_type = self.get_iattr_value(item.conf, 'roomba_980')
-            if item_type == "start" or item_type == "stop" or item_type == "dock":
+            if item_type == 'start' or item_type == 'stop' or item_type == 'dock':
                 return self.update_item
 
             self._status_items[item_type] = item
@@ -71,27 +70,27 @@ class ROOMBA_980(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         if caller != __name__ and self.alive:
             self.logger.debug('item_update {} '.format(item))
-            if self.get_iattr_value(item.conf, 'roomba_980') == "start":
+            if self.get_iattr_value(item.conf, 'roomba_980') == 'start':
                 if item() is True:
-                    self.send_command("start")
-            elif self.get_iattr_value(item.conf, 'roomba_980') == "stop":
+                    self.send_command('start')
+            elif self.get_iattr_value(item.conf, 'roomba_980') == 'stop':
                 if item() is True:
-                    self.send_command("stop")
-            elif self.get_iattr_value(item.conf, 'roomba_980') == "dock":
+                    self.send_command('stop')
+            elif self.get_iattr_value(item.conf, 'roomba_980') == 'dock':
                 if item() is True:
-                    self.send_command("dock")
+                    self.send_command('dock')
 
     def get_status(self):
         status = self.myroomba.master_state
 
         for status_item in self._status_items:
-            if status_item == "status_batterie":
+            if status_item == 'status_batterie':
                 self._status_items[status_item](status['state']['reported']['batPct'], __name__)
-            elif status_item == "status_bin_full":
+            elif status_item == 'status_bin_full':
                 self._status_items[status_item](status['state']['reported']['bin']['full'], __name__)
-            elif status_item == "status_cleanMissionStatus_phase":
+            elif status_item == 'status_cleanMissionStatus_phase':
                 self._status_items[status_item](status['state']['reported']['cleanMissionStatus']['phase'], __name__)
-            elif status_item == "status_cleanMissionStatus_error":
+            elif status_item == 'status_cleanMissionStatus_error':
                 self._status_items[status_item](status['state']['reported']['cleanMissionStatus']['error'], __name__)
 
         self.logger.debug('Status update')
@@ -100,4 +99,3 @@ class ROOMBA_980(SmartPlugin):
         if self.myroomba is not None:
             self.myroomba.send_command(command)
             self.logger.debug('send command: {} to Roomba'.format(command))
-

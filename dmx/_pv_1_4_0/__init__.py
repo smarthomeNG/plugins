@@ -103,7 +103,7 @@ class DMX():
 
         START_DATA = 0x00
 
-        self._enttec_data[channel] = int(value);
+        self._enttec_data[channel] = int(value)
 
         packet = bytearray()
         packet.append(START_VAL)

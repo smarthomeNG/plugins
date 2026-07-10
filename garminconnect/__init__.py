@@ -33,30 +33,30 @@ from garminconnect import (
     GarminConnectAuthenticationError,
 )
 from enum import Enum, auto
-from lib.model.smartplugin import *
+from lib.model.smartplugin import Modules, Shtime, SmartPlugin, SmartPluginWebIf
+
 
 class GarminConnect(SmartPlugin):
     """
     Retrieves Garmin Connect Stats and Heart Rates.
     """
-    PLUGIN_VERSION = "1.2.0"
+
+    PLUGIN_VERSION = '1.2.0'
 
     def __init__(self, sh, *args, **kwargs):
         # Call init code of parent class (SmartPlugin or MqttPlugin)
         super().__init__()
 
         self._shtime = Shtime.get_instance()
-        self._username = self.get_parameter_value("email")
-        self._password = self.get_parameter_value("password")
-        self._is_cn = self.get_parameter_value("is_cn")
+        self._username = self.get_parameter_value('email')
+        self._password = self.get_parameter_value('password')
+        self._is_cn = self.get_parameter_value('is_cn')
         self._api = None
-
 
         self.init_webinterface()
 
     def run(self):
         self.alive = True
-
 
     def stop(self):
         """
@@ -80,13 +80,13 @@ class GarminConnect(SmartPlugin):
             self.logger.info(self._api.get_full_name())
             self.logger.info(self._api.get_unit_system())
         except (
-                GarminConnectConnectionError,
-                GarminConnectAuthenticationError,
-                GarminConnectTooManyRequestsError,
+            GarminConnectConnectionError,
+            GarminConnectAuthenticationError,
+            GarminConnectTooManyRequestsError,
         ) as err:
             self._api = Garmin(self._username, self._password, is_cn=self._is_cn)
             self._api.login()
-            self.logger.error("Error occurred during Garmin Connect communication: %s", err)
+            self.logger.error('Error occurred during Garmin Connect communication: %s', err)
 
     def get_stats(self, date_str=None):
         date = self._get_date(date_str)
@@ -114,32 +114,29 @@ class GarminConnect(SmartPlugin):
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
+            self.mod_http = Modules.get_instance().get_module('http')  # try/except to handle disabled http module
+        except Exception:
             self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
 
         # set application configuration for cherrypy
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
         config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
+            '/': {'tools.staticdir.root': webif_dir},
+            '/static': {'tools.staticdir.on': True, 'tools.staticdir.dir': 'static'},
         }
 
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
+        self.mod_http.register_webif(
+            WebInterface(webif_dir, self),
+            self.get_shortname(),
+            config,
+            self.get_classname(),
+            self.get_instance_name(),
+            description='',
+        )
 
         return True
 
@@ -149,12 +146,10 @@ class GarminConnect(SmartPlugin):
 # ------------------------------------------
 
 import cherrypy
-import json
 from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -179,6 +174,15 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
         tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           interface=None, plugin_info=self.plugin.get_info(), tabcount=3, now=self.plugin.shtime.now(),
-                           day=day, month=month, year=year, p=self.plugin)
+        return tmpl.render(
+            plugin_shortname=self.plugin.get_shortname(),
+            plugin_version=self.plugin.get_version(),
+            interface=None,
+            plugin_info=self.plugin.get_info(),
+            tabcount=3,
+            now=self.plugin.shtime.now(),
+            day=day,
+            month=month,
+            year=year,
+            p=self.plugin,
+        )

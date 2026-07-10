@@ -5,13 +5,13 @@ plugin:
     description:
         de: 'Plugin zur Geräte-Anbindung über ModBus an SmartHomeNG'
         en: 'Plugin to connect via modbus with SmartHomeNG'
-    maintainer: ivande, Cannon
-    tester: NONE                   # Who tests this plugin?
+    maintainer: CaeruleusAqua, ivande, Cannon
+    tester: onkelandy                   # Who tests this plugin?
     state: ready
     keywords: modbus_tcp modbus tcp smartmeter inverter heatpump
     #documentation: http://smarthomeng.de/user/plugins/modbus_tcp/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1154368-einbindung-von-modbus-tcp
-    version: 1.0.15                # Plugin version
+    version: 1.1.0                   # Plugin version
     sh_minversion: '1.10'          # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: '3.8'
@@ -137,7 +137,1823 @@ item_attributes:
             de: 'Faktor mit dem der gelesene Register-Wert multipliziert wird'
             en: 'Factor by which the read register value is multiplied'
 
-item_structs: NONE
+item_structs:
+    huawei:
+        smartlogger:
+            system:
+                date_time:
+                    type: num
+                    modBusAddress@instance: 40000
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read_write
+
+                time_zone:
+                    type: num
+                    modBusAddress@instance: 40005
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                local_time:
+                    type: num
+                    modBusAddress@instance: 40009
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+            pv:
+                active_power:
+                    type: num
+                    modBusAddress@instance: 40388
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 0.01
+                    modBusDirection@instance: read
+
+                reactive_power:
+                    type: num
+                    modBusAddress@instance: 40390
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.01
+                    modBusDirection@instance: read
+
+            storage:
+                active_power:
+                    type: num
+                    modBusAddress@instance: 40392
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.01
+                    modBusDirection@instance: read
+
+                soc:
+                    type: num
+                    modBusAddress@instance: 40515
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 0.1
+                    modBusDirection@instance: read
+
+            inverter:
+                efficiency:
+                    type: num
+                    modBusAddress@instance: 40685
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 0.01
+                    modBusDirection@instance: read
+
+            external_meter:
+
+                voltage:
+                    phase_a:
+                        type: num
+                        modBusAddress@instance: 32260
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    phase_b:
+                        type: num
+                        modBusAddress@instance: 32262
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    phase_c:
+                        type: num
+                        modBusAddress@instance: 32264
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                current:
+                    phase_a:
+                        type: num
+                        modBusAddress@instance: 32272
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read
+
+                    phase_b:
+                        type: num
+                        modBusAddress@instance: 32274
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read
+
+                    phase_c:
+                        type: num
+                        modBusAddress@instance: 32276
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read
+
+                power:
+                    active:
+                        type: num
+                        modBusAddress@instance: 32278
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    power_factor:
+                        type: num
+                        modBusAddress@instance: 32284
+                        modBusDataType@instance: int16
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                energy:
+                    total_active:
+                        type: num
+                        modBusAddress@instance: 32341
+                        modBusDataType@instance: int64
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    total_reactive:
+                        type: num
+                        modBusAddress@instance: 32345
+                        modBusDataType@instance: int64
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+        sdongle:
+
+            energy:
+                input_power:
+                    type: num
+                    modBusAddress@instance: 37498
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 0.010
+                    modBusDirection@instance: read
+
+                load_power:
+                    type: num
+                    modBusAddress@instance: 37500
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 0.010
+                    modBusDirection@instance: read
+
+                grid_power:
+                    description: positive = import from grid, negative = export to grid
+                    type: num
+                    modBusAddress@instance: 37502
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.010
+                    modBusDirection@instance: read
+
+                battery_power:
+                    description: positive = charging, negative = discharging
+                    type: num
+                    modBusAddress@instance: 37504
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.010
+                    modBusDirection@instance: read
+
+                active_power:
+                    type: num
+                    modBusAddress@instance: 37516
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.010
+                    modBusDirection@instance: read
+
+        meter:
+
+            status:
+                type: num
+                modBusAddress@instance: 37100
+                modBusDataType@instance: uint16
+                modBusFactor@instance: 1
+                modBusDirection@instance: read
+
+            frequency:
+                description: Hz
+                type: num
+                modBusAddress@instance: 37118
+                modBusDataType@instance: int16
+                modBusFactor@instance: 0.01
+                modBusDirection@instance: read
+
+            voltage:
+                phase_a:
+                    description: V
+                    type: num
+                    modBusAddress@instance: 37101
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.1
+                    modBusDirection@instance: read
+
+                phase_b:
+                    description: V
+                    type: num
+                    modBusAddress@instance: 37103
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.1
+                    modBusDirection@instance: read
+
+                phase_c:
+                    description: V
+                    type: num
+                    modBusAddress@instance: 37105
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.1
+                    modBusDirection@instance: read
+
+                line_ab:
+                    description: V
+                    type: num
+                    modBusAddress@instance: 37126
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.1
+                    modBusDirection@instance: read
+
+                line_bc:
+                    description: V
+                    type: num
+                    modBusAddress@instance: 37128
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.1
+                    modBusDirection@instance: read
+
+                line_ca:
+                    description: V
+                    type: num
+                    modBusAddress@instance: 37130
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.1
+                    modBusDirection@instance: read
+
+            current:
+                phase_a:
+                    description: A
+                    type: num
+                    modBusAddress@instance: 37107
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.01
+                    modBusDirection@instance: read
+
+                phase_b:
+                    description: A
+                    type: num
+                    modBusAddress@instance: 37109
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.01
+                    modBusDirection@instance: read
+
+                phase_c:
+                    description: A
+                    type: num
+                    modBusAddress@instance: 37111
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.01
+                    modBusDirection@instance: read
+
+            power:
+                active:
+                    description: kW
+                    type: num
+                    modBusAddress@instance: 37113
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                reactive:
+                    description: kVAr
+                    type: num
+                    modBusAddress@instance: 37115
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                factor:
+                    description: PF
+                    type: num
+                    modBusAddress@instance: 37117
+                    modBusDataType@instance: int16
+                    modBusFactor@instance: 0.01
+                    modBusDirection@instance: read
+
+                phase_a:
+                    description: kW
+                    type: num
+                    modBusAddress@instance: 37132
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                phase_b:
+                    description: kW
+                    type: num
+                    modBusAddress@instance: 37134
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                phase_c:
+                    description: kW
+                    type: num
+                    modBusAddress@instance: 37136
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+            energy:
+                exported:
+                    description: kWh
+                    type: num
+                    modBusAddress@instance: 37119
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.01
+                    modBusDirection@instance: read
+
+                accumulated:
+                    description: kWh
+                    type: num
+                    modBusAddress@instance: 37121
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.01
+                    modBusDirection@instance: read
+
+                reactive_accumulated:
+                    description: kVArh
+                    type: num
+                    modBusAddress@instance: 37123
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 0.01
+                    modBusDirection@instance: read
+
+            type:
+                meter:
+                    type: num
+                    modBusAddress@instance: 37125
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                check:
+                    type: num
+                    modBusAddress@instance: 37138
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+        inverter:
+
+            hardware:
+                model_name:
+                    type: str
+                    modBusAddress@instance: 30000
+                    modBusDataType@instance: string30
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                serial_number:
+                    type: str
+                    modBusAddress@instance: 30015
+                    modBusDataType@instance: string20
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                part_number:
+                    type: str
+                    modBusAddress@instance: 30025
+                    modBusDataType@instance: string20
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                model_id:
+                    type: num
+                    modBusAddress@instance: 30070
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                product_sales_area:
+                    type: str
+                    modBusAddress@instance: 30105
+                    modBusDataType@instance: string4
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                grid_standard_code_protocol_version:
+                    type: num
+                    modBusAddress@instance: 30109
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                status:
+                    description: status
+                    type: num
+                    modBusAddress@instance: 32089
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                capability:
+                    nb_pv_strings:
+                        type: num
+                        modBusAddress@instance: 30071
+                        modBusDataType@instance: uint16
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    nb_mpp_tracks:
+                        type: num
+                        modBusAddress@instance: 30072
+                        modBusDataType@instance: uint16
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                startup:
+                    type: num
+                    modBusAddress@instance: 40200
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: write
+
+                shutdown:
+                    type: num
+                    modBusAddress@instance: 40201
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: write
+
+            software:
+                firmware_version:
+                    type: str
+                    modBusAddress@instance: 30035
+                    modBusDataType@instance: string30
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                software_version:
+                    type: str
+                    modBusAddress@instance: 30050
+                    modBusDataType@instance: string30
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                protocol_version_modbus:
+                    type: num
+                    modBusAddress@instance: 30068
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+            limits:
+                rated_power:
+                    description: W
+                    type: num
+                    modBusAddress@instance: 30073
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                p_max:
+                    description: W
+                    type: num
+                    modBusAddress@instance: 30075
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                s_max:
+                    description: VA
+                    type: num
+                    modBusAddress@instance: 30077
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                q_max_out:
+                    type: num
+                    modBusAddress@instance: 30079
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                q_max_in:
+                    type: num
+                    modBusAddress@instance: 30081
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                p_max_real:
+                    description: W
+                    type: num
+                    modBusAddress@instance: 30083
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                s_max_real:
+                    description: VA
+                    type: num
+                    modBusAddress@instance: 30085
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+            features:
+                feature_mask_1:
+                    type: num
+                    modBusAddress@instance: 30211
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                feature_mask_2:
+                    type: num
+                    modBusAddress@instance: 30213
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                feature_mask_3:
+                    type: num
+                    modBusAddress@instance: 30215
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                feature_mask_4:
+                    type: num
+                    modBusAddress@instance: 30217
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+            frequency:
+                description: Hz
+                type: num
+                modBusAddress@instance: 32085
+                modBusDataType@instance: uint16
+                modBusFactor@instance: 0.01
+                modBusDirection@instance: read
+
+
+            efficiency:
+                description: '%'
+                type: num
+                modBusAddress@instance: 32086
+                modBusDataType@instance: uint16
+                modBusFactor@instance: 0.01
+                modBusDirection@instance: read
+
+
+            temperature:
+                description: °C
+                type: num
+                modBusAddress@instance: 32087
+                modBusDataType@instance: int16
+                modBusFactor@instance: 0.1
+                modBusDirection@instance: read
+
+            power:
+                input:
+                    description: W
+                    type: num
+                    modBusAddress@instance: 32064
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                active:
+                    description: W
+                    type: num
+                    modBusAddress@instance: 32080
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                reactive:
+                    description: W
+                    type: num
+                    modBusAddress@instance: 32082
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                factor:
+                    type: num
+                    modBusAddress@instance: 32084
+                    modBusDataType@instance: int16
+                    modBusFactor@instance: 0.01
+                    modBusDirection@instance: read
+
+        storage:
+
+            power:
+                charge:
+                    max:
+                        description: W
+                        type: num
+                        modBusAddress@instance: 37046
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    max_set:
+                        description: W
+                        type: num
+                        modBusAddress@instance: 47075
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read_write
+
+                    forced:
+                        charge:
+                            description: W
+                            type: num
+                            modBusAddress@instance: 47247
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 1
+                            modBusDirection@instance: read_write
+
+                        discharge:
+                            description: W
+                            type: num
+                            modBusAddress@instance: 47249
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 1
+                            modBusDirection@instance: read_write
+
+                discharge:
+                    max:
+                        description: W
+                        type: num
+                        modBusAddress@instance: 37048
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    max_set:
+                        description: W
+                        type: num
+                        modBusAddress@instance: 47077
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read_write
+
+                grid_charge:
+                    current:
+                        description: W
+                        type: num
+                        modBusAddress@instance: 47242
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read_write
+
+                    max:
+                        description: W
+                        type: num
+                        modBusAddress@instance: 47244
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read_write
+
+            capacity:
+                rated:
+                    description: kWh
+                    type: num
+                    modBusAddress@instance: 37758
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                state_of_charge:
+                    description: '%'
+                    type: num
+                    modBusAddress@instance: 37760
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 0.1
+                    modBusDirection@instance: read
+
+                cutoff:
+                    charge:
+                        description: '%'
+                        type: num
+                        modBusAddress@instance: 47081
+                        modBusDataType@instance: uint16
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read_write
+
+                    discharge:
+                        description: '%'
+                        type: num
+                        modBusAddress@instance: 47082
+                        modBusDataType@instance: uint16
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read_write
+
+                forced_soc:
+                    description: '%'
+                    type: num
+                    modBusAddress@instance: 47101
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 0.1
+                    modBusDirection@instance: read_write
+
+                backup_soc:
+                    description: '%'
+                    type: num
+                    modBusAddress@instance: 47102
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 0.1
+                    modBusDirection@instance: read_write
+
+                grid_charge_cutoff:
+                    description: '%'
+                    type: num
+                    modBusAddress@instance: 47088
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 0.1
+                    modBusDirection@instance: read_write
+
+            energy:
+                total:
+                    charge:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 37780
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    discharge:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 37782
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                daily:
+                    charge:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 37784
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    discharge:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 37786
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+            electrical:
+                bus:
+                    voltage:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 37763
+                        modBusDataType@instance: uint16
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read
+
+                    current:
+                        description: A
+                        type: num
+                        modBusAddress@instance: 37764
+                        modBusDataType@instance: int16
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read
+
+            status:
+                running:
+                    type: num
+                    modBusAddress@instance: 37762
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                forced_mode:
+                    description: mode
+                    type: num
+                    modBusAddress@instance: 47100
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read_write
+
+                power_limit_grid:
+                    description: W
+                    type: num
+                    modBusAddress@instance: 47079
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                working_mode_a:
+                    type: num
+                    modBusAddress@instance: 47004
+                    modBusDataType@instance: int16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                working_mode_settings:
+                    type: num
+                    modBusAddress@instance: 47086
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read_write
+
+                control_mode:
+                    type: num
+                    modBusAddress@instance: 47589
+                    modBusDataType@instance: int16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read_write
+
+            operation:
+                charge_from_grid:
+                    type: bool
+                    modBusAddress@instance: 47087
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read_write
+
+                excess_pv_use_tou:
+                    type: num
+                    modBusAddress@instance: 47299
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read_write
+
+            pricing:
+                time_of_use_price:
+                    type: num
+                    modBusAddress@instance: 47027
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                luna_price_periods:
+                    type: num
+                    modBusAddress@instance: 47255
+                    modBusDirection@instance: read_write
+
+                lg_resu_price_periods:
+                    type: num
+                    modBusAddress@instance: 47028
+                    modBusDirection@instance: read_write
+
+                fixed_charging_and_discharging_periods:
+                    type: num
+                    modBusAddress@instance: 47200
+                    modBusDirection@instance: read_write
+
+                lcoe:
+                    description: c/kWh
+                    type: num
+                    modBusAddress@instance: 47069
+                    modBusDataType@instance: uint32
+                    modBusFactor@instance: 0.01
+                    modBusDirection@instance: read
+
+        emma:
+            general:
+
+                system:
+                    software_version:
+                        type: str
+                        modBusAddress@instance: 30035
+                        modBusDataType@instance: string30
+                        modBusDirection@instance: read
+
+                    model:
+                        type: str
+                        modBusAddress@instance: 30222
+                        modBusDataType@instance: string40
+                        modBusDirection@instance: read
+
+                    number_of_inverters_found:
+                        type: num
+                        modBusAddress@instance: 30801
+                        modBusDataType@instance: uint16
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    number_of_chargers_found:
+                        type: num
+                        modBusAddress@instance: 30804
+                        modBusDataType@instance: uint16
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    backup_time_notification_threshold:
+                        description: minutes
+                        type: num
+                        modBusAddress@instance: 30406
+                        modBusDataType@instance: uint16
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    local_time_year:
+                        type: num
+                        modBusAddress@instance: 40490
+                        modBusDataType@instance: uint16
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read_write
+
+                energy:
+
+                    total:
+                        absorbed:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30302
+                            modBusDataType@instance: uint64
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        consumption:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30326
+                            modBusDataType@instance: uint64
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        grid_export:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30332
+                            modBusDataType@instance: uint64
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        grid_import:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30338
+                            modBusDataType@instance: uint64
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        inverter_yield:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30344
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        pv_yield:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30348
+                            modBusDataType@instance: uint64
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                    today:
+                        consumption:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30324
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        grid_export:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30330
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        grid_import:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30336
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        inverter_yield:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30342
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        pv_yield:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30346
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                    monthly:
+                        pv_yield:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30380
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        consumption:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30382
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        grid_export:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30384
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        grid_import:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30394
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                    yearly:
+                        pv_yield:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30386
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        consumption:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30388
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        grid_export:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30390
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        grid_import:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30396
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                power:
+                    pv_output:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 30354
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    load:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 30356
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    feed_in:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 30358
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    inverter:
+                        active:
+                            description: kW
+                            type: num
+                            modBusAddress@instance: 30364
+                            modBusDataType@instance: int32
+                            modBusFactor@instance: 1
+                            modBusDirection@instance: read
+
+                        rated:
+                            description: kW
+                            type: num
+                            modBusAddress@instance: 30362
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 1
+                            modBusDirection@instance: read
+
+                configuration:
+                    threephase_imbalance_control:
+                        type: bool
+                        cache: True
+                        on_change: .register = 1 if value == True else 0
+
+                        register:
+                            type: num
+                            modBusAddress@instance: 40110
+                            modBusDataType@instance: uint16
+                            modBusFactor@instance: 1
+                            modBusDirection@instance: read_write
+                            on_change: .. = True if value == 1 else False
+
+                    power_control_mode_at_grid_connection_point:
+                        type: str
+                        cache: True
+                        on_change: .register = sh..config_reverse(key=value)
+
+                        config:
+                            type: dict
+                            initial_value: "{0: 'unlimited', 5: 'grid connection with zero power', 6: 'limited feed-in', 7: 'power-limited grid connected', 10: 'undefined'}"
+                        config_reverse:
+                            type: dict
+                            initial_value: "{'unlimited': 0, 'grid connection with zero power': 5, 'limited feed-in': 6, 'power-limited grid connected': 7}"
+                        register:
+                            type: num
+                            modBusAddress@instance: 40100
+                            modBusDataType@instance: uint16
+                            modBusFactor@instance: 1
+                            modBusDirection@instance: read_write
+                            initial_value: 10
+                            cache: True
+                            on_change: .. = sh...config(key=value)
+
+                    power_supply_configuration:
+                        type: str
+                        cache: True
+                        on_change: .register = sh..config_reverse(key=value)
+
+                        config:
+                          type: dict
+                          initial_value: "{0: 'None', 1: 'mains only', 2: 'mains + generator', 3: 'generator only', 10: 'undefined'}"
+
+                        config_reverse:
+                          type: dict
+                          initial_value: "{'None': 0, 'mains only': 1, 'mains + generator': 2, 'generator only': 3}"
+
+                        register:
+                          type: num
+                          modBusAddress@instance: 41214
+                          modBusDataType@instance: uint16
+                          modBusFactor@instance: 1
+                          modBusDirection@instance: read_write
+                          initial_value: 10
+                          cache: True
+                          on_change: .. = sh...config(key=value)
+
+                    tou_preferred_surplus_pv_use:
+                        description: 0 = fed to grid, 1 = charge
+                        type: num
+                        modBusAddress@instance: 40001
+                        modBusDataType@instance: uint16
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read_write
+
+                    tou_max_grid_charge_power:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 40002
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read_write
+
+                    limitation_mode:
+                        description: 0 = total power, 1 = single-phase power
+                        type: num
+                        modBusAddress@instance: 40101
+                        modBusDataType@instance: uint16
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read_write
+
+                    max_feed_in_power_watt:
+                        description: W
+                        type: num
+                        modBusAddress@instance: 40107
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read_write
+
+                    max_feed_in_power_percent:
+                        description: '%'
+                        type: num
+                        modBusAddress@instance: 40109
+                        modBusDataType@instance: uint16
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read_write
+
+            storage:
+
+                energy:
+
+                    chargeable:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 30318
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.001
+                        modBusDirection@instance: read
+
+                    dischargeable:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 30320
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.001
+                        modBusDirection@instance: read
+
+                    capacity:
+                        chargeable:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30369
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.001
+                            modBusDirection@instance: read
+
+                        dischargeable:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30371
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.001
+                            modBusDirection@instance: read
+
+                        rated:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30322
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.001
+                            modBusDirection@instance: read
+
+                    charged:
+                        today:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30306
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        monthly:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30407
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        total:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30308
+                            modBusDataType@instance: uint64
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                    discharged:
+                        today:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30312
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        monthly:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30409
+                            modBusDataType@instance: uint32
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                        total:
+                            description: kWh
+                            type: num
+                            modBusAddress@instance: 30314
+                            modBusDataType@instance: uint64
+                            modBusFactor@instance: 0.01
+                            modBusDirection@instance: read
+
+                charge_discharge_power:
+                    description: kW
+                    type: num
+                    modBusAddress@instance: 30360
+                    modBusDataType@instance: int32
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                state_of_charge:
+                    primary:
+                        description: '%'
+                        type: num
+                        modBusAddress@instance: 30368
+                        modBusDataType@instance: uint16
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    backup:
+                        description: '%'
+                        type: num
+                        modBusAddress@instance: 30373
+                        modBusDataType@instance: uint16
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                ess_control_mode:
+                    type: str
+                    cache: True
+                    on_change: .register = sh..config_reverse(key=value)
+
+                    config:
+                        type: dict
+                        initial_value: "{1: 'reserved', 2: 'max self-consumption', 3: 'reserved', 4: 'fully fed to grid', 5: '3rd party dispatch', 10: 'undefined'}"
+
+                    config_reverse:
+                        type: dict
+                        initial_value: "{'reserved': 1, 'max self-consumption': 2, 'reserved': 3, 'fully fed to grid': 4, '3rd party dispatch': 5}"
+
+                    register:
+                        type: num
+                        modBusAddress@instance: 40000
+                        modBusDataType@instance: int16
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read_write
+                        initial_value: 10
+                        cache: True
+                        on_change: .. = sh...config(key=value)
+
+            built_in_energy_sensor:
+
+                voltage:
+                    phase_a:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 31639
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    phase_b:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 31641
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    phase_c:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 31643
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    line_ab:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 31645
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    line_bc:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 31647
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    line_ca:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 31649
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                current:
+                    phase_a:
+                        description: A
+                        type: num
+                        modBusAddress@instance: 31651
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read
+
+                    phase_b:
+                        description: A
+                        type: num
+                        modBusAddress@instance: 31653
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read
+
+                    phase_c:
+                        description: A
+                        type: num
+                        modBusAddress@instance: 31655
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read
+
+                power:
+                    active:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 31657
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    factor:
+                        type: num
+                        modBusAddress@instance: 31661
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.010
+                        modBusDirection@instance: read
+
+                    apparent:
+                        description: kVA
+                        type: num
+                        modBusAddress@instance: 31663
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    phase_a:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 31665
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    phase_b:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 31667
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    phase_c:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 31669
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                energy:
+                    active:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 31671
+                        modBusDataType@instance: int64
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    negative:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 31679
+                        modBusDataType@instance: int64
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    positive:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 31687
+                        modBusDataType@instance: int64
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+            external_energy_sensor:
+
+                voltage:
+                    phase_a:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 31895
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    phase_b:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 31897
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    phase_c:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 31899
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    line_ab:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 31901
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    line_bc:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 31903
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    line_ca:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 31905
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                current:
+                    phase_a:
+                        description: A
+                        type: num
+                        modBusAddress@instance: 31907
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read
+
+                    phase_b:
+                        description: A
+                        type: num
+                        modBusAddress@instance: 31909
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read
+
+                    phase_c:
+                        description: A
+                        type: num
+                        modBusAddress@instance: 31911
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read
+
+                power:
+                    active:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 31913
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    factor:
+                        type: num
+                        modBusAddress@instance: 31917
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.010
+                        modBusDirection@instance: read
+
+                    apparent:
+                        description: kVA
+                        type: num
+                        modBusAddress@instance: 31919
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    phase_a:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 31921
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    phase_b:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 31923
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    phase_c:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 31925
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                energy:
+                    active:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 31927
+                        modBusDataType@instance: int64
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    negative:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 31935
+                        modBusDataType@instance: int64
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    positive:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 31943
+                        modBusDataType@instance: int64
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+            external_meter:
+
+                status:
+                    type: num
+                    modBusAddress@instance: 30500
+                    modBusDataType@instance: uint16
+                    modBusFactor@instance: 1
+                    modBusDirection@instance: read
+
+                voltage:
+                    phase_a:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 30502
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    phase_b:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 30504
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    phase_c:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 30506
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    line_ab:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 30508
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    line_bc:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 30510
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    line_ca:
+                        description: V
+                        type: num
+                        modBusAddress@instance: 30512
+                        modBusDataType@instance: uint32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                current:
+                    phase_a:
+                        description: A
+                        type: num
+                        modBusAddress@instance: 30514
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read
+
+                    phase_b:
+                        description: A
+                        type: num
+                        modBusAddress@instance: 30516
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read
+
+                    phase_c:
+                        description: A
+                        type: num
+                        modBusAddress@instance: 30518
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.1
+                        modBusDirection@instance: read
+
+                power:
+                    active:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 30520
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    apparent:
+                        description: kVA
+                        type: num
+                        modBusAddress@instance: 30526
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    factor:
+                        type: num
+                        modBusAddress@instance: 30524
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    phase_a:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 30528
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    phase_b:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 30530
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                    phase_c:
+                        description: kW
+                        type: num
+                        modBusAddress@instance: 30532
+                        modBusDataType@instance: int32
+                        modBusFactor@instance: 1
+                        modBusDirection@instance: read
+
+                energy:
+                    total:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 30534
+                        modBusDataType@instance: int64
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    positive:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 30550
+                        modBusDataType@instance: int64
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
+
+                    negative:
+                        description: kWh
+                        type: num
+                        modBusAddress@instance: 30542
+                        modBusDataType@instance: int64
+                        modBusFactor@instance: 0.01
+                        modBusDirection@instance: read
 
 plugin_functions: NONE
 

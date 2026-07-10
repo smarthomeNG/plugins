@@ -26,6 +26,7 @@ import socket
 import requests
 import xmltodict
 import logging
+
 logger = logging.getLogger('discover_bridges')
 
 from datetime import datetime
@@ -74,7 +75,8 @@ def get_bridge_desciptrion(ip, port):
     return br_info
 
 
-discovered_bridges = {}    # key: bridge_id, value: {, bridge_id, url_base}
+discovered_bridges = {}  # key: bridge_id, value: {, bridge_id, url_base}
+
 
 def add_discovered_bridge(ip, port):
 
@@ -91,7 +93,7 @@ def add_discovered_bridge(ip, port):
         xmldict = xmltodict.parse(r.text)
         bridge_id = xmldict['root']['device']['serialNumber']
 
-    if not bridge_id in discovered_bridges.keys():
+    if bridge_id not in discovered_bridges.keys():
         discovered_bridges[bridge_id] = url_base
 
     return
@@ -103,8 +105,8 @@ def add_discovered_bridge(ip, port):
 
 from zeroconf import ServiceBrowser, Zeroconf
 
-class MyListener:
 
+class MyListener:
     services = {}
 
     def remove_service(self, zeroconf, type, name):
@@ -122,23 +124,22 @@ def discover_via_mdns():
 
     zeroconf = Zeroconf()
     listener = MyListener()
-    t1 = datetime.now()
-    browser = ServiceBrowser(zeroconf, "_hue._tcp.local.", listener)
+    datetime.now()
+    ServiceBrowser(zeroconf, '_hue._tcp.local.', listener)
 
     time.sleep(2)
 
     zeroconf.close()
-    t2 = datetime.now()
 
     for sv in listener.services:
         service = listener.services[sv]
 
         ip = socket.gethostbyname(service.server)
         if service.port == 443:
-            protocol = 'https'
+            pass
         else:
-            protocol = 'http'
-        bridge_id = service.properties[b'bridgeid'].decode()
+            pass
+        service.properties[b'bridgeid'].decode()
 
         add_discovered_bridge(ip, service.port)
 
@@ -149,14 +150,13 @@ def discover_via_mdns():
 
 try:
     from .ssdp import discover as ssdp_discover
-except:
+except Exception:
     from ssdp import discover as ssdp_discover
+
 
 def discover_via_upnp():
 
-    t1 = datetime.now()
-    ssdp_list = ssdp_discover("ssdp:all", timeout=10)
-    t2 = datetime.now()
+    ssdp_list = ssdp_discover('ssdp:all', timeout=10)
 
     devices = [u for u in ssdp_list if (u.server is not None and 'IpBridge' in u.server)]
     for d in devices:
@@ -170,6 +170,7 @@ def discover_via_upnp():
 # ======================================================================================
 #    Discover via Signify broker server
 #
+
 
 def discover_via_broker():
 
@@ -185,15 +186,16 @@ def discover_via_broker():
                 port = 443
                 add_discovered_bridge(ip, port)
         else:
-            logger.error(f"Problem at broker server: {r.status_code}")
+            logger.error(f'Problem at broker server: {r.status_code}')
     except Exception as e:
-        logger.error(f"Problem at broker url: {e}")
+        logger.error(f'Problem at broker url: {e}')
     return
 
 
 # ======================================================================================
 #    Discover Hue bridges
 #
+
 
 def discover_bridges_by_method(mdns=True, upnp=True, broker=False, httponly=True):
 
@@ -244,46 +246,45 @@ def discover_bridges(upnp=False, httponly=False):
 def test_all_methods():
 
     discover_bridges_by_method(mdns=False, upnp=False, broker=True, httponly=False)
-    print("\nDiscover via broker")
+    print('\nDiscover via broker')
     for br_id in discovered_bridges:
-        print(f"  {br_id}: {discovered_bridges[br_id]}")
+        print(f'  {br_id}: {discovered_bridges[br_id]}')
 
     discover_bridges_by_method(mdns=False, upnp=False, broker=True, httponly=True)
-    print("\nDiscover via broker (http-only):")
+    print('\nDiscover via broker (http-only):')
     for br_id in discovered_bridges:
-        print(f"  {br_id}: {discovered_bridges[br_id]}")
+        print(f'  {br_id}: {discovered_bridges[br_id]}')
 
     discover_bridges_by_method(upnp=False, broker=False, httponly=False)
-    print("\nDiscover mDNS")
+    print('\nDiscover mDNS')
     for br_id in discovered_bridges:
-        print(f"  {br_id}: {discovered_bridges[br_id]}")
+        print(f'  {br_id}: {discovered_bridges[br_id]}')
 
     discover_bridges_by_method(upnp=False, broker=False)
-    print("\nDiscover mDNS (http-only):")
+    print('\nDiscover mDNS (http-only):')
     for br_id in discovered_bridges:
-        print(f"  {br_id}: {discovered_bridges[br_id]}")
+        print(f'  {br_id}: {discovered_bridges[br_id]}')
 
     from ssdp import discover as ssdp_discover
 
     discover_bridges_by_method(mdns=False, broker=False, httponly=False)
-    print("\nDiscover upnp")
+    print('\nDiscover upnp')
     for br_id in discovered_bridges:
-        print(f"  {br_id}: {discovered_bridges[br_id]}")
+        print(f'  {br_id}: {discovered_bridges[br_id]}')
 
     discover_bridges_by_method(mdns=False, broker=False)
-    print("\nDiscover upnp (http-only):")
+    print('\nDiscover upnp (http-only):')
     for br_id in discovered_bridges:
-        print(f"  {br_id}: {discovered_bridges[br_id]}")
+        print(f'  {br_id}: {discovered_bridges[br_id]}')
 
     discover_bridges_by_method(broker=True)
-    print("\nDiscover all:")
+    print('\nDiscover all:')
     for br_id in discovered_bridges:
-        print(f"  {br_id}: {discovered_bridges[br_id]}")
+        print(f'  {br_id}: {discovered_bridges[br_id]}')
 
 
 if __name__ == '__main__':
-
     my_discovered_bridges = discover_bridges(upnp=True, httponly=True)
-    print("\nDiscover all:")
+    print('\nDiscover all:')
     for br_id in my_discovered_bridges:
-        print(f"  {br_id}: {my_discovered_bridges[br_id]}")
+        print(f'  {br_id}: {my_discovered_bridges[br_id]}')

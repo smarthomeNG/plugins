@@ -30,11 +30,12 @@ Ivmech PID Controller is simple implementation of a Proportional-Integral-Deriva
 in the Python Programming Language.
 More information about PID Controller: http://en.wikipedia.org/wiki/PID_controller
 """
+
 import time
 
+
 class PID:
-    """PID Controller
-    """
+    """PID Controller"""
 
     def __init__(self, Kp=0.2, Ki=0.0, Kd=0.0):
 
@@ -81,13 +82,13 @@ class PID:
         delta_time = self.current_time - self.last_time
         delta_error = error - self.last_error
 
-        if (delta_time >= self.sample_time):
+        if delta_time >= self.sample_time:
             self.PTerm = self._Kp * error
             self.ITerm += error * delta_time
 
-            if (self.ITerm < -self.windup_guard):
+            if self.ITerm < -self.windup_guard:
                 self.ITerm = -self.windup_guard
-            elif (self.ITerm > self.windup_guard):
+            elif self.ITerm > self.windup_guard:
                 self.ITerm = self.windup_guard
 
             self.DTerm = 0.0
@@ -118,7 +119,7 @@ class PID:
         """
         self.sample_time = sample_time
 
-# ===========================================================================================
+    # ===========================================================================================
 
     @property
     def Kp(self):
@@ -147,7 +148,6 @@ class PID:
             self._type_error('non-float')
             return
 
-
     @property
     def Ki(self):
         """
@@ -174,7 +174,6 @@ class PID:
         else:
             self._type_error('non-float')
             return
-
 
     @property
     def Kd(self):
@@ -203,15 +202,13 @@ class PID:
             self._type_error('non-float')
             return
 
-
     def __repr__(self):
-        return "PID controller"
-
+        return 'PID controller'
 
     def _type_error(self, err):
         import inspect
+
         prop = inspect.stack()[1][3]
-        #self.logger.error("Cannot set property '{}' of item '{}' to a {} value".format(prop, self._item._path, err))
+        # self.logger.error("Cannot set property '{}' of item '{}' to a {} value".format(prop, self._item._path, err))
         self.logger.error("Cannot set property '{}' to a {} value".format(prop, err))
         return
-

@@ -44,7 +44,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -72,10 +71,7 @@ class WebInterface(SmartPluginWebIf):
         """
         pagelength = self.plugin.get_parameter_value('webif_pagelength')
         tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(p=self.plugin,
-                           webif_pagelength=pagelength,
-                           item_count=len(self.plugin.get_item_list()),
-                        )
+        return tmpl.render(p=self.plugin, webif_pagelength=pagelength, item_count=len(self.plugin.get_item_list()))
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -94,22 +90,23 @@ class WebInterface(SmartPluginWebIf):
                 data = json.dumps(self.plugin.obis_results)
                 return data
             except Exception as e:
-                self.logger.error(f"get_data_html overview exception: {e}")
+                self.logger.error(f'get_data_html overview exception: {e}')
 
         elif dataSet == 'devices_info':
             data = {'items': {}}
 
             # add item data
             for item in self.plugin.get_item_list():
-                item_dict = {'typ': item.property.type,
-                    		 'obis_code': self.plugin.get_iattr_value(item.conf, 'obis_code', ''),
-                             'obis_index': self.plugin.get_iattr_value(item.conf, 'obis_index', '0'),
-                             'obis_property': self.plugin.get_iattr_value(item.conf, 'obis_property', 'value'),
-                             'obis_vtype': self.plugin.get_iattr_value(item.conf, 'obis_vtype', '-'),
-                             'value': item.property.value,
-                             'last_update': item.property.last_update.strftime('%d.%m.%Y %H:%M:%S'),
-                             'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S'),
-                             }
+                item_dict = {
+                    'typ': item.property.type,
+                    'obis_code': self.plugin.get_iattr_value(item.conf, 'obis_code', ''),
+                    'obis_index': self.plugin.get_iattr_value(item.conf, 'obis_index', '0'),
+                    'obis_property': self.plugin.get_iattr_value(item.conf, 'obis_property', 'value'),
+                    'obis_vtype': self.plugin.get_iattr_value(item.conf, 'obis_vtype', '-'),
+                    'value': item.property.value,
+                    'last_update': item.property.last_update.strftime('%d.%m.%Y %H:%M:%S'),
+                    'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S'),
+                }
 
                 data['items'][item.property.path] = item_dict
 
@@ -119,7 +116,7 @@ class WebInterface(SmartPluginWebIf):
             try:
                 return json.dumps(data, default=str)
             except Exception as e:
-                self.logger.error(f"get_data_html devices_info exception: {e}")
+                self.logger.error(f'get_data_html devices_info exception: {e}')
 
         if dataSet is None:
             return
@@ -127,11 +124,10 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     def submit(self, cmd=None):
 
-        self.logger.debug(f"submit:  {cmd=}")
+        self.logger.debug(f'submit:  {cmd=}')
         result = None
 
-        if cmd == "detect":
-
+        if cmd == 'detect':
             # try to soft-format the discovery log messages...
             logmsg = ''
             for key, content in self.plugin.discovery_logs.items():
@@ -148,7 +144,11 @@ class WebInterface(SmartPluginWebIf):
             try:
                 result = {'success': self.plugin.create_items(), 'file': self.plugin.item_file, 'err': ''}
             except FileExistsError:
-                result = {'success': False, 'file': '', 'err': f'Datei {self.plugin.item_file} bereits vorhanden, bitte erst löschen oder umbennen.'}
+                result = {
+                    'success': False,
+                    'file': '',
+                    'err': f'Datei {self.plugin.item_file} bereits vorhanden, bitte erst löschen oder umbennen.',
+                }
                 self.logger.warning(result)
             except Exception as e:
                 self.logger.error(e)
@@ -156,6 +156,5 @@ class WebInterface(SmartPluginWebIf):
         if result is not None:
             # JSON zurücksenden
             cherrypy.response.headers['Content-Type'] = 'application/json'
-            self.logger.debug(f"Result for web interface: {result}")
+            self.logger.debug(f'Result for web interface: {result}')
             return json.dumps(result).encode('utf-8')
-

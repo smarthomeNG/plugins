@@ -34,7 +34,7 @@ class LevelJet(SmartPlugin):
     _ljetdata = ['dist', 'level', 'liter', 'percent', 'outflags']
     _items = []
 
-    def __init__(self, smarthome, serialport, baudrate="19200", update_cycle="240"):
+    def __init__(self, smarthome, serialport, baudrate='19200', update_cycle='240'):
         self._sh = smarthome
         self.enable = False
         self.logger = logging.getLogger(__name__)
@@ -43,13 +43,12 @@ class LevelJet(SmartPlugin):
             self._serial = serial.Serial(serialport, int(baudrate), timeout=2)
             self.enable = True
         except Exception:
-            self.logger.error("leveljet: Serial Port could not be opened. Device connected?")
+            self.logger.error('leveljet: Serial Port could not be opened. Device connected?')
 
     def run(self):
         # if(self.enable == True):
         try:
-
-            if(self._serial.isOpen()):
+            if self._serial.isOpen():
                 self.alive = True
                 # self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
                 self._sh.scheduler.add('LevelJet', self._update_values, prio=5, cycle=self._update_cycle)
@@ -65,45 +64,46 @@ class LevelJet(SmartPlugin):
     def _update_values(self):
         start = time.time()
         try:
-            self._serial.flushInput()    # V3: self._serial.reset_input_buffer()
+            self._serial.flushInput()  # V3: self._serial.reset_input_buffer()
             rcv = bytes()
             prev_length = 0
             while self.alive:
                 rcv += self._serial.read()
                 length = len(rcv)
                 # break if timeout or Frame found
-                if (length >= 12)and(rcv[-12] == 0x00)and(rcv[-11] == 0x10):
-                    result = rcv[-12:]
+                if (length >= 12) and (rcv[-12] == 0x00) and (rcv[-11] == 0x10):
                     break
-                if (length == prev_length):
-                    self.logger.warning("leveljet: read timeout! - rcv={}".format(rcv))
+                if length == prev_length:
+                    self.logger.warning('leveljet: read timeout! - rcv={}'.format(rcv))
                     return
                 prev_length = length
         except Exception as e:
-            self.logger.warning("leveljet:Exception {0}".format(e))
+            self.logger.warning('leveljet:Exception {0}'.format(e))
             return
-        self.logger.debug("leveljet: reading took: {:.2f}s".format(time.time() - start))
+        self.logger.debug('leveljet: reading took: {:.2f}s'.format(time.time() - start))
         # perform check (checksum match)
         crc = Crc16Buypass.calc(rcv[-12:-2])
         crc_high, crc_low = divmod(crc, 0x100)
         if (rcv[-2] != crc_low) or (rcv[-1] != crc_high):
-            self.logger.warning("leveljet: checksum error: RX-Frame={} checksum={}".format(' '.join(hex(i) for i in rcv), hex(crc)))
+            self.logger.warning(
+                'leveljet: checksum error: RX-Frame={} checksum={}'.format(' '.join(hex(i) for i in rcv), hex(crc))
+            )
             return
-        self.logger.debug("leveljet: RX-Frame={}".format(' '.join(hex(i) for i in rcv)))
+        self.logger.debug('leveljet: RX-Frame={}'.format(' '.join(hex(i) for i in rcv)))
         for item in self._items:
             ljet_cmd = item.conf['ljet_cmd']
-            if ljet_cmd == self._ljetdata[0]:     # dist
-                value = (rcv[-9] << 8)+rcv[-10]
-            elif ljet_cmd == self._ljetdata[1]:   # level
-                value = (rcv[-7] << 8)+rcv[-8]
-            elif ljet_cmd == self._ljetdata[2]:   # liter
-                value = ((rcv[-5] << 8)+rcv[-6])*10
-            elif ljet_cmd == self._ljetdata[3]:   # percent
+            if ljet_cmd == self._ljetdata[0]:  # dist
+                value = (rcv[-9] << 8) + rcv[-10]
+            elif ljet_cmd == self._ljetdata[1]:  # level
+                value = (rcv[-7] << 8) + rcv[-8]
+            elif ljet_cmd == self._ljetdata[2]:  # liter
+                value = ((rcv[-5] << 8) + rcv[-6]) * 10
+            elif ljet_cmd == self._ljetdata[3]:  # percent
                 value = rcv[-4]
-            elif ljet_cmd == self._ljetdata[4]:   # outflags:
+            elif ljet_cmd == self._ljetdata[4]:  # outflags:
                 value = rcv[-3]
             else:
-                self.logger.warning("leveljet: unknown ljetcmd: {}".format(ljet_cmd))
+                self.logger.warning('leveljet: unknown ljetcmd: {}'.format(ljet_cmd))
                 continue
             # self.logger.debug("leveljet: {}:{}".format(ljet_cmd, value))
             item(value, 'LevelJet', 'refresh')

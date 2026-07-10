@@ -107,7 +107,7 @@ class Russound(SmartPlugin,lib.connection.Client):
             path = self.get_iattr_value(item.conf,'rus_path')
             parts = path.split('.', 2)
 
-            if len(parts) is not 3:
+            if len(parts) != 3:
                 self.logger.warning(
                     "Invalid Russound path with value {0}, format should be 'c.z.p' c = controller, z = zone, p = parameter name.".format(path))
                 return None
@@ -322,7 +322,7 @@ class Russound(SmartPlugin,lib.connection.Client):
         for path in self.params:
             p = self.params[path]
             key = '{0}.{1}'.format(p['c'], p['z'])
-            if not key in zones:
+            if key not in zones:
                 zones.append(key)
                 self._watch_zone(p['c'], p['z'])
 
@@ -365,12 +365,12 @@ class Russound(SmartPlugin,lib.connection.Client):
                 'http')  # try/except to handle running in a core version that does not support modules
         except:
             self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Not initializing the web interface")
             return False
 
         import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
             self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
             return False
 
@@ -448,7 +448,7 @@ class WebInterface(SmartPluginWebIf):
         """
         if dataSet is None:
             # get the new data
-            data = {}
+            pass
 
             # data['item'] = {}
             # for i in self.plugin.items:

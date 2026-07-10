@@ -39,7 +39,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -53,7 +52,7 @@ class WebInterface(SmartPluginWebIf):
         self.webif_dir = webif_dir
         self.plugin = plugin
         self.items = Items.get_instance()
-        
+
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
@@ -69,16 +68,17 @@ class WebInterface(SmartPluginWebIf):
         pagelength = self.plugin.get_parameter_value('webif_pagelength')
         tmpl = self.tplenv.get_template('index.html')
 
-        return tmpl.render(p=self.plugin,
-                           webif_pagelength=pagelength,
-                           item_list=self.plugin.get_item_list(),
-                           item_count=len(self.plugin.get_item_list()),
-                           plugin_shortname=self.plugin.get_shortname(),
-                           plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(),
-                           soco_version=self.plugin.SoCo_version,
-                           maintenance=True if self.plugin.log_level <= 20 else False,
-                           )
+        return tmpl.render(
+            p=self.plugin,
+            webif_pagelength=pagelength,
+            item_list=self.plugin.get_item_list(),
+            item_count=len(self.plugin.get_item_list()),
+            plugin_shortname=self.plugin.get_shortname(),
+            plugin_version=self.plugin.get_version(),
+            plugin_info=self.plugin.get_info(),
+            soco_version=self.plugin.SoCo_version,
+            maintenance=True if self.plugin.log_level <= 20 else False,
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -97,8 +97,8 @@ class WebInterface(SmartPluginWebIf):
                 data = json.dumps(data)
                 return data
             except Exception as e:
-                self.logger.error(f"get_data_html exception: {e}")
-        
+                self.logger.error(f'get_data_html exception: {e}')
+
         if dataSet is None:
             data = dict()
 
@@ -106,16 +106,20 @@ class WebInterface(SmartPluginWebIf):
             for item in self.plugin.get_item_list():
                 data['items'][item.property.path] = {}
                 data['items'][item.property.path]['value'] = item() if item() is not None else '-'
-                data['items'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                data['items'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
-            
+                data['items'][item.property.path]['last_update'] = item.property.last_update.strftime(
+                    '%d.%m.%Y %H:%M:%S'
+                )
+                data['items'][item.property.path]['last_change'] = item.property.last_change.strftime(
+                    '%d.%m.%Y %H:%M:%S'
+                )
+
             data['maintenance'] = True if self.plugin.log_level <= 20 else False
 
             try:
                 return json.dumps(data, default=str)
             except Exception as e:
-                self.logger.error(f"get_data_html exception: {e}")
-                
+                self.logger.error(f'get_data_html exception: {e}')
+
     @cherrypy.expose
     def discover(self):
         self.plugin._discover(True)

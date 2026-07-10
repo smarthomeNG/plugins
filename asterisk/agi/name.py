@@ -5,8 +5,8 @@
 
 import sys
 import re
-import urllib.request, urllib.parse, urllib.error
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.parse
 
 while 1:
     line = sys.stdin.readline()
@@ -22,7 +22,7 @@ number = urllib.parse.quote(agi_callerid)
 exp = re.compile('<[^>]*id="name0"[^>]*>([^<]+)<', re.MULTILINE)
 lookup = urllib.request.urlopen("http://www3.dastelefonbuch.de/?kw={0}&cmd=search".format(number), data="User-Agent: Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11", timeout=1)
 name = exp.search(lookup.read())
-if name != None:
+if name is not None:
     name = name.group(1).strip()
     sys.stdout.write("SET VARIABLE CALLERID(name) \"{0}\"\n".format(name))
     sys.stdout.flush()

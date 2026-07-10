@@ -66,7 +66,7 @@ import sys
 import logging
 
 # Hack to make docs build without twisted installed
-if "sphinx" in sys.modules:
+if 'sphinx' in sys.modules:
 
     class Resource:  # pylint: disable=no-init
         """Fake Resource class to use when building docs"""
@@ -117,16 +117,16 @@ class EventNotifyHandler(Resource, EventNotifyHandlerBase):
         """
         headers = {}
         for header in request.requestHeaders.getAllRawHeaders():
-            decoded_key = header[0].decode("utf8").lower()
-            decoded_header = header[1][0].decode("utf8")
+            decoded_key = header[0].decode('utf8').lower()
+            decoded_header = header[1][0].decode('utf8')
             headers[decoded_key] = decoded_header
         content = request.content.read()
         self.handle_notification(headers, content)
-        return b"OK"
+        return b'OK'
 
     # pylint: disable=no-self-use, missing-docstring
     def log_event(self, seq, service_id, timestamp):
-        log.debug("Event %s received for %s service at %s", seq, service_id, timestamp)
+        log.debug('Event %s received for %s service at %s', seq, service_id, timestamp)
 
 
 class EventListener(EventListenerBase):
@@ -167,16 +167,12 @@ class EventListener(EventListenerBase):
         """
         # pylint: disable=possibly-used-before-assignment
         factory = Site(EventNotifyHandler())
-        for port_number in range(
-            self.requested_port_number, self.requested_port_number + 100
-        ):
+        for port_number in range(self.requested_port_number, self.requested_port_number + 100):
             try:
                 if port_number > self.requested_port_number:
-                    log.debug("Trying next port (%d)", port_number)
+                    log.debug('Trying next port (%d)', port_number)
                 # pylint: disable=no-member
-                self.port = reactor.listenTCP(
-                    port_number, factory, interface=ip_address
-                )
+                self.port = reactor.listenTCP(port_number, factory, interface=ip_address)
                 break
             # pylint: disable=invalid-name,used-before-assignment
             except twisted.internet.error.CannotListenError as e:
@@ -184,7 +180,7 @@ class EventListener(EventListenerBase):
                 continue
 
         if self.port:
-            log.debug("Event listener running on %s", (ip_address, self.port.port))
+            log.debug('Event listener running on %s', (ip_address, self.port.port))
             return self.port.port
         else:
             return None
@@ -324,9 +320,7 @@ class Subscription(SubscriptionBase):
     def _auto_renew_start(self, interval):
         """Starts the auto_renew loop."""
         # pylint: disable=possibly-used-before-assignment
-        self._auto_renew_loop = task.LoopingCall(
-            self.renew, is_autorenew=True, strict=False
-        )
+        self._auto_renew_loop = task.LoopingCall(self.renew, is_autorenew=True, strict=False)
         # False means wait for the interval to elapse, rather than fire at once
         self._auto_renew_loop.start(interval, False)
 
@@ -363,18 +357,18 @@ class Subscription(SubscriptionBase):
                 if isinstance(header, (list,)):
                     header = header[0]
                 if not isinstance(header, (bytes, bytearray)):
-                    header = header.encode("latin-1")
-                    k = k.encode("latin-1")
+                    header = header.encode('latin-1')
+                    k = k.encode('latin-1')
                 headers[k] = [header]
 
-        args = (method.encode("latin-1"), url.encode("latin-1"), Headers(headers))
+        args = (method.encode('latin-1'), url.encode('latin-1'), Headers(headers))
         d = agent.request(*args)  # pylint: disable=invalid-name
 
         def on_success(response):  # pylint: disable=missing-docstring
             response_headers = {}
             for header in response.headers.getAllRawHeaders():
-                decoded_key = header[0].decode("utf8").lower()
-                decoded_header = header[1][0].decode("utf8")
+                decoded_key = header[0].decode('utf8').lower()
+                decoded_header = header[1][0].decode('utf8')
                 response_headers[decoded_key] = decoded_header
             success(response_headers)
             return self
@@ -422,7 +416,7 @@ class Subscription(SubscriptionBase):
             """Execute method"""
             # Increment the counter of pending calls to Subscription.subscribe
             # if method is subscribe
-            if method.__name__ == "subscribe":
+            if method.__name__ == 'subscribe':
                 self.subscriptions_map.subscribing()
 
             # Execute method
@@ -449,39 +443,29 @@ class Subscription(SubscriptionBase):
                 # If a Failure or Exception occurred during execution of
                 # subscribe, renew or unsubscribe, cancel it unless the
                 # Failure or Exception was a SoCoException upon subscribe
-                if failure.type != SoCoException or action == "renew":
-                    msg = (
-                        "An Exception occurred. Subscription to"
-                        + " {}, sid: {} has been cancelled".format(
-                            self.service.base_url + self.service.event_subscription_url,
-                            self.sid,
-                        )
+                if failure.type != SoCoException or action == 'renew':
+                    msg = 'An Exception occurred. Subscription to' + ' {}, sid: {} has been cancelled'.format(
+                        self.service.base_url + self.service.event_subscription_url, self.sid
                     )
                     self._cancel_subscription(msg)
                 # If we're not being strict, log the Failure
                 if not strict:
-                    msg = (
-                        "Failure received in Subscription"
-                        + ".{} for Subscription to:\n{}, sid: {}: {}".format(
-                            action,
-                            self.service.base_url + self.service.event_subscription_url,
-                            self.sid,
-                            str(failure),
-                        )
+                    msg = 'Failure received in Subscription' + '.{} for Subscription to:\n{}, sid: {}: {}'.format(
+                        action, self.service.base_url + self.service.event_subscription_url, self.sid, str(failure)
                     )
                     log.exception(msg)
                     # If we're not being strict upon a renewal
                     # (e.g. an autorenewal) call the optional
                     # self.auto_renew_fail method, if it has been set
-                    if action == "renew":
+                    if action == 'renew':
                         if self.auto_renew_fail:
-                            if hasattr(self.auto_renew_fail, "__call__"):
+                            if hasattr(self.auto_renew_fail, '__call__'):
                                 # pylint: disable=not-callable
                                 self.auto_renew_fail(failure)
 
             # Decrement the counter of pending calls to Subscription.subscribe
             # if completed action was subscribe
-            if action == "subscribe":
+            if action == 'subscribe':
                 self.subscriptions_map.finished_subscribing()
 
             # Remove the previous deferred from the queue
@@ -543,7 +527,7 @@ class SubscriptionsMapTwisted(SubscriptionsMap):
         self.subscriptions[subscription.sid] = subscription
         # Register subscription to be unsubscribed at exit if still alive
         # pylint: disable=no-member
-        reactor.addSystemEventTrigger("before", "shutdown", subscription.unsubscribe)
+        reactor.addSystemEventTrigger('before', 'shutdown', subscription.unsubscribe)
 
     def subscribing(self):
         """Called when the `Subscription.subscribe` method

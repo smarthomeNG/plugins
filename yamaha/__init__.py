@@ -24,7 +24,7 @@ import logging
 import socket
 
 from io import StringIO
-from lib.model.smartplugin import *
+from lib.model.smartplugin import Modules, SmartPlugin
 from lib.item import Items
 
 from .webif import WebInterface
@@ -35,45 +35,47 @@ from .webif import WebInterface
 try:
     from lxml import etree
     import requests
-    REQUIRED_PACKAGE_IMPORTED = True
-except:
-    REQUIRED_PACKAGE_IMPORTED = False
 
+    REQUIRED_PACKAGE_IMPORTED = True
+except Exception:
+    REQUIRED_PACKAGE_IMPORTED = False
 
 
 class Mcast(socket.socket):
     def __init__(self, local_port):
         socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        if hasattr(socket, "SO_REUSEPORT"):
+        if hasattr(socket, 'SO_REUSEPORT'):
             self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         self.bind(('', local_port))
 
     def mcast_add(self, addr):
-        self.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP,
-                        socket.inet_aton(addr) + socket.inet_aton('0.0.0.0'))
+        self.setsockopt(
+            socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(addr) + socket.inet_aton('0.0.0.0')
+        )
 
 
 class Yamaha(SmartPlugin):
-    PLUGIN_VERSION = "1.0.3"
+    PLUGIN_VERSION = '1.0.3'
 
     def __init__(self, smarthome):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
         from bin.smarthome import VERSION
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
-        self.logger.info("Init Yamaha")
+        self.logger.info('Init Yamaha')
         self._yamaha_cmds = ['state', 'power', 'input', 'volume', 'mute']
         self._yamaha_ignore_cmds = ['play_info', 'list_info']
         self._yamaha_rxv = {}
         self.sock = None
-        self.mcast_addr = "239.255.255.250"
+        self.mcast_addr = '239.255.255.250'
         self.mcast_port = 1900
         self.mcast_buffer = 1024
-        self.mcast_service = "urn:schemas-yamaha-com:service:X_YamahaRemoteControl:1"
+        self.mcast_service = 'urn:schemas-yamaha-com:service:X_YamahaRemoteControl:1'
 
         # added parser with resolve_entities option in response to CVE-2026-41066
         self._xmlparser = etree.XMLParser(resolve_entities='internal')
@@ -87,16 +89,16 @@ class Yamaha(SmartPlugin):
         self.init_webinterface()
 
     def run(self):
-        self.logger.info("Yamaha starting listener")
+        self.logger.info('Yamaha starting listener')
         try:
             self.sock = Mcast(self.mcast_port)
             self.sock.mcast_add(self.mcast_addr)
         except OSError:
-            self.logger.error("Could not create a socket to Yamaha Receiver")
+            self.logger.error('Could not create a socket to Yamaha Receiver')
             return
 
         ## Todo: why not call initialize directly?
-        #self.scheduler_trigger('Yamaha', self._initialize)
+        # self.scheduler_trigger('Yamaha', self._initialize)
 
         ## test to call initialize directly
         if self._initialize():
@@ -111,12 +113,12 @@ class Yamaha(SmartPlugin):
             except TypeError:
                 pass
             notification = data.decode('utf-8')
-            #self.logger.debug("Received '{}' from {}".format(notification,addr))
+            # self.logger.debug("Received '{}' from {}".format(notification,addr))
             if self.mcast_service in notification:
                 if host not in list(self._yamaha_rxv.keys()):
-                    self.logger.warn("Yamaha received notify from unknown host {}".format(host))
+                    self.logger.warn('Yamaha received notify from unknown host {}'.format(host))
                 else:
-                    self.logger.info("Yamaha multicast received {} bytes from {}".format(len(data), host))
+                    self.logger.info('Yamaha multicast received {} bytes from {}'.format(len(data), host))
                     self.logger.debug(data)
                     for line in notification.split('\r\n'):
                         if line.startswith('<'):
@@ -125,22 +127,21 @@ class Yamaha(SmartPlugin):
                             for event in events:
                                 if event.lower() in self._yamaha_cmds:
                                     self.logger.info(
-                                        "Yamaha need to update the following item \"{}\" for host: {}".format(event,
-                                                                                                              host))
+                                        'Yamaha need to update the following item "{}" for host: {}'.format(event, host)
+                                    )
                                     self._get_value(event.lower(), host)
                                     if event.lower() == 'volume':
                                         self._get_value('mute', host)
                                 elif event.lower() in self._yamaha_ignore_cmds:
-                                    self.logger.debug("Yamaha ignoring command {}.".format(event))
+                                    self.logger.debug('Yamaha ignoring command {}.'.format(event))
                                 else:
-                                    self.logger.warn("Yamaha unsupported notify command.")
-                self.logger.debug("Yamaha sending ack to {}:{}".format(host, port))
+                                    self.logger.warn('Yamaha unsupported notify command.')
+                self.logger.debug('Yamaha sending ack to {}:{}'.format(host, port))
                 self.sock.sendto(b'ack', addr)
         else:
             if self.sock:
                 self.sock.close()
             self.sock = None
-            
 
     def stop(self):
         self.alive = False
@@ -157,20 +158,20 @@ class Yamaha(SmartPlugin):
 
     def _initialize(self):
         try:
-            self.logger.debug("initializing current state")
+            self.logger.debug('initializing current state')
             for yamaha_host, yamaha_cmd in self._yamaha_rxv.items():
-                self.logger.debug("Initializing items for host: {}".format(yamaha_host))
+                self.logger.debug('Initializing items for host: {}'.format(yamaha_host))
                 state = self._update_state(yamaha_host)
                 self.logger.debug(state)
                 for yamaha_cmd, item in yamaha_cmd.items():
                     if yamaha_cmd != 'state':
-                        self.logger.debug("Initializing cmd {} for item {}".format(yamaha_cmd, item))
+                        self.logger.debug('Initializing cmd {} for item {}'.format(yamaha_cmd, item))
                         value = self._return_value(state, yamaha_cmd)
                         item(value, self.get_shortname())
         except Exception as e:
             self.logger.error("Exception '{}' occurred".format(e))
             return
-        self.logger.debug("Yamaha finished initializing current state")
+        self.logger.debug('Yamaha finished initializing current state')
         return True
 
     def _return_document(self, doc):
@@ -305,19 +306,19 @@ class Yamaha(SmartPlugin):
             # added parser option in response to CVE-2026-41066
             tree = etree.parse(StringIO(state), parser=self._xmlparser)
         except Exception:
-            return "Invalid data received"
+            return 'Invalid data received'
         if cmd == 'input':
             try:
                 value = tree.find('Main_Zone/Basic_Status/Input/Input_Sel')
                 return value.text
-            except:
+            except Exception:
                 value = tree.find('Main_Zone/Input/Input_Sel')
                 return value.text
         elif cmd == 'volume':
             try:
                 value = tree.find('Main_Zone/Basic_Status/Volume/Lvl/Val')
                 return int(value.text)
-            except:
+            except Exception:
                 value = tree.find('Main_Zone/Volume/Lvl/Val')
                 return int(value.text)
         elif cmd == 'mute':
@@ -328,7 +329,7 @@ class Yamaha(SmartPlugin):
                 elif value.text == 'Off':
                     return False
                 return value.text
-            except:
+            except Exception:
                 value = tree.find('Main_Zone/Volume/Mute')
                 if value.text == 'On':
                     return True
@@ -342,7 +343,7 @@ class Yamaha(SmartPlugin):
                     return False
                 elif value.text == 'On':
                     return True
-            except:
+            except Exception:
                 value = tree.find('Main_Zone/Power_Control/Power')
                 if value.text == 'Standby':
                     return False
@@ -356,7 +357,7 @@ class Yamaha(SmartPlugin):
 
     def _submit_payload(self, host, payload):
         """
-        Creates a data package with payload given as string containing some XML coded command 
+        Creates a data package with payload given as string containing some XML coded command
 
         :param host: IP or hostname of Yamaha device
         :type host: str
@@ -366,23 +367,22 @@ class Yamaha(SmartPlugin):
         :rtype: str
         """
         if payload:
-            self.logger.debug("Sending payload {}".format(payload))
-            res = requests.post("http://%s/YamahaRemoteControl/ctrl" % host,
-                                headers={
-                                    "Accept": "text/xml",
-                                    "User-Agent": "SmartHomeNG"
-                                },
-                                timeout=4,
-                                data=payload)
+            self.logger.debug('Sending payload {}'.format(payload))
+            res = requests.post(
+                'http://%s/YamahaRemoteControl/ctrl' % host,
+                headers={'Accept': 'text/xml', 'User-Agent': 'SmartHomeNG'},
+                timeout=4,
+                data=payload,
+            )
             response = res.text
             del res
-            if response == "":
-                self.logger.warn("No response received.")
+            if response == '':
+                self.logger.warn('No response received.')
             else:
                 self.logger.debug("Response received: '{}'".format(response))
             return response
         else:
-            self.logger.warn("No payload given")
+            self.logger.warn('No payload given')
             return None
 
     def _lookup_host(self, item):
@@ -396,7 +396,7 @@ class Yamaha(SmartPlugin):
         :rtype: str
         """
         parent = item.return_parent()
-        yamaha_host = self.get_iattr_value(parent.conf,'yamaha_host')
+        yamaha_host = self.get_iattr_value(parent.conf, 'yamaha_host')
         return yamaha_host
 
     def parse_item(self, item):
@@ -412,12 +412,12 @@ class Yamaha(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, 'yamaha_cmd'):
-            self.logger.debug("parse item: {}".format(item))
+            self.logger.debug('parse item: {}'.format(item))
             yamaha_host = self._lookup_host(item)
             # todo: abort if yamaha_host is empty
             yamaha_cmd = self.get_iattr_value(item.conf, 'yamaha_cmd').lower()
-            if not yamaha_cmd in self._yamaha_cmds:
-                self.logger.warning("{} not in valid commands: {}".format(yamaha_cmd, self._yamaha_cmds))
+            if yamaha_cmd not in self._yamaha_cmds:
+                self.logger.warning('{} not in valid commands: {}'.format(yamaha_cmd, self._yamaha_cmds))
                 return None
             else:
                 try:
@@ -443,7 +443,7 @@ class Yamaha(SmartPlugin):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
+            self.logger.info('Update item: {}, item has been changed outside this plugin'.format(item.property.path))
 
             yamaha_cmd = self.get_iattr_value(item.conf, 'yamaha_cmd')
             yamaha_host = self._lookup_host(item)
@@ -472,42 +472,40 @@ class Yamaha(SmartPlugin):
         return state
 
     def init_webinterface(self):
-        """"
+        """ "
         Initialize the web interface for this plugin
 
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
+            self.mod_http = Modules.get_instance().get_module('http')  # try/except to handle disabled http module
+        except Exception:
             self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
+        if self.mod_http is None:
+            self.logger.error('Not initializing the web interface')
             return False
 
         import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
+
+        if 'SmartPluginWebIf' not in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning('Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface')
             return False
 
         # set application configuration for cherrypy
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
         config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
+            '/': {'tools.staticdir.root': webif_dir},
+            '/static': {'tools.staticdir.on': True, 'tools.staticdir.dir': 'static'},
         }
 
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
+        self.mod_http.register_webif(
+            WebInterface(webif_dir, self),
+            self.get_shortname(),
+            config,
+            self.get_classname(),
+            self.get_instance_name(),
+            description='',
+        )
 
         return True

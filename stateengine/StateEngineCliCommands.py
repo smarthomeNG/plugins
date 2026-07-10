@@ -20,6 +20,7 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 import logging
+
 # noinspection PyUnresolvedReferences
 from lib.model.smartplugin import SmartPlugin
 from lib.plugin import Plugins
@@ -36,23 +37,27 @@ class SeCliCommands:
         try:
             cli = self._get_cli_plugin()
             if cli is None:
-                self.logger.info("StateEngine: Additional CLI commands not registered because CLI plugin is not active")
+                self.logger.info('StateEngine: Additional CLI commands not registered because CLI plugin is not active')
             elif not isinstance(cli, SmartPlugin):
-                self.logger.info("StateEngine: Additional CLI commands not registered because CLI plugin is too old")
+                self.logger.info('StateEngine: Additional CLI commands not registered because CLI plugin is too old')
             else:
-                cli.commands.add_command("se_list", self.cli_list, "StateEngine", "se_list: list StateEngine items")
-                cli.commands.add_command("se_detail", self.cli_detail, "StateEngine",
-                                         "se_detail [seItem]: show details on StateEngine item [seItem]")
-                self.logger.info("StateEngine: Two additional CLI commands registered")
+                cli.commands.add_command('se_list', self.cli_list, 'StateEngine', 'se_list: list StateEngine items')
+                cli.commands.add_command(
+                    'se_detail',
+                    self.cli_detail,
+                    'StateEngine',
+                    'se_detail [seItem]: show details on StateEngine item [seItem]',
+                )
+                self.logger.info('StateEngine: Two additional CLI commands registered')
         except AttributeError as err:
-            self.logger.error("StateEngine: Additional CLI commands not registered because error occured.")
+            self.logger.error('StateEngine: Additional CLI commands not registered because error occured.')
             self.logger.exception(err)
 
     # CLI command se_list
     # noinspection PyUnusedLocal
     def cli_list(self, handler, parameter, source):
-        handler.push("Items for StateEngine Plugin\n")
-        handler.push("==========================\n")
+        handler.push('Items for StateEngine Plugin\n')
+        handler.push('==========================\n')
         for name in sorted(self.__items):
             self.__items[name].cli_list(handler)
 
@@ -66,7 +71,7 @@ class SeCliCommands:
     # get item from parameter
     def __cli_getitem(self, handler, parameter):
         if parameter not in self.__items:
-            handler.push("no StateEngine item \"{0}\" found.\n".format(parameter))
+            handler.push('no StateEngine item "{0}" found.\n'.format(parameter))
             return None
         return self.__items[parameter]
 

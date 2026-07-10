@@ -31,7 +31,7 @@ import json
 
 from lib.item import Items
 from lib.model.mqttplugin import MqttPluginWebIf
-#from lib.model.mqttplugin import *
+# from lib.model.mqttplugin import *
 
 # ------------------------------------------
 #    Webinterface of the plugin
@@ -41,7 +41,6 @@ import cherrypy
 
 
 class WebInterface(MqttPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -71,10 +70,11 @@ class WebInterface(MqttPluginWebIf):
 
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           webif_pagelength=self.plugin.get_parameter_value('webif_pagelength'),
-                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])) )
-
+        return tmpl.render(
+            p=self.plugin,
+            webif_pagelength=self.plugin.get_parameter_value('webif_pagelength'),
+            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -87,16 +87,14 @@ class WebInterface(MqttPluginWebIf):
         :return: dict with the data needed to update the web page.
         """
         if dataSet is None:
-            result_array = []
-
             # callect data for 'items' tab
             item_list = []
             for item in self.plugin.get_item_list():
                 value_dict = {}
                 value_dict['path'] = item.property.path
                 value_dict['type'] = item.type()
-                value_dict['shelly_type'] = self.plugin.get_shelly_device_from_item( item ).get('app', '')
-                value_dict['shelly_id']  = self.plugin.get_iattr_value(item.conf, 'shelly_id')
+                value_dict['shelly_type'] = self.plugin.get_shelly_device_from_item(item).get('app', '')
+                value_dict['shelly_id'] = self.plugin.get_iattr_value(item.conf, 'shelly_id')
                 if value_dict['shelly_type'] == '':
                     value_dict['value'] = ''
                     value_dict['last_update'] = 'Kein passendes Shelly'
@@ -144,7 +142,7 @@ class WebInterface(MqttPluginWebIf):
                 else:
                     return None
             except Exception as e:
-                self.logger.error(f"get_data_html exception: {e}")
+                self.logger.error(f'get_data_html exception: {e}')
 
         return {}
 
@@ -174,7 +172,6 @@ class WebInterface(MqttPluginWebIf):
     #             return {}
     #
     #     return
-
 
     def ja_nein(self, value) -> str:
         """

@@ -28,20 +28,21 @@ import lib.network
 from lib.model.smartplugin import SmartPlugin
 
 # attribute keywords
-NW              = 'nw'
-NW_ACL          = 'nw_acl'
-NW_UDP_LISTEN   = 'nw_udp_listen'
-NW_TCP_LISTEN   = 'nw_tcp_listen'
-NW_HTTP_LISTEN  = 'nw_http_listen'
-NW_UDP_SEND     = 'nw_udp_send'
+NW = 'nw'
+NW_ACL = 'nw_acl'
+NW_UDP_LISTEN = 'nw_udp_listen'
+NW_TCP_LISTEN = 'nw_tcp_listen'
+NW_HTTP_LISTEN = 'nw_http_listen'
+NW_UDP_SEND = 'nw_udp_send'
 
 
 class TCPDispatcher(lib.network.Tcp_server):
-    '''
+    """
     Encapsulation class for using lib.network.Tcp_server class
-    '''
+    """
+
     def __init__(self, parser, ip, port, plugin_name):
-        '''
+        """
         Initializes the class
 
         :param parser: callback function for handling data, called as parser(remoteip, 'tcp:<localip>:<localport>', '<data>')
@@ -50,25 +51,25 @@ class TCPDispatcher(lib.network.Tcp_server):
         :type ip: str
         :param port: local port to bind to
         :type port: int
-        '''
+        """
         self.dest = f'tcp:{ip}:{port}'
         super().__init__(port, ip, 'plugins.' + plugin_name + '_' + self.dest, b'\n')
         self.parser = parser
         self.set_callbacks(data_received=self.handle_received_data, incoming_connection=self.handle_connection)
 
     def handle_connection(self, server, client):
-        '''
+        """
         Handle incoming connection. Just used for debugging
 
         :param server: Tcp_server object serving the connection
         :type server: lib.network.Tcp_server
         :param client: Client object for connection
         :type client: lib.network.Client
-        '''
+        """
         self.logger.debug(f'Incoming TCP connection from {client.name}')
 
     def handle_received_data(self, server, client, data):
-        '''
+        """
         Forward received data to parser callback
 
         :param server: Tcp_server object serving the connection
@@ -77,17 +78,18 @@ class TCPDispatcher(lib.network.Tcp_server):
         :type addr: lib.network.Client
         :param data: received data
         :type data: string
-        '''
+        """
         self.logger.debug(f'Received packet from {client.ip}:{client.port} to {self.dest} with content "{data}"')
         self.parser(client.ip, self.dest, data.strip())
 
 
 class HTTPDispatcher(lib.network.Tcp_server):
-    '''
+    """
     Encapsulation class for using lib.network.Tcp_server class with HTTP GET support
-    '''
+    """
+
     def __init__(self, parser, ip, port, plugin_name):
-        '''
+        """
         Initializes the class
 
         :param parser: callback function for handling data, called as parser(remoteip, 'tcp:<localip>:<localport>', '<data>')
@@ -96,7 +98,7 @@ class HTTPDispatcher(lib.network.Tcp_server):
         :type ip: str
         :param port: local port to bind to
         :type port: int
-        '''
+        """
 
         self.dest = f'http:{ip}:{port}'
         super().__init__(port, ip, 'plugins.' + plugin_name + '_' + self.dest, b'\n')
@@ -104,18 +106,18 @@ class HTTPDispatcher(lib.network.Tcp_server):
         self.set_callbacks(data_received=self.handle_received_data, incoming_connection=self.handle_connection)
 
     def handle_connection(self, server, client):
-        '''
+        """
         Handle incoming connection. Just used for debugging
 
         :param server: Tcp_server object serving the connection
         :type server: lib.network.Tcp_server
         :param client: Client object for connection
         :type client: lib.network.Client
-        '''
+        """
         self.logger.debug(f'Incoming HTTP connection from {client.name}')
 
     def handle_received_data(self, server, client, data):
-        '''
+        """
         Forward received data to parser callback
 
         :param server: Tcp_server object serving the connection
@@ -124,8 +126,10 @@ class HTTPDispatcher(lib.network.Tcp_server):
         :type addr: lib.network.Client
         :param data: received data
         :type data: string
-        '''
-        self.logger.debug(f'Received packet from {client.ip}:{client.port} to {self.dest} via HTTP with content: "{data}"')
+        """
+        self.logger.debug(
+            f'Received packet from {client.ip}:{client.port} to {self.dest} via HTTP with content: "{data}"'
+        )
 
         # find lines starting with GET or POST and return remaining lines "HTTP-like" and return status
         data_lines = data.splitlines()
@@ -138,7 +142,7 @@ class HTTPDispatcher(lib.network.Tcp_server):
                     client.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
                 client.close()
             elif line.startswith('POST'):
-                #lines 0 - 5 contain the http post header. The data string begins with in line 6:
+                # lines 0 - 5 contain the http post header. The data string begins with in line 6:
                 request = data_lines[6]
                 self.logger.debug(f'POST datastring: {request}')
                 if self.parser(client.ip, self.dest, urllib.parse.unquote(request)) is not False:
@@ -148,13 +152,13 @@ class HTTPDispatcher(lib.network.Tcp_server):
                 client.close()
 
 
-
 class UDPDispatcher(lib.network.Udp_server):
-    '''
+    """
     Encapsulation class for using lib.network.Udp_server class
-    '''
+    """
+
     def __init__(self, parser, ip, port, plugin_name):
-        '''
+        """
         Initializes the class
 
         :param parser: callback function for handling data, called as parser(remoteip, 'tcp:<localip>:<localport>', '<data>')
@@ -163,7 +167,7 @@ class UDPDispatcher(lib.network.Udp_server):
         :type ip: str
         :param port: local port to bind to
         :type port: int
-        '''
+        """
         self.logger = logging.getLogger(__name__)
         self.parser = parser
         self.dest = f'udp:{ip}:{port}'
@@ -171,14 +175,14 @@ class UDPDispatcher(lib.network.Udp_server):
         self.set_callbacks(data_received=self.handle_received_data)
 
     def handle_received_data(self, addr, data):
-        '''
+        """
         Forward received data to parser callback
 
         :param addr: address information about the remote client: ('<ip>', <port>)
         :type addr: tuple
         :param data: received data
         :type data: string
-        '''
+        """
         ip = addr[0]
         addr = f'{addr[0]}:{addr[1]}'
         self.logger.debug(f'{self.name}: incoming connection from {addr} to {self.dest}')
@@ -186,10 +190,11 @@ class UDPDispatcher(lib.network.Udp_server):
 
 
 class Network(SmartPlugin):
-    '''
+    """
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
-    '''
+    """
+
     PLUGIN_VERSION = '1.6.2'
 
     generic_listeners = {}
@@ -200,7 +205,7 @@ class Network(SmartPlugin):
     _dispatcher_list = []
 
     def __init__(self, sh):
-        '''
+        """
         Initalizes the plugin.
 
         If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
@@ -210,12 +215,13 @@ class Network(SmartPlugin):
         use the SmartPlugin method get_parameter_value(parameter_name). Anywhere within the Plugin you can get
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
-        '''
+        """
 
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
         from bin.smarthome import VERSION
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
@@ -225,32 +231,35 @@ class Network(SmartPlugin):
         self.http_acl = self.parse_acl(self.get_parameter_value('http_acl'))
 
         if self.get_parameter_value('tcp'):
-            self.add_listener('tcp', self.get_parameter_value('ip'), self.get_parameter_value('port'), self.tcp_acl,
-                              generic=True)
+            self.add_listener(
+                'tcp', self.get_parameter_value('ip'), self.get_parameter_value('port'), self.tcp_acl, generic=True
+            )
         if self.get_parameter_value('udp'):
-            self.add_listener('udp', self.get_parameter_value('ip'), self.get_parameter_value('port'), self.udp_acl,
-                              generic=True)
+            self.add_listener(
+                'udp', self.get_parameter_value('ip'), self.get_parameter_value('port'), self.udp_acl, generic=True
+            )
         http_param = self.get_parameter_value('http')
         if str(http_param).isnumeric():
-            self.add_listener('http', self.get_parameter_value('ip'), http_param, self.http_acl,
-                              generic=True)
+            self.add_listener('http', self.get_parameter_value('ip'), http_param, self.http_acl, generic=True)
         elif str(http_param).lower() in ('yes', 'true'):
-            self.logger.warning(f'http parameter must be "no" or <port number>, but it is set to "{http_param}". HTTP listener not enabled.')
+            self.logger.warning(
+                f'http parameter must be "no" or <port number>, but it is set to "{http_param}". HTTP listener not enabled.'
+            )
 
     def udp(self, host, port, data):
-        '''
+        """
         This function writes given data to a host with specified port
 
         :param host: a host or an ip for destination
         :param port: a port number
         :param data: a string containing data
-        '''
+        """
         try:
             family, type, proto, canonname, sockaddr = socket.getaddrinfo(host, port)[0]
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.sendto(data.encode(), (sockaddr[0], sockaddr[1]))
             sock.close()
-            del (sock)
+            del sock
         except Exception as e:
             self.logger.warning(f'UDP: Problem sending data to {host}:{port}: {e}')
             pass
@@ -281,11 +290,11 @@ class Network(SmartPlugin):
         return True
 
     def parse_acl(self, acl):
-        '''
+        """
         Parse an acl which can contain either
             '*' which means accept data from all connection requests or
             a list of one or more ip which are allowed to connect
-        '''
+        """
         self.logger.debug(f'parse_acl called with acl={acl}')
         if acl == ['*']:
             return False
@@ -294,15 +303,15 @@ class Network(SmartPlugin):
         return acl
 
     def parse_input(self, source, dest, data):
-        '''
+        """
         :param: source      # '<remoteip>:<port>' or '<remoteip>'
         :param: dest        # '<proto>:<localip>:<port>'
         :param: data either
                         * `item|<item.path>|<value>`
                         * `logic|<logic_name>|<value>`
                         * `log|<loglevel>|message`  # loglevel could be info, warning or error
-        '''
-        #self.logger.debug(f'parse_input called with source={source}, dest={dest} and data={data}')
+        """
+        # self.logger.debug(f'parse_input called with source={source}, dest={dest} and data={data}')
         proto = dest.split(':')[0].upper()
         source_ip, __, __ = source.partition(':')
         if dest in self.generic_listeners:
@@ -321,11 +330,11 @@ class Network(SmartPlugin):
                 iacl = self.generic_listeners[dest]['items'][name]['acl']
                 if iacl:
                     if source_ip not in iacl:
-                        self.logger.error(f'Item {name} acl doesn\'t permit updates from {source_ip}.')
+                        self.logger.error(f"Item {name} acl doesn't permit updates from {source_ip}.")
                         return False
                 elif gacl:
                     if source_ip not in gacl:
-                        self.logger.error(f'Generic network acl doesn\'t permit updates from {source_ip}.')
+                        self.logger.error(f"Generic network acl doesn't permit updates from {source_ip}.")
                         return False
                 item = self.generic_listeners[dest]['items'][name]['item']
                 self.logger.info(f'generic_listeners: Setting {item} to {value} (from {proto}:{source_ip})')
@@ -338,11 +347,11 @@ class Network(SmartPlugin):
                 lacl = self.generic_listeners[dest]['logics'][name]['acl']
                 if lacl:
                     if source_ip not in lacl:
-                        self.logger.error(f'Logic {name} acl doesn\'t permit triggering from {source_ip}.')
+                        self.logger.error(f"Logic {name} acl doesn't permit triggering from {source_ip}.")
                         return False
                 elif gacl:
                     if source_ip not in gacl:
-                        self.logger.error(f'Generic network acl doesn\'t permit triggering from {source_ip}.')
+                        self.logger.error(f"Generic network acl doesn't permit triggering from {source_ip}.")
                         return False
                 logic = self.generic_listeners[dest]['logics'][name]['logic']
                 logic.trigger(proto, source_ip, value)
@@ -350,7 +359,7 @@ class Network(SmartPlugin):
             elif typ == 'log':
                 if gacl:
                     if source_ip not in gacl:
-                        self.logger.error(f'Generic network acl doesn\'t permit log entries from {source_ip}')
+                        self.logger.error(f"Generic network acl doesn't permit log entries from {source_ip}")
                         return False
                 if name == 'info':
                     self.logger.info(value)
@@ -380,11 +389,11 @@ class Network(SmartPlugin):
                 logic = self.special_listeners[dest]['logics'][entry]['logic']
                 if lacl:
                     if source_ip not in lacl:
-                        self.logger.error(f'Logic {logic.name} acl doesn\'t permit triggering from {source_ip}.')
+                        self.logger.error(f"Logic {logic.name} acl doesn't permit triggering from {source_ip}.")
                         return False
                 elif gacl:
                     if source_ip not in gacl:
-                        self.logger.error(f'Generic network acl doesn\'t permit triggering from {source_ip}.')
+                        self.logger.error(f"Generic network acl doesn't permit triggering from {source_ip}.")
                         return False
                 logic.trigger('network', source_ip, data)
             for entry in self.special_listeners[dest]['items']:
@@ -392,11 +401,11 @@ class Network(SmartPlugin):
                 item = self.special_listeners[dest]['items'][entry]['item']
                 if lacl:
                     if source_ip not in lacl:
-                        self.logger.error(f'Item {item.property.path} acl doesn\'t permit triggering from {source_ip}.')
+                        self.logger.error(f"Item {item.property.path} acl doesn't permit triggering from {source_ip}.")
                         return False
                 elif gacl:
                     if source_ip not in gacl:
-                        self.logger.error(f'Generic network acl doesn\'t permit triggering from {source_ip}.')
+                        self.logger.error(f"Generic network acl doesn't permit triggering from {source_ip}.")
                         return False
                 self.logger.debug(f'special_listeners: Setting {item} to {data} (from {proto}:{source_ip})')
                 item(data, 'network', source_ip)
@@ -406,9 +415,9 @@ class Network(SmartPlugin):
         return True
 
     def run(self):
-        '''
+        """
         Run method for the plugin
-        '''
+        """
         self.logger.debug('Run method called')
         self.alive = True
         for listener in self._dispatcher_list:
@@ -417,29 +426,29 @@ class Network(SmartPlugin):
                 self.logger.error(f'Server {listener.name} did not start properly.')
 
     def stop(self):
-        '''
+        """
         Stop method for the plugin
-        '''
+        """
         self.logger.debug('Stop method called')
         for listener in self._dispatcher_list:
             try:  # keep some ugly errors on keyboard interrupt hidden
                 listener.close()
-            except:
+            except Exception:
                 pass
         self._dispatcher_list = []
         self.alive = False
 
     def parse_logic(self, logic):
-        '''
+        """
         Called when the plugin is initialized to parse a logic
-        '''
+        """
         self.parse_obj(logic, 'logic')
 
     def parse_item(self, item):
-        '''
+        """
         This is called when the plugin is initialized and
         a param item is given to decide wether to act on it or not
-        '''
+        """
         self.parse_obj(item, 'item')
 
         if self.has_iattr(item.conf, NW_UDP_SEND):
@@ -447,7 +456,7 @@ class Network(SmartPlugin):
             return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        '''
+        """
         Item has been updated
 
         This method is called, if the value of an item has been updated by SmartHomeNG.
@@ -458,7 +467,7 @@ class Network(SmartPlugin):
         :param caller: if given it represents the callers name
         :param source: if given it represents the source
         :param dest: if given it represents the dest
-        '''
+        """
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
@@ -477,9 +486,9 @@ class Network(SmartPlugin):
                 self.udp(host, port, message)
 
     def parse_obj(self, obj, obj_type):
-        '''
+        """
         parses either an item with item.conf or a logic with logic.conf
-        '''
+        """
         # NW_ACL, NW_UDP, NW_TCP
         if obj_type in ('item', 'logic'):
             oid = obj.id()
@@ -535,4 +544,3 @@ class Network(SmartPlugin):
                     self.logger.warning(f'Could not add listener {dest} for {oid}')
             else:
                 self.special_listeners[dest][obj_type + 's'][oid] = {obj_type: obj, 'acl': acl}
-

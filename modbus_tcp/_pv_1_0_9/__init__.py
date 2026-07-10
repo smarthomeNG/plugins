@@ -231,7 +231,7 @@ class modbus_tcp(SmartPlugin):
         try:
             for reg, regPara in self._regToRead.items():
                 with self.lock:
-                    regAddr = regPara['regAddr']
+                    regPara['regAddr']
                     value = self.__read_Registers(regPara)
                     # self.logger.debug(f"value read: {value} type: {type(value)}")
                     if value is not None:
@@ -325,8 +325,7 @@ class modbus_tcp(SmartPlugin):
                         self.connected = False
                         return
 
-                    startTime = datetime.now()
-                    regCount = 0
+                    datetime.now()
                     try:
                         self.__write_Registers(regPara, item())
                     except Exception as e:
@@ -340,7 +339,6 @@ class modbus_tcp(SmartPlugin):
         wo = regPara['wordOrder']
         dataTypeStr = regPara['dataType']
         dataType = ''.join(filter(str.isalpha, dataTypeStr))  # vom dataType die Ziffen entfernen z.B. uint16 = uint
-        registerCount = 0  # Anzahl der zu schreibenden Register (Words)
 
         try:
             bits = int(''.join(filter(str.isdigit, dataTypeStr)))  # bit-Zahl aus aus dataType z.B. uint16 = 16
@@ -348,9 +346,9 @@ class modbus_tcp(SmartPlugin):
             bits = 16
 
         if dataType.lower() == 'string':
-            registerCount = int(bits / 2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 registerCount
+            int(bits / 2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 registerCount
         else:
-            registerCount = int(bits / 16)
+            int(bits / 16)
 
         if regPara['factor'] != 1:
             # self.logger.debug(f"value {value} divided by: {regPara['factor']}")
@@ -453,7 +451,7 @@ class modbus_tcp(SmartPlugin):
         else:
             registerCount = int(bits / 16)
 
-        if self.connected == False:
+        if not self.connected:
             self.logger.error(f"not connected to {self._host}:{self._port}")
             return None
 

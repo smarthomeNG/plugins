@@ -26,7 +26,7 @@
 #########################################################################
 
 from lib.module import Modules
-from lib.model.mqttplugin import *
+from lib.model.mqttplugin import MqttPlugin
 from .webif import WebInterface
 from lib.item import Items
 from requests.auth import HTTPBasicAuth
@@ -40,14 +40,36 @@ class Robonect(MqttPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
+
     PLUGIN_VERSION = '1.0.6'  # (must match the version specified in plugin.yaml)
-    STATUS_TYPES = ['mower/status', 'mower/status/text', 'status_text_translated', 'mower/distance', 'mower/status/duration',
-                    'mower/statistic/hours',
-                    'mower/stopped', 'mower/mode', 'mower/mode/text', 'mode_text_translated', 'mower/battery/charge', 'blades_quality',
-                    'blades_hours', 'blades_days', 'mower/error/code', 'mower/error/message', 'error_date',
-                    'error_time', 'error_unix']
-    REMOTE_TYPES = ['remotestart_name', 'remotestart_visible', 'remotestart_path', 'remotestart_proportion',
-                    'remotestart_distance']
+    STATUS_TYPES = [
+        'mower/status',
+        'mower/status/text',
+        'status_text_translated',
+        'mower/distance',
+        'mower/status/duration',
+        'mower/statistic/hours',
+        'mower/stopped',
+        'mower/mode',
+        'mower/mode/text',
+        'mode_text_translated',
+        'mower/battery/charge',
+        'blades_quality',
+        'blades_hours',
+        'blades_days',
+        'mower/error/code',
+        'mower/error/message',
+        'error_date',
+        'error_time',
+        'error_unix',
+    ]
+    REMOTE_TYPES = [
+        'remotestart_name',
+        'remotestart_visible',
+        'remotestart_path',
+        'remotestart_proportion',
+        'remotestart_distance',
+    ]
     MODE_TYPES = ['home', 'eod', 'man', 'auto', 'job']
 
     def __init__(self, sh):
@@ -88,7 +110,7 @@ class Robonect(MqttPlugin):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
         self._base_url = 'http://%s/json?cmd=' % self.get_ip()
         self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
         self.alive = True
@@ -102,7 +124,7 @@ class Robonect(MqttPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.scheduler_remove('poll_device')
         self.alive = False
         if self._plugin_mode == 'mqtt':
@@ -122,7 +144,7 @@ class Robonect(MqttPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, 'robonect_data_type'):
-            self.logger.debug("parse item: {}".format(item))
+            self.logger.debug('parse item: {}'.format(item))
 
             if self._plugin_mode == 'mqtt':
                 bool_values = None
@@ -136,11 +158,13 @@ class Robonect(MqttPlugin):
                     callback = self.on_change
                 self.add_subscription(topic, payload_type, item=item, bool_values=bool_values, callback=callback)
 
-            if not self.get_iattr_value(item.conf, 'robonect_data_type') in self._battery_items and \
-                    self.has_iattr(item.conf, 'robonect_battery_index'):
+            if self.get_iattr_value(item.conf, 'robonect_data_type') not in self._battery_items and self.has_iattr(
+                item.conf, 'robonect_battery_index'
+            ):
                 self._battery_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = []
-            if not self.get_iattr_value(item.conf, 'robonect_data_type') in self._remote_items and \
-                    self.has_iattr(item.conf, 'robonect_remote_index'):
+            if self.get_iattr_value(item.conf, 'robonect_data_type') not in self._remote_items and self.has_iattr(
+                item.conf, 'robonect_remote_index'
+            ):
                 self._remote_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = []
 
             if self.get_iattr_value(item.conf, 'robonect_data_type') in self._battery_items:
@@ -184,25 +208,31 @@ class Robonect(MqttPlugin):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
+            self.logger.info('Update item: {}, item has been changed outside this plugin'.format(item.property.path))
 
             mqtt_id = self.get_iattr_value(item.conf, 'robonect_data_type')
             topic = '%s/%s' % (self._topic_prefix, mqtt_id)
 
             if mqtt_id == 'control':
                 if item() not in ['start', 'stop']:
-                    self.logger.error("mqtt publish invalid command supplied: '{}' must be one of 'start','stop'.".format(item()))
+                    self.logger.error(
+                        "mqtt publish invalid command supplied: '{}' must be one of 'start','stop'.".format(item())
+                    )
                     return
             else:
-                self.logger.debug("Publish {} {}".format(topic, item()))
+                self.logger.debug('Publish {} {}'.format(topic, item()))
                 self.publish_topic(topic, item())
 
             if mqtt_id == 'control/mode':
                 if item() not in self.MODE_TYPES or item() == 'job':
-                    self.logger.error( "mqtt publish invalid mode supplied: '{}' must be one of 'home','eod','man','auto'.".format(item()))
+                    self.logger.error(
+                        "mqtt publish invalid mode supplied: '{}' must be one of 'home','eod','man','auto'.".format(
+                            item()
+                        )
+                    )
                     return
             else:
-                self.logger.debug("Publish {} {}".format(topic, item()))
+                self.logger.debug('Publish {} {}'.format(topic, item()))
                 self.publish_topic(topic, item())
         return
 
@@ -222,7 +252,7 @@ class Robonect(MqttPlugin):
             self.get_weather_from_api()
             self.get_motor_data_from_api()
         else:
-            self.logger.debug("Poll Device: Automower is sleeping, so only status is polled to avoid beeping!")
+            self.logger.debug('Poll Device: Automower is sleeping, so only status is polled to avoid beeping!')
         return
 
     def on_change(self, topic, payload, qos=None, retain=None):
@@ -232,20 +262,22 @@ class Robonect(MqttPlugin):
         :param topic: MQTT topic taken from item, e.g. 'mower/status'
         :param payload: Payload received via MQTT
         """
-        self.logger.debug("on_change: called with topic \"%s\" and payload \"%s\"" % (topic, payload))
+        self.logger.debug('on_change: called with topic "%s" and payload "%s"' % (topic, payload))
         if payload is not None:
             if topic == 'Robonect/mower/status':
                 self.logger.debug(
-                    "on_change: setting mode for topic %s via mqtt as %s: %s" % (
-                        topic, payload, self.get_status_as_text(int(payload))))
+                    'on_change: setting mode for topic %s via mqtt as %s: %s'
+                    % (topic, payload, self.get_status_as_text(int(payload)))
+                )
                 self._status_items['mower/status'](int(payload))
                 self._status = int(payload)
                 self._status_items['mower/status/text'](self.get_status_as_text(int(payload)))
                 self._status_items['status_text_translated'](self.translate(self._status_items['mower/status/text']()))
             elif topic == 'Robonect/mower/mode':
                 self.logger.debug(
-                    "on_change: setting mode for topic %s via mqtt as %s: %s" % (
-                        topic, payload, self.get_mode_as_text(int(payload))))
+                    'on_change: setting mode for topic %s via mqtt as %s: %s'
+                    % (topic, payload, self.get_mode_as_text(int(payload)))
+                )
                 self._status_items['mower/mode'](int(payload))
                 self._mode = int(payload)
                 self._status_items['mower/mode/text'](self.get_mode_as_text(int(payload)))
@@ -350,14 +382,15 @@ class Robonect(MqttPlugin):
         :return: JSON object with motor data
         """
         try:
-            self.logger.debug("Plugin '{}': Requesting motor data".format(
-                self.get_fullname()))
+            self.logger.debug("Plugin '{}': Requesting motor data".format(self.get_fullname()))
             response = self._session.get(self._base_url + 'motor', auth=HTTPBasicAuth(self._user, self._password))
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
                     "Plugin '{}': Exception when sending GET request for get_motor_data_from_api:: {}".format(
-                        self.get_fullname(), str(e)))
+                        self.get_fullname(), str(e)
+                    )
+                )
             self._mower_offline = True
             return
 
@@ -366,28 +399,45 @@ class Robonect(MqttPlugin):
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending parsing json response get_motor_data_from_api: {}".format(
-                    self.get_fullname(), str(e)))
+                    self.get_fullname(), str(e)
+                )
+            )
             return
 
         self.set_mower_online()
         self.logger.debug(json_obj)
         if not json_obj['successful']:
-            self.logger.error("Plugin '{}': Error when trying to get motor data via API {} - {}: '{}'.".format(
-                self.get_fullname(), mode, str(json_obj['error_code']), json_obj['error_message']))
+            self.logger.error(
+                "Plugin '{}': Error when trying to get motor data via API {} - {}: '{}'.".format(
+                    self.get_fullname(), self._mode, str(json_obj['error_code']), json_obj['error_message']
+                )
+            )
 
         if 'drive' in json_obj:
             if 'motor_drive_left_power' in self._motor_items:
-                self._motor_items['motor_drive_left_power'](str(json_obj['drive']['left']['power']), self.get_shortname())
+                self._motor_items['motor_drive_left_power'](
+                    str(json_obj['drive']['left']['power']), self.get_shortname()
+                )
             if 'motor_drive_left_speed' in self._motor_items:
-                self._motor_items['motor_drive_left_speed'](str(json_obj['drive']['left']['speed']), self.get_shortname())
+                self._motor_items['motor_drive_left_speed'](
+                    str(json_obj['drive']['left']['speed']), self.get_shortname()
+                )
             if 'motor_drive_left_current' in self._motor_items:
-                self._motor_items['motor_drive_left_current'](str(json_obj['drive']['left']['current']), self.get_shortname())
+                self._motor_items['motor_drive_left_current'](
+                    str(json_obj['drive']['left']['current']), self.get_shortname()
+                )
             if 'motor_drive_right_power' in self._motor_items:
-                self._motor_items['motor_drive_right_power'](str(json_obj['drive']['right']['power']), self.get_shortname())
+                self._motor_items['motor_drive_right_power'](
+                    str(json_obj['drive']['right']['power']), self.get_shortname()
+                )
             if 'motor_drive_right_speed' in self._motor_items:
-                self._motor_items['motor_drive_right_speed'](str(json_obj['drive']['right']['speed']), self.get_shortname())
+                self._motor_items['motor_drive_right_speed'](
+                    str(json_obj['drive']['right']['speed']), self.get_shortname()
+                )
             if 'motor_drive_right_current' in self._motor_items:
-                self._motor_items['motor_drive_right_current'](str(json_obj['drive']['right']['current']), self.get_shortname())
+                self._motor_items['motor_drive_right_current'](
+                    str(json_obj['drive']['right']['current']), self.get_shortname()
+                )
 
         if 'blade' in json_obj:
             if 'motor_blade_speed' in self._motor_items:
@@ -406,14 +456,15 @@ class Robonect(MqttPlugin):
         :return: JSON object with battery data
         """
         try:
-            self.logger.debug("Plugin '{}': Requesting battery data".format(
-                self.get_fullname()))
+            self.logger.debug("Plugin '{}': Requesting battery data".format(self.get_fullname()))
             response = self._session.get(self._base_url + 'battery', auth=HTTPBasicAuth(self._user, self._password))
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
                     "Plugin '{}': Exception when sending GET request for get_battery_data_from_api: {}".format(
-                        self.get_fullname(), str(e)))
+                        self.get_fullname(), str(e)
+                    )
+                )
             self._mower_offline = True
             return
 
@@ -422,50 +473,73 @@ class Robonect(MqttPlugin):
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending parsing json response get_battery_data_from_api: {}".format(
-                    self.get_fullname(), str(e)))
+                    self.get_fullname(), str(e)
+                )
+            )
             return
 
         self.set_mower_online()
 
         if not json_obj['successful']:
-            self.logger.error("Plugin '{}': Error when trying to get battery data via API {} - {}: '{}'.".format(
-                self.get_fullname(), mode, str(json_obj['error_code']), json_obj['error_message']))
+            self.logger.error(
+                "Plugin '{}': Error when trying to get battery data via API {} - {}: '{}'.".format(
+                    self.get_fullname(), self._mode, str(json_obj['error_code']), json_obj['error_message']
+                )
+            )
 
         if 'battery_id' in self._battery_items and 'batteries' in json_obj:
             for item in self._battery_items['battery_id']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['id'],
-                     self.get_shortname())
+                item(
+                    json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['id'],
+                    self.get_shortname(),
+                )
         if 'battery_charge' in self._battery_items and 'batteries' in json_obj:
             for item in self._battery_items['battery_charge']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['charge'],
-                     self.get_shortname())
+                item(
+                    json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['charge'],
+                    self.get_shortname(),
+                )
         if 'battery_voltage' in self._battery_items and 'batteries' in json_obj:
             for item in self._battery_items['battery_voltage']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['voltage'],
-                     self.get_shortname())
+                item(
+                    json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['voltage'],
+                    self.get_shortname(),
+                )
         if 'battery_current' in self._battery_items and 'batteries' in json_obj:
             for item in self._battery_items['battery_current']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['current'],
-                     self.get_shortname())
+                item(
+                    json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['current'],
+                    self.get_shortname(),
+                )
         if 'battery_temperature' in self._battery_items and 'batteries' in json_obj:
             for item in self._battery_items['battery_temperature']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))][
-                         'temperature'], self.get_shortname())
+                item(
+                    json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))][
+                        'temperature'
+                    ],
+                    self.get_shortname(),
+                )
         if 'battery_capacity_full' in self._battery_items and 'batteries' in json_obj:
             for item in self._battery_items['battery_capacity_full']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
-                         'full'], self.get_shortname())
+                item(
+                    json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
+                        'full'
+                    ],
+                    self.get_shortname(),
+                )
         if 'battery_capacity_remaining' in self._battery_items and 'batteries' in json_obj:
             for item in self._battery_items['battery_capacity_remaining']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
-                         'remaining'], self.get_shortname())
+                item(
+                    json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
+                        'remaining'
+                    ],
+                    self.get_shortname(),
+                )
         return json_obj
 
     def set_mower_online(self):
         if self._mower_offline:
-            self.logger.debug(
-                "Plugin '{}': Mower reachable again.".format(
-                    self.get_fullname()))
+            self.logger.debug("Plugin '{}': Mower reachable again.".format(self.get_fullname()))
             self._mower_offline = False
 
     def get_full_error_list(self):
@@ -475,14 +549,15 @@ class Robonect(MqttPlugin):
         :return: JSON object with the overall error list
         """
         try:
-            self.logger.debug("Plugin '{}': Requesting full error list data".format(
-                self.get_fullname()))
+            self.logger.debug("Plugin '{}': Requesting full error list data".format(self.get_fullname()))
             response = self._session.get(self._base_url + 'error&list', auth=HTTPBasicAuth(self._user, self._password))
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
                     "Plugin '{}': Exception when sending GET request for get_full_error_list: {}".format(
-                        self.get_fullname(), str(e)))
+                        self.get_fullname(), str(e)
+                    )
+                )
             self._mower_offline = True
             return
 
@@ -491,7 +566,9 @@ class Robonect(MqttPlugin):
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending parsing json response get_full_error_list: {}".format(
-                    self.get_fullname(), str(e)))
+                    self.get_fullname(), str(e)
+                )
+            )
             return
 
         self.set_mower_online()
@@ -513,34 +590,40 @@ class Robonect(MqttPlugin):
         """
         if name is not None:
             try:
-                self.logger.debug("Plugin '{}': Setting mower name to %s".format(
-                    self.get_fullname()), name)
-                response = self._session.get(self._base_url + 'name&name=%s' % name,
-                                             auth=HTTPBasicAuth(self._user, self._password))
+                self.logger.debug("Plugin '{}': Setting mower name to %s".format(self.get_fullname()), name)
+                response = self._session.get(
+                    self._base_url + 'name&name=%s' % name, auth=HTTPBasicAuth(self._user, self._password)
+                )
             except Exception as e:
                 if not self._mower_offline:
                     self.logger.error(
                         "Plugin '{}': Exception when sending GET request for set_name_via_api: {}".format(
-                            self.get_fullname(), str(e)))
+                            self.get_fullname(), str(e)
+                        )
+                    )
                 self._mower_offline = True
                 return
         else:
-            self.logger.error("Plugin '{}': Name parameter is None".format(
-                self.get_fullname()))
+            self.logger.error("Plugin '{}': Name parameter is None".format(self.get_fullname()))
 
         try:
             json_obj = response.json()
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending parsing json response set_name_via_api: {}".format(
-                    self.get_fullname(), str(e)))
+                    self.get_fullname(), str(e)
+                )
+            )
             return
 
         self.set_mower_online()
 
         if not json_obj['successful']:
-            self.logger.error("Plugin '{}': Error when trying to set name via API {} - {}: '{}'.".format(
-                self.get_fullname(), mode, str(json_obj['error_code']), json_obj['error_message']))
+            self.logger.error(
+                "Plugin '{}': Error when trying to set name via API {} - {}: '{}'.".format(
+                    self.get_fullname(), self._mode, str(json_obj['error_code']), json_obj['error_message']
+                )
+            )
         else:
             return json_obj
 
@@ -550,15 +633,15 @@ class Robonect(MqttPlugin):
         :return json response
         """
         try:
-            self.logger.debug("Plugin '{}': Starting mower".format(
-                self.get_fullname()))
-            response = self._session.get(self._base_url + 'start',
-                                         auth=HTTPBasicAuth(self._user, self._password))
+            self.logger.debug("Plugin '{}': Starting mower".format(self.get_fullname()))
+            response = self._session.get(self._base_url + 'start', auth=HTTPBasicAuth(self._user, self._password))
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
                     "Plugin '{}': Exception when sending GET request for start_mower_via_api: {}".format(
-                        self.get_fullname(), str(e)))
+                        self.get_fullname(), str(e)
+                    )
+                )
             self._mower_offline = True
             return
 
@@ -567,7 +650,9 @@ class Robonect(MqttPlugin):
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending parsing json response start_mower_via_api: {}".format(
-                    self.get_fullname(), str(e)))
+                    self.get_fullname(), str(e)
+                )
+            )
             return
 
         self.set_mower_online()
@@ -580,15 +665,15 @@ class Robonect(MqttPlugin):
         :return json response
         """
         try:
-            self.logger.debug("Plugin '{}': Stopping mower.".format(
-                self.get_fullname()))
-            response = self._session.get(self._base_url + 'stop',
-                                         auth=HTTPBasicAuth(self._user, self._password))
+            self.logger.debug("Plugin '{}': Stopping mower.".format(self.get_fullname()))
+            response = self._session.get(self._base_url + 'stop', auth=HTTPBasicAuth(self._user, self._password))
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
                     "Plugin '{}': Exception when sending GET request for stop_mower_via_api: {}".format(
-                        self.get_fullname(), str(e)))
+                        self.get_fullname(), str(e)
+                    )
+                )
             self._mower_offline = True
             return
 
@@ -597,7 +682,9 @@ class Robonect(MqttPlugin):
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending parsing json response stop_mower_via_api: {}".format(
-                    self.get_fullname(), str(e)))
+                    self.get_fullname(), str(e)
+                )
+            )
             return
 
         self.set_mower_online()
@@ -619,8 +706,10 @@ class Robonect(MqttPlugin):
         param = ''
         if mode not in self.MODE_TYPES:
             self.logger.error(
-                "Plugin '{}': set_mode_via_api - invalid mode supplied: '{}' must be one of 'home','eod','man','auto','job'.".
-                    format(self.get_fullname(), mode))
+                "Plugin '{}': set_mode_via_api - invalid mode supplied: '{}' must be one of 'home','eod','man','auto','job'.".format(
+                    self.get_fullname(), mode
+                )
+            )
             return
         else:
             param += '&mode=%s' % mode
@@ -630,43 +719,51 @@ class Robonect(MqttPlugin):
                         param += '&remotestart=%s' % remotestart
                     else:
                         self.logger.error(
-                            "Plugin '{}': set_mode_via_api - invalid remotestart value supplied: '{}' must be 1, 2, or 3.".
-                                format(self.get_fullname(), remotestart))
+                            "Plugin '{}': set_mode_via_api - invalid remotestart value supplied: '{}' must be 1, 2, or 3.".format(
+                                self.get_fullname(), remotestart
+                            )
+                        )
                 if after is not None:
                     if (0 <= after <= 4) or (after in self.MODE_TYPES):
                         param += '&after=%s' % after
                     else:
                         self.logger.error(
                             "Plugin '{}': set_mode_via_api - invalid after value supplied: '{}' must be 1, 2, 3, or 4 or "
-                            "one of the values 'home','eod','man','auto','job'.".
-                                format(self.get_fullname(), after))
+                            "one of the values 'home','eod','man','auto','job'.".format(self.get_fullname(), after)
+                        )
                 if start is not None:
                     if self.is_time_format(start):
                         param += '&start=%s' % start
                     else:
                         self.logger.error(
-                            "Plugin '{}': set_mode_via_api - invalid start value supplied: '{}' must be 'HH:MM'.".
-                                format(self.get_fullname(), start))
+                            "Plugin '{}': set_mode_via_api - invalid start value supplied: '{}' must be 'HH:MM'.".format(
+                                self.get_fullname(), start
+                            )
+                        )
                 if end is not None:
                     if self.is_time_format(end):
                         param += '&end=%s' % end
                     else:
                         self.logger.error(
-                            "Plugin '{}': set_mode_via_api - invalid end value supplied: '{}' must be 'HH:MM'.".
-                                format(self.get_fullname(), end))
+                            "Plugin '{}': set_mode_via_api - invalid end value supplied: '{}' must be 'HH:MM'.".format(
+                                self.get_fullname(), end
+                            )
+                        )
                 if (start is not None and duration is not None) or (end is not None and duration is not None):
                     param += '&duration=%s' % duration
 
         try:
-            self.logger.debug("Plugin '{}': Requesting battery data".format(
-                self.get_fullname()))
-            response = self._session.get(self._base_url + 'mode' + param,
-                                         auth=HTTPBasicAuth(self._user, self._password))
+            self.logger.debug("Plugin '{}': Requesting battery data".format(self.get_fullname()))
+            response = self._session.get(
+                self._base_url + 'mode' + param, auth=HTTPBasicAuth(self._user, self._password)
+            )
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
                     "Plugin '{}': Exception when sending GET request for set_mode_via_api: {}".format(
-                        self.get_fullname(), str(e)))
+                        self.get_fullname(), str(e)
+                    )
+                )
             self._mower_offline = True
             return
 
@@ -675,19 +772,25 @@ class Robonect(MqttPlugin):
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending parsing json response set_mode_via_api: {}".format(
-                    self.get_fullname(), str(e)))
+                    self.get_fullname(), str(e)
+                )
+            )
             return
 
         self.set_mower_online()
 
         if not json_obj['successful']:
-            self.logger.error("Plugin '{}': Error when trying to set mode {} - {}: '{}'.".format(
-                self.get_fullname(), mode, str(json_obj['error_code']), json_obj['error_message']))
+            self.logger.error(
+                "Plugin '{}': Error when trying to set mode {} - {}: '{}'.".format(
+                    self.get_fullname(), mode, str(json_obj['error_code']), json_obj['error_message']
+                )
+            )
         else:
             return  # todo
 
-    def set_timer_via_api(self, index, enabled=None, start=None, end=None, mo=None, tu=None, we=None, th=None, fr=None,
-                          sa=None, su=None):
+    def set_timer_via_api(
+        self, index, enabled=None, start=None, end=None, mo=None, tu=None, we=None, th=None, fr=None, sa=None, su=None
+    ):
         """
         Sets data for a timer.
 
@@ -710,24 +813,30 @@ class Robonect(MqttPlugin):
         else:
             self.logger.error(
                 "Plugin '{}': set_timer_via_api - index parameter is None, needs to be an integer.".format(
-                    self.get_fullname()))
+                    self.get_fullname()
+                )
+            )
             return
         if enabled is not None:
-            param += '&enabled=%s' % int(enable)
+            param += '&enabled=%s' % int(enabled)
         if start is not None:
             if self.is_time_format(start):
                 param += '&start=%s' % start
             else:
                 self.logger.error(
-                    "Plugin '{}': set_timer_via_api - invalid start value supplied: '{}' must be 'HH:MM'.".
-                        format(self.get_fullname(), start))
+                    "Plugin '{}': set_timer_via_api - invalid start value supplied: '{}' must be 'HH:MM'.".format(
+                        self.get_fullname(), start
+                    )
+                )
         if end is not None:
             if self.is_time_format(end):
                 param += '&end=%s' % end
             else:
                 self.logger.error(
-                    "Plugin '{}': set_timer_via_api - invalid end value supplied: '{}' must be 'HH:MM'.".
-                        format(self.get_fullname(), end))
+                    "Plugin '{}': set_timer_via_api - invalid end value supplied: '{}' must be 'HH:MM'.".format(
+                        self.get_fullname(), end
+                    )
+                )
         if mo is not None:
             param += '&mo=%s' % int(mo)
         if tu is not None:
@@ -744,15 +853,17 @@ class Robonect(MqttPlugin):
             param += '&su=%s' % int(su)
 
         try:
-            self.logger.debug("Plugin '{}': Setting timer data for timer {}".format(
-                self.get_fullname(), index))
-            response = self._session.get(self._base_url + 'timer' + param,
-                                         auth=HTTPBasicAuth(self._user, self._password))
+            self.logger.debug("Plugin '{}': Setting timer data for timer {}".format(self.get_fullname(), index))
+            response = self._session.get(
+                self._base_url + 'timer' + param, auth=HTTPBasicAuth(self._user, self._password)
+            )
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
                     "Plugin '{}': Exception when sending GET request for set_timer_via_api: {}".format(
-                        self.get_fullname(), str(e)))
+                        self.get_fullname(), str(e)
+                    )
+                )
             self._mower_offline = True
             return
 
@@ -761,14 +872,15 @@ class Robonect(MqttPlugin):
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending parsing json response set_timer_via_api: {}".format(
-                    self.get_fullname(), str(e)))
+                    self.get_fullname(), str(e)
+                )
+            )
             return
 
         self.set_mower_online()
 
         if not json_obj['successful']:
-            self.logger.error("Plugin '{}': Error when trying to set remote data.".format(
-                self.get_fullname()))
+            self.logger.error("Plugin '{}': Error when trying to set remote data.".format(self.get_fullname()))
         else:
             return  # todo
 
@@ -793,18 +905,21 @@ class Robonect(MqttPlugin):
         if proportion is not None:
             param += '&proportion%s=%s' % (index, proportion)
         if param == '':
-            self.logger.error("Plugin '{}': set_remote_via_api did not have any parameters.".format(
-                self.get_fullname()))
+            self.logger.error(
+                "Plugin '{}': set_remote_via_api did not have any parameters.".format(self.get_fullname())
+            )
         try:
-            self.logger.debug("Plugin '{}': Requesting battery data".format(
-                self.get_fullname()))
-            response = self._session.get(self._base_url + 'remote' + param,
-                                         auth=HTTPBasicAuth(self._user, self._password))
+            self.logger.debug("Plugin '{}': Requesting battery data".format(self.get_fullname()))
+            response = self._session.get(
+                self._base_url + 'remote' + param, auth=HTTPBasicAuth(self._user, self._password)
+            )
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
                     "Plugin '{}': Exception when sending GET request for set_remote_via_api: {}".format(
-                        self.get_fullname(), str(e)))
+                        self.get_fullname(), str(e)
+                    )
+                )
             self._mower_offline = True
             return
 
@@ -813,14 +928,15 @@ class Robonect(MqttPlugin):
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending parsing json response set_remote_via_api: {}".format(
-                    self.get_fullname(), str(e)))
+                    self.get_fullname(), str(e)
+                )
+            )
             return
 
         self.set_mower_online()
 
         if not json_obj['successful']:
-            self.logger.error("Plugin '{}': Error when trying to set remote data.".format(
-                self.get_fullname()))
+            self.logger.error("Plugin '{}': Error when trying to set remote data.".format(self.get_fullname()))
         else:
             return self.get_remote()
 
@@ -837,7 +953,9 @@ class Robonect(MqttPlugin):
             if not self._mower_offline:
                 self.logger.error(
                     "Plugin '{}': Exception when sending GET request for get_remote_from_api: {}".format(
-                        self.get_fullname(), str(e)))
+                        self.get_fullname(), str(e)
+                    )
+                )
             self._mower_offline = True
             return
 
@@ -846,7 +964,9 @@ class Robonect(MqttPlugin):
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending parsing json response get_remote_from_api: {}".format(
-                    self.get_fullname(), str(e)))
+                    self.get_fullname(), str(e)
+                )
+            )
             return
 
         self.set_mower_online()
@@ -880,14 +1000,17 @@ class Robonect(MqttPlugin):
 
     def get_mower_information_from_api(self):
         try:
-            self.logger.debug("Plugin '{}': get_mower_information.".format(
-                self.get_fullname()))
-            response = self._session.get(self._base_url + 'version', auth=HTTPBasicAuth(self._user, self._password), timeout=15)
+            self.logger.debug("Plugin '{}': get_mower_information.".format(self.get_fullname()))
+            response = self._session.get(
+                self._base_url + 'version', auth=HTTPBasicAuth(self._user, self._password), timeout=15
+            )
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
                     "Plugin '{}': Exception when sending GET request for get_mower_information_from_api: {}".format(
-                        self.get_fullname(), str(e)))
+                        self.get_fullname(), str(e)
+                    )
+                )
             self._mower_offline = True
             return
         try:
@@ -895,7 +1018,9 @@ class Robonect(MqttPlugin):
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending parsing json response get_mower_information_from_api: {}".format(
-                    self.get_fullname(), str(e)))
+                    self.get_fullname(), str(e)
+                )
+            )
             return
 
         self.set_mower_online()
@@ -932,14 +1057,15 @@ class Robonect(MqttPlugin):
 
     def get_weather_from_api(self):
         try:
-            self.logger.debug("Plugin '{}': get_weather_from_api.".format(
-                self.get_fullname()))
+            self.logger.debug("Plugin '{}': get_weather_from_api.".format(self.get_fullname()))
             response = self._session.get(self._base_url + 'weather', auth=HTTPBasicAuth(self._user, self._password))
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
                     "Plugin '{}': Exception when sending GET request for get_weather_from_api: {}".format(
-                        self.get_fullname(), str(e)))
+                        self.get_fullname(), str(e)
+                    )
+                )
             self._mower_offline = True
             return
 
@@ -948,7 +1074,9 @@ class Robonect(MqttPlugin):
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending parsing json response get_weather_from_api: {}".format(
-                    self.get_fullname(), str(e)))
+                    self.get_fullname(), str(e)
+                )
+            )
             return
 
         self.set_mower_online()
@@ -956,77 +1084,78 @@ class Robonect(MqttPlugin):
         if 'service' in json_obj:
             if 'location' in json_obj['service']:
                 if 'weather_location_zip' in self._weather_items:
-                    self._weather_items['weather_location_zip'](json_obj['service']['location']['zip'], self.get_shortname())
+                    self._weather_items['weather_location_zip'](
+                        json_obj['service']['location']['zip'], self.get_shortname()
+                    )
                 if 'weather_location_country' in self._weather_items:
-                    self._weather_items['weather_location_country'](json_obj['service']['location']['country'],
-                                                            self.get_shortname())
+                    self._weather_items['weather_location_country'](
+                        json_obj['service']['location']['country'], self.get_shortname()
+                    )
 
         if 'weather' in json_obj:
             if 'weather_rain' in self._weather_items and 'rain' in json_obj['weather']:
-                self._weather_items['weather_temperature'](json_obj['weather']['rain'],
-                                                   self.get_shortname())
+                self._weather_items['weather_temperature'](json_obj['weather']['rain'], self.get_shortname())
             if 'weather_temperature' in self._weather_items and 'temperature' in json_obj['weather']:
-                self._weather_items['weather_temperature'](json_obj['weather']['temperature'],
-                                                   self.get_shortname())
+                self._weather_items['weather_temperature'](json_obj['weather']['temperature'], self.get_shortname())
             if 'weather_humidity' in self._weather_items and 'humidity' in json_obj['weather']:
-                self._weather_items['weather_humidity'](json_obj['weather']['humidity'],
-                                                self.get_shortname())
+                self._weather_items['weather_humidity'](json_obj['weather']['humidity'], self.get_shortname())
             if 'weather_sunrise' in self._weather_items and 'sunrise' in json_obj['weather']:
-                self._weather_items['weather_sunrise'](json_obj['weather']['sunrise'],
-                                               self.get_shortname())
+                self._weather_items['weather_sunrise'](json_obj['weather']['sunrise'], self.get_shortname())
             if 'weather_sunset' in self._weather_items and 'sunset' in json_obj['weather']:
-                self._weather_items['weather_sunset'](json_obj['weather']['sunset'],
-                                              self.get_shortname())
+                self._weather_items['weather_sunset'](json_obj['weather']['sunset'], self.get_shortname())
             if 'weather_day' in self._weather_items and 'day' in json_obj['weather']:
-                self._weather_items['weather_day'](json_obj['weather']['day'],
-                                           self.get_shortname())
+                self._weather_items['weather_day'](json_obj['weather']['day'], self.get_shortname())
             if 'weather_icon' in self._weather_items and 'icon' in json_obj['weather']:
-                self._weather_items['weather_icon'](json_obj['weather']['icon'],
-                                            self.get_shortname())
+                self._weather_items['weather_icon'](json_obj['weather']['icon'], self.get_shortname())
             if 'condition' in json_obj['weather']:
                 if 'weather_condition_toorainy' in self._weather_items:
-                    self._weather_items['weather_condition_toorainy'](json_obj['weather']['condition']['toorainy'],
-                                                              self.get_shortname())
+                    self._weather_items['weather_condition_toorainy'](
+                        json_obj['weather']['condition']['toorainy'], self.get_shortname()
+                    )
                 if 'weather_condition_toocold' in self._weather_items:
-                    self._weather_items['weather_condition_toocold'](json_obj['weather']['condition']['toocold'],
-                                                             self.get_shortname())
+                    self._weather_items['weather_condition_toocold'](
+                        json_obj['weather']['condition']['toocold'], self.get_shortname()
+                    )
                 if 'weather_condition_toowarm' in self._weather_items:
-                    self._weather_items['weather_condition_toowarm'](json_obj['weather']['condition']['toowarm'],
-                                                             self.get_shortname())
+                    self._weather_items['weather_condition_toowarm'](
+                        json_obj['weather']['condition']['toowarm'], self.get_shortname()
+                    )
                 if 'weather_condition_toodry' in self._weather_items:
-                    self._weather_items['weather_condition_toodry'](json_obj['weather']['condition']['toodry'],
-                                                            self.get_shortname())
+                    self._weather_items['weather_condition_toodry'](
+                        json_obj['weather']['condition']['toodry'], self.get_shortname()
+                    )
                 if 'weather_condition_toowet' in self._weather_items:
-                    self._weather_items['weather_condition_toowet'](json_obj['weather']['condition']['toowet'],
-                                                            self.get_shortname())
+                    self._weather_items['weather_condition_toowet'](
+                        json_obj['weather']['condition']['toowet'], self.get_shortname()
+                    )
                 if 'weather_condition_day' in self._weather_items:
-                    self._weather_items['weather_condition_day'](json_obj['weather']['condition']['day'],
-                                                         self.get_shortname())
+                    self._weather_items['weather_condition_day'](
+                        json_obj['weather']['condition']['day'], self.get_shortname()
+                    )
                 if 'weather_condition_night' in self._weather_items:
-                    self._weather_items['weather_condition_night'](json_obj['weather']['condition']['night'],
-                                                           self.get_shortname())
+                    self._weather_items['weather_condition_night'](
+                        json_obj['weather']['condition']['night'], self.get_shortname()
+                    )
             if 'timestamp' in json_obj['weather']:
                 if 'weather_date' in self._weather_items:
-                    self._weather_items['weather_date'](json_obj['weather']['timestamp']['date'],
-                                                           self.get_shortname())
+                    self._weather_items['weather_date'](json_obj['weather']['timestamp']['date'], self.get_shortname())
                 if 'weather_time' in self._weather_items:
-                    self._weather_items['weather_time'](json_obj['weather']['timestamp']['time'],
-                                                           self.get_shortname())
+                    self._weather_items['weather_time'](json_obj['weather']['timestamp']['time'], self.get_shortname())
                 if 'weather_unix' in self._weather_items:
-                    self._weather_items['weather_unix'](json_obj['weather']['timestamp']['unix'],
-                                                           self.get_shortname())
+                    self._weather_items['weather_unix'](json_obj['weather']['timestamp']['unix'], self.get_shortname())
         return json_obj
 
     def get_status_from_api(self):
         try:
-            self.logger.debug("Plugin '{}': get_status_from_api.".format(
-                self.get_fullname()))
+            self.logger.debug("Plugin '{}': get_status_from_api.".format(self.get_fullname()))
             response = self._session.get(self._base_url + 'status', auth=HTTPBasicAuth(self._user, self._password))
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
                     "Plugin '{}': Exception when sending GET request for get_status_from_api: {}".format(
-                        self.get_fullname(), str(e)))
+                        self.get_fullname(), str(e)
+                    )
+                )
             self._mower_offline = True
             return
 
@@ -1035,7 +1164,9 @@ class Robonect(MqttPlugin):
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending parsing json response get_status_from_api: {}".format(
-                    self.get_fullname(), str(e)))
+                    self.get_fullname(), str(e)
+                )
+            )
             return
 
         self.set_mower_online()
@@ -1052,23 +1183,29 @@ class Robonect(MqttPlugin):
                 self._status_items['mower/status'](json_obj['status']['status'], self.get_shortname())
                 if 'mower/status/text' in self._status_items:
                     self._status_items['mower/status/text'](
-                        self.get_status_as_text(self._status_items['mower/status']()))
+                        self.get_status_as_text(self._status_items['mower/status']())
+                    )
                     if 'status_text_translated' in self._status_items:
-                        self._status_items['status_text_translated'](self.translate(self._status_items['mower/status/text']()))
+                        self._status_items['status_text_translated'](
+                            self.translate(self._status_items['mower/status/text']())
+                        )
             if 'mower/distance' in self._status_items:
                 self._status_items['mower/distance'](json_obj['status']['distance'], self.get_shortname())
             if 'mower/stopped' in self._status_items:
                 self._status_items['mower/stopped'](self.to_bool(json_obj['status']['stopped'], self.get_shortname()))
             if 'mower/status/duration' in self._status_items:
                 # round to minutes, as mqtt is also returning minutes instead of seconds
-                self._status_items['mower/status/duration'](math.floor(json_obj['status']['duration'] / 60),
-                                                            self.get_shortname())
+                self._status_items['mower/status/duration'](
+                    math.floor(json_obj['status']['duration'] / 60), self.get_shortname()
+                )
             if 'mower/mode' in self._status_items:
                 self._status_items['mower/mode'](json_obj['status']['mode'], self.get_shortname())
                 if 'mower/mode/text' in self._status_items:
                     self._status_items['mower/mode/text'](self.get_mode_as_text(self._status_items['mower/mode']()))
                     if 'mode_text_translated' in self._status_items:
-                        self._status_items['mode_text_translated'](self.translate(self._status_items['mower/mode/text']()))
+                        self._status_items['mode_text_translated'](
+                            self.translate(self._status_items['mower/mode/text']())
+                        )
             if 'status_battery' in self._status_items:
                 self._status_items['status_battery'](json_obj['status']['battery'], self.get_shortname())
             if 'mower/statistic/hours' in self._status_items:

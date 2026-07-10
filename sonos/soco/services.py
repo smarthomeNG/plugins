@@ -7,22 +7,22 @@
 
 >>> import soco
 >>> device = soco.SoCo('192.168.1.102')
->>> print(RenderingControl(device).GetMute([('InstanceID', 0),
-...     ('Channel', 'Master')]))
+>>> print(RenderingControl(device).GetMute([('InstanceID', 0), ('Channel', 'Master')]))
 {'CurrentMute': '0'}
->>> r = ContentDirectory(device).Browse([
-...    ('ObjectID', 'Q:0'),
-...    ('BrowseFlag', 'BrowseDirectChildren'),
-...    ('Filter', '*'),
-...    ('StartingIndex', '0'),
-...    ('RequestedCount', '100'),
-...    ('SortCriteria', '')
-...    ])
+>>> r = ContentDirectory(device).Browse(
+...     [
+...         ('ObjectID', 'Q:0'),
+...         ('BrowseFlag', 'BrowseDirectChildren'),
+...         ('Filter', '*'),
+...         ('StartingIndex', '0'),
+...         ('RequestedCount', '100'),
+...         ('SortCriteria', ''),
+...     ]
+... )
 >>> print(r['Result'])
 <?xml version="1.0" ?><DIDL-Lite xmlns="urn:schemas-upnp-org:metadata ...
 >>> for action, in_args, out_args in AlarmClock(device).iter_actions():
-...    print(action, in_args, out_args)
-...
+...     print(action, in_args, out_args)
 SetFormat [Argument(name='DesiredTimeFormat', vartype='string'), Argument(
 name='DesiredDateFormat', vartype='string')] []
 GetFormat [] [Argument(name='CurrentTimeFormat', vartype='string'),
@@ -30,7 +30,6 @@ Argument(name='CurrentDateFormat', vartype='string')] ...
 """
 
 # UPnP Spec at http://upnp.org/specs/arch/UPnP-arch-DeviceArchitecture-v1.0.pdf
-
 
 import logging
 from collections import namedtuple
@@ -66,33 +65,33 @@ if config.EVENTS_MODULE is None:
     config.EVENTS_MODULE = events
 
 
-class Action(namedtuple("ActionBase", "name, in_args, out_args")):
+class Action(namedtuple('ActionBase', 'name, in_args, out_args')):
     """A UPnP Action and its arguments."""
 
     def __str__(self):
-        args = ", ".join(str(arg) for arg in self.in_args)
-        returns = ", ".join(str(arg) for arg in self.out_args)
-        return "{0}({1}) -> {{{2}}}".format(self.name, args, returns)
+        args = ', '.join(str(arg) for arg in self.in_args)
+        returns = ', '.join(str(arg) for arg in self.out_args)
+        return '{0}({1}) -> {{{2}}}'.format(self.name, args, returns)
 
 
-class Argument(namedtuple("ArgumentBase", "name, vartype")):
+class Argument(namedtuple('ArgumentBase', 'name, vartype')):
     """A UPnP Argument and its type."""
 
     def __str__(self):
         argument = self.name
         if self.vartype.default:
-            argument = "{}={}".format(self.name, self.vartype.default)
-        return "{}: {}".format(argument, str(self.vartype))
+            argument = '{}={}'.format(self.name, self.vartype.default)
+        return '{}: {}'.format(argument, str(self.vartype))
 
 
-class Vartype(namedtuple("VartypeBase", "datatype, default, list, range")):
+class Vartype(namedtuple('VartypeBase', 'datatype, default, list, range')):
     """An argument type with default value and range."""
 
     def __str__(self):
         if self.list:
-            return "[{}]".format(", ".join(self.list))
+            return '[{}]'.format(', '.join(self.list))
         if self.range:
-            return "[{}..{}]".format(self.range[0], self.range[1])
+            return '[{}..{}]'.format(self.range[0], self.range[1])
         return self.datatype
 
 
@@ -110,13 +109,13 @@ class Service:
         '<?xml version="1.0"?>'
         '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"'
         ' s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'
-        "<s:Body>"
+        '<s:Body>'
         '<u:{action} xmlns:u="urn:schemas-upnp-org:service:'
         '{service_type}:{version}">'
-        "{arguments}"
-        "</u:{action}>"
-        "</s:Body>"
-        "</s:Envelope>"
+        '{arguments}'
+        '</u:{action}>'
+        '</s:Body>'
+        '</s:Envelope>'
     )  # noqa PEP8
 
     def __init__(self, soco):
@@ -140,13 +139,13 @@ class Service:
         self.version = 1
         self.service_id = self.service_type
         #: str: The base URL for sending UPnP Actions.
-        self.base_url = "http://{}:1400".format(self.soco.ip_address)
+        self.base_url = 'http://{}:1400'.format(self.soco.ip_address)
         #: str: The UPnP Control URL.
-        self.control_url = "/{}/Control".format(self.service_type)
+        self.control_url = '/{}/Control'.format(self.service_type)
         #: str: The service control protocol description URL.
-        self.scpd_url = "/xml/{}{}.xml".format(self.service_type, self.version)
+        self.scpd_url = '/xml/{}{}.xml'.format(self.service_type, self.version)
         #: str: The service eventing subscription URL.
-        self.event_subscription_url = "/{}/Event".format(self.service_type)
+        self.event_subscription_url = '/{}/Event'.format(self.service_type)
         #: A cache for storing the result of network calls. By default, this is
         #: a `TimedCache` with a default timeout=0.
         self.cache = Cache(default_timeout=0)
@@ -166,25 +165,25 @@ class Service:
 
         # pylint: disable=invalid-name
         self.UPNP_ERRORS = {
-            400: "Bad Request",
-            401: "Invalid Action",
-            402: "Invalid Args",
-            404: "Invalid Var",
-            412: "Precondition Failed",
-            501: "Action Failed",
-            600: "Argument Value Invalid",
-            601: "Argument Value Out of Range",
-            602: "Optional Action Not Implemented",
-            603: "Out Of Memory",
-            604: "Human Intervention Required",
-            605: "String Argument Too Long",
-            606: "Action Not Authorized",
-            607: "Signature Failure",
-            608: "Signature Missing",
-            609: "Not Encrypted",
-            610: "Invalid Sequence",
-            611: "Invalid Control URL",
-            612: "No Such Session",
+            400: 'Bad Request',
+            401: 'Invalid Action',
+            402: 'Invalid Args',
+            404: 'Invalid Var',
+            412: 'Precondition Failed',
+            501: 'Action Failed',
+            600: 'Argument Value Invalid',
+            601: 'Argument Value Out of Range',
+            602: 'Optional Action Not Implemented',
+            603: 'Out Of Memory',
+            604: 'Human Intervention Required',
+            605: 'String Argument Too Long',
+            606: 'Action Not Authorized',
+            607: 'Signature Failure',
+            608: 'Signature Missing',
+            609: 'Not Encrypted',
+            610: 'Invalid Sequence',
+            611: 'Invalid Control URL',
+            612: 'No Such Session',
         }
         self.DEFAULT_ARGS = {}
         self.additional_headers = {}
@@ -219,7 +218,7 @@ class Service:
         # Now we have a bound method, we cache it on this instance, so that
         # next time we don't have to go through this again
         setattr(self, action, method)
-        log.debug("Dispatching method %s", action)
+        log.debug('Dispatching method %s', action)
 
         # return our new bound method, which will be called by Python
         return method
@@ -248,14 +247,12 @@ class Service:
 
         tags = []
         for name, value in args:
-            tag = "<{name}>{value}</{name}>".format(
-                name=name, value=escape("%s" % value, {'"': "&quot;"})
-            )
+            tag = '<{name}>{value}</{name}>'.format(name=name, value=escape('%s' % value, {'"': '&quot;'}))
             # % converts to unicode because we are using unicode literals.
             # Avoids use of 'unicode' function which does not exist in python 3
             tags.append(tag)
 
-        xml = "".join(tags)
+        xml = ''.join(tags)
         return xml
 
     @staticmethod
@@ -293,25 +290,21 @@ class Service:
 
         # Get all tags in order. Elementree (in python 2.x) seems to prefer to
         # be fed bytes, rather than unicode
-        xml_response = xml_response.encode("utf-8")
+        xml_response = xml_response.encode('utf-8')
         try:
             tree = XML.fromstring(xml_response)
         except XML.ParseError:
             # Try to filter illegal xml chars (as unicode), in case that is
             # the reason for the parse error
-            filtered = illegal_xml_re.sub("", xml_response.decode("utf-8")).encode(
-                "utf-8"
-            )
+            filtered = illegal_xml_re.sub('', xml_response.decode('utf-8')).encode('utf-8')
             tree = XML.fromstring(filtered)
 
         # Get the first child of the <Body> tag which will be
         # <{actionNameResponse}> (depends on what actionName is). Turn the
         # children of this into a {tagname, content} dict. XML unescaping
         # is carried out for us by elementree.
-        action_response = tree.find("{http://schemas.xmlsoap.org/soap/envelope/}Body")[
-            0
-        ]
-        return {i.tag: i.text or "" for i in action_response}
+        action_response = tree.find('{http://schemas.xmlsoap.org/soap/envelope/}Body')[0]
+        return {i.tag: i.text or '' for i in action_response}
 
     def compose_args(self, action_name, in_argdict):
         """Compose the argument list from an argument dictionary, with
@@ -337,7 +330,7 @@ class Service:
                 # The found 'action' will be visible from outside the loop
                 break
         else:
-            raise AttributeError("Unknown Action: {}".format(action_name))
+            raise AttributeError('Unknown Action: {}'.format(action_name))
 
         # Check for given argument names which do not occur in the expected
         # argument list
@@ -345,9 +338,7 @@ class Service:
         unexpected = set(in_argdict) - {argument.name for argument in action.in_args}
         if unexpected:
             raise ValueError(
-                "Unexpected argument '{}'. Method signature: {}".format(
-                    next(iter(unexpected)), str(action)
-                )
+                "Unexpected argument '{}'. Method signature: {}".format(next(iter(unexpected)), str(action))
             )
 
         # List the (name, value) tuples for each argument in the argument list
@@ -362,11 +353,7 @@ class Service:
                 continue
             if argument.vartype.default is not None:
                 composed.append((name, argument.vartype.default))
-            raise ValueError(
-                "Missing argument '{}'. Method signature: {}".format(
-                    argument.name, str(action)
-                )
-            )
+            raise ValueError("Missing argument '{}'. Method signature: {}".format(argument.name, str(action)))
         return composed
 
     def build_command(self, action, args=None):
@@ -408,21 +395,11 @@ class Service:
 
         arguments = self.wrap_arguments(args)
         body = self.soap_body_template.format(
-            arguments=arguments,
-            action=action,
-            service_type=self.service_type,
-            version=self.version,
+            arguments=arguments, action=action, service_type=self.service_type, version=self.version
         )
-        soap_action_template = (
-            "urn:schemas-upnp-org:service:{service_type}:{version}#{action}"
-        )
-        soap_action = soap_action_template.format(
-            service_type=self.service_type, version=self.version, action=action
-        )
-        headers = {
-            "Content-Type": 'text/xml; charset="utf-8"',
-            "SOAPACTION": soap_action,
-        }
+        soap_action_template = 'urn:schemas-upnp-org:service:{service_type}:{version}#{action}'
+        soap_action = soap_action_template.format(service_type=self.service_type, version=self.version, action=action)
+        headers = {'Content-Type': 'text/xml; charset="utf-8"', 'SOAPACTION': soap_action}
         if len(self.additional_headers):
             headers.update(self.additional_headers)
 
@@ -471,8 +448,8 @@ class Service:
         # config.REQUEST_TIMEOUT unless overridden by 'timeout'
         # being provided as a kwarg by the caller, in which case
         # use this and remove it from kwargs.
-        timeout = kwargs.pop("timeout", config.REQUEST_TIMEOUT)
-        log.debug("Request timeout set to %s", timeout)
+        timeout = kwargs.pop('timeout', config.REQUEST_TIMEOUT)
+        log.debug('Request timeout set to %s', timeout)
 
         if args is None:
             args = self.compose_args(action, kwargs)
@@ -480,24 +457,21 @@ class Service:
             cache = self.cache
         result = cache.get(action, args)
         if result is not None:
-            log.debug("Cache hit")
+            log.debug('Cache hit')
             return result
 
         # Cache miss, so go ahead and make a network call
         headers, body = self.build_command(action, args)
-        log.debug("Sending %s %s to %s", action, args, self.soco.ip_address)
-        log.debug("Sending %s, %s", headers, prettify(body))
+        log.debug('Sending %s %s to %s', action, args, self.soco.ip_address)
+        log.debug('Sending %s, %s', headers, prettify(body))
         # Convert the body to bytes, and send it.
         response = requests.post(
-            self.base_url + self.control_url,
-            headers=headers,
-            data=body.encode("utf-8"),
-            timeout=timeout,
+            self.base_url + self.control_url, headers=headers, data=body.encode('utf-8'), timeout=timeout
         )
 
-        log.debug("Received %s, %s", response.headers, response.text)
+        log.debug('Received %s, %s', response.headers, response.text)
         status = response.status_code
-        log.debug("Received status %s from %s", status, self.soco.ip_address)
+        log.debug('Received status %s from %s', status, self.soco.ip_address)
         if status == 200:
             # The response is good. Get the output params, and return them.
             # NB an empty dict is a valid result. It just means that no
@@ -509,9 +483,7 @@ class Service:
             cache.put(result, action, args, timeout=cache_timeout)
             return result
         elif status == 405:
-            raise NotSupportedException(
-                "{} not supported on {}".format(action, self.soco.ip_address)
-            )
+            raise NotSupportedException('{} not supported on {}'.format(action, self.soco.ip_address))
         elif status == 500:
             # Internal server error. UPnP requires this to be returned if the
             # device does not like the action for some reason. The returned
@@ -564,33 +536,27 @@ class Service:
 
         # NB need to encode unicode strings before passing to ElementTree
         try:
-            xml_error = xml_error.encode("utf-8")
+            xml_error = xml_error.encode('utf-8')
             error = ET.fromstring(xml_error)
-            log.debug("Error %s", xml_error)
-            error_code = error.findtext(
-                ".//{urn:schemas-upnp-org:control-1-0}errorCode"
-            )
+            log.debug('Error %s', xml_error)
+            error_code = error.findtext('.//{urn:schemas-upnp-org:control-1-0}errorCode')
             if error_code is not None:
-                description = self.UPNP_ERRORS.get(int(error_code), "")
+                description = self.UPNP_ERRORS.get(int(error_code), '')
                 raise SoCoUPnPException(
-                    message="UPnP Error {} received: {} from {}".format(
-                        error_code, description, self.soco.ip_address
-                    ),
+                    message='UPnP Error {} received: {} from {}'.format(error_code, description, self.soco.ip_address),
                     error_code=error_code,
                     error_description=description,
                     error_xml=xml_error,
                 )
 
-            raise ValueError("No error code found in UPnP error response")
+            raise ValueError('No error code found in UPnP error response')
         except (ET.ParseError, ValueError) as e:
             # Unknown error, so just return the entire response
-            error = "Error parsing UPnP error response from %s: %s"
+            error = 'Error parsing UPnP error response from %s: %s'
             log.error(error, self.soco.ip_address, xml_error)
             raise UnknownSoCoException(xml_error) from e
 
-    def subscribe(
-        self, requested_timeout=None, auto_renew=False, event_queue=None, strict=True
-    ):
+    def subscribe(self, requested_timeout=None, auto_renew=False, event_queue=None, strict=True):
         """Subscribe to the service's events.
 
         Args:
@@ -622,9 +588,7 @@ class Service:
         method on the returned object.
         """
         subscription = config.EVENTS_MODULE.Subscription(self, event_queue)
-        return subscription.subscribe(
-            requested_timeout=requested_timeout, auto_renew=auto_renew, strict=strict
-        )
+        return subscription.subscribe(requested_timeout=requested_timeout, auto_renew=auto_renew, strict=strict)
 
     def _update_cache_on_event(self, event):
         """Update the cache when an event is received.
@@ -706,52 +670,42 @@ class Service:
         """
 
         # pylint: disable=invalid-name
-        ns = "{urn:schemas-upnp-org:service-1-0}"
+        ns = '{urn:schemas-upnp-org:service-1-0}'
         # get the scpd body as bytes, and feed directly to elementtree
         # which likes to receive bytes
         scpd_body = requests.get(self.base_url + self.scpd_url, timeout=10).content
         tree = XML.fromstring(scpd_body)
         # parse the state variables to get the relevant variable types
         vartypes = {}
-        srvStateTables = tree.findall("{}serviceStateTable".format(ns))
+        srvStateTables = tree.findall('{}serviceStateTable'.format(ns))
         for srvStateTable in srvStateTables:
-            statevars = srvStateTable.findall("{}stateVariable".format(ns))
+            statevars = srvStateTable.findall('{}stateVariable'.format(ns))
             for state in statevars:
-                name = state.findtext("{}name".format(ns))
-                datatype = state.findtext("{}dataType".format(ns))
-                default = state.findtext("{}defaultValue".format(ns))
-                value_list_elt = state.find("{}allowedValueList".format(ns))
-                value_list = (
-                    ([item.text for item in value_list_elt] or None)
-                    if value_list_elt is not None
-                    else None
-                )
-                value_range_elt = state.find("{}allowedValueRange".format(ns))
-                value_range = (
-                    ([item.text for item in value_range_elt] or None)
-                    if value_range_elt is not None
-                    else None
-                )
+                name = state.findtext('{}name'.format(ns))
+                datatype = state.findtext('{}dataType'.format(ns))
+                default = state.findtext('{}defaultValue'.format(ns))
+                value_list_elt = state.find('{}allowedValueList'.format(ns))
+                value_list = ([item.text for item in value_list_elt] or None) if value_list_elt is not None else None
+                value_range_elt = state.find('{}allowedValueRange'.format(ns))
+                value_range = ([item.text for item in value_range_elt] or None) if value_range_elt is not None else None
                 vartypes[name] = Vartype(datatype, default, value_list, value_range)
         # find all the actions
-        actionLists = tree.findall("{}actionList".format(ns))
+        actionLists = tree.findall('{}actionList'.format(ns))
         for actionList in actionLists:
-            actions = actionList.findall("{}action".format(ns))
+            actions = actionList.findall('{}action'.format(ns))
             for i in actions:
-                action_name = i.findtext("{}name".format(ns))
-                argLists = i.findall("{}argumentList".format(ns))
+                action_name = i.findtext('{}name'.format(ns))
+                argLists = i.findall('{}argumentList'.format(ns))
                 for argList in argLists:
-                    args_iter = argList.findall("{}argument".format(ns))
+                    args_iter = argList.findall('{}argument'.format(ns))
                     in_args = []
                     out_args = []
                     for arg in args_iter:
-                        arg_name = arg.findtext("{}name".format(ns))
-                        direction = arg.findtext("{}direction".format(ns))
-                        related_variable = arg.findtext(
-                            "{}relatedStateVariable".format(ns)
-                        )
+                        arg_name = arg.findtext('{}name'.format(ns))
+                        direction = arg.findtext('{}direction'.format(ns))
+                        related_variable = arg.findtext('{}relatedStateVariable'.format(ns))
                         vartype = vartypes[related_variable]
-                        if direction == "in":
+                        if direction == 'in':
                             in_args.append(Argument(arg_name, vartype))
                         else:
                             out_args.append(Argument(arg_name, vartype))
@@ -776,17 +730,17 @@ class Service:
         """
 
         # pylint: disable=invalid-name
-        ns = "{urn:schemas-upnp-org:service-1-0}"
+        ns = '{urn:schemas-upnp-org:service-1-0}'
         scpd_body = requests.get(self.base_url + self.scpd_url, timeout=10).text
-        tree = XML.fromstring(scpd_body.encode("utf-8"))
+        tree = XML.fromstring(scpd_body.encode('utf-8'))
         # parse the state variables to get the relevant variable types
-        statevars = tree.findall("{}stateVariable".format(ns))
+        statevars = tree.findall('{}stateVariable'.format(ns))
         for state in statevars:
             # We are only interested if 'sendEvents' is 'yes', i.e this
             # is an eventable variable
-            if state.attrib["sendEvents"] == "yes":
-                name = state.findtext("{}name".format(ns))
-                vartype = state.findtext("{}dataType".format(ns))
+            if state.attrib['sendEvents'] == 'yes':
+                name = state.findtext('{}name'.format(ns))
+                vartype = state.findtext('{}dataType'.format(ns))
                 yield (name, vartype)
 
 
@@ -795,11 +749,7 @@ class AlarmClock(Service):
 
     def __init__(self, soco):
         super().__init__(soco)
-        self.UPNP_ERRORS.update(
-            {
-                801: "Already an alarm for this time",
-            }
-        )
+        self.UPNP_ERRORS.update({801: 'Already an alarm for this time'})
 
 
 class MusicServices(Service):
@@ -840,34 +790,34 @@ class ContentDirectory(Service):
 
     def __init__(self, soco):
         super().__init__(soco)
-        self.control_url = "/MediaServer/ContentDirectory/Control"
-        self.event_subscription_url = "/MediaServer/ContentDirectory/Event"
+        self.control_url = '/MediaServer/ContentDirectory/Control'
+        self.event_subscription_url = '/MediaServer/ContentDirectory/Event'
         # For error codes, see table 2.7.16 in
         # http://upnp.org/specs/av/UPnP-av-ContentDirectory-v1-Service.pdf
         self.UPNP_ERRORS.update(
             {
-                701: "No such object",
-                702: "Invalid CurrentTagValue",
-                703: "Invalid NewTagValue",
-                704: "Required tag",
-                705: "Read only tag",
-                706: "Parameter Mismatch",
-                708: "Unsupported or invalid search criteria",
-                709: "Unsupported or invalid sort criteria",
-                710: "No such container",
-                711: "Restricted object",
-                712: "Bad metadata",
-                713: "Restricted parent object",
-                714: "No such source resource",
-                715: "Resource access denied",
-                716: "Transfer busy",
-                717: "No such file transfer",
-                718: "No such destination resource",
-                719: "Destination resource access denied",
-                720: "Cannot process the request",
+                701: 'No such object',
+                702: 'Invalid CurrentTagValue',
+                703: 'Invalid NewTagValue',
+                704: 'Required tag',
+                705: 'Read only tag',
+                706: 'Parameter Mismatch',
+                708: 'Unsupported or invalid search criteria',
+                709: 'Unsupported or invalid sort criteria',
+                710: 'No such container',
+                711: 'Restricted object',
+                712: 'Bad metadata',
+                713: 'Restricted parent object',
+                714: 'No such source resource',
+                715: 'Resource access denied',
+                716: 'Transfer busy',
+                717: 'No such file transfer',
+                718: 'No such destination resource',
+                719: 'Destination resource access denied',
+                720: 'Cannot process the request',
             }
         )
-        self.additional_headers = {"USER-AGENT": "Sonos/83.1-61210"}
+        self.additional_headers = {'USER-AGENT': 'Sonos/83.1-61210'}
 
 
 class MS_ConnectionManager(Service):  # pylint: disable=invalid-name
@@ -875,9 +825,9 @@ class MS_ConnectionManager(Service):  # pylint: disable=invalid-name
 
     def __init__(self, soco):
         super().__init__(soco)
-        self.service_type = "ConnectionManager"
-        self.control_url = "/MediaServer/ConnectionManager/Control"
-        self.event_subscription_url = "/MediaServer/ConnectionManager/Event"
+        self.service_type = 'ConnectionManager'
+        self.control_url = '/MediaServer/ConnectionManager/Control'
+        self.event_subscription_url = '/MediaServer/ConnectionManager/Event'
 
 
 class RenderingControl(Service):
@@ -886,9 +836,9 @@ class RenderingControl(Service):
 
     def __init__(self, soco):
         super().__init__(soco)
-        self.control_url = "/MediaRenderer/RenderingControl/Control"
-        self.event_subscription_url = "/MediaRenderer/RenderingControl/Event"
-        self.DEFAULT_ARGS.update({"InstanceID": 0})
+        self.control_url = '/MediaRenderer/RenderingControl/Control'
+        self.event_subscription_url = '/MediaRenderer/RenderingControl/Event'
+        self.DEFAULT_ARGS.update({'InstanceID': 0})
 
 
 class MR_ConnectionManager(Service):  # pylint: disable=invalid-name
@@ -896,9 +846,9 @@ class MR_ConnectionManager(Service):  # pylint: disable=invalid-name
 
     def __init__(self, soco):
         super().__init__(soco)
-        self.service_type = "ConnectionManager"
-        self.control_url = "/MediaRenderer/ConnectionManager/Control"
-        self.event_subscription_url = "/MediaRenderer/ConnectionManager/Event"
+        self.service_type = 'ConnectionManager'
+        self.control_url = '/MediaRenderer/ConnectionManager/Control'
+        self.event_subscription_url = '/MediaRenderer/ConnectionManager/Event'
 
 
 class AVTransport(Service):
@@ -907,36 +857,36 @@ class AVTransport(Service):
 
     def __init__(self, soco):
         super().__init__(soco)
-        self.control_url = "/MediaRenderer/AVTransport/Control"
-        self.event_subscription_url = "/MediaRenderer/AVTransport/Event"
+        self.control_url = '/MediaRenderer/AVTransport/Control'
+        self.event_subscription_url = '/MediaRenderer/AVTransport/Event'
         # For error codes, see
         # http://upnp.org/specs/av/UPnP-av-AVTransport-v1-Service.pdf
         self.UPNP_ERRORS.update(
             {
-                701: "Transition not available",
-                702: "No contents",
-                703: "Read error",
-                704: "Format not supported for playback",
-                705: "Transport is locked",
-                706: "Write error",
-                707: "Media is protected or not writeable",
-                708: "Format not supported for recording",
-                709: "Media is full",
-                710: "Seek mode not supported",
-                711: "Illegal seek target",
-                712: "Play mode not supported",
-                713: "Record quality not supported",
-                714: "Illegal MIME-Type",
+                701: 'Transition not available',
+                702: 'No contents',
+                703: 'Read error',
+                704: 'Format not supported for playback',
+                705: 'Transport is locked',
+                706: 'Write error',
+                707: 'Media is protected or not writeable',
+                708: 'Format not supported for recording',
+                709: 'Media is full',
+                710: 'Seek mode not supported',
+                711: 'Illegal seek target',
+                712: 'Play mode not supported',
+                713: 'Record quality not supported',
+                714: 'Illegal MIME-Type',
                 715: 'Content "BUSY"',
-                716: "Resource Not found",
-                717: "Play speed not supported",
-                718: "Invalid InstanceID",
-                737: "No DNS Server",
-                738: "Bad Domain Name",
-                739: "Server Error",
+                716: 'Resource Not found',
+                717: 'Play speed not supported',
+                718: 'Invalid InstanceID',
+                737: 'No DNS Server',
+                738: 'Bad Domain Name',
+                739: 'Server Error',
             }
         )
-        self.DEFAULT_ARGS.update({"InstanceID": 0})
+        self.DEFAULT_ARGS.update({'InstanceID': 0})
 
 
 class Queue(Service):
@@ -945,8 +895,8 @@ class Queue(Service):
 
     def __init__(self, soco):
         super().__init__(soco)
-        self.control_url = "/MediaRenderer/Queue/Control"
-        self.event_subscription_url = "/MediaRenderer/Queue/Event"
+        self.control_url = '/MediaRenderer/Queue/Control'
+        self.event_subscription_url = '/MediaRenderer/Queue/Event'
 
 
 class GroupRenderingControl(Service):
@@ -955,6 +905,6 @@ class GroupRenderingControl(Service):
 
     def __init__(self, soco):
         super().__init__(soco)
-        self.control_url = "/MediaRenderer/GroupRenderingControl/Control"
-        self.event_subscription_url = "/MediaRenderer/GroupRenderingControl/Event"
-        self.DEFAULT_ARGS.update({"InstanceID": 0})
+        self.control_url = '/MediaRenderer/GroupRenderingControl/Control'
+        self.event_subscription_url = '/MediaRenderer/GroupRenderingControl/Event'
+        self.DEFAULT_ARGS.update({'InstanceID': 0})

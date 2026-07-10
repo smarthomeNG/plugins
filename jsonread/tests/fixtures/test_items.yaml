@@ -1,0 +1,16 @@
+fronius_smartmeter:
+    current_phase_1:
+        type: num
+        jsonread_filter: .Body.Data["0"].Current_AC_Phase_1
+
+    manufacturer:
+        type: str
+        jsonread_filter: .Body.Data["0"].Details.Manufacturer
+
+    second_reading_current:
+        type: num
+        jsonread_filter: .Body.Data["1"].Current_AC_Phase_1
+
+    unmatched:
+        type: str
+        jsonread_filter: .Body.Data["0"].DoesNotExist

@@ -77,13 +77,13 @@ POLLING_CACHE_TIMEOUT = 5
 NEVER_TIME = -1200.0
 
 ZGS_ATTRIB_MAPPING = {
-    "BootSeq": "_boot_seqnum",
-    "ChannelMapSet": "_channel_map",
-    "HTSatChanMapSet": "_ht_sat_chan_map",
-    "MicEnabled": "_mic_enabled",
-    "UUID": "_uid",
-    "VoiceConfigState": "_voice_config_state",
-    "ZoneName": "_player_name",
+    'BootSeq': '_boot_seqnum',
+    'ChannelMapSet': '_channel_map',
+    'HTSatChanMapSet': '_ht_sat_chan_map',
+    'MicEnabled': '_mic_enabled',
+    'UUID': '_uid',
+    'VoiceConfigState': '_voice_config_state',
+    'ZoneName': '_player_name',
 }
 ZGS_XSLT = """
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -129,15 +129,10 @@ class ZoneGroupState:
 
     def add_subscription(self, subscription: SubscriptionBase):
         """Start tracking a ZoneGroupTopology subscription."""
-        if (
-            subscription.service.service_type == "ZoneGroupTopology"
-            and subscription not in self._subscriptions
-        ):
+        if subscription.service.service_type == 'ZoneGroupTopology' and subscription not in self._subscriptions:
             self._subscriptions.add(subscription)
             _LOG.debug(
-                "Monitoring ZoneGroupTopology subscription %s on %s",
-                subscription.sid,
-                subscription.service.soco,
+                'Monitoring ZoneGroupTopology subscription %s on %s', subscription.sid, subscription.service.soco
             )
 
     def remove_subscription(self, subscription: SubscriptionBase):
@@ -145,7 +140,7 @@ class ZoneGroupState:
         if subscription in self._subscriptions:
             self._subscriptions.remove(subscription)
             _LOG.debug(
-                "Discarded unsubscribed subscription %s from %s, %d remaining",
+                'Discarded unsubscribed subscription %s from %s, %d remaining',
                 subscription.sid,
                 subscription.service.soco,
                 len(self._subscriptions),
@@ -156,7 +151,7 @@ class ZoneGroupState:
         """Return True if active subscriptions are updating this ZoneGroupState."""
         stale_subscriptions = [sub for sub in self._subscriptions if not sub.time_left]
         for sub in stale_subscriptions:
-            _LOG.debug("Discarding stale subscription: %s", sub.sid)
+            _LOG.debug('Discarding stale subscription: %s', sub.sid)
             self.remove_subscription(sub)
         return bool(self._subscriptions)
 
@@ -172,7 +167,7 @@ class ZoneGroupState:
         if self.has_subscriptions:
             self.total_requests += 1
             _LOG.debug(
-                "Subscriptions (%s) still active during poll for %s, using cache",
+                'Subscriptions (%s) still active during poll for %s, using cache',
                 len(self._subscriptions),
                 soco.ip_address,
             )
@@ -180,18 +175,13 @@ class ZoneGroupState:
 
         if time.monotonic() < self._cache_until:
             self.total_requests += 1
-            _LOG.debug(
-                "Cache still active (GetZoneGroupState) during poll for %s",
-                soco.ip_address,
-            )
+            _LOG.debug('Cache still active (GetZoneGroupState) during poll for %s', soco.ip_address)
             return
 
         if soco._is_satellite:
             # Satellites can return outdated information, use the parent
             _LOG.debug(
-                "Poll request on satellite (%s), using parent (%s)",
-                soco.ip_address,
-                soco._satellite_parent.ip_address,
+                'Poll request on satellite (%s), using parent (%s)', soco.ip_address, soco._satellite_parent.ip_address
             )
             soco = soco._satellite_parent
 
@@ -199,28 +189,24 @@ class ZoneGroupState:
         # the target Sonos player to return an HTTP 501 error, raising a
         # SoCoUPnPException.
         try:
-            zgs = soco.zoneGroupTopology.GetZoneGroupState()["ZoneGroupState"]
-            self.process_payload(payload=zgs, source="poll", source_ip=soco.ip_address)
+            zgs = soco.zoneGroupTopology.GetZoneGroupState()['ZoneGroupState']
+            self.process_payload(payload=zgs, source='poll', source_ip=soco.ip_address)
             self._cache_until = time.monotonic() + POLLING_CACHE_TIMEOUT
-            _LOG.debug("Extending ZGS cache by %ss", POLLING_CACHE_TIMEOUT)
+            _LOG.debug('Extending ZGS cache by %ss', POLLING_CACHE_TIMEOUT)
 
         # In the event of failure, we fall back to using a ZGT event to
         # determine the ZGS. Fallback behaviour can be disabled by setting the
         # config.ZGT_EVENT_FALLBACK flag to False.
         except SoCoUPnPException as soco_upnp_exception:
-            _LOG.debug(
-                "Exception (%s) raised on 'GetZoneGroupState()'",
-                soco_upnp_exception,
-            )
+            _LOG.debug("Exception (%s) raised on 'GetZoneGroupState()'", soco_upnp_exception)
 
             if config.ZGT_EVENT_FALLBACK is False:
-                _LOG.debug("ZGT event fallback disabled (config.ZGT_EVENT_FALLBACK)")
+                _LOG.debug('ZGT event fallback disabled (config.ZGT_EVENT_FALLBACK)')
                 raise NotSupportedException(
-                    "'GetZoneGroupState()' call fails on large Sonos systems "
-                    "and event fallback is disabled"
+                    "'GetZoneGroupState()' call fails on large Sonos systems and event fallback is disabled"
                 ) from soco_upnp_exception
 
-            _LOG.debug("Falling back to using a ZGT event")
+            _LOG.debug('Falling back to using a ZGT event')
             try:
                 self.update_zgs_by_event(soco)
             except Exception as soco_exception:
@@ -231,11 +217,11 @@ class ZoneGroupState:
         Fall back to updating the ZGS using a ZGT event.
         Use of the 'events_twisted' module is not currently supported.
         """
-        if config.EVENTS_MODULE.__name__ == "soco.events":
+        if config.EVENTS_MODULE.__name__ == 'soco.events':
             _LOG.debug("Updating ZGS using standard 'events' module")
             self.update_zgs_by_event_default(speaker)
 
-        elif config.EVENTS_MODULE.__name__ == "soco.events_asyncio":
+        elif config.EVENTS_MODULE.__name__ == 'soco.events_asyncio':
             _LOG.debug("Updating ZGS using 'events_asyncio' module")
             # Explicit asyncio event loop control required for Python 3.6
             loop = asyncio.new_event_loop()
@@ -246,19 +232,13 @@ class ZoneGroupState:
             # From Python 3.7, we can just use the single statement:
             # asyncio.run(ZoneGroupState.update_zgs_events_asyncio(speaker))
 
-        elif config.EVENTS_MODULE.__name__ == "soco.events_twisted":
+        elif config.EVENTS_MODULE.__name__ == 'soco.events_twisted':
             # Future: Insert code here to handle the 'events_twisted' case
-            raise SoCoException(
-                "ZGT event fallback not yet implemented when using the "
-                "'events_twisted' module"
-            )
+            raise SoCoException("ZGT event fallback not yet implemented when using the 'events_twisted' module")
 
         else:
             # In case any additional events frameworks come along ...
-            raise SoCoException(
-                "ZGT event fallback not implemented for "
-                f"'{config.EVENTS_MODULE.__name__}' module"
-            )
+            raise SoCoException(f"ZGT event fallback not implemented for '{config.EVENTS_MODULE.__name__}' module")
 
     def update_zgs_by_event_default(self, speaker):
         """
@@ -267,8 +247,8 @@ class ZoneGroupState:
         sub = speaker.zoneGroupTopology.subscribe()
         event = sub.events.get(timeout=1.0)
         sub.unsubscribe()
-        zgs = event.variables.get("zone_group_state")
-        self.process_payload(payload=zgs, source="event", source_ip=speaker.ip_address)
+        zgs = event.variables.get('zone_group_state')
+        self.process_payload(payload=zgs, source='event', source_ip=speaker.ip_address)
 
     @staticmethod
     async def update_zgs_by_event_asyncio(speaker):
@@ -294,14 +274,12 @@ class ZoneGroupState:
         tree = normalize_zgs_xml(payload)
         normalized_zgs = str(tree)
         if normalized_zgs == self._last_zgs:
-            _LOG.debug(
-                "Duplicate ZGS received from %s (%s), ignoring", source_ip, source
-            )
+            _LOG.debug('Duplicate ZGS received from %s (%s), ignoring', source_ip, source)
             return
 
         self.processed_count += 1
         _LOG.debug(
-            "Updating ZGS with %s payload from %s (%s/%s processed)",
+            'Updating ZGS with %s payload from %s (%s/%s processed)',
             source,
             source_ip,
             self.processed_count,
@@ -325,7 +303,7 @@ class ZoneGroupState:
 
         # Example Location contents:
         #   http://192.168.1.100:1400/xml/device_description.xml
-        ip_addr = member_attribs["Location"].split("//")[1].split(":")[0]
+        ip_addr = member_attribs['Location'].split('//')[1].split(':')[0]
         zone = config.SOCO_CLASS(ip_addr)
         for key, attrib in ZGS_ATTRIB_MAPPING.items():
             setattr(zone, attrib, member_attribs.get(key))
@@ -334,16 +312,14 @@ class ZoneGroupState:
         #   RINCON_001XXX1400:LF,LF;RINCON_002XXX1400:RF,RF
         # Example HTSatChanMapSet (home theater) contents:
         #   RINCON_001XXX1400:LF,RF;RINCON_002XXX1400:LR;RINCON_003XXX1400:RR
-        for channel_map in list(
-            filter(None, [zone._channel_map, zone._ht_sat_chan_map])
-        ):
-            for channel in channel_map.split(";"):
+        for channel_map in list(filter(None, [zone._channel_map, zone._ht_sat_chan_map])):
+            for channel in channel_map.split(';'):
                 if channel.startswith(zone._uid):
-                    zone._channel = channel.split(":")[-1]
+                    zone._channel = channel.split(':')[-1]
 
         # Add the zone to the set of all members, and to the set
         # of visible members if appropriate
-        if member_attribs.get("Invisible") != "1":
+        if member_attribs.get('Invisible') != '1':
             self.visible_zones.add(zone)
         self.all_zones.add(zone)
         return zone
@@ -355,16 +331,16 @@ class ZoneGroupState:
 
         # Compatibility fallback for pre-10.1 firmwares
         # where a "ZoneGroups" element is not used
-        zone_groups = tree.find("ZoneGroups")
+        zone_groups = tree.find('ZoneGroups')
         if zone_groups is None:
             zone_groups = tree
 
-        for group_element in zone_groups.findall("ZoneGroup"):
-            coordinator_uid = group_element.attrib["Coordinator"]
-            group_uid = group_element.attrib["ID"]
+        for group_element in zone_groups.findall('ZoneGroup'):
+            coordinator_uid = group_element.attrib['Coordinator']
+            group_uid = group_element.attrib['ID']
             group_coordinator = None
             members = set()
-            for member_element in group_element.findall("ZoneGroupMember"):
+            for member_element in group_element.findall('ZoneGroupMember'):
                 zone = self.parse_zone_group_member(member_element)
                 zone._is_satellite = False
                 zone._satellite_parent = None
@@ -376,12 +352,12 @@ class ZoneGroupState:
                 # is_bridge doesn't change, but it does no real harm to
                 # set/reset it here, just in case the zone has not been seen
                 # before
-                zone._is_bridge = member_element.attrib.get("IsZoneBridge") == "1"
+                zone._is_bridge = member_element.attrib.get('IsZoneBridge') == '1'
                 # add the zone to the members for this group
                 members.add(zone)
                 # Loop over Satellite elements if present, and process as for
                 # ZoneGroup elements
-                satellite_elements = member_element.findall("Satellite")
+                satellite_elements = member_element.findall('Satellite')
                 zone._has_satellites = bool(satellite_elements)
                 for satellite_element in satellite_elements:
                     satellite = self.parse_zone_group_member(satellite_element)
@@ -395,7 +371,7 @@ class ZoneGroupState:
 
 def normalize_zgs_xml(xml):
     """Normalize the ZoneGroupState payload and return an lxml ElementTree instance."""
-    # added resolve_entities in response to CVE-2026-41066 
+    # added resolve_entities in response to CVE-2026-41066
     parser = LXML.XMLParser(remove_blank_text=True, resolve_entities='internal')  # pylint:disable=I1101
     tree = LXML.fromstring(xml, parser)  # pylint:disable=I1101
     return ZGS_TRANSFORM(tree)

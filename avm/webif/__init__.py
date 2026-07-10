@@ -32,7 +32,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -49,7 +48,7 @@ class WebInterface(SmartPluginWebIf):
         self.items = Items.get_instance()
         self.tplenv = self.init_template_environment()
 
-        self.logger.debug(f"Init WebIF of {self.plugin.get_shortname()}")
+        self.logger.debug(f'Init WebIF of {self.plugin.get_shortname()}')
 
     @cherrypy.expose
     def index(self, reload=None, action=None):
@@ -89,20 +88,21 @@ class WebInterface(SmartPluginWebIf):
         pagelength = self.plugin.get_parameter_value('webif_pagelength')
         tmpl = self.tplenv.get_template('index.html')
 
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
-                           plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(),
-                           tr064_items=tr064_items,
-                           tr064_item_count=tr064_item_count,
-                           call_monitor_items=call_monitor_items,
-                           call_monitor_item_count=call_monitor_item_count,
-                           aha_items=aha_items,
-                           aha_item_count=aha_item_count,
-                           logentries=logentries,
-                           p=self.plugin,
-                           webif_pagelength=pagelength,
-                           maintenance=True if self.plugin.log_level <= 20 else False,
-                           )
+        return tmpl.render(
+            plugin_shortname=self.plugin.get_shortname(),
+            plugin_version=self.plugin.get_version(),
+            plugin_info=self.plugin.get_info(),
+            tr064_items=tr064_items,
+            tr064_item_count=tr064_item_count,
+            call_monitor_items=call_monitor_items,
+            call_monitor_item_count=call_monitor_item_count,
+            aha_items=aha_items,
+            aha_item_count=aha_item_count,
+            logentries=logentries,
+            p=self.plugin,
+            webif_pagelength=pagelength,
+            maintenance=True if self.plugin.log_level <= 20 else False,
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -122,16 +122,24 @@ class WebInterface(SmartPluginWebIf):
                 for item in self.plugin.get_monitor_items():
                     data['call_monitor'][item.property.path] = {}
                     data['call_monitor'][item.property.path]['value'] = item()
-                    data['call_monitor'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                    data['call_monitor'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                    data['call_monitor'][item.property.path]['last_update'] = item.property.last_update.strftime(
+                        '%d.%m.%Y %H:%M:%S'
+                    )
+                    data['call_monitor'][item.property.path]['last_change'] = item.property.last_change.strftime(
+                        '%d.%m.%Y %H:%M:%S'
+                    )
 
             if self.plugin.fritz_device:
                 data['tr064_items'] = {}
                 for item in self.plugin.get_tr064_items():
                     data['tr064_items'][item.property.path] = {}
                     data['tr064_items'][item.property.path]['value'] = item()
-                    data['tr064_items'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                    data['tr064_items'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                    data['tr064_items'][item.property.path]['last_update'] = item.property.last_update.strftime(
+                        '%d.%m.%Y %H:%M:%S'
+                    )
+                    data['tr064_items'][item.property.path]['last_change'] = item.property.last_change.strftime(
+                        '%d.%m.%Y %H:%M:%S'
+                    )
                 data['tr064_items_blacklistet'] = self.plugin.get_tr064_items_blacklisted()
 
             if self.plugin.fritz_home:
@@ -139,8 +147,12 @@ class WebInterface(SmartPluginWebIf):
                 for item in self.plugin.get_aha_items():
                     data['aha_items'][item.property.path] = {}
                     data['aha_items'][item.property.path]['value'] = item()
-                    data['aha_items'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                    data['aha_items'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                    data['aha_items'][item.property.path]['last_update'] = item.property.last_update.strftime(
+                        '%d.%m.%Y %H:%M:%S'
+                    )
+                    data['aha_items'][item.property.path]['last_change'] = item.property.last_change.strftime(
+                        '%d.%m.%Y %H:%M:%S'
+                    )
                 data['aha_last_request'] = self.plugin.fritz_home.last_request
 
             data['maintenance'] = True if self.plugin.log_level <= 20 else False
@@ -148,7 +160,7 @@ class WebInterface(SmartPluginWebIf):
             try:
                 return json.dumps(data, default=str)
             except Exception as e:
-                self.logger.error(f"get_data_html exception: {e}")
+                self.logger.error(f'get_data_html exception: {e}')
 
     @cherrypy.expose
     def reboot(self):

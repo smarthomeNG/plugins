@@ -66,7 +66,7 @@ class SolarLog():
             time_end = int(vars(self)['time_end'][now.month - 1])
 
             # reset all out values at midnight
-            if now.hour is 0:
+            if now.hour == 0:
                 for name in list(self._items.keys()):
                     if 'out_' in name:
                         self._items[name](0)
@@ -94,7 +94,7 @@ class SolarLog():
                 item = self._items['curStatusCode_{0}'.format(x)]
                 status = int(vars(self)['curStatusCode'][x])
                 if isinstance(item(), str):
-                    if status is 255:
+                    if status == 255:
                         item('Offline')
                     elif status >= len(vars(self)['StatusCodes'][x]):
                         item('unbekannt')
@@ -121,7 +121,7 @@ class SolarLog():
                 if name in self._items:
                     if not self._is_online and ('pdc_' in name or 'udc_' in name or 'pac_' in name):
                         self._items[name](0)
-                    elif now.hour is 0 and 'out_' in name:
+                    elif now.hour == 0 and 'out_' in name:
                         self._items[name](0)
                     else:
                         self._items[name](groups[name])

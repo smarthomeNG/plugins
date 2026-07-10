@@ -54,46 +54,60 @@ class SeValue(StateEngineTools.SeItemChild):
         self.__varname = None
         self.__template = None
         self.__issues = []
-        self.__get_issues = {'cast_item': [], 'cast_regex': [], 'eval': [], 'regex': [], 'struct': [], 'var': [], 'item': []}
+        self.__get_issues = {
+            'cast_item': [],
+            'cast_regex': [],
+            'eval': [],
+            'regex': [],
+            'struct': [],
+            'var': [],
+            'item': [],
+        }
         self._additional_sources = []
         self.itemsApi = Items.get_instance()
         self.__itemClass = Item
         self.__listorder = []
         self.__type_listorder = []
         self.__orig_listorder = []
-        self.__valid_valuetypes = ["value", "regex", "eval", "var", "item", "template", "struct"]
-        if value_type == "str":
+        self.__valid_valuetypes = ['value', 'regex', 'eval', 'var', 'item', 'template', 'struct']
+        if value_type == 'str':
             self.__cast_func = StateEngineTools.cast_str
-            self.__cast = "str"
-        elif value_type == "regex":
+            self.__cast = 'str'
+        elif value_type == 'regex':
             self.__cast_func = self.cast_regex
-            self.__cast = "regex"
-        elif value_type == "num":
+            self.__cast = 'regex'
+        elif value_type == 'num':
             self.__cast_func = StateEngineTools.cast_num
-            self.__cast = "num"
-        elif value_type == "item":
+            self.__cast = 'num'
+        elif value_type == 'item':
             self.__cast_func = self.cast_item
-            self.__cast = "item"
-        elif value_type == "bool":
+            self.__cast = 'item'
+        elif value_type == 'bool':
             self.__cast_func = StateEngineTools.cast_bool
-            self.__cast = "bool"
-        elif value_type == "time":
+            self.__cast = 'bool'
+        elif value_type == 'time':
             self.__cast_func = StateEngineTools.cast_time
-            self.__cast = "time"
-        elif value_type == "list":
+            self.__cast = 'time'
+        elif value_type == 'list':
             self.__cast_func = StateEngineTools.cast_list
-            self.__cast = "list"
+            self.__cast = 'list'
         else:
             self.__cast_func = None
             self.__cast = None
 
     def __repr__(self):
-        return "{}".format(self.get())
+        return '{}'.format(self.get())
 
     # Indicate if object is empty (neither value nor item nor eval set)
     def is_empty(self):
-        return self.__value is None and self.__item is None and self.__eval is None and \
-               self.__varname is None and self.__regex is None and self.__struct is None
+        return (
+            self.__value is None
+            and self.__item is None
+            and self.__eval is None
+            and self.__varname is None
+            and self.__regex is None
+            and self.__struct is None
+        )
 
     def get_issues(self):
         return self.__get_issues
@@ -106,15 +120,19 @@ class SeValue(StateEngineTools.SeItemChild):
     # attr_type: type of declaration (item, value, eval, etc.)
     # ignore: values to ignore, important for se_use
     # function: the value from the given attribute gets converted by this function. function needs to have "value" as parameter!
-    def set_from_attr(self, item, attribute_name, default_value=None, reset=True, attr_type=None, ignore=None, function=None):
+    def set_from_attr(
+        self, item, attribute_name, default_value=None, reset=True, attr_type=None, ignore=None, function=None
+    ):
         value = copy.deepcopy(item.conf.get(attribute_name))
         if function is not None:
             try:
                 new_value = function(value)
-                self._log_develop("Using function {0} on value {1}: Result: {2}", function, value, new_value)
+                self._log_develop('Using function {0} on value {1}: Result: {2}', function, value, new_value)
                 value = new_value
             except Exception as e:
-                self._log_warning("While setting value from attribute, function {0} resulted in problems: {1}", function, e)
+                self._log_warning(
+                    'While setting value from attribute, function {0} resulted in problems: {1}', function, e
+                )
 
         if value is not None:
             _using_default = False
@@ -124,31 +142,41 @@ class SeValue(StateEngineTools.SeItemChild):
                 else:
                     ignore = ignore if isinstance(ignore, list) else [ignore]
                     seen = set(ignore)
-                    self._log_develop("Ignoring values {}", ignore)
+                    self._log_develop('Ignoring values {}', ignore)
                 value = [x for x in value if not (x in seen or seen.add(x))]
             elif value == ignore:
-                self._log_develop("Not setting value {} as it should be ignored", value)
+                self._log_develop('Not setting value {} as it should be ignored', value)
                 return None, None, False, None, None
-            self._log_develop("Processing value {0} from attribute name {1}, reset {2}, type {3}",
-                              value, attribute_name, reset, attr_type)
+            self._log_develop(
+                'Processing value {0} from attribute name {1}, reset {2}, type {3}',
+                value,
+                attribute_name,
+                reset,
+                attr_type,
+            )
         elif default_value is None:
             return None, None, False, None, None
         else:
             value = default_value
             _using_default = True
-            self._log_develop("Processing value from attribute name {0}, reset {1}, type {2}: using default value {3}",
-                              attribute_name, reset, attr_type, value)
+            self._log_develop(
+                'Processing value from attribute name {0}, reset {1}, type {2}: using default value {3}',
+                attribute_name,
+                reset,
+                attr_type,
+                value,
+            )
         value_list = []
         if value is not None and isinstance(value, list) and attr_type is not None:
             for i, entry in enumerate(value):
                 if isinstance(attr_type, list):
-                    value_list.append("{}:{}".format(attr_type[i], entry))
+                    value_list.append('{}:{}'.format(attr_type[i], entry))
                 else:
-                    value_list.append("{}:{}".format(attr_type, entry))
+                    value_list.append('{}:{}'.format(attr_type, entry))
             value = value_list
         elif value is not None and attr_type is not None:
             # update value type correctly based on attr_type
-            value = "{}:{}".format(attr_type, value)
+            value = '{}:{}'.format(attr_type, value)
         # Convert weird string representation of OrderedDict correctly
         try:
             value = StateEngineTools.convert_str_to_dict(value)
@@ -156,17 +184,23 @@ class SeValue(StateEngineTools.SeItemChild):
             pass
 
         if value is not None:
-            self._log_develop("Setting value {0}, attribute name {1}, reset {2}, type {3}",
-                              value, attribute_name, reset, attr_type)
+            self._log_develop(
+                'Setting value {0}, attribute name {1}, reset {2}, type {3}', value, attribute_name, reset, attr_type
+            )
         _returnvalue, _returntype, _issue, _origvalue = self.set(value, attribute_name, reset)
-        self._log_develop("Set from attribute returnvalue {}, returntype {}, issue {}, original {}",
-                          _returnvalue, _returntype, _issue, _origvalue)
+        self._log_develop(
+            'Set from attribute returnvalue {}, returntype {}, issue {}, original {}',
+            _returnvalue,
+            _returntype,
+            _issue,
+            _origvalue,
+        )
         return _returnvalue, _returntype, _using_default, _issue, _origvalue
 
     def _set_additional(self, _additional_sources):
         for _use in _additional_sources:
             self._additional_sources.remove(_use)
-            _, _struct_name = StateEngineTools.partition_strip(_use, ":")
+            _, _struct_name = StateEngineTools.partition_strip(_use, ':')
             StateEngineStructs.create(self._abitem, _struct_name)
 
     def __resetvalue(self):
@@ -186,7 +220,7 @@ class SeValue(StateEngineTools.SeItemChild):
     # Set value
     # value: string indicating value or source of value
     # name: name of object ("time" is being handled differently)
-    def set(self, value, name="", reset=True, copyvalue=True, returnvalue=False):
+    def set(self, value, name='', reset=True, copyvalue=True, returnvalue=False):
         self.__issues = []
         if copyvalue is True:
             value = copy.copy(value)
@@ -200,54 +234,60 @@ class SeValue(StateEngineTools.SeItemChild):
             field_value = []
             for i, val in enumerate(value):
                 if isinstance(val, collections.abc.Mapping):
-                    val = list("{!s}:{!s}".format(k, v) for (k, v) in val.items())[0]
+                    val = list('{!s}:{!s}'.format(k, v) for (k, v) in val.items())[0]
                 if isinstance(val, tuple):
                     val = ':'.join(val)
                 if isinstance(val, str):
-                    s, f = StateEngineTools.partition_strip(val, ":")
+                    s, f = StateEngineTools.partition_strip(val, ':')
                 else:
-                    s = "value"
+                    s = 'value'
                     f = val
                 source.append(s)
                 field_value.append(f)
                 if not returnvalue:
-                    self.__listorder.append("{}:{}".format(s, f))
-                if field_value[i] == "":
-                    source[i] = "value"
+                    self.__listorder.append('{}:{}'.format(s, f))
+                if field_value[i] == '':
+                    source[i] = 'value'
                     field_value[i] = value[i]
                 else:
                     value[i] = field_value[i]
                     field_value[i] = value[i]
                 if source[i] not in self.__valid_valuetypes:
-                    _issue = "{0} is not a valid value type.".format(source[i])
+                    _issue = '{0} is not a valid value type.'.format(source[i])
                     if _issue not in self.__issues:
                         self.__issues.append(_issue)
-                    self._log_warning("{0} Use one of {1} instead. Value '{2}' "
-                                      "will be handled the same as the item type, e.g. string, bool, etc.",
-                                      _issue, self.__valid_valuetypes, field_value[i])
-                    source[i] = "value"
+                    self._log_warning(
+                        "{0} Use one of {1} instead. Value '{2}' "
+                        'will be handled the same as the item type, e.g. string, bool, etc.',
+                        _issue,
+                        self.__valid_valuetypes,
+                        field_value[i],
+                    )
+                    source[i] = 'value'
                 if not returnvalue:
                     self.__type_listorder.append(source[i])
                     self.__orig_listorder.append(val)
-                    if source[i] == "value":
+                    if source[i] == 'value':
                         self.__listorder[i] = value[i]
-                if source[i] == "template":
+                if source[i] == 'template':
                     if self.__template is None:
                         self.__template = []
                     self.__template.append(field_value[i])
                     _template = self._abitem.templates.get(field_value[i])
                     if _template is not None:
                         try:
-                            source[i], field_value[i] = StateEngineTools.partition_strip(_template, ":")
+                            source[i], field_value[i] = StateEngineTools.partition_strip(_template, ':')
                             if not returnvalue and val in self.__listorder and field_value[i] in self._abitem.templates:
-                                self.__listorder[self.__listorder.index(val)] = self._abitem.templates.get(field_value[i])
+                                self.__listorder[self.__listorder.index(val)] = self._abitem.templates.get(
+                                    field_value[i]
+                                )
                             elif returnvalue and val in returnvalues and field_value[i] in self._abitem.templates:
                                 returnvalues[returnvalues.index(val)] = self._abitem.templates.get(field_value[i])
                         except Exception as ex:
                             self._abitem.updatetemplates(field_value[i], None)
                             if not returnvalue:
                                 self.__listorder = [i for i in self.__listorder if i != val]
-                            self._log_warning("Removing template {}: {}", field_value[i], ex)
+                            self._log_warning('Removing template {}: {}', field_value[i], ex)
                             val, field_value[i], source[i] = None, None, None
                     else:
                         _issue = "Template with name '{}' does not exist for this SE Item!".format(field_value[i])
@@ -264,15 +304,15 @@ class SeValue(StateEngineTools.SeItemChild):
                 pass
 
         elif isinstance(value, str):
-            source, field_value = StateEngineTools.partition_strip(value, ":")
+            source, field_value = StateEngineTools.partition_strip(value, ':')
             if not returnvalue:
-                self.__listorder.append("{}{}{}".format(source, ":" if field_value else "", field_value))
-            if source == "template":
+                self.__listorder.append('{}{}{}'.format(source, ':' if field_value else '', field_value))
+            if source == 'template':
                 self.__template = field_value
                 _template = self._abitem.templates.get(self.__template)
                 if _template is not None:
                     try:
-                        source, field_value = StateEngineTools.partition_strip(_template, ":")
+                        source, field_value = StateEngineTools.partition_strip(_template, ':')
                         if not returnvalue and value in self.__listorder and field_value in self._abitem.templates:
                             self.__listorder[self.__listorder.index(value)] = self._abitem.templates[self.__template]
                         elif returnvalue and value in returnvalues and field_value in self._abitem.templates:
@@ -282,7 +322,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             self.__listorder = [i for i in self.__listorder if i != value]
                         source, field_value, value = None, None, None
                         self._abitem.updatetemplates(self.__template, None)
-                        self._log_warning("Removing template {}: {}", self.__template, ex)
+                        self._log_warning('Removing template {}: {}', self.__template, ex)
                 else:
                     _issue = "Template with name '{}' does not exist for this SE Item!".format(self.__template)
                     if _issue not in self.__issues:
@@ -297,27 +337,31 @@ class SeValue(StateEngineTools.SeItemChild):
             except Exception:
                 cond1 = False
                 cond2 = False
-            if (name == "time" or self.__cast == "time") and cond1 and cond2:
+            if (name == 'time' or self.__cast == 'time') and cond1 and cond2:
                 field_value = value
-                source = "value"
-            elif field_value == "":
+                source = 'value'
+            elif field_value == '':
                 field_value = source
-                source = "value"
+                source = 'value'
             if source not in self.__valid_valuetypes:
-                _issue = "{0} is not a valid value type.".format(source)
+                _issue = '{0} is not a valid value type.'.format(source)
                 if _issue not in self.__issues:
                     self.__issues.append(_issue)
-                self._log_warning("{0} Use one of {1} instead. Value '{2}' "
-                                  "will be handled the same as the item type, e.g. string, bool, etc.",
-                                  _issue, self.__valid_valuetypes, field_value)
-                source = "value"
+                self._log_warning(
+                    "{0} Use one of {1} instead. Value '{2}' "
+                    'will be handled the same as the item type, e.g. string, bool, etc.',
+                    _issue,
+                    self.__valid_valuetypes,
+                    field_value,
+                )
+                source = 'value'
             if not returnvalue:
-                if source == "value":
+                if source == 'value':
                     self.__listorder = [field_value]
                 self.__type_listorder.append(source)
                 self.__orig_listorder.append(value)
         else:
-            source = "value"
+            source = 'value'
             field_value = value
             if not returnvalue:
                 self.__listorder = [field_value]
@@ -326,21 +370,29 @@ class SeValue(StateEngineTools.SeItemChild):
         if isinstance(source, list):
             for i, s in enumerate(source):
                 if isinstance(field_value[i], list) and not self.__allow_value_list:
-                    raise ValueError("{0}: value_in is not allowed. Field_value: {1} ({2})".format(
-                        self.__name, field_value[i], self.__allow_value_list))
+                    raise ValueError(
+                        '{0}: value_in is not allowed. Field_value: {1} ({2})'.format(
+                            self.__name, field_value[i], self.__allow_value_list
+                        )
+                    )
                 else:
-                    if s == "template":
+                    if s == 'template':
                         if isinstance(self.__template, list):
                             for t in self.__template:
                                 _template = self._abitem.templates.get(t)
                                 if _template is not None:
-                                    self._log_debug("Template {} exchanged with {}", self.__template,
-                                                    self._abitem.templates[field_value[i]])
+                                    self._log_debug(
+                                        'Template {} exchanged with {}',
+                                        self.__template,
+                                        self._abitem.templates[field_value[i]],
+                                    )
                                     s, field_value[i] = StateEngineTools.partition_strip(
-                                        self._abitem.templates[field_value[i]], ":")
+                                        self._abitem.templates[field_value[i]], ':'
+                                    )
                                 else:
                                     _issue = "Template with name '{}' does not exist for this SE Item!".format(
-                                        self.__template)
+                                        self.__template
+                                    )
                                     if _issue not in self.__issues:
                                         self.__issues.append(_issue)
                                     self._log_warning(_issue)
@@ -351,17 +403,24 @@ class SeValue(StateEngineTools.SeItemChild):
                     except Exception:
                         cond1 = False
                         cond2 = False
-                    if (name == "time" or self.__cast == "time") and cond1 and cond2:
+                    if (name == 'time' or self.__cast == 'time') and cond1 and cond2:
                         field_value[i] = '{}:{}'.format(source[i], field_value[i])
-                        s = "value"
-                    elif field_value[i] == "":
+                        s = 'value'
+                    elif field_value[i] == '':
                         field_value[i] = s
-                        s = "value"
+                        s = 'value'
                     if not returnvalue:
-                        self.__value = [] if self.__value is None else [self.__value] if not isinstance(self.__value,
-                                                                                                        list) else self.__value
-                    if s == "value":
-                        cond3 = isinstance(field_value[i], str) and field_value[i].lstrip('-').replace('.', '', 1).isdigit()
+                        self.__value = (
+                            []
+                            if self.__value is None
+                            else [self.__value]
+                            if not isinstance(self.__value, list)
+                            else self.__value
+                        )
+                    if s == 'value':
+                        cond3 = (
+                            isinstance(field_value[i], str) and field_value[i].lstrip('-').replace('.', '', 1).isdigit()
+                        )
                         if cond3:
                             field_value[i] = ast.literal_eval(field_value[i])
                         elif isinstance(field_value[i], str) and field_value[i].lower() in ['true', 'yes']:
@@ -379,8 +438,14 @@ class SeValue(StateEngineTools.SeItemChild):
                     else:
                         self.__value.append(None)
                 if not returnvalue:
-                    self.__item = [] if self.__item is None else [self.__item] if not isinstance(self.__item, list) else self.__item
-                if s == "item":
+                    self.__item = (
+                        []
+                        if self.__item is None
+                        else [self.__item]
+                        if not isinstance(self.__item, list)
+                        else self.__item
+                    )
+                if s == 'item':
                     _item, _issue = self._abitem.return_item(field_value[i])
                     if _issue not in [[], None, [None], self.__issues]:
                         _issue_dict = {field_value[i]: _issue}
@@ -389,47 +454,87 @@ class SeValue(StateEngineTools.SeItemChild):
                         self.__issues.append(_issue)
                     returnvalues.append(_item)
                 if not returnvalue:
-                    self.__item.append(None if s != "item" else self.__absolute_item(_item, field_value[i]))
-                    self.__eval = [] if self.__eval is None else [self.__eval] if not isinstance(self.__eval, list) else self.__eval
-                    self.__eval.append(None if s != "eval" else field_value[i])
-                    self.__regex = [] if self.__regex is None else [self.__regex] if not isinstance(self.__regex, list) else self.__regex
-                    self.__regex.append(None if s != "regex" else field_value[i])
-                    self.__struct = [] if self.__struct is None else [self.__struct] if not isinstance(self.__struct, list) else self.__struct
-                    self.__struct.append(None if s != "struct" else StateEngineStructs.create(self._abitem, field_value[i]))
-                    self.__varname = [] if self.__varname is None else [self.__varname] if not isinstance(self.__varname, list) else self.__varname
-                    self.__varname.append(None if s != "var" else field_value[i])
+                    self.__item.append(None if s != 'item' else self.__absolute_item(_item, field_value[i]))
+                    self.__eval = (
+                        []
+                        if self.__eval is None
+                        else [self.__eval]
+                        if not isinstance(self.__eval, list)
+                        else self.__eval
+                    )
+                    self.__eval.append(None if s != 'eval' else field_value[i])
+                    self.__regex = (
+                        []
+                        if self.__regex is None
+                        else [self.__regex]
+                        if not isinstance(self.__regex, list)
+                        else self.__regex
+                    )
+                    self.__regex.append(None if s != 'regex' else field_value[i])
+                    self.__struct = (
+                        []
+                        if self.__struct is None
+                        else [self.__struct]
+                        if not isinstance(self.__struct, list)
+                        else self.__struct
+                    )
+                    self.__struct.append(
+                        None if s != 'struct' else StateEngineStructs.create(self._abitem, field_value[i])
+                    )
+                    self.__varname = (
+                        []
+                        if self.__varname is None
+                        else [self.__varname]
+                        if not isinstance(self.__varname, list)
+                        else self.__varname
+                    )
+                    self.__varname.append(None if s != 'var' else field_value[i])
                 else:
-                    if s == "item":
+                    if s == 'item':
                         returnvalues.append(self.__get_from_item(field_value[i]))
-                    elif s == "struct":
+                    elif s == 'struct':
                         returnvalues.append(self.__get_from_struct(field_value[i]))
-                    elif s == "eval":
+                    elif s == 'eval':
                         returnvalues.append(self.__get_eval(field_value[i]))
-                    elif s == "regex":
+                    elif s == 'regex':
                         returnvalues.append(self.__get_from_regex(field_value[i]))
-                    elif s == "var":
+                    elif s == 'var':
                         returnvalues.append(self.__get_from_variable(field_value[i]))
             if not returnvalue:
                 if self.__item:
                     self.__item = [i for i in self.__item if i is not None]
-                    self.__item = self.__item[0] if len(self.__item) == 1 else None if len(self.__item) == 0 else self.__item
+                    self.__item = (
+                        self.__item[0] if len(self.__item) == 1 else None if len(self.__item) == 0 else self.__item
+                    )
                 if self.__eval:
                     self.__eval = [i for i in self.__eval if i is not None]
-                    self.__eval = self.__eval[0] if len(self.__eval) == 1 else None if len(self.__eval) == 0 else self.__eval
+                    self.__eval = (
+                        self.__eval[0] if len(self.__eval) == 1 else None if len(self.__eval) == 0 else self.__eval
+                    )
                 if self.__regex:
                     self.__regex = [i for i in self.__regex if i is not None]
-                    self.__regex = self.__regex[0] if len(self.__regex) == 1 else None if len(self.__regex) == 0 else self.__regex
+                    self.__regex = (
+                        self.__regex[0] if len(self.__regex) == 1 else None if len(self.__regex) == 0 else self.__regex
+                    )
                 if self.__struct:
                     self.__struct = [i for i in self.__struct if i is not None]
                     self.__struct = None if len(self.__struct) == 0 else self.__struct
                 if self.__varname:
                     self.__varname = [i for i in self.__varname if i is not None]
-                    self.__varname = self.__varname[0] if len(self.__varname) == 1 else None if len(self.__varname) == 0 else self.__varname
+                    self.__varname = (
+                        self.__varname[0]
+                        if len(self.__varname) == 1
+                        else None
+                        if len(self.__varname) == 0
+                        else self.__varname
+                    )
                 if self.__value:
                     self.__value = [i for i in self.__value if i is not None]
-                    self.__value = self.__value[0] if len(self.__value) == 1 else None if len(self.__value) == 0 else self.__value
+                    self.__value = (
+                        self.__value[0] if len(self.__value) == 1 else None if len(self.__value) == 0 else self.__value
+                    )
         else:
-            if source == "item":
+            if source == 'item':
                 _item, _issue = self._abitem.return_item(field_value)
                 if _issue not in [[], None, [None], self.__issues]:
                     _issue_dict = {field_value: _issue}
@@ -438,26 +543,29 @@ class SeValue(StateEngineTools.SeItemChild):
                     self.__issues.append(_issue)
                 returnvalues.append(_item)
             if not returnvalue:
-                self.__item = None if source != "item" else self.__absolute_item(_item, field_value)
-                self.__eval = None if source != "eval" else field_value
-                self.__regex = None if source != "regex" else field_value
-                self.__struct = None if source != "struct" else StateEngineStructs.create(self._abitem, field_value)
-                self.__varname = None if source != "var" else field_value
+                self.__item = None if source != 'item' else self.__absolute_item(_item, field_value)
+                self.__eval = None if source != 'eval' else field_value
+                self.__regex = None if source != 'regex' else field_value
+                self.__struct = None if source != 'struct' else StateEngineStructs.create(self._abitem, field_value)
+                self.__varname = None if source != 'var' else field_value
             else:
-                if source == "item":
+                if source == 'item':
                     returnvalues.append(self.__get_from_item(field_value))
-                elif source == "struct":
+                elif source == 'struct':
                     returnvalues.append(self.__get_from_struct(field_value))
-                elif source == "eval":
+                elif source == 'eval':
                     returnvalues.append(self.__get_eval(field_value))
-                elif source == "regex":
+                elif source == 'regex':
                     returnvalues.append(self.__get_from_regex(field_value))
-                elif source == "var":
+                elif source == 'var':
                     returnvalues.append(self.__get_from_variable(field_value))
-            if source == "value":
+            if source == 'value':
                 if isinstance(field_value, list) and not self.__allow_value_list:
-                    raise ValueError("{0}: value_in is not allowed, problem with {1}. Allowed = {2}".format(
-                                     self.__name, field_value, self.__allow_value_list))
+                    raise ValueError(
+                        '{0}: value_in is not allowed, problem with {1}. Allowed = {2}'.format(
+                            self.__name, field_value, self.__allow_value_list
+                        )
+                    )
                 cond3 = isinstance(field_value, str) and field_value.lstrip('-').replace('.', '', 1).isdigit()
                 if cond3:
                     field_value = ast.literal_eval(field_value)
@@ -478,7 +586,9 @@ class SeValue(StateEngineTools.SeItemChild):
         del value
         if returnvalue:
             returnvalues = StateEngineTools.flatten_list(returnvalues)
-            returnvalues = returnvalues[0] if len(returnvalues) == 1 else None if len(returnvalues) == 0 else returnvalues
+            returnvalues = (
+                returnvalues[0] if len(returnvalues) == 1 else None if len(returnvalues) == 0 else returnvalues
+            )
             return returnvalues, self.__issues
         self.__listorder = StateEngineTools.flatten_list(self.__listorder)
         self.__type_listorder = StateEngineTools.flatten_list(self.__type_listorder)
@@ -501,7 +611,7 @@ class SeValue(StateEngineTools.SeItemChild):
         try:
             _original_listorder = self.__listorder.copy()
         except Exception as ex:
-            self._log_error("Can not read listorder. Error: {}", ex)
+            self._log_error('Can not read listorder. Error: {}', ex)
             originalorder = False
         if self.__value is not None:
             returnvalues.append(self.__value)
@@ -517,8 +627,11 @@ class SeValue(StateEngineTools.SeItemChild):
             returnvalues.append(self.__get_from_variable())
 
         returnvalues = StateEngineTools.flatten_list(returnvalues)
-        returnvalues = returnvalues if len(self.__listorder) <= 1 or originalorder is False \
+        returnvalues = (
+            returnvalues
+            if len(self.__listorder) <= 1 or originalorder is False
             else StateEngineTools.flatten_list(self.__listorder)
+        )
         if originalorder:
             self.__listorder = _original_listorder
         if len(returnvalues) == 0:
@@ -540,17 +653,17 @@ class SeValue(StateEngineTools.SeItemChild):
     def get_type(self):
         if len(self.__listorder) <= 1:
             if self.__value is not None:
-                return "value"
+                return 'value'
             if self.__item is not None:
-                return "item"
+                return 'item'
             if self.__eval is not None:
-                return "eval"
+                return 'eval'
             if self.__regex is not None:
-                return "regex"
+                return 'regex'
             if self.__struct is not None:
-                return "struct"
+                return 'struct'
             if self.__varname is not None:
-                return "var"
+                return 'var'
         else:
             return self.__type_listorder
 
@@ -558,31 +671,31 @@ class SeValue(StateEngineTools.SeItemChild):
     def write_to_logger(self):
         returnvalues = []
         if self.__template is not None:
-            self._log_info("{0}: Using template(s) {1}", self.__name, self.__template)
+            self._log_info('{0}: Using template(s) {1}', self.__name, self.__template)
         if self.__value is not None:
             if isinstance(self.__value, list):
                 for i in self.__value:
                     if i is not None:
-                        self._log_debug("{0}: {1} ({2})", self.__name, i, type(i))
+                        self._log_debug('{0}: {1} ({2})', self.__name, i, type(i))
             else:
-                self._log_debug("{0}: {1} ({2})", self.__name, self.__value, type(self.__value))
+                self._log_debug('{0}: {1} ({2})', self.__name, self.__value, type(self.__value))
             returnvalues.append(self.__value)
         if self.__regex is not None:
             if isinstance(self.__regex, list):
                 for i in self.__regex:
                     if i is not None:
-                        self._log_debug("{0} from regex: {1}", self.__name, i)
+                        self._log_debug('{0} from regex: {1}', self.__name, i)
             else:
-                self._log_debug("{0} from regex: {1}", self.__name, self.__regex)
-            returnvalues.append(f"regex:{self.__regex}")
+                self._log_debug('{0} from regex: {1}', self.__name, self.__regex)
+            returnvalues.append(f'regex:{self.__regex}')
         if self.__struct is not None:
             if isinstance(self.__struct, list):
                 for i in self.__struct:
                     if i is not None:
-                        self._log_debug("{0} from struct: {1}", self.__name, i.property.path)
+                        self._log_debug('{0} from struct: {1}', self.__name, i.property.path)
 
             else:
-                self._log_debug("{0} from struct: {1}", self.__name, self.__struct.property.path)
+                self._log_debug('{0} from struct: {1}', self.__name, self.__struct.property.path)
             returnvalues.append(self.__struct)
         if self.__item is not None:
             _original_listorder = self.__listorder.copy()
@@ -590,30 +703,30 @@ class SeValue(StateEngineTools.SeItemChild):
             if isinstance(self.__item, list):
                 for i, item in enumerate(self.__item):
                     if item is not None:
-                        self._log_debug("{0} from item: {1}", self.__name, item.property.path)
+                        self._log_debug('{0} from item: {1}', self.__name, item.property.path)
                         current = self.__get_from_item()[i]
                         items.append(current)
-                        self._log_debug("Currently item results in {}", current)
+                        self._log_debug('Currently item results in {}', current)
             else:
-                self._log_debug("{0} from item: {1}", self.__name, self.__item.property.path)
+                self._log_debug('{0} from item: {1}', self.__name, self.__item.property.path)
                 items = self.__get_from_item()
-                self._log_debug("Currently item results in {}", items)
+                self._log_debug('Currently item results in {}', items)
             self.__listorder = _original_listorder
             returnvalues.append(items)
         if self.__eval is not None:
-            self._log_debug("{0} from eval: {1}", self.__name, self.__eval)
+            self._log_debug('{0} from eval: {1}', self.__name, self.__eval)
             _original_listorder = self.__listorder.copy()
             eval_result = self.__get_eval()
-            self._log_debug("Currently eval results in {}. ", eval_result)
+            self._log_debug('Currently eval results in {}. ', eval_result)
             self.__listorder = _original_listorder
             returnvalues.append(eval_result)
         if self.__varname is not None:
             if isinstance(self.__varname, list):
                 for i in self.__varname:
                     if i is not None:
-                        self._log_debug("{0} from variable: {1}", self.__name, i)
+                        self._log_debug('{0} from variable: {1}', self.__name, i)
             else:
-                self._log_debug("{0} from variable: {1}", self.__name, self.__varname)
+                self._log_debug('{0} from variable: {1}', self.__name, self.__varname)
             _original_listorder = self.__listorder.copy()
             var_result = self.__get_from_variable()
             self.__listorder = _original_listorder
@@ -627,19 +740,19 @@ class SeValue(StateEngineTools.SeItemChild):
     # suffix: Suffix for text
     def get_text(self, prefix=None, suffix=None):
         if self.__value is not None:
-            value = "{0}: {1}. Prefix: {2}, Suffix: {3}".format(self.__name, self.__value, prefix, suffix)
+            value = '{0}: {1}. Prefix: {2}, Suffix: {3}'.format(self.__name, self.__value, prefix, suffix)
         elif self.__regex is not None:
-            value = "{0} from regex: {1}".format(self.__name, self.__regex)
+            value = '{0} from regex: {1}'.format(self.__name, self.__regex)
         elif self.__struct is not None:
-            value = "{0} from struct: {1}".format(self.__name, self.__struct)
+            value = '{0} from struct: {1}'.format(self.__name, self.__struct)
         elif self.__item is not None:
-            value = "{0} from item: {1}".format(self.__name, self.__item)
+            value = '{0} from item: {1}'.format(self.__name, self.__item)
         elif self.__eval is not None:
-            value = "{0} from eval: {1}".format(self.__name, self.__eval)
+            value = '{0} from eval: {1}'.format(self.__name, self.__eval)
         elif self.__varname is not None:
-            value = "{0} from variable: {1}".format(self.__name, self.__varname)
+            value = '{0} from variable: {1}'.format(self.__name, self.__varname)
         else:
-            value = "{0}: (undefined)".format(self.__name)
+            value = '{0}: (undefined)'.format(self.__name)
 
         value = value if prefix is None else prefix + value
         value = value if suffix is None else value + suffix
@@ -656,7 +769,7 @@ class SeValue(StateEngineTools.SeItemChild):
                 try:
                     _returnvalue = re.compile(value, re.IGNORECASE)
                 except Exception as ex:
-                    _issue = "Issue converting {} to regex: {}".format(value, ex)
+                    _issue = 'Issue converting {} to regex: {}'.format(value, ex)
                     _issue_dict = {str(value): _issue}
                     self._log_error(_issue)
             if _issue_dict and _issue_dict not in self.__get_issues['cast_regex']:
@@ -684,7 +797,7 @@ class SeValue(StateEngineTools.SeItemChild):
                 try:
                     _returnvalue = eval(_returnvalue)
                 except Exception:
-                    _issue = "Got string {0} while casting item {1}".format(_returnvalue, value)
+                    _issue = 'Got string {0} while casting item {1}'.format(_returnvalue, value)
                     _issue_dict = {str(value): _issue}
                     self._log_error(_issue)
             if _issue_dict and _issue_dict not in self.__get_issues['cast_item']:
@@ -700,20 +813,24 @@ class SeValue(StateEngineTools.SeItemChild):
 
     def __update_item_listorder(self, value, newvalue, item_id=None):
         if value is None:
-            _id_value = "item:{}".format(item_id)
+            _id_value = 'item:{}'.format(item_id)
             self.__listorder[self.__listorder.index(_id_value)] = newvalue
         if value in self.__listorder:
             self.__listorder[self.__listorder.index(value)] = newvalue
         if isinstance(value, self.__itemClass):
-            _item_value = "item:{}".format(value.property.path)
+            _item_value = 'item:{}'.format(value.property.path)
             if _item_value in self.__listorder:
                 self.__listorder[self.__listorder.index(_item_value)] = newvalue
             if item_id:
-                _item_value = "item:{}".format(item_id)
+                _item_value = 'item:{}'.format(item_id)
                 if _item_value in self.__listorder:
-                    self.__listorder[self.__listorder.index(_item_value)] = "item:{}".format(newvalue.property.path)
-                    self._log_develop("Updated relative declaration {} with absolute item path {}. Listorder is now: {}",
-                                      _item_value, newvalue.property.path, self.__listorder)
+                    self.__listorder[self.__listorder.index(_item_value)] = 'item:{}'.format(newvalue.property.path)
+                    self._log_develop(
+                        'Updated relative declaration {} with absolute item path {}. Listorder is now: {}',
+                        _item_value,
+                        newvalue.property.path,
+                        self.__listorder,
+                    )
 
     def __absolute_item(self, value, item_id=None):
         if value is None:
@@ -752,7 +869,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             self.__update_item_listorder(value, _newvalue, item_id[i])
 
                         if isinstance(element, StateEngineStruct.SeStruct):
-                            _item_value = "struct:{}".format(element.property.path)
+                            _item_value = 'struct:{}'.format(element.property.path)
                             if _item_value in self.__listorder:
                                 self.__listorder[self.__listorder.index(_item_value)] = _newvalue
                     value = valuelist
@@ -765,7 +882,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             self.__update_item_listorder(value, _newvalue, item_id)
 
                         if isinstance(value, StateEngineStruct.SeStruct):
-                            _item_value = "struct:{}".format(value.property.path)
+                            _item_value = 'struct:{}'.format(value.property.path)
                             if _item_value in self.__listorder:
                                 self.__listorder[self.__listorder.index(_item_value)] = _newvalue
                     except Exception as ex:
@@ -773,7 +890,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             _issue = "You most likely forgot to prefix your expression with 'eval:'"
                             raise ValueError(_issue)
                         else:
-                            _issue = "{}".format(ex)
+                            _issue = '{}'.format(ex)
                             raise ValueError(_issue)
                     if value in self.__listorder:
                         self.__listorder[self.__listorder.index(value)] = _newvalue
@@ -781,7 +898,10 @@ class SeValue(StateEngineTools.SeItemChild):
             except Exception as ex:
                 _issue = "Problem casting '{0}': {1}.".format(value, ex)
                 self._log_warning(_issue)
-                if '_cast_list' in self.__cast_func.__globals__ and self.__cast_func == self.__cast_func.__globals__['_cast_list']:
+                if (
+                    '_cast_list' in self.__cast_func.__globals__
+                    and self.__cast_func == self.__cast_func.__globals__['_cast_list']
+                ):
                     try:
                         _newvalue = StateEngineTools.cast_num(value)
                         if value in self.__listorder:
@@ -790,8 +910,12 @@ class SeValue(StateEngineTools.SeItemChild):
                     except Exception:
                         pass
                     value = [value]
-                    self._log_debug("Original casting of {} to {} failed. New cast is now: {}.",
-                                    value, self.__cast_func, type(value))
+                    self._log_debug(
+                        'Original casting of {} to {} failed. New cast is now: {}.',
+                        value,
+                        self.__cast_func,
+                        type(value),
+                    )
                     return value, _issue
                 return value, _issue
         return value, _issue
@@ -875,16 +999,8 @@ class SeValue(StateEngineTools.SeItemChild):
 
     # Determine value by executing eval-function
     def __get_eval(self, eval_get=None):
-        # noinspection PyUnusedLocal
-        sh = self._sh
-        # noinspection PyUnusedLocal
-        shtime = self._shtime
-        patterns = [
-            "get_variable('current.",
-            'get_variable("current.',
-            "get_variable('next.",
-            'get_variable("next.'
-        ]
+        _eval_ns = {'sh': self._sh, 'shtime': self._shtime, '__builtins__': __builtins__}
+        patterns = ["get_variable('current.", 'get_variable("current.', "get_variable('next.", 'get_variable("next.']
         set_eval = False
         if eval_get is None:
             eval_get = self.__eval
@@ -894,21 +1010,20 @@ class SeValue(StateEngineTools.SeItemChild):
                 self.__eval = StateEngineTools.parse_relative(eval_get, 'sh.', ['()', '.property.'])
             else:
                 eval_get = StateEngineTools.parse_relative(eval_get, 'sh.', ['()', '.property.'])
-            if "stateengine_eval" in eval_get or "se_eval" in eval_get:
-                # noinspection PyUnusedLocal
-                stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
-            self._log_debug("Checking eval: {0}", eval_get)
+            if 'stateengine_eval' in eval_get or 'se_eval' in eval_get:
+                _eval_ns['stateengine_eval'] = _eval_ns['se_eval'] = StateEngineEval.SeEval(self._abitem)
+            self._log_debug('Checking eval: {0}', eval_get)
             if eval_get in self._abitem.cache:
                 self._log_increase_indent()
                 result = self._abitem.cache.get(eval_get)
-                self._log_debug("Loading eval from cache: {}", result)
+                self._log_debug('Loading eval from cache: {}', result)
                 self._log_decrease_indent()
                 if 'eval:{}'.format(eval_get) in self.__listorder:
                     self.__listorder[self.__listorder.index('eval:{}'.format(eval_get))] = [result]
                 return result
             self._log_increase_indent()
             try:
-                _newvalue, _issue = self.__do_cast(eval(eval_get))
+                _newvalue, _issue = self.__do_cast(eval(eval_get, _eval_ns))
                 _issue_dict = {StateEngineTools.get_eval_name(eval_get): _issue}
                 if _issue not in [[], None, [None]] and _issue_dict not in self.__get_issues['eval']:
                     self.__get_issues['eval'].append(_issue_dict)
@@ -916,7 +1031,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     self.__listorder[self.__listorder.index('eval:{}'.format(eval_get))] = [_newvalue]
                 values = _newvalue
                 self._log_decrease_indent()
-                self._log_debug("Eval result: {0} ({1}).", values, type(values))
+                self._log_debug('Eval result: {0} ({1}).', values, type(values))
                 if not any(pattern in eval_get for pattern in patterns):
                     self._abitem.cache = {eval_get: values}
                 self._log_increase_indent()
@@ -937,25 +1052,24 @@ class SeValue(StateEngineTools.SeItemChild):
                 values = []
                 for val in eval_get:
                     try:
-                        val = val.replace("\n", "")
+                        val = val.replace('\n', '')
                     except Exception:
                         pass
-                    self._log_debug("Checking eval {0} from list {1}.", val, eval_get)
+                    self._log_debug('Checking eval {0} from list {1}.', val, eval_get)
                     self._log_increase_indent()
                     if val in self._abitem.cache:
                         result = self._abitem.cache.get(val)
-                        self._log_debug("Loading eval in list from cache: {} ({})", result, type(result))
+                        self._log_debug('Loading eval in list from cache: {} ({})', result, type(result))
                         self._log_decrease_indent()
                         values.append(result)
                         if 'eval:{}'.format(val) in self.__listorder:
                             self.__listorder[self.__listorder.index('eval:{}'.format(val))] = [result]
                         continue
                     if isinstance(val, str):
-                        if "stateengine_eval" in val or "se_eval" in val:
-                            # noinspection PyUnusedLocal
-                            stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
+                        if 'stateengine_eval' in val or 'se_eval' in val:
+                            _eval_ns['stateengine_eval'] = _eval_ns['se_eval'] = StateEngineEval.SeEval(self._abitem)
                         try:
-                            _newvalue, _issue = self.__do_cast(eval(val))
+                            _newvalue, _issue = self.__do_cast(eval(val, _eval_ns))
                             _issue_dict = {val: _issue}
                             if _issue not in [[], None, [None]] and _issue_dict not in self.__get_issues['eval']:
                                 self.__get_issues['eval'].append(_issue_dict)
@@ -963,12 +1077,13 @@ class SeValue(StateEngineTools.SeItemChild):
                                 self.__listorder[self.__listorder.index('eval:{}'.format(val))] = [_newvalue]
                             value = _newvalue
                             self._log_decrease_indent()
-                            self._log_debug("Eval result from list: {0}.", value)
+                            self._log_debug('Eval result from list: {0}.', value)
                             self._log_increase_indent()
                         except Exception as ex:
                             self._log_decrease_indent()
                             _issue = "Problem evaluating from list '{0}': {1}.".format(
-                                StateEngineTools.get_eval_name(val), ex)
+                                StateEngineTools.get_eval_name(val), ex
+                            )
                             _issue_dict = {val: _issue}
                             if _issue_dict not in self.__get_issues['eval']:
                                 self.__get_issues['eval'].append(_issue_dict)
@@ -986,8 +1101,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             value = _newvalue
                         except Exception as ex:
                             self._log_decrease_indent()
-                            _issue = "Problem evaluating '{0}': {1}.".format(
-                                StateEngineTools.get_eval_name(val), ex)
+                            _issue = "Problem evaluating '{0}': {1}.".format(StateEngineTools.get_eval_name(val), ex)
                             _issue_dict = {str(val): _issue}
                             if _issue_dict not in self.__get_issues['eval']:
                                 self.__get_issues['eval'].append(_issue_dict)
@@ -999,11 +1113,11 @@ class SeValue(StateEngineTools.SeItemChild):
                             self._abitem.cache = {val: value}
                     self._log_decrease_indent()
             else:
-                self._log_debug("Checking eval (no str, no list): {0}.", eval_get)
+                self._log_debug('Checking eval (no str, no list): {0}.', eval_get)
                 if eval_get in self._abitem.cache:
                     self._log_increase_indent()
                     result = self._abitem.cache.get(eval_get)
-                    self._log_debug("Loading eval (no str, no list) from cache: {}", result)
+                    self._log_debug('Loading eval (no str, no list) from cache: {}', result)
                     self._log_decrease_indent()
                     if 'eval:{}'.format(eval_get) in self.__listorder:
                         self.__listorder[self.__listorder.index('eval:{}'.format(eval_get))] = [result]
@@ -1018,7 +1132,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         self.__listorder[self.__listorder.index('eval:{}'.format(eval_get))] = [_newvalue]
                     values = _newvalue
                     self._log_decrease_indent()
-                    self._log_debug("Eval result (no str, no list): {0}.", values)
+                    self._log_debug('Eval result (no str, no list): {0}.', values)
                     self._abitem.cache = {eval_get: values}
                     self._log_increase_indent()
                 except Exception as ex:
@@ -1047,21 +1161,23 @@ class SeValue(StateEngineTools.SeItemChild):
                     try:
                         checked_entry = StateEngineTools.convert_str_to_list(val.property.value)
                     except Exception as ex:
-                        self._log_warning("While getting from list item: {}", ex)
+                        self._log_warning('While getting from list item: {}', ex)
                         checked_entry = []
                     checked_entry = checked_entry if isinstance(checked_entry, list) else [checked_entry]
 
                     for entry in checked_entry:
                         # _newvalue, _issue = self.__do_cast(entry)
                         _newvalue, _issue = self.set(entry, reset=False, returnvalue=True)
-                        self._log_develop("Return from set from item list: {}, issue {}", _newvalue, _issue)
+                        self._log_develop('Return from set from item list: {}, issue {}', _newvalue, _issue)
                         _issue_dict = {entry: _issue}
                         if _issue not in [[], None, [None]] and _issue_dict not in self.__get_issues['item']:
                             self.__get_issues['item'].append(_issue_dict)
                         if _newvalue is not None:
                             _new_values.append(_newvalue)
 
-                _new_values = _new_values[0] if len(_new_values) == 1 else None if len(_new_values) == 0 else _new_values
+                _new_values = (
+                    _new_values[0] if len(_new_values) == 1 else None if len(_new_values) == 0 else _new_values
+                )
                 search_item = 'item:{}'.format(val)
                 if search_item in self.__listorder:
                     index = self.__listorder.index(search_item)
@@ -1080,14 +1196,16 @@ class SeValue(StateEngineTools.SeItemChild):
             try:
                 checked_entry = StateEngineTools.convert_str_to_list(get_item.property.value)
             except Exception as ex:
-                self._log_warning("While getting from item: {}", ex)
+                self._log_warning('While getting from item: {}', ex)
                 checked_entry = []
             checked_entry = checked_entry if isinstance(checked_entry, list) else [checked_entry]
             _new_values = []
             for entry in checked_entry:
-                #_newvalue, _issue = self.__do_cast(entry)
+                # _newvalue, _issue = self.__do_cast(entry)
                 _newvalue, _issue = self.set(entry, reset=False, returnvalue=True)
-                self._log_develop("Return from set from item: {}, issue {}, listorder {}", _newvalue, _issue, self.__listorder)
+                self._log_develop(
+                    'Return from set from item: {}, issue {}, listorder {}', _newvalue, _issue, self.__listorder
+                )
                 _issue_dict = {entry: _issue}
                 if _issue not in [[], None, [None]] and _issue_dict not in self.__get_issues['item']:
                     self.__get_issues['item'].append(_issue_dict)
@@ -1116,9 +1234,9 @@ class SeValue(StateEngineTools.SeItemChild):
             values = get_item
             _issue = "Problem while reading item path '{0}': {1}.".format(values, ex)
             self._log_info(_issue)
-        #_newvalue, _issue = self.__do_cast(values)
+        # _newvalue, _issue = self.__do_cast(values)
         _newvalue, _issue = self.set(values, reset=False, returnvalue=True)
-        self._log_develop("Return from set from item end: {}, issue {}", _newvalue, _issue)
+        self._log_develop('Return from set from item end: {}, issue {}', _newvalue, _issue)
         _issue_dict = {_newvalue: _issue}
         if _issue not in [[], None, [None]] and _issue_dict not in self.__get_issues['item']:
             self.__get_issues['item'].append(_issue_dict)
@@ -1131,7 +1249,7 @@ class SeValue(StateEngineTools.SeItemChild):
             new_value, _issue = self.__do_cast(value)
             new_value = 'var:{}'.format(varname) if new_value == '' else new_value
             if isinstance(new_value, str) and '(Unknown variable' in new_value:
-                _issue = "There is a problem with your variable {}".format(new_value)
+                _issue = 'There is a problem with your variable {}'.format(new_value)
                 new_value = ''
                 _issue_dict = {varname: _issue}
                 if _issue_dict not in self.__get_issues['var']:
@@ -1139,14 +1257,16 @@ class SeValue(StateEngineTools.SeItemChild):
             if 'var:{}'.format(varname) in self.__listorder:
                 self.__listorder[self.__listorder.index('var:{}'.format(varname))] = new_value
             return new_value
-        _issue = ""
+
+        _issue = ''
         values = []
         if var_get is None:
             var_get = self.__varname
         if isinstance(var_get, list):
             for var in var_get:
-                self._log_debug("Checking variable in loop '{0}', value {1} from list {2}",
-                                var, values[-1], self.__listorder)
+                self._log_debug(
+                    "Checking variable in loop '{0}', value {1} from list {2}", var, values[-1], self.__listorder
+                )
                 values.append(update_value(var))
         else:
             values = update_value(var_get)

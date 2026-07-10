@@ -25,7 +25,7 @@
 #########################################################################
 
 from lib.module import Modules
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf
 import re
 import logging
 
@@ -34,7 +34,9 @@ import json
 import http.client
 
 from lib.shtime import Shtime
+
 shtime = Shtime.get_instance()
+
 
 class SolarLog(SmartPlugin):
     """
@@ -50,6 +52,7 @@ class SolarLog(SmartPlugin):
         """
 
         from bin.smarthome import VERSION
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
@@ -75,7 +78,7 @@ class SolarLog(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
         # setup scheduler for device poll loop
         if self.fw2x:
             # use 'old' code for firmware <= 2.x
@@ -90,7 +93,7 @@ class SolarLog(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.alive = False
 
     def parse_item(self, item):
@@ -102,10 +105,10 @@ class SolarLog(SmartPlugin):
         :return:        always None as no update from SmartHomeNG core is needed
         """
         if self.has_iattr(item.conf, 'solarlog'):
-            self.logger.debug("parse item: {}".format(item))
+            self.logger.debug('parse item: {}'.format(item))
             index = self.get_iattr_value(item.conf, 'solarlog')
-            self._items[ index ] = item
-        
+            self._items[index] = item
+
         return None
 
     def poll_deviceV2(self):
@@ -120,7 +123,7 @@ class SolarLog(SmartPlugin):
                 time_end = int(vars(self)['time_end'][now.month - 1])
 
                 # reset all out values at midnight
-                if now.hour is 0:
+                if now.hour == 0:
                     for name in list(self._items.keys()):
                         if 'out_' in name:
                             self._items[name](0)
@@ -148,7 +151,7 @@ class SolarLog(SmartPlugin):
                     item = self._items['curStatusCode_{0}'.format(x)]
                     status = int(vars(self)['curStatusCode'][x])
                     if isinstance(item(), str):
-                        if status is 255:
+                        if status == 255:
                             item('Offline')
                         elif status >= len(vars(self)['StatusCodes'][x]):
                             item('unbekannt')
@@ -175,7 +178,7 @@ class SolarLog(SmartPlugin):
                     if name in self._items:
                         if not self._is_online and ('pdc_' in name or 'udc_' in name or 'pac_' in name):
                             self._items[name](0)
-                        elif now.hour is 0 and 'out_' in name:
+                        elif now.hour == 0 and 'out_' in name:
                             self._items[name](0)
                         else:
                             self._items[name](groups[name])
@@ -195,14 +198,14 @@ class SolarLog(SmartPlugin):
         self._read_javascript('min_cur.js')
 
     def _read_javascript(self, filename):
-        re_var = re.compile(
-            r'^var\s+(?P<varname>\w+)\s*=\s*"?(?P<varvalue>[^"]+)"?;?')
-        re_array = re.compile(
-            r'^var\s+(?P<varname>\w+)\s*=\s*new\s*Array\s*\((?P<arrayvalues>.*)\)')
+        re_var = re.compile(r'^var\s+(?P<varname>\w+)\s*=\s*"?(?P<varvalue>[^"]+)"?;?')
+        re_array = re.compile(r'^var\s+(?P<varname>\w+)\s*=\s*new\s*Array\s*\((?P<arrayvalues>.*)\)')
         re_array_1st_level = re.compile(
-            r'\s*(?P<varname>\w+)\[(?P<idx1>[0-9]+)\]((\s*=\s*(?:new\s*Array)?\((?P<arrayvalues>.*)\))|(\s*=\s*(?P<arraystring>.*)))')
+            r'\s*(?P<varname>\w+)\[(?P<idx1>[0-9]+)\]((\s*=\s*(?:new\s*Array)?\((?P<arrayvalues>.*)\))|(\s*=\s*(?P<arraystring>.*)))'
+        )
         re_array_2nd_level = re.compile(
-            r'\s*(?P<varname>\w+)\[(?P<idx1>[0-9]+)\]\s*\[(?P<idx2>[0-9]+)\]\s*=\s*new\s*Array\s*\((?P<arrayvalues>.*)\)')
+            r'\s*(?P<varname>\w+)\[(?P<idx1>[0-9]+)\]\s*\[(?P<idx2>[0-9]+)\]\s*=\s*new\s*Array\s*\((?P<arrayvalues>.*)\)'
+        )
 
         f = self._read(filename)
 
@@ -220,9 +223,8 @@ class SolarLog(SmartPlugin):
                     else:
                         try:
                             vars(self)[name] = [None] * int(value)
-                        except:
-                            vars(self)[name] = [x.strip(' "')
-                                                for x in value.split(',')]
+                        except Exception:
+                            vars(self)[name] = [x.strip(' "') for x in value.split(',')]
                     continue
 
                 matches = re_var.match(line)
@@ -243,8 +245,7 @@ class SolarLog(SmartPlugin):
                         if not values:
                             values = matches.group('arraystring')
                         if ',' in values:
-                            vars(self)[name][idx1] = [x.strip(' "')
-                                                      for x in values.split(',')]
+                            vars(self)[name][idx1] = [x.strip(' "') for x in values.split(',')]
                         else:
                             vars(self)[name][idx1] = values
                     continue
@@ -255,8 +256,7 @@ class SolarLog(SmartPlugin):
                     name, idx1, idx2, value = matches.groups()
 
                     if name in vars(self):
-                        vars(self)[name][int(idx1)][int(idx2)] = [x.strip(' "')
-                                                                  for x in value.split(',')]
+                        vars(self)[name][int(idx1)][int(idx2)] = [x.strip(' "') for x in value.split(',')]
                     continue
 
     def _read_years(self):
@@ -265,7 +265,7 @@ class SolarLog(SmartPlugin):
         for x in range(0, self._count_inverter):
             pattern += '\|(?P<out_{0}>[0-9]*)'.format(x)
 
-        pattern += '\"'
+        pattern += '"'
         re_entry = re.compile(pattern)
 
         years = self._read('years.js')
@@ -275,7 +275,7 @@ class SolarLog(SmartPlugin):
                 matches = re_entry.match(line)
 
                 if matches:
-                    logger.debug(matches.groups())
+                    self.logger.debug(matches.groups())
 
     def _read_months(self):
         pattern = r'mo\[mx\+\+\]=.(?P<day>\d{2})\.(?P<month>\d{2})\.(?P<year>\d{2})'
@@ -283,7 +283,7 @@ class SolarLog(SmartPlugin):
         for x in range(0, self._count_inverter):
             pattern += '\|(?P<out_{0}>[0-9]*)'.format(x)
 
-        pattern += '\"'
+        pattern += '"'
         re_entry = re.compile(pattern)
 
         months = self._read('months.js')
@@ -293,7 +293,7 @@ class SolarLog(SmartPlugin):
                 matches = re_entry.match(line)
 
                 if matches:
-                    logger.debug(matches.groups())
+                    self.logger.debug(matches.groups())
 
     def _read_days(self, history=False):
         pattern = r'da\[dx\+\+\]=.(?P<day>\d{2})\.(?P<month>\d{2})\.(?P<year>\d{2})'
@@ -301,7 +301,7 @@ class SolarLog(SmartPlugin):
         for x in range(0, self._count_inverter):
             pattern += '\|(?P<out_{0}>[0-9]*);(?P<pac_max_{0}>[0-9]*)'.format(x)
 
-        pattern += '\"'
+        pattern += '"'
         re_entry = re.compile(pattern)
 
         if history:
@@ -314,7 +314,7 @@ class SolarLog(SmartPlugin):
                 matches = re_entry.match(line)
 
                 if matches:
-                    logger.debug(matches.groups())
+                    self.logger.debug(matches.groups())
 
     def _read_min_day(self, date=None, read_all=False):
         pattern = r'm\[mi\+\+\]=.(?P<day>\d{2})\.(?P<month>\d{2})\.(?P<year>\d{2})\s(?P<hour>\d{2})\:(?P<minute>\d{2})\:(?P<second>\d{2})'
@@ -336,7 +336,7 @@ class SolarLog(SmartPlugin):
                 if vars(self)['WRInfo'][x][12] == '1':
                     pattern += ';(?P<tmp_{0}>[0-9]*)'.format(x)
 
-        pattern += '\"'
+        pattern += '"'
         re_entry = re.compile(pattern)
 
         if date:
@@ -367,60 +367,55 @@ class SolarLog(SmartPlugin):
         Polls for updates of the SolarLog device with firmware >= 3.x
         """
         for parameter in self._items:
-             params = '{"801":{"170":null}}'
-             paramsbytes = params.encode('utf-8')
-             headers = {"Content-Type": "application/json",
-                        "Accept": "text/plain"}
-             conn = http.client.HTTPConnection(self.host)
-             conn.request("POST", "/getjp", params, headers)
-             response = conn.getresponse()
-             data=response.read()
-             jsondata = json.loads(data.decode('utf-8'))
-             value = jsondata['801']['170'][str(parameter)]
-             if parameter in self._items:
-                  item = self._items[parameter]
-                  item (value, 'solarlog')
+            params = '{"801":{"170":null}}'
+            headers = {'Content-Type': 'application/json', 'Accept': 'text/plain'}
+            conn = http.client.HTTPConnection(self.host)
+            conn.request('POST', '/getjp', params, headers)
+            response = conn.getresponse()
+            data = response.read()
+            jsondata = json.loads(data.decode('utf-8'))
+            value = jsondata['801']['170'][str(parameter)]
+            if parameter in self._items:
+                item = self._items[parameter]
+                item(value, 'solarlog')
         return
 
-
     def init_webinterface(self):
-        """"
+        """ "
         Initialize the web interface for this plugin
 
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
+            self.mod_http = Modules.get_instance().get_module('http')  # try/except to handle disabled http module
+        except Exception:
             self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
+        if self.mod_http is None:
+            self.logger.error('Not initializing the web interface')
             return False
 
         import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
+
+        if 'SmartPluginWebIf' not in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning('Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface')
             return False
 
         # set application configuration for cherrypy
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
         config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
+            '/': {'tools.staticdir.root': webif_dir},
+            '/static': {'tools.staticdir.on': True, 'tools.staticdir.dir': 'static'},
         }
 
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
+        self.mod_http.register_webif(
+            WebInterface(webif_dir, self),
+            self.get_shortname(),
+            config,
+            self.get_classname(),
+            self.get_instance_name(),
+            description='',
+        )
 
         return True
 
@@ -434,7 +429,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -462,7 +456,6 @@ class WebInterface(SmartPluginWebIf):
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin)
 
-
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
         """
@@ -475,9 +468,9 @@ class WebInterface(SmartPluginWebIf):
         """
         if dataSet is None:
             # get the new data
-            #self.plugin.beodevices.update_devices_info()
+            # self.plugin.beodevices.update_devices_info()
 
             # return it as json the the web page
-            #return json.dumps(self.plugin.beodevices.beodeviceinfo)
+            # return json.dumps(self.plugin.beodevices.beodeviceinfo)
             pass
         return

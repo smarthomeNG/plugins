@@ -24,16 +24,16 @@ import logging
 from lib.model.smartplugin import SmartPlugin
 import time
 import re
+import base64
 import http.client
 
 logger = logging.getLogger('')
 
 
 class Waterkotte(SmartPlugin):
-
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = "1.0.0"
+    PLUGIN_VERSION = '1.0.0'
 
     _key2tag = {
         'temp_aussen': 'A1',
@@ -87,22 +87,12 @@ class Waterkotte(SmartPlugin):
         'cop_oct': 'A933',
         'cop_nov': 'A934',
         'cop_dec': 'A935',
-        'f121': 'D8'
+        'f121': 'D8',
     }
 
-    _tag_noconv = {
-        'A516',
-        'A517',
-        'A528',
-        'A529',
-        'A522',
-        'A523',
-        'A524',
-        'A525',
-        'D8'
-    }
+    _tag_noconv = {'A516', 'A517', 'A528', 'A529', 'A522', 'A523', 'A524', 'A525', 'D8'}
 
-    def __init__(self, smarthome, ip, user="waterkotte", passwd="waterkotte", cycle=300):
+    def __init__(self, smarthome, ip, user='waterkotte', passwd='waterkotte', cycle=300):
         self._sh = smarthome
         self.ip = ip
         self.user = user
@@ -140,25 +130,28 @@ class Waterkotte(SmartPlugin):
         start = time.time()
         try:
             # log in to web interface, retrieve Cookie
-            token = self._sh.tools.fetch_url('http://' + self.ip + '/cgi/login?username=' + self.user + '&password=' + self.passwd, timeout=10).decode()
+            token = self._sh.tools.fetch_url(
+                'http://' + self.ip + '/cgi/login?username=' + self.user + '&password=' + self.passwd, timeout=10
+            ).decode()
             token = re.search('IDALToken=\w*', token)
             token = token.group(0)
 
             # first of all check and if required set D634 to show total consumption instead of annual
-            data2 = self.fetch_url_cookie('http://' + self.ip +'/cgi/readTags?&n=1&t1=D634', token).decode()
+            data2 = self.fetch_url_cookie('http://' + self.ip + '/cgi/readTags?&n=1&t1=D634', token).decode()
             data2 = re.sub('#\w*\tS_OK\n\w*\t', '', data2)
             data2 = re.sub('\n', '', data2)
             # if D634 is not set, set it and skip this cycle --- note: updated readings may take 30s or longer!
             if int(data2) == 0:
                 logger.error('D634 has not been set. Trying to set it and skipping this cycle.')
-                data2 = self.fetch_url_cookie('http://' + self.ip +'/cgi/writeTags?&n=1&t1=D634&v1=1', token).decode()
+                data2 = self.fetch_url_cookie('http://' + self.ip + '/cgi/writeTags?&n=1&t1=D634&v1=1', token).decode()
                 return
 
             # update all items
             for waterkotte_key in self._key2tag:
-
                 # send request using previously aquired Cookie
-                data2 = self.fetch_url_cookie('http://' + self.ip +'/cgi/readTags?&n=1&t1=' + self._key2tag[waterkotte_key], token).decode()
+                data2 = self.fetch_url_cookie(
+                    'http://' + self.ip + '/cgi/readTags?&n=1&t1=' + self._key2tag[waterkotte_key], token
+                ).decode()
                 data2 = re.sub('#\w*\tS_OK\n\w*\t', '', data2)
                 data2 = re.sub('\n', '', data2)
 
@@ -167,20 +160,19 @@ class Waterkotte(SmartPlugin):
                     value = float(data2)
                 else:
                     # analog values A### are 16 bit integers; divide by 10 to get real value
-                    value = float(data2)/10
+                    value = float(data2) / 10
 
                 self._values[waterkotte_key] = value
             for item_cfg in self._items:
                 if item_cfg[1] in self._values:
                     item_cfg[0](self._values[item_cfg[1]], 'Waterkotte')
         except Exception as e:
-            logger.error(
-                'could not retrieve data from {0}: {1}'.format(self.ip, e))
+            logger.error('could not retrieve data from {0}: {1}'.format(self.ip, e))
         return
 
         cycletime = time.time() - start
         self.cycletime = cycletime
-        logger.debug("cycle takes {0} seconds".format(cycletime))
+        logger.debug('cycle takes {0} seconds'.format(cycletime))
 
     # this is fetch_url from lib/tools.py, extended to use the Cookie 'token' in the http request
     def fetch_url_cookie(self, url, token, username=None, password=None, timeout=10):
@@ -197,18 +189,18 @@ class Waterkotte(SmartPlugin):
         else:
             conn = http.client.HTTPSConnection(host, timeout=timeout)
         if username and password:
-            headers['Authorization'] = ('Basic '.encode() + base64.b64encode((username + ':' + password).encode()))
+            headers['Authorization'] = 'Basic '.encode() + base64.b64encode((username + ':' + password).encode())
         try:
-            conn.request("GET", purl, headers=headers)
+            conn.request('GET', purl, headers=headers)
         except Exception as e:
-            logger.warning("Problem fetching {0}: {1}".format(url, e))
+            logger.warning('Problem fetching {0}: {1}'.format(url, e))
             conn.close()
             return False
         resp = conn.getresponse()
         if resp.status == 200:
             content = resp.read()
         else:
-            logger.warning("Problem fetching {0}: {1} {2}".format(url, resp.status, resp.reason))
+            logger.warning('Problem fetching {0}: {1} {2}'.format(url, resp.status, resp.reason))
             content = False
         conn.close()
         return content

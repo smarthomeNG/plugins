@@ -38,22 +38,18 @@ illegal_unichrs = [
     (0x10FFFE, 0x10FFFF),
 ]
 
-illegal_ranges = [
-    "{}-{}".format(chr(low), chr(high))
-    for (low, high) in illegal_unichrs
-    if low < sys.maxunicode
-]
+illegal_ranges = ['{}-{}'.format(chr(low), chr(high)) for (low, high) in illegal_unichrs if low < sys.maxunicode]
 
-illegal_xml_re = re.compile("[%s]" % "".join(illegal_ranges))
+illegal_xml_re = re.compile('[%s]' % ''.join(illegal_ranges))
 
 
 #: Commonly used namespaces, and abbreviations, used by `ns_tag`.
 NAMESPACES = {
-    "dc": "http://purl.org/dc/elements/1.1/",
-    "upnp": "urn:schemas-upnp-org:metadata-1-0/upnp/",
-    "": "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/",
-    "ms": "http://www.sonos.com/Services/1.1",
-    "r": "urn:schemas-rinconnetworks-com:metadata-1-0/",
+    'dc': 'http://purl.org/dc/elements/1.1/',
+    'upnp': 'urn:schemas-upnp-org:metadata-1-0/upnp/',
+    '': 'urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/',
+    'ms': 'http://www.sonos.com/Services/1.1',
+    'r': 'urn:schemas-rinconnetworks-com:metadata-1-0/',
 }
 
 # Register common namespaces to assist in serialisation (avoids the ns:0
@@ -78,4 +74,4 @@ def ns_tag(ns_id, tag):
         >>> xml.ns_tag('dc','author')
         '{http://purl.org/dc/elements/1.1/}author'
     """
-    return "{{{}}}{}".format(NAMESPACES[ns_id], tag)
+    return '{{{}}}{}'.format(NAMESPACES[ns_id], tag)

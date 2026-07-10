@@ -26,7 +26,6 @@ from . import StateEngineDefaults
 
 
 class SeLogger:
-
     @property
     def default_log_level(self):
         return SeLogger.__default_log_level.get()
@@ -54,7 +53,7 @@ class SeLogger:
         except ValueError:
             SeLogger.__log_maxage = 0
             logger = StateEngineDefaults.logger
-            logger.error("The maximum age of the log files has to be an int number.")
+            logger.error('The maximum age of the log files has to be an int number.')
 
     @property
     def log_level_as_num(self):
@@ -84,9 +83,9 @@ class SeLogger:
     # logdirectory: Target directory for StateEngine log files
     @staticmethod
     def manage_logdirectory(base, log_directory, create=True):
-        if log_directory[0] != "/":
-            if base[-1] != "/":
-                base += "/"
+        if log_directory[0] != '/':
+            if base[-1] != '/':
+                base += '/'
             log_directory = base + log_directory
         if create is True and not os.path.isdir(log_directory):
             os.makedirs(log_directory)
@@ -98,12 +97,12 @@ class SeLogger:
         if SeLogger.log_maxage.get() == 0 or not os.path.isdir(str(SeLogger.log_directory)):
             return
         logger = StateEngineDefaults.logger
-        logger.info("Removing logfiles older than {0} days".format(SeLogger.log_maxage))
+        logger.info('Removing logfiles older than {0} days'.format(SeLogger.log_maxage))
         count_success = 0
         count_error = 0
         now = datetime.datetime.now()
         for file in os.listdir(str(SeLogger.log_directory)):
-            if file.endswith(".log"):
+            if file.endswith('.log'):
                 try:
                     abs_file = os.path.join(str(SeLogger.log_directory), file)
                     stat = os.stat(abs_file)
@@ -113,10 +112,10 @@ class SeLogger:
                         os.unlink(abs_file)
                         count_success += 1
                 except Exception as ex:
-                    logger.error("Problem removing old logfiles: {}".format(ex))
+                    logger.error('Problem removing old logfiles: {}'.format(ex))
                     logger.error(ex)
                     count_error += 1
-        logger.info("{0} files removed, {1} errors occured".format(count_success, count_error))
+        logger.info('{0} files removed, {1} errors occured'.format(count_success, count_error))
 
     # Return SeLogger instance for given item
     # item: item for which the detailed log is
@@ -129,9 +128,9 @@ class SeLogger:
     def __init__(self, item, manual=False):
         self.logger = logging.getLogger('stateengine.{}'.format(item.property.path))
         self.__name = 'stateengine.{}'.format(item.property.path)
-        self.__section = item.property.path.replace(".", "_").replace("/", "")
+        self.__section = item.property.path.replace('.', '_').replace('/', '')
         self.__indentlevel = 0
-        self.__indentprefix = ""
+        self.__indentprefix = ''
         if manual:
             self.__log_level_as_num = 2
         else:
@@ -139,7 +138,7 @@ class SeLogger:
         self.__logmaxage = None
         self.__date = None
         self.__logerror = False
-        self.__filename = ""
+        self.__filename = ''
         self.update_logfile()
 
     # Update name logfile if required
@@ -147,7 +146,7 @@ class SeLogger:
         if self.__date == datetime.datetime.today() and self.__filename is not None:
             return
         self.__date = str(datetime.date.today())
-        self.__filename = f"{SeLogger.log_directory}{self.__date}-{self.__section}.log"
+        self.__filename = f'{SeLogger.log_directory}{self.__date}-{self.__section}.log'
 
     # Increase indentation level
     # by: number of levels to increase
@@ -171,33 +170,32 @@ class SeLogger:
     def log(self, level, text, *args):
         # Section given: Check level
         if level <= self.__log_level_as_num:
-            indent = "\t" * self.__indentlevel
+            indent = '\t' * self.__indentlevel
             if args:
                 text = text.format(*args)
-            logtext = "{0} {1}{2}{3}\r\n".format(datetime.datetime.now(), self.__indentprefix, indent, text)
+            logtext = '{0} {1}{2}{3}\r\n'.format(datetime.datetime.now(), self.__indentprefix, indent, text)
             try:
-                with open(self.__filename, mode="a", encoding="utf-8") as f:
+                with open(self.__filename, mode='a', encoding='utf-8') as f:
                     f.write(logtext)
             except Exception as e:
                 if self.__logerror is False:
                     self.__logerror = True
-                    self.logger.error("There is a problem with "
-                                      "the logfile {}: {}".format(self.__filename, e))
+                    self.logger.error('There is a problem with the logfile {}: {}'.format(self.__filename, e))
 
     # log header line (as info)
     # text: header text
     def header(self, text):
         self.__indentlevel = 0
-        text += " "
-        self.log(1, text.ljust(80, "="))
-        self.logger.info(text.ljust(80, "="))
+        text += ' '
+        self.log(1, text.ljust(80, '='))
+        self.logger.info(text.ljust(80, '='))
 
     # log with level=info
     # @param text text to log
     # @param *args parameters for text
     def info(self, text, *args):
         self.log(1, text, *args)
-        indent = "\t" * self.__indentlevel
+        indent = '\t' * self.__indentlevel
         text = '{}{}{}'.format(self.__indentprefix, indent, text)
         if args:
             text = text.format(*args)
@@ -208,7 +206,7 @@ class SeLogger:
     # *args: parameters for text
     def debug(self, text, *args):
         self.log(2, text, *args)
-        indent = "\t" * self.__indentlevel
+        indent = '\t' * self.__indentlevel
         text = '{}{}{}'.format(self.__indentprefix, indent, text)
         if args:
             text = text.format(*args)
@@ -218,8 +216,8 @@ class SeLogger:
     # text: text to log
     # *args: parameters for text
     def develop(self, text, *args):
-        self.log(3, "DEV: " + text, *args)
-        indent = "\t" * self.__indentlevel
+        self.log(3, 'DEV: ' + text, *args)
+        indent = '\t' * self.__indentlevel
         text = '{}{}{}'.format(self.__indentprefix, indent, text)
         if args:
             text = text.format(*args)
@@ -230,8 +228,8 @@ class SeLogger:
     # *args: parameters for text
     # noinspection PyMethodMayBeStatic
     def warning(self, text, *args):
-        self.log(1, "WARNING: " + text, *args)
-        indent = "\t" * self.__indentlevel
+        self.log(1, 'WARNING: ' + text, *args)
+        indent = '\t' * self.__indentlevel
         text = '{}{}{}'.format(self.__indentprefix, indent, text)
         if args:
             text = text.format(*args)
@@ -242,8 +240,8 @@ class SeLogger:
     # *args: parameters for text
     # noinspection PyMethodMayBeStatic
     def error(self, text, *args):
-        self.log(1, "ERROR: " + text, *args)
-        indent = "\t" * self.__indentlevel
+        self.log(1, 'ERROR: ' + text, *args)
+        indent = '\t' * self.__indentlevel
         text = '{}{}{}'.format(self.__indentprefix, indent, text)
         if args:
             text = text.format(*args)
@@ -255,7 +253,7 @@ class SeLogger:
     # **kwargs: known arguments for message
     # noinspection PyMethodMayBeStatic
     def exception(self, msg, *args, **kwargs):
-        self.log(1, "EXCEPTION: " + str(msg), *args)
+        self.log(1, 'EXCEPTION: ' + str(msg), *args)
         self.logger.exception(msg, *args, **kwargs)
 
 

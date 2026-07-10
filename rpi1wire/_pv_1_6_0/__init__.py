@@ -108,10 +108,10 @@ class Rpi1Wire(SmartPlugin):
         # better make it an item attribute and search for that
         anz = self.get_sh().return_item("rpi1wire.sensors")
         ids = self.get_sh().return_item("rpi1wire.sensor_list")
-        if anz != None:
+        if anz is not None:
             anz(int(self.anz_sensors),'rpi1wire')
             self.logger.debug("rpi1wire-item sensors value = {0}".format(self.anz_sensors))
-        if ids != None:
+        if ids is not None:
             ids(str(self.sensors),'rpi1wire')
             self.logger.debug("rpi1wire-item sensor_list value = {0}".format(self.sensors))
 
@@ -137,7 +137,7 @@ class Rpi1Wire(SmartPlugin):
         """
         if self.has_iattr(item.conf, 'rpi1wire_update'):
             self.logger.debug("parse item: {}".format(item))
-            ad = self.get_iattr_value( item.conf,'rpi1wire_update')
+            self.get_iattr_value( item.conf,'rpi1wire_update')
             return self.update_item
 
         if not self.has_iattr(item.conf, 'rpi1wire_id'):
@@ -154,20 +154,19 @@ class Rpi1Wire(SmartPlugin):
             try:
                 for sn, sid in self.sensors.items():
                     if sid == self.get_iattr_value( item.conf,'rpi1wire_id'):
-                        name = sn
                         break
             except:
                 self.logger.warning("Sensor {0} Hardware not found".format(self.get_iattr_value( item.conf,'rpi1wire_id')))
                 not_found = True
         else:
             if self.has_iattr(item.conf, 'rpi1wire_name'):
-                name = self.get_iattr_value( item.conf,'rpi1wire_name')
+                self.get_iattr_value( item.conf,'rpi1wire_name')
                 try:
                     addr = self.sensors[self.get_iattr_value( item.conf, 'rpi1wire_name')]
                 except:
                     self.logger.warning("Sensor {0} Hardware not found".format(self.get_iattr_value( item.conf, 'rpi1wire_name')))
                     not_found = True
-        if not_found == False:
+        if not not_found:
             self._sensordaten[addr]['item'] = item
 
     def parse_logic(self, logic):
@@ -186,7 +185,7 @@ class Rpi1Wire(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        if self.update == True:
+        if self.update:
             return None
 
         if self.alive and caller != self.get_shortname():
@@ -251,9 +250,9 @@ class Rpi1Wire(SmartPlugin):
         """
         If successful returns a list of sensors starting at given param dirname
         """
-        if (os.path.exists(dirname) == False or
-            os.path.isdir(dirname) == False or
-            os.access(dirname, os.R_OK) == False):
+        if (not os.path.exists(dirname) or
+            not os.path.isdir(dirname) or
+            not os.access(dirname, os.R_OK)):
             return None
         else:
             objects = os.listdir(dirname)
@@ -261,9 +260,9 @@ class Rpi1Wire(SmartPlugin):
             for objectname in objects:
                 objectpath = dirname + "/" + objectname
                 if (otype == "all" or
-                    (otype == "dir" and os.path.isdir(objectpath)  == True) or
-                    (otype == "file" and os.path.isfile(objectpath) == True) or
-                    (otype == "link" and os.path.islink(objectpath) == True)):
+                    (otype == "dir" and os.path.isdir(objectpath)) or
+                    (otype == "file" and os.path.isfile(objectpath)) or
+                    (otype == "link" and os.path.islink(objectpath))):
                     result.append(objectname)
             result.sort()
             return result
@@ -303,7 +302,7 @@ class Rpi1Wire(SmartPlugin):
         self.update_basics()
         self.update_values()
         upd = self.get_sh().return_item("rpi1wire.update")
-        if upd != None:
+        if upd is not None:
             upd(False,'rpi1wire')
             self.logger.info("rpi1wire-item update value done, {0} sensors found".format(self.anz_sensors))
         self.update = False
@@ -321,7 +320,6 @@ class Rpi1Wire(SmartPlugin):
                             break
                 except:
                     self.logger.warning("Sensor {0} Hardware not found".format(addr))
-                    not_found = True
             if self.has_iattr(item.conf, 'rpi1wire_name'):
                 name = self.get_iattr_value( item.conf, 'rpi1wire_name')
                 try:
@@ -343,12 +341,12 @@ class Rpi1Wire(SmartPlugin):
                 'http')  # try/except to handle running in a core version that does not support modules
         except:
             self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Not initializing the web interface")
             return False
 
         import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
             self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
             return False
 
@@ -426,7 +424,7 @@ class WebInterface(SmartPluginWebIf):
         """
         if dataSet is None:
             # get the new data
-            data = {}
+            pass
 
             # data['item'] = {}
             # for i in self.plugin.items:

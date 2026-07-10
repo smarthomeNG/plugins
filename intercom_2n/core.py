@@ -3,8 +3,8 @@ from .commands import CommandService
 
 log = logging.getLogger(__name__)
 
-class IPCam(object):
 
+class IPCam(object):
     def __init__(self, ip, ssl=False, auth_type=0, user=None, password=None):
         self.ip_address = ip
         self.user = user

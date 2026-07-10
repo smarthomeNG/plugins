@@ -10,8 +10,8 @@ class ZoneGroup:
 
         ZoneGroup(
             uid='RINCON_000FD584236D01400:58',
-            coordinator=SoCo("192.168.1.101"),
-            members={SoCo("192.168.1.101"), SoCo("192.168.1.102")}
+            coordinator=SoCo('192.168.1.101'),
+            members={SoCo('192.168.1.101'), SoCo('192.168.1.102')},
         )
 
 
@@ -111,7 +111,7 @@ class ZoneGroup:
         'Kitchen, Living Room'
         """
         group_names = sorted([m.player_name for m in self.members])
-        return ", ".join(group_names)
+        return ', '.join(group_names)
 
     @property
     def short_label(self):
@@ -123,7 +123,7 @@ class ZoneGroup:
         group_names = sorted([m.player_name for m in self.members])
         group_label = group_names[0]
         if len(group_names) > 1:
-            group_label += " + {}".format(len(group_names) - 1)
+            group_label += ' + {}'.format(len(group_names) - 1)
         return group_label
 
     @property
@@ -132,20 +132,16 @@ class ZoneGroup:
 
         An integer between 0 and 100.
         """
-        self.coordinator.groupRenderingControl.SnapshotGroupVolume([("InstanceID", 0)])
-        response = self.coordinator.groupRenderingControl.GetGroupVolume(
-            [("InstanceID", 0)]
-        )
-        return int(response["CurrentVolume"])
+        self.coordinator.groupRenderingControl.SnapshotGroupVolume([('InstanceID', 0)])
+        response = self.coordinator.groupRenderingControl.GetGroupVolume([('InstanceID', 0)])
+        return int(response['CurrentVolume'])
 
     @volume.setter
     def volume(self, group_volume):
         group_volume = int(group_volume)
         group_volume = max(0, min(group_volume, 100))  # Coerce in range
-        self.coordinator.groupRenderingControl.SnapshotGroupVolume([("InstanceID", 0)])
-        self.coordinator.groupRenderingControl.SetGroupVolume(
-            [("InstanceID", 0), ("DesiredVolume", group_volume)]
-        )
+        self.coordinator.groupRenderingControl.SnapshotGroupVolume([('InstanceID', 0)])
+        self.coordinator.groupRenderingControl.SetGroupVolume([('InstanceID', 0), ('DesiredVolume', group_volume)])
 
     @property
     def mute(self):
@@ -153,18 +149,14 @@ class ZoneGroup:
 
         True or False.
         """
-        response = self.coordinator.groupRenderingControl.GetGroupMute(
-            [("InstanceID", 0)]
-        )
-        mute_state = response["CurrentMute"]
+        response = self.coordinator.groupRenderingControl.GetGroupMute([('InstanceID', 0)])
+        mute_state = response['CurrentMute']
         return bool(int(mute_state))
 
     @mute.setter
     def mute(self, group_mute):
-        mute_value = "1" if group_mute else "0"
-        self.coordinator.groupRenderingControl.SetGroupMute(
-            [("InstanceID", 0), ("DesiredMute", mute_value)]
-        )
+        mute_value = '1' if group_mute else '0'
+        self.coordinator.groupRenderingControl.SetGroupMute([('InstanceID', 0), ('DesiredMute', mute_value)])
 
     def set_relative_volume(self, relative_group_volume):
         """Adjust the group volume up or down by a relative amount.
@@ -193,8 +185,8 @@ class ZoneGroup:
         """
         relative_group_volume = int(relative_group_volume)
         # Sonos automatically handles out-of-range values.
-        self.coordinator.groupRenderingControl.SnapshotGroupVolume([("InstanceID", 0)])
+        self.coordinator.groupRenderingControl.SnapshotGroupVolume([('InstanceID', 0)])
         resp = self.coordinator.groupRenderingControl.SetRelativeGroupVolume(
-            [("InstanceID", 0), ("Adjustment", relative_group_volume)]
+            [('InstanceID', 0), ('Adjustment', relative_group_volume)]
         )
-        return int(resp["NewVolume"])
+        return int(resp['NewVolume'])

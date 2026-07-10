@@ -281,7 +281,7 @@ class Tasmota(MqttPlugin):
                         value = ','.join(str(v) for v in hsb)
                     else:
                         self.logger.debug(
-                            f"update_item: hsb value received but not in correct format/content; expected format is list like [299, 100, 94]")
+                            "update_item: hsb value received but not in correct format/content; expected format is list like [299, 100, 94]")
 
                 elif tasmota_attr == 'white':
                     # publish topic with new white value
@@ -291,7 +291,7 @@ class Tasmota(MqttPlugin):
                         value = white
                     else:
                         self.logger.debug(
-                            f"update_item: white value received but not in correct format/content; expected format is integer value between 0 and 100")
+                            "update_item: white value received but not in correct format/content; expected format is integer value between 0 and 100")
 
                 elif tasmota_attr == 'ct':
                     # publish topic with new ct value
@@ -301,7 +301,7 @@ class Tasmota(MqttPlugin):
                         value = ct
                     else:
                         self.logger.debug(
-                            f"update_item: ct value received but not in correct format/content; expected format is integer value between 153 for cold white and 500 for warm white")
+                            "update_item: ct value received but not in correct format/content; expected format is integer value between 153 for cold white and 500 for warm white")
 
                 elif tasmota_attr == 'rf_send':
                     # publish topic with new rf data
@@ -329,14 +329,14 @@ class Tasmota(MqttPlugin):
                         rf_key = int(item())
                     except Exception:
                         self.logger.debug(
-                            f"update_item: rf_key_send received but with correct format; expected format integer or string 1-16")
+                            "update_item: rf_key_send received but with correct format; expected format integer or string 1-16")
                     else:
                         if rf_key in range(1, 17):
                             detail = 'RfKey' + str(rf_key)
                             value = 1
                         else:
                             self.logger.debug(
-                                f"update_item: rf_key_send received but with correct content; expected format value 1-16")
+                                "update_item: rf_key_send received but with correct content; expected format value 1-16")
 
                 elif tasmota_attr == 'ZbPermitJoin':
                     # publish topic for ZbPermitJoin
@@ -382,7 +382,7 @@ class Tasmota(MqttPlugin):
                     value = int(item())
                     if value < 0 or value > 254:
                         self.logger.warning(
-                            f' commanded value for brightness not within allowed range; set to next valid value')
+                            ' commanded value for brightness not within allowed range; set to next valid value')
                         value = 0 if (value < 0) else 254
                     payload = {'Device': tasmota_zb_device, 'Send': {'Dimmer': value}}
 
@@ -392,7 +392,7 @@ class Tasmota(MqttPlugin):
                     value = int(item())
                     if value < 0 or value > 254:
                         self.logger.warning(
-                            f' commanded value for hue not within allowed range; set to next valid value')
+                            ' commanded value for hue not within allowed range; set to next valid value')
                         value = 0 if (value < 0) else 254
                     payload = {'Device': tasmota_zb_device, 'Send': {'Hue': value}}
 
@@ -402,7 +402,7 @@ class Tasmota(MqttPlugin):
                     value = int(item())
                     if value < 0 or value > 254:
                         self.logger.warning(
-                            f' commanded value for saturation not within allowed range; set to next valid value')
+                            ' commanded value for saturation not within allowed range; set to next valid value')
                         value = 0 if (value < 0) else 254
                     payload = {'Device': tasmota_zb_device, 'Send': {'Sat': value}}
 
@@ -412,7 +412,7 @@ class Tasmota(MqttPlugin):
                     value = int(item())
                     if value < 0 or value > 65534:
                         self.logger.warning(
-                            f' commanded value for saturation not within allowed range; set to next valid value')
+                            ' commanded value for saturation not within allowed range; set to next valid value')
                         value = 0 if (value < 0) else 65534
                     payload = {'Device': tasmota_zb_device, 'Send': {'CT': value}}
 
@@ -434,7 +434,7 @@ class Tasmota(MqttPlugin):
         # check if Tasmota Zigbee Bridge needs to be configured
         tasmota_zigbee_bridge_status = self.tasmota_zigbee_bridge.get('status')
         if tasmota_zigbee_bridge_status == 'discovered':
-            self.logger.info(f'poll_device: Tasmota Zigbee Bridge discovered; Configuration will be adapted.')
+            self.logger.info('poll_device: Tasmota Zigbee Bridge discovered; Configuration will be adapted.')
             zigbee_device = self.tasmota_zigbee_bridge.get('device')
             if zigbee_device:
                 self._discover_zigbee_bridge(zigbee_device)
@@ -459,7 +459,7 @@ class Tasmota(MqttPlugin):
 
                 # ask for status info of reconnected tasmota_topic (which was not connected during plugin start)
                 if not self.tasmota_devices[tasmota_topic].get('mac'):
-                    self.logger.debug(f"poll_device: reconnected device discovered and try to discover it")
+                    self.logger.debug("poll_device: reconnected device discovered and try to discover it")
                     self._identify_device(tasmota_topic)
 
         # update tasmota_meta auf Basis von tasmota_devices
@@ -596,47 +596,47 @@ class Tasmota(MqttPlugin):
                 # Handling of Light messages
                 if type(payload) is dict and (
                         'HSBColor' or 'Dimmer' or 'Color' or 'CT' or 'Scheme' or 'Fade' or 'Speed' or 'LedTable' or 'White') in payload:
-                    self.logger.info(f"Received Message decoded as light message.")
+                    self.logger.info("Received Message decoded as light message.")
                     self._handle_lights(tasmota_topic, info_topic, payload)
 
                 # Handling of Power messages
                 elif any(item.startswith("POWER") for item in payload.keys()):
-                    self.logger.info(f"Received Message decoded as power message.")
+                    self.logger.info("Received Message decoded as power message.")
                     self._handle_power(tasmota_topic, info_topic, payload)
 
                 # Handling of RF messages
                 elif any(item.startswith("Rf") for item in payload.keys()):
-                    self.logger.info(f"Received Message decoded as RF type message.")
+                    self.logger.info("Received Message decoded as RF type message.")
                     self._handle_rf(tasmota_topic, info_topic, payload)
 
                 # Handling of Module messages
                 elif type(payload) is dict and 'Module' in payload:
-                    self.logger.info(f"Received Message decoded as Module type message.")
+                    self.logger.info("Received Message decoded as Module type message.")
                     self._handle_module(tasmota_topic, payload)
 
                 # Handling of Zigbee Bridge Setting messages
                 elif type(payload) is dict and any(item.startswith("SetOption") for item in payload.keys()):
-                    self.logger.info(f"Received Message decoded as Zigbee Bridge Setting message.")
+                    self.logger.info("Received Message decoded as Zigbee Bridge Setting message.")
                     self._handle_zbbridge_setting(payload)
 
                 # Handling of Zigbee Bridge Config messages
                 elif type(payload) is dict and any(item.startswith("ZbConfig") for item in payload.keys()):
-                    self.logger.info(f"Received Message decoded as Zigbee Config message.")
+                    self.logger.info("Received Message decoded as Zigbee Config message.")
                     self._handle_zbconfig(tasmota_topic, payload)
 
                 # Handling of Zigbee Bridge Status messages
                 elif any(item.startswith("ZbStatus") for item in payload.keys()):
-                    self.logger.info(f"Received Message decoded as Zigbee ZbStatus message.")
+                    self.logger.info("Received Message decoded as Zigbee ZbStatus message.")
                     self._handle_zbstatus(tasmota_topic, payload)
 
                 # Handling of WIFI
                 if type(payload) is dict and 'Wifi' in payload:
-                    self.logger.info(f"Received Message contains Wifi information.")
+                    self.logger.info("Received Message contains Wifi information.")
                     self._handle_wifi(tasmota_topic, payload)
 
                 # Handling of Uptime
                 if tasmota_topic in self.tasmota_devices:
-                    self.logger.info(f"Received Message will be checked for Uptime.")
+                    self.logger.info("Received Message will be checked for Uptime.")
                     self.tasmota_devices[tasmota_topic]['uptime'] = payload.get('Uptime', '-')
 
                 # setting new online-timeout
@@ -647,7 +647,7 @@ class Tasmota(MqttPlugin):
                 self._set_item_value(tasmota_topic, 'item_online', True, info_topic)
 
             elif info_topic == 'SENSOR':
-                self.logger.info(f"Received Message contain sensor information.")
+                self.logger.info("Received Message contain sensor information.")
                 self._handle_sensor(tasmota_topic, info_topic, payload)
 
                 # setting new online-timeout
@@ -661,7 +661,7 @@ class Tasmota(MqttPlugin):
                 # payload={'Status': {'Module': 1, 'DeviceName': 'SONOFF_B1', 'FriendlyName': ['SONOFF_B1'], 'Topic': 'SONOFF_B1', 'ButtonTopic': '0', 'Power': 1, 'PowerOnState': 3, 'LedState': 1, 'LedMask': 'FFFF', 'SaveData': 1, 'SaveState': 1, 'SwitchTopic': '0', 'SwitchMode': [0, 0, 0, 0, 0, 0, 0, 0], 'ButtonRetain': 0, 'SwitchRetain': 0, 'SensorRetain': 0, 'PowerRetain': 0, 'InfoRetain': 0, 'StateRetain': 0}, 'StatusPRM': {'Baudrate': 115200, 'SerialConfig': '8N1', 'GroupTopic': 'tasmotas', 'OtaUrl': 'http://ota.tasmota.com/tasmota/release/tasmota.bin.gz', 'RestartReason': 'Software/System restart', 'Uptime': '0T20:03:04', 'StartupUTC': '2022-02-22T11:36:56', 'Sleep': 50, 'CfgHolder': 4617, 'BootCount': 1394, 'BCResetTime': '2021-11-19T09:08:33', 'SaveCount': 1571, 'SaveAddress': 'F9000'}, 'StatusFWR': {'Version': '11.0.0(tasmota)', 'BuildDateTime': '2022-02-12T14:13:50', 'Boot': 6, 'Core': '2_7_4_9', 'SDK': '2.2.2-dev(38a443e)', 'CpuFrequency': 80, 'Hardware': 'ESP8266EX', 'CR': '354/699'}, 'StatusLOG': {'SerialLog': 2, 'WebLog': 2, 'MqttLog': 0, 'SysLog': 0, 'LogHost': '', 'LogPort': 514, 'SSId': ['WLAN-Access', ''], 'TelePeriod': 300, 'Resolution': '558180C0', 'SetOption': ['000A8009', '2805C80001000600003C5A0A000000000000', '000002A0', '00006000', '00004000']}, 'StatusMEM': {'ProgramSize': 620, 'Free': 380, 'Heap': 25, 'ProgramFlashSize': 1024, 'FlashSize': 1024, 'FlashChipId': '14405E', 'FlashFrequency': 40, 'FlashMode': 3, 'Features': ['00000809', '8FDAC787', '04368001', '000000CF', '010013C0', 'C000F981', '00004004', '00001000', '00000020'], 'Drivers': '1,2,3,4,5,6,7,8,9,10,12,16,18,19,20,21,22,24,26,27,29,30,35,37,45', 'Sensors': '1,2,3,4,5,6'}, 'StatusNET': {'Hostname': 'SONOFF-B1-6318', 'IPAddress': '192.168.2.25', 'Gateway': '192.168.2.1', 'Subnetmask': '255.255.255.0', 'DNSServer1': '192.168.2.1', 'DNSServer2': '0.0.0.0', 'Mac': '2C:3A:E8:2E:B8:AE', 'Webserver': 2, 'HTTP_API': 1, 'WifiConfig': 4, 'WifiPower': 17.0}, 'StatusMQT': {'MqttHost': '192.168.2.12', 'MqttPort': 1883, 'MqttClientMask': 'DVES_%06X', 'MqttClient': 'DVES_2EB8AE', 'MqttUser': 'DVES_USER', 'MqttCount': 3, 'MAX_PACKET_SIZE': 1200, 'KEEPALIVE': 30, 'SOCKET_TIMEOUT': 4}, 'StatusTIM': {'UTC': '2022-02-23T07:40:00', 'Local': '2022-02-23T08:40:00', 'StartDST': '2022-03-27T02:00:00', 'EndDST': '2022-10-30T03:00:00', 'Timezone': '+01:00', 'Sunrise': '07:43', 'Sunset': '18:23'}, 'StatusSNS': {'Time': '2022-02-23T08:40:00', 'DS18B20': {'Id': '00000938355C', 'Temperature': 18.1}, 'TempUnit': 'C'}, 'StatusSTS': {'Time': '2022-02-23T08:40:00', 'Uptime': '0T20:03:04', 'UptimeSec': 72184, 'Heap': 24, 'SleepMode': 'Dynamic', 'Sleep': 50, 'LoadAvg': 19, 'MqttCount': 3, 'POWER': 'ON', 'Wifi': {'AP': 1, 'SSId': 'WLAN-Access', 'BSSId': 'DC:39:6F:15:58:0B', 'Channel': 11, 'Mode': '11n', 'RSSI': 76, 'Signal': -62, 'LinkCount': 3, 'Downtime': '0T00:00:07'}}}
                 # payload={'Status': {'Module': 7, 'DeviceName': 'SONOFF_B1', 'FriendlyName': ['SONOFF_B1', '', '', ''], 'Topic': 'SONOFF_B1', 'ButtonTopic': '0', 'Power': 1, 'PowerOnState': 3, 'LedState': 1, 'LedMask': 'FFFF', 'SaveData': 1, 'SaveState': 1, 'SwitchTopic': '0', 'SwitchMode': [0, 0, 0, 0, 0, 0, 0, 0], 'ButtonRetain': 0, 'SwitchRetain': 0, 'SensorRetain': 0, 'PowerRetain': 0, 'InfoRetain': 0, 'StateRetain': 0}, 'StatusPRM': {'Baudrate': 115200, 'SerialConfig': '8N1', 'GroupTopic': 'tasmotas', 'OtaUrl': 'http://ota.tasmota.com/tasmota/release/tasmota.bin.gz', 'RestartReason': 'Software/System restart', 'Uptime': '0T00:00:14', 'StartupUTC': '2022-02-23T09:12:09', 'Sleep': 50, 'CfgHolder': 4617, 'BootCount': 1397, 'BCResetTime': '2021-11-19T09:08:33', 'SaveCount': 1578, 'SaveAddress': 'FA000'}, 'StatusFWR': {'Version': '11.0.0(tasmota)', 'BuildDateTime': '2022-02-12T14:13:50', 'Boot': 6, 'Core': '2_7_4_9', 'SDK': '2.2.2-dev(38a443e)', 'CpuFrequency': 80, 'Hardware': 'ESP8266EX', 'CR': '354/699'}, 'StatusLOG': {'SerialLog': 2, 'WebLog': 2, 'MqttLog': 0, 'SysLog': 0, 'LogHost': '', 'LogPort': 514, 'SSId': ['WLAN-Access', ''], 'TelePeriod': 300, 'Resolution': '558180C0', 'SetOption': ['00028009', '2805C80001000600003C5A0A000000000000', '000002A0', '00006000', '00004000']}, 'StatusMEM': {'ProgramSize': 620, 'Free': 380, 'Heap': 26, 'ProgramFlashSize': 1024, 'FlashSize': 1024, 'FlashChipId': '14405E', 'FlashFrequency': 40, 'FlashMode': 3, 'Features': ['00000809', '8FDAC787', '04368001', '000000CF', '010013C0', 'C000F981', '00004004', '00001000', '00000020'], 'Drivers': '1,2,3,4,5,6,7,8,9,10,12,16,18,19,20,21,22,24,26,27,29,30,35,37,45', 'Sensors': '1,2,3,4,5,6'}, 'StatusNET': {'Hostname': 'SONOFF-B1-6318', 'IPAddress': '192.168.2.25', 'Gateway': '192.168.2.1', 'Subnetmask': '255.255.255.0', 'DNSServer1': '192.168.2.1', 'DNSServer2': '0.0.0.0', 'Mac': '2C:3A:E8:2E:B8:AE', 'Webserver': 2, 'HTTP_API': 1, 'WifiConfig': 4, 'WifiPower': 17.0}, 'StatusMQT': {'MqttHost': '192.168.2.12', 'MqttPort': 1883, 'MqttClientMask': 'DVES_%06X', 'MqttClient': 'DVES_2EB8AE', 'MqttUser': 'DVES_USER', 'MqttCount': 1, 'MAX_PACKET_SIZE': 1200, 'KEEPALIVE': 30, 'SOCKET_TIMEOUT': 4}, 'StatusTIM': {'UTC': '2022-02-23T09:12:23', 'Local': '2022-02-23T10:12:23', 'StartDST': '2022-03-27T02:00:00', 'EndDST': '2022-10-30T03:00:00', 'Timezone': '+01:00', 'Sunrise': '07:43', 'Sunset': '18:23'}, 'StatusSNS': {'Time': '2022-02-23T10:12:23'}, 'StatusSTS': {'Time': '2022-02-23T10:12:23', 'Uptime': '0T00:00:14', 'UptimeSec': 14, 'Heap': 25, 'SleepMode': 'Dynamic', 'Sleep': 50, 'LoadAvg': 19, 'MqttCount': 1, 'POWER1': 'ON', 'POWER2': 'OFF', 'POWER3': 'OFF', 'POWER4': 'OFF', 'Wifi': {'AP': 1, 'SSId': 'WLAN-Access', 'BSSId': 'DC:39:6F:15:58:0B', 'Channel': 11, 'Mode': '11n', 'RSSI': 80, 'Signal': -60, 'LinkCount': 1, 'Downtime': '0T00:00:03'}}}
                 # payload={'Status': {'Module': 20, 'DeviceName': 'SONOFF_RGBW1', 'FriendlyName': ['SONOFF_RGBW'], 'Topic': 'SONOFF_RGBW1', 'ButtonTopic': '0', 'Power': 1, 'PowerOnState': 3, 'LedState': 1, 'LedMask': 'FFFF', 'SaveData': 1, 'SaveState': 1, 'SwitchTopic': '0', 'SwitchMode': [0, 0, 0, 0, 0, 0, 0, 0], 'ButtonRetain': 0, 'SwitchRetain': 0, 'SensorRetain': 0, 'PowerRetain': 0, 'InfoRetain': 0, 'StateRetain': 0}, 'StatusPRM': {'Baudrate': 115200, 'SerialConfig': '8N1', 'GroupTopic': 'sonoffs', 'OtaUrl': 'http://ota.tasmota.com/tasmota/release/tasmota.bin.gz', 'RestartReason': 'Software/System restart', 'Uptime': '0T00:02:06', 'StartupUTC': '2022-02-23T09:20:17', 'Sleep': 50, 'CfgHolder': 4617, 'BootCount': 123, 'BCResetTime': '2021-03-12T16:54:51', 'SaveCount': 449, 'SaveAddress': 'F8000'}, 'StatusFWR': {'Version': '11.0.0(tasmota)', 'BuildDateTime': '2022-02-12T14:13:50', 'Boot': 31, 'Core': '2_7_4_9', 'SDK': '2.2.2-dev(38a443e)', 'CpuFrequency': 80, 'Hardware': 'ESP8266EX', 'CR': '429/699'}, 'StatusLOG': {'SerialLog': 2, 'WebLog': 2, 'MqttLog': 0, 'SysLog': 0, 'LogHost': '', 'LogPort': 514, 'SSId': ['WLAN-Access', ''], 'TelePeriod': 300, 'Resolution': '55C180C0', 'SetOption': ['00008009', '2805C80001000600003C5AFF000000000000', '00000080', '00006000', '00004000']}, 'StatusMEM': {'ProgramSize': 620, 'Free': 380, 'Heap': 25, 'ProgramFlashSize': 1024, 'FlashSize': 1024, 'FlashChipId': '1440EF', 'FlashFrequency': 40, 'FlashMode': 3, 'Features': ['00000809', '8FDAC787', '04368001', '000000CF', '010013C0', 'C000F981', '00004004', '00001000', '00000020'], 'Drivers': '1,2,3,4,5,6,7,8,9,10,12,16,18,19,20,21,22,24,26,27,29,30,35,37,45', 'Sensors': '1,2,3,4,5,6'}, 'StatusNET': {'Hostname': 'SONOFF-RGBW1-5742', 'IPAddress': '192.168.2.31', 'Gateway': '192.168.2.1', 'Subnetmask': '255.255.255.0', 'DNSServer1': '192.168.2.1', 'DNSServer2': '0.0.0.0', 'Mac': '60:01:94:6F:96:6E', 'Webserver': 2, 'HTTP_API': 1, 'WifiConfig': 5, 'WifiPower': 17.0}, 'StatusMQT': {'MqttHost': '192.168.2.12', 'MqttPort': 1883, 'MqttClientMask': 'DVES_%06X', 'MqttClient': 'DVES_6F966E', 'MqttUser': 'DVES_USER', 'MqttCount': 1, 'MAX_PACKET_SIZE': 1200, 'KEEPALIVE': 30, 'SOCKET_TIMEOUT': 4}, 'StatusTIM': {'UTC': '2022-02-23T09:22:23', 'Local': '2022-02-23T10:22:23', 'StartDST': '2022-03-27T02:00:00', 'EndDST': '2022-10-30T03:00:00', 'Timezone': '+01:00', 'Sunrise': '07:43', 'Sunset': '18:23'}, 'StatusSNS': {'Time': '2022-02-23T10:22:23'}, 'StatusSTS': {'Time': '2022-02-23T10:22:23', 'Uptime': '0T00:02:06', 'UptimeSec': 126, 'Heap': 24, 'SleepMode': 'Dynamic', 'Sleep': 10, 'LoadAvg': 99, 'MqttCount': 1, 'POWER': 'ON', 'Dimmer': 100, 'Color': '65FF3F0000', 'HSBColor': '108,75,100', 'White': 0, 'CT': 153, 'Channel': [40, 100, 25, 0, 0], 'Scheme': 0, 'Fade': 'ON', 'Speed': 1, 'LedTable': 'OFF', 'Wifi': {'AP': 1, 'SSId': 'WLAN-Access', 'BSSId': '38:10:D5:15:87:69', 'Channel': 1, 'Mode': '11n', 'RSSI': 64, 'Signal': -68, 'LinkCount': 1, 'Downtime': '0T00:00:03'}}}
-                self.logger.info(f"Received Message decoded as STATUS0 message.")
+                self.logger.info("Received Message decoded as STATUS0 message.")
 
                 # get friendly name
                 friendly_name = payload['Status'].get('FriendlyName', None)
@@ -722,24 +722,24 @@ class Tasmota(MqttPlugin):
 
             elif info_topic == 'INFO1':
                 # payload={'Info1': {'Module': 'Sonoff Basic', 'Version': '11.0.0(tasmota)', 'FallbackTopic': 'cmnd/DVES_2EB8AE_fb/', 'GroupTopic': 'cmnd/tasmotas/'}}
-                self.logger.info(f"Received Message decoded as INFO1 message.")
+                self.logger.info("Received Message decoded as INFO1 message.")
                 self.tasmota_devices[tasmota_topic]['fw_ver'] = payload['Info1'].get('Version', '')
                 self.tasmota_devices[tasmota_topic]['module'] = payload['Info1'].get('Module', '')
 
             elif info_topic == 'INFO2':
                 # payload={'Info2': {'WebServerMode': 'Admin', 'Hostname': 'SONOFF-B1-6318', 'IPAddress': '192.168.2.25'}}
-                self.logger.info(f"Received Message decoded as INFO2 message.")
+                self.logger.info("Received Message decoded as INFO2 message.")
                 self.tasmota_devices[tasmota_topic]['ip'] = payload['Info2'].get('IPAddress', '')
 
             elif info_topic == 'INFO3':
                 # payload={'Info3': {'RestartReason': 'Software/System restart', 'BootCount': 1395}}
-                self.logger.info(f"Received Message decoded as INFO3 message.")
+                self.logger.info("Received Message decoded as INFO3 message.")
                 restart_reason = payload['Info3'].get('RestartReason', '')
                 self.logger.warning(
                     f"Device {tasmota_topic} (IP={self.tasmota_devices[tasmota_topic]['ip']}) just startet. Reason={restart_reason}")
 
             elif info_topic == 'ZbReceived':
-                self.logger.info(f"Received Message decoded as ZbReceived message.")
+                self.logger.info("Received Message decoded as ZbReceived message.")
                 self._handle_ZbReceived(payload)
 
                 # setting new online-timeout
@@ -799,10 +799,8 @@ class Tasmota(MqttPlugin):
         if tasmota_topic in self.tasmota_devices:
             if self.tasmota_devices[tasmota_topic].get('connected_items'):
                 item = self.tasmota_devices[tasmota_topic]['connected_items'].get(itemtype)
-                topic = ''
                 src = ''
                 if info_topic != '':
-                    topic = f"from info_topic '{info_topic}'"
                     src = self.get_instance_name()
                     if src != '':
                         src += ':'
@@ -861,7 +859,7 @@ class Tasmota(MqttPlugin):
 
         # Handling of Zigbee Device Messages
         if self.tasmota_devices[device]['zigbee'] != {}:
-            self.logger.info(f"Received Message decoded as Zigbee Device message.")
+            self.logger.info("Received Message decoded as Zigbee Device message.")
             if type(payload) is dict:
                 for zigbee_device in payload:
                     if zigbee_device not in self.tasmota_zigbee_devices:
@@ -892,7 +890,7 @@ class Tasmota(MqttPlugin):
                                 self.tasmota_zigbee_devices[zigbee_device]['meta'].pop(key)
 
                     # Iterate over payload and set corresponding items
-                    self.logger.debug(f"Item to be checked for update based in Zigbee Message and updated")
+                    self.logger.debug("Item to be checked for update based in Zigbee Message and updated")
                     for element in payload[zigbee_device]:
                         itemtype = f"item_{zigbee_device}.{element.lower()}"
                         value = payload[zigbee_device][element]
@@ -903,7 +901,7 @@ class Tasmota(MqttPlugin):
             # Energy sensors
             energy = payload.get('ENERGY')
             if energy:
-                self.logger.info(f"Received Message decoded as Energy Sensor message.")
+                self.logger.info("Received Message decoded as Energy Sensor message.")
                 if not self.tasmota_devices[device]['sensors'].get('ENERGY'):
                     self.tasmota_devices[device]['sensors']['ENERGY'] = {}
                 if type(energy) is dict:
@@ -942,7 +940,7 @@ class Tasmota(MqttPlugin):
             # DS18B20 sensors
             ds18b20 = payload.get('DS18B20')
             if ds18b20:
-                self.logger.info(f"Received Message decoded as DS18B20 Sensor message.")
+                self.logger.info("Received Message decoded as DS18B20 Sensor message.")
                 if not self.tasmota_devices[device]['sensors'].get('DS18B20'):
                     self.tasmota_devices[device]['sensors']['DS18B20'] = {}
                 if type(ds18b20) is dict:
@@ -956,7 +954,7 @@ class Tasmota(MqttPlugin):
             # AM2301 sensors
             am2301 = payload.get('AM2301')
             if am2301:
-                self.logger.info(f"Received Message decoded as AM2301 Sensor message.")
+                self.logger.info("Received Message decoded as AM2301 Sensor message.")
                 if not self.tasmota_devices[device]['sensors'].get('AM2301'):
                     self.tasmota_devices[device]['sensors']['AM2301'] = {}
                 if type(am2301) is dict:
@@ -1140,7 +1138,7 @@ class Tasmota(MqttPlugin):
                         self.tasmota_zigbee_devices[zigbee_device]['data'].update(data)
 
                         # Iterate over data and set corresponding items
-                        self.logger.debug(f"Item to be checked for update based in Zigbee Status Message")
+                        self.logger.debug("Item to be checked for update based in Zigbee Status Message")
                         for entry in data:
                             itemtype = f"item_{zigbee_device}.{entry.lower()}"
                             value = data[entry]
@@ -1163,17 +1161,17 @@ class Tasmota(MqttPlugin):
         """
         rfreceived = payload.get('RfReceived')
         if rfreceived:
-            self.logger.info(f"Received Message decoded as RF message.")
+            self.logger.info("Received Message decoded as RF message.")
             self.tasmota_devices[device]['rf']['rf_received'] = rfreceived
             self._set_item_value(device, 'item_rf_recv', rfreceived['Data'], function)
         if type(payload) is dict and ('RfSync' or 'RfLow' or 'RfHigh' or 'RfCode') in payload:
-            self.logger.info(f"Received Message decoded as RF message.")
+            self.logger.info("Received Message decoded as RF message.")
             if not self.tasmota_devices[device]['rf'].get('rf_send_result'):
                 self.tasmota_devices[device]['rf']['rf_send_result'] = payload
             else:
                 self.tasmota_devices[device]['rf']['rf_send_result'].update(payload)
         if any(item.startswith("RfKey") for item in payload.keys()):
-            self.logger.info(f"Received Message decoded as RF message.")
+            self.logger.info("Received Message decoded as RF message.")
             self.tasmota_devices[device]['rf']['rfkey_result'] = payload
 
     def _handle_zbconfig(self, device, payload):
@@ -1203,13 +1201,13 @@ class Tasmota(MqttPlugin):
         """
         zbstatus1 = payload.get('ZbStatus1')
         if zbstatus1:
-            self.logger.info(f"Received Message decoded as Zigbee ZbStatus1 message.")
+            self.logger.info("Received Message decoded as Zigbee ZbStatus1 message.")
             self._handle_zbstatus1(device, zbstatus1)
         zbstatus23 = payload.get('ZbStatus2')
         if not zbstatus23:
             zbstatus23 = payload.get('ZbStatus3')
         if zbstatus23:
-            self.logger.info(f"Received Message decoded as Zigbee ZbStatus2 or ZbStatus3 message.")
+            self.logger.info("Received Message decoded as Zigbee ZbStatus2 or ZbStatus3 message.")
             self._handle_zbstatus23(device, zbstatus23)
 
     def _handle_wifi(self, device, payload):
@@ -1227,7 +1225,7 @@ class Tasmota(MqttPlugin):
         if wifi_signal:
             if isinstance(wifi_signal, str) and wifi_signal.isdigit():
                 wifi_signal = int(wifi_signal)
-            self.logger.info(f"Received Message decoded as Wifi message.")
+            self.logger.info("Received Message decoded as Wifi message.")
             self.tasmota_devices[device]['wifi_signal'] = wifi_signal
 
     def _handle_zbbridge_setting(self, payload):
@@ -1244,7 +1242,7 @@ class Tasmota(MqttPlugin):
 
         if self.tasmota_zigbee_bridge['setting'] == self.tasmota_zigbee_bridge_stetting:
             self.tasmota_zigbee_bridge['status'] = 'set'
-            self.logger.info(f'_handle_zbbridge_setting: Setting of Tasmota Zigbee Bridge successful.')
+            self.logger.info('_handle_zbbridge_setting: Setting of Tasmota Zigbee Bridge successful.')
 
     def _update_tasmota_meta(self):
         """
@@ -1292,7 +1290,7 @@ class Tasmota(MqttPlugin):
             "Zigbee Bridge discovered: Prepare Settings and polling information of all connected zigbee devices")
 
         # Configure ZigBeeBridge
-        self.logger.debug(f"Configuration of Tasmota Zigbee Bridge to get MQTT Messages in right format")
+        self.logger.debug("Configuration of Tasmota Zigbee Bridge to get MQTT Messages in right format")
         for setting in self.tasmota_zigbee_bridge_stetting:
             self.publish_tasmota_topic('cmnd', device, setting, self.tasmota_zigbee_bridge_stetting[setting])
             self.logger.debug(

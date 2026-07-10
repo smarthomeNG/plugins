@@ -28,7 +28,6 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class ComfoAir(SmartPlugin):
-
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = '1.3.1'
 
@@ -50,9 +49,9 @@ class ComfoAir(SmartPlugin):
         if self._kwltype in commands.controlset and self._kwltype in commands.commandset:
             self._controlset = commands.controlset[self._kwltype]
             self._commandset = commands.commandset[self._kwltype]
-            self.log_info('Loaded commands for KWL type \'{}\''.format(self._kwltype))
+            self.log_info("Loaded commands for KWL type '{}'".format(self._kwltype))
         else:
-            self.log_err('Commands for KWL type \'{}\' could not be found!'.format(self._kwltype))
+            self.log_err("Commands for KWL type '{}' could not be found!".format(self._kwltype))
             return None
 
         # Remember packet config
@@ -93,7 +92,8 @@ class ComfoAir(SmartPlugin):
         self._lock.acquire()
         try:
             self._serialconnection = serial.Serial(
-                self._serialport, 9600, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE, timeout=2)
+                self._serialport, 9600, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE, timeout=2
+            )
         except Exception as e:
             self._connection_attempts -= 1
             if self._connection_attempts <= 0:
@@ -117,11 +117,11 @@ class ComfoAir(SmartPlugin):
         self.connected = False
         try:
             self._sock.shutdown(socket.SHUT_RDWR)
-        except:
+        except Exception:
             pass
         try:
             self._sock.close()
-        except:
+        except Exception:
             pass
 
     def disconnect_serial(self):
@@ -129,7 +129,7 @@ class ComfoAir(SmartPlugin):
         try:
             self._serialconnection.close()
             self._serialconnection = None
-        except:
+        except Exception:
             pass
 
     def send_bytes(self, packet):
@@ -160,12 +160,12 @@ class ComfoAir(SmartPlugin):
         # Process the read config
         if self.has_iattr(item.conf, 'comfoair_read'):
             commandname = self.get_iattr_value(item.conf, 'comfoair_read')
-            if (commandname is None or commandname not in self._commandset):
-                self.log_err('Item {} contains invalid read command \'{}\'!'.format(item, commandname))
+            if commandname is None or commandname not in self._commandset:
+                self.log_err("Item {} contains invalid read command '{}'!".format(item, commandname))
                 return None
 
             # Remember the read config to later update this item if the configured response comes in
-            self.log_info('Item {} reads by using command \'{}\'.'.format(item, commandname))
+            self.log_info("Item {} reads by using command '{}'.".format(item, commandname))
             commandconf = self._commandset[commandname]
             commandcode = commandconf['Command']
 
@@ -176,14 +176,17 @@ class ComfoAir(SmartPlugin):
                 self._params[commandcode]['items'].append(item)
 
             # Allow items to be automatically initiated on startup
-            if (self.has_iattr(item.conf, 'comfoair_init') and self.get_iattr_value(item.conf, 'comfoair_init') == 'true'):
+            if (
+                self.has_iattr(item.conf, 'comfoair_init')
+                and self.get_iattr_value(item.conf, 'comfoair_init') == 'true'
+            ):
                 self.log_info('Item {} is initialized on startup.'.format(item))
                 # Only add the item to the initial commands if it is not cyclic. Cyclic commands get called on init because this is the first cycle...
                 if commandcode not in self._init_cmds and not self.has_iattr(item.conf, 'comfoair_read_cycle'):
                     self._init_cmds.append(commandcode)
 
             # Allow items to be cyclically updated
-            if (self.has_iattr(item.conf, 'comfoair_read_cycle')):
+            if self.has_iattr(item.conf, 'comfoair_read_cycle'):
                 cycle = int(self.get_iattr_value(item.conf, 'comfoair_read_cycle'))
                 self.log_info('Item {} should read cyclic every {} seconds.'.format(item, cycle))
 
@@ -200,10 +203,10 @@ class ComfoAir(SmartPlugin):
             if commandname is None:
                 return None
             elif commandname not in self._commandset:
-                self.log_err('Item {} contains invalid write command \'{}\'!'.format(item, commandname))
+                self.log_err("Item {} contains invalid write command '{}'!".format(item, commandname))
                 return None
 
-            self.log_info('Item {} writes by using command \'{}\''.format(item, commandname))
+            self.log_info("Item {} writes by using command '{}'".format(item, commandname))
             return self.update_item
         else:
             return None
@@ -227,7 +230,11 @@ class ComfoAir(SmartPlugin):
             if self.has_iattr(item.conf, 'comfoair_read') and self.has_iattr(item.conf, 'comfoair_read_afterwrite'):
                 readcommandname = self.get_iattr_value(item.conf, 'comfoair_read')
                 readafterwrite = self.get_iattr_value(item.conf, 'comfoair_read_afterwrite')
-                self.log_debug('Attempting read after write for item {}, command {}, delay {}'.format(item, readcommandname, readafterwrite))
+                self.log_debug(
+                    'Attempting read after write for item {}, command {}, delay {}'.format(
+                        item, readcommandname, readafterwrite
+                    )
+                )
                 if readcommandname is not None and readafterwrite is not None:
                     aw = float(readafterwrite)
                     time.sleep(aw)
@@ -237,7 +244,7 @@ class ComfoAir(SmartPlugin):
             if self.has_iattr(item.conf, 'comfoair_trigger'):
                 trigger = self.get_iattr_value(item.conf, 'comfoair_trigger')
                 if trigger is None:
-                    self.log_err('Item {} contains invalid trigger command list \'{}\'!'.format(item, trigger))
+                    self.log_err("Item {} contains invalid trigger command list '{}'!".format(item, trigger))
                 else:
                     tdelay = 5  # default delay
                     if self.has_iattr(item.conf, 'comfoair_trigger_afterwrite'):
@@ -304,13 +311,17 @@ class ComfoAir(SmartPlugin):
                 packet.extend(self.encode_specialchars(valuebytes))
             packet.extend(self.int2bytes(checksum, 1))
             packet.extend(self.int2bytes(self._controlset['PacketEnd'], 2))
-            self.log_debug('Preparing command {} with value {} (transformed to value byte \'{}\') to be sent.'.format(commandname, value, self.bytes2hexstring(valuebytes)))
+            self.log_debug(
+                "Preparing command {} with value {} (transformed to value byte '{}') to be sent.".format(
+                    commandname, value, self.bytes2hexstring(valuebytes)
+                )
+            )
 
             # Use a lock to allow only one sender at a time
             self._lock.acquire()
 
             if not self.connected:
-                raise Exception("No connection to ComfoAir.")
+                raise Exception('No connection to ComfoAir.')
 
             try:
                 self.send_bytes(packet)
@@ -326,9 +337,15 @@ class ComfoAir(SmartPlugin):
                 while self.alive and len(packet) < firstpartlen:
                     try:
                         bytestoreceive = firstpartlen - len(packet)
-                        self.log_debug('Trying to receive {} bytes for the first part of the response.'.format(bytestoreceive))
+                        self.log_debug(
+                            'Trying to receive {} bytes for the first part of the response.'.format(bytestoreceive)
+                        )
                         chunk = self.read_bytes(bytestoreceive)
-                        self.log_debug('Received {} bytes chunk of response part 1: {}'.format(len(chunk), self.bytes2hexstring(chunk)))
+                        self.log_debug(
+                            'Received {} bytes chunk of response part 1: {}'.format(
+                                len(chunk), self.bytes2hexstring(chunk)
+                            )
+                        )
                         if len(chunk) == 0:
                             raise Exception('Received 0 bytes chunk - ignoring packet!')
 
@@ -337,9 +354,9 @@ class ComfoAir(SmartPlugin):
                             chunk = self.remove_ack_begin(chunk)
                         packet.extend(chunk)
                     except socket.timeout:
-                        raise Exception("error receiving first part of packet: timeout")
+                        raise Exception('error receiving first part of packet: timeout')
                     except Exception as e:
-                        raise Exception("error receiving first part of packet: {}".format(e))
+                        raise Exception('error receiving first part of packet: {}'.format(e))
 
                 datalen = packet[firstpartlen - 1]
                 # self.log_info('Got a data length of: {}'.format(datalen))
@@ -351,20 +368,26 @@ class ComfoAir(SmartPlugin):
                         # In case of doubled special characters, the packet can be longer (try one byte more at a time)
                         if len(packet) >= packetlen and packet[-2:] != self._packetend:
                             packetlen = len(packet) + 1
-                            self.log_debug('Extended packet length because of encoded characters.'.format(self.bytes2hexstring(chunk)))
+                            self.log_debug('Extended packet length because of encoded characters.')
 
                         # Receive next chunk
                         bytestoreceive = packetlen - len(packet)
-                        self.log_debug('Trying to receive {} bytes for the second part of the response.'.format(bytestoreceive))
+                        self.log_debug(
+                            'Trying to receive {} bytes for the second part of the response.'.format(bytestoreceive)
+                        )
                         chunk = self.read_bytes(bytestoreceive)
-                        self.log_debug('Received {} bytes chunk of response part 2: {}'.format(len(chunk), self.bytes2hexstring(chunk)))
+                        self.log_debug(
+                            'Received {} bytes chunk of response part 2: {}'.format(
+                                len(chunk), self.bytes2hexstring(chunk)
+                            )
+                        )
                         packet.extend(chunk)
                         if len(chunk) == 0:
                             raise Exception('Received 0 bytes chunk - ignoring packet!')
                     except socket.timeout:
-                        raise Exception("error receiving second part of packet: timeout")
+                        raise Exception('error receiving second part of packet: timeout')
                     except Exception as e:
-                        raise Exception("error receiving second part of packet: {}".format(e))
+                        raise Exception('error receiving second part of packet: {}'.format(e))
 
                 # Send ACK
                 self.send_bytes(self._acknowledge)
@@ -374,7 +397,7 @@ class ComfoAir(SmartPlugin):
 
         except Exception as e:
             self.disconnect()
-            self.log_err("send_command failed: {}".format(e))
+            self.log_err('send_command failed: {}'.format(e))
 
         finally:
             # At the end, release the lock
@@ -395,7 +418,13 @@ class ComfoAir(SmartPlugin):
 
         # Decode special characters
         databytes = self.decode_specialchars(rawdatabytes)
-        self.log_debug('Corresponding read command: {}, decoded data: {} (raw: {})'.format(self.bytes2hexstring(commandcodebytes), self.bytes2hexstring(databytes), self.bytes2hexstring(rawdatabytes)))
+        self.log_debug(
+            'Corresponding read command: {}, decoded data: {} (raw: {})'.format(
+                self.bytes2hexstring(commandcodebytes),
+                self.bytes2hexstring(databytes),
+                self.bytes2hexstring(rawdatabytes),
+            )
+        )
 
         # Validate checksum
         packetpart = bytearray()
@@ -403,8 +432,12 @@ class ComfoAir(SmartPlugin):
         packetpart.extend(databytes)  # Decoded data bytes
         checksum = self.calc_checksum(packetpart)
         receivedchecksum = response[len(response) - len(self._packetend) - 1]
-        if (receivedchecksum != checksum):
-            self.log_err('Calculated checksum of {} does not match received checksum of {}! Ignoring reponse.'.format(checksum, receivedchecksum))
+        if receivedchecksum != checksum:
+            self.log_err(
+                'Calculated checksum of {} does not match received checksum of {}! Ignoring reponse.'.format(
+                    checksum, receivedchecksum
+                )
+            )
             return
 
         # Find items using this response command
@@ -429,17 +462,25 @@ class ComfoAir(SmartPlugin):
                 index = commandresppos - 1
                 if index + commandvaluebytes <= len(databytes):
                     # Extract value
-                    valuebytes = databytes[index:index + commandvaluebytes]
+                    valuebytes = databytes[index : index + commandvaluebytes]
                     rawvalue = self.bytes2int(valuebytes)
 
                     # Tranform value
                     value = self.value_transform(rawvalue, commandtype, commandtransform)
-                    self.log_debug('Matched command {} and read transformed value {} (raw value was {}) from byte position {} and byte length {}.'.format(commandname, value, rawvalue, commandresppos, commandvaluebytes))
+                    self.log_debug(
+                        'Matched command {} and read transformed value {} (raw value was {}) from byte position {} and byte length {}.'.format(
+                            commandname, value, rawvalue, commandresppos, commandvaluebytes
+                        )
+                    )
 
                     # Update item
                     item(value, 'ComfoAir')
                 else:
-                    self.log_err('Telegram did not contain enough data bytes for the configured command {} to extract a value!'.format(commandname))
+                    self.log_err(
+                        'Telegram did not contain enough data bytes for the configured command {} to extract a value!'.format(
+                            commandname
+                        )
+                    )
 
     def run(self):
         # automatically (re)connect
@@ -481,7 +522,11 @@ class ComfoAir(SmartPlugin):
                 # Balance unnecessary calls and precision
                 workercycle = int(shortestcycle / 2)
                 self.scheduler_add('ComfoAir-cyclic', self.handle_cyclic_cmds, cycle=workercycle, prio=5, offset=0)
-                self.log_info('Added cyclic worker thread ({} sec cycle). Shortest item update cycle found: {} sec.'.format(workercycle, shortestcycle))
+                self.log_info(
+                    'Added cyclic worker thread ({} sec cycle). Shortest item update cycle found: {} sec.'.format(
+                        workercycle, shortestcycle
+                    )
+                )
         finally:
             self._initread = True
 
@@ -513,7 +558,7 @@ class ComfoAir(SmartPlugin):
         return int.from_bytes(bytesvalue, byteorder='big', signed=False)
 
     def bytes2hexstring(self, bytesvalue):
-        return ":".join("{:02x}".format(c) for c in bytesvalue)
+        return ':'.join('{:02x}'.format(c) for c in bytesvalue)
 
     def encode_specialchars(self, packet):
         specialchar = self._controlset['SpecialCharacter']
@@ -523,7 +568,9 @@ class ComfoAir(SmartPlugin):
             encodedpacket.append(char)
             if char == specialchar:
                 # Encoding works by doubling the special char
-                self.log_debug('Encoded special char at position {} of data bytes {}.'.format(count, self.bytes2hexstring(packet)))
+                self.log_debug(
+                    'Encoded special char at position {} of data bytes {}.'.format(count, self.bytes2hexstring(packet))
+                )
                 encodedpacket.append(char)
         # self.log_debug('Encoded data bytes: {}.'.format(encodedpacket))
         return encodedpacket
@@ -539,7 +586,9 @@ class ComfoAir(SmartPlugin):
                 prevchar = packet[count - 1]
             if char == specialchar and prevchar == specialchar and specialcharremoved == 0:
                 # Decoding works by dropping double sepcial chars
-                self.log_debug('Decoded special char at position {} of packet {}.'.format(count, self.bytes2hexstring(packet)))
+                self.log_debug(
+                    'Decoded special char at position {} of packet {}.'.format(count, self.bytes2hexstring(packet))
+                )
                 specialcharremoved = 1
             else:
                 decodedpacket.append(char)

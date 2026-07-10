@@ -28,9 +28,8 @@ from uuid import getnode as getmac
 
 
 class SmartTV(SmartPlugin):
-
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.3.3"
+    PLUGIN_VERSION = '1.3.3'
 
     def __init__(self, sh, **kwargs):
         self._tv_version = self.get_parameter_value('tv_version')
@@ -41,7 +40,7 @@ class SmartTV(SmartPlugin):
             self.logger.error('No valid tv_version attribute specified to plugin')
             self._init_complete = False
         else:
-            self.logger.debug("Smart TV plugin for {0} SmartTV device initalized".format(self._tv_version))
+            self.logger.debug('Smart TV plugin for {0} SmartTV device initalized'.format(self._tv_version))
 
     def push_samsung_m_series(self, key):
         """
@@ -53,10 +52,18 @@ class SmartTV(SmartPlugin):
             ws = create_connection('ws://%s:%d/api/v2/channels/samsung.remote.control' % (self._host, self._port))
         except Exception as e:
             self.logger.error(
-                "Could not connect to ws://%s:%d/api/v2/channels/samsung.remote.control, to send key: %s. Exception: %s" % (self._host, self._port, key, str(e)))
+                'Could not connect to ws://%s:%d/api/v2/channels/samsung.remote.control, to send key: %s. Exception: %s'
+                % (self._host, self._port, key, str(e))
+            )
             return
-        cmd = '{"method":"ms.remote.control","params":{"Cmd":"Click","DataOfCmd":"%s","Option":"false","TypeOfRemote":"SendRemoteKey"}}' % key
-        self.logger.debug("Sending %s via websocket connection to %s" % (cmd, 'ws://%s:%d/api/v2/channels/samsung.remote.control' % (self._host, self._port)))
+        cmd = (
+            '{"method":"ms.remote.control","params":{"Cmd":"Click","DataOfCmd":"%s","Option":"false","TypeOfRemote":"SendRemoteKey"}}'
+            % key
+        )
+        self.logger.debug(
+            'Sending %s via websocket connection to %s'
+            % (cmd, 'ws://%s:%d/api/v2/channels/samsung.remote.control' % (self._host, self._port))
+        )
         ws.send(cmd)
         ws.close()
         return
@@ -65,21 +72,21 @@ class SmartTV(SmartPlugin):
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((self._host, int(self._port)))
-            self.logger.debug("Connected to {0}:{1}".format(self._host, self._port))
+            self.logger.debug('Connected to {0}:{1}'.format(self._host, self._port))
         except Exception:
-            self.logger.warning("Could not connect to %s:%s, to send key: %s." %
-                                (self._host, self._port, key))
+            self.logger.warning('Could not connect to %s:%s, to send key: %s.' % (self._host, self._port, key))
             return
 
-        src = s.getsockname()[0]            # ip of remote
-        mac = self._int_to_str(getmac())    # mac of remote
-        remote = 'sh.py remote'             # remote name
-        dst = self._host                    # ip of tv
-        app = b'python'                      # iphone..iapp.samsung
-        tv = b'UE32ES6300'                   # iphone.UE32ES6300.iapp.samsung
+        src = s.getsockname()[0]  # ip of remote
+        mac = self._int_to_str(getmac())  # mac of remote
+        remote = 'sh.py remote'  # remote name
+        dst = self._host  # ip of tv
+        app = b'python'  # iphone..iapp.samsung
+        tv = b'UE32ES6300'  # iphone.UE32ES6300.iapp.samsung
 
-        self.logger.debug("src = {0}, mac = {1}, remote = {2}, dst = {3}, app = {4}, tv = {5}".format(
-            src, mac, remote, dst, app, tv))
+        self.logger.debug(
+            'src = {0}, mac = {1}, remote = {2}, dst = {3}, app = {4}, tv = {5}'.format(src, mac, remote, dst, app, tv)
+        )
 
         src = base64.b64encode(src.encode())
         mac = base64.b64encode(mac.encode())
@@ -102,10 +109,10 @@ class SmartTV(SmartPlugin):
 
         try:
             s.send(pkt)
-        except:
+        except OSError:
             try:
                 s.close()
-            except:
+            except OSError:
                 pass
             return
 
@@ -121,20 +128,23 @@ class SmartTV(SmartPlugin):
 
         try:
             s.send(pkt)
-        except:
+        except Exception:
             return
         finally:
             try:
                 s.close()
-            except:
+            except Exception:
                 pass
-        self.logger.debug("Send {0} to Smart TV".format(key))
+        self.logger.debug('Send {0} to Smart TV'.format(key))
         time.sleep(0.1)
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'smarttv'):
-            self.logger.debug("Smart TV Item {0} with value {1} for plugin instance {2} found!".format(
-                item, self.get_iattr_value(item.conf, 'smarttv'), self.get_instance_name()))
+            self.logger.debug(
+                'Smart TV Item {0} with value {1} for plugin instance {2} found!'.format(
+                    item, self.get_iattr_value(item.conf, 'smarttv'), self.get_instance_name()
+                )
+            )
             return self.update_item
         else:
             return None
@@ -180,7 +190,7 @@ class SmartTV(SmartPlugin):
         if not 0 <= int_val <= max_int:
             raise IndexError('integer out of bounds: %r!' % hex(int_val))
 
-        max_word = 2 ** word_size - 1
+        max_word = 2**word_size - 1
 
         words = []
         for _ in range(num_words):

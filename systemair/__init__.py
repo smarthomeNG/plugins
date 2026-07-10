@@ -27,7 +27,7 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class Systemair(SmartPlugin):
-    PLUGIN_VERSION = "1.3.1"
+    PLUGIN_VERSION = '1.3.1'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, **kwargs):
@@ -41,33 +41,35 @@ class Systemair(SmartPlugin):
         self.scheduler_add(__name__, self._read_modbus, prio=5, cycle=self._update_cycle)
         self.my_reg_items = []
         self.mod_write_repeat = 20  # if port is already open, e.g on auto-update,
-                                    # repeat mod_write attempt x times a 1 seconds
-        self._lockmb = threading.Lock()    # modbus serial port lock
+        # repeat mod_write attempt x times a 1 seconds
+        self._lockmb = threading.Lock()  # modbus serial port lock
         self.init_serial_connection(self.serialport, self.slave_address)
-        self._reg_sets = [{'name': 'fan', 'range': range(101, 138 + 1)},
-                          {'name': 'heater', 'range': range(201, 221 + 1), 'scaled_signed': range(208, 218 + 1)},
-                          {'name': 'damper', 'range': range(301, 301 + 1)},
-                          {'name': 'rotor', 'range': range(351, 352 + 1)},
-                          {'name': 'week', 'range': range(401, 459 + 1)},
-                          {'name': 'system', 'range': range(501, 507 + 1)},
-                          {'name': 'clock', 'range': range(551, 557 + 1)},
-                          {'name': 'filter', 'range': range(601, 602 + 1)},
-                          {'name': 'VTC_defr', 'range': range(651, 654 + 1)},
-                          {'name': 'VTR_defr', 'range': range(671, 672 + 1)},
-                          {'name': 'dig_in', 'range': range(701, 709 + 1)},
-                          {'name': 'PCU_PB', 'range': range(751, 751 + 1)},
-                          {'name': 'alarms', 'range': range(801, 802 + 1)},
-                          {'name': 'demand', 'range': range(851, 859 + 1)},
-                          {'name': 'wireless', 'range': range(901, 1020 + 1)},]
+        self._reg_sets = [
+            {'name': 'fan', 'range': range(101, 138 + 1)},
+            {'name': 'heater', 'range': range(201, 221 + 1), 'scaled_signed': range(208, 218 + 1)},
+            {'name': 'damper', 'range': range(301, 301 + 1)},
+            {'name': 'rotor', 'range': range(351, 352 + 1)},
+            {'name': 'week', 'range': range(401, 459 + 1)},
+            {'name': 'system', 'range': range(501, 507 + 1)},
+            {'name': 'clock', 'range': range(551, 557 + 1)},
+            {'name': 'filter', 'range': range(601, 602 + 1)},
+            {'name': 'VTC_defr', 'range': range(651, 654 + 1)},
+            {'name': 'VTR_defr', 'range': range(671, 672 + 1)},
+            {'name': 'dig_in', 'range': range(701, 709 + 1)},
+            {'name': 'PCU_PB', 'range': range(751, 751 + 1)},
+            {'name': 'alarms', 'range': range(801, 802 + 1)},
+            {'name': 'demand', 'range': range(851, 859 + 1)},
+            {'name': 'wireless', 'range': range(901, 1020 + 1)},
+        ]
 
     def init_serial_connection(self, serialport, slave_address):
         try:
             if self.instrument is None:
                 self.instrument = minimalmodbus.Instrument(serialport, int(slave_address))
             return True
-        except:
+        except Exception:
             self.instrument = None
-            self.logger.error("Failed to initialize modbus on {serialport}".format(serialport=serialport))
+            self.logger.error('Failed to initialize modbus on {serialport}'.format(serialport=serialport))
             return False
 
     def _read_modbus(self):
@@ -80,10 +82,16 @@ class Systemair(SmartPlugin):
 
             for reg_set in self._reg_sets:
                 if 'range_used' in reg_set:
-                    read_regs = dict(zip(reg_set['range_used'], self.instrument.read_registers(
-                                         reg_set['range_used'].start - 1,
-                                         reg_set['range_used'].stop - reg_set['range_used'].start,
-                                         functioncode=3)))
+                    read_regs = dict(
+                        zip(
+                            reg_set['range_used'],
+                            self.instrument.read_registers(
+                                reg_set['range_used'].start - 1,
+                                reg_set['range_used'].stop - reg_set['range_used'].start,
+                                functioncode=3,
+                            ),
+                        )
+                    )
                     if 'scaled_signed' in reg_set:
                         for scaled_reg in reg_set['scaled_signed']:
                             read_regs[scaled_reg] = c_short(read_regs[scaled_reg]).value / 10
@@ -91,16 +99,16 @@ class Systemair(SmartPlugin):
                     for reg in reg_set['regs_used']:
                         for item in reg_set['regs_used'][reg]:
                             try:
-                                item(read_regs[reg], 'systemair_value_from_bus', "Reg {}".format(reg))
+                                item(read_regs[reg], 'systemair_value_from_bus', 'Reg {}'.format(reg))
                             except Exception as e:
-                                self.logger.error("Modbus: Exception when updating {} {}".format(item, e))
+                                self.logger.error('Modbus: Exception when updating {} {}'.format(item, e))
 
             # get coils
             for coil_addr in self._update_coil:
                 value = self.instrument.read_bit(coil_addr - 1, functioncode=2)
                 if value is not None:
                     for item in self._update_coil[coil_addr]:
-                        item(value, 'systemair_value_from_bus', "Coil {}".format(coil_addr))
+                        item(value, 'systemair_value_from_bus', 'Coil {}'.format(coil_addr))
 
         except Exception as err:
             self.logger.error(err)
@@ -116,7 +124,7 @@ class Systemair(SmartPlugin):
         self.alive = False
 
     def connect(self):
-        self.logger.debug("systemair_value_from_bus: connect")
+        self.logger.debug('systemair_value_from_bus: connect')
 
     def update_item(self, item, caller=None, source=None, dest=None):
         # ignore values from bus
@@ -130,11 +138,12 @@ class Systemair(SmartPlugin):
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'systemair_regaddr'):
             modbus_regaddr = int(self.get_iattr_value(item.conf, 'systemair_regaddr'))
-            self.logger.debug("systemair_value_from_bus: {0} connected to register {1:#04x}".format(item, modbus_regaddr))
+            self.logger.debug(
+                'systemair_value_from_bus: {0} connected to register {1:#04x}'.format(item, modbus_regaddr)
+            )
             self.my_reg_items.append(item)
             for reg_set in self._reg_sets:
                 if modbus_regaddr in reg_set['range']:
-
                     if 'regs_used' not in reg_set:
                         reg_set['regs_used'] = dict()
                     if modbus_regaddr not in reg_set['regs_used']:
@@ -142,16 +151,25 @@ class Systemair(SmartPlugin):
                     reg_set['regs_used'][modbus_regaddr].add(item)
 
                     if 'range_used' in reg_set:
-                        reg_set['range_used'] = range(min(reg_set['range_used'].start, modbus_regaddr), max(reg_set['range_used'].stop, modbus_regaddr + 1))
+                        reg_set['range_used'] = range(
+                            min(reg_set['range_used'].start, modbus_regaddr),
+                            max(reg_set['range_used'].stop, modbus_regaddr + 1),
+                        )
                     else:
                         reg_set['range_used'] = range(modbus_regaddr, modbus_regaddr + 1)
-                    self.logger.debug("systemair: adding reg {} to reg_set {} {}".format(modbus_regaddr, reg_set['name'], reg_set['range_used']))
-                    self.logger.debug("systemair: regs used: {}".format(reg_set['regs_used']))
+                    self.logger.debug(
+                        'systemair: adding reg {} to reg_set {} {}'.format(
+                            modbus_regaddr, reg_set['name'], reg_set['range_used']
+                        )
+                    )
+                    self.logger.debug('systemair: regs used: {}'.format(reg_set['regs_used']))
                     break
 
         if self.has_iattr(item.conf, 'systemair_coiladdr'):
             modbus_coiladdr = int(self.get_iattr_value(item.conf, 'systemair_coiladdr'))
-            self.logger.debug("systemair_value_from_bus: {0} connected to coil register {1:#04x}".format(item, modbus_coiladdr))
+            self.logger.debug(
+                'systemair_value_from_bus: {0} connected to coil register {1:#04x}'.format(item, modbus_coiladdr)
+            )
             if modbus_coiladdr not in self._update_coil:
                 self._update_coil[modbus_coiladdr] = set()
 
@@ -173,7 +191,7 @@ class Systemair(SmartPlugin):
         except serial.serialutil.SerialException as err:
             if err.args[0].lower() == 'port is already open.':
                 if self.mod_write_repeat < repeat_count:
-                    self.logger.error("Could not write register value to systemair modbus. Maximal retries reached.")
+                    self.logger.error('Could not write register value to systemair modbus. Maximal retries reached.')
                     return
                 repeat_count += 1
                 self.logger.warning('Could not write register value to systemair modbus. Port is already open.')
