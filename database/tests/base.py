@@ -48,7 +48,14 @@ class TestDatabaseBase(unittest.TestCase):
             'copy_database_name': '',
         }
 
-        plugin = Database(self.sh)
+        plugin = Database.__new__(Database)
+        # Mirrors lib.plugin.PluginWrapper's real load sequence: _set_sh() is
+        # called BEFORE __init__() runs (see lib/plugin.py), so code in
+        # __init__() can rely on self.get_sh()/self._sh already being set —
+        # e.g. Database._resolve_sqlite_database_path(). Constructing via
+        # Database(self.sh) directly skips that wiring entirely.
+        plugin._set_sh(self.sh)
+        plugin.__init__(self.sh)
         for item in self.sh.return_items():
             plugin.parse_item(item)
         return plugin

@@ -121,6 +121,7 @@ class Database(SmartPlugin):
         # parameters: driver, connect, prefix="", cycle=60, precision=2
         self.driver = self.get_parameter_value('driver')
         self._connect = self.get_parameter_value('connect')  # list of connection parameters
+        self._connect = self._resolve_sqlite_database_path(self._connect)
         self._prefix = self.get_parameter_value('prefix')
         if self._prefix is None:
             self._prefix = ''
@@ -2067,6 +2068,49 @@ class Database(SmartPlugin):
     # ------------------------------------------
     #    Database specific stuff
     # ------------------------------------------
+
+    def _resolve_sqlite_database_path(self, connect):
+        """
+        Rewrite a relative sqlite ``database:<path>`` connect entry to an
+        absolute path anchored at SmartHomeNG's install directory.
+
+        lib.db.Database.connect() hands the raw connect params straight to
+        ``sqlite3.connect()``, which resolves a relative path against
+        ``os.getcwd()`` *at call time* — not once, at startup. The very
+        first connect happens early enough that cwd is still correct, but
+        a later reconnect (_initialize_db(), e.g. triggered by
+        Items.rename_item()'s STOP_ON_ITEM_CHANGE pause/resume cycle
+        calling run() well after startup, the only other place in the
+        codebase that calls plugin.run() again post-startup) re-resolves
+        the same relative string against whatever cwd happens to be at
+        that later moment. A mismatch there is exactly what caused a real
+        incident: SmartHomeNG interpreting the resulting "unable to open
+        database file" as a fatal error and shutting itself down (see
+        _initialize_db()'s sqlite3-specific self._sh.restart() call).
+        Resolving to an absolute path once, here, makes the later
+        reconnect immune to cwd entirely.
+
+        Only applies to the sqlite3 driver — for other DB-API drivers
+        (e.g. pymysql) the ``database`` key names a schema, not a file.
+        ``:memory:`` and already-absolute paths are left untouched.
+
+        :param connect: Raw 'connect' parameter list from plugin.yaml
+        :type connect: list
+
+        :return: connect, with a relative sqlite database path resolved
+                 to an absolute one
+        :rtype: list
+        """
+        if self.driver.lower() != 'sqlite3' or not isinstance(connect, list):
+            return connect
+
+        resolved = []
+        for entry in connect:
+            key, sep, value = entry.partition(':')
+            if sep and key.strip() == 'database' and value not in ('', ':memory:') and not os.path.isabs(value):
+                entry = f'{key}:{os.path.join(self.get_sh().get_basedir(), value)}'
+            resolved.append(entry)
+        return resolved
 
     def _initialize_db(self):
         # initialize main db connection
