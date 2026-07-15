@@ -75,7 +75,7 @@ class Resol(SmartPlugin):
                 resol_source = self.get_iattr_value(parentItem.conf, 'resol_source')
                 self.logger.debug(f"Parent source: {resol_source}")
             else:
-                self.logger.error(f"Attribute resol_source missing in parent item of item {item}")
+                self.logger.error(f"Attribute resol_source missing in parent item of item {item} with resol_offset: {resol_offset}")
                 return
 
             if self.has_iattr(item.conf, 'resol_bituse'):
@@ -83,7 +83,6 @@ class Resol(SmartPlugin):
                 self._items.append(item)
                 self.logger.debug(f"Debug: added item {item} with resol_bituse {resol_bituse}")
                 # As plugin is read-only, no need to register item for event handling via smarthomeNG core:
-
             else:
                 self.logger.error(f"resol_offset found in item {item} but no bitsize given, specify bitsize in item with resol_bitsize = ")
 
@@ -262,9 +261,12 @@ class Resol(SmartPlugin):
 
     # Extract protocol Version from msg
     def get_protocolversion(self, msg):
-        if hex(ord(msg[4])) == '0x10': return "PV1"
-        if hex(ord(msg[4])) == '0x20': return "PV2"
-        if hex(ord(msg[4])) == '0x30': return "PV3"
+        if hex(ord(msg[4])) == '0x10':
+            return "PV1"
+        if hex(ord(msg[4])) == '0x20':
+            return "PV2"
+        if hex(ord(msg[4])) == '0x30':
+            return "PV3"
         return "UNKNOWN"
 
     # Extract Destination from msg NOT USED AT THE MOMENT
@@ -396,8 +398,8 @@ class Resol(SmartPlugin):
             if self.has_iattr(item.conf, 'resol_isSigned'):
                 resol_isSigned = self.get_iattr_value(item.conf, 'resol_isSigned')
 
-            end = int(resol_offset) + int((resol_bituse + 1) / 8)
-            #self.logger.warning(f"Debug Start: {resol_offset}, End: {end}")
+            # end = int(resol_offset) + int((resol_bituse + 1) / 8)
+            # self.logger.warning(f"Debug Start: {resol_offset}, End: {end}")
 
             value = 0
             count = 0
