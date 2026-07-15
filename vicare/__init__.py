@@ -203,7 +203,7 @@ class Vicare(SmartPlugin):
         import hashlib
         
         if codeVerifier == '':
-            self.logger.error(f"calculate_code_challenge: codeVerifier is empty.")
+            self.logger.error("calculate_code_challenge: codeVerifier is empty.")
             return
         codeChallenge = hashlib.sha256(codeVerifier.encode('utf-8')).digest()
         codeChallenge = base64.urlsafe_b64encode(codeChallenge).decode('utf-8')
@@ -313,7 +313,7 @@ class Vicare(SmartPlugin):
             self.logger.debug("Successfully saved accessToken in plugin.yaml")
 #            self.pollData = True
         else:
-            self.logger.error(f"Response did not contain an access token!")
+            self.logger.error("Response did not contain an access token!")
             return False
 
         if 'refresh_token' in responseGetTokenJson:
@@ -580,7 +580,7 @@ class Vicare(SmartPlugin):
     
         if len(self.featureListJson) == 0:
             if not self._noFeatures_warning: 
-                self.logger.warning(f"pollFeature: No features found")
+                self.logger.warning("pollFeature: No features found")
             self._noFeatures_warning = True
         else: 
             self._noFeatures_warning = False
@@ -829,7 +829,7 @@ class Vicare(SmartPlugin):
         self.logger.warning(f"Debug: token reponse: {token}")
 
         if oauth_session.token is None:
-            self.logger.error(f"PyViCareInvalidCredentialsError")
+            self.logger.error("PyViCareInvalidCredentialsError")
             return 'error'
         else:
             self.logger.warning(f"SUCCESS: Valid token received: {oauth_session.token}")
