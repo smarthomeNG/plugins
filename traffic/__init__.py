@@ -38,6 +38,7 @@ class Traffic(SmartPlugin):
         api key. For your own key see https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model
         @param language: two char language code. default: de
         """
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self._apikey = self.get_parameter_value('apikey')
         self._language = self.get_parameter_value('language')

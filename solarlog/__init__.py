@@ -47,6 +47,7 @@ class SolarLog(SmartPlugin):
     PLUGIN_VERSION = '1.6.2'
 
     def __init__(self, sh, *args, **kwargs):
+        super().__init__()
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         """

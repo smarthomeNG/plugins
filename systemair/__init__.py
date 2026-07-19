@@ -31,6 +31,7 @@ class Systemair(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, **kwargs):
+        super().__init__()
         self.instrument = None
         self.serialport = self.get_parameter_value('serialport')
         self.slave_address = self.get_parameter_value('slave_address')

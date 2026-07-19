@@ -32,6 +32,7 @@ class ComfoAir(SmartPlugin):
     PLUGIN_VERSION = '1.3.1'
 
     def __init__(self, sh, **kwargs):
+        super().__init__()
         self.connected = False
         self._params = {}
         self._init_cmds = []

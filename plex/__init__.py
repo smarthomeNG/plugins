@@ -30,6 +30,7 @@ class Plex(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, **kwargs):
+        super().__init__()
         self._displayTime = self.get_parameter_value('displaytime')
         self.logger.info('Init Plex notifications')
         self._images = ['info', 'error', 'warning']

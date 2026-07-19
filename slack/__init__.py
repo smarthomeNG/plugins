@@ -32,6 +32,7 @@ class Slack(SmartPlugin):
     SLACK_INCOMING_WEBHOOK = 'https://hooks.slack.com/services/%s'
 
     def __init__(self, sh):
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init Slack notifications')
         self._sh = sh

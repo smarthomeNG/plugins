@@ -36,6 +36,7 @@ class Bsblan(SmartPlugin):
     _items = []
 
     def __init__(self, sh, *args, **kwargs):
+        super().__init__()
         self.logger.info('INIT')
         self.SH = sh
         return

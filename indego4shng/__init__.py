@@ -86,6 +86,7 @@ class Indego4shNG(SmartPlugin):
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
         """
+        super().__init__()
         from bin.smarthome import VERSION
 
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':

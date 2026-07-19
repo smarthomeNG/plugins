@@ -73,6 +73,7 @@ class Milight(SmartPlugin):
         a reference to the sh object any more.
 
         """
+        super().__init__()
         from bin.smarthome import VERSION
 
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':

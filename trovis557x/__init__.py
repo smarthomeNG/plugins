@@ -51,6 +51,7 @@ class trovis557x(SmartPlugin):
 
     # Starten
     def __init__(self, sh, *args, **kwargs):
+        super().__init__()
         self._init_complete = False
         self.logger = logging.getLogger(__name__)
         self.sh = sh

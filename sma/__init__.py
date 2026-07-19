@@ -415,6 +415,7 @@ class SMA(SmartPlugin):
     PLUGIN_VERSION = '1.3.2'
 
     def __init__(self, sh, **kwargs):
+        super().__init__()
         self.shtime = Shtime.get_instance()
 
         # TODO: self._own_bt_addr setzen

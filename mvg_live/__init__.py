@@ -34,6 +34,7 @@ class MVG_Live(SmartPlugin):
         """
         Initializes the plugin
         """
+        super().__init__()
         self.logger = logging.getLogger(__name__)
 
     def run(self):

@@ -107,6 +107,7 @@ class Kostal(SmartPlugin):
     }
 
     def __init__(self, sh, **kwargs):
+        super().__init__()
         self.ip = self.get_parameter_value('ip')
         self.user = self.get_parameter_value('user')
         self.passwd = self.get_parameter_value('passwd')

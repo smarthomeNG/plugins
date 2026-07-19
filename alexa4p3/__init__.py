@@ -70,6 +70,7 @@ class Alexa4P3(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, *args, **kwargs):
+        super().__init__()
         from bin.smarthome import VERSION
 
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':

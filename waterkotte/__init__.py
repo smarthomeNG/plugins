@@ -93,6 +93,7 @@ class Waterkotte(SmartPlugin):
     _tag_noconv = {'A516', 'A517', 'A528', 'A529', 'A522', 'A523', 'A524', 'A525', 'D8'}
 
     def __init__(self, smarthome, ip, user='waterkotte', passwd='waterkotte', cycle=300):
+        super().__init__()
         self._sh = smarthome
         self.ip = ip
         self.user = user

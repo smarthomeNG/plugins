@@ -33,6 +33,7 @@ class wettercom(SmartPlugin):
     _server = 'api.wetter.com'
 
     def __init__(self, smarthome):
+        super().__init__()
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
         self._project = self.get_parameter_value('project')

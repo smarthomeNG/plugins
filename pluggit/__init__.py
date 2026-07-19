@@ -271,6 +271,7 @@ class Pluggit(SmartPlugin):
 
     # Initialize connection
     def __init__(self, sh, *args, **kwargs):
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self._host = self.get_parameter_value('host')
         self._port = int(self.get_parameter_value('port'))

@@ -32,6 +32,7 @@ class SmartTV(SmartPlugin):
     PLUGIN_VERSION = '1.3.3'
 
     def __init__(self, sh, **kwargs):
+        super().__init__()
         self._tv_version = self.get_parameter_value('tv_version')
         self._host = self.get_parameter_value('host')
         self._port = self.get_parameter_value('port')

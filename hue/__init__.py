@@ -68,7 +68,7 @@ class HUE(SmartPlugin):
         cycle_bridges='60',
         default_transitionTime='0.4',
     ):
-
+        super().__init__()
         self.logger = logging.getLogger(__name__)
 
         #        self.logger.warning("self._parameters = {}".format(str(self._parameters)))

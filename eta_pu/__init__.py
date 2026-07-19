@@ -134,6 +134,7 @@ class ETA_PU(SmartPlugin):
     PLUGIN_VERSION = '1.1.2'
 
     def __init__(self, sh, *args, **kwargs):
+        super().__init__()
         self._cycle = 30
         self.logger = logging.getLogger(__name__)
         self._uri = dict()

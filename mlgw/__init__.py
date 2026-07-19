@@ -769,6 +769,7 @@ class Mlgw(SmartPlugin):
     #
     # def __init__(self, smarthome, host='mlgw.local', port=9000, username='mlgw', password='mlgw', rooms=[], mlns=[], log_mlgwtelegrams='0'):
     def __init__(self, smarthome):
+        super().__init__()
 
         self.logger = logging.getLogger(__name__)
         global roomdict, reverse_roomdict

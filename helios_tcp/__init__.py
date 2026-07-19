@@ -249,6 +249,7 @@ class HeliosTCP(SmartPlugin):
     _items = {}
 
     def __init__(self, sh):
+        super().__init__()
         from bin.smarthome import VERSION
 
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':

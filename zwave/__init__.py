@@ -71,6 +71,8 @@ class ZWave(SmartPlugin):
         returns the value in the datatype that is defined in the metadata.
         """
 
+        super().__init__()
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 

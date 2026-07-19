@@ -35,6 +35,7 @@ class LevelJet(SmartPlugin):
     _items = []
 
     def __init__(self, smarthome, serialport, baudrate='19200', update_cycle='240'):
+        super().__init__()
         self._sh = smarthome
         self.enable = False
         self.logger = logging.getLogger(__name__)

@@ -34,6 +34,7 @@ class Kostalmodbus(SmartPlugin):
     _items = []
 
     def __init__(self, sh, *args, **kwargs):
+        super().__init__()
         self.inverter = Inverter(self.get_parameter_value('inverter_ip'), self.get_parameter_value('modbus_port'))
         self._cycle = int(self.get_parameter_value('update_cycle'))
         return

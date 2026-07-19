@@ -35,6 +35,7 @@ class Squeezebox(SmartPlugin):
     PLUGIN_VERSION = '1.4.0'
 
     def __init__(self, smarthome):
+        super().__init__()
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
         try:

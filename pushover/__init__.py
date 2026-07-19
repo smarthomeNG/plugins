@@ -34,6 +34,7 @@ class Pushover(SmartPlugin):
     _url = 'https://api.pushover.net/1/messages.json'
 
     def __init__(self, sh, *args, **kwargs):
+        super().__init__()
         from bin.smarthome import VERSION
 
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':

@@ -36,6 +36,7 @@ class Pushbullet(SmartPlugin):
     PLUGIN_VERSION = '1.5.2'
 
     def __init__(self, sh, *args, **kwargs):
+        super().__init__()
         logging.getLogger('requests').setLevel(logging.WARNING)
         self._apikey = self.get_parameter_value('apikey')
         self._deviceid = self.get_parameter_value('deviceid')

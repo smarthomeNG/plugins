@@ -37,6 +37,7 @@ class XMPP(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, smarthome, jid, password, logic='XMPP'):
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         server = self.get_parameter_value('server')
         plugins = self.get_parameter_value('plugins')

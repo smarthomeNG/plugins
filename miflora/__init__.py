@@ -34,6 +34,7 @@ class Miflora(SmartPlugin):
         """
         Initalizes the plugin.
         """
+        super().__init__()
         self._bt_addr = self.get_parameter_value('bt_addr')
         self._bt_library = self.get_parameter_value('bt_library')
         self._cycle = self.get_parameter_value('cycle')
