@@ -11,7 +11,7 @@ plugin:
              \n
              Dabei ist es möglich, verschiedene Geräte aus SmartHomeNG aus anzusprechen und zu steuern, als auch über SmartHomeNG auszulesen.\n
              \n
-             Die Steuerungsmöglichkeiten umfassen (derzeit) unter Anderem:\n
+             Die Steuerungsmöglichkeiten umfassen unter Anderem:\n
                 \n
                 - Gerät ein-/ausschalten, Standby, Sleep-Timer\n
                 - Wiedergabequelle auswählen (geräteabhängig, z.B. NetRadio, Radio, NetUSB, Streamingdienste)\n
@@ -19,8 +19,11 @@ plugin:
                 - Lautstärkesteuerung\n
                 - Anwahl von Favoriten und Presets (geräteabhängig)\n
                 - Stellen und De-/Aktivieren des Weckers (geräteabhängig)\n
+                - Tuner-Steuerung (AM/FM): Band, Frequenz, Sendersuchlauf, Presets\n
+                - Klangfeld/DSP (geräteabhängig): Sound Program, 3D Surround, Direct/Pure Direct, Enhancer, Klangregelung, Equalizer, Balance\n
+                - Multiroom (MusicCast Link, geräteabhängig, Grundfunktionen an echter Mehrgeräte-Hardware getestet): Gruppen erstellen/beitreten/verlassen, Clients hinzufügen/entfernen\n
             \n
-            Die Möglichkeiten, Statusinformationen abzurufen, umfassen (derzeit) u.a.\n
+            Die Möglichkeiten, Statusinformationen abzurufen, umfassen u.a.\n
                 \n
                 - Gerätestatus (an/aus/Standby), \n
                 - Lautstärke, Stummschaltung,\n
@@ -30,13 +33,13 @@ plugin:
                 - aktuelle Wiedergabeposition (quellenabhängig),\n
                 - Coverbild des aktuellen Titels (quellenabhängig)\n
             \n
-            Weitere Funktionen werden nach Bedarf und Verfügbarkeit von entsprechenden Geräten implementiert. Grundsätzlich ist die Architektur des Plugins so strukturiert, dass prinzipiell alle verfügbaren Kommandos im entsprechenden Steuerungsstandard implementiert werden können. Für noch nicht implementierte Steuerungsbefehle ist ein genereller "Pass-Thru"-Befehl vorhanden, so dass beliebige Befehlssequenzen an das Gerät gesendet werden können.\n
+            Für noch nicht implementierte Steuerungsbefehle ist ein genereller "Pass-Thru"-Befehl vorhanden, so dass beliebige Befehlssequenzen an das Gerät gesendet werden können.\n
             '
         en: 'This plugin gives access to Yamaha MusicCast-devices in SmartHomeNG.\n
              \n
              You can access the devices from SmartHomeNG to control them as well as to read status information.\n
              \n
-             Control directives implemented (so far) include:\n
+             Control directives implemented include:\n
                 \n
                 - switch device on/off, standby, sleep timer,\n
                 - select playback source (device dependent, e.g. NetRadio, AM/FM radio, NetUSB, streaming services),\n
@@ -44,8 +47,11 @@ plugin:
                 - volume control,\n
                 - selection of favorites and presets (device dependent)\n
                 - setting and de-/activating the alarm clock (device dependent)\n
+                - tuner control (AM/FM): band, frequency, seek, presets\n
+                - DSP/sound field (device dependent): sound program, 3D surround, direct/pure direct, enhancer, tone control, equalizer, balance\n
+                - Multi-room (MusicCast Link, device dependent, basic functions tested against real multi-device hardware): create/join/leave groups, add/remove clients\n
              \n
-             Status information implemented (so far) include:\n
+             Status information implemented include:\n
                 \n
                 - device status (on/off/standby),\n
                 - volume/mute,\n
@@ -55,20 +61,17 @@ plugin:
                 - current playback position (depends on pb source),\n
                 - cover image of current title (depends on pb source)\n
              \n
-             New control functions will be implemented as requested and as far as suitable devices are available for testing. Generally, the plugins architecture allows adding any valid control sequence described in the standard. For not yet implemented control directived, a general pass-thru option is available for sending arbitrary control sequences to the device.\n
+             For not yet implemented control directives, a general pass-thru option is available for sending arbitrary control sequences to the device.\n
              '
     maintainer: Morg
     tester: Morg
     state: ready
     keywords: iot yxc yamaha media musiccast
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1174064-plugin-yamaha-musiccast-geräte-neuere-generation
-
-    version: 1.0.7                 # Plugin version
-    sh_minversion: '1.3'             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False          # plugin supports multi instance
-    restartable: False
+    version: 2.0.0                 # Plugin version
+    sh_minversion: '1.12'             # minimum shNG version to use this plugin
+    multi_instance: false          # plugin supports multi instance
+    restartable: true
     classname: YamahaYXC              # class containing the plugin
 
 parameters: NONE
@@ -79,8 +82,8 @@ item_attributes:
     yamahayxc_host:
         type: str
         description:
-            de: 'Hostname für das Yamaha-Gerät. Gilt für alle untergeordneten Items.'
-            en: 'Hostname for the Yamaha device. Applies to all child items.'
+            de: 'Hostname oder IP-Adresse für das Yamaha-Gerät. Gilt für alle untergeordneten Items.'
+            en: 'Hostname or IP address for the Yamaha device. Applies to all child items.'
 
     yamahayxc_cmd:
         type: str
@@ -92,93 +95,833 @@ item_attributes:
         type: str
         default: 'main'
         description:
-            de: 'Ausgewählte Zone'
-            en: 'Selected zone'
+            de: 'Ausgewählte Zone. Gilt für alle untergeordneten Items.'
+            en: 'Selected zone. Applies to all child items.'
 
 item_structs:
     # Definition of item structs to be used for use with this plugin
 
+    #
+    # the following structs contain the building blocks for the 
+    # device structs the user should use (see far below)
+    #
+
+    zone_amp:
+        # zone-scoped amp core content, applicable to all zones
+
+        power:
+            remark: Ein-/Ausschalter für die aktuelle Zone
+            type: bool
+            yamahayxc_cmd: power
+            enforce_updates: true
+
+        volume:
+            remark: Lautstärke der aktuellen Zone in Prozent
+            type: num
+            yamahayxc_cmd: volume_percent
+            enforce_updates: true
+
+            min:
+                remark: Minimaler Lautstärkewert für volume.raw. Nur-Lese-Zugriff.
+                type: num
+                yamahayxc_cmd: volume_min
+                visu_acl: ro
+
+            max:
+                remark: Maximaler Lautstärkewert für volume.raw. Nur-Lese-Zugriff.
+                type: num
+                yamahayxc_cmd: volume_max
+                visu_acl: ro
+
+            step:
+                remark: Schrittweite für Lautstärkewert für volume.raw. Nur-Lese-Zugriff.
+                type: num
+                yamahayxc_cmd: volume_step
+                visu_acl: ro
+
+            raw:
+                remark: Lautstärke der aktuellen Zone in Gerätewerten
+                type: num
+                yamahayxc_cmd: volume
+                visu_acl: rw
+                enforce_updates: true
+
+        mute:
+            remark: Stummschaltung
+            type: bool
+            yamahayxc_cmd: mute
+            enforce_updates: true
+
+        sleep:
+            remark: Ausschalttimer, gültige Werte 0, 30, 60, 90, 120
+            type: num
+            yamahayxc_cmd: sleep
+            enforce_updates: true
+
+        input:
+            remark: Tonquelle, gültige Werte in .values
+            type: str
+            yamahayxc_cmd: input
+            enforce_updates: true
+
+            values:
+                remark: Gültige Werte für Tonquelle. Nur-Lese-Zugriff.
+                type: list
+                yamahayxc_cmd: input_sources
+                visu_acl: ro
+
+        update:
+            remark: Alle Werte für aktuelles Gerät neu lesen. 
+            type: bool
+            yamahayxc_cmd: state
+            enforce_updates: true
+
+        passthru:
+            remark: Item, um fertig formatierte Befehlssequenzen an das Gerät zu senden.
+            type: str
+            yamahayxc_cmd: passthru
+            enforce_updates: true
+
+    zone_link_controls:
+        # zone-scoped link controls
+
+        link_control:
+            remark: Link-Control-Modus, gültige Werte in .values
+            type: str
+            yamahayxc_cmd: link_control
+            enforce_updates: true
+
+            values:
+                remark: Gültige Werte für Link-Control. Nur-Lese-Zugriff.
+                type: list
+                yamahayxc_cmd: link_control_values
+                visu_acl: ro
+
+        link_audio_delay:
+            remark: Audio-Delay-Modus, gültige Werte in .values. Nicht gültig, wenn Link-Control auf "stability" gesetzt ist.
+            type: str
+            yamahayxc_cmd: link_audio_delay
+            enforce_updates: true
+
+            values:
+                remark: Gültige Werte für Audio-Delay. Nur-Lese-Zugriff.
+                type: list
+                yamahayxc_cmd: link_audio_delay_values
+                visu_acl: ro
+
+        link_audio_quality:
+            remark: Audioqualität, gültige Werte in .values.
+            type: str
+            yamahayxc_cmd: link_audio_quality
+            enforce_updates: true
+
+            values:
+                remark: Gültige Werte für Audioqualität. Nur-Lese-Zugriff.
+                type: list
+                yamahayxc_cmd: link_audio_quality_values
+                visu_acl: ro
+
+    zones:
+        # zone2/3/4 content, mirroring 'amp' above but for the other zones
+        zone2:
+            remark: Zone 2
+            yamahayxc_zone: zone2
+            struct: [.zone_amp, .zone_link_controls]
+
+        zone3:
+            remark: Zone 3
+            yamahayxc_zone: zone3
+            struct: [.zone_amp, .zone_link_controls]
+
+        zone4:
+            remark: Zone 4
+            yamahayxc_zone: zone4
+            struct: [.zone_amp, .zone_link_controls]
+
+    alarm:
+        # alarm clock functions, standalone - combine with amp as needed
+        alarm_on:
+            remark: Wecker aktivieren
+            type: bool
+            yamahayxc_cmd: alarm_on
+            enforce_updates: true
+
+        alarm_time:
+            remark: Weckzeit als vierstelliger String, bspw. "0630"
+            type: str
+            yamahayxc_cmd: alarm_time
+            enforce_updates: true
+
+        alarm_beep:
+            remark: Wecker-Piepen aktivieren (nur, wenn Wecker aktiv)
+            type: bool
+            yamahayxc_cmd: alarm_beep
+            enforce_updates: true
+
+    media:
+        # device-global media/audio sources and link control - netusb/tuner/link
+
+        netusb:
+            remark: UPNP-AV, USB, Bluetooth-Status und -Steuerung
+
+            track:
+                remark: Aktuell gespielter Track. Nur-Lese-Zugriff.
+                type: str
+                yamahayxc_cmd: track
+                visu_acl: ro
+
+            artist:
+                remark: Interpret des aktuell gespielten Tracks. Nur-Lese-Zugriff.
+                type: str
+                yamahayxc_cmd: artist
+                visu_acl: ro
+
+            curtime:
+                remark: Aktuelle Spielzeit des gespielten Tracks. Nur-Lese-Zugriff.
+                type: num
+                yamahayxc_cmd: play_time
+                visu_acl: ro
+
+            totaltime:
+                remark: Länge des aktuell gespielten Tracks. Nur-Lese-Zugriff.
+                type: num
+                yamahayxc_cmd: total_time
+                visu_acl: ro
+
+            playback:
+                remark: Wiedergabestatus als Textausgabe.
+                type: str
+                yamahayxc_cmd: playback
+                enforce_updates: true
+
+            playing:
+                remark: Bool-Indikator, ob die Wiedergabe läuft. Nur-Lese-Zugriff.
+                type: bool
+                visu_acl: ro
+                eval: sh...playback() == 'play'
+                eval_trigger:
+                    - ..playback
+
+            albumart:
+                remark: URL zum Bild des aktuellen Albums. Nur-Lese-Zugriff.
+                type: str
+                visu_acl: ro
+                yamahayxc_cmd: albumart
+
+            albumarturl:
+                remark: HTML-Snippet zum Bild des aktuellen Albums. Nur-Lese-Zugriff.
+                type: str
+                visu_acl: ro
+                eval: "'<img class=\"ui-corner-all\" width=\"100\" height=\"100\" id=\"albumImage\" src=\"{}\" />'.format(sh...albumart())"
+                eval_trigger: ..albumart
+
+            preset:
+                remark: Auswahl voreingestellter Wiedergabelisten.
+                type: num
+                yamahayxc_cmd: preset
+                enforce_updates: true
+
+            standby:
+                remark: Bool-Indikator, ob das Gerät im Leerlauf ist. Nur-Lese-Zugriff.
+                type: bool
+                visu_acl: ro
+                eval: sh....power() and not sh...playback() == 'play'
+                eval_trigger:
+                    - ..playback
+                    - ...power
+
+            update:
+                remark: Aktuelle Werte für netusb neu lesen.
+                type: bool
+                yamahayxc_cmd: update_netusb
+                enforce_updates: true
+
+        tuner:
+            remark: Tuner-Steuerung (AM/FM)
+
+            band:
+                remark: AM/FM/DAB, je nach Gerät. RDS ist kein eigenes Band, sondern Zusatzinfo im FM-Betrieb.
+                type: str
+                yamahayxc_cmd: tuner_band
+                enforce_updates: true
+
+                values:
+                    remark: Gültige Werte für Band. Nur-Lese-Zugriff.
+                    type: list
+                    yamahayxc_cmd: tuner_band_values
+                    visu_acl: ro
+
+            freq:
+                remark: Sendefrequenz für das aktuell gewählte Band, Grenzen in .min/.max/.step
+                type: num
+                yamahayxc_cmd: tuner_freq
+                enforce_updates: true
+
+                min:
+                    remark: Minimaler Frequenzwert für das aktuell gewählte Band. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: tuner_freq_min
+                    visu_acl: ro
+
+                max:
+                    remark: Maximaler Frequenzwert für das aktuell gewählte Band. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: tuner_freq_max
+                    visu_acl: ro
+
+                step:
+                    remark: Schrittweite für Frequenzwert für das aktuell gewählte Band. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: tuner_freq_step
+                    visu_acl: ro
+
+            seek:
+                remark: Sendersuchlauf, gültige Werte "up"/"down"/"cancel"/"auto_up"/"auto_down"/"tp_up"/"tp_down" (RDS)
+                type: str
+                yamahayxc_cmd: tuner_seek
+                enforce_updates: true
+
+            tuned:
+                remark: Bool-Indikator, ob ein Sender empfangen wird. Nur-Lese-Zugriff.
+                type: bool
+                yamahayxc_cmd: tuner_tuned
+                visu_acl: ro
+
+            station:
+                remark: Empfangener Sendername (RDS Program Service). Nur-Lese-Zugriff.
+                type: str
+                yamahayxc_cmd: tuner_station
+                visu_acl: ro
+
+            preset:
+                remark: Anwahl gespeicherter Tuner-Presets.
+                type: num
+                yamahayxc_cmd: tuner_preset
+                enforce_updates: true
+
+            preset_store:
+                remark: Aktuellen Sender auf Preset-Nummer speichern.
+                type: num
+                yamahayxc_cmd: tuner_preset_store
+                enforce_updates: true
+
+            preset_clear:
+                remark: Preset-Nummer löschen.
+                type: num
+                yamahayxc_cmd: tuner_preset_clear
+                enforce_updates: true
+
+            preset_switch:
+                remark: Zum nächsten/vorherigen Preset wechseln, gültige Werte "next"/"previous"
+                type: str
+                yamahayxc_cmd: tuner_preset_switch
+                enforce_updates: true
+
+            update:
+                remark: Aktuelle Werte für Tuner neu lesen.
+                type: bool
+                yamahayxc_cmd: update_tuner
+                enforce_updates: true
+
+        link:
+            remark: Multiroom (MusicCast Link) Gruppen-Status und -Steuerung.
+
+            linked:
+                remark: Bool-Indikator, ob das Gerät aktuell in einer Link-Gruppe ist. Nur-Lese-Zugriff.
+                type: bool
+                yamahayxc_cmd: link_linked
+                visu_acl: ro
+
+            role:
+                remark: Rolle in der Link-Gruppe ("server"/"client"/"none"). Nur-Lese-Zugriff.
+                type: str
+                yamahayxc_cmd: link_role
+                visu_acl: ro
+
+            available_devices:
+                remark: Für Link konfigurierte Hosts, als Auswahl für client.join/server.add_device. Nur-Lese-Zugriff.
+                type: list
+                yamahayxc_cmd: link_hosts
+                visu_acl: ro
+
+            server:
+                remark: Aktionen/Status in der Rolle als Gruppen-Server.
+
+                linked_devices:
+                    remark: IP-Adressen der Gruppen-Clients (nur als Server verfügbar). Nur-Lese-Zugriff.
+                    type: list
+                    yamahayxc_cmd: link_devices
+                    visu_acl: ro
+
+                add_device:
+                    remark: Host/IP als Client zur Gruppe hinzufügen.
+                    type: str
+                    yamahayxc_cmd: link_add_client
+                    enforce_updates: true
+
+                remove_device:
+                    remark: Host/IP aus der Gruppe entfernen.
+                    type: str
+                    yamahayxc_cmd: link_remove_client
+                    enforce_updates: true
+
+                disband:
+                    remark: Gruppe auflösen (Serverrolle beenden).
+                    type: bool
+                    yamahayxc_cmd: link_disband
+                    enforce_updates: true
+
+            client:
+                remark: Aktionen in der Rolle als Gruppen-Client.
+
+                join:
+                    remark: Als Client dem Server mit dem/der angegebenen Host/IP beitreten.
+                    type: str
+                    yamahayxc_cmd: link_join
+                    enforce_updates: true
+
+                leave:
+                    remark: Gruppe als Client verlassen.
+                    type: bool
+                    yamahayxc_cmd: link_leave
+                    enforce_updates: true
+
+            options:
+                remark: Selten benötigte Optionen/Informationen zum Link.
+
+                group_id:
+                    remark: Link-Gruppen-ID des Geräts. Nur-Lese-Zugriff.
+                    type: str
+                    yamahayxc_cmd: link_group_id
+                    visu_acl: ro
+
+                group_name:
+                    remark: Name der Link-Gruppe. Nur-Lese-Zugriff.
+                    type: str
+                    yamahayxc_cmd: link_group_name
+                    enforce_updates: true
+                    visu_acl: ro
+
+                server_zone:
+                    remark: Zone des Gruppen-Servers. Nur-Lese-Zugriff.
+                    type: str
+                    yamahayxc_cmd: link_server_zone
+                    visu_acl: ro
+
+                audio_dropout:
+                    remark: Bool-Indikator für Audio-Aussetzer in der Link-Gruppe. Nur-Lese-Zugriff.
+                    type: bool
+                    yamahayxc_cmd: link_audio_dropout
+                    visu_acl: ro
+
+            update:
+                remark: Aktuelle Werte für Link neu lesen.
+                type: bool
+                yamahayxc_cmd: update_link
+                enforce_updates: true
+
+    dsp_content:
+        remark: Klangfeld/DSP-Steuerung der aktuellen Zone (geräteabhängig).
+
+        sound_program:
+            remark: Soundprogramm, gültige Werte in .values
+            type: str
+            yamahayxc_cmd: sound_program
+            enforce_updates: true
+
+            values:
+                remark: Gültige Werte für Soundprogramm. Nur-Lese-Zugriff.
+                type: list
+                yamahayxc_cmd: sound_program_values
+                visu_acl: ro
+
+        surround_3d:
+            remark: 3D-Surround-Modus aktivieren
+            type: bool
+            yamahayxc_cmd: surround_3d
+            enforce_updates: true
+
+        direct:
+            remark: Direkt-Modus aktivieren
+            type: bool
+            yamahayxc_cmd: direct
+            enforce_updates: true
+
+        pure_direct:
+            remark: Pure-Direct-Modus aktivieren
+            type: bool
+            yamahayxc_cmd: pure_direct
+            enforce_updates: true
+
+        enhancer:
+            remark: Enhancer aktivieren
+            type: bool
+            yamahayxc_cmd: enhancer
+            enforce_updates: true
+
+        tone_control_mode:
+            remark: Klangregelungs-Modus, gültige Werte in .values
+            type: str
+            yamahayxc_cmd: tone_control_mode
+            enforce_updates: true
+
+            values:
+                remark: Gültige Werte für Klangregelungs-Modus. Nur-Lese-Zugriff.
+                type: list
+                yamahayxc_cmd: tone_control_mode_values
+                visu_acl: ro
+
+        tone:
+            remark: Bass-/Höhen-/Balance-Einstellungen.
+
+            bass:
+                remark: Bass-Anhebung/-Absenkung
+                type: num
+                yamahayxc_cmd: tone_bass
+                enforce_updates: true
+
+                min:
+                    remark: Minimaler Wert für tone.bass. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: tone_bass_min
+                    visu_acl: ro
+
+                max:
+                    remark: Maximaler Wert für tone.bass. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: tone_bass_max
+                    visu_acl: ro
+
+                step:
+                    remark: Schrittweite für tone.bass. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: tone_bass_step
+                    visu_acl: ro
+
+            treble:
+                remark: Höhen-Anhebung/-Absenkung
+                type: num
+                yamahayxc_cmd: tone_treble
+                enforce_updates: true
+
+                min:
+                    remark: Minimaler Wert für tone.treble. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: tone_treble_min
+                    visu_acl: ro
+
+                max:
+                    remark: Maximaler Wert für tone.treble. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: tone_treble_max
+                    visu_acl: ro
+
+                step:
+                    remark: Schrittweite für tone.treble. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: tone_treble_step
+                    visu_acl: ro
+
+            balance:
+                remark: Balance zwischen linkem/rechtem Kanal
+                type: num
+                yamahayxc_cmd: balance
+                enforce_updates: true
+
+                min:
+                    remark: Minimaler Wert für tone.balance. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: balance_min
+                    visu_acl: ro
+
+                max:
+                    remark: Maximaler Wert für tone.balance. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: balance_max
+                    visu_acl: ro
+
+                step:
+                    remark: Schrittweite für tone.balance. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: balance_step
+                    visu_acl: ro
+
+        equalizer_mode:
+            remark: Equalizer-Modus, gültige Werte in .values
+            type: str
+            yamahayxc_cmd: equalizer_mode
+            enforce_updates: true
+
+            values:
+                remark: Gültige Werte für Equalizer-Modus. Nur-Lese-Zugriff.
+                type: list
+                yamahayxc_cmd: equalizer_mode_values
+                visu_acl: ro
+
+        equalizer:
+            remark: Equalizer-Einstellungen (tief/mittel/hoch).
+
+            low:
+                remark: Equalizer tiefe Frequenzen
+                type: num
+                yamahayxc_cmd: eq_low
+                enforce_updates: true
+
+                min:
+                    remark: Minimaler Wert für equalizer.low. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: eq_low_min
+                    visu_acl: ro
+
+                max:
+                    remark: Maximaler Wert für equalizer.low. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: eq_low_max
+                    visu_acl: ro
+
+                step:
+                    remark: Schrittweite für equalizer.low. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: eq_low_step
+                    visu_acl: ro
+
+            mid:
+                remark: Equalizer mittlere Frequenzen
+                type: num
+                yamahayxc_cmd: eq_mid
+                enforce_updates: true
+
+                min:
+                    remark: Minimaler Wert für equalizer.mid. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: eq_mid_min
+                    visu_acl: ro
+
+                max:
+                    remark: Maximaler Wert für equalizer.mid. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: eq_mid_max
+                    visu_acl: ro
+
+                step:
+                    remark: Schrittweite für equalizer.mid. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: eq_mid_step
+                    visu_acl: ro
+
+            high:
+                remark: Equalizer hohe Frequenzen
+                type: num
+                yamahayxc_cmd: eq_high
+                enforce_updates: true
+
+                min:
+                    remark: Minimaler Wert für equalizer.high. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: eq_high_min
+                    visu_acl: ro
+
+                max:
+                    remark: Maximaler Wert für equalizer.high. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: eq_high_max
+                    visu_acl: ro
+
+                step:
+                    remark: Schrittweite für equalizer.high. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: eq_high_step
+                    visu_acl: ro
+
+        update:
+            remark: Aktuelle DSP-Werte neu lesen.
+            type: bool
+            yamahayxc_cmd: update_dsp
+            enforce_updates: true
+
+
+#
+# Nutzbare Aliases für Items:
+#
+# root_item:
+#     structs:
+#         - yamahayxc.amp     # mandatory, all following optional:
+#         - yamahayxc.dsp
+#         - yamahayxc.tuner
+#         - yamahayxc.netusb
+#         - yamahayxc.link
+#         - yamahayxc.zone2/3/4
+#
+# optional structs dsp / zone2/3/4 have "available" subitems indicating if the
+# section is supported by the device
+#
+# no remarks here, these are included from the above structs
+#
+
+    amp:
+        # actually means "main" zone amp controls.
+        yamahayxc_zone: main
+        struct: [.zone_amp, .zone_link_controls]
+
+    dsp:
+        # alias into dsp_content, added .dsp.available.
+        dsp:
+            struct: .dsp_content
+            available:
+                remark: Bool-Indikator, ob DSP-Funktionen für diese Zone verfügbar sind. Nur-Lese-Zugriff.
+                type: bool
+                visu_acl: ro
+
+    tuner:
+        # alias into media.tuner
+        tuner:
+            struct: .media.tuner
+
+    netusb:
+        # alias into media.netusb
+        netusb:
+            struct: .media.netusb
+
+    link:
+        # alias into media.link
+        link:
+            struct: .media.link
+
+    zone2:
+        # alias into zones.zone2, adding 'available'
+        struct: .zones.zone2
+        available:
+            remark: Bool-Indikator, ob Zone 2 an diesem Gerät verfügbar ist. Nur-Lese-Zugriff.
+            type: bool
+            visu_acl: ro
+
+    zone3:
+        # alias into zones.zone3, adding 'available'
+        struct: .zones.zone3
+        available:
+            remark: Bool-Indikator, ob Zone 3 an diesem Gerät verfügbar ist. Nur-Lese-Zugriff.
+            type: bool
+            visu_acl: ro
+
+    zone4:
+        # alias into zones.zone4, adding 'available'
+        struct: .zones.zone4
+        available:
+            remark: Bool-Indikator, ob Zone 4 an diesem Gerät verfügbar ist. Nur-Lese-Zugriff.
+            type: bool
+            visu_acl: ro
+
+
+#
+# legacy structs to keep compatibility with earlier plugin versions
+#
+
     basic:
-        # basic media player setup
+        # TEMPORARY migration aid: frozen snapshot of the pre-reorg "basic"
+        # struct (before amp/netusb were split apart), so an existing config
+        # using "struct: yamahayxc.basic" keeps working identically
+        # Combine needed structs (yamahayxc.amp, yamahayxc.netusb...) at your
+        # own pace, then drop this.
 
         yamahayxc_zone: main
 
         wakeup:
             type: bool
-            enforce_updates: 'True'
+            enforce_updates: true
 
         power:
+            remark: Ein-/Ausschalter für die aktuelle Zone
             type: bool
             yamahayxc_cmd: power
-            enforce_updates: 'True'
+            enforce_updates: true
 
         volume:
+            remark: Lautstärke der aktuellen Zone in Gerätewerten
             type: num
             yamahayxc_cmd: volume
-            enforce_updates: 'True'
+            enforce_updates: true
 
         mute:
+            remark: Stummschaltung
             type: bool
             yamahayxc_cmd: mute
-            enforce_updates: 'True'
+            enforce_updates: true
 
         input:
+            remark: Tonquelle
             type: str
             yamahayxc_cmd: input
-            enforce_updates: 'True'
+            enforce_updates: true
 
         track:
+            remark: Aktuell gespielter Track. Nur-Lese-Zugriff.
             type: str
             yamahayxc_cmd: track
+            visu_acl: ro
 
         albumart:
+            remark: URL zum Bild des aktuellen Albums. Nur-Lese-Zugriff.
             type: str
             yamahayxc_cmd: albumart
+            visu_acl: ro
 
         albumarturl:
+            remark: HTML-Snippet zum Bild des aktuellen Albums. Nur-Lese-Zugriff.
             type: str
             visu_acl: rw
             eval: "'<img class=\"ui-corner-all\" width=\"100\" height=\"100\" id=\"albumImage\" src=\"{}\" />'.format(sh...albumart())"
             eval_trigger: ..albumart
 
         update:
+            remark: Alle Werte für aktuelles Gerät neu lesen.
             type: bool
             yamahayxc_cmd: state
-            enforce_updates: 'True'
+            enforce_updates: true
 
         preset:
+            remark: Auswahl voreingestellter Wiedergabelisten.
             type: num
             yamahayxc_cmd: preset
-            enforce_updates: 'True'
+            enforce_updates: true
 
         sleep:
+            remark: Ausschalttimer, gültige Werte 0, 30, 60, 90, 120
             type: num
             yamahayxc_cmd: sleep
-            enforce_updates: 'True'
+            enforce_updates: true
 
         artist:
+            remark: Interpret des aktuell gespielten Tracks. Nur-Lese-Zugriff.
             type: str
             yamahayxc_cmd: artist
+            visu_acl: ro
 
         curtime:
+            remark: Aktuelle Spielzeit des gespielten Tracks. Nur-Lese-Zugriff.
             type: num
             yamahayxc_cmd: play_time
+            visu_acl: ro
 
         totaltime:
+            remark: Länge des aktuell gespielten Tracks. Nur-Lese-Zugriff.
             type: num
             yamahayxc_cmd: total_time
+            visu_acl: ro
 
         playback:
+            remark: Wiedergabestatus als Textausgabe.
             type: str
             yamahayxc_cmd: playback
-            enforce_updates: 'True'
+            enforce_updates: true
 
         passthru:
+            remark: Item, um fertig formatierte Befehlssequenzen an das Gerät zu senden.
             type: str
             yamahayxc_cmd: passthru
-            enforce_updates: 'True'
+            enforce_updates: true
 
         playing:
+            remark: Bool-Indikator, ob die Wiedergabe läuft. Nur-Lese-Zugriff.
             type: bool
             visu_acl: ro
             eval: sh...playback() == 'play'
@@ -187,6 +930,7 @@ item_structs:
                 - ..power
 
         standby:
+            remark: Bool-Indikator, ob das Gerät im Leerlauf ist. Nur-Lese-Zugriff.
             type: bool
             visu_acl: ro
             eval: sh...power() and not sh...playback() == 'play'
@@ -194,24 +938,103 @@ item_structs:
                 - ..playback
                 - ..power
 
-    alarm:
-        # media player setup with alarm clock functions
-        struct: yamahayxc.basic
+    legacy_alarm:
+        # TEMPORARY migration aid: frozen snapshot of the pre-reorg "alarm"
+        # struct (basic + alarm items combined), see legacy_basic
+        # renamed for new alarm 
+        struct:
+            - .legacy_basic
+            - .alarm
 
-        alarm_on:
+
+#
+# debugging structs to help diagnosing problems
+# not for production use
+#
+
+    debug:
+        remark: Diagnose-Items, kein Teil des YXC-Protokolls.
+        # diagnostic introspection - not part of the YXC protocol, exposes
+        # this plugin's own internal bookkeeping dicts as dict-typed items.
+        # Combine with 'amp' as needed: struct: [yamahayxc.amp, yamahayxc.debug].
+        # Pushed once at startup and whenever 'refresh' is written.
+
+        refresh:
+            remark: Debug-Items neu befüllen.
             type: bool
-            yamahayxc_cmd: alarm_on
-            enforce_updates: 'True'
+            yamahayxc_cmd: debug_refresh
+            enforce_updates: true
 
-        alarm_time:
-            type: str
-            yamahayxc_cmd: alarm_time
-            enforce_updates: 'True'
+        features:
+            remark: Erkannte getFeatures-Fähigkeiten dieser Zone. Nur-Lese-Zugriff.
+            # this zone's discovered getFeatures capabilities
+            # (_yamaha_features[host][zone])
+            type: dict
+            yamahayxc_cmd: debug_features
+            visu_acl: ro
 
-        alarm_beep:
-            type: bool
-            yamahayxc_cmd: alarm_beep
-            enforce_updates: 'True'
+        dev_zone:
+            remark: Registrierte Item-Pfade je Kommando für diese Zone. Nur-Lese-Zugriff.
+            # item paths currently registered per cmd for this zone
+            # (_yamaha_dev_zone[host][zone])
+            type: dict
+            yamahayxc_cmd: debug_dev_zone
+            visu_acl: ro
+
+        tuner_features:
+            remark: Erkannte Tuner-Fähigkeiten dieses Geräts. Nur-Lese-Zugriff.
+            # discovered tuner capabilities for this host
+            # (_yamaha_tuner_features[host])
+            type: dict
+            yamahayxc_cmd: debug_tuner_features
+            visu_acl: ro
+
+        dev_global:
+            remark: Registrierte Item-Pfade je Kommando, geräteweit/netusb/Wecker. Nur-Lese-Zugriff.
+            # item paths registered per cmd, host-global/netusb/alarm
+            # (_yamaha_dev_global[host])
+            type: dict
+            yamahayxc_cmd: debug_dev_global
+            visu_acl: ro
+
+        dev_tuner:
+            remark: Registrierte Item-Pfade je Kommando, Tuner. Nur-Lese-Zugriff.
+            # item paths registered per cmd, tuner (_yamaha_dev_tuner[host])
+            type: dict
+            yamahayxc_cmd: debug_dev_tuner
+            visu_acl: ro
+
+        dev_link:
+            remark: Registrierte Item-Pfade je Kommando, Link. Nur-Lese-Zugriff.
+            # item paths registered per cmd, link (_yamaha_dev_link[host])
+            type: dict
+            yamahayxc_cmd: debug_dev_link
+            visu_acl: ro
+
+#
+#
+#
+# device-dependent structs
+#
+#
+#
+
+wx-010:
+    structs: [.amp, .link, .netusb]
+
+ix-018:
+    structs: [.amp, .link, .netusb, .alarm]
+
+rxv-483:
+    structs: [.amp, .link, .netusb, .tuner, .zones.zone2]
+
+    dsp:
+        struct: .dsp_content
+
+
+
+
+
 
 plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
