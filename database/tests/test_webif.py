@@ -36,6 +36,11 @@ class TestDatabaseWebifItemCsv(TestDatabaseBase):
         id = self.create_item(plugin, 'main.num')
         plugin.insertLog(id, time=0, duration=3600, val=10, it='num')
 
+        # item_csv() writes to <base_dir>/var/db/, which is gitignored and
+        # not present on a fresh checkout (e.g. CI). Ensure it exists rather
+        # than relying on ambient state left behind by a real shng run.
+        os.makedirs(os.path.join(self.sh.base_dir, 'var', 'db'), exist_ok=True)
+
         with (
             mock.patch('cherrypy.request'),
             mock.patch('cherrypy.lib.static.serve_download', return_value='served') as fake_serve,
