@@ -943,7 +943,7 @@ item_structs:
         # struct (basic + alarm items combined), see legacy_basic
         # renamed for new alarm 
         struct:
-            - .legacy_basic
+            - .basic
             - .alarm
 
 
