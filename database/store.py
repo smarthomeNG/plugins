@@ -78,18 +78,28 @@ class ItemStore:
         """Insert a new item row and return its database ID.
 
         Uses ``INTEGER PRIMARY KEY`` autoincrement behaviour: the INSERT
-        omits ``id`` and lets the database assign it.  A subsequent SELECT
-        retrieves the assigned id.  This avoids the previous
-        ``MAX(id) + 1`` race condition.
+        omits ``id`` and lets the database assign it.  The cursor's own
+        ``lastrowid`` is read right after the INSERT rather than a
+        follow-up ``SELECT id WHERE name=`` - the database connection can
+        be shared across threads, and a concurrent caller could interleave
+        between the two statements and cause the lookup to miss, leaving
+        the item permanently id-less. ``lastrowid`` is scoped to this
+        cursor and immune to that race.
 
         :param name: Full item path (e.g. ``'solar.power'``).
         :param cur:  Optional cursor for transaction batching.
         :returns:    The new integer item ID.
         :rtype:      int
         """
-        self._execute('INSERT INTO {item}(name) VALUES(:name);', {'name': name}, cur=cur)
-        row = self._fetchone('SELECT id FROM {item} WHERE name = :name;', {'name': name}, cur=cur)
-        return int(row[0])
+        own_cur = cur is None
+        if own_cur:
+            cur = self._db.cursor()
+        try:
+            self._execute('INSERT INTO {item}(name) VALUES(:name);', {'name': name}, cur=cur)
+            return int(cur.lastrowid)
+        finally:
+            if own_cur:
+                cur.close()
 
     def update(self, item_id: int, time: int, val, item_type: str, changed: int, cur=None) -> None:
         """Update the latest-value row for *item_id*.

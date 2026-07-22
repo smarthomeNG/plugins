@@ -1,9 +1,12 @@
+import inspect
 import os
 import datetime
 import tempfile
 import pytest
+from unittest import mock
 
 from plugins.database import Database
+from plugins.database.constants import BufferEntry
 from plugins.database.tests.base import TestDatabaseBase
 
 
@@ -91,6 +94,34 @@ class TestDatabaseBasic(TestDatabaseBase):
         self.assertEqual(None, res[0][3])
         self.assertEqual(20, res[0][4])
         self.assertEqual(1, res[0][5])
+
+    def test_insertLog_defaults_to_valid_quality(self):
+        plugin = self.plugin()
+        id = self.create_item(plugin, 'main.num')
+        plugin.insertLog(id, time=0, duration=3600, val=10, it='num')
+        res = plugin.readLog(id, time=0)
+        self.assertEqual(0, res[0][7])  # val_quality column, QUALITY_VALID
+
+    def test_insertLog_accepts_explicit_quality(self):
+        plugin = self.plugin()
+        id = self.create_item(plugin, 'main.num')
+        plugin.insertLog(id, time=0, duration=3600, val=None, it='num', quality=1)
+        res = plugin.readLog(id, time=0)
+        self.assertEqual(1, res[0][7])  # val_quality column, QUALITY_NO_DATA
+        self.assertIsNone(res[0][4])  # val_num stays NULL for a no-data row
+
+    def test_updateLog_accepts_explicit_quality(self):
+        plugin = self.plugin()
+        id = self.create_item(plugin, 'main.num')
+        plugin.insertLog(id, time=0, duration=3600, val=10, it='num')
+        plugin.updateLog(id, time=0, duration=3600, val=None, it='num', quality=1)
+        res = plugin.readLog(id, time=0)
+        self.assertEqual(1, res[0][7])
+
+    def test_readItemCount_returns_int_when_not_connected(self):
+        plugin = self.plugin()
+        plugin._db.close()
+        self.assertEqual(0, plugin.readItemCount())
 
     def test_deleteLog(self):
         plugin = self.plugin()
@@ -253,6 +284,55 @@ class TestDatabaseBasic(TestDatabaseBase):
             '1;main.num;7200;3600;;15.0;1;7200;1970-01-01 00:00:07.200000;1970-01-01 00:00:07.200000\n',
             self.read_tmpfile(name),
         )
+
+    def test_dump_restores_buffer_on_write_failure(self):
+        # If writing a buffered entry to the DB fails and rollback() itself
+        # succeeds (the common case), the entry must be restored to the
+        # in-memory buffer for a later retry - not silently discarded.
+        plugin = self.plugin()
+        item = self.sh.return_item('main.num')
+        id = self.create_item(plugin, 'main.num')
+        pending = [BufferEntry(1000, 500, 42.0), BufferEntry(1500, None, 43.0)]
+        plugin._buffer_mgr.restore(item, list(pending))
+
+        with mock.patch.object(plugin._log_store, 'upsert', side_effect=RuntimeError('simulated write failure')):
+            plugin._dump(items=[item])
+
+        self.assertEqual(pending, plugin._buffer_mgr.pop_all(item))
+        self.assertEqual(0, plugin.readLogCount(id))
+
+        # Retry with the fault removed: the restored data must now be written.
+        plugin._buffer_mgr.restore(item, list(pending))
+        plugin._dump(items=[item])
+        self.assertEqual(2, plugin.readLogCount(id))
+        self.assertEqual([], plugin._buffer_mgr.pop_all(item))
+
+    def test_initialize_db_maint_throttle_logs_correct_delta(self):
+        # Regression: the maintenance-connection reconnect-throttle branch
+        # referenced time_delta_last_connect (the main connection's delta,
+        # only assigned when the main connection itself needed reconnecting)
+        # instead of the just-computed time_delta_last_maint_connect. With
+        # the main connection already up - so that variable is never
+        # assigned in this call at all - this raised NameError instead of
+        # logging the (wrong) number.
+        plugin = self.plugin()
+        self.assertTrue(plugin._db.connected())
+        plugin._db_maint._connected = False
+
+        with mock.patch('plugins.database.time.time', return_value=1000.0):
+            plugin.last_maint_connect_time = 995.0  # delta = 5, within the 20s throttle window
+            with self.assertLogs(level='ERROR') as logs:
+                result = plugin._initialize_db()
+
+        self.assertFalse(result)
+        [message] = logs.output
+        self.assertIn('Delta time: 5.0', message)
+
+    def test_fetchone_fetchall_do_not_use_mutable_default_params(self):
+        plugin = self.plugin()
+        for name in ('_fetchone', '_fetchall'):
+            default = inspect.signature(getattr(plugin, name)).parameters['params'].default
+            self.assertIsNone(default, f'{name} params default should be None, not a shared mutable {default!r}')
 
     def test_cleanup_empty(self):
         plugin = self.plugin()

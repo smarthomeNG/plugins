@@ -8,6 +8,7 @@ test_items.yaml during setup — tests below rely on that, not a second
 explicit parse_item() call (which would double-register list-based state).
 """
 
+from plugins.database.constants import BufferEntry
 from plugins.database.tests.base import TestDatabaseBase
 
 
@@ -33,11 +34,11 @@ class TestDatabaseRemoveItem(TestDatabaseBase):
     def test_remove_item_clears_buffer(self):
         plugin = self.plugin()
         item = self.sh.return_item('main.num')
-        self.assertIn(item, plugin._buffer)
+        self.assertIn(item, plugin._buffer_mgr.items())
 
         plugin.remove_item(item)
 
-        self.assertNotIn(item, plugin._buffer)
+        self.assertNotIn(item, plugin._buffer_mgr.items())
 
     def test_remove_item_clears_items_with_maxage(self):
         plugin = self.plugin()
@@ -57,7 +58,7 @@ class TestDatabaseRemoveItem(TestDatabaseBase):
     def test_remove_item_flushes_pending_buffer_to_db(self):
         plugin = self.plugin()
         item = self.sh.return_item('main.num')
-        plugin._buffer_insert(item, [(1000, None, 5)])
+        plugin._buffer_mgr.push(item, BufferEntry(time=1000, duration=None, value=5))
 
         plugin.remove_item(item)
 

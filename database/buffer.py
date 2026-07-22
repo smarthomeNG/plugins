@@ -80,6 +80,16 @@ class BufferManager:
             if item not in self._buffer:
                 self._buffer[item] = []
 
+    def deregister(self, item) -> None:
+        """Drop all bookkeeping for *item* (e.g. when it is removed/deleted).
+
+        Does nothing if *item* was never registered.
+
+        :param item: SmartHomeNG item object.
+        """
+        with self._lock:
+            self._buffer.pop(item, None)
+
     # ── writing ───────────────────────────────────────────────────────────────
 
     def push(self, item, entry: BufferEntry) -> None:
@@ -91,6 +101,26 @@ class BufferManager:
         """
         with self._lock:
             self._buffer[item].append(entry)
+
+    def set_last_duration(self, item, duration) -> None:
+        """Overwrite the duration of the last open entry (duration=None).
+
+        Unlike :meth:`close_open`, the caller supplies the duration value
+        directly rather than an end timestamp to compute it from - used
+        where the duration is derived from the item's own change-tracking
+        (``item.last_change() - item.prev_change()``) rather than the
+        buffered entry's own recorded start time.
+
+        Does nothing if the buffer is empty or the last entry is already
+        closed.
+
+        :param item:     SmartHomeNG item.
+        :param duration: Duration to set, in milliseconds.
+        """
+        with self._lock:
+            buf = self._buffer.get(item)
+            if buf and buf[-1].duration is None:
+                buf[-1] = buf[-1]._replace(duration=duration)
 
     def close_open(self, item, end_ts: int) -> None:
         """Set the duration on the last open entry (duration=None) for *item*.

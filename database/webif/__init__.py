@@ -275,7 +275,10 @@ class WebInterface(SmartPluginWebIf):
 
         :return: item log data as CSV
         """
-        if item_id is None:
+        try:
+            item_id = int(item_id)
+        except (TypeError, ValueError):
+            self.logger.warning(f'item_csv: invalid item_id {item_id!r}')
             return None
         else:
             rows = self.plugin.readLogs(item_id)

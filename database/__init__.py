@@ -41,6 +41,7 @@ from lib.utils import Utils
 from lib.model.smartplugin import SmartPlugin
 from lib.module import Modules
 
+from .buffer import BufferManager
 from .constants import (
     COL_ITEM,
     COL_ITEM_ID,
@@ -56,7 +57,11 @@ from .constants import (
     COL_LOG_VAL_BOOL,
     COL_LOG_VAL_NUM,
     COL_LOG_VAL_STR,
+    BufferEntry,
+    QUALITY_NO_DATA,
+    QUALITY_VALID,
 )
+from .store import ItemStore, LogStore
 from .webif import WebInterface
 
 
@@ -150,8 +155,7 @@ class Database(SmartPlugin):
         self._replace['item_columns'] = ', '.join(COL_ITEM)
         # val_quality column added in schema v7; include in log column list
         self._replace['log_columns'] = ', '.join(COL_LOG + ('val_quality',))
-        self._buffer = {}
-        self._buffer_lock = threading.Lock()
+        self._buffer_mgr = BufferManager()
         self._dump_lock = threading.Lock()
 
         self.skipping_dump = False
@@ -187,6 +191,9 @@ class Database(SmartPlugin):
             self.logger.error('Initialization of database API failed')
             self._init_complete = False
             return
+
+        self._item_store = ItemStore(self._db, self._replace, self.logger)
+        self._log_store = LogStore(self._db, self._replace, self.logger)
 
         # Setup db maintenance connection and test if connection is possible
         self._db_maint = lib.db.Database(
@@ -255,7 +262,7 @@ class Database(SmartPlugin):
                     self._items_with_maxage.append(item)
 
             self.logger.debug(item.conf)
-            self._buffer_insert(item, [])
+            self._buffer_mgr.register(item)
             item.series = functools.partial(self._series, item=item.property.path)  # Zur Nutzung im Websocket Plugin
             item.db = functools.partial(
                 self._single, item=item.property.path
@@ -305,7 +312,9 @@ class Database(SmartPlugin):
                             and self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro'
                         ):
                             # self.logger.debug(f"DEBUG: Parse item, doing buffer insert for ItemID: {item.property.path}: {value}, databse_acl {self.get_iattr_value(item.conf, 'database_acl').lower()}")
-                            self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
+                            self._buffer_mgr.push(
+                                item, BufferEntry(time=self._timestamp(self.shtime.now()), duration=None, value=value)
+                            )
                     except Exception as e:
                         self.logger.error(
                             'Reading cache value from database for {} failed: {}'.format(item.property.path, e)
@@ -351,9 +360,7 @@ class Database(SmartPlugin):
             return False
 
         self._dump(finalize=True, items=[item])
-        self._buffer_lock.acquire()
-        self._buffer.pop(item, None)
-        self._buffer_lock.release()
+        self._buffer_mgr.deregister(item)
 
         self._webdata.pop(item.property.path, None)
         try:
@@ -469,54 +476,42 @@ class Database(SmartPlugin):
 
             # ── Gap detection ────────────────────────────────────────────────
             # If db_mark_invalid() was called previously and the open buffer
-            # entry is a no-data gap (value is None), this new valid measurement
-            # implicitly re-validates the item.  We must NOT use the standard
-            # step-1a duration formula here because that computes
+            # entry is a no-data gap (quality=QUALITY_NO_DATA), this new valid
+            # measurement implicitly re-validates the item.  We must NOT use
+            # the standard step-1a duration formula here because that computes
             #   end - item.prev_change()
             # which reaches back to the last Python-value change *before* the
             # gap started, making the gap duration appear longer than it really
-            # was.  Instead the gap is closed using its own start timestamp.
-            in_gap = (
-                getattr(self, '_gap_items', {}).get(item) is not None
-                and self._buffer[item]
-                and self._buffer[item][-1][1] is None  # still open
-                and self._buffer[item][-1][2] is None  # is a gap entry
-            )
+            # was.  Instead the gap is closed using its own start timestamp
+            # (BufferManager.close_open() computes end_ts - entry's own time).
+            last = self._buffer_mgr.last_entry(item)
+            in_gap = last is not None and last.duration is None and last.quality == QUALITY_NO_DATA
             if in_gap:
-                gap = self._buffer[item][-1]
-                # Close the gap with the correct duration relative to gap start
-                self._buffer[item][-1] = (gap[0], end - gap[0], None)
-                # Clear gap tracking — implicitly re-validated by the new value
-                del self._gap_items[item]
+                self._buffer_mgr.close_open(item, end)
                 self.logger.info(
                     f"update_item: implicit re-validation for '{item.property.path}' "
-                    f'— no-data gap closed (duration {self._seconds(end - gap[0])} s)'
+                    f'— no-data gap closed (duration {self._seconds(end - last.time)} s)'
                 )
                 # Skip step 1b: there is no meaningful prev_value to record
                 # during a gap period.  Go straight to step 2.
-                self._buffer[item].append((end, None, item()))
+                self._buffer_mgr.push(item, BufferEntry(time=end, duration=None, value=item()))
                 return
 
             # ── Normal path ──────────────────────────────────────────────────
-            # Determine, if DB buffer has a valid "last" value:
-            if len(self._buffer[item]) == 0 or self._buffer[item][-1][1] is not None:
-                last = None
-            else:
-                last = self._buffer[item][-1]
+            # Determine, if DB buffer has a valid open "last" value:
+            has_open_valid = last is not None and last.duration is None
 
             if debug_item:
-                self.logger.warning(
-                    f'Debug: last {last}, len buffer_item {len(self._buffer[item])}, buffer_item {self._buffer[item]}'
-                )
+                self.logger.warning(f'Debug: last {last}, pending {self._buffer_mgr.pending_count(item)}')
 
             # Update the DB buffer:
-            if last:
+            if has_open_valid:
                 # Step 1a): Alter current value with updated duration:
                 if debug_item:
                     self.logger.warning(
-                        f"Debug 1a): Rewriting valid last value, start: {last[0]}, duration: {end - start}, value: {last[2]} to item '{item}'."
+                        f"Debug 1a): Rewriting valid last value, start: {last.time}, duration: {end - start}, value: {last.value} to item '{item}'."
                     )
-                self._buffer[item][-1] = (last[0], end - start, last[2])
+                self._buffer_mgr.set_last_duration(item, end - start)
             else:
                 # Step 1b): Append new value with none duration
 
@@ -533,13 +528,13 @@ class Database(SmartPlugin):
                         self.logger.warning(
                             f"Debug 1b): Appending prev_value: start: {start}, duration: {end - start}, prev_value: {item.prev_value()} to item '{item}'"
                         )
-                    self._buffer[item].append((start, end - start, item.prev_value()))
+                    self._buffer_mgr.push(item, BufferEntry(time=start, duration=end - start, value=item.prev_value()))
 
             # Step 2: Add current value with duration "none" to DB buffer. This entry is "none" because the duration cannot be determined yet as it's duration has not finished
             if debug_item:
                 self.logger.warning(f"Debug 2): Appending current value: start {end}, value {item()} to item '{item}'")
 
-            self._buffer[item].append((end, None, item()))
+            self._buffer_mgr.push(item, BufferEntry(time=end, duration=None, value=item()))
         else:
             self.logger.debug("Not writing item '{}' value because database_acl = {}".format(item, acl))
 
@@ -559,25 +554,14 @@ class Database(SmartPlugin):
         :param caller: Optional caller identifier (for logging).
         :param source: Optional source identifier (for logging).
         """
-        from .constants import QUALITY_NO_DATA
-
         start_ts = self._timestamp(self.shtime.now())
         self.logger.info(
             f"db_mark_invalid: opening no-data gap for '{item.property.path}'"
             + (f' (caller={caller})' if caller else '')
         )
-        # Close any currently-open valid entry
-        with self._buffer_lock:
-            buf = self._buffer.get(item, [])
-            if buf and buf[-1][1] is None:
-                last = buf[-1]
-                buf[-1] = (last[0], start_ts - last[0], last[2])
-        # Append the open-ended no-data entry
-        self._buffer_insert(item, [(start_ts, None, None)])
-        # Track that we're in a gap so _mark_item_valid knows to close it
-        if not hasattr(self, '_gap_items'):
-            self._gap_items = {}
-        self._gap_items[item] = start_ts
+        # BufferManager.push_invalid() closes any currently-open valid entry
+        # and appends the open-ended no-data entry in one call.
+        self._buffer_mgr.push_invalid(item, start_ts)
 
     def _mark_item_valid(self, item, caller=None, source=None):
         """Close an open no-data gap for *item*.
@@ -593,18 +577,14 @@ class Database(SmartPlugin):
         :param caller: Optional caller identifier (for logging).
         :param source: Optional source identifier (for logging).
         """
-        if not hasattr(self, '_gap_items') or item not in self._gap_items:
+        last = self._buffer_mgr.last_entry(item)
+        if last is None or last.duration is not None or last.quality != QUALITY_NO_DATA:
             return  # no open gap — nothing to close
         end_ts = self._timestamp(self.shtime.now())
         self.logger.info(
             f"db_mark_valid: closing no-data gap for '{item.property.path}'" + (f' (caller={caller})' if caller else '')
         )
-        with self._buffer_lock:
-            buf = self._buffer.get(item, [])
-            if buf and buf[-1][1] is None:
-                last = buf[-1]
-                buf[-1] = (last[0], end_ts - last[0], last[2])
-        del self._gap_items[item]
+        self._buffer_mgr.close_open(item, end_ts)
 
     def _start_schedulers(self):
         """
@@ -895,8 +875,7 @@ class Database(SmartPlugin):
         :return:     The new integer item ID.
         :rtype:      int
         """
-        result_cur = self._execute(self._prepare('INSERT INTO {item}(name) VALUES(:name);'), {'name': name}, cur=cur)
-        return int(result_cur.lastrowid)
+        return self._item_store.insert(name, cur=cur)
 
     def updateItem(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
         """
@@ -912,15 +891,7 @@ class Database(SmartPlugin):
         :param changed: Time of change
         :param cur: A database cursor object if available (optional)
         """
-        params = {'id': id, 'time': time, 'changed': changed}
-        params.update(self._item_value_tuple(it, val))
-        self._execute(
-            self._prepare(
-                'UPDATE {item} SET time = :time, val_str = :val_str, val_num = :val_num, val_bool = :val_bool, changed = :changed WHERE id = :id;'
-            ),
-            params,
-            cur=cur,
-        )
+        self._item_store.update(id, time, val, it, changed, cur=cur)
 
     def readItem(self, id, cur=None):
         """
@@ -932,10 +903,7 @@ class Database(SmartPlugin):
 
         :return: Data for the selected item
         """
-        params = {'id': id}
-        if isinstance(id, str):
-            return self._fetchone('SELECT {item_columns} from {item} WHERE name = :id;', params, cur=cur)
-        return self._fetchone('SELECT {item_columns} from {item} WHERE id = :id;', params, cur=cur)
+        return self._item_store.find(id, cur=cur)
 
     def readItems(self, cur=None):
         """
@@ -947,7 +915,7 @@ class Database(SmartPlugin):
 
         :return: selected items
         """
-        return self._fetchall('SELECT {item_columns} from {item};', cur=cur)
+        return self._item_store.find_all(cur=cur)
 
     def readItemCount(self, cur=None):
         """
@@ -959,10 +927,7 @@ class Database(SmartPlugin):
 
         :return: Number of log records for the database ID
         """
-        if self._db.connected():
-            params = {}
-            return self._fetchall('SELECT count(*) FROM {item};', params, cur=cur)[0][0]
-        return '-'
+        return self._item_store.count(cur=cur)
 
     def deleteItem(self, id, cur=None):
         """
@@ -973,11 +938,9 @@ class Database(SmartPlugin):
         :param id: Database ID of item to delete the record for
         :param cur: A database cursor object if available (optional)
         """
-        params = {'id': id}
-        self.deleteLog(id, cur=cur)
-        self._execute(self._prepare('DELETE FROM {item} WHERE id = :id;'), params, cur=cur)
+        self._item_store.delete(id, cur=cur)
 
-    def insertLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
+    def insertLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=None, quality=QUALITY_VALID):
         """
         Create database log record for given database ID
 
@@ -990,19 +953,12 @@ class Database(SmartPlugin):
         :param it: The item type of the value ('str', 'num', 'bool')
         :param changed: Time of change
         :param cur: A database cursor object if available (optional)
+        :param quality: Data-quality flag (QUALITY_VALID by default, QUALITY_NO_DATA for a gap row)
         """
-        params = {'id': id, 'time': time, 'changed': changed, 'duration': duration}
-        params.update(self._item_value_tuple(it, val))
-        self._execute(
-            self._prepare(
-                'INSERT INTO {log}(item_id, time, val_str, val_num, val_bool, duration, changed) VALUES (:id,:time,:val_str,:val_num,:val_bool,:duration,:changed);'
-            ),
-            params,
-            cur=cur,
-        )
-        return
+        entry = BufferEntry(time=time, duration=duration, value=val, quality=quality)
+        self._log_store.insert(id, entry, it, changed, cur=cur)
 
-    def updateLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
+    def updateLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=None, quality=QUALITY_VALID):
         """
         Update database log record for given database ID
 
@@ -1015,17 +971,10 @@ class Database(SmartPlugin):
         :param it: The item type of the value ('str', 'num', 'bool')
         :param changed: Time of change
         :param cur: A database cursor object if available (optional)
+        :param quality: Data-quality flag (QUALITY_VALID by default, QUALITY_NO_DATA for a gap row)
         """
-        params = {'id': id, 'time': time, 'changed': changed, 'duration': duration}
-        params.update(self._item_value_tuple(it, val))
-        self._execute(
-            self._prepare(
-                'UPDATE {log} SET duration = :duration, val_str = :val_str, val_num = :val_num, val_bool = :val_bool, changed = :changed WHERE item_id = :id AND time = :time;'
-            ),
-            params,
-            cur=cur,
-        )
-        return
+        entry = BufferEntry(time=time, duration=duration, value=val, quality=quality)
+        self._log_store.update(id, entry, it, changed, cur=cur)
 
     def readLog(self, id, time, cur=None):
         """
@@ -1039,8 +988,7 @@ class Database(SmartPlugin):
 
         :return: Log record for the database ID
         """
-        params = {'id': id, 'time': time}
-        return self._fetchall('SELECT {log_columns} FROM {log} WHERE item_id = :id AND time = :time;', params, cur=cur)
+        return self._log_store.find(id, time, cur=cur)
 
     def readLogs(
         self,
@@ -1069,7 +1017,7 @@ class Database(SmartPlugin):
 
         :return: log records
         """
-        condition, params = self._slice_condition(
+        return self._log_store.find_range(
             id,
             time=time,
             time_start=time_start,
@@ -1077,8 +1025,8 @@ class Database(SmartPlugin):
             changed=changed,
             changed_start=changed_start,
             changed_end=changed_end,
+            cur=cur,
         )
-        return self._fetchall('SELECT {log_columns} FROM {log} WHERE ' + condition, params, cur=cur)
 
     def readOldestLog(self, id, cur=None):
         """
@@ -1091,12 +1039,7 @@ class Database(SmartPlugin):
 
         :return: Time of oldest log record for the database ID
         """
-        params = {'id': id}
-        db_values = self._fetchall('SELECT min(time) FROM {log} WHERE item_id = :id;', params, cur=cur)
-        if db_values is None:
-            return None
-        else:
-            return db_values[0][0]
+        return self._log_store.oldest_time(id, cur=cur)
 
     def readLatestLog(self, id, time=None, cur=None):
         """
@@ -1110,22 +1053,7 @@ class Database(SmartPlugin):
 
         :return: Log record for the database ID
         """
-        if time is None:
-            params = {'id': id}
-            db_values = self._fetchall('SELECT max(time) FROM {log} WHERE item_id = :id;', params, cur=cur)
-            if db_values is None:
-                return None
-            else:
-                return db_values[0][0]
-        else:
-            params = {'id': id, 'time': time}
-            db_values = self._fetchall(
-                'SELECT max(time) FROM {log} WHERE item_id = :id AND time <= :time', params, cur=cur
-            )
-            if db_values is None:
-                return None
-            else:
-                return db_values[0][0]
+        return self._log_store.latest_time(id, before=time, cur=cur)
 
     def readTotalLogCount(self, cur=None):
         """
@@ -1140,10 +1068,7 @@ class Database(SmartPlugin):
         :return:    Total log row count.
         :rtype:     int
         """
-        result = self._fetchall('SELECT count(*) FROM {log};', cur=cur)
-        if not result:
-            return 0
-        return result[0][0]
+        return self._log_store.count_all(cur=cur)
 
     def readLogCount(self, id, time_start=None, time_end=None, cur=None):
         """
@@ -1210,7 +1135,7 @@ class Database(SmartPlugin):
         :param cur: A database cursor object if available (optional)
         :return:
         """
-        condition, params = self._slice_condition(
+        self._log_store.delete_range(
             id,
             time=time,
             time_start=time_start,
@@ -1218,14 +1143,9 @@ class Database(SmartPlugin):
             changed=changed,
             changed_start=changed_start,
             changed_end=changed_end,
+            cur=cur,
+            commit=with_commit,
         )
-        try:
-            self._execute(self._prepare('DELETE FROM {log} WHERE ' + condition), params, cur=cur)
-            if with_commit:
-                self._db.commit()
-        except Exception as e:
-            self.logger.error('Exception in function deleteLog: {}'.format(e))
-            self._db.rollback()
 
         try:
             self._item_logcount[id] = self.readLogCount(id)
@@ -1247,7 +1167,7 @@ class Database(SmartPlugin):
         self.orphanitemlist = []
         self.orphanlist = []
 
-        items = [item.property.path for item in self._buffer]
+        items = [item.property.path for item in self._buffer_mgr.items()]
         try:
             cur = self._db_maint.cursor()
         except Exception as e:
@@ -1401,36 +1321,6 @@ class Database(SmartPlugin):
         self.cleanup_active = True
         self.logger.info('Database cleanup started (removal of entries without defined item)')
         return
-
-    def _slice_condition(
-        self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None, changed_end=None
-    ):
-        params = {
-            'id': id,
-            'time': time,
-            'time_flag': 1 if time is None else 0,
-            'time_start': time_start,
-            'time_start_flag': 1 if time_start is None else 0,
-            'time_end': time_end,
-            'time_end_flag': 1 if time_end is None else 0,
-            'changed': changed,
-            'changed_flag': 1 if changed is None else 0,
-            'changed_start': changed_start,
-            'changed_start_flag': 1 if changed_start is None else 0,
-            'changed_end': changed_end,
-            'changed_end_flag': 1 if changed_end is None else 0,
-        }
-
-        condition = (
-            '(item_id = :id                                      ) AND '
-            + '(time    = :time          OR 1 = :time_flag         ) AND '
-            + '(time    > :time_start    OR 1 = :time_start_flag   ) AND '
-            + '(time    < :time_end      OR 1 = :time_end_flag     ) AND '
-            + '(changed = :changed       OR 1 = :changed_flag      ) AND '
-            + '(changed > :changed_start OR 1 = :changed_start_flag) AND '
-            + '(changed < :changed_end   OR 1 = :changed_end_flag  );    '
-        )
-        return (condition, params)
 
     # ------------------------------------------------------
     #    Database specific stuff to support websocket/visu
@@ -1622,7 +1512,7 @@ class Database(SmartPlugin):
             else:
                 step = iend - istart
 
-        if self._buffer[_item] != []:
+        if self._buffer_mgr.pending_count(_item):
             self._dump(items=[_item])
 
         params = {'id': id, 'time_start': istart, 'time_end': iend, 'inow': inow, 'step': step}
@@ -1649,9 +1539,17 @@ class Database(SmartPlugin):
         columns = columns.replace('duration', duration)
 
         # Create base query including the replaced columns
+        # val_quality != 0 rows (no-data gaps) are excluded entirely - not
+        # just their value (NULL propagation already skips that in e.g.
+        # AVG(val_num*duration)) but their duration too, since otherwise a
+        # gap's duration would still count in a denominator like
+        # AVG(duration) while its value silently drops out of the
+        # numerator, skewing the result instead of the gap contributing
+        # nothing as intended.
         query = (
             'SELECT ' + columns + ' FROM {log} WHERE '
             'item_id = :id AND '
+            '(val_quality IS NULL OR val_quality = 0) AND '
             'time >= (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) AND '
             'time <= :time_end AND '
             'time + duration_now > (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) '
@@ -1763,30 +1661,30 @@ class Database(SmartPlugin):
 
         if items is None:
             # No item given on method call -> dump content of the buffer
-            self._buffer_lock.acquire()
-            items = list(self._buffer.keys())
-            self._buffer_lock.release()
+            items = self._buffer_mgr.items()
 
         for item in items:
-            tuples = self._buffer_remove(item)
+            entries = self._buffer_mgr.pop_all(item)
 
-            if len(tuples) or finalize:
+            if len(entries) or finalize:
                 # Test connectivity
                 if self._db.verify(5) == 0:
-                    self._buffer_insert(item, tuples)
+                    self._buffer_mgr.restore(item, entries)
                     self.logger.error('Connection not recovered, skipping dump')
                     self._dump_lock.release()
                     return
 
                 # Can't lock, restore data
                 if not self._db.lock(300):
-                    self._buffer_insert(item, tuples)
+                    self._buffer_mgr.restore(item, entries)
                     if finalize:
-                        self.logger.error("Can't dump {} items due to fail to acquire lock!".format(len(self._buffer)))
+                        self.logger.error(
+                            "Can't dump {} items due to fail to acquire lock!".format(len(self._buffer_mgr.items()))
+                        )
                     else:
                         self.logger.error(
                             "Can't dump {} items due to fail to acquire lock - will try on next dump".format(
-                                len(self._buffer)
+                                len(self._buffer_mgr.items())
                             )
                         )
                     self._dump_lock.release()
@@ -1831,8 +1729,7 @@ class Database(SmartPlugin):
                             # Perform item update and rewrite current value to database:
                             _update = (end, val, changed)
 
-                            current = (start, end - start, val)
-                            tuples.append(current)
+                            entries.append(BufferEntry(time=start, duration=end - start, value=val))
 
                     else:
                         # only perform DB item update for regular dumps (not at plugin shutdown)
@@ -1841,15 +1738,11 @@ class Database(SmartPlugin):
                     cur = self._db.cursor()
                     id = self.id(item, cur=cur)
 
-                    # Dump tuples
-                    self.logger.debug('Dumping {}/{} with {} values'.format(item.property.path, id, len(tuples)))
+                    # Dump entries
+                    self.logger.debug('Dumping {}/{} with {} values'.format(item.property.path, id, len(entries)))
 
-                    for t in tuples:
-                        existing = self.readLog(id, t[0], cur)
-                        if existing:  # readLog may return None on connection failure
-                            self.updateLog(id, t[0], t[1], t[2], item.type(), changed, cur)
-                        else:
-                            self.insertLog(id, t[0], t[1], t[2], item.type(), changed, cur)
+                    for entry in entries:
+                        self._log_store.upsert(id, entry, item.type(), changed, cur=cur)
 
                     self.updateItem(id, _update[0], None, _update[1], item.type(), _update[2], cur)
 
@@ -1859,10 +1752,10 @@ class Database(SmartPlugin):
                     self._db.commit()
                 except Exception as e:
                     self.logger.warning('Problem dumping {}: {}'.format(item.property.path, e), exc_info=True)
+                    self._buffer_mgr.restore(item, entries)
                     try:
                         self._db.rollback()
                     except Exception as er:
-                        self._buffer_insert(item, tuples)
                         self.logger.warning('Error rolling back: {}'.format(er))
                 finally:
                     if cur is not None:
@@ -1870,22 +1763,6 @@ class Database(SmartPlugin):
                 self._db.release()
         self.logger.debug('Dump completed')
         self._dump_lock.release()
-
-    def _buffer_insert(self, item, tuples):
-        self._buffer_lock.acquire()
-        if item in self._buffer:
-            self._buffer[item] = tuples + self._buffer[item]
-        else:
-            self._buffer[item] = tuples
-        self._buffer_lock.release()
-        return tuples
-
-    def _buffer_remove(self, item):
-        self._buffer_lock.acquire()
-        tuples = self._buffer[item]
-        self._buffer[item] = self._buffer[item][len(tuples) :]
-        self._buffer_lock.release()
-        return tuples
 
     # ------------------------------------------
     #    Database maintenance stuff
@@ -2156,7 +2033,7 @@ class Database(SmartPlugin):
                 else:
                     self.logger.error(
                         'Database reconnect (maintenance connection) supressed: Delta time: {0}'.format(
-                            time_delta_last_connect
+                            time_delta_last_maint_connect
                         )
                     )
                     return False
@@ -2182,12 +2059,12 @@ class Database(SmartPlugin):
     def _execute(self, query, params, cur=None):
         return self._query(self._db.execute, query, params, cur)
 
-    def _fetchone(self, query, params={}, cur=None):
-        tuples = self._query(self._db.fetchone, query, params, cur)
+    def _fetchone(self, query, params=None, cur=None):
+        tuples = self._query(self._db.fetchone, query, params or {}, cur)
         return tuples
 
-    def _fetchall(self, query, params={}, cur=None):
-        tuples = self._query(self._db.fetchall, query, params, cur)
+    def _fetchall(self, query, params=None, cur=None):
+        tuples = self._query(self._db.fetchall, query, params or {}, cur)
         return None if tuples is None else list(tuples)
 
     def _query(self, func, query, params, cur=None):

@@ -100,6 +100,35 @@ class TestItemStore(unittest.TestCase):
         self.assertEqual(id1, 1)
         self.assertEqual(id2, 2)
 
+    def test_insert_uses_lastrowid_not_a_followup_lookup(self):
+        # Must mirror plugins.database.__init__.py's insertItem(), which
+        # documents fixing exactly this: a follow-up "SELECT id WHERE
+        # name=" after the INSERT lets a concurrent caller on the shared
+        # connection interleave between the two statements and miss,
+        # leaving the item permanently id-less. Using the cursor's own
+        # lastrowid right after the INSERT avoids the second statement
+        # (and the race) entirely.
+        calls = {'execute': 0, 'fetchone': 0}
+        orig_execute = self.db.execute
+        orig_fetchone = self.db.fetchone
+
+        def spy_execute(*a, **kw):
+            calls['execute'] += 1
+            return orig_execute(*a, **kw)
+
+        def spy_fetchone(*a, **kw):
+            calls['fetchone'] += 1
+            return orig_fetchone(*a, **kw)
+
+        self.db.execute = spy_execute
+        self.db.fetchone = spy_fetchone
+
+        new_id = self.store.insert('item.one')
+
+        self.assertEqual(1, new_id)
+        self.assertEqual(1, calls['execute'], 'expected exactly one INSERT statement')
+        self.assertEqual(0, calls['fetchone'], 'insert() must not issue a follow-up lookup query')
+
     def test_find_by_name(self):
         self.store.insert('my.item')
         row = self.store.find('my.item')
