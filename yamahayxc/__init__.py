@@ -2069,7 +2069,7 @@ class YamahaYXC(SmartPlugin):
         elif cmd == 'volume':
             return int(value)
         elif cmd == 'mute':
-            return value == 'true'
+            return str(value).lower() == 'true'
         elif cmd == 'power':
             if value == 'standby':
                 return False
@@ -2096,14 +2096,13 @@ class YamahaYXC(SmartPlugin):
             value = 'http://{}{}'.format(host, value)
             return value
         elif cmd == 'alarm_on':
-            return value == 'true'
+            # see the 'mute' branch above - same str()-normalising fix for
+            # the same native-bool-vs-string-literal risk.
+            return str(value).lower() == 'true'
         elif cmd == 'alarm_time':
             return value
         elif cmd == 'alarm_beep':
-            if value == 'true':
-                return True
-            else:
-                return False
+            return str(value).lower() == 'true'
         elif cmd == 'sound_program':
             return value
         elif cmd in ('surround_3d', 'direct', 'pure_direct', 'enhancer'):
