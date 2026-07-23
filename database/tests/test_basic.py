@@ -363,3 +363,34 @@ class TestDatabaseBasic(TestDatabaseBase):
         items = plugin.readItems()
         self.assertEqual(1, len(items))
         self.assertEqual('main.num', items[0][1])
+
+    def test_remove_orphan_items_survives_stale_maintenance_connection(self):
+        # Regression for smarthomeNG/plugins#1004: a hiccup on the dedicated
+        # maintenance connection (_db_maint), independent from the main _db
+        # connection (e.g. a brief backup-induced DB outage), currently
+        # crashes orphan cleanup outright. _delete_orphan() drives a raw
+        # cursor from _db_maint straight into _execute(..., cur=cur); passing
+        # an explicit cursor makes _query() skip its verify()/reconnect
+        # branch entirely, and the resulting DBAPI error is re-raised with no
+        # try/except anywhere up the call chain - matching the uncaught
+        # "pymysql.err.InterfaceError: (0, '')" loop reported in the issue.
+        # It must instead be logged and the item requeued for the next cycle.
+        plugin = self.plugin()
+        self.create_item(plugin, 'main.num')
+        self.create_item(plugin, 'main.nodb')
+        plugin._db.commit()
+        plugin.cleanup()
+        plugin.build_orphanlist()
+        self.assertTrue(plugin.remove_orphan)
+        self.assertIn('main.nodb', plugin.orphanlist)
+
+        class _BrokenCursor:
+            def execute(self, *a, **kw):
+                raise RuntimeError('simulated stale maintenance-connection error')
+
+        with mock.patch.object(plugin._db_maint, 'cursor', return_value=_BrokenCursor()):
+            with self.assertLogs(level='ERROR'):
+                plugin.remove_orphan_items()  # must not raise
+
+        # item must survive for a retry on the next cycle, not vanish silently
+        self.assertIn('main.nodb', plugin.orphanlist)

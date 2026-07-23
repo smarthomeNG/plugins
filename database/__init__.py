@@ -1270,23 +1270,29 @@ class Database(SmartPlugin):
         if logcount == 0:
             self.logger.info(f'_delete_orphan: Item {item_path} has no log entries')
             cur = self._db_maint.cursor()
-            self._execute(self._prepare('DELETE FROM {item} WHERE id = :id;'), {'id': item_id}, cur=cur)
+            try:
+                self._execute(self._prepare('DELETE FROM {item} WHERE id = :id;'), {'id': item_id}, cur=cur)
+            finally:
+                if cur is not None:
+                    cur.close()
             self.logger.info(f'_delete_orphan: Deleted item entry for {item_path}')
-            cur.close()
             self._db_maint.commit()
             return True
 
         cur = self._db_maint.cursor()
-        self._execute(
-            self._prepare('DELETE FROM {log} WHERE item_id = :id LIMIT :maxrecords;'),
-            {'id': item_id, 'maxrecords': self.delete_orphan_chunk_size},
-            cur=cur,
-        )
+        try:
+            self._execute(
+                self._prepare('DELETE FROM {log} WHERE item_id = :id LIMIT :maxrecords;'),
+                {'id': item_id, 'maxrecords': self.delete_orphan_chunk_size},
+                cur=cur,
+            )
+        finally:
+            if cur is not None:
+                cur.close()
         delete_orphan_chunk_size_str = f'{self.delete_orphan_chunk_size:,}'.replace(',', '.')
         self.logger.info(
             f'_delete_orphan: Deleted (up to) {delete_orphan_chunk_size_str} log entries for Item {item_path}'
         )
-        cur.close()
         self._db_maint.commit()
 
         return False
@@ -1299,7 +1305,17 @@ class Database(SmartPlugin):
             self.build_orphanlist()
 
         item = self.orphanlist.pop(0)
-        if not self._delete_orphan(item):
+        try:
+            deleted = self._delete_orphan(item)
+        except Exception as e:
+            # e.g. the maintenance connection (_db_maint) went stale independently
+            # of the main connection (see smarthomeNG/plugins#1004) - keep the item
+            # queued and retry on the next cycle instead of crashing the scheduler task.
+            self.logger.warning(f'remove_orphan_items: Deletion of orphan {item} failed, will retry: {e}')
+            self.orphanlist.append(item)
+            return
+
+        if not deleted:
             self.orphanlist.append(item)
 
         if len(self.orphanlist) == 0:
