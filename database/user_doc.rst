@@ -245,9 +245,136 @@ Lückeneinträge (``val_quality = 1``) werden bei Aggregationsabfragen (``avg``,
 Energieberechnungen nur echte Messwerte berücksichtigen.  In Rohwertabfragen (``raw``)
 erscheinen sie als ``NULL``-Werte, damit Visualisierungen Lücken darstellen können.
 
-Es gibt aktuell nur eine Möglichkeit die Anzahl der Datensätze pro Item zu begrenzen:
-Durch die Angabe des Item Attributs ``database_maxage`` wird das maximale Alter der Einträge eines Items begrenzt.
-Regelmässig werden Werte deren Zeitstempel älter ist als die angegebene Zeitspanne aus der Datenbank gelöscht.
+Es gibt zwei Möglichkeiten, die Anzahl der Datensätze pro Item zu begrenzen: Durch die Angabe des
+Item Attributs ``database_maxage`` wird das maximale Alter der Einträge eines Items begrenzt.
+Standardmäßig werden Werte, deren Zeitstempel älter ist als die angegebene Zeitspanne, regelmäßig aus
+der Datenbank gelöscht. Alternativ können ältere Werte statt gelöscht zu werden auch zu einem Wert pro
+Kompaktierungsintervall verdichtet werden, siehe unten "Kompaktierung statt Löschen".
+
+
+Kompaktierung statt Löschen (database_maxage_action)
+=====================================================
+
+Standardmäßig löscht ``database_maxage`` alte Werte ersatzlos. Über das Item Attribut
+``database_maxage_action`` kann stattdessen festgelegt werden, dass alte Rohwerte zu jeweils **einem**
+Wert pro Kompaktierungsintervall verdichtet werden, statt komplett zu verschwinden. So bleibt zum
+Beispiel der Verlauf eines Werts über Jahre hinweg als Tagesmittelwert erhalten, während die
+minütlichen Rohdaten irgendwann gelöscht werden.
+
+Die Kompaktierung läuft im selben Turnus wie das bisherige Löschen (Parameter ``removeold_cycle``)
+und arbeitet sich - genau wie das Löschen - in begrenzten Schritten durch alte Daten (Parameter
+``max_aggregate_intervals``), um die Datenbank nicht mit einem einzigen großen Durchlauf zu blockieren.
+
+
+Item Attribute
+---------------
+
+``database_maxage_action``
+    Legt fest, was mit Werten passiert, die älter als ``database_maxage`` sind. Standardwert ist
+    ``delete`` (bisheriges Verhalten). Jeder andere Wert ersetzt die Rohwerte eines Intervalls durch
+    **einen** berechneten Wert:
+
+    =============== ========================================================== ===============
+    Wert                    Bedeutung                                            Gültig für Typ
+    =============== ========================================================== ===============
+    delete               Werte löschen (Standard)                              beliebig
+    avg                  Zeitgewichteter Mittelwert                            num, bool
+    sum                  Summe der Werte                                       num, bool
+    min                  Minimalwert                                           num, bool
+    max                  Maximalwert                                           num, bool
+    integrate            Diskretes Integral über der Zeit                      num, bool
+    on                   Prozentzahl der Werte > 0 (zeitgewichtet)             bool, str
+    countall             Anzahl der Rohwerte im Intervall                      beliebig
+    first                Ältester Rohwert im Intervall, unverändert            beliebig
+    last                 Neuester Rohwert im Intervall, unverändert            beliebig
+    =============== ========================================================== ===============
+
+    Die Funktionen ``avg``, ``sum``, ``min``, ``max``, ``integrate``, ``on`` und ``countall``
+    entsprechen den gleichnamigen Funktionen aus dem Abschnitt "Datenbankfunktionen für
+    Einzelauswertungen" weiter oben. ``first`` und ``last`` gibt es dort nicht - sie behalten den
+    tatsächlich gespeicherten Wert bei, statt etwas zu berechnen, und sind deshalb die einzigen
+    Funktionen, die auch für Items vom Typ ``str`` sinnvoll funktionieren (z.B. um den letzten
+    Status-Text eines Tages zu behalten, statt nur die Anzahl der Statuswechsel zu zählen).
+
+    Ist ein Wert für den Typ des Items ungültig (z.B. ``sum`` bei einem ``str``-Item, dessen
+    numerische Spalte immer leer ist), wird dies beim Start als Fehler geloggt und für dieses Item
+    automatisch auf ``delete`` zurückgefallen.
+
+``database_maxage_interval``
+    Größe eines Kompaktierungsintervalls, im gleichen Format wie ``cycle``/``autotimer``
+    (z.B. ``24h``, ``30m`` - **kein** ``d``-Suffix für Tage). Nur relevant, wenn
+    ``database_maxage_action`` nicht ``delete`` ist. Ohne Angabe gilt der Plugin-Parameter
+    ``default_maxage_interval``.
+
+Beide Attribute haben bewusst **keinen** Standardwert direkt am Item-Attribut, damit die
+Plugin-Parameter ``default_maxage_action``/``default_maxage_interval`` als Fallback greifen können,
+wenn ein Item nur ``database_maxage`` setzt, aber keine eigene Aktion/Intervall konfiguriert.
+
+
+Beispiel
+--------
+
+.. code-block:: yaml
+
+    solar:
+        leistung:
+            type: num
+            database: true
+            database_maxage: 90
+            database_maxage_action: avg
+            database_maxage_interval: 24h
+
+Werte, die älter als 90 Tage sind, werden zu einem Tagesmittelwert zusammengefasst statt gelöscht zu
+werden.
+
+
+Minimum/Maximum als eigenständige Items (database.min / database.max)
+------------------------------------------------------------------------
+
+``database_maxage_action`` liefert bewusst nur **einen** Wert pro Intervall - wer zusätzlich zum
+Mittelwert auch Minimum und/oder Maximum eines Intervalls dauerhaft speichern möchte, kann dafür die
+mitgelieferten Structs ``database.min`` und ``database.max`` nutzen. Sie legen jeweils ein eigenes
+Kind-Item an (``db_min`` bzw. ``db_max``), das den Wert des übergeordneten Items live mitschreibt und
+unabhängig mit ``database_maxage_action: min`` bzw. ``max`` kompaktiert wird:
+
+.. code-block:: yaml
+
+    solar:
+        leistung:
+            type: num
+            database: true
+            database_maxage: 90
+            database_maxage_action: avg
+            struct:
+              - database.min
+              - database.max
+
+Dadurch entstehen ``solar.leistung.db_min`` und ``solar.leistung.db_max`` als vollwertige,
+eigenständig geloggte Items.
+
+.. note::
+
+   Die Structs kopieren ``database_maxage``/``database_maxage_interval`` **nicht** vom
+   übergeordneten Item - beide Kind-Items nutzen die gleichen Plugin-Parameter
+   (``default_maxage``/``default_maxage_interval``) wie jedes andere Item auch, das diese Attribute
+   nicht selbst setzt. Setzt das übergeordnete Item einen abweichenden, expliziten Wert für
+   ``database_maxage`` (wie im Beispiel oben, ``90``), muss dieser bei Bedarf zusätzlich lokal auf
+   den Kind-Items gesetzt werden:
+
+   .. code-block:: yaml
+
+       solar:
+           leistung:
+               ...
+               struct:
+                 - database.min
+                 - database.max
+
+               db_min:
+                   database_maxage: 90
+               db_max:
+                   database_maxage: 90
+
 
 Datenbankfunktionen für Datenreihen/Plots
 =========================================
