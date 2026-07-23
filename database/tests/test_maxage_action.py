@@ -41,6 +41,34 @@ class TestMaxageAction(TestDatabaseBase):
         item = self.sh.return_item('main.maxage_invalid_type')
         self.assertEqual('delete', plugin._maxage_action_for(item))
 
+    # -- malformed database_maxage (regression: this used to crash item creation) --
+
+    def test_parse_item_survives_empty_database_maxage(self):
+        # main.maxage_empty has database_maxage: '' - e.g. produced by a
+        # struct copy-directive ('..:.') against a parent that doesn't set
+        # database_maxage itself. This used to reach parse_item()'s
+        # float(maxage) unguarded and blow up the whole item's creation
+        # (ValueError: could not convert string to float: '').
+        plugin = self.plugin()
+        item = self.sh.return_item('main.maxage_empty')
+        self.assertIsNotNone(item, 'item creation must not have crashed')
+        self.assertNotIn(item, plugin._items_with_maxage)
+
+    def test_get_maxage_ts_returns_none_for_empty_maxage(self):
+        plugin = self.plugin()
+        item = self.sh.return_item('main.maxage_empty')
+        self.assertIsNone(plugin.get_maxage_ts(item))
+
+    def test_remove_older_than_maxage_skips_item_with_no_usable_maxage(self):
+        # with default_maxage=0 (test default), main.maxage_empty would
+        # never reach the worklist in practice - but if it somehow does
+        # (e.g. default_maxage > 0, or a future caller), remove_older_than_maxage
+        # must not crash trying to use a None time_end.
+        plugin = self.plugin()
+        item = self.sh.return_item('main.maxage_empty')
+        plugin._maxage_worklist = [item]
+        plugin.remove_older_than_maxage()  # must not raise
+
     # -- _maxage_interval_seconds_for ----------------------------------------
 
     def test_maxage_interval_seconds_for_parses_hours(self):

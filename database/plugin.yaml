@@ -194,25 +194,36 @@ item_structs:
     # hand-authored item of the same name (e.g. a configured setpoint);
     # 'db_min'/'db_max' stays self-explanatory regardless of how it got
     # there.
+    #
+    # Deliberately NOT copying database_maxage/database_maxage_interval/
+    # enforce_updates from the parent via '..:.' here: that only works if
+    # the parent sets them explicitly, which defeats the point of having
+    # default_maxage/default_maxage_action/default_maxage_interval plugin
+    # parameters in the first place (an item can legitimately set only
+    # database_maxage_action and rely on the plugin-level default for
+    # everything else). Copying an attribute the parent doesn't actually
+    # have produces an empty string, which crashed item creation outright
+    # (database_maxage) or logged a parse warning (enforce_updates) instead
+    # of silently doing nothing. Leaving these unset lets the companion
+    # resolve database_maxage/database_maxage_interval through the exact
+    # same plugin-level fallback the parent itself would use if it also
+    # left them unset - correct in the common case. The one case this
+    # doesn't cover: a parent with an explicit *non-default* database_maxage
+    # or enforce_updates:true - the companion won't automatically mirror
+    # that, and would need a local override alongside the struct reference.
     min:
         on_change: .db_min = value
         db_min:
             type: num
-            enforce_updates: ..:.
             database: true
-            database_maxage: ..:.
             database_maxage_action: min
-            database_maxage_interval: ..:.
 
     max:
         on_change: .db_max = value
         db_max:
             type: num
-            enforce_updates: ..:.
             database: true
-            database_maxage: ..:.
             database_maxage_action: max
-            database_maxage_interval: ..:.
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

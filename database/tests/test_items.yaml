@@ -20,6 +20,12 @@ main:
         database: init
         database_maxage: 30
 
+    maxage_empty:
+        type: num
+        database: init
+        database_maxage: ''
+        database_maxage_action: min
+
     maxage_sum:
         type: num
         database: init

@@ -292,7 +292,14 @@ class Database(SmartPlugin):
             self._handled_items.append(item)
             if self.has_iattr(item.conf, 'database_maxage'):
                 maxage = self.get_iattr_value(item.conf, 'database_maxage')
-                if float(maxage) > 0:
+                try:
+                    maxage_valid = float(maxage) > 0
+                except (TypeError, ValueError):
+                    self.logger.warning(
+                        f"Item {item.property.path}: database_maxage value '{maxage}' is not a number, ignoring"
+                    )
+                    maxage_valid = False
+                if maxage_valid:
                     # if self.get_iattr_value(item.conf, 'database') == 'init':
                     #    self.logger.warning(f"Item {item.property.path} configured with database_maxage and init could lead to no values in DB for initialization.")
 
@@ -2028,6 +2035,10 @@ class Database(SmartPlugin):
         # a) delete only records for one day
         # b) to just delete a limited number of log entries
         time_end = self.get_maxage_ts(item)
+        if time_end is None:
+            # no usable maxage for this item (e.g. an invalid database_maxage
+            # value, already logged by get_maxage_ts) - nothing to do
+            return
         timestamp_end = self._timestamp(time_end)
 
         maxage_action = self._maxage_action_for(item)
@@ -2120,16 +2131,25 @@ class Database(SmartPlugin):
 
         :return:
         """
+        maxage = None
         if self.has_iattr(item.conf, 'database_maxage'):
             maxage = self.get_iattr_value(item.conf, 'database_maxage')
         elif self._default_maxage > 0:
             maxage = self._default_maxage
 
         if maxage:
-            dt = self.shtime.now()
-            dt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
-            dt = dt - datetime.timedelta(float(maxage))
-            return dt
+            try:
+                maxage = float(maxage)
+            except (TypeError, ValueError):
+                self.logger.warning(
+                    f"Item {item.property.path}: database_maxage value '{maxage}' is not a number, ignoring"
+                )
+                return None
+            if maxage > 0:
+                dt = self.shtime.now()
+                dt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
+                dt = dt - datetime.timedelta(maxage)
+                return dt
         return None
 
     def _count_logentries(self):
