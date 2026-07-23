@@ -423,3 +423,25 @@ class LogStore:
                 cur=cur,
             )
         return rows[0][0] if rows else None
+
+    def aggregate(self, item_id: int, expr: str, *, time_start=None, time_end=None, cur=None):
+        """Return one aggregate value for *item_id* in the given range.
+
+        *expr* must be a caller-controlled SQL aggregate expression (e.g.
+        ``'SUM(val_num)'``) - it is interpolated directly into the query, so
+        it must never come from user/item-config input, only from a fixed,
+        code-defined set of fragments.
+
+        :param item_id:    Database item ID.
+        :param expr:       SQL aggregate expression over ``val_num``/``val_bool``/``duration``.
+        :param time_start: Exclusive lower bound on ``time`` (optional).
+        :param time_end:   Exclusive upper bound on ``time`` (optional).
+        :param cur:        Optional cursor.
+        :returns:          The aggregate result, or ``None`` if the range is empty
+                           (or the aggregate itself evaluates to NULL).
+        """
+        where, params = build_where_clause(item_id, time_start=time_start, time_end=time_end)
+        result = self._fetchall(f'SELECT {expr} FROM {{log}} WHERE ' + where + ';', params, cur=cur)
+        if not result:
+            return None
+        return result[0][0]

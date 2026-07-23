@@ -104,6 +104,40 @@ class Database(SmartPlugin):
         ],
     }
 
+    # database_maxage_action: value expressions, one scalar per compaction
+    # interval. Deliberately mirrors (not DRY-shares) the fragments in
+    # _single()'s `queries` dict - reusing the exact same SQL text without
+    # refactoring _single()/_series() themselves, to avoid touching the
+    # already-working on-demand query path while adding this feature.
+    # 'diff'/'count'/'first'/'last' are intentionally left out for now (see
+    # database_maxage_action design discussion: 'diff' has two conflicting
+    # meanings between _single/_series, 'first'/'last' need a differently
+    # shaped query than a plain aggregate expression).
+    _MAXAGE_AGGREGATE_EXPR = {
+        'avg': 'AVG(val_num * duration) / AVG(duration)',
+        'sum': 'SUM(val_num)',
+        'min': 'MIN(val_num)',
+        'max': 'MAX(val_num)',
+        'integrate': 'SUM(val_num * duration)',
+        'on': 'SUM(val_bool * duration) / SUM(duration)',
+        'countall': 'COUNT(*)',
+    }
+
+    # item types each database_maxage_action is valid for. None = any type.
+    # Grounded in utils.encode_value(): val_num is populated for 'num' and
+    # 'bool' (bool encodes as float(value)); val_bool is populated for
+    # 'bool' *and* 'str' (string truthiness) - hence 'on' works for str/bool
+    # but avg/sum/min/max/integrate (which read val_num) do not work for str.
+    _MAXAGE_ACTION_VALID_TYPES = {
+        'avg': ('num', 'bool'),
+        'sum': ('num', 'bool'),
+        'min': ('num', 'bool'),
+        'max': ('num', 'bool'),
+        'integrate': ('num', 'bool'),
+        'on': ('bool', 'str'),
+        'countall': None,
+    }
+
     def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin.
@@ -145,6 +179,9 @@ class Database(SmartPlugin):
         self.max_delete_logentries = self.get_parameter_value('max_delete_logentries')
         self.max_reassign_logentries = self.get_parameter_value('max_reassign_logentries')
         self._default_maxage = float(self.get_parameter_value('default_maxage') or 0)
+        self._default_maxage_action = self.get_parameter_value('default_maxage_action') or 'delete'
+        self._default_maxage_interval = self.get_parameter_value('default_maxage_interval') or '24h'
+        self.max_aggregate_intervals = self.get_parameter_value('max_aggregate_intervals')
 
         self._copy_database = self.get_parameter_value('copy_database')
         self._copy_database_name = self.get_parameter_value('copy_database_name')
@@ -260,6 +297,15 @@ class Database(SmartPlugin):
                     #    self.logger.warning(f"Item {item.property.path} configured with database_maxage and init could lead to no values in DB for initialization.")
 
                     self._items_with_maxage.append(item)
+
+            if self.has_iattr(item.conf, 'database_maxage_action'):
+                action = self.get_iattr_value(item.conf, 'database_maxage_action').lower()
+                valid_types = self._MAXAGE_ACTION_VALID_TYPES.get(action)
+                if valid_types is not None and item.type() not in valid_types:
+                    self.logger.error(
+                        f"Item {item.property.path}: database_maxage_action '{action}' is not valid for "
+                        f"item type '{item.type()}' (valid: {', '.join(valid_types)}) - falling back to 'delete'"
+                    )
 
             self.logger.debug(item.conf)
             self._buffer_mgr.register(item)
@@ -1784,6 +1830,141 @@ class Database(SmartPlugin):
     #    Database maintenance stuff
     # ------------------------------------------
 
+    def _maxage_action_for(self, item):
+        """
+        Resolve database_maxage_action for *item*, falling back to the
+        plugin-level default_maxage_action when the item doesn't set its
+        own. The item attribute deliberately has no schema default in
+        plugin.yaml, so has_iattr() can distinguish "unset" from
+        "explicitly delete" - mirrors the existing default_maxage pattern.
+
+        Also the single enforcement point for the type-compatibility check
+        (see _MAXAGE_ACTION_VALID_TYPES): an invalid action for this item's
+        type always resolves to 'delete' here, regardless of whether
+        parse_item()'s startup validation ran, so a bad config can never
+        reach _compact_maxage() and run e.g. SUM(val_num) against a str
+        item (val_num is always NULL there).
+
+        :param item: item to resolve the action for
+        :return: one of _MAXAGE_AGGREGATE_EXPR's keys, or 'delete'
+        """
+        if self.has_iattr(item.conf, 'database_maxage_action'):
+            action = self.get_iattr_value(item.conf, 'database_maxage_action').lower()
+        else:
+            action = self._default_maxage_action
+
+        if action == 'delete':
+            return 'delete'
+
+        valid_types = self._MAXAGE_ACTION_VALID_TYPES.get(action)
+        if action not in self._MAXAGE_AGGREGATE_EXPR or (valid_types is not None and item.type() not in valid_types):
+            return 'delete'
+        return action
+
+    def _maxage_interval_seconds_for(self, item):
+        """
+        Resolve database_maxage_interval for *item* in seconds, falling
+        back to the plugin-level default_maxage_interval. Same format as
+        cycle/autotimer (lib.shtime.Shtime.to_seconds) - no 'd' (days)
+        suffix supported.
+
+        :param item: item to resolve the interval for
+        :return: interval in seconds (int), never 0 or negative
+        """
+        if self.has_iattr(item.conf, 'database_maxage_interval'):
+            interval = self.get_iattr_value(item.conf, 'database_maxage_interval')
+        else:
+            interval = self._default_maxage_interval
+
+        seconds = self.shtime.to_seconds(interval, test=True)
+        if not seconds or seconds <= 0:
+            self.logger.warning(
+                f"Item {item.property.path}: invalid database_maxage_interval '{interval}', using 86400s (24h)"
+            )
+            return 86400
+        return int(seconds)
+
+    def _compact_maxage(self, item, item_id, itempath, time_end, action):
+        """
+        Compact log entries older than maxage into one aggregate value per
+        database_maxage_interval, instead of deleting them (called from
+        remove_older_than_maxage() instead of the delete path when *action*
+        is not 'delete').
+
+        No persisted resume cursor is kept: the next interval to compact is
+        always simply the oldest remaining raw data for this item
+        (self._log_store.oldest_time - a cheap MIN(time) index seek).
+        Compaction always proceeds oldest-first and only deletes an
+        interval's raw rows in the same transaction as writing its
+        aggregate, so this is self-healing across restarts/crashes by
+        construction - there is no separate state file to get out of sync.
+
+        Bounded by self.max_aggregate_intervals per call (the aggregate-mode
+        analogue of max_delete_logentries' row-count bound - one interval's
+        aggregate query can still cover an arbitrary number of raw rows for
+        a hot item, so the bound here is on intervals, not rows).
+
+        :param item: the item being compacted
+        :param item_id: database id of item
+        :param itempath: item.property.path, for logging
+        :param time_end: datetime - the maxage cutoff; only intervals
+            entirely older than this are touched
+        :param action: resolved database_maxage_action (already validated
+            via _maxage_action_for - never 'delete' here)
+        """
+        expr = self._MAXAGE_AGGREGATE_EXPR[action]
+        interval_ms = self._maxage_interval_seconds_for(item) * 1000
+        cutoff_ms = self._timestamp(time_end)
+        item_type = item.type()
+
+        intervals_done = 0
+        while intervals_done < self.max_aggregate_intervals:
+            oldest = self._log_store.oldest_time(item_id)
+            if oldest is None:
+                break  # nothing left to compact
+
+            interval_start = (oldest // interval_ms) * interval_ms
+            interval_end = interval_start + interval_ms
+            if interval_end > cutoff_ms:
+                break  # this interval isn't entirely past the cutoff yet - leave it raw
+
+            value = self._log_store.aggregate(item_id, expr, time_start=interval_start - 1, time_end=interval_end)
+
+            cur = self._db.cursor()
+            try:
+                # delete before insert: interval_start is derived from the
+                # oldest raw row's own timestamp, so a raw row can legally
+                # sit at exactly that timestamp - inserting the aggregate
+                # there first would collide with the (item_id, time) unique
+                # constraint. Both statements still share one transaction,
+                # so a crash between them can never leave a duplicate
+                # aggregate behind on the next run's self-healing resume.
+                self._log_store.delete_range(
+                    item_id, time_start=interval_start - 1, time_end=interval_end, cur=cur, commit=False
+                )
+                if value is not None:
+                    now_ms = self._timestamp(self.shtime.now())
+                    entry = BufferEntry(time=interval_start, duration=interval_ms, value=value, quality=QUALITY_VALID)
+                    self._log_store.insert(item_id, entry, item_type, now_ms, cur=cur)
+                self._db.commit()
+            finally:
+                cur.close()
+
+            intervals_done += 1
+
+        if intervals_done:
+            self.logger.info(
+                f"remove_older_: {itempath} compacted {intervals_done} interval(s) using action='{action}'"
+            )
+
+        # more intervals might already be past the cutoff but weren't
+        # reached this cycle (max_aggregate_intervals) - requeue like the
+        # delete path does. If we stopped because the next interval isn't
+        # past the cutoff yet, this correctly does not requeue.
+        oldest = self._log_store.oldest_time(item_id)
+        if oldest is not None and oldest + interval_ms <= cutoff_ms:
+            self._maxage_worklist.append(item)
+
     def remove_older_than_maxage(self):
         """
         Remove log entries older than maxage of an item
@@ -1848,6 +2029,19 @@ class Database(SmartPlugin):
         # b) to just delete a limited number of log entries
         time_end = self.get_maxage_ts(item)
         timestamp_end = self._timestamp(time_end)
+
+        maxage_action = self._maxage_action_for(item)
+        if maxage_action != 'delete':
+            # compaction always replaces raw rows with an aggregate row in
+            # the same transaction as deleting them, so the item's log can
+            # never end up empty as a side effect - the database: init
+            # last-value-preservation logic below is a delete-path-only
+            # concern and doesn't apply here.
+            self._compact_maxage(item, item_id, itempath, time_end, maxage_action)
+            logcount = self.readLogCount(item_id)
+            self._item_logcount[item_id] = logcount
+            self._webdata[item.property.path].update({'logcount': logcount})
+            return
 
         # if delete would also remove the last logged value for the item then there might be no chance for
         # ``database: init`` to retrieve the latest value.

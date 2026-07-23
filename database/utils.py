@@ -143,8 +143,8 @@ def build_where_clause(
 
     :param item_id:       Database item ID (always required).
     :param time:          Exact timestamp match (optional).
-    :param time_start:    Inclusive lower bound on ``time`` (optional).
-    :param time_end:      Inclusive upper bound on ``time`` (optional).
+    :param time_start:    Exclusive lower bound on ``time`` (optional).
+    :param time_end:      Exclusive upper bound on ``time`` (optional).
     :param changed:       Exact ``changed`` timestamp match (optional).
     :param changed_start: Lower bound on ``changed`` (optional).
     :param changed_end:   Upper bound on ``changed`` (optional).

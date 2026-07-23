@@ -44,6 +44,9 @@ class TestDatabaseBase(unittest.TestCase):
             'max_delete_logentries': 20000,
             'max_reassign_logentries': 20,
             'default_maxage': 0,
+            'default_maxage_action': 'delete',
+            'default_maxage_interval': '24h',
+            'max_aggregate_intervals': 30,
             'copy_database': False,
             'copy_database_name': '',
         }
