@@ -2336,13 +2336,20 @@ class Database(SmartPlugin):
         if not self._db_initialized:  # fast-path: avoid full init check on every query
             if not self._initialize_db():
                 return None
-        if cur is None:
+        owns_cur = cur is None
+        if owns_cur:
             if self._db.verify(5) == 0:
                 self.logger.error('Database: Connection not recovered')
                 return None
             if not self._db.lock(300):
                 self.logger.error("Database: Can't query due to fail to acquire lock")
                 return None
+            # explicit cursor once locked: func's own cur=None path now
+            # locks internally too (execute()/fetchone()/fetchall(), see
+            # _cursor_op_with_reconnect in lib/db.py) - self._db.lock() is a
+            # plain non-reentrant Lock, so calling func(..., cur=None) here
+            # while already holding it would deadlock against itself.
+            cur = self._db.cursor()
         prepared = self._prepare(query)  # prepare once
         tuples = None
         try:
@@ -2355,7 +2362,9 @@ class Database(SmartPlugin):
                 self.logger.error('Database: Query error: {}'.format(e))
             raise e
         finally:
-            if cur is None:
+            if owns_cur:
+                if cur is not None:
+                    cur.close()
                 self._db.release()
         if self.logger.isEnabledFor(logging.DEBUG):
             query_readable = re.sub(r':([a-z_]+)', r'{\1}', prepared).format(**params)
