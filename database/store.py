@@ -424,6 +424,34 @@ class LogStore:
             )
         return rows[0][0] if rows else None
 
+    def edge_value(self, item_id: int, order: str, *, time_start=None, time_end=None, cur=None):
+        """Return the raw ``(val_str, val_num, val_bool)`` tuple of the
+        first or last row (by ``time``) for *item_id* in the given range.
+
+        Unlike :meth:`aggregate`, this reads the actual stored value rather
+        than computing a scalar over ``val_num``/``val_bool`` - the only way
+        to get a meaningful compacted value for ``str``-typed items (and the
+        correct choice for ``num``/``bool`` items too, when the desired
+        value is literally "the value at the start/end of the interval"
+        rather than a statistic over it).
+
+        :param item_id: Database item ID.
+        :param order:   ``'ASC'`` for the first (oldest) row, ``'DESC'`` for
+                        the last (newest) row in the range.
+        :param time_start: Exclusive lower bound on ``time`` (optional).
+        :param time_end:   Exclusive upper bound on ``time`` (optional).
+        :param cur:        Optional cursor.
+        :returns:          ``(val_str, val_num, val_bool)`` tuple, or ``None``
+                           if the range is empty.
+        """
+        where, params = build_where_clause(item_id, time_start=time_start, time_end=time_end)
+        result = self._fetchall(
+            'SELECT val_str, val_num, val_bool FROM {log} WHERE ' + where + f' ORDER BY time {order} LIMIT 1;',
+            params,
+            cur=cur,
+        )
+        return result[0] if result else None
+
     def aggregate(self, item_id: int, expr: str, *, time_start=None, time_end=None, cur=None):
         """Return one aggregate value for *item_id* in the given range.
 

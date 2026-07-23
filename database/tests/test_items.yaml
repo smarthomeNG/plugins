@@ -57,3 +57,17 @@ main:
         type: num
         database: init
         database_maxage: 1
+
+    maxage_first_str:
+        type: str
+        database: init
+        database_maxage: 1
+        database_maxage_action: first
+        database_maxage_interval: 1h
+
+    maxage_last_str:
+        type: str
+        database: init
+        database_maxage: 1
+        database_maxage_action: last
+        database_maxage_interval: 1h

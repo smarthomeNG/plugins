@@ -109,10 +109,13 @@ class Database(SmartPlugin):
     # _single()'s `queries` dict - reusing the exact same SQL text without
     # refactoring _single()/_series() themselves, to avoid touching the
     # already-working on-demand query path while adding this feature.
-    # 'diff'/'count'/'first'/'last' are intentionally left out for now (see
-    # database_maxage_action design discussion: 'diff' has two conflicting
-    # meanings between _single/_series, 'first'/'last' need a differently
-    # shaped query than a plain aggregate expression).
+    # 'diff'/'count' are intentionally left out for now ('diff' has two
+    # conflicting meanings between _single/_series; parameterised 'count'
+    # would need database_maxage_action to carry an expression, not just a
+    # bare function name). 'first'/'last' are handled separately below
+    # (_MAXAGE_EDGE_ACTIONS) - they pick a raw stored value rather than
+    # computing a scalar over val_num/val_bool, so str-typed items can be
+    # compacted too (nothing else here works for str).
     _MAXAGE_AGGREGATE_EXPR = {
         'avg': 'AVG(val_num * duration) / AVG(duration)',
         'sum': 'SUM(val_num)',
@@ -123,11 +126,18 @@ class Database(SmartPlugin):
         'countall': 'COUNT(*)',
     }
 
+    # 'first'/'last': keep the oldest/newest raw value in the interval as-is
+    # (via LogStore.edge_value's ORDER BY ... LIMIT 1), instead of computing
+    # anything over it. Maps action name -> SQL ORDER BY direction.
+    _MAXAGE_EDGE_ACTIONS = {'first': 'ASC', 'last': 'DESC'}
+
     # item types each database_maxage_action is valid for. None = any type.
     # Grounded in utils.encode_value(): val_num is populated for 'num' and
     # 'bool' (bool encodes as float(value)); val_bool is populated for
     # 'bool' *and* 'str' (string truthiness) - hence 'on' works for str/bool
     # but avg/sum/min/max/integrate (which read val_num) do not work for str.
+    # first/last just read back whatever encode_value() already stored, so
+    # they work for every type, str included.
     _MAXAGE_ACTION_VALID_TYPES = {
         'avg': ('num', 'bool'),
         'sum': ('num', 'bool'),
@@ -136,6 +146,8 @@ class Database(SmartPlugin):
         'integrate': ('num', 'bool'),
         'on': ('bool', 'str'),
         'countall': None,
+        'first': None,
+        'last': None,
     }
 
     def __init__(self, sh, *args, **kwargs):
@@ -1853,7 +1865,7 @@ class Database(SmartPlugin):
         item (val_num is always NULL there).
 
         :param item: item to resolve the action for
-        :return: one of _MAXAGE_AGGREGATE_EXPR's keys, or 'delete'
+        :return: one of _MAXAGE_AGGREGATE_EXPR's or _MAXAGE_EDGE_ACTIONS' keys, or 'delete'
         """
         if self.has_iattr(item.conf, 'database_maxage_action'):
             action = self.get_iattr_value(item.conf, 'database_maxage_action').lower()
@@ -1863,8 +1875,9 @@ class Database(SmartPlugin):
         if action == 'delete':
             return 'delete'
 
+        known = action in self._MAXAGE_AGGREGATE_EXPR or action in self._MAXAGE_EDGE_ACTIONS
         valid_types = self._MAXAGE_ACTION_VALID_TYPES.get(action)
-        if action not in self._MAXAGE_AGGREGATE_EXPR or (valid_types is not None and item.type() not in valid_types):
+        if not known or (valid_types is not None and item.type() not in valid_types):
             return 'delete'
         return action
 
@@ -1919,7 +1932,8 @@ class Database(SmartPlugin):
         :param action: resolved database_maxage_action (already validated
             via _maxage_action_for - never 'delete' here)
         """
-        expr = self._MAXAGE_AGGREGATE_EXPR[action]
+        edge_order = self._MAXAGE_EDGE_ACTIONS.get(action)
+        expr = None if edge_order else self._MAXAGE_AGGREGATE_EXPR[action]
         interval_ms = self._maxage_interval_seconds_for(item) * 1000
         cutoff_ms = self._timestamp(time_end)
         item_type = item.type()
@@ -1935,7 +1949,16 @@ class Database(SmartPlugin):
             if interval_end > cutoff_ms:
                 break  # this interval isn't entirely past the cutoff yet - leave it raw
 
-            value = self._log_store.aggregate(item_id, expr, time_start=interval_start - 1, time_end=interval_end)
+            if edge_order:
+                # 'first'/'last': keep the actual oldest/newest raw value as-is
+                # (works for str too - encode_value/decode_value round-trip it
+                # via val_str, unlike the val_num-based aggregate expressions).
+                edge = self._log_store.edge_value(
+                    item_id, edge_order, time_start=interval_start - 1, time_end=interval_end
+                )
+                value = self._item_value_tuple_rev(item_type, edge) if edge else None
+            else:
+                value = self._log_store.aggregate(item_id, expr, time_start=interval_start - 1, time_end=interval_end)
 
             cur = self._db.cursor()
             try:

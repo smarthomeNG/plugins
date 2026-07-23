@@ -1,6 +1,6 @@
 import time
 
-from plugins.database.constants import COL_LOG_TIME, COL_LOG_DURATION, COL_LOG_VAL_NUM
+from plugins.database.constants import COL_LOG_TIME, COL_LOG_DURATION, COL_LOG_VAL_NUM, COL_LOG_VAL_STR
 from plugins.database.tests.base import TestDatabaseBase
 
 
@@ -131,6 +131,80 @@ class TestMaxageAction(TestDatabaseBase):
         rows = plugin.readLogs(item_id)
         self.assertEqual(1, len(rows))
         self.assertAlmostEqual(20.0, rows[0][COL_LOG_VAL_NUM], places=3)
+
+    def test_maxage_action_first_last_valid_for_str_type(self):
+        # the motivating case: avg/sum/min/max/integrate can't work on str
+        # (val_num is always NULL there); first/last read back whatever was
+        # actually stored, so they're the only meaningful compaction option
+        # for str-typed items.
+        plugin = self.plugin()
+        first_item = self.sh.return_item('main.maxage_first_str')
+        last_item = self.sh.return_item('main.maxage_last_str')
+        self.assertEqual('first', plugin._maxage_action_for(first_item))
+        self.assertEqual('last', plugin._maxage_action_for(last_item))
+
+    def test_compact_maxage_first_keeps_oldest_raw_value(self):
+        plugin = self.plugin()
+        item = self.sh.return_item('main.maxage_first_str')
+        item_id = self.create_item(plugin, 'main.maxage_first_str')
+
+        interval_ms = 3600 * 1000
+        bucket_start = self._old_bucket_start(interval_ms)
+        plugin.insertLog(item_id, time=bucket_start, duration=1000, val='idle', it='str')
+        plugin.insertLog(item_id, time=bucket_start + 1000, duration=1000, val='heating', it='str')
+        plugin.insertLog(item_id, time=bucket_start + 2000, duration=1000, val='error', it='str')
+        plugin._db.commit()
+
+        time_end = plugin.get_maxage_ts(item)
+        action = plugin._maxage_action_for(item)
+        plugin._compact_maxage(item, item_id, 'main.maxage_first_str', time_end, action)
+
+        rows = plugin.readLogs(item_id)
+        self.assertEqual(1, len(rows))
+        self.assertEqual(bucket_start, rows[0][COL_LOG_TIME])
+        self.assertEqual(interval_ms, rows[0][COL_LOG_DURATION])
+        self.assertEqual('idle', rows[0][COL_LOG_VAL_STR])
+
+    def test_compact_maxage_last_keeps_newest_raw_value(self):
+        plugin = self.plugin()
+        item = self.sh.return_item('main.maxage_last_str')
+        item_id = self.create_item(plugin, 'main.maxage_last_str')
+
+        interval_ms = 3600 * 1000
+        bucket_start = self._old_bucket_start(interval_ms)
+        plugin.insertLog(item_id, time=bucket_start, duration=1000, val='idle', it='str')
+        plugin.insertLog(item_id, time=bucket_start + 1000, duration=1000, val='heating', it='str')
+        plugin.insertLog(item_id, time=bucket_start + 2000, duration=1000, val='error', it='str')
+        plugin._db.commit()
+
+        time_end = plugin.get_maxage_ts(item)
+        action = plugin._maxage_action_for(item)
+        plugin._compact_maxage(item, item_id, 'main.maxage_last_str', time_end, action)
+
+        rows = plugin.readLogs(item_id)
+        self.assertEqual(1, len(rows))
+        self.assertEqual('error', rows[0][COL_LOG_VAL_STR])
+
+    def test_compact_maxage_first_works_for_num_type_too(self):
+        # first/last aren't str-only - they're valid for any type, and for
+        # num/bool items they mean "the value at the start/end of the
+        # interval" rather than a statistic over it.
+        plugin = self.plugin()
+        item = self.sh.return_item('main.maxage_sum')  # type num
+        item_id = self.create_item(plugin, 'main.maxage_sum')
+
+        interval_ms = 3600 * 1000
+        bucket_start = self._old_bucket_start(interval_ms)
+        plugin.insertLog(item_id, time=bucket_start, duration=1000, val=7.0, it='num')
+        plugin.insertLog(item_id, time=bucket_start + 1000, duration=1000, val=99.0, it='num')
+        plugin._db.commit()
+
+        time_end = plugin.get_maxage_ts(item)
+        plugin._compact_maxage(item, item_id, 'main.maxage_sum', time_end, 'first')
+
+        rows = plugin.readLogs(item_id)
+        self.assertEqual(1, len(rows))
+        self.assertEqual(7.0, rows[0][COL_LOG_VAL_NUM])
 
     def test_compact_maxage_never_touches_data_inside_raw_window(self):
         # a row from "now" must survive untouched - only data older than the
