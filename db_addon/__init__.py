@@ -3356,9 +3356,17 @@ class DatabaseAddOn(SmartPlugin):
                 self.logger.error('Connection to database NOT recovered.')
                 return None
 
-        if self.lock_db_for_query and not self._db.lock(300):
-            self.logger.error("Can't query database due to fail to acquire lock.")
-            return None
+        locked_here = cur is None and self.lock_db_for_query
+        if locked_here:
+            if not self._db.lock(300):
+                self.logger.error("Can't query database due to fail to acquire lock.")
+                return None
+            # explicit cursor once locked: fetch's own cur=None path (it's
+            # always self._db.execute/fetchone/fetchall) now locks
+            # internally too - self._db.lock() is a plain non-reentrant
+            # Lock, so calling fetch(..., cur=None) here while already
+            # holding it would deadlock against itself.
+            cur = self._db.cursor()
 
         query_readable = re.sub(r':([a-z_]+)', r'{\1}', query).format(**params)
 
@@ -3373,7 +3381,9 @@ class DatabaseAddOn(SmartPlugin):
             tuples = None
             pass
 
-        if cur is None and self.lock_db_for_query:
+        if locked_here:
+            if cur is not None:
+                cur.close()
             self._db.release()
 
         if self.debug_log.sql:
@@ -3402,10 +3412,17 @@ class DatabaseAddOn(SmartPlugin):
                     self.logger.debug('Connection to database recovered.')
 
         # lock database if required
-        if cur is None and self.lock_db_for_query:
+        locked_here = cur is None and self.lock_db_for_query
+        if locked_here:
             if not self._db.lock(300):
                 self.logger.error("Can't query database due to fail to acquire lock.")
                 return None
+            # explicit cursor once locked: fetch's own cur=None path (it's
+            # always self._db.execute/fetchone/fetchall) now locks
+            # internally too - self._db.lock() is a plain non-reentrant
+            # Lock, so calling fetch(..., cur=None) here while already
+            # holding it would deadlock against itself.
+            cur = self._db.cursor()
 
         # fetch data
         query_readable = re.sub(r':([a-z_]+)', r'{\1}', query).format(**params)
@@ -3417,7 +3434,9 @@ class DatabaseAddOn(SmartPlugin):
             pass
 
         # release database
-        if cur is None and self.lock_db_for_query:
+        if locked_here:
+            if cur is not None:
+                cur.close()
             self._db.release()
 
         # close connection
