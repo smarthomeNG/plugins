@@ -1,0 +1,390 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @author      Martin Gleiß
+* @copyright   2012 - 2015
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+
+/**
+* Yamaha YXC Multimedia Player
+*
+* @param {id} unique id for this widget
+* @param {item} the item for playback control
+* @param {item=} the item for the position (optional)
+* @param {item=} the item for the volume (optional)
+* @param {item=} the item to mute the music (optional)
+* @param {item=} the item for the song title (optional)
+* @param {item=} the item for the song artist (optional)
+* @param {item=} the item for the album art (optional)
+* @param {item=} the item for the input (optional)
+* @param {item=} the item for the power (optional)
+*
+* @author Sebastian Helms
+*/
+{% macro player(id, item_play, item_pos, item_vol, item_mute, item_title, item_artist, item_art, item_input, item_power, item_update) %}
+	{% import "@widgets/basic.html" as basic %}
+	{% set uid = uid(page, id) %}
+
+	<div id="{{ uid }}" class="music" data-widget="multimedia.yamaha-yxc">
+
+		{% if item_vol %}
+			<div class="vol">
+				<img class="slider-bottomup-scale" src="pages/base/pics/scale_buttomup.png" alt="scale">
+				{{ basic.slider(id~'vol', item_vol, 0, 60, 1, 'bottomup') }}
+			</div>
+		{% endif %}
+
+		<div class="control">
+
+			{% if item_input %} {{ basic.stateswitch('', item_input, '', ['net_radio', 'server'], 'it_radio.svg', '', ['icon1', 'icon0']) }} {% endif %}
+			{% if item_input %} {{ basic.stateswitch('', item_input, '', ['server', 'net_radio'], 'it_nas.svg', '', ['icon1', 'icon0']) }} {% endif %}
+			{{ basic.stateswitch('', item_power, '', [1, 0], ['control_on_off.svg','control_on_off.svg'], '', ['icon1', 'icon0']) }}
+		</div>
+
+		
+		{% if item_art %}
+		<div class="title">
+			<span>{% if item_artist %}{{ basic.print('', item_artist) }} <br /> {% endif %}
+			{% if item_title %}{{ basic.print('', item_title) }}{% endif %}</span>
+			<!-- {{ basic.value('', item_art, 'html') }} -->
+		</div>
+		{% else %}
+		<div class="title">{% if not item_pos %}<br />{% endif%}{% if item_artist %}{{ basic.print('', item_artist) }} <br /> {% endif %}
+			{% if item_title %}{{ basic.print('', item_title) }}{% endif %}</div>
+		{% endif %}
+
+		<div class="set">
+			{% if item_pos %}
+				<div class="pos">
+					<div class="scale">&nbsp;</div>
+					{{ basic.slider(id~'pos', item_pos, 0, 100, 1) }}
+				</div>
+			{% endif %}
+
+			<div data-role="controlgroup" data-type="horizontal">
+				{% if item_play %}
+					{{ basic.stateswitch('', item_play, '', 'previous', 'control_arrow_left.svg', 'back') }}
+					{{ basic.stateswitch('', item_play, '', 'play_pause', ['audio_play.svg', 'audio_pause.svg']) }}
+					{{ basic.stateswitch('', item_play, '', 'stop', 'audio_stop.svg', 'stop') }}
+					{{ basic.stateswitch('', item_play, '', 'next', 'control_arrow_right.svg', 'next') }}
+				{% endif %}
+				{% if item_mute %} {{ basic.stateswitch('', item_mute, 'mini', [1, 0], ['audio_volume_mute.svg','audio_volume_high.svg'], '', ['icon1', 'icon0']) }} {% endif %}
+				{% if item_update %} 
+
+					{{ basic.stateswitch('', item_update, '', 1, 'jquery_refresh.svg', '')}} 
+				{% endif %}
+			</div>
+		</div>
+	</div>
+{% endmacro %}
+
+
+/**
+* Yamaha YXC - full device control, derived from a single root item
+*
+* Assumes the shng item config combines the yamahayxc plugin's structs as
+* struct: [amp, dsp, netusb, tuner, link] on item_root (any of dsp/netusb/
+* tuner/link may be omitted - the matching popup trigger just never
+* appears), and zone2/3/4 (if present) nested under item_root as
+* item_root.zone2/zone3/zone4 (struct: yamahayxc.zone2 etc). All sub-item
+* paths are derived from item_root, not passed individually - see
+* plugin.yaml for the exact fixed layout this relies on.
+*
+* volume is 0..100% (yamahayxc_cmd volume_percent) - the plugin scales
+* this against the device's real range itself, so this widget never needs
+* to know a device's native volume range. item_root.volume.raw carries
+* the native value if ever needed, not used here.
+*
+* DSP/Link controls open in a popup to keep the main card compact.
+* Visibility of dsp/zoneN/link is purely build-time, controlled by 'hide' -
+* there is no live auto-collapse based on a runtime 'available' item, since
+* those items don't exist in shng at all when the corresponding struct
+* wasn't combined onto item_root, and subscribing to a non-existent item
+* makes smartVISU report a permanent "item not found" error. If a struct
+* isn't combined for this device, pass its key in 'hide' explicitly.
+*
+* netusb (if not hidden) also gets a UPnP/USB/DLNA browser popup (folder
+* nav, per-row play / play-now / play-next / add-to-queue / add-to-playlist
+* actions gated by the entry's attribute bitmask), a play-queue popup, and
+* an MC-playlist-bank popup (rename/clear/select target bank) - see
+* widgets/yxc.js' sv.yxc_browse widget for the item-level details and the
+* two-index-space caveat (browse.* vs queue.* positions are not the same).
+*
+* @param {id} unique id for this widget
+* @param {item} root item for the device/zone, e.g. 'eg.wohnen.rxav'
+* @param {text=} comma-separated feature keys to hide: 'dsp', 'netusb',
+*   'link', 'zone2', 'zone3', 'zone4' (optional - zone2/3/4 are hidden by
+*   default since most devices don't have them; pass e.g. 'zone3,zone4' to
+*   show only zone2, or '' to show all zones)
+*
+* @author Sebastian Helms
+*/
+{% macro device(id, item_root, hide) %}
+	{% import "@widgets/basic.html" as basic %}
+	{% set uid = uid(page, id) %}
+	{% set hidden = hide|default('zone2,zone3,zone4')|split(',') %}
+
+	<div id="{{ uid }}" class="yxc-device" data-widget="yxc.device" data-item="{{ item_root }}.input">
+
+		<div class="yxc-vol">
+			<img class="slider-bottomup-scale" src="pages/base/pics/scale_buttomup.png" alt="scale">
+			<div class="yxc-vol-ctrl yxc-zone-main">
+				{{ basic.slider(uid~'-vol', item_root~'.volume', 0, 100, 1, 'bottomup') }}
+			</div>
+			{% for zone in ['zone2', 'zone3', 'zone4'] %}
+				{% if zone not in hidden %}
+				<div class="yxc-vol-ctrl yxc-zone-{{ zone }}" style="display:none">
+					{{ basic.slider(uid~'-'~zone~'-vol', item_root~'.'~zone~'.volume', 0, 100, 1, 'bottomup') }}
+				</div>
+				{% endif %}
+			{% endfor %}
+		</div>
+
+		<div class="yxc-right">
+
+			<div class="yxc-source">
+				{{ basic.select(uid~'-input', item_root~'.input', 'menu', '', '', '', '', '', item_root~'.input.values') }}
+			</div>
+
+			<div class="yxc-art yxc-panel-netusb">
+				{{ basic.print('', item_root~'.netusb.albumarturl', 'html') }}
+			</div>
+
+			<div class="yxc-meta yxc-panel-netusb">
+				{{ basic.print('', item_root~'.netusb.artist') }}<br>
+				{{ basic.print('', item_root~'.netusb.track') }}
+			</div>
+
+			<div class="yxc-content yxc-panel-netusb">
+				<div data-role="controlgroup" data-type="horizontal">
+					{{ basic.stateswitch('', item_root~'.netusb.playback', '', 'previous', 'control_arrow_left.svg') }}
+					{{ basic.stateswitch('', item_root~'.netusb.playback', '', ['play', 'pause'], ['audio_pause.svg', 'audio_play.svg'], '', ['icon1', 'icon0']) }}
+					{{ basic.stateswitch('', item_root~'.netusb.playback', '', 'stop', 'audio_stop.svg') }}
+					{{ basic.stateswitch('', item_root~'.netusb.playback', '', 'next', 'control_arrow_right.svg') }}
+					<span class="yxc-server-only" style="display:none">
+						{{ basic.stateswitch('', item_root~'.netusb.repeat', '', ['off', 'one', 'all'], ['audio_repeat.svg', 'audio_repeat_song.svg', 'audio_repeat.svg'], '', ['icon0', 'icon1', 'icon1']) }}
+						{{ basic.stateswitch('', item_root~'.netusb.shuffle', '', ['off', 'on', 'songs', 'albums'], ['audio_shuffle.svg', 'audio_shuffle.svg', 'audio_shuffle.svg', 'audio_shuffle_album.svg'], '', ['icon0', 'icon1', 'icon1', 'icon1']) }}
+					</span>
+					{% if 'netusb' not in hidden %}
+					<a href="#{{ uid }}-browse-popup" data-rel="popup"
+					   class="yxc-server-only ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0" style="display:none">
+						{{ basic.icon('audio_playlist', 'icon0') }}
+					</a>
+					{% endif %}
+				</div>
+			</div>
+
+			<div class="yxc-content yxc-panel-tuner" style="display:none">
+				<div data-role="controlgroup" data-type="horizontal">
+					{{ basic.stateswitch('', item_root~'.tuner.band', 'mini', ['fm', 'am'], '', ['FM', 'AM'], ['icon1', 'icon0']) }}
+				</div>
+				<div class="yxc-tuner-station">{{ basic.print('', item_root~'.tuner.station') }}</div>
+				<div data-role="controlgroup" data-type="horizontal">
+					{{ basic.stateswitch('', item_root~'.tuner.seek', '', 'down', 'control_arrow_left.svg') }}
+					{{ basic.stateswitch('', item_root~'.tuner.seek', '', 'up', 'control_arrow_right.svg') }}
+				</div>
+				<div class="yxc-tuner-preset">
+					{{ basic.input(uid~'-preset', item_root~'.tuner.preset', 'number', 1, 40, 1) }}
+				</div>
+			</div>
+
+			<div class="yxc-bar">
+				<div class="yxc-bar-left">
+					<a class="yxc-zone-btn ui-btn ui-mini ui-corner-all ui-btn-inline icon1" data-zone="main">Main</a>
+					{% for zone in ['zone2', 'zone3', 'zone4'] %}
+						{% if zone not in hidden %}
+						<a class="yxc-zone-btn ui-btn ui-mini ui-corner-all ui-btn-inline icon0"
+						   data-zone="{{ zone }}">{{ zone }}</a>
+						{% endif %}
+					{% endfor %}
+					{% if 'link' not in hidden %}
+					<a href="#{{ uid }}-link-popup" data-rel="popup"
+					   class="ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0">
+						{{ basic.icon('audio_sync', 'icon0') }}
+					</a>
+					{% endif %}
+				</div>
+
+				<div class="yxc-bar-right">
+					{% if 'dsp' not in hidden %}
+					<a class="yxc-dsp-btn ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0">
+						{{ basic.icon('audio_eq', 'icon0') }}
+					</a>
+					{% endif %}
+
+					<div class="yxc-btn-ctrl yxc-zone-main">
+						{{ basic.stateswitch('', item_root~'.mute', '', [1, 0], ['audio_volume_mute.svg', 'audio_volume_high.svg'], '', ['icon1', 'icon0']) }}
+					</div>
+					{% for zone in ['zone2', 'zone3', 'zone4'] %}
+						{% if zone not in hidden %}
+						<div class="yxc-btn-ctrl yxc-zone-{{ zone }}" style="display:none">
+							{{ basic.stateswitch('', item_root~'.'~zone~'.mute', '', [1, 0], ['audio_volume_mute.svg', 'audio_volume_high.svg'], '', ['icon1', 'icon0']) }}
+						</div>
+						{% endif %}
+					{% endfor %}
+
+					{{ basic.stateswitch('', item_root~'.update', '', 1, 'jquery_refresh.svg') }}
+
+					<div class="yxc-btn-ctrl yxc-zone-main">
+						{{ basic.stateswitch('', item_root~'.power', '', [1, 0], ['control_on_off.svg', 'control_on_off.svg'], '', ['icon1', 'icon0']) }}
+					</div>
+					{% for zone in ['zone2', 'zone3', 'zone4'] %}
+						{% if zone not in hidden %}
+						<div class="yxc-btn-ctrl yxc-zone-{{ zone }}" style="display:none">
+							{{ basic.stateswitch('', item_root~'.'~zone~'.power', '', [1, 0], ['control_on_off.svg', 'control_on_off.svg'], '', ['icon1', 'icon0']) }}
+						</div>
+						{% endif %}
+					{% endfor %}
+				</div>
+			</div>
+		</div>
+	</div>
+
+	{% if 'dsp' not in hidden %}
+	<div id="{{ uid }}-dsp-popup" data-role="popup" style="min-width:260px;" class="ui-content">
+		<h3>DSP</h3>
+		<div data-role="controlgroup" data-type="horizontal">
+			{{ basic.stateswitch('', item_root~'.dsp.surround_3d', 'mini', [1,0], 'audio_sound.svg', '3D', ['icon1','icon0']) }}
+			{{ basic.stateswitch('', item_root~'.dsp.direct', 'mini', [1,0], 'audio_sound.svg', 'Direct', ['icon1','icon0']) }}
+			{{ basic.stateswitch('', item_root~'.dsp.pure_direct', 'mini', [1,0], 'audio_sound.svg', 'Pure', ['icon1','icon0']) }}
+			{{ basic.stateswitch('', item_root~'.dsp.enhancer', 'mini', [1,0], 'audio_sound.svg', 'Enh.', ['icon1','icon0']) }}
+		</div>
+		{{ basic.select(uid~'-sp', item_root~'.dsp.sound_program', 'menu', '', '', '', '', '', item_root~'.dsp.sound_program.values') }}
+		{{ basic.select(uid~'-tcm', item_root~'.dsp.tone_control_mode', 'menu', '', '', '', '', '', item_root~'.dsp.tone_control_mode.values') }}
+		<div class="pos">Bass {{ basic.slider(uid~'-bass', item_root~'.dsp.tone.bass', -12, 12, 1) }}</div>
+		<div class="pos">Treble {{ basic.slider(uid~'-treble', item_root~'.dsp.tone.treble', -12, 12, 1) }}</div>
+		<div class="pos">Balance {{ basic.slider(uid~'-balance', item_root~'.dsp.tone.balance', -12, 12, 1) }}</div>
+		{{ basic.select(uid~'-eqm', item_root~'.dsp.equalizer_mode', 'menu', '', '', '', '', '', item_root~'.dsp.equalizer_mode.values') }}
+		<div class="pos">Low {{ basic.slider(uid~'-eqlow', item_root~'.dsp.equalizer.low', -10, 10, 1) }}</div>
+		<div class="pos">Mid {{ basic.slider(uid~'-eqmid', item_root~'.dsp.equalizer.mid', -10, 10, 1) }}</div>
+		<div class="pos">High {{ basic.slider(uid~'-eqhigh', item_root~'.dsp.equalizer.high', -10, 10, 1) }}</div>
+		<a href="#" data-rel="back" data-role="button" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Schließen</a>
+	</div>
+	{% endif %}
+
+	{% if 'link' not in hidden %}
+	<div id="{{ uid }}-link-popup" data-role="popup" style="min-width:260px;" class="ui-content">
+		<h3>Multiroom</h3>
+		<div>{{ basic.print('', item_root~'.link.role') }}</div>
+		<div data-role="collapsible" data-collapsed="true">
+			<h4>Server</h4>
+			{{ basic.print('', item_root~'.link.server.linked_devices') }}
+			{{ basic.select(uid~'-add', item_root~'.link.server.add_device', 'menu', '', '', '', '', '', item_root~'.link.available_devices') }}
+			{{ basic.select(uid~'-rm', item_root~'.link.server.remove_device', 'menu', '', '', '', '', '', item_root~'.link.server.linked_devices') }}
+			{{ basic.stateswitch('', item_root~'.link.server.disband', 'mini', 1, 'delete.svg', 'Disband') }}
+		</div>
+		<div data-role="collapsible" data-collapsed="true">
+			<h4>Client</h4>
+			{{ basic.select(uid~'-join', item_root~'.link.client.join', 'menu', '', '', '', '', '', item_root~'.link.available_devices') }}
+			{{ basic.stateswitch('', item_root~'.link.client.leave', 'mini', 1, 'delete.svg', 'Leave') }}
+		</div>
+		<a href="#" data-rel="back" data-role="button" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Schließen</a>
+	</div>
+	{% endif %}
+
+	{% if 'netusb' not in hidden %}
+	<div id="{{ uid }}-browse-popup" data-role="popup" data-overlay-theme="a" data-dismissible="false"
+	     class="ui-content yxc-browse-popup" style="min-width:300px;max-width:480px;width:90%;">
+
+		<div class="yxc-browse-header">
+			<a class="yxc-browse-home ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0">
+				{{ basic.icon('control_home', 'icon0') }}
+			</a>
+			<a class="yxc-browse-up ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0">
+				{{ basic.icon('control_arrow_up', 'icon0') }}
+			</a>
+			<span class="yxc-browse-title">&nbsp;</span>
+			<a href="#{{ uid }}-queue-popup" data-rel="popup"
+			   class="ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0">
+				{{ basic.icon('audio_playlist', 'icon0') }}
+			</a>
+			<a href="#" data-rel="back" data-role="button" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Schließen</a>
+		</div>
+
+		<div class="yxc-browse-crumbs"></div>
+
+		<div id="{{ uid }}-browse" class="yxc-browse-body" data-widget="yxc.browse"
+		     data-item="{{ implode([item_root~'.netusb.browse.list', item_root~'.netusb.browse.menu_name', item_root~'.netusb.browse.menu_layer', item_root~'.netusb.browse.max_line', item_root~'.netusb.browse.index', item_root~'.netusb.browse.playing_index', item_root~'.netusb.browse.busy', item_root~'.netusb.queue.list', item_root~'.netusb.queue.max_line', item_root~'.netusb.queue.playing_index', item_root~'.netusb.browse.playlist_names']) }}"
+		     data-item-page="{{ item_root~'.netusb.browse.page' }}"
+		     data-item-select="{{ item_root~'.netusb.browse.select' }}"
+		     data-item-play="{{ item_root~'.netusb.browse.play' }}"
+		     data-item-return="{{ item_root~'.netusb.browse.return' }}"
+		     data-item-play-now="{{ item_root~'.netusb.browse.play_now' }}"
+		     data-item-play-next="{{ item_root~'.netusb.browse.play_next' }}"
+		     data-item-queue-add="{{ item_root~'.netusb.browse.queue_add' }}"
+		     data-item-playlist-bank="{{ item_root~'.netusb.browse.playlist_bank' }}"
+		     data-item-playlist-add="{{ item_root~'.netusb.browse.playlist_add' }}"
+		     data-item-playlist-rename="{{ item_root~'.netusb.browse.playlist_rename' }}"
+		     data-item-playlist-clear="{{ item_root~'.netusb.browse.playlist_clear' }}"
+		     data-item-queue-play="{{ item_root~'.netusb.queue.play' }}"
+		     data-item-queue-delete="{{ item_root~'.netusb.queue.delete' }}"
+		     data-item-queue-clear="{{ item_root~'.netusb.queue.clear' }}"
+		     data-item-queue-update="{{ item_root~'.netusb.queue.update' }}"
+		     data-item-queue-save-playlist="{{ item_root~'.netusb.queue.save_playlist' }}">
+			<div class="yxc-browse-list"></div>
+			<div class="yxc-browse-busy" style="display:none">
+				<span>&hellip;</span>
+			</div>
+		</div>
+
+		<div class="yxc-browse-footer">
+			<a class="yxc-browse-prev ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0">
+				{{ basic.icon('control_arrow_left', 'icon0') }}
+			</a>
+			<span class="yxc-browse-range">&nbsp;</span>
+			<a class="yxc-browse-next ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0">
+				{{ basic.icon('control_arrow_right', 'icon0') }}
+			</a>
+		</div>
+	</div>
+
+	<div id="{{ uid }}-rowaction-popup" data-role="popup" data-overlay-theme="a"
+	     class="ui-content yxc-rowaction-popup" style="min-width:240px;max-width:400px;width:85%;">
+		<div class="yxc-rowaction-title"></div>
+		<div data-role="controlgroup" data-type="vertical" class="yxc-rowaction-buttons">
+			<a class="yxc-rowaction-playnow ui-btn ui-mini ui-corner-all">{{ basic.icon('audio_play', 'icon0') }} Sofort abspielen</a>
+			<a class="yxc-rowaction-playnext ui-btn ui-mini ui-corner-all">{{ basic.icon('control_arrow_right', 'icon0') }} Als nächstes</a>
+			<a class="yxc-rowaction-queueadd ui-btn ui-mini ui-corner-all">{{ basic.icon('audio_playlist', 'icon0') }} Zur Warteschlange</a>
+			<a class="yxc-rowaction-playlistadd ui-btn ui-mini ui-corner-all">{{ basic.icon('edit_save', 'icon0') }} <span class="yxc-rowaction-playlistadd-label">Zu Playlist hinzufügen</span></a>
+		</div>
+		<a href="#" data-rel="back" data-role="button" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Schließen</a>
+	</div>
+
+	<div id="{{ uid }}-queue-popup" data-role="popup" data-overlay-theme="a"
+	     class="ui-content yxc-queue-popup" style="min-width:300px;max-width:480px;width:90%;">
+		<div class="yxc-queue-header">
+			<span class="yxc-queue-title">Warteschlange</span>
+			<a href="#{{ uid }}-playlist-popup" data-rel="popup"
+			   class="ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0">
+				{{ basic.icon('edit_save', 'icon0') }}
+			</a>
+			<a href="#" data-rel="back" data-role="button" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Schließen</a>
+		</div>
+		<div class="yxc-queue-list"></div>
+		<div class="yxc-queue-footer">
+			<a class="yxc-queue-update ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0">
+				{{ basic.icon('jquery_refresh', 'icon0') }}
+			</a>
+			<a class="yxc-queue-clear ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0">
+				{{ basic.icon('edit_delete', 'icon0') }}
+			</a>
+			<a class="yxc-queue-saveplaylist ui-btn ui-mini ui-corner-all ui-btn-inline">
+				{{ basic.icon('edit_save', 'icon0') }} Als Playlist speichern
+			</a>
+		</div>
+	</div>
+
+	<div id="{{ uid }}-playlist-popup" data-role="popup" data-overlay-theme="a"
+	     class="ui-content yxc-playlist-popup" style="min-width:280px;max-width:420px;width:88%;">
+		<div class="yxc-playlist-header">
+			<span>Playlisten</span>
+			<a href="#" data-rel="back" data-role="button" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Schließen</a>
+		</div>
+		<div class="yxc-playlist-hint">MusicCast-Playlisten erscheinen auch im normalen Ordnerbaum - hier nur Auswahl der Zielliste sowie Umbenennen/Leeren.</div>
+		<div class="yxc-playlist-list"></div>
+	</div>
+	{% endif %}
+
+{% endmacro %}

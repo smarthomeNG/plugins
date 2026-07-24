@@ -10,9 +10,9 @@ Anmerkungen
 ===========
 
 Das Plugin wird nach Bedarf weiterentwickelt und unterstützt noch längst nicht alle möglichen Funktionen, die im Yamaha Extended Control (YXC)-Standard definiert sind. Ich nutze es aber selbst täglich. Die genutzten und getesteten Geräte sind RX-V483, ISX-18D und WX-010.
-Das Plugin nutzt die YXC API, welche auf dem Austausch von JSON-formatierten Daten basiert. Es abonniert die Daten der konfigurierten Geräte, um laufend mit Statusmeldungen versorgt zu werden. Diese werden per UDP verteilt, solange eine Kommunikation zwischen Client (Plugin) und Gerät erfolgt und 10 Minuten nach der letzten Kommunikation. Das Plugin kann mit mehreren Verbindungen gleichzeitig umgehen. Bisher habe ich keine Fehler feststellen können, aber ich habe nur 5 Geräte zum Testen.
+Das Plugin nutzt die YXC API, welche auf dem Austausch von JSON-formatierten Daten basiert. Es abonniert die Daten der konfigurierten Geräte, um laufend mit Statusmeldungen versorgt zu werden. Diese werden per UDP verteilt, solange eine Kommunikation zwischen Client (Plugin) und Gerät erfolgt, und 10 Minuten nach der letzten Kommunikation. Das Plugin kann mit mehreren Verbindungen gleichzeitig umgehen. Bisher habe ich keine Fehler feststellen können, aber ich habe nur 5 Geräte zum Testen.
 
-Items können nach eigenen Vorstellungen eingerichtet werden; sie werden vom Plugin durch das Item-Attribut ``yamahayxc_cmd`` identifiziert. ``yamahayxc_host`` und ``yamahayxc_zone`` müssen nicht mehr direkt am Elternitem eines Steuerungs-/Statusitems stehen - das Plugin sucht sie in den Vorfahren-Items nach oben. Dadurch können Items beliebig tief verschachtelt werden, z.B. um Fähigkeits-Items als Unteritems ihres jeweiligen Werte-Items abzulegen.
+Items können nach eigenen Vorstellungen eingerichtet werden; sie werden vom Plugin durch das Item-Attribut ``yamahayxc_cmd`` identifiziert. ``yamahayxc_host`` und ``yamahayxc_zone`` müssen nicht direkt im Steuerungs-/Statusitems stehen - das Plugin sucht sie in den Vorfahren-Items nach oben. Dadurch können Items beliebig tief verschachtelt werden, z.B. um Fähigkeits-Items als Unteritems ihres jeweiligen Werte-Items abzulegen.
 
 Das ``update``-Item (in Struct ``yamahayxc.amp``) hat keine eigene Funktion, sondern fragt beim Setzen aktiv den kompletten Status des Geräts ab (alle Zonen + netusb + Tuner + Link + Alarm). Nach jedem Schreiben eines beliebigen anderen Items aktualisiert das Plugin ohnehin automatisch den betroffenen Bereich (z.B. nur die geänderte Zone bei einem Zonen-Item, nur netusb bei einem netusb-Item, usw.) - ein komplettes ``update`` ist also i.d.R. nicht nötig, außer beim Timeout des 10-Minuten-Abonnements. Für einen gezielten, aber nicht vollständigen Refresh gibt es zusätzlich ``update_dsp`` (in Struct ``dsp``/``dsp_content``), ``update_netusb`` (in ``media.netusb``/``netusb``) sowie ``update_tuner``/``update_link``.
 
@@ -64,6 +64,16 @@ Für Lautstärke und die Klangfeld-Wertebereiche (Bass/Höhen, Equalizer, Balanc
 Genauso liest das Plugin für jedes Item mit einer festen Werteliste (statt eines Zahlenbereichs) die vom Gerät tatsächlich unterstützten Werte per ``getFeatures`` aus und stellt sie als read-only Listen-Unteritem ``<item>.values`` bereit: ``input.sources`` (bereits länger vorhanden), sowie neu ``sound_program.values``, ``tone_control_mode.values``, ``equalizer_mode.values``, ``link_control.values``, ``link_audio_delay.values`` und ``link_audio_quality.values``. Meldet ein Gerät eine bestimmte Liste nicht (modellabhängig - z.B. ``tone_control_mode_list``/``equalizer_mode_list`` fehlen auf manchen Geräten ganz), bleibt das jeweilige ``.values``-Item einfach leer (``[]``), statt einen Platzhalter oder Fehler zu erzeugen.
 
 Beim Start fragt das Plugin pro Gerät ``getFeatures`` ab und merkt sich, welche Befehle (power/volume/mute) und Eingänge in der jeweiligen Zone tatsächlich unterstützt werden. Nicht unterstützte Befehle/Eingänge werden abgelehnt (mit Logmeldung), Lautstärkewerte werden auf den vom Gerät gemeldeten Bereich (min/max/step) begrenzt. Ist das Gerät beim Start nicht erreichbar, wird diese Prüfung übersprungen und wie bisher ungeprüft gesendet.
+
+Inhalte durchsuchen (UPnP/USB/DLNA, z.B. um wie in der MusicCast-App durch USB-Ordner oder einen Medienserver zu navigieren) ist jetzt ebenfalls möglich, über ``getListInfo``/``setListControl`` (siehe Struct ``media.netusb``/``netusb``, Unteritem ``browse``): ``browse.list`` liefert die aktuelle Seite (bis zu 8 Einträge je ``getListInfo``-Aufruf, ``.attribute`` je Eintrag zeigt u.a. an, ob er auswählbar (Ordner) und/oder abspielbar (Datei) ist), ``browse.page`` fordert eine bestimmte Seite an (wird intern auf ein Vielfaches von 8 abgerundet), ``browse.select``/``browse.play`` nehmen den absoluten Index eines Eintrags (``browse.index`` + Position in ``browse.list``), ``browse.return`` wechselt eine Ebene nach oben (bool-Trigger, setzt sich selbst zurück). Zwei Dinge sind dabei laut Spezifikation zu beachten, nicht nur Implementierungsdetails dieses Plugins: Die Navigationsposition ist geräteweit **eine** geteilte Cursor-Position, nicht pro Client/Zone getrennt - parallele Nutzung über die MusicCast-App oder eine zweite Visu-Sitzung überschneidet sich also. Und ``getListInfo`` kann das Gerät laut Spezifikation bis zu 30 Sekunden lang blockieren (keine andere Anfrage wird währenddessen angenommen) - deutlich länger als der sonstige Standard-Timeout des Plugins, ``browse.busy`` zeigt an, während ein Abruf läuft. ``browse.play`` spielt vorerst immer in Zone "main" ab (Suche über ``setSearchString`` ist noch nicht implementiert). Gegen die offizielle YXC-Spezifikation entwickelt, noch nicht an echter Hardware getestet - Rückmeldungen sind willkommen.
+
+Zusätzlich zu select/play/return unterstützt ``browse`` jetzt auch die vier Aktionen aus dem "..."-Kontextmenü der echten MusicCast-App: ``browse.play_now`` (sofort abspielen, unterbricht laufende Wiedergabe), ``browse.play_next`` (nach aktuellem Titel einreihen), ``browse.queue_add`` (ans Ende der Warteschlange anhängen) und ``browse.playlist_add`` (einer der bis zu 5 benannten MusicCast-Playlisten hinzufügen - welche, wird vorher über ``browse.playlist_bank`` gewählt, 1-5, gerätespezifisch, muss vor dem ersten ``playlist_add`` gesetzt sein). Alle vier nehmen wie ``browse.select``/``browse.play`` den absoluten Index eines Eintrags. **Wichtig:** Diese vier sind nicht Teil der offiziellen YXC-Spezifikation - ``getListInfo``s ``list_info[].attribute``-Bitmaske zeigt zwar pro Eintrag an, ob er dafür geeignet ist (Bits 23-26: Play Now / Play Next / Add Play Queue / Add MusicCast Playlist), aber weder ``setListControl`` noch ``managePlay``/``manageList`` dokumentieren dafür einen ``type``-Wert - die Spezifikation kennt bei ``manageList`` nur Streaming-Dienst-spezifisches Bookmarking (``add_bookmark``/``add_track``/``add_to_playlist``/... für Napster/Pandora/JUKE/Qobuz/TIDAL/Deezer). Die tatsächlich verwendeten Werte (``play_now``/``play_next``/``add_to_queue``/``add_to_mc_playlist``, alle über ``manageList``) stammen aus einem Netzwerkmitschnitt der echten App - siehe ``_build_cmd_manage_list()`` im Plugincode. Entsprechend unklar/unbestätigt: ob diese Werte über alle netusb-Quellen (USB/Server/Streaming-Dienste) hinweg gleich funktionieren, oder Geräte-/Firmware-abhängig variieren. Rückmeldungen zu abweichendem Verhalten sind besonders hier willkommen. ``browse.play_now`` funktioniert dabei nicht nur auf einzelnen Titeln, sondern genauso auf Ordner-/Album-Einträgen (per Mitschnitt bestätigt) - spielt dann offenbar das ganze Album/den ganzen Ordner ab dem ersten Titel.
+
+Ebenfalls per Mitschnitt gefunden und implementiert: die eigentliche Wiedergabe-Warteschlange, komplett unter ``media.netusb``/``netusb``, Unteritem ``queue`` - taucht in der Spezifikation nicht einmal als "Reserved" auf (nur ``getStatus.play_queue`` und ``getPlayInfo.play_queue_type`` deuten überhaupt an, dass es sowas gibt). ``queue.list``/``queue.max_line``/``queue.playing_index`` (per ``getPlayQueue``) zeigen die aktuelle Warteschlange - **eigener Index-Raum**, nicht derselbe wie ``browse.index``/``browse.list``: ``queue.play``/``queue.delete`` beziehen sich auf die Position *in der Warteschlange*, nicht auf die Position in der gerade durchsuchten Liste (``delete`` statt ``remove``, da letzteres mit ``Item.remove()`` kollidiert). ``queue.save_playlist`` (bool-Trigger) sichert die *komplette* Warteschlange als über ``browse.playlist_bank`` gewählte Playliste - dieselbe Bank-Auswahl wie ``browse.playlist_add``, aber ganze Warteschlange statt einzelnem Eintrag. ``queue.clear`` leert sie, ``queue.update`` fragt sie manuell neu ab. Anders als ``browse.list`` (feste 8er-Seiten laut Spezifikation) lieferte ein einzelner Abruf im Mitschnitt alle 21 Einträge einer Warteschlange auf einmal zurück - das Plugin implementiert deshalb (noch) keine Seitenweise-Abfrage für ``queue.list``, Verhalten bei sehr langen Warteschlangen ist unbestätigt. ``queue_type`` (auf ``netusb``-Ebene, neben ``repeat``/``shuffle``) zeigt die Art der aktuellen Warteschlange (beobachteter Wert: ``"user"``).
+
+Ergänzend zu ``playlist_bank``/``playlist_add`` (Playlisten-Verwaltung, ebenfalls per Mitschnitt gefunden, nicht in der Spezifikation - nicht mal als "Reserved"): ``browse.playlist_names`` liefert die Namen aller 5 Playlisten (``getMcPlaylistName``, Index 0 = Bank 1, per Mitschnitt bestätigt - Umbenennen von Bank 1 änderte ``name_list[0]``), ``browse.playlist_rename`` benennt die über ``playlist_bank`` gewählte Playliste um (``setMcPlaylistName``, aktualisiert ``playlist_names`` danach automatisch), ``browse.playlist_clear`` leert sie (``clearMcPlaylist``, Name bleibt erhalten). ``playlist_names`` wird nicht laufend abgefragt (ändert sich selten) - neben der automatischen Aktualisierung nach ``playlist_rename`` lässt sich das gemeinsame ``media.netusb.update`` (bzw. ``update_netusb``) jederzeit manuell dafür nutzen, es aktualisiert jetzt beides (Wiedergabestatus und Playlistennamen).
+
+Wiederhol- und Zufallswiedergabemodus sind ebenfalls verfügbar: ``media.netusb``/``netusb`` bekommt neu ``repeat`` (Werte ``off``/``one``/``all``) und ``shuffle`` (Werte ``off``/``on``/``songs``/``albums``, geräteabhängig), beide beschreibbar über ``setRepeat``/``setShuffle``. Die jeweils gültigen Werte liefert das Gerät ohnehin bei jeder ``getPlayInfo``-Abfrage mit, verfügbar als read-only ``repeat_available``/``shuffle_available`` - keine zusätzliche Abfrage nötig. Anders als bei ``input``/``sound_program`` etc. werden geschriebene Werte hier nicht gegen die Werteliste geprüft (die stammt aus ``getPlayInfo``, nicht aus dem sonst für ``list_check`` genutzten zonenbezogenen ``getFeatures``) - ein ungültiger Wert wird einfach ans Gerät weitergereicht und von dort ggf. mit einem Fehler-``response_code`` abgelehnt (im Log als Warnung sichtbar).
 
 Seit SmartHomeNG v1.7 werden Item-Structs bereitgestellt, mit denen die Funktionalitäten eines einfachen Players und zusätzlich Weckerfunktionen genutzt werden können.
 
@@ -203,7 +213,20 @@ oder ohne Item-Structs (mit identischem Resultat zu ``[yamahayxc.amp, yamahayxc.
                 type: str
                 yamahayxc_cmd: playback
                 enforce_updates: 'True'
-                
+
+            # repeat mode, valid values in repeat_available below ('off'/'one'/'all')
+            repeat:
+                type: str
+                yamahayxc_cmd: repeat
+                enforce_updates: 'True'
+
+            # shuffle mode, valid values in shuffle_available below
+            # ('off'/'on'/'songs'/'albums')
+            shuffle:
+                type: str
+                yamahayxc_cmd: shuffle
+                enforce_updates: 'True'
+
             # values are numeric and can (as of now) not be queried by the plugin
             preset:
                 type: num
@@ -243,6 +266,16 @@ oder ohne Item-Structs (mit identischem Resultat zu ``[yamahayxc.amp, yamahayxc.
             totaltime:
                 type: num
                 yamahayxc_cmd: total_time
+
+            # currently valid values for repeat/shuffle above, straight off
+            # getPlayInfo (not a separate query)
+            repeat_available:
+                type: list
+                yamahayxc_cmd: repeat_available
+
+            shuffle_available:
+                type: list
+                yamahayxc_cmd: shuffle_available
 
     # write-only item to pass arbitrary command. Use at own discretion
             passthru:

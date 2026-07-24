@@ -58,6 +58,41 @@ class _CmdSpec(NamedTuple):
 # _update_zone_flags()).
 _DSP_FUNC_NAMES = {'surround_3d', 'direct', 'pure_direct', 'enhancer', 'tone_control', 'equalizer', 'balance'}
 
+# response_code -> description, per spec section "10. Response Code List".
+# Every YXC response carries this field; 0 means success, anything else means
+# the device rejected the request (and returns no other data). Used by
+# _submit_payload() to surface rejections that were previously swallowed
+# silently - a written cmd could fail on the device (e.g. code 5 'Guarded'
+# because the device is mid-operation) with nothing in the log to show it.
+_YXC_RESPONSE_CODES = {
+    0: 'Successful request',
+    1: 'Initializing',
+    2: 'Internal Error',
+    3: "Invalid Request (method didn't exist or wasn't appropriate)",
+    4: 'Invalid Parameter (out of range, invalid characters etc.)',
+    5: 'Guarded (unable to setup in current status)',
+    6: 'Time Out',
+    99: 'Firmware Updating',
+    100: 'Access Error',
+    101: 'Other Errors',
+    102: 'Wrong User Name',
+    103: 'Wrong Password',
+    104: 'Account Expired',
+    105: 'Account Disconnected/Gone Off/Shut Down',
+    106: 'Account Number Reached to the Limit',
+    107: 'Server Maintenance',
+    108: 'Invalid Account',
+    109: 'License Error',
+    110: 'Read Only Mode',
+    111: 'Max Stations',
+    112: 'Access Denied',
+    113: 'Need to specify the additional destination Playlist',
+    114: 'Need to create a new Playlist',
+    115: 'Simultaneous logins has reached the upper limit',
+    200: 'Linking in progress',
+    201: 'Unlinking in progress',
+}
+
 
 class YamahaYXC(SmartPlugin):
     """
@@ -96,6 +131,17 @@ class YamahaYXC(SmartPlugin):
             'mute',
             'track',
             'artist',
+            # repeat/shuffle mode, netusb-global like playback/track/artist -
+            # getPlayInfo already returns these on every poll (repeat/shuffle
+            # plus their own _available lists), see setRepeat/setShuffle
+            'repeat',
+            'shuffle',
+            'repeat_available',
+            'shuffle_available',
+            # play_queue_type, netusb-global like repeat/shuffle above -
+            # getPlayInfo's field is spec-documented as "Reserved" but a real
+            # device does populate it (observed value: "user")
+            'queue_type',
             'sleep',
             'total_time',
             'play_time',
@@ -213,6 +259,59 @@ class YamahaYXC(SmartPlugin):
             'debug_dev_global',
             'debug_dev_tuner',
             'debug_dev_link',
+            # UPnP/USB/DLNA content browsing (getListInfo/setListControl) -
+            # device-global, single shared navigation cursor (not per-client,
+            # not per-zone - see _update_browse_state()). browse_play always
+            # targets 'main' zone for now (v1 scope). See _handle_browse_page/
+            # _build_cmd_browse_select/_build_cmd_browse_play/
+            # _build_cmd_browse_return/_update_browse_state().
+            'browse_list',
+            'browse_menu_name',
+            'browse_menu_layer',
+            'browse_max_line',
+            'browse_index',
+            'browse_playing_index',
+            'browse_busy',
+            'browse_page',
+            'browse_select',
+            'browse_play',
+            'browse_return',
+            # per-track "..." context menu actions (manageList type=play_now/
+            # play_next/add_to_queue/add_to_mc_playlist) - NOT in the official
+            # YXC spec (its documented manageList 'type' enum only covers
+            # streaming-service bookmarking), reverse-engineered from a packet
+            # capture of the real MusicCast iOS app. See _build_cmd_manage_list()/
+            # _handle_browse_playlist_add()/user_doc.rst.
+            'browse_play_now',
+            'browse_play_next',
+            'browse_queue_add',
+            'browse_playlist_bank',
+            'browse_playlist_add',
+            # named MusicCast playlist management (getMcPlaylistName/
+            # setMcPlaylistName/clearMcPlaylist) - same undocumented-territory
+            # caveat, same packet capture. rename/clear both target the bank
+            # selected via browse_playlist_bank, like browse_playlist_add.
+            'browse_playlist_names',
+            'browse_playlist_rename',
+            'browse_playlist_clear',
+            # netusb play queue management (getPlayQueue/managePlayQueue/
+            # copyPlayQueue/clearPlayQueue) - like browse_play_now etc., NOT
+            # in the official YXC spec at all (doesn't even appear as
+            # "Reserved" the way play_queue/play_queue_type do), reverse-
+            # engineered from the same app packet capture. Indices here are
+            # positions in the *queue* (getPlayQueue's track_info), a
+            # separate index space from browse.list/browse.select/browse.play
+            # (positions in the currently browsed folder) - don't mix them up.
+            # queue_save_playlist shares browse_playlist_bank's remembered
+            # target bank (see _handle_queue_save_playlist()).
+            'queue_list',
+            'queue_max_line',
+            'queue_playing_index',
+            'queue_play',
+            'queue_delete',
+            'queue_save_playlist',
+            'queue_clear',
+            'queue_update',
         ]
 
         # capability (getFeatures-derived, read-only) list-valued cmds ->
@@ -308,6 +407,46 @@ class YamahaYXC(SmartPlugin):
                 # look them up in a getStatus response
                 'zone_present',
                 'dsp_available',
+                # passthru is write-only (raw item value IS the outgoing
+                # payload, see _handle_passthru) - no device response field
+                # ever corresponds to it, so every getStatus/push lookup was
+                # guaranteed to miss and log a spurious debug line
+                'passthru',
+                # browse.* items are pushed directly by _update_browse_state()
+                # (getListInfo, not getStatus/getPlayInfo) or are write-only
+                # triggers - never looked up in a getPlayInfo response
+                'browse_list',
+                'browse_menu_name',
+                'browse_menu_layer',
+                'browse_max_line',
+                'browse_index',
+                'browse_playing_index',
+                'browse_busy',
+                'browse_page',
+                'browse_select',
+                'browse_play',
+                'browse_return',
+                'browse_play_now',
+                'browse_play_next',
+                'browse_queue_add',
+                'browse_playlist_bank',
+                'browse_playlist_add',
+                'browse_playlist_names',
+                'browse_playlist_rename',
+                'browse_playlist_clear',
+                # queue.* items (except queue_type, sourced from getPlayInfo
+                # like repeat/shuffle) are pushed directly by
+                # _update_queue_state() (getPlayQueue, a different endpoint
+                # than getPlayInfo) or are write-only triggers - never
+                # looked up in a getPlayInfo response
+                'queue_list',
+                'queue_max_line',
+                'queue_playing_index',
+                'queue_play',
+                'queue_delete',
+                'queue_save_playlist',
+                'queue_clear',
+                'queue_update',
             ]
             + list(self._yamaha_range_cmds)
             + list(self._yamaha_list_cmds)
@@ -436,6 +575,11 @@ class YamahaYXC(SmartPlugin):
             'debug_refresh',
             'link_leave',
             'link_disband',
+            'browse_return',
+            'browse_playlist_clear',
+            'queue_save_playlist',
+            'queue_clear',
+            'queue_update',
         }
         self._yamaha_global_cmds = (
             set(self._yamaha_cmds)
@@ -458,6 +602,10 @@ class YamahaYXC(SmartPlugin):
             'mute': _CmdSpec(build=self._build_cmd_mute, label='mute', func_check='mute'),
             'input': _CmdSpec(build=self._build_cmd_input, label='input', list_check='input_list'),
             'playback': _CmdSpec(build=self._build_cmd_playback),
+            # repeat_available/shuffle_available have no spec entry - read-only,
+            # like track/artist, populated straight off getPlayInfo
+            'repeat': _CmdSpec(build=self._build_cmd_repeat, label='repeat'),
+            'shuffle': _CmdSpec(build=self._build_cmd_shuffle, label='shuffle'),
             'preset': _CmdSpec(build=self._build_cmd_preset),
             'sleep': _CmdSpec(build=self._build_cmd_sleep, label='sleep', func_check='sleep'),
             'sound_program': _CmdSpec(
@@ -523,6 +671,45 @@ class YamahaYXC(SmartPlugin):
             'tuner_preset_store': _CmdSpec(build=self._build_cmd_tuner_store_preset),
             'tuner_preset_clear': _CmdSpec(build=self._handle_tuner_preset_clear, full_context=True),
             'tuner_preset_switch': _CmdSpec(build=self._build_cmd_tuner_switch_preset),
+            # UPnP/USB/DLNA content browsing - see _yamaha_cmds' browse_*
+            # comment. browse_page needs full_context (calls
+            # _update_browse_state() itself, with getListInfo's own longer
+            # timeout, instead of going through the generic build->submit
+            # path); select/play/return are plain builds, their follow-up
+            # list refresh is routed explicitly in update_item() instead
+            # (setListControl itself is a normal-speed call, only the
+            # getListInfo refresh after it needs the long timeout).
+            'browse_page': _CmdSpec(build=self._handle_browse_page, full_context=True),
+            'browse_select': _CmdSpec(build=self._build_cmd_browse_select, label='browse select'),
+            'browse_play': _CmdSpec(build=self._build_cmd_browse_play, label='browse play'),
+            'browse_return': _CmdSpec(build=self._build_cmd_browse_return, label='browse return'),
+            # manageList context-menu actions - full_context since each needs
+            # its own long timeout (see _yamaha_manage_http_timeout) and
+            # submits+returns None itself, same reasoning as browse_page.
+            # browse_playlist_bank makes no network call at all (pure local
+            # memory, see _handle_browse_playlist_bank()).
+            'browse_play_now': _CmdSpec(build=self._handle_browse_play_now, full_context=True),
+            'browse_play_next': _CmdSpec(build=self._handle_browse_play_next, full_context=True),
+            'browse_queue_add': _CmdSpec(build=self._handle_browse_queue_add, full_context=True),
+            'browse_playlist_bank': _CmdSpec(build=self._handle_browse_playlist_bank, full_context=True),
+            'browse_playlist_add': _CmdSpec(build=self._handle_browse_playlist_add, full_context=True),
+            # named MusicCast playlist management - full_context for the same
+            # reason as browse_playlist_add (need host for the bank lookup).
+            # browse_playlist_names has no entry - read-only, pushed by
+            # _update_playlist_names().
+            'browse_playlist_rename': _CmdSpec(build=self._handle_browse_playlist_rename, full_context=True),
+            'browse_playlist_clear': _CmdSpec(build=self._handle_browse_playlist_clear, full_context=True),
+            # play queue management - queue_play/queue_delete are plain
+            # builds (normal-speed calls, like browse_select/browse_play);
+            # queue_save_playlist is full_context since it needs host to
+            # look up the remembered playlist bank (see
+            # _handle_queue_save_playlist()). queue_update has no entry at
+            # all - pure refresh trigger, routed directly in update_item(),
+            # same as update_netusb/update_dsp/etc.
+            'queue_play': _CmdSpec(build=self._build_cmd_queue_play, label='queue play'),
+            'queue_delete': _CmdSpec(build=self._build_cmd_queue_delete, label='queue delete'),
+            'queue_clear': _CmdSpec(build=self._build_cmd_queue_clear, label='queue clear'),
+            'queue_save_playlist': _CmdSpec(build=self._handle_queue_save_playlist, full_context=True),
         }
         # cheap startup guard against self._yamaha_cmd_specs/_yamaha_zone_cmds
         # drifting apart (e.g. a build target's real signature no longer
@@ -564,6 +751,13 @@ class YamahaYXC(SmartPlugin):
         # recallPreset/clearPreset URLs for tuner_freq/tuner_seek/tuner_preset* items,
         # since those don't carry the band themselves. Defaults to 'fm' if never polled.
         self._yamaha_tuner_band = {}
+        # store last selected MusicCast playlist bank per host, needed by
+        # browse_playlist_add (manageList type=add_to_mc_playlist) since the
+        # 'bank' isn't carried by the item itself - see browse_playlist_bank/
+        # _handle_browse_playlist_bank()/_handle_browse_playlist_add(). Same
+        # remember-then-use pattern as _yamaha_tuner_band. No default: unlike
+        # tuner band there's no sane fallback, a bank must be picked first.
+        self._yamaha_playlist_bank = {}
         # store which master host a link_join call joined, per client host - needed
         # by link_leave to also tell the master to remove this client, since
         # getDistributionInfo doesn't report the server's IP back to a client.
@@ -591,6 +785,16 @@ class YamahaYXC(SmartPlugin):
         # loop, one unreachable device would stall getFeatures/getStatus for
         # every other configured device behind it at startup.
         self._yamaha_http_timeout = 5
+        # getListInfo (netusb browse) is spec-documented as potentially
+        # blocking the device for up to 30s (large USB/UPnP libraries) -
+        # needs its own, much longer timeout than every other request. See
+        # _update_browse_state()/_submit_payload()'s timeout parameter.
+        self._yamaha_browse_http_timeout = 30
+        # manageList (play_now/play_next/add_to_queue/add_to_mc_playlist) - the
+        # real app always sends timeout=60000 (see _build_cmd_manage_list()),
+        # matched here so our own HTTP client doesn't give up before the device
+        # would (a cloud-service playlist add can genuinely be slow).
+        self._yamaha_manage_http_timeout = 60
         self.sock = None
         self.last_total = 0
 
@@ -872,11 +1076,22 @@ class YamahaYXC(SmartPlugin):
             yamaha_host = self._lookup_host(item)
             yamaha_zone = self._lookup_zone(item)
 
+            # trace-level checkpoints for the item change -> command -> device
+            # round trip, at graduated dbg* levels (dbghigh coarsest/always-on
+            # down to plain debug for raw response bodies, see _submit_payload)
+            # so the chain can be followed without going to full "all in" debug.
+            self.logger.dbghigh(
+                'item changed: {} = {} -> cmd {} on {}/{}'.format(
+                    item.property.path, item(), yamaha_cmd, self._host_label(yamaha_host), yamaha_zone
+                )
+            )
+
             if yamaha_cmd in self._yamaha_trigger_cmds and item() is not True:
                 return None
 
             yamaha_payload = self._dispatch_cmd_build(yamaha_cmd, item, yamaha_host, yamaha_zone)
             if yamaha_payload:
+                self.logger.dbgmed('command sent: {} -> {}'.format(yamaha_cmd, yamaha_payload))
                 self._submit_payload(yamaha_host, yamaha_payload)
 
             # refresh only what could plausibly have changed, instead of a
@@ -892,12 +1107,36 @@ class YamahaYXC(SmartPlugin):
                 self._update_zone_state(yamaha_host, yamaha_zone)
             elif yamaha_cmd == 'update_netusb':
                 self._update_global_state(yamaha_host)
+                # playlist names have no polling/auto-refresh of their own
+                # (see _update_playlist_names()) - piggyback on the general
+                # netusb refresh trigger instead of adding a dedicated one
+                self._update_playlist_names(yamaha_host)
             elif yamaha_cmd == 'update_tuner':
                 self._update_tuner_state(yamaha_host)
             elif yamaha_cmd == 'update_link':
                 self._update_link_state(yamaha_host)
             elif yamaha_cmd == 'debug_refresh':
                 self._update_debug_items(yamaha_host)
+            elif yamaha_cmd in ('browse_select', 'browse_play', 'browse_return'):
+                # re-fetch from the top of whatever layer the cursor just
+                # moved to/from - see _update_browse_state()'s docstring for
+                # why index=0 rather than trying to preserve a prior page
+                self._update_browse_state(yamaha_host, index=0)
+            elif yamaha_cmd == 'browse_page':
+                # _handle_browse_page() already fetched and pushed the
+                # requested page itself (needs getListInfo's own longer
+                # timeout, which the generic global-cmds refresh below
+                # doesn't know about) - nothing left to do here
+                pass
+            elif yamaha_cmd in ('queue_play', 'queue_delete', 'queue_clear', 'queue_update'):
+                # re-fetch the queue after anything that could have changed
+                # it (or on the bare manual-refresh trigger) - queue_play
+                # doesn't change queue *contents*, but does change
+                # playing_index, so it's included too
+                self._update_queue_state(yamaha_host)
+            elif yamaha_cmd == 'queue_save_playlist':
+                # copies the queue elsewhere, doesn't change it - nothing to refresh
+                pass
             elif yamaha_cmd in self._yamaha_zone_cmds:
                 self._update_zone_state(yamaha_host, yamaha_zone)
             elif yamaha_cmd in self._yamaha_alarm_cmds:
@@ -985,6 +1224,128 @@ class YamahaYXC(SmartPlugin):
             )
             return None
         return self._build_cmd_volume(native, zone)
+
+    def _handle_browse_page(self, item, host, zone):
+        """
+        dispatch target for 'browse_page' - snaps the written offset down
+        to the nearest multiple of 8 (getListInfo's own indexing
+        granularity per spec) and fetches that page directly via
+        _update_browse_state(), instead of going through the generic
+        build-then-submit path: getListInfo needs its own, much longer
+        timeout than the plugin's normal default (up to 30s, spec-documented
+        as blocking the device meanwhile), which the generic post-write
+        submit call in update_item() has no way to know about.
+
+        Returns None either way - there is never a separate payload left
+        for update_item() to submit afterward, and update_item()'s own
+        refresh-dispatch is short-circuited for 'browse_page' too (see
+        there) since the fetch already happened here.
+        """
+        index = max(0, int(item()) // 8 * 8)
+        self._update_browse_state(host, index=index)
+        return None
+
+    def _handle_browse_play_now(self, item, host, zone):
+        """
+        dispatch target for 'browse_play_now' - manageList type=play_now,
+        immediately plays list entry <item()> (absolute index), interrupting
+        whatever is currently playing. full_context so it can use the longer
+        _yamaha_manage_http_timeout (see _build_cmd_manage_list()) instead of
+        the generic post-write submit's short default.
+        """
+        self._submit_payload(
+            host, self._build_cmd_manage_list('play_now', int(item())), timeout=self._yamaha_manage_http_timeout
+        )
+        return None
+
+    def _handle_browse_play_next(self, item, host, zone):
+        """dispatch target for 'browse_play_next' - manageList type=play_next, queues list entry <item()> to play right after the current track"""
+        self._submit_payload(
+            host, self._build_cmd_manage_list('play_next', int(item())), timeout=self._yamaha_manage_http_timeout
+        )
+        return None
+
+    def _handle_browse_queue_add(self, item, host, zone):
+        """dispatch target for 'browse_queue_add' - manageList type=add_to_queue, appends list entry <item()> to the end of the play queue"""
+        self._submit_payload(
+            host, self._build_cmd_manage_list('add_to_queue', int(item())), timeout=self._yamaha_manage_http_timeout
+        )
+        return None
+
+    def _handle_browse_playlist_bank(self, item, host, zone):
+        """
+        dispatch target for 'browse_playlist_bank' - remembers which of the
+        device's (up to 5) named MusicCast playlists browse_playlist_add
+        should target next, since manageList's 'bank' isn't carried by the
+        add-item write itself. Purely local bookkeeping, no network call -
+        same remember-then-use pattern as _handle_tuner_band(), but unlike
+        tuner band there's no sane default, so browse_playlist_add refuses
+        to fire until this has been written at least once (see there).
+        """
+        self._yamaha_playlist_bank[host] = item()
+        return None
+
+    def _handle_browse_playlist_add(self, item, host, zone):
+        """dispatch target for 'browse_playlist_add' - manageList type=add_to_mc_playlist, adds list entry <item()> to the playlist selected via browse_playlist_bank"""
+        bank = self._yamaha_playlist_bank.get(host)
+        if bank is None:
+            self.logger.warn(
+                f'browse: no playlist selected via browse.playlist_bank for {self._host_label(host)}, cannot add to playlist'
+            )
+            return None
+        self._submit_payload(
+            host,
+            self._build_cmd_manage_list('add_to_mc_playlist', int(item()), bank=bank),
+            timeout=self._yamaha_manage_http_timeout,
+        )
+        return None
+
+    def _handle_browse_playlist_rename(self, item, host, zone):
+        """
+        dispatch target for 'browse_playlist_rename' - setMcPlaylistName,
+        renames the playlist selected via browse_playlist_bank to item()'s
+        value, then refreshes browse.playlist_names so the new name shows
+        up without a separate manual update.
+        """
+        bank = self._yamaha_playlist_bank.get(host)
+        if bank is None:
+            self.logger.warn(
+                f'browse: no playlist selected via browse.playlist_bank for {self._host_label(host)}, cannot rename playlist'
+            )
+            return None
+        self._submit_payload(host, self._build_cmd_playlist_rename(bank, item()))
+        self._update_playlist_names(host)
+        return None
+
+    def _handle_browse_playlist_clear(self, item, host, zone):
+        """dispatch target for 'browse_playlist_clear' - clearMcPlaylist, empties the playlist selected via browse_playlist_bank (name unaffected). value unused (bare trigger)."""
+        bank = self._yamaha_playlist_bank.get(host)
+        if bank is None:
+            self.logger.warn(
+                f'browse: no playlist selected via browse.playlist_bank for {self._host_label(host)}, cannot clear playlist'
+            )
+            return None
+        self._submit_payload(host, 'v1/netusb/clearMcPlaylist?bank={}'.format(bank))
+        return None
+
+    def _handle_queue_save_playlist(self, item, host, zone):
+        """
+        dispatch target for 'queue_save_playlist' - copyPlayQueue, saves the
+        *entire current queue* as one of the device's named MusicCast
+        playlists. Shares browse_playlist_bank's remembered target bank
+        with browse_playlist_add - different action (this snapshots the
+        whole queue; browse_playlist_add adds one browsed entry) but both
+        need the same "which playlist" selection, no reason to duplicate it.
+        value unused (bare trigger, like browse_return/queue_clear).
+        """
+        bank = self._yamaha_playlist_bank.get(host)
+        if bank is None:
+            self.logger.warn(
+                f'queue: no playlist selected via browse.playlist_bank for {self._host_label(host)}, cannot save queue'
+            )
+            return None
+        self._submit_payload(host, 'v1/netusb/copyPlayQueue?bank={}'.format(bank))
+        return None
 
     def _handle_tuner_band(self, item, host, zone):
         """
@@ -1443,6 +1804,20 @@ class YamahaYXC(SmartPlugin):
         """return whether value is listed in the zone's discovered sound_program_list"""
         return self._zone_list_allowed(host, zone, 'sound_program_list', value)
 
+    def _zone_cmd_value(self, host, zone, cmd):
+        """
+        return the current value of the first item registered for
+        host/zone/cmd (e.g. main zone's 'input'), or None if nothing is
+        registered
+
+        Used by the browse_* handlers: getListInfo needs an 'input' value,
+        but browsing has no zone context of its own (device-global, single
+        shared cursor - see _yamaha_cmds' browse_* comment), so main zone's
+        current input is read this way instead.
+        """
+        items = self._yamaha_dev_zone.get(host, {}).get(zone, {}).get(cmd)
+        return items[0]() if items else None
+
     def _clamp_zone_range(self, host, zone, range_key, value):
         """
         clamp value to the zone's discovered min/max for range_key (e.g.
@@ -1654,6 +2029,145 @@ class YamahaYXC(SmartPlugin):
                     if value is not None:
                         for item in items:
                             item(value, self.get_fullname())
+
+        return state
+
+    def _update_browse_state(self, yamaha_host, index=0, update_items=True):
+        """
+        retrieve the netusb content list at index (an offset into the
+        device's current, shared navigation position - see _yamaha_cmds'
+        browse_* comment) via getListInfo, and push it to registered
+        browse.* items.
+
+        Called directly by _handle_browse_page(), and by update_item()'s
+        refresh dispatch for browse_select/browse_play/browse_return
+        (always with index=0 - re-fetching from the top of whatever layer
+        the cursor just moved to/from, matching the spec's own worked
+        example, which always re-fetches after a select/play/return rather
+        than trying to preserve a prior page position that may no longer
+        even exist at the new layer).
+
+        getListInfo is spec-documented as blocking the device for up to
+        30s, with no other command accepted meanwhile - uses a dedicated,
+        much longer timeout than the plugin's normal default, and sets
+        browse.busy for the duration so a Visu can show a spinner / hold
+        off other controls.
+
+        Uses main zone's current 'input' (see _zone_cmd_value()) - browsing
+        has no zone context of its own (device-global, single shared
+        cursor), main is used throughout for now (v1 scope).
+
+        Return None prematurely if no network response was received, or if
+        main zone's current input is unknown (nothing to browse yet).
+        """
+        global_items = self._yamaha_dev_global.get(yamaha_host, {})
+        busy_items = global_items.get('browse_busy', [])
+        for item in busy_items:
+            item(True, self.get_fullname())
+
+        input_value = self._zone_cmd_value(yamaha_host, 'main', 'input')
+        if not input_value:
+            self.logger.warn(f'browse: no known input for {self._host_label(yamaha_host)} main zone, cannot browse')
+            for item in busy_items:
+                item(False, self.get_fullname())
+            return None
+
+        browse_payload = self._build_cmd_browse_list(input_value, index)
+        self.logger.dbgmed(
+            'command sent: browse_page -> {} (index {}, input {})'.format(browse_payload, index, input_value)
+        )
+        state = self._submit_payload(yamaha_host, browse_payload, timeout=self._yamaha_browse_http_timeout)
+
+        for item in busy_items:
+            item(False, self.get_fullname())
+
+        if state is None:
+            return None
+
+        if update_items:
+            field_map = {
+                'browse_list': 'list_info',
+                'browse_menu_name': 'menu_name',
+                'browse_menu_layer': 'menu_layer',
+                'browse_max_line': 'max_line',
+                'browse_index': 'index',
+                'browse_playing_index': 'playing_index',
+            }
+            for yamaha_cmd, field in field_map.items():
+                items = global_items.get(yamaha_cmd)
+                if items and field in state:
+                    for item in items:
+                        item(state[field], self.get_fullname())
+
+        return state
+
+    def _update_queue_state(self, yamaha_host, update_items=True):
+        """
+        retrieve the netusb play queue via getPlayQueue and push it to
+        registered queue.* items.
+
+        NOT part of the official YXC spec at all - unlike browse
+        (getListInfo/setListControl, at least referenced by name), the play
+        queue endpoints don't appear in the spec text under any name;
+        getStatus's 'play_queue' object and getPlayInfo's 'play_queue_type'
+        field are the only hints it exists, both marked "Reserved".
+        Reverse-engineered from a packet capture of the real MusicCast iOS
+        app, see user_doc.rst.
+
+        Unlike getListInfo (browse, fixed 8-per-page), a single call with
+        index=0 and no size parameter returned every entry of a 21-track
+        queue at once in the observed capture - no pagination is
+        implemented here since the real app didn't appear to use any either;
+        unconfirmed behavior for much longer queues.
+
+        Return None prematurely if no network response was received.
+        """
+        global_items = self._yamaha_dev_global.get(yamaha_host, {})
+        state = self._submit_payload(yamaha_host, self._build_cmd_get_queue())
+        if state is None:
+            return None
+
+        if update_items:
+            field_map = {
+                'queue_list': 'track_info',
+                'queue_max_line': 'max_line',
+                'queue_playing_index': 'playing_index',
+            }
+            for yamaha_cmd, field in field_map.items():
+                items = global_items.get(yamaha_cmd)
+                if items and field in state:
+                    for item in items:
+                        item(state[field], self.get_fullname())
+
+        return state
+
+    def _update_playlist_names(self, yamaha_host, update_items=True):
+        """
+        retrieve the names of the device's (up to 5) named MusicCast
+        playlists via getMcPlaylistName and push to browse.playlist_names.
+
+        NOT part of the official YXC spec (like queue.*, doesn't even
+        appear as "Reserved") - reverse-engineered from a packet capture of
+        the real MusicCast iOS app. name_list[0] is bank 1 - confirmed by
+        capture (renaming bank 1 via setMcPlaylistName changed
+        name_list[0]).
+
+        Not polled on its own schedule (playlist names rarely change) -
+        refreshed after browse.playlist_rename, and via the existing
+        update_netusb refresh trigger (see update_item()).
+
+        Return None prematurely if no network response was received.
+        """
+        global_items = self._yamaha_dev_global.get(yamaha_host, {})
+        state = self._submit_payload(yamaha_host, 'v1/netusb/getMcPlaylistName')
+        if state is None:
+            return None
+
+        if update_items:
+            items = global_items.get('browse_playlist_names')
+            if items and 'name_list' in state:
+                for item in items:
+                    item(state['name_list'], self.get_fullname())
 
         return state
 
@@ -2078,6 +2592,8 @@ class YamahaYXC(SmartPlugin):
             return value
         elif cmd == 'playback':
             return value
+        elif cmd in ('repeat', 'shuffle', 'repeat_available', 'shuffle_available', 'queue_type'):
+            return value
         elif cmd == 'sleep':
             return value
         elif cmd == 'track':
@@ -2126,7 +2642,7 @@ class YamahaYXC(SmartPlugin):
     # send network commands and receive responses
     #
 
-    def _submit_payload(self, host, payload):
+    def _submit_payload(self, host, payload, timeout=None):
         """
         send cmd string to device and return response data as dict
 
@@ -2143,8 +2659,14 @@ class YamahaYXC(SmartPlugin):
           MusicCast devices are quite picky about double quotes;
           single-quoted data is rewarded with errors!
 
+        timeout overrides self._yamaha_http_timeout for this call only -
+        used by _update_browse_state() (getListInfo can block the device
+        for up to 30s per spec)
+
         return data is None or a dict with json response data
         """
+        if timeout is None:
+            timeout = self._yamaha_http_timeout
         if payload:
             if type(payload) is str:
                 url = 'http://{}/YamahaExtendedControl/{}'.format(host, payload)
@@ -2153,7 +2675,7 @@ class YamahaYXC(SmartPlugin):
                     'X-AppPort': '{}'.format(self.srv_port),
                 }
                 try:
-                    res = requests.get(url, headers=headers, timeout=self._yamaha_http_timeout)
+                    res = requests.get(url, headers=headers, timeout=timeout)
                     response = res.text
                     del res
                 except Exception:
@@ -2170,17 +2692,30 @@ class YamahaYXC(SmartPlugin):
                         'X-AppPort': '{}'.format(self.srv_port),
                     }
                     try:
-                        res = requests.post(url, data=payload[1], headers=headers, timeout=self._yamaha_http_timeout)
+                        res = requests.post(url, data=payload[1], headers=headers, timeout=timeout)
                         response = res.text
                         del res
                     except Exception:
                         self.logger.info('Device not answering: {}.'.format(self._host_label(host)))
                         response = None
+            # raw HTTP body - the finest-grained checkpoint, "all in" only
+            self.logger.debug('raw response from {}: {}'.format(self._host_label(host), response))
+
             try:
                 jdata = json.loads(response)
             except Exception:
                 self.logger.debug('Invalid data received (not JSON). Data discarded.')
                 jdata = None
+
+            if isinstance(jdata, dict):
+                code = jdata.get('response_code')
+                self.logger.dbglow('response parsed from {}: {}'.format(self._host_label(host), jdata))
+                if code:
+                    self.logger.warn(
+                        '{} rejected request: response_code {} ({}) for {}'.format(
+                            self._host_label(host), code, _YXC_RESPONSE_CODES.get(code, 'unknown code'), payload
+                        )
+                    )
 
             return jdata
         else:
@@ -2259,6 +2794,28 @@ class YamahaYXC(SmartPlugin):
         cmd = 'v1/netusb/setPlayback?playback={}'.format(value)
         return cmd
 
+    def _build_cmd_repeat(self, value, cmd='PUT'):
+        """
+        return cmd string for "set repeat"
+
+        value is string, one of: off / one / all
+        valid values not cross-checked against repeat_available (that list
+        is netusb-global from getPlayInfo, not zone-scoped getFeatures data
+        like the other list_check cmds use - left unvalidated for now)
+        """
+        cmd = 'v1/netusb/setRepeat?mode={}'.format(value)
+        return cmd
+
+    def _build_cmd_shuffle(self, value, cmd='PUT'):
+        """
+        return cmd string for "set shuffle"
+
+        value is string, one of: off / on / songs / albums
+        see _build_cmd_repeat() - shuffle_available likewise unvalidated
+        """
+        cmd = 'v1/netusb/setShuffle?mode={}'.format(value)
+        return cmd
+
     def _build_cmd_get_features(self):
         """
         return cmd string for "get features" -> get device/zone capabilities
@@ -2284,6 +2841,104 @@ class YamahaYXC(SmartPlugin):
         """
         cmd = 'v1/netusb/getPlayInfo'
         return cmd
+
+    def _build_cmd_browse_list(self, input_value, index, size=8):
+        """
+        return cmd string for "get list info" -> get netusb browse list
+
+        index must be a multiple of 8 per spec (getListInfo, YXC API Spec
+        Basic v2.0 7.9) - callers are expected to have already snapped it
+        (see _handle_browse_page()); not re-validated here since
+        _update_browse_state() also calls this directly with a known-good
+        index=0.
+        """
+        return 'v1/netusb/getListInfo?input={}&index={}&size={}&lang=en'.format(input_value, index, size)
+
+    def _build_cmd_browse_select(self, value):
+        """return cmd string for "list control: select" -> descend into list entry <value> (absolute index)"""
+        return 'v1/netusb/setListControl?list_id=main&type=select&index={}'.format(int(value))
+
+    def _build_cmd_browse_play(self, value):
+        """
+        return cmd string for "list control: play" -> play list entry <value> (absolute index)
+
+        always targets zone 'main' (v1 scope - browsing itself has no zone
+        context of its own, see _yamaha_cmds' browse_* comment)
+        """
+        return 'v1/netusb/setListControl?list_id=main&type=play&index={}&zone=main'.format(int(value))
+
+    def _build_cmd_browse_return(self, value):
+        """return cmd string for "list control: return" -> move up one menu layer. value unused (bare trigger)."""
+        return 'v1/netusb/setListControl?list_id=main&type=return'
+
+    def _build_cmd_manage_list(self, action, index, bank=None):
+        """
+        return cmd string for netusb manageList - per-track "..." context
+        menu actions (play now / play next / add to queue / add to
+        MusicCast playlist).
+
+        NOT part of the official YXC spec: managePlay/manageList's
+        documented 'type' enum (YXC API Spec Basic v2.0, 7.21/7.22) only
+        covers streaming-service bookmarking (add_bookmark/add_track/...),
+        nothing matching these. action/param shapes below are
+        reverse-engineered from a packet capture of the real MusicCast iOS
+        app's "..." menu instead - see user_doc.rst. Matches the capability
+        bits documented in getListInfo's per-entry 'attribute' field (b[23]
+        Play Now / b[24] Play Next / b[25] Add Play Queue / b[26] Add
+        MusicCast Playlist), just not the request side.
+
+        index is the absolute list position (browse.index + position in
+        browse.list, same convention as browse.select/browse.play).
+
+        bank selects which of the device's named playlists to add to
+        (add_to_mc_playlist only - see browse_playlist_bank); every other
+        action instead sends zone=main like browse.play (also unvalidated,
+        also v1 scope - see _build_cmd_browse_play()). Matches exactly what
+        the real app sends: zone for play_now/play_next/add_to_queue, bank
+        (not zone) for add_to_mc_playlist, never both.
+
+        timeout is the *device's* own processing budget for this call (per
+        spec, 0-60000ms) - matched 1:1 with self._yamaha_manage_http_timeout,
+        the HTTP client-side timeout callers pass to _submit_payload(), so
+        neither side gives up before the other would.
+        """
+        if bank is not None:
+            return 'v1/netusb/manageList?list_id=main&type={}&index={}&bank={}&timeout={}'.format(
+                action, index, bank, self._yamaha_manage_http_timeout * 1000
+            )
+        return 'v1/netusb/manageList?list_id=main&type={}&index={}&zone=main&timeout={}'.format(
+            action, index, self._yamaha_manage_http_timeout * 1000
+        )
+
+    def _build_cmd_get_queue(self):
+        """return cmd string for "get play queue" -> get netusb play queue contents (getPlayQueue). Not in the official spec, see _update_queue_state()."""
+        return 'v1/netusb/getPlayQueue?index=0'
+
+    def _build_cmd_queue_play(self, value):
+        """return cmd string for "play queue: play" -> jump to and play queue entry <value> (absolute queue index, zone main). Not in the official spec, see _update_queue_state()."""
+        return 'v1/netusb/managePlayQueue?type=play&index={}&zone=main'.format(int(value))
+
+    def _build_cmd_queue_delete(self, value):
+        """return cmd string for "play queue: remove" -> remove queue entry <value> (absolute queue index). Not in the official spec, see _update_queue_state()."""
+        return 'v1/netusb/managePlayQueue?type=remove&index={}'.format(int(value))
+
+    def _build_cmd_queue_clear(self, value):
+        """return cmd string for "clear play queue". value unused (bare trigger). Not in the official spec, see _update_queue_state()."""
+        return 'v1/netusb/clearPlayQueue'
+
+    def _build_cmd_playlist_rename(self, bank, name):
+        """
+        return [url, json_data] for "set MusicCast playlist name"
+        (setMcPlaylistName) -> rename playlist <bank> to <name>.
+
+        Not in the official spec, see _update_playlist_names(). POST body,
+        not query params (matches the captured request) - JSON via
+        json.dumps like every other POST builder in this file (MusicCast
+        devices reportedly reject single-quoted JSON).
+        """
+        cmd = 'v1/netusb/setMcPlaylistName'
+        data = json.dumps({'bank': bank, 'name': name})
+        return [cmd, data]
 
     def _build_cmd_get_alarm_state(self):
         """

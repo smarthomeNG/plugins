@@ -294,6 +294,38 @@ item_structs:
                 yamahayxc_cmd: playback
                 enforce_updates: true
 
+            repeat:
+                remark: Wiederholmodus, gültige Werte in .available.
+                type: str
+                yamahayxc_cmd: repeat
+                enforce_updates: true
+
+            repeat_available:
+                remark: Gültige Werte für repeat. Nur-Lese-Zugriff.
+                type: list
+                yamahayxc_cmd: repeat_available
+                visu_acl: ro
+
+            shuffle:
+                remark: Zufallswiedergabe, gültige Werte in .available.
+                type: str
+                yamahayxc_cmd: shuffle
+                enforce_updates: true
+
+            shuffle_available:
+                remark: Gültige Werte für shuffle. Nur-Lese-Zugriff.
+                type: list
+                yamahayxc_cmd: shuffle_available
+                visu_acl: ro
+
+            queue_type:
+                remark: Art der aktuellen Wiedergabe-Warteschlange (beobachteter Wert z.B. "user").
+                    Laut Spezifikation als "Reserved" markiert, wird vom Gerät aber tatsächlich befüllt.
+                    Nur-Lese-Zugriff.
+                type: str
+                yamahayxc_cmd: queue_type
+                visu_acl: ro
+
             playing:
                 remark: Bool-Indikator, ob die Wiedergabe läuft. Nur-Lese-Zugriff.
                 type: bool
@@ -335,6 +367,206 @@ item_structs:
                 type: bool
                 yamahayxc_cmd: update_netusb
                 enforce_updates: true
+
+            browse:
+                remark: UPnP/USB/DLNA-Inhalte durchsuchen (getListInfo/setListControl). Geräteweit
+                    geteilte Navigationsposition - nicht pro Client/Zone getrennt, kann sich also mit
+                    der offiziellen MusicCast App oder einer zweiten Visu-Sitzung überschneiden.
+                    Zielzone für .play ist vorerst immer "main". play_now/play_next/queue_add/
+                    playlist_bank/playlist_add (manageList) sind nicht Teil der offiziellen
+                    YXC-Spezifikation - deren type-Werte wurden per Netzwerkmitschnitt der echten
+                    MusicCast-iOS-App aus dem "..."-Kontextmenü rekonstruiert, nicht aus dem Dokument.
+
+                list:
+                    remark: Aktuelle Seite der Liste (bis zu 8 Einträge). Nur-Lese-Zugriff.
+                    type: list
+                    yamahayxc_cmd: browse_list
+                    visu_acl: ro
+
+                menu_name:
+                    remark: Name der aktuellen Ebene/des aktuellen Ordners. Nur-Lese-Zugriff.
+                    type: str
+                    yamahayxc_cmd: browse_menu_name
+                    visu_acl: ro
+
+                menu_layer:
+                    remark: Tiefe der aktuellen Ebene (0 = Wurzel). Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: browse_menu_layer
+                    visu_acl: ro
+
+                max_line:
+                    remark: Gesamtanzahl der Einträge auf dieser Ebene. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: browse_max_line
+                    visu_acl: ro
+
+                index:
+                    remark: Offset der aktuell angezeigten Seite (Vielfaches von 8). Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: browse_index
+                    visu_acl: ro
+
+                playing_index:
+                    remark: Index des aktuell wiedergegebenen Eintrags in dieser Liste, -1 falls keiner. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: browse_playing_index
+                    visu_acl: ro
+
+                busy:
+                    remark: True während ein getListInfo-Abruf läuft (bis zu 30s laut Spezifikation). Nur-Lese-Zugriff.
+                    type: bool
+                    yamahayxc_cmd: browse_busy
+                    visu_acl: ro
+
+                page:
+                    remark: Schreiben fordert die Seite ab diesem Offset an (wird intern auf ein
+                        Vielfaches von 8 abgerundet).
+                    type: num
+                    yamahayxc_cmd: browse_page
+                    enforce_updates: true
+
+                select:
+                    remark: Schreiben des absoluten Index (browse.index + Position in browse.list)
+                        eines Eintrags steigt eine Ebene tiefer in diesen Eintrag ein, sofern per
+                        .attribute als auswählbar markiert.
+                    type: num
+                    yamahayxc_cmd: browse_select
+                    enforce_updates: true
+
+                play:
+                    remark: Schreiben des absoluten Index eines Eintrags spielt ihn ab (Zone "main"),
+                        sofern per .attribute als abspielbar markiert.
+                    type: num
+                    yamahayxc_cmd: browse_play
+                    enforce_updates: true
+
+                return:
+                    remark: True schreiben, um eine Ebene nach oben zu wechseln.
+                    type: bool
+                    yamahayxc_cmd: browse_return
+                    enforce_updates: true
+
+                play_now:
+                    remark: Schreiben des absoluten Index eines Eintrags spielt ihn sofort ab (unterbricht
+                        die aktuelle Wiedergabe), unabhängig vom Layer/Auswahlstatus. Nicht Teil der
+                        offiziellen YXC-Spezifikation, per Mitschnitt der echten MusicCast-App aus dem
+                        "..."-Kontextmenü rekonstruiert (siehe Hinweis oben im Beschreibungstext).
+                    type: num
+                    yamahayxc_cmd: browse_play_now
+                    enforce_updates: true
+
+                play_next:
+                    remark: Schreiben des absoluten Index eines Eintrags reiht ihn direkt nach dem
+                        aktuellen Titel ein. Siehe play_now.
+                    type: num
+                    yamahayxc_cmd: browse_play_next
+                    enforce_updates: true
+
+                queue_add:
+                    remark: Schreiben des absoluten Index eines Eintrags hängt ihn ans Ende der
+                        Wiedergabe-Warteschlange an. Siehe play_now.
+                    type: num
+                    yamahayxc_cmd: browse_queue_add
+                    enforce_updates: true
+
+                playlist_bank:
+                    remark: Auswahl einer der (bis zu 5) benannten MusicCast-Playlisten für playlist_add
+                        (1-5, gerätespezifisch). Muss vor playlist_add mindestens einmal gesetzt werden -
+                        rein lokal gemerkt, löst selbst keine Geräteanfrage aus.
+                    type: num
+                    yamahayxc_cmd: browse_playlist_bank
+                    enforce_updates: true
+
+                playlist_add:
+                    remark: Schreiben des absoluten Index eines Eintrags fügt ihn der über playlist_bank
+                        gewählten Playliste hinzu. Siehe play_now.
+                    type: num
+                    yamahayxc_cmd: browse_playlist_add
+                    enforce_updates: true
+
+                playlist_names:
+                    remark: Namen der bis zu 5 benannten MusicCast-Playlisten (Index 0 = Bank 1, ...).
+                        Wird nicht automatisch aktualisiert (ändert sich selten) - Aktualisierung nach
+                        playlist_rename sowie über media.netusb.update. Nur-Lese-Zugriff.
+                    type: list
+                    yamahayxc_cmd: browse_playlist_names
+                    visu_acl: ro
+
+                playlist_rename:
+                    remark: Schreiben eines Textes benennt die über playlist_bank gewählte Playliste um.
+                    type: str
+                    yamahayxc_cmd: browse_playlist_rename
+                    enforce_updates: true
+
+                playlist_clear:
+                    remark: True schreiben, um die über playlist_bank gewählte Playliste zu leeren
+                        (Name bleibt erhalten).
+                    type: bool
+                    yamahayxc_cmd: browse_playlist_clear
+                    enforce_updates: true
+
+            queue:
+                remark: Wiedergabe-Warteschlange (getPlayQueue/managePlayQueue/copyPlayQueue/
+                    clearPlayQueue). Eigener, von browse getrennter Index-Raum - queue.play/
+                    queue.delete beziehen sich auf die Position in queue.list, nicht in browse.list.
+                    Nicht Teil der offiziellen YXC-Spezifikation, nicht einmal als "Reserved"
+                    erwähnt - per Netzwerkmitschnitt der echten MusicCast-iOS-App rekonstruiert.
+
+                list:
+                    remark: Aktuelle Warteschlange (alle Einträge, keine Seitenweise-Abfrage wie bei
+                        browse.list beobachtet). Nur-Lese-Zugriff.
+                    type: list
+                    yamahayxc_cmd: queue_list
+                    visu_acl: ro
+
+                max_line:
+                    remark: Gesamtanzahl der Einträge in der Warteschlange. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: queue_max_line
+                    visu_acl: ro
+
+                playing_index:
+                    remark: Index des aktuell wiedergegebenen Eintrags in der Warteschlange. Nur-Lese-Zugriff.
+                    type: num
+                    yamahayxc_cmd: queue_playing_index
+                    visu_acl: ro
+
+                play:
+                    remark: Schreiben des absoluten Index eines Warteschlangen-Eintrags springt dorthin
+                        und spielt ihn ab (Zone "main").
+                    type: num
+                    yamahayxc_cmd: queue_play
+                    enforce_updates: true
+
+                delete:
+                    remark: Schreiben des absoluten Index eines Warteschlangen-Eintrags entfernt ihn
+                        aus der Warteschlange. Heißt "delete" statt "remove", da "remove" mit
+                        Item.remove() kollidiert (siehe check_item_name_collision).
+                    type: num
+                    yamahayxc_cmd: queue_delete
+                    enforce_updates: true
+
+                save_playlist:
+                    remark: True schreiben, um die gesamte aktuelle Warteschlange als über
+                        browse.playlist_bank gewählte MusicCast-Playliste zu speichern (dieselbe
+                        Bank-Auswahl wie browse.playlist_add, aber ganze Warteschlange statt
+                        einzelnem Eintrag).
+                    type: bool
+                    yamahayxc_cmd: queue_save_playlist
+                    enforce_updates: true
+
+                clear:
+                    remark: True schreiben, um die Warteschlange zu leeren.
+                    type: bool
+                    yamahayxc_cmd: queue_clear
+                    enforce_updates: true
+
+                update:
+                    remark: True schreiben, um die Warteschlange neu abzufragen.
+                    type: bool
+                    yamahayxc_cmd: queue_update
+                    enforce_updates: true
 
         tuner:
             remark: Tuner-Steuerung (AM/FM)
