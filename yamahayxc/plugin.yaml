@@ -1254,10 +1254,10 @@ item_structs:
 wx-010:
     structs: [.amp, .link, .netusb]
 
-ix-018:
+isx-18:
     structs: [.amp, .link, .netusb, .alarm]
 
-rxv-483:
+rx-v483:
     structs: [.amp, .link, .netusb, .tuner, .zones.zone2]
 
     dsp:

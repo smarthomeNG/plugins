@@ -1,0 +1,33 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @author      Sebastian Helms
+* -----------------------------------------------------------------------------
+*/
+
+/**
+* Yamaha YXC device model -> feature catalog, for yxc.device()'s optional
+* 'model' parameter.
+*
+* Keys match the yamahayxc plugin's own top-level device-dependent struct
+* names 1:1 (plugin.yaml, "device-dependent structs" section at the bottom -
+* keep this in sync whenever that section gains a new model). Values are
+* comma-separated feature keys in the same vocabulary as yxc.device()'s
+* 'hide' parameter: dsp, netusb, tuner, link, zone2, zone3, zone4.
+*
+* Unknown/unlisted models return an empty string, and the widget falls back
+* to its hide-only default in that case. If a specific unit is wired
+* differently than its model normally would be (or the model isn't listed
+* here yet), don't pass 'model' at all - just use 'hide' directly, same as
+* before this catalog existed.
+*
+* @author Sebastian Helms
+*/
+{% macro features(model) %}
+	{%- set catalog = {
+		'wx-010':  'netusb,link',
+		'isx-18':  'netusb,link',
+		'rx-v483': 'dsp,netusb,link,tuner,zone2',
+	} -%}
+	{{- catalog[model]|default('') -}}
+{% endmacro %}

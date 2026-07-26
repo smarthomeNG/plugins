@@ -112,19 +112,36 @@
 * widgets/yxc.js' sv.yxc_browse widget for the item-level details and the
 * two-index-space caveat (browse.* vs queue.* positions are not the same).
 *
+* 'model' looks up a known device's feature set from widgets/yxc_devices.html
+* (keyed by the yamahayxc plugin's own device-dependent struct names, e.g.
+* 'rx-v483') so most calls don't need 'hide' at all - see that file for the
+* current catalog. 'hide' still applies on top to trim further; if a unit
+* is wired differently than its model normally would be, or its model isn't
+* in the catalog yet, just omit 'model' and use 'hide' directly as before.
+*
 * @param {id} unique id for this widget
 * @param {item} root item for the device/zone, e.g. 'eg.wohnen.rxav'
 * @param {text=} comma-separated feature keys to hide: 'dsp', 'netusb',
-*   'link', 'zone2', 'zone3', 'zone4' (optional - zone2/3/4 are hidden by
-*   default since most devices don't have them; pass e.g. 'zone3,zone4' to
-*   show only zone2, or '' to show all zones)
+*   'tuner', 'link', 'zone2', 'zone3', 'zone4' (optional - if 'model' isn't
+*   given, zone2/3/4 are hidden by default since most devices don't have
+*   them; pass e.g. 'zone3,zone4' to show only zone2, or '' to show all
+*   zones)
+* @param {text=} known device model key, e.g. 'rx-v483' - see
+*   widgets/yxc_devices.html for the catalog (optional)
 *
 * @author Sebastian Helms
 */
-{% macro device(id, item_root, hide) %}
+{% macro device(id, item_root, hide, model) %}
 	{% import "@widgets/basic.html" as basic %}
+	{% import "@widgets/yxc_devices.html" as devices %}
 	{% set uid = uid(page, id) %}
-	{% set hidden = hide|default('zone2,zone3,zone4')|split(',') %}
+	{% set all_features = ['dsp', 'netusb', 'tuner', 'link', 'zone2', 'zone3', 'zone4'] %}
+	{% set model_features = model|default('') != '' ? devices.features(model)|trim : '' %}
+	{% if model_features != '' %}
+		{% set hidden = (all_features|filter(f => f not in model_features|split(',')))|merge(hide|default('')|split(',')) %}
+	{% else %}
+		{% set hidden = hide|default('zone2,zone3,zone4')|split(',') %}
+	{% endif %}
 
 	<div id="{{ uid }}" class="yxc-device" data-widget="yxc.device" data-item="{{ item_root }}.input">
 
@@ -180,6 +197,7 @@
 				</div>
 			</div>
 
+			{% if 'tuner' not in hidden %}
 			<div class="yxc-content yxc-panel-tuner" style="display:none">
 				<div data-role="controlgroup" data-type="horizontal">
 					{{ basic.stateswitch('', item_root~'.tuner.band', 'mini', ['fm', 'am'], '', ['FM', 'AM'], ['icon1', 'icon0']) }}
@@ -193,6 +211,7 @@
 					{{ basic.input(uid~'-preset', item_root~'.tuner.preset', 'number', 1, 40, 1) }}
 				</div>
 			</div>
+			{% endif %}
 
 			<div class="yxc-bar">
 				<div class="yxc-bar-left">
