@@ -84,6 +84,27 @@
     padding: 0 2px;
 }
 
+/* plain flex row, not a jQuery Mobile controlgroup - the controlgroup
+   widget reorganizes/flattens its children in a way that ignores the
+   yxc-server-only wrapper span used here to hide repeat/shuffle, ending
+   up with a visual order that doesn't match the DOM */
+.yxc-netusb-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1px;
+    margin: 2px 0;
+}
+
+.yxc-netusb-controls .ui-btn-inline.ui-mini,
+.yxc-netusb-controls .ui-btn.ui-mini {
+    min-height: 34px;
+    min-width: 26px;
+    line-height: 29px;
+    padding: 0 1px;
+}
+
 .yxc-tuner-station {
     text-align: center;
 }

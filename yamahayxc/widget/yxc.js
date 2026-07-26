@@ -146,6 +146,7 @@ $.widget("sv.yxc_browse", $.sv.widget, {
         this.$queueUpdate = this.$queuePopup.find('.yxc-queue-update');
         this.$queueClear = this.$queuePopup.find('.yxc-queue-clear');
         this.$queueSavePlaylist = this.$queuePopup.find('.yxc-queue-saveplaylist');
+        this.$queuePlaylistBtn = this.$queuePopup.find('.yxc-queue-playlist-btn');
 
         this.$playlistPopup = $('#' + uidBase + '-playlist-popup');
         this.$playlistList = this.$playlistPopup.find('.yxc-playlist-list');
@@ -155,6 +156,20 @@ $.widget("sv.yxc_browse", $.sv.widget, {
         this.targetLayer = null;
         this.pendingRowIdx = null;
         this.playlistBank = null;
+
+        // Browse/Queue are separate top-level buttons on the main panel
+        // (jQuery Mobile 1.4.5 doesn't reliably open a second popup while
+        // one is already open), but Playlists only makes sense as a
+        // sub-action of Queue ("save queue as playlist") - for this one
+        // nested hop, close Queue first and only open Playlists once that
+        // close has actually finished animating.
+        this.$queuePlaylistBtn.on('click', function(e) {
+            e.preventDefault();
+            self.$queuePopup.one('popupafterclose', function() {
+                self.$playlistPopup.popup('open');
+            });
+            self.$queuePopup.popup('close');
+        });
 
         this.$home.on('click', function(e) {
             e.preventDefault();

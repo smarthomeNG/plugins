@@ -67,7 +67,7 @@
 				{% if item_play %}
 					{{ basic.stateswitch('', item_play, '', 'previous', 'control_arrow_left.svg', 'back') }}
 					{{ basic.stateswitch('', item_play, '', 'play_pause', ['audio_play.svg', 'audio_pause.svg']) }}
-					{{ basic.stateswitch('', item_play, '', 'stop', 'audio_stop.svg', 'stop') }}
+					<!-- basic.stateswitch('', item_play, '', 'stop', 'audio_stop.svg', 'stop') }} -->
 					{{ basic.stateswitch('', item_play, '', 'next', 'control_arrow_right.svg', 'next') }}
 				{% endif %}
 				{% if item_mute %} {{ basic.stateswitch('', item_mute, 'mini', [1, 0], ['audio_volume_mute.svg','audio_volume_high.svg'], '', ['icon1', 'icon0']) }} {% endif %}
@@ -158,10 +158,10 @@
 			</div>
 
 			<div class="yxc-content yxc-panel-netusb">
-				<div data-role="controlgroup" data-type="horizontal">
+				<div class="yxc-netusb-controls">
 					{{ basic.stateswitch('', item_root~'.netusb.playback', '', 'previous', 'control_arrow_left.svg') }}
 					{{ basic.stateswitch('', item_root~'.netusb.playback', '', ['play', 'pause'], ['audio_pause.svg', 'audio_play.svg'], '', ['icon1', 'icon0']) }}
-					{{ basic.stateswitch('', item_root~'.netusb.playback', '', 'stop', 'audio_stop.svg') }}
+					<!-- basic.stateswitch('', item_root~'.netusb.playback', '', 'stop', 'audio_stop.svg') }} -->
 					{{ basic.stateswitch('', item_root~'.netusb.playback', '', 'next', 'control_arrow_right.svg') }}
 					<span class="yxc-server-only" style="display:none">
 						{{ basic.stateswitch('', item_root~'.netusb.repeat', '', ['off', 'one', 'all'], ['audio_repeat.svg', 'audio_repeat_song.svg', 'audio_repeat.svg'], '', ['icon0', 'icon1', 'icon1']) }}
@@ -169,6 +169,10 @@
 					</span>
 					{% if 'netusb' not in hidden %}
 					<a href="#{{ uid }}-browse-popup" data-rel="popup"
+					   class="yxc-server-only ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0" style="display:none">
+						{{ basic.icon('edit_open', 'icon0') }}
+					</a>
+					<a href="#{{ uid }}-queue-popup" data-rel="popup"
 					   class="yxc-server-only ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0" style="display:none">
 						{{ basic.icon('audio_playlist', 'icon0') }}
 					</a>
@@ -296,10 +300,6 @@
 				{{ basic.icon('control_arrow_up', 'icon0') }}
 			</a>
 			<span class="yxc-browse-title">&nbsp;</span>
-			<a href="#{{ uid }}-queue-popup" data-rel="popup"
-			   class="ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0">
-				{{ basic.icon('audio_playlist', 'icon0') }}
-			</a>
 			<a href="#" data-rel="back" data-role="button" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Schließen</a>
 		</div>
 
@@ -355,11 +355,10 @@
 	<div id="{{ uid }}-queue-popup" data-role="popup" data-overlay-theme="a"
 	     class="ui-content yxc-queue-popup" style="min-width:300px;max-width:480px;width:90%;">
 		<div class="yxc-queue-header">
-			<span class="yxc-queue-title">Warteschlange</span>
-			<a href="#{{ uid }}-playlist-popup" data-rel="popup"
-			   class="ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0">
+			<a class="yxc-queue-playlist-btn ui-btn ui-mini ui-corner-all ui-btn-inline ui-nodisc-icon icon0">
 				{{ basic.icon('edit_save', 'icon0') }}
 			</a>
+			<span class="yxc-queue-title">Warteschlange</span>
 			<a href="#" data-rel="back" data-role="button" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Schließen</a>
 		</div>
 		<div class="yxc-queue-list"></div>
