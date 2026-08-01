@@ -140,6 +140,9 @@ class SDPProtocolViessmann(SDPProtocol):
         # select controlset for viess_proto
         self._controlset = self._controlsets[self._viess_proto]
 
+        # number of attempts for the P300 init handshake before giving up
+        self._p300_init_retries = kwargs.get('p300_init_retries', 10)
+
         # make sure we have a basic set of parameters for the serial connection
         self._params = {
             PLUGIN_ATTR_SERIAL_PORT: '',
@@ -207,10 +210,11 @@ class SDPProtocolViessmann(SDPProtocol):
             self.__syncsent = False
             empty_replies = 0
 
-            self.logger.debug(f'send_bytes: send reset command {RESET}')
+            self._connection.reset_input_buffer()
+            self.logger.debug(f'send_bytes: flush input buffer and send reset command {RESET}')
             self._send_bytes(RESET)
 
-            for i in range(10):
+            for i in range(self._p300_init_retries):
                 readbyte = self._read_bytes(1)
                 self.logger.debug(f'read_bytes: read {readbyte}')
 
@@ -245,7 +249,7 @@ class SDPProtocolViessmann(SDPProtocol):
 
             if not self._is_initialized:
                 self._close()
-                raise SDPProtocolError('P300 protocol initialization failed after 10 attempts')
+                raise SDPProtocolError(f'P300 protocol initialization failed after {self._p300_init_retries} attempts')
             self.logger.debug('P300 communication initialized successfully')
             return True
 

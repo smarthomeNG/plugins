@@ -36,6 +36,13 @@ parameters:
         -   KW
         description: Kommunikationsprotokoll der Heizung
 
+    p300_init_retries:
+        type: num
+        default: 10
+        description:
+            de: Anzahl der Versuche für die P300-Initialisierungssequenz, bevor die Verbindung als fehlgeschlagen gilt
+            en: Number of attempts for the P300 initialization handshake before the connection is considered failed
+
     cycle:
         type: num
         default: 30
