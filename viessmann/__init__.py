@@ -181,7 +181,7 @@ class viessmann(SmartDevicePlugin):
         try:
             res = self.read_addr(addr)
         except Exception as e:
-            self.logger.error(f'Error on send: {e}')
+            self.logger.exception(f'Error on send: {e}')
             res = None
 
         try:
