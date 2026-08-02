@@ -333,6 +333,10 @@ class SDPProtocolViessmann(SDPProtocol):
                     return self._parse_response(bytearray(chunk))
 
                 elif self._viess_proto == 'KW':
+                    # chunk was never actually read here before - responselen
+                    # (bytes expected back) is already computed by _build_payload()
+                    chunk = self._read_bytes(responselen)
+                    self.logger.debug(f'received {len(chunk)} bytes: {self._bytes2hexstring(bytearray(chunk))}')
                     if len(chunk) == 0:
                         raise SDPConnectionError('no response from device after KW command')
                     return self._parse_response(bytearray(chunk), data_dict['data']['value'] is None)

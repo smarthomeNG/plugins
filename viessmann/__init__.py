@@ -104,7 +104,7 @@ class viessmann(SmartDevicePlugin):
                 print(
                     f'Device ID is {res}, device type is {devs.get(res.upper(), "unknown")} supporting protocol {proto}'
                 )
-                # break
+                break
 
     def read_addr(self, addr):
         """
