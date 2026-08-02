@@ -176,7 +176,7 @@ class viessmann(SmartDevicePlugin):
                 'param_values': ['VAL', mult, signed, length],
             }
             self.logger.debug(f'Adding temporary command config {cmdconf} for command temp_cmd')
-            self._commands._parse_commands(self.device_id, {cmd: cmdconf}, [cmd])
+            self._commands._parse_commands({cmd: cmdconf}, [cmd])
 
         try:
             res = self.read_addr(addr)
@@ -226,7 +226,6 @@ class viessmann(SmartDevicePlugin):
         self.alive = True
         self._parameters['viess_proto'] = protocol
         self._connection = self._get_connection()
-        self._dispatch_callback = self._cb_standalone
 
         err = None
         res = None
@@ -247,25 +246,19 @@ class viessmann(SmartDevicePlugin):
             self.logger.info(f'Could not initialize communication using protocol {protocol}. {err if err else ""}')
             return False
 
-        self._result = None
+        result = None
         try:
-            self.read_temp_addr('00f8', 2, 0, False)
+            result = self.read_temp_addr('00f8', 2, 0, False)
         except Exception as e:
             err = e
 
-        if self._result is None:
+        if result is None:
             raise ValueError(f'Error on communicating with the device, no response received. {err if err else ""}')
 
         # let it go...
         self._connection.close()
 
-        if self._result is not None:
-            return self._result
-        else:
-            return
-
-    def _cb_standalone(self, command, value, by):
-        self._result = value
+        return result
 
 
 if __name__ == '__main__':

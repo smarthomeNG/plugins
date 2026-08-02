@@ -141,7 +141,9 @@ class SDPProtocolViessmann(SDPProtocol):
         self._controlset = self._controlsets[self._viess_proto]
 
         # number of attempts for the P300 init handshake before giving up
-        self._p300_init_retries = kwargs.get('p300_init_retries', 10)
+        # int(): p300_init_retries is declared as type: num in plugin.yaml,
+        # metadata resolves 'num' defaults/values as float (e.g. 10.0) - range() needs an int
+        self._p300_init_retries = int(kwargs.get('p300_init_retries', 10))
 
         # make sure we have a basic set of parameters for the serial connection
         self._params = {
