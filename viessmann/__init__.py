@@ -169,7 +169,7 @@ class viessmann(SmartDevicePlugin):
                 'read': True,
                 'write': False,
                 'opcode': addr,
-                'reply_token': addr,
+                'reply_pattern': [addr],
                 'item_type': 'str',
                 'dev_datatype': 'Hex',
                 'params': ['value', 'mult', 'signed', 'len'],
