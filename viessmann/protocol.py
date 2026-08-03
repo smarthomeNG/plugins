@@ -249,6 +249,10 @@ class SDPProtocolViessmann(SDPProtocol):
                     self.__syncsent = False
                     empty_replies = 0
 
+                # give the device time to actually process/respond before the next
+                # read, instead of reading back-to-back with no pacing at all
+                sleep(0.15)
+
             if not self._is_initialized:
                 self._close()
                 raise SDPProtocolError(f'P300 protocol initialization failed after {self._p300_init_retries} attempts')
