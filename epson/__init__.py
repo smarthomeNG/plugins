@@ -38,7 +38,12 @@ if __name__ == '__main__':
     sys.path.insert(0, BASE)
 
 else:
-    builtins.SDP_standalone = False
+    # don't clobber a True set by the real __main__ run - loading
+    # commands.py via pydoc.locate('plugins.epson.commands') imports
+    # this file a second time under its package name, hitting this branch
+    # with __name__ != '__main__' even in standalone mode
+    if not hasattr(builtins, 'SDP_standalone'):
+        builtins.SDP_standalone = False
 
 from lib.model.sdp.globals import (
     PLUGIN_ATTR_CONNECTION,
