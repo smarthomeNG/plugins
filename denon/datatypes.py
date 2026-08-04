@@ -9,9 +9,9 @@ class DT_DenonDisplay(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
         infotype = data[3:4]
         if infotype.isdigit():
-            if infotype == 0:
+            if infotype == '0':
                 data = data[4:]
-            elif infotype == 1:
+            elif infotype == '1':
                 data = data[5:]
             else:
                 data = data[6:]
@@ -28,7 +28,8 @@ class DT_DenonCustominput(DT.Datatype):
 
     def get_shng_data(self, data, type=None, **kwargs):
         tmp = data.split(' ', 1)
-        self._custom_inputnames[tmp[0]] = tmp[1]
+        if len(tmp) == 2:
+            self._custom_inputnames[tmp[0]] = tmp[1]
         return self._custom_inputnames
 
 
@@ -46,7 +47,7 @@ class DT_DenonVol(DT.Datatype):
         if len(data) == 3:
             return int(data) / 10
         else:
-            return data
+            return int(data)
 
 
 class DT_DenonFrequency(DT.Datatype):
@@ -71,7 +72,7 @@ class DT_DenonStandby(DT.Datatype):
         return 'OFF' if data == 0 else f'{data:01}H'
 
     def get_shng_data(self, data, type=None, **kwargs):
-        return 0 if data == 'OFF' else data.split('H')[0]
+        return 0 if data == 'OFF' else int(data.split('H')[0])
 
 
 class DT_DenonStandby1(DT.Datatype):
@@ -79,7 +80,7 @@ class DT_DenonStandby1(DT.Datatype):
         return 'OFF' if data == 0 else f'{data:02}M'
 
     def get_shng_data(self, data, type=None, **kwargs):
-        return 0 if data == 'OFF' else data.split('M')[0]
+        return 0 if data == 'OFF' else int(data.split('M')[0])
 
 
 class DT_onoff(DT.Datatype):
@@ -95,7 +96,7 @@ class DT_convert0(DT.Datatype):
         return 'OFF' if data == 0 else f'{data:03}'
 
     def get_shng_data(self, data, type=None, **kwargs):
-        return 0 if data in ['OFF', 'NON'] else data
+        return 0 if data in ['OFF', 'NON'] else int(data)
 
 
 class DT_convertAuto(DT.Datatype):

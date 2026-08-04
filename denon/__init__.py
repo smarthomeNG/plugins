@@ -41,7 +41,12 @@ if __name__ == '__main__':
     sys.path.insert(0, BASE)
 
 else:
-    builtins.SDP_standalone = False
+    # don't clobber a True set by the real __main__ run - loading
+    # commands.py via pydoc.locate('plugins.denon.commands') imports
+    # this file a second time under its package name, hitting this branch
+    # with __name__ != '__main__' even in standalone mode
+    if not hasattr(builtins, 'SDP_standalone'):
+        builtins.SDP_standalone = False
 
 from lib.model.sdp.globals import (
     PLUGIN_ATTR_MODEL,
@@ -61,8 +66,6 @@ from lib.item.items import Items
 from lib.item.item import Item
 
 # from .webif import WebInterface
-
-builtins.SDP_standalone = False
 
 
 class denon(SmartDevicePlugin):
@@ -156,6 +159,8 @@ class denon(SmartDevicePlugin):
             zone = 2
         elif command == 'zone3.control.power':
             zone = 3
+        elif command == 'zone4.control.power':
+            zone = 4
         if zone > 0 and value is True:
             self.logger.debug(f'Device is turned on by command {command}. Requesting current state of zone {zone}.')
             time.sleep(1)
