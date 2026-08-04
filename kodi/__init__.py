@@ -38,7 +38,12 @@ if __name__ == '__main__':
     sys.path.insert(0, BASE)
 
 else:
-    builtins.SDP_standalone = False
+    # don't clobber a True set by the real __main__ run - loading
+    # commands.py via pydoc.locate('plugins.kodi.commands') imports
+    # this file a second time under its package name, hitting this branch
+    # with __name__ != '__main__' even in standalone mode
+    if not hasattr(builtins, 'SDP_standalone'):
+        builtins.SDP_standalone = False
 
 from lib.model.sdp.globals import (
     JSON_MOVE_KEYS,
@@ -137,6 +142,7 @@ class kodi(SmartDevicePlugin):
 
         if not isinstance(data, dict):
             self.logger.error(f'received data {data} not in JSON (dict) format, ignoring')
+            return
 
         if 'error' in data:
             # errors are handled on protocol level
@@ -165,7 +171,8 @@ class kodi(SmartDevicePlugin):
                     self._playerid = self._activeplayers[0]
                     self.logger.debug(f'received GetActivePlayers, set playerid to {self._playerid}')
                     self._dispatch_callback('info.player', self._playerid, by)
-                    self._dispatch_callback('info.media', result_data[0].get('type').capitalize(), by)
+                    media_type = result_data[0].get('type')
+                    self._dispatch_callback('info.media', media_type.capitalize() if media_type else '', by)
                 elif len(result_data) > 1:
                     # multiple active players. Have not yet seen this happen
                     self._activeplayers = []
@@ -216,14 +223,14 @@ class kodi(SmartDevicePlugin):
                 player_type = result_data['item'].get('type')
                 if not title:
                     title = result_data['item'].get('label')
-                self._dispatch_callback('info.media', player_type.capitalize(), by)
+                self._dispatch_callback('info.media', player_type.capitalize() if player_type else '', by)
                 if player_type == 'audio' and 'artist' in result_data['item']:
                     artist = (
                         'unknown'
                         if len(result_data['item'].get('artist')) == 0
                         else result_data['item'].get('artist')[0]
                     )
-                    title = artist + ' - ' + title
+                    title = artist + ' - ' + (title or '')
                 if title:
                     self._dispatch_callback('info.title', title, by)
                 self.logger.debug(f'received GetItem: update player info to title={title}, type={player_type}')
@@ -408,7 +415,11 @@ class kodi(SmartDevicePlugin):
         :return: True if command is valid, False otherwise
         :rtype: bool
         """
-        if command in self._special_commands['read' if read else 'write']:
+        if read is None:
+            special_commands = self._special_commands['read'] + self._special_commands['write']
+        else:
+            special_commands = self._special_commands['read' if read else 'write']
+        if command in special_commands:
             self.logger.debug(f'Acknowledging special command {command}, read is {read}')
             return True
         else:
