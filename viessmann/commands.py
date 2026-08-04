@@ -9,6 +9,7 @@
 # V200KO1B
 # V200WO1C
 # V200HO1C
+# VScotHO1_200_11
 
 commands = {
     'ALL': {
