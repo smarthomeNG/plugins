@@ -1960,6 +1960,11 @@ class Database(SmartPlugin):
             else:
                 value = self._log_store.aggregate(item_id, expr, time_start=interval_start - 1, time_end=interval_end)
 
+            if not self._db.lock(300):
+                self.logger.error(
+                    f'remove_older_: {itempath} could not acquire database lock, giving up this compaction cycle'
+                )
+                break
             cur = self._db.cursor()
             try:
                 # delete before insert: interval_start is derived from the
@@ -1979,6 +1984,7 @@ class Database(SmartPlugin):
                 self._db.commit()
             finally:
                 cur.close()
+                self._db.release()
 
             intervals_done += 1
 
@@ -2115,13 +2121,21 @@ class Database(SmartPlugin):
         # to prevent from database lockups after setting database_maxage to old/ancient items
         if count_log_records_to_delete > self.max_delete_logentries:
             time_start_deletion = time.time()
+            if not self._db.lock(300):
+                self.logger.error(
+                    f'remove_older_: {itempath} could not acquire database lock for deletion, skipping this cycle'
+                )
+                return
             cur = self._db.cursor()
-            self._execute(
-                self._prepare('DELETE FROM {log} WHERE item_id = :id ORDER BY time ASC LIMIT :maxrecords;'),
-                {'id': item_id, 'maxrecords': self.max_delete_logentries},
-                cur=cur,
-            )
-            cur.close()
+            try:
+                self._execute(
+                    self._prepare('DELETE FROM {log} WHERE item_id = :id ORDER BY time ASC LIMIT :maxrecords;'),
+                    {'id': item_id, 'maxrecords': self.max_delete_logentries},
+                    cur=cur,
+                )
+            finally:
+                cur.close()
+                self._db.release()
             time_used_for_deletion = time.time() - time_start_deletion
             self.logger.info(
                 f'remove_older_: {itempath} deleted {max_delete_logentries_str} of {count_log_records_to_delete_str} log entries - took {time_used_for_deletion:.2f} seconds, averaging {100 * time_used_for_deletion / self.max_delete_logentries:.4f} seconds per 100 entries'
