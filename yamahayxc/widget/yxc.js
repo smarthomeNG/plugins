@@ -12,6 +12,7 @@ $.widget("sv.yxc_device", $.sv.widget, {
 
         this.$badge = this.element.find('.yxc-unreachable-badge');
         this.$lastSeen = this.element.find('.yxc-unreachable-lastseen');
+        this.$lastSeenText = this.element.find('.yxc-lastseen-text');
 
         // Zone tab: switch active zone
         this._on(this.element.find('.yxc-zone-btn'), {
@@ -71,9 +72,26 @@ $.widget("sv.yxc_device", $.sv.widget, {
         this.element.toggleClass('yxc-unreachable', !reachable);
         this.$badge.toggle(!reachable);
         this.$lastSeen.toggle(!reachable);
+
+        // last_seen is a Python time.time() epoch in SECONDS (0 if the
+        // device was never reachable since shng startup) - not run through
+        // basic.print since that expects milliseconds and has no way to
+        // special-case 0 as "never" rather than formatting it as a real date
+        var lastSeen = Number(response[2]) || 0;
+        if (lastSeen > 0) {
+            var d = new Date(lastSeen * 1000);
+            this.$lastSeenText.text(pad2(d.getHours()) + ':' + pad2(d.getMinutes()));
+        }
+        else {
+            this.$lastSeenText.text('nie');
+        }
     }
 
 });
+
+function pad2(n) {
+    return (n < 10 ? '0' : '') + n;
+}
 
 
 // ----- yxc.browse -----------------------------------------------------------
