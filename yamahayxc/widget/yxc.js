@@ -10,6 +10,9 @@ $.widget("sv.yxc_device", $.sv.widget, {
         this._super();
         var self = this;
 
+        this.$badge = this.element.find('.yxc-unreachable-badge');
+        this.$lastSeen = this.element.find('.yxc-unreachable-lastseen');
+
         // Zone tab: switch active zone
         this._on(this.element.find('.yxc-zone-btn'), {
             'click': function(event) {
@@ -46,7 +49,8 @@ $.widget("sv.yxc_device", $.sv.widget, {
     },
 
     _update: function(response) {
-        var input = String([].concat(response)[0]);
+        var input = String(response[0]);
+        var reachable = !!Number(response[1]);
         var netusb = ['net_radio', 'server', 'airplay', 'bluetooth', 'spotify',
                       'pandora', 'siriusxm', 'tidal', 'deezer', 'qobuz',
                       'mc_link', 'usb', 'main_sync'];
@@ -60,6 +64,13 @@ $.widget("sv.yxc_device", $.sv.widget, {
         // server source - airplay/bluetooth/etc are external-app passthrough
         // with nothing on this device to browse or reorder
         this.element.find('.yxc-server-only').toggle(isServer);
+
+        // dim only, never disable - writes are deliberately still allowed
+        // while unreachable (plugin design: a manual retry costs nothing,
+        // reachable is a staleness hint, not proof a write will fail)
+        this.element.toggleClass('yxc-unreachable', !reachable);
+        this.$badge.toggle(!reachable);
+        this.$lastSeen.toggle(!reachable);
     }
 
 });

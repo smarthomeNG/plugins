@@ -46,6 +46,42 @@
     max-width: 55%;
 }
 
+/* dim, never disable - writes stay allowed while unreachable (plugin
+   design: a manual retry costs nothing, reachable is a staleness hint,
+   not proof a write would fail). Targeted at the individual children
+   rather than the whole .yxc-device, so the badge/last-seen indicators
+   below stay at full opacity - opacity always compounds with descendants,
+   so dimming the parent can't be "undone" from inside it, even with
+   !important. */
+.yxc-device.yxc-unreachable > .yxc-vol,
+.yxc-device.yxc-unreachable .yxc-source,
+.yxc-device.yxc-unreachable .yxc-art,
+.yxc-device.yxc-unreachable .yxc-meta,
+.yxc-device.yxc-unreachable .yxc-content,
+.yxc-device.yxc-unreachable .yxc-bar {
+    opacity: 0.55;
+}
+
+.yxc-unreachable-badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 3;
+    width: 20px;
+    height: 20px;
+}
+
+.yxc-unreachable-badge svg {
+    width: 20px;
+    height: 20px;
+}
+
+.yxc-unreachable-lastseen {
+    font-size: 0.75em;
+    opacity: 0.8;
+    padding: 2px 0 0 22px;
+}
+
 .yxc-art {
     font-size: 0;
     line-height: 0;
@@ -121,6 +157,7 @@
     flex-wrap: wrap;
     gap: 2px;
     padding-top: 4px;
+    margin-top: auto;
     border-top: 1px solid rgba(128, 128, 128, 0.3);
 }
 
