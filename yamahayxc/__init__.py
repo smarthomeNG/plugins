@@ -26,6 +26,7 @@ import secrets
 import socket
 import json
 import inspect
+import time
 from typing import Callable, NamedTuple
 from lib.model.smartplugin import SmartPlugin
 from lib.network import Udp_server
@@ -124,6 +125,12 @@ class YamahaYXC(SmartPlugin):
         self._yamaha_cmds = [
             'state',
             'power',
+            # device-level (not zone-scoped) reachability indicators - see
+            # _note_reachable()/_note_unreachable()/poll_device(). Pushed
+            # directly from this plugin's own bookkeeping, never read from a
+            # getStatus/getPlayInfo response - see _yamaha_ignore_cmds_upd.
+            'reachable',
+            'last_seen',
             'input',
             'playback',
             'preset',
@@ -407,6 +414,11 @@ class YamahaYXC(SmartPlugin):
                 # look them up in a getStatus response
                 'zone_present',
                 'dsp_available',
+                # reachability cmds are pushed directly by
+                # _note_reachable()/_note_unreachable(), never read from a
+                # getStatus/getPlayInfo response
+                'reachable',
+                'last_seen',
                 # passthru is write-only (raw item value IS the outgoing
                 # payload, see _handle_passthru) - no device response field
                 # ever corresponds to it, so every getStatus/push lookup was
@@ -778,6 +790,19 @@ class YamahaYXC(SmartPlugin):
         #                                  'fm_range': (min,max,step) or None, 'preset_type': 'common'/'separate'/None}
         self._yamaha_tuner_features = {}
 
+        # reachability bookkeeping, updated at the _submit_payload() choke
+        # point (every HTTP call - poll, write, on-demand refresh - counts
+        # as evidence) - see _note_reachable()/_note_unreachable().
+        # _yamaha_reachable[host]: True/False, absent until first contact attempt
+        self._yamaha_reachable = {}
+        # _yamaha_last_seen[host]: time.time() of last successful contact
+        self._yamaha_last_seen = {}
+        # _yamaha_fail_count[host]: consecutive failed requests, capped at 2
+        # (the unreachable threshold) - see _note_unreachable()
+        self._yamaha_fail_count = {}
+        # periodic reachability poll interval (seconds) - see poll_device()/run()
+        self._cycle = self.get_parameter_value('cycle')
+
         self.srv_port = 41100
         # HTTP request timeout for _submit_payload(). Without one, requests
         # blocks indefinitely on an unreachable host (no RST, e.g. powered
@@ -805,6 +830,14 @@ class YamahaYXC(SmartPlugin):
         Initializes class and starts the UDP listener (lib.network.Udp_server
         manages its own background thread/event loop; run() doesn't block).
         Incoming notifications are dispatched to _data_received().
+
+        Also starts the periodic reachability poll (poll_device()) - push
+        notifications are event-driven (only sent on an actual state change,
+        and only for up to ~10 minutes after the last HTTP request to the
+        device, per _data_received()'s docstring) so they're not a reliable
+        liveness signal on their own; this is the only thing that actually
+        detects a device that's gone dark, e.g. an outdoor speaker losing
+        power - see _note_reachable()/_note_unreachable().
         """
         self._sh.trigger(self.get_fullname(), self._initialize)
         self.logger.info('YamahaYXC starting listener')
@@ -814,6 +847,7 @@ class YamahaYXC(SmartPlugin):
         self.sock.start()
         if not self.sock.listening():
             self.logger.error('YamahaYXC UDP listener failed to start on port {}'.format(self.srv_port))
+        self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
 
     def stop(self):
         """
@@ -828,6 +862,26 @@ class YamahaYXC(SmartPlugin):
     def _data_received(self, addr, data):
         """
         callback for lib.network.Udp_server - handle one push notification
+
+        Thin guarded wrapper around _process_notification() - this is the
+        boundary where control hands back from the UDP listener's own
+        thread into plugin code, and lib.network.Udp_server does not
+        exception-guard this callback itself, so nothing may escape
+        uncaught here (this plugin has no supervisor that would restart a
+        thread that dies from an unhandled exception - see remove_item()'s
+        docstring: it can mutate the same nested dicts _process_notification()
+        iterates, from a different thread, e.g. a live admin-UI item
+        deletion racing an in-flight push - a rare, deliberate admin action,
+        not worth locking against, but worth not letting kill the listener).
+        """
+        try:
+            self._process_notification(addr, data)
+        except Exception as e:
+            self.logger.warning(f'error processing notification from {addr}: {e}')
+
+    def _process_notification(self, addr, data):
+        """
+        parse and dispatch one push notification - see _data_received()
 
         data is already UTF-8-decoded text (Udp_server's contract). addr is
         (remote_ip, remote_port); dispatches item updates and triggers
@@ -1419,6 +1473,36 @@ class YamahaYXC(SmartPlugin):
             self._update_features(yamaha_host)
             self._update_state(yamaha_host)
             self._update_debug_items(yamaha_host)
+
+    def poll_device(self):
+        """
+        periodic reachability probe, scheduled in run() via scheduler_add(cycle=self._cycle)
+
+        Runs unconditionally every cycle regardless of recent push traffic -
+        see run()'s docstring for why push activity alone can't be trusted
+        as a liveness signal. Only polls hosts that actually have a
+        'reachable' item registered (no point probing a host nobody asked
+        to monitor), and only fetches getStatus for a single zone - a
+        minimal probe, not a full refresh. The returned state is discarded;
+        _submit_payload() already recorded reachability as a side effect of
+        the attempt (see _note_reachable()/_note_unreachable()), and a full
+        item resync only happens on an actual down->up recovery transition
+        (_note_reachable()), not on every routine successful poll - pushing
+        every zone/global item on every cycle would make enforce_updates
+        items (power, volume, ...) refire every cycle even when nothing on
+        the device changed.
+        """
+        for yamaha_host, global_cmds in list(self._yamaha_dev_global.items()):
+            if 'reachable' not in global_cmds:
+                continue
+            zones = self._yamaha_dev_zone.get(yamaha_host, {})
+            zone = 'main' if 'main' in zones else next(iter(zones), None)
+            if zone is None:
+                self.logger.debug(
+                    f'poll_device: no zone configured for {self._host_label(yamaha_host)}, cannot probe reachability'
+                )
+                continue
+            self._submit_payload(yamaha_host, self._build_cmd_get_state(zone))
 
     def _lookup_host(self, item):
         """
@@ -2642,6 +2726,74 @@ class YamahaYXC(SmartPlugin):
     # send network commands and receive responses
     #
 
+    def _note_reachable(self, host):
+        """
+        record a successful contact with host
+
+        Called from _submit_payload() on every request that got a transport-
+        level response - not just poll_device()'s probes, writes and
+        on-demand refreshes count as evidence too, since they all funnel
+        through the same choke point.
+
+        Clears the failure streak immediately: a single success fully
+        un-flags a host, deliberately asymmetric to the 2-failure threshold
+        needed to flag one unreachable in the first place (see
+        _note_unreachable()) - a lost increment/false recovery here is
+        self-correcting on the very next failed attempt, no harm in being
+        quick to trust a success.
+
+        last_seen is pushed on every call (a fresh timestamp is always new
+        information); 'reachable' and the recovery log line are only
+        pushed/fired on a genuine down->up transition, not on every routine
+        successful call while already known reachable - and only a
+        transition from a *confirmed* down state triggers the full
+        _update_state() resync, not the very first contact ever (that's
+        discovery, not recovery).
+        """
+        was_reachable = self._yamaha_reachable.get(host)
+        self._yamaha_fail_count[host] = 0
+        self._yamaha_reachable[host] = True
+        self._yamaha_last_seen[host] = time.time()
+        self._push_last_seen(host)
+        if was_reachable is not True:
+            self._push_reachable(host)
+            if was_reachable is False:
+                self.logger.info(f'{self._host_label(host)} is reachable again')
+                self._update_state(host)
+
+    def _note_unreachable(self, host):
+        """
+        record a failed contact attempt with host
+
+        Called from _submit_payload()'s exception handlers (transport-level
+        failure only - a device that answers but rejects the request, e.g.
+        response_code != 0, already proved it's reachable and never reaches
+        this path). Flips to unreachable only after 2 consecutive failures -
+        a single dropped packet shouldn't flag a device down - and only
+        logs/pushes once, on that transition, not on every subsequent failed
+        poll while still down (see _submit_payload()'s own "Device not
+        answering" info log, gated the same way against repeat-logging).
+        Capped at 2 rather than counting indefinitely - nothing needs the
+        exact count once already flagged, and an uncapped counter would just
+        grow for as long as the device stays down.
+        """
+        count = min(self._yamaha_fail_count.get(host, 0) + 1, 2)
+        self._yamaha_fail_count[host] = count
+        if count >= 2 and self._yamaha_reachable.get(host) is not False:
+            self._yamaha_reachable[host] = False
+            self._push_reachable(host)
+            self.logger.warning(f'{self._host_label(host)} is not reachable (device not answering)')
+
+    def _push_reachable(self, host):
+        """push current reachability state to every registered 'reachable' item for host"""
+        for item in self._yamaha_dev_global.get(host, {}).get('reachable', []):
+            item(self._yamaha_reachable.get(host, False), self.get_fullname())
+
+    def _push_last_seen(self, host):
+        """push current last_seen timestamp to every registered 'last_seen' item for host"""
+        for item in self._yamaha_dev_global.get(host, {}).get('last_seen', []):
+            item(self._yamaha_last_seen.get(host, 0), self.get_fullname())
+
     def _submit_payload(self, host, payload, timeout=None):
         """
         send cmd string to device and return response data as dict
@@ -2650,6 +2802,10 @@ class YamahaYXC(SmartPlugin):
         always subscribes to unicast notification service
         log message "No payload received" probably indicates coding error or
         improper use of cmd 'passthru'
+
+        Every transport-level attempt here (success or failure) feeds
+        _note_reachable()/_note_unreachable() - see those for the
+        reachability/staleness bookkeeping this drives.
 
         payload can be
         - a string, will then be sent via HTTP GET
@@ -2678,8 +2834,11 @@ class YamahaYXC(SmartPlugin):
                     res = requests.get(url, headers=headers, timeout=timeout)
                     response = res.text
                     del res
+                    self._note_reachable(host)
                 except Exception:
-                    self.logger.info('Device not answering: {}.'.format(self._host_label(host)))
+                    if self._yamaha_reachable.get(host) is not False:
+                        self.logger.info('Device not answering: {}.'.format(self._host_label(host)))
+                    self._note_unreachable(host)
                     response = None
             elif type(payload) is list:
                 if len(payload) < 2:
@@ -2695,8 +2854,11 @@ class YamahaYXC(SmartPlugin):
                         res = requests.post(url, data=payload[1], headers=headers, timeout=timeout)
                         response = res.text
                         del res
+                        self._note_reachable(host)
                     except Exception:
-                        self.logger.info('Device not answering: {}.'.format(self._host_label(host)))
+                        if self._yamaha_reachable.get(host) is not False:
+                            self.logger.info('Device not answering: {}.'.format(self._host_label(host)))
+                        self._note_unreachable(host)
                         response = None
             # raw HTTP body - the finest-grained checkpoint, "all in" only
             self.logger.debug('raw response from {}: {}'.format(self._host_label(host), response))
