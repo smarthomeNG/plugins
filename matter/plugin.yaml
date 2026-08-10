@@ -1,0 +1,191 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Matter-Controller-Plugin: Verbindung zu Matter-Geräten.'
+        en: 'Matter controller plugin: connect Matter devices.'
+    maintainer: Morg42
+    tester: Morg42
+    state: develop
+    keywords: iot matter chip smarthome
+    documentation: ''   # TODO
+    support: ''         # TODO
+    version: 0.1.0
+    sh_minversion: '1.12'
+    multi_instance: false           # gateway-style plugin, one Matter fabric/sidecar per shng instance only for now
+    restartable: true
+    classname: Matter
+
+parameters:
+    node_binary:
+        type: str
+        default: 'node'
+        description:
+            de: 'Pfad zum Node.js-Binary (muss die von matter-server geforderte Version erfüllen, siehe user_doc.rst)'
+            en: 'Path to the Node.js binary (must satisfy the version required by matter-server, see user_doc.rst)'
+
+    sidecar_entry:
+        type: str
+        default: 'sidecar/node_modules/matter-server/dist/esm/MatterServer.js'
+        description:
+            de: 'Pfad (relativ zum Plugin-Verzeichnis) zur matter-server-Einstiegsdatei. matter-server hat kein CLI-Binary, daher wird die Datei direkt mit node ausgeführt.'
+            en: 'Path (relative to the plugin directory) to the matter-server entry file. matter-server has no CLI binary, so the file is run directly with node.'
+
+    sidecar_port:
+        type: int
+        default: 5580
+        description:
+            de: 'Port, auf dem der matter-server-Sidecar seine WebSocket-API anbietet (nur localhost)'
+            en: 'Port on which the matter-server sidecar exposes its WebSocket API (localhost only)'
+
+    storage_path:
+        type: str
+        default: 'var/matter'
+        description:
+            de: 'Verzeichnis (relativ zum shng-Arbeitsverzeichnis) für die Fabric-/Kommissionierungsdaten des Sidecars'
+            en: 'Directory (relative to the shng working directory) for the sidecars fabric/commissioning storage'
+
+    enable_test_net_dcl:
+        type: bool
+        default: false
+        description:
+            de: 'Testgeräte mit Entwicklungs-Zertifikaten zulassen (--enable-test-net-dcl). NICHT fuer echte Geräte aktivieren.'
+            en: 'Allow test devices with development attestation certificates (--enable-test-net-dcl). Do NOT enable this for real devices.'
+
+    primary_interface:
+        type: str
+        default: ''
+        description:
+            de: 'Netzwerk-Interface fuer lokale Adressen (--primary-interface). Auf Hosts mit mehreren Interfaces auf demselben Subnetz kann die automatische Auswahl ein Interface wählen, über das das Zielgerät nicht erreichbar ist - dann explizit setzen (z.B. en0).'
+            en: 'Network interface for link-local addresses (--primary-interface). On hosts with multiple interfaces on the same subnet, automatic selection can pick one the target device is not reachable through - set explicitly (e.g. en0) if commissioning times out with "unreachable" address warnings.'
+
+item_attributes:
+    matter_node:
+        type: int
+        description:
+            de: 'Matter Node-ID des Geräts (wird bei der Kommissionierung vergeben)'
+            en: 'Matter node ID of the device (assigned during commissioning)'
+
+    matter_endpoint:
+        type: int
+        description:
+            de: 'Endpoint-Nummer auf dem Matter-Node'
+            en: 'Endpoint number on the Matter node'
+
+    matter_cluster:
+        type: int
+        description:
+            de: 'Matter-Cluster-ID (dezimal, z.B. 6 fuer OnOff)'
+            en: 'Matter cluster ID (decimal, e.g. 6 for OnOff)'
+
+    matter_attribute:
+        type: int
+        description:
+            de: 'Attribut-ID innerhalb des Clusters. Das Item wird per Subscribe/Report aktuell gehalten (z.B. 0 fuer OnOff.OnOff)'
+            en: 'Attribute ID within the cluster. The item is kept up to date via subscribe/report (e.g. 0 for OnOff.OnOff)'
+
+    matter_switch:
+        type: bool
+        description:
+            de: 'Kurzform fuer einen Bool-Schalter (z.B. OnOff): Attribut und beide Kommandos werden automatisch aus dem Cluster abgeleitet (siehe clusters.py SWITCH_CLUSTERS). Setzt matter_attribute/matter_command/matter_command_false nicht voraus. Fehlermeldung im Log, falls der Cluster (noch) nicht in der Tabelle steht - dann die low-level Attribute direkt verwenden.'
+            en: 'Shorthand for a bool switch (e.g. OnOff): attribute and both commands are derived automatically from the cluster (see clusters.py SWITCH_CLUSTERS). Does not require matter_attribute/matter_command/matter_command_false. Logs an error if the cluster is not (yet) in that table - use the low-level attributes directly in that case.'
+
+    matter_command:
+        type: str
+        description:
+            de: 'Kommandoname innerhalb des Clusters, der bei einem Item-Write aufgerufen wird (z.B. toggle, on, off)'
+            en: 'Command name within the cluster invoked when the item is written (e.g. toggle, on, off)'
+
+    matter_command_params:
+        type: dict
+        description:
+            de: 'Optionale feste Parameter fuer matter_command. Der Platzhalter "$value" wird durch den geschriebenen Item-Wert ersetzt.'
+            en: 'Optional fixed parameters for matter_command. The placeholder "$value" is substituted with the items written value.'
+
+    matter_command_false:
+        type: str
+        description:
+            de: 'Optionales zweites Kommando fuer ein Bool-Item: bei falsy Wert wird dieses statt matter_command aufgerufen (z.B. matter_command=on, matter_command_false=off - ein Item spiegelt und steuert den Zustand statt zweier getrennter Trigger-Items).'
+            en: 'Optional second command for a bool item: invoked instead of matter_command when the written value is falsy (e.g. matter_command=on, matter_command_false=off - one item both mirrors and drives state instead of separate trigger items).'
+
+    matter_available:
+        type: bool
+        description:
+            de: 'Nur-Lese-Item, das die von matter-server erkannte Erreichbarkeit des Node spiegelt (dieselbe Information wie die "verfuegbar"-Spalte im Webif, hier als echtes Item fuer eigene Logik/Struct/Visu). Braucht nur matter_node, kein Endpoint/Cluster.'
+            en: 'Read-only item mirroring matter-server''s own node-level reachability tracking (the same information as the webif''s "available" column, exposed here as a real item for your own logic/struct/visu). Only needs matter_node, no endpoint/cluster.'
+
+item_structs:
+    #
+    # this can be a collection of ready-made struct for known and tested devices
+    # import the struct in an item and set matter_node to assign to a device
+    # 
+
+    #
+    # Shelly Plug M 3Gen
+    #
+
+    shelly_plug_m_3gen_simple:
+        type: bool
+        matter_cluster: 6
+        matter_endpoint: 1
+        matter_switch: true
+
+        available:
+            remark: Gerät erreichbar
+            type: bool
+            matter_available: true
+
+    shelly_plug_m_3gen:
+        struct: .shelly_plug_m_3gen_simple
+
+        toggle:
+            remark: auf True setzen, um den Schaltzustand zu wechseln
+            type: bool
+            matter_command: toggle
+            enforce_updates: true
+            autotimer: 1 = 0
+
+        power:
+            remark: aktuelle Leistung in W
+            type: num
+            eval: sh..power_mw() / 1000.0
+            eval_trigger: .power_mw
+
+            power_mw:
+                remark: aktuelle Leistung in mW
+                type: num
+                matter_cluster: 144
+                matter_attribute: 8
+
+        voltage:
+            remark: aktuelle Spannung in V
+            type: num
+            eval: sh..voltage_mv() / 1000.0
+            eval_trigger: .voltage_mv
+
+            voltage_mv:
+                remark: aktuelle Spannung in mV
+                type: num
+                matter_cluster: 144
+                matter_attribute: 11
+
+            hinweis:
+                remark: In eigenen Tests wurde die Spannung nur einmalig beim Verbinden aktualisiert. Obwohl das Gerät die Spannung laufend misst, wird sie über Matter nicht mehr übertragen - z.B. über MQTT sehr wohl.
+
+        current:
+            remark: aktueller Strom in A
+            type: num
+            eval: sh..current_ma() / 1000.0
+            eval_trigger: .current_ma
+
+            current_ma:
+                remark: aktueller Strom in mA
+                type: num
+                matter_cluster: 144
+                matter_attribute: 12
+
+
+plugin_functions: NONE
+
+logic_parameters: NONE

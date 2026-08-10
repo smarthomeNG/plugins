@@ -1,0 +1,11 @@
+{
+  "name": "shng-matter-plugin-sidecar",
+  "private": true,
+  "description": "matter-server sidecar for shng's Matter plugin. Not a published package - just pins the dependency the plugin's sidecar.py spawns. Run 'npm install' here before starting the plugin.",
+  "engines": {
+    "node": ">=20.19.0 <22.0.0 || >=22.13.0"
+  },
+  "dependencies": {
+    "matter-server": "1.3.3"
+  }
+}

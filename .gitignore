@@ -40,3 +40,8 @@ Thumbs.db
 # pyright stub packages (tools/pyright_stub_audit.py) — local dev aid,
 # CI lints with ruff, not pyright; regenerate with --apply-create if needed
 /typings/
+
+# Node sidecar dependency for the matter plugin (dev/matter/matter-integration-plan.md
+# in the core repo) - package.json and package-lock.json are tracked for
+# reproducible installs, the installed package itself is not.
+matter/sidecar/node_modules/
