@@ -144,7 +144,7 @@
 	{% endif %}
 
 	<div id="{{ uid }}" class="yxc-device" data-widget="yxc.device"
-	     data-item="{{ implode([item_root~'.input', item_root~'.reachable', item_root~'.last_seen']) }}">
+	     data-item="{{ implode([item_root~'.input', item_root~'.reachable', item_root~'.last_seen', item_root~'.netusb.playback', item_root~'.power']) }}">
 
 		<div class="yxc-vol">
 			<img class="slider-bottomup-scale" src="pages/base/pics/scale_buttomup.png" alt="scale">
@@ -175,7 +175,12 @@
 			</div>
 
 			<div class="yxc-art yxc-panel-netusb">
-				{{ basic.print('', item_root~'.netusb.albumarturl', 'html') }}
+				<span class="yxc-art-placeholder">
+					{{ basic.icon('scene_sleeping', 'icon0') }}
+				</span>
+				<span class="yxc-art-live" style="display:none">
+					{{ basic.print('', item_root~'.netusb.albumarturl', 'html') }}
+				</span>
 			</div>
 
 			<div class="yxc-meta yxc-panel-netusb">

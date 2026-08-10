@@ -59,7 +59,18 @@
 .yxc-device.yxc-unreachable .yxc-meta,
 .yxc-device.yxc-unreachable .yxc-content,
 .yxc-device.yxc-unreachable .yxc-bar {
-    opacity: 0.55;
+    opacity: 0.25;
+}
+
+/* powered off (main zone) - distinct from unreachable, dims only the
+   now-irrelevant source/art/meta/netusb-controls, deliberately excludes
+   .yxc-bar so the power button stays fully visible/usable */
+.yxc-device.yxc-poweroff > .yxc-vol,
+.yxc-device.yxc-poweroff .yxc-source,
+.yxc-device.yxc-poweroff .yxc-art,
+.yxc-device.yxc-poweroff .yxc-meta,
+.yxc-device.yxc-poweroff .yxc-content {
+    opacity: 0.35;
 }
 
 .yxc-unreachable-badge {
@@ -82,15 +93,23 @@
     padding: 2px 0 0 22px;
 }
 
+/* placeholder/live are mutually exclusive (toggled in sv.yxc_device),
+   so the reserved height always has real content and never collapses -
+   no font-size:0 trick needed here anymore */
 .yxc-art {
-    font-size: 0;
-    line-height: 0;
+    min-height: 100px;
     max-height: 120px;
     overflow: hidden;
 }
 
-.yxc-art img {
-    font-size: 1rem;
+.yxc-art-placeholder svg {
+    display: block;
+    width: 100px;
+    height: 100px;
+    opacity: 0.5;
+}
+
+.yxc-art-live img {
     display: block;
     max-width: 100%;
     max-height: 120px;

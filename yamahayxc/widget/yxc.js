@@ -13,6 +13,8 @@ $.widget("sv.yxc_device", $.sv.widget, {
         this.$badge = this.element.find('.yxc-unreachable-badge');
         this.$lastSeen = this.element.find('.yxc-unreachable-lastseen');
         this.$lastSeenText = this.element.find('.yxc-lastseen-text');
+        this.$artPlaceholder = this.element.find('.yxc-art-placeholder');
+        this.$artLive = this.element.find('.yxc-art-live');
 
         // Zone tab: switch active zone
         this._on(this.element.find('.yxc-zone-btn'), {
@@ -85,6 +87,22 @@ $.widget("sv.yxc_device", $.sv.widget, {
         else {
             this.$lastSeenText.text('nie');
         }
+
+        // the device drops its own albumarturl link once playback is fully
+        // stopped, so the <img> 404s if left showing - swap to a static
+        // placeholder then, without collapsing the space. Paused keeps the
+        // art showing (track is still cued up, just not advancing) - only
+        // 'stop' means there's nothing loaded anymore.
+        var hasArt = String(response[3]) !== 'stop';
+        this.$artPlaceholder.toggle(!hasArt);
+        this.$artLive.toggle(hasArt);
+
+        // powered off (main zone) is a different state than unreachable -
+        // dim the now-irrelevant source/art/meta/netusb-controls, but keep
+        // the bottom bar at full strength so the power button stays clearly
+        // usable to turn it back on
+        var power = !!Number(response[4]);
+        this.element.toggleClass('yxc-poweroff', !power);
     }
 
 });
