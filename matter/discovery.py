@@ -43,7 +43,7 @@ import re
 from collections import defaultdict
 from typing import Any
 
-import yaml
+import ruamel.yaml as yaml
 
 from .clusters import attribute_info, cluster_name, decode_value, device_type_name
 
