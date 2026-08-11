@@ -1,0 +1,98 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @author      Sebastian Helms
+* @copyright   2026
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+{% extends "custom/widget_custom.html" %}
+
+
+{% block example %}
+<script>
+    var lastSeen = parseInt(new Date().getTime() /1000)
+    io.write("dg.bad.wxbad.input", "server")
+    io.write("dg.bad.wxbad.reachable", "0")
+    io.write("dg.bad.wxbad.last_seen", lastSeen.toString())
+    io.write("dg.bad.wxbad.netusb.playback","play")
+    io.write("dg.bad.wxbad.power","1")
+    io.write("dg.bad.wxbad.volume","21")
+    io.write("dg.bad.wxbad.input.values",  ['net_radio', 'server', 'airplay', 'bluetooth', 'spotify', 'pandora', 'siriusxm', 'tidal', 'deezer', 'qobuz', 'mc_link', 'usb', 'main_sync', 'tuner'])
+    io.write("dg.bad.wxbad.netusb.albumarturl", "")
+    io.write("dg.bad.wxbad.netusb.artist", "Torfrock")
+    io.write("dg.bad.wxbad.netusb.track", "Volle Granate Renate")
+    io.write("dg.bad.wxbad.netusb.repeat", "off")
+    io.write("dg.bad.wxbad.netusb.shuffle","off")
+    io.write("dg.bad.wxbad.mute","0")
+    io.write("dg.bad.wxbad.update","1")
+    io.write("dg.bad.wxbad.link.role", "Server")
+    io.write("dg.bad.wxbad.link.server.linked_devices", ["192.168.2.99"])
+    io.write("dg.bad.wxbad.link.server.add_device", "")
+    io.write("dg.bad.wxbad.link.available_devices", ["192.168.2.99","192.168.2.98","192.168.2.97"])
+    io.write("dg.bad.wxbad.link.server.remove_device", "")
+    io.write("dg.bad.wxbad.link.server.disband", "0")
+    io.write("dg.bad.wxbad.link.client.join", "192.168.2.97")
+    io.write("dg.bad.wxbad.link.client.leave", 0)
+    io.write("dg.bad.wxbad.netusb.browse.list", ["Rollo der Wikinger", "Presslufthammer B-B-Bernhard", "Der Boxer", "No Schanze for Romanze", "Trunkenbold", "Volle Granate Renate", "Let's Wörk Togesser", "Freie Bahn mit Marzipan"])
+    io.write("dg.bad.wxbad.netusb.browse.menu_name", "Torfrock")
+    io.write("dg.bad.wxbad.netusb.browse.menu_layer", 0)
+    io.write("dg.bad.wxbad.netusb.browse.max_line", 16)
+    io.write("dg.bad.wxbad.netusb.browse.index", 0)
+    io.write("dg.bad.wxbad.netusb.browse.playing_index", 0)
+    io.write("dg.bad.wxbad.netusb.browse.busy", 0)
+    io.write("dg.bad.wxbad.netusb.queue.list",["Rollo der Wikinger", "Presslufthammer B-B-Bernhard", "Der Boxer", "No Schanze for Romanze", "Trunkenbold", "Volle Granate Renate", "Let's Wörk Togesser", "Freie Bahn mit Marzipan"])
+    io.write("dg.bad.wxbad.netusb.queue.max_line",16)
+    io.write("dg.bad.wxbad.netusb.queue.playing_index",0)
+    io.write("dg.bad.wxbad.netusb.browse.playlist_names",["Torfrock"])
+    io.write("dg.bad.wxbad.zone2.volume",30)
+    io.write("dg.bad.wxbad.tuner.band", "fm")
+    io.write("dg.bad.wxbad.tuner.station", "SWR3")
+    io.write("dg.bad.wxbad.tuner.seek", "up")
+    io.write("dg.bad.wxbad.tuner.preset", 1)
+    io.write("dg.bad.wxbad.zone2.mute", 0)
+    io.write("dg.bad.wxbad.zone2.power", 1)
+    io.write("dg.bad.wxbad.dsp.surround_3d", 1)
+    io.write("dg.bad.wxbad.dsp.direct", 0)
+    io.write("dg.bad.wxbad.dsp.pure_direct", 0)
+    io.write("dg.bad.wxbad.dsp.enhancer", 0)
+    io.write("dg.bad.wxbad.dsp.sound_program", "9ch_stereo")
+    io.write("dg.bad.wxbad.dsp.sound_program.values",["munich", "frankfurt", "stuttgart", "vienna", "amsterdam", "tokyo", "chamber", "concert", "jazz_club", "music", "standard", "movie", "2ch_stereo" , "5ch_stereo" , "7ch_stereo" , "9ch_stereo" , "off"])
+    io.write("dg.bad.wxbad.dsp.tone_control_mode", "auto")
+    io.write("dg.bad.wxbad.dsp.tone_control_mode.values", ["manual", "auto", "bypass"])
+    io.write("dg.bad.wxbad.dsp.tone.bass", 0)
+    io.write("dg.bad.wxbad.dsp.tone.treble", 0)
+    io.write("dg.bad.wxbad.dsp.tone.balance", 0)
+    io.write("dg.bad.wxbad.dsp.equalizer_mode", "auto")
+    io.write("dg.bad.wxbad.dsp.equalizer_mode.values",["manual", "auto", "bypass"])
+    io.write("dg.bad.wxbad.dsp.equalizer.low", 0)
+    io.write("dg.bad.wxbad.dsp.equalizer.mid", 0)
+    io.write("dg.bad.wxbad.dsp.equalizer.high", 0)
+</script>
+    /** get docu text from widgets docstring */
+    {{- widgetlist[widget].docu|replace({'*':'', '\r\n*\r\n': '\n\n', '\r\n': ' '})|nl2br -}}
+    <br>
+	<h5>Example</h5>
+     
+    	<div class="twig">
+		<code class="prettyprint">{% filter trim|escape|nl2br %}{% verbatim %}
+			{{ yxc.device('', 'dg.bad.wxbad', '', 'rx-v483') }}
+		{% endverbatim %}{% endfilter %}</code>
+	</div>
+    <br>
+    Use the flipswitch to toggle availability of the device
+	<div class="html">
+        {{ basic.flip('',"dg.bad.wxbad.reachable") }} <br><br>
+		<div class="block">
+			<div class="set-1" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+				<div data-role="collapsible" data-collapsed="false">
+					<h3>Yamaha RX-V483</h3>
+					{{ yxc.device('', 'dg.bad.wxbad', '', 'rx-v483') }}
+				</div>
+			</div>
+		</div>
+    </div>
+    
+
+
+{% endblock %}

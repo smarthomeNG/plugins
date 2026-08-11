@@ -20,6 +20,7 @@
 * @param {item=} the item for the album art (optional)
 * @param {item=} the item for the input (optional)
 * @param {item=} the item for the power (optional)
+* @param {item=} the item for triggering an update (optional)                                                             
 *
 * @author Sebastian Helms
 */
@@ -84,6 +85,7 @@
 /**
 * Yamaha YXC - full device control, derived from a single root item
 *
+* @docu        
 * Assumes the shng item config combines the yamahayxc plugin's structs as
 * struct: [amp, dsp, netusb, tuner, link] on item_root (any of dsp/netusb/
 * tuner/link may be omitted - the matching popup trigger just never
@@ -121,13 +123,9 @@
 *
 * @param {id} unique id for this widget
 * @param {item} root item for the device/zone, e.g. 'eg.wohnen.rxav'
-* @param {text=} comma-separated feature keys to hide: 'dsp', 'netusb',
-*   'tuner', 'link', 'zone2', 'zone3', 'zone4' (optional - if 'model' isn't
-*   given, zone2/3/4 are hidden by default since most devices don't have
-*   them; pass e.g. 'zone3,zone4' to show only zone2, or '' to show all
-*   zones)
-* @param {text=} known device model key, e.g. 'rx-v483' - see
-*   widgets/yxc_devices.html for the catalog (optional)
+* @param {text=} comma-separated feature keys to hide: 'dsp', 'netusb', 'tuner', 'link', 'zone2', 'zone3', 'zone4' (optional - if 'model' isn't given, 
+    zone2/3/4 are hidden by default since most devices don't have them; pass e.g. 'zone3,zone4' to show only zone2, or '' to show all zones)
+* @param {text=} known device model key, e.g. 'rx-v483' - see widgets/yxc_devices.html for the catalog (optional)
 *
 * @author Sebastian Helms
 */
