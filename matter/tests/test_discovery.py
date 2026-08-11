@@ -8,7 +8,7 @@ matter-server's get_nodes() (see dev/matter/matter-integration-plan.md's
 real device this was captured from), not a fabricated shape.
 """
 
-import yaml
+import ruamel.yaml as yaml  # not pyyaml - see discovery.py's import comment
 
 from plugins.matter.discovery import discovery_rows, generate_item_yaml, node_summary
 
