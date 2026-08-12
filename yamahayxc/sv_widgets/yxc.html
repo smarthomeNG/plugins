@@ -7,80 +7,6 @@
 * -----------------------------------------------------------------------------
 */
 
-/**
-* Yamaha YXC Multimedia Player
-*
-* @param {id} unique id for this widget
-* @param {item} the item for playback control
-* @param {item=} the item for the position (optional)
-* @param {item=} the item for the volume (optional)
-* @param {item=} the item to mute the music (optional)
-* @param {item=} the item for the song title (optional)
-* @param {item=} the item for the song artist (optional)
-* @param {item=} the item for the album art (optional)
-* @param {item=} the item for the input (optional)
-* @param {item=} the item for the power (optional)
-* @param {item=} the item for triggering an update (optional)                                                             
-*
-* @author Sebastian Helms
-*/
-{% macro player(id, item_play, item_pos, item_vol, item_mute, item_title, item_artist, item_art, item_input, item_power, item_update) %}
-	{% import "@widgets/basic.html" as basic %}
-	{% set uid = uid(page, id) %}
-
-	<div id="{{ uid }}" class="music" data-widget="multimedia.yamaha-yxc">
-
-		{% if item_vol %}
-			<div class="vol">
-				<img class="slider-bottomup-scale" src="pages/base/pics/scale_buttomup.png" alt="scale">
-				{{ basic.slider(id~'vol', item_vol, 0, 60, 1, 'bottomup') }}
-			</div>
-		{% endif %}
-
-		<div class="control">
-
-			{% if item_input %} {{ basic.stateswitch('', item_input, '', ['net_radio', 'server'], 'it_radio.svg', '', ['icon1', 'icon0']) }} {% endif %}
-			{% if item_input %} {{ basic.stateswitch('', item_input, '', ['server', 'net_radio'], 'it_nas.svg', '', ['icon1', 'icon0']) }} {% endif %}
-			{{ basic.stateswitch('', item_power, '', [1, 0], ['control_on_off.svg','control_on_off.svg'], '', ['icon1', 'icon0']) }}
-		</div>
-
-		
-		{% if item_art %}
-		<div class="title">
-			<span>{% if item_artist %}{{ basic.print('', item_artist) }} <br /> {% endif %}
-			{% if item_title %}{{ basic.print('', item_title) }}{% endif %}</span>
-			<!-- {{ basic.value('', item_art, 'html') }} -->
-		</div>
-		{% else %}
-		<div class="title">{% if not item_pos %}<br />{% endif%}{% if item_artist %}{{ basic.print('', item_artist) }} <br /> {% endif %}
-			{% if item_title %}{{ basic.print('', item_title) }}{% endif %}</div>
-		{% endif %}
-
-		<div class="set">
-			{% if item_pos %}
-				<div class="pos">
-					<div class="scale">&nbsp;</div>
-					{{ basic.slider(id~'pos', item_pos, 0, 100, 1) }}
-				</div>
-			{% endif %}
-
-			<div data-role="controlgroup" data-type="horizontal">
-				{% if item_play %}
-					{{ basic.stateswitch('', item_play, '', 'previous', 'control_arrow_left.svg', 'back') }}
-					{{ basic.stateswitch('', item_play, '', 'play_pause', ['audio_play.svg', 'audio_pause.svg']) }}
-					<!-- basic.stateswitch('', item_play, '', 'stop', 'audio_stop.svg', 'stop') }} -->
-					{{ basic.stateswitch('', item_play, '', 'next', 'control_arrow_right.svg', 'next') }}
-				{% endif %}
-				{% if item_mute %} {{ basic.stateswitch('', item_mute, 'mini', [1, 0], ['audio_volume_mute.svg','audio_volume_high.svg'], '', ['icon1', 'icon0']) }} {% endif %}
-				{% if item_update %} 
-
-					{{ basic.stateswitch('', item_update, '', 1, 'jquery_refresh.svg', '')}} 
-				{% endif %}
-			</div>
-		</div>
-	</div>
-{% endmacro %}
-
 
 /**
 * Yamaha YXC - full device control, derived from a single root item
@@ -418,3 +344,85 @@
 	{% endif %}
 
 {% endmacro %}
+
+/**
+* Yamaha YXC Multimedia Player
+*
+* This widget is the older and obsolete version of the Yamaha YXC widget.
+* It is kept for backwards compatibility - not towards devices, but towards
+* old setups using this widget.
+*
+* Consider switching to the new widget if you are using the v2 plugin version.
+*
+* @param {id} unique id for this widget
+* @param {item} the item for playback control
+* @param {item=} the item for the position (optional)
+* @param {item=} the item for the volume (optional)
+* @param {item=} the item to mute the music (optional)
+* @param {item=} the item for the song title (optional)
+* @param {item=} the item for the song artist (optional)
+* @param {item=} the item for the album art (optional)
+* @param {item=} the item for the input (optional)
+* @param {item=} the item for the power (optional)
+* @param {item=} the item for triggering an update (optional)                                                             
+*
+* @author Sebastian Helms
+*/
+{% macro player(id, item_play, item_pos, item_vol, item_mute, item_title, item_artist, item_art, item_input, item_power, item_update) %}
+	{% import "@widgets/basic.html" as basic %}
+	{% set uid = uid(page, id) %}
+
+	<div id="{{ uid }}" class="music" data-widget="multimedia.yamaha-yxc">
+
+		{% if item_vol %}
+			<div class="vol">
+				<img class="slider-bottomup-scale" src="pages/base/pics/scale_buttomup.png" alt="scale">
+				{{ basic.slider(id~'vol', item_vol, 0, 60, 1, 'bottomup') }}
+			</div>
+		{% endif %}
+
+		<div class="control">
+
+			{% if item_input %} {{ basic.stateswitch('', item_input, '', ['net_radio', 'server'], 'it_radio.svg', '', ['icon1', 'icon0']) }} {% endif %}
+			{% if item_input %} {{ basic.stateswitch('', item_input, '', ['server', 'net_radio'], 'it_nas.svg', '', ['icon1', 'icon0']) }} {% endif %}
+			{{ basic.stateswitch('', item_power, '', [1, 0], ['control_on_off.svg','control_on_off.svg'], '', ['icon1', 'icon0']) }}
+		</div>
+
+		
+		{% if item_art %}
+		<div class="title">
+			<span>{% if item_artist %}{{ basic.print('', item_artist) }} <br /> {% endif %}
+			{% if item_title %}{{ basic.print('', item_title) }}{% endif %}</span>
+			<!-- {{ basic.value('', item_art, 'html') }} -->
+		</div>
+		{% else %}
+		<div class="title">{% if not item_pos %}<br />{% endif%}{% if item_artist %}{{ basic.print('', item_artist) }} <br /> {% endif %}
+			{% if item_title %}{{ basic.print('', item_title) }}{% endif %}</div>
+		{% endif %}
+
+		<div class="set">
+			{% if item_pos %}
+				<div class="pos">
+					<div class="scale">&nbsp;</div>
+					{{ basic.slider(id~'pos', item_pos, 0, 100, 1) }}
+				</div>
+			{% endif %}
+
+			<div data-role="controlgroup" data-type="horizontal">
+				{% if item_play %}
+					{{ basic.stateswitch('', item_play, '', 'previous', 'control_arrow_left.svg', 'back') }}
+					{{ basic.stateswitch('', item_play, '', 'play_pause', ['audio_play.svg', 'audio_pause.svg']) }}
+					<!-- basic.stateswitch('', item_play, '', 'stop', 'audio_stop.svg', 'stop') }} -->
+					{{ basic.stateswitch('', item_play, '', 'next', 'control_arrow_right.svg', 'next') }}
+				{% endif %}
+				{% if item_mute %} {{ basic.stateswitch('', item_mute, 'mini', [1, 0], ['audio_volume_mute.svg','audio_volume_high.svg'], '', ['icon1', 'icon0']) }} {% endif %}
+				{% if item_update %} 
+
+					{{ basic.stateswitch('', item_update, '', 1, 'jquery_refresh.svg', '')}} 
+				{% endif %}
+			</div>
+		</div>
+	</div>
+{% endmacro %}
+
+
