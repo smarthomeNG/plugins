@@ -50,11 +50,6 @@ from .mapping import (
 from .sidecar import RESTART_BACKOFF_SECONDS, MatterSidecar, SidecarStartError
 from .webif import WebInterface
 
-# All alias item definitions persist to this one dedicated file
-# (etc/items/matter_aliases.yaml), kept separate from the user's own item
-# config so the alias table is easy to find/back up/inspect on its own.
-ALIAS_ITEMS_FILENAME = 'matter_aliases'
-
 DEFAULT_ALIAS_BASE_REMARK = 'matter alias base item, child items are alias definitions, do not change'
 
 
@@ -65,6 +60,7 @@ class Matter(SmartPlugin):
 
     PLUGIN_VERSION = '0.1.0'  # must match the version in plugin.yaml
     ALLOW_MULTIINSTANCE = False
+    STOP_ON_ITEM_CHANGE = False
 
     def __init__(self, sh=None, **kwargs):
         super().__init__()
@@ -81,11 +77,7 @@ class Matter(SmartPlugin):
         self.client: MatterServerClient | None = None
         self.items = Items.get_instance()
 
-        # Alias bookkeeping - entirely plugin-internal, deliberately never
-        # touching SmartPlugin's own _plg_item_dict/_item_lookup_dict for
-        # alias-based items (see the plan doc's alias design notes for why:
-        # a repoint only ever needs to update these dicts, never the item
-        # objects themselves or their base-class registration).
+        # Alias bookkeeping, kept separate from SmartPlugin's own _plg_item_dict/_item_lookup_dict.
         self._aliases: dict[str, int] = {}  # alias name -> current node_id
         self._node_to_alias: dict[int, set[str]] = {}  # node_id -> alias names currently pointing at it
         self._alias_lookup_dict: dict[str, list] = {}  # alias_mapping_key()/alias_availability_mapping_key() -> items
@@ -98,6 +90,7 @@ class Matter(SmartPlugin):
     def run(self):
         self.alive = True
         self._ensure_alias_base_item()
+        self._validate_alias_references()
         self.start_asyncio(self._plugin_coro())
 
     def stop(self):
@@ -175,10 +168,8 @@ class Matter(SmartPlugin):
                 return
             self._apply_attribute(node_id, path, value)
         elif event == 'node_updated':
-            # Full node details (same shape as a get_nodes() entry), pushed
-            # when matter-server's nodeAvailabilityChanged fires
-            # (ControllerCommandHandler.ts/WebSocketControllerHandler.ts) -
-            # only the availability flag is used here.
+            # Full node_updated payload matches get_nodes()'s entry shape (matter-server's
+            # nodeAvailabilityChanged, see ControllerCommandHandler.ts) - only 'available' used here.
             data = message.get('data') or {}
             node_id = data.get('node_id')
             available = data.get('available')
@@ -203,14 +194,12 @@ class Matter(SmartPlugin):
 
     def _seed_initial_values(self, nodes: list) -> None:
         """
-        Push each node's cached attribute values and availability into
-        matching items once, right after (re)connecting. start_listening()'s
-        return value is the same snapshot as get_nodes() (#handleStartListening
-        just calls #handleGetNodes internally, see WebSocketControllerHandler.ts)
-        - without this, items sit at whatever shng gave them at load until a
-        live event happens to arrive for that exact node/path: never, for
-        unchanging state (a socket left on) or a node available all along
-        (no fresh node_updated).
+        Push each node's cached values/availability into items once per
+        (re)connect. start_listening()'s return is the same snapshot as
+        get_nodes() (matter-server's #handleStartListening calls
+        #handleGetNodes internally) - without this, an item sits at its
+        load-time value until a live event happens to arrive, which never
+        happens for state that hasn't changed since shng started.
         """
         for node in nodes:
             node_id = node['node_id']
@@ -222,11 +211,9 @@ class Matter(SmartPlugin):
 
     def _ensure_alias_base_item(self) -> None:
         """
-        Validate the configured alias base item once at startup and give it
-        a default remark if it doesn't have one - but never create it: the
-        base item is the user's own structure to own, matching how e.g.
-        pause_item works elsewhere in shng (a plugin.yaml parameter naming
-        an item the user is expected to have already created).
+        Give the base item a default remark if it has none. Never creates
+        it - same as pause_item elsewhere in shng, the user is expected to
+        have already created the item a plugin.yaml parameter names.
         """
         if not self.alias_base_item:
             self.logger.info('alias_base_item is empty - matter_alias support disabled')
@@ -239,11 +226,32 @@ class Matter(SmartPlugin):
                 f'until it exists (the rest of the plugin is unaffected). Create it yourself, e.g.:\n{example}'
             )
             return
-        if 'remark' not in base_item.conf:
-            config = {key: value for key, value in base_item.conf.items() if not key.startswith('_')}
+        if base_item.property.remark is None:
+            config = self._preserve_core_config(base_item)
             config['remark'] = DEFAULT_ALIAS_BASE_REMARK
             self.items.edit_item(base_item, config)
             self.logger.info(f"set default remark on alias base item '{self.alias_base_item}'")
+
+    def _preserve_core_config(self, item) -> dict:
+        """
+        Config dict for edit_item(). type/remark aren't in item.conf (core
+        attributes, applied via setattr in Item._apply_config() rather than
+        stored there) - rebuilding from .conf alone would silently drop them.
+        """
+        config = {key: value for key, value in item.conf.items() if not key.startswith('_')}
+        config['type'] = item._type
+        if item.property.remark is not None:
+            config['remark'] = item.property.remark
+        return config
+
+    def _validate_alias_references(self) -> None:
+        """Log genuinely unknown matter_alias names, once every item has parsed (see _resolve_node_id)."""
+        for path, alias in self._item_alias.items():
+            if alias not in self._aliases:
+                self.logger.error(
+                    f"{path}: matter_alias '{alias}' is not a known alias - check it exists "
+                    f'as an item under {self.alias_base_item}'
+                )
 
     def _is_alias_definition(self, item) -> bool:
         """True if item is a DIRECT child of the configured alias base item - the sole, structural definition."""
@@ -262,13 +270,13 @@ class Matter(SmartPlugin):
         errors = []
         if item._type != 'num':
             errors.append(f"type is '{item._type}', must be 'num'")
-        if 'value' not in item.conf:
-            errors.append('no explicit value: set')
-        if 'cache' in item.conf:
+        elif not isinstance(item(), int) or item() <= 0:
+            errors.append('no explicit (positive integer) value: set')
+        if item._cache:
             errors.append('cache is set - the node_id must live in the item definition (etc/), not var/ cache')
         if 'database' in item.conf:
             errors.append('database is set - not appropriate for an alias definition')
-        if 'eval' in item.conf:
+        if item.property.eval:
             errors.append('eval is set - an alias value must be a plain literal, not computed')
         if errors:
             self.logger.error(f'{path}: not a valid matter alias definition - {"; ".join(errors)}')
@@ -303,37 +311,14 @@ class Matter(SmartPlugin):
 
     def parse_item(self, item):
         """
-        Item config, cheapest/most convenient first:
+        Checked in order: alias definition (item directly under
+        alias_base_item) > matter_available > matter_switch > matter_attribute/
+        matter_command. See plugin.yaml for what each attribute does.
 
-        - An item directly under `alias_base_item` is an alias definition
-          (see `_parse_alias_definition_item`) - structural location is the
-          declaration, no marker attribute needed.
-        - `matter_available` (bool, read-only): mirrors matter-server's
-          node-level reachability tracking (see `_apply_availability`) -
-          needs only `matter_node`/`matter_alias` (via `_resolve_node_id()`),
-          no endpoint/cluster.
-        - `matter_switch` (bool): shorthand for a bool on/off switch -
-          attribute and both commands are derived from clusters.py's
-          SWITCH_CLUSTERS table, keyed by matter_cluster. Logs a clear
-          error, not a silent no-op, if the cluster isn't registered - use
-          the low-level attributes directly until it is.
-        - `matter_attribute` + `matter_command`(_false): the general
-          mechanism underneath matter_switch, for anything not
-          boolean-on/off-shaped (LevelControl, WindowCovering percentages,
-          ...) or not yet in SWITCH_CLUSTERS. Both may be set on the same
-          item - mirrors state via subscription, drives it via command on
-          write; writes always go through the command mapping when both
-          are set (OnOff's state attribute is spec-read-only on real
-          devices, actuation needs a command anyway).
-
-        `matter_node`/`matter_alias`/`matter_endpoint`/`matter_cluster` need
-        not be set on every item - `_resolve_addressing()` uses
-        `Item.find_attribute()` to walk up to the nearest ancestor that sets
-        each one, so addressing only needs stating once on a device's
-        "master" item; a child only overrides what differs (e.g.
-        matter_cluster, for power-measurement children on another cluster).
-        `matter_alias` takes priority over `matter_node` if an item's
-        ancestor chain somehow sets both.
+        matter_node/matter_alias/matter_endpoint/matter_cluster are resolved
+        via Item.find_attribute() up the ancestor chain, so a child only
+        overrides what differs from its "master" item. matter_alias wins if
+        an ancestor chain sets both it and matter_node.
         """
         if self._is_alias_definition(item):
             return self._parse_alias_definition_item(item)
@@ -435,14 +420,10 @@ class Matter(SmartPlugin):
         updating: bool = True,
     ) -> None:
         """
-        Register a parsed item, either through the base class's own
-        node_id-keyed mapping (direct matter_node items - _item_lookup_dict
-        stays exactly what it always was, untouched by any of this) or
-        through this plugin's own alias-keyed lookup dict (alias-based
-        items - _item_lookup_dict is deliberately never used for these, so
-        a repoint never needs to reach into it, only self._aliases/
-        self._node_to_alias change). *_key is None when this item has no
-        read-side dispatch at all (a command-only item, e.g. toggle).
+        Direct matter_node items go through the base class's node_id-keyed
+        mapping; alias-based items go through _alias_lookup_dict instead, so
+        a repoint only ever touches self._aliases/self._node_to_alias.
+        *_key is None for a command-only item with no read-side dispatch.
         """
         if alias is None:
             self.add_item(item, config_data_dict=config_data, mapping=direct_key, updating=updating)
@@ -454,14 +435,7 @@ class Matter(SmartPlugin):
             self._alias_lookup_dict.setdefault(alias_key, []).append(item)
 
     def _resolve_addressing(self, item) -> tuple[int, int, int, str | None] | None:
-        """
-        (node_id, endpoint_id, cluster_id, alias_name_or_None), each
-        resolved from this item or its nearest ancestor (Item.find_attribute()
-        checks the item first, so a child can override just one, e.g. a
-        different matter_cluster). Only addressing inherits this way -
-        matter_switch/matter_attribute/matter_command stay item-local, so
-        an item always opts in explicitly.
-        """
+        """(node_id, endpoint_id, cluster_id, alias_name_or_None), each resolved via find_attribute()."""
         resolved = self._resolve_node_id(item)
         if resolved is None:
             return None
@@ -476,25 +450,15 @@ class Matter(SmartPlugin):
         return node_id, values['matter_endpoint'], values['matter_cluster'], alias
 
     def _resolve_node_id(self, item) -> tuple[int, str | None] | None:
-        """
-        (node_id, alias_name_or_None), resolved from this item or its
-        nearest ancestor. matter_alias is checked first - if an ancestor
-        chain somehow sets both, alias wins rather than being silently
-        ignored. alias_name is carried through into the mapping objects so
-        update_item/_apply_attribute can re-resolve the CURRENT node_id
-        from self._aliases at call time instead of trusting a value baked
-        in once here - the entire point of aliasing.
-        """
+        """(node_id, alias_name_or_None), resolved from this item or its nearest ancestor."""
         alias = item.find_attribute('matter_alias', default=None)
         if alias:
-            node_id = self._aliases.get(alias)
-            if node_id is None:
-                self.logger.error(
-                    f"{item.property.path}: matter_alias '{alias}' is not a known alias - check it exists "
-                    f'as an item under {self.alias_base_item} and was recognized at startup (see the log)'
-                )
-                return None
-            return node_id, alias
+            # 0 is a deliberate placeholder, not a bug: item tree load order doesn't
+            # guarantee the alias definition parses first, and mapping.node_id is never
+            # read for an alias mapping (dispatch always re-resolves via self._aliases -
+            # see _resolve_current_node_id/_apply_attribute). A genuinely unknown alias is
+            # caught tree-wide by _validate_alias_references() once every item has parsed.
+            return self._aliases.get(alias, 0), alias
         raw = item.find_attribute('matter_node', default=None)
         if raw is None or raw == '':
             self.logger.error(f'{item.property.path}: matter_node or matter_alias not set on this item or any ancestor')
@@ -502,13 +466,7 @@ class Matter(SmartPlugin):
         return int(raw), None
 
     def _resolve_current_node_id(self, mapping) -> int:
-        """
-        mapping.node_id for a direct matter_node item; the CURRENT alias
-        target for an aliased one, read fresh from self._aliases rather
-        than the possibly-stale value baked into the mapping at parse time.
-        Falls back to the parse-time value (with a warning) if the alias
-        was since removed, rather than failing the write outright.
-        """
+        """mapping.node_id directly, or the current alias target read fresh from self._aliases."""
         if mapping.alias is None:
             return mapping.node_id
         node_id = self._aliases.get(mapping.alias)
@@ -520,21 +478,11 @@ class Matter(SmartPlugin):
         return node_id
 
     def unparse_item(self, item) -> bool:
-        """
-        Custom cleanup for this plugin's own alias bookkeeping - the base
-        class's generic _plg_item_dict/_item_lookup_dict cleanup already
-        happened in remove_item() before this is called, unconditionally.
-        No super() call: SmartPlugin.unparse_item()'s own default is now a
-        genuine no-op by design (the trigger-removal it used to do moved
-        into remove_item() itself), so there's nothing to preserve.
-        """
+        """No super() call: SmartPlugin.unparse_item()'s default is a genuine no-op by design."""
         path = item.property.path
         alias = self._item_alias.pop(path, None)
         if alias is not None:
-            # A device item that depended on an alias - drop it from every
-            # alias_lookup_dict entry under that alias (there's normally
-            # just one, for its own path, but scanning by prefix is cheap
-            # and doesn't need this item's own resolved path stored too).
+            # Scanning by prefix instead of storing this item's own resolved key.
             prefix = f'{alias}:'
             for key in list(self._alias_lookup_dict.keys()):
                 if not key.startswith(prefix):
@@ -548,7 +496,6 @@ class Matter(SmartPlugin):
 
         parent_path, sep, name = path.rpartition('.')
         if sep and parent_path == self.alias_base_item:
-            # The alias definition item itself was removed.
             node_id = self._aliases.pop(name, None)
             if node_id is not None:
                 self._node_to_alias.get(node_id, set()).discard(name)
@@ -616,14 +563,14 @@ class Matter(SmartPlugin):
         config = {'type': 'num', 'value': node_id}
         if remark:
             config['remark'] = remark
-        self.items.create_item(path, config, parent=base_item, filename=ALIAS_ITEMS_FILENAME)
+        self.items.create_item(path, config, parent=base_item, filename=base_item.property.defined_in)
 
     def repoint_alias(self, name: str, node_id: int) -> None:
         path = f'{self.alias_base_item}.{name}'
         alias_item = self.items.return_item(path)
         if alias_item is None:
             raise ValueError(f"alias '{name}' does not exist")
-        config = {key: value for key, value in alias_item.conf.items() if not key.startswith('_')}
+        config = self._preserve_core_config(alias_item)
         config['value'] = node_id
         self.items.edit_item(alias_item, config)
 
@@ -641,12 +588,8 @@ class Matter(SmartPlugin):
 
     def describe_mapping(self, item) -> str:
         """
-        Human-readable summary of an item's resolved Matter mapping, for the
-        webif's Items tab. Reads the mapping objects parse_item already
-        stored (fully resolved through ancestor inheritance) rather than
-        item.conf directly - a child relying on inheritance wouldn't have
-        those three in its own conf, so re-deriving from conf would show
-        blank.
+        Reads the mapping objects parse_item stored, not item.conf directly -
+        a child relying on ancestor inheritance wouldn't have those in its own conf.
         """
         if item.property.path not in self._plg_item_dict:
             return '(not mapped - see log for the parse_item error)'
@@ -659,8 +602,7 @@ class Matter(SmartPlugin):
             return ''
 
         def mark(attr_name: str, value) -> str:
-            # not in this item's own conf -> resolved via ancestor walk, not
-            # declared locally; '*' flags that so it isn't a guessing game.
+            # '*' = resolved via ancestor walk, not declared on this item itself.
             suffix = '' if attr_name in item.conf else '*'
             return f'{value}{suffix}'
 
