@@ -60,12 +60,25 @@ parameters:
             de: 'Netzwerk-Interface fuer lokale Adressen (--primary-interface). Auf Hosts mit mehreren Interfaces auf demselben Subnetz kann die automatische Auswahl ein Interface wählen, über das das Zielgerät nicht erreichbar ist - dann explizit setzen (z.B. en0).'
             en: 'Network interface for link-local addresses (--primary-interface). On hosts with multiple interfaces on the same subnet, automatic selection can pick one the target device is not reachable through - set explicitly (e.g. en0) if commissioning times out with "unreachable" address warnings.'
 
+    alias_base_item:
+        type: str
+        default: 'matter.aliases'
+        description:
+            de: 'Item, unter dem Alias-Definitionen liegen (direkte Kind-Items, jeweils Typ num mit dem aktuellen node_id als Wert - siehe matter_alias). Muss bereits existieren, wird vom Plugin nicht angelegt. Fehlt es, bleibt die Alias-Funktion inaktiv, ohne den Rest des Plugins zu beeinträchtigen.'
+            en: 'Item under which alias definitions live (direct child items, each type num holding the current node_id as its value - see matter_alias). Must already exist, the plugin never creates it. If missing, alias support just stays inactive, the rest of the plugin is unaffected.'
+
 item_attributes:
     matter_node:
         type: int
         description:
             de: 'Matter Node-ID des Geräts (wird bei der Kommissionierung vergeben)'
             en: 'Matter node ID of the device (assigned during commissioning)'
+
+    matter_alias:
+        type: str
+        description:
+            de: 'Alternative zu matter_node: Name einer Alias-Definition unter alias_base_item. Löst node_id über die interne Alias-Tabelle des Plugins auf statt fest im Item-Wert - übersteht ein Rekommissionieren (neue node_id) ohne Änderung an diesem oder abhängigen Items, sobald der Alias über das Webif umgebogen wird.'
+            en: 'Alternative to matter_node: name of an alias definition under alias_base_item. Resolved through the plugins own alias table instead of a fixed node_id - survives a recommission (new node_id) with no change to this or dependent items, once the alias is repointed via the webif.'
 
     matter_endpoint:
         type: int

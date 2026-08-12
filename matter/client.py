@@ -203,3 +203,57 @@ class MatterServerClient:
         casually tested. Verify carefully before relying on it.
         """
         return await self.send_command('remove_node', {'node_id': node_id})
+
+    async def open_commissioning_window(self, node_id: int, timeout: int = 900) -> dict:
+        """
+        Generates a fresh pairing code for an already-commissioned node, so
+        a second controller (Apple Home, Google Home, ...) can commission
+        it onto its own separate fabric without disturbing this one - Matter
+        is designed for multiple simultaneous admins per device. 900s (15
+        min) default matches matter.js's own default
+        (PairedNode.openEnhancedCommissioningWindow), not invented.
+
+        Returns {'setup_pin_code': int, 'setup_manual_code': str,
+        'setup_qr_code': str} (WebSocketControllerHandler.ts's
+        #handleOpenCommissioningWindow). Only the manual code and QR content
+        string are surfaced in the webif - no QR image rendering, since
+        every major commissioning app (incl. Apple Home) accepts manual
+        entry as a first-class alternative to scanning.
+        """
+        return await self.send_command('open_commissioning_window', {'node_id': node_id, 'timeout': timeout})
+
+    async def get_matter_fabrics(self, node_id: int) -> list:
+        """
+        Every fabric currently on a node - node_id, vendor_id, fabric_index,
+        fabric_label, and a resolved vendor_name (matter-server maps
+        vendor_id through its own VendorIds table, so an Apple Home fabric
+        shows up with vendor_name='Apple' directly, not just a numeric id).
+        """
+        return await self.send_command('get_matter_fabrics', {'node_id': node_id})
+
+    async def remove_matter_fabric(self, node_id: int, fabric_index: int) -> Any:
+        """
+        Removes one specific fabric from a node (by fabric_index from
+        get_matter_fabrics). A real, spec-compliant device-side command
+        (ControllerCommandHandler.removeFabric ->
+        OperationalCredentialsClient.removeFabric({fabricIndex})), not a
+        local-only forget - the device itself is cleanly notified, same
+        class of operation as remove_node's decommission path. Removing
+        this plugin's own fabric this way still isn't recommended: it
+        skips matter-server's own node-removal bookkeeping that
+        remove_node performs, so its local record of the node goes stale
+        instead of being cleaned up. Use remove_node for this plugin's own
+        pairing; this method is for removing *other* controllers' fabrics.
+        """
+        return await self.send_command('remove_matter_fabric', {'node_id': node_id, 'fabric_index': fabric_index})
+
+    async def interview_node(self, node_id: int) -> None:
+        """
+        Forces a fresh full read of every attribute on a node, replacing
+        matter-server's cached copy (#handleInterviewNode, awaited - by the
+        time this returns, the cache is already updated, no race with an
+        immediately following get_nodes()). Requested after the Discovery
+        tab's "cached, no live query" data went stale with no way to force
+        a refresh short of restarting the sidecar.
+        """
+        await self.send_command('interview_node', {'node_id': node_id})

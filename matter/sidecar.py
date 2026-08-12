@@ -91,7 +91,24 @@ class MatterSidecar:
         return self._process is not None and self._process.returncode is None
 
     def _build_args(self) -> list[str]:
-        args = [self.entry_path, '--port', str(self.port), '--storage-path', self.storage_path, '--log-level', 'info']
+        args = [
+            self.entry_path,
+            '--port',
+            str(self.port),
+            '--storage-path',
+            self.storage_path,
+            '--log-level',
+            'info',
+            # matter-server is Home Assistant's own project - its unpinned default
+            # fabric label is literally "HomeAssistant" (ConfigStorage.ts), which
+            # every other controller/app sees when listing a device's fabrics
+            # (e.g. this plugin's own Fabrics webif tab, or Apple Home). Pinning
+            # this - confirmed via MatterServer.ts to apply before the controller
+            # is even constructed, not just cosmetic - avoids shng's own fabric
+            # being mislabeled as a different project entirely.
+            '--default-fabric-label',
+            'SmartHomeNG',
+        ]
         if self.enable_test_net_dcl:
             args.append('--enable-test-net-dcl')
         if self.primary_interface:

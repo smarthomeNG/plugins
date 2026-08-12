@@ -59,6 +59,24 @@ def availability_mapping_key(node_id: int) -> str:
     return f'{node_id}:available'
 
 
+def alias_mapping_key(alias: str, path: str) -> str:
+    """
+    Reverse-lookup key for an alias-backed item, kept in a plugin-owned
+    dict entirely separate from SmartPlugin's own _item_lookup_dict (which
+    stays node_id-keyed, untouched by aliasing). Same 'name:path' shape as
+    report_mapping_key so the two are easy to reason about side by side,
+    but alias names and node_ids are never compared against each other -
+    there's no collision risk to design around here the way there is
+    between availability_mapping_key and report_mapping_key.
+    """
+    return f'{alias}:{path}'
+
+
+def alias_availability_mapping_key(alias: str) -> str:
+    """Reverse-lookup key for an alias-backed matter_available item - see alias_mapping_key."""
+    return f'{alias}:available'
+
+
 @dataclass(frozen=True)
 class AttributeMapping:
     """
@@ -69,12 +87,20 @@ class AttributeMapping:
     new value. Not every cluster attribute accepts direct writes on real
     devices (many actuators expect a command instead) - if the device rejects
     it, the plugin logs the failure, it does not crash the update.
+
+    `alias`, when set, means `node_id` is only the value resolved at parse
+    time - the plugin's own alias registry (Matter._aliases), not this field,
+    is authoritative from then on. Keeping node_id here too (rather than
+    making it Optional) means a mapping is always immediately usable even
+    before any alias-specific resolution runs, and matches what write_attribute
+    actually needs as a fallback if the alias registry lookup fails.
     """
 
     node_id: int
     endpoint_id: int
     cluster_id: int
     attribute_id: int
+    alias: str | None = None
 
     @property
     def path(self) -> str:
@@ -111,6 +137,7 @@ class CommandMapping:
     command_name: str
     params: dict[str, Any] = field(default_factory=dict)
     command_name_false: str | None = None
+    alias: str | None = None
 
     def resolve_command_name(self, value: Any) -> str:
         if self.command_name_false is not None and not value:

@@ -1,7 +1,7 @@
 {% extends "base_plugin.html" %}
 
 {% set logo_frame = false %}
-{% set update_interval = 0 %}
+{% set update_interval = 5000 %}
 
 {% block headtable %}
 <table class="table table-striped table-hover">
@@ -26,6 +26,7 @@
 			$('#devicestable').DataTable( { order: [[1, 'asc']] } );
 			$('#maintable').DataTable( { order: [[1, 'asc']] } );
 			$('#discoverytable').DataTable( { order: [[1, 'asc']] } );
+			$('#aliasestable').DataTable( { order: [[1, 'asc']] } );
 		}
 		catch (e) {
 			console.warn("Datatable JS not loaded, showing standard tables without sort/filter " + e);
@@ -38,10 +39,69 @@
 			shngPost('', {unlink_node_id: nodeId});
 		}
 	}
+
+	function shareDevice(nodeId) {
+		shngPost('', {share_node_id: nodeId});
+	}
+
+	function showFabrics(nodeId) {
+		shngPost('', {fabrics_node_id: nodeId});
+	}
+
+	function interviewNode(nodeId) {
+		shngPost('', {interview_node_id: nodeId});
+	}
+
+	function removeFabric(nodeId, fabricIndex, label) {
+		if (confirm("{{ _('Fabric wirklich entfernen?') }} (" + label + ", fabric_index=" + fabricIndex + ")\n\n" +
+		            "{{ _('Falls dies die eigene Fabric dieses Plugins ist, stattdessen den Entkoppeln-Button verwenden - sonst bleibt der lokale Geräte-Datensatz von shng veraltet stehen.') }}")) {
+			shngPost('', {remove_fabric_node_id: nodeId, remove_fabric_index: fabricIndex});
+		}
+	}
+
+	// Share/Fabrics/Neu einlesen all need a live device to talk to - disabling
+	// them while unavailable avoids the confusing case of clicking one and
+	// getting a low-level timeout/connection error that obscures the real,
+	// simple reason (device offline). Unlink is deliberately left enabled -
+	// it already falls back to a local-only forget if the device can't be
+	// reached, so it's still meaningful exactly when a device is unavailable.
+	function setDeviceAvailability(nodeId, available) {
+		$('#' + nodeId + '_available').text(available);
+		$('#' + nodeId + '_share_btn').prop('disabled', !available);
+		$('#' + nodeId + '_fabrics_btn').prop('disabled', !available);
+		$('#' + nodeId + '_interview_btn').prop('disabled', !available);
+	}
+
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet !== null) return;
+		var data = JSON.parse(response);
+		for (var path in data.items) {
+			shngInsertText(path + '_value', data.items[path], 'maintable', 2);
+		}
+		for (var nodeId in data.devices) {
+			setDeviceAvailability(nodeId, data.devices[nodeId]);
+		}
+	}
+
+	function repointAlias(name) {
+		var nodeId = document.getElementById('alias_repoint_select_' + name).value;
+		if (!nodeId) {
+			alert("{{ _('Bitte ein Gerät auswählen') }}");
+			return;
+		}
+		shngPost('', {alias_repoint_name: name, alias_repoint_node_id: nodeId});
+	}
+
+	function removeAlias(name) {
+		if (confirm("{{ _('Alias wirklich entfernen?') }} (" + name + ")\n\n" +
+		            "{{ _('Items, die diesen Alias verwenden, behalten die zuletzt bekannte node_id, bis sie umgebogen oder selbst entfernt werden.') }}")) {
+			shngPost('', {alias_remove_name: name});
+		}
+	}
 </script>
 {% endblock pluginscripts %}
 
-{% set tabcount = 5 %}
+{% set tabcount = 6 %}
 
 {% set tab1title = "<strong>" ~ _('Geräte') ~ "</strong> (" ~ devices|length ~ ")" %}
 {% block bodytab1 %}
@@ -67,6 +127,59 @@
 		{% if unlink_error %}
 			<div class="alert alert-danger mt-2">{{ _('Entkoppeln fehlgeschlagen') }}: {{ unlink_error }}</div>
 		{% endif %}
+		{% if share_error %}
+			<div class="alert alert-danger mt-2">{{ _('Öffnen des Kopplungsfensters fehlgeschlagen') }}: {{ share_error }}</div>
+		{% endif %}
+		{% if share_result %}
+			<div class="alert alert-success mt-2">
+				<div class="d-flex align-items-start">
+					<div class="mr-3" style="background:#fff; padding:8px; display:inline-block;">
+						{{ share_result.qr_svg | safe }}
+					</div>
+					<div>
+						{{ _('Kopplungsfenster geöffnet für node_id') }}={{ share_result.node_id }} -
+						{{ _('in Apple Home, Google Home o.ä. mit diesem Code koppeln (15 Minuten gültig)') }}:<br>
+						{{ _('Manueller Code') }}: <code>{{ share_result.setup_manual_code }}</code><br>
+						{{ _('QR-Inhalt') }}: <code>{{ share_result.setup_qr_code }}</code>
+					</div>
+				</div>
+			</div>
+		{% endif %}
+		{% if fabrics_error %}
+			<div class="alert alert-danger mt-2">{{ _('Fabrics konnten nicht gelesen werden') }}: {{ fabrics_error }}</div>
+		{% endif %}
+		{% if interview_error %}
+			<div class="alert alert-danger mt-2">{{ _('Neu einlesen fehlgeschlagen') }}: {{ interview_error }}</div>
+		{% endif %}
+		{% if fabrics_result %}
+			<div class="mt-2">
+				<h6>{{ _('Fabrics auf node_id') }}={{ fabrics_result.node_id }}</h6>
+				<table class="table table-sm">
+					<thead>
+					<tr>
+						<th>fabric_index</th>
+						<th>{{ _('Hersteller') }}</th>
+						<th>{{ _('Label') }}</th>
+						<th>fabric_id</th>
+						<th></th>
+					</tr>
+					</thead>
+					{% for fabric in fabrics_result.fabrics %}
+						<tr>
+							<td class="py-1">{{ fabric.fabric_index }}</td>
+							<td class="py-1">{{ fabric.vendor_name or fabric.vendor_id }}</td>
+							<td class="py-1">{{ fabric.fabric_label or ('<' ~ _('kein Label') ~ '>') }}</td>
+							<td class="py-1">{{ fabric.fabric_id }}</td>
+							<td class="py-1">
+								<button type="button" class="btn btn-shng btn-sm" onclick="removeFabric({{ fabrics_result.node_id }}, {{ fabric.fabric_index }}, '{{ fabric.vendor_name or fabric.vendor_id }}')">
+									<i class="fas fa-trash"></i>&nbsp;{{ _('Entfernen') }}
+								</button>
+							</td>
+						</tr>
+					{% endfor %}
+				</table>
+			</div>
+		{% endif %}
 	</div>
 
 	<table id="devicestable" class="dataTableAdditional">
@@ -90,9 +203,18 @@
 				<td class="py-1">{{ device.vendor }}</td>
 				<td class="py-1">{{ device.product }}</td>
 				<td class="py-1">{{ device.device_type }}</td>
-				<td class="py-1">{{ device.available }}</td>
+				<td class="py-1" id="{{ device.node_id }}_available">{{ device.available }}</td>
 				<td class="py-1">
-					<button type="button" class="btn btn-shng btn-sm" onclick="unlinkDevice({{ device.node_id }}, '{{ device.label }}')">
+					<button type="button" id="{{ device.node_id }}_share_btn" class="btn btn-shng btn-sm" onclick="shareDevice({{ device.node_id }})" title="{{ _('Für Apple Home, Google Home o.ä. freigeben') }}" {% if not device.available %}disabled{% endif %}>
+						<i class="fas fa-share-alt"></i>&nbsp;{{ _('Teilen') }}
+					</button>
+					<button type="button" id="{{ device.node_id }}_fabrics_btn" class="btn btn-shng btn-sm" onclick="showFabrics({{ device.node_id }})" title="{{ _('Gekoppelte Fabrics anzeigen') }}" {% if not device.available %}disabled{% endif %}>
+						<i class="fas fa-list"></i>&nbsp;{{ _('Fabrics') }}
+					</button>
+					<button type="button" id="{{ device.node_id }}_interview_btn" class="btn btn-shng btn-sm" onclick="interviewNode({{ device.node_id }})" title="{{ _('Alle Attribute frisch vom Gerät lesen, ersetzt den zwischengespeicherten Stand') }}" {% if not device.available %}disabled{% endif %}>
+						<i class="fas fa-sync-alt"></i>&nbsp;{{ _('Neu einlesen') }}
+					</button>
+					<button type="button" class="btn btn-shng btn-sm" onclick="unlinkDevice({{ device.node_id }}, '{{ device.label }}')" title="{{ _('Funktioniert auch bei nicht erreichbarem Gerät (lokales Vergessen als Fallback)') }}">
 						<i class="fas fa-unlink"></i>&nbsp;{{ _('Entkoppeln') }}
 					</button>
 				</td>
@@ -162,17 +284,89 @@
 	</table>
 {% endblock bodytab3 %}
 
-{% set tab4title = "<strong>" ~ _('Item-Generator') ~ "</strong>" %}
+{% set tab4title = "<strong>" ~ _('Aliase') ~ "</strong> (" ~ aliases|length ~ ")" %}
 {% block bodytab4 %}
+	<div class="mb-2">
+		{{ _('Namen statt node_id in Items verwenden (matter_alias) - übersteht ein Rekommissionieren, das die node_id ändert. Alias-Definitionen sind Kind-Items unter') }}
+		<code>{{ p.alias_base_item }}</code>{{ _(', muss bereits existieren.') }}
+	</div>
+
+	{% if alias_error %}
+		<div class="alert alert-danger mt-2">{{ _('Alias-Aktion fehlgeschlagen') }}: {{ alias_error }}</div>
+	{% endif %}
+
+	<div class="mb-3">
+		<h5>{{ _('Neuen Alias anlegen') }}</h5>
+		<form method="post" action="">
+			<div class="form-row align-items-center">
+				<div class="col-auto">
+					<input type="text" class="form-control" name="alias_create_name" placeholder="{{ _('Name (z.B. kueche_steckdose)') }}" size="30">
+				</div>
+				<div class="col-auto">
+					<select class="form-control" name="alias_create_node_id">
+						<option value="">{{ _('Gerät auswählen ...') }}</option>
+						{% for device in devices %}
+							<option value="{{ device.node_id }}">{{ device.node_id }} - {{ device.vendor }} {{ device.product }}</option>
+						{% endfor %}
+					</select>
+				</div>
+				<div class="col-auto">
+					<button type="submit" class="btn btn-shng btn-sm"><i class="fas fa-plus"></i>&nbsp;{{ _('Anlegen') }}</button>
+				</div>
+			</div>
+		</form>
+	</div>
+
+	<table id="aliasestable" class="dataTableAdditional">
+		<thead>
+		<tr>
+			<th></th>
+			<th>{{ _('Name') }}</th>
+			<th>node_id</th>
+			<th>{{ _('Gerät (falls aktuell bekannt)') }}</th>
+			<th></th>
+		</tr>
+		</thead>
+		{% for name, node_id in aliases.items() %}
+			<tr>
+				<td></td>
+				<td class="py-1">{{ name }}</td>
+				<td class="py-1">{{ node_id }}</td>
+				<td class="py-1">
+					{% for device in devices %}
+						{% if device.node_id == node_id %}{{ device.vendor }} {{ device.product }}{% endif %}
+					{% endfor %}
+				</td>
+				<td class="py-1">
+					<select class="form-control d-inline-block" style="width:auto;" id="alias_repoint_select_{{ name }}">
+						<option value="">{{ _('umbiegen auf ...') }}</option>
+						{% for device in devices %}
+							<option value="{{ device.node_id }}">{{ device.node_id }} - {{ device.vendor }} {{ device.product }}</option>
+						{% endfor %}
+					</select>
+					<button type="button" class="btn btn-shng btn-sm" onclick="repointAlias('{{ name }}')" title="{{ _('Alias auf anderes Gerät umbiegen - kein Neustart nötig') }}">
+						<i class="fas fa-exchange-alt"></i>&nbsp;{{ _('Umbiegen') }}
+					</button>
+					<button type="button" class="btn btn-shng btn-sm" onclick="removeAlias('{{ name }}')">
+						<i class="fas fa-trash"></i>&nbsp;{{ _('Entfernen') }}
+					</button>
+				</td>
+			</tr>
+		{% endfor %}
+	</table>
+{% endblock bodytab4 %}
+
+{% set tab5title = "<strong>" ~ _('Item-Generator') ~ "</strong>" %}
+{% block bodytab5 %}
 	<div class="mb-2">
 		{{ _('Vorschlag für items/*.yaml, generiert aus den oben entdeckten Nodes. Zum Übernehmen kopieren und in die eigene Item-Konfiguration einfügen - das Plugin schreibt keine Dateien selbst.') }}
 	</div>
 	<div class="container-fluid m-2"><pre>{{ item_generator_yaml }}</pre></div>
-{% endblock bodytab4 %}
+{% endblock bodytab5 %}
 
-{% set tab5title = "<strong>" ~ _('Info') ~ "</strong>" %}
-{% block bodytab5 %}
+{% set tab6title = "<strong>" ~ _('Info') ~ "</strong>" %}
+{% block bodytab6 %}
 	<div class="mb-2">
 		{{ _('Phase 2: Endpoint/Cluster-Discovery-Browser + Item-Generator (Copy-Paste-YAML). matter_switch deckt bislang nur den OnOff-Cluster ab - andere Cluster brauchen die low-level Attribute (matter_attribute/matter_command/matter_command_false) je nach gewünschter Aktion.') }}
 	</div>
-{% endblock bodytab5 %}
+{% endblock bodytab6 %}

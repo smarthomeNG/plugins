@@ -77,6 +77,40 @@ here as a real item for your own logic/struct/visu. Only needs ``matter_node`` r
 same ancestor inheritance as above), not an endpoint or cluster - availability isn't attached to
 either.
 
+Surviving recommissioning: matter_alias
+========================================
+
+``node_id`` is assigned by matter-server at commission time and is not guaranteed stable across a
+decommission/recommission cycle (factory-resetting a device, moving it off and back onto shng's
+fabric, ...). Every item addressed via a fixed ``matter_node`` then silently points at the wrong
+device until you go update it by hand, on every affected item.
+
+``matter_alias`` (str) is an indirection layer for this: use it instead of ``matter_node``, giving
+the name of an *alias definition* - a plain shng item, ``type: num``, holding the current
+``node_id`` as its value - living directly under ``alias_base_item`` (``plugin.yaml`` parameter,
+default ``matter.aliases``). Every direct child of that item is treated as one alias definition
+(name = child item's own name). An item's ``node_id`` is then resolved through this table at every
+access rather than baked in, so repointing one alias (webif **Aliase** tab, or editing the alias
+item's value directly) takes effect for every item using that alias - none of them need touching.
+
+The base item itself must already exist; the plugin never creates it (not yet an established shng
+pattern) and just logs an example structure and stays inactive w.r.t. alias support until it does,
+without affecting the rest of the plugin. Each alias-definition item is validated on parse: must be
+``type: num``, must have an explicit ``value:`` (the ``node_id``), and must not be ``cache``,
+``database``, or ``eval``'d (an alias's value is meant to change only via explicit repointing, never
+through those mechanisms) - every violation found is logged in one message rather than stopping at
+the first. If the base item has no ``remark`` set, the plugin sets a default one; an existing remark
+is left untouched.
+
+Defining a brand-new alias, or pointing an item's ``matter_alias`` at a name that did not exist at
+parse time, needs a shng restart - same as any other structural item change. Repointing an
+*existing* alias to a different ``node_id`` is live, no restart needed, since that only changes the
+alias item's own value.
+
+Removing an alias while other items still reference it does not touch those items - they keep their
+last-known (now orphaned) ``node_id`` until the alias is redefined or the items themselves are
+edited to point elsewhere. A warning naming every affected item is logged when this happens.
+
 Item structs
 ============
 
@@ -94,6 +128,23 @@ RMSVoltage in particular is not guaranteed to ever report a live update on a giv
 though its sibling attributes on the same cluster do - see
 ``dev/matter/matter-integration-plan.md``'s "RMSVoltage never reports" section before relying on it
 for anything time-sensitive.
+
+Sharing a device with Apple Home / Google Home / etc.
+======================================================
+
+Matter devices support multiple simultaneous "admins" - a device commissioned by shng can also join
+another ecosystem on its own separate fabric, without shng losing its own pairing. The Devices tab's
+**Teilen** (Share) button opens a fresh 15-minute commissioning window on that device and shows both
+a scannable QR code and the manual pairing code (and raw QR-content string) to enter in the other
+app.
+
+The **Fabrics** button lists every fabric currently on a device (vendor, label, fabric_id) with a
+per-fabric Remove option, backed by a real, spec-compliant device-side ``RemoveFabric`` command
+(``OperationalCredentialsClient.removeFabric``) - the device itself is cleanly notified, same as
+Unlink's decommission path. Removing shng's *own* fabric this way still isn't recommended, though:
+it skips matter-server's own node-removal bookkeeping that `remove_node`/Unlink performs, so its
+local record of that node would go stale instead of being cleaned up. Use Unlink for shng's own
+pairing; use the Fabrics table for *other* controllers' fabrics.
 
 Phase 2 scope
 =============
