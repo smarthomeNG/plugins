@@ -229,7 +229,10 @@ class Matter(SmartPlugin):
         if base_item.property.remark is None:
             config = self._preserve_core_config(base_item)
             config['remark'] = DEFAULT_ALIAS_BASE_REMARK
-            self.items.edit_item(base_item, config)
+            # notify_plugins=False: only remark changes, a core attribute no
+            # plugin registers - and the base item is matter's own alias
+            # container, unused by anything else
+            self.items.edit_item(base_item, config, notify_plugins=False)
             self.logger.info(f"set default remark on alias base item '{self.alias_base_item}'")
 
     def _preserve_core_config(self, item) -> dict:
@@ -572,7 +575,9 @@ class Matter(SmartPlugin):
             raise ValueError(f"alias '{name}' does not exist")
         config = self._preserve_core_config(alias_item)
         config['value'] = node_id
-        self.items.edit_item(alias_item, config)
+        # notify_plugins=False: alias items are matter's own node_id lookup
+        # table, unused by any other plugin
+        self.items.edit_item(alias_item, config, notify_plugins=False)
 
     def remove_alias(self, name: str) -> None:
         path = f'{self.alias_base_item}.{name}'

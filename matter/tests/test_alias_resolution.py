@@ -81,8 +81,8 @@ class _FakeItems:
     def return_item(self, path):
         return self._item
 
-    def edit_item(self, item, config):
-        self.edit_item_calls.append((item, dict(config)))
+    def edit_item(self, item, config, notify_plugins=True):
+        self.edit_item_calls.append((item, dict(config), notify_plugins))
 
 
 class TestResolveNodeIdAliasParseOrder(unittest.TestCase):
@@ -177,9 +177,12 @@ class TestEnsureAliasBaseItemRemark(unittest.TestCase):
         plugin._ensure_alias_base_item()
 
         self.assertEqual(len(plugin.items.edit_item_calls), 1)
-        item, config = plugin.items.edit_item_calls[0]
+        item, config, notify_plugins = plugin.items.edit_item_calls[0]
         self.assertIs(item, base_item)
         self.assertIn('remark', config)
+        # base item is matter's own alias container, unused by any other
+        # plugin - no need to notify plugins of this edit
+        self.assertFalse(notify_plugins)
 
 
 if __name__ == '__main__':
