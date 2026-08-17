@@ -10,11 +10,9 @@
 #  forwards its log output into the plugin's logger, and restarts it
 #  with backoff if it dies unexpectedly while the plugin is alive.
 #
-#  matter-server has no CLI bin/entry point (see plugin.yaml's
-#  sidecar_entry parameter doc and dev/matter/matter-integration-plan.md's
-#  Phase 0 findings in the core repo) - it is invoked by running its main
-#  JS file directly with node. CLI flags below were confirmed against the
-#  actually-installed matter-server 1.3.3's dist/esm/cli.js.
+#  matter-server has no CLI bin/entry point (see plugin.yaml's sidecar_entry parameter doc) -
+#  it is invoked by running its main JS file directly with node. CLI flags below were confirmed
+#  against the actually-installed matter-server 1.3.3's dist/esm/cli.js.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -144,17 +142,14 @@ class MatterServerSidecar:
                 *self._build_args(),
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,
-                # Without this, the child inherits the parent's (POSIX) process group - a
-                # terminal Ctrl-C's SIGINT then reaches it directly, independent of and
-                # racing against shng's own graceful, sequential per-plugin shutdown. Caught
-                # live: with multiple plugin instances configured, shng shut them down one at
-                # a time (~10s apart here) - the still-running instance's sidecar died from
-                # the direct SIGINT immediately, got auto-respawned by supervise() (its own
-                # _stopping was still False, since THIS instance's cleanup() hadn't run yet),
-                # and only settled once shng's shutdown actually reached it. start_new_session
-                # detaches the child into its own session/process group, so only our own
-                # explicit terminate()/kill() below (which target the pid directly, not the
-                # group) can stop it - not a stray signal aimed at the whole group.
+                # Without this, the child inherits the parent's (POSIX) process group - a terminal
+                # Ctrl-C's SIGINT reaches it directly, racing shng's own graceful, sequential
+                # per-plugin shutdown. Observed live with multiple plugin instances: shng shut
+                # them down ~10s apart, and the still-running instance's sidecar died from the
+                # direct SIGINT immediately, got auto-respawned by supervise() (its own _stopping
+                # still False, cleanup() not yet run), only settling once shng's shutdown reached
+                # it. start_new_session detaches the child into its own session/process group -
+                # only our own terminate()/kill() below (pid-targeted, not group-targeted) can stop it.
                 start_new_session=True,
             )
         except FileNotFoundError as ex:

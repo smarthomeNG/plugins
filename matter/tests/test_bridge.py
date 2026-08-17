@@ -140,9 +140,8 @@ class TestParseItem(unittest.TestCase):
         )
 
     def test_name_defaults_to_full_item_path(self):
-        """Deliberate default - see matter-integration-plan.md's reasoning
-        for why remark/item-name were rejected (collision-prone in a flat
-        accessory list, unlike the full path)."""
+        """Deliberate default, not remark/item-name: those are collision-prone in a flat
+        accessory list, unlike the full path."""
         plugin = _make_plugin()
         item = _FakeItem('house.living_room.lamp', conf={'matter_expose_type': 'switch'})
 

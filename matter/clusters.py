@@ -7,17 +7,14 @@
 #  https://www.smarthomeNG.de
 #
 #  Human-readable names for Matter cluster/attribute IDs, for the webif's
-#  discovery browser and item-generator (Phase 2). Deliberately small and
-#  grown incrementally as clusters are actually encountered/validated
-#  against real or example devices - not a transcription of the whole
-#  Application Cluster spec. Unknown IDs fall back to their raw number,
-#  which is a perfectly usable (if less friendly) matter_cluster/
-#  matter_attribute value.
+#  discovery browser and item-generator. Deliberately small and grown
+#  incrementally as clusters are actually encountered/validated against
+#  real or example devices - not a transcription of the whole Application
+#  Cluster spec. Unknown IDs fall back to their raw number, which is a
+#  perfectly usable (if less friendly) matter_cluster/matter_attribute value.
 #
-#  Attribute IDs/units below are taken from the actual spec tables in
-#  dev/matter/23-27350-010_Matter-1.6-Application-Cluster-Specification.txt
-#  (core repo), not guessed - see that file's section references in each
-#  cluster's comment.
+#  Attribute IDs/units below are taken from the actual Matter spec tables,
+#  not guessed - see each cluster's own comment for its section reference.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -49,18 +46,14 @@ class AttributeInfo:
 
 # cluster_id -> (cluster name, {attribute_id: AttributeInfo})
 CLUSTERS: dict[int, tuple[str, dict[int, AttributeInfo]]] = {
-    # Core Spec, Basic Information cluster (0x0028) - not exhaustively covered,
-    # only what's been seen so far.
+    # Core Spec, Basic Information cluster (0x0028) - only what's been seen so far, not exhaustive.
     0x28: ('BasicInformation', {1: AttributeInfo('VendorName', 'str'), 3: AttributeInfo('ProductName', 'str')}),
-    # Application Cluster Spec, chapter on Descriptor (Core spec really, but
-    # encountered on every endpoint) - name only, not worth decoding attributes.
+    # Descriptor (Core spec, encountered on every endpoint) - name only, not worth decoding attributes.
     0x1D: ('Descriptor', {}),
     # Application Cluster Spec 3.8, On/Off Cluster.
     0x06: ('OnOff', {0: AttributeInfo('OnOff', 'bool')}),
-    # Application Cluster Spec 2.13, Electrical Power Measurement Cluster (attribute
-    # IDs/units per that section's table - validated live against a real device,
-    # see dev/matter/matter-integration-plan.md's "ElectricalPowerMeasurement /
-    # struct-cluster validation" section).
+    # Application Cluster Spec 2.13, Electrical Power Measurement Cluster - IDs/units per that
+    # section's table, validated against a real device.
     0x90: (
         'ElectricalPowerMeasurement',
         {
@@ -73,15 +66,12 @@ CLUSTERS: dict[int, tuple[str, dict[int, AttributeInfo]]] = {
             17: AttributeInfo('PowerFactor', 'num', 100, None),
         },
     ),
-    # Application Cluster Spec 2.12, Electrical Energy Measurement Cluster - cluster
-    # name only so far, attribute struct fields not yet decoded (see plan doc).
+    # Application Cluster Spec 2.12, Electrical Energy Measurement Cluster - name only so
+    # far, attribute struct fields not yet decoded.
     0x91: ('ElectricalEnergyMeasurement', {}),
-    # Core Spec, Bridged Device Basic Information cluster (0x0039) - present on every
-    # endpoint the bridge role exposes (bridge.js's BridgedDeviceBasicInformationServer).
-    # NodeLabel/ProductName carry matter_expose_name, the one thing that actually answers
-    # "which of my bridged items is this endpoint" from the server role's Discovery tab -
-    # added after a real gap: a bridge exposing 3 items showed as unreadable
-    # cluster_57/attr_N rows with no way to tell them apart before this.
+    # Core Spec, Bridged Device Basic Information cluster (0x0039) - present on every bridge-role
+    # endpoint (bridge.js's BridgedDeviceBasicInformationServer). NodeLabel/ProductName carry
+    # matter_expose_name - the only way to tell bridged endpoints apart on the Discovery tab.
     0x39: (
         'BridgedDeviceBasicInformation',
         {
@@ -94,11 +84,10 @@ CLUSTERS: dict[int, tuple[str, dict[int, AttributeInfo]]] = {
     # Application Cluster Spec 2.4, Boolean State Cluster - the bridge role's own
     # "contact" expose_type (bridge.js's ContactSensorDevice).
     0x45: ('BooleanState', {0: AttributeInfo('StateValue', 'bool')}),
-    # Application Cluster Spec 2.3, Temperature Measurement Cluster - the bridge role's
-    # own "temperature_sensor" expose_type. MeasuredValue is int16 hundredths of a degree
-    # C (Core Spec 1.6 7.19.2.9, same unit bridge.js's own applyValue() scales into) -
-    # divisor 100 converts it to plain degrees C, same pattern as ElectricalPowerMeasurement
-    # above.
+    # Application Cluster Spec 2.3, Temperature Measurement Cluster - the bridge role's own
+    # "temperature_sensor" expose_type. MeasuredValue is int16 hundredths of a degree C (Core
+    # Spec 1.6 7.19.2.9) - divisor 100 converts to plain degrees C, same pattern as
+    # ElectricalPowerMeasurement above.
     0x402: ('TemperatureMeasurement', {0: AttributeInfo('MeasuredValue', 'num', 100, '°C')}),
 }
 
@@ -125,15 +114,9 @@ def decode_value(cluster_id: int, attribute_id: int, raw_value):
     return raw_value / info.divisor
 
 
-# cluster_id -> (state attribute_id, command-when-true, command-when-false).
-# Only clusters where a single bool item can fully describe both state and
-# actuation via a canonical two-command pair - the `matter_switch` item
-# attribute's whole point. Small and validated incrementally, same
-# philosophy as CLUSTERS above: an unregistered cluster is a real gap, not
-# a bug - use matter_attribute/matter_command/matter_command_false directly
-# for it instead (that lower-level mechanism stays available for exactly
-# this reason - it has to work for devices/clusters this table hasn't
-# caught up with yet).
+# cluster_id -> (state attribute_id, command-when-true, command-when-false) - the `matter_switch`
+# item attribute's whole point. Same incremental-registry philosophy as CLUSTERS above; an
+# unregistered cluster falls back to matter_attribute/matter_command/matter_command_false directly.
 SWITCH_CLUSTERS: dict[int, tuple[int, str, str]] = {
     0x06: (0x00, 'on', 'off')  # OnOff: OnOff attribute, On/Off commands - verified on real hardware
 }
@@ -145,11 +128,9 @@ def switch_info(cluster_id: int) -> tuple[int, str, str] | None:
 
 
 # cluster_id -> name of a matching generic struct under plugin.yaml's item_structs (e.g.
-# 'matter.switch') - the Item-Generator webif feature suggests `struct: [...]` referencing these
-# instead of spelling out every attribute, for clusters that have graduated to "curated, tested,
-# has a real struct" status. Same small-and-incremental philosophy as SWITCH_CLUSTERS/CLUSTERS - a
-# cluster missing here just gets no suggestion (see the Discovery tab for its raw attributes
-# instead), not a bug.
+# 'matter.switch') - the webif's item-suggestion feature uses this instead of a raw per-attribute
+# dump, for clusters with a real, curated struct. Same registry philosophy as CLUSTERS/
+# SWITCH_CLUSTERS above; missing here just means no suggestion (Discovery tab still has raw data).
 CLUSTER_STRUCTS: dict[int, str] = {
     0x06: 'switch',  # OnOff
     0x90: 'electrical_power_measurement',  # ElectricalPowerMeasurement
@@ -163,10 +144,9 @@ def cluster_struct_name(cluster_id: int) -> str | None:
     return CLUSTER_STRUCTS.get(cluster_id)
 
 
-# struct_name -> human-readable function label, for a generated item's remark ("what is this",
-# not just "which device is this belongs to"). German, hardcoded - matches every other generated/
-# hand-written remark in this plugin (e.g. plugin.yaml's "aktuelle Leistung in W"), no i18n
-# mechanism exists for plugin-generated item config text anywhere in this codebase.
+# struct_name -> human-readable function label for a generated item's remark. German, hardcoded -
+# matches every other generated/hand-written remark in this plugin; no i18n mechanism exists for
+# plugin-generated item config text anywhere in this codebase.
 CLUSTER_STRUCT_LABELS: dict[str, str] = {
     'switch': 'Schalter',
     'electrical_power_measurement': 'Energiemessung',
@@ -180,9 +160,7 @@ def cluster_struct_label(struct_name: str) -> str:
     return CLUSTER_STRUCT_LABELS.get(struct_name, struct_name)
 
 
-# Device Library Spec device type IDs -> human name. Small and grown
-# incrementally like everything else here - unregistered types fall back to
-# their raw number via device_type_name() below.
+# Device Library Spec device type IDs -> human name; unregistered types fall back to their raw number.
 DEVICE_TYPES: dict[int, str] = {
     0x010A: 'On/Off Plug-in Unit'  # 266 - verified against real Shelly Plug M Gen3
 }

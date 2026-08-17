@@ -3,9 +3,7 @@
 """
 Unit tests for discovery.py - pure data transforms, no network. Fixture below
 is a trimmed-down version of the real attribute shape returned by
-matter-server's get_nodes() (see dev/matter/matter-integration-plan.md's
-"ElectricalPowerMeasurement / struct-cluster validation" section for the
-real device this was captured from), not a fabricated shape.
+matter-server's get_nodes(), captured from a real device, not fabricated.
 """
 
 import ruamel.yaml as yaml  # not pyyaml - see discovery.py's import comment

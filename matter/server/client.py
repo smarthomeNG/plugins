@@ -6,12 +6,10 @@
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
 #
-#  Asyncio WebSocket client for the matter-server sidecar. The wire
-#  protocol (message_id-correlated commands, unframed ServerInfoMessage on
-#  connect, unsolicited {"event": ...} pushes) was validated end-to-end
-#  against a real matter-server instance and a software Matter device in
-#  the Phase 0 spike - see dev/matter/matter-integration-plan.md and
-#  dev/matter/spike/spike_client.py in the core repo.
+#  Asyncio WebSocket client for the matter-server sidecar. The wire protocol
+#  (message_id-correlated commands, unframed ServerInfoMessage on connect,
+#  unsolicited {"event": ...} pushes) was validated end-to-end against a
+#  real matter-server instance and a software Matter device.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -188,7 +186,7 @@ class MatterServerClient:
             raise MatterCommandError(command, message)
         return message.get('result')
 
-    # -- convenience wrappers for the commands exercised in Phase 0 --
+    # -- convenience wrappers for matter-server's own commands --
 
     async def commission_with_code(self, code: str, network_only: bool = True, timeout: float = 300.0) -> dict:
         """
@@ -237,10 +235,8 @@ class MatterServerClient:
 
     async def write_attribute(self, node_id: int, path: str, value: Any) -> Any:
         """
-        Verified against real hardware (Shelly Plug M Gen3,
-        BasicInformation.NodeLabel - see the plan doc's "write_attribute
-        verified on real hardware" section). Not yet verified against an
-        attribute a device actively rejects (e.g. one expecting a command
+        Verified against real hardware (Shelly Plug M Gen3, BasicInformation.NodeLabel). Not yet
+        verified against an attribute a device actively rejects (e.g. one expecting a command
         instead of a direct write).
         """
         return await self.send_command('write_attribute', {'node_id': node_id, 'attribute_path': path, 'value': value})

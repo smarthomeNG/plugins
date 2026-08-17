@@ -19,8 +19,8 @@ from plugins.matter.mapping import (
 
 
 def test_attribute_path_format():
-    # confirmed against a live matter-server in the Phase 0 spike: endpoint 1,
-    # OnOff cluster (6), OnOff attribute (0) -> "1/6/0"
+    # confirmed against a live matter-server: endpoint 1, OnOff cluster (6),
+    # OnOff attribute (0) -> "1/6/0"
     assert attribute_path(1, 6, 0) == '1/6/0'
     assert attribute_path(0, 40, 14) == '0/40/14'  # Basic Information / ProductName
 

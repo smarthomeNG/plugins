@@ -10,8 +10,7 @@
 #  devices via the matter-server Node.js sidecar (sidecar.py) over a
 #  WebSocket (client.py), mirroring cluster attributes/commands onto shng
 #  items (mapping.py, shared with the bridge role) and managing the
-#  matter_alias node_id-indirection layer. See dev/matter/matter-integration-plan.md
-#  in the core (shng) repo for design/history.
+#  matter_alias node_id-indirection layer.
 #
 #  Extracted from plugins/matter/__init__.py - every function here takes the
 #  Matter plugin instance as its first argument (same pattern as

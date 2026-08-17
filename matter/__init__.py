@@ -15,8 +15,7 @@
 #  server's talks to the vendored matter-server, bridge's talks to this
 #  plugin's own @matter/node application (sidecar/bridge.js - lives next to
 #  matter-server, not under bridge/, so both share one Node.js dependency
-#  tree instead of installing separately). Design and history:
-#  dev/matter/matter-integration-plan.md in the core (shng) repo.
+#  tree instead of installing separately).
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -89,13 +88,11 @@ class Matter(SmartPlugin):
         # -- server role state --
         self.server_sidecar: MatterServerSidecar | None = None
         self.server_client: MatterServerClient | None = None
-        # The sidecar's own crash-recovery loop, run as a free-standing task (not
-        # part of the {stop_task, server_task, bridge_task} set _plugin_coro() awaits)
-        # - stored so cleanup() can cancel it before calling sidecar.stop(), closing a
-        # real race: without this, a sidecar dying at exactly the wrong moment during
-        # shutdown could get "helpfully" restarted by supervise() in the window before
-        # cleanup() gets around to setting sidecar._stopping, spawning a fresh process
-        # cleanup() never accounted for.
+        # The sidecar's own crash-recovery loop, run as a free-standing task (not part of the
+        # {stop_task, server_task, bridge_task} set _plugin_coro() awaits) - stored so cleanup()
+        # can cancel it before calling sidecar.stop(). Without this, a sidecar dying at the wrong
+        # moment during shutdown could get restarted by supervise() before cleanup() sets
+        # sidecar._stopping.
         self.server_sidecar_supervisor_task: asyncio.Task | None = None
         # Alias bookkeeping, kept separate from SmartPlugin's own _plg_item_dict/_item_lookup_dict.
         self._server_aliases: dict[str, int] = {}  # alias name -> current node_id

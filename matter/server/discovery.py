@@ -66,8 +66,7 @@ from ..clusters import (
 )
 
 # BasicInformation cluster (Core Spec 11.1), attributes used for the device
-# table: VendorName, ProductName, NodeLabel (user-settable, RW - see
-# dev/matter/matter-integration-plan.md's write_attribute verification).
+# table: VendorName, ProductName, NodeLabel (user-settable, RW).
 BASIC_INFORMATION_CLUSTER = 0x28
 VENDOR_NAME_ATTR = 0x01
 PRODUCT_NAME_ATTR = 0x03

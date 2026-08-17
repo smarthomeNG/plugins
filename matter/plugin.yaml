@@ -106,8 +106,8 @@ parameters:
         type: int
         default: 5561
         description:
-            de: 'Port, auf dem bridge.js seine WebSocket-Steuer-API anbietet (nur localhost, eigenes Protokoll dieses Plugins - siehe matter-integration-plan.md). Muss sich zwischen mehreren Instanzen unterscheiden, aus demselben Grund wie bridge_matter_port.'
-            en: 'Port on which bridge.js exposes its WebSocket control API (localhost only, this plugins own protocol - see matter-integration-plan.md). Must differ between instances if running more than one, same reason as bridge_matter_port.'
+            de: 'Port, auf dem bridge.js seine WebSocket-Steuer-API anbietet (nur localhost, eigenes Protokoll dieses Plugins). Muss sich zwischen mehreren Instanzen unterscheiden, aus demselben Grund wie bridge_matter_port.'
+            en: 'Port on which bridge.js exposes its WebSocket control API (localhost only, this plugins own protocol). Must differ between instances if running more than one, same reason as bridge_matter_port.'
 
     bridge_storage_path:
         type: str
@@ -120,8 +120,8 @@ parameters:
         type: int
         default: 20202021
         description:
-            de: 'Kommissionierungs-Passcode der Bridge. Fest vergeben (v1 hat noch keine Webif-UI fuer eine pro-Kommissionierung generierte Kombination) - siehe matter-integration-plan.md. Sollte sich zwischen mehreren Instanzen unterscheiden - sonst werben zwei Bridges mit identischen Kommissionierungsdaten gleichzeitig im selben LAN, was beim Scannen/Eingeben nicht mehr eindeutig einer bestimmten Instanz zuzuordnen ist.'
-            en: 'Commissioning passcode for the bridge. Fixed (v1 has no webif UI yet for a per-commissioning generated pairing code) - see matter-integration-plan.md. Should differ between instances if running more than one - otherwise two bridges advertise identical commissioning credentials on the same LAN simultaneously, making a scan/manual entry ambiguous about which instance you are actually commissioning.'
+            de: 'Kommissionierungs-Passcode der Bridge. Fest vergeben (v1 hat noch keine Webif-UI fuer eine pro-Kommissionierung generierte Kombination). Sollte sich zwischen mehreren Instanzen unterscheiden - sonst werben zwei Bridges mit identischen Kommissionierungsdaten gleichzeitig im selben LAN, was beim Scannen/Eingeben nicht mehr eindeutig einer bestimmten Instanz zuzuordnen ist.'
+            en: 'Commissioning passcode for the bridge. Fixed (v1 has no webif UI yet for a per-commissioning generated pairing code). Should differ between instances if running more than one - otherwise two bridges advertise identical commissioning credentials on the same LAN simultaneously, making a scan/manual entry ambiguous about which instance you are actually commissioning.'
 
     bridge_discriminator:
         type: int

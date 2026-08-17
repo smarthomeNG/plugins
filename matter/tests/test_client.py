@@ -5,8 +5,7 @@ Unit tests for MatterServerClient's request/response correlation, in
 particular the late-response path added after a real incident: a
 commission_with_code call took ~3 minutes end to end while send_command()'s
 default 30s timeout had already given up on it, and matter-server's real
-final answer was silently dropped as "unsolicited" (see
-dev/matter/matter-integration-plan.md's matching section). Exercises the
+final answer was silently dropped as "unsolicited". Exercises the
 real MatterServerClient/_receive_loop/send_command code (asyncio.run, same
 convention as test_bridge.py's TestBridgeErrorHandling), against a small
 fake websocket - not a mock of MatterServerClient itself.

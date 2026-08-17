@@ -13,10 +13,7 @@
 #  the server role's fabric, not something matter-server is involved in at
 #  all. bridge.js itself lives under sidecar/, not bridge/, so it shares
 #  one Node.js dependency tree with the server role instead of installing
-#  separately - see user_doc.rst. See dev/matter/matter-integration-plan.md
-#  in the core (shng) repo for the full design, including the live test
-#  against Apple Home the dynamic add_endpoint/remove_endpoint design is
-#  built on.
+#  separately - see user_doc.rst.
 #
 #  Same function-takes-plugin-first-arg pattern as server/__init__.py.
 #
@@ -44,11 +41,8 @@ from ..mapping import BridgeMapping
 from .client import BridgeCommandError, MatterBridgeClient
 from .sidecar import RESTART_BACKOFF_SECONDS, BridgeSidecarStartError, MatterBridgeSidecar
 
-# v1 scope only - see matter-integration-plan.md's "Bridge item-attribute
-# surface" section for why these three and not more yet (no low-level
-# escape hatch, no thermostat - both explicitly deferred until a real use
-# case shows up). Must match bridge.js's own EXPOSE_TYPES keys and
-# plugin.yaml's matter_expose_type valid_list.
+# v1 scope only - no low-level escape hatch, no thermostat, both deferred until a real use case
+# shows up. Must match bridge.js's own EXPOSE_TYPES keys and plugin.yaml's matter_expose_type valid_list.
 VALID_EXPOSE_TYPES = ('switch', 'contact', 'temperature_sensor')
 
 # What every bridge_client call below can raise: BridgeCommandError (bridge.js
@@ -210,22 +204,16 @@ def parse_item(plugin, item):
         )
         return None
 
-    # Full item path, not remark/item name: the only structurally-unique
-    # default available without requiring the user to set anything - see
-    # matter-integration-plan.md's "matter_expose_name" reasoning (a flat
-    # accessory list has no item-tree context to disambiguate identically-
-    # worded remarks or names the way shng's own item tree does).
+    # Full item path, not remark/item name: the only structurally-unique default without
+    # requiring the user to set anything - a flat accessory list has no item-tree context to
+    # disambiguate identically-worded remarks or names the way shng's own item tree does.
     name = plugin.get_iattr_value(item.conf, 'matter_expose_name', item.property.path) or item.property.path
 
-    # bridge.js writes *name* into BridgedDeviceBasicInformation's NodeLabel/
-    # ProductName, both spec-capped at 32 chars (Matter Core Spec, Basic
-    # Information cluster) - a longer value doesn't get silently truncated,
-    # it fails the whole endpoint's construction with a matter.js
-    # ConstraintError, dropping the accessory entirely. Caught here, not in
-    # bridge.js, for the same reason
-    # the unknown-expose_type check above is: a clear, early, item-path-
-    # attributed log line beats a cryptic JS stack trace three layers removed
-    # from the actual misconfiguration.
+    # bridge.js writes *name* into BridgedDeviceBasicInformation's NodeLabel/ProductName, both
+    # spec-capped at 32 chars (Matter Core Spec, Basic Information cluster) - a longer value
+    # fails the whole endpoint's construction with a matter.js ConstraintError instead of
+    # truncating. Caught here, not in bridge.js, same reason as the expose_type check above: a
+    # clear, item-path-attributed log line beats a cryptic JS stack trace.
     if len(name) > 32:
         plugin.logger.error(
             f'{item.property.path}: matter_expose_name (or the item path, if unset) is {len(name)} chars, '

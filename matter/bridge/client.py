@@ -6,10 +6,8 @@
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
 #
-#  Asyncio WebSocket client for bridge.js's control protocol - this
-#  plugin's own design (see dev/matter/matter-integration-plan.md's
-#  "Bridge control protocol" section in the core repo), not an external
-#  API to match like server/client.py's matter-server protocol. Mirrors
+#  Asyncio WebSocket client for bridge.js's control protocol - this plugin's own design, not an
+#  external API to match like server/client.py's matter-server protocol. Mirrors
 #  server/client.py's id-correlated command/response + unsolicited-event
 #  shape for consistency within the same plugin, not because anything
 #  requires it here.
@@ -149,7 +147,7 @@ class MatterBridgeClient:
             raise BridgeCommandError(command, message)
         return message.get('result')
 
-    # -- convenience wrappers matching bridge.js's three commands --
+    # -- convenience wrappers matching bridge.js's own commands --
 
     async def add_endpoint(self, item_path: str, expose_type: str, name: str) -> int:
         result = await self.send_command(

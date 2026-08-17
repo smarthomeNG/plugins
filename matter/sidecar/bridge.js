@@ -4,15 +4,7 @@
  * shng items as bridged Matter accessories for other Matter controllers
  * (Apple Home, Google Home, ...). Endpoints are added/removed live, driven
  * by bridge/client.py over a local control WebSocket - not matter-server,
- * which plays no part in this role (see dev/matter/matter-integration-plan.md's
- * "Bridge role" sections in the core repo for the full design and the
- * dynamic-add validation this is built on, including a real live test
- * against Apple Home).
- *
- * Derived from dev/matter/spike/bridge/bridge_spike.js (Phase 0 bridge
- * spike, both the initial static-device pass and the later dynamic-add/
- * SIGUSR1 rounds) - same @matter/node APIs, no longer hardcoded to one
- * fixed device.
+ * which plays no part in this role.
  *
  * Control protocol (Python <-> Node, one JSON message per WebSocket frame):
  *   Python -> Node request:  {"id": <int>, "command": <str>, "args": {...}}
@@ -164,9 +156,7 @@ const EXPOSE_TYPES = {
         // Matter's "temperature" datatype is int16, hundredths of a degree C
         // (Core Spec 1.6 7.19.2.9) - value = (temperature in C) x 100. shng
         // items carry plain degrees C; the x100 scaling happens here, at the
-        // Matter boundary, the same place server/mapping.py's cluster tables
-        // would apply a unit conversion (compare the milli-unit handling
-        // noted for ElectricalPowerMeasurement in the plan doc).
+        // Matter boundary, same as any other unit conversion in this plugin.
         applyValue: (endpoint, value) => endpoint.set({ temperatureMeasurement: { measuredValue: Math.round(value * 100) } }),
     },
 };
@@ -221,28 +211,19 @@ const endpoints = new Map();
 let wsClient = null; // the one control connection expected (bridge/client.py)
 
 /**
- * item_path -> endpoint number, persisted to disk so the SAME shng item gets
- * the SAME Matter endpoint number across bridge restarts - matter.js's own
- * Aggregator.add() assigns endpoint numbers sequentially per session with
- * nothing persisted (confirmed by reading Endpoint.ts - "if you omit the
- * endpoint number the node assigns a sequential one for you", no memory of
- * past assignments), so which number a given item got used to depend purely
- * on how many other items had already been added first that particular
- * session. Caught live: matter-server's own re-interview of the bridge
- * failed with a real ConstraintError ("Cannot initialize ... because it is
- * already active") after a restart reshuffled numbers out from under its own
- * persisted node cache. A stable number is also just correct behavior for a
- * bridge in general - Apple/Google Home expect a bridged accessory's
- * identity to survive a bridge restart without a fresh pairing.
+ * item_path -> endpoint number, persisted to disk so the SAME shng item gets the SAME Matter
+ * endpoint number across bridge restarts - matter.js's own Aggregator.add() assigns numbers
+ * sequentially per session with nothing persisted (Endpoint.ts: "if you omit the endpoint number
+ * the node assigns a sequential one for you"). Without this, matter-server's own re-interview of
+ * the bridge failed with a real ConstraintError ("Cannot initialize ... because it is already
+ * active") after a restart reshuffled numbers out from under its own persisted node cache - and a
+ * stable number is correct behavior generally, since Apple/Google Home expect a bridged
+ * accessory's identity to survive a bridge restart without a fresh pairing.
  *
  * Stored flat at <storage_path>/endpoint_ids.json, not inside matter.js's own
- * <storage_path>/shng-bridge/ subdirectory (confirmed via a live repro this
- * script's own storage never writes loose files at the storage_path root,
- * only under that node-id-named subdirectory) - no collision with anything
- * matter.js itself manages there. Entries are never removed on
- * remove_endpoint - re-exposing the same item_path later should get its old
- * number back, not a new one; the file only grows, negligible for a JSON map
- * this small.
+ * <storage_path>/shng-bridge/ subdirectory - no collision with anything matter.js manages there.
+ * Entries are never removed on remove_endpoint - re-exposing the same item_path later gets its
+ * old number back, not a new one.
  */
 const ENDPOINT_IDS_FILE = STORAGE_PATH ? join(STORAGE_PATH, 'endpoint_ids.json') : null;
 
@@ -272,17 +253,13 @@ function savePersistedEndpointIds() {
 const persistedEndpointIds = loadPersistedEndpointIds();
 
 /**
- * Lowest number not currently in use AND not already reserved for some other
- * item_path that hasn't been (re-)added yet this session - the second half
- * matters because add_endpoint calls arrive one at a time, in whatever order
- * Python's own item dict iterates in, not "known items first": without also
- * excluding not-yet-arrived persisted numbers, an early brand-new item could
- * get auto-assigned a number a later, already-known item is about to request
- * explicitly, which then fails outright (Endpoint.ts's own allocation guard
- * throws "number N is allocated to another endpoint", not a silent
- * reassignment) - matter.js's own auto-assignment only ever avoids
- * numbers already active *right now*, never numbers reserved for the future
- * on its behalf.
+ * Lowest number not currently in use AND not already reserved for some other item_path that
+ * hasn't been (re-)added yet this session - add_endpoint calls arrive one at a time in whatever
+ * order Python's item dict iterates, not "known items first". Without also excluding
+ * not-yet-arrived persisted numbers, an early brand-new item could get auto-assigned a number a
+ * later, already-known item is about to request explicitly, which then fails outright
+ * (Endpoint.ts's own allocation guard throws "number N is allocated to another endpoint", not a
+ * silent reassignment).
  */
 function nextFreeEndpointNumber() {
     const reserved = new Set([0, 1, ...endpoints.keys(), ...persistedEndpointIds.values()]);
@@ -314,16 +291,14 @@ function sendEvent(name, data) {
 }
 
 /**
- * BridgedDeviceBasicInformation's SerialNumber is spec-capped at 32 chars
- * (Core Spec, Basic Information cluster) and quality:F (fixed once set) -
- * a raw `shng-${itemPath}` blew past that for any item path over ~27 chars,
- * failing the whole endpoint's construction with a matter.js ConstraintError.
- * Item path length isn't something a user should have to think about
- * just to bridge an item, unlike matter_expose_name (validated in Python's
- * parse_item(), since that one IS user-visible and user-controlled) - so this
- * is unconditionally hash-derived rather than truncated: deterministic (same
- * item -> same serial across restarts, required by quality:F), collision-safe
- * regardless of path length or similarity, and always well under the cap.
+ * BridgedDeviceBasicInformation's SerialNumber is spec-capped at 32 chars (Core Spec, Basic
+ * Information cluster) and quality:F (fixed once set) - a raw `shng-${itemPath}` blew past that
+ * for any item path over ~27 chars, failing the whole endpoint's construction with a matter.js
+ * ConstraintError. Unlike matter_expose_name (validated in Python's parse_item(), since that one
+ * IS user-visible), item path length isn't something a user should have to think about just to
+ * bridge an item - so this is unconditionally hash-derived rather than truncated: deterministic
+ * (same item -> same serial across restarts, required by quality:F), collision-safe, and always
+ * well under the cap.
  */
 function serialNumberFor(itemPath) {
     return 'shng-' + createHash('sha256').update(itemPath).digest('hex').slice(0, 24);
@@ -413,16 +388,10 @@ async function handleGetStatus() {
 }
 
 async function handleOpenCommissioningWindow() {
-    // NOT agent.commissioning.allowBasicCommissioning() - that throws
-    // "... is not a function". The CommissioningServer *behavior* (what
-    // `agent.commissioning` exposes) never wraps
-    // DeviceCommissioner.allowBasicCommissioning() under that name - only
-    // enterCommissionableMode() calls it internally, and that's the actual
-    // public entry point. enterCommissionableMode() itself has no "already
-    // commissioned" guard (that check lives one level up, in
-    // CommissioningServer's own boot-time #enterOnlineMode(), not in this
-    // method), so this reopens the window correctly whether or not a fabric
-    // already exists, same as the doc comment above always intended.
+    // NOT agent.commissioning.allowBasicCommissioning() - see this file's own module docstring
+    // ("open_commissioning_window" entry) for why. No "already commissioned" guard here either
+    // (that check lives one level up, in CommissioningServer's own boot-time #enterOnlineMode()),
+    // so this correctly reopens the window whether or not a fabric already exists.
     await server.act(agent => agent.commissioning.enterCommissionableMode());
     windowOpenUntilMs = Date.now() + STANDARD_COMMISSIONING_TIMEOUT;
     return {};
