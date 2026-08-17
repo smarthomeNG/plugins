@@ -29,10 +29,10 @@ from bin.smarthome import VERSION
 
 class IMAP(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.4.2"
+    PLUGIN_VERSION = '1.4.2'
 
     def __init__(self, sh, *args, **kwargs):
-        super().__init__() 
+        super().__init__()
         self._host = self.get_parameter_value('host')
         self._port = self.get_parameter_value('port')
         self._username = self.get_parameter_value('username')
@@ -65,24 +65,24 @@ class IMAP(SmartPlugin):
         try:
             imap = self._connect()
         except Exception as e:
-            self.logger.warning("Could not connect to {0}: {1}".format(self._host, e))
+            self.logger.warning('Could not connect to {0}: {1}'.format(self._host, e))
             return
         try:
             rsp, data = imap.select()
         except Exception as e:
-            self.logger.warning("Problem getting mail on host {0}: {1}".format(self._host, e))
+            self.logger.warning('Problem getting mail on host {0}: {1}'.format(self._host, e))
             return
         if rsp != 'OK':
-            self.logger.warning("IMAP: Could not select mailbox")
+            self.logger.warning('IMAP: Could not select mailbox')
             try:
                 imap.close()
                 imap.logout()
             except Exception:
                 pass
             return
-        rsp, data = imap.uid('search', None, "ALL")
+        rsp, data = imap.uid('search', None, 'ALL')
         if rsp != 'OK':
-            self.logger.warning("IMAP: Could not search mailbox")
+            self.logger.warning('IMAP: Could not search mailbox')
             try:
                 imap.close()
                 imap.logout()
@@ -97,15 +97,17 @@ class IMAP(SmartPlugin):
             try:
                 rsp, data = imap.uid('fetch', uid, '(RFC822)')
                 if rsp != 'OK':
-                    self.logger.warning("IMAP: Could not fetch mail")
+                    self.logger.warning('IMAP: Could not fetch mail')
                     continue
                 try:
                     mail = email.message_from_bytes(data[0][1])
                 except Exception as e:
                     if len(data) < 2:
-                        self.logger.warning("IMAP: problem getting message {} from data: "
-                                            "data-list has length {} and data[0] = '{}' "
-                                            "Error: {}".format(uid, len(data), data[0], e))
+                        self.logger.warning(
+                            'IMAP: problem getting message {} from data: '
+                            "data-list has length {} and data[0] = '{}' "
+                            'Error: {}'.format(uid, len(data), data[0], e)
+                        )
                     if len(data) > 1:
                         self.logger.warning("data[1] = '{}'. Error: {}".format(data[1], e))
                     break
@@ -122,7 +124,9 @@ class IMAP(SmartPlugin):
                     if encoding is not None:
                         subject = subject.decode(encoding)
             except Exception as e:
-                self.logger.error("IMAP: problem parsing message {} with subject {}: {}".format(uid, mail.get('Subject'), e))
+                self.logger.error(
+                    'IMAP: problem parsing message {} with subject {}: {}'.format(uid, mail.get('Subject'), e)
+                )
                 # self.logger.warning("data = '{}', mail = '{}'".format(data, mail))
                 continue
             if subject in self._mail_sub:
@@ -138,27 +142,27 @@ class IMAP(SmartPlugin):
                 if self._host.lower() == 'imap.gmail.com':
                     typ, data = imap.uid('store', uid, '+X-GM-LABELS', '\\Trash')
                     if typ == 'OK':
-                        self.logger.debug("Moving mail to trash. {0} => {1}: {2}".format(fo, to, subject))
+                        self.logger.debug('Moving mail to trash. {0} => {1}: {2}'.format(fo, to, subject))
                     else:
-                        self.logger.warning("Could not move mail to trash. {0} => {1}: {2}".format(fo, to, subject))
+                        self.logger.warning('Could not move mail to trash. {0} => {1}: {2}'.format(fo, to, subject))
                 else:
                     rsp, data = imap.uid('copy', uid, self._trashfolder)
                     if rsp == 'OK':
                         typ, data = imap.uid('store', uid, '+FLAGS', '(\Deleted)')
-                        self.logger.debug("Moving mail to trash. {0} => {1}: {2}".format(fo, to, subject))
+                        self.logger.debug('Moving mail to trash. {0} => {1}: {2}'.format(fo, to, subject))
                     else:
-                        self.logger.warning("Could not move mail to trash. {0} => {1}: {2}".format(fo, to, subject))
-                        self.logger.info("Consider setting the trashfolder option to the name of your trash mailbox.")
+                        self.logger.warning('Could not move mail to trash. {0} => {1}: {2}'.format(fo, to, subject))
+                        self.logger.info('Consider setting the trashfolder option to the name of your trash mailbox.')
                         mailboxes = []
                         for mb in imap.list()[1]:
                             if mb is not None:
-                                mailboxes.append(mb.decode("utf-8"))
+                                mailboxes.append(mb.decode('utf-8'))
                         if mailboxes:
-                            self.logger.info("Available mailboxes are: {}".format(mailboxes))
+                            self.logger.info('Available mailboxes are: {}'.format(mailboxes))
                         else:
-                            self.logger.info("No trash mailboxes available")
+                            self.logger.info('No trash mailboxes available')
             else:
-                self.logger.info("Ignoring mail. {0} => {1}: {2}".format(fo, to, subject))
+                self.logger.info('Ignoring mail. {0} => {1}: {2}'.format(fo, to, subject))
         try:
             imap.close()
             imap.logout()

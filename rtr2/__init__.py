@@ -28,7 +28,7 @@ import datetime
 import os
 import json
 
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
 from lib.shtime import Shtime
 
@@ -45,10 +45,11 @@ class Rtr2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.2.0'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = (
+        '2.2.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    )
 
     _rtr = {}  # dict containing data of the rtrs. Key is the attribute rtr2_id
-
 
     def __init__(self, sh):
         """
@@ -81,7 +82,7 @@ class Rtr2(SmartPlugin):
         self.default_min_output = self.get_parameter_value('min_output')
         self.default_max_output = self.get_parameter_value('max_output')
 
-        self.cache_read_tried = False # Only write cache on shutdown, if a cache read has been tried on start
+        self.cache_read_tried = False  # Only write cache on shutdown, if a cache read has been tried on start
 
         # cycle time in seconds, only needed, if hardware/interface needs to be
         # polled for value changes by adding a scheduler entry in the run method of this plugin
@@ -98,10 +99,9 @@ class Rtr2(SmartPlugin):
         self.cache_path = os.path.join(self.get_sh().get_basedir(), 'var', 'plugins_cache')
         if not os.path.isdir(self.cache_path):
             # create plugins_cache dir if it does not already exist
-            self.logger.warning(f"Createing cache directory {self.cache_path}")
+            self.logger.warning(f'Createing cache directory {self.cache_path}')
             os.mkdir(self.cache_path)
-        self.logger.info(f"Using cache directory {self.cache_path}")
-
+        self.logger.info(f'Using cache directory {self.cache_path}')
 
         # if plugin should start even without web interface
         self.init_webinterface(WebInterface)
@@ -115,7 +115,7 @@ class Rtr2(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
         # read rtr values from cache
         self.read_cacheinfo()
 
@@ -129,7 +129,6 @@ class Rtr2(SmartPlugin):
         self.scheduler_add('update_all_rtrs', self.update_all_rtrs, cycle=self._cycle)
         self.scheduler_add('valve_protection', self.valve_protection, prio=5, cron='30 2 * 0')
 
-
         self.alive = True
         # if you need to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
@@ -138,7 +137,7 @@ class Rtr2(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.scheduler_remove('valve_protection')
         self.scheduler_remove('update_all_rtrs')
         self.alive = False
@@ -158,7 +157,7 @@ class Rtr2(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, 'rtr2_id'):
-            self.logger.debug(f"parse item: {item}")
+            self.logger.debug(f'parse item: {item}')
             rtr_id = self.get_iattr_value(item.conf, 'rtr2_id')
             if self._rtr.get(rtr_id, None) is None:
                 # Create a new rtr
@@ -226,7 +225,6 @@ class Rtr2(SmartPlugin):
                 self._rtr[rtr_id].update_rtr_items('Init')
                 return self.update_item
 
-
     def parse_logic(self, logic):
         """
         Default plugin parse_logic method
@@ -249,7 +247,7 @@ class Rtr2(SmartPlugin):
         :param dest: if given it represents the dest
         """
         if self.alive and caller != self.get_shortname():
-            #self.logger.warning(f"update_item: item={item.property.path} - value={item()}")
+            # self.logger.warning(f"update_item: item={item.property.path} - value={item()}")
             rtr_id = self.get_iattr_value(item.conf, 'rtr2_id')
             rtr_func = self.get_iattr_value(item.conf, 'rtr2_function')
             self._rtr[rtr_id].set_mode(rtr_func, item())
@@ -272,18 +270,17 @@ class Rtr2(SmartPlugin):
             # update PI controller
             self._rtr[r].update()
 
-
     def valve_protection(self):
         """
         Open and close valves of all RTRs periodically to protect them
         """
-        self.logger.info(f"Starting valve protection for all RTRs")
+        self.logger.info('Starting valve protection for all RTRs')
         for r in self._rtr:
             if self._rtr[r].valve_protect:
-                self.logger.info(f"- rtr {r}: Valve protection is opening valve")
+                self.logger.info(f'- rtr {r}: Valve protection is opening valve')
                 self._rtr[r].valve_protect_active = True
             else:
-                self.logger.info(f"- rtr {r}: Valve protection is disabled")
+                self.logger.info(f'- rtr {r}: Valve protection is disabled')
 
         shtime = Shtime.get_instance()
         close_time = shtime.now() + datetime.timedelta(minutes=5)
@@ -293,23 +290,21 @@ class Rtr2(SmartPlugin):
         self.update_all_rtrs()
         return
 
-
     def valve_protection_close(self):
         """
 
         :return:
         """
-        self.logger.info(f"Ending valve protection for all RTRs")
+        self.logger.info('Ending valve protection for all RTRs')
         for r in self._rtr:
             if self._rtr[r].valve_protect_active:
-                self.logger.info(f"- rtr {r}: Valve protection is closing valve (returning to regular state)")
+                self.logger.info(f'- rtr {r}: Valve protection is closing valve (returning to regular state)')
                 self._rtr[r].valve_protect_active = False
         self.update_all_rtrs()
         return
 
-
     def write_cacheinfo(self):
-        self.logger.info("write_cacheinfo() called")
+        self.logger.info('write_cacheinfo() called')
         # get parameters from all rtrs to be written to cache file (e.g. to survive a restart)
         # Info to be written:
         #  - temp info (analog to setup parameters)
@@ -331,11 +326,11 @@ class Rtr2(SmartPlugin):
             info_dict[r]['night_reduction'] = round(self._rtr[r]._temp.night_reduction, 2)
             info_dict[r]['fixed_reduction'] = self._rtr[r]._temp.fixed_reduction
             info_dict[r]['frost_temp'] = round(self._rtr[r]._temp._temp_frost, 2)
-            if (self._rtr[r].lock_status_item is not None):
+            if self._rtr[r].lock_status_item is not None:
                 info_dict[r]['locked'] = self._rtr[r].lock_status_item()
-            if (self._rtr[r].setting_max_output_item is not None):
+            if self._rtr[r].setting_max_output_item is not None:
                 info_dict[r]['max_output'] = self._rtr[r].setting_max_output_item()
-            if (self._rtr[r].setting_min_output_item is not None):
+            if self._rtr[r].setting_min_output_item is not None:
                 info_dict[r]['min_output'] = self._rtr[r].setting_min_output_item()
             if self.default_Kp != self._rtr[r].controller._Kp:
                 info_dict[r]['Kp'] = self._rtr[r].controller._Kp
@@ -344,10 +339,11 @@ class Rtr2(SmartPlugin):
             try:
                 if self.default_Kd != self._rtr[r].controller._Kd:
                     info_dict[r]['Kd'] = self._rtr[r].controller._Kd
-            except: pass
-        self.logger.info(f"write_cacheinfo: info_dict = {info_dict}")
+            except Exception:
+                pass
+        self.logger.info(f'write_cacheinfo: info_dict = {info_dict}')
 
-        filename = os.path.join(self.cache_path,'rtr2.json')
+        filename = os.path.join(self.cache_path, 'rtr2.json')
         # write thread list to ../var/run
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(info_dict, f, ensure_ascii=False, indent=4)
@@ -357,24 +353,25 @@ class Rtr2(SmartPlugin):
     def read_cacheinfo(self):
         self.cache_read_tried = True
 
-        self.logger.info("read_cacheinfo() called")
-        filename = os.path.join(self.cache_path,'rtr2.json')
+        self.logger.info('read_cacheinfo() called')
+        filename = os.path.join(self.cache_path, 'rtr2.json')
         try:
             with open(filename) as f:
                 info_dict = json.load(f)
-        except:
+        except Exception:
             return
 
-        self.logger.info(f"read_cacheinfo: info_dict = {info_dict}")
+        self.logger.info(f'read_cacheinfo: info_dict = {info_dict}')
         for r in info_dict:
-            self.logger.info(f"rtr {r} = {info_dict[r]}")
+            self.logger.info(f'rtr {r} = {info_dict[r]}')
             if self._rtr.get(r, None) is not None:
                 try:
                     # set Kp, Ki, Kd only, if saved to cache before
                     self._rtr[r].controller._Kp = float(info_dict[r]['Kp'])
                     self._rtr[r].controller._Ki = float(info_dict[r]['Ki'])
                     self._rtr[r].controller._Kd = float(info_dict[r]['Kd'])
-                except: pass
+                except Exception:
+                    pass
 
                 self._rtr[r]._mode._mode_before_frost = info_dict[r].get('mode_before_frost', 0)
                 self._rtr[r]._mode.hvac = info_dict[r]['hvac']
@@ -384,15 +381,15 @@ class Rtr2(SmartPlugin):
                 self._rtr[r]._temp.fixed_reduction = info_dict[r]['fixed_reduction']
                 self._rtr[r]._temp._temp_frost = info_dict[r]['frost_temp']
 
-                if (self._rtr[r].lock_status_item is not None):
+                if self._rtr[r].lock_status_item is not None:
                     value = info_dict[r].get('locked', None)
                     if value is not None:
                         self._rtr[r].lock_status_item(value)
-                if (self._rtr[r].setting_max_output_item is not None):
+                if self._rtr[r].setting_max_output_item is not None:
                     value = info_dict[r].get('max_output', None)
                     if value is not None:
                         self._rtr[r].setting_max_output_item(value)
-                if (self._rtr[r].setting_min_output_item is not None):
+                if self._rtr[r].setting_min_output_item is not None:
                     value = info_dict[r].get('min_output', None)
                     if value is not None:
                         self._rtr[r].setting_min_output_item(value)
@@ -402,15 +399,16 @@ class Rtr2(SmartPlugin):
                 self.logger.warning(f"Cannot restore cached values for rtr '{r}' (rtr not defined in items)")
         return
 
+
 # ==================================================================================================
 
 
-from .mode import *
-from .temperature import *
-from .pi_controller import *
+from .mode import Mode
+from .temperature import Temperature
+from .pi_controller import Pi_controller
 
-class Rtr_object():
 
+class Rtr_object:
     def __init__(self, plugin, temp_settings=None, controller_settings=None):
         self.plugin = plugin
         self.logger = self.plugin.logger
@@ -419,38 +417,41 @@ class Rtr_object():
 
         if temp_settings is not None and isinstance(temp_settings, list):
             if len(temp_settings) < 1:
-                temp_settings.append(self.plugin.default_comfort_temp)      # comfort temp
+                temp_settings.append(self.plugin.default_comfort_temp)  # comfort temp
             if len(temp_settings) < 2:
-                temp_settings.append(self.plugin.default_night_reduction)   # night reduction
+                temp_settings.append(self.plugin.default_night_reduction)  # night reduction
             if len(temp_settings) < 3:
-                temp_settings.append(self.plugin.default_standby_reduction) # standby_reduction
+                temp_settings.append(self.plugin.default_standby_reduction)  # standby_reduction
             if len(temp_settings) < 4:
-                temp_settings.append(self.plugin.default_fixed_reduction)   # fixed_reduction
+                temp_settings.append(self.plugin.default_fixed_reduction)  # fixed_reduction
             if len(temp_settings) < 5:
-                temp_settings.append(self.plugin.default_hvac_mode)         # hvac mode
+                temp_settings.append(self.plugin.default_hvac_mode)  # hvac mode
             if len(temp_settings) < 6:
-                temp_settings.append(self.plugin.default_frost_temp)        # frost prevention temp
+                temp_settings.append(self.plugin.default_frost_temp)  # frost prevention temp
 
-        self.logger.info(f"New Rtr_object: Initial temp_settings = {temp_settings}")
+        self.logger.info(f'New Rtr_object: Initial temp_settings = {temp_settings}')
 
         Kp = self.plugin.default_Kp
         Ki = self.plugin.default_Ki
-        Kd = self.plugin.default_Kd
         if controller_settings is not None and isinstance(controller_settings, list):
             # use inividual controller settings for Kp, Ki (and Kd)
             if len(controller_settings) > 0:
                 Kp = controller_settings[0]
             if len(controller_settings) > 1:
                 Ki = controller_settings[1]
-            if len(controller_settings) > 2:
-                Kd = controller_settings[2]
-
         self._mode = Mode()
 
         #                        mode,       comfort_temp,   night_reduction=None, standby_reduction=None,
         #                         fixed_reduction=True, hvac_mode=True, frost_temp=None):
-        self._temp = Temperature(self._mode, temp_settings[0], temp_settings[1], temp_settings[2],
-                                 temp_settings[3], temp_settings[4], temp_settings[5])
+        self._temp = Temperature(
+            self._mode,
+            temp_settings[0],
+            temp_settings[1],
+            temp_settings[2],
+            temp_settings[3],
+            temp_settings[4],
+            temp_settings[5],
+        )
         self.controller = Pi_controller(self._temp, Kp, Ki)
         # self.controller = Pi_controller(self._temp, 3, 120)
 
@@ -478,13 +479,12 @@ class Rtr_object():
         self.setting_min_output_item = None
         self.setting_max_output_item = None
 
-
     def update(self):
-        self.logger.info(f"rtr {self.id}: update called")
+        self.logger.info(f'rtr {self.id}: update called')
         if self.temp_actual_item is not None:
             # If valve protection is active, overrule lock and controler values
             if self.valve_protect_active:
-                dummy = self.controller.update(self.temp_actual_item())
+                self.controller.update(self.temp_actual_item())
                 output = 100
                 if (self.setting_max_output_item is not None) and (output > self.setting_max_output_item()):
                     output = self.setting_max_output_item()
@@ -493,7 +493,7 @@ class Rtr_object():
             # test if RTR is locked
             elif (self.lock_status_item is not None) and self.lock_status_item:
                 # if RTR is locked, set output to 0
-                dummy = self.controller.update(self.temp_actual_item())
+                self.controller.update(self.temp_actual_item())
                 self._update_item(self.control_output_item, 0)
                 self._update_item(self.heating_status_item, False)
             else:
@@ -509,9 +509,8 @@ class Rtr_object():
                     # set output value
                     self._update_item(self.control_output_item, output)
                     self._update_item(self.heating_status_item, self.heating)
-        self.logger.info(f"rtr {self.id}: update finished")
+        self.logger.info(f'rtr {self.id}: update finished')
         return
-
 
     # ----------------------------------------------------------------------
     # Methods to update status
@@ -575,7 +574,6 @@ class Rtr_object():
             self.update_rtr_items(mode)
         return
 
-
     def update_rtr_items(self, ignore_function=None):
 
         if ignore_function != 'comfort_mode':
@@ -610,11 +608,9 @@ class Rtr_object():
 
         self._update_item(self.heating_status_item, self.heating, src=ignore_function)
 
-
     def _update_item(self, item, value, src=None):
         if item is not None:
             item(value, self.plugin.get_shortname(), src)
-
 
     @property
     def heating(self):
@@ -624,11 +620,10 @@ class Rtr_object():
         :return: actual heating state
         :rtype: bool
         """
-        #self.logger.warning(f"rtr.heating={(self.controller.output >= 1.0)}, controller.putput={self.controller.output}")
-        return (self.controller.output >= 1.0)
-
+        # self.logger.warning(f"rtr.heating={(self.controller.output >= 1.0)}, controller.putput={self.controller.output}")
+        return self.controller.output >= 1.0
 
     def __repr__(self):
-        #return f"Mode object:\n{self._mode}\n\nTemperature object:\n{self._temp}\n\nPI-controller object:\n{self.controller}"
-        #return f"PI-controller object:\n{self.controller}, valve protect: {self.valve_protect}"
-        return f"valve protect: {self.valve_protect}"
+        # return f"Mode object:\n{self._mode}\n\nTemperature object:\n{self._temp}\n\nPI-controller object:\n{self.controller}"
+        # return f"PI-controller object:\n{self.controller}, valve protect: {self.valve_protect}"
+        return f'valve protect: {self.valve_protect}'

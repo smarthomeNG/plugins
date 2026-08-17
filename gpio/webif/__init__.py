@@ -44,7 +44,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -63,20 +62,23 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     def index(self, action=None, item_id=None, item_path=None, reload=None):
-        '''
+        """
         Build index.html for cherrypy
 
         Render the template and return the html file to be delivered to the browser
 
         :return: contents of the template after beeing rendered
-        '''
+        """
         pagelength = self.plugin.get_parameter_value('webif_pagelength')
 
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           webif_pagelength=pagelength,
-                           language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())
+        return tmpl.render(
+            p=self.plugin,
+            webif_pagelength=pagelength,
+            language=self.plugin._sh.get_defaultlanguage(),
+            now=self.plugin.shtime.now(),
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -95,5 +97,5 @@ class WebInterface(SmartPluginWebIf):
             try:
                 return json.dumps(data)
             except Exception as e:
-                self.logger.error(f"get_data_html exception: {e}")
+                self.logger.error(f'get_data_html exception: {e}')
         return {}

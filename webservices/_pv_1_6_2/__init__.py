@@ -59,7 +59,7 @@ class WebServices(SmartPlugin):
                 'http')  # try/except to handle running in a core version that does not support modules
         except:
             self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_fullname()))
             return False
 
@@ -467,7 +467,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                                 data = self.plugin.to_bool(data)
                                 item(data)
                                 self.logger.debug("Item with item path %s set to %s." % (item_path, data))
-                            except Exception as e:
+                            except Exception:
                                 return {"Error": "Item with item path %s is type bool, value is %s." % (item_path,
                                                                                                         data)}
                     elif 'str' in item.type():

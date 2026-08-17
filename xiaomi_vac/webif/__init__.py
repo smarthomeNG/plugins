@@ -44,7 +44,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -70,17 +69,19 @@ class WebInterface(SmartPluginWebIf):
         """
         plgitems = []
         for item in self.items.return_items():
-            if ('robvac' in item.conf):
+            if 'robvac' in item.conf:
                 plgitems.append(item)
-        self.logger.debug("Plugin : Render index Webif")
+        self.logger.debug('Plugin : Render index Webif')
         tmpl = self.tplenv.get_template('index.html')
         pagelength = self.plugin.get_parameter_value('webif_pagelength')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
-                           plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(),
-                           p=self.plugin,
-                           webif_pagelength=pagelength,
-                           connection=self.plugin.get_connection_info(),
-                           webif_dir=self.webif_dir,
-                           items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
-                           item_count=len(plgitems))
+        return tmpl.render(
+            plugin_shortname=self.plugin.get_shortname(),
+            plugin_version=self.plugin.get_version(),
+            plugin_info=self.plugin.get_info(),
+            p=self.plugin,
+            webif_pagelength=pagelength,
+            connection=self.plugin.get_connection_info(),
+            webif_dir=self.webif_dir,
+            items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
+            item_count=len(plgitems),
+        )

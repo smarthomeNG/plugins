@@ -1,0 +1,15 @@
+main:
+
+    temp:
+        type: num
+
+        uzsu:
+            type: dict
+            uzsu_item: ..
+
+    lamp:
+        type: bool
+
+        uzsu:
+            type: dict
+            uzsu_item: ..

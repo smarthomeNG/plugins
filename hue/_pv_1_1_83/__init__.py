@@ -203,7 +203,7 @@ class HUE():
         # zwischenspeichern für die loggerausgabe
         itemSearch = item
         # schleife bis ich ganz oben angekommen bin
-        while (not attribute in itemSearch.conf):
+        while (attribute not in itemSearch.conf):
             # eine Stufe in den ebenen nach oben
             itemSearch = itemSearch.return_parent()                    
             if (itemSearch is self._sh):
@@ -230,10 +230,10 @@ class HUE():
         # routinen keinen sonderfall mehr abzudecken !
         # zunächst einmal die installation der dimmroutine
         if 'hue_dim_max' in item.conf:
-            if not 'hue_dim_step' in item.conf:
+            if 'hue_dim_step' not in item.conf:
                 item.conf['hue_dim_step'] = '25'
                 logger.warning('HUE: dimmenDPT3: no hue_dim_step defined in item [{0}] using default 25'.format(item))
-            if not 'hue_dim_time' in item.conf:
+            if 'hue_dim_time' not in item.conf:
                 item.conf['hue_dim_time'] = '1'
                 logger.warning('HUE: dimmenDPT3: no hue_dim_time defined in item [{0}] using default 1'.format(item))
             return self.dimmenDPT3
@@ -249,7 +249,7 @@ class HUE():
                 item.conf['hue_lamp_type'] = hueLampType
                 item.conf['hue_bridge_id'] = hueBridgeId
                 hueIndex = hueBridgeId + '.' + hueLampId + '.' + hueListenCommand
-                if not hueIndex in self._listenLampItems:
+                if hueIndex not in self._listenLampItems:
                     self._listenLampItems[hueIndex] = item
                 else:
                     logger.warning('HUE: parse_item: in lamp item [{0}] command hue_listen = {1} is duplicated to item  [{2}]'.format(item,hueListenCommand,self._listenLampItems[hueIndex]))
@@ -258,7 +258,7 @@ class HUE():
                 hueBridgeId = self._find_item_attribute(item, 'hue_bridge_id', 0, self._numberHueBridges)
                 item.conf['hue_bridge_id'] = hueBridgeId
                 hueIndex = hueBridgeId + '.' + hueListenCommand
-                if not hueIndex in self._listenBridgeItems:
+                if hueIndex not in self._listenBridgeItems:
                     self._listenBridgeItems[hueIndex] = item
                 else:
                     logger.warning('HUE: parse_item: in bridge item [{0}] command hue_listen = {1} is duplicated to item  [{2}]'.format(item,hueListenCommand,self._listenLampItems[hueIndex]))
@@ -275,7 +275,7 @@ class HUE():
                 item.conf['hue_group_id'] = hueGroupId
                 item.conf['hue_bridge_id'] = hueBridgeId
                 hueIndex = hueBridgeId + '.' + hueGroupId + '.' + hueListenGroupCommand
-                if not hueIndex in self._listenGroupItems:
+                if hueIndex not in self._listenGroupItems:
                     self._listenGroupItems[hueIndex] = item
                 else:
                     logger.warning('HUE: parse_item: in group item [{0}] command hue_listen_group = {1} is duplicated to item  [{2}]'.format(item,hueListenGroupCommand,self._listenGroupItems[hueIndex]))
@@ -291,7 +291,7 @@ class HUE():
                 item.conf['hue_lamp_type'] = hueLampType
                 item.conf['hue_bridge_id'] = hueBridgeId
                 hueIndex = hueBridgeId + '.' + hueLampId + '.' + hueSendCommand
-                if not hueIndex in self._sendLampItems:
+                if hueIndex not in self._sendLampItems:
                     self._sendLampItems[hueIndex] = item
                 else:
                     logger.warning('HUE: parse_item: in lamp item [{0}] command hue_send = {1} is duplicated to item  [{2}]'.format(item,hueSendCommand,self._sendLampItems[hueIndex]))
@@ -301,7 +301,7 @@ class HUE():
                 hueBridgeId = self._find_item_attribute(item, 'hue_bridge_id', 0, self._numberHueBridges)
                 item.conf['hue_bridge_id'] = hueBridgeId
                 hueIndex = hueBridgeId + '.' + hueSendCommand
-                if not hueIndex in self._sendBridgeItems:
+                if hueIndex not in self._sendBridgeItems:
                     self._sendBridgeItems[hueIndex] = item
                 else:
                     logger.warning('HUE: parse_item: in bridge item [{0}] command hue_send = {1} is duplicated to item  [{2}]'.format(item,hueSendCommand,self._sendLampItems[hueIndex]))
@@ -319,7 +319,7 @@ class HUE():
                 item.conf['hue_group_id'] = hueGroupId
                 item.conf['hue_bridge_id'] = hueBridgeId
                 hueIndex = hueBridgeId + '.' + hueGroupId + '.' + hueSendGroupCommand
-                if not hueIndex in self._sendGroupItems:
+                if hueIndex not in self._sendGroupItems:
                     self._sendGroupItems[hueIndex] = item
                 else:
                     logger.warning('HUE: parse_item: in group item [{0}] command hue_send_group = {1} is duplicated to item  [{2}]'.format(item,hueSendGroupCommand,self._sendGroupItems[hueIndex]))
@@ -567,7 +567,7 @@ class HUE():
         # hier kommt der PUT request, um die stati an die hue bridge zu übertragen
         self._hueLock.acquire()
         returnValues = self._get_web_content(hueBridgeId, '/lights/%s/state' % hueLampId, 'PUT', json.dumps(state))
-        if returnValues == None:
+        if returnValues is None:
             self._hueLock.release()
             return
         # der aufruf liefert eine bestätigung zurück, was den numgesetzt werden konnte
@@ -602,7 +602,7 @@ class HUE():
         # hier kommt der PUT request, um die stati an die hue bridge zu übertragen
         self._hueLock.acquire()
         returnValues = self._get_web_content(hueBridgeId, '/groups/%s/action' % hueGroupId, 'PUT', json.dumps(state))
-        if returnValues == None:
+        if returnValues is None:
             self._hueLock.release()
             return
         # der aufruf liefert eine bestätigung zurück, was den numgesetzt werden konnte
@@ -622,7 +622,7 @@ class HUE():
             hueBridgeId = str(numberBridgeId)
             self._hueLock.acquire()
             returnValues = self._get_web_content(hueBridgeId, '/lights')
-            if returnValues == None:
+            if returnValues is None:
                 self._hueLock.release()
                 return
             # schleife über alle gefundenen lampen
@@ -672,7 +672,7 @@ class HUE():
             hueBridgeId = str(numberBridgeId)
             self._hueLock.acquire()
             returnValues = self._get_web_content(hueBridgeId, '/groups')
-            if returnValues == None:
+            if returnValues is None:
                 self._hueLock.release()
                 return
             # schleife über alle gefundenen lampen
@@ -722,7 +722,7 @@ class HUE():
             hueBridgeId = str(numberBridgeId)
             self._hueLock.acquire()
             returnValues = self._get_web_content(hueBridgeId, '/config')
-            if returnValues == None:
+            if returnValues is None:
                 self._hueLock.release()
                 return
             # schleife über alle gefundenen lampen

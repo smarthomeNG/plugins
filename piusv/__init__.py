@@ -32,6 +32,7 @@ from .webif import WebInterface
 
 import smbus
 
+
 class piusv(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
@@ -62,69 +63,74 @@ class piusv(SmartPlugin):
             self.poll_cycle = self.get_parameter_value('poll_cycle')
             self.i2c_address = self.get_parameter_value('i2c_address')
         except KeyError as e:
-            self.logger.critical("Plugin '{}': Inconsistent plugin (invalid metadata definition: {} not defined)".format(self.get_shortname(), e))
+            self.logger.critical(
+                "Plugin '{}': Inconsistent plugin (invalid metadata definition: {} not defined)".format(
+                    self.get_shortname(), e
+                )
+            )
             self._init_complete = False
             return
 
         self.init_webinterface(WebInterface)
         return
 
-####################################################################################
-# Die Parameter der Pi USV+ byteweise auslesen
+    ####################################################################################
+    # Die Parameter der Pi USV+ byteweise auslesen
     def get_parameter(self, index):
-        parameters = [0,0,0,0,0,0,0,0,0,0]
+        parameters = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
         try:
             self.piusv_handle.write_byte(self.i2c_address, 0x02)
-        except (IOError):
-            self.logger.error("get_parameter: error writing to piusv")
-            return(0)
+        except IOError:
+            self.logger.error('get_parameter: error writing to piusv')
+            return 0
         for i in range(10):
             try:
                 parameters[i] = self.piusv_handle.read_byte(self.i2c_address)
-            except (IOError):
-                self.logger.error("get_parameter: error reading to piusv")
-                return(0)
-        value = 256*parameters[index] + parameters[index+1]
+            except IOError:
+                self.logger.error('get_parameter: error reading to piusv')
+                return 0
+        value = 256 * parameters[index] + parameters[index + 1]
         return value
 
-# Statusbyte auslesen
+    # Statusbyte auslesen
     def get_status(self):
 
         try:
             self.piusv_handle.write_byte(self.i2c_address, 0x00)
-        except (IOError):
-            self.logger.error("get_status: error writing to piusv")
-            return(0)
+        except IOError:
+            self.logger.error('get_status: error writing to piusv')
+            return 0
         try:
             status = self.piusv_handle.read_byte(self.i2c_address)
-        except (IOError):
-            self.logger.error("get_status: error reading to piusv")
-            return(0)
+        except IOError:
+            self.logger.error('get_status: error reading to piusv')
+            return 0
         return status
 
-# Firmware auslesen
+    # Firmware auslesen
     def get_firmware(self):
 
         version = ''
         try:
             self.piusv_handle.write_byte(self.i2c_address, 0x01)
-        except (IOError):
-            self.logger.error("get_get_firmware: error writing to piusv")
-            return(0)
-        for i in range (12):
+        except IOError:
+            self.logger.error('get_get_firmware: error writing to piusv')
+            return 0
+        for i in range(12):
             try:
                 version = version + chr(self.piusv_handle.read_byte(self.i2c_address))
-            except (IOError):
-                self.logger.error("get_firmware: error reading to piusv")
-                return(0)
+            except IOError:
+                self.logger.error('get_firmware: error reading to piusv')
+                return 0
         return version
-###############################################################################
+
+    ###############################################################################
     def run(self):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
         # Handle
         self.piusv_handle = smbus.SMBus(1)
 
@@ -136,7 +142,7 @@ class piusv(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.scheduler_remove('poll_device')
         self.alive = False
 
@@ -154,7 +160,7 @@ class piusv(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, 'piusv_func'):
-            self.logger.debug(f"parse item: {item}")
+            self.logger.debug(f'parse item: {item}')
             self._item_dict[item] = self.get_iattr_value(item.conf, 'piusv_func')
 
         elif self.has_iattr(item.conf, 'piusv_sys'):
@@ -172,12 +178,14 @@ class piusv(SmartPlugin):
         """
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped and only, if the item has not been changed by this plugin:
-            self.logger.info(f"Update item: {item.property.path}, item has been changed outside this plugin")
+            self.logger.info(f'Update item: {item.property.path}, item has been changed outside this plugin')
 
             if self.has_iattr(item.conf, 'piusv_sys'):
-                self.logger.debug(f"update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}")
+                self.logger.debug(
+                    f'update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}'
+                )
                 if self.get_iattr_value(item.conf, 'piusv_sys') == 'update' and bool(item()):
-                    self.logger.info(f"Update of all items of piusv Plugin requested. ")
+                    self.logger.info('Update of all items of piusv Plugin requested. ')
                     self.poll_device()
                     item(False)
             pass
@@ -188,10 +196,14 @@ class piusv(SmartPlugin):
         """
         # check if another cyclic cmd run is still active
         if self._cyclic_update_active:
-            self.logger.warning('Triggered cyclic poll_device, but previous cyclic run is still active. Therefore request will be skipped.')
+            self.logger.warning(
+                'Triggered cyclic poll_device, but previous cyclic run is still active. Therefore request will be skipped.'
+            )
             return
         elif self.suspended:
-            self.logger.warning('Triggered cyclic poll_device, but Plugin in suspended. Therefore request will be skipped.')
+            self.logger.warning(
+                'Triggered cyclic poll_device, but Plugin in suspended. Therefore request will be skipped.'
+            )
             return
         else:
             self.logger.info('Triggering cyclic poll_device')
@@ -201,7 +213,7 @@ class piusv(SmartPlugin):
 
         for item in self._item_dict:
             # self.logger.debug(f"poll_device: handle item {item.id()}")
-            value = eval(f"self.{self.get_iattr_value(item.conf, 'piusv_func')}()")
+            value = eval(f'self.{self.get_iattr_value(item.conf, "piusv_func")}()')
             # self.logger.info(f"poll_device: {value=} for item {item.id()} will be set.")
             item(value, self.get_shortname())
 

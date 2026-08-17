@@ -252,7 +252,7 @@ class Zigbee2Mqtt(MqttPlugin):
                     topic_level3 = 'set'
                     value = int(round(item() * 255 / 100, 0))  # Umrechnung von 0-100% in 0-254
                     if value < 0 or value > 255:
-                        self.logger.warning(f'commanded value for brightness not within allowed range; set to next valid value')
+                        self.logger.warning('commanded value for brightness not within allowed range; set to next valid value')
                         value = 0 if value < 0 else 255
                     payload = '{' + f'"brightness" : "{value}"' + '}'
                 elif zigbee2mqtt_attr == 'color_temp':
@@ -260,7 +260,7 @@ class Zigbee2Mqtt(MqttPlugin):
                     value = int(round(1000000 / item(), 0))
                     # mired scale
                     if value < 150 or value > 500:
-                        self.logger.warning(f' commanded value for brightness not within allowed range; set to next valid value')
+                        self.logger.warning(' commanded value for brightness not within allowed range; set to next valid value')
                         value = 150 if value < 150 else 500
                     payload = '{' + f'"color_temp" : "{value}"' + '}'
                 elif zigbee2mqtt_attr == 'hue':
@@ -269,7 +269,7 @@ class Zigbee2Mqtt(MqttPlugin):
                     saturation_item = self.zigbee2mqtt_plugin_devices[topic_level2]['connected_items']['item_saturation']
                     saturation = saturation_item()
                     if hue < 0 or hue > 359:
-                        self.logger.warning(f'commanded value for hue not within allowed range; set to next valid value')
+                        self.logger.warning('commanded value for hue not within allowed range; set to next valid value')
                         hue = 0 if hue < 0 else 359
                     payload = '{"color":{' + f'"hue":{hue}, "saturation":{saturation}' + '}}'
                 elif zigbee2mqtt_attr == 'saturation':
@@ -278,7 +278,7 @@ class Zigbee2Mqtt(MqttPlugin):
                     hue_item = self.zigbee2mqtt_plugin_devices[topic_level2]['connected_items']['item_hue']
                     hue = hue_item()
                     if saturation < 0 or saturation > 100:
-                        self.logger.warning(f'commanded value for hue not within allowed range; set to next valid value')
+                        self.logger.warning('commanded value for hue not within allowed range; set to next valid value')
                         saturation = 0 if saturation < 0 else 100
                     payload = '{"color":{' + f'"hue":{hue}, "saturation":{saturation}' + '}}'
                 else:
@@ -456,7 +456,7 @@ class Zigbee2Mqtt(MqttPlugin):
                 if topic_level4 == '':
                     # event_type = payload.get('type')
                     if self.debug_log:
-                        self.logger.debug(f"event info message not implemented yet.")
+                        self.logger.debug("event info message not implemented yet.")
 
             elif topic_level3 == 'devices':
                 if self.debug_log:
@@ -470,7 +470,7 @@ class Zigbee2Mqtt(MqttPlugin):
 
             else:
                 if self.debug_log:
-                    self.logger.debug(f"Function type message not implemented yet.")
+                    self.logger.debug("Function type message not implemented yet.")
 
         # Handle Data from connected devices
         elif (topic_level3 + topic_level4 + topic_level5) == '':
@@ -551,7 +551,7 @@ class Zigbee2Mqtt(MqttPlugin):
                 # Setzen des Itemwertes
                 if topic_level2 in list(self.zigbee2mqtt_plugin_devices.keys()):
                     if self.debug_log:
-                        self.logger.debug(f"Item to be checked for update and to be updated")
+                        self.logger.debug("Item to be checked for update and to be updated")
                     for element in payload:
                         itemtype = f"item_{element}"
                         value = payload[element]

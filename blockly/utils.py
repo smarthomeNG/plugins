@@ -27,6 +27,7 @@ import os
 import collections
 from collections import OrderedDict
 
+
 def remove_prefix(string, prefix):
     """
     Remove prefix from a string
@@ -40,7 +41,7 @@ def remove_prefix(string, prefix):
     :rtype: str
     """
     if string.startswith(prefix):
-        return string[len(prefix):]
+        return string[len(prefix) :]
     return string
 
 

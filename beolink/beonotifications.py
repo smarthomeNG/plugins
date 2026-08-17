@@ -33,8 +33,8 @@ import requests
 import threading
 import logging
 
-class beo_notifications():
 
+class beo_notifications:
     ip = None
     friendlyName = None
     state = '?'
@@ -48,7 +48,6 @@ class beo_notifications():
     swupdate = {}
 
     _r = None
-
 
     def __init__(self, ip=None, device_dict=None, beodevices=None, logger=None, logger_name=None):
 
@@ -64,44 +63,43 @@ class beo_notifications():
             ip = device_dict['device']['ip']
 
         if ip is None:
-            self.logger.error(f"No ip address specified for Beolink device")
+            self.logger.error('No ip address specified for Beolink device')
             return
 
         self.ip = ip
-        self.friendlyName =  ip
+        self.friendlyName = ip
         if device_dict is not None:
             self.friendlyName = device_dict['device'].get('FriendlyName', ip)
 
         self.lock = threading.Lock()
-        self.log_notification( msg=f"--- New instance of class beo_notifications ---", level='dbghigh')
-
+        self.log_notification(msg='--- New instance of class beo_notifications ---', level='dbghigh')
 
     def log_notification(self, notification=None, msg=None, handled=True, level=None):
 
-        msg_time = ""
+        msg_time = ''
         if notification is None:
-            log_msg = f"{msg_time}{self.friendlyName:13}{msg}"
+            log_msg = f'{msg_time}{self.friendlyName:13}{msg}'
         else:
-            #msg_time =f"{notification['timestamp'].split('T')[1].split('.')[0]} "
+            # msg_time =f"{notification['timestamp'].split('T')[1].split('.')[0]} "
             if msg is None:
                 msg = notification['type']
                 if not handled:
-                    msg = f"({msg}): kind={notification['kind']}"
+                    msg = f'({msg}): kind={notification["kind"]}'
                 elif level is None:
                     level = 'dbghigh'
-                msg = f"{msg}: data={notification['data']}"
+                msg = f'{msg}: data={notification["data"]}'
             else:
-                msg = f"{notification['type']}: {msg}"
+                msg = f'{notification["type"]}: {msg}'
 
-            log_msg = f"{msg_time}{self.friendlyName:13}{msg}"
+            log_msg = f'{msg_time}{self.friendlyName:13}{msg}'
 
         try:
             if level is None:
                 self.logger.info(log_msg)
             elif level.lower() == 'dbghigh':
-                self.logger.dbgmed( log_msg )
+                self.logger.dbgmed(log_msg)
             elif level.lower() == 'dbgmed':
-                self.logger.dbgmed( log_msg )
+                self.logger.dbgmed(log_msg)
             elif level.lower() == 'dbglow':
                 self.logger.dbglow(log_msg)
             elif level.lower() == 'debug':
@@ -112,8 +110,8 @@ class beo_notifications():
                 self.logger.warning(log_msg)
             else:
                 log_msg = log_msg + ', level=' + level.lower()
-                self.logger.info( log_msg )
-        except:
+                self.logger.info(log_msg)
+        except Exception:
             self.logger.warning(log_msg)
 
     def notification_playing_net_radio(self, notification):
@@ -123,23 +121,28 @@ class beo_notifications():
         self.playing['genre'] = data['genre']
         self.playing['liveDescription'] = data['liveDescription']
 
-        self.log_notification(notification, msg=f"name={self.playing['name']}, genre={self.playing['genre']}, liveDescription={self.playing['liveDescription']}" )
-
+        self.log_notification(
+            notification,
+            msg=f'name={self.playing["name"]}, genre={self.playing["genre"]}, liveDescription={self.playing["liveDescription"]}',
+        )
 
     def process_notification(self, line):
 
         try:
             line_dict = json.loads(line)
         except Exception as e:
-            self.logger.exception(f"process_notification: Exception 1 {e}")
-            #print(f"Fehler: {e}")
+            self.logger.exception(f'process_notification: Exception 1 {e}')
+            # print(f"Fehler: {e}")
             return
 
         try:
             if self.ip != self.device_dict['device'].get('ip', None):
-                self.log_notification(msg=f"WRONG DEVICE - self.ip={self.ip}, device_dict ip={self.device_dict['device'].get('ip', None)}", level='warning')
+                self.log_notification(
+                    msg=f'WRONG DEVICE - self.ip={self.ip}, device_dict ip={self.device_dict["device"].get("ip", None)}',
+                    level='warning',
+                )
         except Exception as e:
-            self.logger.exception(f"process_notification: Exception 2 {e}")
+            self.logger.exception(f'process_notification: Exception 2 {e}')
         notification = line_dict['notification']
         notification_type = notification['type']
         data = notification['data']
@@ -177,8 +180,8 @@ class beo_notifications():
                 self.source['friendlyName'] = experience['source']['friendlyName']
                 self.source['deviceFriendlyName'] = experience['source']['product']['friendlyName']
                 self.friendlyName = self.source['deviceFriendlyName']
-                self.logger.info(f"{self.ip}: SOURCE friendlyName={self.source['deviceFriendlyName']} - data={data}")
-                self.logger.info(f"{self.ip}:  - self.device_dict={self.device_dict}")
+                self.logger.info(f'{self.ip}: SOURCE friendlyName={self.source["deviceFriendlyName"]} - data={data}')
+                self.logger.info(f'{self.ip}:  - self.device_dict={self.device_dict}')
                 self.source['type'] = experience['source']['sourceType']['type']
                 self.source['category'] = experience['source']['category']
                 self.source['inUse'] = experience['source']['inUse']
@@ -198,7 +201,7 @@ class beo_notifications():
                     self.device_dict['source']['linkable'] = experience['source']['linkable']
 
                 self.log_notification(notification)
-                #self.log_notification(notification, msg=f"source={self.source}")
+                # self.log_notification(notification, msg=f"source={self.source}")
             else:
                 self.log_notification(notification)
 
@@ -211,7 +214,10 @@ class beo_notifications():
                 self.device_dict['content']['genre'] = data['genre']
                 self.device_dict['content']['title'] = data['liveDescription']
 
-            self.log_notification(notification, msg=f"name={self.playing['name']}, genre={self.playing['genre']}, liveDescription={self.playing['liveDescription']}" )
+            self.log_notification(
+                notification,
+                msg=f'name={self.playing["name"]}, genre={self.playing["genre"]}, liveDescription={self.playing["liveDescription"]}',
+            )
 
         elif notification_type == 'NUMBER_AND_NAME':
             if self.device_dict is not None:
@@ -220,7 +226,7 @@ class beo_notifications():
                 dvb = data.get('dvb', None)
                 if dvb:
                     self.device_dict['source']['tuner'] = data['dvb'].get('tuner', '')
-            self.log_notification(notification )
+            self.log_notification(notification)
 
         elif notification_type == 'VOLUME':
             self.volume['level'] = data['speaker']['level']
@@ -235,7 +241,7 @@ class beo_notifications():
                 self.device_dict['volume']['minimum'] = data['speaker']['range']['minimum']
                 self.device_dict['volume']['maximum'] = data['speaker']['range']['maximum']
 
-            self.log_notification( notification )
+            self.log_notification(notification)
 
         # elif notification_type == 'SOFTWARE_UPDATE_STATE':
         #     self.swupdate = {}
@@ -247,22 +253,21 @@ class beo_notifications():
         #
         #     self.log_notification(notification, msg=f"state={self.swupdate.get('state', '')}, updstate={self.swupdate.get('updstate', '')}" )
 
-        elif notification_type in('KEYBOARD', 'TRACKPAD', 'SOFTWARE_UPDATE_STATE'):
+        elif notification_type in ('KEYBOARD', 'TRACKPAD', 'SOFTWARE_UPDATE_STATE'):
             self.log_notification(notification, handled=False, level='dbghigh')
 
         else:
             self.log_notification(notification, handled=False)
 
-
     def open_stream(self):
 
-        self.log_notification(msg=f"_CONNECT_: Opening connection to {self.ip}...", level='dbghigh' )
+        self.log_notification(msg=f'_CONNECT_: Opening connection to {self.ip}...', level='dbghigh')
         try:
-            self._r = requests.get(f"http://{self.ip}:8080/BeoZone/Notifications", stream=True)
+            self._r = requests.get(f'http://{self.ip}:8080/BeoZone/Notifications', stream=True)
         except Exception as e:
-            self.log_notification(msg=f"Exception while opening: {e}", level='dbglow')
+            self.log_notification(msg=f'Exception while opening: {e}', level='dbglow')
             if self.state != 'off':
-                self.log_notification(msg=f"_CONNECT_: Device ist offline", level='dbghigh')
+                self.log_notification(msg='_CONNECT_: Device ist offline', level='dbghigh')
             self.state = 'off'
             self._r = None
             return
@@ -270,11 +275,10 @@ class beo_notifications():
         if self._r.encoding is None:
             self._r.encoding = 'utf-8'
         self.state = 'on'
-        self.log_notification(msg=f"_CONNECT_: Connection opened", level='dbghigh' )
+        self.log_notification(msg='_CONNECT_: Connection opened', level='dbghigh')
 
         self.lines = self._r.iter_lines(decode_unicode=True)
         return
-
 
     def close_stream(self):
 
@@ -292,18 +296,18 @@ class beo_notifications():
             self._r.close()
         return
 
-
     def process_stream(self):
 
-
         if not self.lock.acquire(blocking=False):
-            self.log_notification(msg=f"Skipping, process_stream() is locked", level='debug')
+            self.log_notification(msg='Skipping, process_stream() is locked', level='debug')
             return
 
         if self._r is None:
             self.open_stream()
             if self._r is None:
-                self.log_notification(msg=f"process_stream() unlocked because stream could not be opened", level='dbglow')
+                self.log_notification(
+                    msg='process_stream() unlocked because stream could not be opened', level='dbglow'
+                )
                 self.lock.release()
                 return
 
@@ -314,8 +318,8 @@ class beo_notifications():
                 if line == 'OFFLINE':
                     line = None
                     self._r = None
-                    self.log_notification(msg=f"_LOOP_: Device ging offline", level='dbghigh')
-                    self.log_notification(msg=f"process_stream() unlocked (offline)", level='dbglow')
+                    self.log_notification(msg='_LOOP_: Device ging offline', level='dbghigh')
+                    self.log_notification(msg='process_stream() unlocked (offline)', level='dbglow')
                     self.lock.release()
                     return
 
@@ -324,8 +328,7 @@ class beo_notifications():
                 else:
                     loop = False
         except Exception as e:
-            self.log_notification(msg=f"process_stream: Exception {e}")
+            self.log_notification(msg=f'process_stream: Exception {e}')
 
-        self.log_notification(msg=f"process_stream() unlocked", level='debug')
+        self.log_notification(msg='process_stream() unlocked', level='debug')
         self.lock.release()
-

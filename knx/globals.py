@@ -24,29 +24,31 @@
 #  along with SmartHomeNG.py. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-""" Global definitions of constants and functions for KNX plugin """
+"""Global definitions of constants and functions for KNX plugin"""
 
-KNXD_CACHEREAD_DELAY  = 0.35
-KNXD_CACHEREAD_DELAY  = 0.0
+KNXD_CACHEREAD_DELAY = 0.35
+KNXD_CACHEREAD_DELAY = 0.0
 
-KNX_DATA_MASK =     0b00111111 # 0x3f up to 6 bits form data content
-KNX_FLAG_MASK =     0b11000000 # 0xC0
-FLAG_KNXREAD =      0b00000000 # 0x00
-FLAG_KNXRESPONSE =  0b01000000 # 0x40
-FLAG_KNXWRITE =     0b10000000 # 0x80
-FLAG_RESERVED =     0b11000000 # 0xC0 none of the above flags, one need to examine the previous byte for lowest two bits then
+KNX_DATA_MASK = 0b00111111  # 0x3f up to 6 bits form data content
+KNX_FLAG_MASK = 0b11000000  # 0xC0
+FLAG_KNXREAD = 0b00000000  # 0x00
+FLAG_KNXRESPONSE = 0b01000000  # 0x40
+FLAG_KNXWRITE = 0b10000000  # 0x80
+FLAG_RESERVED = (
+    0b11000000  # 0xC0 none of the above flags, one need to examine the previous byte for lowest two bits then
+)
 
 # attribute keywords
-KNX_DPT      = 'knx_dpt'          # data point type
-KNX_STATUS   = 'knx_status'       # status
-KNX_SEND     = 'knx_send'         # send changes within SmartHomeNG to this ga
-KNX_REPLY    = 'knx_reply'        # answer read requests from knx with item value from SmartHomeNG
-KNX_CACHE    = 'knx_cache'        # get item from knx_cache
-KNX_INIT     = 'knx_init'         # query knx upon init
-KNX_LISTEN   = 'knx_listen'       # write or response from knx will change the value of this item
-KNX_POLL     = 'knx_poll'         # query (poll) a ga on knx in regular intervals
+KNX_DPT = 'knx_dpt'  # data point type
+KNX_STATUS = 'knx_status'  # status
+KNX_SEND = 'knx_send'  # send changes within SmartHomeNG to this ga
+KNX_REPLY = 'knx_reply'  # answer read requests from knx with item value from SmartHomeNG
+KNX_CACHE = 'knx_cache'  # get item from knx_cache
+KNX_INIT = 'knx_init'  # query knx upon init
+KNX_LISTEN = 'knx_listen'  # write or response from knx will change the value of this item
+KNX_POLL = 'knx_poll'  # query (poll) a ga on knx in regular intervals
 
-KNX_DTP      = 'knx_dtp'          # often misspelled argument in config files, instead should be knx_dpt
+KNX_DTP = 'knx_dtp'  # often misspelled argument in config files, instead should be knx_dpt
 
 ITEM = 'item'
 ITEMS = 'items'

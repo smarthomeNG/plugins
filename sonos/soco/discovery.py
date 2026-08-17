@@ -21,7 +21,7 @@ def discover(
     timeout=5,
     include_invisible=False,
     interface_addr=None,
-    household_id="Sonos",
+    household_id='Sonos',
     allow_network_scan=False,
     **network_scan_kwargs,
 ):
@@ -73,12 +73,8 @@ def discover(
 
         _sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         # UPnP v1.0 requires a TTL of 4
-        _sock.setsockopt(
-            socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, struct.pack("B", 4)
-        )
-        _sock.setsockopt(
-            socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(interface_addr)
-        )
+        _sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, struct.pack('B', 4))
+        _sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(interface_addr))
         return _sock
 
     # pylint: disable=invalid-name
@@ -88,27 +84,23 @@ def discover(
         MAN: "ssdp:discover"
         MX: 1
         ST: urn:schemas-upnp-org:device:ZonePlayer:1
-        """).encode("utf-8")
-    MCAST_GRP = "239.255.255.250"
+        """).encode('utf-8')
+    MCAST_GRP = '239.255.255.250'
     MCAST_PORT = 1900
 
     if interface_addr is not None:  # Use the specified interface, if any
         try:
             _ = socket.inet_aton(interface_addr)
         except OSError as e:
-            raise ValueError(
-                "{} is not a valid IP address string".format(interface_addr)
-            ) from e
+            raise ValueError('{} is not a valid IP address string'.format(interface_addr)) from e
         addresses = {interface_addr}
-        _LOG.debug(
-            "Sending discovery packets on specified interface %s", interface_addr
-        )
+        _LOG.debug('Sending discovery packets on specified interface %s', interface_addr)
     else:  # Use all qualified, discovered network interfaces
         addresses = _find_ipv4_addresses()
         if len(addresses) == 0:
-            _LOG.debug("No interfaces available for discovery")
+            _LOG.debug('No interfaces available for discovery')
             return None
-        _LOG.debug("Sending discovery packets on discovered interface(s) %s", addresses)
+        _LOG.debug('Sending discovery packets on discovered interface(s) %s', addresses)
 
     # Create sockets
     _sockets = []
@@ -116,35 +108,30 @@ def discover(
         try:
             _sock = create_socket(address)
             _sockets.append(_sock)
-            _LOG.debug("Created socket %s for %s", _sock, address)
+            _LOG.debug('Created socket %s for %s', _sock, address)
         except OSError as e:
-            _LOG.warning(
-                "Can't make a discovery socket for %s: %s: %s",
-                address,
-                e.__class__.__name__,
-                e,
-            )
+            _LOG.warning("Can't make a discovery socket for %s: %s: %s", address, e.__class__.__name__, e)
 
     # Send a few times to each socket. UDP is unreliable
     for _ in range(0, 3):
         for _sock in _sockets[:]:  # Copy the list, because items may be removed
-            _LOG.debug("Sending discovery packet on %s", _sock)
+            _LOG.debug('Sending discovery packet on %s', _sock)
             try:
                 _sock.sendto(really_utf8(PLAYER_SEARCH), (MCAST_GRP, MCAST_PORT))
             except OSError as e:
-                _LOG.debug("Sending failed %s: removing %s from sockets list", e, _sock)
+                _LOG.debug('Sending failed %s: removing %s from sockets list', e, _sock)
                 _sockets.remove(_sock)
-                _LOG.debug("Closing socket %s", _sock)
+                _LOG.debug('Closing socket %s', _sock)
                 _sock.close()
 
     if len(_sockets) == 0:
-        _LOG.debug("Sending failed on all interfaces")
+        _LOG.debug('Sending failed on all interfaces')
         return None
 
     def close_sockets():
         """Helper function to close all remaining open sockets"""
         for _sock in _sockets:
-            _LOG.debug("Closing socket %s", _sock)
+            _LOG.debug('Closing socket %s', _sock)
             _sock.close()
 
     t0 = time.time()
@@ -157,7 +144,7 @@ def discover(
         # is no monotonic timer available before Python 3.3.
         t1 = time.time()
         if t1 - t0 > timeout:
-            _LOG.debug("Discovery timeout")
+            _LOG.debug('Discovery timeout')
             close_sockets()
             break
 
@@ -203,17 +190,12 @@ def discover(
                         return zone.visible_zones
 
     if allow_network_scan:
-        _LOG.debug("Falling back to network scan discovery")
-        if household_id == "Sonos":
-            return scan_network(
-                include_invisible=include_invisible,
-                **network_scan_kwargs,
-            )
+        _LOG.debug('Falling back to network scan discovery')
+        if household_id == 'Sonos':
+            return scan_network(include_invisible=include_invisible, **network_scan_kwargs)
         else:
             return scan_network_by_household_id(
-                household_id,
-                include_invisible=include_invisible,
-                **network_scan_kwargs,
+                household_id, include_invisible=include_invisible, **network_scan_kwargs
             )
 
 
@@ -243,9 +225,7 @@ def any_soco(allow_network_scan=False, **network_scan_kwargs):
         # as long as it is visible (i.e. not a bridge etc). Otherwise,
         # perform discovery (again, excluding invisibles) and return one of
         # those
-        device = next(
-            d for d in cls._instances[cls._class_group].values() if d.is_visible
-        )
+        device = next(d for d in cls._instances[cls._class_group].values() if d.is_visible)
     except (KeyError, StopIteration):
         devices = discover(allow_network_scan=allow_network_scan, **network_scan_kwargs)
         return None if devices is None else devices.pop()
@@ -363,30 +343,26 @@ def scan_network(
     max_threads = min(max_threads, len(ip_set))
     for _ in range(max_threads):
         thread = threading.Thread(
-            target=_sonos_scan_worker_thread,
-            args=(ip_set, scan_timeout, sonos_ip_addresses, multi_household),
+            target=_sonos_scan_worker_thread, args=(ip_set, scan_timeout, sonos_ip_addresses, multi_household)
         )
         try:
             thread.start()
         except RuntimeError:
             # We probably can't start any more threads
             # Cease thread creation and continue
-            _LOG.warning(
-                "Runtime error starting thread number %d ... continue",
-                len(thread_list) + 1,
-            )
+            _LOG.warning('Runtime error starting thread number %d ... continue', len(thread_list) + 1)
             break
         thread_list.append(thread)
-    _LOG.debug("Created %d scanner threads", len(thread_list))
+    _LOG.debug('Created %d scanner threads', len(thread_list))
 
     # Wait for all threads to finish
     for thread in thread_list:
         thread.join()
-    _LOG.debug("All %d scanner threads terminated", len(thread_list))
+    _LOG.debug('All %d scanner threads terminated', len(thread_list))
 
     # No Sonos devices found
     if len(sonos_ip_addresses) == 0:
-        _LOG.debug("No Sonos zones discovered")
+        _LOG.debug('No Sonos zones discovered')
         return None
 
     # Collect SoCo instances
@@ -404,7 +380,7 @@ def scan_network(
             break
 
     _LOG.debug(
-        "Include_invisible: %s | multi_household: %s | %d Zones: %s",
+        'Include_invisible: %s | multi_household: %s | %d Zones: %s',
         include_invisible,
         multi_household,
         len(zones),
@@ -414,9 +390,7 @@ def scan_network(
     return zones
 
 
-def scan_network_by_household_id(
-    household_id, include_invisible=False, **network_scan_kwargs
-):
+def scan_network_by_household_id(household_id, include_invisible=False, **network_scan_kwargs):
     """Convenience function to find the zones in a specific Sonos
     household.
 
@@ -435,11 +409,11 @@ def scan_network_by_household_id(
     """
 
     # multi_household must be set to True
-    network_scan_kwargs["multi_household"] = True
+    network_scan_kwargs['multi_household'] = True
     zones = scan_network(include_invisible=include_invisible, **network_scan_kwargs)
     if zones:
         zones = {zone for zone in zones if household_id in zone.household_id}
-    _LOG.debug("Returning zones: %s", zones)
+    _LOG.debug('Returning zones: %s', zones)
     return zones
 
 
@@ -459,14 +433,14 @@ def scan_network_get_household_ids(**network_scan_kwargs):
     """
 
     # multi_household must be set to True
-    network_scan_kwargs["multi_household"] = True
+    network_scan_kwargs['multi_household'] = True
     zones = scan_network(include_invisible=True, **network_scan_kwargs)
     household_ids = set()
     if zones:
         for zone in zones:
             household_ids.add(zone.household_id)
 
-    _LOG.debug("Returning household IDs: %s", household_ids)
+    _LOG.debug('Returning household IDs: %s', household_ids)
     return household_ids
 
 
@@ -493,7 +467,7 @@ def scan_network_get_by_name(name, household_id=None, **network_scan_kwargs):
     """
 
     # multi_household must be set to True
-    network_scan_kwargs["multi_household"] = True
+    network_scan_kwargs['multi_household'] = True
     zones = scan_network(include_invisible=False, **network_scan_kwargs)
     matching_zone = None
     if zones:
@@ -507,7 +481,7 @@ def scan_network_get_by_name(name, household_id=None, **network_scan_kwargs):
                     matching_zone = zone
                     break
 
-    _LOG.debug("Returning zone: %s", matching_zone)
+    _LOG.debug('Returning zone: %s', matching_zone)
     return matching_zone
 
 
@@ -528,7 +502,7 @@ def scan_network_any_soco(household_id=None, **network_scan_kwargs):
     """
 
     if household_id:
-        network_scan_kwargs["multi_household"] = True
+        network_scan_kwargs['multi_household'] = True
 
     zones = scan_network(include_invisible=False, **network_scan_kwargs)
     any_zone = None
@@ -541,7 +515,7 @@ def scan_network_any_soco(household_id=None, **network_scan_kwargs):
                     any_zone = zone
                     break
 
-    _LOG.debug("Returning zone: %s", any_zone)
+    _LOG.debug('Returning zone: %s', any_zone)
     return any_zone
 
 
@@ -579,12 +553,12 @@ def contactable(speakers):
             try:
                 # Try getting a device property
                 _ = speaker.is_visible
-                _LOG.debug("%s is contactable", speaker.ip_address)
+                _LOG.debug('%s is contactable', speaker.ip_address)
                 contactable_speakers.add(speaker)
             # The exception is unimportant
             # pylint: disable=bare-except
             except:  # noqa: E722
-                _LOG.debug("%s is not contactable", speaker.ip_address)
+                _LOG.debug('%s is not contactable', speaker.ip_address)
 
     contactable_speakers = set()
     if speakers is None:
@@ -599,7 +573,7 @@ def contactable(speakers):
             thread_list.append(thread)
         except RuntimeError:
             # Can't create any more threads
-            _LOG.warning("Failed to create a new thread")
+            _LOG.warning('Failed to create a new thread')
             break
 
     for thread in thread_list:
@@ -634,28 +608,21 @@ def _find_ipv4_networks(min_netmask):
 
             ipv4_network = ipaddress.ip_network(ifaddr_network.ip)
             # Restrict to private networks, and exclude loopback and link local
-            if (
-                ipv4_network.is_private
-                and not ipv4_network.is_loopback
-                and not ipv4_network.is_link_local
-            ):
+            if ipv4_network.is_private and not ipv4_network.is_loopback and not ipv4_network.is_link_local:
                 # Constrain the size of network that will be searched
                 netmask = ifaddr_network.network_prefix
                 if netmask < min_netmask:
                     _LOG.debug(
-                        "%s: Constraining netmask from %d to %d",
+                        '%s: Constraining netmask from %d to %d',
                         ifaddr_network.ip,
                         ifaddr_network.network_prefix,
                         min_netmask,
                     )
                     netmask = min_netmask
-                network = ipaddress.ip_network(
-                    ifaddr_network.ip + "/" + str(netmask),
-                    False,
-                )
+                network = ipaddress.ip_network(ifaddr_network.ip + '/' + str(netmask), False)
                 ipv4_net_list.add(network)
 
-    _LOG.debug("Set of networks to search: %s", str(ipv4_net_list))
+    _LOG.debug('Set of networks to search: %s', str(ipv4_net_list))
     return ipv4_net_list
 
 
@@ -683,7 +650,7 @@ def _find_ipv4_addresses():
             if not ipv4_network.is_loopback and not ipv4_network.is_link_local:
                 ipv4_addresses.add(ifaddr_network.ip)
 
-    _LOG.debug("Set of attached IPs: %s", str(ipv4_addresses))
+    _LOG.debug('Set of attached IPs: %s', str(ipv4_addresses))
     return ipv4_addresses
 
 
@@ -724,9 +691,7 @@ def _is_sonos(ip_address):
         return False
 
 
-def _sonos_scan_worker_thread(
-    ip_set, socket_timeout, sonos_ip_addresses, multi_household
-):
+def _sonos_scan_worker_thread(ip_set, socket_timeout, sonos_ip_addresses, multi_household):
     """Helper function worker thread to take IP addresses from a set and
     test whether there is (1) a device with port 1400 open at that IP
     address, then (2) check the device is a Sonos device.
@@ -751,7 +716,7 @@ def _sonos_scan_worker_thread(
             ip_set.add(ip_addr)
             break
 
-        _LOG.debug("Scanning port %s:1400", ip_address)
+        _LOG.debug('Scanning port %s:1400', ip_address)
 
         if check:
             _LOG.debug("Found open port 1400 at IP '%s'", ip_address)

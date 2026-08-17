@@ -198,9 +198,9 @@
                 shngInsertText(plugin+'_wtpath', objResponse[plugin]['disp_wt_path'], 'plugintable', 2);
                 if (objResponse[plugin]['clean']) {
                 	txt = 
-                    	'<button type="button" class="btn btn-danger btn-sm" onclick="javascript:removePlugin(' +
+                    	'<button type="button" title="Plugin entfernen" class="btn btn-danger btn-sm" onclick="javascript:removePlugin(' +
                     	objResponse[plugin]['owner'] + ', ' + objResponse[plugin]['branch'] + ', ' + objResponse[plugin]['plugin'] + ', ' + plugin + ');"><i class="fas fa-times"></i></button>' + 
-                    	'<button type="button" class="btn btn-shng btn-sm" onclick="javascript:pullRepo(' + plugin + ');"><i class="fas fa-download"></i></button>';
+                    	'<button type="button" title="Pull für aktuelle Version ausführen" class="btn btn-shng btn-sm" onclick="javascript:pullRepo(' + plugin + ');"><i class="fas fa-download"></i></button>';
                 } else {
                 	txt = 'Änderungen vorhanden';
                 }
@@ -676,8 +676,8 @@
 remote: {{ repos[plugin].rcommit }}">
 					{{ repos[plugin].lc }}/{{ repos[plugin].rc }}</td>
 				<td id="{{ plugin }}_action">{% if not repos[plugin].clean %}Änderungen vorhanden{% else %}
-					<button type="button" class="btn btn-danger btn-sm" onclick="javascript:removePlugin('{{ repos[plugin].owner }}', '{{ repos[plugin].branch }}', '{{ repos[plugin].plugin }}', '{{ plugin }}');"><i class="fas fa-times"></i></button>
-					<button type="button" class="btn btn-shng btn-sm" onclick="javascript:pullRepo('{{ plugin }}');"><i class="fas fa-download"></i></button>
+					<button type="button" title="Plugin entfernen" class="btn btn-danger btn-sm" onclick="javascript:removePlugin('{{ repos[plugin].owner }}', '{{ repos[plugin].branch }}', '{{ repos[plugin].plugin }}', '{{ plugin }}');"><i class="fas fa-times"></i></button>
+					<button type="button" title="Pull für aktuelle Version ausführen" class="btn btn-shng btn-sm" onclick="javascript:pullRepo('{{ plugin }}');"><i class="fas fa-download"></i></button>
 					{% endif %}</td>
 				</tr>
 		{% endfor %}

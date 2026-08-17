@@ -1,4 +1,5 @@
 """TR-064 client"""
+
 from io import BytesIO
 import lxml.etree as ET
 import requests
@@ -19,7 +20,14 @@ class Client:
     :param str base_url: URL to router.
     """
 
-    def __init__(self, username, password, base_url='https://192.168.178.1:49443', description_file='tr64desc.xml', verify: bool = False):
+    def __init__(
+        self,
+        username,
+        password,
+        base_url='https://192.168.178.1:49443',
+        description_file='tr64desc.xml',
+        verify: bool = False,
+    ):
         self.base_url = base_url
         self.auth = HTTPDigestAuth(username, password)
 
@@ -36,7 +44,7 @@ class Client:
         if name in self.devices:
             return self.devices[name]
 
-        raise TR064UnknownDeviceException(f"Requested Device Name {name!r} not available.")
+        raise TR064UnknownDeviceException(f'Requested Device Name {name!r} not available.')
 
     def _fetch_devices(self, description_file='tr64desc.xml'):
         """Fetch device description."""

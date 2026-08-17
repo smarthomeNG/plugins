@@ -14,3 +14,60 @@ main:
 
     nodb:
         type: num
+
+    maxage:
+        type: num
+        database: init
+        database_maxage: 30
+
+    maxage_empty:
+        type: num
+        database: init
+        database_maxage: ''
+        database_maxage_action: min
+
+    maxage_sum:
+        type: num
+        database: init
+        database_maxage: 1
+        database_maxage_action: sum
+        database_maxage_interval: 1h
+
+    maxage_avg:
+        type: num
+        database: init
+        database_maxage: 1
+        database_maxage_action: avg
+        database_maxage_interval: 1h
+
+    maxage_min:
+        type: num
+        database: init
+        database_maxage: 1
+        database_maxage_action: min
+        database_maxage_interval: 1h
+
+    maxage_invalid_type:
+        type: str
+        database: init
+        database_maxage: 1
+        database_maxage_action: sum
+
+    maxage_no_action:
+        type: num
+        database: init
+        database_maxage: 1
+
+    maxage_first_str:
+        type: str
+        database: init
+        database_maxage: 1
+        database_maxage_action: first
+        database_maxage_interval: 1h
+
+    maxage_last_str:
+        type: str
+        database: init
+        database_maxage: 1
+        database_maxage_action: last
+        database_maxage_interval: 1h

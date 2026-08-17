@@ -1,4 +1,5 @@
 """TR-064 service"""
+
 from io import BytesIO
 import lxml.etree as ET
 import requests
@@ -14,7 +15,18 @@ class Service:
     """TR-064 service."""
 
     # pylint: disable=too-many-arguments
-    def __init__(self, auth, base_url, service_type, service_id, scpdurl, control_url, event_sub_url, verify: bool = False, description_file='tr64desc.xml'):
+    def __init__(
+        self,
+        auth,
+        base_url,
+        service_type,
+        service_id,
+        scpdurl,
+        control_url,
+        event_sub_url,
+        verify: bool = False,
+        description_file='tr64desc.xml',
+    ):
         self.auth = auth
         self.base_url = base_url
         self.service_type = service_type
@@ -37,7 +49,7 @@ class Service:
         if name in self.actions:
             return self.actions[name]
 
-        raise TR064UnknownActionException(f"Requested Action Name {name!r} not available.")
+        raise TR064UnknownActionException(f'Requested Action Name {name!r} not available.')
 
     def _fetch_actions(self, scpdurl):
         """Fetch action description."""
@@ -58,5 +70,5 @@ class Service:
                     self.service_id,
                     self.control_url,
                     self.verify,
-                    self.description_file
+                    self.description_file,
                 )

@@ -36,7 +36,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -46,7 +45,7 @@ class WebInterface(SmartPluginWebIf):
         :type webif_dir: str
         :type plugin: object
         """
-        #self.logger = logging.getLogger(__name__)
+        # self.logger = logging.getLogger(__name__)
         self.logger = plugin.logger
         self.webif_dir = webif_dir
         self.plugin = plugin
@@ -68,10 +67,11 @@ class WebInterface(SmartPluginWebIf):
 
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           device_count=len(self.plugin.beodevices.beo_keys),
-                           item_count=len(self.plugin.beo_items.keys()))
-
+        return tmpl.render(
+            p=self.plugin,
+            device_count=len(self.plugin.beodevices.beo_keys),
+            item_count=len(self.plugin.beo_items.keys()),
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -80,14 +80,13 @@ class WebInterface(SmartPluginWebIf):
             data['beodevice_info'] = self.plugin.beodevices.beodeviceinfo
 
             data['item_values'] = self.plugin._item_values
-            #return json.dumps(data)
+            # return json.dumps(data)
 
             # return it as json the web page
             try:
                 return json.dumps(data)
             except Exception as e:
-                self.logger.error(f"get_data_html exception: {e} - {data['beodevice_info']}")
+                self.logger.error(f'get_data_html exception: {e} - {data["beodevice_info"]}')
                 return {}
 
         return
-

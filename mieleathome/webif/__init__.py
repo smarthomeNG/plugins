@@ -44,7 +44,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -61,7 +60,6 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
-
     @cherrypy.expose
     def index(self, reload=None):
         """
@@ -73,9 +71,11 @@ class WebInterface(SmartPluginWebIf):
         """
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
-                           item_count=len (self.plugin.miele_items))
+        return tmpl.render(
+            p=self.plugin,
+            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
+            item_count=len(self.plugin.miele_items),
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -90,11 +90,10 @@ class WebInterface(SmartPluginWebIf):
         if dataSet is None:
             # get the new data
             data = {}
-            data['Device']=self.plugin.last_event_device
-            data['Action']=self.plugin.last_event_action
-            data['last_Event']=self.plugin.last_event_time
-            data['last_Ping']=self.plugin.last_ping_time
-            
+            data['Device'] = self.plugin.last_event_device
+            data['Action'] = self.plugin.last_event_action
+            data['last_Event'] = self.plugin.last_event_time
+            data['last_Ping'] = self.plugin.last_ping_time
 
             # data['item'] = {}
             # for i in self.plugin.items:
@@ -104,6 +103,4 @@ class WebInterface(SmartPluginWebIf):
         try:
             return json.dumps(data)
         except Exception as e:
-            self.logger.error("get_data_html exception: {}".format(e))
-        
-
+            self.logger.error('get_data_html exception: {}'.format(e))

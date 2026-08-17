@@ -32,11 +32,10 @@ import os
 import requests
 
 import lib.shyaml as shyaml
-from lib.constants import (YAML_FILE)
+from lib.constants import YAML_FILE
 
 
-class BeoDevices():
-
+class BeoDevices:
     beodeviceinfo = {}
     beo_keys = []
 
@@ -51,7 +50,7 @@ class BeoDevices():
         self.beodeviceinfo = {}
         self.beo_keys = []
 
-        self.filename = os.path.join(self.datadir, 'bo_deviceinfo'+YAML_FILE)
+        self.filename = os.path.join(self.datadir, 'bo_deviceinfo' + YAML_FILE)
 
         pass
 
@@ -81,7 +80,7 @@ class BeoDevices():
             scan_fromip = self.fromip
         if scan_toip is None:
             scan_toip = self.toip
-        self.logger.info(f"Scanning network range ({scan_fromip} to {scan_toip}) for Bang & Olufsen devices")
+        self.logger.info(f'Scanning network range ({scan_fromip} to {scan_toip}) for Bang & Olufsen devices')
 
         fromip = scan_fromip.split('.')
         toip = scan_toip.split('.')
@@ -97,7 +96,7 @@ class BeoDevices():
 
         filename = os.path.join(self.datadir, 'bo_rawinfo' + YAML_FILE)
         scan_rawinfo = shyaml.yaml_load(filename, ordered=False, ignore_notfound=True)
-        #self.logger.info('old rawinfo {}'.format(scan_rawinfo))
+        # self.logger.info('old rawinfo {}'.format(scan_rawinfo))
         if scan_rawinfo is None:
             scan_rawinfo = {}
 
@@ -108,7 +107,7 @@ class BeoDevices():
             try:
                 r = requests.get(device + '/Ping', timeout=0.5)
                 result = True
-            except:
+            except Exception:
                 result = False
 
             if result:
@@ -124,34 +123,45 @@ class BeoDevices():
 
                     if scan_devicelist.get(beo_id, None) is None:
                         scan_devicelist[beo_id] = {}
-                    #scan_devicelist[beo_id]['Device-Jid'] = r.headers.get('Device-Jid', '')
+                    # scan_devicelist[beo_id]['Device-Jid'] = r.headers.get('Device-Jid', '')
 
                     if scan_devicelist[beo_id].get('device', None) is None:
                         scan_devicelist[beo_id]['device'] = {}
-                    #scan_devicelist[beo_id]['ip'] = ip
+                    # scan_devicelist[beo_id]['ip'] = ip
                     scan_devicelist[beo_id]['device']['ip'] = ip
-                    scan_devicelist[beo_id]['device']['productType'] = scan_rawinfo[beo_id]['BeoDevice']['beoDevice']['productId']['productType']
-                    scan_devicelist[beo_id]['device']['typeNumber'] = scan_rawinfo[beo_id]['BeoDevice']['beoDevice']['productId']['typeNumber']
-                    scan_devicelist[beo_id]['device']['itemNumber'] = scan_rawinfo[beo_id]['BeoDevice']['beoDevice']['productId']['itemNumber']
-                    scan_devicelist[beo_id]['device']['serialNumber'] = scan_rawinfo[beo_id]['BeoDevice']['beoDevice']['productId']['serialNumber']
-                    scan_devicelist[beo_id]['device']['FriendlyName'] = scan_rawinfo[beo_id]['BeoDevice']['beoDevice']['productFriendlyName']['productFriendlyName']
-                    scan_devicelist[beo_id]['device']['swVersion'] = scan_rawinfo[beo_id]['BeoDevice']['beoDevice']['software']['version']
+                    scan_devicelist[beo_id]['device']['productType'] = scan_rawinfo[beo_id]['BeoDevice']['beoDevice'][
+                        'productId'
+                    ]['productType']
+                    scan_devicelist[beo_id]['device']['typeNumber'] = scan_rawinfo[beo_id]['BeoDevice']['beoDevice'][
+                        'productId'
+                    ]['typeNumber']
+                    scan_devicelist[beo_id]['device']['itemNumber'] = scan_rawinfo[beo_id]['BeoDevice']['beoDevice'][
+                        'productId'
+                    ]['itemNumber']
+                    scan_devicelist[beo_id]['device']['serialNumber'] = scan_rawinfo[beo_id]['BeoDevice']['beoDevice'][
+                        'productId'
+                    ]['serialNumber']
+                    scan_devicelist[beo_id]['device']['FriendlyName'] = scan_rawinfo[beo_id]['BeoDevice']['beoDevice'][
+                        'productFriendlyName'
+                    ]['productFriendlyName']
+                    scan_devicelist[beo_id]['device']['swVersion'] = scan_rawinfo[beo_id]['BeoDevice']['beoDevice'][
+                        'software'
+                    ]['version']
 
-                    #pwr = requests.get(device + '/BeoDevice/powerManagement/standby', timeout=0.5)
-                    #actual_pwr = pwr.json()
-                    #scan_devicelist[serial]['powerstate'] = actual_pwr['standby']['powerState']
+                    # pwr = requests.get(device + '/BeoDevice/powerManagement/standby', timeout=0.5)
+                    # actual_pwr = pwr.json()
+                    # scan_devicelist[serial]['powerstate'] = actual_pwr['standby']['powerState']
 
-                    #self.logger.info("- found B&O device on ip {0: <10}: {1} ({2})".format(ip, scan_devicelist[beo_id]['Device-Jid'], scan_devicelist[beo_id]['FriendlyName']))
-
+                    # self.logger.info("- found B&O device on ip {0: <10}: {1} ({2})".format(ip, scan_devicelist[beo_id]['Device-Jid'], scan_devicelist[beo_id]['FriendlyName']))
 
         self.logger.info('Scanning network range ({} to {}) finished'.format(scan_fromip, scan_toip))
 
-        filename = os.path.join(self.datadir, 'bo_deviceinfo'+YAML_FILE)
+        filename = os.path.join(self.datadir, 'bo_deviceinfo' + YAML_FILE)
         shyaml.yaml_save(filename, scan_devicelist)
 
-        filename = os.path.join(self.datadir, 'bo_rawinfo'+YAML_FILE)
+        filename = os.path.join(self.datadir, 'bo_rawinfo' + YAML_FILE)
         shyaml.yaml_save(filename, scan_rawinfo)
-        self.logger.info("Bang & Olufsen device info saved to directory {}".format(self.datadir))
+        self.logger.info('Bang & Olufsen device info saved to directory {}'.format(self.datadir))
 
         # move result to public var
         self.beodeviceinfo = scan_devicelist
@@ -161,14 +171,12 @@ class BeoDevices():
         self.update_devices_info()
         return
 
-
     def update_devices_info(self):
         """
         Update info for all found devices
         """
         for beo_key in self.beo_keys:
             self.update_deviceinfo(beo_key)
-
 
     def read_list_value(self, ip, api_suburl, json_element='mode'):
 
@@ -177,8 +185,8 @@ class BeoDevices():
         active_mode = -1
         raw_mode = self.get_beo_api(ip, api_url, [json_element])
         if raw_mode != '-':
-            #active_mode = self.get_beo_api(ip, api_url, [json_element, 'active'])
-            #mode_list = self.get_beo_api(ip, api_url, [json_element, 'list'])
+            # active_mode = self.get_beo_api(ip, api_url, [json_element, 'active'])
+            # mode_list = self.get_beo_api(ip, api_url, [json_element, 'list'])
             active_mode = raw_mode.get('active', -1)
             mode_list = raw_mode.get('list', [])
             mode = 'unknown'
@@ -191,11 +199,10 @@ class BeoDevices():
                             break
                 else:
                     mode = '-'
-            #self.beodeviceinfo[beo_key]['device']['videomode'] = mode.lower()
-            #self.logger.info("update_deviceinfo: ip: {} videomode-friendly = {}".format(ip, mode))
+            # self.beodeviceinfo[beo_key]['device']['videomode'] = mode.lower()
+            # self.logger.info("update_deviceinfo: ip: {} videomode-friendly = {}".format(ip, mode))
 
         return (mode.lower(), int(active_mode))
-
 
     def update_deviceinfo(self, beo_id):
         """
@@ -218,15 +225,24 @@ class BeoDevices():
         # get speaker info (vol. level, muted) from B&O deivce
         speaker_info, error = self.get_speaker_info(beo_id)
         if speaker_info:
-            self.logger.debug("update_deviceinfo: {} - level={}, muted={}".format(fn.ljust(16), speaker_info['level'], speaker_info['muted']))
+            self.logger.debug(
+                'update_deviceinfo: {} - level={}, muted={}'.format(
+                    fn.ljust(16), speaker_info['level'], speaker_info['muted']
+                )
+            )
             self.beodeviceinfo[beo_id]['volume']['level'] = speaker_info['level']
             self.beodeviceinfo[beo_id]['volume']['muted'] = speaker_info['muted']
         if error:
-            #self.logger.info("update_deviceinfo: {} - error={}".format(fn, error))
-            self.logger.info("update_deviceinfo: {} speaker_info - ERROR={}, type={}".format(fn.ljust(16), error['message'], error['type']))
+            # self.logger.info("update_deviceinfo: {} - error={}".format(fn, error))
+            self.logger.info(
+                'update_deviceinfo: {} speaker_info - ERROR={}, type={}'.format(
+                    fn.ljust(16), error['message'], error['type']
+                )
+            )
 
-
-        self.beodeviceinfo[beo_id]['device']['powerstate'] = self.translate(self.get_beo_api(ip, '/BeoDevice/powerManagement/standby', ['standby','powerState']))
+        self.beodeviceinfo[beo_id]['device']['powerstate'] = self.translate(
+            self.get_beo_api(ip, '/BeoDevice/powerManagement/standby', ['standby', 'powerState'])
+        )
         if self.beodeviceinfo[beo_id]['device']['powerstate'] in ['Standby', 'unbekannt']:
             self.beodeviceinfo[beo_id]['source']['source'] = '-'
             self.beodeviceinfo[beo_id]['content'] = {}
@@ -235,41 +251,56 @@ class BeoDevices():
             self.beodeviceinfo[beo_id]['device']['stand'] = ['-', -1]
         else:
             try:
-                self.beodeviceinfo[beo_id]['source']['source'] = self.get_beo_api(ip, '/BeoZone/Zone/ActiveSources', ['primaryExperience','source','friendlyName'])
+                self.beodeviceinfo[beo_id]['source']['source'] = self.get_beo_api(
+                    ip, '/BeoZone/Zone/ActiveSources', ['primaryExperience', 'source', 'friendlyName']
+                )
 
                 # get picture-mode of the B&O device
-                self.beodeviceinfo[beo_id]['device']['videomode'] = list(self.read_list_value(ip, '/Picture/Mode', 'mode'))
-                self.logger.debug("update_deviceinfo: ip: {} videomode-friendly = {}".format(ip, self.beodeviceinfo[beo_id]['device']['videomode']))
+                self.beodeviceinfo[beo_id]['device']['videomode'] = list(
+                    self.read_list_value(ip, '/Picture/Mode', 'mode')
+                )
+                self.logger.debug(
+                    'update_deviceinfo: ip: {} videomode-friendly = {}'.format(
+                        ip, self.beodeviceinfo[beo_id]['device']['videomode']
+                    )
+                )
 
                 # get sound-mode of the B&O device
-                self.beodeviceinfo[beo_id]['device']['audiomode'] = list(self.read_list_value(ip, '/Sound/Mode', 'mode'))
-                self.logger.debug("update_deviceinfo: ip: {} audiomode-friendly = {}".format(ip, self.beodeviceinfo[beo_id]['device']['audiomode']))
+                self.beodeviceinfo[beo_id]['device']['audiomode'] = list(
+                    self.read_list_value(ip, '/Sound/Mode', 'mode')
+                )
+                self.logger.debug(
+                    'update_deviceinfo: ip: {} audiomode-friendly = {}'.format(
+                        ip, self.beodeviceinfo[beo_id]['device']['audiomode']
+                    )
+                )
 
                 # get stand position of the B&O device
                 self.beodeviceinfo[beo_id]['device']['stand'] = list(self.read_list_value(ip, '/Stand', 'stand'))
-                self.logger.debug("update_deviceinfo: ip: {} stand-friendly = {}".format(ip, self.beodeviceinfo[beo_id]['device']['stand']))
+                self.logger.debug(
+                    'update_deviceinfo: ip: {} stand-friendly = {}'.format(
+                        ip, self.beodeviceinfo[beo_id]['device']['stand']
+                    )
+                )
             except Exception as ex:
                 self.logger.warning(f"beodevices/update_deviceinfo: {beo_id} - Exception '{ex}'")
         # get possible sources of the B&O device
-        #raw_sources = self.get_beo_api(ip, '/BeoZone/Zone/Sources', [])
-        #self.beodeviceinfo[beo_id]['sources'] = []
-        #for source in raw_sources.keys():
+        # raw_sources = self.get_beo_api(ip, '/BeoZone/Zone/Sources', [])
+        # self.beodeviceinfo[beo_id]['sources'] = []
+        # for source in raw_sources.keys():
         #    self.logger.info("update_deviceinfo: ip: {} source = {}".format(ip, source))
 
         return
-
 
     def send_beo_command(self, beo_id, api_url, json_elements=None):
         ip = self.beodeviceinfo[beo_id]['device']['ip']
         self.send_beo_api('put', ip, api_url, json_elements)
         return
 
-
     def post_beo_command(self, beo_id, api_url, json_elements=None):
         ip = self.beodeviceinfo[beo_id]['device']['ip']
         self.send_beo_api('post', ip, api_url, json_elements)
         return
-
 
     def get_beo_api(self, ip, api_url, json_elements=None):
         """
@@ -287,8 +318,8 @@ class BeoDevices():
         try:
             r = requests.get(device + api_url, timeout=0.5)
             request_result = True
-        except:
-            self.logger.debug("Could not get data from device {} for {}".format(device, api_url))
+        except Exception:
+            self.logger.debug('Could not get data from device {} for {}'.format(device, api_url))
             request_result = False
             result = '-'
 
@@ -304,13 +335,12 @@ class BeoDevices():
                         result = actual_r[json_elements[0]][json_elements[1]][json_elements[2]]
                     elif len(json_elements) == 4:
                         result = actual_r[json_elements[0]][json_elements[1]][json_elements[2]][json_elements[3]]
-                    #result = actual_r['standby']['powerState']
+                    # result = actual_r['standby']['powerState']
                 else:
                     result = actual_r
-            except:
+            except Exception:
                 pass
         return result
-
 
     def send_beo_api(self, mode, ip, api_url, json_elements=None):
         """
@@ -321,22 +351,19 @@ class BeoDevices():
         :param json_elements:
         :return:
         """
-        result = ''
         device = 'http://' + ip + ':8080'
 
-        self.logger.info("send_beo_api: mode {}, ip {}, url {}, data {}".format(mode, ip, api_url, json_elements))
-        result = '-'
+        self.logger.info('send_beo_api: mode {}, ip {}, url {}, data {}'.format(mode, ip, api_url, json_elements))
         try:
             if mode.lower() == 'post':
                 r = requests.post(device + api_url, data=json_elements, timeout=0.5)
             else:
                 r = requests.put(device + api_url, data=json_elements, timeout=0.5)
-            self.logger.info("send_beo_api: request result = {}".format(r.status_code))
+            self.logger.info('send_beo_api: request result = {}'.format(r.status_code))
             request_result = True
-        except:
-            self.logger.debug("Could not get data from device {} for {}".format(device, api_url))
+        except Exception:
+            self.logger.debug('Could not get data from device {} for {}'.format(device, api_url))
             request_result = False
-            result = 'unknown'
 
         return request_result
 
@@ -350,13 +377,12 @@ class BeoDevices():
         req_result = self.beo_get_request(ip, '/BeoZone/Zone/Sound/Volume/Speaker')
         if req_result.get('error', None):
             if req_result['error']['message'] != '':
-                self.logger.info("get_speaker_info: {} - error = {}".format(fn, req_result['error']['message'] ))
+                self.logger.info('get_speaker_info: {} - error = {}'.format(fn, req_result['error']['message']))
             return {}, req_result['error']
         else:
-            #self.logger.info("get_speaker_info: {} - speaker={}".format(fn, req_result['speaker']))
+            # self.logger.info("get_speaker_info: {} - speaker={}".format(fn, req_result['speaker']))
             return req_result['speaker'], {}
         return {}, {}
-
 
     def get_speaker_volume(self, beo_id):
 
@@ -367,38 +393,33 @@ class BeoDevices():
         try:
             if req_result.get('error', None):
                 if req_result['error']['message'] != '':
-                    self.logger.info("get_speaker_volume: {} - error = {}".format(fn, req_result['error']['message'] ))
+                    self.logger.info('get_speaker_volume: {} - error = {}'.format(fn, req_result['error']['message']))
                 return -1
             else:
-                self.logger.info("get_speaker_volume: {} - level={}".format(fn, req_result['level']))
+                self.logger.info('get_speaker_volume: {} - level={}'.format(fn, req_result['level']))
                 return req_result['level']
         except Exception as e:
-            self.logger.error("get_speaker_volume: {} - req_result={} - Exception = {}".format(fn, req_result, e))
+            self.logger.error('get_speaker_volume: {} - req_result={} - Exception = {}'.format(fn, req_result, e))
 
         return
-
 
     def set_speaker_volume(self, beo_id, volume):
 
         ip = self.beodeviceinfo[beo_id]['device']['ip']
-        fn = self.beodeviceinfo[beo_id]['device'].get('FriendlyName', ip)
 
-        data = '{'+'"level": {}'.format(volume)+'}'
-        req_result = self.beo_put_request(ip, '/BeoZone/Zone/Sound/Volume/Speaker/Level', data)
+        data = '{' + '"level": {}'.format(volume) + '}'
+        self.beo_put_request(ip, '/BeoZone/Zone/Sound/Volume/Speaker/Level', data)
 
         return
-
 
     def set_speaker_muted(self, beo_id, state):
 
         ip = self.beodeviceinfo[beo_id]['device']['ip']
-        fn = self.beodeviceinfo[beo_id]['device'].get('FriendlyName', ip)
 
-        data = '{'+'"muted": {}'.format(str(state).lower())+'}'
-        req_result = self.beo_put_request(ip, '/BeoZone/Zone/Sound/Volume/Speaker/Muted', data)
+        data = '{' + '"muted": {}'.format(str(state).lower()) + '}'
+        self.beo_put_request(ip, '/BeoZone/Zone/Sound/Volume/Speaker/Muted', data)
 
         return
-
 
     def get_stand(self, beo_id):
 
@@ -409,24 +430,22 @@ class BeoDevices():
         try:
             if req_result.get('error', None):
                 if req_result['error']['message'] != '':
-                    self.logger.info("get_stand: {} - error = {}".format(fn, req_result['error']['message'] ))
+                    self.logger.info('get_stand: {} - error = {}'.format(fn, req_result['error']['message']))
                 return -1
             else:
-                self.logger.info("get_stand: {} - level={}".format(fn, req_result['active']))
+                self.logger.info('get_stand: {} - level={}'.format(fn, req_result['active']))
                 return req_result['active']
         except Exception as e:
-            self.logger.error("get_stand: {} - req_result={} - Exception = {}".format(fn, req_result, e))
+            self.logger.error('get_stand: {} - req_result={} - Exception = {}'.format(fn, req_result, e))
 
         return
-
 
     def set_stand(self, beo_id, position):
 
         ip = self.beodeviceinfo[beo_id]['device']['ip']
-        fn = self.beodeviceinfo[beo_id]['device'].get('FriendlyName', ip)
 
-        data = '{'+'"active": {}'.format(str(position).lower())+'}'
-        req_result = self.beo_put_request(ip, '/BeoZone/Zone/Stand/Active', data)
+        data = '{' + '"active": {}'.format(str(position).lower()) + '}'
+        self.beo_put_request(ip, '/BeoZone/Zone/Stand/Active', data)
 
         return
 
@@ -445,11 +464,10 @@ class BeoDevices():
         try:
             r = requests.get(device + api_url, timeout=0.5)
             request_result = r.json()
-        except:
-            self.logger.debug("Could not get data from device {} for {}".format(device, api_url))
-            request_result = {'error': { 'message': '', 'type': 'NO_RESPONSE'}}
+        except Exception:
+            self.logger.debug('Could not get data from device {} for {}'.format(device, api_url))
+            request_result = {'error': {'message': '', 'type': 'NO_RESPONSE'}}
         return request_result
-
 
     def beo_put_request(self, ip, api_url, data):
         """
@@ -464,9 +482,7 @@ class BeoDevices():
         try:
             r = requests.put(device + api_url, data, timeout=0.5)
             request_result = r.json()
-        except:
-            self.logger.debug("Could not get data from device {} for {}".format(device, api_url))
-            request_result = {'error': { 'message': '', 'type': 'NO_RESPONSE'}}
+        except Exception:
+            self.logger.debug('Could not get data from device {} for {}'.format(device, api_url))
+            request_result = {'error': {'message': '', 'type': 'NO_RESPONSE'}}
         return request_result
-
-

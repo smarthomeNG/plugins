@@ -37,10 +37,10 @@ import os
 
 try:
     import rrdtool
-    REQUIRED_PACKAGE_IMPORTED = True
-except:
-    REQUIRED_PACKAGE_IMPORTED = False
 
+    REQUIRED_PACKAGE_IMPORTED = True
+except Exception:
+    REQUIRED_PACKAGE_IMPORTED = False
 
 
 class RRD(SmartPlugin):
@@ -71,7 +71,7 @@ class RRD(SmartPlugin):
         if not os.path.exists(self._rrd_dir):
             try:
                 os.makedirs(self._rrd_dir)
-            except:
+            except Exception:
                 self.logger.error(f"Unable to create directory '{self._rrd_dir}'")
 
         self._rrds = {}
@@ -93,7 +93,7 @@ class RRD(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
         self.alive = True
         # create rrds
         for itempath in self._rrds:
@@ -103,12 +103,11 @@ class RRD(SmartPlugin):
         offset = 100  # wait 100 seconds for 1-Wire to update values
         self.scheduler_add('RRDtool', self._update_cycle, cycle=self.step, offset=offset, prio=5)
 
-
     def stop(self):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.scheduler_remove('RRDtool')
         self.alive = False
 
@@ -123,8 +122,8 @@ class RRD(SmartPlugin):
 
         # set database filename
         dbname = ''
-        self.logger.debug(f"parse item: {item}")
-        if self.has_iattr(item.conf,'rrd_ds_name'):
+        self.logger.debug(f'parse item: {item}')
+        if self.has_iattr(item.conf, 'rrd_ds_name'):
             dbname = self.get_iattr_value(item.conf, 'rrd_ds_name')
         if not dbname:
             dbname = item.property.path
@@ -134,28 +133,37 @@ class RRD(SmartPlugin):
         rrd_max = False
         rrd_type = 'GAUGE'
         rrd_step = self.step
-        if self.has_iattr(item.conf,'rrd_min'):
-            rrd_min = self.get_iattr_value(item.conf,'rrd_min')
-        if self.has_iattr(item.conf,'rrd_max'):
-            rrd_max = self.get_iattr_value(item.conf,'rrd_max')
-        if self.has_iattr(item.conf,'rrd_type'):
-            if self.get_iattr_value(item.conf,'rrd_type').lower() == 'counter':
+        if self.has_iattr(item.conf, 'rrd_min'):
+            rrd_min = self.get_iattr_value(item.conf, 'rrd_min')
+        if self.has_iattr(item.conf, 'rrd_max'):
+            rrd_max = self.get_iattr_value(item.conf, 'rrd_max')
+        if self.has_iattr(item.conf, 'rrd_type'):
+            if self.get_iattr_value(item.conf, 'rrd_type').lower() == 'counter':
                 rrd_type = 'COUNTER'
-        if self.has_iattr(item.conf,'rrd_step'):
-            rrd_step = self.get_iattr_value(item.conf,'rrd_step')
-
+        if self.has_iattr(item.conf, 'rrd_step'):
+            rrd_step = self.get_iattr_value(item.conf, 'rrd_step')
 
         no_series = False
-        if self.has_iattr(item.conf,'rrd_no_series'):
-            no_series = self.get_iattr_value(item.conf,'rrd_no_series')
+        if self.has_iattr(item.conf, 'rrd_no_series'):
+            no_series = self.get_iattr_value(item.conf, 'rrd_no_series')
 
         if no_series:
-            self.logger.warning("Attribute rrd_no_series is set to True, no data series will be provided for item {item.property.path}")
+            self.logger.warning(
+                'Attribute rrd_no_series is set to True, no data series will be provided for item {item.property.path}'
+            )
         else:
             item.series = functools.partial(self._series, item=item.property.path)
             item.db = functools.partial(self._single, item=item.property.path)
 
-        self._rrds[item.property.path] = {'item': item, 'id': item.property.path, 'rrdb': rrdb, 'max': rrd_max, 'min': rrd_min, 'step': rrd_step, 'type': rrd_type}
+        self._rrds[item.property.path] = {
+            'item': item,
+            'id': item.property.path,
+            'rrdb': rrdb,
+            'max': rrd_max,
+            'min': rrd_min,
+            'step': rrd_step,
+            'type': rrd_type,
+        }
 
         if self.get_iattr_value(item.conf, 'rrd') == 'init':
             last = self._single('last', '5d', item=item.property.path)
@@ -175,14 +183,10 @@ class RRD(SmartPlugin):
             else:  # 'COUNTER'
                 value = 'N:' + str(int(rrd['step'] * rrd['item']()))
             try:
-                rrdtool.update(
-                    rrd['rrdb'],
-                    value
-                )
+                rrdtool.update(rrd['rrdb'], value)
             except Exception as e:
-                self.logger.warning(f"RRD: error updating {itempath}: {e}")
+                self.logger.warning(f'RRD: error updating {itempath}: {e}')
                 continue
-
 
     def parse_logic(self, logic):
         # no logics are supported
@@ -199,50 +203,50 @@ class RRD(SmartPlugin):
         if item in self._rrds:
             rrd = self._rrds[item]
         else:
-            self.logger.warning(f"RRDtool: not enabled for {item}")
+            self.logger.warning(f'RRDtool: not enabled for {item}')
             return
-        query = [f"{rrd['rrdb']}"]
+        query = [f'{rrd["rrdb"]}']
         # prepare consolidation function
         if func == 'avg' or func == 'raw':
             query.append('AVERAGE')
         elif func == 'max':
             if not rrd['max']:
-                self.logger.warning(f"RRDtool: unsupported consolidation function {func} for {item}")
+                self.logger.warning(f'RRDtool: unsupported consolidation function {func} for {item}')
                 return
             query.append('MAX')
         elif func == 'min':
             if not rrd['min']:
-                self.logger.warning(f"RRDtool: unsupported consolidation function {func} for {item}")
+                self.logger.warning(f'RRDtool: unsupported consolidation function {func} for {item}')
                 return
             query.append('MIN')
         elif func == 'raw':
             query.append('AVERAGE')
-            self.logger.warning(f"RRDtool: unsupported consolidation function {func} for {item}. Using average instead")
+            self.logger.warning(f'RRDtool: unsupported consolidation function {func} for {item}. Using average instead')
         else:
-            self.logger.warning(f"RRDtool: unsupported consolidation function {func} for {item}")
+            self.logger.warning(f'RRDtool: unsupported consolidation function {func} for {item}')
             return
         # set time frame for query
         if start.isdigit():
-            query.extend(['--start', f"{start}"])
+            query.extend(['--start', f'{start}'])
         else:
-            query.extend(['--start', f"now-{start}"])
+            query.extend(['--start', f'now-{start}'])
         if end != 'now':
             if end.isdigit():
-                query.extend(['--end', f"{end}"])
+                query.extend(['--end', f'{end}'])
             else:
-                query.extend(['--end', f"now-{end}"])
+                query.extend(['--end', f'now-{end}'])
         if step is not None:
             query.extend(['--resolution', step])
         # run query
         try:
             meta, name, data = rrdtool.fetch(*query)
         except Exception as e:
-            self.logger.warning(f"error reading {item} data: {e}")
+            self.logger.warning(f'error reading {item} data: {e}')
             return None
 
         # postprocess values
         if sid is None:
-            sid = f"{item}|{func}|{start}|{end}|{count}"
+            sid = f'{item}|{func}|{start}|{end}|{count}'
         reply = {'cmd': 'series', 'series': None, 'sid': sid}
         istart, iend, istep = meta
         mstart = istart * 1000
@@ -253,13 +257,23 @@ class RRD(SmartPlugin):
         for i, v in enumerate(data):
             if v[0] is not None:
                 tuples.append((mstart + i * mstep, v[0]))
-                iend = int( ( mstart + i * mstep ) / 1000 ) # added by ghciv6
+                iend = int((mstart + i * mstep) / 1000)  # added by ghciv6
         reply['series'] = sorted(tuples)
-        #reply['params'] = {'update': True, 'item': item, 'func': func, 'start': str(iend), 'end': str(iend + istep), 'step': str(istep), 'sid': sid} # old
-        reply['params'] = {'update': True, 'item': item, 'func': func, 'start': str(iend + istep), 'end': str(iend + 2 * istep), 'step': str(istep), 'sid': sid} # changed by ghciv6
+        # reply['params'] = {'update': True, 'item': item, 'func': func, 'start': str(iend), 'end': str(iend + istep), 'step': str(istep), 'sid': sid} # old
+        reply['params'] = {
+            'update': True,
+            'item': item,
+            'func': func,
+            'start': str(iend + istep),
+            'end': str(iend + 2 * istep),
+            'step': str(istep),
+            'sid': sid,
+        }  # changed by ghciv6
         reply['update'] = self.get_sh().now() + datetime.timedelta(seconds=istep)
-        #self.logger.warning(f"Returning series for {sid} from {iend} to {iend+istep} with {len(tuples)} values") # old
-        self.logger.info(f"Returning series for {sid} from {istart} to {iend} with {len(tuples)} values") # changed by ghciv6
+        # self.logger.warning(f"Returning series for {sid} from {iend} to {iend+istep} with {len(tuples)} values") # old
+        self.logger.info(
+            f'Returning series for {sid} from {istart} to {iend} with {len(tuples)} values'
+        )  # changed by ghciv6
         return reply
 
     def _single(self, func, start='1d', end='now', item=None):
@@ -273,11 +287,11 @@ class RRD(SmartPlugin):
         if item in self._rrds:
             rrd = self._rrds[item]
         else:
-            self.logger.warning(f"RRDtool: not enabled for {item}")
+            self.logger.warning(f'RRDtool: not enabled for {item}')
             return
 
         # prepare consolidation function
-        query = [f"{rrd['rrdb']}"]
+        query = [f'{rrd["rrdb"]}']
         if func == 'avg' or func == 'raw':
             query.append('AVERAGE')
         elif func == 'max':
@@ -293,28 +307,28 @@ class RRD(SmartPlugin):
         elif func == 'last':
             query.append('AVERAGE')
         elif func == 'raw':
-            self.logger.warning(f"RRDtool: unsupported consolidation function {func} for {item}. Using average instead")
+            self.logger.warning(f'RRDtool: unsupported consolidation function {func} for {item}. Using average instead')
             query.append('AVERAGE')
         else:
-            self.logger.warning(f"RRDtool: unsupported consolidation function {func} for {item}")
+            self.logger.warning(f'RRDtool: unsupported consolidation function {func} for {item}')
             return
 
         # set time frame for query
         if start.isdigit():
-            query.extend(['--start', f"{start}"])
+            query.extend(['--start', f'{start}'])
         else:
-            query.extend(['--start', f"now-{start}"])
+            query.extend(['--start', f'now-{start}'])
         if end != 'now':
             if end.isdigit():
-                query.extend(['--end', f"{end}"])
+                query.extend(['--end', f'{end}'])
             else:
-                query.extend(['--end', f"now-{end}"])
+                query.extend(['--end', f'now-{end}'])
 
         # execute query
         try:
             meta, name, data = rrdtool.fetch(*query)
         except Exception as e:
-            self.logger.warning(f"error reading {item} data: {e}")
+            self.logger.warning(f'error reading {item} data: {e}')
             return None
 
         # unpack returned values
@@ -334,7 +348,7 @@ class RRD(SmartPlugin):
             if len(values) > 0:
                 return values[-1]
         elif func == 'raw':
-            self.logger.warning(f"Unsupported consolidation function {func} for {item}. Using last instead")
+            self.logger.warning(f'Unsupported consolidation function {func} for {item}. Using last instead')
             if len(values) > 0:
                 return values[-1]
 
@@ -346,24 +360,24 @@ class RRD(SmartPlugin):
         args = [rrd['rrdb']]
         item_id = rrd['id'].rpartition('.')[2][:19]
 
-        args.append(f"DS:{item_id}:{rrd['type']}:{str(2 * rrd['step'])}:U:U")
+        args.append(f'DS:{item_id}:{rrd["type"]}:{str(2 * rrd["step"])}:U:U')
         if rrd['min']:
-            args.append(f"RRA:MIN:0.5:{int(86400 / rrd['step'])}:1825")  # 24h/5y
+            args.append(f'RRA:MIN:0.5:{int(86400 / rrd["step"])}:1825')  # 24h/5y
         if rrd['max']:
-            args.append(f"RRA:MAX:0.5:{int(86400 / rrd['step'])}:1825")  # 24h/5y
+            args.append(f'RRA:MAX:0.5:{int(86400 / rrd["step"])}:1825')  # 24h/5y
         args.extend(['--step', str(rrd['step'])])
 
         if rrd['type'] == 'GAUGE':
-            args.append(f"RRA:AVERAGE:0.5:1:{int(86400 / rrd['step']) * 7 + 8}")    # 7 days
-            args.append(f"RRA:AVERAGE:0.5:{int(1800 / rrd['step'])}:1536")          # 0.5h/32 days
-            args.append(f"RRA:AVERAGE:0.5:{int(21600 / rrd['step'])}:1600")         # 6h/400 days
-            args.append(f"RRA:AVERAGE:0.5:{int(86400 / rrd['step'])}:1826")         # 24h/5y
-            args.append(f"RRA:AVERAGE:0.5:{int(604800 / rrd['step'])}:1300")        # 7d/25y
+            args.append(f'RRA:AVERAGE:0.5:1:{int(86400 / rrd["step"]) * 7 + 8}')  # 7 days
+            args.append(f'RRA:AVERAGE:0.5:{int(1800 / rrd["step"])}:1536')  # 0.5h/32 days
+            args.append(f'RRA:AVERAGE:0.5:{int(21600 / rrd["step"])}:1600')  # 6h/400 days
+            args.append(f'RRA:AVERAGE:0.5:{int(86400 / rrd["step"])}:1826')  # 24h/5y
+            args.append(f'RRA:AVERAGE:0.5:{int(604800 / rrd["step"])}:1300')  # 7d/25y
         elif rrd['type'] == 'COUNTER':
-            args.append(f"RRA:AVERAGE:0.5:{int(86400 / rrd['step'])}:1826")         # 24h/5y
-            args.append(f"RRA:AVERAGE:0.5:{int(604800 / rrd['step'])}:1300")        # 7d/25y
+            args.append(f'RRA:AVERAGE:0.5:{int(86400 / rrd["step"])}:1826')  # 24h/5y
+            args.append(f'RRA:AVERAGE:0.5:{int(604800 / rrd["step"])}:1300')  # 7d/25y
         try:
             rrdtool.create(*args)
-            self.logger.debug(f"Creating rrd ({rrd['rrdb']}) for {rrd['item']}.")
+            self.logger.debug(f'Creating rrd ({rrd["rrdb"]}) for {rrd["item"]}.')
         except Exception as e:
-            self.logger.warning(f"Error creating rrd ({rrd['rrdb']}) for {rrd['item']}: {e}")
+            self.logger.warning(f'Error creating rrd ({rrd["rrdb"]}) for {rrd["item"]}: {e}')

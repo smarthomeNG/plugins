@@ -32,7 +32,6 @@ from lib.model.smartplugin import SmartPluginWebIf
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -48,7 +47,7 @@ class WebInterface(SmartPluginWebIf):
         self.plugin = plugin
         self.items = Items.get_instance()
         self.tplenv = self.init_template_environment()
-        self.logger.debug(f"Init WebIF of {self.plugin.get_shortname()}")
+        self.logger.debug(f'Init WebIF of {self.plugin.get_shortname()}')
 
     @cherrypy.expose
     def index(self, reload=None, action=None):
@@ -68,14 +67,15 @@ class WebInterface(SmartPluginWebIf):
         except Exception:
             pagelength = 100
 
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
-                           plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(),
-                           items=sorted([i for i in self.plugin.get_item_list()], key=lambda x: x.property.path.lower()),
-                           item_count=len(self.plugin.get_item_list()),
-                           p=self.plugin,
-                           webif_pagelength=pagelength,
-                           )
+        return tmpl.render(
+            plugin_shortname=self.plugin.get_shortname(),
+            plugin_version=self.plugin.get_version(),
+            plugin_info=self.plugin.get_info(),
+            items=sorted([i for i in self.plugin.get_item_list()], key=lambda x: x.property.path.lower()),
+            item_count=len(self.plugin.get_item_list()),
+            p=self.plugin,
+            webif_pagelength=pagelength,
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -98,15 +98,19 @@ class WebInterface(SmartPluginWebIf):
             for item in self.plugin.get_item_list():
                 data['item_values'][item.property.path] = {}
                 data['item_values'][item.property.path]['value'] = item.property.value
-                data['item_values'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                data['item_values'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                data['item_values'][item.property.path]['last_update'] = item.property.last_update.strftime(
+                    '%d.%m.%Y %H:%M:%S'
+                )
+                data['item_values'][item.property.path]['last_change'] = item.property.last_change.strftime(
+                    '%d.%m.%Y %H:%M:%S'
+                )
 
             data['device_values'] = {}
             for device in self.plugin._devices:
                 if 'data' in self.plugin._devices[device]:
                     data['device_values'][device] = {
                         'lqi': str(self.plugin._devices[device]['data'].get('linkquality', '-')),
-                        'data': ", ".join(list(self.plugin._devices[device]['data'].keys()))
+                        'data': ', '.join(list(self.plugin._devices[device]['data'].keys())),
                     }
                 else:
                     data['device_values'][device] = {'lqi': '-', 'data': '-'}
@@ -124,5 +128,5 @@ class WebInterface(SmartPluginWebIf):
             try:
                 return json.dumps(data, default=str)
             except Exception as e:
-                self.logger.error("get_data_html exception: {}".format(e))
+                self.logger.error('get_data_html exception: {}'.format(e))
                 return {}

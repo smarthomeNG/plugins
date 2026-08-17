@@ -18,14 +18,14 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
-  
+
 import socket
 import time
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin, logging
 
 class Resol(SmartPlugin):
 
-    PLUGIN_VERSION = '1.1.0'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.1.1'    # (must match the version specified in plugin.yaml)
 
 
     def __init__(self, sh):
@@ -46,8 +46,7 @@ class Resol(SmartPlugin):
         self._to_do = True
         self.socket = None
         self._last_request_successfull = False
-        #self._client = Tcp_client(name=name, host=self._ip, port=self._port, binary=True, autoreconnect=True, connect_cycle=5, retry_cycle=30)
-
+        # self._client = Tcp_client(name=name, host=self._ip, port=self._port, binary=True, autoreconnect=True, connect_cycle=5, retry_cycle=30)
 
     def run(self):
         self.alive = True
@@ -59,32 +58,31 @@ class Resol(SmartPlugin):
         self.scheduler_remove('PollData')
 
         try:
-            if self.socket: 
+            if self.socket:
                 self.socket.shutdown(0)
                 self.socket.close()
-        except:
+        except Exception:
             pass
-        
+
         self.socket = None
         self.alive = False
 
     def parse_item(self, item):
-        if self.has_iattr(item.conf, 'resol_offset'): 
+        if self.has_iattr(item.conf, 'resol_offset'):
             resol_offset = self.get_iattr_value(item.conf, 'resol_offset')
             parentItem = item.return_parent()
             if self.has_iattr(parentItem.conf, 'resol_source'):
                 resol_source = self.get_iattr_value(parentItem.conf, 'resol_source')
                 self.logger.debug(f"Parent source: {resol_source}")
             else:
-                self.logger.error(f"Attribute resol_source missing in parent item of item {item}")
+                self.logger.error(f"Attribute resol_source missing in parent item of item {item} with resol_offset: {resol_offset}")
                 return
 
-            if self.has_iattr(item.conf, 'resol_bituse'): 
+            if self.has_iattr(item.conf, 'resol_bituse'):
                 resol_bituse = self.get_iattr_value(item.conf, 'resol_bituse')
                 self._items.append(item)
                 self.logger.debug(f"Debug: added item {item} with resol_bituse {resol_bituse}")
                 # As plugin is read-only, no need to register item for event handling via smarthomeNG core:
-                        
             else:
                 self.logger.error(f"resol_offset found in item {item} but no bitsize given, specify bitsize in item with resol_bitsize = ")
 
@@ -105,6 +103,8 @@ class Resol(SmartPlugin):
             self.logger.warning("Timeout exception during socket connect: %s" % str(e))
             self._last_request_successfull = False
             return
+        except OSError as e:
+            self.logger.warning("OSError exception during socket connect: %s" % str(e))
         except Exception as e:
             self._last_request_successfull = False
             self.logger.error("Exception during socket connect: %s" % str(e))
@@ -118,7 +118,7 @@ class Resol(SmartPlugin):
             self._last_request_successfull = False
         self.logger.info("5) Shutting down socket")
         try:
-            if self.socket: 
+            if self.socket:
                 self.socket.shutdown(0)
                 self.socket.close()
         except Exception as e:
@@ -168,7 +168,7 @@ class Resol(SmartPlugin):
             return
 
         self.logger.info("Response to data: " + str(dat))
-    
+
         #Check if device is ready to send Data
         if not dat.startswith("+OK"):
             self.logger.warning("Vbus Lan is not ready, reply: " + str(dat))
@@ -218,13 +218,13 @@ class Resol(SmartPlugin):
             return None
 
         return dat
-    
+
     # Sends given bytes over the stream. Adds debug
     def send(self, dat):
         if not self.socket:
             return
         self.socket.send(dat.encode('utf-8'))
-    
+
     # Read Data until minimum 1 message is received
     def readstream(self):
         data = self.recv()
@@ -250,30 +250,33 @@ class Resol(SmartPlugin):
                 self.logger.debug("Readstream count received {0}".format(data_rcv))
             data += data_rcv
         return data
-    
+
     #Split Messages on Sync Byte
     def splitmsg(self, buf):
         return buf.split(chr(0xAA))[1:-1]
-    
+
     # Format 1 byte as String
     def format_byte(self, byte):
         return hex(ord(byte))[0:2] + '0' + hex(ord(byte))[2:] if len(hex(ord(byte))) < 4 else hex(ord(byte))
-    
+
     # Extract protocol Version from msg
     def get_protocolversion(self, msg):
-        if hex(ord(msg[4])) == '0x10': return "PV1"
-        if hex(ord(msg[4])) == '0x20': return "PV2"
-        if hex(ord(msg[4])) == '0x30': return "PV3"
+        if hex(ord(msg[4])) == '0x10':
+            return "PV1"
+        if hex(ord(msg[4])) == '0x20':
+            return "PV2"
+        if hex(ord(msg[4])) == '0x30':
+            return "PV3"
         return "UNKNOWN"
-    
+
     # Extract Destination from msg NOT USED AT THE MOMENT
     def get_destination(self, msg):
         return self.format_byte(msg[1]) + self.format_byte(msg[0])[2:]
-    
+
     #Extract source from msg NOT USED AT THE MOMENT
     def get_source(self, msg):
         return self.format_byte(msg[3]) + self.format_byte(msg[2])[2:]
-    
+
     # Extract command from msg NOT USED AT THE MOMENT
     def get_command(self, msg):
         return self.format_byte(msg[6]) + self.format_byte(msg[5:6])[2:]
@@ -282,16 +285,16 @@ class Resol(SmartPlugin):
     def check_header_crc(self, msg):
         #header_crc = hex(ord(msg[8]))
         calc_crc = self.calc_vbus_crc(msg, offset=0, length=8)
-        
+
         if calc_crc == ord(msg[8]):
             return True
         else:
-            return False 
-    
+            return False
+
     # Get count of frames in msg
     def get_frame_count(self, msg):
         return self.gb(msg, 7, 8)
-    
+
     # Extract payload from msg
     def get_payload(self, msg):
         payload = ''
@@ -325,7 +328,7 @@ class Resol(SmartPlugin):
         for i in range(length):
             Crc = (Crc - ord(msg[offset + i]) ) & 0x7F
         return Crc
-    
+
     # parse payload and set item value
     def parse_payload_pv1(self, msg):
         logger_debug = self.logger.isEnabledFor(logging.DEBUG)
@@ -334,7 +337,7 @@ class Resol(SmartPlugin):
             self.logger.warning("Header crc error")
             self._last_request_successfull = False
             return
-        
+
         command = self.get_command(msg)
         source = self.get_source(msg)
         destination = self.get_destination(msg)
@@ -353,7 +356,7 @@ class Resol(SmartPlugin):
             return
 
         self._last_request_successfull = True
-       
+
         for item in self._items:
             parentItem = item.return_parent()
             if self.has_iattr(parentItem.conf, 'resol_source'):
@@ -395,9 +398,9 @@ class Resol(SmartPlugin):
             if self.has_iattr(item.conf, 'resol_isSigned'):
                 resol_isSigned = self.get_iattr_value(item.conf, 'resol_isSigned')
 
-            end = int(resol_offset) + int((resol_bituse + 1) / 8)
-            #self.logger.warning(f"Debug Start: {resol_offset}, End: {end}")
-            
+            # end = int(resol_offset) + int((resol_bituse + 1) / 8)
+            # self.logger.warning(f"Debug Start: {resol_offset}, End: {end}")
+
             value = 0
             count = 0
             #self.logger.debug(f"Starting for loop with {int(resol_offset)},{int((resol_bituse + 1) / 8)}")
@@ -425,26 +428,26 @@ class Resol(SmartPlugin):
                 count = count + 1
             if logger_debug:
                 self.logger.debug(f"Value of item {item} is {value}, Source {source}, Destination {destination}")
-            
+
             item(value, self.get_shortname(), str(source), str(destination))
 
     def integrate_septett(self, frame):
         data = ''
         septet = ord(frame[4])
-    
+
         for j in range(4):
-          if septet & (1 << j):
-              data += chr(ord(frame[j]) | 0x80)
-          else:
-              data += frame[j]
-    
+            if septet & (1 << j):
+                data += chr(ord(frame[j]) | 0x80)
+            else:
+                data += frame[j]
+
         return data
-    
+
     # Gets the numerical value of a set of bytes (respect Two's complement by value Range)
     def gb(self, data, begin, end):  # GetBytes
-        wbg = sum([0xff << (i * 8) for i, b in enumerate(data[begin:end])])
+        wbg = sum([0xFF << (i * 8) for i, b in enumerate(data[begin:end])])
         s = sum([ord(b) << (i * 8) for i, b in enumerate(data[begin:end])])
-                
-        if s >= wbg/2:
-          s = -1 * (wbg - s)
+
+        if s >= wbg / 2:
+            s = -1 * (wbg - s)
         return s

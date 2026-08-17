@@ -235,17 +235,17 @@ item_structs:
 
             installed_version:
                 type: num
-                eval: sh...()['installed_version']
+                eval: sh...get('installed_version')
                 eval_trigger: ..
                 
             latest_version:
                 type: num
-                eval: sh...()['latest_version']
+                eval: sh...get('latest_version')
                 eval_trigger: ..
 
             state:
                 type: str
-                eval: sh...()['state']
+                eval: sh...get('state')
                 eval_trigger: ..
 
     light_rgb_group:
@@ -295,17 +295,17 @@ item_structs:
 
             installed_version:
                 type: num
-                eval: sh...()['installed_version']
+                eval: sh...get('installed_version')
                 eval_trigger: ..
                 
             latest_version:
                 type: num
-                eval: sh...()['latest_version']
+                eval: sh...get('latest_version')
                 eval_trigger: ..
 
             state:
                 type: str
-                eval: sh...()['state']
+                eval: sh...get('state')
                 eval_trigger: ..
 
     bridge:

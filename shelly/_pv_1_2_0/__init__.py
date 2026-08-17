@@ -58,7 +58,7 @@ class Shelly(MqttPlugin):
 
         # Call init code of parent class (MqttPlugin)
         super().__init__()
-        if self._init_complete == False:
+        if not self._init_complete:
             return
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
@@ -191,7 +191,7 @@ class Shelly(MqttPlugin):
 
             if topic:
                 # append to list used for web interface
-                if not item in self.shelly_items:
+                if item not in self.shelly_items:
                     self.shelly_items.append(item)
 
                 # subscribe to topic for relay state

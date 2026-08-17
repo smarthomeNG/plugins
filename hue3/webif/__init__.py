@@ -43,7 +43,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -97,13 +96,12 @@ class WebInterface(SmartPluginWebIf):
         devicedata = self.get_devicesdata()
 
         #        self.logger.info(f"get_lightsdata() - Lights:")
-        first = True
         for light in self.plugin.v2bridge.lights:
             value_dict = {}
             value_dict['_full'] = light
 
             device_id = light.owner.rid
-            zigbee_status =  self.plugin.v2bridge.devices.get_zigbee_connectivity(device_id).status.value
+            zigbee_status = self.plugin.v2bridge.devices.get_zigbee_connectivity(device_id).status.value
 
             value_dict['id'] = light.id
             if light.id_v1 is None:
@@ -132,9 +130,9 @@ class WebInterface(SmartPluginWebIf):
             value_dict['xy'] = [light.color.xy.x, light.color.xy.y]
             try:
                 value_dict['ct'] = light.color_temperature.mirek
-                if light.color_temperature.mirek_valid == False:
+                if not light.color_temperature.mirek_valid:
                     value_dict['ct'] = '(' + str(light.color_temperature.mirek) + ')'
-            except:
+            except Exception:
                 value_dict['ct'] = ''
             value_dict['gamut_type'] = light.color.gamut_type.value
             value_dict['type'] = light.type.value
@@ -172,7 +170,7 @@ class WebInterface(SmartPluginWebIf):
             return result
 
         for group in self.plugin.v2bridge.groups:
-            #self.logger.notice(f"get_groupsdata: {group=}")
+            # self.logger.notice(f"get_groupsdata: {group=}")
             if group.type.value == 'grouped_light':
                 value_dict = {}
                 value_dict['_full'] = group
@@ -186,7 +184,7 @@ class WebInterface(SmartPluginWebIf):
                     value_dict['name'] = room.metadata.name
                     if value_dict['name'] == '':
                         value_dict['name'] = '(All lights)'
-                except:
+                except Exception:
                     value_dict['name'] = ''
                 value_dict['type'] = group.type.value
 
@@ -212,43 +210,46 @@ class WebInterface(SmartPluginWebIf):
                 value_dict['id_v1'] = sensor.id_v1
             try:
                 value_dict['name'] = sensor.name
-            except:
+            except Exception:
                 value_dict['name'] = ''
-                self.logger.debug(f"get_sensorsdata: Exception 'no name'")
-                self.logger.debug(f"- sensor={sensor}")
-                self.logger.debug(f"- owner={sensor.owner}")
+                self.logger.debug("get_sensorsdata: Exception 'no name'")
+                self.logger.debug(f'- sensor={sensor}')
+                self.logger.debug(f'- owner={sensor.owner}')
 
             try:
                 value_dict['control_id'] = sensor.metadata.control_id
-            except:
+            except Exception:
                 value_dict['control_id'] = ''
             try:
                 value_dict['event'] = sensor.button.last_event.value
-            except:
+            except Exception:
                 value_dict['event'] = ''
             try:
                 value_dict['last_event'] = sensor.button.last_event.value
-            except:
+            except Exception:
                 value_dict['last_event'] = ''
 
             try:
                 value_dict['battery_level'] = sensor.power_state.battery_level
                 value_dict['battery_state'] = sensor.power_state.battery_state.value
-            except:
+            except Exception:
                 value_dict['battery_level'] = ''
                 value_dict['battery_state'] = ''
 
             # fill status with data of the outdoor sensor
             value_dict['data'] = ''
             try:
-                value_dict['data'] = f"{sensor.light.light_level:,}".replace(",",".") + ' Lux'
-            except: pass
+                value_dict['data'] = f'{sensor.light.light_level:,}'.replace(',', '.') + ' Lux'
+            except Exception:
+                pass
             try:
                 value_dict['data'] = sensor.motion.motion
-            except: pass
+            except Exception:
+                pass
             try:
                 value_dict['data'] = str(sensor.temperature.temperature) + ' °C'
-            except: pass
+            except Exception:
+                pass
 
             try:
                 value_dict['device_id'] = sensor.owner.rid
@@ -259,15 +260,15 @@ class WebInterface(SmartPluginWebIf):
                         if value_dict['name'] == '':
                             value_dict['name'] = devicedata[d]['name']
 
-            except Exception as ex:
+            except Exception:
                 value_dict['device_id'] = ''
             try:
                 value_dict['owner_type'] = sensor.owner.rtype.value
-            except Exception as ex:
+            except Exception:
                 value_dict['owner_type'] = ''
             try:
                 value_dict['status'] = sensor.status.value
-            except Exception as ex:
+            except Exception:
                 value_dict['status'] = ''
 
             value_dict['type'] = sensor.type.value
@@ -309,7 +310,7 @@ class WebInterface(SmartPluginWebIf):
                     sensor = self.plugin.v2bridge.devices.get_zigbee_connectivity(device.id)
                     try:
                         value_dict['zigbee_connectivity'] = str(sensor.status.value)
-                    except:
+                    except Exception:
                         value_dict['zigbee_connectivity'] = ''
             value_dict['product_archetype'] = device.product_data.product_archetype.value
             value_dict['certified'] = device.product_data.certified
@@ -339,7 +340,6 @@ class WebInterface(SmartPluginWebIf):
             return self.translate('Nein')
         return value
 
-
     @cherrypy.expose
     def index(self, scan=None, connect=None, disconnect=None, reload=None):
         """
@@ -354,12 +354,12 @@ class WebInterface(SmartPluginWebIf):
             self.plugin.discovered_bridges = self.plugin.discover_bridges()
 
         if connect is not None:
-            self.logger.info("Connect: connect={}".format(connect))
+            self.logger.info('Connect: connect={}'.format(connect))
             for db in self.plugin.discovered_bridges:
                 if db['serialNumber'] == connect:
                     user = self.plugin.create_new_username(db['ip'])
                     if user != '':
-                        self.plugin.bridge= db
+                        self.plugin.bridge = db
                         self.plugin.bridge['username'] = user
                         self.plugin.bridge_user = user
                         self.plugin.update_plugin_config()
@@ -370,26 +370,24 @@ class WebInterface(SmartPluginWebIf):
 
         try:
             tmpl = self.tplenv.get_template('index.html')
-        except:
+        except Exception:
             self.logger.error("Template file 'index.html' not found")
         else:
             # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-            #self.logger.notice(f"index: {self.plugin.get_parameter_value('webif_pagelength')}")
-            return tmpl.render(p=self.plugin, w=self,
-                               webif_pagelength=self.plugin.get_parameter_value('webif_pagelength'),
-                               item_count=len(self.plugin.plugin_items),
-
-                               bridge=self.plugin.bridge,
-
-#                               bridge_devices=sorted(self.plugin.get_devicesdata().items(), key=lambda k: str.lower(k[1]['id_v1'])),
-                               bridge_lights=self.get_lightsdata(),
-                               bridge_groups=self.get_groupsdata(),
-                               bridge_scenes=self.get_scenesdata(),
-                               bridge_sensors=self.get_sensorsdata(),
-
-                               bridge_config=self.plugin.get_bridge_config()
-                               )
-
+            # self.logger.notice(f"index: {self.plugin.get_parameter_value('webif_pagelength')}")
+            return tmpl.render(
+                p=self.plugin,
+                w=self,
+                webif_pagelength=self.plugin.get_parameter_value('webif_pagelength'),
+                item_count=len(self.plugin.plugin_items),
+                bridge=self.plugin.bridge,
+                #                               bridge_devices=sorted(self.plugin.get_devicesdata().items(), key=lambda k: str.lower(k[1]['id_v1'])),
+                bridge_lights=self.get_lightsdata(),
+                bridge_groups=self.get_groupsdata(),
+                bridge_scenes=self.get_scenesdata(),
+                bridge_sensors=self.get_sensorsdata(),
+                bridge_config=self.plugin.get_bridge_config(),
+            )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -401,7 +399,7 @@ class WebInterface(SmartPluginWebIf):
         :param dataSet: Dataset for which the data should be returned (standard: None)
         :return: dict with the data needed to update the web page.
         """
-#        self.plugin.logger.info(f"get_data_html: dataSet={dataSet}")
+        #        self.plugin.logger.info(f"get_data_html: dataSet={dataSet}")
         item_list = []
         light_list = []
         scene_list = []
@@ -409,8 +407,6 @@ class WebInterface(SmartPluginWebIf):
         sensor_list = []
         device_list = []
         if dataSet is None or dataSet == 'bridge_info':
-            result_array = []
-
             # callect data for items
             items = self.get_itemsdata()
             for item in items:
@@ -419,7 +415,6 @@ class WebInterface(SmartPluginWebIf):
                     value_dict[key] = items[item][key]
 
                 item_list.append(value_dict)
-
 
             # callect data for lights
             lights = self.get_lightsdata()
@@ -431,7 +426,7 @@ class WebInterface(SmartPluginWebIf):
                         if key == 'id_v1' and len(value_dict[key].split('/')) > 2:
                             value_dict[key] = value_dict[key].split('/')[2]
                         elif key == 'on':
-                            value_dict[key] =  self.ja_nein(value_dict[key])
+                            value_dict[key] = self.ja_nein(value_dict[key])
 
                 light_list.append(value_dict)
 
@@ -466,7 +461,7 @@ class WebInterface(SmartPluginWebIf):
                 for key in sensors[sensor]:
                     if key != '_full':
                         value_dict[key] = sensors[sensor][key]
-                        #if key == 'id_v1' and len(value_dict[key].split('/')) > 2:
+                        # if key == 'id_v1' and len(value_dict[key].split('/')) > 2:
                         #    value_dict[key] = value_dict[key].split('/')[2]
 
                 sensor_list.append(value_dict)
@@ -478,11 +473,10 @@ class WebInterface(SmartPluginWebIf):
                 for key in devices[device]:
                     if key != '_full':
                         value_dict[key] = devices[device][key]
-                        #if key == 'id_v1' and len(value_dict[key].split('/')) > 2:
+                        # if key == 'id_v1' and len(value_dict[key].split('/')) > 2:
                         #    value_dict[key] = value_dict[key].split('/')[2]
 
                 device_list.append(value_dict)
-
 
         if dataSet is None:
             # get the new data
@@ -498,8 +492,15 @@ class WebInterface(SmartPluginWebIf):
             # except Exception as e:
             #     self.logger.error("get_data_html exception: {}".format(e))
 
-        #result = {'items': item_list, 'devices': device_list, 'broker': broker_data}
-        result = {'items': item_list, 'lights': light_list, 'scenes': scene_list, 'groups': group_list, 'sensors': sensor_list, 'devices': device_list}
+        # result = {'items': item_list, 'devices': device_list, 'broker': broker_data}
+        result = {
+            'items': item_list,
+            'lights': light_list,
+            'scenes': scene_list,
+            'groups': group_list,
+            'sensors': sensor_list,
+            'devices': device_list,
+        }
 
         # send result to wen interface
         try:
@@ -509,8 +510,7 @@ class WebInterface(SmartPluginWebIf):
             else:
                 return None
         except Exception as e:
-            self.logger.error(f"get_data_html exception: {e}")
-            self.logger.error(f"- {result}")
+            self.logger.error(f'get_data_html exception: {e}')
+            self.logger.error(f'- {result}')
 
         return {}
-

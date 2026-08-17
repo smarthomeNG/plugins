@@ -70,7 +70,7 @@ class OwBase(SmartPlugin):
             self._lock.release()
         try:
             self.read('/system/process/pid')  # workaround read to avoid owserver timeout
-        except Exception as e:
+        except Exception:
             pass
 
     def read(self, path):
@@ -241,7 +241,7 @@ class OneWire(OwBase):
     _intruders = []
     alive = True
     _discovered = False
-    _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
+    _flip = {0: '1', 1: '0', '0': True, '1': False}
     _supported = {'T': 'Temperature', 'H': 'Humidity', 'V': 'Voltage', 'BM': 'Busmaster', 'B': 'iButton', 'L': 'Light/Lux', 'IA': 'Input A', 'IB': 'Input B', 'OA': 'Output A', 'OB': 'Output B', 'I0': 'Input 0', 'I1': 'Input 1', 'I2': 'Input 2', 'I3': 'Input 3', 'I4': 'Input 4', 'I5': 'Input 5', 'I6': 'Input 6', 'I7': 'Input 7', 'O0': 'Output 0', 'O1': 'Output 1', 'O2': 'Output 2', 'O3': 'Output 3', 'O4': 'Output 4', 'O5': 'Output 5', 'O6': 'Output 6', 'O7': 'Output 7', 'T9': 'Temperature 9Bit', 'T10': 'Temperature 10Bit', 'T11': 'Temperature 11Bit', 'T12': 'Temperature 12Bit', 'VOC': 'VOC'}
 
     def __init__(self, smarthome, cycle=300, io_wait=5, button_wait=0.5, host='127.0.0.1', port=4304):
@@ -343,7 +343,7 @@ class OneWire(OwBase):
             return
         for bus in self._ibutton_buses:
             if not self.alive:
-                self.logger.info("1-Wire: Self not alive".format(bus))
+                self.logger.info("1-Wire: Self not alive")
                 break
             path = '/uncached/' + bus + '/'
             name = self._ibutton_buses[bus]
@@ -378,7 +378,7 @@ class OneWire(OwBase):
         start = time.time()
         for addr in self._sensors:
             if not self.alive:
-                self.logger.info("1-Wire: Self not alive".format(addr))
+                self.logger.info("1-Wire: Self not alive")
                 break
             for key in self._sensors[addr]:
                 item = self._sensors[addr][key]['item']

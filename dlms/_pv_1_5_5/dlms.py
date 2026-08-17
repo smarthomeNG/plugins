@@ -188,13 +188,13 @@ def query( config ):
         if not SerialPort == dlms_serial.name:
             logger.debug("Asked for {} as serial port, but really using now {}".format(
                 SerialPort, dlms_serial.name))
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         logger.error("Serial port '{0}' does not exist, please check your port".format( SerialPort))
         return
-    except OSError as e:
+    except OSError:
         logger.error("Serial port '{0}' does not exist, please check the spelling".format(SerialPort))
         return
-    except serial.SerialException as e:
+    except serial.SerialException:
         if dlms_serial is None:
             logger.error("Serial port '{0}' could not be opened".format(SerialPort))
         else:
@@ -238,13 +238,13 @@ def query( config ):
         # We need to examine the read response here for an echo of the _Request_Message
         # some meters answer with an echo of the request Message
         if response == Request_Message:
-            logger.debug("Request Message was echoed, need to read the identification message".format(response))
+            logger.debug("Request Message was echoed, need to read the identification message")
             # read Identification message if Request was echoed
             # now read the capabilities and type/brand line from Smartmeter
             # e.g. b'/LGZ5\\2ZMD3104407.B32\r\n'
             response = read_data_block_from_serial(dlms_serial)
         else:
-            logger.debug("Request Message was not equal to response, treating as identification message".format(response))
+            logger.debug("Request Message was not equal to response, treating as identification message")
 
         logger.debug("Time to get first identification message from smartmeter: "
                           "{}".format(format_time(time.time() - runtime)))
@@ -291,8 +291,6 @@ def query( config ):
                                   '7': "reserved", '8': "reserved", '9': "reserved"}
 
     # always '3' but it is always initiated by the metering device so it can't be encountered here
-    Baudrates_Protocol_Mode_D = { '3' : 2400}
-    Baudrates_Protocol_Mode_E = Baudrates_Protocol_Mode_C
 
     Baudrate_identification = chr(Identification_Message[4])
     if Baudrate_identification in Baudrates_Protocol_Mode_B:

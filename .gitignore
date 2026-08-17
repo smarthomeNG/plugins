@@ -36,3 +36,13 @@ Thumbs.db
 
 # VSCode settings
 .vscode/settings.json
+
+# pyright stub packages (tools/pyright_stub_audit.py) — local dev aid,
+# CI lints with ruff, not pyright; regenerate with --apply-create if needed
+/typings/
+
+# Node dependencies for the matter plugin's server and bridge roles
+# (dev/matter/matter-integration-plan.md in the core repo) - package.json
+# and package-lock.json are tracked for reproducible installs, the
+# installed packages themselves are not.
+matter/sidecar/node_modules/

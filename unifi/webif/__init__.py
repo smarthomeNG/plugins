@@ -44,7 +44,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -61,7 +60,6 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
-
     @cherrypy.expose
     def index(self, reload=None):
         """
@@ -74,12 +72,13 @@ class WebInterface(SmartPluginWebIf):
 
         tmpl = self.tplenv.get_template('index.html')
         pagelength = self.plugin.get_parameter_value('webif_pagelength')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
-                           webif_pagelength=pagelength,
-                           plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(),
-                           p=self.plugin)
-
+        return tmpl.render(
+            plugin_shortname=self.plugin.get_shortname(),
+            webif_pagelength=pagelength,
+            plugin_version=self.plugin.get_version(),
+            plugin_info=self.plugin.get_info(),
+            p=self.plugin,
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -94,10 +93,18 @@ class WebInterface(SmartPluginWebIf):
         if dataSet is None:
             data = {'items': {}, 'requests': 0}
             for item in self.plugin._model.get_items():
-                data['items'].update({item.property.path: {'value': str(item.property.value), 'last_update': item.property.last_update.strftime('%d.%m.%Y %H:%M:%S'), 'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')}})
+                data['items'].update(
+                    {
+                        item.property.path: {
+                            'value': str(item.property.value),
+                            'last_update': item.property.last_update.strftime('%d.%m.%Y %H:%M:%S'),
+                            'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S'),
+                        }
+                    }
+                )
             data['requests'] = self.plugin._model.get_total_number_of_requests_to_controller()
             try:
                 return json.dumps(data)
             except Exception as e:
-                self.logger.error(f"get_data_html exception: {e}")
+                self.logger.error(f'get_data_html exception: {e}')
         return {}

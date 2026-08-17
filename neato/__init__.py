@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2019 Thomas Hengsberg <thomas@thomash.eu>
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #
 #########################################################################
 
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin, os
 from lib.item import Items
 from .webif import WebInterface
 import binascii
@@ -42,10 +42,15 @@ class Neato(SmartPlugin):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
-        self.robot = Robot(self.get_parameter_value("account_email"), self.get_parameter_value("account_pass"), self.get_parameter_value("robot_vendor"), token=self.get_parameter_value("token"))
+        self.robot = Robot(
+            self.get_parameter_value('account_email'),
+            self.get_parameter_value('account_pass'),
+            self.get_parameter_value('robot_vendor'),
+            token=self.get_parameter_value('token'),
+        )
         self._sh = sh
         self._cycle = 60
-        self.logger.debug("Init completed.")
+        self.logger.debug('Init completed.')
         self.init_webinterface(WebInterface)
         self._items = {}
         return
@@ -57,7 +62,7 @@ class Neato(SmartPlugin):
         return self.robot._backendOnline
 
     def accountEmail(self):
-        return self.get_parameter_value("account_email")
+        return self.get_parameter_value('account_email')
 
     def clientIDHash(self):
         return self.robot.clientIDHash()
@@ -66,18 +71,17 @@ class Neato(SmartPlugin):
         return self.robot.setClientIDHash(hash)
 
     def run(self):
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
         self.scheduler_add('poll_device', self.poll_device, prio=5, cycle=self._cycle)
         self.alive = True
 
     def stop(self):
         self.scheduler_remove('poll_device')
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.alive = False
         self.robot._backendOnline = False
 
     def parse_item(self, item):
-        
         """
         Default plugin parse_item method. Is called when the plugin is initialized. Selects each item corresponding to
         the neato_attribute and adds it to an internal array
@@ -85,7 +89,7 @@ class Neato(SmartPlugin):
         :param item: The item to process.
         """
         if self.get_iattr_value(item.conf, 'neato_attribute'):
-            if not self.get_iattr_value(item.conf, 'neato_attribute') in self._items:
+            if self.get_iattr_value(item.conf, 'neato_attribute') not in self._items:
                 self._items[self.get_iattr_value(item.conf, 'neato_attribute')] = []
             self._items[self.get_iattr_value(item.conf, 'neato_attribute')].append(item)
 
@@ -98,13 +102,11 @@ class Neato(SmartPlugin):
         elif self.get_iattr_value(item.conf, 'neato_attribute') == 'clean_room':
             return self.update_item
 
-
-
     def parse_logic(self, logic):
-            pass
+        pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        self.logger.debug("Update neato item: Caller: {0}, pluginname: {1}".format(caller,self.get_shortname() ))
+        self.logger.debug('Update neato item: Caller: {0}, pluginname: {1}'.format(caller, self.get_shortname()))
         if caller != self.get_shortname():
             val_to_command = {
                 61: 'start',
@@ -115,56 +117,55 @@ class Neato(SmartPlugin):
                 66: 'sendToBase',
                 67: 'enableSchedule',
                 68: 'disableSchedule',
-                69: 'dismiss_current_alert'}
+                69: 'dismiss_current_alert',
+            }
 
             if self.get_iattr_value(item.conf, 'neato_attribute') == 'command':
                 if item._value in val_to_command:
                     self.robot.robot_command(val_to_command[item._value])
                 else:
-                    self.logger.warning("Update item: {}, item has no command equivalent for value '{}'".format(item.id(),item() ))
+                    self.logger.warning(
+                        "Update item: {}, item has no command equivalent for value '{}'".format(item.id(), item())
+                    )
 
             elif self.get_iattr_value(item.conf, 'neato_attribute') == 'is_schedule_enabled':
-                if item._value == True:
-                    self.robot.robot_command("enableSchedule")
-                    self.logger.debug("enabling neato scheduler")
+                if item._value:
+                    self.robot.robot_command('enableSchedule')
+                    self.logger.debug('enabling neato scheduler')
                 else:
-                    self.robot.robot_command("disableSchedule")
-                    self.logger.debug("disabling neato scheduler")
+                    self.robot.robot_command('disableSchedule')
+                    self.logger.debug('disabling neato scheduler')
             elif self.get_iattr_value(item.conf, 'neato_attribute') == 'clean_room':
-                self.robot.robot_command("start", item._value, None)
-                #self.robot.robot_command("start", item._value, '2020-03-09T07:52:21Z')
+                self.robot.robot_command('start', item._value, None)
+                # self.robot.robot_command("start", item._value, '2020-03-09T07:52:21Z')
             pass
 
-    def start_robot(self):
-        response = self.robot.robot_command("start")
-        return self.check_command_response(response)
-
     def start_robot(self, boundary_id=None, map_id=None):
-        response = self.robot.robot_command("start", boundary_id, map_id)
+        response = self.robot.robot_command('start', boundary_id, map_id)
         return self.check_command_response(response)
 
     def get_known_mapId(self):
-        self.logger.info(f"MapID is {self.robot.mapId}")
+        self.logger.info(f'MapID is {self.robot.mapId}')
         return self.robot.mapId
 
     # returns boundaryIds (clean zones) for given mapID
     # returns True on success and False otherwise
     def get_map_boundaries(self, map_id=None):
-        response = self.robot.robot_command("getMapBoundaries", map_id)
+        response = self.robot.robot_command('getMapBoundaries', map_id)
         return self.check_command_response(response)
 
     def dismiss_current_alert(self):
-        response = self.robot.robot_command("dismiss_current_alert")
+        response = self.robot.robot_command('dismiss_current_alert')
         return self.check_command_response(response)
 
     # enable cleaning schedule
     # returns True on success and False otherwise
     def enable_schedule(self):
-        response = self.robot.robot_command("enableSchedule")
+        response = self.robot.robot_command('enableSchedule')
         return self.check_command_response(response)
 
     def disable_schedule(self):
-        response = self.robot.robot_command("disableSchedule")
+        response = self.robot.robot_command('disableSchedule')
         return self.check_command_response(response)
 
     def check_command_response(self, response):
@@ -186,11 +187,10 @@ class Neato(SmartPlugin):
             return
 
         for attribute, matchStringItems in self._items.items():
-
             if not self.alive:
                 return
 
-            #self.logger.warning('DEBUG: attribute: {0}, matchStringItems: {1}".format(attribute, matchStringItems))
+            # self.logger.warning('DEBUG: attribute: {0}, matchStringItems: {1}".format(attribute, matchStringItems))
 
             value = None
 
@@ -209,7 +209,7 @@ class Neato(SmartPlugin):
             elif attribute == 'alert':
                 value = str(self.robot.alert)
             elif attribute == 'is_schedule_enabled':
-                value = self.robot.isScheduleEnabled 
+                value = self.robot.isScheduleEnabled
             elif attribute == 'command_goToBaseAvailable':
                 value = self.robot.dockHasBeenSeen
             elif attribute == 'command_startAvailable':
@@ -220,15 +220,15 @@ class Neato(SmartPlugin):
             # if a value was found, store it to item
             if value is not None:
                 for sameMatchStringItem in matchStringItems:
-                    sameMatchStringItem(value, self.get_shortname() )
-                    #self.logger.debug('_update: Value "{0}" written to item {1}'.format(value, sameMatchStringItem))
+                    sameMatchStringItem(value, self.get_shortname())
+                    # self.logger.debug('_update: Value "{0}" written to item {1}'.format(value, sameMatchStringItem))
 
         pass
 
-    def __get_state_string(self,state):
+    def __get_state_string(self, state):
         if state == '0':
             return 'invalid'
-        elif  state == '1':
+        elif state == '1':
             return 'idle'
         elif state == '2':
             return 'busy'
@@ -237,10 +237,10 @@ class Neato(SmartPlugin):
         elif state == '4':
             return 'error'
 
-    def __get_state_action_string(self,state_action):
+    def __get_state_action_string(self, state_action):
         if state_action == '0':
             return 'invalid'
-        elif  state_action == '1':
+        elif state_action == '1':
             return 'House Cleaning'
         elif state_action == '2':
             return 'Spot Cleaning'
@@ -271,9 +271,8 @@ class Neato(SmartPlugin):
         elif state_action == '15':
             return 'Suspended Exploration'
 
-
     # Oauth2 functions for new login feature with Vorwerk's myKobold APP
-    
+
     # Generate 16 byte random hex hash as string:
     def generateRandomHash(self):
         hash = binascii.hexlify(os.urandom(16)).decode('utf8')
@@ -283,12 +282,9 @@ class Neato(SmartPlugin):
     # Requesting authentication code to be send to email account:
     def request_oauth2_code(self, hash):
         success = self.robot.request_oauth2_code(hash)
-        return success 
+        return success
 
     # Requesting authentication token to be send to email account:
     def request_oauth2_token(self, code, hash):
         token = self.robot.request_oauth2_token(code, hash)
         return token
-
-
-

@@ -3,6 +3,7 @@
 They may be set by your code as follows::
 
     from soco import config
+
     ...
     config.VARIABLE = value
 """

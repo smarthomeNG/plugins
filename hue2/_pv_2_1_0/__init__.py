@@ -779,7 +779,7 @@ class Hue2(SmartPlugin):
             self.logger.error("remove_username: res-delete exception {}".format(e))
             response = [{'error': str(e)}]
 
-        if not('success' in response[0]):
+        if 'success' not in response[0]:
             self.logger.warning("remove_username: Error removing username/application key {} - {}".format(username, response[0]))
         else:
             self.logger.info("remove_username: username/application key {} removed".format(username))

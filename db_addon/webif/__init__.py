@@ -41,7 +41,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -72,28 +71,31 @@ class WebInterface(SmartPluginWebIf):
         tmpl = self.tplenv.get_template('index.html')
 
         if action is not None:
-            if action == "recalc_item" and item_path is not None:
-                self.logger.info(f"Recalc of item={item_path} called via WebIF. Item put to Queue for new calculation.")
+            if action == 'recalc_item' and item_path is not None:
+                self.logger.info(f'Recalc of item={item_path} called via WebIF. Item put to Queue for new calculation.')
                 self.plugin.execute_items(option='item', item=item_path)
 
-            elif action == "clean_item_cache" and item_path is not None:
-                self.logger.info(f"Clean item cache of item={item_path} called via WebIF. Plugin item value cache will be cleaned.")
+            elif action == 'clean_item_cache' and item_path is not None:
+                self.logger.info(
+                    f'Clean item cache of item={item_path} called via WebIF. Plugin item value cache will be cleaned.'
+                )
                 self.plugin._clean_item_cache(item=item_path)
 
-            elif action == "_activate_item_calculation" and item_path is not None and active is not None:
-                self.logger.info(f"Item calculation of item={item_path} will be set to {bool(int(active))} via WebIF.")
+            elif action == '_activate_item_calculation' and item_path is not None and active is not None:
+                self.logger.info(f'Item calculation of item={item_path} will be set to {bool(int(active))} via WebIF.')
                 self.plugin._activate_item_calculation(item=item_path, active=bool(int(active)))
 
-        return tmpl.render(p=self.plugin,
-                           webif_pagelength=pagelength,
-                           items=self.plugin.get_item_list('db_addon', 'function'),
-                           item_count=len(self.plugin.get_item_list('db_addon', 'function')),
-                           plugin_shortname=self.plugin.get_shortname(),
-                           plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(),
-                           maintenance=True if self.plugin.log_level < 20 else False,
-                           paused=not(self.plugin.alive)
-                           )
+        return tmpl.render(
+            p=self.plugin,
+            webif_pagelength=pagelength,
+            items=self.plugin.get_item_list('db_addon', 'function'),
+            item_count=len(self.plugin.get_item_list('db_addon', 'function')),
+            plugin_shortname=self.plugin.get_shortname(),
+            plugin_version=self.plugin.get_version(),
+            plugin_info=self.plugin.get_info(),
+            maintenance=True if self.plugin.log_level < 20 else False,
+            paused=not (self.plugin.alive),
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -113,8 +115,12 @@ class WebInterface(SmartPluginWebIf):
             for item in self.plugin.get_item_list('db_addon', 'function'):
                 data['items'][item.property.path] = {}
                 data['items'][item.property.path]['value'] = item.property.value
-                data['items'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                data['items'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                data['items'][item.property.path]['last_update'] = item.property.last_update.strftime(
+                    '%d.%m.%Y %H:%M:%S'
+                )
+                data['items'][item.property.path]['last_change'] = item.property.last_change.strftime(
+                    '%d.%m.%Y %H:%M:%S'
+                )
 
             data['maintenance'] = True if self.plugin.log_level == 10 else False
             data['queue_length'] = self.plugin.queue_backlog()
@@ -127,130 +133,132 @@ class WebInterface(SmartPluginWebIf):
             try:
                 return json.dumps(data, default=str)
             except Exception as e:
-                self.logger.error(f"get_data_html exception: {e}")
+                self.logger.error(f'get_data_html exception: {e}')
 
     @cherrypy.expose
     def submit(self, item=None):
         result = None
         item_path, cmd = item.split(':')
         if item_path is not None and cmd is not None:
-            self.logger.debug(f"Received db_addon {cmd=} for {item_path=} via web interface")
+            self.logger.debug(f'Received db_addon {cmd=} for {item_path=} via web interface')
 
-            if cmd == "recalc_item":
-                self.logger.info(f"Recalc of item={item_path} called via WebIF. Item put to Queue for new calculation.")
+            if cmd == 'recalc_item':
+                self.logger.info(f'Recalc of item={item_path} called via WebIF. Item put to Queue for new calculation.')
                 result = self.plugin.execute_items(option='item', item=item_path)
-                self.logger.debug(f"Result for web interface: {result}")
+                self.logger.debug(f'Result for web interface: {result}')
                 return json.dumps(result).encode('utf-8')
 
-            elif cmd == "clean_item_cache":
-                self.logger.info(f"Clean item cache of item={item_path} called via WebIF. Plugin item value cache will be cleaned.")
+            elif cmd == 'clean_item_cache':
+                self.logger.info(
+                    f'Clean item cache of item={item_path} called via WebIF. Plugin item value cache will be cleaned.'
+                )
                 result = self.plugin._clean_item_cache(item=item_path)
-                self.logger.debug(f"Result for web interface: {result}")
+                self.logger.debug(f'Result for web interface: {result}')
                 return json.dumps(result).encode('utf-8')
 
-            elif cmd.startswith("pause_plugin"):
-                self.logger.debug(f"pause_plugin {cmd=}")
+            elif cmd.startswith('pause_plugin'):
+                self.logger.debug(f'pause_plugin {cmd=}')
                 cmd, value = cmd.split(',')
-                if value == "True":
+                if value == 'True':
                     self.plugin.stop()
                 else:
                     self.plugin.run()
-                self.logger.warning(f"Plugin will be set to paused: {value} via WebIF.")
-                result = not(self.plugin.alive)
-                self.logger.debug(f"Result for web interface: {result}")
+                self.logger.warning(f'Plugin will be set to paused: {value} via WebIF.')
+                result = not (self.plugin.alive)
+                self.logger.debug(f'Result for web interface: {result}')
                 return json.dumps(result).encode('utf-8')
 
-            elif cmd.startswith("suspend_item_calculation"):
+            elif cmd.startswith('suspend_item_calculation'):
                 cmd, value = cmd.split(',')
-                self.logger.info(f"Item calculation of item={item_path} will be set to suspended: {value} via WebIF.")
-                value = True if value == "True" else False
+                self.logger.info(f'Item calculation of item={item_path} will be set to suspended: {value} via WebIF.')
+                value = True if value == 'True' else False
                 result = self.plugin._suspend_item_calculation(item=item_path, suspended=value)
-                self.logger.debug(f"Result for web interface: {result}")
+                self.logger.debug(f'Result for web interface: {result}')
                 return json.dumps(result).encode('utf-8')
 
         if result is not None:
             # JSON zurücksenden
             cherrypy.response.headers['Content-Type'] = 'application/json'
-            self.logger.debug(f"Result for web interface: {result}")
+            self.logger.debug(f'Result for web interface: {result}')
             return json.dumps(result).encode('utf-8')
 
     @cherrypy.expose
     def recalc_all(self):
-        self.logger.debug(f"recalc_all called")
+        self.logger.debug('recalc_all called')
         self.plugin.execute_items('all')
 
     @cherrypy.expose
     def clean_cache_dicts(self):
-        self.logger.debug(f"_clean_cache_dicts called")
+        self.logger.debug('_clean_cache_dicts called')
         self.plugin._init_cache_dicts()
 
     @cherrypy.expose
     def clear_queue(self):
-        self.logger.debug(f"_clear_queue called")
+        self.logger.debug('_clear_queue called')
         self.plugin._clear_queue()
 
     @cherrypy.expose
     def debug_log_option(self, log: str = None, state: bool = None):
-        self.logger.warning(f"debug_log_option called with {log=}, {state=}")
+        self.logger.warning(f'debug_log_option called with {log=}, {state=}')
         _state = True if state == 'true' else False
         setattr(self.plugin.debug_log, log, _state)
 
     @cherrypy.expose
     def debug_log_option_parse_true(self):
-        self.logger.debug("debug_log_option_parse_true")
+        self.logger.debug('debug_log_option_parse_true')
         setattr(self.plugin.debug_log, 'parse', True)
 
     @cherrypy.expose
-    def debug_log_option_parse_false (self):
-        self.logger.debug("debug_log_option_parse_false")
+    def debug_log_option_parse_false(self):
+        self.logger.debug('debug_log_option_parse_false')
         setattr(self.plugin.debug_log, 'parse', False)
 
     @cherrypy.expose
     def debug_log_option_execute_true(self):
-        self.logger.debug("debug_log_option_execute_true")
+        self.logger.debug('debug_log_option_execute_true')
         setattr(self.plugin.debug_log, 'execute', True)
 
     @cherrypy.expose
-    def debug_log_option_execute_false (self):
-        self.logger.debug("debug_log_option_execute_false")
+    def debug_log_option_execute_false(self):
+        self.logger.debug('debug_log_option_execute_false')
         setattr(self.plugin.debug_log, 'execute', False)
 
     @cherrypy.expose
     def debug_log_option_ondemand_true(self):
-        self.logger.debug("debug_log_option_ondemand_true")
+        self.logger.debug('debug_log_option_ondemand_true')
         setattr(self.plugin.debug_log, 'ondemand', True)
 
     @cherrypy.expose
-    def debug_log_option_ondemand_false (self):
-        self.logger.debug("debug_log_option_ondemand_false")
+    def debug_log_option_ondemand_false(self):
+        self.logger.debug('debug_log_option_ondemand_false')
         setattr(self.plugin.debug_log, 'ondemand', False)
 
     @cherrypy.expose
     def debug_log_option_onchange_true(self):
-        self.logger.debug("debug_log_option_onchange_true")
+        self.logger.debug('debug_log_option_onchange_true')
         setattr(self.plugin.debug_log, 'onchange', True)
 
     @cherrypy.expose
-    def debug_log_option_onchange_false (self):
-        self.logger.debug("debug_log_option_onchange_false")
+    def debug_log_option_onchange_false(self):
+        self.logger.debug('debug_log_option_onchange_false')
         setattr(self.plugin.debug_log, 'onchange', False)
 
     @cherrypy.expose
     def debug_log_option_prepare_true(self):
-        self.logger.debug("debug_log_option_prepare_true")
+        self.logger.debug('debug_log_option_prepare_true')
         setattr(self.plugin.debug_log, 'prepare', True)
 
     @cherrypy.expose
-    def debug_log_option_prepare_false (self):
-        self.logger.debug("debug_log_option_prepare_false")
+    def debug_log_option_prepare_false(self):
+        self.logger.debug('debug_log_option_prepare_false')
         setattr(self.plugin.debug_log, 'prepare', False)
 
     @cherrypy.expose
     def debug_log_option_sql_true(self):
-        self.logger.debug("debug_log_option_sql_true")
+        self.logger.debug('debug_log_option_sql_true')
         setattr(self.plugin.debug_log, 'sql', True)
 
     @cherrypy.expose
-    def debug_log_option_sql_false (self):
-        self.logger.debug("debug_log_option_sql_false")
+    def debug_log_option_sql_false(self):
+        self.logger.debug('debug_log_option_sql_false')
         setattr(self.plugin.debug_log, 'sql', False)

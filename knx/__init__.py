@@ -41,13 +41,34 @@ from lib.shtime import Shtime
 from . import dpts
 from . import knxproj
 from .knxd import KNXD
-from .globals import *
+from .globals import (
+    DPT,
+    FLAG_KNXREAD,
+    FLAG_KNXRESPONSE,
+    FLAG_KNXWRITE,
+    FLAG_RESERVED,
+    ITEM,
+    ITEMS,
+    KNXD_CACHEREAD_DELAY,
+    KNX_CACHE,
+    KNX_DATA_MASK,
+    KNX_DPT,
+    KNX_DTP,
+    KNX_FLAG_MASK,
+    KNX_INIT,
+    KNX_LISTEN,
+    KNX_POLL,
+    KNX_REPLY,
+    KNX_SEND,
+    KNX_STATUS,
+    LOGIC,
+    LOGICS,
+)
 from .webif import WebInterface
 
 
 class KNX(SmartPlugin):
-
-    PLUGIN_VERSION = "1.8.5"
+    PLUGIN_VERSION = '1.8.5'
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes
@@ -55,7 +76,7 @@ class KNX(SmartPlugin):
     ITEM_TAG_PLUS = [KNX_DTP]
 
     # provider for KNX service
-    PROVIDER_KNXD =  'knxd'
+    PROVIDER_KNXD = 'knxd'
     PROVIDER_KNXIP = 'IP Interface'
     PROVIDER_KNXMC = 'IP Router'
 
@@ -71,79 +92,90 @@ class KNX(SmartPlugin):
         self.loglevel_knxd_cache_problems = self.get_parameter_value('loglevel_knxd_cache_problems')
 
         from bin.smarthome import VERSION
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
         name = 'plugins.' + self.get_fullname()
-        self._client = Tcp_client(name=name, host=self.host, port=self.port, binary=True, autoreconnect=True, connect_cycle=5, retry_cycle=30)
-        self._client.set_callbacks(connected=self.handle_connect, data_received=self.parse_knxd_message)  # , disconnected=disconnected_callback, data_received=receive_callback
+        self._client = Tcp_client(
+            name=name, host=self.host, port=self.port, binary=True, autoreconnect=True, connect_cycle=5, retry_cycle=30
+        )
+        self._client.set_callbacks(
+            connected=self.handle_connect, data_received=self.parse_knxd_message
+        )  # , disconnected=disconnected_callback, data_received=receive_callback
 
         if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug("init knx")
+            self.logger.debug('init knx')
         self.shtime = Shtime.get_instance()
 
-        self.gal = {}                   # group addresses to listen to {DPT: dpt, ITEMS: [item 1, item 2, ..., item n], LOGICS: [ logic 1, logic 2, ..., logic n]}
-        self.gar = {}                   # group addresses to reply if requested from knx, {DPT: dpt, ITEM: item, LOGIC: None}
+        self.gal = {}  # group addresses to listen to {DPT: dpt, ITEMS: [item 1, item 2, ..., item n], LOGICS: [ logic 1, logic 2, ..., logic n]}
+        self.gar = {}  # group addresses to reply if requested from knx, {DPT: dpt, ITEM: item, LOGIC: None}
         self._init_ga = []
-        self._cache_ga = []             # group addresses which should be initalized by the knxd cache
-        self._cache_ga_response_pending = []    # group adresses for which a read request was sent to knxd
-        self._cache_ga_response_no_value = []   # group adresses for which a response from knxd did not provide a value
+        self._cache_ga = []  # group addresses which should be initalized by the knxd cache
+        self._cache_ga_response_pending = []  # group adresses for which a read request was sent to knxd
+        self._cache_ga_response_no_value = []  # group adresses for which a response from knxd did not provide a value
 
         self.time_ga = self.get_parameter_value('time_ga')
         self.date_ga = self.get_parameter_value('date_ga')
         self._send_time_do = self.get_parameter_value('send_time')
         self._bm_separatefile = False
-        self._bm_format = "BM: {1} set {2} to {3}"
-        self._bm_format_send = "BM: Sending value {3} for GA {2}"
-        self._bm_format_poll = "BM: Polling value for GA {2}"
+        self._bm_format = 'BM: {1} set {2} to {3}'
+        self._bm_format_send = 'BM: Sending value {3} for GA {2}'
+        self._bm_format_poll = 'BM: Polling value for GA {2}'
         self._startup_polling = {}
 
         # following needed for statistics
         self.enable_stats = self.get_parameter_value('enable_stats')
-        self.stats_ga = {}              # statistics for used group addresses on the BUS
-        self.stats_pa = {}              # statistics for used group addresses on the BUS
-        self.stats_last_read = None     # last read request from KNX
-        self.stats_last_write = None    # last write from KNX
-        self.stats_last_response = None # last response from KNX
-        self.stats_last_action = None   # the most recent action
+        self.stats_ga = {}  # statistics for used group addresses on the BUS
+        self.stats_pa = {}  # statistics for used group addresses on the BUS
+        self.stats_last_read = None  # last read request from KNX
+        self.stats_last_write = None  # last write from KNX
+        self.stats_last_response = None  # last response from KNX
+        self.stats_last_action = None  # the most recent action
         self._log_own_packets = self.get_parameter_value('log_own_packets')
         # following is for a special logger called busmonitor
         busmonitor = self.get_parameter_value('busmonitor')
 
-        if busmonitor.lower() in ['on','true']:
+        if busmonitor.lower() in ['on', 'true']:
             self._busmonitor = self.logger.info
         elif busmonitor.lower() in ['off', 'false']:
             self._busmonitor = self.logger.debug
         elif busmonitor.lower() == 'logger':
             self._bm_separatefile = True
-            self._bm_format = "{0};{1};{2};{3}"
-            self._bm_format_send = "{0};{1};{2};{3}"
-            self._bm_format_poll = "{0};{1};{2}"
-            self._busmonitor = logging.getLogger("knx_busmonitor").info
+            self._bm_format = '{0};{1};{2};{3}'
+            self._bm_format_send = '{0};{1};{2};{3}'
+            self._bm_format_poll = '{0};{1};{2}'
+            self._busmonitor = logging.getLogger('knx_busmonitor').info
             self.logger.info(self.translate("Using busmonitor (L) = '{}'").format(busmonitor))
         else:
-            self.logger.warning(self.translate("Invalid value '{}' configured for parameter 'busmonitor', using 'false'").format(busmonitor))
+            self.logger.warning(
+                self.translate("Invalid value '{}' configured for parameter 'busmonitor', using 'false'").format(
+                    busmonitor
+                )
+            )
             self._busmonitor = self.logger.debug
 
         self.readonly = self.get_parameter_value('readonly')
         if self.readonly:
-            self.logger.warning(self.translate("!!! KNX Plugin in READONLY mode !!!"))
+            self.logger.warning(self.translate('!!! KNX Plugin in READONLY mode !!!'))
 
         # extension to use knx project files from ETS5
-        self.project_file_password = self.get_parameter_value( 'project_file_password')
+        self.project_file_password = self.get_parameter_value('project_file_password')
         self.knxproj_ga = {}
         self.use_project_file = self.get_parameter_value('use_project_file')
 
         if self.use_project_file:
             # don't bother people without project files
-            self.base_project_filename = "projectfile"
+            self.base_project_filename = 'projectfile'
             self.projectpath = pathlib.Path(self.get_parameter_value('projectpath'))
             if self.projectpath.is_absolute():
                 self.projectpath = self.projectpath / self.base_project_filename
-                self.logger.warning(self.translate("Given path is absolute, using {}").format(self.projectpath))
+                self.logger.warning(self.translate('Given path is absolute, using {}').format(self.projectpath))
             else:
-                self.projectpath = pathlib.Path(self.get_sh().get_basedir()) / self.projectpath / self.base_project_filename
-                self.logger.info(self.translate("Given path is relative, using {path}", {'path': self.projectpath} ))
+                self.projectpath = (
+                    pathlib.Path(self.get_sh().get_basedir()) / self.projectpath / self.base_project_filename
+                )
+                self.logger.info(self.translate('Given path is relative, using {path}', {'path': self.projectpath}))
 
             self._parse_projectfile()
 
@@ -157,14 +189,14 @@ class KNX(SmartPlugin):
 
     def _check_projectfile_destination(self):
         if not self.projectpath.exists():
-            self.logger.warning(self.translate("File at given path {} does not exist").format(self.projectpath))
+            self.logger.warning(self.translate('File at given path {} does not exist').format(self.projectpath))
             if not self.projectpath.parent.exists():
-                self.logger.warning(self.translate("try to create directory {}").format(self.projectpath.parent))
+                self.logger.warning(self.translate('try to create directory {}').format(self.projectpath.parent))
                 try:
                     self.projectpath.parent.mkdir(parents=True, exist_ok=True)
-                    self.logger.warning(self.translate("directory {} was created").format(self.projectpath.parent))
-                except:
-                    self.logger.warning(self.translate("could not create directory {}").format(self.projectpath.parent))
+                    self.logger.warning(self.translate('directory {} was created').format(self.projectpath.parent))
+                except Exception:
+                    self.logger.warning(self.translate('could not create directory {}').format(self.projectpath.parent))
 
     def _send(self, data):
         if not self.alive:
@@ -172,7 +204,7 @@ class KNX(SmartPlugin):
             self.logger.warning(self.translate('send called while self.alive is False, will NOT send anything to KNX'))
             return
 
-        if len(data) < 2 or len(data) > 0xffff:
+        if len(data) < 2 or len(data) > 0xFFFF:
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(self.translate('Illegal data size: {}').format(repr(data)))
             return False
@@ -185,40 +217,50 @@ class KNX(SmartPlugin):
         pkt = bytearray([0, KNXD.GROUP_PACKET])
         try:
             pkt.extend(self.encode(ga, 'ga'))
-        except:
-            self.logger.warning('groupwrite: ' + self.translate("problem encoding ga: {}").format(ga))
+        except Exception:
+            self.logger.warning('groupwrite: ' + self.translate('problem encoding ga: {}').format(ga))
             return
         pkt.extend([0])
         try:
             pkt.extend(self.encode(payload, dpt))
-        except:
-            self.logger.warning(self.translate('problem encoding payload {} for dpt {}').format(payload,dpt))
+        except Exception:
+            self.logger.warning(self.translate('problem encoding payload {} for dpt {}').format(payload, dpt))
             return
         if flag == 'write':
             flag = FLAG_KNXWRITE
         elif flag == 'response':
             flag = FLAG_KNXRESPONSE
         else:
-            self.logger.warning(self.translate(
-                "groupwrite telegram for {} with unknown flag: {}. Please choose beetween write and response.").format(
-                    ga, flag))
+            self.logger.warning(
+                self.translate(
+                    'groupwrite telegram for {} with unknown flag: {}. Please choose beetween write and response.'
+                ).format(ga, flag)
+            )
             return
         pkt[5] = flag | pkt[5]
         if self.readonly:
-            self.logger.info(self.translate("groupwrite telegram for: {} - Value: {} not sent. Plugin in READONLY mode.").format(ga, payload))
+            self.logger.info(
+                self.translate('groupwrite telegram for: {} - Value: {} not sent. Plugin in READONLY mode.').format(
+                    ga, payload
+                )
+            )
         elif not self.alive:
-            self.logger.info(self.translate("groupwrite telegram for: {} - Value: {} not sent. Plugin not alive.").format(ga, payload))
+            self.logger.info(
+                self.translate('groupwrite telegram for: {} - Value: {} not sent. Plugin not alive.').format(
+                    ga, payload
+                )
+            )
         else:
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug(self.translate("groupwrite telegram for: {} - Value: {} sent.").format(ga, payload))
+                self.logger.debug(self.translate('groupwrite telegram for: {} - Value: {} sent.').format(ga, payload))
             self._send(pkt)
 
     def _cacheread(self, ga):
         pkt = bytearray([0, KNXD.CACHE_READ])
         try:
             pkt.extend(self.encode(ga, 'ga'))
-        except:
-            self.logger.warning("_cacheread: " + self.translate('problem encoding ga: {}').format(ga))
+        except Exception:
+            self.logger.warning('_cacheread: ' + self.translate('problem encoding ga: {}').format(ga))
             return
         pkt.extend([0, 0])
         if not self.alive:
@@ -232,8 +274,8 @@ class KNX(SmartPlugin):
         pkt = bytearray([0, KNXD.GROUP_PACKET])
         try:
             pkt.extend(self.encode(ga, 'ga'))
-        except:
-            self.logger.warning("groupread: " + self.translate('problem encoding ga: {}').format(ga))
+        except Exception:
+            self.logger.warning('groupread: ' + self.translate('problem encoding ga: {}').format(ga))
             return
         pkt.extend([0, FLAG_KNXREAD])
         if not self.alive:
@@ -251,7 +293,7 @@ class KNX(SmartPlugin):
         if 'ga' in kwargs:
             self.groupread(kwargs['ga'])
             if self._log_own_packets is True and self.alive:
-                self._busmonitor(self._bm_format_poll.format(self.get_instance_name(), 'POLL', kwargs["ga"]))
+                self._busmonitor(self._bm_format_poll.format(self.get_instance_name(), 'POLL', kwargs['ga']))
         else:
             self.logger.warning(self.translate('problem polling {}, no known ga').format(item))
 
@@ -260,13 +302,20 @@ class KNX(SmartPlugin):
                 ga = kwargs['ga']
                 interval = int(kwargs['interval'])
                 next = self.shtime.now() + timedelta(seconds=interval)
-                self.scheduler_add(f'KNX poll {item}', self._poll,
-                                    value={'caller': self.get_shortname(),
-                                    'instance': self.get_instance_name(),
-                                    ITEM: item, 'ga': ga, 'interval': interval},
-                                    next=next)
+                self.scheduler_add(
+                    f'KNX poll {item}',
+                    self._poll,
+                    value={
+                        'caller': self.get_shortname(),
+                        'instance': self.get_instance_name(),
+                        ITEM: item,
+                        'ga': ga,
+                        'interval': interval,
+                    },
+                    next=next,
+                )
             except Exception as ex:
-                self.logger.error(f"_poll function got an error {ex}")
+                self.logger.error(f'_poll function got an error {ex}')
 
     def _send_time(self):
         self.send_time(self.time_ga, self.date_ga)
@@ -358,19 +407,19 @@ class KNX(SmartPlugin):
             self._isLength = False
             try:
                 # expecting an unsigned short integer:
-                client.terminator = struct.unpack(">H", data)[0]
-            except:
-                self.logger.error(f"KNX[{self.get_instance_name()}]: problem unpacking length: {data}")
+                client.terminator = struct.unpack('>H', data)[0]
+            except Exception:
+                self.logger.error(f'KNX[{self.get_instance_name()}]: problem unpacking length: {data}')
             return
         else:
             self._isLength = True
             client.terminator = 2
 
         # expecting the type of the following knxd telegram as an unsigned short integer
-        knxd_msg_type = struct.unpack(">H", data[0:2])[0]
+        knxd_msg_type = struct.unpack('>H', data[0:2])[0]
 
         # knxd
-        if not knxd_msg_type in [KNXD.GROUP_PACKET, KNXD.CACHE_READ, KNXD.CACHE_READ_NOWAIT]:
+        if knxd_msg_type not in [KNXD.GROUP_PACKET, KNXD.CACHE_READ, KNXD.CACHE_READ_NOWAIT]:
             self.handle_other_knxd_messages(knxd_msg_type, data[2:])
             return
 
@@ -388,31 +437,32 @@ class KNX(SmartPlugin):
         # knxd will only deliver 4 bytes and no command/data payload when it is unable to provide a group address from cache.
         if len(knx_data) < 6:
             knx_data_str = binascii.hexlify(knx_data).decode()
-            src = ""
-            dst = ""
+            src = ''
+            dst = ''
             try:
                 src = self.decode(knx_data[0:2], 'pa')
                 dst = self.decode(knx_data[2:4], 'ga')
             finally:
                 self._cache_ga_response_no_value.append(dst)
                 loglevel = logging.getLevelName(self.loglevel_knxd_cache_problems)
-                if not isinstance( loglevel, int):
-                  loglevel = logging.getLevelName(loglevel)
-                self.logger.log(loglevel, f"{len(knx_data)} bytes [{knx_data_str}] from {src} for ga/pa {dst} is not enough data to parse")
+                if not isinstance(loglevel, int):
+                    loglevel = logging.getLevelName(loglevel)
+                self.logger.log(
+                    loglevel,
+                    f'{len(knx_data)} bytes [{knx_data_str}] from {src} for ga/pa {dst} is not enough data to parse',
+                )
             return
 
         # test if flags provide normal knx telegram data or if they are special
         if len(knx_data) >= 6 and (knx_data[4] & 0x03 or (knx_data[5] & KNX_FLAG_MASK) == FLAG_RESERVED):
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug("Unknown Application Protocol Data Unit")
+                self.logger.debug('Unknown Application Protocol Data Unit')
             return
-
 
         src = self.decode(knx_data[0:2], 'pa')
         dst = self.decode(knx_data[2:4], 'ga')
 
         flg = knx_data[5] & KNX_FLAG_MASK
-        is_ga = knx_data[4] & 0b1000000
         if flg == FLAG_KNXWRITE:
             flg = 'write'
         elif flg == FLAG_KNXREAD:
@@ -420,18 +470,18 @@ class KNX(SmartPlugin):
         elif flg == FLAG_KNXRESPONSE:
             flg = 'response'
         else:
-            self.logger.warning("Unknown flag: {:02x} src: {} dest: {}".format(flg, src, dst))
+            self.logger.warning('Unknown flag: {:02x} src: {} dest: {}'.format(flg, src, dst))
             return
 
         if len(knx_data) == 6:
-            payload = bytearray([knx_data[5] & KNX_DATA_MASK ]) # 0x3f
+            payload = bytearray([knx_data[5] & KNX_DATA_MASK])  # 0x3f
         else:
             payload = knx_data[6:]
 
         if len(payload) == 0:
             # this is an error!!!
             payloadstr = binascii.hexlify(payload).decode()
-            msg = f"KNXD message {KNXD.MessageDescriptions[knxd_msg_type]} from {src} for GA {dst} received but payload {payloadstr} has not enough data"
+            msg = f'KNXD message {KNXD.MessageDescriptions[knxd_msg_type]} from {src} for GA {dst} received but payload {payloadstr} has not enough data'
             self.logger.warning(msg)
             return
 
@@ -459,13 +509,19 @@ class KNX(SmartPlugin):
         # further inspect what to do next
         if flg == 'write' or flg == 'response':
             if dst not in self.gal:  # update item/logic
-                self._busmonitor(self._bm_format.format(self.get_instance_name(), src, dst, binascii.hexlify(payload).decode()))
+                self._busmonitor(
+                    self._bm_format.format(self.get_instance_name(), src, dst, binascii.hexlify(payload).decode())
+                )
                 return
             dpt = self.gal[dst][DPT]
             try:
                 val = self.decode(payload, dpt)
             except Exception as e:
-                self.logger.exception("Problem decoding frame from {} to {} with '{}' and DPT {}. Exception: {}".format(src, dst, binascii.hexlify(payload).decode(), dpt, e))
+                self.logger.exception(
+                    "Problem decoding frame from {} to {} with '{}' and DPT {}. Exception: {}".format(
+                        src, dst, binascii.hexlify(payload).decode(), dpt, e
+                    )
+                )
                 return
             if val is not None:
                 self._busmonitor(self._bm_format.format(self.get_instance_name(), src, dst, val))
@@ -479,23 +535,39 @@ class KNX(SmartPlugin):
                 if knxd_msg_type == KNXD.CACHE_READ:
                     if dst in self._cache_ga_response_pending:
                         self._cache_ga_response_pending.remove(dst)
-                way = "" if knxd_msg_type != KNXD.CACHE_READ else " (from knxd Cache)"
+                way = '' if knxd_msg_type != KNXD.CACHE_READ else ' (from knxd Cache)'
                 if self.logger.isEnabledFor(logging.DEBUG):
-                    self.logger.debug("{} request from {} to {} with '{}' and DPT {}{}".format(flg, src, dst, binascii.hexlify(payload).decode(), dpt, way))
+                    self.logger.debug(
+                        "{} request from {} to {} with '{}' and DPT {}{}".format(
+                            flg, src, dst, binascii.hexlify(payload).decode(), dpt, way
+                        )
+                    )
                 src_wrk = self.get_instance_name()
                 if src_wrk != '':
                     src_wrk += ':'
                 src_wrk += src + ':ga=' + dst
                 for item in self.gal[dst][ITEMS]:
                     if self.logger.isEnabledFor(logging.DEBUG):
-                        self.logger.debug("Set Item '{}' to value '{}' caller='{}', source='{}', dest='{}'".format(item, val, self.get_shortname(), src, dst))
+                        self.logger.debug(
+                            "Set Item '{}' to value '{}' caller='{}', source='{}', dest='{}'".format(
+                                item, val, self.get_shortname(), src, dst
+                            )
+                        )
                     item(val, self.get_shortname(), src_wrk, dst)
                 for logic in self.gal[dst][LOGICS]:
                     if self.logger.isEnabledFor(logging.DEBUG):
-                        self.logger.debug("Trigger Logic '{}' from caller='{}', source='{}', value '{}', dest='{}'".format(logic, self.get_shortname(), src_wrk, val, dst))
+                        self.logger.debug(
+                            "Trigger Logic '{}' from caller='{}', source='{}', value '{}', dest='{}'".format(
+                                logic, self.get_shortname(), src_wrk, val, dst
+                            )
+                        )
                     logic.trigger(self.get_shortname(), src_wrk, val, dst)
             else:
-                self.logger.warning("Wrong payload '{2}' for ga '{1}' with dpt '{0}'.".format(dpt, dst, binascii.hexlify(payload).decode()))
+                self.logger.warning(
+                    "Wrong payload '{2}' for ga '{1}' with dpt '{0}'.".format(
+                        dpt, dst, binascii.hexlify(payload).decode()
+                    )
+                )
             if self.enable_stats:
                 if flg == 'write':
                     self.stats_last_write = self.shtime.now()
@@ -511,29 +583,37 @@ class KNX(SmartPlugin):
                     item = self.gar[dst][ITEM]
                     val = item()
                     if self.logger.isEnabledFor(logging.DEBUG):
-                        self.logger.debug("groupwrite value '{}' to ga '{}' as DPT '{}' as response".format(dst, val, self.get_iattr_value(item.conf,KNX_DPT)))
+                        self.logger.debug(
+                            "groupwrite value '{}' to ga '{}' as DPT '{}' as response".format(
+                                dst, val, self.get_iattr_value(item.conf, KNX_DPT)
+                            )
+                        )
                     if self._log_own_packets is True:
                         self._busmonitor(self._bm_format.format(self.get_instance_name(), src, dst, val))
-                    self.groupwrite(dst, val, self.get_iattr_value(item.conf,KNX_DPT), 'response')
+                    self.groupwrite(dst, val, self.get_iattr_value(item.conf, KNX_DPT), 'response')
                 if self.gar[dst][LOGIC] is not None:
                     src_wrk = self.get_instance_name()
                     if src_wrk != '':
                         src_wrk += ':'
                     src_wrk += src + ':ga=' + dst
                     if self.logger.isEnabledFor(logging.DEBUG):
-                        self.logger.debug("Trigger Logic '{}' from caller='{}', source='{}', dest='{}'".format(self.gar[dst][LOGIC], self.get_shortname(), src_wrk, dst))
+                        self.logger.debug(
+                            "Trigger Logic '{}' from caller='{}', source='{}', dest='{}'".format(
+                                self.gar[dst][LOGIC], self.get_shortname(), src_wrk, dst
+                            )
+                        )
                     self.gar[dst][LOGIC].trigger(self.get_shortname(), src_wrk, None, dst)
 
     def handle_other_knxd_messages(self, knxd_msg_type, data):
         """to approach a two way communication we need to know more about the other messages"""
         if len(data) > 0:
-            payloadstr = f" with data {binascii.hexlify(data).decode()}"
+            payloadstr = f' with data {binascii.hexlify(data).decode()}'
         else:
-            payloadstr = " no further data"
+            payloadstr = ' no further data'
         if knxd_msg_type in KNXD.MessageDescriptions:
-            msg = f"KNXD message {KNXD.MessageDescriptions[knxd_msg_type]} received {payloadstr}"
+            msg = f'KNXD message {KNXD.MessageDescriptions[knxd_msg_type]} received {payloadstr}'
         else:
-            msg = f"KNXD message UNKNOWN received with data {payloadstr}"
+            msg = f'KNXD message UNKNOWN received with data {payloadstr}'
 
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(msg)
@@ -552,10 +632,12 @@ class KNX(SmartPlugin):
             _interval = self._startup_polling[item].get('interval')
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug("KNX Startup Poll for item '{}': ga {}, interval {}".format(item, _ga, _interval))
-            self._poll(**{ITEM: item, 'ga':_ga, 'interval':_interval})
+            self._poll(**{ITEM: item, 'ga': _ga, 'interval': _interval})
 
         if self._send_time_do:
-            self.scheduler_add('KNX[{0}] time'.format(self.get_instance_name()), self._send_time, prio=5, cycle=int(self._send_time_do))
+            self.scheduler_add(
+                'KNX[{0}] time'.format(self.get_instance_name()), self._send_time, prio=5, cycle=int(self._send_time_do)
+            )
 
     def stop(self):
         """
@@ -583,28 +665,35 @@ class KNX(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, KNX_DTP):
-            self.logger.error("Ignoring {}: please change knx_dtp to knx_dpt.".format(item))
+            self.logger.error('Ignoring {}: please change knx_dtp to knx_dpt.'.format(item))
             return None
         if self.has_iattr(item.conf, KNX_DPT):
             dpt = self.get_iattr_value(item.conf, KNX_DPT)
             if dpt not in dpts.decode:
-                self.logger.warning("Ignoring {} unknown dpt: {}".format(item, dpt))
+                self.logger.warning('Ignoring {} unknown dpt: {}'.format(item, dpt))
                 return None
-        elif self.has_iattr(item.conf, KNX_STATUS) or self.has_iattr(item.conf, KNX_SEND) or self.has_iattr(item.conf, KNX_REPLY) or self.has_iattr(item.conf, KNX_LISTEN) or self.has_iattr(item.conf, KNX_INIT) or self.has_iattr(item.conf, KNX_CACHE):
-            self.logger.warning("Ignoring {}: please add knx_dpt.".format(item))
+        elif (
+            self.has_iattr(item.conf, KNX_STATUS)
+            or self.has_iattr(item.conf, KNX_SEND)
+            or self.has_iattr(item.conf, KNX_REPLY)
+            or self.has_iattr(item.conf, KNX_LISTEN)
+            or self.has_iattr(item.conf, KNX_INIT)
+            or self.has_iattr(item.conf, KNX_CACHE)
+        ):
+            self.logger.warning('Ignoring {}: please add knx_dpt.'.format(item))
             return None
         else:
             return None
         if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug("Item {} is mapped to KNX Instance {}".format(item, self.get_instance_name()))
+            self.logger.debug('Item {} is mapped to KNX Instance {}'.format(item, self.get_instance_name()))
 
         if self.has_iattr(item.conf, KNX_LISTEN):
             knx_listen = self.get_iattr_value(item.conf, KNX_LISTEN)
             if isinstance(knx_listen, str):
-                knx_listen = [knx_listen, ]
+                knx_listen = [knx_listen]
             for ga in knx_listen:
                 if self.logger.isEnabledFor(logging.DEBUG):
-                    self.logger.debug("{} listen on {}".format(item, ga))
+                    self.logger.debug('{} listen on {}'.format(item, ga))
                 if ga not in self.gal:
                     self.gal[ga] = {DPT: dpt, ITEMS: [item], LOGICS: []}
                 else:
@@ -614,9 +703,13 @@ class KNX(SmartPlugin):
         if self.has_iattr(item.conf, KNX_INIT):
             ga = self.get_iattr_value(item.conf, KNX_INIT)
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug("{} listen on and init with {}".format(item, ga))
+                self.logger.debug('{} listen on and init with {}'.format(item, ga))
             if Utils.get_type(ga) == 'list':
-                self.logger.warning("{} Problem while doing knx_init: Multiple GA specified in item definition, using first GA ({}) for reading value".format(item.property.path, ga))
+                self.logger.warning(
+                    '{} Problem while doing knx_init: Multiple GA specified in item definition, using first GA ({}) for reading value'.format(
+                        item.property.path, ga
+                    )
+                )
                 ga = ga[0]
             if ga not in self.gal:
                 self.gal[ga] = {DPT: dpt, ITEMS: [item], LOGICS: []}
@@ -628,9 +721,13 @@ class KNX(SmartPlugin):
         if self.has_iattr(item.conf, KNX_CACHE):
             ga = self.get_iattr_value(item.conf, KNX_CACHE)
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug("{} listen on and init with cache {}".format(item, ga))
+                self.logger.debug('{} listen on and init with cache {}'.format(item, ga))
             if Utils.get_type(ga) == 'list':
-                self.logger.warning("{} Problem while reading KNX cache: Multiple GA specified in item definition, using first GA ({}) for reading cache".format(item.property.path, ga))
+                self.logger.warning(
+                    '{} Problem while reading KNX cache: Multiple GA specified in item definition, using first GA ({}) for reading cache'.format(
+                        item.property.path, ga
+                    )
+                )
                 ga = ga[0]
             if ga not in self.gal:
                 self.gal[ga] = {DPT: dpt, ITEMS: [item], LOGICS: []}
@@ -643,38 +740,41 @@ class KNX(SmartPlugin):
         if self.has_iattr(item.conf, KNX_REPLY):
             knx_reply = self.get_iattr_value(item.conf, KNX_REPLY)
             if isinstance(knx_reply, str):
-                knx_reply = [knx_reply, ]
+                knx_reply = [knx_reply]
             for ga in knx_reply:
                 if self.logger.isEnabledFor(logging.DEBUG):
-                    self.logger.debug("{} reply to {}".format(item, ga))
+                    self.logger.debug('{} reply to {}'.format(item, ga))
                 if ga not in self.gar:
                     self.gar[ga] = {DPT: dpt, ITEM: item, LOGIC: None}
                 else:
-                    self.logger.warning("{} knx_reply ({}) already defined for {}".format(item.property.path, ga, self.gar[ga][ITEM]))
+                    self.logger.warning(
+                        '{} knx_reply ({}) already defined for {}'.format(item.property.path, ga, self.gar[ga][ITEM])
+                    )
 
         if self.has_iattr(item.conf, KNX_SEND):
             if isinstance(self.get_iattr_value(item.conf, KNX_SEND), str):
-                self.set_attr_value(item.conf, KNX_SEND, [self.get_iattr_value(item.conf, KNX_SEND), ])
+                self.set_attr_value(item.conf, KNX_SEND, [self.get_iattr_value(item.conf, KNX_SEND)])
 
         if self.has_iattr(item.conf, KNX_STATUS):
             if isinstance(self.get_iattr_value(item.conf, KNX_STATUS), str):
-                self.set_attr_value(item.conf, KNX_STATUS, [self.get_iattr_value(item.conf, KNX_STATUS), ])
+                self.set_attr_value(item.conf, KNX_STATUS, [self.get_iattr_value(item.conf, KNX_STATUS)])
 
         if self.has_iattr(item.conf, KNX_POLL):
             knx_poll = self.get_iattr_value(item.conf, KNX_POLL)
             if isinstance(knx_poll, str):
-                knx_poll = [knx_poll, ]
+                knx_poll = [knx_poll]
             if len(knx_poll) == 2:
                 poll_ga = knx_poll[0]
                 poll_interval = float(knx_poll[1])
 
-                self.logger.info(
-                    "Item {} is polled on GA {} every {} seconds".format(item, poll_ga, poll_interval))
-                randomwait = random.randrange(15)
-                next = self.shtime.now() + timedelta(seconds=poll_interval + randomwait)
+                self.logger.info('Item {} is polled on GA {} every {} seconds'.format(item, poll_ga, poll_interval))
                 self._startup_polling.update({item: {'ga': poll_ga, 'interval': poll_interval}})
             else:
-                self.logger.warning("Ignoring knx_poll for item {}: We need two parameters, one for the GA and one for the polling interval.".format(item))
+                self.logger.warning(
+                    'Ignoring knx_poll for item {}: We need two parameters, one for the GA and one for the polling interval.'.format(
+                        item
+                    )
+                )
                 pass
 
         if self.has_iattr(item.conf, KNX_STATUS) or self.has_iattr(item.conf, KNX_SEND):
@@ -689,21 +789,21 @@ class KNX(SmartPlugin):
         if KNX_DPT in logic.conf:
             dpt = logic.conf[KNX_DPT]
             if dpt not in dpts.decode:
-                self.logger.warning("Ignoring {} unknown dpt: {}".format(logic, dpt))
+                self.logger.warning('Ignoring {} unknown dpt: {}'.format(logic, dpt))
                 return None
         else:
             return None
 
         if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug("Logic {} is mapped to KNX Instance {}".format(logic, self.get_instance_name()))
+            self.logger.debug('Logic {} is mapped to KNX Instance {}'.format(logic, self.get_instance_name()))
 
         if KNX_LISTEN in logic.conf:
             knx_listen = logic.conf[KNX_LISTEN]
             if isinstance(knx_listen, str):
-                knx_listen = [knx_listen, ]
+                knx_listen = [knx_listen]
             for ga in knx_listen:
                 if self.logger.isEnabledFor(logging.DEBUG):
-                    self.logger.debug("{} listen on {}".format(logic, ga))
+                    self.logger.debug('{} listen on {}'.format(logic, ga))
                 if ga not in self.gal:
                     self.gal[ga] = {DPT: dpt, ITEMS: [], LOGICS: [logic]}
                 else:
@@ -712,16 +812,16 @@ class KNX(SmartPlugin):
         if KNX_REPLY in logic.conf:
             knx_reply = logic.conf[KNX_REPLY]
             if isinstance(knx_reply, str):
-                knx_reply = [knx_reply, ]
+                knx_reply = [knx_reply]
             for ga in knx_reply:
                 if self.logger.isEnabledFor(logging.DEBUG):
-                    self.logger.debug("{} reply to {}".format(logic, ga))
+                    self.logger.debug('{} reply to {}'.format(logic, ga))
                 if ga in self.gar:
                     if self.gar[ga][LOGIC] is False:
                         obj = self.gar[ga][ITEM]
                     else:
                         obj = self.gar[ga][LOGIC]
-                    self.logger.warning("{} knx_reply ({}) already defined for {}".format(logic, ga, obj))
+                    self.logger.warning('{} knx_reply ({}) already defined for {}'.format(logic, ga, obj))
                 else:
                     self.gar[ga] = {DPT: dpt, ITEM: None, LOGIC: logic}
 
@@ -751,13 +851,14 @@ class KNX(SmartPlugin):
                     if ga != dest:
                         _value = item()
                         if self._log_own_packets is True:
-                            self._busmonitor(self._bm_format_send.format(self.get_instance_name(), 'STATUS', ga, _value))
+                            self._busmonitor(
+                                self._bm_format_send.format(self.get_instance_name(), 'STATUS', ga, _value)
+                            )
                         self.groupwrite(ga, _value, self.get_iattr_value(item.conf, KNX_DPT))
 
-
-# ------------------------------------------
-#    Statistics functions for KNX
-# ------------------------------------------
+    # ------------------------------------------
+    #    Statistics functions for KNX
+    # ------------------------------------------
 
     """
     The statistics functions were introduced to watch what is happening on the KNX.
@@ -775,6 +876,7 @@ class KNX(SmartPlugin):
     - adresses that do not react upon requests
     - adresses that can't satisfy cache requests
     """
+
     def enable_stats(self):
         """
         Enables the tracking of KNX telegrams during runtime of SmartHomeNG
@@ -815,13 +917,17 @@ class KNX(SmartPlugin):
         """
         returns a dict with following structure
         ```
-        stats_ga = { ga1 : { 'read' : n-read,               # counter of read requests from KNX
-                             'write' : n-write,             # counter of write operations from KNX
-                             'response' : n-response,       # counter of response operations from KNX
-                             'last_read' : datetime,        # the respective datetime object of read,
-                             'last_write' : datetime,       # write
-                             'last_response' : datetime },  # and response
-                     ga2 : {...} }
+        stats_ga = {
+            ga1: {
+                'read': n - read,  # counter of read requests from KNX
+                'write': n - write,  # counter of write operations from KNX
+                'response': n - response,  # counter of response operations from KNX
+                'last_read': datetime,  # the respective datetime object of read,
+                'last_write': datetime,  # write
+                'last_response': datetime,
+            },  # and response
+            ga2: {...},
+        }
         ```
         :return: dict
         """
@@ -831,13 +937,17 @@ class KNX(SmartPlugin):
         """
         returns a dict with following structure
         ```
-        stats_pa = { pa1 : { 'read' : n-read,               # counter of read requests from KNX
-                             'write' : n-write,             # counter of write operations from KNX
-                             'response' : n-response,       # counter of response operations from KNX
-                             'last_read' : datetime,        # the respective datetime object of read,
-                             'last_write' : datetime,       # write
-                             'last_response' : datetime },  # and response
-                     pa2 : {...} }
+        stats_pa = {
+            pa1: {
+                'read': n - read,  # counter of read requests from KNX
+                'write': n - write,  # counter of write operations from KNX
+                'response': n - response,  # counter of response operations from KNX
+                'last_read': datetime,  # the respective datetime object of read,
+                'last_write': datetime,  # write
+                'last_response': datetime,
+            },  # and response
+            pa2: {...},
+        }
         ```
         :return: dict
         """

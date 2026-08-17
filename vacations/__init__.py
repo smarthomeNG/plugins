@@ -24,14 +24,15 @@ import datetime
 import logging
 import ferien
 from lib.shtime import Shtime
-from lib.model.smartplugin import *
+from lib.model.smartplugin import Modules, SmartPlugin, SmartPluginWebIf
 
 
 class Vacations(SmartPlugin):
     """
     Retrieves the German school vacations.
     """
-    PLUGIN_VERSION = "1.0.3"
+
+    PLUGIN_VERSION = '1.0.3'
     ALLOWED_PROVINCES = ['BW', 'BY', 'BE', 'BB', 'HB', 'HH', 'HE', 'MV', 'NI', 'NW', 'RP', 'SL', 'SN', 'ST', 'SH', 'TH']
 
     def __init__(self, sh, *args, **kwargs):
@@ -65,11 +66,10 @@ class Vacations(SmartPlugin):
         pass
 
     def _update_vacations(self):
-        new_vactions = None
         try:
             new_vacations = ferien.all_vacations()
         except Exception as e:
-            self.logger.error("An exception occurred when calling \"all_vacations()\" in ferien_api library: %s" % e)
+            self.logger.error('An exception occurred when calling "all_vacations()" in ferien_api library: %s' % e)
             return
         if new_vacations is not None:
             for province_code in self._province_codes:
@@ -87,20 +87,25 @@ class Vacations(SmartPlugin):
     def get_vacation(self, date_str=None, province=None):
         if province is None:
             if self.shtime.config.get('location', None).get('country').lower() not in ['de', 'germany']:
-                self.logger.error('The SmartHomeNG country "%s" not supported by vacations plugin' % self.shtime.config.get('location', None).get('country'))
+                self.logger.error(
+                    'The SmartHomeNG country "%s" not supported by vacations plugin'
+                    % self.shtime.config.get('location', None).get('country')
+                )
                 return
             else:
                 province = self.shtime.config.get('location', None).get('province')
                 if province is None:
                     self.logger.error(
                         'No province configured in etc/holidays.yaml. Please set country to DE and province value to one of '
-                        'those supported by this plugin: BW, BY, BE, BB, HB, HH, HE, MV, NI, NW, RP, SL, SN, ST, SH, TH ')
+                        'those supported by this plugin: BW, BY, BE, BB, HB, HH, HE, MV, NI, NW, RP, SL, SN, ST, SH, TH '
+                    )
                     return
                 elif province not in self._province_codes:
                     self.logger.error(
                         'Province %s is not available in this plugin. Please ensure you are using one of the following provinces: '
                         'BW, BY, BE, BB, HB, HH, HE, MV, NI, NW, RP, SL, SN, ST, SH, TH. Not specifying the parameter will use '
-                        'the province configuration of your SmartHomeNG instance in etc/holidays.yaml.')
+                        'the province configuration of your SmartHomeNG instance in etc/holidays.yaml.'
+                    )
                     return
 
         if date_str is not None:
@@ -132,7 +137,7 @@ class Vacations(SmartPlugin):
         if v is not None:
             return v.name.capitalize()
         else:
-            return ""
+            return ''
 
     def init_webinterface(self):
         """
@@ -141,32 +146,29 @@ class Vacations(SmartPlugin):
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
+            self.mod_http = Modules.get_instance().get_module('http')  # try/except to handle disabled http module
+        except Exception:
             self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
 
         # set application configuration for cherrypy
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
         config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
+            '/': {'tools.staticdir.root': webif_dir},
+            '/static': {'tools.staticdir.on': True, 'tools.staticdir.dir': 'static'},
         }
 
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
+        self.mod_http.register_webif(
+            WebInterface(webif_dir, self),
+            self.get_shortname(),
+            config,
+            self.get_classname(),
+            self.get_instance_name(),
+            description='',
+        )
 
         return True
 
@@ -181,7 +183,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -206,6 +207,11 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
         tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           interface=None, plugin_info=self.plugin.get_info(), tabcount=2,
-                           p=self.plugin)
+        return tmpl.render(
+            plugin_shortname=self.plugin.get_shortname(),
+            plugin_version=self.plugin.get_version(),
+            interface=None,
+            plugin_info=self.plugin.get_info(),
+            tabcount=2,
+            p=self.plugin,
+        )

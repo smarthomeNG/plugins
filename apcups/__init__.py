@@ -21,21 +21,23 @@
 
 import logging
 import threading
-import subprocess # we scrape apcaccess output
+import subprocess  # we scrape apcaccess output
 from lib.model.smartplugin import SmartPlugin
 
 logger = logging.getLogger(__name__)
 
 ITEM_TAG = ['apcups']
-class APCUPS(SmartPlugin):
 
-    PLUGIN_VERSION = "1.4.0"
+
+class APCUPS(SmartPlugin):
+    PLUGIN_VERSION = '1.4.0'
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
         from bin.smarthome import VERSION
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
@@ -45,8 +47,8 @@ class APCUPS(SmartPlugin):
         self._items = {}
         self._lock = threading.Lock()
         # the command goes here
-        self._command = f"/sbin/apcaccess status {self._host}:{ self._port}"
-        self._last_readout = ""
+        self._command = f'/sbin/apcaccess status {self._host}:{self._port}'
+        self._last_readout = ''
 
     def run(self):
         self.alive = True
@@ -56,12 +58,11 @@ class APCUPS(SmartPlugin):
         self.alive = False
         self.scheduler_remove(self.get_shortname())
 
-
     def parse_item(self, item):
         if self.has_iattr(item.conf, ITEM_TAG[0]):
             apcups_key = (self.get_iattr_value(item.conf, ITEM_TAG[0])).lower()
-            self._items[apcups_key]=item
-            self.logger.debug(f"item {item} added with apcupd_key {apcups_key}")
+            self._items[apcups_key] = item
+            self.logger.debug(f'item {item} added with apcupd_key {apcups_key}')
         # no callback for any item needed as this plugin is readonly
         return None
 
@@ -73,33 +74,32 @@ class APCUPS(SmartPlugin):
         Start **apcaccess** on a shell, capture the output and parse it.
         The items attribut parameter will be matched against the shell output
         """
-        
+
         if not self._lock.acquire(timeout=1):
             return
         try:
-            self._command = f"/sbin/apcaccess status {self._host}:{self._port}"   # the command goes here
+            self._command = f'/sbin/apcaccess status {self._host}:{self._port}'  # the command goes here
             output = subprocess.check_output(self._command.split(), shell=False)
             # decode byte string to string
             output = output.decode()
             # save for webinterface
             self._last_readout = output
             for line in output.split('\n'):
-                (key,spl,val) = line.partition(': ')
+                (key, spl, val) = line.partition(': ')
                 key = key.rstrip().lower()
                 val = val.strip()
 
                 if key in self._items:
-                     self.logger.debug(f"update item {self._items[key]} with {val}")
-                     item = self._items[key]
-                     self.logger.debug(f"Item type {item.type()}")
-                     if item.type() == 'str':
-                         item (val, self.get_shortname())
-                     else:
-                         val = val.split(' ', 1)[0]  # ignore anything after 1st space
-                         item (float(val), self.get_shortname())
+                    self.logger.debug(f'update item {self._items[key]} with {val}')
+                    item = self._items[key]
+                    self.logger.debug(f'Item type {item.type()}')
+                    if item.type() == 'str':
+                        item(val, self.get_shortname())
+                    else:
+                        val = val.split(' ', 1)[0]  # ignore anything after 1st space
+                        item(float(val), self.get_shortname())
             return
         except Exception as e:
-            self.logger.error(f"Problem {e} reading output from call to {self._command}")
+            self.logger.error(f'Problem {e} reading output from call to {self._command}')
         finally:
             self._lock.release()
-

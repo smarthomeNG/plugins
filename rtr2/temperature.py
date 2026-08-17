@@ -27,9 +27,18 @@
 import inspect
 import logging
 
-class Temperature():
 
-    def __init__(self, mode, comfort_temp=None, night_reduction=None, standby_reduction=None, fixed_reduction=True, hvac_mode=None, frost_temp=None):
+class Temperature:
+    def __init__(
+        self,
+        mode,
+        comfort_temp=None,
+        night_reduction=None,
+        standby_reduction=None,
+        fixed_reduction=True,
+        hvac_mode=None,
+        frost_temp=None,
+    ):
         self.logger = logging.getLogger(__name__)
 
         self.mode = mode
@@ -41,19 +50,17 @@ class Temperature():
         self.mode.hvac = self.to_int(hvac_mode, 2)
         self._temp_frost = self.to_float(frost_temp, 7)
 
-
-    def to_int (self, value, default):
+    def to_int(self, value, default):
         try:
             return int(value)
-        except:
+        except Exception:
             return int(default)
 
-    def to_float (self, value, default):
+    def to_float(self, value, default):
         try:
             return float(value)
-        except:
+        except Exception:
             return float(default)
-
 
     @property
     def set_temp(self):
@@ -64,7 +71,7 @@ class Temperature():
         :rtype: str
         """
         if self.mode.hvac == 1:
-            return round(self._temp_comfort,2)
+            return round(self._temp_comfort, 2)
         elif self.mode.hvac == 2:
             return round(self._temp_comfort - self._standby_reduction, 2)
         elif self.mode.hvac == 3:
@@ -89,7 +96,6 @@ class Temperature():
         else:
             self._type_error('non-float')
             return
-
 
     @property
     def comfort(self):
@@ -119,7 +125,6 @@ class Temperature():
             self._type_error('non-float')
             return
 
-
     @property
     def standby(self):
         """
@@ -133,7 +138,6 @@ class Temperature():
         """
         return round(self._temp_comfort - self._standby_reduction, 2)
 
-
     @standby.setter
     def standby(self, value):
 
@@ -143,12 +147,13 @@ class Temperature():
             if self._fixed_reduction:
                 self._temp_comfort = round(value + self._standby_reduction, 2)
             else:
-                self._standby_reduction = round(self._standby_reduction - ((value + self._standby_reduction) - self._temp_comfort), 2)
+                self._standby_reduction = round(
+                    self._standby_reduction - ((value + self._standby_reduction) - self._temp_comfort), 2
+                )
             return
         else:
             self._type_error('non-float')
             return
-
 
     @property
     def night(self):
@@ -163,7 +168,6 @@ class Temperature():
         """
         return round(self._temp_comfort - self._night_reduction, 2)
 
-
     @night.setter
     def night(self, value):
 
@@ -173,12 +177,13 @@ class Temperature():
             if self._fixed_reduction:
                 self._temp_comfort = round(value + self._night_reduction, 2)
             else:
-                self._night_reduction = round(self._night_reduction - ((value + self._night_reduction) - self._temp_comfort), 2)
+                self._night_reduction = round(
+                    self._night_reduction - ((value + self._night_reduction) - self._temp_comfort), 2
+                )
             return
         else:
             self._type_error('non-float')
             return
-
 
     @property
     def night_reduction(self):
@@ -193,7 +198,6 @@ class Temperature():
         """
         return self._night_reduction
 
-
     @night_reduction.setter
     def night_reduction(self, value):
 
@@ -205,7 +209,6 @@ class Temperature():
         else:
             self._type_error('non-float')
             return
-
 
     @property
     def standby_reduction(self):
@@ -220,7 +223,6 @@ class Temperature():
         """
         return self._standby_reduction
 
-
     @standby_reduction.setter
     def standby_reduction(self, value):
 
@@ -232,7 +234,6 @@ class Temperature():
         else:
             self._type_error('non-float')
             return
-
 
     @property
     def fixed_reduction(self):
@@ -247,7 +248,6 @@ class Temperature():
         """
         return self._fixed_reduction
 
-
     @fixed_reduction.setter
     def fixed_reduction(self, value):
 
@@ -257,7 +257,6 @@ class Temperature():
         else:
             self._type_error('non-boolean')
             return
-
 
     @property
     def frost(self):
@@ -272,7 +271,6 @@ class Temperature():
         """
         return self._temp_frost
 
-
     @frost.setter
     def frost(self, value):
 
@@ -285,14 +283,11 @@ class Temperature():
             self._type_error('non-float')
             return
 
-
     def __repr__(self):
-        return f"set-temp={self.set_temp} ({self.mode}) \n- comfort={self.comfort}, standby={self.standby}, night={self.night}, frost={self.frost} \n- standby reduction={self.standby_reduction}, night reduction={self.night_reduction} - fixed reduction={self.fixed_reduction}"
-
+        return f'set-temp={self.set_temp} ({self.mode}) \n- comfort={self.comfort}, standby={self.standby}, night={self.night}, frost={self.frost} \n- standby reduction={self.standby_reduction}, night reduction={self.night_reduction} - fixed reduction={self.fixed_reduction}'
 
     def _type_error(self, err):
         prop = inspect.stack()[1][3]
-        #self.logger.error("Cannot set property '{}' of item '{}' to a {} value".format(prop, self._item._path, err))
+        # self.logger.error("Cannot set property '{}' of item '{}' to a {} value".format(prop, self._item._path, err))
         self.logger.error("Cannot set property '{}' to a {} value".format(prop, err))
         return
-

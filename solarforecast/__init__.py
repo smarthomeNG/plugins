@@ -59,7 +59,7 @@ class Solarforecast(SmartPlugin):
         if self.latitude == self.longitude == 0.0:
             self.latitude = self._sh._lat
             self.longitude = self._sh._lon
-            self.logger.debug("latitude and longitude not provided, using shng system values instead.")
+            self.logger.debug('latitude and longitude not provided, using shng system values instead.')
 
         self.declination = self.get_parameter_value('declination')
         self.azimuth = self.get_parameter_value('azimuth')
@@ -70,20 +70,20 @@ class Solarforecast(SmartPlugin):
         # Note: as plugin.yaml makes providing parameters mandatory, they cannot be None anymore
 
         if self.service not in SERVICES:
-            self.logger.error(f"Service {self.service} is not supported yet.")
+            self.logger.error(f'Service {self.service} is not supported yet.')
             self._init_complete = False
             return
 
-        self.logger.debug("Init completed.")
+        self.logger.debug('Init completed.')
         self.init_webinterface(WebInterface)
 
     def run(self):
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
         self.scheduler_add('poll_backend', self.poll_backend, prio=5, cycle=self._cycle)
         self.alive = True
 
     def stop(self):
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.alive = False
         self.scheduler_remove('poll_backend')
 
@@ -104,33 +104,31 @@ class Solarforecast(SmartPlugin):
     def _get_json(self, url):
 
         if TESTING and url in DUMMY:
-
             # for testing, use cached responses to prevent frequent polling of service
             self.logger.debug('using dummy response for request url')
             self.json = DUMMY[url]
         else:
             try:
-                response = requests.get(
-                    url, headers={'content-type': 'application/json'}, timeout=10, verify=False)
+                response = requests.get(url, headers={'content-type': 'application/json'}, timeout=10, verify=False)
 
             except requests.exceptions.Timeout as e:
-                self.logger.warning(f"Timeout exception during get command: {e}")
+                self.logger.warning(f'Timeout exception during get command: {e}')
                 return
             except Exception as e:
-                self.logger.error(f"Exception during get command: {e}")
+                self.logger.error(f'Exception during get command: {e}')
                 return
 
             statusCode = response.status_code
             if statusCode == 200:
-                self.logger.debug("Sending session request command successful")
+                self.logger.debug('Sending session request command successful')
             else:
-                self.logger.error(f"Server error: {statusCode}")
+                self.logger.error(f'Server error: {statusCode}')
                 return
 
             try:
                 self.json = response.json()
             except Exception as e:
-                self.logger.error(f"Exception during json decoding: {str(e)}")
+                self.logger.error(f'Exception during json decoding: {str(e)}')
                 self.json = {}
                 return
 
@@ -139,17 +137,17 @@ class Solarforecast(SmartPlugin):
         if not self.alive:
             return
 
-        self.logger.debug("polling backend...")
+        self.logger.debug('polling backend...')
 
         urlService = 'https://api.forecast.solar/estimate/'
         functionURL = f'{self.latitude}/{self.longitude}/{self.declination}/{self.azimuth}/{self.kwp}'
 
-        self.logger.debug(f"DEBUG URL: {urlService + functionURL}")
+        self.logger.debug(f'DEBUG URL: {urlService + functionURL}')
 
         # fetch json data
         self._get_json(urlService + functionURL)
 
-        self.logger.debug(f"Json response: {self.json}")
+        self.logger.debug(f'Json response: {self.json}')
 
         # Decode Json data:
         wattHoursToday = None
@@ -184,13 +182,16 @@ class Solarforecast(SmartPlugin):
             elif attribute == 'date_tomorrow':
                 value = str(tomorrow)
             elif attribute == 'watts_hourly':
-
                 # recalculate values for easier use
                 now = self._sh.shtime.now()
                 datestr = str(now.date())
 
                 # {hour0: watts, hour1: watts, hour2: watts...}
-                value = {int(k[11:13]): self.json['result']['watts'][k] for k in sorted(self.json['result']['watts'].keys()) if k.startswith(datestr)}
+                value = {
+                    int(k[11:13]): self.json['result']['watts'][k]
+                    for k in sorted(self.json['result']['watts'].keys())
+                    if k.startswith(datestr)
+                }
 
             # if a value was found, store it to item(s)
             if value is not None:
@@ -202,7 +203,7 @@ class Solarforecast(SmartPlugin):
         """
         This function should return a boolean value indicating if the requested
         power is estimated to be available for the next given number of hours.
-        The current hour is counted, but to keep it simple, the given number of 
+        The current hour is counted, but to keep it simple, the given number of
         hours are counten from the next full hour, so we count to "now + hours + 1".
 
         As errors cannot properly be handled in eval call stacks, we return False
@@ -233,7 +234,11 @@ class Solarforecast(SmartPlugin):
 
         # see self.poll_backend()
         datestr = str(self._sh.shtime.now().date())
-        watts = {int(k[11:13]): self.json['result']['watts'][k] for k in sorted(self.json['result']['watts'].keys()) if k.startswith(datestr)}
+        watts = {
+            int(k[11:13]): self.json['result']['watts'][k]
+            for k in sorted(self.json['result']['watts'].keys())
+            if k.startswith(datestr)
+        }
 
         for hour in range(self.now().hour, self.now().hour + hours + 1):
             if watts.get(hour, 0) < power:

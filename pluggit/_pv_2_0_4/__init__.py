@@ -379,7 +379,7 @@ class Pluggit(SmartPlugin):
                     pluggit_paramList = self._modbusRegisterDictionary['prmRamIdxUnitMode']
                     registerValue = self._Pluggit.read_holding_registers(pluggit_paramList[self.DICT_READ_ADDRESS], pluggit_paramList[self.DICT_ADDRESS_QUANTITY])
                     vdecoder = BinaryPayloadDecoder.fromRegisters(registerValue.registers, byteorder=Endian.Big, wordorder=Endian.Little)
-                    readItemValue = vdecoder.decode_16bit_uint()
+                    vdecoder.decode_16bit_uint()
                     #if readItemValue & unitstate != unitstate:
                         # workaround for manual bypass timeout
                     self.logger.info('SetUnitMode(): Mode \"{}\".'.format(modekey))
@@ -511,7 +511,7 @@ class Pluggit(SmartPlugin):
 
                 if pluggit_paramList[self.DICT_VALUE_TYPE] == 'version_bcd':
                     vresult = vdecoder.decode_16bit_uint()
-                    readItemValue = '{}.{}{}'.format(vresult >> 12 & 0x0F, vresult >> 8 & 0x0F, vresult >> 4 & 0x0F, vresult & 0x0F)
+                    readItemValue = '{}.{}{}'.format(vresult >> 12 & 0x0F, vresult >> 8 & 0x0F, vresult >> 4 & 0x0F, )
 
                 if pluggit_paramList[self.DICT_VALUE_TYPE] == 'weekprogram':
                     # 6 Register, 1 h = 4 Bit, 2 h = 8 bit, 4 h = 16 bit = 1 Register

@@ -33,11 +33,11 @@ from bin.smarthome import VERSION
 
 
 class iCal(SmartPlugin):
-    PLUGIN_VERSION = "1.6.4"
+    PLUGIN_VERSION = '1.6.4'
     ALLOW_MULTIINSTANCE = False
-    DAYS = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")
-    FREQ = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
-    PROPERTIES = ("SUMMARY", "DESCRIPTION", "LOCATION", "CATEGORIES", "CLASS")
+    DAYS = ('MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU')
+    FREQ = ('YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY', 'HOURLY', 'MINUTELY', 'SECONDLY')
+    PROPERTIES = ('SUMMARY', 'DESCRIPTION', 'LOCATION', 'CATEGORIES', 'CLASS')
 
     def __init__(self, smarthome):
         super().__init__()
@@ -48,7 +48,7 @@ class iCal(SmartPlugin):
             self.handle_login = self.get_parameter_value('handle_login')
             try:
                 self.dl = Http(timeout=self.get_parameter_value('timeout'), hide_login=self.handle_login)
-            except:
+            except Exception:
                 self.dl = Http(hide_login=self.handle_login)
             self._items = []
             self._icals = {}
@@ -76,14 +76,20 @@ class iCal(SmartPlugin):
 
         for calendar in calendars:
             if isinstance(calendar, dict):
-                calendar=list("{!s}:{!s}".format(k,v) for (k,v) in calendar.items())[0]
+                calendar = list('{!s}:{!s}'.format(k, v) for (k, v) in calendar.items())[0]
             if ':' in calendar and 'http' != calendar[:4]:
                 name, _, cal = calendar.partition(':')
                 calendar = cal.strip()
-                self.logger.info('Registering calendar {} with alias {}.'.format(Network.clean_uri(calendar, self.handle_login), name))
+                self.logger.info(
+                    'Registering calendar {} with alias {}.'.format(
+                        Network.clean_uri(calendar, self.handle_login), name
+                    )
+                )
                 self._ical_aliases[name.strip()] = calendar
             else:
-                self.logger.info('Registering calendar {} without alias.'.format(Network.clean_uri(calendar, self.handle_login)))
+                self.logger.info(
+                    'Registering calendar {} without alias.'.format(Network.clean_uri(calendar, self.handle_login))
+                )
             calendar = calendar.strip()
             self._icals[calendar] = self._read_events(calendar)
 
@@ -129,7 +135,9 @@ class iCal(SmartPlugin):
             return self._filter_events(self._icals[ics], delta, offset)
 
         self.logger.debug('iCal retrieve events {0}'.format(ics))
-        return self._filter_events(self._read_events(ics, username=username, password=password, prio=prio, verify=verify), delta, offset)
+        return self._filter_events(
+            self._read_events(ics, username=username, password=password, prio=prio, verify=verify), delta, offset
+        )
 
     def _update_items(self):
         if self.alive:
@@ -149,7 +157,10 @@ class iCal(SmartPlugin):
                     val = False
                     for date in events[calendar]:
                         for event in events[calendar][date]:
-                            if event['Start'] <= now <= event['End'] or (event['Start'] == event['End'] and event['Start'] <= now <= event['End'].replace(second=59, microsecond=999)):
+                            if event['Start'] <= now <= event['End'] or (
+                                event['Start'] == event['End']
+                                and event['Start'] <= now <= event['End'].replace(second=59, microsecond=999)
+                            ):
                                 val = True
                                 break
 
@@ -188,7 +199,7 @@ class iCal(SmartPlugin):
                         else:
                             revents[date].append(revent)
                     else:
-                        self.logger.info("Removed {0} because it is in the excluded dates list".format(e_rstart))
+                        self.logger.info('Removed {0} because it is in the excluded dates list'.format(e_rstart))
             else:
                 if (e_start > start and e_start < end) or (e_start < start and e_end > start):
                     date = e_start.date()
@@ -210,11 +221,17 @@ class iCal(SmartPlugin):
                 name = '{}.ics'.format(entry) if ics == self._ical_aliases[entry] else name
             filename = '{}/{}'.format(self._directory, name)
             auth = 'HTTPBasicAuth' if username else None
-            downloaded = self.dl.download(url=ics, local=filename, params={username: username, password: password}, verify=verify, auth=auth)
+            downloaded = self.dl.download(
+                url=ics, local=filename, params={username: username, password: password}, verify=verify, auth=auth
+            )
             if downloaded is False:
                 self.logger.error('Could not download online ics file {0}.'.format(ics))
                 return {}
-            self.logger.debug('Online ics {} successfully downloaded to {}'.format(Network.clean_uri(ics, self.handle_login), filename))
+            self.logger.debug(
+                'Online ics {} successfully downloaded to {}'.format(
+                    Network.clean_uri(ics, self.handle_login), filename
+                )
+            )
             ics = os.path.normpath(filename)
         try:
             ics = ics.replace('\\', os.sep).replace('/', os.sep)
@@ -233,7 +250,7 @@ class iCal(SmartPlugin):
 
         if 'T' in val:  # ISO datetime
             val, sep, off = val.partition('Z')
-            dt = datetime.datetime.strptime(val, "%Y%m%dT%H%M%S")
+            dt = datetime.datetime.strptime(val, '%Y%m%dT%H%M%S')
             # 'Z' indicates 'Zulu', thus UTC time, therefore specify time zone utc:
             dt = dt.replace(tzinfo=datetime.timezone.utc)
 
@@ -262,7 +279,6 @@ class iCal(SmartPlugin):
         dt = dt.astimezone(self.shtime.tzinfo())
         # self.logger.debug('Datetime after final conversion in plugin ical: {}'.format(dt))
 
-
         # convert time based on time zone info which has been extracted on a higher level:
         # dt = dt.astimezone(dtzinfo)
 
@@ -271,30 +287,34 @@ class iCal(SmartPlugin):
     def _parse_ical(self, ical, ics, prio):
         events = {}
         tzinfo = self.shtime.tzinfo()
-        ical = ical.replace("\r\n\\n", ", ")
-        ical = ical.replace("\n\\n", ", ").replace("\\n", ", ")
-        ical = ical.replace("\\n", ", ")
-        ical = ical.replace("\r ", "").replace("\n ", "")  # in case long lines continue in the next line
+        ical = ical.replace('\r\n\\n', ', ')
+        ical = ical.replace('\n\\n', ', ').replace('\\n', ', ')
+        ical = ical.replace('\\n', ', ')
+        ical = ical.replace('\r ', '').replace('\n ', '')  # in case long lines continue in the next line
         for line in ical.splitlines():
             if line == 'BEGIN:VEVENT':
                 prio_count = {'UID': 1, 'SUMMARY': 1, 'SEQUENCE': 1, 'RRULE': 1, 'CLASS': 1, 'DESCRIPTION': 1}
                 event = {'EXDATES': []}
             elif line == 'END:VEVENT':
                 if 'UID' not in event:
-                    self.logger.warning("problem parsing {0} no UID for event: {1}".format(ics, event))
+                    self.logger.warning('problem parsing {0} no UID for event: {1}'.format(ics, event))
                     continue
                 if 'SUMMARY' not in event:
                     # Background info: Some events in google calender ICAS files have no summary:
-                    self.logger.info("problem parsing {0} no SUMMARY for UID: {1}".format(ics, event['UID']))
+                    self.logger.info('problem parsing {0} no SUMMARY for UID: {1}'.format(ics, event['UID']))
                     continue
                 if 'DTSTART' not in event:
-                    self.logger.warning("problem parsing {0} no DTSTART for UID: {1}".format(ics, event['UID']))
+                    self.logger.warning('problem parsing {0} no DTSTART for UID: {1}'.format(ics, event['UID']))
                     continue
                 if 'DTEND' not in event:
-                    self.logger.info("Warning in parsing {0} no DTEND for UID: {1}. Setting DTEND from DTSTART".format(ics, event['UID']))
+                    self.logger.info(
+                        'Warning in parsing {0} no DTEND for UID: {1}. Setting DTEND from DTSTART'.format(
+                            ics, event['UID']
+                        )
+                    )
                     # Set end to start time:
                     event['DTEND'] = event['DTSTART']
-                    #continue
+                    # continue
                 if 'RRULE' in event:
                     event['RRULE'] = self._parse_rrule(event, tzinfo)
                 if event['UID'] in events:
@@ -304,15 +324,17 @@ class iCal(SmartPlugin):
                         events[event['UID'] + event['DTSTART'].isoformat()] = event
                     # Check if already known event's UID is marked as recurring:
                     elif 'RECURRENCE-ID' in events[event['UID']]:
-                        self.logger.debug(f"UID already known for event {event['SUMMARY']}, marked as recurring")
+                        self.logger.debug(f'UID already known for event {event["SUMMARY"]}, marked as recurring')
                         events[event['UID'] + event['DTSTART'].isoformat()] = event
                     else:
                         # Neither event's UID is marked as recurring and therefore dublicate. Ouput warning:
-                        self.logger.warning("problem parsing {0} duplicate UID: {1} ({2})".format(ics, event['UID'], event['SUMMARY']))
+                        self.logger.warning(
+                            'problem parsing {0} duplicate UID: {1} ({2})'.format(ics, event['UID'], event['SUMMARY'])
+                        )
                         continue
                 else:
                     events[event['UID']] = event
-                del(event)
+                del event
             elif 'event' in locals():
                 key, val = line.rsplit(':', 1)
                 key, sep, par = key.partition(';')
@@ -333,11 +355,11 @@ class iCal(SmartPlugin):
                     except Exception as e:
                         if key == 'EXDATE':
                             date = []
-                            values = val.split(",")
+                            values = val.split(',')
                             for value in values:
                                 date.append(self._parse_date(value, tzinfo, par))
                         else:
-                            self.logger.warning("Problem parsing: {0}: {1}".format(ics, e))
+                            self.logger.warning('Problem parsing: {0}: {1}'.format(ics, e))
                             continue
                     if key == 'EXDATE':
                         event['EXDATES'].append(date)  # noqa
@@ -353,14 +375,14 @@ class iCal(SmartPlugin):
 
     def _parse_rrule(self, event, tzinfo):
         rrule = dict(a.split('=') for a in event['RRULE'].upper().split(';'))
-        self.logger.debug("Rrule {0}".format(rrule))
+        self.logger.debug('Rrule {0}'.format(rrule))
         args = {}
         if 'FREQ' not in rrule:
-            self.logger.debug("Rrule has no frequency")
+            self.logger.debug('Rrule has no frequency')
             return
         freq = self.FREQ.index(rrule['FREQ'])
-        self.logger.debug("Frequency: {0}".format(freq))
-        del(rrule['FREQ'])
+        self.logger.debug('Frequency: {0}'.format(freq))
+        del rrule['FREQ']
         if 'DTSTART' not in rrule:
             rrule['DTSTART'] = event['DTSTART']
         if 'WKST' in rrule:
@@ -382,7 +404,7 @@ class iCal(SmartPlugin):
                     day = dateutil.rrule.weekday(day, n)
                 new_days.append(day)
             rrule['BYWEEKDAY'] = new_days
-            del(rrule['BYDAY'])
+            del rrule['BYDAY']
         if 'COUNT' in rrule:
             rrule['COUNT'] = int(rrule['COUNT'])
         if 'INTERVAL' in rrule:
@@ -395,7 +417,7 @@ class iCal(SmartPlugin):
             try:
                 rrule['UNTIL'] = self._parse_date(rrule['UNTIL'], tzinfo)
             except Exception as e:
-                self.logger.warning("Problem parsing UNTIL: {1} --- {0} ".format(event, e))
+                self.logger.warning('Problem parsing UNTIL: {1} --- {0} '.format(event, e))
                 return
         for par in rrule:
             args[par.lower()] = rrule[par]

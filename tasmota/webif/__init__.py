@@ -38,7 +38,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -68,14 +67,15 @@ class WebInterface(SmartPluginWebIf):
 
         tmpl = self.tplenv.get_template('index.html')
 
-        return tmpl.render(p=self.plugin,
-                           webif_pagelength=self.plugin.get_parameter_value('webif_pagelength'),
-                           item_count=len(self.plugin.get_item_list()),
-                           zigbee = True if self.plugin.tasmota_zigbee_devices else False,
-                           broker_config = self.plugin.broker_config,
-                           full_topic = self.plugin.full_topic,
-                           maintenance=True if self.plugin.log_level == 10 else False,
-                           )
+        return tmpl.render(
+            p=self.plugin,
+            webif_pagelength=self.plugin.get_parameter_value('webif_pagelength'),
+            item_count=len(self.plugin.get_item_list()),
+            zigbee=True if self.plugin.tasmota_zigbee_devices else False,
+            broker_config=self.plugin.broker_config,
+            full_topic=self.plugin.full_topic,
+            maintenance=True if self.plugin.log_level == 10 else False,
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None, params=None):
@@ -87,12 +87,12 @@ class WebInterface(SmartPluginWebIf):
         :param dataSet: Dataset for which the data should be returned (standard: None)
         :return: dict with the data needed to update the web page.
         """
-        
-        self.logger.debug(f"get_data_html: {dataSet=}, {params=}")
-        
+
+        self.logger.debug(f'get_data_html: {dataSet=}, {params=}')
+
         data = dict()
-        
-        if dataSet == "items_info":
+
+        if dataSet == 'items_info':
             data[dataSet] = {}
             for item in self.plugin.get_item_list():
                 item_data = {
@@ -104,23 +104,23 @@ class WebInterface(SmartPluginWebIf):
                     'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S'),
                 }
                 data['items_info'][item.property.path] = item_data
-         
-        elif dataSet == "devices_info":
+
+        elif dataSet == 'devices_info':
             data[dataSet] = {}
             for device_name, device_data in self.plugin.tasmota_devices.items():
                 device_data = device_data.copy()
                 device_data.pop('discovery_config', None)
                 data[dataSet][device_name] = device_data
-                
-        elif dataSet == "zigbee_info":
+
+        elif dataSet == 'zigbee_info':
             data[dataSet] = self.plugin.tasmota_zigbee_devices.copy()
 
-        elif dataSet == "broker_info":
+        elif dataSet == 'broker_info':
             self.plugin.get_broker_info()
             data[dataSet] = self.plugin._broker.copy()
             data[dataSet]['broker_uptime'] = self.plugin.broker_uptime()
-            
-        elif dataSet == "details_info":
+
+        elif dataSet == 'details_info':
             data['devices_info'] = {}
             for device_name, device_data in self.plugin.tasmota_devices.items():
                 device_data = device_data.copy()
@@ -128,37 +128,36 @@ class WebInterface(SmartPluginWebIf):
                 data['devices_info'][device_name] = device_data
             data['zigbee_info'] = self.plugin.tasmota_zigbee_devices.copy()
 
-         # return it as json the web page
+        # return it as json the web page
         try:
             return json.dumps(data, default=str)
         except Exception as e:
-            self.logger.error("get_data_html exception: {}".format(e))
+            self.logger.error('get_data_html exception: {}'.format(e))
             return {}
-
 
     @cherrypy.expose
     def submit(self, cmd=None, params=None):
 
-        self.logger.debug(f"submit:  {cmd=}, {params=}")
+        self.logger.debug(f'submit:  {cmd=}, {params=}')
         result = None
 
-        if cmd == "zbstatus":
+        if cmd == 'zbstatus':
             result = self.plugin._poll_zigbee_devices()
-            
-        elif cmd == "tasmota_status":
+
+        elif cmd == 'tasmota_status':
             result = self.plugin._interview_device(params)
-            
-        elif cmd == "zb_ping":
+
+        elif cmd == 'zb_ping':
             result = self.plugin._poll_zigbee_device(params)
- 
-        self.logger.debug(f"submit:  {cmd=}, {params=} --> {result=}")
+
+        self.logger.debug(f'submit:  {cmd=}, {params=} --> {result=}')
 
         if result is not None:
             # JSON zurücksenden
             cherrypy.response.headers['Content-Type'] = 'application/json'
-            self.logger.debug(f"Result for web interface: {result}")
+            self.logger.debug(f'Result for web interface: {result}')
             return json.dumps(result).encode('utf-8')
-        
+
     def _get_relay_value(self, item):
         """
         Determines the relay value based on item configuration.
@@ -169,12 +168,11 @@ class WebInterface(SmartPluginWebIf):
             The relay value as a string.
         """
 
-        relay = self.plugin.get_iattr_value(item.conf, 'tasmota_relay') 
+        relay = self.plugin.get_iattr_value(item.conf, 'tasmota_relay')
         if relay in ['1', '2', '3', '4', '5', '6', '7', '8']:
             return relay
 
         if self.plugin.get_iattr_value(item.conf, 'tasmota_attr') == 'relay':
-            return "1"
+            return '1'
 
-        return "-"
-        
+        return '-'

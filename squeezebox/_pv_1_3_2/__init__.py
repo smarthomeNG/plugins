@@ -81,10 +81,10 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 return None
 
             self.logger.debug("{0} receives updates by \"{1}\"".format(item, cmd))
-            if not cmd in self._val:
+            if cmd not in self._val:
                 self._val[cmd] = {'items': [item], 'logics': []}
             else:
-                if not item in self._val[cmd]['items']:
+                if item not in self._val[cmd]['items']:
                     self._val[cmd]['items'].append(item)
 
         if self.has_iattr(item.conf, 'squeezebox_albumart'):
@@ -101,13 +101,13 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 return None
 
             self.logger.debug("{0} is initialized by \"{1}\"".format(item, cmd))
-            if not cmd in self._val:
+            if cmd not in self._val:
                 self._val[cmd] = {'items': [item], 'logics': []}
             else:
-                if not item in self._val[cmd]['items']:
+                if item not in self._val[cmd]['items']:
                     self._val[cmd]['items'].append(item)
 
-            if not cmd in self._init_cmds:
+            if cmd not in self._init_cmds:
                 self._init_cmds.append(cmd)
 
         if self.has_iattr(item.conf, 'squeezebox_send'):
@@ -137,10 +137,10 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                     self.logger.warning("no valid playerid in \"{}\"".format(cmd))
                     continue
                 self.logger.debug("{} will be triggered by \"{}\"".format(logic.name, cmd))
-                if not cmd in self._val:
+                if cmd not in self._val:
                     self._val[cmd] = {'items': [], 'logics': [logic]}
                 else:
-                    if not logic in self._val[cmd]['logics']:
+                    if logic not in self._val[cmd]['logics']:
                         self._val[cmd]['logics'].append(logic)
         else:
             return None

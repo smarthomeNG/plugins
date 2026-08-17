@@ -182,12 +182,12 @@ class DLMS(SmartPlugin, conversion.Conversion):
             self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
         except:
              self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
         
         import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
             self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
             return False
 
@@ -275,7 +275,7 @@ class DLMS(SmartPlugin, conversion.Conversion):
                     #todo: error handling for key errors
                     Index = int(attribute[1]) if len(attribute)>1 else 0
                     Key = attribute[2] if len(attribute)>2 else 'Value'
-                    if not Key in ['Value', 'Unit']: Key = 'Value'
+                    if Key not in ['Value', 'Unit']: Key = 'Value'
                     Converter = attribute[3] if len(attribute)>3 else ''
                     try:
                         itemValue = Values[Index][Key]

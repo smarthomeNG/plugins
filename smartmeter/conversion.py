@@ -23,9 +23,9 @@
 #########################################################################
 
 
-__license__ = "GPL"
-__version__ = "2.0"
-__revision__ = "0.1"
+__license__ = 'GPL'
+__version__ = '2.0'
+__revision__ = '0.1'
 __docformat__ = 'reStructuredText'
 
 import datetime
@@ -38,7 +38,7 @@ CONVERTERS = {
     'D6': 'date',
     'Z6': 'time',
     'Z4': 'time',
-    'num': 'num'
+    'num': 'num',
 }
 
 
@@ -50,7 +50,7 @@ class Conversion:
         :return: a datetime object upon success or None if error found by malformed string
         """
         if len(text) != 10:
-            raise ValueError("too few characters for date/time code from OBIS")
+            raise ValueError('too few characters for date/time code from OBIS')
 
         year = int(text[0:2]) + 2000
         month = int(text[2:4])
@@ -66,7 +66,7 @@ class Conversion:
         :return: a datetime object upon success or None if error found by malformed string
         """
         if len(text) != 12:
-            raise ValueError("too few characters for date/time code from OBIS")
+            raise ValueError('too few characters for date/time code from OBIS')
 
         year = int(text[0:2]) + 2000
         month = int(text[2:4])
@@ -83,7 +83,7 @@ class Conversion:
         :return: a datetime.date object upon success or None if error found by malformed string
         """
         if len(text) != 6:
-            raise ValueError("too few characters for date code from OBIS")
+            raise ValueError('too few characters for date code from OBIS')
 
         year = int(text[0:2]) + 2000
         month = int(text[2:4])
@@ -97,7 +97,7 @@ class Conversion:
         :return: a datetime.time object upon success or None if error found by malformed string
         """
         if len(text) != 4:
-            raise ValueError("too few characters for time code from OBIS")
+            raise ValueError('too few characters for time code from OBIS')
 
         hour = int(text[0:2])
         minute = int(text[2:4])
@@ -110,7 +110,7 @@ class Conversion:
         :return: a datetime.time object upon success or None if error found by malformed string
         """
         if len(text) != 6:
-            raise ValueError("too few characters for time code from OBIS")
+            raise ValueError('too few characters for time code from OBIS')
 
         hour = int(text[0:2])
         minute = int(text[2:4])
@@ -129,7 +129,6 @@ class Conversion:
 
         try:
             if converter in ('num', 'float', 'int'):
-
                 if converter in ('num', 'int'):
                     try:
                         return int(val)
@@ -148,7 +147,7 @@ class Conversion:
                         raise ValueError
 
             if not val.isdigit():
-                raise ValueError("only digits allowed for date/time code from OBIS")
+                raise ValueError('only digits allowed for date/time code from OBIS')
 
             if converter == 'int':
                 return int(val)

@@ -38,7 +38,7 @@ class SeEval(StateEngineTools.SeItemChild):
         self.shtime = Shtime.get_instance()
 
     def __repr__(self):
-        return "SeEval"
+        return 'SeEval'
 
     # Get lamella angle based on sun_altitude for sun tracking
     def sun_tracking(self, offset=None):
@@ -56,18 +56,19 @@ class SeEval(StateEngineTools.SeItemChild):
                 offset = float(offset)
             except Exception as e:
                 offset = 0
-                self._log_warning("Problem handling offset {0}: {1}", offset, e)
+                self._log_warning('Problem handling offset {0}: {1}', offset, e)
         self._eval_lock.acquire()
         self._log_debug("Executing method 'SunTracking({0})'", offset)
         self._log_increase_indent()
 
         altitude = StateEngineCurrent.values.get_sun_altitude()
-        self._log_debug("Current sun altitude is {0:.2f}°", altitude)
+        self._log_debug('Current sun altitude is {0:.2f}°', altitude)
         _lamella_open_value = StateEngineDefaults.lamella_open_value
-        _lamella_text = " (based on lamella open value of {0})".format(_lamella_open_value)
+        _lamella_text = ' (based on lamella open value of {0})'.format(_lamella_open_value)
         value = remap(90 - altitude, _lamella_open_value) + offset
-        self._log_debug("Blinds at right angle to the sun at {0}° with an offset of {1}°{2}",
-                        value, offset, _lamella_text)
+        self._log_debug(
+            'Blinds at right angle to the sun at {0}° with an offset of {1}°{2}', value, offset, _lamella_text
+        )
 
         self._log_decrease_indent()
         self._eval_lock.release()
@@ -124,7 +125,7 @@ class SeEval(StateEngineTools.SeItemChild):
                 self._log_debug("Return item path '{0}'", returnvalue)
         except Exception as ex:
             returnvalue = None
-            self._log_warning("Problem evaluating name of {0}: {1}", subitem_id, ex)
+            self._log_warning('Problem evaluating name of {0}: {1}', subitem_id, ex)
         finally:
             self._eval_lock.release()
         return returnvalue
@@ -145,7 +146,7 @@ class SeEval(StateEngineTools.SeItemChild):
                 self._log_debug("Return item '{0}'", returnvalue)
         except Exception as ex:
             returnvalue = None
-            self._log_warning("Problem evaluating item {0}: {1}", subitem_id, ex)
+            self._log_warning('Problem evaluating item {0}: {1}', subitem_id, ex)
         finally:
             self._eval_lock.release()
         return returnvalue
@@ -166,9 +167,8 @@ class SeEval(StateEngineTools.SeItemChild):
                 item, issue = self._abitem.return_item(subitem_id)
                 returnvalue = item.property.value
                 returnvalue = StateEngineTools.convert_str_to_list(returnvalue)
-                issue = f" Issue: {issue}" if issue not in [[], None, [None]] else ""
-                self._log_debug("Return item value '{0}' for item {1}.{2}",
-                                returnvalue, subitem_id, issue)
+                issue = f' Issue: {issue}' if issue not in [[], None, [None]] else ''
+                self._log_debug("Return item value '{0}' for item {1}.{2}", returnvalue, subitem_id, issue)
         except Exception as ex:
             self._log_warning("Problem evaluating value of '{0}': {1}", subitem_id, ex)
         finally:
@@ -187,26 +187,33 @@ class SeEval(StateEngineTools.SeItemChild):
         try:
             item, _ = self._abitem.return_item(subitem_id)
         except Exception as ex:
-            self._log_warning("Problem evaluating property of {0} - relative item might not exist. Error: {1}",
-                              subitem_id, ex)
+            self._log_warning(
+                'Problem evaluating property of {0} - relative item might not exist. Error: {1}', subitem_id, ex
+            )
             self._eval_lock.release()
             return
         try:
             if self._abitem.initstate and subitem_id == '..state_name':
                 returnvalue = getattr(self._abitem.return_item(self._abitem.initstate.id)[0].property, prop)
-                self._log_debug("Return item property '{0}' from {1}: {2} during init", prop,
-                                self._abitem.return_item(self._abitem.initstate.id)[0].property.path, returnvalue)
+                self._log_debug(
+                    "Return item property '{0}' from {1}: {2} during init",
+                    prop,
+                    self._abitem.return_item(self._abitem.initstate.id)[0].property.path,
+                    returnvalue,
+                )
             else:
                 returnvalue = getattr(item.property, prop)
-                if prop == "value":
+                if prop == 'value':
                     returnvalue = StateEngineTools.convert_str_to_list(returnvalue)
-                    returnvalue = returnvalue[0] if len(returnvalue) == 1 else None if len(
-                        returnvalue) == 0 else returnvalue
-                self._log_debug("Return item property {0} from {1}: {2}", prop, item.property.path, returnvalue)
+                    returnvalue = (
+                        returnvalue[0] if len(returnvalue) == 1 else None if len(returnvalue) == 0 else returnvalue
+                    )
+                self._log_debug('Return item property {0} from {1}: {2}', prop, item.property.path, returnvalue)
         except Exception as ex:
             returnvalue = None
-            self._log_warning("Problem evaluating property {0} of {1} - property might not exist. Error: {2}",
-                              prop, subitem_id, ex)
+            self._log_warning(
+                'Problem evaluating property {0} of {1} - property might not exist. Error: {2}', prop, subitem_id, ex
+            )
         finally:
             self._eval_lock.release()
         return returnvalue
@@ -226,26 +233,37 @@ class SeEval(StateEngineTools.SeItemChild):
         self._eval_lock.acquire()
         self._log_debug("Executing method 'get_attributevalue({0}, {1})'", item, attrib)
         issue = None
-        if ":" in item:
-            var_type, item = StateEngineTools.partition_strip(item, ":")
-            if var_type == "var":
+        if ':' in item:
+            var_type, item = StateEngineTools.partition_strip(item, ':')
+            if var_type == 'var':
                 item, issue = self._abitem.return_item(self._abitem.get_variable(item))
         else:
             item, issue = self._abitem.return_item(item)
         try:
             if self._abitem.initstate and item == '..state_name':
                 returnvalue, issue = self._abitem.return_item(self._abitem.initstate.id).conf[attrib]
-                self._log_debug("Return item attribute '{0}' from {1}: {2} during init. Issue {3}", attrib,
-                                self._abitem.return_item(self._abitem.initstate.id)[0].property.path, returnvalue, issue)
+                self._log_debug(
+                    "Return item attribute '{0}' from {1}: {2} during init. Issue {3}",
+                    attrib,
+                    self._abitem.return_item(self._abitem.initstate.id)[0].property.path,
+                    returnvalue,
+                    issue,
+                )
             else:
                 returnvalue = item.conf[attrib]
-                self._log_debug("Return item attribute {0} from {1}: {2}. Issue {3}",
-                                attrib, item.property.path, returnvalue, issue)
+                self._log_debug(
+                    'Return item attribute {0} from {1}: {2}. Issue {3}', attrib, item.property.path, returnvalue, issue
+                )
         except Exception as ex:
             returnvalue = None
-            self._log_warning("Problem evaluating attribute {0} of {1} - attribute might not exist. "
-                              "Existing item attributes are: {3}. Error: {2}.",
-                              attrib, item, ex, getattr(item.property, 'attributes'))
+            self._log_warning(
+                'Problem evaluating attribute {0} of {1} - attribute might not exist. '
+                'Existing item attributes are: {3}. Error: {2}.',
+                attrib,
+                item,
+                ex,
+                getattr(item.property, 'attributes'),
+            )
         finally:
             self._eval_lock.release()
         return returnvalue
@@ -254,34 +272,34 @@ class SeEval(StateEngineTools.SeItemChild):
     # suspend_item_id: Item whose age is used to determine how much of the suspend time is already over
     # suspend_text: Text to insert end time of suspension into. Use strftime/strptime format codes for the end time
     #               (see https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior)
-    def insert_suspend_time(self, suspend_item_id, suspend_text="Ausgesetzt bis %X"):
+    def insert_suspend_time(self, suspend_item_id, suspend_text='Ausgesetzt bis %X'):
         self._eval_lock.acquire()
         self._log_debug("Executing method 'insert_suspend_time({0}, {1})'", suspend_item_id, suspend_text)
         self._log_increase_indent()
         try:
-            suspend_time = self._abitem.get_variable("item.suspend_time") or 0
-            self._log_debug("Suspend time is {0}", suspend_time)
+            suspend_time = self._abitem.get_variable('item.suspend_time') or 0
+            self._log_debug('Suspend time is {0}', suspend_time)
             suspend_item, issue = self._abitem.return_item(suspend_item_id)
             if suspend_item is None:
                 text = "Eval-Method 'insert_suspend_time': Suspend Item {0} not found!"
                 self._eval_lock.release()
                 raise ValueError(text.format(suspend_item_id))
-            self._log_debug("Suspend item is {0}", suspend_item.property.path)
+            self._log_debug('Suspend item is {0}', suspend_item.property.path)
             suspend_over = suspend_item.property.last_change_age
-            self._log_debug("Current suspend age: {0}", suspend_over)
+            self._log_debug('Current suspend age: {0}', suspend_over)
             suspend_remaining = suspend_time - suspend_over
-            self._log_debug("Remaining suspend time: {0}", suspend_remaining)
+            self._log_debug('Remaining suspend time: {0}', suspend_remaining)
             if suspend_remaining < 0:
                 self._log_debug("Eval-Method 'insert_suspend_time': Suspend time already over.")
                 self._eval_lock.release()
-                return "Suspend already over."
+                return 'Suspend already over.'
             suspend_until = self._abitem.shtime.now() + datetime.timedelta(seconds=suspend_remaining)
-            self._log_debug("Suspend finished at {0}", suspend_until)
+            self._log_debug('Suspend finished at {0}', suspend_until)
         except Exception as ex:
             self._log_exception(ex)
             if self._eval_lock.locked():
                 self._eval_lock.release()
-            return "(Error while determining text. Check log)"
+            return '(Error while determining text. Check log)'
         finally:
             self._log_decrease_indent()
             if self._eval_lock.locked():

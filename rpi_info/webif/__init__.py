@@ -42,7 +42,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -75,15 +74,16 @@ class WebInterface(SmartPluginWebIf):
         except Exception:
             pagelength = 100
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           webif_pagelength=pagelength,
-                           items=sorted(self.plugin.item_list, key=lambda k: str.lower(k['_path'])),
-                           item_count=len(self.plugin.item_list),
-                           plugin_shortname=self.plugin.get_shortname(),
-                           plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(),
-                           maintenance=True if self.plugin.log_level <= 20 else False,
-                           )
+        return tmpl.render(
+            p=self.plugin,
+            webif_pagelength=pagelength,
+            items=sorted(self.plugin.item_list, key=lambda k: str.lower(k['_path'])),
+            item_count=len(self.plugin.item_list),
+            plugin_shortname=self.plugin.get_shortname(),
+            plugin_version=self.plugin.get_version(),
+            plugin_info=self.plugin.get_info(),
+            maintenance=True if self.plugin.log_level <= 20 else False,
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -104,21 +104,25 @@ class WebInterface(SmartPluginWebIf):
             for item in self.plugin.item_list:
                 data['items'][item.property.path] = {}
                 data['items'][item.property.path]['value'] = item.property.value
-                data['items'][item.property.path]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                data['items'][item.property.path]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                data['items'][item.property.path]['last_update'] = item.property.last_update.strftime(
+                    '%d.%m.%Y %H:%M:%S'
+                )
+                data['items'][item.property.path]['last_change'] = item.property.last_change.strftime(
+                    '%d.%m.%Y %H:%M:%S'
+                )
             data['plugin_suspended'] = self.plugin.suspended
             data['maintenance'] = True if self.plugin.log_level <= 20 else False
             try:
                 return json.dumps(data, default=str)
             except Exception as e:
-                self.logger.error(f"get_data_html exception: {e}")
+                self.logger.error(f'get_data_html exception: {e}')
 
     @cherrypy.expose
     def activate(self):
-        self.logger.debug(f"active called")
+        self.logger.debug('active called')
         self.plugin.suspend(False)
 
     @cherrypy.expose
     def suspend(self):
-        self.logger.debug(f"suspend called")
+        self.logger.debug('suspend called')
         self.plugin.suspend(True)

@@ -60,7 +60,7 @@ class Tasmota(MqttPlugin):
 
         # Call init code of parent class (MqttPlugin)
         super().__init__()
-        if self._init_complete == False:
+        if not self._init_complete:
             return
 
         # cycle time in seconds, only needed, if hardware/interface needs to be
@@ -188,20 +188,20 @@ class Tasmota(MqttPlugin):
                 self.tasmota_devices[tasmota_topic]['connected_to_item'] = True
                 self.tasmota_devices[tasmota_topic]['item_relay'] = item
                 # append to list used for web interface
-                if not item in self.tasmota_items:
+                if item not in self.tasmota_items:
                     self.tasmota_items.append(item)
             elif tasmota_attr in ['online']:
                 self.tasmota_devices[tasmota_topic]['online'] = False
                 self.tasmota_devices[tasmota_topic]['connected_to_item'] = True
                 self.tasmota_devices[tasmota_topic]['item_online'] = item
                 # append to list used for web interface
-                if not item in self.tasmota_items:
+                if item not in self.tasmota_items:
                     self.tasmota_items.append(item)
             elif tasmota_attr in ['voltage', 'current', 'power', 'power_total', 'power_yesterday', 'power_today']:
                 self.logger.debug(f" - tasmota_attr={tasmota_attr}, item={'item_'+tasmota_attr}")
                 self.tasmota_devices[tasmota_topic]['item_'+tasmota_attr] = item
                 self.tasmota_devices[tasmota_topic]['connected_to_item'] = True
-                if not item in self.tasmota_items:
+                if item not in self.tasmota_items:
                     self.tasmota_items.append(item)
 
             else:
@@ -406,7 +406,7 @@ class Tasmota(MqttPlugin):
         if info_topic == 'STATUS9':
             #self.logger.info(f"Topic={topic}, tasmota_topic={tasmota_topic}, info_topic={info_topic}")
             #self.logger.info(f" - Payload={payload}")
-            StatusPTH = payload.get('StatusPTH', {})
+            payload.get('StatusPTH', {})
             #self.logger.info(f" - StatusPTH={StatusPTH}")
 
         # Get info direct after boot of client

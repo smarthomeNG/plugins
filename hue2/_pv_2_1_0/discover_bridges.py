@@ -91,7 +91,7 @@ def add_discovered_bridge(ip, port):
         xmldict = xmltodict.parse(r.text)
         bridge_id = xmldict['root']['device']['serialNumber']
 
-    if not bridge_id in discovered_bridges.keys():
+    if bridge_id not in discovered_bridges.keys():
         discovered_bridges[bridge_id] = url_base
 
     return
@@ -122,23 +122,23 @@ def discover_via_mdns():
 
     zeroconf = Zeroconf()
     listener = MyListener()
-    t1 = datetime.now()
-    browser = ServiceBrowser(zeroconf, "_hue._tcp.local.", listener)
+    datetime.now()
+    ServiceBrowser(zeroconf, "_hue._tcp.local.", listener)
 
     time.sleep(2)
 
     zeroconf.close()
-    t2 = datetime.now()
+    datetime.now()
 
     for sv in listener.services:
         service = listener.services[sv]
 
         ip = socket.gethostbyname(service.server)
         if service.port == 443:
-            protocol = 'https'
+            pass
         else:
-            protocol = 'http'
-        bridge_id = service.properties[b'bridgeid'].decode()
+            pass
+        service.properties[b'bridgeid'].decode()
 
         add_discovered_bridge(ip, service.port)
 
@@ -154,9 +154,9 @@ except:
 
 def discover_via_upnp():
 
-    t1 = datetime.now()
+    datetime.now()
     ssdp_list = ssdp_discover("ssdp:all", timeout=10)
-    t2 = datetime.now()
+    datetime.now()
 
     devices = [u for u in ssdp_list if 'IpBridge' in u.server]
     for d in devices:

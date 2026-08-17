@@ -302,7 +302,7 @@ class Yamaha(SmartPlugin):
         if 'yamaha_cmd' in item.conf:
             yamaha_host = self._lookup_host(item)
             yamaha_cmd = item.conf['yamaha_cmd'].lower()
-            if not yamaha_cmd in self._yamaha_cmds:
+            if yamaha_cmd not in self._yamaha_cmds:
                 self.logger.warning("{} not in valid commands: {}".format(yamaha_cmd, self._yamaha_cmds))
                 return None
             else:

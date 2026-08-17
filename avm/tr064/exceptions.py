@@ -6,7 +6,7 @@ __all__ = [
     'TR064UnknownServiceIndexException',
     'TR064UnknownActionException',
     'TR064UnknownArgumentException',
-    'TR064MissingArgumentException'
+    'TR064MissingArgumentException',
 ]
 
 

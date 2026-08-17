@@ -40,7 +40,7 @@ from .const import FURTHER_OBIS_NAMES
 from lib.module import Modules
 from lib.item import Items
 
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin
 from .webif import WebInterface
 
 SML_SCHEDULER_NAME = 'Sml2'
@@ -56,7 +56,6 @@ class Sml2(SmartPlugin):
         self.loop.run_forever()
 
     class Reader(asyncio.Protocol):
-
         def __init__(self):
             self.buf = None
             self.smlx = None
@@ -66,17 +65,15 @@ class Sml2(SmartPlugin):
             return self
 
         def connection_made(self, transport):
-            """Store the serial transport and prepare to receive data.
-            """
+            """Store the serial transport and prepare to receive data."""
             self.transport = transport
             self.buf = bytes()
-            self.smlx.logger.debug("Reader connection created")
+            self.smlx.logger.debug('Reader connection created')
             self.smlx.connected = True
 
         def data_received(self, chunk):
-            """Store characters until a newline is received.
-            """
-            self.smlx.logger.debug(f"Smartmeter is sending {len(chunk)} bytes of data")
+            """Store characters until a newline is received."""
+            self.smlx.logger.debug(f'Smartmeter is sending {len(chunk)} bytes of data')
             self.buf += chunk
 
             if len(self.buf) < 100:
@@ -89,11 +86,11 @@ class Sml2(SmartPlugin):
                 self.smlx.logger.error(f'Reading data from {self.smlx._target} failed with exception {e}')
             # just in case of many errors, reset buffer
             if len(self.buf) > 100000:
-                self.smlx.logger.error("Buffer got to large, doing buffer reset")
+                self.smlx.logger.error('Buffer got to large, doing buffer reset')
                 self.buf = bytes()
 
         def connection_lost(self, exc):
-            self.smlx.logger.error("Connection so serial device was closed")
+            self.smlx.logger.error('Connection so serial device was closed')
             self.smlx.connected = False
 
     PLUGIN_VERSION = '2.0.1'
@@ -136,7 +133,7 @@ class Sml2(SmartPlugin):
         self.init_webinterface(WebInterface)
         self.task = None
         self.values = {}
-        self.obis_names = { **smlConst.OBIS_NAMES, **FURTHER_OBIS_NAMES }
+        self.obis_names = {**smlConst.OBIS_NAMES, **FURTHER_OBIS_NAMES}
         self.obis_units = smlConst.UNITS
 
     def run(self):
@@ -154,10 +151,16 @@ class Sml2(SmartPlugin):
 
             self.reader = self.Reader()
             self.reader.smlx = self
-            reader = serial_asyncio.create_serial_connection(self.loop, self.reader, self.serialport, baudrate=9600,
-                                                             bytesize=serial.EIGHTBITS,
-                                                             parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE,
-                                                             timeout=self.timeout)
+            reader = serial_asyncio.create_serial_connection(
+                self.loop,
+                self.reader,
+                self.serialport,
+                baudrate=9600,
+                bytesize=serial.EIGHTBITS,
+                parity=serial.PARITY_NONE,
+                stopbits=serial.STOPBITS_ONE,
+                timeout=self.timeout,
+            )
 
             self.task = asyncio.run_coroutine_threadsafe(reader, self.loop)
 
@@ -215,7 +218,7 @@ class Sml2(SmartPlugin):
         """
         if caller != self.get_shortname():
             # Code to execute, only if the item has not been changed by this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.property.path))
+            self.logger.info('Update item: {}, item has been changed outside this plugin'.format(item.property.path))
             pass
 
     def connect(self):
@@ -224,8 +227,14 @@ class Sml2(SmartPlugin):
             try:
                 if self.serialport is not None:
                     self._target = f'serial://{self.serialport}'
-                    self._serial = serial.Serial(self.serialport, 9600, serial.EIGHTBITS, serial.PARITY_NONE,
-                                                 serial.STOPBITS_ONE, timeout=self.timeout)
+                    self._serial = serial.Serial(
+                        self.serialport,
+                        9600,
+                        serial.EIGHTBITS,
+                        serial.PARITY_NONE,
+                        serial.STOPBITS_ONE,
+                        timeout=self.timeout,
+                    )
 
                 elif self.host is not None:
                     self._target = f'tcp://{self.host}:{self.port}'
@@ -295,7 +304,8 @@ class Sml2(SmartPlugin):
         successfully_acquired = self._lock.acquire(False)
         if not successfully_acquired:
             self.logger.warning(
-                'Triggered cyclic poll_device, but previous cyclic run is still active. Therefore request will be skipped.')
+                'Triggered cyclic poll_device, but previous cyclic run is still active. Therefore request will be skipped.'
+            )
             return
 
         start = time.time()
@@ -327,7 +337,7 @@ class Sml2(SmartPlugin):
         finally:
             cycletime = time.time() - start
             self.disconnect()
-            self.logger.debug(f"Polling Smartmeter done. Poll cycle took {cycletime} seconds.")
+            self.logger.debug(f'Polling Smartmeter done. Poll cycle took {cycletime} seconds.')
             self._lock.release()
 
     def parse_data(self):

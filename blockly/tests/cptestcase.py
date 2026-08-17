@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 from io import BytesIO
 import unittest
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 
 import cherrypy
 
 # Not strictly speaking mandatory but just makes sense
-cherrypy.config.update({'environment': "test_suite"})
+cherrypy.config.update({'environment': 'test_suite'})
 
 # This is mandatory so that the HTTP server isn't started
 # if you need to actually start (why would you?), simply
@@ -14,12 +16,14 @@ cherrypy.config.update({'environment': "test_suite"})
 cherrypy.server.unsubscribe()
 
 # simulate fake socket address... they are irrelevant in our context
-local = cherrypy.lib.httputil.Host('127.0.0.1', 50000, "")
-remote = cherrypy.lib.httputil.Host('127.0.0.1', 50001, "")
+local = cherrypy.lib.httputil.Host('127.0.0.1', 50000, '')
+remote = cherrypy.lib.httputil.Host('127.0.0.1', 50001, '')
+
 
 class BaseCherryPyTestCase(unittest.TestCase):
-    def request(self, path='/', method='GET', app_path='', scheme='http',
-                proto='HTTP/1.1', data=None, headers=None, **kwargs):
+    def request(
+        self, path='/', method='GET', app_path='', scheme='http', proto='HTTP/1.1', data=None, headers=None, **kwargs
+    ):
         """
         CherryPy does not have a facility for serverless unit testing.
         However this recipe demonstrates a way of doing it by
@@ -70,7 +74,7 @@ class BaseCherryPyTestCase(unittest.TestCase):
         fd = None
         if data is not None:
             h['content-length'] = '%d' % len(data)
-            #fd = StringIO(data)
+            # fd = StringIO(data)
             fd = BytesIO(data.encode())
 
         # Get our application and run the request against it
@@ -95,7 +99,7 @@ class BaseCherryPyTestCase(unittest.TestCase):
 
         if response.output_status.startswith(b'500'):
             print(response.body)
-            raise AssertionError("Unexpected error")
+            raise AssertionError('Unexpected error')
 
         # collapse the response into a bytestring
         response.collapse_body()

@@ -27,7 +27,7 @@ def really_unicode(in_string):
         ValueError
     """
     if isinstance(in_string, bytes):
-        for args in (("utf-8",), ("latin-1",), ("ascii", "replace")):
+        for args in (('utf-8',), ('latin-1',), ('ascii', 'replace')):
             try:
                 # pylint: disable=star-args
                 in_string = in_string.decode(*args)
@@ -35,7 +35,7 @@ def really_unicode(in_string):
             except UnicodeDecodeError:
                 continue
     if not isinstance(in_string, str):
-        raise ValueError("%s is not a string at all." % in_string)
+        raise ValueError('%s is not a string at all.' % in_string)
     return in_string
 
 
@@ -55,11 +55,11 @@ def really_utf8(in_string):
      Returns:
          str: utf-encoded data.
     """
-    return really_unicode(in_string).encode("utf-8")
+    return really_unicode(in_string).encode('utf-8')
 
 
-FIRST_CAP_RE = re.compile("(.)([A-Z][a-z]+)")
-ALL_CAP_RE = re.compile("([a-z0-9])([A-Z])")
+FIRST_CAP_RE = re.compile('(.)([A-Z][a-z]+)')
+ALL_CAP_RE = re.compile('([a-z0-9])([A-Z])')
 
 
 def camel_to_underscore(string):
@@ -73,8 +73,8 @@ def camel_to_underscore(string):
     Returns:
         str: The converted string.
     """
-    string = FIRST_CAP_RE.sub(r"\1_\2", string)
-    return ALL_CAP_RE.sub(r"\1_\2", string).lower()
+    string = FIRST_CAP_RE.sub(r'\1_\2', string)
+    return ALL_CAP_RE.sub(r'\1_\2', string).lower()
 
 
 def prettify(unicode_text):
@@ -93,7 +93,7 @@ def prettify(unicode_text):
     import xml.dom.minidom
 
     reparsed = xml.dom.minidom.parseString(unicode_text)
-    return reparsed.toprettyxml(indent="  ", newl="\n")
+    return reparsed.toprettyxml(indent='  ', newl='\n')
 
 
 def show_xml(xml):
@@ -128,7 +128,7 @@ class deprecated:
     Example:
         ..  code-block:: python
 
-            @deprecated(since="0.7", alternative="new_function")
+            @deprecated(since='0.7', alternative='new_function')
             def old_function(args):
                 pass
     """
@@ -137,13 +137,7 @@ class deprecated:
     # pylint: disable=invalid-name
     # pylint: disable=missing-docstring
 
-    def __init__(
-        self,
-        since,
-        alternative=None,
-        will_be_removed_in=None,
-        alternative_not_referable=False,
-    ):
+    def __init__(self, since, alternative=None, will_be_removed_in=None, alternative_not_referable=False):
         self.since_version = since
         self.alternative = alternative
         self.will_be_removed_in = will_be_removed_in
@@ -152,29 +146,25 @@ class deprecated:
     def __call__(self, deprecated_fn):
         @functools.wraps(deprecated_fn)
         def decorated(*args, **kwargs):
-            message = "Call to deprecated function {}.".format(deprecated_fn.__name__)
+            message = 'Call to deprecated function {}.'.format(deprecated_fn.__name__)
             if self.will_be_removed_in is not None:
-                message += " Will be removed in version {}.".format(
-                    self.will_be_removed_in
-                )
+                message += ' Will be removed in version {}.'.format(self.will_be_removed_in)
             if self.alternative is not None:
-                message += " Use {} instead.".format(self.alternative)
+                message += ' Use {} instead.'.format(self.alternative)
             warnings.warn(message, stacklevel=2)
 
             return deprecated_fn(*args, **kwargs)
 
-        docs = "\n\n  .. deprecated:: {}\n".format(self.since_version)
+        docs = '\n\n  .. deprecated:: {}\n'.format(self.since_version)
         if self.will_be_removed_in is not None:
-            docs += "\n     Will be removed in version {}.".format(
-                self.will_be_removed_in
-            )
+            docs += '\n     Will be removed in version {}.'.format(self.will_be_removed_in)
         if self.alternative is not None:
             if self.alternative_not_referable:
-                docs += "\n     Use ``{}`` instead.".format(self.alternative)
+                docs += '\n     Use ``{}`` instead.'.format(self.alternative)
             else:
-                docs += "\n     Use `{}` instead.".format(self.alternative)
+                docs += '\n     Use `{}` instead.'.format(self.alternative)
         if decorated.__doc__ is None:
-            decorated.__doc__ = ""
+            decorated.__doc__ = ''
         decorated.__doc__ += docs
         return decorated
 
@@ -188,11 +178,11 @@ def url_escape_path(path):
     Returns:
         str: The escaped path
 
-    >>> url_escape_path("Foo, bar & baz / the hackers")
+    >>> url_escape_path('Foo, bar & baz / the hackers')
     u'Foo%2C%20bar%20%26%20baz%20%2F%20the%20hackers'
     """
     # Using 'safe' arg does not seem to work for python 2.6
-    return quote_url(path.encode("utf-8")).replace("/", "%2F")
+    return quote_url(path.encode('utf-8')).replace('/', '%2F')
 
 
 def first_cap(string):

@@ -44,7 +44,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -75,27 +74,25 @@ class WebInterface(SmartPluginWebIf):
         if cmd:
             self.logger.debug(f'Command: {cmd}')
             if cmd == 'clean':
-                self.logger.info("WebIf: Start cleaning")
+                self.logger.info('WebIf: Start cleaning')
                 self.plugin.clean()
             elif cmd == 'clean_room':
-                self.logger.info(
-                    f"WebIf: Start cleaning {type} (id: {id})")
+                self.logger.info(f'WebIf: Start cleaning {type} (id: {id})')
                 self.plugin.clean(id)
             elif cmd == 'pause':
-                self.logger.info("WebIf: Pause cleaning")
+                self.logger.info('WebIf: Pause cleaning')
                 self.plugin.pause()
             elif cmd == 'charge':
-                self.logger.info("WebIf: Return to charging station")
+                self.logger.info('WebIf: Return to charging station')
                 self.plugin.charge()
             elif cmd == 'locate':
-                self.logger.info("WebIf: Locating robot")
+                self.logger.info('WebIf: Locating robot')
                 self.plugin.locate()
             elif cmd == 'set_fan_speed':
-                self.logger.info(f"WebIf: Update fan speed to {speed}")
+                self.logger.info(f'WebIf: Update fan speed to {speed}')
                 self.plugin.set_fan_speed(speed)
             elif cmd == 'set_water_level':
-                self.logger.info(
-                    f"WebIf: Update water level to {level}")
+                self.logger.info(f'WebIf: Update water level to {level}')
                 self.plugin.set_water_level(level)
             else:
                 self.logger.warning(f'Unknown command: {cmd}')
@@ -129,22 +126,22 @@ class WebInterface(SmartPluginWebIf):
             try:
                 return json.dumps(data)
             except Exception as e:
-                self.logger.error(f"get_data_html exception: {e}")
+                self.logger.error(f'get_data_html exception: {e}')
         return {}
 
     # Jinja2 filter to format int timestamp as string
     def dateformat(self, timestamp):
         try:
             _datetime = datetime.datetime.fromtimestamp(timestamp)
-            result = _datetime.strftime("%d/%m/%Y")
-        except:
+            result = _datetime.strftime('%d/%m/%Y')
+        except Exception:
             result = 'ERROR'
         return result
 
     def timeformat(self, timestamp):
         try:
             _datetime = datetime.datetime.fromtimestamp(timestamp)
-            result = _datetime.strftime("%H:%M:%S")
-        except:
+            result = _datetime.strftime('%H:%M:%S')
+        except Exception:
             result = 'ERROR'
         return result

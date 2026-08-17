@@ -31,10 +31,10 @@ import json
 
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
-from lib.logic import Logics          # für update der /etc/logic.yaml
-from lib.logic import Logic           # für reload (bytecode)
+from lib.logic import Logics  # für update der /etc/logic.yaml
+from lib.logic import Logic  # für reload (bytecode)
 from lib.utils import Utils
-from ..utils import *
+from ..utils import html_escape, remove_prefix
 
 # ------------------------------------------
 #    Webinterface of the plugin
@@ -43,6 +43,7 @@ from ..utils import *
 import cherrypy
 import csv
 from jinja2 import Environment, FileSystemLoader
+
 
 class WebInterface(SmartPluginWebIf):
     logics = None
@@ -68,8 +69,8 @@ class WebInterface(SmartPluginWebIf):
         self.plugininstance = plugin
         self._sh = self.plugininstance.get_sh()
         self._sh_dir = self._sh.base_dir
-        self._section_prefix = self.plugininstance._parameters.get('section_prefix','')
-        self.logger.debug("WebInterface: section_prefix = {}".format(self._section_prefix))
+        self._section_prefix = self.plugininstance._parameters.get('section_prefix', '')
+        self.logger.debug('WebInterface: section_prefix = {}'.format(self._section_prefix))
         self.logicname = ''
         self.logic_filename = ''
 
@@ -77,7 +78,6 @@ class WebInterface(SmartPluginWebIf):
 
     def html_escape(self, str):
         return html_escape(str)
-
 
     @cherrypy.expose
     def index(self):
@@ -102,9 +102,9 @@ class WebInterface(SmartPluginWebIf):
                 cmd = 'new'
 
         self.cmd = cmd.lower()
-        self.logger.info("index_html: cmd = {}, filename = {}, logicname = {}".format(cmd, filename, logicname))
+        self.logger.info('index_html: cmd = {}, filename = {}, logicname = {}'.format(cmd, filename, logicname))
         if self.cmd == '':
-#            self.logic_filename = ''
+            #            self.logic_filename = ''
             self.logicname = ''
         elif self.cmd == 'new':
             self.logic_filename = 'new'
@@ -112,18 +112,21 @@ class WebInterface(SmartPluginWebIf):
         elif self.cmd == 'edit' and filename != '':
             self.logic_filename = filename
             self.logicname = logicname
-        self.logger.info("index_html: self.logicname = '{}', self.logic_filename = '{}'".format(self.logicname, self.logic_filename))
+        self.logger.info(
+            "index_html: self.logicname = '{}', self.logic_filename = '{}'".format(self.logicname, self.logic_filename)
+        )
         language = self._sh.get_defaultlanguage()
 
         tmpl = self.tplenv.get_template('blockly.html')
-        return tmpl.render(smarthome=self._sh,
-                           p=self.plugin,
-                           dyn_sh_toolbox=self._DynToolbox(self._sh),
-                           cmd=self.cmd,
-                           logicname=logicname,
-                           lang=language,
-                           timestamp=str(time.time()))
-
+        return tmpl.render(
+            smarthome=self._sh,
+            p=self.plugin,
+            dyn_sh_toolbox=self._DynToolbox(self._sh),
+            cmd=self.cmd,
+            logicname=logicname,
+            lang=language,
+            timestamp=str(time.time()),
+        )
 
     @cherrypy.expose
     def edit_html(self, cmd='', filename='', logicname='', v=0):
@@ -139,9 +142,9 @@ class WebInterface(SmartPluginWebIf):
                 cmd = 'new'
 
         self.cmd = cmd.lower()
-        self.logger.info("edit_html: cmd = {}, filename = {}, logicname = {}".format(cmd, filename, logicname))
+        self.logger.info('edit_html: cmd = {}, filename = {}, logicname = {}'.format(cmd, filename, logicname))
         if self.cmd == '':
-#            self.logic_filename = ''
+            #            self.logic_filename = ''
             self.logicname = ''
         elif self.cmd == 'new':
             self.logic_filename = 'new'
@@ -149,23 +152,25 @@ class WebInterface(SmartPluginWebIf):
         elif self.cmd == 'edit' and filename != '':
             self.logic_filename = filename
             self.logicname = logicname
-        self.logger.info("edit_html: self.logicname = '{}', self.logic_filename = '{}'".format(self.logicname, self.logic_filename))
+        self.logger.info(
+            "edit_html: self.logicname = '{}', self.logic_filename = '{}'".format(self.logicname, self.logic_filename)
+        )
         language = self._sh.get_defaultlanguage()
 
         tmpl = self.tplenv.get_template('blockly.html')
-        return tmpl.render(smarthome=self._sh,
-                           p=self.plugin,
-                           dyn_sh_toolbox=self._DynToolbox(self._sh),
-                           cmd=self.cmd,
-                           logicname=logicname,
-                           lang=language,
-                           timestamp=str(time.time()))
-
+        return tmpl.render(
+            smarthome=self._sh,
+            p=self.plugin,
+            dyn_sh_toolbox=self._DynToolbox(self._sh),
+            cmd=self.cmd,
+            logicname=logicname,
+            lang=language,
+            timestamp=str(time.time()),
+        )
 
     def _DynToolbox(self, sh):
         mytree = self._build_tree()
-        return mytree + "<sep>-</sep>\n"
-
+        return mytree + '<sep>-</sep>\n'
 
     def _build_tree(self):
         # Get top level items
@@ -179,9 +184,8 @@ class WebInterface(SmartPluginWebIf):
         xml = '\n'
         for item in toplevelitems:
             xml += self._build_treelevel(item)
-#        self.logger.info("log_tree #  xml -> '{}'".format(str(xml)))
+        #        self.logger.info("log_tree #  xml -> '{}'".format(str(xml)))
         return xml
-
 
     def _build_treelevel(self, item, parent='', level=0):
         """
@@ -191,37 +195,35 @@ class WebInterface(SmartPluginWebIf):
         """
         childitems = sorted(item.return_children(), key=lambda k: str.lower(k['_path']), reverse=False)
 
-        name = remove_prefix(item._path, parent+'.')
+        name = remove_prefix(item._path, parent + '.')
         if childitems != []:
             xml = ''
-            if (item.type() != 'foo') or (item() != None):
-#                self.logger.info("item._path = '{}', item.type() = '{}', item() = '{}', childitems = '{}'".format(item._path, item.type(), str(item()), childitems))
-                xml += self._build_leaf(name, item, level+1)
-                xml += ''.ljust(3*(level)) + '<category name="{0} ({1})">\n'.format(name, len(childitems)+1)
+            if (item.type() != 'foo') or (item() is not None):
+                #                self.logger.info("item._path = '{}', item.type() = '{}', item() = '{}', childitems = '{}'".format(item._path, item.type(), str(item()), childitems))
+                xml += self._build_leaf(name, item, level + 1)
+                xml += ''.ljust(3 * (level)) + '<category name="{0} ({1})">\n'.format(name, len(childitems) + 1)
             else:
-                xml += ''.ljust(3*(level)) + '<category name="{0} ({1})">\n'.format(name, len(childitems))
+                xml += ''.ljust(3 * (level)) + '<category name="{0} ({1})">\n'.format(name, len(childitems))
             for grandchild in childitems:
-                xml += self._build_treelevel(grandchild, item._path, level+1)
+                xml += self._build_treelevel(grandchild, item._path, level + 1)
 
-            xml += ''.ljust(3*(level)) + '</category>  # name={}\n'.format(item._path)
+            xml += ''.ljust(3 * (level)) + '</category>  # name={}\n'.format(item._path)
         else:
             xml = self._build_leaf(name, item, level)
         return xml
-
 
     def _build_leaf(self, name, item, level=0):
         """
         Builds the leaf information for an entry in the item tree
         """
-#        n = item._path.title().replace('.','_')
+        #        n = item._path.title().replace('.','_')
         n = item._path
-        xml = ''.ljust(3*(level)) + '<block type="sh_item_obj" name="' + name + '">\n'
-        xml += ''.ljust(3*(level+1)) + '<field name="N">' + n + '</field>>\n'
-        xml += ''.ljust(3*(level+1)) + '<field name="P">' + item._path + '</field>>\n'
-        xml += ''.ljust(3*(level+1)) + '<field name="T">' + item.type() + '</field>>\n'
-        xml += ''.ljust(3*(level)) + '</block>\n'
+        xml = ''.ljust(3 * (level)) + '<block type="sh_item_obj" name="' + name + '">\n'
+        xml += ''.ljust(3 * (level + 1)) + '<field name="N">' + n + '</field>>\n'
+        xml += ''.ljust(3 * (level + 1)) + '<field name="P">' + item._path + '</field>>\n'
+        xml += ''.ljust(3 * (level + 1)) + '<field name="T">' + item.type() + '</field>>\n'
+        xml += ''.ljust(3 * (level)) + '</block>\n'
         return xml
-
 
     @cherrypy.expose
     def blockly_close_editor(self, content=''):
@@ -230,23 +232,25 @@ class WebInterface(SmartPluginWebIf):
         self.logic_filename = ''
         return
 
-
     @cherrypy.expose
     def blockly_load_logic(self, uniq_param=''):
-        self.logger.info("blockly_load_logic: self.logicname = '{}', self.logic_filename = '{}'".format(self.logicname, self.logic_filename))
+        self.logger.info(
+            "blockly_load_logic: self.logicname = '{}', self.logic_filename = '{}'".format(
+                self.logicname, self.logic_filename
+            )
+        )
         if self.logicname == '' and self.edit_redirect == '':
             if self.logic_filename == 'new':
-                fn_xml = self.plugininstance.path_join( self.webif_dir, 'templates') + '/' + "new.blockly"
+                fn_xml = self.plugininstance.path_join(self.webif_dir, 'templates') + '/' + 'new.blockly'
             else:
-                fn_xml = self._sh._logic_dir + "blockly_logics.blockly"
+                fn_xml = self._sh._logic_dir + 'blockly_logics.blockly'
         else:
             if self.logic_filename == '':
-                fn_xml = self.plugininstance.path_join( self.webif_dir, 'templates') + '/' + "new.blockly"
+                fn_xml = self.plugininstance.path_join(self.webif_dir, 'templates') + '/' + 'new.blockly'
             else:
                 fn_xml = self._sh._logic_dir + self.logic_filename
-        self.logger.info("blockly_load_logic: fn_xml = {}".format(fn_xml))
+        self.logger.info('blockly_load_logic: fn_xml = {}'.format(fn_xml))
         return cherrypy.lib.static.serve_file(fn_xml, content_type='application/xml')
-
 
     def blockly_update_config(self, code, name=''):
         """
@@ -263,14 +267,14 @@ class WebInterface(SmartPluginWebIf):
         active = False
         config_list = []
         for line in code.splitlines():
-            if (line.startswith('#comment#')):
+            if line.startswith('#comment#'):
                 if config_list == []:
                     sc, fn, ac, fnco = line[9:].split('#')
                     fnk, fnv = fn.split(':')
                     ack, acv = ac.split(':')
                     active = Utils.to_bool(acv.strip(), False)
                     if section == '':
-                        section = sc;
+                        section = sc
                         self.logger.info("blockly_update_config: #comment# section = '{}'".format(section))
                     config_list.append([fnk.strip(), fnv.strip(), fnco])
             elif line.startswith('#trigger#'):
@@ -281,12 +285,12 @@ class WebInterface(SmartPluginWebIf):
                     fnco = ''
                     config_list.append([fnk.strip(), fnv.strip(), fnco])
                 if section == '':
-                    section = sc;
+                    section = sc
                     self.logger.info("blockly_update_config: #trigger# section = '{}'".format(section))
-                config_list.append([trk.strip(), trv.strip(),co])
-            elif line.startswith('"""'):    # initial .rst-comment reached, stop scanning
+                config_list.append([trk.strip(), trv.strip(), co])
+            elif line.startswith('"""'):  # initial .rst-comment reached, stop scanning
                 break
-            else:                           # non-metadata lines between beginning of code and initial .rst-comment
+            else:  # non-metadata lines between beginning of code and initial .rst-comment
                 pass
 
         if section == '':
@@ -297,14 +301,12 @@ class WebInterface(SmartPluginWebIf):
 
         self.logics.update_config_section(active, section, config_list)
 
-
     def pretty_print_xml(self, xml_in):
         import xml.dom.minidom
 
         xml = xml.dom.minidom.parseString(xml_in)
         xml_out = xml.toprettyxml()
         return xml_out
-
 
     @cherrypy.expose
     def blockly_save_logic(self, py, xml, name):
@@ -320,10 +322,10 @@ class WebInterface(SmartPluginWebIf):
         """
         self._pycode = py
         self._xmldata = xml
-        fn_py = self._sh._logic_dir + name.lower() + ".py"
-        self.logic_filename = name.lower() + ".blockly"
+        fn_py = self._sh._logic_dir + name.lower() + '.py'
+        self.logic_filename = name.lower() + '.blockly'
         fn_xml = self._sh._logic_dir + self.logic_filename
-        self.logger.info("blockly_save_logic: saving blockly logic {} as file {}".format(name, fn_py))
+        self.logger.info('blockly_save_logic: saving blockly logic {} as file {}'.format(name, fn_py))
         self.logger.debug("blockly_save_logic: SAVE PY blockly logic {} = {}\n '{}'".format(name, fn_py, py))
         with open(fn_py, 'w') as fpy:
             fpy.write(py)

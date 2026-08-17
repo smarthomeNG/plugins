@@ -6,19 +6,16 @@ from typing import Pattern, Dict, Union
 
 
 class LoggedInException(Exception):
-
     def __init__(self, *args, **kwargs):
         super(LoggedInException, self).__init__(*args, **kwargs)
 
 
 class DataException(Exception):
-
     def __init__(self, *args, **kwargs):
         super(DataException, self).__init__(*args, **kwargs)
 
 
 class DeviceCacheEntry(object):
-
     def __init__(self):
         self.age = 0
         self.data = {}
@@ -30,6 +27,7 @@ class API(object):
     Unifi API for the Unifi Controller.
 
     """
+
     _login_data = {}
 
     _is_logged_in = False
@@ -41,7 +39,15 @@ class API(object):
     _device_cache = {}
     _request_count = 0
 
-    def __init__(self, username: str = "ubnt", password: str = "ubnt", site: str = "default", baseurl: str = "https://unifi:8443", verify_ssl: bool = True, unifitype: str = "software"):
+    def __init__(
+        self,
+        username: str = 'ubnt',
+        password: str = 'ubnt',
+        site: str = 'default',
+        baseurl: str = 'https://unifi:8443',
+        verify_ssl: bool = True,
+        unifitype: str = 'software',
+    ):
         """
         Initiates tha api with default settings if none other are set.
 
@@ -55,11 +61,7 @@ class API(object):
         self._login_data['password'] = password
         self._site = site
         self._verify_ssl = verify_ssl
-        self._headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "User-Agent": "Mozilla/5.0"
-        }
+        self._headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0'}
         if unifitype == 'device':
             self._baseurl = f'{baseurl}/proxy/network'
             self._loginurl = f'{baseurl}/api/auth/login'
@@ -98,13 +100,15 @@ class API(object):
 
             if not r.ok:
                 if current_status_code == 401:
-                    raise LoggedInException(f"Invalid login while getting, or login has expired. r: {r} {current_status_code}")
+                    raise LoggedInException(
+                        f'Invalid login while getting, or login has expired. r: {r} {current_status_code}'
+                    )
 
             data = r.json()['data']
             return data
         except LoggedInException:
             if recursion:
-                raise DataException("Unable to log in or get data for url {}".format(url))
+                raise DataException('Unable to log in or get data for url {}'.format(url))
             self._is_logged_in = False
             return self._get_url(url, True)
 
@@ -117,15 +121,15 @@ class API(object):
             current_status_code = r.status_code
             if not r.ok:
                 if current_status_code == 401:
-                    raise LoggedInException("Invalid login while putting, or login has expired")
+                    raise LoggedInException('Invalid login while putting, or login has expired')
                 else:
-                    raise LoggedInException("code {}".format(current_status_code))
+                    raise LoggedInException('code {}'.format(current_status_code))
 
             data = r.json()['data']
             return data
         except LoggedInException:
             if recursion:
-                raise DataException("Unable to log in or put data")
+                raise DataException('Unable to log in or put data')
             self._is_logged_in = False
             return self._put_url(url, body, True)
 
@@ -138,11 +142,15 @@ class API(object):
         if self._is_logged_in:
             return
 
-        current_status_code = self._session.post("{}".format(
-            self._loginurl), data=json.dumps(self._login_data), headers=self._headers, verify=self._verify_ssl).status_code
+        current_status_code = self._session.post(
+            '{}'.format(self._loginurl),
+            data=json.dumps(self._login_data),
+            headers=self._headers,
+            verify=self._verify_ssl,
+        ).status_code
         self._request_count = self._request_count + 1
         if current_status_code == 400:
-            raise LoggedInException("Failed to log in to api with provided credentials")
+            raise LoggedInException('Failed to log in to api with provided credentials')
 
         self._is_logged_in = True
 
@@ -152,11 +160,13 @@ class API(object):
 
         :return: None
         """
-        self._session.get("{}/logout".format(self._baseurl))
+        self._session.get('{}/logout'.format(self._baseurl))
         self._request_count = self._request_count + 1
         self._session.close()
 
-    def list_clients(self, filters: Dict[str, Union[str, Pattern]] = None, order_by: str = None, max_age_seconds: int = 60) -> list:
+    def list_clients(
+        self, filters: Dict[str, Union[str, Pattern]] = None, order_by: str = None, max_age_seconds: int = 60
+    ) -> list:
         """
         List all available clients from the api or an internal cache
 
@@ -166,8 +176,7 @@ class API(object):
         :return: A list of clients on the format of a dict
         """
         if time.time() - self._client_list_from > max_age_seconds:
-            self._client_list = self._get_url("{}/api/s/{}/stat/sta".format(self._baseurl,
-                                                                            self._site))
+            self._client_list = self._get_url('{}/api/s/{}/stat/sta'.format(self._baseurl, self._site))
             self._client_list_from = time.time()
 
         data = self._client_list
@@ -192,12 +201,10 @@ class API(object):
         ap_data = {}
         ap_data['disabled'] = disabled
         for ids in device_ids:
-            self._put_url("{}/api/s/{}/rest/device/{}".format(
-                self._baseurl, self._site, ids), body=json.dumps(ap_data))
+            self._put_url('{}/api/s/{}/rest/device/{}'.format(self._baseurl, self._site, ids), body=json.dumps(ap_data))
 
     def device_stat(self, mac: str):
-        return self._get_url("{}/api/s/{}/stat/device/{}".format(self._baseurl,
-                                                                 self._site, mac))
+        return self._get_url('{}/api/s/{}/stat/device/{}'.format(self._baseurl, self._site, mac))
 
     def hierarchize(self, inventory, key_selector, subkey_selector, start_key):
         to_ret = []
@@ -210,7 +217,7 @@ class API(object):
         return sorted(to_ret, key=lambda x: str(x['node']['uplink_remote_port']) + x['node']['key'])
 
     def get_device_hierarchy(self):
-        dvcs = self.device_stat("")
+        dvcs = self.device_stat('')
         mac_inventory = []
         for dvc in dvcs:
             entry = {}
@@ -229,14 +236,13 @@ class API(object):
                     entry['uplink_mac'] = dvc['uplink']['uplink_mac']
                     entry['uplink_remote_port'] = dvc['uplink']['uplink_remote_port']
                 except KeyError:
-                    entry['uplink_mac'] = "no_mac"
+                    entry['uplink_mac'] = 'no_mac'
                     entry['uplink_remote_port'] = -1
             mac_inventory.append(entry)
 
         flat_clients = []
         clnts = self.list_clients()
         for clnt in clnts:
-
             if clnt['is_wired']:
                 entry = {}
                 entry['mac'] = clnt['mac']
@@ -269,7 +275,7 @@ class API(object):
                         tmpcl['name'] = 'mac_' + tmpcl['mac'].replace(':', '_')
                 flat_clients.append(tmpcl)
 
-        device_hr = self.hierarchize(mac_inventory, lambda x: x['uplink_mac'], lambda x: x['mac'], "no_mac")
+        device_hr = self.hierarchize(mac_inventory, lambda x: x['uplink_mac'], lambda x: x['mac'], 'no_mac')
 
         struct = {}
         struct['wireless_clients'] = flat_clients
@@ -279,7 +285,7 @@ class API(object):
 
     def _get_port_profiles(self, filters: Dict[str, Union[str, Pattern]] = None):
         if len(self._port_profiles) < 1:
-            self._port_profiles = self._get_url("{}/api/s/{}/rest/portconf".format(self._baseurl, self._site))
+            self._port_profiles = self._get_url('{}/api/s/{}/rest/portconf'.format(self._baseurl, self._site))
 
         data = self._port_profiles
         if filters:
@@ -302,7 +308,7 @@ class API(object):
     def set_device_disabled(self, device_mac: str, disabled: bool):
         did = self._get_id_from_mac(device_mac)
         if did is None:
-            raise DataException("Cannot find switch with MAC {}".format(device_mac))
+            raise DataException('Cannot find switch with MAC {}'.format(device_mac))
         self.device_disable([did], disabled)
 
     def get_port_profile_for(self, switch_mac: str, port_number: int):
@@ -310,7 +316,7 @@ class API(object):
 
         sid = self._get_id_from_mac(switch_mac)
         if sid is None:
-            raise DataException("Cannot find switch with MAC {}".format(switch_mac))
+            raise DataException('Cannot find switch with MAC {}'.format(switch_mac))
 
         poData = self.get_device_info(switch_mac, 'port_overrides')
         poIndex = -1
@@ -321,29 +327,29 @@ class API(object):
                 poFound = True
                 break
         if not poFound:
-            raise DataException("Could not match any port in data to given port-number {}".format(port_number))
+            raise DataException('Could not match any port in data to given port-number {}'.format(port_number))
         port_prof = poData[poIndex].get('portconf_id')
 
         profiles = self._get_port_profiles()
         if len(profiles) == 0:
-            raise DataException("No port profiles found")
+            raise DataException('No port profiles found')
         for prof in profiles:
-            if prof["_id"] == port_prof:
-                return prof["name"]
+            if prof['_id'] == port_prof:
+                return prof['name']
 
-        raise DataException("Cannot match profile {} in {}".format(port_prof, json.dumps(profiles)))
+        raise DataException('Cannot match profile {} in {}'.format(port_prof, json.dumps(profiles)))
 
     def set_port_profile_for(self, switch_mac: str, port_number: int, profile_name: str):
         self.login()
 
         pp = self._get_port_profiles(filters={'name': profile_name})
         if len(pp) == 0:
-            raise DataException("No port profile found for {}".format(profile_name))
+            raise DataException('No port profile found for {}'.format(profile_name))
         pid = pp[0]['_id']
 
         sid = self._get_id_from_mac(switch_mac)
         if sid is None:
-            raise DataException("Cannot find switch with MAC {}".format(switch_mac))
+            raise DataException('Cannot find switch with MAC {}'.format(switch_mac))
 
         poData = self.get_device_info(switch_mac, 'port_overrides')
         poIndex = -1
@@ -354,14 +360,13 @@ class API(object):
                 poFound = True
                 break
         if not poFound:
-            raise DataException("Could not match any port in data to given port-number {}".format(port_number))
+            raise DataException('Could not match any port in data to given port-number {}'.format(port_number))
 
         poData[poIndex]['portconf_id'] = pid
         newPoData = {}
         newPoData['port_overrides'] = poData
 
-        self._put_url("{}/api/s/{}/rest/device/{}".format(self._baseurl,
-                                                          self._site, sid), body=json.dumps(newPoData))
+        self._put_url('{}/api/s/{}/rest/device/{}'.format(self._baseurl, self._site, sid), body=json.dumps(newPoData))
 
     def get_client_presence(self, client_mac: str, last_seen_delta: int = 300):
         clnts = self.list_clients(filters={'mac': client_mac})

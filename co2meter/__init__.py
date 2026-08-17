@@ -35,17 +35,17 @@ from lib.model.smartplugin import SmartPlugin
 
 class CO2Meter(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.2"
+    PLUGIN_VERSION = '1.3.2'
 
     CO2METER_CO2 = 0x50
     CO2METER_TEMP = 0x42
     CO2METER_HUM = 0x44
     HIDIOCSFEATURE_9 = 0xC0094806
 
-    _key = [0xc4, 0xc6, 0xc0, 0x92, 0x40, 0x23, 0xdc, 0x96]
-    _device = ""
+    _key = [0xC4, 0xC6, 0xC0, 0x92, 0x40, 0x23, 0xDC, 0x96]
+    _device = ''
     _values = {}
-    _file = ""
+    _file = ''
     _running = True
 
     def __init__(self, sh, *args, **kwargs):
@@ -63,12 +63,12 @@ class CO2Meter(SmartPlugin):
         self._time_sleep = self.get_parameter_value('time_sleep')
 
         self._device = self.get_parameter_value('device')
-        self._file = open(self.get_parameter_value('device'), "a+b", 0)
+        self._file = open(self.get_parameter_value('device'), 'a+b', 0)
 
         set_report = [0] + self._key
         fcntl.ioctl(self._file, self.HIDIOCSFEATURE_9, bytearray(set_report))
 
-        thread = threading.Thread(target=self._co2_worker, name="CO2Meter_READ", args=(weakref.ref(self),))
+        thread = threading.Thread(target=self._co2_worker, name='CO2Meter_READ', args=(weakref.ref(self),))
         thread.daemon = True
         thread.start()
 
@@ -105,7 +105,7 @@ class CO2Meter(SmartPlugin):
         """
         if self.has_iattr(item.conf, 'co2meter_data_type'):
             self._items[self.get_iattr_value(item.conf, 'co2meter_data_type')] = item
-    
+
     def _co2_worker(self, weak_self):
         while True:
             self = weak_self()
@@ -123,15 +123,14 @@ class CO2Meter(SmartPlugin):
             data = list(result)
 
             decrypted = self._decrypt(data)
-            if decrypted[4] != 0x0d or (sum(decrypted[:3]) & 0xff) != decrypted[3]:
-                self.logger.debug(self._hd(data), " => ", self._hd(decrypted), "Checksum error")
+            if decrypted[4] != 0x0D or (sum(decrypted[:3]) & 0xFF) != decrypted[3]:
+                self.logger.debug(self._hd(data), ' => ', self._hd(decrypted), 'Checksum error')
             else:
                 operation = decrypted[0]
                 val = decrypted[1] << 8 | decrypted[2]
                 self._values[operation] = val
-        except:
+        except Exception:
             self._running = False
-
 
     def _decrypt(self, data):
         cstate = [0x48, 0x74, 0x65, 0x6D, 0x70, 0x39, 0x39, 0x65]
@@ -147,22 +146,21 @@ class CO2Meter(SmartPlugin):
 
         phase3 = [0] * 8
         for i in range(8):
-            phase3[i] = ((phase2[i] >> 3) | (phase2[(i-1+8)%8] << 5)) & 0xff
+            phase3[i] = ((phase2[i] >> 3) | (phase2[(i - 1 + 8) % 8] << 5)) & 0xFF
 
         ctmp = [0] * 8
         for i in range(8):
-            ctmp[i] = ((cstate[i] >> 4) | (cstate[i]<<4)) & 0xff
+            ctmp[i] = ((cstate[i] >> 4) | (cstate[i] << 4)) & 0xFF
 
         out = [0] * 8
         for i in range(8):
-            out[i] = (0x100 + phase3[i] - ctmp[i]) & 0xff
+            out[i] = (0x100 + phase3[i] - ctmp[i]) & 0xFF
 
         return out
 
     @staticmethod
     def _hd(data):
-        return " ".join("%02X" % e for e in data)
-
+        return ' '.join('%02X' % e for e in data)
 
     def get_co2(self):
         if not self._running:
@@ -173,25 +171,22 @@ class CO2Meter(SmartPlugin):
 
         return result
 
-
     def get_temperature(self):
         if not self._running:
             raise IOError("worker thread couldn't read data")
         result = {}
         if self.CO2METER_TEMP in self._values:
-            result = {'temperature': (self._values[self.CO2METER_TEMP]/16.0-273.15)}
+            result = {'temperature': (self._values[self.CO2METER_TEMP] / 16.0 - 273.15)}
 
         return result
 
-
-    def get_humidity(self): # not implemented by all devices
+    def get_humidity(self):  # not implemented by all devices
         if not self._running:
             raise IOError("worker thread couldn't read data")
         result = {}
         if self.CO2METER_HUM in self._values:
-            result = {'humidity': (self._values[self.CO2METER_HUM]/100.0)}
+            result = {'humidity': (self._values[self.CO2METER_HUM] / 100.0)}
         return result
-
 
     def get_data(self):
         result = {}

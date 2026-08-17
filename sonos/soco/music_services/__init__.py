@@ -5,4 +5,4 @@ with Sonos."""
 from .music_service import MusicService
 from .accounts import Account
 
-__all__ = ["MusicService", "Account"]
+__all__ = ['MusicService', 'Account']

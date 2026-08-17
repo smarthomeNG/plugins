@@ -45,17 +45,20 @@ from git.exc import GitCommandError
 # this is NOT the plugin class...
 #
 
+
 class GitHubHelper(object):
-    """ Helper class for handling the GitHub API """
+    """Helper class for handling the GitHub API"""
 
     def loggerr(self, msg: str):
-        """ log error message and raise GPError to signal WebIf """
+        """log error message and raise GPError to signal WebIf"""
 
         # TODO: this need to be reworked if WebIf errors should be displayed in German or translated
         self.logger.error(msg)
         raise GPError(msg)
 
-    def __init__(self, dt, logger, repo: str = 'plugins', apikey: str = '', auth: Union[Auth.Token, None] = None, **kwargs):
+    def __init__(
+        self, dt, logger, repo: str = 'plugins', apikey: str = '', auth: Union[Auth.Token, None] = None, **kwargs
+    ):
         self.dt = dt
         self.logger = logger
         self.apikey = apikey
@@ -77,7 +80,7 @@ class GitHubHelper(object):
         #   'owner': {
         #     'repo': git.Repo(path),
         #     'branches': {  # (optional!)
-        #       '<branch1>': {'branch': git.Branch(name="<branch1>"), 'repo': git.Repo(path)', 'owner': '<owner>'}, 
+        #       '<branch1>': {'branch': git.Branch(name="<branch1>"), 'repo': git.Repo(path)', 'owner': '<owner>'},
         #       '<branch2>': {...}
         #     }
         #   }
@@ -121,7 +124,7 @@ class GitHubHelper(object):
             self.loggerr(f'could not initialize Github object: {e}')
 
     def get_rate_limit(self):
-        """ return list of allowed and remaining requests and backoff seconds """
+        """return list of allowed and remaining requests and backoff seconds"""
         try:
             rl = self._github.get_rate_limit()
             allow = rl.core.limit
@@ -174,7 +177,7 @@ class GitHubHelper(object):
                     'git_repo': pull.head.repo,
                     'owner': pull.head.repo.owner.login,
                     'repo': pull.head.repo.name,
-                    'branch': pull.head.ref
+                    'branch': pull.head.ref,
                 }
         except AttributeError:
             self.logger.warning('github object not created. Check rate limit.')
@@ -235,7 +238,9 @@ class GitHubHelper(object):
         self.forks[fork.owner.login]['branches'] = b_list
         return b_list
 
-    def get_plugins_from(self, fork: Union[Repo, None] = None, owner: str = '', branch: str = '', fetch: bool = False) -> list:
+    def get_plugins_from(
+        self, fork: Union[Repo, None] = None, owner: str = '', branch: str = '', fetch: bool = False
+    ) -> list:
 
         if not branch:
             return []
@@ -262,7 +267,7 @@ class GitHubHelper(object):
 
         # plugins not yet cached, fetch from github
         self.logger.debug('fetching plugins from github')
-        contents = fork.get_contents("", ref=branch)
+        contents = fork.get_contents('', ref=branch)
         plugins = [item.path for item in contents if item.type == 'dir' and not item.path.startswith('.')]
 
         try:
@@ -286,11 +291,12 @@ class GithubPlugin(SmartPlugin):
     that fork. Additionally, the specified plugin will be soft-linked into the
     "live" plugins repo worktree as a private plugin.
     """
+
     PLUGIN_VERSION = '1.0.1'
     REPO_DIR = 'priv_repos'
 
     def loggerr(self, msg: str):
-        """ log error message and raise GPError to signal WebIf """
+        """log error message and raise GPError to signal WebIf"""
         self.logger.error(msg)
         raise GPError(msg)
 
@@ -389,7 +395,7 @@ class GithubPlugin(SmartPlugin):
             repo_path = os.path.join(self.repo_path, owner)
             wt_path = os.path.join(self.repo_path, f'{owner}_wt_{branch}')
 
-            name = str(item)[len(self.plg_path) + 1:]
+            name = str(item)[len(self.plg_path) + 1 :]
 
             self.repos[name] = {
                 'plugin': plugin,
@@ -399,13 +405,13 @@ class GithubPlugin(SmartPlugin):
                 'url': f'https://github.com/{owner}/plugins.git',
                 'repo_path': repo_path,
                 'wt_path': wt_path,
-                'disp_wt_path': wt_path[len(self._sh.get_basedir()) + 1:],
+                'disp_wt_path': wt_path[len(self._sh.get_basedir()) + 1 :],
                 'rel_wt_path': os.path.join('..', f'{owner}_wt_{branch}'),
                 'link': str(item),
                 'rel_link_path': str(target),
                 'repo': repo,
                 'lcommit': '',
-                'rcommit': ''
+                'rcommit': '',
             }
             self.repos[name]['clean'] = self.is_repo_clean(name, exc)
 
@@ -416,7 +422,7 @@ class GithubPlugin(SmartPlugin):
             self.logger.info(f'added plugin {plugin} with name {name} in {item}')
 
     def check_for_repo_name(self, name: str) -> bool:
-        """ check if name exists in repos or link exists """
+        """check if name exists in repos or link exists"""
         if name in self.repos or os.path.exists(os.path.join(self.plg_path, 'priv_' + name)):
             self.loggerr(f'name {name} already taken, delete old plugin first or choose a different name.')
             return False
@@ -424,7 +430,7 @@ class GithubPlugin(SmartPlugin):
         return True
 
     def create_repo(self, name: str, owner: str, plugin: str, branch: str = '', rename: bool = False) -> bool:
-        """ create repo from given parameters """
+        """create repo from given parameters"""
 
         if any(x in name for x in ['/', '..']) or name == self.REPO_DIR:
             self.loggerr(f'Invalid characters in name {name} (no dirs, not "{self.REPO_DIR}")')
@@ -443,7 +449,9 @@ class GithubPlugin(SmartPlugin):
                     return False
 
         if not owner or not plugin:
-            self.loggerr(f'Insufficient parameters, github user {owner} or plugin {plugin} empty, unable to fetch repo, aborting.')
+            self.loggerr(
+                f'Insufficient parameters, github user {owner} or plugin {plugin} empty, unable to fetch repo, aborting.'
+            )
             return False
 
         # if branch is not given, assume that the branch is named like the plugin
@@ -454,9 +462,8 @@ class GithubPlugin(SmartPlugin):
             'plugin': plugin,
             'owner': owner,
             'branch': branch,
-            'plugin': plugin,
             # default to plugins repo. No further repos are managed right now
-            'gh_repo': 'plugins'
+            'gh_repo': 'plugins',
         }
 
         # build GitHub url from parameters. Hope they don't change the syntax...
@@ -467,7 +474,7 @@ class GithubPlugin(SmartPlugin):
 
         # üath to git worktree dir, default to "plugins/priv_repos/{owner}_wt_{branch}"
         repo['wt_path'] = os.path.join(self.repo_path, f'{owner}_wt_{branch}')
-        repo['disp_wt_path'] = repo['wt_path'][len(self._sh.get_basedir()) + 1:]
+        repo['disp_wt_path'] = repo['wt_path'][len(self._sh.get_basedir()) + 1 :]
         repo['rel_wt_path'] = os.path.join('..', f'{owner}_wt_{branch}')
 
         # set link location from plugin name
@@ -487,7 +494,7 @@ class GithubPlugin(SmartPlugin):
 
             self.logger.debug(f'found repo {repo["repo"]} at {repo["repo_path"]}')
 
-            if "origin" not in repo['repo'].remotes:
+            if 'origin' not in repo['repo'].remotes:
                 self.loggerr(f'repo at {repo["repo_path"]} has no "origin" remote set')
                 return False
 
@@ -572,7 +579,9 @@ class GithubPlugin(SmartPlugin):
         try:
             os.symlink(repo['rel_link_path'], repo['link'])
         except FileExistsError:
-            self.loggerr(f'plugin link {repo["link"]} was created by someone else while we were setting up repo. Not overwriting, check link file manually')
+            self.loggerr(
+                f'plugin link {repo["link"]} was created by someone else while we were setting up repo. Not overwriting, check link file manually'
+            )
             return False
 
         self.repos[name] = repo
@@ -622,7 +631,7 @@ class GithubPlugin(SmartPlugin):
             return False
 
     def _rmtree(self, path: str):
-        """ remove path tree, also try to remove .DS_Store if present """
+        """remove path tree, also try to remove .DS_Store if present"""
         try:
             rmtree(path)
         except Exception:
@@ -640,7 +649,7 @@ class GithubPlugin(SmartPlugin):
                 rmtree(path)
 
     def remove_plugin(self, name: str) -> bool:
-        """ remove plugin link, worktree and if not longer needed, local repo """
+        """remove plugin link, worktree and if not longer needed, local repo"""
         if name not in self.repos:
             self.loggerr(f'plugin entry {name} not found.')
             return False
@@ -667,10 +676,10 @@ class GithubPlugin(SmartPlugin):
         for r in self.repos:
             if r == name:
                 continue
-            if self.repos[r]["owner"] == owner:
+            if self.repos[r]['owner'] == owner:
                 last_repo = False
 
-                if self.repos[r]["branch"] == branch:
+                if self.repos[r]['branch'] == branch:
                     last_branch = False
                     break
 
@@ -711,7 +720,7 @@ class GithubPlugin(SmartPlugin):
         del repo
 
         if err:
-            msg = ", ".join([str(x) for x in err])
+            msg = ', '.join([str(x) for x in err])
             self.loggerr(f'error(s) occurred while removing plugin: {msg}')
             return False
 
@@ -722,7 +731,7 @@ class GithubPlugin(SmartPlugin):
     #
 
     def get_head_commits(self, name: str, exc: bool = False) -> bool:
-        """ tries to get current local and remote head commits """
+        """tries to get current local and remote head commits"""
 
         entry = self.repos[name]
         local = entry['repo']
@@ -746,7 +755,7 @@ class GithubPlugin(SmartPlugin):
             return False
 
     def is_repo_clean(self, name: str, exc: bool = False) -> bool:
-        """ checks if worktree is clean and local and remote branches are in sync """
+        """checks if worktree is clean and local and remote branches are in sync"""
         if name not in self.repos:
             self.loggerr(f'repo {name} not found')
             return False
@@ -778,7 +787,7 @@ class GithubPlugin(SmartPlugin):
         return clean
 
     def pull_repo(self, name: str) -> bool:
-        """ pull repo if clean """
+        """pull repo if clean"""
         if not name or name not in self.repos:
             self.loggerr(f'repo {name} invalid or not found')
             return False
@@ -812,7 +821,7 @@ class GithubPlugin(SmartPlugin):
             return False
 
     def setup_github(self) -> bool:
-        """ login to github and set repo """
+        """login to github and set repo"""
         try:
             self.gh.login()
         except Exception as e:
@@ -822,14 +831,14 @@ class GithubPlugin(SmartPlugin):
         return self.gh.set_repo()
 
     def fetch_github_forks(self, fetch: bool = False) -> bool:
-        """ fetch forks from github API """
+        """fetch forks from github API"""
         if self.gh:
             return self.gh.get_forks(fetch=fetch)
         else:
             return False
 
     def fetch_github_pulls(self, fetch: bool = False) -> bool:
-        """ fetch PRs from github API """
+        """fetch PRs from github API"""
         if self.gh:
             return self.gh.get_pulls(fetch=fetch)
         else:
@@ -844,19 +853,21 @@ class GithubPlugin(SmartPlugin):
         """
         return self.gh.get_branches_from(fork=fork, owner=owner, fetch=fetch)
 
-    def fetch_github_plugins_from(self, fork: Union[Repo, None] = None, owner: str = '', branch: str = '', fetch: bool = False) -> list:
-        """ fetch plugin names for selected fork/branch """
+    def fetch_github_plugins_from(
+        self, fork: Union[Repo, None] = None, owner: str = '', branch: str = '', fetch: bool = False
+    ) -> list:
+        """fetch plugin names for selected fork/branch"""
         return self.gh.get_plugins_from(fork=fork, owner=owner, branch=branch, fetch=fetch)
 
     def get_github_forks(self, owner: str = '') -> dict:
-        """ return forks or single fork for given owner """
+        """return forks or single fork for given owner"""
         if owner:
             return self.gh.forks.get(owner, {})
         else:
             return self.gh.forks
 
     def get_github_forklist_sorted(self) -> list:
-        """ return list of forks, sorted alphabetically, used forks up front """
+        """return list of forks, sorted alphabetically, used forks up front"""
 
         # case insensitive sorted forks
         forks = sorted(self.get_github_forks().keys(), key=lambda x: x.casefold())
@@ -877,7 +888,7 @@ class GithubPlugin(SmartPlugin):
         return sforkstop + sforks
 
     def get_github_pulls(self, number: int = 0) -> dict:
-        """ return pulls or single pull for given number """
+        """return pulls or single pull for given number"""
         if number:
             return self.gh.pulls.get(number, {})
         else:
@@ -888,7 +899,9 @@ class GithubPlugin(SmartPlugin):
     #
 
     # unused right now, possibly remove?
-    def create_repo_from_gh(self, number: int = 0, owner: str = '', branch: Union[Repo, str, None] = None, plugin: str = '') -> bool:
+    def create_repo_from_gh(
+        self, number: int = 0, owner: str = '', branch: Union[Repo, str, None] = None, plugin: str = ''
+    ) -> bool:
         """
         call init/create methods to download new repo and create worktree
 
@@ -948,7 +961,9 @@ class GithubPlugin(SmartPlugin):
             return False
 
         if 'branches' in self.gh.forks[r_owner] and r_branch not in self.gh.forks[r_owner]['branches']:
-            self.loggerr(f'branch {r_branch} not found in cached branches for owner {r_owner}. Maybe re-fetch branches?')
+            self.loggerr(
+                f'branch {r_branch} not found in cached branches for owner {r_owner}. Maybe re-fetch branches?'
+            )
 
         # default id for plugin (actually not identifying the plugin but the branch...)
         name = f'{r_owner}/{r_branch}'
@@ -961,7 +976,7 @@ class GithubPlugin(SmartPlugin):
 
     def run(self):
         self.logger.dbghigh(self.translate("Methode '{method}' aufgerufen", {'method': 'run()'}))
-        self.alive = True     # if using asyncio, do not set self.alive here. Set it in the session coroutine
+        self.alive = True  # if using asyncio, do not set self.alive here. Set it in the session coroutine
 
         try:
             self.setup_github()
@@ -976,14 +991,14 @@ class GithubPlugin(SmartPlugin):
         Stop method for the plugin
         """
         self.logger.dbghigh(self.translate("Methode '{method}' aufgerufen", {'method': 'stop()'}))
-        self.alive = False     # if using asyncio, do not set self.alive here. Set it in the session coroutine
+        self.alive = False  # if using asyncio, do not set self.alive here. Set it in the session coroutine
 
     #
     # helper methods
     #
 
     def _get_last_3_path_parts(self, path: str) -> Tuple[str, str, str]:
-        """ return last 3 parts of a path """
+        """return last 3 parts of a path"""
         try:
             head, l3 = os.path.split(path)
             head, l2 = os.path.split(head)

@@ -29,15 +29,13 @@ import datetime
 import json
 from collections import OrderedDict
 from lib.module import Modules
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin
 
 from .webif import WebInterface
 
 
 class PirateWeather(SmartPlugin):
-
-
-    PLUGIN_VERSION = "1.2.5"
+    PLUGIN_VERSION = '1.2.5'
 
     # https://api.pirateweather.net/forecast/[apikey]/[latitude],[longitude]
     _base_url = 'https://api.pirateweather.net/forecast/'
@@ -49,7 +47,6 @@ class PirateWeather(SmartPlugin):
         503: 'Service Unavailable',
         504: 'Internal Server Error',
     }
-
 
     def get_http_response(self, code):
 
@@ -69,7 +66,6 @@ class PirateWeather(SmartPlugin):
                 description = 'Unknown Response'
         description += ' (' + str(code) + ')'
         return description
-
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -93,7 +89,7 @@ class PirateWeather(SmartPlugin):
             self._lat = self.get_parameter_value('latitude')
             self._lon = self.get_parameter_value('longitude')
         else:
-            self.logger.debug("__init__: latitude and longitude not provided, using shng system values instead.")
+            self.logger.debug('__init__: latitude and longitude not provided, using shng system values instead.')
             self._lat = self.get_sh().lat
             self._lon = self.get_sh().lon
         self._lang = self.get_parameter_value('lang')
@@ -101,10 +97,9 @@ class PirateWeather(SmartPlugin):
         self._jsonData = {}
         self._session = requests.Session()
         self._cycle = int(self.get_parameter_value('cycle'))
-        self._items = {}        # Items that are handled by this plugin
+        self._items = {}  # Items that are handled by this plugin
 
         self.init_webinterface(WebInterface)
-
 
     def run(self):
         self.scheduler_add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)
@@ -112,7 +107,6 @@ class PirateWeather(SmartPlugin):
 
     def stop(self):
         self.alive = False
-
 
     def _update_loop(self):
         """
@@ -124,41 +118,42 @@ class PirateWeather(SmartPlugin):
 
         self._update()
 
-
     def _update(self):
         """
         Updates information on items when it becomes available on the weather service
         """
         forecast = self.get_forecast()
         if forecast is None:
-            self.logger.info("Forecast is None! Server did not answer or sent an invalid reply?")
+            self.logger.info('Forecast is None! Server did not answer or sent an invalid reply?')
             return
         self._jsonData = forecast
         for s, matchStringItems in self._items.items():
             wrk = forecast
             sp = s.split('/')
-            if s == "flags/sources":
+            if s == 'flags/sources':
                 wrk = ', '.join(wrk['flags']['sources'])
-            elif s == "alerts" or s == "alerts_string":
+            elif s == 'alerts' or s == 'alerts_string':
                 if 'alerts' in wrk:
-                    if s == "alerts":
+                    if s == 'alerts':
                         wrk = wrk['alerts']
                     else:
                         alerts_string = ''
                         if 'alerts' in wrk:
                             for alert in wrk['alerts']:
-                                start_time = datetime.datetime.fromtimestamp(
-                                    int(alert['time'])
-                                ).strftime('%d.%m.%Y %H:%M')
-                                expire_time = datetime.datetime.fromtimestamp(
-                                    int(alert['expires'])
-                                ).strftime('%d.%m.%Y %H:%M')
-                                alerts_string_wrk = "<p><h1>"+alert['title']+" ("+start_time+" - "+expire_time+")</h1>"
-                                alerts_string_wrk = alerts_string_wrk + "<span>"+alert['description']+"</span></p>"
+                                start_time = datetime.datetime.fromtimestamp(int(alert['time'])).strftime(
+                                    '%d.%m.%Y %H:%M'
+                                )
+                                expire_time = datetime.datetime.fromtimestamp(int(alert['expires'])).strftime(
+                                    '%d.%m.%Y %H:%M'
+                                )
+                                alerts_string_wrk = (
+                                    '<p><h1>' + alert['title'] + ' (' + start_time + ' - ' + expire_time + ')</h1>'
+                                )
+                                alerts_string_wrk = alerts_string_wrk + '<span>' + alert['description'] + '</span></p>'
                                 alerts_string = alerts_string + alerts_string_wrk
                         wrk = alerts_string
                 else:
-                    if s == "alerts_string":
+                    if s == 'alerts_string':
                         wrk = ''
                     else:
                         wrk = []
@@ -172,22 +167,23 @@ class PirateWeather(SmartPlugin):
                                 wrk = wrk[int(sp[0])]
                             else:
                                 self.logger.error(
-                                    "_update: invalid pw_matchstring '{}'; integer too large in matchstring".format(
-                                        s))
+                                    "_update: invalid pw_matchstring '{}'; integer too large in matchstring".format(s)
+                                )
                                 break
                         else:
                             self.logger.error(
-                                "_update: invalid pw_matchstring '{}'; integer expected in matchstring".format(
-                                    s))
+                                "_update: invalid pw_matchstring '{}'; integer expected in matchstring".format(s)
+                            )
                             break
                     else:
                         wrk = wrk.get(sp[0])
                     if len(sp) == 1:
                         spl = s.split('/')
                         self.logger.debug(
-                            "_update: pw_matchstring split len={}, content={} -> '{}'".format(str(len(spl)),
-                                                                                              str(spl),
-                                                                                              str(wrk)))
+                            "_update: pw_matchstring split len={}, content={} -> '{}'".format(
+                                str(len(spl)), str(spl), str(wrk)
+                            )
+                        )
                     sp.pop(0)
 
             # if a value was found, store it to item
@@ -198,34 +194,35 @@ class PirateWeather(SmartPlugin):
 
         return
 
-
     def get_forecast(self):
         """
         Requests the forecast information at pirateweather.net
         """
         url_to_send = self._build_url()
-        self.logger.info(f"get_forecast: url={url_to_send}")
+        self.logger.info(f'get_forecast: url={url_to_send}')
         json_obj = None
         try:
             response = self._session.get(url_to_send)
         except Exception as e:
-            self.logger.warning(f"get_forecast: Exception when sending GET request: {e}")
+            self.logger.warning(f'get_forecast: Exception when sending GET request: {e}')
             return
         try:
             json_obj = response.json()
         except Exception as e:
             self.logger.warning(f"get_forecast: Response '{response}' is no valid json format: {e}")
             return
-        self.logger.info(f"get_forecast: json response={json_obj}")
+        self.logger.info(f'get_forecast: json response={json_obj}')
 
         if response.status_code >= 500:
-            self.logger.warning(f"api.pirateweather.net: {self.get_http_response(response.status_code)} - Ignoring response.")
+            self.logger.warning(
+                f'api.pirateweather.net: {self.get_http_response(response.status_code)} - Ignoring response.'
+            )
             return
 
         if json_obj['flags']['units'].lower() != self._units.lower():
             # Log data, if receiving data in other format than the requested units
-            self.logger.notice(f"get_forecast: url sent={url_to_send}")
-            self.logger.notice(f"get_forecast: Ignoring data in other units than requested: {json_obj}")
+            self.logger.notice(f'get_forecast: url sent={url_to_send}')
+            self.logger.notice(f'get_forecast: Ignoring data in other units than requested: {json_obj}')
             return
 
         # if json_obj['currently']['temperature'] > 45:
@@ -235,28 +232,39 @@ class PirateWeather(SmartPlugin):
 
         daily_data = OrderedDict()
         if not json_obj.get('daily', False):
-            self.logger.warning(f"api.pirateweather.net: {self.get_http_response(response.status_code)} - No info for daily values.")
-            #return
+            self.logger.warning(
+                f'api.pirateweather.net: {self.get_http_response(response.status_code)} - No info for daily values.'
+            )
+            # return
         else:
             # add icon_visu to daily
             json_obj['daily'].update({'icon_visu': self.map_icon(json_obj['daily']['icon'])})
 
         if not json_obj.get('hourly', False):
-            self.logger.warning(f"api.pirateweather.net: {self.get_http_response(response.status_code)} - No info for hourly values.")
-            #return
+            self.logger.warning(
+                f'api.pirateweather.net: {self.get_http_response(response.status_code)} - No info for hourly values.'
+            )
+            # return
         else:
             # add icon_visu to hourly
             json_obj['hourly'].update({'icon_visu': self.map_icon(json_obj['hourly']['icon'])})
 
         if not json_obj.get('currently'):
-            self.logger.warning(f"api.pirateweather.net: {self.get_http_response(response.status_code)} - No info for current values. Skipping update for 'currently' values.")
+            self.logger.warning(
+                f"api.pirateweather.net: {self.get_http_response(response.status_code)} - No info for current values. Skipping update for 'currently' values."
+            )
         else:
             date_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%d.%m.%Y')
             day_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%A')
             hour_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).hour
-            json_obj['currently'].update({'date': date_entry, 'weekday': day_entry,
-                                          'hour': hour_entry, 'icon_visu':
-                                          self.map_icon(json_obj['currently']['icon'])})
+            json_obj['currently'].update(
+                {
+                    'date': date_entry,
+                    'weekday': day_entry,
+                    'hour': hour_entry,
+                    'icon_visu': self.map_icon(json_obj['currently']['icon']),
+                }
+            )
 
         if json_obj.get('daily', False):
             # add icon_visu, date and day to each day
@@ -275,7 +283,14 @@ class PirateWeather(SmartPlugin):
                 day_entry = datetime.datetime.fromtimestamp(hour['time']).strftime('%A')
                 hour_entry = datetime.datetime.fromtimestamp(hour['time']).hour
                 date_key = datetime.datetime.fromtimestamp(hour['time']).date()
-                hour.update({'date': date_entry, 'weekday': day_entry, 'hour': hour_entry, 'icon_visu': self.map_icon(hour['icon'])})
+                hour.update(
+                    {
+                        'date': date_entry,
+                        'weekday': day_entry,
+                        'hour': hour_entry,
+                        'icon_visu': self.map_icon(hour['icon']),
+                    }
+                )
                 if json_obj['daily'].get(date_key) is None:
                     json_obj['daily'].update({date_key: {}})
                 if json_obj['daily'][date_key].get('hours') is None:
@@ -302,11 +317,15 @@ class PirateWeather(SmartPlugin):
                 if isinstance(entry, datetime.date):
                     try:
                         precip_probability = json_obj['daily'][entry]['precipProbability_mean']
-                        json_obj['daily'][entry]['precipProbability_mean'] = round(sum(precip_probability)/len(precip_probability), 2)
+                        json_obj['daily'][entry]['precipProbability_mean'] = round(
+                            sum(precip_probability) / len(precip_probability), 2
+                        )
                         precip_intensity = json_obj['daily'][entry]['precipIntensity_mean']
-                        json_obj['daily'][entry]['precipIntensity_mean'] = round(sum(precip_intensity)/len(precip_intensity), 2)
+                        json_obj['daily'][entry]['precipIntensity_mean'] = round(
+                            sum(precip_intensity) / len(precip_intensity), 2
+                        )
                         temperature = json_obj['daily'][entry]['temperature_mean']
-                        json_obj['daily'][entry]['temperature_mean'] = round(sum(temperature)/len(temperature), 2)
+                        json_obj['daily'][entry]['temperature_mean'] = round(sum(temperature) / len(temperature), 2)
                     except Exception:
                         pass
                     json_obj['daily']['day{}'.format(i)] = json_obj['daily'].pop(entry)
@@ -353,14 +372,13 @@ class PirateWeather(SmartPlugin):
         """
         pw_matchstring = self.get_iattr_value(item.conf, 'pw_matchstring')
         if pw_matchstring:
-            if not pw_matchstring in self._items:
+            if pw_matchstring not in self._items:
                 self._items[pw_matchstring] = []
             self._items[pw_matchstring].append(item)
 
             self.add_item(item, mapping=pw_matchstring, config_data_dict={})
 
         return
-
 
     def get_items(self):
         return self._items
@@ -380,13 +398,12 @@ class PirateWeather(SmartPlugin):
         """
         url = ''
         if url_type == 'forecast':
-            #url = self._base_forecast_url % (self._key, self._lat, self._lon)
-            url = self._base_url + f"{self._key}/{self._lat},{self._lon}"
-            parameters = f"?lang={self._lang}"
+            # url = self._base_forecast_url % (self._key, self._lat, self._lon)
+            url = self._base_url + f'{self._key}/{self._lat},{self._lon}'
+            parameters = f'?lang={self._lang}'
             if self._units is not None:
-                parameters += f"&units={self._units}"
+                parameters += f'&units={self._units}'
             url += parameters
         else:
-            self.logger.error(f"_build_url: Wrong url type specified: {url_type}")
+            self.logger.error(f'_build_url: Wrong url type specified: {url_type}')
         return url
-

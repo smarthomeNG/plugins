@@ -27,5 +27,6 @@
 
 
 class GPError(Exception):
-    """ GithubPlugin-Exception used to signal errors to the webif """
+    """GithubPlugin-Exception used to signal errors to the webif"""
+
     pass

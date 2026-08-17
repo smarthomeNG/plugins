@@ -2,26 +2,28 @@ from .action import alexa
 
 DEFAULT_RANGE = (True, False)
 
-@alexa('turnOn', 'TurnOnRequest', 'TurnOnConfirmation','',[],"2")
+
+@alexa('turnOn', 'TurnOnRequest', 'TurnOnConfirmation', '', [], '2')
 def turn_on(self, payload):
-    items = self.items( payload['appliance']['applianceId'] )
+    items = self.items(payload['appliance']['applianceId'])
 
     for item in items:
         on, off = self.item_range(item, DEFAULT_RANGE)
-        self.logger.info("Alexa: turnOn({}, {})".format(item.property.path, on))
-        if on != None:
-            item( on )
+        self.logger.info('Alexa: turnOn({}, {})'.format(item.property.path, on))
+        if on is not None:
+            item(on)
 
     return self.respond()
 
-@alexa('turnOff', 'TurnOffRequest', 'TurnOffConfirmation','',[],"2")
+
+@alexa('turnOff', 'TurnOffRequest', 'TurnOffConfirmation', '', [], '2')
 def turn_off(self, payload):
-    items = self.items( payload['appliance']['applianceId'] )
+    items = self.items(payload['appliance']['applianceId'])
 
     for item in items:
         on, off = self.item_range(item, DEFAULT_RANGE)
-        self.logger.info("Alexa: turnOff({}, {})".format(item.property.path, off))
-        if off != None:
-            item( off )
+        self.logger.info('Alexa: turnOff({}, {})'.format(item.property.path, off))
+        if off is not None:
+            item(off)
 
     return self.respond()

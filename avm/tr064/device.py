@@ -1,4 +1,5 @@
 """TR-064 device"""
+
 from .config import TR064_DEVICE_NAMESPACE
 from .config import IGD_DEVICE_NAMESPACE
 from .exceptions import TR064UnknownServiceException
@@ -45,7 +46,7 @@ class Device:
                     control_url,
                     event_sub_url,
                     self.verify,
-                    self.description_file
+                    self.description_file,
                 )
             )
 
@@ -53,4 +54,4 @@ class Device:
         if name in self.services:
             return self.services[name]
 
-        raise TR064UnknownServiceException(f"Requested Service Name {name!r} not available.")
+        raise TR064UnknownServiceException(f'Requested Service Name {name!r} not available.')

@@ -69,7 +69,7 @@ class MusicServiceSoapClient:
         self.timeout = timeout
         self.music_service = music_service
         self.token_store = token_store
-        self.namespace = "http://www.sonos.com/Services/1.1"
+        self.namespace = 'http://www.sonos.com/Services/1.1'
 
         self._cached_soap_header = None
 
@@ -84,19 +84,12 @@ class MusicServiceSoapClient:
         # Play does not like it anyway.
 
         self.http_headers = {
-            "Accept-Encoding": "gzip, deflate",
-            "User-Agent": (
-                "Linux UPnP/1.0 Sonos/29.3-87071 (ICRU_iPhone7,1); "
-                "iOS/Version 8.2 (Build 12D508)"
-            ),
+            'Accept-Encoding': 'gzip, deflate',
+            'User-Agent': ('Linux UPnP/1.0 Sonos/29.3-87071 (ICRU_iPhone7,1); iOS/Version 8.2 (Build 12D508)'),
         }
         self._device = device or discovery.any_soco()
-        self._device_id = self._device.systemProperties.GetString(
-            [("VariableName", "R_TrialZPSerial")]
-        )["StringValue"]
-        self._household_id = self._device.deviceProperties.GetHouseholdID()[
-            "CurrentHouseholdID"
-        ]
+        self._device_id = self._device.systemProperties.GetString([('VariableName', 'R_TrialZPSerial')])['StringValue']
+        self._household_id = self._device.deviceProperties.GetHouseholdID()['CurrentHouseholdID']
 
     def get_soap_header(self):
         """Generate the SOAP authentication header for the related service.
@@ -114,34 +107,30 @@ class MusicServiceSoapClient:
         if self._cached_soap_header is not None:
             return self._cached_soap_header
         music_service = self.music_service
-        credentials_header = XML.Element("credentials", {"xmlns": self.namespace})
-        device_id = XML.SubElement(credentials_header, "deviceId")
+        credentials_header = XML.Element('credentials', {'xmlns': self.namespace})
+        device_id = XML.SubElement(credentials_header, 'deviceId')
         device_id.text = self._device_id
-        device_provider = XML.SubElement(credentials_header, "deviceProvider")
-        device_provider.text = "Sonos"
+        device_provider = XML.SubElement(credentials_header, 'deviceProvider')
+        device_provider.text = 'Sonos'
 
-        if music_service.auth_type in ("DeviceLink", "AppLink"):
+        if music_service.auth_type in ('DeviceLink', 'AppLink'):
             # Add context
-            context = XML.Element("context")
+            context = XML.Element('context')
             credentials_header.append(context)
 
             # If no existing authentication is known, we do not add 'token' and 'key'
             # elements and the only operation the service can perform is to authenticate
-            if self.token_store.has_token(
-                self.music_service.service_id, self._device.household_id
-            ):
-                login_token = XML.Element("loginToken")
+            if self.token_store.has_token(self.music_service.service_id, self._device.household_id):
+                login_token = XML.Element('loginToken')
 
                 # Fill in from saved tokens
-                token_pair = self.token_store.load_token_pair(
-                    self.music_service.service_id, self._device.household_id
-                )
-                token = XML.SubElement(login_token, "token")
-                key = XML.SubElement(login_token, "key")
+                token_pair = self.token_store.load_token_pair(self.music_service.service_id, self._device.household_id)
+                token = XML.SubElement(login_token, 'token')
+                key = XML.SubElement(login_token, 'key')
                 token.text = token_pair[0]
                 key.text = token_pair[1]
 
-                household_id = XML.SubElement(login_token, "householdId")
+                household_id = XML.SubElement(login_token, 'householdId')
                 household_id.text = self._household_id
                 credentials_header.append(login_token)
 
@@ -149,9 +138,7 @@ class MusicServiceSoapClient:
         # accounts from the device anymore
 
         # Anonymous auth. No need for anything further.
-        self._cached_soap_header = XML.tostring(
-            credentials_header, encoding="utf-8"
-        ).decode(encoding="utf-8")
+        self._cached_soap_header = XML.tostring(credentials_header, encoding='utf-8').decode(encoding='utf-8')
         return self._cached_soap_header
 
     def call(self, method, args=None):
@@ -175,7 +162,7 @@ class MusicServiceSoapClient:
             method=method,
             parameters=[] if args is None else args,
             http_headers=self.http_headers,
-            soap_action="http://www.sonos.com/Services/1.1#{0}".format(method),
+            soap_action='http://www.sonos.com/Services/1.1#{0}'.format(method),
             soap_header=self.get_soap_header(),
             namespace=self.namespace,
             timeout=self.timeout,
@@ -184,26 +171,18 @@ class MusicServiceSoapClient:
         try:
             result_elt = message.call()
         except SoapFault as exc:
-            if "Client.AuthTokenExpired" in exc.faultcode:
+            if 'Client.AuthTokenExpired' in exc.faultcode:
                 raise MusicServiceAuthException(
-                    "Authorization for {} expired, is invalid or has not yet been "
-                    "completed: [{} / {} / {}]".format(
-                        self.music_service.service_name,
-                        exc.faultcode,
-                        exc.faultstring,
-                        exc.detail,
+                    'Authorization for {} expired, is invalid or has not yet been completed: [{} / {} / {}]'.format(
+                        self.music_service.service_name, exc.faultcode, exc.faultstring, exc.detail
                     )
                 ) from exc
 
-            if "Client.TokenRefreshRequired" in exc.faultcode:
-                log.debug(
-                    "Auth token for %s expired, attempting to refresh",
-                    self.music_service.service_name,
-                )
-                if self.music_service.auth_type not in ("DeviceLink", "AppLink"):
+            if 'Client.TokenRefreshRequired' in exc.faultcode:
+                log.debug('Auth token for %s expired, attempting to refresh', self.music_service.service_name)
+                if self.music_service.auth_type not in ('DeviceLink', 'AppLink'):
                     raise MusicServiceAuthException(
-                        "Token-refresh not supported for music service auth type: "
-                        + self.music_service.auth_type
+                        'Token-refresh not supported for music service auth type: ' + self.music_service.auth_type
                     ) from exc
 
                 # Remove any cached value for the SOAP header
@@ -216,35 +195,26 @@ class MusicServiceSoapClient:
                 #     <ms:privateKey>yyyyyy</ms:privateKey>
                 #   </ms:RefreshAuthTokenResult>
                 # </detail>
-                auth_token = exc.detail.find(
-                    ".//xmlns:authToken", {"xmlns": self.namespace}
-                )
+                auth_token = exc.detail.find('.//xmlns:authToken', {'xmlns': self.namespace})
                 if auth_token is not None:
                     auth_token = auth_token.text
-                private_key = exc.detail.find(
-                    ".//xmlns:privateKey", {"xmlns": self.namespace}
-                )
+                private_key = exc.detail.find('.//xmlns:privateKey', {'xmlns': self.namespace})
                 if private_key is not None:
                     private_key = private_key.text
 
                 if auth_token is None or private_key is None:
-                    auth_token = exc.detail.findtext(".//authToken")
-                    private_key = exc.detail.findtext(".//privateKey")
+                    auth_token = exc.detail.findtext('.//authToken')
+                    private_key = exc.detail.findtext('.//privateKey')
 
                     if auth_token is None or private_key is None:
                         # If we didn't find the tokens, raise
                         raise MusicServiceAuthException(
-                            "Got a TokenRefreshRequired but no new token was"
-                            " found in the reply: {}".format(exc.detail)
+                            'Got a TokenRefreshRequired but no new token was found in the reply: {}'.format(exc.detail)
                         ) from exc
 
                 # Create new token pair and save it
                 token_pair = (auth_token, private_key)
-                self.token_store.save_token_pair(
-                    self.music_service.service_id,
-                    self._device.household_id,
-                    token_pair,
-                )
+                self.token_store.save_token_pair(self.music_service.service_id, self._device.household_id, token_pair)
 
                 # With the new token pair in hand, attempt a new call
                 message = SoapMessage(
@@ -252,7 +222,7 @@ class MusicServiceSoapClient:
                     method=method,
                     parameters=[] if args is None else args,
                     http_headers=self.http_headers,
-                    soap_action="http://www.sonos.com/Services/1.1#{0}".format(method),
+                    soap_action='http://www.sonos.com/Services/1.1#{0}'.format(method),
                     soap_header=self.get_soap_header(),
                     namespace=self.namespace,
                     timeout=self.timeout,
@@ -260,26 +230,18 @@ class MusicServiceSoapClient:
                 result_elt = message.call()
             else:
                 log.exception(
-                    "Unhandled SOAP Fault. Code: %s. Detail: %s. String: %s",
-                    exc.faultcode,
-                    exc.detail,
-                    exc.faultstring,
+                    'Unhandled SOAP Fault. Code: %s. Detail: %s. String: %s', exc.faultcode, exc.detail, exc.faultstring
                 )
                 raise MusicServiceException(exc.faultstring, exc.faultcode) from exc
         except XML.ParseError as parse_exc:
             raise MusicServiceAuthException(
-                "Got empty response to request, likely because the service is not "
-                "authenticated"
+                'Got empty response to request, likely because the service is not authenticated'
             ) from parse_exc
 
         # The top key in the OrderedDict will be the methodResult. Its
         # value may be None if no results were returned.
         result = list(
-            parse(
-                XML.tostring(result_elt),
-                process_namespaces=True,
-                namespaces={self.namespace: None},
-            ).values()
+            parse(XML.tostring(result_elt), process_namespaces=True, namespaces={self.namespace: None}).values()
         )[0]
 
         return result if result is not None else {}
@@ -292,26 +254,21 @@ class MusicServiceSoapClient:
         """
         link_device_id = None
 
-        if self.music_service.auth_type == "DeviceLink":
-            log.debug("Beginning DeviceLink authentication")
-            result = self.call(
-                "getDeviceLinkCode", [("householdId", self._household_id)]
-            )["getDeviceLinkCodeResult"]
-            if "linkDeviceId" in result:
-                link_device_id = result["linkDeviceId"]
-            return result["regUrl"], result["linkCode"], link_device_id
-        elif self.music_service.auth_type == "AppLink":
-            log.debug("Beginning AppLink authentication")
-            result = self.call("getAppLink", [("householdId", self._household_id)])[
-                "getAppLinkResult"
-            ]
-            auth_parts = result["authorizeAccount"]["deviceLink"]
-            if "linkDeviceId" in auth_parts:
-                link_device_id = auth_parts["linkDeviceId"]
-            return auth_parts["regUrl"], auth_parts["linkCode"], link_device_id
+        if self.music_service.auth_type == 'DeviceLink':
+            log.debug('Beginning DeviceLink authentication')
+            result = self.call('getDeviceLinkCode', [('householdId', self._household_id)])['getDeviceLinkCodeResult']
+            if 'linkDeviceId' in result:
+                link_device_id = result['linkDeviceId']
+            return result['regUrl'], result['linkCode'], link_device_id
+        elif self.music_service.auth_type == 'AppLink':
+            log.debug('Beginning AppLink authentication')
+            result = self.call('getAppLink', [('householdId', self._household_id)])['getAppLinkResult']
+            auth_parts = result['authorizeAccount']['deviceLink']
+            if 'linkDeviceId' in auth_parts:
+                link_device_id = auth_parts['linkDeviceId']
+            return auth_parts['regUrl'], auth_parts['linkCode'], link_device_id
         raise MusicServiceAuthException(
-            "begin_authentication() is not implemented "
-            "for auth type {}".format(self.music_service.auth_type)
+            'begin_authentication() is not implemented for auth type {}'.format(self.music_service.auth_type)
         )
 
     def complete_authentication(self, link_code, link_device_id=None):
@@ -320,19 +277,17 @@ class MusicServiceSoapClient:
         See `complete_authentication` for details
 
         """
-        log.debug("Attempting to complete DeviceLink or AppLink authentication")
+        log.debug('Attempting to complete DeviceLink or AppLink authentication')
         result = self.call(
-            "getDeviceAuthToken",
+            'getDeviceAuthToken',
             [
-                ("householdId", self._household_id),
-                ("linkCode", link_code),
-                ("linkDeviceId", link_device_id or self._device_id),
+                ('householdId', self._household_id),
+                ('linkCode', link_code),
+                ('linkDeviceId', link_device_id or self._device_id),
             ],
-        )["getDeviceAuthTokenResult"]
-        token_pair = (result["authToken"], result["privateKey"])
-        self.token_store.save_token_pair(
-            self.music_service.service_id, self._device.household_id, token_pair
-        )
+        )['getDeviceAuthTokenResult']
+        token_pair = (result['authToken'], result['privateKey'])
+        self.token_store.save_token_pair(self.music_service.service_id, self._device.household_id, token_pair)
         # Delete the soap header, which will force it to rebuild
         self._cached_soap_header = None
 
@@ -354,7 +309,7 @@ class MusicService:
         Interact with TuneIn:
 
         >>> tunein = MusicService('TuneIn')
-        >>> print (tunein)
+        >>> print(tunein)
         <MusicService 'TuneIn' at 0x10ad84e10>
 
         Browse an item. By default, the root item is used. An
@@ -381,8 +336,7 @@ class MusicService:
 
         Get some metadata about a specific track:
 
-        >>> response =  spotify.get_media_metadata(
-        ... item_id='spotify:track:6NmXV4o6bmp704aPGyTVVG')
+        >>> response = spotify.get_media_metadata(item_id='spotify:track:6NmXV4o6bmp704aPGyTVVG')
         >>> print(dumps(response, indent=4))
         {
             "mediaMetadata": {
@@ -406,14 +360,13 @@ class MusicService:
         }
         or even a playlist:
 
-        >>> response =  spotify.get_metadata(
-        ...    item_id='spotify:user:spotify:playlist:0FQk6BADgIIYd3yTLCThjg')
+        >>> response = spotify.get_metadata(item_id='spotify:user:spotify:playlist:0FQk6BADgIIYd3yTLCThjg')
 
         Find the available search categories, and use them:
 
         >>> print(spotify.available_search_categories)
         ['albums', 'tracks', 'artists']
-        >>> result =  spotify.search(category='artists', term='miles')
+        >>> result = spotify.search(category='artists', term='miles')
 
 
     Note:
@@ -448,22 +401,22 @@ class MusicService:
             self.token_store = JsonFileTokenStore.from_config_file()
         # Look up the data for this service
         data = self.get_data_for_name(service_name)
-        self.uri = data["Uri"]
-        self.secure_uri = data["SecureUri"]
-        self.capabilities = data["Capabilities"]
-        self.version = data["Version"]
-        self.container_type = data["ContainerType"]
-        self.service_id = data["Id"]
+        self.uri = data['Uri']
+        self.secure_uri = data['SecureUri']
+        self.capabilities = data['Capabilities']
+        self.version = data['Version']
+        self.container_type = data['ContainerType']
+        self.service_id = data['Id']
         # Auth_type can be 'Anonymous', 'UserId, 'DeviceLink' and 'AppLink'
-        self.auth_type = data["Auth"]
-        self.presentation_map_uri = data.get("PresentationMapUri")
+        self.auth_type = data['Auth']
+        self.presentation_map_uri = data.get('PresentationMapUri')
         # Certain music services doesn't have a PresentationMapUri element, but
         # deliver it instead through a manifest. Get the URI for it to prepare
         # for parsing.
-        self.manifest_uri = data.get("ManifestUri")
+        self.manifest_uri = data.get('ManifestUri')
         self.manifest_data = None
         self._search_prefix_map = None
-        self.service_type = data["ServiceType"]
+        self.service_type = data['ServiceType']
 
         # Cached values used between begin_authentication and complete_authentication
         self.link_code = None
@@ -478,9 +431,7 @@ class MusicService:
         )
 
     def __repr__(self):
-        return "<{} '{}' at {}>".format(
-            self.__class__.__name__, self.service_name, hex(id(self))
-        )
+        return "<{} '{}' at {}>".format(self.__class__.__name__, self.service_name, hex(id(self)))
 
     def __str__(self):
         return self.__repr__()
@@ -497,10 +448,10 @@ class MusicService:
             str: a string containing the music services data xml
         """
         device = soco or discovery.any_soco()
-        log.debug("Fetching music services data from %s", device)
+        log.debug('Fetching music services data from %s', device)
         available_services = device.musicServices.ListAvailableServices()
-        descriptor_list_xml = available_services["AvailableServiceDescriptorList"]
-        log.debug("Services descriptor list: %s", descriptor_list_xml)
+        descriptor_list_xml = available_services['AvailableServiceDescriptorList']
+        log.debug('Services descriptor list: %s', descriptor_list_xml)
         return descriptor_list_xml
 
     @classmethod
@@ -516,7 +467,7 @@ class MusicService:
             return cls._music_services_data
 
         result = {}
-        root = XML.fromstring(cls._get_music_services_data_xml().encode("utf-8"))
+        root = XML.fromstring(cls._get_music_services_data_xml().encode('utf-8'))
         # <Services SchemaVersion="1">
         #     <Service Id="163" Name="Spreaker" Version="1.1"
         #         Uri="http://sonos.spreaker.com/sonos/service/v1"
@@ -540,39 +491,39 @@ class MusicService:
         # elements at any level, but Python 2.6 breaks with this if Service
         # is a child of the current element. Since 'Service' works here, we use
         # that instead
-        services = root.findall("Service")
+        services = root.findall('Service')
         for service in services:
             result_value = service.attrib.copy()
-            name = service.get("Name")
-            result_value["Name"] = name
-            auth_element = service.find("Policy")
+            name = service.get('Name')
+            result_value['Name'] = name
+            auth_element = service.find('Policy')
             auth = auth_element.attrib
             result_value.update(auth)
 
             # Get presentation map
-            presentation_element = service.find(".//PresentationMap")
+            presentation_element = service.find('.//PresentationMap')
             if presentation_element is not None:
-                result_value["PresentationMapUri"] = presentation_element.get("Uri")
+                result_value['PresentationMapUri'] = presentation_element.get('Uri')
                 # FIXME these strings seems to have definitions of
                 # custom search categories, check whether it is
                 # implemented
                 # FIXME is this right, or are we getting the same element twice?
-                result_value["StringsUri"] = presentation_element.get("Uri")
+                result_value['StringsUri'] = presentation_element.get('Uri')
 
             # Get manifest information if available
-            manifest_element = service.find("Manifest")
+            manifest_element = service.find('Manifest')
             if manifest_element is not None:
-                result_value["ManifestUri"] = manifest_element.get("Uri")
+                result_value['ManifestUri'] = manifest_element.get('Uri')
 
-            result_value["ServiceID"] = service.get("Id")
+            result_value['ServiceID'] = service.get('Id')
             # ServiceType is used elsewhere in Sonos, eg to form tokens,
             # and get_subscribed_music_services() below. It is also the
             # 'Type' used in account_xml (see above). Its value always
             # seems to be (ID*256) + 7. Some serviceTypes are also
             # listed in available_services['AvailableServiceTypeList']
             # but this does not seem to be comprehensive
-            service_type = str(int(service.get("Id")) * 256 + 7)
-            result_value["ServiceType"] = service_type
+            service_type = str(int(service.get('Id')) * 256 + 7)
+            result_value['ServiceType'] = service_type
             result[service_type] = result_value
 
         # Cache this so we don't need to do it again
@@ -588,7 +539,7 @@ class MusicService:
         Returns:
             list: A list of strings.
         """
-        return [service["Name"] for service in cls._get_music_services_data().values()]
+        return [service['Name'] for service in cls._get_music_services_data().values()]
 
     @classmethod
     def get_data_for_name(cls, service_name):
@@ -605,7 +556,7 @@ class MusicService:
             `MusicServiceException`: if the music service cannot be found.
         """
         for service in cls._get_music_services_data().values():
-            if service_name == service["Name"]:
+            if service_name == service['Name']:
                 return service
         raise MusicServiceException("Unknown music service: '%s'" % service_name)
 
@@ -631,35 +582,27 @@ class MusicService:
         # Not cached. Fetch and parse presentation map
         self._search_prefix_map = {}
         # Tunein is a special case. It has no pmap, but supports searching
-        if self.service_name == "TuneIn":
-            self._search_prefix_map = {
-                "stations": "search:station",
-                "shows": "search:show",
-                "hosts": "search:host",
-            }
+        if self.service_name == 'TuneIn':
+            self._search_prefix_map = {'stations': 'search:station', 'shows': 'search:show', 'hosts': 'search:host'}
             return self._search_prefix_map
 
         # Certain music services delivers the presentation map not in an
         # information field of its own, but in a JSON 'manifest'. Get it
         # and extract the needed values.
-        if (
-            self.presentation_map_uri is None
-            and self.manifest_uri is not None
-            and self.manifest_data is None
-        ):
+        if self.presentation_map_uri is None and self.manifest_uri is not None and self.manifest_data is None:
             manifest = requests.get(self.manifest_uri, timeout=9)
             self.manifest_data = json.loads(manifest.content)
-            pmap_element = self.manifest_data.get("presentationMap")
+            pmap_element = self.manifest_data.get('presentationMap')
             if pmap_element:
-                self.presentation_map_uri = pmap_element.get("uri")
+                self.presentation_map_uri = pmap_element.get('uri')
         if self.presentation_map_uri is None:
             # Assume not searchable?
             return self._search_prefix_map
-        log.debug("Fetching presentation map from %s", self.presentation_map_uri)
+        log.debug('Fetching presentation map from %s', self.presentation_map_uri)
         pmap = requests.get(self.presentation_map_uri, timeout=9)
         pmap_root = XML.fromstring(pmap.content)
         # Search translations can appear in Category or CustomCategory elements
-        categories = pmap_root.findall(".//SearchCategories/Category")
+        categories = pmap_root.findall('.//SearchCategories/Category')
         if categories is None:
             return self._search_prefix_map
         for category in categories:
@@ -667,12 +610,10 @@ class MusicService:
             # Navidrome + bonob setup, where the category ids are delivered on this key
             # instead of `mappedId` like for most other services. Reference:
             # https://github.com/SoCo/SoCo/pull/869#issuecomment-991353397
-            self._search_prefix_map[category.get("id")] = category.get(
-                "mappedId"
-            ) or category.get("id")
-        custom_categories = pmap_root.findall(".//SearchCategories/CustomCategory")
+            self._search_prefix_map[category.get('id')] = category.get('mappedId') or category.get('id')
+        custom_categories = pmap_root.findall('.//SearchCategories/CustomCategory')
         for category in custom_categories:
-            self._search_prefix_map[category.get("stringId")] = category.get("mappedId")
+            self._search_prefix_map[category.get('stringId')] = category.get('mappedId')
         return self._search_prefix_map
 
     @property
@@ -691,7 +632,7 @@ class MusicService:
 
             >>> print(spotify.available_search_categories)
             ['albums', 'tracks', 'artists']
-            >>> result =  spotify.search(category='artists', term='miles')
+            >>> result = spotify.search(category='artists', term='miles')
 
 
         """
@@ -729,7 +670,7 @@ class MusicService:
 
         # quote_url will break if given unicode on Py2.6, and early 2.7. So
         # we need to encode.
-        item_id = quote_url(item_id.encode("utf-8"))
+        item_id = quote_url(item_id.encode('utf-8'))
         # Add the account info to the end as query params
 
         # FIXME we no longer have accounts, so for now the serial
@@ -737,7 +678,7 @@ class MusicService:
         # account.serial_numbers
         # account = self.account
 
-        result = "soco://{}?sid={}&sn={}".format(item_id, self.service_id, 0)
+        result = 'soco://{}?sid={}&sn={}'.format(item_id, self.service_id, 0)
         return result
 
     @property
@@ -747,14 +688,12 @@ class MusicService:
         The Sonos descriptor is used as the content of the <desc> tag in
         DIDL metadata, to indicate the relevant music service id.
         """
-        if self.auth_type == "DeviceLink":
+        if self.auth_type == 'DeviceLink':
             # It used to be that the second part (after the second _ was the username
-            desc = "SA_RINCON{service_type}_X_#Svc{service_type}-0-Token".format(
-                service_type=self.service_type
-            )
+            desc = 'SA_RINCON{service_type}_X_#Svc{service_type}-0-Token'.format(service_type=self.service_type)
         else:
             # This seems to at least be the case for TuneIn
-            desc = "SA_RINCON{service_type}_".format(service_type=self.service_type)
+            desc = 'SA_RINCON{service_type}_'.format(service_type=self.service_type)
         return desc
 
     def begin_authentication(self):
@@ -775,14 +714,8 @@ class MusicService:
             str: Registration URL used for service linking.
 
         """
-        log.debug(
-            "Begin authentication on music service '%s' with id %i", self, id(self)
-        )
-        (
-            reg_url,
-            self.link_code,
-            self.link_device_id,
-        ) = self.soap_client.begin_authentication()
+        log.debug("Begin authentication on music service '%s' with id %i", self, id(self))
+        (reg_url, self.link_code, self.link_device_id) = self.soap_client.begin_authentication()
         return reg_url
 
     def complete_authentication(self, link_code=None, link_device_id=None):
@@ -798,12 +731,10 @@ class MusicService:
                 begin_authentication. If not provided, cached device ID will be used.
 
         """
-        log.debug(
-            "Complete authentication on music service '%s' with id %i", self, id(self)
-        )
+        log.debug("Complete authentication on music service '%s' with id %i", self, id(self))
         _link_code = link_code or self.link_code
         if not _link_code:
-            raise MusicServiceAuthException("link_code not provided or cached")
+            raise MusicServiceAuthException('link_code not provided or cached')
         _link_device_id = link_device_id or self.link_device_id
         self.soap_client.complete_authentication(_link_code, _link_device_id)
         self.link_code = self.link_device_id = None
@@ -839,7 +770,7 @@ class MusicService:
     #    search(xs:string id, xs:string term, xs:string index, xs:int count)
     #    setPlayedSeconds(id id, xs:int seconds)
 
-    def get_metadata(self, item="root", index=0, count=100, recursive=False):
+    def get_metadata(self, item='root', index=0, count=100, recursive=False):
         """Get metadata for a container or item.
 
         Args:
@@ -865,17 +796,11 @@ class MusicService:
         else:
             item_id = item
         response = self.soap_client.call(
-            "getMetadata",
-            [
-                ("id", item_id),
-                ("index", index),
-                ("count", count),
-                ("recursive", 1 if recursive else 0),
-            ],
+            'getMetadata', [('id', item_id), ('index', index), ('count', count), ('recursive', 1 if recursive else 0)]
         )
-        return parse_response(self, response, "browse")
+        return parse_response(self, response, 'browse')
 
-    def search(self, category, term="", index=0, count=100):
+    def search(self, category, term='', index=0, count=100):
         """Search for an item in a category.
 
         Args:
@@ -896,19 +821,10 @@ class MusicService:
         """
         search_category = self._get_search_prefix_map().get(category, None)
         if search_category is None:
-            raise MusicServiceException(
-                "%s does not support the '%s' search category"
-                % (self.service_name, category)
-            )
+            raise MusicServiceException("%s does not support the '%s' search category" % (self.service_name, category))
 
         response = self.soap_client.call(
-            "search",
-            [
-                ("id", search_category),
-                ("term", term),
-                ("index", index),
-                ("count", count),
-            ],
+            'search', [('id', search_category), ('term', term), ('index', index), ('count', count)]
         )
 
         return parse_response(self, response, category)
@@ -926,8 +842,8 @@ class MusicService:
             The Sonos `getMediaMetadata API
             <http://musicpartners.sonos.com/node/83>`_
         """
-        response = self.soap_client.call("getMediaMetadata", [("id", item_id)])
-        return response.get("getMediaMetadataResult", None)
+        response = self.soap_client.call('getMediaMetadata', [('id', item_id)])
+        return response.get('getMediaMetadataResult', None)
 
     def get_media_uri(self, item_id):
         """Get a streaming URI for an item.
@@ -947,8 +863,8 @@ class MusicService:
         Returns:
             str: The item's streaming URI.
         """
-        response = self.soap_client.call("getMediaURI", [("id", item_id)])
-        return response.get("getMediaURIResult", None)
+        response = self.soap_client.call('getMediaURI', [('id', item_id)])
+        return response.get('getMediaURIResult', None)
 
     def get_last_update(self):
         """Get last_update details for this music service.
@@ -961,8 +877,8 @@ class MusicService:
         """
         # TODO: Maybe create a favorites/catalog cache which is invalidated
         # TODO: when these values change?
-        response = self.soap_client.call("getLastUpdate")
-        return response.get("getLastUpdateResult", None)
+        response = self.soap_client.call('getLastUpdate')
+        return response.get('getLastUpdateResult', None)
 
     def get_extended_metadata(self, item_id):
         """Get extended metadata for a media item, such as related items.
@@ -977,8 +893,8 @@ class MusicService:
             The Sonos `getExtendedMetadata API
             <http://musicpartners.sonos.com/node/128>`_
         """
-        response = self.soap_client.call("getExtendedMetadata", [("id", item_id)])
-        return response.get("getExtendedMetadataResult", None)
+        response = self.soap_client.call('getExtendedMetadata', [('id', item_id)])
+        return response.get('getExtendedMetadataResult', None)
 
     def get_extended_metadata_text(self, item_id, metadata_type):
         """Get extended metadata text for a media item.
@@ -997,7 +913,5 @@ class MusicService:
             The Sonos `getExtendedMetadataText API
             <http://musicpartners.sonos.com/node/127>`_
         """
-        response = self.soap_client.call(
-            "getExtendedMetadataText", [("id", item_id), ("type", metadata_type)]
-        )
-        return response.get("getExtendedMetadataTextResult", None)
+        response = self.soap_client.call('getExtendedMetadataText', [('id', item_id), ('type', metadata_type)])
+        return response.get('getExtendedMetadataTextResult', None)

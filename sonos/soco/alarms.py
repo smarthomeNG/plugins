@@ -10,12 +10,12 @@ from .exceptions import SoCoException
 from .xml import XML
 
 log = logging.getLogger(__name__)
-TIME_FORMAT = "%H:%M:%S"
+TIME_FORMAT = '%H:%M:%S'
 RECURRENCE_KEYWORD_EQUIVALENT = {
-    "DAILY": "ON_0123456",
-    "ONCE": "ON_",  # Never reoccurs
-    "WEEKDAYS": "ON_12345",
-    "WEEKENDS": "ON_06",
+    'DAILY': 'ON_0123456',
+    'ONCE': 'ON_',  # Never reoccurs
+    'WEEKDAYS': 'ON_12345',
+    'WEEKENDS': 'ON_06',
 }
 
 
@@ -44,14 +44,14 @@ def is_valid_recurrence(text):
         True
         >>> is_valid_recurrence('ON_666')  # Sat
         True
-        >>> is_valid_recurrence('ON_3421') # Mon, Tue, Wed, Thur
+        >>> is_valid_recurrence('ON_3421')  # Mon, Tue, Wed, Thur
         True
-        >>> is_valid_recurrence('ON_123456789') # Too many digits
+        >>> is_valid_recurrence('ON_123456789')  # Too many digits
         False
     """
-    if text in ("DAILY", "ONCE", "WEEKDAYS", "WEEKENDS"):
+    if text in ('DAILY', 'ONCE', 'WEEKDAYS', 'WEEKENDS'):
         return True
-    return re.search(r"^ON_[0-6]{1,7}$", text) is not None
+    return re.search(r'^ON_[0-6]{1,7}$', text) is not None
 
 
 class Alarms(_SocoSingletonBase):
@@ -71,7 +71,6 @@ class Alarms(_SocoSingletonBase):
          470: <Alarm id:470@22:07:46 at 0x7f5198797d60>}
         >>> for alarm in alarms:
         ...     alarm
-        ...
         <Alarm id:469@22:07:41 at 0x7f5198797dc0>
         <Alarm id:470@22:07:46 at 0x7f5198797d60>
         >>> alarms[470]
@@ -79,7 +78,7 @@ class Alarms(_SocoSingletonBase):
         >>> new_alarm = Alarm(zone)
         >>> new_alarm.save()
         471
-        >>> new_alarm.recurrence = "ONCE"
+        >>> new_alarm.recurrence = 'ONCE'
         >>> new_alarm.save()
         471
         >>> alarms.alarms
@@ -92,12 +91,11 @@ class Alarms(_SocoSingletonBase):
          471: <Alarm id:471@22:08:40 at 0x7f51987f1b50>}
         >>> for alarm in alarms:
         ...     alarm.remove()
-        ...
         >>> a.alarms
         {}
     """
 
-    _class_group = "Alarms"
+    _class_group = 'Alarms'
 
     def __init__(self):
         """Initialize the instance."""
@@ -116,7 +114,7 @@ class Alarms(_SocoSingletonBase):
     @last_alarm_list_version.setter
     def last_alarm_list_version(self, alarm_list_version):
         """Store alarm list version and store UID/ID values."""
-        self.last_uid, last_id = alarm_list_version.split(":")
+        self.last_uid, last_id = alarm_list_version.split(':')
         self.last_id = int(last_id)
         self._last_alarm_list_version = alarm_list_version
 
@@ -149,17 +147,15 @@ class Alarms(_SocoSingletonBase):
         self._last_zone_used = zone
 
         response = zone.alarmClock.ListAlarms()
-        current_alarm_list_version = response["CurrentAlarmListVersion"]
+        current_alarm_list_version = response['CurrentAlarmListVersion']
 
         if self.last_alarm_list_version:
-            alarm_list_uid, alarm_list_id = current_alarm_list_version.split(":")
+            alarm_list_uid, alarm_list_id = current_alarm_list_version.split(':')
             if self.last_uid != alarm_list_uid:
-                matching_zone = next(
-                    (z for z in zone.all_zones if z.uid == alarm_list_uid), None
-                )
+                matching_zone = next((z for z in zone.all_zones if z.uid == alarm_list_uid), None)
                 if not matching_zone:
                     raise SoCoException(
-                        "Alarm list UID {} does not match {}".format(
+                        'Alarm list UID {} does not match {}'.format(
                             current_alarm_list_version, self.last_alarm_list_version
                         )
                     )
@@ -202,9 +198,7 @@ class Alarms(_SocoSingletonBase):
                 self.alarms[alarm_id] = alarm
                 self.alarms_skipped.pop(alarm_id)
 
-    def get_next_alarm_datetime(
-        self, from_datetime=None, include_disabled=False, zone_uid=None
-    ):
+    def get_next_alarm_datetime(self, from_datetime=None, include_disabled=False, zone_uid=None):
         """Get the next alarm trigger datetime.
 
         Args:
@@ -234,12 +228,9 @@ class Alarms(_SocoSingletonBase):
             this_alarm = self.alarms.get(alarm_id)
             if zone_uid is not None and this_alarm.zone.uid != zone_uid:
                 continue
-            this_next_datetime = this_alarm.get_next_alarm_datetime(
-                from_datetime, include_disabled
-            )
+            this_next_datetime = this_alarm.get_next_alarm_datetime(from_datetime, include_disabled)
             if (next_alarm_datetime is None) or (
-                this_next_datetime is not None
-                and this_next_datetime < next_alarm_datetime
+                this_next_datetime is not None and this_next_datetime < next_alarm_datetime
             ):
                 next_alarm_datetime = this_next_datetime
         return next_alarm_datetime
@@ -257,11 +248,11 @@ class Alarm:
         zone,
         start_time=None,
         duration=None,
-        recurrence="DAILY",
+        recurrence='DAILY',
         enabled=True,
         program_uri=None,
-        program_metadata="",
-        play_mode="NORMAL",
+        program_metadata='',
+        play_mode='NORMAL',
         volume=20,
         include_linked_zones=False,
         room_uuid=None,
@@ -317,15 +308,13 @@ class Alarm:
 
     def __repr__(self):
         middle = str(self.start_time.strftime(TIME_FORMAT))
-        return "<{} id:{}@{} at {}>".format(
-            self.__class__.__name__, self.alarm_id, middle, hex(id(self))
-        )
+        return '<{} id:{}@{} at {}>'.format(self.__class__.__name__, self.alarm_id, middle, hex(id(self)))
 
     def update(self, **kwargs):
         """Update an existing Alarm instance using the same arguments as __init__."""
         for attr, value in kwargs.items():
             if not hasattr(self, attr):
-                raise SoCoException("Alarm does not have atttribute {}".format(attr))
+                raise SoCoException('Alarm does not have atttribute {}'.format(attr))
             setattr(self, attr, value)
 
     @property
@@ -393,41 +382,32 @@ class Alarm:
         """
         if self.zone is None:
             raise SoCoException(
-                "Cannot save alarm {}: zone is not set. "
-                "Call Alarms.update_skipped() with the zone first.".format(
+                'Cannot save alarm {}: zone is not set. Call Alarms.update_skipped() with the zone first.'.format(
                     self._alarm_id
                 )
             )
         args = [
-            ("StartLocalTime", self.start_time.strftime(TIME_FORMAT)),
-            (
-                "Duration",
-                "" if self.duration is None else self.duration.strftime(TIME_FORMAT),
-            ),
-            ("Recurrence", self.recurrence),
-            ("Enabled", "1" if self.enabled else "0"),
-            ("RoomUUID", self.zone.uid),
-            (
-                "ProgramURI",
-                "x-rincon-buzzer:0" if self.program_uri is None else self.program_uri,
-            ),
-            ("ProgramMetaData", self.program_metadata),
-            ("PlayMode", self.play_mode),
-            ("Volume", self.volume),
-            ("IncludeLinkedZones", "1" if self.include_linked_zones else "0"),
+            ('StartLocalTime', self.start_time.strftime(TIME_FORMAT)),
+            ('Duration', '' if self.duration is None else self.duration.strftime(TIME_FORMAT)),
+            ('Recurrence', self.recurrence),
+            ('Enabled', '1' if self.enabled else '0'),
+            ('RoomUUID', self.zone.uid),
+            ('ProgramURI', 'x-rincon-buzzer:0' if self.program_uri is None else self.program_uri),
+            ('ProgramMetaData', self.program_metadata),
+            ('PlayMode', self.play_mode),
+            ('Volume', self.volume),
+            ('IncludeLinkedZones', '1' if self.include_linked_zones else '0'),
         ]
         if self.alarm_id is None:
             response = self.zone.alarmClock.CreateAlarm(args)
-            self._alarm_id = response["AssignedID"]
+            self._alarm_id = response['AssignedID']
             alarms = Alarms()
             if alarms.last_id == int(self.alarm_id) - 1:
-                alarms.last_alarm_list_version = "{}:{}".format(
-                    alarms.last_uid, self.alarm_id
-                )
+                alarms.last_alarm_list_version = '{}:{}'.format(alarms.last_uid, self.alarm_id)
             alarms.alarms[self.alarm_id] = self
         else:
             # The alarm has been saved before. Update it instead.
-            args.insert(0, ("ID", self.alarm_id))
+            args.insert(0, ('ID', self.alarm_id))
             self.zone.alarmClock.UpdateAlarm(args)
         return self.alarm_id
 
@@ -440,7 +420,7 @@ class Alarm:
         Returns:
             bool: If the removal was sucessful.
         """
-        result = self.zone.alarmClock.DestroyAlarm([("ID", self.alarm_id)])
+        result = self.zone.alarmClock.DestroyAlarm([('ID', self.alarm_id)])
         alarms = Alarms()
         alarms.alarms.pop(self.alarm_id, None)
         self._alarm_id = None
@@ -474,14 +454,12 @@ class Alarm:
             from_datetime = datetime.now()
 
         # Convert helper words to number recurrences
-        recurrence_on_str = RECURRENCE_KEYWORD_EQUIVALENT.get(
-            self.recurrence, self.recurrence
-        )
+        recurrence_on_str = RECURRENCE_KEYWORD_EQUIVALENT.get(self.recurrence, self.recurrence)
 
         # For the purpose of finding the next alarm a "once" trigger that has
         # yet to trigger is everyday (the next possible day)
-        if recurrence_on_str == RECURRENCE_KEYWORD_EQUIVALENT["ONCE"]:
-            recurrence_on_str = RECURRENCE_KEYWORD_EQUIVALENT["DAILY"]
+        if recurrence_on_str == RECURRENCE_KEYWORD_EQUIVALENT['ONCE']:
+            recurrence_on_str = RECURRENCE_KEYWORD_EQUIVALENT['DAILY']
 
         # Trim the 'ON_' prefix, convert to int, remove duplicates
         recurrence_set = set(map(int, recurrence_on_str[3:]))
@@ -506,9 +484,7 @@ class Alarm:
             offset_weekday = (from_datetime_day + offset) % 7
 
         return datetime.combine(
-            from_datetime.date() + timedelta(days=offset),
-            self.start_time,
-            tzinfo=from_datetime.tzinfo,
+            from_datetime.date() + timedelta(days=offset), self.start_time, tzinfo=from_datetime.tzinfo
         )
 
 
@@ -548,8 +524,8 @@ def remove_alarm_by_id(zone, alarm_id):
 
 def parse_alarm_payload(payload, zone):
     """Parse the XML payload response and return a dict of `Alarm` kwargs."""
-    alarm_list = payload["CurrentAlarmList"]
-    tree = XML.fromstring(alarm_list.encode("utf-8"))
+    alarm_list = payload['CurrentAlarmList']
+    tree = XML.fromstring(alarm_list.encode('utf-8'))
 
     # An alarm list looks like this:
     # <Alarms>
@@ -567,36 +543,28 @@ def parse_alarm_payload(payload, zone):
     #          IncludeLinkedZones="0"/>
     # </Alarms>
 
-    alarms = tree.findall("Alarm")
+    alarms = tree.findall('Alarm')
     alarm_args = {}
     for alarm in alarms:
         values = alarm.attrib
-        alarm_id = values["ID"]
+        alarm_id = values['ID']
 
-        alarm_zone = next(
-            (z for z in zone.all_zones if z.uid == values["RoomUUID"]), None
-        )
+        alarm_zone = next((z for z in zone.all_zones if z.uid == values['RoomUUID']), None)
         args = {
-            "zone": alarm_zone,
+            'zone': alarm_zone,
             # StartTime not StartLocalTime which is used by CreateAlarm
-            "start_time": datetime.strptime(values["StartTime"], "%H:%M:%S").time(),
-            "duration": (
-                None
-                if values["Duration"] == ""
-                else datetime.strptime(values["Duration"], "%H:%M:%S").time()
+            'start_time': datetime.strptime(values['StartTime'], '%H:%M:%S').time(),
+            'duration': (
+                None if values['Duration'] == '' else datetime.strptime(values['Duration'], '%H:%M:%S').time()
             ),
-            "recurrence": values["Recurrence"],
-            "enabled": values["Enabled"] == "1",
-            "program_uri": (
-                None
-                if values["ProgramURI"] == "x-rincon-buzzer:0"
-                else values["ProgramURI"]
-            ),
-            "program_metadata": values["ProgramMetaData"],
-            "play_mode": values["PlayMode"],
-            "volume": values["Volume"],
-            "include_linked_zones": values["IncludeLinkedZones"] == "1",
-            "room_uuid": values["RoomUUID"],
+            'recurrence': values['Recurrence'],
+            'enabled': values['Enabled'] == '1',
+            'program_uri': (None if values['ProgramURI'] == 'x-rincon-buzzer:0' else values['ProgramURI']),
+            'program_metadata': values['ProgramMetaData'],
+            'play_mode': values['PlayMode'],
+            'volume': values['Volume'],
+            'include_linked_zones': values['IncludeLinkedZones'] == '1',
+            'room_uuid': values['RoomUUID'],
         }
 
         alarm_args[alarm_id] = args

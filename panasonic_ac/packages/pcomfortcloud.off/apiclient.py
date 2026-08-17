@@ -1,6 +1,6 @@
-'''
+"""
 Panasonic session, using Panasonic Comfort Cloud app api
-'''
+"""
 
 import hashlib
 import re
@@ -10,7 +10,7 @@ from . import authentication
 from . import constants
 
 
-class ApiClient():
+class ApiClient:
     def __init__(self, auth: authentication.Authentication, raw=False):
         self._auth = auth
 
@@ -25,11 +25,7 @@ class ApiClient():
 
     def _get_groups(self):
         self._ensure_logged_in()
-        self._groups = self._auth.execute_get(
-            self._get_group_url(),
-            "get_groups",
-            200
-        )
+        self._groups = self._auth.execute_get(self._get_group_url(), 'get_groups', 200)
         self._devices = None
 
     def get_devices(self):
@@ -50,25 +46,26 @@ class ApiClient():
                         if 'deviceHashGuid' in device:
                             device_id = device['deviceHashGuid']
                         else:
-                            device_id = hashlib.md5(
-                                device['deviceGuid'].encode('utf-8')).hexdigest()
+                            device_id = hashlib.md5(device['deviceGuid'].encode('utf-8')).hexdigest()
 
                         self._device_indexer[device_id] = device['deviceGuid']
-                        self._devices.append({
-                            'id': device_id,
-                            'name': device['deviceName'],
-                            'group': group['groupName'],
-                            'model': device['deviceModuleNumber'] if 'deviceModuleNumber' in device else ''
-                        })
+                        self._devices.append(
+                            {
+                                'id': device_id,
+                                'name': device['deviceName'],
+                                'group': group['groupName'],
+                                'model': device['deviceModuleNumber'] if 'deviceModuleNumber' in device else '',
+                            }
+                        )
         return self._devices
 
     def dump(self, device_id):
         device_guid = self._device_indexer.get(device_id)
         if device_guid:
-            return self._auth.execute_get(self._get_device_status_url(device_guid), "dump", 200)
+            return self._auth.execute_get(self._get_device_status_url(device_guid), 'dump', 200)
         return None
 
-    def history(self, device_id, mode, date, time_zone="+01:00"):
+    def history(self, device_id, mode, date, time_zone='+01:00'):
         self._ensure_logged_in()
 
         device_guid = self._device_indexer.get(device_id)
@@ -77,22 +74,13 @@ class ApiClient():
             try:
                 data_mode = constants.DataMode[mode].value
             except KeyError:
-                raise Exception("Wrong mode parameter")
+                raise Exception('Wrong mode parameter')
 
-            payload = {
-                "deviceGuid": device_guid,
-                "dataMode": data_mode,
-                "date": date,
-                "osTimezone": time_zone
-            }
+            payload = {'deviceGuid': device_guid, 'dataMode': data_mode, 'date': date, 'osTimezone': time_zone}
 
-            json_response = self._auth.execute_post(
-                self._get_device_history_url(), payload, "history", 200)
+            json_response = self._auth.execute_post(self._get_device_history_url(), payload, 'history', 200)
 
-            return {
-                'id': device_id,
-                'parameters': self._read_parameters(json_response)
-            }
+            return {'id': device_id, 'parameters': self._read_parameters(json_response)}
         return None
 
     def get_device(self, device_id):
@@ -101,16 +89,12 @@ class ApiClient():
         device_guid = self._device_indexer.get(device_id)
 
         if device_guid:
-            json_response = self._auth.execute_get(
-                self._get_device_status_url(device_guid), "get_device", 200)
-            return {
-                'id': device_id,
-                'parameters': self._read_parameters(json_response['parameters'])
-            }
+            json_response = self._auth.execute_get(self._get_device_status_url(device_guid), 'get_device', 200)
+            return {'id': device_id, 'parameters': self._read_parameters(json_response['parameters'])}
         return None
 
     def set_device(self, device_id, **kwargs):
-        """ Set parameters of device
+        """Set parameters of device
 
         Args:
             device_id  (str): Id of the device
@@ -145,9 +129,11 @@ class ApiClient():
                 if key == 'eco' and isinstance(value, constants.EcoMode):
                     parameters['ecoMode'] = value.value
 
-                if key == 'nanoe' and \
-                        isinstance(value, constants.NanoeMode) and \
-                        value != constants.NanoeMode.Unavailable:
+                if (
+                    key == 'nanoe'
+                    and isinstance(value, constants.NanoeMode)
+                    and value != constants.NanoeMode.Unavailable
+                ):
                     parameters['nanoe'] = value.value
 
         # routine to set the auto mode of fan
@@ -188,12 +174,8 @@ class ApiClient():
 
         device_guid = self._device_indexer.get(device_id)
         if device_guid:
-            payload = {
-                "deviceGuid": device_guid,
-                "parameters": parameters
-            }
-            _ = self._auth.execute_post(
-                self._get_device_status_control_url(), payload, "set_device", 200)
+            payload = {'deviceGuid': device_guid, 'parameters': parameters}
+            _ = self._auth.execute_post(self._get_device_status_control_url(), payload, 'set_device', 200)
             return True
         return False
 
@@ -217,19 +199,16 @@ class ApiClient():
             value['power'] = constants.Power(parameters['operate'])
 
         if 'operationMode' in parameters:
-            value['mode'] = constants.OperationMode(
-                parameters['operationMode'])
+            value['mode'] = constants.OperationMode(parameters['operationMode'])
 
         if 'fanSpeed' in parameters:
             value['fanSpeed'] = constants.FanSpeed(parameters['fanSpeed'])
 
         if 'airSwingLR' in parameters:
-            value['airSwingHorizontal'] = constants.AirSwingLR(
-                parameters['airSwingLR'])
+            value['airSwingHorizontal'] = constants.AirSwingLR(parameters['airSwingLR'])
 
         if 'airSwingUD' in parameters:
-            value['airSwingVertical'] = constants.AirSwingUD(
-                parameters['airSwingUD'])
+            value['airSwingVertical'] = constants.AirSwingUD(parameters['airSwingUD'])
 
         if 'ecoMode' in parameters:
             value['eco'] = constants.EcoMode(parameters['ecoMode'])
@@ -249,28 +228,20 @@ class ApiClient():
         return value
 
     def _get_group_url(self):
-        return '{base_url}/device/group'.format(
-            base_url=constants.BASE_PATH_ACC
-        )
+        return '{base_url}/device/group'.format(base_url=constants.BASE_PATH_ACC)
 
     def _get_device_status_url(self, guid):
         return '{base_url}/deviceStatus/{guid}'.format(
-            base_url=constants.BASE_PATH_ACC,
-            guid=re.sub(r'(?i)\%2f', 'f', quote_plus(guid))
+            base_url=constants.BASE_PATH_ACC, guid=re.sub(r'(?i)\%2f', 'f', quote_plus(guid))
         )
 
     def _get_device_status_now_url(self, guid):
         return '{base_url}/deviceStatus/now/{guid}'.format(
-            base_url=constants.BASE_PATH_ACC,
-            guid=re.sub(r'(?i)\%2f', 'f', quote_plus(guid))
+            base_url=constants.BASE_PATH_ACC, guid=re.sub(r'(?i)\%2f', 'f', quote_plus(guid))
         )
 
     def _get_device_status_control_url(self):
-        return '{base_url}/deviceStatus/control'.format(
-            base_url=constants.BASE_PATH_ACC
-        )
+        return '{base_url}/deviceStatus/control'.format(base_url=constants.BASE_PATH_ACC)
 
     def _get_device_history_url(self):
-        return '{base_url}/deviceHistoryData'.format(
-            base_url=constants.BASE_PATH_ACC,
-        )
+        return '{base_url}/deviceHistoryData'.format(base_url=constants.BASE_PATH_ACC)

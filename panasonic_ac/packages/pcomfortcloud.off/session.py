@@ -2,6 +2,7 @@ from .authentication import Authentication
 from .apiclient import ApiClient
 from . import constants
 
+
 class Session(Authentication):
     def __init__(self, username, password, token, raw=False):
         super().__init__(username, password, token, raw)
@@ -20,11 +21,7 @@ class Session(Authentication):
     def logout(self):
         super().logout()
 
-    def execute_post(self,
-                     url,
-                     json_data,
-                     function_description,
-                     expected_status_code):
+    def execute_post(self, url, json_data, function_description, expected_status_code):
         return super().execute_post(url, json_data, function_description, expected_status_code)
 
     def execute_get(self, url, function_description, expected_status_code):
@@ -36,7 +33,7 @@ class Session(Authentication):
     def dump(self, id):
         return self._api.dump(id)
 
-    def history(self, id, mode, date, tz="+01:00"):
+    def history(self, id, mode, date, tz='+01:00'):
         return self._api.history(id, mode, date, tz)
 
     def get_device(self, id):

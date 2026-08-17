@@ -97,6 +97,29 @@ parameters:
             de: "Falls dieser Parameter einen Wert größer 0 enthält: Standard maxage für Items, die kein maxage gesetzt haben"
             en: "If this parameter is > 0: maxage for Items that don't have a maxage set."
 
+    default_maxage_action:
+        type: str
+        default: 'delete'
+        valid_list_ci: ['delete', 'avg', 'sum', 'min', 'max', 'integrate', 'on', 'countall', 'first', 'last']
+        description:
+            de: "Standard-Aktion für Items mit database_maxage, die kein eigenes database_maxage_action gesetzt haben"
+            en: "Default action for items with database_maxage that don't have their own database_maxage_action set"
+
+    default_maxage_interval:
+        type: str
+        default: '24h'
+        description:
+            de: "Standard-Kompaktierungsintervall für Items, die kein eigenes database_maxage_interval gesetzt haben (nur relevant, falls database_maxage_action nicht 'delete' ist). Format wie bei 'cycle'/'autotimer' (z.B. '24h', '30m'), Tage-Suffix 'd' wird nicht unterstützt."
+            en: "Default compaction interval for items that don't have their own database_maxage_interval set (only relevant if database_maxage_action is not 'delete'). Same format as 'cycle'/'autotimer' (e.g. '24h', '30m'), no 'd' (days) suffix supported."
+
+    max_aggregate_intervals:
+        type: int
+        default: 30
+        valid_min: 1
+        description:
+            de: "Maximale Anzahl an Kompaktierungs-Intervallen, die pro Durchlauf für ein Item verarbeitet werden, reduziert die Belastung der Datenbank bei alten Datenbeständen"
+            en: "Maximum number of compaction intervals processed per item per run, reduces load on database with old datasets"
+
     copy_database:
         type: bool
         default: False
@@ -127,6 +150,19 @@ item_attributes:
             de: "Maximales Alter (in Tagen) der Logeinträge, die für dieses Item gespeichert werden sollen. Falls nicht angegeben, werden die Werte unbegrenzt gespeichert."
             en: "Maximum age (in days) of the log entries to be saved for this item. If not specified, the values are saved indefinitely."
 
+    database_maxage_action:
+        type: str
+        valid_list_ci: ['delete', 'avg', 'sum', 'min', 'max', 'integrate', 'on', 'countall', 'first', 'last']
+        description:
+            de: "Aktion, die beim Erreichen von database_maxage auf ältere Logeinträge angewendet wird. 'delete' (Standardverhalten) löscht die Einträge ersatzlos; jeder andere Wert ersetzt sie durch einen Kompaktierungswert pro database_maxage_interval, statt sie zu löschen. Kein Standardwert hier gesetzt, damit default_maxage_action als Fallback greifen kann, wenn das Attribut nicht gesetzt ist."
+            en: "Action applied to log entries older than database_maxage. 'delete' (today's behaviour) removes them outright; any other value replaces them with one compacted value per database_maxage_interval instead of deleting them. No default set here on purpose, so the default_maxage_action plugin parameter can act as fallback when the attribute is unset."
+
+    database_maxage_interval:
+        type: str
+        description:
+            de: "Kompaktierungsintervall im Format von 'cycle'/'autotimer' (z.B. '24h', '30m'; kein 'd'-Suffix), nur relevant falls database_maxage_action nicht 'delete' ist. Kein Standardwert hier gesetzt, damit default_maxage_interval als Fallback greifen kann, wenn das Attribut nicht gesetzt ist."
+            en: "Compaction interval, same format as 'cycle'/'autotimer' (e.g. '24h', '30m'; no 'd' suffix), only relevant if database_maxage_action is not 'delete'. No default set here on purpose, so the default_maxage_interval plugin parameter can act as fallback when the attribute is unset."
+
     database_acl:
         type: str
         valid_list_ci: ['rw', 'ro']
@@ -143,8 +179,51 @@ item_attributes:
             en: "Usually does not need to be configured, in this case the default 'True' is used. This means that the item value is written to the DB once again on smarthomeNG shutdown. (even though the item has not been updated). Setting the attribute to 'False', supresses the rewrite on shutdown."
 
 
-item_structs: NONE
-  # Definition of item-structure templates for this plugin
+item_structs:
+    # Companion items mirroring the parent's own value, each independently
+    # compacted with a different database_maxage_action. Attach via
+    # 'struct: database.min' / 'struct: database.max' on any item that
+    # itself sets database_maxage/database_maxage_action. See
+    # database_maxage_action documentation for why min/max need a separate
+    # item rather than being an option list on the parent's own attribute.
+    #
+    # The struct key is bare 'min'/'max' (already namespaced by the plugin
+    # name at the reference point, struct: database.min), but the child
+    # item it creates is named 'db_min'/'db_max' - once instantiated, a
+    # bare '<item>.min' would be indistinguishable from an unrelated
+    # hand-authored item of the same name (e.g. a configured setpoint);
+    # 'db_min'/'db_max' stays self-explanatory regardless of how it got
+    # there.
+    #
+    # Deliberately NOT copying database_maxage/database_maxage_interval/
+    # enforce_updates from the parent via '..:.' here: that only works if
+    # the parent sets them explicitly, which defeats the point of having
+    # default_maxage/default_maxage_action/default_maxage_interval plugin
+    # parameters in the first place (an item can legitimately set only
+    # database_maxage_action and rely on the plugin-level default for
+    # everything else). Copying an attribute the parent doesn't actually
+    # have produces an empty string, which crashed item creation outright
+    # (database_maxage) or logged a parse warning (enforce_updates) instead
+    # of silently doing nothing. Leaving these unset lets the companion
+    # resolve database_maxage/database_maxage_interval through the exact
+    # same plugin-level fallback the parent itself would use if it also
+    # left them unset - correct in the common case. The one case this
+    # doesn't cover: a parent with an explicit *non-default* database_maxage
+    # or enforce_updates:true - the companion won't automatically mirror
+    # that, and would need a local override alongside the struct reference.
+    min:
+        on_change: .db_min = value
+        db_min:
+            type: num
+            database: true
+            database_maxage_action: min
+
+    max:
+        on_change: .db_max = value
+        db_max:
+            type: num
+            database: true
+            database_maxage_action: max
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

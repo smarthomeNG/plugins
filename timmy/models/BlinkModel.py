@@ -1,4 +1,4 @@
-class BlinkModel():
+class BlinkModel:
     def __init__(self, target_item, blink_pattern, blink_cycles, blink_loops):
         self.__target_item = target_item
         self.__return_to = None
@@ -12,8 +12,8 @@ class BlinkModel():
     def tick(self):
         pattern_value = self.__blink_pattern[self.__cycle_cursor]
         wait_period = self.__blink_cycles[self.__cycle_cursor]
-        index = f"L{self.__loop_cursor}, S{self.__cycle_cursor}"
-        
+        index = f'L{self.__loop_cursor}, S{self.__cycle_cursor}'
+
         self.__cycle_cursor = self.__cycle_cursor + 1
         if self.__cycle_cursor == len(self.__blink_pattern):
             self.__cycle_cursor = 0

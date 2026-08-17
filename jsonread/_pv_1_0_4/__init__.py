@@ -93,7 +93,7 @@ class JSONREAD(SmartPlugin):
 
         try:
             json_obj = response.json()
-        except Exception as ex:
+        except Exception:
             self.logger.error("Response from '{}' doesn't look like json '{}'".format(self._url, str(response.content)[:30]))
             return
 
@@ -101,7 +101,7 @@ class JSONREAD(SmartPlugin):
             self._lastresult = json_obj
             self._lastresultstr = json.dumps(self._lastresult, indent=4, sort_keys=True)
             self._lastresultjq = '\n'.join(str(x) for x in pathes(self._lastresult))
-        except Exception as ex:
+        except Exception:
             self.logger.error("Could not change '{}' into pretty json string'{}'".format(self._lastresult,self._lastresultstr))
             self._lastresultstr = "<empty due to failure>"
 

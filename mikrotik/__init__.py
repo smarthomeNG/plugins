@@ -79,7 +79,7 @@ class MikrotikPlugin(SmartPlugin):
             'plaintext_login': True,
             'use_ssl': True,
             'ssl_verify': False,
-            'ssl_verify_hostname': False
+            'ssl_verify_hostname': False,
         }
 
         try:
@@ -103,7 +103,7 @@ class MikrotikPlugin(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
 
         try:
             # Get the device model and serial number
@@ -130,9 +130,9 @@ class MikrotikPlugin(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.scheduler_remove('poll_routeros')
-        #self._api.put()
+        # self._api.put()
         self._api_pool.disconnect()
         self.alive = False
 
@@ -151,13 +151,13 @@ class MikrotikPlugin(SmartPlugin):
         """
 
         if self.has_iattr(item.conf, 'mikrotik_parameter'):
-            self.logger.debug(f"parse item: {item} with conf {item.conf}")
+            self.logger.debug(f'parse item: {item} with conf {item.conf}')
             function = self.get_iattr_value(item.conf, 'mikrotik_parameter')
             if not self.has_iattr(item.conf, 'mikrotik_port'):
-                self.logger.warning(F'Item requested function {function}, but no port specified')
+                self.logger.warning(f'Item requested function {function}, but no port specified')
             else:
                 port = self.get_iattr_value(item.conf, 'mikrotik_port')
-                self.logger.debug(f"Item: {item} is parameter {function} of port {port}")
+                self.logger.debug(f'Item: {item} is parameter {function} of port {port}')
                 self._items.append(item)
                 return self.update_item
 
@@ -185,16 +185,18 @@ class MikrotikPlugin(SmartPlugin):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.debug(f"update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}")
+            self.logger.debug(
+                f'update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}'
+            )
 
             port = self.get_iattr_value(item.conf, 'mikrotik_port')
             function = self.get_iattr_value(item.conf, 'mikrotik_parameter')
 
             if function == 'enabled':
-                self.set_port_enabled(port, 'true' if item() == True else 'false')
+                self.set_port_enabled(port, 'true' if item() else 'false')
 
             if function == 'poe':
-                self.set_port_poe(port, 'true' if item() == True else 'false')
+                self.set_port_poe(port, 'true' if item() else 'false')
 
     def update_items(self):
         """
@@ -203,7 +205,7 @@ class MikrotikPlugin(SmartPlugin):
         This method is called after having successfully polled a device.
         It updates the configured items with the result of the device poll.
         """
-        # Itter though configured items
+        # Itter though configured items
         for item in self._items:
             port = self.get_iattr_value(item.conf, 'mikrotik_port')
             function = self.get_iattr_value(item.conf, 'mikrotik_parameter')
@@ -229,24 +231,20 @@ class MikrotikPlugin(SmartPlugin):
         changes on it's own, but has to be polled to get the actual status.
         It is called by the scheduler which is set within run() method.
         """
-    
+
         try:
             # Retrieve ethernet interface list
-            ethernet_ports = self._api.get_resource(
-                '/interface/ethernet').get()
+            ethernet_ports = self._api.get_resource('/interface/ethernet').get()
 
             # Retrieve bridge port information for all interfaces
-            bridge_ports = self._api.get_resource(
-                '/interface/bridge/port').get()
+            bridge_ports = self._api.get_resource('/interface/bridge/port').get()
 
             # Retrieve identity and RouterOS version
-            self._identity = self._api.get_resource(
-                '/system/identity').get()[0]['name']
-            self._osversion = self._api.get_binary_resource(
-                '/system/package').get()[0]['version'].decode()
+            self._identity = self._api.get_resource('/system/identity').get()[0]['name']
+            self._osversion = self._api.get_binary_resource('/system/package').get()[0]['version'].decode()
 
         except exceptions.RouterOsApiConnectionError:
-            self.logger.error(F"Failed to connect to MikroTik device {self._device['host']}")
+            self.logger.error(f'Failed to connect to MikroTik device {self._device["host"]}')
             return
 
         except exceptions.RouterOsApiError as e:
@@ -262,60 +260,62 @@ class MikrotikPlugin(SmartPlugin):
             # Get PVID for the ethernet interface from bridge port buffer
             bridge_port = bridge_port_dict.get(interface['name'])
             pvid = bridge_port['pvid'] if bridge_port else '-'
-            if (interface['name'] == 'ether18'):
+            if interface['name'] == 'ether18':
                 {self.logger.debug(interface)}
-            if (interface['id'][0] == '*'):
+            if interface['id'][0] == '*':
                 interface['id'] = interface['id'][1:]
                 interface['id'] = int(interface['id'], 16)
             self.logger.debug(interface)
             speed = '?'
             if 'speed' in interface:
                 speed = interface['speed']
-            interfaces.append({
-                'id': interface['id'],
-                'defaultname': interface['default-name'],
-                'name': interface['name'],
-                'running': interface['running'],
-                'speed': speed,
-                'disabled': interface['disabled'],
-                'pvid': pvid,
-                'poe': interface.get('poe-out', '-'),
-                'comment': interface.get('comment', '')
-            })
+            interfaces.append(
+                {
+                    'id': interface['id'],
+                    'defaultname': interface['default-name'],
+                    'name': interface['name'],
+                    'running': interface['running'],
+                    'speed': speed,
+                    'disabled': interface['disabled'],
+                    'pvid': pvid,
+                    'poe': interface.get('poe-out', '-'),
+                    'comment': interface.get('comment', ''),
+                }
+            )
         self._interfaces = interfaces
-        self.logger.debug(F"Polled {self._device['host']}, found {len(interfaces)} ports")
+        self.logger.debug(f'Polled {self._device["host"]}, found {len(interfaces)} ports')
         self.update_items()
 
     def str2bool(self, v):
-        return str(v).lower() in ("yes", "true", "on", "1")
+        return str(v).lower() in ('yes', 'true', 'on', '1')
 
     def get_port_status(self, port):
         active = False
         interface = next((sub for sub in self._interfaces if sub['name'] == port), None)
-        if (interface):
+        if interface:
             active = True if interface['running'] == 'true' else False
         else:
-            self.logger.warning(F'Requested state of unknown interface {port}')
+            self.logger.warning(f'Requested state of unknown interface {port}')
             return None
         return active
 
     def get_port_enabled(self, port):
         active = False
         interface = next((sub for sub in self._interfaces if sub['name'] == port), None)
-        if (interface):
+        if interface:
             active = False if interface['disabled'] == 'true' else True
         else:
-            self.logger.warning(F'Requested enabled state of unknown interface {port}')
+            self.logger.warning(f'Requested enabled state of unknown interface {port}')
             return None
         return active
 
     def get_port_poe(self, port):
         active = False
         interface = next((sub for sub in self._interfaces if sub['name'] == port), None)
-        if (interface):
+        if interface:
             active = True if interface['poe'] == 'auto-on' else False
         else:
-            self.logger.warning(F'Requested POE state of unknown interface {port}')
+            self.logger.warning(f'Requested POE state of unknown interface {port}')
             return None
         return active
 
@@ -328,26 +328,26 @@ class MikrotikPlugin(SmartPlugin):
         :param port: switch port to be updated
         :param status: 'false' disables the port, 'true' enables it. Parameter must be a string.
         """
-        self.logger.debug(F"Setting active state of port {port} to {self.str2bool(status)}")
+        self.logger.debug(f'Setting active state of port {port} to {self.str2bool(status)}')
 
         # send the command to the device
         try:
-            if (self.str2bool(status) == False):
+            if not self.str2bool(status):
                 self._api.get_binary_resource('/interface').call('disable', {'.id': port.encode()})
             else:
                 self._api.get_binary_resource('/interface').call('enable', {'.id': port.encode()})
             interface = next((sub for sub in self._interfaces if sub['name'] == port), None)
-            if (interface):
-                interface['disabled'] = 'true' if self.str2bool(status) == False else 'false'
+            if interface:
+                interface['disabled'] = 'true' if not self.str2bool(status) else 'false'
         except exceptions.RouterOsApiConnectionError:
             self.logger.error('Failed to connect to MikroTik device')
-            return "NOK"
+            return 'NOK'
 
         except exceptions.RouterOsApiError as e:
             self.logger.error(f'RouterOS API error: {e}')
-            return "NOK"
+            return 'NOK'
 
-        return "OK"
+        return 'OK'
 
     def set_port_poe(self, port, status):
         """
@@ -357,24 +357,28 @@ class MikrotikPlugin(SmartPlugin):
 
         :param port: switch port to be updated
         :param status: 'false' disabled POE of the port, 'true' enables it. Parameter must be a string.
-        """       
-        self.logger.debug(F"Setting POE state of port {port} to {self.str2bool(status)}")
+        """
+        self.logger.debug(f'Setting POE state of port {port} to {self.str2bool(status)}')
 
         # send the command to the device
         try:
-            if self.str2bool(status) == True:
-                self._api.get_binary_resource('/interface/ethernet').call('set', {'.id': port.encode(), 'poe-out': b'auto-on'})
+            if self.str2bool(status):
+                self._api.get_binary_resource('/interface/ethernet').call(
+                    'set', {'.id': port.encode(), 'poe-out': b'auto-on'}
+                )
             else:
-                self._api.get_binary_resource('/interface/ethernet').call('set', {'.id': port.encode(), 'poe-out': b'off'})
+                self._api.get_binary_resource('/interface/ethernet').call(
+                    'set', {'.id': port.encode(), 'poe-out': b'off'}
+                )
             interface = next((sub for sub in self._interfaces if sub['name'] == port), None)
-            if (interface):
-                interface['poe'] = 'auto-on' if (self.str2bool(status) == True) else 'off'
+            if interface:
+                interface['poe'] = 'auto-on' if (self.str2bool(status)) else 'off'
         except exceptions.RouterOsApiConnectionError:
             self.logger.error('Failed to connect to MikroTik device')
-            return "NOK"
+            return 'NOK'
 
         except exceptions.RouterOsApiError as e:
             self.logger.error(f'RouterOS API error: {e}')
-            return "NOK"
+            return 'NOK'
 
-        return "OK"
+        return 'OK'

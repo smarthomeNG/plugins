@@ -40,7 +40,7 @@ class Pushover(SmartPlugin):
         self._apiKey = self.get_parameter_value('apiKey')
         self._userKey = self.get_parameter_value('userKey')
         self._device = self.get_parameter_value('device')
-        self._po = Http();
+        self._po = Http()
 
     def run(self):
         pass

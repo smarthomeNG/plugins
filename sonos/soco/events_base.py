@@ -50,38 +50,32 @@ def parse_event_xml(xml_event):
     tree = XML.fromstring(xml_event)
     # property values are just under the propertyset, which
     # uses this namespace
-    properties = tree.findall("{urn:schemas-upnp-org:event-1-0}property")
+    properties = tree.findall('{urn:schemas-upnp-org:event-1-0}property')
     for prop in properties:  # pylint: disable=too-many-nested-blocks
         for variable in prop:
             # Special handling for a LastChange event specially. For details on
             # LastChange events, see
             # http://upnp.org/specs/av/UPnP-av-RenderingControl-v1-Service.pdf
             # and http://upnp.org/specs/av/UPnP-av-AVTransport-v1-Service.pdf
-            if variable.tag == "LastChange":
-                last_change_tree = XML.fromstring(variable.text.encode("utf-8"))
+            if variable.tag == 'LastChange':
+                last_change_tree = XML.fromstring(variable.text.encode('utf-8'))
                 # We assume there is only one InstanceID tag. This is true for
                 # Sonos, as far as we know.
                 # InstanceID can be in one of two namespaces, depending on
                 # whether we are looking at an avTransport event, a
                 # renderingControl event, or a Queue event
                 # (there, it is named QueueID)
-                instance = last_change_tree.find(
-                    "{urn:schemas-upnp-org:metadata-1-0/AVT/}InstanceID"
-                )
+                instance = last_change_tree.find('{urn:schemas-upnp-org:metadata-1-0/AVT/}InstanceID')
                 if instance is None:
-                    instance = last_change_tree.find(
-                        "{urn:schemas-upnp-org:metadata-1-0/RCS/}InstanceID"
-                    )
+                    instance = last_change_tree.find('{urn:schemas-upnp-org:metadata-1-0/RCS/}InstanceID')
                 if instance is None:
-                    instance = last_change_tree.find(
-                        "{urn:schemas-sonos-com:metadata-1-0/Queue/}QueueID"
-                    )
+                    instance = last_change_tree.find('{urn:schemas-sonos-com:metadata-1-0/Queue/}QueueID')
                 # Look at each variable within the LastChange event
                 for last_change_var in instance:
                     tag = last_change_var.tag
                     # Remove any namespaces from the tags
-                    if tag.startswith("{"):
-                        tag = tag.split("}", 1)[1]
+                    if tag.startswith('{'):
+                        tag = tag.split('}', 1)[1]
                     # Un-camel case it
                     tag = camel_to_underscore(tag)
                     # Now extract the relevant value for the variable.
@@ -91,30 +85,28 @@ def parse_event_xml(xml_event):
                     # 'channel' attribute. In addition, it seems that Sonos
                     # sometimes uses a text value instead: see
                     # http://forums.sonos.com/showthread.php?t=34663
-                    value = last_change_var.get("val")
+                    value = last_change_var.get('val')
                     if value is None:
                         value = last_change_var.text
                     # If DIDL metadata is returned, convert it to a music
                     # library data structure
-                    if value is not None and value.startswith("<DIDL-Lite"):
+                    if value is not None and value.startswith('<DIDL-Lite'):
                         # Wrap any parsing exception in a SoCoFault, so the
                         # user can handle it
                         try:
                             value = from_didl_string(value)[0]
                         except SoCoException as original_exception:
                             log.debug(
-                                "Event contains illegal metadata"
+                                'Event contains illegal metadata'
                                 "for '%s'.\n"
                                 "Error message: '%s'\n"
-                                "The result will be a SoCoFault.",
+                                'The result will be a SoCoFault.',
                                 tag,
                                 str(original_exception),
                             )
-                            event_parse_exception = EventParseException(
-                                tag, value, original_exception
-                            )
+                            event_parse_exception = EventParseException(tag, value, original_exception)
                             value = SoCoFault(event_parse_exception)
-                    channel = last_change_var.get("channel")
+                    channel = last_change_var.get('channel')
                     if channel is not None:
                         if result.get(tag) is None:
                             result[tag] = {}
@@ -160,17 +152,17 @@ class Event:
     def __init__(self, sid, seq, service, timestamp, variables=None):
         # Initialisation has to be done like this, because __setattr__ is
         # overridden, and will not allow direct setting of attributes
-        self.__dict__["sid"] = sid
-        self.__dict__["seq"] = seq
-        self.__dict__["timestamp"] = timestamp
-        self.__dict__["service"] = service
-        self.__dict__["variables"] = variables if variables is not None else {}
+        self.__dict__['sid'] = sid
+        self.__dict__['seq'] = seq
+        self.__dict__['timestamp'] = timestamp
+        self.__dict__['service'] = service
+        self.__dict__['variables'] = variables if variables is not None else {}
 
     def __getattr__(self, name):
         if name in self.variables:
             return self.variables[name]
         else:
-            raise AttributeError("No such attribute: %s" % name)
+            raise AttributeError('No such attribute: %s' % name)
 
     def __setattr__(self, name, value):
         """Disable (most) attempts to set attributes.
@@ -178,7 +170,7 @@ class Event:
         This is not completely foolproof. It just acts as a warning! See
         `object.__setattr__`.
         """
-        raise TypeError("Event object does not support attribute assignment")
+        raise TypeError('Event object does not support attribute assignment')
 
 
 class EventNotifyHandlerBase:
@@ -220,8 +212,8 @@ class EventNotifyHandlerBase:
         """
 
         timestamp = time.time()
-        seq = headers["seq"]  # Event sequence number
-        sid = headers["sid"]  # Event Subscription Identifier
+        seq = headers['seq']  # Event sequence number
+        sid = headers['sid']  # Event Subscription Identifier
         # find the relevant service from the sid
         # pylint: disable=no-member
         subscription = self.subscriptions_map.get_subscription(sid)
@@ -229,7 +221,7 @@ class EventNotifyHandlerBase:
         if subscription:
             service = subscription.service
             self.log_event(seq, service.service_id, timestamp)
-            log.debug("Event content: %s", content)
+            log.debug('Event content: %s', content)
             variables = parse_event_xml(content)
             # Build the Event object
             event = Event(sid, seq, service, timestamp, variables)
@@ -240,7 +232,7 @@ class EventNotifyHandlerBase:
             # Pass the event on for handling
             subscription.send_event(event)
         else:
-            log.info("No service registered for %s", sid)
+            log.info('No service registered for %s', sid)
 
     # pylint: disable=missing-docstring
     def log_event(self, seq, service_id, timestamp):
@@ -282,7 +274,7 @@ class EventListenerBase:
             # automatically.
             ip_address = get_listen_ip(any_zone.ip_address)
             if not ip_address:
-                log.exception("Could not start Event Listener: check network.")
+                log.exception('Could not start Event Listener: check network.')
                 # Otherwise, no point trying to start server
                 return
             port = self.listen(ip_address)
@@ -290,7 +282,7 @@ class EventListenerBase:
                 return
             self.address = (ip_address, port)
             self.is_running = True
-            log.debug("Event Listener started")
+            log.debug('Event Listener started')
 
     def stop(self):
         """Stop the Event Listener."""
@@ -298,7 +290,7 @@ class EventListenerBase:
             return
         self.is_running = False
         self.stop_listening(self.address)
-        log.debug("Event Listener stopped")
+        log.debug('Event Listener stopped')
 
     # pylint: disable=missing-docstring
     def listen(self, ip_address):
@@ -391,14 +383,9 @@ class SubscriptionBase:
         # to be allocated
         self.requested_timeout = requested_timeout
         if self.is_subscribed:
-            raise SoCoException(
-                "Cannot subscribe Subscription instance more than once. "
-                + "Use renew instead"
-            )
+            raise SoCoException('Cannot subscribe Subscription instance more than once. ' + 'Use renew instead')
         if self._has_been_unsubscribed:
-            raise SoCoException(
-                "Cannot resubscribe Subscription instance once unsubscribed"
-            )
+            raise SoCoException('Cannot resubscribe Subscription instance once unsubscribed')
         service = self.service
         # The Event Listener must be running, so start it if not
         # pylint: disable=no-member
@@ -417,32 +404,25 @@ class SubscriptionBase:
         if config.EVENT_ADVERTISE_IP:
             ip_address = config.EVENT_ADVERTISE_IP
 
-        headers = {
-            "Callback": "<http://{}:{}>".format(ip_address, port),
-            "NT": "upnp:event",
-        }
+        headers = {'Callback': '<http://{}:{}>'.format(ip_address, port), 'NT': 'upnp:event'}
         if requested_timeout is not None:
-            headers["TIMEOUT"] = "Second-{}".format(requested_timeout)
+            headers['TIMEOUT'] = 'Second-{}'.format(requested_timeout)
 
         # pylint: disable=missing-docstring
         def success(headers):
-            self.sid = headers["sid"]
-            timeout = headers["timeout"]
+            self.sid = headers['sid']
+            timeout = headers['timeout']
             # According to the spec, timeout can be "infinite" or "second-123"
             # where 123 is a number of seconds.  Sonos uses "Second-123"
             # (with a capital letter)
-            if timeout.lower() == "infinite":
+            if timeout.lower() == 'infinite':
                 self.timeout = None
             else:
-                self.timeout = int(timeout.lstrip("Second-"))
+                self.timeout = int(timeout.lstrip('Second-'))
             self._timestamp = time.time()
             self.is_subscribed = True
             service.soco.zone_group_state.add_subscription(self)
-            log.debug(
-                "Subscribed to %s, sid: %s",
-                service.base_url + service.event_subscription_url,
-                self.sid,
-            )
+            log.debug('Subscribed to %s, sid: %s', service.base_url + service.event_subscription_url, self.sid)
             # Register the subscription so it can be looked up by sid
             # and unsubscribed at exit
             self.subscriptions_map.register(self)
@@ -460,12 +440,7 @@ class SubscriptionBase:
         # the EventNotifyHandler from sending a notification before the
         # subscription has been registered.
         with self.subscriptions_map.subscriptions_lock:
-            return self._request(
-                "SUBSCRIBE",
-                service.base_url + service.event_subscription_url,
-                headers,
-                success,
-            )
+            return self._request('SUBSCRIBE', service.base_url + service.event_subscription_url, headers, success)
 
     def renew(self, requested_timeout=None, is_autorenew=False):
         """renew(requested_timeout=None)
@@ -484,52 +459,47 @@ class SubscriptionBase:
         # subscriptions are auto-renewed. Be careful to ensure thread-safety
 
         if is_autorenew:
-            log_msg = "Autorenewing subscription %s"
+            log_msg = 'Autorenewing subscription %s'
         else:
-            log_msg = "Renewing subscription %s"
+            log_msg = 'Renewing subscription %s'
         log.debug(log_msg, self.sid)
 
         if self._has_been_unsubscribed:
-            raise SoCoException("Cannot renew subscription once unsubscribed")
+            raise SoCoException('Cannot renew subscription once unsubscribed')
         if not self.is_subscribed:
-            raise SoCoException("Cannot renew subscription before subscribing")
+            raise SoCoException('Cannot renew subscription before subscribing')
         if self.time_left == 0:
-            raise SoCoException("Cannot renew subscription after expiry")
+            raise SoCoException('Cannot renew subscription after expiry')
 
         # SUBSCRIBE publisher path HTTP/1.1
         # HOST: publisher host:publisher port
         # SID: uuid:subscription UUID
         # TIMEOUT: Second-requested subscription duration (optional)
-        headers = {"SID": self.sid}
+        headers = {'SID': self.sid}
         if requested_timeout is None:
             requested_timeout = self.requested_timeout
         if requested_timeout is not None:
-            headers["TIMEOUT"] = "Second-{}".format(requested_timeout)
+            headers['TIMEOUT'] = 'Second-{}'.format(requested_timeout)
 
         # pylint: disable=missing-docstring
         def success(headers):
-            timeout = headers["timeout"]
+            timeout = headers['timeout']
             # According to the spec, timeout can be "infinite" or "second-123"
             # where 123 is a number of seconds.  Sonos uses "Second-123"
             # (with a capital letter)
-            if timeout.lower() == "infinite":
+            if timeout.lower() == 'infinite':
                 self.timeout = None
             else:
-                self.timeout = int(timeout.lstrip("Second-"))
+                self.timeout = int(timeout.lstrip('Second-'))
             self._timestamp = time.time()
             self.is_subscribed = True
             log.debug(
-                "Renewed subscription to %s, sid: %s",
+                'Renewed subscription to %s, sid: %s',
                 self.service.base_url + self.service.event_subscription_url,
                 self.sid,
             )
 
-        return self._request(
-            "SUBSCRIBE",
-            self.service.base_url + self.service.event_subscription_url,
-            headers,
-            success,
-        )
+        return self._request('SUBSCRIBE', self.service.base_url + self.service.event_subscription_url, headers, success)
 
     def unsubscribe(self):
         """unsubscribe()
@@ -550,18 +520,16 @@ class SubscriptionBase:
         # UNSUBSCRIBE publisher path HTTP/1.1
         # HOST: publisher host:publisher port
         # SID: uuid:subscription UUID
-        headers = {"SID": self.sid}
+        headers = {'SID': self.sid}
 
         # pylint: disable=missing-docstring, unused-argument
         def success(*arg):
             log.debug(
-                "Unsubscribed from %s, sid: %s",
-                self.service.base_url + self.service.event_subscription_url,
-                self.sid,
+                'Unsubscribed from %s, sid: %s', self.service.base_url + self.service.event_subscription_url, self.sid
             )
 
         return self._request(
-            "UNSUBSCRIBE",
+            'UNSUBSCRIBE',
             self.service.base_url + self.service.event_subscription_url,
             headers,
             success,
@@ -580,19 +548,19 @@ class SubscriptionBase:
                 self.events.
 
         """
-        if hasattr(self, "callback"):
+        if hasattr(self, 'callback'):
             # pylint: disable=no-member
             callback = self.callback
         else:
             callback = None
-        if callback and hasattr(callback, "__call__"):
+        if callback and hasattr(callback, '__call__'):
             callback(event)
         else:
             try:
                 self.events.put(event)
             # pylint: disable=broad-except
             except Exception as ex:
-                log.warning("Error putting event %s, ex=%s", event, ex)
+                log.warning('Error putting event %s, ex=%s', event, ex)
 
     # pylint: disable=missing-docstring
     def _auto_renew_start(self, interval):

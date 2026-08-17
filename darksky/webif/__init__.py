@@ -44,7 +44,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -69,7 +68,7 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
 
-        def printdict(OD, mode='dict', s="", indent=' '*4, level=0):
+        def printdict(OD, mode='dict', s='', indent=' ' * 4, level=0):
             def is_number(s):
                 try:
                     float(s)
@@ -79,6 +78,7 @@ class WebInterface(SmartPluginWebIf):
 
             def fstr(s):
                 return s if is_number(s) else '"{}"'.format(s)
+
             if mode != 'dict':
                 kv_tpl = '("{}")'.format(s)
                 ST = 'OrderedDict([\n'
@@ -90,16 +90,24 @@ class WebInterface(SmartPluginWebIf):
             for i, k in enumerate(OD.keys()):
                 if type(OD[k]) in [dict, OrderedDict]:
                     level += 1
-                    s += (level-1)*indent+kv_tpl%(k,ST+printdict(OD[k], mode=mode, indent=indent, level=level)+(level-1)*indent+END)
+                    s += (level - 1) * indent + kv_tpl % (
+                        k,
+                        ST + printdict(OD[k], mode=mode, indent=indent, level=level) + (level - 1) * indent + END,
+                    )
                     level -= 1
                 else:
-                    s += level*indent+kv_tpl%(k,fstr(OD[k]))
+                    s += level * indent + kv_tpl % (k, fstr(OD[k]))
                 if i != len(OD) - 1:
-                    s += ","
-                s += "\n"
+                    s += ','
+                s += '\n'
             return s
 
         tmpl = self.tplenv.get_template('index.html')
         pf = printdict(self.plugin.get_json_data())
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(), p=self.plugin, json_data=pf.replace('\n', '<br>').replace(' ', '&nbsp;'),)
+        return tmpl.render(
+            plugin_shortname=self.plugin.get_shortname(),
+            plugin_version=self.plugin.get_version(),
+            plugin_info=self.plugin.get_info(),
+            p=self.plugin,
+            json_data=pf.replace('\n', '<br>').replace(' ', '&nbsp;'),
+        )

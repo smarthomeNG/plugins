@@ -44,7 +44,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -60,7 +59,6 @@ class WebInterface(SmartPluginWebIf):
         self.items = Items.get_instance()
 
         self.tplenv = self.init_template_environment()
-
 
     @cherrypy.expose
     def index(self, reload=None):
@@ -82,7 +80,7 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     def test_match_string(self, match_string):
         success = True
-        req_correlation_key = f"webif_req {str(datetime.now().replace(tzinfo=timezone.utc).timestamp())}:"
+        req_correlation_key = f'webif_req {str(datetime.now().replace(tzinfo=timezone.utc).timestamp())}:'
         self.logger.debug(f'Queried to test match_string "{match_string}" as request "{req_correlation_key}"')
 
         if not self.plugin._forced_download_happened:
@@ -93,19 +91,21 @@ class WebInterface(SmartPluginWebIf):
             str_value = str(ret_val)
             line, char, line_len = self.plugin._get_position_hint_within_json(queried_source, s)
             path_in_source = s
-            position_in_file = f"{line},{char},{line_len}"
+            position_in_file = f'{line},{char},{line_len}'
             success = was_ok
         except Exception as e:
             success = False
             str_value = repr(e)
-            queried_source = ""
-            path_in_source = ""
-            position_in_file = ""
+            queried_source = ''
+            path_in_source = ''
+            position_in_file = ''
 
-        return json.dumps({
-            "success": success,
-            "value": str_value,
-            "queried_source": queried_source,
-            "path_in_source": path_in_source,
-            "position_in_file": position_in_file
-        })
+        return json.dumps(
+            {
+                'success': success,
+                'value': str_value,
+                'queried_source': queried_source,
+                'path_in_source': path_in_source,
+                'position_in_file': position_in_file,
+            }
+        )

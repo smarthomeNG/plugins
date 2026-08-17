@@ -29,10 +29,11 @@ from lib.tools import Tools
 
 class wettercom(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.0"
+    PLUGIN_VERSION = '1.4.0'
     _server = 'api.wetter.com'
 
     def __init__(self, smarthome):
+        super().__init__()
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
         self._project = self.get_parameter_value('project')
@@ -47,8 +48,11 @@ class wettercom(SmartPlugin):
         """
         retval = {}
         searchURL = 'http://{}/location/index/search/{}/project/{}/cs/{}'.format(
-            self._server, location, self._project, hashlib.md5(('{}{}{}'.format(
-                self._project, self._apikey, location)).encode('UTF-8')).hexdigest())
+            self._server,
+            location,
+            self._project,
+            hashlib.md5(('{}{}{}'.format(self._project, self._apikey, location)).encode('UTF-8')).hexdigest(),
+        )
         self.logger.debug('Search URL: {}'.format(searchURL))
 
         try:
@@ -80,8 +84,11 @@ class wettercom(SmartPlugin):
         """
         retval = {}
         forecastURL = 'http://{}/forecast/weather/city/{}/project/{}/cs/{}'.format(
-            self._server, city_code, self._project, hashlib.md5(('{}{}{}'.format(
-                self._project, self._apikey, city_code)).encode('UTF-8')).hexdigest())
+            self._server,
+            city_code,
+            self._project,
+            hashlib.md5(('{}{}{}'.format(self._project, self._apikey, city_code)).encode('UTF-8')).hexdigest(),
+        )
         self.logger.debug('Forecast URL: {}'.format(forecastURL))
 
         try:
@@ -96,20 +103,21 @@ class wettercom(SmartPlugin):
                 year, month, day = days.attrib['value'].split('-')
                 for time in days.iter('time'):
                     hour, minute = time.attrib['value'].split(':')
-                    d = datetime.datetime(int(year), int(month), int(day),
-                                          int(hour))
-                    items = [time.find('tn'),
-                             time.find('tx'),
-                             time.find('w_txt'),
-                             time.find('pc'),
-                             time.find('ws'),
-                             time.find('wd'),
-                             time.find('wd_txt'),
-                             time.find('w')]
+                    d = datetime.datetime(int(year), int(month), int(day), int(hour))
+                    items = [
+                        time.find('tn'),
+                        time.find('tx'),
+                        time.find('w_txt'),
+                        time.find('pc'),
+                        time.find('ws'),
+                        time.find('wd'),
+                        time.find('wd_txt'),
+                        time.find('w'),
+                    ]
 
                     retval[d] = []
                     for item in items:
-                      retval[d].append(None if item is None else item.text)
+                        retval[d].append(None if item is None else item.text)
 
             return retval
 

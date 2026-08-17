@@ -455,7 +455,7 @@ class RTR(SmartPlugin):
         Kp = 1.0 / self._controller[c]['Kp']
         self._controller[c]['eSum'] = self._controller[c]['eSum'] + e * Ta
         i = self._controller[c]['eSum'] / (60.0 * self._controller[c]['Ki'])
-        y = 100.0 * Kp * (e + i);
+        y = 100.0 * Kp * (e + i)
 
         # limit the new actuator value to [0 ... 100]
         if y > 100:
@@ -624,7 +624,7 @@ class RTR(SmartPlugin):
                 if self._controller[c]['tempBoostTime'] == 0 and edt is None:
                     timer = False
 
-                if timer == True:
+                if timer:
                     if edt is None:
                         shtime = Shtime.get_instance()
                         edt = shtime.now() + datetime.timedelta(minutes=self._controller[c]['tempBoostTime'])

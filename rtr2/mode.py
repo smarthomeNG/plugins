@@ -27,9 +27,9 @@
 import inspect
 import logging
 
-class Mode():
 
-    _mode_hvac = 2          # 1=comfort, 2=standby, 3=night, 4=frost
+class Mode:
+    _mode_hvac = 2  # 1=comfort, 2=standby, 3=night, 4=frost
     _mode_before_frost = 0  # store mode when turning frost mode on to restore it later
 
     def __init__(self):
@@ -37,7 +37,6 @@ class Mode():
 
         self._mode_hvac = 2
         self._mode_before_frost = 0
-
 
     @property
     def comfort(self):
@@ -50,7 +49,7 @@ class Mode():
         :return: actual comfort mode state
         :rtype: bool
         """
-        return (self._mode_hvac == 1)
+        return self._mode_hvac == 1
 
     @comfort.setter
     def comfort(self, value):
@@ -68,7 +67,6 @@ class Mode():
             self._type_error('non-boolean')
             return
 
-
     @property
     def standby(self):
         """
@@ -80,7 +78,7 @@ class Mode():
         :return: actual standby mode state
         :rtype: bool
         """
-        return (self._mode_hvac == 2)
+        return self._mode_hvac == 2
 
     @standby.setter
     def standby(self, value):
@@ -98,7 +96,6 @@ class Mode():
             self._type_error('non-boolean')
             return
 
-
     @property
     def night(self):
         """
@@ -110,7 +107,7 @@ class Mode():
         :return: actual night mode state
         :rtype: bool
         """
-        return (self._mode_hvac == 3)
+        return self._mode_hvac == 3
 
     @night.setter
     def night(self, value):
@@ -128,7 +125,6 @@ class Mode():
             self._type_error('non-boolean')
             return
 
-
     @property
     def frost(self):
         """
@@ -140,7 +136,7 @@ class Mode():
         :return: actual frost mode state
         :rtype: bool
         """
-        return (self._mode_hvac == 4)
+        return self._mode_hvac == 4
 
     @frost.setter
     def frost(self, value):
@@ -158,7 +154,6 @@ class Mode():
         else:
             self._type_error('non-boolean')
             return
-
 
     @property
     def hvac(self):
@@ -188,7 +183,6 @@ class Mode():
             self._type_error('non-integer', value)
             return
 
-
     def _get_modename(self, mode):
         if mode == 1:
             return 'comfort'
@@ -210,19 +204,16 @@ class Mode():
         """
         return self._get_modename(self._mode_hvac)
 
-
     def __repr__(self):
         if self._mode_hvac == 4:
             return self.mode + f' ({self._get_modename(self._mode_before_frost)})'
         return self.mode
 
-
     def _type_error(self, err, value=None):
         prop = inspect.stack()[1][3]
-        #self.logger.error("Cannot set property '{}' of item '{}' to a {} value".format(prop, self._item._path, err))
+        # self.logger.error("Cannot set property '{}' of item '{}' to a {} value".format(prop, self._item._path, err))
         if value is None:
             self.logger.error(f"Cannot set property '{prop}' to a {err} value")
         else:
             self.logger.error(f"Cannot set property '{prop}' to a {err} value of '{value}'")
         return
-

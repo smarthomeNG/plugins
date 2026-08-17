@@ -152,7 +152,7 @@ class Blockly(SmartPlugin):
             self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
         except:
              self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
         
@@ -379,7 +379,7 @@ class WebInterface:
         name = remove_prefix(item._path, parent+'.')
         if childitems != []:
             xml = ''
-            if (item.type() != 'foo') or (item() != None):
+            if (item.type() != 'foo') or (item() is not None):
 #                self.logger.info("item._path = '{}', item.type() = '{}', item() = '{}', childitems = '{}'".format(item._path, item.type(), str(item()), childitems))
                 xml += self._build_leaf(name, item, level+1)
                 xml += ''.ljust(3*(level)) + '<category name="{0} ({1})">\n'.format(name, len(childitems)+1)
@@ -455,7 +455,7 @@ class WebInterface:
                     ack, acv = ac.split(':')
                     active = Utils.to_bool(acv.strip(), False)
                     if section == '':
-                        section = sc;
+                        section = sc
                         self.logger.info("blockly_update_config: #comment# section = '{}'".format(section))
                     config_list.append([fnk.strip(), fnv.strip(), fnco])
             elif line.startswith('#trigger#'):
@@ -466,7 +466,7 @@ class WebInterface:
                     fnco = ''
                     config_list.append([fnk.strip(), fnv.strip(), fnco])
                 if section == '':
-                    section = sc;
+                    section = sc
                     self.logger.info("blockly_update_config: #trigger# section = '{}'".format(section))
                 config_list.append([trk.strip(), trv.strip(),co])
             elif line.startswith('"""'):    # initial .rst-comment reached, stop scanning

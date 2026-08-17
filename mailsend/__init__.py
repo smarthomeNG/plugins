@@ -28,14 +28,15 @@ from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
+from email import encoders
 
 from lib.module import Modules
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin, os
 from lib.item import Items
 
-class SMTP(SmartPlugin):
 
-    PLUGIN_VERSION = "1.4.2"
+class SMTP(SmartPlugin):
+    PLUGIN_VERSION = '1.4.2'
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)
@@ -48,7 +49,6 @@ class SMTP(SmartPlugin):
         self._username = self.get_parameter_value('username')
         self._password = self.get_parameter_value('password')
 
-
     def send(self, to, sub, msg, caller=None, source=None):
         self.__call__(to, sub, msg, caller, source)
 
@@ -56,7 +56,7 @@ class SMTP(SmartPlugin):
         try:
             smtp = self._connect()
         except Exception as e:
-            self.logger.warning(f"Could not connect to {self._host}: {e}")
+            self.logger.warning(f'Could not connect to {self._host}: {e}')
             return
         try:
             msg = MIMEText(msg, 'plain', 'utf-8')
@@ -66,19 +66,21 @@ class SMTP(SmartPlugin):
             msg['To'] = to
             msg['Message-ID'] = email.utils.make_msgid('SmartHomeNG')
             to = [x.strip() for x in to.split(',')]
-            self.logger.debug("email prepared for sending")
+            self.logger.debug('email prepared for sending')
             smtp.sendmail(self._from, to, msg.as_string())
         except Exception as e:
-            self.logger.warning(f"Could not send message {sub} to {to} (caller={caller}): {e}")
+            self.logger.warning(f'Could not send message {sub} to {to} (caller={caller}): {e}')
         finally:
             try:
                 smtp.quit()
-                del (smtp)
-            except:
+                del smtp
+            except Exception:
                 pass
-            self.logger.debug("email was sent")
+            self.logger.debug('email was sent')
 
-    def extended(self, to, sub, msg, sender_name: str, img_list: list=None, attachments: list=None, caller=None, source=None):
+    def extended(
+        self, to, sub, msg, sender_name: str, img_list: list = None, attachments: list = None, caller=None, source=None
+    ):
         if img_list is None:
             img_list = []
         if attachments is None:
@@ -86,7 +88,7 @@ class SMTP(SmartPlugin):
         try:
             smtp = self._connect()
         except Exception as e:
-            self.logger.warning(f"Could not connect to {self._host}: {e}")
+            self.logger.warning(f'Could not connect to {self._host}: {e}')
             return
         try:
             sender_name = Header(sender_name, 'utf-8').encode()
@@ -143,18 +145,17 @@ class SMTP(SmartPlugin):
                 msg_attach = MIMEBase('application', 'octet-stream')
                 msg_attach.set_payload(f.read())
                 encoders.encode_base64(msg_attach)
-                msg_attach.add_header('Content-Disposition', 'attachment',
-                                      filename=(Header(fname, 'utf-8').encode()))
+                msg_attach.add_header('Content-Disposition', 'attachment', filename=(Header(fname, 'utf-8').encode()))
                 msg_root.attach(msg_attach)
 
             smtp.send_message(msg_root)
         except Exception as e:
-            self.logger.warning("Could not send message {} to {}: {}".format(sub, to, e))
+            self.logger.warning('Could not send message {} to {}: {}'.format(sub, to, e))
         finally:
             try:
                 smtp.quit()
-                del(smtp)
-            except:
+                del smtp
+            except Exception:
                 pass
 
     def _connect(self):
@@ -166,11 +167,11 @@ class SMTP(SmartPlugin):
         return smtp
 
     def run(self):
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
         self.alive = True
 
     def stop(self):
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.alive = False
 
     def parse_item(self, item):

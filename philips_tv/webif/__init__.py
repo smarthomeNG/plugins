@@ -44,7 +44,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -61,7 +60,6 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
-
     @cherrypy.expose
     def index(self, reload=None, action=None, email=None, hashInput=None, code=None, tokenInput=None):
         """
@@ -71,33 +69,32 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        
+
         codeRequestSuccessfull = None
         pairingCompleted = None
 
         if action is not None:
-            if action == "requestCode":
-                self.logger.info("Request code triggered via webinterface")
+            if action == 'requestCode':
+                self.logger.info('Request code triggered via webinterface')
                 codeRequestSuccessfull = self.plugin.startPairing()
-            elif action == "confirmCode":
-                self.logger.info("Confirm code triggered via webinterface")
+            elif action == 'confirmCode':
+                self.logger.info('Confirm code triggered via webinterface')
                 if (code is not None) and (not code == ''):
                     pairingCompleted = self.plugin.completePairing(code)
                 elif (code is None) or (code == ''):
-                    self.logger.error("Confirmation not possible: TV Paring code missing.")
+                    self.logger.error('Confirmation not possible: TV Paring code missing.')
                     pairingCompleted = False
                 else:
-                    self.logger.error("Confirmation no possible: Missing argument.")
+                    self.logger.error('Confirmation no possible: Missing argument.')
                     pairingCompleted = False
             else:
-                self.logger.error("Unknown command received via webinterface")
+                self.logger.error('Unknown command received via webinterface')
 
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, 
-                           codeRequestSuccessfull=codeRequestSuccessfull,
-                           pairingCompleted=pairingCompleted)
-
+        return tmpl.render(
+            p=self.plugin, codeRequestSuccessfull=codeRequestSuccessfull, pairingCompleted=pairingCompleted
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -117,7 +114,7 @@ class WebInterface(SmartPluginWebIf):
                 data = json.dumps(data)
                 return data
             except Exception as e:
-                self.logger.error(f"get_data_html exception: {e}")
+                self.logger.error(f'get_data_html exception: {e}')
         if dataSet is None:
             # get the new data
             data = {}

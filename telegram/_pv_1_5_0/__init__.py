@@ -136,7 +136,7 @@ class Telegram(SmartPlugin):
         self._init_complete = True
 
     def __call__(self, msg, chat_id=None):
-        if chat_id == None:
+        if chat_id is None:
             self._msg_broadcast(msg)
         else:
             self._msg_broadcast(msg, chat_id)
@@ -411,12 +411,12 @@ class Telegram(SmartPlugin):
             self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
         except:
              self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
         
         import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
             self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
             return False
 

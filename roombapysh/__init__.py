@@ -31,23 +31,23 @@ from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
 import sys
 
-sys.path.append("/usr/local/smarthome/plugins/roombapysh/roombapy/")
+sys.path.append('/usr/local/smarthome/plugins/roombapysh/roombapy/')
 from roombapy import RoombaFactory
 
 
 class ROOMBAPY(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.0.0"
+    PLUGIN_VERSION = '1.0.0'
 
     myroomba = None
     pluginStatus = 'not initialized'
 
     def __init__(self, sh):
         super().__init__()
-        self._address = self.get_parameter_value("address")
-        self._blid = self.get_parameter_value("blid")
-        self._roombaPassword = self.get_parameter_value("roombaPassword")
-        self._cycle = int(self.get_parameter_value("cycle"))
+        self._address = self.get_parameter_value('address')
+        self._blid = self.get_parameter_value('blid')
+        self._roombaPassword = self.get_parameter_value('roombaPassword')
+        self._cycle = int(self.get_parameter_value('cycle'))
 
         self._status_items = {}
 
@@ -67,8 +67,17 @@ class ROOMBAPY(SmartPlugin):
             item_type = self.get_iattr_value(item.conf, 'roombapysh')
             self._status_items[item_type] = item
             self.logger.debug('found item {} with function {}'.format(item, item_type))
-            if item_type in ['start', 'pause', 'resume', 'stop', 'dock', 'evac', 'reset', 'locate',
-                             'connect']:  # List of valid commands
+            if item_type in [
+                'start',
+                'pause',
+                'resume',
+                'stop',
+                'dock',
+                'evac',
+                'reset',
+                'locate',
+                'connect',
+            ]:  # List of valid commands
                 return self.update_item
 
     def run(self):
@@ -85,7 +94,7 @@ class ROOMBAPY(SmartPlugin):
         if not self.myroomba.roomba_connected:
             try:
                 self.myroomba.connect()
-            except:
+            except Exception:
                 self.get_status()
                 self._status_items['connect']('false', __name__)
             finally:
@@ -109,7 +118,7 @@ class ROOMBAPY(SmartPlugin):
 
         if caller != __name__ and self.alive:
             self.logger.debug('item_update {} '.format(item))
-            if self.get_iattr_value(item.conf, 'roombapysh') == "connect":
+            if self.get_iattr_value(item.conf, 'roombapysh') == 'connect':
                 if item() is True:
                     self.connect_roomba()
                 else:
@@ -125,182 +134,202 @@ class ROOMBAPY(SmartPlugin):
             for status_item in self._status_items:
                 # states reported by roomba status message
                 # ----------------------------------------
-                if status_item == "name":
+                if status_item == 'name':
                     try:
                         self._status_items[status_item](status['state']['reported']['name'], __name__)
-                    except:
+                    except Exception:
                         pass
                 # Batterie-Info
-                elif status_item == "bat_cCount":
+                elif status_item == 'bat_cCount':
                     try:
                         self._status_items[status_item](status['state']['reported']['batInfo']['cCount'], __name__)
-                    except:
+                    except Exception:
                         pass
-                elif status_item == "status_batterie":
+                elif status_item == 'status_batterie':
                     try:
                         self._status_items[status_item](status['state']['reported']['batPct'], __name__)
-                    except:
+                    except Exception:
                         pass
                 # Summenwerte über die gesamte Lebenszeit aus bbrun
-                elif status_item == "run_nCliffs":
+                elif status_item == 'run_nCliffs':
                     try:
                         self._status_items[status_item](status['state']['reported']['bbrun']['nCliffsF'], __name__)
-                    except:
+                    except Exception:
                         pass
-                elif status_item == "run_nPanics":
+                elif status_item == 'run_nPanics':
                     try:
                         self._status_items[status_item](status['state']['reported']['bbrun']['nPanics'], __name__)
-                    except:
+                    except Exception:
                         pass
-                elif status_item == "run_time":
+                elif status_item == 'run_time':
                     try:
-                        self._status_items[status_item](str(status['state']['reported']['bbrun']['hr']) + ':' + str(
-                            status['state']['reported']['bbrun']['min']), __name__)
-                    except:
+                        self._status_items[status_item](
+                            str(status['state']['reported']['bbrun']['hr'])
+                            + ':'
+                            + str(status['state']['reported']['bbrun']['min']),
+                            __name__,
+                        )
+                    except Exception:
                         pass
-                elif status_item == "run_nScrubs":
+                elif status_item == 'run_nScrubs':
                     try:
                         self._status_items[status_item](status['state']['reported']['bbrun']['nScrubs'], __name__)
-                    except:
+                    except Exception:
                         pass
                 # Missionsanzahl aus bbmssn
-                elif status_item == "mission_total":
+                elif status_item == 'mission_total':
                     try:
                         self._status_items[status_item](status['state']['reported']['bbmssn']['nMssn'], __name__)
-                    except:
+                    except Exception:
                         pass
-                elif status_item == "mission_OK":
+                elif status_item == 'mission_OK':
                     try:
                         self._status_items[status_item](status['state']['reported']['bbmssn']['nMssnOK'], __name__)
-                    except:
+                    except Exception:
                         pass
-                elif status_item == "mission_err":
+                elif status_item == 'mission_err':
                     try:
                         self._status_items[status_item](status['state']['reported']['bbmssn']['nMssnF'], __name__)
-                    except:
+                    except Exception:
                         pass
                 # aktueller Missions-Status
-                elif status_item == "MissionStatus_cycle":
-                    try:
-                        self._status_items[status_item](status['state']['reported']['cleanMissionStatus']['cycle'],
-                                                        __name__)
-                    except:
-                        pass
-                elif status_item == "MissionStatus_phase":
-                    try:
-                        self._status_items[status_item](status['state']['reported']['cleanMissionStatus']['phase'],
-                                                        __name__)
-                    except:
-                        pass
-                elif status_item == "MissionStatus_error":
-                    try:
-                        self._status_items[status_item](status['state']['reported']['cleanMissionStatus']['error'],
-                                                        __name__)
-                    except:
-                        pass
-                elif status_item == "MissionStatus_startTime":
+                elif status_item == 'MissionStatus_cycle':
                     try:
                         self._status_items[status_item](
-                            status['state']['reported']['cleanMissionStatus']['mssnStrtTm'] * 1000, __name__)
-                    except:
+                            status['state']['reported']['cleanMissionStatus']['cycle'], __name__
+                        )
+                    except Exception:
                         pass
-                elif status_item == "MissionStatus_expireTime":
+                elif status_item == 'MissionStatus_phase':
                     try:
                         self._status_items[status_item](
-                            status['state']['reported']['cleanMissionStatus']['expireTm'] * 1000, __name__)
-                    except:
+                            status['state']['reported']['cleanMissionStatus']['phase'], __name__
+                        )
+                    except Exception:
                         pass
-                elif status_item == "MissionStatus_initiator":
+                elif status_item == 'MissionStatus_error':
                     try:
-                        self._status_items[status_item](status['state']['reported']['cleanMissionStatus']['initiator'],
-                                                        __name__)
-                    except:
+                        self._status_items[status_item](
+                            status['state']['reported']['cleanMissionStatus']['error'], __name__
+                        )
+                    except Exception:
                         pass
-                elif status_item == "MissionStatus_runTime":
+                elif status_item == 'MissionStatus_startTime':
+                    try:
+                        self._status_items[status_item](
+                            status['state']['reported']['cleanMissionStatus']['mssnStrtTm'] * 1000, __name__
+                        )
+                    except Exception:
+                        pass
+                elif status_item == 'MissionStatus_expireTime':
+                    try:
+                        self._status_items[status_item](
+                            status['state']['reported']['cleanMissionStatus']['expireTm'] * 1000, __name__
+                        )
+                    except Exception:
+                        pass
+                elif status_item == 'MissionStatus_initiator':
+                    try:
+                        self._status_items[status_item](
+                            status['state']['reported']['cleanMissionStatus']['initiator'], __name__
+                        )
+                    except Exception:
+                        pass
+                elif status_item == 'MissionStatus_runTime':
                     self._status_items[status_item](
-                        time.strftime('%H:%M:%S', time.gmtime(time.mktime(time.localtime(time.time())) -
-                                                             status['state'][
-                                                                 'reported'][
-                                                                 'cleanMissionStatus'][
-                                                                 'mssnStrtTm'])),
-                        __name__)
+                        time.strftime(
+                            '%H:%M:%S',
+                            time.gmtime(
+                                time.mktime(time.localtime(time.time()))
+                                - status['state']['reported']['cleanMissionStatus']['mssnStrtTm']
+                            ),
+                        ),
+                        __name__,
+                    )
 
                     try:
                         if self._status_items['status']() != 4:  # Roomba is not running
                             self._status_items[status_item]('', __name__)
                         else:
                             self._status_items[status_item](
-                                time.strftime('%H:%M:%S', time.gmtime(time.mktime(time.localtime(time.time())) -
-                                                                     status['state'][
-                                                                         'reported'][
-                                                                         'cleanMissionStatus'][
-                                                                         'mssnStrtTm'])),
-                                __name__)
-                    except:
+                                time.strftime(
+                                    '%H:%M:%S',
+                                    time.gmtime(
+                                        time.mktime(time.localtime(time.time()))
+                                        - status['state']['reported']['cleanMissionStatus']['mssnStrtTm']
+                                    ),
+                                ),
+                                __name__,
+                            )
+                    except Exception:
                         pass
                 # Last Command
-                elif status_item == "lastCommand_command":
+                elif status_item == 'lastCommand_command':
                     try:
                         self._status_items[status_item](status['state']['reported']['lastCommand']['command'], __name__)
-                    except:
+                    except Exception:
                         pass
-                elif status_item == "lastCommand_time":
+                elif status_item == 'lastCommand_time':
                     try:
-                        self._status_items[status_item](status['state']['reported']['lastCommand']['time'] * 1000,
-                                                        __name__)
-                    except:
+                        self._status_items[status_item](
+                            status['state']['reported']['lastCommand']['time'] * 1000, __name__
+                        )
+                    except Exception:
                         pass
-                elif status_item == "lastCommand_initiator":
+                elif status_item == 'lastCommand_initiator':
                     try:
-                        self._status_items[status_item](status['state']['reported']['lastCommand']['initiator'],
-                                                        __name__)
-                    except:
+                        self._status_items[status_item](
+                            status['state']['reported']['lastCommand']['initiator'], __name__
+                        )
+                    except Exception:
                         pass
                 # Sonstiger allgemeiner Status
-                elif status_item == "dock_known":
+                elif status_item == 'dock_known':
                     try:
                         self._status_items[status_item](status['state']['reported']['dock']['known'], __name__)
-                    except:
+                    except Exception:
                         pass
-                elif status_item == "bin_present":
+                elif status_item == 'bin_present':
                     try:
                         self._status_items[status_item](status['state']['reported']['bin']['present'], __name__)
-                    except:
+                    except Exception:
                         pass
-                elif status_item == "bin_full":
+                elif status_item == 'bin_full':
                     try:
                         self._status_items[status_item](status['state']['reported']['bin']['full'], __name__)
-                    except:
+                    except Exception:
                         pass
                 # states reported from roombapy
                 # -----------------------------
-                if status_item == "connected":
+                if status_item == 'connected':
                     self._status_items[status_item](self.myroomba.roomba_connected, __name__)
-                if status_item == "error_code":
+                if status_item == 'error_code':
                     self._status_items[status_item](self.myroomba.error_code, __name__)
-                if status_item == "error_message":
+                if status_item == 'error_message':
                     self._status_items[status_item](self.myroomba.error_message, __name__)
-                if status_item == "mission_state":
+                if status_item == 'mission_state':
                     self._status_items[status_item](self.myroomba.current_state, __name__)
-                if status_item == "client_error":
+                if status_item == 'client_error':
                     if self.myroomba.roomba_connected:
                         self._status_items[status_item]('OK', __name__)
                     elif self.myroomba.client_error is None:
                         self._status_items[status_item]('getrennt', __name__)
                     else:
                         self._status_items[status_item](self.myroomba.client_error, __name__)
-                if status_item == "status":  # overall status: 0=not connected, 1=unknown, 2=charging, 3=charging (full), 4=running, 5=pause/stop, 6=going to dock, 7=error
+                if (
+                    status_item == 'status'
+                ):  # overall status: 0=not connected, 1=unknown, 2=charging, 3=charging (full), 4=running, 5=pause/stop, 6=going to dock, 7=error
                     try:
                         _mission_phase = status['state']['reported']['cleanMissionStatus']['phase']
-                    except:
+                    except Exception:
                         _mission_phase = 'unknown'
                     try:
                         _battery_state = status['state']['reported']['batPct']
-                    except:
+                    except Exception:
                         _battery_state = 0
                     try:
                         _bin_full = status['state']['reported']['bin']['full']
-                    except:
+                    except Exception:
                         _bin_full = False
                     if not self.myroomba.roomba_connected:
                         self._status_items[status_item](0, __name__)
@@ -325,4 +354,3 @@ class ROOMBAPY(SmartPlugin):
         if self.myroomba is not None:
             self.myroomba.send_command(command)
             self.logger.debug('send command: {} to Roomba'.format(command))
-

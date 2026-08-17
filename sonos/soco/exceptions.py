@@ -22,7 +22,7 @@ class SoCoUPnPException(SoCoException):
 
     """
 
-    def __init__(self, message, error_code, error_xml, error_description=""):
+    def __init__(self, message, error_code, error_xml, error_description=''):
         """
         Args:
             message (str): The message from the server.
@@ -122,7 +122,7 @@ class SoCoFault:
         Args:
             exception (Exception): The exception which should be thrown on use
         """
-        self.__dict__["exception"] = exception
+        self.__dict__['exception'] = exception
 
     def __getattr__(self, name):
         raise self.exception
@@ -137,9 +137,7 @@ class SoCoFault:
         raise self.exception
 
     def __repr__(self):
-        return "<{}: {} at {}>".format(
-            self.__class__.__name__, repr(self.exception), hex(id(self))
-        )
+        return '<{}: {} at {}>'.format(self.__class__.__name__, repr(self.exception), hex(id(self)))
 
     def __str__(self):
-        return "<{}: {}>".format(self.__class__.__name__, repr(self.exception))
+        return '<{}: {}>'.format(self.__class__.__name__, repr(self.exception))

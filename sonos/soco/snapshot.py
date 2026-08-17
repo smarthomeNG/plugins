@@ -93,8 +93,8 @@ class Snapshot:
         self.is_coordinator = self.device.is_coordinator
 
         # Get information about the currently playing media
-        media_info = self.device.avTransport.GetMediaInfo([("InstanceID", 0)])
-        self.media_uri = media_info["CurrentURI"]
+        media_info = self.device.avTransport.GetMediaInfo([('InstanceID', 0)])
+        self.media_uri = media_info['CurrentURI']
         # Extract source from media uri - below some media URI value examples:
         #  'x-rincon-queue:RINCON_000E5859E49601400#0'
         #       - playing a local queue always #0 for local queue)
@@ -105,11 +105,11 @@ class Snapshot:
         #  -'x-rincon:RINCON_000E5859E49601400'
         #       - a slave player pointing to coordinator player
 
-        if self.media_uri.split(":")[0] == "x-rincon-queue":
+        if self.media_uri.split(':')[0] == 'x-rincon-queue':
             # The pylint error below is a false positive, see about removing it
             # in the future
             # pylint: disable=simplifiable-if-statement
-            if self.media_uri.split("#")[1] == "0":
+            if self.media_uri.split('#')[1] == '0':
                 # playing local queue
                 self.is_playing_queue = True
             else:
@@ -132,20 +132,20 @@ class Snapshot:
             # Get information about the currently playing track
             track_info = self.device.get_current_track_info()
             if track_info is not None:
-                position = track_info["playlist_position"]
-                if position != "":
+                position = track_info['playlist_position']
+                if position != '':
                     # save as integer
                     self.playlist_position = int(position)
-                self.track_position = track_info["position"]
+                self.track_position = track_info['position']
         else:
             # playing from a stream - save media metadata
-            self.media_metadata = media_info["CurrentURIMetaData"]
+            self.media_metadata = media_info['CurrentURIMetaData']
 
         # Work out what the playing state is - if a coordinator
         if self.is_coordinator:
             transport_info = self.device.get_current_transport_info()
             if transport_info is not None:
-                self.transport_state = transport_info["current_transport_state"]
+                self.transport_state = transport_info['current_transport_state']
 
         # Save of the current queue if we need to
         self._save_queue()
@@ -172,9 +172,9 @@ class Snapshot:
         # Now everything is set, see if we need to be playing, stopped
         # or paused ( only for coordinators)
         if self.is_coordinator:
-            if self.transport_state == "PLAYING":
+            if self.transport_state == 'PLAYING':
                 self.device.play()
-            elif self.transport_state == "STOPPED":
+            elif self.transport_state == 'STOPPED':
                 self.device.stop()
 
     def _restore_coordinator(self):
@@ -184,7 +184,7 @@ class Snapshot:
         # include things like audio
         transport_info = self.device.get_current_transport_info()
         if transport_info is not None:
-            if transport_info["current_transport_state"] == "PLAYING":
+            if transport_info['current_transport_state'] == 'PLAYING':
                 self.device.pause()
 
         # Check if the queue should be restored
@@ -204,7 +204,7 @@ class Snapshot:
                 self.device.play_from_queue(self.playlist_position, False)
 
             if self.track_position is not None:
-                if self.track_position != "":
+                if self.track_position != '':
                     self.device.seek(self.track_position)
 
             # reinstate track, position, play mode, cross fade
@@ -220,7 +220,7 @@ class Snapshot:
         else:
             # was playing a stream (radio station, file, or nothing)
             # reinstate uri and meta data
-            if self.media_uri != "":
+            if self.media_uri != '':
                 self.device.play_uri(self.media_uri, self.media_metadata, start=False)
 
     def _restore_volume(self, fade):

@@ -47,7 +47,6 @@ import socket
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -67,7 +66,6 @@ class WebInterface(SmartPluginWebIf):
         # try to get API handles
         self.items = Items.get_instance()
         self.logics = Logics.get_instance()
-
 
     @cherrypy.expose
     def index(self, reload=None):
@@ -89,13 +87,12 @@ class WebInterface(SmartPluginWebIf):
         clients = []
 
         for clientinfo in self.plugin.return_clients():
-            c = clientinfo.get('addr', '')
             client = dict()
             client['ip'] = clientinfo.get('ip', '')
             client['port'] = clientinfo.get('port', '')
             try:
                 client['name'] = socket.gethostbyaddr(client['ip'])[0]
-            except:
+            except Exception:
                 client['name'] = client['ip']
 
             client['proto'] = clientinfo.get('proto', '')
@@ -117,7 +114,7 @@ class WebInterface(SmartPluginWebIf):
 
         plgitems = []
         for item in self.items.return_items():
-            if ('visu_acl' in item.conf):
+            if 'visu_acl' in item.conf:
                 plgitems.append(item)
 
         plglogics = []
@@ -126,12 +123,14 @@ class WebInterface(SmartPluginWebIf):
                 plglogics.append(self.logics.get_logic_info(logic))
         pagelength = self.plugin.get_parameter_value('webif_pagelength')
         tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(p=self.plugin,
-                           webif_pagelength=pagelength,
-                           items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
-                           logics=sorted(plglogics, key=lambda k: str.lower(k['name'])),
-                           clients=clients_sorted, client_count=len(clients_sorted))
-
+        return tmpl.render(
+            p=self.plugin,
+            webif_pagelength=pagelength,
+            items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
+            logics=sorted(plglogics, key=lambda k: str.lower(k['name'])),
+            clients=clients_sorted,
+            client_count=len(clients_sorted),
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -147,10 +146,9 @@ class WebInterface(SmartPluginWebIf):
             # callect data for 'items' tab
             item_dict = {}
             for item in self.plugin.get_item_list():
-                item_config = self.plugin.get_item_config(item)
                 value_dict = {}
                 value_dict['type'] = item.property.type
-                if ('visu_acl' in item.conf):
+                if 'visu_acl' in item.conf:
                     value_dict['acl'] = item.conf.get('visu_acl')
                 value_dict['value'] = str(item.property.value)
                 value_dict['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
@@ -165,7 +163,7 @@ class WebInterface(SmartPluginWebIf):
                 value_dict['port'] = clientinfo.get('port', '')
                 try:
                     value_dict['name'] = socket.gethostbyaddr(value_dict['ip'])[0]
-                except:
+                except Exception:
                     value_dict['name'] = value_dict['ip']
                 value_dict['proto'] = clientinfo.get('proto', '')
                 value_dict['sw'] = clientinfo.get('sw', '')
@@ -188,12 +186,12 @@ class WebInterface(SmartPluginWebIf):
                     plglogics.append(self.logics.get_logic_info(logic))
 
             result = {'items': item_dict, 'clients': client_list, 'logics': plglogics}
-            #self.logger.error(result)
+            # self.logger.error(result)
             # send result to web interface
             try:
                 data = json.dumps(result)
             except Exception as e:
-                self.logger.error(f"get_data_html exception: {e}")
+                self.logger.error(f'get_data_html exception: {e}')
                 self.logger.error(result)
             else:
                 if data:

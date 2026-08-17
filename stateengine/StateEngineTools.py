@@ -81,7 +81,7 @@ class SeItemChild:
 # child_id: Id of child item to search (without prefixed id of "item")
 # returns: child item if found, otherwise None
 def get_child_item(item, child_id):
-    search_id = item.property.path + "." + child_id
+    search_id = item.property.path + '.' + child_id
     for child in item.return_children():
         if child.property.path == search_id:
             return child
@@ -93,24 +93,24 @@ def get_child_item(item, child_id):
 # returns: last part of item id
 def get_last_part_of_item_id(item):
     if isinstance(item, str):
-        return_value = item if "." not in item else item.rsplit(".", 1)[1]
+        return_value = item if '.' not in item else item.rsplit('.', 1)[1]
     else:
-        return_value = item.property.path.rsplit(".", 1)[1]
+        return_value = item.property.path.rsplit('.', 1)[1]
     return return_value
 
 
 def parse_relative(evalstr, begintag, endtags):
     if begintag == '' and endtags == '':
         return evalstr
-    if evalstr.find(begintag+'.') == -1:
+    if evalstr.find(begintag + '.') == -1:
         return evalstr
     pref = ''
     rest = evalstr
     endtags = [endtags] if isinstance(endtags, str) else endtags
 
-    while rest.find(begintag+'.') != -1:
-        pref += rest[:rest.find(begintag+'.')]
-        rest = rest[rest.find(begintag+'.')+len(begintag):]
+    while rest.find(begintag + '.') != -1:
+        pref += rest[: rest.find(begintag + '.')]
+        rest = rest[rest.find(begintag + '.') + len(begintag) :]
         endtag = ''
         previousposition = 1000
         for end in endtags:
@@ -118,8 +118,8 @@ def parse_relative(evalstr, begintag, endtags):
             if position < previousposition and not position == -1:
                 endtag = end
                 previousposition = position
-        rel = rest[:rest.find(endtag)]
-        rest = rest[rest.find(endtag)+len(endtag):]
+        rel = rest[: rest.find(endtag)]
+        rest = rest[rest.find(endtag) + len(endtag) :]
         if 'property' in endtag:
             rest1 = re.split('([- +*/])', rest, 1)
             rest = ''.join(rest1[1:])
@@ -141,7 +141,7 @@ def flatten_list(changelist):
                     flat_list.append(item)
             else:
                 flat_list.append(sublist)
-    elif isinstance(changelist, str) and changelist.startswith("["):
+    elif isinstance(changelist, str) and changelist.startswith('['):
         flat_list = literal_eval(changelist)
     else:
         flat_list = changelist
@@ -234,8 +234,8 @@ def cast_time(value):
         return value
 
     orig_value = value
-    value = value.replace(",", ":")
-    value_parts = value.split(":")
+    value = value.replace(',', ':')
+    value_parts = value.split(':')
     if len(value_parts) != 2:
         raise ValueError("Can not cast '{0}' to data type 'time' due to incorrect format!".format(orig_value))
     else:
@@ -245,7 +245,9 @@ def cast_time(value):
         except ValueError:
             raise ValueError("Can not cast '{0}' to data type 'time' due to non-numeric parts!".format(orig_value))
         if hour > 24 or minute > 59:
-            raise ValueError("Can not cast '{0}' to data type 'time'. Hour or minute values too high!".format(orig_value))
+            raise ValueError(
+                "Can not cast '{0}' to data type 'time'. Hour or minute values too high!".format(orig_value)
+            )
         elif hour == 24 and minute >= 0:
             return datetime.time(23, 59, 59)
         else:
@@ -304,10 +306,10 @@ def find_attribute(smarthome, state, attribute, recursion_depth=0, use=None):
 # returns: Parts before and after split, whitespaces stripped
 def partition_strip(value, splitchar):
     if not isinstance(value, str):
-        raise ValueError("value has to be a string!")
-    elif value.startswith("se_") and splitchar == "_":
+        raise ValueError('value has to be a string!')
+    elif value.startswith('se_') and splitchar == '_':
         part1, __, part2 = value[3:].partition(splitchar)
-        return "se_" + part1.strip(), part2.strip()
+        return 'se_' + part1.strip(), part2.strip()
     else:
         part1, __, part2 = value.partition(splitchar)
         return part1.strip(), part2.strip()
@@ -325,25 +327,26 @@ def convert_str_to_list(value, force=True):
         else:
             return orig_value
 
-    if isinstance(value, str) and "," in value:
+    if isinstance(value, str) and ',' in value:
         try:
             elements = re.findall(r"'([^']*)'|\"([^\"]*)\"|([^,]+)", value)
-            flattened_elements = [element[0] if element[0] else (element[1] if element[1] else element[2].strip()) for
-                                  element in elements]
+            flattened_elements = [
+                element[0] if element[0] else (element[1] if element[1] else element[2].strip()) for element in elements
+            ]
             flattened_elements = [element.strip() for element in flattened_elements]
             formatted_elements = []
             for element in flattened_elements:
-                element = element.strip(" '\"")
+                element = element.strip(' \'"')
                 if "'" in element:
                     formatted_elements.append(f'"{element}"')  # If element contains single quote, wrap in double quotes
                 elif '"' in element:
                     formatted_elements.append(f"'{element}'")  # If element contains double quote, wrap in single quotes
                 else:
                     formatted_elements.append(f"'{element}'")  # Default case, wrap in single quotes
-            formatted_str = "[" + ", ".join(formatted_elements) + "]"
+            formatted_str = '[' + ', '.join(formatted_elements) + ']'
             return literal_eval(formatted_str)
         except Exception as ex:
-            raise ValueError("Problem converting string to list: {}".format(ex))
+            raise ValueError('Problem converting string to list: {}'.format(ex))
     elif isinstance(value, list) or force is False:
         return value
     else:
@@ -354,7 +357,7 @@ def convert_str_to_list(value, force=True):
 # value: OrderedDict as string
 # returns: OrderedDict or original value
 def convert_str_to_dict(value):
-    if isinstance(value, str) and value.startswith("["):
+    if isinstance(value, str) and value.startswith('['):
         value = re.split(r'(, (?![^(]*\)))', value.strip(']['))
         value = [s for s in value if s != ', ']
         result = []
@@ -370,7 +373,7 @@ def convert_str_to_dict(value):
     try:
         return literal_eval(value)
     except Exception as ex:
-        raise ValueError("Problem converting string to OrderedDict: {}".format(ex))
+        raise ValueError('Problem converting string to OrderedDict: {}'.format(ex))
 
 
 # return string representation of eval function
@@ -386,13 +389,13 @@ def get_eval_name(eval_func):
                 if isinstance(func, str):
                     functionnames.append(func)
                 else:
-                    functionnames.append(func.__module__ + "." + func.__name__)
+                    functionnames.append(func.__module__ + '.' + func.__name__)
             return functionnames
         else:
             if isinstance(eval_func, str):
                 return eval_func
             else:
-                return eval_func.__module__ + "." + eval_func.__name__
+                return eval_func.__module__ + '.' + eval_func.__name__
 
 
 # determine original caller/source
@@ -408,17 +411,18 @@ def get_original_caller(smarthome, elog, caller, source, item=None, eval_keyword
     if isinstance(source, str):
         original_source = source
     else:
-        original_source = "None"
-    while partition_strip(original_caller, ":")[0] in eval_keyword:
+        original_source = 'None'
+    while partition_strip(original_caller, ':')[0] in eval_keyword:
         original_item = smarthome.items.return_item(original_source)
         if original_item is None:
-            elog.info("get_caller({0}, {1}): original item not found", caller, source)
+            elog.info('get_caller({0}, {1}): original item not found', caller, source)
             break
-        original_manipulated_by = original_item.property.last_update_by if eval_type == "update" else \
-            original_item.property.last_change_by
-        if ":" not in original_manipulated_by:
+        original_manipulated_by = (
+            original_item.property.last_update_by if eval_type == 'update' else original_item.property.last_change_by
+        )
+        if ':' not in original_manipulated_by:
             break
-        original_caller, __, original_source = original_manipulated_by.partition(":")
+        original_caller, __, original_source = original_manipulated_by.partition(':')
 
     if item is None:
         return original_caller, original_source

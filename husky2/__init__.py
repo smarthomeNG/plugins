@@ -32,7 +32,7 @@ import time
 import json
 
 from lib.module import Modules
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf
 
 import cherrypy
 from aioautomower import session
@@ -46,18 +46,18 @@ class Husky2AutomowerSession(session.AutomowerSession):
         self.shLogger = shLogger
 
     async def refresh_token(self):
-        if "refresh_token" in self.token:
-            session._LOGGER.debug("Refresh access token using refresh_token")
-            self.shLogger.debug("Refresh access token using refresh_token")
-            r = session.rest.RefreshAccessToken(self.api_key, self.token["refresh_token"])
+        if 'refresh_token' in self.token:
+            session._LOGGER.debug('Refresh access token using refresh_token')
+            self.shLogger.debug('Refresh access token using refresh_token')
+            r = session.rest.RefreshAccessToken(self.api_key, self.token['refresh_token'])
             self.token = await r.async_refresh_access_token()
             self._schedule_token_callbacks()
         else:
-            session._LOGGER.debug("Refresh access token doing relogin")
-            self.shLogger.debug("Refresh access token doing relogin")
+            session._LOGGER.debug('Refresh access token doing relogin')
+            self.shLogger.debug('Refresh access token doing relogin')
             await asyncio.sleep(5)
             await self.logincc(self.client_secret)
-            self.shLogger.debug("Logged in successfully")
+            self.shLogger.debug('Logged in successfully')
             await asyncio.sleep(5)
 
 
@@ -73,15 +73,34 @@ class Husky2(SmartPlugin):
 
     PLUGIN_VERSION = '2.1.2'
 
-    ITEM_INFO = "husky_info"
-    ITEM_CONTROL = "husky_control"
-    ITEM_STATE = "husky_state"
+    ITEM_INFO = 'husky_info'
+    ITEM_CONTROL = 'husky_control'
+    ITEM_STATE = 'husky_state'
 
     VALID_INFOS = ['name', 'id', 'serial', 'model']
-    VALID_STATES = ['message', 'state', 'activity', 'mode', 'errormessage', 'batterypercent', 'connection', 'longitude',
-                    'latitude', 'gpspoints']
-    VALID_COMMANDS = ['starttime', 'starttime', 'pause', 'parkpermanent', 'parktime', 'parknext', 'resume',
-                      'cuttingheight', 'headlight']
+    VALID_STATES = [
+        'message',
+        'state',
+        'activity',
+        'mode',
+        'errormessage',
+        'batterypercent',
+        'connection',
+        'longitude',
+        'latitude',
+        'gpspoints',
+    ]
+    VALID_COMMANDS = [
+        'starttime',
+        'starttime',
+        'pause',
+        'parkpermanent',
+        'parktime',
+        'parknext',
+        'resume',
+        'cuttingheight',
+        'headlight',
+    ]
 
     MOWERERROR = {
         0: {'msg': 'No error'},
@@ -207,7 +226,7 @@ class Husky2(SmartPlugin):
         120: {'msg': 'Internal voltage error'},
         121: {'msg': 'High internal temerature'},
         122: {'msg': 'CAN error'},
-        123: {'msg': 'Destination not reachable'}
+        123: {'msg': 'Destination not reachable'},
     }
 
     def __init__(self, sh):
@@ -284,14 +303,14 @@ class Husky2(SmartPlugin):
         """
         # if you need to create child threads, do not make them daemon = True!
         # They will not shut down properly. (It's a python bug)
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
 
         try:
             self.pluginThread = threading.Thread(target=self.huky2Thread, daemon=False)
             self.pluginThread.start()
-            self.logger.debug("Starting Thread...")
+            self.logger.debug('Starting Thread...')
         except Exception as e:
-            self.logger.error(f"Cannot start Thread - Error: {e}")
+            self.logger.error(f'Cannot start Thread - Error: {e}')
         return
 
     def huky2Thread(self):
@@ -306,10 +325,10 @@ class Husky2(SmartPlugin):
             try:
                 self.asyncLoop.run_until_complete(self.closeSession())
 
-                self.logger.debug("Shutting down Eventloop")
+                self.logger.debug('Shutting down Eventloop')
                 self.asyncLoop.run_until_complete(self.asyncLoop.shutdown_asyncgens())
             except Exception as e:
-                self.logger.warning(f"husky2_thread: finally *1 - Exception {e}")
+                self.logger.warning(f'husky2_thread: finally *1 - Exception {e}')
             try:
                 for task in asyncio.Task.all_tasks(self.asyncLoop):
                     try:
@@ -318,44 +337,45 @@ class Husky2(SmartPlugin):
                     except CancelledError:
                         pass
             except AttributeError:
-                self.logger.debug("No other running async Tasks to cancel")
+                self.logger.debug('No other running async Tasks to cancel')
             except Exception as e:
-                self.logger.warning(f"husky2_thread: finally *2 - Exception {e}")
+                self.logger.warning(f'husky2_thread: finally *2 - Exception {e}')
             try:
                 self.asyncLoop.close()
-                self.logger.debug("Eventloop closed")
+                self.logger.debug('Eventloop closed')
             except Exception as e:
-                self.logger.warning(f"husky2_thread: finally *3 - Exception {e}")
+                self.logger.warning(f'husky2_thread: finally *3 - Exception {e}')
 
     def startFinished(self, args):
         self.alive = True
-        self.logger.debug("Init finished, husky2 plugin is running")
+        self.logger.debug('Init finished, husky2 plugin is running')
 
         dt = self.shtime.now() + timedelta(seconds=self.poll_cycle)
-        self.scheduler_add('poll_husky_device_' + self.instance,
-                           self.poll_device, cycle=self.poll_cycle, prio=5, next=dt)
+        self.scheduler_add(
+            'poll_husky_device_' + self.instance, self.poll_device, cycle=self.poll_cycle, prio=5, next=dt
+        )
 
     def stop(self):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called. Shutting down Thread...")
+        self.logger.debug('Stop method called. Shutting down Thread...')
         self.scheduler_remove('poll_husky_device_' + self.instance)
         self.asyncLoop.call_soon_threadsafe(self.asyncLoop.stop)
         time.sleep(2)
         try:
             self.pluginThread.join()
-            self.logger.debug("Thread Stopped")
+            self.logger.debug('Thread Stopped')
         except Exception as err:
-            self.logger.debug(f"Stopping Thread error: {err}")
+            self.logger.debug(f'Stopping Thread error: {err}')
             pass
         finally:
-            self.logger.debug("Stop finished, husky2 plugin is shutdown")
+            self.logger.debug('Stop finished, husky2 plugin is shutdown')
             self.alive = False
         return
 
     async def closeSession(self):
-        self.logger.debug("Closing Session")
+        self.logger.debug('Closing Session')
         await self.apiSession.close()
         return
 
@@ -374,13 +394,15 @@ class Husky2(SmartPlugin):
         """
 
         if self.has_iattr(item.conf, self.ITEM_INFO):
-            self.logger.debug("parse INFO item: {}".format(item))
+            self.logger.debug('parse INFO item: {}'.format(item))
 
             value = self.get_iattr_value(item.conf, self.ITEM_INFO).lower()
             if value in self.VALID_INFOS:
-                self.logger.debug("adding valid info item {0} to wachlist {1}={2} ".format(item, self.ITEM_INFO,
-                                                                                           item.conf[
-                                                                                               self.ITEM_INFO]))
+                self.logger.debug(
+                    'adding valid info item {0} to wachlist {1}={2} '.format(
+                        item, self.ITEM_INFO, item.conf[self.ITEM_INFO]
+                    )
+                )
                 if value not in self._items_info:
                     self._items_info[value] = [item]
                 else:
@@ -390,13 +412,15 @@ class Husky2(SmartPlugin):
                 self.logger.error("info '{0}' invalid, use one of {1}".format(value, self.VALID_INFOS))
 
         if self.has_iattr(item.conf, self.ITEM_CONTROL):
-            self.logger.debug("parse CONTROL item: {}".format(item))
+            self.logger.debug('parse CONTROL item: {}'.format(item))
 
             value = self.get_iattr_value(item.conf, self.ITEM_CONTROL).lower()
             if value in self.VALID_COMMANDS:
-                self.logger.debug("adding valid command item {0} to wachlist {1}={2} ".format(item, self.ITEM_CONTROL,
-                                                                                              item.conf[
-                                                                                                  self.ITEM_CONTROL]))
+                self.logger.debug(
+                    'adding valid command item {0} to wachlist {1}={2} '.format(
+                        item, self.ITEM_CONTROL, item.conf[self.ITEM_CONTROL]
+                    )
+                )
                 if value not in self._items_control:
                     self._items_control[value] = [item]
                 else:
@@ -406,12 +430,15 @@ class Husky2(SmartPlugin):
                 self.logger.error("command '{0}' invalid, use one of {1}".format(value, self.VALID_COMMANDS))
 
         if self.has_iattr(item.conf, self.ITEM_STATE):
-            self.logger.debug("parse STATE item: {}".format(item))
+            self.logger.debug('parse STATE item: {}'.format(item))
 
             value = self.get_iattr_value(item.conf, self.ITEM_STATE).lower()
             if value in self.VALID_STATES:
-                self.logger.debug("adding valid state item {0} to wachlist {1}={2} ".format(item, self.ITEM_STATE,
-                                                                                            item.conf[self.ITEM_STATE]))
+                self.logger.debug(
+                    'adding valid state item {0} to wachlist {1}={2} '.format(
+                        item, self.ITEM_STATE, item.conf[self.ITEM_STATE]
+                    )
+                )
                 if value not in self._items_state:
                     self._items_state[value] = [item]
                 else:
@@ -440,19 +467,21 @@ class Husky2(SmartPlugin):
         :param dest: if given it represents the dest
         """
 
-        if self.alive and not self.get_fullname() in caller:
+        if self.alive and self.get_fullname() not in caller:
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            item_value = "{0}".format(item())
+            item_value = '{0}'.format(item())
             self.logger.info(
-                "Update item: {0}, item has been changed outside this plugin to value={1}".format(item.property.path,
-                                                                                                  item_value))
+                'Update item: {0}, item has been changed outside this plugin to value={1}'.format(
+                    item.property.path, item_value
+                )
+            )
             if self.has_iattr(item.conf, self.ITEM_CONTROL):
                 self.logger.debug(
-                    "update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item,
-                                                                                                               caller,
-                                                                                                               source,
-                                                                                                               dest))
+                    "update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(
+                        item, caller, source, dest
+                    )
+                )
                 cmd = self.get_iattr_value(item.conf, self.ITEM_CONTROL).lower()
 
                 self.sendCmd(cmd, item())
@@ -462,7 +491,7 @@ class Husky2(SmartPlugin):
                     item(0, self.get_fullname())
 
     def sendCmd(self, cmd, value=-1):
-        self.writeToStatusItem(self.translate("Sending command") + ": " + cmd)
+        self.writeToStatusItem(self.translate('Sending command') + ': ' + cmd)
         asyncio.run_coroutine_threadsafe(self.send_worker(cmd, value), self.asyncLoop)
 
     def writeToStatusItem(self, txt):
@@ -472,7 +501,7 @@ class Husky2(SmartPlugin):
                 item(txt, self.get_fullname())
 
     def poll_device(self):
-        self.logger.debug("Poll new status")
+        self.logger.debug('Poll new status')
         asyncio.run_coroutine_threadsafe(self.update_worker(), self.asyncLoop)
 
     def data_callback(self, status):
@@ -495,16 +524,17 @@ class Husky2(SmartPlugin):
             return
 
         if self.mowerTimestamp.get_last() >= data['attributes']['metadata']['statusTimestamp']:
-            self.logger.debug("Data callback: Old Timestamp, not updating Items")
+            self.logger.debug('Data callback: Old Timestamp, not updating Items')
             return
 
         self.mowerTimestamp.push(data['attributes']['metadata']['statusTimestamp'])
-        self.logger.debug("Data callback: " + json.dumps(data))
+        self.logger.debug('Data callback: ' + json.dumps(data))
 
         posindex = -1
         for gpsindex, gpspoint in enumerate(data['attributes']['positions']):
             if (gpspoint['longitude'] == self.mowerGpspoints.get_last()[0]) and (
-                    gpspoint['latitude'] == self.mowerGpspoints.get_last()[1]):
+                gpspoint['latitude'] == self.mowerGpspoints.get_last()[1]
+            ):
                 posindex = gpsindex - 1
                 break
             elif gpsindex >= self.maxgpspoints:
@@ -513,8 +543,9 @@ class Husky2(SmartPlugin):
             else:
                 posindex = gpsindex
         for i in range(posindex, -1, -1):
-            self.mowerGpspoints.push([data['attributes']['positions'][i]['latitude'],
-                                      data['attributes']['positions'][i]['longitude']])
+            self.mowerGpspoints.push(
+                [data['attributes']['positions'][i]['latitude'], data['attributes']['positions'][i]['longitude']]
+            )
         if 'gpspoints' in self._items_state:
             for item in self._items_state['gpspoints']:
                 item(self.mowerGpspoints.get_list()[::-1], self.get_fullname())
@@ -534,7 +565,7 @@ class Husky2(SmartPlugin):
         if errorcode in self.MOWERERROR:
             self.mowerErrormsg.push(self.translate(self.MOWERERROR[errorcode]['msg']))
         else:
-            self.mowerErrormsg.push(self.translate('Unknown error code') + ": " + str(errorcode))
+            self.mowerErrormsg.push(self.translate('Unknown error code') + ': ' + str(errorcode))
         if 'errormessage' in self._items_state:
             for item in self._items_state['errormessage']:
                 item(self.mowerErrormsg.get_last(), self.get_fullname())
@@ -577,9 +608,9 @@ class Husky2(SmartPlugin):
         """
 
         self.token = token['access_token']
-        self.tokenExp = datetime.fromtimestamp(token['expires_at']).strftime("%d.%m.%Y %H:%M:%S")
+        self.tokenExp = datetime.fromtimestamp(token['expires_at']).strftime('%d.%m.%Y %H:%M:%S')
 
-        self.logger.debug("Token callback: " + json.dumps(token))
+        self.logger.debug('Token callback: ' + json.dumps(token))
 
     async def initWorker(self):
         self.apiSession = Husky2AutomowerSession(self.apikey, token=None)
@@ -591,14 +622,14 @@ class Husky2(SmartPlugin):
 
         # Login to get a token and connect to the api
         await self.apiSession.logincc(self.apisecret)
-        self.logger.debug(f"Logged in successfully")
+        self.logger.debug('Logged in successfully')
 
         await self.apiSession.connect()
-        self.logger.debug("Connected successfully")
+        self.logger.debug('Connected successfully')
 
         # List data of all mowers
         status_all = await self.apiSession.get_status()
-        self.logger.debug(f"Found {len(status_all['data'])} mower")
+        self.logger.debug(f'Found {len(status_all["data"])} mower')
 
         self.mowerCount = len(status_all['data'])
 
@@ -618,7 +649,7 @@ class Husky2(SmartPlugin):
             self.mowerModel = status_all['data'][0]['attributes']['system']['model']
             self.mowerSerial = status_all['data'][0]['attributes']['system']['serialNumber']
 
-        self.logger.debug(f"Selected mower {self.mowerName} with id {self.mowerId}")
+        self.logger.debug(f'Selected mower {self.mowerName} with id {self.mowerId}')
 
         if 'name' in self._items_info:
             for item in self._items_info['name']:
@@ -639,39 +670,52 @@ class Husky2(SmartPlugin):
     async def send_worker(self, cmd, value):
         commands = {
             # Actions
-            'startime': {'payload': '{"data": {"type": "Start", "attributes": {"duration": ' + str(int(value)) + '}}}',
-                         'type': 'actions'},
+            'startime': {
+                'payload': '{"data": {"type": "Start", "attributes": {"duration": ' + str(int(value)) + '}}}',
+                'type': 'actions',
+            },
             'pause': {'payload': '{"data": {"type": "Pause"}}', 'type': 'actions'},
             'parkpermanent': {'payload': '{"data": {"type": "ParkUntilFurtherNotice"}}', 'type': 'actions'},
-            'parktime': {'payload': '{"data": {"type": "Park", "attributes": {"duration": ' + str(int(value)) + '}}}',
-                         'type': 'actions'},
+            'parktime': {
+                'payload': '{"data": {"type": "Park", "attributes": {"duration": ' + str(int(value)) + '}}}',
+                'type': 'actions',
+            },
             'parknext': {'payload': '{"data": {"type": "ParkUntilNextSchedule"}}', 'type': 'actions'},
             'resume': {'payload': '{"data": {"type": "ResumeSchedule"}}', 'type': 'actions'},
             # Settings
             'cuttingheight': {
                 'payload': '{"data": {"type": "settings", "attributes": {"cuttingHeight": ' + str(int(value)) + '}}}',
-                'type': 'settings'},
+                'type': 'settings',
+            },
             'headlightalwayson': {
                 'payload': '{"data": {"type": "settings", "attributes": {"headlight": {"mode": "ALWAYS_ON"}}}}',
-                'type': 'settings'},
+                'type': 'settings',
+            },
             'headlightalwaysoff': {
                 'payload': '{"data": {"type": "settings", "attributes": {"headlight": {"mode": "ALWAYS_OFF"}}}}',
-                'type': 'settings'},
+                'type': 'settings',
+            },
             'headlighteveningonly': {
                 'payload': '{"data": {"type": "settings", "attributes": {"headlight": {"mode": "EVENING_ONLY"}}}}',
-                'type': 'settings'},
+                'type': 'settings',
+            },
             'headlighteveningnight': {
                 'payload': '{"data": {"type": "settings", "attributes": {"headlight": {"mode": "EVENING_AND_NIGHT"}}}}',
-                'type': 'settings'},
-            'headLight': {'payload': '{"data": {"type": "settings", "attributes": {"headlight": {"mode": "' + str(
-                value) + '"}}}}', 'type': 'settings'}
+                'type': 'settings',
+            },
+            'headLight': {
+                'payload': '{"data": {"type": "settings", "attributes": {"headlight": {"mode": "'
+                + str(value)
+                + '"}}}}',
+                'type': 'settings',
+            },
         }
 
         if cmd in commands:
             await self.apiSession.action(self.mowerId, commands[cmd]['payload'], commands[cmd]['type'])
             newstatus = await self.apiSession.get_status()
             self.data_callback(newstatus)
-            self.writeToStatusItem("Ok")
+            self.writeToStatusItem('Ok')
         else:
             self.logger.error("'{0}' not in available commands: {1}".format(cmd, commands.keys()))
         return
@@ -727,7 +771,7 @@ class Husky2(SmartPlugin):
     def getTimestamps(self):
         stamps = []
         for data in self.mowerTimestamp.get_list():
-            stamps.append(datetime.fromtimestamp(data / 1000.0).strftime("%d.%m.%Y %H:%M:%S"))
+            stamps.append(datetime.fromtimestamp(data / 1000.0).strftime('%d.%m.%Y %H:%M:%S'))
         return stamps
 
     def getActivities(self):
@@ -748,7 +792,7 @@ class Husky2(SmartPlugin):
         for data in self.mowerTimestamp.get_list():
             min = int((now - (data / 1000.0)) / 60.0)
             sec = int((now - (data / 1000.0)) % 60.0)
-            deltas.append(f"{min}:{sec:02d}")
+            deltas.append(f'{min}:{sec:02d}')
         return deltas
 
     def getErrormessages(self):
@@ -768,43 +812,41 @@ class Husky2(SmartPlugin):
 
     # webinterface init method
     def init_webinterface(self):
-        """"
+        """ "
         Initialize the web interface for this plugin
 
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
+            self.mod_http = Modules.get_instance().get_module('http')  # try/except to handle disabled http module
+        except Exception:
             self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
+        if self.mod_http is None:
+            self.logger.error('Not initializing the web interface')
             return False
 
         import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
+
+        if 'SmartPluginWebIf' not in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning('Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface')
             return False
 
         # set application configuration for cherrypy
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
         config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
+            '/': {'tools.staticdir.root': webif_dir},
+            '/static': {'tools.staticdir.on': True, 'tools.staticdir.dir': 'static'},
         }
 
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_fullname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
+        self.mod_http.register_webif(
+            WebInterface(webif_dir, self),
+            self.get_fullname(),
+            config,
+            self.get_classname(),
+            self.get_instance_name(),
+            description='',
+        )
 
         return True
 
@@ -813,8 +855,8 @@ class Husky2(SmartPlugin):
 #    Webinterface class of the plugin
 # ------------------------------------------
 
-class WebInterface(SmartPluginWebIf):
 
+class WebInterface(SmartPluginWebIf):
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -843,8 +885,13 @@ class WebInterface(SmartPluginWebIf):
         items_count = len(self.plugin._items_control) + len(self.plugin._items_state)
 
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, device_count=self.plugin.mowerCount, items_count=items_count,
-                           items_control=self.plugin._items_control, items_state=self.plugin._items_state)
+        return tmpl.render(
+            p=self.plugin,
+            device_count=self.plugin.mowerCount,
+            items_count=items_count,
+            items_control=self.plugin._items_control,
+            items_state=self.plugin._items_state,
+        )
 
     @cherrypy.expose
     def mower_park(self):
@@ -862,6 +909,7 @@ class WebInterface(SmartPluginWebIf):
 # ------------------------------------------
 #    Utils of the plugin
 # ------------------------------------------
+
 
 class LengthList(object):
     def __init__(self, maxLength, default=0):

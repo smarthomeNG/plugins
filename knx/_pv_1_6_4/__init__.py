@@ -322,20 +322,20 @@ class KNX(lib.connection.Client,SmartPlugin):
 
         if self.enable_stats:
             # update statistics on used group addresses
-            if not dst in self.stats_ga:
+            if dst not in self.stats_ga:
                 self.stats_ga[dst] = {}
 
-            if not flg in self.stats_ga[dst]:
+            if flg not in self.stats_ga[dst]:
                 self.stats_ga[dst][flg] = 1
             else:
                 self.stats_ga[dst][flg] = self.stats_ga[dst][flg] + 1
             self.stats_ga[dst]['last_'+flg] = self.shtime.now()
 
             # update statistics on used physical addresses
-            if not src in self.stats_pa:
+            if src not in self.stats_pa:
                 self.stats_pa[src] = {}
 
-            if not flg in self.stats_pa[src]:
+            if flg not in self.stats_pa[src]:
                 self.stats_pa[src][flg] = 1
             else:
                 self.stats_pa[src][flg] = self.stats_pa[src][flg] + 1
@@ -453,10 +453,10 @@ class KNX(lib.connection.Client,SmartPlugin):
                 knx_listen = [knx_listen, ]
             for ga in knx_listen:
                 self.logger.debug("{} listen on {}".format(item, ga))
-                if not ga in self.gal:
+                if ga not in self.gal:
                     self.gal[ga] = {DPT: dpt, ITEMS: [item], LOGICS: []}
                 else:
-                    if not item in self.gal[ga][ITEMS]:
+                    if item not in self.gal[ga][ITEMS]:
                         self.gal[ga][ITEMS].append(item)
 
         if self.has_iattr(item.conf, KNX_INIT):
@@ -465,10 +465,10 @@ class KNX(lib.connection.Client,SmartPlugin):
             if Utils.get_type(ga) == 'list':
                 self.logger.warning("{} Problem while doing knx_init: Multiple GA specified in item definition, using first GA ({}) for reading value".format(item.property.path, ga))
                 ga = ga[0]
-            if not ga in self.gal:
+            if ga not in self.gal:
                 self.gal[ga] = {DPT: dpt, ITEMS: [item], LOGICS: []}
             else:
-                if not item in self.gal[ga][ITEMS]:
+                if item not in self.gal[ga][ITEMS]:
                     self.gal[ga][ITEMS].append(item)
             self._init_ga.append(ga)
 
@@ -478,10 +478,10 @@ class KNX(lib.connection.Client,SmartPlugin):
             if Utils.get_type(ga) == 'list':
                 self.logger.warning("{} Problem while reading KNX cache: Multiple GA specified in item definition, using first GA ({}) for reading cache".format(item.property.path, ga))
                 ga = ga[0]
-            if not ga in self.gal:
+            if ga not in self.gal:
                 self.gal[ga] = {DPT: dpt, ITEMS: [item], LOGICS: []}
             else:
-                if not item in self.gal[ga][ITEMS]:
+                if item not in self.gal[ga][ITEMS]:
                     self.gal[ga][ITEMS].append(item)
             self._cache_ga.append(ga)
 
@@ -551,7 +551,7 @@ class KNX(lib.connection.Client,SmartPlugin):
                 knx_listen = [knx_listen, ]
             for ga in knx_listen:
                 self.logger.debug("{} listen on {}".format(logic, ga))
-                if not ga in self.gal:
+                if ga not in self.gal:
                     self.gal[ga] = {DPT: dpt, ITEMS: [], LOGICS: [logic]}
                 else:
                     self.gal[ga][LOGICS].append(logic)
@@ -605,12 +605,12 @@ class KNX(lib.connection.Client,SmartPlugin):
             self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
         except:
              self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Not initializing the web interface")
             return False
 
         import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
             self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
             return False
 
@@ -822,7 +822,7 @@ class WebInterface(SmartPluginWebIf):
         (result, err) = p.communicate()
 
         ## Wait for date to terminate. Get return returncode ##
-        p_status = p.wait()
+        p.wait()
         return str(result, encoding='utf-8', errors='strict')
 
 

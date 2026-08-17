@@ -72,7 +72,11 @@ class RPi_Info(SmartPlugin):
             self.webif_pagelength = self.get_parameter_value('webif_pagelength')
             self.poll_cycle = self.get_parameter_value('poll_cycle')
         except KeyError as e:
-            self.logger.critical("Plugin '{}': Inconsistent plugin (invalid metadata definition: {} not defined)".format(self.get_shortname(), e))
+            self.logger.critical(
+                "Plugin '{}': Inconsistent plugin (invalid metadata definition: {} not defined)".format(
+                    self.get_shortname(), e
+                )
+            )
             self._init_complete = False
             return
 
@@ -83,7 +87,7 @@ class RPi_Info(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
+        self.logger.debug('Run method called')
         # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well)
         self.scheduler_add('poll_device', self.poll_device, cycle=self.poll_cycle)
         self.alive = True
@@ -92,7 +96,7 @@ class RPi_Info(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
+        self.logger.debug('Stop method called')
         self.scheduler_remove('poll_device')
         self.alive = False
 
@@ -110,7 +114,7 @@ class RPi_Info(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, 'rpiinfo_func'):
-            self.logger.debug(f"parse item: {item}")
+            self.logger.debug(f'parse item: {item}')
             self._item_dict[item] = self.get_iattr_value(item.conf, 'rpiinfo_func')
 
         elif self.has_iattr(item.conf, 'rpiinfo_sys'):
@@ -128,12 +132,14 @@ class RPi_Info(SmartPlugin):
         """
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped and only, if the item has not been changed by this plugin:
-            self.logger.info(f"Update item: {item.property.path}, item has been changed outside this plugin")
+            self.logger.info(f'Update item: {item.property.path}, item has been changed outside this plugin')
 
             if self.has_iattr(item.conf, 'rpiinfo_sys'):
-                self.logger.debug(f"update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}")
+                self.logger.debug(
+                    f'update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}'
+                )
                 if self.get_iattr_value(item.conf, 'rpiinfo_sys') == 'update' and bool(item()):
-                    self.logger.info(f"Update of all items of RPi_Info Plugin requested. ")
+                    self.logger.info('Update of all items of RPi_Info Plugin requested. ')
                     self.poll_device()
                     item(False)
             pass
@@ -144,10 +150,14 @@ class RPi_Info(SmartPlugin):
         """
         # check if another cyclic cmd run is still active
         if self._cyclic_update_active:
-            self.logger.warning('Triggered cyclic poll_device, but previous cyclic run is still active. Therefore request will be skipped.')
+            self.logger.warning(
+                'Triggered cyclic poll_device, but previous cyclic run is still active. Therefore request will be skipped.'
+            )
             return
         elif self.suspended:
-            self.logger.warning('Triggered cyclic poll_device, but Plugin in suspended. Therefore request will be skipped.')
+            self.logger.warning(
+                'Triggered cyclic poll_device, but Plugin in suspended. Therefore request will be skipped.'
+            )
             return
         else:
             self.logger.info('Triggering cyclic poll_device')
@@ -157,7 +167,7 @@ class RPi_Info(SmartPlugin):
 
         for item in self._item_dict:
             # self.logger.debug(f"poll_device: handle item {item.property.path}")
-            value = eval(f"self.{self.get_iattr_value(item.conf, 'rpiinfo_func')}()")
+            value = eval(f'self.{self.get_iattr_value(item.conf, "rpiinfo_func")}()')
             # self.logger.info(f"poll_device: {value=} for item {item.property.path} will be set.")
             item(value, self.get_shortname())
 
@@ -191,7 +201,7 @@ class RPi_Info(SmartPlugin):
 
     @staticmethod
     def cpu_temperature():
-        with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
+        with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
             tmp = int(float(f.read().strip()) / 100) / 10
         return tmp
 
@@ -236,7 +246,7 @@ class RPi_Info(SmartPlugin):
         else:
             model_info = rev_info.get(revision_raw, None)
             if not model_info:
-                return f"Raspberry Pi (Rev. {revision_raw})"
+                return f'Raspberry Pi (Rev. {revision_raw})'
             else:
                 return model_info.get('model', None)
 
@@ -288,11 +298,11 @@ class RPi_Info(SmartPlugin):
         """
 
         if state:
-            self.logger.info("Plugins suspended. No information about RPi will be gathered.")
+            self.logger.info('Plugins suspended. No information about RPi will be gathered.')
             self.suspended = True
             self._clear_queue()
         else:
-            self.logger.info("Plugin suspension cancelled. Gathering of information about RPi will be resumed.")
+            self.logger.info('Plugin suspension cancelled. Gathering of information about RPi will be resumed.')
             self.suspended = False
 
     @property
@@ -324,41 +334,41 @@ throttled = {
     16: 'Under-voltage has occurred since last reboot.',
     17: 'Throttling has occurred since last reboot.',
     18: 'ARM frequency capped has occurred since last reboot.',
-    19: 'Soft temperature limit has occurred'
+    19: 'Soft temperature limit has occurred',
 }
 
 rev_info = {
-    '0002': {'model': 'Raspberry Model B Rev 1',           'ram': '256MB', 'revision': '',    'manufacturer': ''},
-    '0003': {'model': 'Raspberry Model B Rev 1 - ECN0001', 'ram': '256MB', 'revision': '',    'manufacturer': ''},
-    '0004': {'model': 'Raspberry Model B Rev 2',           'ram': '256MB', 'revision': '',    'manufacturer': ''},
-    '0005': {'model': 'Raspberry Model B Rev 2',           'ram': '256MB', 'revision': '',    'manufacturer': ''},
-    '0006': {'model': 'Raspberry Model B Rev 2',           'ram': '256MB', 'revision': '',    'manufacturer': ''},
-    '0007': {'model': 'Raspberry Model A',                 'ram': '256MB', 'revision': '',    'manufacturer': ''},
-    '0008': {'model': 'Raspberry Model A',                 'ram': '256MB', 'revision': '',    'manufacturer': ''},
-    '0009': {'model': 'Raspberry Model A',                 'ram': '256MB', 'revision': '',    'manufacturer': ''},
-    '000d': {'model': 'Raspberry Model B Rev 2',           'ram': '512MB', 'revision': '',    'manufacturer': ''},
-    '000e': {'model': 'Raspberry Model B Rev 2',           'ram': '512MB', 'revision': '',    'manufacturer': ''},
-    '000f': {'model': 'Raspberry Model B Rev 2',           'ram': '512MB', 'revision': '',    'manufacturer': ''},
-    '0010': {'model': 'Raspberry Model B+',                'ram': '512MB', 'revision': '',    'manufacturer': ''},
-    '0013': {'model': 'Raspberry Model B+',                'ram': '512MB', 'revision': '',    'manufacturer': ''},
-    '900032': {'model': 'Raspberry Model B+',              'ram': '512MB', 'revision': '',    'manufacturer': ''},
-    '0011': {'model': 'Raspberry Compute Modul',           'ram': '512MB', 'revision': '',    'manufacturer': ''},
-    '0014': {'model': 'Raspberry Compute Modul',           'ram': '512MB', 'revision': '',    'manufacturer': 'Embest, China'},
-    '0012': {'model': 'Raspberry Model A+',                'ram': '256MB', 'revision': '',    'manufacturer': ''},
-    '0015': {'model': 'Raspberry Model A+',                'ram': '256MB', 'revision': '',    'manufacturer': 'Embest, China'},
-    'a01041': {'model': 'Raspberry Pi 2 Model B',          'ram': '1GB',   'revision': '1.1', 'manufacturer': 'Sony, UK'},
-    'a21041': {'model': 'Raspberry Pi 2 Model B',          'ram': '1GB',   'revision': '1.1', 'manufacturer': 'Embest, China'},
-    'a22042': {'model': 'Raspberry Pi 2 Model B',          'ram': '1GB',   'revision': '1.2', 'manufacturer': ''},
-    '900092': {'model': 'Raspberry Pi Zero v1.2',          'ram': '512MB', 'revision': '1.2', 'manufacturer': ''},
-    '900093': {'model': 'Raspberry Pi Zero v1.3',          'ram': '512MB', 'revision': '1.3', 'manufacturer': ''},
-    '9000C1': {'model': 'Raspberry Pi Zero W',             'ram': '512MB', 'revision': '1.1', 'manufacturer': ''},
-    'a02082': {'model': 'Raspberry Pi 3 Model B',          'ram': '1GB',   'revision': '1.2', 'manufacturer': 'Sony, UK'},
-    'a22082': {'model': 'Raspberry Pi 3 Model B',          'ram': '1GB',   'revision': '1.2', 'manufacturer': 'Embest, China'},
-    'a020d3': {'model': 'Raspberry Pi 3 Model B+',         'ram': '1GB',   'revision': '1.3', 'manufacturer': 'Sony, UK'},
-    'a03111': {'model': 'Raspberry Pi 4',                  'ram': '1GB',   'revision': '1.1', 'manufacturer': 'Sony, UK'},
-    'b03111': {'model': 'Raspberry Pi 4',                  'ram': '2GB',   'revision': '1.1', 'manufacturer': 'Sony, UK'},
-    'b03112': {'model': 'Raspberry Pi 4',                  'ram': '2GB',   'revision': '1.2', 'manufacturer': 'Sony, UK'},
-    'c03111': {'model': 'Raspberry Pi 4',                  'ram': '4GB',   'revision': '1.1', 'manufacturer': 'Sony, UK'},
-    'c03112': {'model': 'Raspberry Pi 4',                  'ram': '4GB',   'revision': '1.2', 'manufacturer': 'Sony, UK'},
-    'c03114': {'model': 'Raspberry Pi 4',                  'ram': '8GB',   'revision': '1.4', 'manufacturer': 'Sony, UK'},
+    '0002': {'model': 'Raspberry Model B Rev 1', 'ram': '256MB', 'revision': '', 'manufacturer': ''},
+    '0003': {'model': 'Raspberry Model B Rev 1 - ECN0001', 'ram': '256MB', 'revision': '', 'manufacturer': ''},
+    '0004': {'model': 'Raspberry Model B Rev 2', 'ram': '256MB', 'revision': '', 'manufacturer': ''},
+    '0005': {'model': 'Raspberry Model B Rev 2', 'ram': '256MB', 'revision': '', 'manufacturer': ''},
+    '0006': {'model': 'Raspberry Model B Rev 2', 'ram': '256MB', 'revision': '', 'manufacturer': ''},
+    '0007': {'model': 'Raspberry Model A', 'ram': '256MB', 'revision': '', 'manufacturer': ''},
+    '0008': {'model': 'Raspberry Model A', 'ram': '256MB', 'revision': '', 'manufacturer': ''},
+    '0009': {'model': 'Raspberry Model A', 'ram': '256MB', 'revision': '', 'manufacturer': ''},
+    '000d': {'model': 'Raspberry Model B Rev 2', 'ram': '512MB', 'revision': '', 'manufacturer': ''},
+    '000e': {'model': 'Raspberry Model B Rev 2', 'ram': '512MB', 'revision': '', 'manufacturer': ''},
+    '000f': {'model': 'Raspberry Model B Rev 2', 'ram': '512MB', 'revision': '', 'manufacturer': ''},
+    '0010': {'model': 'Raspberry Model B+', 'ram': '512MB', 'revision': '', 'manufacturer': ''},
+    '0013': {'model': 'Raspberry Model B+', 'ram': '512MB', 'revision': '', 'manufacturer': ''},
+    '900032': {'model': 'Raspberry Model B+', 'ram': '512MB', 'revision': '', 'manufacturer': ''},
+    '0011': {'model': 'Raspberry Compute Modul', 'ram': '512MB', 'revision': '', 'manufacturer': ''},
+    '0014': {'model': 'Raspberry Compute Modul', 'ram': '512MB', 'revision': '', 'manufacturer': 'Embest, China'},
+    '0012': {'model': 'Raspberry Model A+', 'ram': '256MB', 'revision': '', 'manufacturer': ''},
+    '0015': {'model': 'Raspberry Model A+', 'ram': '256MB', 'revision': '', 'manufacturer': 'Embest, China'},
+    'a01041': {'model': 'Raspberry Pi 2 Model B', 'ram': '1GB', 'revision': '1.1', 'manufacturer': 'Sony, UK'},
+    'a21041': {'model': 'Raspberry Pi 2 Model B', 'ram': '1GB', 'revision': '1.1', 'manufacturer': 'Embest, China'},
+    'a22042': {'model': 'Raspberry Pi 2 Model B', 'ram': '1GB', 'revision': '1.2', 'manufacturer': ''},
+    '900092': {'model': 'Raspberry Pi Zero v1.2', 'ram': '512MB', 'revision': '1.2', 'manufacturer': ''},
+    '900093': {'model': 'Raspberry Pi Zero v1.3', 'ram': '512MB', 'revision': '1.3', 'manufacturer': ''},
+    '9000C1': {'model': 'Raspberry Pi Zero W', 'ram': '512MB', 'revision': '1.1', 'manufacturer': ''},
+    'a02082': {'model': 'Raspberry Pi 3 Model B', 'ram': '1GB', 'revision': '1.2', 'manufacturer': 'Sony, UK'},
+    'a22082': {'model': 'Raspberry Pi 3 Model B', 'ram': '1GB', 'revision': '1.2', 'manufacturer': 'Embest, China'},
+    'a020d3': {'model': 'Raspberry Pi 3 Model B+', 'ram': '1GB', 'revision': '1.3', 'manufacturer': 'Sony, UK'},
+    'a03111': {'model': 'Raspberry Pi 4', 'ram': '1GB', 'revision': '1.1', 'manufacturer': 'Sony, UK'},
+    'b03111': {'model': 'Raspberry Pi 4', 'ram': '2GB', 'revision': '1.1', 'manufacturer': 'Sony, UK'},
+    'b03112': {'model': 'Raspberry Pi 4', 'ram': '2GB', 'revision': '1.2', 'manufacturer': 'Sony, UK'},
+    'c03111': {'model': 'Raspberry Pi 4', 'ram': '4GB', 'revision': '1.1', 'manufacturer': 'Sony, UK'},
+    'c03112': {'model': 'Raspberry Pi 4', 'ram': '4GB', 'revision': '1.2', 'manufacturer': 'Sony, UK'},
+    'c03114': {'model': 'Raspberry Pi 4', 'ram': '8GB', 'revision': '1.4', 'manufacturer': 'Sony, UK'},
 }

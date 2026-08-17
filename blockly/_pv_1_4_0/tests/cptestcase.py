@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from io import BytesIO
 import unittest
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 
 import cherrypy
 

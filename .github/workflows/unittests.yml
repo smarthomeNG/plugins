@@ -1,5 +1,4 @@
 name: "Unittests Plugins"
-#on: [workflow_dispatch, push]
 on:
   workflow_dispatch:
   push:
@@ -11,11 +10,11 @@ on:
       - 'develop'
 jobs:
   build:
-    runs-on: ubuntu-24.04 #latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.10', '3.11', '3.12', '3.13' ]
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
     name: Python ${{ matrix.python-version }}
     steps:
       - name: Setup OS (Ubuntu)
@@ -25,71 +24,104 @@ jobs:
           sudo apt-get install librrd-dev libpython3-dev
           sudo apt-get install gcc --only-upgrade
           sudo apt-get install libglib2.0
+          sudo apt-get install libxml2-dev libxslt1-dev
 
+      # For push events github.ref_name is the branch name.
+      # For PR events github.head_ref is the source branch name.
+      # The previous GITHUB_REF strip produced 'refs/pull/N/merge' for PRs.
       - name: Get branch name
-        run: echo "branch=$(echo ${GITHUB_REF#refs/heads/})" >>$GITHUB_OUTPUT
         id: extract_branch
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "branch=${{ github.head_ref }}" >>$GITHUB_OUTPUT
+          else
+            echo "branch=${{ github.ref_name }}" >>$GITHUB_OUTPUT
+          fi
 
       - name: Workflow Information
         run: |
-          echo github.event_name             '${{ github.event_name }}'
-          echo github.workflow               '${{ github.workflow }}'
-          echo github.action_repository      '${{ github.action_repository }}'
-          echo github.actor                  '${{ github.actor }}'
-          echo github.ref_name               '${{ github.ref_name }}'
-          echo github.ref                    '${{ github.ref }}'
-          echo github.base_ref               '${{ github.base_ref }}'
-          echo github.head_ref               '${{ github.head_ref }}'
-          echo github.pull_request.base.ref  '${{ github.pull_request.base.ref }}'
-          echo steps.extract_branch.outputs.branch '${{ steps.extract_branch.outputs.branch }}'
+          echo "event:  ${{ github.event_name }}"
+          echo "actor:  ${{ github.actor }}"
+          echo "ref:    ${{ github.ref_name }}"
+          echo "branch: ${{ steps.extract_branch.outputs.branch }}"
+          echo "base:   ${{ github.base_ref }}"
+          echo "head:   ${{ github.head_ref }}"
 
       - name: Check if branch '${{ steps.extract_branch.outputs.branch }}' exists in smarthomeNG/smarthome
-        run: echo "code=$(git ls-remote --exit-code --heads https://github.com/smarthomeNG/smarthome ${{ steps.extract_branch.outputs.branch }} > /dev/null; echo $? )" >>$GITHUB_OUTPUT
         id: shng_branch_check
+        run: echo "code=$(git ls-remote --exit-code --heads https://github.com/smarthomeNG/smarthome ${{ steps.extract_branch.outputs.branch }} > /dev/null; echo $? )" >>$GITHUB_OUTPUT
 
-      - name: Checkout core from branch '${{ steps.extract_branch.outputs.branch }}' (for push on known smarthomeNG/smarthome branch)
+      - name: Checkout core from branch '${{ steps.extract_branch.outputs.branch }}' (push on known smarthomeNG/smarthome branch)
         if: github.event_name != 'pull_request' && steps.shng_branch_check.outputs.code == '0'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: smarthomeNG/smarthome
           ref: ${{ steps.extract_branch.outputs.branch }}
 
-      - name: Checkout core from branch 'develop' (for pull request or push on unknown smarthomeNG/smarthome branch)
+      - name: Checkout core from branch 'develop' (pull request or push on unknown smarthomeNG/smarthome branch)
         if: github.event_name == 'pull_request' || steps.shng_branch_check.outputs.code == '2'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: smarthomeNG/smarthome
           ref: develop
 
-      - name: Checkout plugins from branch '${{steps.extract_branch.outputs.branch}}'
-        uses: actions/checkout@v3
+      # For push: check out the pushed branch of the plugins repo.
+      # For PR:   no ref specified — actions/checkout defaults to refs/pull/N/merge
+      #           (the merged result of the PR), which is what we want to test.
+      - name: Checkout plugins (push)
+        if: github.event_name != 'pull_request'
+        uses: actions/checkout@v4
         with:
           repository: ${{ github.repository_owner }}/plugins
-          ref: ${{steps.extract_branch.outputs.branch}}
+          ref: ${{ steps.extract_branch.outputs.branch }}
           path: plugins
 
+      - name: Checkout plugins (pull request — tests the merge result)
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          path: plugins
+          # No ref: defaults to refs/pull/N/merge (PR code merged into develop)
+
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
+
       - run: python3 -m pip install --upgrade pip
 
-      - name: Install setuptools (needed for Python 3.12)
+      - name: Install setuptools
         run: pip install setuptools
+
       - name: Install requirements for unit testing
         run: pip install -r tests/requirements.txt
+
       - name: Build Requirements for SmartHomeNG
         run: python3 tools/build_requirements.py
+
       - name: Install SmartHomeNG base requirements
         # base requirements are needed for pytest to run
         run: pip install -r requirements/base.txt
 
       # ---  up to here, the workflow is identical for CORE and PLUGINS  ---
 
-      - name: Install SmartHomeNG all requirements
-        # all requirements are needed for pytest to run plugin tests
-        run: pip install -r requirements/all.txt
+      - name: Build test requirements for SmartHomeNG plugins
+        # only the requirements of plugins that actually have a tests/ directory are
+        # needed to run pytest - installing every plugin's requirements (requirements/all.txt)
+        # would be overkill, since pytest only ever imports the handful of tested plugins.
+        run: python3 tools/build_test_requirements.py
+
+      - name: Install SmartHomeNG plugin-test requirements
+        run: pip install -r requirements/test_plugins.txt
+
+      # --- Linting ---
+      - name: Lint with ruff
+        run: |
+          pip install "ruff>=0.4.0"
+          ruff check plugins/ --output-format=github
+        # --output-format=github annotates violations inline on the PR diff.
+        # Uses plugins/pyproject.toml — see SYNC NOTE in both pyproject.toml files.
 
       - name: '>>> Run Python Unittests for PLUGINS <<<'
         working-directory: ./plugins

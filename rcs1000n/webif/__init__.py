@@ -40,7 +40,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -55,7 +54,6 @@ class WebInterface(SmartPluginWebIf):
         self.plugin = plugin
         self.items = Items.get_instance()
         self.tplenv = self.init_template_environment()
-
 
     @cherrypy.expose
     def index(self, reload=None):
@@ -72,25 +70,26 @@ class WebInterface(SmartPluginWebIf):
             pagelength = self.plugin.webif_pagelength
         except Exception:
             pagelength = 100
-        
+
         # get list of items with the attribute rc_SystemCode
         plgin_items = []
         for item in self.items.find_items('rcs_SystemCode'):
-                myitem = self.items.return_item(item.property.path)
-                i = {}
-                i['path'] = item.property.path
-                i['SystemCode'] = myitem.property.rcs_SystemCode
-                i['ButtonCode'] = myitem.property.rcs_ButtonCode
-                i['value'] = item()
-                plgin_items.append(i)
-        #self.logger.info("{}".format(plgin_items))
+            myitem = self.items.return_item(item.property.path)
+            i = {}
+            i['path'] = item.property.path
+            i['SystemCode'] = myitem.property.rcs_SystemCode
+            i['ButtonCode'] = myitem.property.rcs_ButtonCode
+            i['value'] = item()
+            plgin_items.append(i)
+        # self.logger.info("{}".format(plgin_items))
 
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           webif_pagelength=pagelength,
-                           items=sorted(plgin_items, key=lambda cat: str.lower(cat['path']), reverse=False),
-                           item_count = len(plgin_items))
-
+        return tmpl.render(
+            p=self.plugin,
+            webif_pagelength=pagelength,
+            items=sorted(plgin_items, key=lambda cat: str.lower(cat['path']), reverse=False),
+            item_count=len(plgin_items),
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -104,15 +103,15 @@ class WebInterface(SmartPluginWebIf):
         """
         if dataSet is None:
             # get the new data
-            data = {}
+            pass
 
-            #data['item'] = {}
-            #for i in self.plugin.items:
+            # data['item'] = {}
+            # for i in self.plugin.items:
             #    data['item'][i]['value'] = self.plugin.getitemvalue(i)
-            
+
             # return it as json the the web page
-            #try:
+            # try:
             #    return json.dumps(data)
-            #except Exception as e:
+            # except Exception as e:
             #    self.logger.error("get_data_html exception: {}".format(e))
         return {}

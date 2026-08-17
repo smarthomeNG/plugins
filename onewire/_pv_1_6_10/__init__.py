@@ -38,7 +38,7 @@ class OneWire(SmartPlugin):
 
     PLUGIN_VERSION = '1.6.10'
 
-    _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
+    _flip = {0: '1', 1: '0', '0': True, '1': False}
 
     _supported = {
         'T': 'Temperature',
@@ -283,7 +283,7 @@ class OneWire(SmartPlugin):
                             value = (addr in entries)
                         else:
                             value = self._flip[self.owbase.read('/uncached' + path).decode()]
-                    except ConnectionError as e:
+                    except ConnectionError:
                         raise
                     except Exception as e:
                         if warningLog:
@@ -317,7 +317,7 @@ class OneWire(SmartPlugin):
         error = False
         for bus in self._ibutton_buses:
             if not self.alive:
-                self.logger.error("1-Wire: Self not alive".format(bus))
+                self.logger.error("1-Wire: Self not alive")
                 break
             path = '/uncached/' + bus + '/'
             name = self._ibutton_buses[bus]
@@ -368,7 +368,7 @@ class OneWire(SmartPlugin):
         for addr in self._sensors:
             if not self.alive:
                 if debugLog:
-                    self.logger.debug("1-Wire: Self not alive".format(addr))
+                    self.logger.debug("1-Wire: Self not alive")
                 break
             for key in self._sensors[addr]:
                 item = self._sensors[addr][key]['item']
@@ -510,7 +510,7 @@ class OneWire(SmartPlugin):
                                 self.logger.debug("1-Wire: addr {} was not found in lookup {}".format(addr,table))
                     else:
                         if debugLog:
-                            self.logger.debug("1-Wire: Sensor {} was already found in bus ".format(sensor,bus))
+                            self.logger.debug("1-Wire: Sensor {} was already found in bus ".format(sensor,))
 
         else: # for did not end prematurely with break or something else
             self._discovered = True
@@ -554,7 +554,7 @@ class OneWire(SmartPlugin):
         # speed up logging for time critical sections only
         debugLog = self.logger.isEnabledFor(logging.DEBUG)
         warningLog = self.logger.isEnabledFor(logging.WARNING)
-        errorLog = self.logger.isEnabledFor(logging.ERROR)
+        self.logger.isEnabledFor(logging.ERROR)
         if not self.has_iattr(item.conf, 'ow_addr'):
             return
         if not self.has_iattr(item.conf, 'ow_sensor'):
@@ -641,12 +641,12 @@ class OneWire(SmartPlugin):
                 'http')  # try/except to handle running in a core version that does not support modules
         except:
             self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Not initializing the web interface")
             return False
 
         import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
             self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
             return False
 

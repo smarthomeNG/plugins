@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2025 Alexander Schwithal
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  Plugin to connect with Viessman ViCare Backend
 #
@@ -22,7 +22,7 @@
 #
 #########################################################################
 
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
 from .webif import WebInterface
 
@@ -39,7 +39,7 @@ TOKEN_URL = 'https://iam.viessmann-climatesolutions.com/idp/v3/token'
 API_URL = 'https://api.viessmann-climatesolutions.com'
 
 class Vicare(SmartPlugin):
-    PLUGIN_VERSION = '1.9.9'
+    PLUGIN_VERSION = '1.9.10'
 
     def __init__(self, sh):
         """
@@ -76,6 +76,7 @@ class Vicare(SmartPlugin):
         self.verbose = False
         self.fixed_cylces_to_renew = int(1800/self._cycle)   # refresh every 30 minutes
         self.count_to_renew = 0                              # Counter that is increased in poll_backend task
+        self._noFeatures_warning = False                     # Flag to indicate empty features only once
 
         # Check plugin parameters:
         temp = self.get_parameter_value('clientID')
@@ -165,7 +166,7 @@ class Vicare(SmartPlugin):
     # Getter/Setter
     ############################################################
 
-    def enablePolling(enable = True):
+    def enablePolling(self, enable=True):
         self.pollData = enable
 
     def set_refreshToken(self, refreshToken):
@@ -182,7 +183,7 @@ class Vicare(SmartPlugin):
 
     def set_codeVerifier(self, codeVerifier):
         if codeVerifier == '':
-            self.logger.warning(f"set_codeVerifier: Argument is empty!")
+            self.logger.warning("set_codeVerifier: Argument is empty!")
         self.codeVerifier = codeVerifier
 
     ############################################################
@@ -202,7 +203,7 @@ class Vicare(SmartPlugin):
         import hashlib
         
         if codeVerifier == '':
-            self.logger.error(f"calculate_code_challenge: codeVerifier is empty.")
+            self.logger.error("calculate_code_challenge: codeVerifier is empty.")
             return
         codeChallenge = hashlib.sha256(codeVerifier.encode('utf-8')).digest()
         codeChallenge = base64.urlsafe_b64encode(codeChallenge).decode('utf-8')
@@ -212,13 +213,13 @@ class Vicare(SmartPlugin):
 
     def generate_request_url(self):
         if self.clientID == '':
-            self.logger.error(f"generate_request_url: clientID is missing")
+            self.logger.error("generate_request_url: clientID is missing")
             return False
         if self.redirectUrl == '':
-            self.logger.error(f"generate_request_url: Redirect URL is missing")
+            self.logger.error("generate_request_url: Redirect URL is missing")
             return False
         if self.codeChallenge == '':
-            self.logger.error(f"generate_request_url: code challenge is missing")
+            self.logger.error("generate_request_url: code challenge is missing")
             return False
 
         url = f"{AUTHORIZE_URL}?client_id={self.clientID}&redirect_uri={self.redirectUrl}&scope=IoT%20User%20offline_access&response_type=code&code_challenge_method=S256&code_challenge={self.codeChallenge}"
@@ -226,16 +227,16 @@ class Vicare(SmartPlugin):
         self.logger.warning(f"Copy paste this url to browser to request a code: {url}")
         return True
 
-    def refresh_accessToken(self): 
+    def refresh_accessToken(self):
         # Refreshes the accessToken validity by using the refresh token. Works up to 180 days.
         # Procedure is described on: https://documentation.viessmann.com/static/authentication
         # Return True on success and False otherwise
 
         if self.refreshToken == '':
-            self.logger.error(f"No refresh token available. Aborting.")
+            self.logger.error("No refresh token available. Aborting.")
             return False
 
-        self.logger.debug(f"Refreshing accessToken...")
+        self.logger.debug("Refreshing accessToken...")
         headers = {'Content-Type': 'application/x-www-form-urlencoded'}
         data = {}
         data['grant_type'] = "refresh_token"
@@ -251,12 +252,12 @@ class Vicare(SmartPlugin):
             return False
 
         if response.status_code == 200:
-            self.logger.info(f"Refresh token request successfull")
+            self.logger.info("Refresh token request successfull")
         else:
             self.logger.warning(f"Refresh token request was unsuccessfull. Status code: {response.status_code}")
             self.logger.warning(f"Refresh token request was unsuccessfull. Response: {response.text}")
             return False
-        
+
         responseJson = response.json()
         if 'access_token' in responseJson :
             accessToken = responseJson['access_token']
@@ -264,14 +265,14 @@ class Vicare(SmartPlugin):
             self.accessToken = accessToken
             param_dict = {"accessToken": str(self.accessToken)}
             self.update_config_section(param_dict)
-            self.logger.debug(f"Successfully saved accessToken in plugin.yaml")
+            self.logger.debug("Successfully saved accessToken in plugin.yaml")
             return True
         else:
-            self.logger.error(f"refreshToken: Response did not contain an access token!")
+            self.logger.error("refreshToken: Response did not contain an access token!")
             return False
 
     def retrieve_accessToken(self, code):
-        # pass code from login procedure, see browser argument on redirected page:        
+        # pass code from login procedure, see browser argument on redirected page:
 
         accessToken = ''
         headers = {'Content-Type': 'application/x-www-form-urlencoded'}
@@ -290,16 +291,16 @@ class Vicare(SmartPlugin):
             return False
 
         if responseGetToken is None:
-            self.logger.error(f"Retrieve token returned None")
+            self.logger.error("Retrieve token returned None")
             return False
 
         if responseGetToken.status_code == 200:
-            self.logger.info(f"get token request successfull")
+            self.logger.info("get token request successfull")
         else:
             self.logger.warning(f"get token request was unsuccessfull. Status code: {responseGetToken.status_code}")
             return False
 
-        self.logger.info(f"Request for token request was successfull")
+        self.logger.info("Request for token request was successfull")
         responseGetTokenJson = responseGetToken.json()
         self.logger.debug(f"Request for token request as json: {responseGetTokenJson }")
         if 'access_token' in responseGetTokenJson:
@@ -309,21 +310,21 @@ class Vicare(SmartPlugin):
             self.accessToken = accessToken
             param_dict = {"accessToken": str(self.accessToken)}
             self.update_config_section(param_dict)
-            self.logger.debug(f"Successfully saved accessToken in plugin.yaml")
+            self.logger.debug("Successfully saved accessToken in plugin.yaml")
 #            self.pollData = True
         else:
-            self.logger.error(f"Response did not contain an access token!")
+            self.logger.error("Response did not contain an access token!")
             return False
 
         if 'refresh_token' in responseGetTokenJson:
             refreshToken = responseGetTokenJson['refresh_token']
             self.logger.info(f"SUCCESS: Refresh token is {refreshToken}")
-            self.refreshToken = refreshToken 
+            self.refreshToken = refreshToken
             param_dict = {"refreshToken": str(self.refreshToken)}
             self.update_config_section(param_dict)
-            self.logger.debug(f"Successfully saved refreshToken in plugin.yaml")
+            self.logger.debug("Successfully saved refreshToken in plugin.yaml")
         else:
-            self.logger.error(f"Response did not contain a refresh token!")
+            self.logger.error("Response did not contain a refresh token!")
             return False
 
         if 'expires_in' in responseGetTokenJson:
@@ -331,46 +332,44 @@ class Vicare(SmartPlugin):
             self.logger.info(f"Token expire in {expires_in} seconds")
 
         else:
-            self.logger.error(f"Token request was not successfull")
+            self.logger.error("Token request was not successfull")
             return False
 
-        return True         
-
+        return True
 
     ######################################################################
     #   Poll functions
     ######################################################################
 
     def poll_backend(self):
-        self.logger.debug(f"Polling viessmann backend.")
-           
-        # Token refresh mechanism:   
+        self.logger.debug("Polling viessmann backend.")
+
+        # Token refresh mechanism:
         self.count_to_renew = self.count_to_renew + 1
         if self.count_to_renew >= self.fixed_cylces_to_renew:
-            self.logger.debug(f"Refreshing token...")
-            if self.refresh_accessToken() == True:
+            self.logger.debug("Refreshing token...")
+            if self.refresh_accessToken():
                 self.count_to_renew = 0
 #        else:
 #            self.logger.debug(f"{self.fixed_cylces_to_renew - self.count_to_renew} remaining cycles to refresh token.")
 
-        # Poll installation setup only if data are invalid: 
+        # Poll installation setup only if data are invalid:
         if self.installationId == '':
-            self.logger.debug(f"poll_backend: installationId is empty, trying to update")
+            self.logger.debug("poll_backend: installationId is empty, trying to update")
             self.pollInstallationId()
         if self.gatewaySerial == '':
-            self.logger.debug(f"poll_backend: gatewaySerial is empty, trying to update")
-            self.pollSerial()        
+            self.logger.debug("poll_backend: gatewaySerial is empty, trying to update")
+            self.pollSerial()
         if self.deviceId == '':
-            self.logger.debug(f"poll_backend: deviceID is empty, trying to update")
+            self.logger.debug("poll_backend: deviceID is empty, trying to update")
             self.pollDevices()
 
         # Poll data from backend:
         self.pollFeatures()
-        self.decodeFeatures(self.featureListJson, log_features = False)
+        self.decodeFeatures(self.featureListJson, log_features=False)
 
-
-    def pollUrlInterface(self, url): 
-        headers={}
+    def pollUrlInterface(self, url):
+        headers = {}
         headers['Authorization'] = f"Bearer {self.accessToken}"
         response = None
         try:
@@ -381,7 +380,7 @@ class Vicare(SmartPlugin):
 
     def checkErrors(self, response):
         responseJson = response.json()
-        
+
         if 'error' in responseJson:
             if 'message' in responseJson:
                 message = responseJson['message']
@@ -389,27 +388,26 @@ class Vicare(SmartPlugin):
             return True
         return False
 
-
     def pollInstallationId(self):
         url = f"{API_URL}/iot/v2/equipment/installations"
 
         response = self.pollUrlInterface(url)
-        
+
         if response is None:
             return
         if response.status_code == 200:
-            self.logger.debug(f"pollInstallationId request successfull")
+            self.logger.debug("pollInstallationId request successfull")
         else:
             self.logger.warning(f"pollInstallationId request was unsuccessfull. Status code: {response.status_code}, Text: {response.text}")
             return
 
         if response.json() is not None:
-            responseJson = response.json() 
+            responseJson = response.json()
             #self.logger.debug(f"PollInstallation: {responseJson}")
-        
-            if self.checkErrors(response) == True: 
+
+            if self.checkErrors(response):
                 return
-   
+
             if 'data' in responseJson:
                 dataJson = responseJson['data']
                 #self.logger.warning(f"Debug dataJson: {dataJson}")
@@ -432,17 +430,17 @@ class Vicare(SmartPlugin):
         if response is None:
             return
         if response.status_code == 200:
-            self.logger.debug(f"pollSerial request successfull")
+            self.logger.debug("pollSerial request successfull")
         else:
             self.logger.warning(f"pollSerial request was unsuccessfull. Status code: {response.status_code}, Text: {response.text}")
             return
-    
+
         if response.json() is not None:
             responseJson = response.json()
 
-            if self.checkErrors(response) == True: 
+            if self.checkErrors(response):
                 return
-        
+
             if 'data' in responseJson:
                 dataJson = responseJson['data']
                 #self.logger.warning(f"Debug dataJson: {dataJson}")
@@ -454,16 +452,16 @@ class Vicare(SmartPlugin):
 
     def pollDevices(self):
         if self.gatewaySerial == '':
-            self.logger.debug(f"pollSerial, invalid gatewaySerial, aborting!")
+            self.logger.debug("pollSerial, invalid gatewaySerial, aborting!")
             return
         if self.installationId == '':
-            self.logger.debug(f"pollSerial, invalid installationId, aborting!")
+            self.logger.debug("pollSerial, invalid installationId, aborting!")
             return
 
         url = f"{API_URL}/iot/v2/equipment/installations/{self.installationId}/gateways/{self.gatewaySerial}/devices"
 
         response = self.pollUrlInterface(url)
-        
+
         if response is None:
             return
         if response.status_code == 200:
@@ -475,7 +473,7 @@ class Vicare(SmartPlugin):
         if response.json() is not None:
             responseJson = response.json()
 
-            if self.checkErrors(response) == True: 
+            if self.checkErrors(response):
                 return
 
             if 'data' in responseJson:
@@ -488,14 +486,14 @@ class Vicare(SmartPlugin):
                     self.logger.info(f"pollDevices: Found {self.nr_devices} devices.")
                     found_valid_serial = False
                     # Determine device of interest by picking the first device having a valid boiler serial number:
-                    for i in range(0,self.nr_devices):
+                    for i in range(0, self.nr_devices):
                         if 'boilerSerial' in dataJson[i] and (dataJson[i]['boilerSerial'] is not None):
                             found_valid_serial = True
                             index_of_device = i
                             self.logger.info(f"pollDevices: Decoding device with index {index_of_device} and boiler serial number:{dataJson[i]['boilerSerial']}")
                 
-                    if found_valid_serial == False:
-                        self.logger.error(f"pollDevices: No device with valid boiler serial number found. Perhaps plugin has to be extended for additional device types. Aborting decoding.")
+                    if not found_valid_serial:
+                        self.logger.error("pollDevices: No device with valid boiler serial number found. Perhaps plugin has to be extended for additional device types. Aborting decoding.")
                         return
 
                 dataJson_device = dataJson[index_of_device]
@@ -533,22 +531,28 @@ class Vicare(SmartPlugin):
         self.featureListJson = {}
 
         if self.gatewaySerial == '':
-            self.logger.debug(f"pollFeatures, invalid gatewaySerial, aborting!")
+            self.logger.debug("pollFeatures, invalid gatewaySerial, aborting!")
             return
         if self.installationId == '':
-            self.logger.debug(f"pollFeatures, invalid installationId, aborting!")
+            self.logger.debug("pollFeatures, invalid installationId, aborting!")
             return
         if self.deviceId == '':
-            self.logger.debug(f"pollFeatures, invalid deviceId, aborting!")
+            self.logger.debug("pollFeatures, invalid deviceId, aborting!")
             return
 
         url = f"{API_URL}/iot/v2/features/installations/{self.installationId}/gateways/{self.gatewaySerial}/devices/{self.deviceId}/features"
 
         response = self.pollUrlInterface(url)
+
         if response is None:
+            self.logger.debug("pollFeatures: Something went wrong")
             return
         if response.status_code == 200:
             self.logger.debug(f"pollFeatures: request successfull, response: {response.text}")
+        elif response.status_code == 400:
+            self.logger.warning(f"pollFeatures request was unauthorized (Status code: {response.status_code})")
+            if not response.text == "":
+                self.logger.debug(f"pollFeatures Debug response: {response}, response.text: {response.text}")
         elif response.status_code == 401:
             self.logger.warning(f"pollFeatures request was unauthorized (Status code: {response.status_code})")
             if not response.text == "":
@@ -566,22 +570,26 @@ class Vicare(SmartPlugin):
         if response.json() is not None:
             responseJson = response.json()
 
-            if self.checkErrors(response) == True:
+            if self.checkErrors(response):
                 return
 
             if 'data' in responseJson:
                 self.featureListJson = responseJson['data']
                 nr_features = len(self.featureListJson)
                 self.logger.info(f"Found {nr_features} features")
-        
+    
         if len(self.featureListJson) == 0:
-            self.logger.warning(f"pollFeature: No Features found")
+            if not self._noFeatures_warning: 
+                self.logger.warning("pollFeature: No features found")
+            self._noFeatures_warning = True
+        else: 
+            self._noFeatures_warning = False
 
 
     def decodeFeatures(self, featureList, log_features = False):
         nr_features = len(featureList)
         self.onlineStatus = nr_features > 0
-        
+    
         if nr_features >= 0:
             for i in range(0,nr_features):
                 #self.logger.debug(f"Extracting feature {i+1}")
@@ -599,7 +607,7 @@ class Vicare(SmartPlugin):
                 if 'feature' in featureItem:
                     feature = featureItem['feature']
                     if isEnabled and log_features:
-                        self.logger.info(f"feature: {feature}")                    
+                        self.logger.info(f"feature: {feature}")
                 if 'isReady' in featureItem:
                     isReady = featureItem['isReady']
                     if isEnabled and log_features:
@@ -617,7 +625,7 @@ class Vicare(SmartPlugin):
 
                 #Copy feature data in viessmann items:
                 for item in self._rx_items:
-                    if (item.conf['vicare_rx_key'] == feature):
+                    if item.conf['vicare_rx_key'] == feature:
                         self.logger.debug(f"Vicare Item found for feature: {feature}. Updating")
                         if isEnabled and isReady and self.has_iattr(item.conf, 'vicare_path') and properties:
                             path = item.conf['vicare_path']
@@ -643,7 +651,7 @@ class Vicare(SmartPlugin):
                         else:
                             self.logger.warning(f"Vicare Item found for feature: {feature} but not marked as usable (enabled:{isEnabled}, ready:{isReady}, properties:{properties}, vicare_path:{self.has_iattr(item.conf, 'vicare_path')})")
         else:
-            self.logger.debug(f"decodeFeatures, feature list is empty.")
+            self.logger.debug("decodeFeatures, feature list is empty.")
 
         # Copy global data in viessmann items:
         for item in self._rx_items:
@@ -659,16 +667,16 @@ class Vicare(SmartPlugin):
         nr_features = len(featureList)
         
         if nr_features == 0:
-            self.logger.warning(f"decodeCommandFeature, feature list is empty. Aborting")
+            self.logger.warning("decodeCommandFeature, feature list is empty. Aborting")
             return None, None, None, None, None, None, None
 
         if vicare_tx_key == '':
-            self.logger.error(f"decodeCommandFeature, tx key is empty. Aborting")
+            self.logger.error("decodeCommandFeature, tx key is empty. Aborting")
             return None, None, None, None, None, None, None
 
         for i in range(0,nr_features):
             #self.logger.debug(f"Extracting feature {i+1}")
-            commands = None
+
             feature = None
             isEnabled = False
             isExecutable = False
@@ -711,9 +719,9 @@ class Vicare(SmartPlugin):
                                 self.logger.debug(f"Additional debug info for exception: k:{k}, vicare_tx_path:{vicare_tx_path}, tag:{tag}")
                                 self.logger.debug(f"Additional debug info for exception2: commandsItem:{commandsItem }, controlItem :{controlItem}")
 
-                            if 'uri' in controlItem :
+                            if 'uri' in controlItem:
                                 uri = controlItem['uri']
-                            if 'isExecutable' in controlItem :
+                            if 'isExecutable' in controlItem:
                                 isExecutable = controlItem['isExecutable']
                             if 'type' in controlItem:
                                 type = controlItem['type']
@@ -734,46 +742,44 @@ class Vicare(SmartPlugin):
 
         return None, None, None, None, None, None, None
 
-
-
     def controlItem(self, url, tag, type, min, max, stepping, enumList, value):
-        headers={}
+        headers = {}
         headers['Authorization'] = f"Bearer {self.accessToken}"
-        headers['content-type'] = f"application/json"
+        headers['content-type'] = "application/json"
         if max and min and ((value > max) or (value < min)): 
             self.logger.warning(f"controlItem: Value ({value}) is not within allowed range ({min}-{max})")
-            return 
- 
+            return
+
         if stepping == 1:
             self.logger.warning(f"Value {value} will be round to integer {int(value)}")
             value = int(value)
 
         if enumList and len(enumList) > 0 and isinstance(value, str):
-           if not value in enumList:
+           if value not in enumList:
                self.logger.warning(f"controlItem: String value ({value}) is not in the list of allowed values ({enumList}). Aborting.")
                return
            else:
-               self.logger.warning(f"Debug SUCCES: Value is on positive list.")
+               self.logger.warning("Debug SUCCES: Value is on positive list.")
 
-        # Some commands are sent without a value and only provide a url. 
+        # Some commands are sent without a value and only provide a url.
         # Therefore, only sent additional data for commands with valid (data) types.
         jsonCommand = {}
         if type is not None:
             jsonCommand = {tag: value}
         else:
-            # Items with no valid type would send the uri on every item state change. 
+            # Items with no valid type would send the uri on every item state change.
             # Here, only allow commands to be sent on positive item values (== bool state True)
             if not value:
-                self.logger.debug(f"controlItem: Supressing sending for command without additional data because item is false")
+                self.logger.debug("controlItem: Supressing sending for command without additional data because item is false")
                 return
-            self.logger.debug(f"controlItem: Sending command without additional data because to data type is supported")
+            self.logger.debug("controlItem: Sending command without additional data because to data type is supported")
 
         data = json.dumps(jsonCommand)
         self.logger.debug(f"Prepare control data: {data}")
         response = self.session.post(url, headers = headers, data = data, verify=False, timeout=4)
-   
+
         if response is not None and response.status_code == 200:
-            self.logger.info(f"controlItem request successfull")
+            self.logger.info("controlItem request successfull")
         else:
             self.logger.warning(f"controlItem request was unsuccessfull. Status code: {response.status_code}, text: {response.text}")
             return
@@ -786,25 +792,25 @@ class Vicare(SmartPlugin):
         VIESSMANN_SCOPE = ["IoT, User, offline_access"]
 
         if self.redirectUrl == '':
-            self.logger.error(f"Redirect Url is empty but necessary for token request. Aborting.")
+            self.logger.error("Redirect Url is empty but necessary for token request. Aborting.")
             return 'error'
 
         if codeVerifier == '':
-            self.logger.error(f"Code verifier is empty but necessary for token request. Aborting.")
+            self.logger.error("Code verifier is empty but necessary for token request. Aborting.")
             return 'error'
 
-        self.logger.warning(f"Debug: Redirect URL is: {self.redirectUrl}")
+        self.logger.warning("Debug: Redirect URL is: {self.redirectUrl}")
 
         oauth_session = OAuth2Session(self.clientID, redirect_uri=self.redirectUrl, scope=VIESSMANN_SCOPE, code_challenge_method='S256')
         authorization_url, _ = oauth_session.create_authorization_url(AUTHORIZE_URL, code_verifier=codeVerifier)
         self.logger.warning(f"Authorization URL is: {authorization_url}")
 
-        self.logger.warning(f"Debug: Sending authorization pos...")
+        self.logger.warning("Debug: Sending authorization pos...")
         header = {'Content-Type': 'application/x-www-form-urlencoded'}
         response = requests.post(authorization_url, headers=header, auth=(self.user, self.password), allow_redirects=True)
 
-        if response is None: 
-            self.logger.error(f"generateAPIToken: response is None")
+        if response is None:
+            self.logger.error("generateAPIToken: response is None")
         if response.status_code == 200:
             self.logger.warning(f"SUCCESS: {response.json()}")
         elif response.status_code == 401:
@@ -817,19 +823,17 @@ class Vicare(SmartPlugin):
         else:
             self.logger.warning(f"SUCCESS: Location in response header: {response.headers}")
 
-        self.logger.warning(f"Debug: Fetching token...")
-        accessToken = None
+        self.logger.warning("Debug: Fetching token...")
         token = oauth_session.fetch_token(TOKEN_URL, authorization_response=response.headers['Location'], code_verifier=codeVerifier)
 
         self.logger.warning(f"Debug: token reponse: {token}")
 
         if oauth_session.token is None:
-            self.logger.error(f"PyViCareInvalidCredentialsError")
+            self.logger.error("PyViCareInvalidCredentialsError")
             return 'error'
-        else:                                                                 
+        else:
             self.logger.warning(f"SUCCESS: Valid token received: {oauth_session.token}")
             self.accessToken = oauth_session.token
             param_dict = {"testaccessToken": str(self.accessToken)}
             self.update_config_section(param_dict)
             return self.accessToken
-

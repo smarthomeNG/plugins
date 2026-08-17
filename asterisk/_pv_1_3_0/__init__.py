@@ -135,7 +135,7 @@ class Asterisk(lib.connection.Client,SmartPlugin):
                     self._reply_lock.acquire()
                     self._reply_lock.notify()
                     self._reply_lock.release()
-        if not 'Event' in event:  # ignore
+        if 'Event' not in event:  # ignore
             return
         if event['Event'] == 'Newchannel':  # or data.startswith('Event: Newstate') ) and 'ChannelStateDesc: Ring' in data:
             device = self._get_device(event['Channel'])

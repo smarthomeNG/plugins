@@ -43,7 +43,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -70,64 +69,68 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
         calculatedHash = ''
-        codeRequestSuccessfull  = None
+        codeRequestSuccessfull = None
         token = ''
-        configWriteSuccessfull  = None
-        resetAlarmsSuccessfull  = None
+        configWriteSuccessfull = None
+        resetAlarmsSuccessfull = None
         boundaryListSuccessfull = None
 
-
-
         if action is not None:
-            if action == "generateHash":
+            if action == 'generateHash':
                 ret = self.plugin.generateRandomHash()
                 calculatedHash = str(ret)
-                self.logger.info("Generate hash triggered via webinterface: {0}".format(calculatedHash))
-            elif action == "requestCode" and (email is not None) and (hashInput is not None):
-                self.logger.warning("Request Vorwerk code triggered via webinterface (Email:{0} hashInput:{1})".format(email, hashInput))
+                self.logger.info('Generate hash triggered via webinterface: {0}'.format(calculatedHash))
+            elif action == 'requestCode' and (email is not None) and (hashInput is not None):
+                self.logger.warning(
+                    'Request Vorwerk code triggered via webinterface (Email:{0} hashInput:{1})'.format(email, hashInput)
+                )
                 codeRequestSuccessfull = self.plugin.request_oauth2_code(str(hashInput))
-            elif action == "requestCode":
+            elif action == 'requestCode':
                 if email is None:
-                    self.logger.error("Cannot request Vorwerk code as email is empty: {0}.".format(str(email)))
+                    self.logger.error('Cannot request Vorwerk code as email is empty: {0}.'.format(str(email)))
                 elif hash is None:
-                    self.logger.error("Cannot request Vorwerk code as hash is empty: {0}.".format(str(email)))
-            elif action == "requestToken":
-                self.logger.info("Request Vorwerk token triggered via webinterface")
-                if (email is not None) and (hashInput is not None) and (code is not None) and (not code == '') :
+                    self.logger.error('Cannot request Vorwerk code as hash is empty: {0}.'.format(str(email)))
+            elif action == 'requestToken':
+                self.logger.info('Request Vorwerk token triggered via webinterface')
+                if (email is not None) and (hashInput is not None) and (code is not None) and (not code == ''):
                     token = self.plugin.request_oauth2_token(str(code), str(hashInput))
                 elif (code is None) or (code == ''):
-                    self.logger.error("Request Vorwerk token: Email validation code missing.")
+                    self.logger.error('Request Vorwerk token: Email validation code missing.')
                 else:
-                    self.logger.error("Request Vorwerk token: Missing argument.")
-            elif action =="writeToPluginConfig":
+                    self.logger.error('Request Vorwerk token: Missing argument.')
+            elif action == 'writeToPluginConfig':
                 if (tokenInput is not None) and (not tokenInput == ''):
-                    self.logger.warning("Writing token to plugin.yaml")
-                    param_dict = {"token": str(tokenInput)}
+                    self.logger.warning('Writing token to plugin.yaml')
+                    param_dict = {'token': str(tokenInput)}
                     self.plugin.update_config_section(param_dict)
                     configWriteSuccessfull = True
                 else:
-                    self.logger.error("writeToPluginConfig: Missing argument.")
+                    self.logger.error('writeToPluginConfig: Missing argument.')
                     configWriteSuccessfull = False
-            elif action =="clearAlarms":
-                    self.logger.warning("Resetting alarms via webinterface")
-                    self.plugin.dismiss_current_alert()
-                    resetAlarmsSuccessfull = True
-            elif action =="listAvailableMaps":
-                    boundaryListSuccessfull = self.plugin.get_map_boundaries(map_id=mapIDInput)
-                    self.logger.warning(f"Request all available maps via webinterface successfull: {boundaryListSuccessfull }")
+            elif action == 'clearAlarms':
+                self.logger.warning('Resetting alarms via webinterface')
+                self.plugin.dismiss_current_alert()
+                resetAlarmsSuccessfull = True
+            elif action == 'listAvailableMaps':
+                boundaryListSuccessfull = self.plugin.get_map_boundaries(map_id=mapIDInput)
+                self.logger.warning(
+                    f'Request all available maps via webinterface successfull: {boundaryListSuccessfull}'
+                )
             else:
-                self.logger.error("Unknown command received via webinterface")
+                self.logger.error('Unknown command received via webinterface')
 
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, calculatedHash=calculatedHash,
-                           token=token,
-                           codeRequestSuccessfull=codeRequestSuccessfull,
-                           configWriteSuccessfull=configWriteSuccessfull,
-                           resetAlarmsSuccessfull=resetAlarmsSuccessfull,
-                           boundaryListSuccessfull=boundaryListSuccessfull,
-                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
-
+        return tmpl.render(
+            p=self.plugin,
+            calculatedHash=calculatedHash,
+            token=token,
+            codeRequestSuccessfull=codeRequestSuccessfull,
+            configWriteSuccessfull=configWriteSuccessfull,
+            resetAlarmsSuccessfull=resetAlarmsSuccessfull,
+            boundaryListSuccessfull=boundaryListSuccessfull,
+            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
+        )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -141,7 +144,7 @@ class WebInterface(SmartPluginWebIf):
         """
         if dataSet is None:
             # get the new data
-            data = {}
+            pass
 
             # data['item'] = {}
             # for i in self.plugin.items:

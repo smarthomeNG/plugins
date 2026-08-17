@@ -51,10 +51,10 @@ except ImportError:
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
-    logger.debug(f"init standalone {__name__}")
+    logger.debug(f'init standalone {__name__}')
 else:
     logger = logging.getLogger()
-    logger.debug(f"init plugin component {__name__}")
+    logger.debug(f'init plugin component {__name__}')
 
 
 def get_manufacturer(from_url: str, exportfile: str, verbose: bool = False) -> dict:
@@ -73,7 +73,7 @@ def get_manufacturer(from_url: str, exportfile: str, verbose: bool = False) -> d
     try:
         reque = requests.get(url, headers=headers)
     except ConnectionError as e:
-        logger.debug(f"An error {e} occurred fetching {url}\n")
+        logger.debug(f'An error {e} occurred fetching {url}\n')
         raise
 
     try:
@@ -82,30 +82,30 @@ def get_manufacturer(from_url: str, exportfile: str, verbose: bool = False) -> d
         logger.debug('sheetnames {}'.format(wb.sheetnames))
 
         sheet = wb.active
-        logger.debug(f"sheet {sheet}")
-        logger.debug(f"rows [{sheet.min_row} .. {sheet.max_row}]")
-        logger.debug(f"columns [{sheet.min_column} .. {sheet.max_column}]")
+        logger.debug(f'sheet {sheet}')
+        logger.debug(f'rows [{sheet.min_row} .. {sheet.max_row}]')
+        logger.debug(f'columns [{sheet.min_column} .. {sheet.max_column}]')
 
-        if sheet.min_row+1 <= sheet.max_row and sheet.min_column == 1 and sheet.max_column == 4:
+        if sheet.min_row + 1 <= sheet.max_row and sheet.min_column == 1 and sheet.max_column == 4:
             # Get data from rows """
-            for row in range(sheet.min_row + 1,sheet.max_row):
+            for row in range(sheet.min_row + 1, sheet.max_row):
                 id = str(sheet.cell(row, 1).value).strip()
                 if len(id) == 3:
                     # there are entries like > 'ITRON ...'  < that need special cleaning:
                     man = str(sheet.cell(row, 2).value).strip()
-                    man = man.strip('\'').strip()
+                    man = man.strip("'").strip()
                     r[id] = man
                     if verbose:
-                        logger.debug(f"{id}->{man}")
+                        logger.debug(f'{id}->{man}')
                 else:
                     logger.debug(f">id< is '{id}' has more than 3 characters and will not be considered")
             with open(exportfile, 'w') as f:
                 y.dump(r, f)
 
-        logger.debug(f"{len(r)} distinct manufacturers were found and written to {exportfile}")
+        logger.debug(f'{len(r)} distinct manufacturers were found and written to {exportfile}')
 
     except Exception as e:
-        logger.debug(f"Error {e} occurred")
+        logger.debug(f'Error {e} occurred')
 
     return r
 

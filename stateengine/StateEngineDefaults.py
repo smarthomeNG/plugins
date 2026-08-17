@@ -30,7 +30,7 @@ suntracking_offset = 0
 
 lamella_open_value = 0
 
-plugin_identification = "StateEngine Plugin"
+plugin_identification = 'StateEngine Plugin'
 
 VERBOSE = logging.DEBUG - 1
 
@@ -40,8 +40,8 @@ plugin_version = 0
 
 
 def write_to_log(logger):
-    logger.info("Plugin {0} Version {1}".format(plugin_identification, plugin_version))
-    logger.info("StateEngine default suntracking offset = {0}".format(suntracking_offset))
-    logger.info("StateEngine default suntracking lamella open value = {0}".format(lamella_open_value))
-    logger.info("StateEngine default startup delay = {0}".format(startup_delay))
-    logger.info("StateEngine default suspension time = {0}".format(suspend_time))
+    logger.info('Plugin {0} Version {1}'.format(plugin_identification, plugin_version))
+    logger.info('StateEngine default suntracking offset = {0}'.format(suntracking_offset))
+    logger.info('StateEngine default suntracking lamella open value = {0}'.format(lamella_open_value))
+    logger.info('StateEngine default startup delay = {0}'.format(startup_delay))
+    logger.info('StateEngine default suspension time = {0}'.format(suspend_time))
