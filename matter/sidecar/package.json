@@ -1,11 +1,15 @@
 {
   "name": "shng-matter-plugin-sidecar",
   "private": true,
-  "description": "matter-server sidecar for shng's Matter plugin. Not a published package - just pins the dependency the plugin's sidecar.py spawns. Run 'npm install' here before starting the plugin.",
+  "type": "module",
+  "description": "Shared Node.js dependencies for shng's Matter plugin - both the server role's matter-server sidecar and the bridge role's bridge.js, which lives directly in this directory (not bridge/) so both roles resolve the same node_modules via Node's normal same-directory lookup, no symlink needed. The 'type': 'module' field is for bridge.js's own ESM imports - matter-server's own entry file is unaffected, its own package.json inside node_modules/matter-server/ governs its module type independently. Not a published package. Run 'npm install' here before starting the plugin - covers both roles.",
   "engines": {
     "node": ">=20.19.0 <22.0.0 || >=22.13.0"
   },
   "dependencies": {
-    "matter-server": "1.3.3"
+    "matter-server": "1.3.3",
+    "@matter/main": "0.17.7",
+    "@matter/protocol": "0.17.7",
+    "ws": "8.21.1"
   }
 }

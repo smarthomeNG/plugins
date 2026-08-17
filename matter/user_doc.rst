@@ -5,152 +5,133 @@
 matter
 ======
 
-Matter controller plugin for SmartHomeNG. Commissions and controls Matter devices directly - no
-separate hub/bridge/app needed. See ``dev/matter/matter-integration-plan.md`` in the core repo for
-the full architecture background and the Phase 0 spike findings this plugin is built on.
+Matter-Plugin für SmartHomeNG mit zwei unabhängigen Rollen: **server** (kommissioniert und steuert
+echte Matter-Geräte direkt - ohne separaten Hub/Bridge/App) und **bridge** (macht shng-Items als
+eigene "Geräte" für andere Matter-Ökosysteme sichtbar - Apple Home, Google Home, ...).
+Beide Rollen sind individuell über Item-Attribut wählbar; beide laufen in derselben Plugin-Instanz.
 
-Requirements
-============
+Voraussetzungen
+===============
 
-This is currently the only shng plugin with a non-Python runtime dependency: a Node.js sidecar
-(`matter-server <https://github.com/matter-js/matterjs-server>`_, the actively maintained successor
-to the now-archived python-matter-server) that speaks Matter's actual protocol stack.
+Dieses Plugin hat eine Laufzeitabhängigkeit außerhalb von Python (Node.js) und startet zwei
+separate Node.js-Prozesse, einen pro Rolle - beide benötigen eine unterstützte Node.js-Version
+(``>=20.19.0 <22.0.0 || >=22.13.0``). Mit ``nvm``::
 
-1. Install a supported Node.js version. matter-server 1.3.3 requires
-   ``>=20.19.0 <22.0.0 || >=22.13.0`` - not just "any modern Node". Using ``nvm``::
+    nvm install lts/jod
+    nvm use lts/jod
 
-       nvm install lts/jod
-       nvm use lts/jod
+Beide Rollen teilen sich ein gemeinsames Node.js-Dependency-Verzeichnis, es genügt eine
+einzige Installation::
 
-2. Install the sidecar dependency (one-time, not done automatically by the plugin)::
+    cd plugins/matter/sidecar
+    npm install
 
-       cd plugins/matter/sidecar
-       npm install
+Das installiert sowohl den matter-server-Sidecar als auch die von ``bridge.js`` benötigten Pakete.
 
-If either step is skipped, the plugin logs a clear error on startup and stays idle rather than
-crashing shng.
-
-Configuration
+Konfiguration
 =============
 
-See plugin.yaml for the full parameter list (node binary path, sidecar port, storage path,
-``enable_test_net_dcl``). Defaults work for a standard install with the sidecar set up as above.
+Siehe plugin.yaml für die vollständige Parameterliste. 
 
-Item attributes
+Item-Attribute
+--------------
+
+``matter_node``, ``matter_endpoint``, ``matter_cluster`` adressieren eine bestimmte Gerätefunktion. 
+Diese drei müssen nur einmal am Hauptitem eines Geräts gesetzt werden und werden an alle Kind-Items
+vererbt.
+
+Für einen Schalter (matter-intern bool-Item im On/Off-Schema, z.B. OnOff) wird ``matter_switch: true``
+verwendet. Für alles andere werden die Low-Level-Attribute direkt verwendet: ``matter_attribute``
+macht das Item zu einem Read-/Subscribe-Spiegel dieses Attributs. ``matter_command`` (optional mit
+``matter_command_params``) lässt eine Änderung des Itemwerts den entsprechenden Befehl auslösen; der
+Platzhalter ``"$value"`` in einem Parameterwert wird durch durch den geschriebenen Item-Wert
+ersetzet (z.B. für den ``level``-Parameter von ``MoveToLevel``). ``matter_attribute`` und
+``matter_command`` können am selben Item gesetzt werden (spiegelt den Status per Subscription, steuert
+ihn per Befehl beim Schreiben).
+
+Ein reines Befehls-Item ohne passendes Status-Attribut (z.B. ``toggle``) schreibt immer nur True oder 1
+und benötigt daher ``enforce_updates: true`` und ggf. einen ``autotimer``, der ihn wieder auf False oder
+0 zurücksetzt.
+
+``matter_available`` (bool, read-only) gibt an, ob das Gerät für den matter-server erreichbar ist.
+
+Geräte dauerhaft benennen: matter_alias
+---------------------------------------
+
+``node_id`` wird von matter-server zum Kommissionierungszeitpunkt vergeben und ist über einen
+Dekommissionierungs-/Rekommissionierungszyklus hinweg nicht garantiert stabil (Werksreset eines
+Geräts, Wechsel von und wieder auf shngs Fabric, ...). Jedes über ein fest eingetragenes
+``matter_node`` adressierte Item zeigt danach still auf das falsche Gerät, bis es von Hand
+aktualisiert wird.
+
+``matter_alias`` kann statt ``matter_node`` verwendet werden, um einen lesbaren Namen zu benutzen.
+
+Die Zuordnung zu der jeweiligen ``matter_node`` erfolgt im Web-Interface und wird **durch das Plugin**
+in Items unterhalb von ``server_alias_base_item`` gesichert. Jedes direkte Kind-Item davon gilt als
+eine Alias-Definition. Die ``node_id`` eines Items wird dann bei jedem Zugriff über diese Tabelle 
+aufgelöst, statt fest codiert zu sein. Das Basis-Item selbst muss bereits existieren, das Plugin 
+legt es nicht selbst an.
+
+bridge-Rolle: shng-Items für andere Matter-Ökosysteme sichtbar machen
+=====================================================================
+
+Die bridge-Rolle stellt shng-Items als gebrückte Gerätefunktionen für andere Matter-Controller wie 
+Apple Home bereit.
+
+``matter_expose_type`` an einem Item definiert seine matter-Funktion:
+
+- ``switch`` - ein schreibbarer bool-Aktor (``OnOffPlugInUnit``). Vom anderen Controller aus
+  beschreibbar; ein Schreiben dort löst über den üblichen Item-Update-Mechanismus zurück ins Item
+  aus, und eine Item-Wertänderung wird genauso an den anderen Controller weitergegeben.
+- ``contact`` - ein reiner bool-Sensor (``ContactSensor``, z.B. ein Türkontakt), der Werte wird nur 
+  von SmartHomeNG aus weitergegeben, es ist keine Änderung über Matter möglich.
+- ``temperature_sensor`` - ein reiner Sensor (``TemperatureSensor``), analog zu ``contact``. 
+  Der Item-Wert wird als Grad Celsius interpretiert.
+
+``matter_expose_name`` (optional) legt den Namen fest, der dem anderen Controller angezeigt wird.
+Ohne ihn wird der vollständige Item-Pfad verwendet.
+
+Das Koppeln der bridge mit dem Fabric eines anderen Controllers (Apple Home, Google Home, ...) 
+benötigt den Code oder QR-Code des Bridge-Webinterfaces. Da die bridge nur ein Entwicklungs-/Test-
+Attestierungszertifikat (nicht CSA-zertifiziert) hat, zeigen die meisten Controller während der
+Kopplung eine Warnung "nicht zertifiziertes Zubehör" an.
+
+Änderungen an ``matter_expose_*``-Attributen werden üblicherweise innerhalb weniger Sekunden über
+matter an gekoppelte Controller verteilt. 
+
+Item-Structs
+============
+
+``item_structs`` in ``plugin.yaml`` ist als wachsende Sammlung fertiger Vorlagen für bekannte,
+getestete Geräte gedacht - nicht als generische Vorlagen pro Cluster. Für diese muss in der Regel
+nur ``matter_node`` zusätzlich gesetzt werden. Bisher vorhanden: 
+
+- ``matter.shelly_plug_m_3gen_simple`` (OnOff-Schalter/Toggle + Verfügbarkeit)
+- ``matter.shelly_plug_m_3gen`` (zusätzlich mit Messung von Leistung/Spannung/Strom)
+
+Im Test stellte sich heraus, dass die Spannungswerte über Matter nicht immer live übertagen wurden,
+obwohl diese im Gerät vorliegen und z.B. über MQTT sehr wohl übertragen werden. Dies sollte im
+Zweifelsfall selbst geprüft werden.
+
+Ein Gerät mit Apple Home / Google Home usw. teilen
+==================================================
+
+Matter-Geräte unterstützen die gleichzeitige Verbindung zu mehreren Controllern - ein mit shng
+gekoppeltes Gerät kann auch einem anderen Ökosystem auf dessen separaten Fabric beitreten, ohne
+dass shng seine eigene Kopplung verliert. Der **Teilen**-Button im Devices-Tab öffnet auf diesem
+Gerät ein neues 15-minütiges Kopplungsfenster und zeigt sowohl einen scanbaren QR-Code als auch 
+den manuellen Pairing-Code (und den rohen QR-Inhalts-String) zur Eingabe in der anderen App.
+
+Der **Fabrics**-Button listet jede aktuell auf einem Gerät vorhandene Fabric (Vendor, Label,
+fabric_id) mit einer Entfernen-Option je Fabric. Für das Entfernen aus dem shng-Fabric sollte
+der **Entfernen**-Button verwendet werden.
+
+Aktueller Umfang
 ================
 
-``matter_node``, ``matter_endpoint``, ``matter_cluster`` address a specific cluster instance. These
-three only need to be set once, on a device's "master" item - every child item inherits whichever
-one it doesn't set itself from the nearest ancestor that does, via shng's own
-``Item.find_attribute()``. Only override one (usually ``matter_cluster``) on a child that actually
-addresses a different cluster than its parent - see ``dev/matter/spike/sample_matter_items.yaml``
-(core repo) for a worked example (a switch item with power-measurement children on a different
-cluster). Nothing is inherited beyond these three - ``matter_switch``/``matter_attribute``/
-``matter_command`` always have to be set on the item they apply to, so an item always explicitly
-opts in to its own mapping.
+**server-Rolle**: Sidecar-Überwachung, WS-Client, Item-Mapping (generisches Attribut/Befehl, plus
+``matter_switch``-Kurzform für bool-On/Off-Cluster), Endpoint-/Cluster-Discovery-Browser und
+Copy-Paste-Item-Generator-YAML im Webif.
 
-For a bool on/off-shaped item (e.g. OnOff), use ``matter_switch: true`` - the plugin derives the
-state attribute and both commands from a small internal per-cluster table, so the item config
-doesn't need to know Matter's attribute/command names at all. Logs a clear error instead of a
-silent no-op if the cluster isn't in that table yet.
-
-For anything else (or a cluster ``matter_switch`` doesn't cover yet), use the low-level attributes
-directly: ``matter_attribute`` (int) makes the item a read/subscribe mirror of that attribute.
-``matter_command`` (str, optionally with ``matter_command_params``) makes an item write invoke that
-command; use the placeholder ``"$value"`` in a param value to substitute the item's written value
-(e.g. for ``MoveToLevel``'s ``level`` parameter). ``matter_attribute`` and ``matter_command`` may
-both be set on the same item (mirrors state via subscription, drives it via command on write) -
-add ``matter_command_false`` to route a falsy write to a different command than a truthy one (e.g.
-``matter_command: on``, ``matter_command_false: off``) rather than a fixed command that fires on
-every write regardless of value.
-
-A command-only item with no matching state attribute (e.g. ``toggle``) is a momentary trigger, not
-a value - give it ``enforce_updates: true`` (otherwise writing the same value twice in a row gets
-deduped away and the second write never fires) and an ``autotimer`` that resets it back to falsy
-(e.g. ``autotimer: 1 = 0``). This is general shng item modeling advice, not Matter-specific - any
-trigger-only item needs it, and the webif's Item-Generator already includes both for the ``toggle``
-item it suggests.
-
-``matter_available`` (bool, read-only) mirrors matter-server's own node-level reachability tracking
-- the same information the webif's Devices tab already shows in its "verfügbar" column, exposed
-here as a real item for your own logic/struct/visu. Only needs ``matter_node`` resolved (via the
-same ancestor inheritance as above), not an endpoint or cluster - availability isn't attached to
-either.
-
-Surviving recommissioning: matter_alias
-========================================
-
-``node_id`` is assigned by matter-server at commission time and is not guaranteed stable across a
-decommission/recommission cycle (factory-resetting a device, moving it off and back onto shng's
-fabric, ...). Every item addressed via a fixed ``matter_node`` then silently points at the wrong
-device until you go update it by hand, on every affected item.
-
-``matter_alias`` (str) is an indirection layer for this: use it instead of ``matter_node``, giving
-the name of an *alias definition* - a plain shng item, ``type: num``, holding the current
-``node_id`` as its value - living directly under ``alias_base_item`` (``plugin.yaml`` parameter,
-default ``matter.aliases``). Every direct child of that item is treated as one alias definition
-(name = child item's own name). An item's ``node_id`` is then resolved through this table at every
-access rather than baked in, so repointing one alias (webif **Aliase** tab, or editing the alias
-item's value directly) takes effect for every item using that alias - none of them need touching.
-
-The base item itself must already exist; the plugin never creates it (not yet an established shng
-pattern) and just logs an example structure and stays inactive w.r.t. alias support until it does,
-without affecting the rest of the plugin. Each alias-definition item is validated on parse: must be
-``type: num``, must have an explicit ``value:`` (the ``node_id``), and must not be ``cache``,
-``database``, or ``eval``'d (an alias's value is meant to change only via explicit repointing, never
-through those mechanisms) - every violation found is logged in one message rather than stopping at
-the first. If the base item has no ``remark`` set, the plugin sets a default one; an existing remark
-is left untouched.
-
-Defining a brand-new alias, or pointing an item's ``matter_alias`` at a name that did not exist at
-parse time, needs a shng restart - same as any other structural item change. Repointing an
-*existing* alias to a different ``node_id`` is live, no restart needed, since that only changes the
-alias item's own value.
-
-Removing an alias while other items still reference it does not touch those items - they keep their
-last-known (now orphaned) ``node_id`` until the alias is redefined or the items themselves are
-edited to point elsewhere. A warning naming every affected item is logged when this happens.
-
-Item structs
-============
-
-``item_structs`` in ``plugin.yaml`` is meant as a growing collection of ready-made templates for
-known, tested devices - not generic per-cluster templates. So far: ``matter.shelly_plug_m_3gen_simple``
-(OnOff switch/toggle + availability, cluster/endpoint baked in since they're fixed for this exact
-device model - only ``matter_node`` needs setting on the attaching item) and
-``matter.shelly_plug_m_3gen`` (adds power/voltage/current on top, via ``struct:
-.shelly_plug_m_3gen_simple`` referencing the first one in the same namespace). Both convert the raw
-milli-units (mW/mV/mA) to base units via a child item + ``eval``, since the plugin itself passes
-attribute values through unconverted (see ``dev/matter/matter-integration-plan.md``'s
-"ElectricalPowerMeasurement" sections for why).
-
-RMSVoltage in particular is not guaranteed to ever report a live update on a given device, even
-though its sibling attributes on the same cluster do - see
-``dev/matter/matter-integration-plan.md``'s "RMSVoltage never reports" section before relying on it
-for anything time-sensitive.
-
-Sharing a device with Apple Home / Google Home / etc.
-======================================================
-
-Matter devices support multiple simultaneous "admins" - a device commissioned by shng can also join
-another ecosystem on its own separate fabric, without shng losing its own pairing. The Devices tab's
-**Teilen** (Share) button opens a fresh 15-minute commissioning window on that device and shows both
-a scannable QR code and the manual pairing code (and raw QR-content string) to enter in the other
-app.
-
-The **Fabrics** button lists every fabric currently on a device (vendor, label, fabric_id) with a
-per-fabric Remove option, backed by a real, spec-compliant device-side ``RemoveFabric`` command
-(``OperationalCredentialsClient.removeFabric``) - the device itself is cleanly notified, same as
-Unlink's decommission path. Removing shng's *own* fabric this way still isn't recommended, though:
-it skips matter-server's own node-removal bookkeeping that `remove_node`/Unlink performs, so its
-local record of that node would go stale instead of being cleaned up. Use Unlink for shng's own
-pairing; use the Fabrics table for *other* controllers' fabrics.
-
-Phase 2 scope
-=============
-
-Sidecar supervision, WS client, item mapping (generic attribute/command, plus ``matter_switch``
-shorthand for bool on/off clusters), endpoint/cluster discovery browser and copy-paste
-item-generator YAML in the webif. No broadened cluster-specific handling for
-ColorControl/Thermostat/etc. (Phase 3), no DoorLock user/schedule management (Phase 4/5, only if
-demanded).
+**bridge-Rolle**: nur ``switch``/``contact``/``temperature_sensor``, Live-Hinzufügen/-Entfernen
+von Accessories ohne bridge-Neustart, Webif-Kopplung.

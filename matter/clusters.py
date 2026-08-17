@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2026-      <AUTHOR>                                  <EMAIL>
+#  Copyright 2026-  Sebastian Helms                 Morg @ knx-user-forum
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -76,6 +76,30 @@ CLUSTERS: dict[int, tuple[str, dict[int, AttributeInfo]]] = {
     # Application Cluster Spec 2.12, Electrical Energy Measurement Cluster - cluster
     # name only so far, attribute struct fields not yet decoded (see plan doc).
     0x91: ('ElectricalEnergyMeasurement', {}),
+    # Core Spec, Bridged Device Basic Information cluster (0x0039) - present on every
+    # endpoint the bridge role exposes (bridge.js's BridgedDeviceBasicInformationServer).
+    # NodeLabel/ProductName carry matter_expose_name, the one thing that actually answers
+    # "which of my bridged items is this endpoint" from the server role's Discovery tab -
+    # added after a real gap: a bridge exposing 3 items showed as unreadable
+    # cluster_57/attr_N rows with no way to tell them apart before this.
+    0x39: (
+        'BridgedDeviceBasicInformation',
+        {
+            3: AttributeInfo('ProductName', 'str'),
+            5: AttributeInfo('NodeLabel', 'str'),
+            15: AttributeInfo('SerialNumber', 'str'),
+            17: AttributeInfo('Reachable', 'bool'),
+        },
+    ),
+    # Application Cluster Spec 2.4, Boolean State Cluster - the bridge role's own
+    # "contact" expose_type (bridge.js's ContactSensorDevice).
+    0x45: ('BooleanState', {0: AttributeInfo('StateValue', 'bool')}),
+    # Application Cluster Spec 2.3, Temperature Measurement Cluster - the bridge role's
+    # own "temperature_sensor" expose_type. MeasuredValue is int16 hundredths of a degree
+    # C (Core Spec 1.6 7.19.2.9, same unit bridge.js's own applyValue() scales into) -
+    # divisor 100 converts it to plain degrees C, same pattern as ElectricalPowerMeasurement
+    # above.
+    0x402: ('TemperatureMeasurement', {0: AttributeInfo('MeasuredValue', 'num', 100, '°C')}),
 }
 
 
@@ -118,6 +142,42 @@ SWITCH_CLUSTERS: dict[int, tuple[int, str, str]] = {
 def switch_info(cluster_id: int) -> tuple[int, str, str] | None:
     """(attribute_id, command_true, command_false) for a switch-shaped cluster, or None if unregistered."""
     return SWITCH_CLUSTERS.get(cluster_id)
+
+
+# cluster_id -> name of a matching generic struct under plugin.yaml's item_structs (e.g.
+# 'matter.switch') - the Item-Generator webif feature suggests `struct: [...]` referencing these
+# instead of spelling out every attribute, for clusters that have graduated to "curated, tested,
+# has a real struct" status. Same small-and-incremental philosophy as SWITCH_CLUSTERS/CLUSTERS - a
+# cluster missing here just gets no suggestion (see the Discovery tab for its raw attributes
+# instead), not a bug.
+CLUSTER_STRUCTS: dict[int, str] = {
+    0x06: 'switch',  # OnOff
+    0x90: 'electrical_power_measurement',  # ElectricalPowerMeasurement
+    0x45: 'contact',  # BooleanState
+    0x402: 'temperature_sensor',  # TemperatureMeasurement
+}
+
+
+def cluster_struct_name(cluster_id: int) -> str | None:
+    """Name of the generic plugin.yaml struct (without the 'matter.' plugin prefix) for this cluster, if any."""
+    return CLUSTER_STRUCTS.get(cluster_id)
+
+
+# struct_name -> human-readable function label, for a generated item's remark ("what is this",
+# not just "which device is this belongs to"). German, hardcoded - matches every other generated/
+# hand-written remark in this plugin (e.g. plugin.yaml's "aktuelle Leistung in W"), no i18n
+# mechanism exists for plugin-generated item config text anywhere in this codebase.
+CLUSTER_STRUCT_LABELS: dict[str, str] = {
+    'switch': 'Schalter',
+    'electrical_power_measurement': 'Energiemessung',
+    'contact': 'Kontakt',
+    'temperature_sensor': 'Temperatursensor',
+}
+
+
+def cluster_struct_label(struct_name: str) -> str:
+    """Human-readable function label for a struct name - falls back to the bare name if unregistered."""
+    return CLUSTER_STRUCT_LABELS.get(struct_name, struct_name)
 
 
 # Device Library Spec device type IDs -> human name. Small and grown

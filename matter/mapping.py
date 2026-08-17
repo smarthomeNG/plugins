@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2026-      <AUTHOR>                                  <EMAIL>
+#  Copyright 2026-  Sebastian Helms                 Morg @ knx-user-forum
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -151,3 +151,25 @@ class CommandMapping:
     def resolve_params(self, value: Any) -> dict[str, Any]:
         """Return this mapping's params with any '$value' placeholder replaced by `value`."""
         return {key: (value if val == VALUE_PLACEHOLDER else val) for key, val in self.params.items()}
+
+
+@dataclass(frozen=True)
+class BridgeMapping:
+    """
+    A matter_expose_type-backed item, exposed as a bridged Matter accessory
+    to other Matter controllers (Apple Home, Google Home, ...) - the mirror
+    direction of AttributeMapping/CommandMapping (those read/control a real
+    Matter device; this exposes an shng item as one).
+
+    endpoint_id is deliberately not part of this mapping: it is only known
+    once bridge/client.py's add_endpoint() round-trip completes, which
+    needs the plugin's asyncio loop running and so cannot be resolved at
+    parse_item() time the way node_id can for the server role. Kept in a
+    separate plugin-owned dict instead (bridge/__init__.py), the same "one
+    dict per concern" style server/__init__.py's alias tracking already
+    uses rather than a mutable field on an otherwise-frozen mapping.
+    """
+
+    item_path: str
+    expose_type: str
+    name: str

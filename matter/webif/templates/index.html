@@ -7,16 +7,30 @@
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
-			<td class="py-1"><strong>{{ _('Sidecar verbunden') }}</strong></td>
-			<td class="py-1">{% if p.client and p.client.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1"><strong>{{ _('Server verbunden') }}</strong></td>
+			<td class="py-1">{% if p.server_client and p.server_client.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Bridge verbunden') }}</strong></td>
+			<td class="py-1">{% if p.bridge_client and p.bridge_client.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
 			<td class="py-1" width="50px"></td>
 			<td class="py-1"><strong>{{ _('Bekannte Geräte') }}</strong></td>
 			<td class="py-1">{{ devices|length }}</td>
 			<td class="py-1" width="50px"></td>
+			{% if p.primary_interface %}
+			<td class="py-1"><strong>{{ _('Netzwerk-Interface') }}</strong></td>
+			<td class="py-1">{{ p.primary_interface }}</td>
+			{% endif %}
 		</tr>
 	</tbody>
 </table>
 {% endblock headtable %}
+
+{% block buttons %}
+{{ super() }}
+<button type="button" class="btn btn-shng btn-sm" onclick="location.href='?view=bridge'">
+	<i class="fas fa-broadcast-tower"></i>&nbsp;{{ _('Bridge') }}
+</button>
+{% endblock buttons %}
 
 {% block pluginscripts %}
 <script>
@@ -31,7 +45,41 @@
 		catch (e) {
 			console.warn("Datatable JS not loaded, showing standard tables without sort/filter " + e);
 		}
+
+		// Fixed-position toast container for late_commission_results (see
+		// handleUpdatedData) - appended to body, not tied to any one tab, so a
+		// late answer shows up regardless of which tab is currently active.
+		$('body').append('<div id="matter_toast_container" style="position:fixed; top:70px; right:20px; z-index:1050; max-width:400px;"></div>');
+
+		var pairingForm = document.getElementById('pairing_form');
+		if (pairingForm) {
+			pairingForm.addEventListener('submit', function () {
+				var btn = document.getElementById('pairing_submit_btn');
+				var codeInput = pairingForm.querySelector('[name="pairing_code"]');
+				if (!codeInput || !codeInput.value.trim()) return;  // let the empty-code case submit/redirect normally
+				btn.disabled = true;
+				var started = Date.now();
+				var label = btn.innerHTML;
+				var tick = function () {
+					var elapsed = Math.floor((Date.now() - started) / 1000);
+					btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>&nbsp;' +
+						"{{ _('Kopplung läuft') }}... " + elapsed + 's' +
+						' <span class="small">({{ _("kann bis zu ca. 3-5 Minuten dauern") }})</span>';
+				};
+				tick();
+				setInterval(tick, 1000);
+			});
+		}
 	});
+
+	function showMatterToast(alertClass, text) {
+		var $toast = $('<div class="alert ' + alertClass + ' alert-dismissible fade show shadow-sm" role="alert">' +
+			text +
+			'<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+			'</div>');
+		$('#matter_toast_container').append($toast);
+		setTimeout(function () { $toast.alert('close'); }, 20000);
+	}
 
 	function unlinkDevice(nodeId, label) {
 		if (confirm("{{ _('Gerät wirklich entkoppeln?') }} (" + label + ", node_id=" + nodeId + ")\n\n" +
@@ -50,6 +98,23 @@
 
 	function interviewNode(nodeId) {
 		shngPost('', {interview_node_id: nodeId});
+	}
+
+	function showIpAddresses(nodeId) {
+		shngPost('', {ip_addresses_node_id: nodeId});
+	}
+
+	function suggestItem(nodeId) {
+		shngPost('', {suggest_item_node_id: nodeId});
+	}
+
+	function copyToClipboard(elementId, btn) {
+		var text = document.getElementById(elementId).innerText;
+		navigator.clipboard.writeText(text).then(function () {
+			var original = btn.innerHTML;
+			btn.innerHTML = '<i class="fas fa-check"></i>&nbsp;{{ _("Kopiert") }}';
+			setTimeout(function () { btn.innerHTML = original; }, 2000);
+		});
 	}
 
 	function removeFabric(nodeId, fabricIndex, label) {
@@ -81,6 +146,16 @@
 		for (var nodeId in data.devices) {
 			setDeviceAvailability(nodeId, data.devices[nodeId]);
 		}
+		for (var key in data.discovery) {
+			shngInsertText('discovery_' + key + '_value', data.discovery[key], 'discoverytable', 2);
+		}
+		(data.late_commission_results || []).forEach(function (r) {
+			if (r.success) {
+				showMatterToast('alert-success', "{{ _('Kopplung (verzögert) erfolgreich') }}: " + r.detail);
+			} else {
+				showMatterToast('alert-warning', "{{ _('Kopplung (verzögert) fehlgeschlagen') }}: " + r.detail);
+			}
+		});
 	}
 
 	function repointAlias(name) {
@@ -94,27 +169,27 @@
 
 	function removeAlias(name) {
 		if (confirm("{{ _('Alias wirklich entfernen?') }} (" + name + ")\n\n" +
-		            "{{ _('Items, die diesen Alias verwenden, behalten die zuletzt bekannte node_id, bis sie umgebogen oder selbst entfernt werden.') }}")) {
+		            "{{ _('Items, die diesen Alias verwenden, behalten die zuletzt bekannte node_id, bis sie umgeleitet oder selbst entfernt werden.') }}")) {
 			shngPost('', {alias_remove_name: name});
 		}
 	}
 </script>
 {% endblock pluginscripts %}
 
-{% set tabcount = 6 %}
+{% set tabcount = 5 %}
 
 {% set tab1title = "<strong>" ~ _('Geräte') ~ "</strong> (" ~ devices|length ~ ")" %}
 {% block bodytab1 %}
 
 	<div class="mb-2">
 		<h5>{{ _('Gerät koppeln') }}</h5>
-		<form method="post" action="">
+		<form method="post" action="" id="pairing_form">
 			<div class="form-row align-items-center">
 				<div class="col-auto">
 					<input type="text" class="form-control" name="pairing_code" placeholder="{{ _('Pairing-Code (manueller Code oder QR-Inhalt)') }}" size="40">
 				</div>
 				<div class="col-auto">
-					<button type="submit" class="btn btn-shng btn-sm"><i class="fas fa-plug"></i>&nbsp;{{ _('Koppeln') }}</button>
+					<button type="submit" id="pairing_submit_btn" class="btn btn-shng btn-sm"><i class="fas fa-plug"></i>&nbsp;{{ _('Koppeln') }}</button>
 				</div>
 			</div>
 		</form>
@@ -151,6 +226,23 @@
 		{% if interview_error %}
 			<div class="alert alert-danger mt-2">{{ _('Neu einlesen fehlgeschlagen') }}: {{ interview_error }}</div>
 		{% endif %}
+		{% if ip_addresses_error %}
+			<div class="alert alert-danger mt-2">{{ _('IP-Adressen konnten nicht gelesen werden') }}: {{ ip_addresses_error }}</div>
+		{% endif %}
+		{% if ip_addresses_result %}
+			<div class="mt-2">
+				<h6>{{ _('Adressen für node_id') }}={{ ip_addresses_result.node_id }}</h6>
+				{% if ip_addresses_result.addresses %}
+					<ul>
+						{% for address in ip_addresses_result.addresses %}
+							<li><code>{{ address }}</code></li>
+						{% endfor %}
+					</ul>
+				{% else %}
+					<p>{{ _('Keine Adresse bekannt (Gerät noch nie erreicht?)') }}</p>
+				{% endif %}
+			</div>
+		{% endif %}
 		{% if fabrics_result %}
 			<div class="mt-2">
 				<h6>{{ _('Fabrics auf node_id') }}={{ fabrics_result.node_id }}</h6>
@@ -178,6 +270,22 @@
 						</tr>
 					{% endfor %}
 				</table>
+			</div>
+		{% endif %}
+		{% if suggested_item_error %}
+			<div class="alert alert-danger mt-2">{{ _('Item-Definition fehlgeschlagen') }}: {{ suggested_item_error }}</div>
+		{% endif %}
+		{% if suggested_item_result %}
+			<div class="mt-2">
+				<h6>{{ _('Item-Definition für node_id') }}={{ suggested_item_result.node_id }}</h6>
+				{% if suggested_item_result.yaml %}
+					<pre id="suggested_item_yaml" class="p-2 bg-light border">{{ suggested_item_result.yaml }}</pre>
+					<button type="button" class="btn btn-shng btn-sm" onclick="copyToClipboard('suggested_item_yaml', this)">
+						<i class="fas fa-copy"></i>&nbsp;{{ _('Kopieren') }}
+					</button>
+				{% else %}
+					<p>{{ _('Keine bekannte Struktur für dieses Gerät - siehe Discovery-Tab für alle Rohdaten.') }}</p>
+				{% endif %}
 			</div>
 		{% endif %}
 	</div>
@@ -213,6 +321,12 @@
 					</button>
 					<button type="button" id="{{ device.node_id }}_interview_btn" class="btn btn-shng btn-sm" onclick="interviewNode({{ device.node_id }})" title="{{ _('Alle Attribute frisch vom Gerät lesen, ersetzt den zwischengespeicherten Stand') }}" {% if not device.available %}disabled{% endif %}>
 						<i class="fas fa-sync-alt"></i>&nbsp;{{ _('Neu einlesen') }}
+					</button>
+					<button type="button" class="btn btn-shng btn-sm" onclick="showIpAddresses({{ device.node_id }})" title="{{ _('Aktuell verbundene Adresse(n)/Netzwerk-Interface anzeigen - auch bei nicht erreichbarem Gerät (letzter bekannter Stand)') }}">
+						<i class="fas fa-network-wired"></i>&nbsp;{{ _('Adressen') }}
+					</button>
+					<button type="button" class="btn btn-shng btn-sm" onclick="suggestItem({{ device.node_id }})" title="{{ _('Item-Definition für dieses Gerät anzeigen (Copy-Paste)') }}">
+						<i class="fas fa-code"></i>&nbsp;{{ _('Item-Definition') }}
 					</button>
 					<button type="button" class="btn btn-shng btn-sm" onclick="unlinkDevice({{ device.node_id }}, '{{ device.label }}')" title="{{ _('Funktioniert auch bei nicht erreichbarem Gerät (lokales Vergessen als Fallback)') }}">
 						<i class="fas fa-unlink"></i>&nbsp;{{ _('Entkoppeln') }}
@@ -276,7 +390,7 @@
 				<td class="py-1">{{ row.endpoint_id }}</td>
 				<td class="py-1">{{ row.cluster_name }} ({{ row.cluster_id }})</td>
 				<td class="py-1">{{ row.attribute_name }} ({{ row.attribute_id }})</td>
-				<td class="py-1">{{ row.value }}</td>
+				<td class="py-1" id="discovery_{{ row.node_id }}_{{ row.path }}_value">{{ row.value }}</td>
 				<td class="py-1">{{ row.unit }}</td>
 				<td class="py-1">{{ row.path }}</td>
 			</tr>
@@ -288,7 +402,7 @@
 {% block bodytab4 %}
 	<div class="mb-2">
 		{{ _('Namen statt node_id in Items verwenden (matter_alias) - übersteht ein Rekommissionieren, das die node_id ändert. Alias-Definitionen sind Kind-Items unter') }}
-		<code>{{ p.alias_base_item }}</code>{{ _(', muss bereits existieren.') }}
+		<code>{{ p.server_alias_base_item }}</code>{{ _(', muss bereits existieren.') }}
 	</div>
 
 	{% if alias_error %}
@@ -339,13 +453,13 @@
 				</td>
 				<td class="py-1">
 					<select class="form-control d-inline-block" style="width:auto;" id="alias_repoint_select_{{ name }}">
-						<option value="">{{ _('umbiegen auf ...') }}</option>
+						<option value="">{{ _('umleiten auf ...') }}</option>
 						{% for device in devices %}
 							<option value="{{ device.node_id }}">{{ device.node_id }} - {{ device.vendor }} {{ device.product }}</option>
 						{% endfor %}
 					</select>
-					<button type="button" class="btn btn-shng btn-sm" onclick="repointAlias('{{ name }}')" title="{{ _('Alias auf anderes Gerät umbiegen - kein Neustart nötig') }}">
-						<i class="fas fa-exchange-alt"></i>&nbsp;{{ _('Umbiegen') }}
+					<button type="button" class="btn btn-shng btn-sm" onclick="repointAlias('{{ name }}')" title="{{ _('Alias auf anderes Gerät umleiten - kein Neustart nötig') }}">
+						<i class="fas fa-exchange-alt"></i>&nbsp;{{ _('Umleiten') }}
 					</button>
 					<button type="button" class="btn btn-shng btn-sm" onclick="removeAlias('{{ name }}')">
 						<i class="fas fa-trash"></i>&nbsp;{{ _('Entfernen') }}
@@ -356,17 +470,18 @@
 	</table>
 {% endblock bodytab4 %}
 
-{% set tab5title = "<strong>" ~ _('Item-Generator') ~ "</strong>" %}
+{% set tab5title = "<strong>" ~ _('Info') ~ "</strong>" %}
 {% block bodytab5 %}
 	<div class="mb-2">
-		{{ _('Vorschlag für items/*.yaml, generiert aus den oben entdeckten Nodes. Zum Übernehmen kopieren und in die eigene Item-Konfiguration einfügen - das Plugin schreibt keine Dateien selbst.') }}
+		{{ _('Endpoint/Cluster-Discovery-Browser + Item-Definition (Copy-Paste-YAML, Button "Item-Definition" je Gerät).') }}
 	</div>
-	<div class="container-fluid m-2"><pre>{{ item_generator_yaml }}</pre></div>
-{% endblock bodytab5 %}
-
-{% set tab6title = "<strong>" ~ _('Info') ~ "</strong>" %}
-{% block bodytab6 %}
 	<div class="mb-2">
-		{{ _('Phase 2: Endpoint/Cluster-Discovery-Browser + Item-Generator (Copy-Paste-YAML). matter_switch deckt bislang nur den OnOff-Cluster ab - andere Cluster brauchen die low-level Attribute (matter_attribute/matter_command/matter_command_false) je nach gewünschter Aktion.') }}
+		{{ _('Eine Item-Definition existiert nur für Endpoints mit einem Cluster, für den eine Struktur hinterlegt ist (aktuell: OnOff, ElectricalPowerMeasurement, BooleanState, TemperatureMeasurement).') }}
 	</div>
-{% endblock bodytab6 %}
+	<div class="mb-2">
+		{{ _('Hat ein Gerät mehrere solcher Endpoints (z.B. eine Bridge), erscheint pro Endpoint ein eigener Item-Block.') }}
+	</div>
+	<div class="mb-2">
+		{{ _('Für alles andere die Discovery-Tabelle nutzen und die low-level Attribute (matter_attribute/matter_command/matter_command_false) direkt setzen.') }}
+	</div>
+{% endblock bodytab5 %}

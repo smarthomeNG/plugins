@@ -41,7 +41,8 @@ Thumbs.db
 # CI lints with ruff, not pyright; regenerate with --apply-create if needed
 /typings/
 
-# Node sidecar dependency for the matter plugin (dev/matter/matter-integration-plan.md
-# in the core repo) - package.json and package-lock.json are tracked for
-# reproducible installs, the installed package itself is not.
+# Node dependencies for the matter plugin's server and bridge roles
+# (dev/matter/matter-integration-plan.md in the core repo) - package.json
+# and package-lock.json are tracked for reproducible installs, the
+# installed packages themselves are not.
 matter/sidecar/node_modules/

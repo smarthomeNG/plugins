@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2026-      <AUTHOR>                                  <EMAIL>
+#  Copyright 2026-  Sebastian Helms                 Morg @ knx-user-forum
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -36,11 +36,19 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import time
 
 # Backoff schedule for unexpected sidecar exits while the plugin is alive.
 # Caps out rather than growing forever, so a persistently broken sidecar
 # still gets retried occasionally instead of being abandoned.
 RESTART_BACKOFF_SECONDS = (1, 2, 5, 10, 30, 60)
+
+# A process that stayed up at least this long gets treated as a fresh
+# failure, not a continuation of a crash loop - see supervise()'s own
+# comment on the bug this constant fixes (same fix as bridge/sidecar.py's
+# supervise()). Reuses the top of the backoff schedule itself rather than
+# introducing a second, unrelated magic number.
+STABLE_RUN_SECONDS = RESTART_BACKOFF_SECONDS[-1]
 
 # Logged by matter-server itself (matter-server/src/server/WebServer.ts)
 # once its WS/HTTP port is bound - confirmed against the installed
@@ -56,7 +64,7 @@ class SidecarStartError(Exception):
     """Raised when the sidecar process/entry file cannot be found or fails to start."""
 
 
-class MatterSidecar:
+class MatterServerSidecar:
     """Owns the lifecycle of one matter-server child process."""
 
     def __init__(
@@ -68,6 +76,8 @@ class MatterSidecar:
         enable_test_net_dcl: bool,
         logger: logging.Logger | None = None,
         primary_interface: str | None = None,
+        fabric_vendor_id: int = 65521,
+        fabric_label: str = 'SmartHomeNG',
     ):
         self.node_binary = node_binary
         self.entry_path = entry_path
@@ -75,6 +85,8 @@ class MatterSidecar:
         self.storage_path = storage_path
         self.enable_test_net_dcl = enable_test_net_dcl
         self.logger = logger or logging.getLogger(__name__)
+        self.fabric_vendor_id = fabric_vendor_id
+        self.fabric_label = fabric_label
         # On a multi-interface host, matter-server can pick an interface whose
         # link-local/IPv6 addresses aren't actually reachable for the target
         # device, causing PASE to time out against "unreachable" addresses
@@ -99,15 +111,17 @@ class MatterSidecar:
             self.storage_path,
             '--log-level',
             'info',
-            # matter-server is Home Assistant's own project - its unpinned default
-            # fabric label is literally "HomeAssistant" (ConfigStorage.ts), which
-            # every other controller/app sees when listing a device's fabrics
-            # (e.g. this plugin's own Fabrics webif tab, or Apple Home). Pinning
-            # this - confirmed via MatterServer.ts to apply before the controller
-            # is even constructed, not just cosmetic - avoids shng's own fabric
-            # being mislabeled as a different project entirely.
+            # matter-server's own unpinned default is "HomeAssistant" (ConfigStorage.ts) - every
+            # other controller listing this fabric would otherwise see it mislabeled.
             '--default-fabric-label',
-            'SmartHomeNG',
+            self.fabric_label,
+            # Only takes effect the first time a fabric is created (matter.js persists vendorId into
+            # the fabric's NOC at that point, read from storage on every later run regardless of this
+            # flag) - changing it on an already-commissioned install needs a storage wipe + re-pairing
+            # every device to have any effect. Default 65521 (0xFFF1) is the Matter spec's own
+            # test-vendor range, matter-server's own default - real vendor IDs are CSA-assigned.
+            '--vendorid',
+            str(self.fabric_vendor_id),
         ]
         if self.enable_test_net_dcl:
             args.append('--enable-test-net-dcl')
@@ -126,7 +140,22 @@ class MatterSidecar:
         self._stopping = False
         try:
             self._process = await asyncio.create_subprocess_exec(
-                self.node_binary, *self._build_args(), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
+                self.node_binary,
+                *self._build_args(),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+                # Without this, the child inherits the parent's (POSIX) process group - a
+                # terminal Ctrl-C's SIGINT then reaches it directly, independent of and
+                # racing against shng's own graceful, sequential per-plugin shutdown. Caught
+                # live: with multiple plugin instances configured, shng shut them down one at
+                # a time (~10s apart here) - the still-running instance's sidecar died from
+                # the direct SIGINT immediately, got auto-respawned by supervise() (its own
+                # _stopping was still False, since THIS instance's cleanup() hadn't run yet),
+                # and only settled once shng's shutdown actually reached it. start_new_session
+                # detaches the child into its own session/process group, so only our own
+                # explicit terminate()/kill() below (which target the pid directly, not the
+                # group) can stop it - not a stray signal aimed at the whole group.
+                start_new_session=True,
             )
         except FileNotFoundError as ex:
             raise SidecarStartError(
@@ -134,12 +163,12 @@ class MatterSidecar:
                 'and that a supported Node.js version is installed - see user_doc.rst.'
             ) from ex
 
-        self.logger.info(f'matter-server sidecar started (pid={self._process.pid}, port={self.port})')
+        self.logger.info(f'matter server sidecar started (pid={self._process.pid}, port={self.port})')
         try:
             await asyncio.wait_for(self._wait_until_ready(), timeout=READY_TIMEOUT_SECONDS)
         except asyncio.TimeoutError:
             self.logger.warning(
-                f'matter-server sidecar did not log readiness within {READY_TIMEOUT_SECONDS}s, '
+                f'matter server sidecar did not log readiness within {READY_TIMEOUT_SECONDS}s, '
                 'proceeding anyway - the connect retry loop will catch up if it is just slow'
             )
 
@@ -174,10 +203,10 @@ class MatterSidecar:
             try:
                 await asyncio.wait_for(self._process.wait(), timeout=timeout)
             except asyncio.TimeoutError:
-                self.logger.warning('matter-server sidecar did not exit in time, killing it')
+                self.logger.warning('matter server sidecar did not exit in time, killing it')
                 self._process.kill()
                 await self._process.wait()
-        self.logger.info('matter-server sidecar stopped')
+        self.logger.info('matter server sidecar stopped')
         self._process = None
 
     async def supervise(self) -> None:
@@ -185,20 +214,33 @@ class MatterSidecar:
         Run forever (until stop() is called): restart the sidecar with
         backoff whenever it exits unexpectedly. Call as a background task
         alongside the plugin's main connection loop, not awaited directly.
+
+        Backoff only actually escalates for a genuine crash loop, not any
+        restart - attempt is reset to 0 only once a process has stayed up at
+        least STABLE_RUN_SECONDS, not unconditionally on every start(). A
+        prior version reset it right after every start() regardless of how
+        long that process then stayed up, which meant a sidecar dying
+        immediately, repeatedly, always hit the shortest (1s) delay - never
+        actually backing off despite RESTART_BACKOFF_SECONDS climbing to 60s
+        (the same bug was independently present in bridge/sidecar.py's copy
+        of this method).
         """
         attempt = 0
         while not self._stopping:
             if self._process is None:
                 await self.start()
-                attempt = 0
 
+            started_at = time.monotonic()
             returncode = await self._process.wait()
             if self._stopping:
                 return
 
-            self.logger.warning(f'matter-server sidecar exited unexpectedly (code={returncode})')
+            if time.monotonic() - started_at >= STABLE_RUN_SECONDS:
+                attempt = 0
+
+            self.logger.warning(f'matter server sidecar exited unexpectedly (code={returncode})')
             self._process = None
             delay = RESTART_BACKOFF_SECONDS[min(attempt, len(RESTART_BACKOFF_SECONDS) - 1)]
             attempt += 1
-            self.logger.info(f'restarting matter-server sidecar in {delay}s (attempt {attempt})')
+            self.logger.info(f'restarting matter server sidecar in {delay}s (attempt {attempt})')
             await asyncio.sleep(delay)

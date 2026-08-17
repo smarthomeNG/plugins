@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2026-      <AUTHOR>                                  <EMAIL>
+#  Copyright 2026-  Sebastian Helms                 Morg @ knx-user-forum
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -38,6 +38,12 @@ from typing import Any, Callable
 
 import websockets
 
+# Bare `import websockets` alone does NOT expose `.exceptions` (this version's
+# top-level package lazy-loads submodules via its own __getattr__ -
+# `websockets.exceptions.ConnectionClosed` raises AttributeError without this
+# explicit import, despite `websockets.connect` below working fine either way).
+from websockets.exceptions import ConnectionClosed
+
 
 class MatterCommandError(Exception):
     """Raised when the sidecar answers a command with an error_code."""
@@ -63,14 +69,28 @@ class MatterServerClient:
     directly.
     """
 
-    def __init__(self, url: str, on_event: Callable[[dict], None], logger: logging.Logger | None = None):
+    def __init__(
+        self,
+        url: str,
+        on_event: Callable[[dict], None],
+        on_late_result: Callable[[str, dict], None] | None = None,
+        logger: logging.Logger | None = None,
+    ):
         self.url = url
         self._on_event = on_event
+        self._on_late_result = on_late_result
         self.logger = logger or logging.getLogger(__name__)
 
         self._ws = None
         self._receive_task: asyncio.Task | None = None
-        self._pending: dict[str, asyncio.Future] = {}
+        self._pending: dict[str, tuple[asyncio.Future, str]] = {}
+        # message_id -> (command, timed_out_at) for a request send_command() gave up
+        # waiting on - matter-server can still answer it later (a real commission_with_code
+        # call was observed taking ~3 minutes end to end; see commission_with_code's own
+        # docstring). Without this, that answer arrives with no pending future to resolve
+        # and used to be silently dropped as "unsolicited". Pruned by age, not by count -
+        # this is expected to stay near-empty in normal operation.
+        self._timed_out: dict[str, tuple[str, float]] = {}
         self._msg_id_counter = itertools.count(1)
         self.server_info: dict | None = None
 
@@ -94,10 +114,16 @@ class MatterServerClient:
         if self._ws is not None:
             await self._ws.close()
             self._ws = None
-        for future in self._pending.values():
+        for future, _command in self._pending.values():
             if not future.done():
                 future.cancel()
         self._pending.clear()
+        self._timed_out.clear()
+
+    def _remember_timeout(self, message_id: str, command: str) -> None:
+        now = asyncio.get_event_loop().time()
+        self._timed_out = {mid: v for mid, v in self._timed_out.items() if now - v[1] < 600}
+        self._timed_out[message_id] = (command, now)
 
     async def _receive_loop(self) -> None:
         try:
@@ -109,10 +135,24 @@ class MatterServerClient:
                     continue
 
                 message_id = message.get('message_id')
-                future = self._pending.pop(message_id, None) if message_id is not None else None
-                if future is not None:
+                pending = self._pending.pop(message_id, None) if message_id is not None else None
+                if pending is not None:
+                    future, _command = pending
                     if not future.done():
                         future.set_result(message)
+                    continue
+
+                late = self._timed_out.pop(message_id, None) if message_id is not None else None
+                if late is not None:
+                    command, _timed_out_at = late
+                    self.logger.warning(
+                        f"late response for '{command}' arrived after this client's own timeout: {message}"
+                    )
+                    if self._on_late_result is not None:
+                        try:
+                            self._on_late_result(command, message)
+                        except Exception:
+                            self.logger.exception('matter-server late-result handler raised')
                 elif 'event' in message:
                     try:
                         self._on_event(message)
@@ -122,6 +162,8 @@ class MatterServerClient:
                     self.logger.debug(f'unsolicited/unmatched message from matter-server: {message}')
         except asyncio.CancelledError:
             raise
+        except ConnectionClosed as ex:
+            self.logger.warning(f'matter-server connection closed ({ex}) - reconnecting on the next retry cycle')
         except Exception:
             self.logger.exception('matter-server receive loop terminated unexpectedly')
 
@@ -131,11 +173,14 @@ class MatterServerClient:
 
         message_id = str(next(self._msg_id_counter))
         future: asyncio.Future = asyncio.get_event_loop().create_future()
-        self._pending[message_id] = future
+        self._pending[message_id] = (future, command)
 
         await self._ws.send(json.dumps({'message_id': message_id, 'command': command, 'args': args}))
         try:
             message = await asyncio.wait_for(future, timeout=timeout)
+        except asyncio.TimeoutError:
+            self._remember_timeout(message_id, command)
+            raise
         finally:
             self._pending.pop(message_id, None)
 
@@ -145,8 +190,24 @@ class MatterServerClient:
 
     # -- convenience wrappers for the commands exercised in Phase 0 --
 
-    async def commission_with_code(self, code: str, network_only: bool = True) -> dict:
-        return await self.send_command('commission_with_code', {'code': code, 'network_only': network_only})
+    async def commission_with_code(self, code: str, network_only: bool = True, timeout: float = 300.0) -> dict:
+        """
+        300s, not send_command()'s 30s default: matter-server's own commissioner
+        tries every discovered candidate address with a 30s timeout each
+        (ControllerCommissioner.js, Seconds(30)) and a later phase explicitly
+        budgets up to 255s ("two ~2-minute server-side retry windows", same
+        source) before giving up - a real commission attempt was observed
+        taking ~3 minutes end to end before matter-server's own final answer
+        arrived, well past the old 30s default. 300s is a safety margin above
+        that documented ceiling, not a value derived from interface/candidate
+        count - more candidates change how many attempts happen, not the
+        per-attempt or overall ceiling, which matter-server controls either
+        way. Even if this timeout is still hit, the answer isn't lost - see
+        _remember_timeout()/on_late_result.
+        """
+        return await self.send_command(
+            'commission_with_code', {'code': code, 'network_only': network_only}, timeout=timeout
+        )
 
     async def get_nodes(self, only_available: bool = False) -> list:
         return await self.send_command('get_nodes', {'only_available': only_available})
@@ -257,3 +318,17 @@ class MatterServerClient:
         a refresh short of restarting the sidecar.
         """
         await self.send_command('interview_node', {'node_id': node_id})
+
+    async def get_node_ip_addresses(self, node_id: int, prefer_cache: bool = True) -> list[str]:
+        """
+        The address(es) currently in use (or last known, if prefer_cache) for
+        this node's operational session, each still carrying its network
+        interface as an IPv6 zone suffix (e.g. "fe80::...%en0") - always
+        scoped=True on the WS call, since the interface name is the entire
+        point of exposing this (diagnosing which of several host interfaces
+        actually got used, not just the bare address WebSocketControllerHandler.ts's
+        own scoped=False default would strip). #handleGetNodeIpAddresses.
+        """
+        return await self.send_command(
+            'get_node_ip_addresses', {'node_id': node_id, 'prefer_cache': prefer_cache, 'scoped': True}
+        )

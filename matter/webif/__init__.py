@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2026-      <AUTHOR>                                  <EMAIL>
+#  Copyright 2026-  Sebastian Helms                 Morg @ knx-user-forum
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
 #
-#  Web interface for the Matter plugin: pairing-code form (Phase 1),
-#  endpoint/cluster discovery browser + copy-paste item-generator YAML
-#  (Phase 2, see plugins/matter/discovery.py for why this is generated
-#  text rather than shng's item_structs mechanism or a written file).
+#  Web interface for the Matter plugin: pairing-code form, endpoint/cluster
+#  discovery browser, and a per-device "suggest an item" action producing
+#  copy-paste struct-reference YAML (see server/discovery.py's own
+#  docstring for why this suggests plugin.yaml item_structs references
+#  rather than a full per-attribute dump or a written file).
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -42,9 +43,24 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
+        # Post-Redirect-Get support: index() renders directly after a POST
+        # action, so the last request in the browser's history was a POST -
+        # pressing F5 asks to resubmit it (e.g. re-commissioning a device),
+        # which is essentially always the wrong thing to do. Every action's
+        # result is stashed here and index() redirects to itself afterward,
+        # so the browser's last request becomes a plain GET; the redirected-to
+        # GET shows the stashed result once, then clears it - a minimal
+        # hand-rolled flash message, not CherryPy sessions (unused anywhere
+        # else in shng - not worth adding for one plugin). Single shared slot,
+        # not per-session: fine for a single-admin local tool, would show the
+        # wrong tab's result if two browser tabs both submitted actions around
+        # the same time - an accepted, narrow edge case, not engineered around.
+        self._flash: dict | None = None
+
     @cherrypy.expose
     def index(
         self,
+        view=None,
         reload=None,
         pairing_code=None,
         unlink_node_id=None,
@@ -53,29 +69,85 @@ class WebInterface(SmartPluginWebIf):
         remove_fabric_node_id=None,
         remove_fabric_index=None,
         interview_node_id=None,
+        ip_addresses_node_id=None,
         alias_create_name=None,
         alias_create_node_id=None,
         alias_repoint_name=None,
         alias_repoint_node_id=None,
         alias_remove_name=None,
+        open_bridge_window=None,
+        remove_bridge_fabric_index=None,
+        suggest_item_node_id=None,
     ):
         """
-        Render the plugin's index page. A POST with `pairing_code` (via the
-        page's own pairing form) triggers commissioning; a POST with
-        `unlink_node_id` (via a per-row button on the devices table)
-        decommissions that node; `share_node_id` opens a fresh commissioning
-        window on that node (for a second controller, e.g. Apple Home, to
-        join); `fabrics_node_id` lists that node's current fabrics;
-        `remove_fabric_node_id`+`remove_fabric_index` removes one;
-        `interview_node_id` forces a fresh attribute read, replacing
-        matter-server's cached copy the Devices/Discovery tabs otherwise
-        show unchanged since the last commission/reconnect;
-        `alias_create_name`+`alias_create_node_id` creates a new alias
-        definition item; `alias_repoint_name`+`alias_repoint_node_id`
-        changes which node_id an existing alias points to;
-        `alias_remove_name` deletes an alias definition - all happen
-        before the page is (re-)rendered.
+        Render the plugin's index page - the server-role view by default, or
+        the separate bridge-role view when `view=bridge` (see index.html's
+        "Bridge" header button and bridge.html's own "Server" button back -
+        a distinct top-level page, not another tab, so the bridge role isn't
+        structurally capped to competing with the server role's 6 tabs for
+        space; same mechanism the `database` plugin uses for its item-detail
+        drill-down). A POST with `pairing_code` (via the page's own pairing
+        form) triggers commissioning; a POST with `unlink_node_id` (via a
+        per-row button on the devices table) decommissions that node;
+        `share_node_id` opens a fresh commissioning window on that node (for
+        a second controller, e.g. Apple Home, to join); `fabrics_node_id`
+        lists that node's current fabrics; `remove_fabric_node_id`+
+        `remove_fabric_index` removes one; `interview_node_id` forces a
+        fresh attribute read, replacing matter-server's cached copy the
+        Devices/Discovery tabs otherwise show unchanged since the last
+        commission/reconnect; `ip_addresses_node_id` looks up which address
+        (and network interface) that node's operational session is
+        currently using - on-demand, not shown by default, since it's a
+        diagnostic for a specific misbehaving device, not steady-state info
+        (see client.py's get_node_ip_addresses()); `alias_create_name`+
+        `alias_create_node_id` creates a new alias definition item;
+        `alias_repoint_name`+`alias_repoint_node_id` changes which node_id
+        an existing alias points to; `alias_remove_name` deletes an alias
+        definition; `suggest_item_node_id` computes the copy-paste item
+        suggestion for that node (see server/discovery.py's
+        generate_suggested_item()); `open_bridge_window` reopens the bridge's own basic
+        commissioning window (view=bridge only); `remove_bridge_fabric_index`
+        removes one controller from the bridge (view=bridge only) - all
+        happen before the page is (re-)rendered.
+
+        A POST (any action param set) redirects to this same page afterward
+        instead of rendering directly - see __init__'s self._flash comment
+        for why. Plain GETs (including the one the browser makes right after
+        that redirect) fall through to the render at the bottom, showing
+        whatever the redirect just stashed - once. A bridge-view POST
+        redirects to `index?view=bridge`, not bare `index`, so the browser
+        lands back on the bridge view, not the server view.
         """
+        if cherrypy.request.method != 'POST':
+            flash = self._flash or {}
+            self._flash = None
+            if view == 'bridge':
+                return self._render_bridge(flash)
+            return self._render(flash)
+
+        if view == 'bridge':
+            open_bridge_window_error = None
+            if open_bridge_window:
+                try:
+                    self.plugin.open_bridge_commissioning_window()
+                except Exception as ex:
+                    self.logger.error(f'opening bridge commissioning window failed: {ex}')
+                    open_bridge_window_error = str(ex)
+
+            remove_bridge_fabric_error = None
+            if remove_bridge_fabric_index is not None:
+                try:
+                    self.plugin.remove_bridge_fabric(int(remove_bridge_fabric_index))
+                except Exception as ex:
+                    self.logger.error(f'removing bridge fabric {remove_bridge_fabric_index} failed: {ex}')
+                    remove_bridge_fabric_error = str(ex)
+
+            self._flash = {
+                'open_bridge_window_error': open_bridge_window_error,
+                'remove_bridge_fabric_error': remove_bridge_fabric_error,
+            }
+            raise cherrypy.HTTPRedirect('index?view=bridge')
+
         commission_error = None
         commission_result = None
         pairing_code = (pairing_code or '').strip()
@@ -139,6 +211,18 @@ class WebInterface(SmartPluginWebIf):
                 self.logger.error(f'interviewing node {interview_node_id} failed: {ex}')
                 interview_error = str(ex)
 
+        ip_addresses_error = None
+        ip_addresses_result = None
+        if ip_addresses_node_id:
+            try:
+                ip_addresses_result = {
+                    'node_id': int(ip_addresses_node_id),
+                    'addresses': self.plugin.get_node_ip_addresses(int(ip_addresses_node_id)),
+                }
+            except Exception as ex:
+                self.logger.error(f'getting IP addresses for node {ip_addresses_node_id} failed: {ex}')
+                ip_addresses_error = str(ex)
+
         alias_error = None
         if alias_create_name and alias_create_node_id:
             try:
@@ -159,23 +243,72 @@ class WebInterface(SmartPluginWebIf):
                 self.logger.error(f"removing alias '{alias_remove_name}' failed: {ex}")
                 alias_error = str(ex)
 
+        suggested_item_error = None
+        suggested_item_result = None
+        if suggest_item_node_id:
+            try:
+                suggested_item_result = {
+                    'node_id': int(suggest_item_node_id),
+                    'yaml': self.plugin.get_suggested_item_yaml(int(suggest_item_node_id)),
+                }
+            except Exception as ex:
+                self.logger.error(f'suggesting an item for node {suggest_item_node_id} failed: {ex}')
+                suggested_item_error = str(ex)
+
+        self._flash = {
+            'commission_result': commission_result,
+            'commission_error': commission_error,
+            'unlink_error': unlink_error,
+            'share_result': share_result,
+            'share_error': share_error,
+            'fabrics_result': fabrics_result,
+            'fabrics_error': fabrics_error,
+            'interview_error': interview_error,
+            'ip_addresses_result': ip_addresses_result,
+            'ip_addresses_error': ip_addresses_error,
+            'alias_error': alias_error,
+            'suggested_item_result': suggested_item_result,
+            'suggested_item_error': suggested_item_error,
+        }
+        raise cherrypy.HTTPRedirect('index')
+
+    def _render(self, flash: dict):
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(
             p=self.plugin,
             items=self.plugin.get_matter_items(),
             devices=self.plugin.get_node_summaries(),
-            commission_result=commission_result,
-            commission_error=commission_error,
-            unlink_error=unlink_error,
-            share_result=share_result,
-            share_error=share_error,
-            fabrics_result=fabrics_result,
-            fabrics_error=fabrics_error,
-            interview_error=interview_error,
+            commission_result=flash.get('commission_result'),
+            commission_error=flash.get('commission_error'),
+            unlink_error=flash.get('unlink_error'),
+            share_result=flash.get('share_result'),
+            share_error=flash.get('share_error'),
+            fabrics_result=flash.get('fabrics_result'),
+            fabrics_error=flash.get('fabrics_error'),
+            interview_error=flash.get('interview_error'),
+            ip_addresses_result=flash.get('ip_addresses_result'),
+            ip_addresses_error=flash.get('ip_addresses_error'),
             aliases=self.plugin.get_aliases(),
-            alias_error=alias_error,
+            alias_error=flash.get('alias_error'),
             discovery_rows=self.plugin.get_discovery_rows(),
-            item_generator_yaml=self.plugin.get_item_generator_yaml(),
+            suggested_item_result=flash.get('suggested_item_result'),
+            suggested_item_error=flash.get('suggested_item_error'),
+        )
+
+    def _render_bridge(self, flash: dict):
+        bridge_status = self.plugin.get_bridge_status()
+        # Computed here, not in the template, for the same reason share_result's qr_svg
+        # already is - _qr_svg() needs self, not available as a bare Jinja filter.
+        bridge_qr_svg = self._qr_svg(bridge_status['qr_pairing_code']) if bridge_status.get('available') else None
+        tmpl = self.tplenv.get_template('bridge.html')
+        return tmpl.render(
+            p=self.plugin,
+            bridge_status=bridge_status,
+            bridge_qr_svg=bridge_qr_svg,
+            bridge_fabrics=self.plugin.get_bridge_fabrics(),
+            bridge_items=self.plugin.get_bridge_items(),
+            open_bridge_window_error=flash.get('open_bridge_window_error'),
+            remove_bridge_fabric_error=flash.get('remove_bridge_fabric_error'),
         )
 
     @cherrypy.expose
@@ -183,16 +316,37 @@ class WebInterface(SmartPluginWebIf):
         """
         Periodic live-update data for the standard shng webif auto-refresh
         mechanism (see doc/user/.../webinterface_automatic_update.rst) -
-        item values (Items tab) and device availability (Devices tab,
-        drives disabling Share/Fabrics/Neu einlesen while a device is
-        unreachable, see index.html). Both reads are cheap: matter-server's
-        own get_nodes() is a synchronous local cache read, no live query to
-        the actual devices - safe at the default update_interval.
+        item values (Items tab), device availability (Devices tab, drives
+        disabling Share/Fabrics/Neu einlesen while a device is unreachable,
+        see index.html), and raw discovery values (Discovery tab). All three
+        are cheap: matter-server's own get_nodes() is a synchronous local
+        cache read, no live query to the actual devices - safe at the
+        default update_interval. 'discovery' is keyed the same way the
+        Discovery table's own row IDs are built (index.html), node_id and
+        path joined with '_' - path alone ("endpoint/cluster/attribute")
+        isn't unique across nodes, only per-node.
+
+        Discovery values only change when a device reports a new value on
+        its own (matter-server pushes those into its cache asynchronously) or
+        after a manual "Neu einlesen" - this poll never triggers a fresh
+        device read itself, same "cached, not live-queried" contract the
+        Discovery tab's own caption already states. Payload size grows with
+        total known attribute count across every commissioned node, unlike
+        items/devices which stay proportional to configured items/devices -
+        fine at today's device counts, worth revisiting if that ever becomes
+        large enough to matter.
         """
         if dataSet is None:
             data = {
                 'items': {item.property.path: item() for item in self.plugin.get_matter_items()},
                 'devices': {device['node_id']: device['available'] for device in self.plugin.get_node_summaries()},
+                'discovery': {
+                    f'{row["node_id"]}_{row["path"]}': row['value'] for row in self.plugin.get_discovery_rows()
+                },
+                # Drained once, not re-sent on the next poll - a commission_with_code answer
+                # that arrived after this client's own timeout already gave up on it (see
+                # server/client.py's _timed_out/on_late_result). Almost always empty.
+                'late_commission_results': self.plugin.get_late_commission_results(),
             }
             try:
                 return json.dumps(data)

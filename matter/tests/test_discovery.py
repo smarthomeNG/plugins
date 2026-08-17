@@ -10,7 +10,7 @@ real device this was captured from), not a fabricated shape.
 
 import ruamel.yaml as yaml  # not pyyaml - see discovery.py's import comment
 
-from plugins.matter.discovery import discovery_rows, generate_item_yaml, node_summary
+from plugins.matter.server.discovery import discovery_rows, generate_suggested_item, node_summary
 
 SAMPLE_NODE = {
     'node_id': 1,
@@ -20,7 +20,7 @@ SAMPLE_NODE = {
         '0/40/3': 'Shelly Plug M Gen3',
         '0/40/5': '',  # NodeLabel, unset - falls back to product name
         # global/metadata attributes present on real clusters - should show
-        # up in discovery_rows() but never in generate_item_yaml().
+        # up in discovery_rows() but never in generate_suggested_item().
         '0/40/65533': 3,
         '0/29/0': [{'0': 22, '1': 1}],  # RootNode device type on endpoint 0 - skipped for device_type
         '1/29/0': [{'0': 266, '1': 1}],  # On/Off Plug-in Unit device type on endpoint 1
@@ -30,8 +30,10 @@ SAMPLE_NODE = {
         '1/144/11': 240623,
         '1/144/17': None,
         '1/144/65533': 1,
-        # a cluster with ONLY global attributes - should be dropped entirely
-        # from the generated item tree, not left as an empty block.
+        # a cluster with no CLUSTER_STRUCTS entry - should never appear in a suggestion, whatever
+        # its own attributes look like (see clusters.py's own docstring: unregistered = real gap,
+        # covered by the Discovery tab instead, not something generate_suggested_item() tries to
+        # approximate).
         '1/999/65533': 2,
     },
 }
@@ -70,73 +72,90 @@ def test_discovery_rows_preserve_null_values():
     assert rows[(144, 17)]['value'] is None
 
 
-def test_generate_item_yaml_is_valid_yaml():
-    text = generate_item_yaml(SAMPLE_NODE)
+def test_generate_suggested_item_combined_device_lists_both_structs_in_cluster_id_order():
+    # SAMPLE_NODE has both OnOff (cluster 6) and ElectricalPowerMeasurement (cluster 144) on the
+    # same endpoint - both are CLUSTER_STRUCTS-covered, so both belong in the struct list, lower
+    # cluster_id first.
+    text = generate_suggested_item(SAMPLE_NODE)
     parsed = yaml.safe_load(text)
-    assert 'matter_node_1' in parsed
+    item = parsed['matter_node_1']
+    assert item['struct'] == ['matter.switch', 'matter.electrical_power_measurement']
+    assert item['matter_node'] == 1
+    assert item['matter_endpoint'] == 1
 
 
-def test_generate_item_yaml_shape_for_onoff():
-    # single item using matter_switch - mirrors state AND drives it, plugin
-    # derives attribute/commands internally. Not separate on/off/state
-    # items (could disagree) and not spelled-out matter_attribute/
-    # matter_command/matter_command_false (that's what matter_switch saves
-    # the item config from needing to know).
-    parsed = yaml.safe_load(generate_item_yaml(SAMPLE_NODE))
-    onoff_cluster = parsed['matter_node_1']['endpoint_1']['on_off']
-    on_off_item = onoff_cluster['on_off']
-    assert on_off_item['matter_node'] == 1
-    assert on_off_item['matter_endpoint'] == 1
-    assert on_off_item['matter_cluster'] == 6
-    assert on_off_item['type'] == 'bool'
-    assert on_off_item['matter_switch'] is True
-    assert 'matter_attribute' not in on_off_item
-    assert 'matter_command' not in on_off_item
+def test_generate_suggested_item_ignores_uncovered_cluster():
+    # cluster 999 has no CLUSTER_STRUCTS entry - must never show up in the struct list, regardless
+    # of what attributes it has.
+    text = generate_suggested_item(SAMPLE_NODE)
+    parsed = yaml.safe_load(text)
+    assert 'matter.cluster_999' not in parsed['matter_node_1']['struct']
+    assert all('999' not in ref for ref in parsed['matter_node_1']['struct'])
 
 
-def test_generate_item_yaml_onoff_toggle_stays_separate():
-    # toggle has no "false" counterpart - value-independent by nature, so
-    # it's still its own command-only item, not merged into on_off.
-    parsed = yaml.safe_load(generate_item_yaml(SAMPLE_NODE))
-    onoff_cluster = parsed['matter_node_1']['endpoint_1']['on_off']
-    assert onoff_cluster['toggle']['matter_command'] == 'toggle'
-    assert onoff_cluster['toggle']['matter_cluster'] == 6
-    assert 'matter_attribute' not in onoff_cluster['toggle']
-    assert 'on' not in onoff_cluster
-    assert 'off' not in onoff_cluster
+def test_generate_suggested_item_single_covered_cluster_is_a_bare_string_not_a_list():
+    node = {'node_id': 2, 'available': True, 'attributes': {'1/6/0': False}}
+    parsed = yaml.safe_load(generate_suggested_item(node))
+    assert parsed['matter_node_2']['struct'] == 'matter.switch'
 
 
-def test_generate_item_yaml_toggle_is_a_proper_trigger():
-    # a pure command trigger needs enforce_updates (repeated same-value
-    # writes aren't deduped away) and autotimer (resets back to falsy) to
-    # actually behave like a momentary trigger rather than a static value.
-    parsed = yaml.safe_load(generate_item_yaml(SAMPLE_NODE))
-    toggle_item = parsed['matter_node_1']['endpoint_1']['on_off']['toggle']
-    assert toggle_item['enforce_updates'] is True
-    assert toggle_item['autotimer'] == '1 = 0'
+def test_generate_suggested_item_key_order_is_remark_struct_node_endpoint():
+    # Real user feedback: remark should be immediately identifiable (which physical device),
+    # struct: next (what kind of item this is, self-explanatory via naming), matter_node/
+    # matter_endpoint last (Matter-internal plumbing, least relevant to a human scanning the
+    # block) - not incidental/alphabetical ordering.
+    text = generate_suggested_item(SAMPLE_NODE, device_label='Shelly Plug M Gen3 (Küche)')
+    parsed = yaml.safe_load(text)
+    assert list(parsed['matter_node_1'].keys()) == ['remark', 'struct', 'matter_node', 'matter_endpoint']
 
 
-def test_generate_item_yaml_non_onoff_cluster_gets_no_command_items():
-    parsed = yaml.safe_load(generate_item_yaml(SAMPLE_NODE))
-    power_cluster = parsed['matter_node_1']['endpoint_1']['electrical_power_measurement']
-    assert 'on' not in power_cluster
-    assert power_cluster['active_power']['matter_attribute'] == 8
-    assert power_cluster['rms_voltage']['matter_attribute'] == 11
+def test_generate_suggested_item_remark_leads_with_function_labels_then_device_label():
+    # Real feedback: a bare device-name remark didn't say what a given suggestion actually does
+    # once there was more than one device/suggestion on the page - function label(s) first, then
+    # the device name for disambiguation.
+    parsed = yaml.safe_load(generate_suggested_item(SAMPLE_NODE, device_label='Shelly Plug M Gen3 (Küche)'))
+    assert parsed['matter_node_1']['remark'] == 'Schalter, Energiemessung - Shelly Plug M Gen3 (Küche)'
 
 
-def test_generate_item_yaml_excludes_global_attributes():
-    parsed = yaml.safe_load(generate_item_yaml(SAMPLE_NODE))
-    onoff_cluster = parsed['matter_node_1']['endpoint_1']['on_off']
-    power_cluster = parsed['matter_node_1']['endpoint_1']['electrical_power_measurement']
-    assert 'attr_65528' not in onoff_cluster
-    assert 'attr_65533' not in power_cluster
+def test_generate_suggested_item_no_device_label_still_has_function_label_remark():
+    # remark is no longer conditional on device_label - the function label(s) are always known
+    # here, so remark is always set, just without the trailing device name.
+    parsed = yaml.safe_load(generate_suggested_item(SAMPLE_NODE))
+    assert parsed['matter_node_1']['remark'] == 'Schalter, Energiemessung'
 
 
-def test_generate_item_yaml_drops_cluster_with_only_global_attributes():
-    parsed = yaml.safe_load(generate_item_yaml(SAMPLE_NODE))
-    # cluster 999 on endpoint 1 has only a global attribute (65533) - should
-    # not appear as an empty block, or at all.
-    assert 'cluster_999' not in parsed['matter_node_1']['endpoint_1']
+def test_generate_suggested_item_no_covered_clusters_returns_none():
+    node = {'node_id': 3, 'available': True, 'attributes': {'1/999/65533': 2}}
+    assert generate_suggested_item(node) is None
+
+
+def test_generate_suggested_item_covered_clusters_on_different_endpoints_produce_one_block_each():
+    # OnOff on endpoint 1, ElectricalPowerMeasurement on endpoint 2 - two separate physical signals
+    # on two separate endpoints (unlike SAMPLE_NODE's single-endpoint combined device). Real need:
+    # the bridge role routinely exposes one cluster per endpoint (see the temperature_sensor/contact/
+    # switch bridge fixture below) - each covered endpoint gets its own item block, keyed uniquely
+    # since matter_node_4 alone would collide.
+    node = {'node_id': 4, 'available': True, 'attributes': {'1/6/0': False, '2/144/8': 0}}
+    parsed = yaml.safe_load(generate_suggested_item(node))
+    assert set(parsed.keys()) == {'matter_node_4_ep1', 'matter_node_4_ep2'}
+    assert parsed['matter_node_4_ep1']['struct'] == 'matter.switch'
+    assert parsed['matter_node_4_ep1']['matter_endpoint'] == 1
+    assert parsed['matter_node_4_ep2']['struct'] == 'matter.electrical_power_measurement'
+    assert parsed['matter_node_4_ep2']['matter_endpoint'] == 2
+
+
+def test_generate_suggested_item_bridge_with_three_single_cluster_endpoints():
+    # Real live shape: a bridge exposing a switch, a contact sensor, and a temperature sensor, each
+    # on its own endpoint (bridge.js's BridgedDeviceBasicInformationServer + one device-type cluster
+    # per endpoint) - matches what a real matter2 bridge test instance produced.
+    node = {'node_id': 14, 'available': True, 'attributes': {'2/6/0': False, '3/69/0': False, '4/1026/0': 2150}}
+    parsed = yaml.safe_load(generate_suggested_item(node))
+    assert set(parsed.keys()) == {'matter_node_14_ep2', 'matter_node_14_ep3', 'matter_node_14_ep4'}
+    assert parsed['matter_node_14_ep2']['struct'] == 'matter.switch'
+    assert parsed['matter_node_14_ep3']['struct'] == 'matter.contact'
+    assert parsed['matter_node_14_ep4']['struct'] == 'matter.temperature_sensor'
+    for key in parsed:
+        assert list(parsed[key].keys()) == ['remark', 'struct', 'matter_node', 'matter_endpoint']
 
 
 def test_node_summary_basics():

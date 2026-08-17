@@ -1,0 +1,242 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set update_interval = 0 %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Bridge verbunden') }}</strong></td>
+			<td class="py-1">{% if p.bridge_client and p.bridge_client.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Kommissioniert') }}</strong></td>
+			<td class="py-1">{% if bridge_status.available %}{% if bridge_status.commissioned %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}{% else %}?{% endif %}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Fabrics') }}</strong></td>
+			<td class="py-1">{{ bridge_status.fabric_count if bridge_status.available else '?' }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Freigegebene Items') }}</strong></td>
+			<td class="py-1">{{ bridge_items|length }}</td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+{% block buttons %}
+{{ super() }}
+<button type="button" class="btn btn-shng btn-sm" onclick="location.href='?'">
+	<i class="fas fa-server"></i>&nbsp;{{ _('Server') }}
+</button>
+{% endblock buttons %}
+
+{% block pluginscripts %}
+<script>
+	$(document).ready( function () {
+		$(window).trigger('datatables_defaults');
+		try {
+			$('#bridgefabricstable').DataTable( { order: [[1, 'asc']] } );
+			$('#bridgeitemstable').DataTable( { order: [[1, 'asc']] } );
+		}
+		catch (e) {
+			console.warn("Datatable JS not loaded, showing standard tables without sort/filter " + e);
+		}
+
+		// Plain client-side countdown, not the framework's periodic ajax timer -
+		// this page deliberately keeps that one stopped (see the update_interval=0
+		// workaround below), so the remaining commissioning-window time is just
+		// ticked down locally from the value rendered at page load, with no
+		// server round-trip. Only runs at all if the window was actually open
+		// when the page rendered.
+		//
+		// Must live inside this $(document).ready() block, not run bare at the top
+		// level - this whole <script> is in the pluginscripts block, which base.html
+		// nests inside block scripts, rendered in <head>, well before body/bodytab1
+		// (containing #window_countdown_text/#window_status_indicator) even exists.
+		// A bare IIFE here previously called document.getElementById() before those
+		// elements existed, got null back, and every setInterval tick then silently
+		// threw trying to update it - console-only, no visible symptom beyond the
+		// countdown just never moving. Caught live (reported: "static at 15:00, no
+		// countdown"), not by inspection - same class of DOM-not-ready mistake the
+		// datatables_defaults trigger above this already sidesteps correctly.
+		{% if bridge_status.commissioning_window_open %}
+		(function () {
+			let remainingSeconds = {{ bridge_status.commissioning_window_closes_in_seconds }};
+			const countdownText = document.getElementById('window_countdown_text');
+			const indicator = document.getElementById('window_status_indicator');
+			const timer = setInterval(function () {
+				remainingSeconds -= 1;
+				if (remainingSeconds <= 0) {
+					clearInterval(timer);
+					indicator.innerHTML = '<span style="color: grey;">{{ _("inaktiv") }}</span>';
+					return;
+				}
+				const minutes = Math.floor(remainingSeconds / 60);
+				const seconds = remainingSeconds % 60;
+				countdownText.textContent = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+			}, 1000);
+		})();
+		{% endif %}
+	});
+
+	// This view has update_interval=0 - no live-polling data source of its own - but the
+	// shared framework's periodic shngGetUpdatedData() timer can still start anyway (its
+	// on/off state and interval are read from a cookie shared across this whole plugin's
+	// pages, keyed by plugin name only, not by page/view - a prior visit to the server
+	// view's index.html, which does poll, can leave that cookie set to a real interval).
+	// When that happens, its ajax success handler always calls handleUpdatedData(response) -
+	// every plugin page is expected to define it, even as a no-op, or this throws
+	// ReferenceError on every tick.
+	function handleUpdatedData(response, dataSet=null) {}
+
+	// The ReferenceError above was only half the bug - silencing it stops the crash, but
+	// smarthomeng_pageupdate.js's own $(window).on('load', ...) handler (loaded via
+	// <script src> in base_plugin.html's scripts block, AFTER this page's own inline
+	// pluginscripts in document order) unconditionally restores that same stale
+	// per-plugin cookie and calls refresh.set_interval(cookie_interval, false) - the
+	// periodic timer keeps running regardless of this page's own update_interval=0, still
+	// calling DataTables' own responsive.recalc() (via its shared drawCallback) on every
+	// tick. That recalc racing a user's own click-triggered responsive.recalc() on the
+	// dtr-control column is what actually corrupted DataTables' Responsive state and
+	// dropped a real column's data - confirmed live (Chrome: exception alone explained it;
+	// Firefox: still broken after the exception was silenced, pointing at this second,
+	// independent cause).
+	//
+	// A same-priority $(window).on('load', ...) handler here can't fix this: DOM/jQuery
+	// fire same-event listeners in registration order, and smarthomeng_pageupdate.js's
+	// <script> tag - hence its handler's registration - comes after this block's own
+	// inline script in the page, so its handler would always run after (and clobber) one
+	// registered here. Deferred via setTimeout(0) instead, to run in a later macrotask -
+	// strictly after every synchronous 'load' handler, including that one, has already
+	// finished - regardless of registration order. Does not touch the cookie itself
+	// (only this page's own in-memory timer state) - overwriting it would also disable
+	// index.html's own legitimate auto-refresh the next time that page loads.
+	$(window).on('load', function () {
+		setTimeout(function () {
+			window.update_active = false;
+			refresh.stop();
+		}, 0);
+	});
+
+	// '?view=bridge' explicitly, not '' - an empty action *should* resolve to the current
+	// URL including its query string per spec, but that leaves the POST's routing entirely
+	// dependent on this exact page having been reached via a URL that still has ?view=bridge
+	// in it, which isn't guaranteed (and, if it silently doesn't, index()'s own view=='bridge'
+	// check fails, falling through to the server-role branch's plain 'index' redirect - the
+	// user lands back on the server view with no error, looking exactly like the action did
+	// nothing). Spelling out the destination removes that dependency entirely.
+	function openBridgeWindow() {
+		shngPost('?view=bridge', {open_bridge_window: 1});
+	}
+
+	function removeBridgeFabric(fabricIndex, label) {
+		if (confirm("{{ _('Fabric wirklich entfernen?') }} (" + label + ", fabric_index=" + fabricIndex + ")\n\n" +
+		            "{{ _('Der jeweilige Controller (Apple Home, Google Home o.ä.) verliert damit den Zugriff auf diese Bridge, bis er neu gekoppelt wird.') }}")) {
+			shngPost('?view=bridge', {remove_bridge_fabric_index: fabricIndex});
+		}
+	}
+</script>
+{% endblock pluginscripts %}
+
+{% set tabcount = 2 %}
+
+{% set tab1title = "<strong>" ~ _('Status') ~ "</strong>" %}
+{% block bodytab1 %}
+
+	{% if open_bridge_window_error %}
+		<div class="alert alert-danger mt-2">{{ _('Kopplungsmodus aktivieren fehlgeschlagen') }}: {{ open_bridge_window_error }}</div>
+	{% endif %}
+	{% if remove_bridge_fabric_error %}
+		<div class="alert alert-danger mt-2">{{ _('Fabric entfernen fehlgeschlagen') }}: {{ remove_bridge_fabric_error }}</div>
+	{% endif %}
+
+	{% if not bridge_status.available %}
+		<div class="alert alert-warning mt-2">{{ _('Bridge nicht verbunden - keine Statusdaten verfügbar.') }}</div>
+	{% else %}
+		<div class="mb-3">
+			<h5>{{ _('Kopplungscode') }}</h5>
+			<div class="d-flex align-items-start">
+				<div class="mr-3" style="background:#fff; padding:8px; display:inline-block;">
+					{{ bridge_qr_svg | safe }}
+				</div>
+				<div>
+					{{ _('Mit diesem Code die Bridge in Apple Home, Google Home o.ä. koppeln - nur während der Kopplungsmodus aktiv ist.') }}
+					{% if bridge_status.commissioned %}
+						{{ _('Bereits kommissioniert - der Kopplungsmodus erlaubt dann einen weiteren Controller, ohne bestehende Kopplungen zu beeinträchtigen.') }}
+					{% endif %}<br>
+					{{ _('Manueller Code') }}: <code>{{ bridge_status.manual_pairing_code }}</code><br>
+					{{ _('QR-Inhalt') }}: <code>{{ bridge_status.qr_pairing_code }}</code><br>
+					{{ _('Discriminator') }}: <code>{{ bridge_status.discriminator }}</code>
+				</div>
+			</div>
+			<div class="mt-2">
+				<strong>{{ _('Kopplungsmodus') }}:</strong>
+				<span id="window_status_indicator">
+					{% if bridge_status.commissioning_window_open %}
+						<span style="color: green;">{{ _('aktiv') }}</span> -
+						{{ _('schließt in') }}
+						<span id="window_countdown_text">{{ '%d:%02d'|format(bridge_status.commissioning_window_closes_in_seconds // 60, bridge_status.commissioning_window_closes_in_seconds % 60) }}</span>
+					{% else %}
+						<span style="color: grey;">{{ _('inaktiv') }}</span>
+					{% endif %}
+				</span>
+			</div>
+			<button type="button" class="btn btn-shng btn-sm mt-2" onclick="openBridgeWindow()">
+				<i class="fas fa-plug"></i>&nbsp;{{ _('Kopplungsmodus aktivieren') }}
+			</button>
+		</div>
+
+		<h5>{{ _('Gekoppelte Controller (Fabrics)') }}</h5>
+		<table id="bridgefabricstable" class="dataTableAdditional">
+			<thead>
+			<tr>
+				<th></th>
+				<th>fabric_index</th>
+				<th>vendor_id</th>
+				<th>{{ _('Label') }}</th>
+				<th>fabric_id</th>
+				<th></th>
+			</tr>
+			</thead>
+			{% for fabric in bridge_fabrics %}
+				<tr>
+					<td></td>
+					<td class="py-1">{{ fabric.fabric_index }}</td>
+					<td class="py-1">{{ fabric.vendor_id }}</td>
+					<td class="py-1">{{ fabric.fabric_label or ('<' ~ _('kein Label') ~ '>') }}</td>
+					<td class="py-1">{{ fabric.fabric_id }}</td>
+					<td class="py-1">
+						<button type="button" class="btn btn-shng btn-sm" onclick="removeBridgeFabric({{ fabric.fabric_index }}, '{{ fabric.vendor_id }}')">
+							<i class="fas fa-trash"></i>&nbsp;{{ _('Entfernen') }}
+						</button>
+					</td>
+				</tr>
+			{% endfor %}
+		</table>
+	{% endif %}
+
+{% endblock bodytab1 %}
+
+{% set tab2title = "<strong>" ~ _('Freigegebene Items') ~ "</strong> (" ~ bridge_items|length ~ ")" %}
+{% block bodytab2 %}
+	<table id="bridgeitemstable" class="dataTableAdditional">
+		<thead>
+		<tr>
+			<th></th>
+			<th>{{ _('Item') }}</th>
+			<th>{{ _('Name (extern sichtbar)') }}</th>
+			<th>matter_expose_type</th>
+			<th>endpoint_id</th>
+		</tr>
+		</thead>
+		{% for item in bridge_items %}
+			<tr>
+				<td></td>
+				<td class="py-1">{{ item.item_path }}</td>
+				<td class="py-1">{{ item.name }}</td>
+				<td class="py-1">{{ item.expose_type }}</td>
+				<td class="py-1">{{ item.endpoint_id if item.endpoint_id is not none else ('<' ~ _('noch nicht hinzugefügt') ~ '>') }}</td>
+			</tr>
+		{% endfor %}
+	</table>
+{% endblock bodytab2 %}

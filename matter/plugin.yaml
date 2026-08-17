@@ -10,10 +10,10 @@ plugin:
     state: develop
     keywords: iot matter chip smarthome
     documentation: ''   # TODO
-    support: ''         # TODO
-    version: 0.1.0
+    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/2102287-neues-plugin-matter'
+    version: 0.2.0
     sh_minversion: '1.12'
-    multi_instance: false           # gateway-style plugin, one Matter fabric/sidecar per shng instance only for now
+    multi_instance: true            # each instance is its own independent Matter fabric/bridge identity - see the
     restartable: true
     classname: Matter
 
@@ -25,28 +25,28 @@ parameters:
             de: 'Pfad zum Node.js-Binary (muss die von matter-server geforderte Version erfüllen, siehe user_doc.rst)'
             en: 'Path to the Node.js binary (must satisfy the version required by matter-server, see user_doc.rst)'
 
-    sidecar_entry:
+    server_sidecar_entry:
         type: str
         default: 'sidecar/node_modules/matter-server/dist/esm/MatterServer.js'
         description:
             de: 'Pfad (relativ zum Plugin-Verzeichnis) zur matter-server-Einstiegsdatei. matter-server hat kein CLI-Binary, daher wird die Datei direkt mit node ausgeführt.'
             en: 'Path (relative to the plugin directory) to the matter-server entry file. matter-server has no CLI binary, so the file is run directly with node.'
 
-    sidecar_port:
+    server_sidecar_port:
         type: int
         default: 5580
         description:
-            de: 'Port, auf dem der matter-server-Sidecar seine WebSocket-API anbietet (nur localhost)'
-            en: 'Port on which the matter-server sidecar exposes its WebSocket API (localhost only)'
+            de: 'Port, auf dem der matter-server-Sidecar seine WebSocket-API anbietet (nur localhost). Muss sich zwischen mehreren Instanzen unterscheiden - sonst kollidieren die Sidecar-Prozesse beim Binden des Ports.'
+            en: 'Port on which the matter-server sidecar exposes its WebSocket API (localhost only). Must differ between instances if running more than one - otherwise the sidecar processes collide trying to bind the same port.'
 
     storage_path:
         type: str
         default: 'var/matter'
         description:
-            de: 'Verzeichnis (relativ zum shng-Arbeitsverzeichnis) für die Fabric-/Kommissionierungsdaten des Sidecars'
-            en: 'Directory (relative to the shng working directory) for the sidecars fabric/commissioning storage'
+            de: 'Verzeichnis (relativ zum shng-Arbeitsverzeichnis) für die Fabric-/Kommissionierungsdaten des Sidecars. Muss sich zwischen mehreren Instanzen unterscheiden - jede Instanz ist eine eigene Fabric, geteilter Storage wuerde die Kommissionierungsdaten der anderen Instanz beschaedigen.'
+            en: 'Directory (relative to the shng working directory) for the sidecars fabric/commissioning storage. Must differ between instances if running more than one - each instance is its own fabric, sharing storage would corrupt the other instances commissioning data.'
 
-    enable_test_net_dcl:
+    server_enable_test_net_dcl:
         type: bool
         default: false
         description:
@@ -60,12 +60,82 @@ parameters:
             de: 'Netzwerk-Interface fuer lokale Adressen (--primary-interface). Auf Hosts mit mehreren Interfaces auf demselben Subnetz kann die automatische Auswahl ein Interface wählen, über das das Zielgerät nicht erreichbar ist - dann explizit setzen (z.B. en0).'
             en: 'Network interface for link-local addresses (--primary-interface). On hosts with multiple interfaces on the same subnet, automatic selection can pick one the target device is not reachable through - set explicitly (e.g. en0) if commissioning times out with "unreachable" address warnings.'
 
-    alias_base_item:
+    server_alias_base_item:
         type: str
         default: 'matter.aliases'
         description:
-            de: 'Item, unter dem Alias-Definitionen liegen (direkte Kind-Items, jeweils Typ num mit dem aktuellen node_id als Wert - siehe matter_alias). Muss bereits existieren, wird vom Plugin nicht angelegt. Fehlt es, bleibt die Alias-Funktion inaktiv, ohne den Rest des Plugins zu beeinträchtigen.'
-            en: 'Item under which alias definitions live (direct child items, each type num holding the current node_id as its value - see matter_alias). Must already exist, the plugin never creates it. If missing, alias support just stays inactive, the rest of the plugin is unaffected.'
+            de: 'Item, unter dem Alias-Definitionen liegen (direkte Kind-Items, jeweils Typ num mit dem aktuellen node_id als Wert - siehe matter_alias). Muss bereits existieren, wird vom Plugin nicht angelegt. Fehlt es, bleibt die Alias-Funktion inaktiv, ohne den Rest des Plugins zu beeinträchtigen. Sollte sich zwischen mehreren Instanzen unterscheiden, falls beide matter_alias nutzen - ein node_id ist nur innerhalb der Fabric der jeweiligen Instanz gueltig, ein geteiltes Basis-Item wuerde Aliase beider Fabrics ununterscheidbar vermischen.'
+            en: 'Item under which alias definitions live (direct child items, each type num holding the current node_id as its value - see matter_alias). Must already exist, the plugin never creates it. If missing, alias support just stays inactive, the rest of the plugin is unaffected. Should differ between instances if both use matter_alias - a node_id is only meaningful within its own instances fabric, a shared base item would mix both fabrics aliases indistinguishably.'
+
+    server_fabric_vendor_id:
+        type: int
+        default: 65521
+        description:
+            de: 'Vendor-ID (--vendorid) für shngs eigene Fabric. Wirkt nur beim allerersten Anlegen der Fabric (in vorhandenen Installationen bereits in den Node-Zertifikaten verankert) - Änderung erfordert Storage-Reset und Neukopplung aller Geräte. Default 65521 (0xFFF1) ist der von der Matter-Spec reservierte Test-Vendor-Bereich; echte Vendor-IDs werden von der CSA vergeben.'
+            en: 'Vendor ID (--vendorid) for shngs own fabric. Only takes effect the very first time the fabric is created - already baked into node certificates on an existing install, changing this needs a storage reset and re-pairing every device. Default 65521 (0xFFF1) is the Matter specs reserved test-vendor range; real vendor IDs are CSA-assigned.'
+
+    server_fabric_label:
+        type: str
+        default: 'SmartHomeNG'
+        description:
+            de: 'Fabric-Label (--default-fabric-label), das andere Controller (z.B. Apple Home, das Fabrics-Webif-Tab) für shngs eigene Fabric anzeigen. Ohne dies wäre matter-servers eigener Default "HomeAssistant" sichtbar.'
+            en: 'Fabric label (--default-fabric-label) other controllers (e.g. Apple Home, this plugins own Fabrics webif tab) show for shngs own fabric. Without this, matter-servers own default "HomeAssistant" would be visible.'
+
+    server_commission_timeout:
+        type: int
+        default: 300
+        description:
+            de: 'Wartezeit (Sekunden) auf die Antwort von matter-server auf einen Kopplungsversuch (commission_with_code), bevor das Plugin selbst aufgibt. matter-server versucht dabei jede bekannte Netzwerkadresse des Geräts mit bis zu 30s Timeout und plant intern bis zu 255s für einen Kopplungsversuch ein - ein realer Versuch dauerte schon einmal ca. 3 Minuten bis zur echten Antwort. Kommt die Antwort trotzdem später als dieser Timeout, wird sie nicht verworfen, sondern im Webif nachträglich als Hinweis angezeigt. Für Tests kann ein kürzerer Wert sinnvoll sein, um schneller ein Fehlschlagen zu sehen - auf Kosten davon, öfter in den verzögerten Hinweis statt die direkte Fehlermeldung zu laufen.'
+            en: 'How long (seconds) to wait for matter-servers answer to a pairing attempt (commission_with_code) before the plugin itself gives up. matter-server tries every known network address for the device with up to a 30s timeout each and internally budgets up to 255s for one pairing attempt - a real attempt was observed taking close to 3 minutes before the actual answer arrived. If the answer still arrives after this timeout, it is not discarded - it is shown in the webif afterwards as a delayed notice instead. A shorter value can be useful for testing, to see a failure faster - at the cost of hitting the delayed notice instead of the direct error message more often.'
+
+    bridge_sidecar_entry:
+        type: str
+        default: 'sidecar/bridge.js'
+        description:
+            de: 'Pfad (relativ zum Plugin-Verzeichnis) zur bridge.js-Datei - dem eigenen @matter/node-Programm des Plugins fuer die Bridge-Rolle (nicht matter-server). Liegt im sidecar/-Verzeichnis, nicht bridge/, da es sich die dortigen Node.js-Abhaengigkeiten mit der Server-Rolle teilt - ein einziges npm install in plugins/matter/sidecar/ deckt beide Rollen ab.'
+            en: 'Path (relative to the plugin directory) to bridge.js - the plugins own @matter/node application for the bridge role (not matter-server). Lives in the sidecar/ directory, not bridge/, since it shares its Node.js dependencies with the server role there - a single npm install in plugins/matter/sidecar/ covers both roles.'
+
+    bridge_matter_port:
+        type: int
+        default: 5560
+        description:
+            de: 'Netzwerk-Port, auf dem die Bridge ihre eigene Matter-Fabric anbietet (fuer Kommissionierung durch andere Controller wie Apple Home). Muss sich von server_sidecar_port unterscheiden, sowie zwischen mehreren Instanzen - sonst kollidieren die bridge.js-Prozesse beim Binden des Ports.'
+            en: 'Network port on which the bridge advertises its own Matter fabric (for commissioning by other controllers like Apple Home). Must differ from server_sidecar_port, and between instances if running more than one - otherwise the bridge.js processes collide trying to bind the same port.'
+
+    bridge_control_port:
+        type: int
+        default: 5561
+        description:
+            de: 'Port, auf dem bridge.js seine WebSocket-Steuer-API anbietet (nur localhost, eigenes Protokoll dieses Plugins - siehe matter-integration-plan.md). Muss sich zwischen mehreren Instanzen unterscheiden, aus demselben Grund wie bridge_matter_port.'
+            en: 'Port on which bridge.js exposes its WebSocket control API (localhost only, this plugins own protocol - see matter-integration-plan.md). Must differ between instances if running more than one, same reason as bridge_matter_port.'
+
+    bridge_storage_path:
+        type: str
+        default: 'var/matter/bridge'
+        description:
+            de: 'Verzeichnis (relativ zum shng-Arbeitsverzeichnis) fuer die Kommissionierungsdaten der Bridge - eine eigene Matter-Identitaet, getrennt von storage_path (Server-Rolle). Muss sich zwischen mehreren Instanzen unterscheiden, aus demselben Grund wie storage_path.'
+            en: 'Directory (relative to the shng working directory) for the bridges own commissioning data - a separate Matter identity from storage_path (server role). Must differ between instances if running more than one, same reason as storage_path.'
+
+    bridge_passcode:
+        type: int
+        default: 20202021
+        description:
+            de: 'Kommissionierungs-Passcode der Bridge. Fest vergeben (v1 hat noch keine Webif-UI fuer eine pro-Kommissionierung generierte Kombination) - siehe matter-integration-plan.md. Sollte sich zwischen mehreren Instanzen unterscheiden - sonst werben zwei Bridges mit identischen Kommissionierungsdaten gleichzeitig im selben LAN, was beim Scannen/Eingeben nicht mehr eindeutig einer bestimmten Instanz zuzuordnen ist.'
+            en: 'Commissioning passcode for the bridge. Fixed (v1 has no webif UI yet for a per-commissioning generated pairing code) - see matter-integration-plan.md. Should differ between instances if running more than one - otherwise two bridges advertise identical commissioning credentials on the same LAN simultaneously, making a scan/manual entry ambiguous about which instance you are actually commissioning.'
+
+    bridge_discriminator:
+        type: int
+        default: 3840
+        description:
+            de: 'Kommissionierungs-Diskriminator der Bridge (12 Bit). Fest vergeben, siehe bridge_passcode. Sollte sich zwischen mehreren Instanzen unterscheiden, aus demselben Grund wie bridge_passcode.'
+            en: 'Commissioning discriminator for the bridge (12 bit). Fixed, see bridge_passcode. Should differ between instances if running more than one, same reason as bridge_passcode.'
+
+    bridge_vendor_id:
+        type: int
+        default: 65521
+        description:
+            de: 'Vendor-ID der Bridge (--vendorid-Aequivalent fuer die eigene Geraete-Identitaet, nicht die Fabric wie bei server_fabric_vendor_id). Default 65521 (0xFFF1) ist der von der Matter-Spec reservierte Test-Vendor-Bereich.'
+            en: 'Vendor ID for the bridge (device identity, not a fabric like server_fabric_vendor_id). Default 65521 (0xFFF1) is the Matter specs reserved test-vendor range.'
 
 item_attributes:
     matter_node:
@@ -77,8 +147,8 @@ item_attributes:
     matter_alias:
         type: str
         description:
-            de: 'Alternative zu matter_node: Name einer Alias-Definition unter alias_base_item. Löst node_id über die interne Alias-Tabelle des Plugins auf statt fest im Item-Wert - übersteht ein Rekommissionieren (neue node_id) ohne Änderung an diesem oder abhängigen Items, sobald der Alias über das Webif umgebogen wird.'
-            en: 'Alternative to matter_node: name of an alias definition under alias_base_item. Resolved through the plugins own alias table instead of a fixed node_id - survives a recommission (new node_id) with no change to this or dependent items, once the alias is repointed via the webif.'
+            de: 'Alternative zu matter_node: Name einer Alias-Definition unter server_alias_base_item. Löst node_id über die interne Alias-Tabelle des Plugins auf statt fest im Item-Wert - übersteht ein Rekommissionieren (neue node_id) ohne Änderung an diesem oder abhängigen Items, sobald der Alias über das Webif umgeleitet wird.'
+            en: 'Alternative to matter_node: name of an alias definition under server_alias_base_item. Resolved through the plugins own alias table instead of a fixed node_id - survives a recommission (new node_id) with no change to this or dependent items, once the alias is repointed via the webif.'
 
     matter_endpoint:
         type: int
@@ -128,29 +198,36 @@ item_attributes:
             de: 'Nur-Lese-Item, das die von matter-server erkannte Erreichbarkeit des Node spiegelt (dieselbe Information wie die "verfuegbar"-Spalte im Webif, hier als echtes Item fuer eigene Logik/Struct/Visu). Braucht nur matter_node, kein Endpoint/Cluster.'
             en: 'Read-only item mirroring matter-server''s own node-level reachability tracking (the same information as the webif''s "available" column, exposed here as a real item for your own logic/struct/visu). Only needs matter_node, no endpoint/cluster.'
 
+    matter_expose_type:
+        type: str
+        valid_list:
+            - switch
+            - contact
+            - temperature_sensor
+        description:
+            de: 'Bridge-Rolle: macht dieses Item als Matter-Bridge-Gerät fuer andere Matter-Controller (Apple Home, Google Home, ...) sichtbar. switch = steuerbarer Bool-Aktor, contact = Nur-Lese-Bool-Sensor (z.B. Tuerkontakt), temperature_sensor = Nur-Lese-Zahlensensor (Grad Celsius).'
+            en: 'Bridge role: exposes this item as a Matter bridge accessory to other Matter controllers (Apple Home, Google Home, ...). switch = commandable bool actuator, contact = read-only bool sensor (e.g. a door contact), temperature_sensor = read-only numeric sensor (degrees Celsius).'
+
+    matter_expose_name:
+        type: str
+        description:
+            de: 'Bridge-Rolle: Anzeigename fuer den anderen Controller. Default: voller Item-Pfad (strukturell eindeutig; remark/Item-Name koennten mehrfach vorkommen und waeren dann in einer flachen Zubehoerliste nicht unterscheidbar). Max. 32 Zeichen (Matter-Spezifikationslimit) - laengere Werte (oder ein zu langer Item-Pfad als Default) lassen das Item unsichtbar fuer die Bridge-Rolle, mit Fehlermeldung im Log.'
+            en: 'Bridge role: display name shown to the other controller. Defaults to the items full path (structurally unique; remark/item name could repeat and would then be indistinguishable in a flat accessory list). Max 32 characters (Matter specification limit) - a longer value (or a too-long item path as the default) makes the item invisible to the bridge role, with an error logged.'
+
 item_structs:
     #
-    # this can be a collection of ready-made struct for known and tested devices
-    # import the struct in an item and set matter_node to assign to a device
-    # 
-
+    # Generic, device-agnostic structs, one per Matter cluster with real, validated attribute data
+    # in clusters.py - combine via struct: [x, y] on the item representing one physical device (see
+    # shelly_plug_m_3gen below). Deliberately do NOT set matter_node/matter_endpoint here - those are
+    # only known after a real device is commissioned, not at struct-definition time. Set them
+    # directly on the applying item instead; every descendant item inherits them via this plugin's
+    # own Item.find_attribute() ancestor-walk, no need to restate them on every child.
     #
-    # Shelly Plug M 3Gen
-    #
 
-    shelly_plug_m_3gen_simple:
+    switch:
         type: bool
         matter_cluster: 6
-        matter_endpoint: 1
         matter_switch: true
-
-        available:
-            remark: Gerät erreichbar
-            type: bool
-            matter_available: true
-
-    shelly_plug_m_3gen:
-        struct: .shelly_plug_m_3gen_simple
 
         toggle:
             remark: auf True setzen, um den Schaltzustand zu wechseln
@@ -159,29 +236,31 @@ item_structs:
             enforce_updates: true
             autotimer: 1 = 0
 
+    electrical_power_measurement:
+        # Mixin, not a root - no top-level type of its own. Meant to combine with a root struct
+        # (e.g. switch) via struct: [x, electrical_power_measurement], same shape shelly_plug_m_3gen
+        # already uses below.
         power:
             remark: aktuelle Leistung in W
             type: num
-            eval: sh..power_mw() / 1000.0
-            eval_trigger: .power_mw
 
             power_mw:
                 remark: aktuelle Leistung in mW
                 type: num
                 matter_cluster: 144
                 matter_attribute: 8
+                on_update: .. = value / 1000.0
 
         voltage:
             remark: aktuelle Spannung in V
             type: num
-            eval: sh..voltage_mv() / 1000.0
-            eval_trigger: .voltage_mv
 
             voltage_mv:
                 remark: aktuelle Spannung in mV
                 type: num
                 matter_cluster: 144
                 matter_attribute: 11
+                on_update: .. = value / 1000.0
 
             hinweis:
                 remark: In eigenen Tests wurde die Spannung nur einmalig beim Verbinden aktualisiert. Obwohl das Gerät die Spannung laufend misst, wird sie über Matter nicht mehr übertragen - z.B. über MQTT sehr wohl.
@@ -189,14 +268,55 @@ item_structs:
         current:
             remark: aktueller Strom in A
             type: num
-            eval: sh..current_ma() / 1000.0
-            eval_trigger: .current_ma
 
             current_ma:
                 remark: aktueller Strom in mA
                 type: num
                 matter_cluster: 144
                 matter_attribute: 12
+                on_update: .. = value / 1000.0
+
+    contact:
+        # BooleanState.StateValue - no unit conversion needed (already bool), unlike the two below.
+        # True/False semantics (open vs. closed) are device-specific per spec, not asserted here.
+        remark: Kontaktzustand (BooleanState.StateValue)
+        type: bool
+        matter_cluster: 69
+        matter_attribute: 0
+
+    temperature_sensor:
+        remark: aktuelle Temperatur in °C
+        type: num
+
+        temperature_raw:
+            remark: aktuelle Temperatur in 1/100 °C (Roh-Wert)
+            type: num
+            matter_cluster: 1026
+            matter_attribute: 0
+            on_update: .. = value / 100.0
+
+    #
+    # Ready-made structs for known and tested devices, built on the generic structs above (same
+    # base -> device layering the yamahayxc plugin already uses). Import the struct in an item and
+    # set matter_node (and matter_endpoint, if the device struct doesn't already fix it) to assign
+    # it to a real, commissioned device.
+    #
+
+    #
+    # Shelly Plug M 3Gen
+    #
+
+    shelly_plug_m_3gen_simple:
+        struct: .switch
+        matter_endpoint: 1
+
+        available:
+            remark: Gerät erreichbar
+            type: bool
+            matter_available: true
+
+    shelly_plug_m_3gen:
+        struct: [.shelly_plug_m_3gen_simple, .electrical_power_measurement]
 
 
 plugin_functions: NONE
