@@ -1,5 +1,5 @@
 from plugins.database import Database
-from plugins.database.constants import QUALITY_NO_DATA
+from plugins.database.constants import QUALITY_INVALID, QUALITY_NO_DATA
 from plugins.database.tests.base import TestDatabaseBase
 
 
@@ -52,6 +52,27 @@ class TestDatabaseSingleQualityFilter(TestDatabaseBase):
 
         # Only the valid row (10, dur=3) should count.
         self.assertSingle(10, res)
+
+
+class TestDatabaseSingleInvalidQualityFilter(TestDatabaseBase):
+    """A manually invalidated row (val_quality=QUALITY_INVALID) must be
+    excluded from aggregations exactly like a QUALITY_NO_DATA gap - the
+    exclusion filter matches on val_quality alone, so this must hold even
+    though (unlike a gap) the row still carries a real, non-NULL value."""
+
+    def test_avg_excludes_invalidated_row_despite_preserved_value(self):
+        plugin = self.plugin()
+        id = self.create_item(plugin, 'main.num')
+        plugin.insertLog(id, time=self.t(0), duration=self.t(2), val=10, it='num')
+        # Value is preserved (unlike a QUALITY_NO_DATA gap), not None -
+        # only the quality flag marks it as excluded.
+        plugin.insertLog(id, time=self.t(2), duration=self.t(1), val=999, it='num', quality=QUALITY_INVALID)
+        plugin.insertLog(id, time=self.t(3), duration=self.t(2), val=20, it='num')
+
+        res = plugin._single('avg', start=self.t(0), end=self.t(6), item='main.num')
+
+        # Same math as the QUALITY_NO_DATA case: 15, not skewed by the 999.
+        self.assertSingle(15, res)
 
 
 class TestDatabaseSingle(TestDatabaseBase):

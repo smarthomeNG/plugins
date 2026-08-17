@@ -319,6 +319,56 @@ class LogStore:
             self.logger.error('LogStore.delete_range: {}'.format(e))
             self._db.rollback()
 
+    def set_quality(
+        self,
+        item_id: int,
+        quality: int,
+        *,
+        time=None,
+        time_start=None,
+        time_end=None,
+        changed=None,
+        changed_start=None,
+        changed_end=None,
+        cur=None,
+        commit=True,
+    ) -> None:
+        """Set ``val_quality`` on matching log rows without touching their values.
+
+        Used for reversible invalidate/restore (e.g. the webif's "delete"
+        action), as opposed to :meth:`delete_range` which permanently
+        removes rows. ``duration``/``val_str``/``val_num``/``val_bool`` are
+        left untouched.
+
+        :param item_id:       Database item ID.
+        :param quality:       New ``val_quality`` value.
+        :param time:          Exact timestamp to match (optional).
+        :param time_start:    Lower bound on ``time`` (exclusive, optional).
+        :param time_end:      Upper bound on ``time`` (exclusive, optional).
+        :param changed:       Exact ``changed`` match (optional).
+        :param changed_start: Lower bound on ``changed`` (optional).
+        :param changed_end:   Upper bound on ``changed`` (optional).
+        :param cur:           Optional cursor.
+        :param commit:        If ``True`` (default) commit after the update.
+        """
+        where, params = build_where_clause(
+            item_id,
+            time=time,
+            time_start=time_start,
+            time_end=time_end,
+            changed=changed,
+            changed_start=changed_start,
+            changed_end=changed_end,
+        )
+        params['quality'] = quality
+        try:
+            self._execute('UPDATE {log} SET val_quality=:quality WHERE ' + where + ';', params, cur=cur)
+            if commit:
+                self._db.commit()
+        except Exception as e:
+            self.logger.error('LogStore.set_quality: {}'.format(e))
+            self._db.rollback()
+
     # ── read ─────────────────────────────────────────────────────────────────
 
     def find(self, item_id: int, time: int, cur=None) -> list:

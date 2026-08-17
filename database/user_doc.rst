@@ -460,6 +460,10 @@ Eintrag in der ``log``-Tabelle trägt jetzt eine Spalte ``val_quality``:
 | ``1`` | Keine Daten verfügbar (Lücke).  Alle ``val_*`` Spalten    |
 |       | sind ``NULL``.  Wird bei Aggregationen ausgeschlossen.    |
 +-------+-----------------------------------------------------------+
+| ``2`` | Manuell als ungültig markiert.  Der ursprüngliche Wert    |
+|       | bleibt erhalten, wird aber wie eine Lücke behandelt und   |
+|       | kann jederzeit wiederhergestellt werden.                  |
++-------+-----------------------------------------------------------+
 
 item.db_mark_invalid()
 -----------------------
@@ -513,6 +517,28 @@ Einträge mit ``val_quality = 1`` werden bei folgenden Funktionen automatisch
 
 Bei Rohwertabfragen (``raw``) erscheinen Lückeneinträge als ``NULL``, damit
 Visualisierungen die Unterbrechung als echte Lücke darstellen können.
+
+Einzelnen Datensatz ungültig markieren (Webinterface)
+--------------------------------------------------------
+
+In der Detailansicht eines Items (``log``-Tabelle) lässt sich ein einzelner
+Datensatz über das Papierkorb-Symbol als ungültig markieren, statt ihn zu
+löschen. Der Wert bleibt in der Datenbank erhalten, zählt aber ab sofort nicht
+mehr bei ``avg``, ``sum``, ``integrate``, ``on``, ``min`` und ``max`` mit.
+
+Ein hartes Löschen einzelner Datensätze würde die Dauer des vorherigen Eintrags
+verfälschen, da die Summe aller Dauern nicht mehr der tatsächlich vergangenen
+Zeit entspräche. Das Markieren als ungültig vermeidet das: Die Dauer des
+vorherigen Eintrags bleibt unangetastet, und der markierte Datensatz lässt
+sich über das Wiederherstellen-Symbol jederzeit zurücksetzen.
+
+Diese Aktion steht nur für die letzten beiden, noch offenen Werte eines Items
+nicht zur Verfügung (Schaltfläche ist deaktiviert), da diese den aktuell
+gültigen Wert des Items abbilden.
+
+Das vollständige Löschen der Werthistorie eines Items (Papierkorb-Symbol in der
+Übersicht) ist davon nicht betroffen und bleibt ein echtes, unwiderrufliches
+Löschen.
 
 Implizite Revalidierung
 ------------------------

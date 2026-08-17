@@ -131,6 +131,31 @@ class TestDatabaseBasic(TestDatabaseBase):
         res = plugin.readLog(id, time=0)
         self.assertEqual(0, len(res))
 
+    def test_markLogInvalid_preserves_value(self):
+        plugin = self.plugin()
+        id = self.create_item(plugin, 'main.num')
+        plugin.insertLog(id, time=0, duration=3600, val=10, it='num')
+
+        plugin.markLogInvalid(id, time=0)
+
+        res = plugin.readLog(id, time=0)
+        self.assertEqual(1, len(res))  # row still exists, unlike deleteLog
+        self.assertEqual(2, res[0][7])  # val_quality column, QUALITY_INVALID
+        self.assertEqual(10, res[0][4])  # val_num preserved
+        self.assertEqual(3600, res[0][2])  # duration preserved
+
+    def test_markLogValid_restores_previously_invalidated_row(self):
+        plugin = self.plugin()
+        id = self.create_item(plugin, 'main.num')
+        plugin.insertLog(id, time=0, duration=3600, val=10, it='num')
+        plugin.markLogInvalid(id, time=0)
+
+        plugin.markLogValid(id, time=0)
+
+        res = plugin.readLog(id, time=0)
+        self.assertEqual(0, res[0][7])  # val_quality column, QUALITY_VALID
+        self.assertEqual(10, res[0][4])  # val_num still intact
+
     def test_readLogs(self):
         plugin = self.plugin()
         id = self.create_item(plugin, 'main.num')
