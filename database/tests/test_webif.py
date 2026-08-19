@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 from unittest import mock
@@ -53,6 +54,92 @@ class TestDatabaseWebifItemCsv(TestDatabaseBase):
         csv_path = fake_serve.call_args[0][0]
         self.addCleanup(lambda: os.path.exists(csv_path) and os.unlink(csv_path))
         self.assertTrue(os.path.isfile(csv_path))
+
+    def test_item_csv_formats_time_as_local_datetime_string(self):
+        plugin = self.plugin()
+        webif = self._webif(plugin)
+        id = self.create_item(plugin, 'main.num')
+        now_ms = int(plugin.shtime.now().timestamp() * 1000)
+        plugin.insertLog(id, time=now_ms, duration=3600, val=10, it='num', changed=now_ms)
+
+        os.makedirs(os.path.join(self.sh.base_dir, 'var', 'db'), exist_ok=True)
+
+        with mock.patch('cherrypy.request'), mock.patch('cherrypy.lib.static.serve_download', return_value='served'):
+            webif.item_csv(str(id))
+
+        csv_path = os.path.join(self.sh.base_dir, 'var', 'db', f'{plugin.get_instance_name()}_item_{id}.csv')
+        self.addCleanup(lambda: os.path.exists(csv_path) and os.unlink(csv_path))
+        with open(csv_path, encoding='utf-8') as f:
+            lines = f.read().splitlines()
+        row = lines[1].split(',')
+        expected_time = datetime.datetime.fromtimestamp(now_ms / 1000, tz=plugin.shtime.tzinfo()).isoformat(
+            sep=' ', timespec='milliseconds'
+        )
+        # time is the first column, changed is the second-to-last (before val_quality)
+        self.assertEqual(expected_time, row[0])
+        self.assertEqual(expected_time, row[-2])
+
+    def test_item_csv_formats_time_as_utc_when_requested(self):
+        plugin = self.plugin()
+        webif = self._webif(plugin)
+        id = self.create_item(plugin, 'main.num')
+        now_ms = int(plugin.shtime.now().timestamp() * 1000)
+        plugin.insertLog(id, time=now_ms, duration=3600, val=10, it='num', changed=now_ms)
+
+        os.makedirs(os.path.join(self.sh.base_dir, 'var', 'db'), exist_ok=True)
+
+        with mock.patch('cherrypy.request'), mock.patch('cherrypy.lib.static.serve_download', return_value='served'):
+            webif.item_csv(str(id), tz='utc')
+
+        csv_path = os.path.join(self.sh.base_dir, 'var', 'db', f'{plugin.get_instance_name()}_item_{id}.csv')
+        self.addCleanup(lambda: os.path.exists(csv_path) and os.unlink(csv_path))
+        with open(csv_path, encoding='utf-8') as f:
+            lines = f.read().splitlines()
+        row = lines[1].split(',')
+        expected_time = datetime.datetime.fromtimestamp(now_ms / 1000, tz=datetime.timezone.utc).isoformat(
+            sep=' ', timespec='milliseconds'
+        )
+        self.assertEqual(expected_time, row[0])
+
+    def test_item_csv_filters_by_time_range(self):
+        plugin = self.plugin()
+        webif = self._webif(plugin)
+        id = self.create_item(plugin, 'main.num')
+        plugin.insertLog(id, time=0, duration=1000, val=1, it='num', changed=0)
+        plugin.insertLog(id, time=5000, duration=1000, val=2, it='num', changed=5000)
+        plugin.insertLog(id, time=10000, duration=1000, val=3, it='num', changed=10000)
+
+        os.makedirs(os.path.join(self.sh.base_dir, 'var', 'db'), exist_ok=True)
+
+        with mock.patch('cherrypy.request'), mock.patch('cherrypy.lib.static.serve_download', return_value='served'):
+            webif.item_csv(str(id), time_start='4000', time_end='9000')
+
+        csv_path = os.path.join(self.sh.base_dir, 'var', 'db', f'{plugin.get_instance_name()}_item_{id}.csv')
+        self.addCleanup(lambda: os.path.exists(csv_path) and os.unlink(csv_path))
+        with open(csv_path, encoding='utf-8') as f:
+            lines = f.read().splitlines()
+        # header + exactly the one row inside [4000, 9000]
+        self.assertEqual(2, len(lines))
+        self.assertEqual(2.0, float(lines[1].split(',')[4]))  # val_num column
+
+    def test_item_csv_ignores_malformed_time_range(self):
+        plugin = self.plugin()
+        webif = self._webif(plugin)
+        id = self.create_item(plugin, 'main.num')
+        plugin.insertLog(id, time=0, duration=1000, val=1, it='num', changed=0)
+
+        os.makedirs(os.path.join(self.sh.base_dir, 'var', 'db'), exist_ok=True)
+
+        with mock.patch('cherrypy.request'), mock.patch('cherrypy.lib.static.serve_download', return_value='served'):
+            result = webif.item_csv(str(id), time_start='not-a-number')
+
+        self.assertEqual('served', result)
+        csv_path = os.path.join(self.sh.base_dir, 'var', 'db', f'{plugin.get_instance_name()}_item_{id}.csv')
+        self.addCleanup(lambda: os.path.exists(csv_path) and os.unlink(csv_path))
+        with open(csv_path, encoding='utf-8') as f:
+            lines = f.read().splitlines()
+        # malformed time_start is ignored, not fatal - row still exported unbounded
+        self.assertEqual(2, len(lines))
 
     def test_item_csv_includes_val_quality_column(self):
         plugin = self.plugin()
@@ -144,6 +231,21 @@ class TestDatabaseWebifIndexDispatch(TestDatabaseBase):
         self.assertEqual(0, res[0][7])  # QUALITY_VALID
         render_kwargs = webif.tplenv.get_template.return_value.render.call_args.kwargs
         self.assertTrue(render_kwargs['restore_triggered'])
+
+    def test_item_details_render_exposes_day_range_for_csv_export(self):
+        plugin = self.plugin()
+        webif = self._webif(plugin)
+        id = self.create_item(plugin, 'main.num')
+        plugin.insertLog(id, time=0, duration=3600, val=10, it='num', changed=0)
+
+        webif.index(action='item_details', item_id=id, item_path='main.num', day=1, month=1, year=2026)
+
+        render_kwargs = webif.tplenv.get_template.return_value.render.call_args.kwargs
+        self.assertEqual('item_details', render_kwargs['action'])
+        # a full calendar day in ms, matching the day/month/year requested
+        self.assertEqual(24 * 60 * 60 * 1000, render_kwargs['csv_time_end'] - render_kwargs['csv_time_start'])
+        self.assertIsInstance(render_kwargs['csv_time_start'], int)
+        self.assertIsInstance(render_kwargs['csv_time_end'], int)
 
     def test_delete_log_bulk_action_still_hard_deletes(self):
         """The bulk 'clear entire history' action (no time_orig/changed_orig) must

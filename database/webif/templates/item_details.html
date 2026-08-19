@@ -89,6 +89,12 @@ checkDate();
 	{% endif %}
 	</strong>
 	<br/>( {{_('Datenbank-ID') }}: {{ item_id }}, {{ _('Typ') }}: {{ item.type() }}, {{ log_array | length }} {{_('Datensätze')}}, {{_('Aktueller Wert')}}: {{ item() }}  -  {{_('Gesamt')}}: <strong>{{ p.readLogCount(item_id) }} {{_('Datensätze')}}</strong>, {{_('ältester Wert')}}: <strong>{% if p.readLogCount(item_id) >0 %}{{ p._datetime(p.readOldestLog(item_id)).strftime('%d.%m.%Y %H:%M:%S') }}{% else %}-{% endif %}</strong> )
+	<br/>
+	<button type="button" class="btn btn-shng btn-sm" title="{{ _('CSV Export der Werte dieses Tages') }}" onclick="exportItemDayCsv()">CSV</button>
+	<label class="form-check-label" style="margin-left: 0.5em;">
+		<input type="checkbox" id="csv_utc" class="form-check-input">
+		UTC
+	</label>
 </div>
 <div style="float:right; width:20%;" id="datepicker">
 </div>
@@ -143,6 +149,10 @@ checkDate();
 	</table>
 </div>
 <script>
+	function exportItemDayCsv() {
+		var tz = document.getElementById('csv_utc').checked ? 'utc' : 'local';
+		window.open('item.csv?item_id={{ item_id }}&time_start={{ csv_time_start }}&time_end={{ csv_time_end }}&tz=' + tz);
+	}
 	$('#datepicker').datepicker({
 		language: "{{ language }}",
 		autoclose: true,

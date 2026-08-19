@@ -80,6 +80,12 @@ class WebInterface(SmartPluginWebIf):
         level = self.logger.info if self.plugin._db.is_connection_error(e) else self.logger.error
         level(f'{context}: {e}')
 
+    def _ms_to_datetime(self, ms, tzinfo=None):
+        """Convert an epoch-ms log timestamp to a timezone-aware datetime, or None for None input."""
+        if ms is None:
+            return None
+        return datetime.datetime.fromtimestamp(ms / 1000, tz=tzinfo or self.plugin.shtime.tzinfo())
+
     @cherrypy.expose
     def index(
         self,
@@ -177,11 +183,7 @@ class WebInterface(SmartPluginWebIf):
                             if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
                                 value_dict[key] = row[key]
                             else:
-                                value_dict[key] = (
-                                    datetime.datetime.fromtimestamp(row[key] / 1000, tz=self.plugin.shtime.tzinfo())
-                                    if row[key] is not None
-                                    else None
-                                )
+                                value_dict[key] = self._ms_to_datetime(row[key])
                                 value_dict['%s_orig' % key] = row[key]
 
                         log_array.append(value_dict)
@@ -201,6 +203,8 @@ class WebInterface(SmartPluginWebIf):
                     day=day,
                     month=month,
                     year=year,
+                    csv_time_start=int(time_start),
+                    csv_time_end=int(time_end),
                     delete_triggered=delete_triggered,
                     invalidate_triggered=invalidate_triggered,
                     restore_triggered=restore_triggered,
@@ -301,13 +305,7 @@ class WebInterface(SmartPluginWebIf):
                         if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
                             value_dict[key] = row[key]
                         else:
-                            value_dict[key] = (
-                                datetime.datetime.fromtimestamp(
-                                    row[key] / 1000, tz=self.plugin.shtime.tzinfo()
-                                ).isoformat()
-                                if row[key] is not None
-                                else None
-                            )
+                            value_dict[key] = self._ms_to_datetime(row[key]).isoformat()
                             value_dict['%s_orig' % key] = row[key]
 
                     log_array.append(value_dict)
@@ -324,18 +322,21 @@ class WebInterface(SmartPluginWebIf):
         return {}
 
     @cherrypy.expose
-    def item_csv(self, item_id):
+    def item_csv(self, item_id, time_start=None, time_end=None, tz='local'):
         """Returns CSV Output for item log data - thin wrapper, see _item_csv()."""
         try:
-            return self._item_csv(item_id)
+            return self._item_csv(item_id, time_start=time_start, time_end=time_end, tz=tz)
         except Exception as e:
             self._log_webif_error(f'database webif item_csv (item_id={item_id!r})', e)
             return None
 
-    def _item_csv(self, item_id):
+    def _item_csv(self, item_id, time_start=None, time_end=None, tz='local'):
         """
         Returns CSV Output for item log data
 
+        :param time_start: restrict export to entries at/after this time, epoch ms (optional)
+        :param time_end: restrict export to entries at/before this time, epoch ms (optional)
+        :param tz: timezone to format the 'time'/'changed' columns in - 'local' (default) or 'utc'
         :return: item log data as CSV
         """
         try:
@@ -344,7 +345,20 @@ class WebInterface(SmartPluginWebIf):
             self.logger.warning(f'item_csv: invalid item_id {item_id!r}')
             return None
         else:
-            rows = self.plugin.readLogs(item_id)
+
+            def _parse_ms(value, param_name):
+                if value in (None, ''):
+                    return None
+                try:
+                    return int(value)
+                except (TypeError, ValueError):
+                    self.logger.warning(f'item_csv: invalid {param_name} {value!r}, ignoring')
+                    return None
+
+            time_start = _parse_ms(time_start, 'time_start')
+            time_end = _parse_ms(time_end, 'time_end')
+            tzinfo = datetime.timezone.utc if tz == 'utc' else self.plugin.shtime.tzinfo()
+            rows = self.plugin.readLogs(item_id, time_start=time_start, time_end=time_end)
             log_array = []
             if rows is None:
                 reversed_arr = []
@@ -361,7 +375,12 @@ class WebInterface(SmartPluginWebIf):
                         COL_LOG_CHANGED,
                         COL_LOG_VAL_QUALITY,
                     ]:
-                        value_dict[key] = row[key]
+                        dt = (
+                            self._ms_to_datetime(row[key], tzinfo=tzinfo)
+                            if key in (COL_LOG_TIME, COL_LOG_CHANGED)
+                            else None
+                        )
+                        value_dict[key] = dt.isoformat(sep=' ', timespec='milliseconds') if dt is not None else row[key]
                     log_array.append(value_dict)
                 reversed_arr = log_array[::-1]
             csv_file_path = f'{self.plugin._sh.base_dir}/var/db/{self.plugin.get_instance_name()}_item_{item_id}.csv'
