@@ -28,15 +28,24 @@ from lib.model.smartplugin import SmartPlugin
 from datetime import datetime
 import threading
 import asyncio
+import inspect
 import logging
 import time
 from .webif import WebInterface
 
-from pymodbus.constants import Endian
 from pymodbus import ModbusException
 
 # pymodbus async client
 from pymodbus.client import AsyncModbusTcpClient
+
+# pymodbus >= 3.10 renamed the 'slave' keyword argument to 'device_id'.
+# Detect once at import time so the plugin runs with both old and new pymodbus.
+try:
+    _UNIT_KWARG = 'slave' if 'slave' in inspect.signature(
+        AsyncModbusTcpClient.read_holding_registers
+    ).parameters else 'device_id'
+except Exception:
+    _UNIT_KWARG = 'slave'
 
 
 AttrAddress = 'modBusAddress'
@@ -246,17 +255,15 @@ class modbus_tcp(SmartPlugin):
             if self.has_iattr(item.conf, AttrWordOrder):
                 wordOrderStr = self.get_iattr_value(item.conf, AttrWordOrder)
 
-            try:
-                byteOrder = Endian[(str(byteOrderStr).split('.')[-1]).upper()]
-            except Exception as e:
-                self.logger.warning(f"Invalid byteOrder -> default(Endian.BIG) is used. Error:{e}")
-                byteOrder = Endian.BIG
+            byteOrder = (str(byteOrderStr).split('.')[-1]).upper()
+            if byteOrder not in ('BIG', 'LITTLE'):
+                self.logger.warning(f"Invalid byteOrder -> default(BIG) is used. Error:{byteOrderStr}")
+                byteOrder = 'BIG'
 
-            try:
-                wordOrder = Endian[(str(wordOrderStr).split('.')[-1]).upper()]
-            except Exception as e:
-                self.logger.warning(f"Invalid wordOrder -> default(Endian.BIG) is used. Error:{e}")
-                wordOrder = Endian.BIG
+            wordOrder = (str(wordOrderStr).split('.')[-1]).upper()
+            if wordOrder not in ('BIG', 'LITTLE'):
+                self.logger.warning(f"Invalid wordOrder -> default(BIG) is used. Error:{wordOrderStr}")
+                wordOrder = 'BIG'
 
             regPara = {
                 'regAddr': regAddr,
@@ -736,12 +743,12 @@ class modbus_tcp(SmartPlugin):
             async with self._client_lock:
                 if objectType == 'Coil':
                     result = await asyncio.wait_for(
-                        self._aclient.write_coil(address, value, slave=slaveUnit),
+                        self._aclient.write_coil(address, value, **{_UNIT_KWARG: slaveUnit}),
                         timeout=self._write_timeout
                     )
                 elif objectType == 'HoldingRegister':
                     result = await asyncio.wait_for(
-                        self._aclient.write_registers(address, registers, slave=slaveUnit),
+                        self._aclient.write_registers(address, registers, **{_UNIT_KWARG: slaveUnit}),
                         timeout=self._write_timeout
                     )
                 elif objectType == 'DiscreteInput':
@@ -805,13 +812,13 @@ class modbus_tcp(SmartPlugin):
         try:
             async with self._client_lock:
                 if objectType == 'Coil':
-                    result = await self._aclient.read_coils(address, count=registerCount, slave=slaveUnit)
+                    result = await self._aclient.read_coils(address, count=registerCount, **{_UNIT_KWARG: slaveUnit})
                 elif objectType == 'DiscreteInput':
-                    result = await self._aclient.read_discrete_inputs(address, count=registerCount, slave=slaveUnit)
+                    result = await self._aclient.read_discrete_inputs(address, count=registerCount, **{_UNIT_KWARG: slaveUnit})
                 elif objectType == 'InputRegister':
-                    result = await self._aclient.read_input_registers(address, count=registerCount, slave=slaveUnit)
+                    result = await self._aclient.read_input_registers(address, count=registerCount, **{_UNIT_KWARG: slaveUnit})
                 elif objectType == 'HoldingRegister':
-                    result = await self._aclient.read_holding_registers(address, count=registerCount, slave=slaveUnit)
+                    result = await self._aclient.read_holding_registers(address, count=registerCount, **{_UNIT_KWARG: slaveUnit})
                 else:
                     self.logger.error(f"{AttrObjectType} not supported: {objectType}")
                     return None
