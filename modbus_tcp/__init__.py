@@ -593,6 +593,7 @@ class modbus_tcp(SmartPlugin):
                         self.logger.debug(f"Modbus read cancelled while stopping: {e}")
                         break
                     self.logger.error(f"ModbusException raised while reading: {e}")
+                    self._close_client()
                     raw_value = None
                 except Exception as e:
                     if not self.alive:
