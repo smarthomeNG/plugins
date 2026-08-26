@@ -1,7 +1,9 @@
+import csv
 import inspect
 import os
 import datetime
 import tempfile
+import threading
 import pytest
 from unittest import mock
 
@@ -11,6 +13,40 @@ from plugins.database.tests.base import TestDatabaseBase
 
 
 class TestDatabaseBasic(TestDatabaseBase):
+    def test_init_fails_cleanly_for_sqlite_memory_database(self):
+        # Regression: the plugin opens two independent connections (self._db,
+        # self._db_maint), each its own sqlite3.connect() call - a ':memory:'
+        # database is private to the connection that opened it (no
+        # shared-cache URI is used here), so the two would silently become
+        # two separate, disconnected empty databases. base.py's plugin()
+        # fixture already works around this exact problem by using a temp
+        # file instead (see its comment) - this asserts the plugin itself
+        # now refuses the configuration outright rather than running broken.
+        self.plugin()  # sets up self.sh / registers test items / Database._parameters
+        Database._parameters['connect'] = {'database': ':memory:'}
+
+        plugin = Database.__new__(Database)
+        plugin._set_sh(self.sh)
+        plugin.__init__(self.sh)
+
+        self.assertFalse(getattr(plugin, '_init_complete', True))
+        self.assertFalse(
+            hasattr(plugin, '_item_store'), 'init must stop before wiring up stores that assume a working db'
+        )
+
+    def test_db_itemtype_returns_none_not_crash_when_disconnected(self):
+        # db_itemtype()/db_lastchange() both call readItem(cur=None), which
+        # hits Database.fetchone()'s never-connected sentinel path. That
+        # sentinel used to be '' - `row is None` wouldn't catch it, and
+        # only the len(row)==0 branch of `COL_ITEM_ID >= len(row)`
+        # happened to still return None. Now the sentinel is None itself,
+        # not relying on that coincidence.
+        plugin = self.plugin()
+        item = self.sh.return_item('main.num')
+        plugin._db._conn = None  # simulate disconnected, no reconnect attempt
+
+        self.assertIsNone(plugin.db_itemtype(item))
+
     def test_id_not_creating_items(self):
         plugin = self.plugin()
         self.assertIsNone(plugin.id(self.sh.return_item('main.num'), False))
@@ -22,6 +58,102 @@ class TestDatabaseBasic(TestDatabaseBase):
         self.assertEqual(1, plugin.id(self.sh.return_item('main.num'), True))
         self.assertEqual(2, plugin.id(self.sh.return_item('main.str'), True))
         self.assertEqual(3, plugin.id(self.sh.return_item('main.bool'), True))
+
+    def test_id_creating_from_bare_path_string(self):
+        # Regression: id() falls back to using the raw argument as the item
+        # path (via the AttributeError branch) when it's a plain string
+        # rather than an item object - but the create-if-missing branch
+        # called self.insertItem(item.property.path, ...) unconditionally,
+        # which crashed with AttributeError for exactly this bare-string
+        # case instead of using the already-computed item_path fallback.
+        plugin = self.plugin()
+        self.assertEqual(1, plugin.id('some.new.path', True))
+        self.assertEqual(1, plugin.id('some.new.path', False))
+
+    def test_setup_item_ddl_uses_auto_increment_for_non_sqlite_driver(self):
+        """
+        Regression: CREATE TABLE {item}'s id column was hardcoded as bare
+        'id INTEGER PRIMARY KEY', which only auto-increments on SQLite
+        (aliased to rowid) - on MySQL/MariaDB it needs an explicit
+        AUTO_INCREMENT, or the very first ItemStore.insert() against a
+        fresh install fails outright under default strict SQL mode (see
+        Database._setup's docstring comment). Fixture always uses
+        sqlite3, so this only checks the DDL string the property builds
+        for each driver, not a live MySQL connection.
+        """
+        plugin = self.plugin()
+        self.assertIn('id INTEGER PRIMARY KEY,', plugin._setup['2'][0])
+        self.assertNotIn('AUTO_INCREMENT', plugin._setup['2'][0])
+
+    def test_setup_version_8_retrofits_auto_increment_for_existing_mysql_installs(self):
+        # Regression: version 2's CREATE TABLE only runs for a schema that
+        # hasn't recorded it yet - every already-existing MySQL/MariaDB
+        # install has v2 applied without AUTO_INCREMENT and never re-runs
+        # it. Version 8 retrofits it via ALTER TABLE, which setup() DOES
+        # run for any install below that version, sqlite included (has to
+        # stay a no-op there since the column already auto-increments).
+        plugin = self.plugin()
+        self.assertNotIn('AUTO_INCREMENT', plugin._setup['8'][0])
+        self.assertNotIn('ALTER TABLE', plugin._setup['8'][0])
+
+        plugin.driver = 'pymysql'
+        self.assertIn('AUTO_INCREMENT', plugin._setup['8'][0])
+        self.assertIn('ALTER TABLE', plugin._setup['8'][0])
+        self.assertIn('id INTEGER PRIMARY KEY AUTO_INCREMENT,', plugin._setup['2'][0])
+
+    def test_setup_versions_9_to_11_widen_name_column_for_non_sqlite_driver(self):
+        # Regression: name varchar(255) never actually bounded anything on
+        # SQLite (no length enforcement there), but a MySQL/MariaDB install
+        # under strict mode rejects/truncates any item path over 255 chars.
+        # Split into 3 single-statement versions (setup() runs one
+        # execute() per version; DB-API drivers don't reliably support
+        # several ;-separated statements in one call): widen the column,
+        # drop the old full-column index, recreate it as a name(191) prefix
+        # index - a prefix index doesn't affect WHERE name = ... lookup
+        # correctness, and 191 chars stays under InnoDB's classic 767-byte
+        # indexed-column limit regardless of charset/row-format. Verified
+        # end-to-end (all three statements, plus storing/reading back a
+        # 300+ char name) against a real MariaDB target.
+        plugin = self.plugin()
+        for v in ('9', '10', '11'):
+            self.assertEqual('SELECT 1;', plugin._setup[v][0], f'sqlite3 driver: version {v} must be a no-op')
+
+        plugin.driver = 'pymysql'
+        self.assertIn('varchar(1024)', plugin._setup['9'][0])
+        self.assertIn('DROP INDEX {item}_name ON {item}', plugin._setup['10'][0])
+        self.assertIn('name(191)', plugin._setup['11'][0])
+
+    def test_id_concurrent_create_no_duplicate(self):
+        """
+        id(create=True) is a check-then-act sequence (readItem, then
+        insertItem if not found). Without holding the lock across both,
+        two concurrent callers can each see "not found" and both insert,
+        creating two rows for the same item name. Fire many threads at the
+        same not-yet-existing item and confirm exactly one row is created
+        and every thread agrees on its id.
+        """
+        plugin = self.plugin()
+        item = self.sh.return_item('main.num')
+
+        results = []
+        num_threads = 4
+        barrier = threading.Barrier(num_threads)
+
+        def worker():
+            barrier.wait()
+            results.append(plugin.id(item, True))
+
+        threads = [threading.Thread(target=worker) for _ in range(num_threads)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        self.assertEqual(num_threads, len(results))
+        self.assertEqual({results[0]}, set(results), 'all callers must agree on the same id')
+
+        rows = [row for row in plugin.readItems() if row[1] == item.property.path]
+        self.assertEqual(1, len(rows), 'exactly one row must exist for the item, no duplicates')
 
     def test_insertItem_creating_item(self):
         plugin = self.plugin()
@@ -131,6 +263,47 @@ class TestDatabaseBasic(TestDatabaseBase):
         res = plugin.readLog(id, time=0)
         self.assertEqual(0, len(res))
 
+    def test_deleteLog_with_explicit_cursor_updates_logcount(self):
+        # deleteLog()'s internal logcount refresh must run on the caller's
+        # cursor when one is passed - a cur=None readLogCount() from inside
+        # the caller's transaction() block hits lock()'s same-thread
+        # reentrancy guard, so the refresh silently failed (error logged,
+        # count never updated) on every explicit-cursor call.
+        plugin = self.plugin()
+        id = self.create_item(plugin, 'main.num')
+        plugin.insertLog(id, time=0, duration=3600, val=10, it='num')
+
+        with plugin._db.transaction() as cur:
+            plugin.deleteLog(id, time=0, cur=cur)
+
+        self.assertEqual(0, plugin._item_logcount[id])
+
+    def test_readLogCount_time_end_boundary_matches_deleteLog(self):
+        # Regression: readLogCount's time_end was inclusive (time <=
+        # time_end) but deleteLog()/delete_range's is exclusive (time <
+        # time_end) - a row landing exactly on time_end used to be counted
+        # by readLogCount() but left behind by deleteLog() with the same
+        # time_end, so a "count then delete" caller (remove_older_than_maxage)
+        # over- reported how many rows it removed.
+        plugin = self.plugin()
+        id = self.create_item(plugin, 'main.num')
+        plugin.insertLog(id, time=1000, duration=1000, val=1.0, it='num')
+        plugin.insertLog(id, time=2000, duration=1000, val=2.0, it='num')  # exactly on the boundary below
+
+        count_at_boundary = plugin.readLogCount(id, time_end=2000)
+        self.assertEqual(2, count_at_boundary, 'time_end is inclusive for readLogCount')
+
+        # the fix used by remove_older_than_maxage(): shift by 1ms (integer
+        # timestamps) to predict exactly what deleteLog() with the same
+        # time_end will actually remove
+        predicted = plugin.readLogCount(id, time_end=2000 - 1)
+        self.assertEqual(1, predicted)
+
+        plugin.deleteLog(id, time_end=2000)
+        remaining = plugin.readLogCount(id)
+        self.assertEqual(1, remaining, 'time_end is exclusive for deleteLog - the boundary row survives')
+        self.assertEqual(2 - predicted, remaining, 'predicted removal count must match what deleteLog actually removed')
+
     def test_readLogs(self):
         plugin = self.plugin()
         id = self.create_item(plugin, 'main.num')
@@ -160,6 +333,24 @@ class TestDatabaseBasic(TestDatabaseBase):
         item = self.sh.return_item('main.num')
         plugin.parse_item(item)
         self.assertEqual(0, item())
+
+    def test_parse_item_releases_lock_even_if_readitem_raises(self):
+        # Regression: this block used to lock()/cursor() with no
+        # try/finally at all - if readItem() raised, self._db's lock was
+        # never released, wedging every future operation on this
+        # connection (including shutdown) until process restart.
+        plugin = self.plugin()
+        item = self.sh.return_item('main.num')
+
+        def failing_readitem(*a, **kw):
+            raise RuntimeError('simulated readItem failure')
+
+        with mock.patch.object(plugin, 'readItem', side_effect=failing_readitem):
+            with self.assertRaises(RuntimeError):
+                plugin.parse_item(item)
+
+        self.assertTrue(plugin._db.lock(0), '_fdb_lock left held after parse_item() propagated an exception')
+        plugin._db.release()
 
     @pytest.mark.skip(reason='test for pending implementation')
     def test_parse_item_reads_cache(self):
@@ -192,6 +383,51 @@ class TestDatabaseBasic(TestDatabaseBase):
         self.assertEqual('1970-01-01T00:00:03.600000+00:00', item.prev_change().isoformat())
         self.assertEqual('1970-01-01T00:00:07.200000+00:00', item.last_change().isoformat())
 
+    def test_sqlite_dump_holds_lock_for_the_whole_iterdump(self):
+        # Regression: sqlite_dump() iterated self._db._conn.iterdump()
+        # directly - bypassing self._db.transaction(), which every other
+        # multi-statement access to self._db in this file goes through to
+        # take self._fdb_lock. A concurrent write (e.g. a buffer flush)
+        # could interleave with the dump and produce an inconsistent
+        # snapshot. Spies on lock()/release() to confirm the dump now
+        # acquires the lock before iterdump() and releases it after.
+        plugin = self.plugin()
+        id = self.create_item(plugin, 'main.num')
+        plugin.insertLog(id, time=0, duration=3600, val=10, it='num')
+        name = self.create_tmpfile()
+
+        calls = []
+        orig_lock = plugin._db.lock
+        orig_release = plugin._db.release
+
+        def spy_lock(*a, **kw):
+            calls.append('lock')
+            return orig_lock(*a, **kw)
+
+        def spy_release(*a, **kw):
+            calls.append('release')
+            return orig_release(*a, **kw)
+
+        plugin._db.lock = spy_lock
+        plugin._db.release = spy_release
+        try:
+            self.assertTrue(plugin.sqlite_dump(name))
+        finally:
+            plugin._db.lock = orig_lock
+            plugin._db.release = orig_release
+
+        self.assertEqual(['lock', 'release'], calls)
+        self.assertIn('main.num', self.read_tmpfile(name))
+
+    def test_sqlite_dump_aborts_cleanly_when_lock_unavailable(self):
+        plugin = self.plugin()
+        name = self.create_tmpfile()
+
+        with mock.patch.object(plugin._db, 'lock', return_value=False):
+            self.assertFalse(plugin.sqlite_dump(name))
+
+        self.assertEqual('', self.read_tmpfile(name), 'must not write a partial/empty dump file when locking fails')
+
     def test_dump_empty(self):
         name = self.create_tmpfile()
         plugin = self.plugin()
@@ -200,6 +436,25 @@ class TestDatabaseBasic(TestDatabaseBase):
             'item_id;item_name;time;duration;val_str;val_num;val_bool;changed;time_date;changed_date\n',
             self.read_tmpfile(name),
         )
+
+    def test_dump_escapes_semicolon_and_newline_in_val_str(self):
+        # Regression: escaping only handled embedded '"' (via a backslash,
+        # not RFC 4180's doubled-quote convention either) - a val_str
+        # containing the ';' delimiter silently shifted every later column
+        # in that row, and an embedded newline split one logical row into
+        # two lines. csv.writer's default quoting handles both correctly.
+        plugin = self.plugin()
+        id = self.create_item(plugin, 'main.str')
+        tricky_value = 'a;b\nc'
+        plugin.insertLog(id, time=0, duration=3600, val=tricky_value, it='str', changed=0)
+        name = self.create_tmpfile()
+        plugin.dump(name)
+
+        with open(name, newline='') as f:
+            rows = list(csv.reader(f, delimiter=';'))
+        self.assertEqual(2, len(rows), 'the embedded newline must not split the data row into two csv rows')
+        header, data_row = rows
+        self.assertEqual(tricky_value, data_row[header.index('val_str')])
 
     @pytest.mark.skip(reason='test for pending implementation')
     def test_dump_log(self):
@@ -307,6 +562,73 @@ class TestDatabaseBasic(TestDatabaseBase):
         self.assertEqual(2, plugin.readLogCount(id))
         self.assertEqual([], plugin._buffer_mgr.pop_all(item))
 
+    def test_dump_finalize_rewrites_by_default_when_attribute_unset(self):
+        # Regression: plugin.yaml documents database_write_on_shutdown's
+        # default as True, but item parsing never injects a plugin-declared
+        # item_attribute default into an item's conf when the item omits
+        # the attribute entirely (lib/item/item.py's per-item conf loop
+        # only converts attributes already present; the metadata default is
+        # only ever used inside a "value failed to convert" warning
+        # message, never assigned back). get_iattr_value() without its own
+        # default= therefore returned None for main.num (which sets no
+        # database_write_on_shutdown attribute at all), silently inverting
+        # the documented True default to False.
+        plugin = self.plugin()
+        item = self.sh.return_item('main.num')
+        id = self.create_item(plugin, 'main.num')
+        self.assertNotIn('database_write_on_shutdown', item.conf)
+
+        plugin._dump(items=[item], finalize=True)
+
+        self.assertEqual(1, plugin.readLogCount(id), 'default (attribute unset) must still rewrite on shutdown')
+
+    def test_dump_finalize_honours_explicit_write_on_shutdown_false(self):
+        plugin = self.plugin()
+        item = self.sh.return_item('main.num')
+        item.conf['database_write_on_shutdown'] = False
+        id = self.create_item(plugin, 'main.num')
+
+        plugin._dump(items=[item], finalize=True)
+
+        self.assertEqual(0, plugin.readLogCount(id), 'explicit False must still block the shutdown rewrite')
+
+    def test_dump_lock_timeout_aborts_whole_method_not_just_one_item(self):
+        # A lock-acquisition timeout (transaction() raising TimeoutError)
+        # must abort the entire _dump() call - not just skip the failing
+        # item and continue, unlike an ordinary mid-transaction failure
+        # (see test_dump_restores_buffer_on_write_failure). Matches the
+        # original self._db.lock(300) check's behaviour: restore the
+        # buffer, log, release self._dump_lock, return immediately.
+        plugin = self.plugin()
+        item1 = self.sh.return_item('main.num')
+        item2 = self.sh.return_item('main.str')
+        id1 = self.create_item(plugin, 'main.num')
+        id2 = self.create_item(plugin, 'main.str')
+        pending1 = [BufferEntry(1000, 500, 42.0)]
+        pending2 = [BufferEntry(1000, 500, 'x')]
+        plugin._buffer_mgr.restore(item1, list(pending1))
+        plugin._buffer_mgr.restore(item2, list(pending2))
+
+        # verify() mocked directly - it has its own retry/delay loop that
+        # would make this test slow and would exercise its own "not
+        # recovered" abort path instead of transaction()'s.
+        with mock.patch.object(plugin._db, 'verify', return_value=1):
+            with mock.patch.object(plugin._db, 'lock', return_value=False):
+                plugin._dump(items=[item1, item2])  # must not raise
+
+        # item1 (the one being processed when the lock failed) restored...
+        self.assertEqual(pending1, plugin._buffer_mgr.pop_all(item1))
+        # ...and item2 never even attempted - the whole call aborted.
+        self.assertEqual(pending2, plugin._buffer_mgr.pop_all(item2))
+        self.assertEqual(0, plugin.readLogCount(id1))
+        self.assertEqual(0, plugin.readLogCount(id2))
+
+        # self._dump_lock must have been released, not left held - a
+        # subsequent dump must be able to proceed normally.
+        plugin._buffer_mgr.restore(item1, list(pending1))
+        plugin._dump(items=[item1])
+        self.assertEqual(1, plugin.readLogCount(id1))
+
     def test_initialize_db_maint_throttle_logs_correct_delta(self):
         # Regression: the maintenance-connection reconnect-throttle branch
         # referenced time_delta_last_connect (the main connection's delta,
@@ -333,6 +655,33 @@ class TestDatabaseBasic(TestDatabaseBase):
         for name in ('_fetchone', '_fetchall'):
             default = inspect.signature(getattr(plugin, name)).parameters['params'].default
             self.assertIsNone(default, f'{name} params default should be None, not a shared mutable {default!r}')
+
+    def test_query_own_cur_lock_timeout_returns_none_not_raises(self):
+        # _query() migrated its owns_cur path to self._db.transaction(),
+        # which raises TimeoutError on a failed lock acquisition - a
+        # different signal than the original self._db.lock(300) check it
+        # replaced (that just logged and returned None). Every caller
+        # throughout this file treats a None result as "query failed",
+        # not something to catch - preserve that contract explicitly:
+        # transaction()'s TimeoutError must be translated back to None
+        # here, never left to propagate.
+        # Calls plugin._fetchall() directly, not a higher-level method like
+        # readLogCount() - several of those convert _query()'s None into
+        # their own default (e.g. readLogCount() returns 0 for a None
+        # result), which would mask the exact contract under test here.
+        plugin = self.plugin()
+        item_id = self.create_item(plugin, 'main.num')
+        plugin._db.commit()
+
+        # verify() mocked directly (not exercised via a real failing
+        # lock()) - it has its own retry/delay loop that would make this
+        # test slow and would exercise verify()'s own "not recovered"
+        # return-None path instead of transaction()'s.
+        with mock.patch.object(plugin._db, 'verify', return_value=1):
+            with mock.patch.object(plugin._db, 'lock', return_value=False):
+                result = plugin._fetchall('SELECT count(*) FROM {log} WHERE item_id = :id;', {'id': item_id})
+
+        self.assertIsNone(result, '_query() must return None on lock timeout, not raise')
 
     def test_cleanup_empty(self):
         plugin = self.plugin()
@@ -363,6 +712,31 @@ class TestDatabaseBasic(TestDatabaseBase):
         items = plugin.readItems()
         self.assertEqual(1, len(items))
         self.assertEqual('main.num', items[0][1])
+
+    def test_delete_orphan_bulk_delete_removes_chunk_of_log_rows(self):
+        # Regression: 'DELETE FROM {log} WHERE item_id = :id LIMIT
+        # :maxrecords' (no ORDER BY, but still a bare LIMIT on a top-level
+        # DELETE) is not valid SQLite syntax without the non-default
+        # SQLITE_ENABLE_UPDATE_DELETE_LIMIT compile flag - same class of
+        # bug as remove_older_than_maxage()'s bulk-delete branch (see
+        # test_maxage_action.py), found alongside it. Rewritten as a
+        # rowid-subquery. Exercises the real SQL - not mocked - and checks
+        # the chunk size is actually respected: some rows deleted, some
+        # left (item stays orphaned, to be finished next cycle).
+        plugin = self.plugin()
+        plugin.delete_orphan_chunk_size = 2
+        item_id = self.create_item(plugin, 'main.nodb')
+        for i in range(4):
+            plugin.insertLog(item_id, time=i * 1000, duration=1000, val=float(i), it='num')
+        plugin._db.commit()
+        plugin.cleanup()
+        plugin.build_orphanlist()
+        self.assertIn('main.nodb', plugin.orphanlist)
+
+        plugin.remove_orphan_items()
+
+        self.assertEqual(2, plugin.readLogCount(item_id), 'must delete exactly one chunk (2 rows), not all/none')
+        self.assertIn('main.nodb', plugin.orphanlist, 'item must remain orphaned - more log rows still need deleting')
 
     def test_remove_orphan_items_survives_stale_maintenance_connection(self):
         # Regression for smarthomeNG/plugins#1004: a hiccup on the dedicated

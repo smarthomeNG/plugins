@@ -31,6 +31,18 @@ Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/co
    **KEIN** **instance** Attribut konfiguriert werden darf, da sonst die Systemdaten nicht gespeichert werden und
    Abfragen aus dem Admin Interface und der smartVISU ins Leere laufen und Fehlermeldungen produzieren.
 
+.. note::
+
+   Hinweise für MySQL/MariaDB:
+
+   - Textwerte (``val_str``) sind auf 64 KB begrenzt (Spaltentyp ``TEXT``). SQLite hat diese
+     Grenze nicht.
+   - Beim ersten Start nach einem Update kann die Schema-Migration auf Version 7 (neue Spalte
+     ``val_quality``) auf MariaDB vor 10.3 lange dauern, da die komplette Log-Tabelle neu
+     aufgebaut wird.
+   - Die Auswertungsfunktionen ``diff`` und ``differentiate`` benötigen Window-Funktionen:
+     MariaDB ab 10.2, MySQL ab 8.0, SQLite ab 3.25.
+
 Standarmäßig schreibt das Plugin vor dem Beenden von SmarthomeNG alle am Plugin registrierten Items nochmal mit aktuellem
 Wert in die Datenbank. Die kann durch Setzen des Item Attributes database_write_on_shutdown: False unterdrückt werden.
 Ein typischer Anwendungsfall sind zum Beispiel monoton steigende Werte wie Zählerstände, die selten geschrieben werden
@@ -283,7 +295,7 @@ Item Attribute
     min                  Minimalwert                                           num, bool
     max                  Maximalwert                                           num, bool
     integrate            Diskretes Integral über der Zeit                      num, bool
-    on                   Prozentzahl der Werte > 0 (zeitgewichtet)             bool, str
+    on                   Prozentzahl der Werte > 0 (zeitgewichtet)             bool
     countall             Anzahl der Rohwerte im Intervall                      beliebig
     first                Ältester Rohwert im Intervall, unverändert            beliebig
     last                 Neuester Rohwert im Intervall, unverändert            beliebig

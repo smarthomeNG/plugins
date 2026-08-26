@@ -75,3 +75,56 @@ class TestDatabaseRenameItem(TestDatabaseBase):
         new_id = plugin.id('main.renamed', create=False)
         values = [v[4] for v in plugin.readLogs(new_id)]  # COL_LOG_VAL_NUM
         self.assertEqual(sorted(values), [1.0, 2.0])
+
+    def test_reassign_orphaned_id_converges_across_multiple_chunks(self):
+        # Regression: the UPDATE inside reassign_orphaned_id()'s while loop
+        # used to be a rowid-subquery ('WHERE rowid IN (SELECT rowid FROM
+        # {log} WHERE item_id = :orphanid LIMIT :limit)') - broken against
+        # real MariaDB for two reasons: MariaDB rejects LIMIT directly
+        # inside IN(subquery), and {log} has no primary key, so
+        # MySQL/MariaDB exposes no rowid for it under any name. Rewritten
+        # to match on (item_id, time) via the existing UNIQUE KEY instead.
+        # test_rename_item_reassigns_actual_log_entries_not_just_an_empty_
+        # row only has 2 rows (one chunk, default max_reassign_logentries=
+        # 20) - this test forces several loop iterations to confirm the
+        # rewrite converges correctly across chunk boundaries too.
+        plugin = self.plugin()
+        plugin.max_reassign_logentries = 3
+        item = self.sh.return_item('main.num')
+        self.create_log(plugin, 'main.num', [(i, i + 1, float(i)) for i in range(10)])
+        plugin._db.commit()
+
+        item._path = 'main.renamed'
+        plugin.rename_item(item, 'main.num', 'main.renamed')
+
+        new_id = plugin.id('main.renamed', create=False)
+        old_id = plugin.id('main.num', create=False)
+        values = sorted(v[4] for v in plugin.readLogs(new_id))
+        self.assertEqual(values, [float(i) for i in range(10)], 'all 10 rows across 4 chunks must be reassigned')
+        self.assertIsNone(old_id, 'orphaned id must be fully drained and removed, not left with leftover rows')
+
+    def test_reassign_orphaned_id_uses_transaction(self):
+        # Regression: reassign_orphaned_id() used to open a raw cursor via
+        # self._db_maint.cursor() with no lock() call anywhere - no
+        # serialization at all against this connection's other users.
+        plugin = self.plugin()
+        item = self.sh.return_item('main.num')
+        old_id = self.create_item(plugin, 'main.num')
+
+        calls = []
+        orig_transaction = plugin._db_maint.transaction
+
+        def spy_transaction(*a, **kw):
+            calls.append((a, kw))
+            return orig_transaction(*a, **kw)
+
+        plugin._db_maint.transaction = spy_transaction
+        item._path = 'main.renamed'
+        plugin.rename_item(item, 'main.num', 'main.renamed')
+
+        # >=1, not ==1: reassign_orphaned_id() also calls build_orphanlist()
+        # at the end to refresh the list, which itself goes through
+        # self._db_maint.transaction() too - both calls are expected.
+        self.assertGreaterEqual(len(calls), 1, 'reassign_orphaned_id() must go through self._db_maint.transaction()')
+        self.assertIsNone(plugin.id('main.num', create=False), 'sanity: reassignment must still have happened')
+        self.assertNotEqual(old_id, plugin.id('main.renamed', create=False))

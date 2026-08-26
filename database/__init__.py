@@ -23,7 +23,8 @@
 #
 #########################################################################
 
-import copy
+import csv
+import decimal
 import logging
 import re
 import os
@@ -36,10 +37,8 @@ import lib.db
 
 from lib.shtime import Shtime
 from lib.item import Items
-from lib.utils import Utils
 
 from lib.model.smartplugin import SmartPlugin
-from lib.module import Modules
 
 from .buffer import BufferManager
 from .constants import (
@@ -76,33 +75,86 @@ class Database(SmartPlugin):
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
-    _setup = {
-        '1': [
-            'CREATE TABLE {log} (time BIGINT, item_id INTEGER, duration BIGINT, val_str TEXT, val_num REAL, val_bool BOOLEAN, changed BIGINT);',
-            'DROP TABLE {log};',
-        ],
-        '2': [
-            # id declared as INTEGER PRIMARY KEY so the DB handles auto-increment;
-            # avoids the previous MAX(id)+1 race condition on multi-connection setups.
-            'CREATE TABLE {item} (id INTEGER PRIMARY KEY, name varchar(255), time BIGINT, val_str TEXT, val_num REAL, val_bool BOOLEAN, changed BIGINT);',
-            'DROP TABLE {item};',
-        ],
-        '3': ['CREATE UNIQUE INDEX {log}_{item}_id_time ON {log} (item_id, time);', 'DROP INDEX {log}_{item}_id_time;'],
-        '4': [
-            'CREATE INDEX {log}_{item}_id_changed ON {log} (item_id, changed);',
-            'DROP INDEX {log}_{item}_id_changed;',
-        ],
-        '5': ['CREATE UNIQUE INDEX {item}_id ON {item} (id);', 'DROP INDEX {item}_id;'],
-        '6': ['CREATE INDEX {item}_name ON {item} (name);', 'DROP INDEX {item}_name;'],
-        '7': [
-            # Add data-quality column to the log table.
-            # 0 (default) = normal valid measurement.
-            # 1 = QUALITY_NO_DATA: data source was unavailable; all val_* columns NULL.
-            # Existing rows implicitly have quality=0 via the DEFAULT clause.
-            'ALTER TABLE {log} ADD COLUMN val_quality TINYINT DEFAULT 0;',
-            '/* val_quality column cannot be removed via ALTER TABLE on SQLite <3.35 */',
-        ],
-    }
+    @property
+    def _setup(self):
+        # id declared as INTEGER PRIMARY KEY so the DB handles auto-increment;
+        # avoids the previous MAX(id)+1 race condition on multi-connection
+        # setups. That's true as-is on SQLite (bare INTEGER PRIMARY KEY is
+        # aliased to rowid, which auto-increments implicitly) but NOT on
+        # MySQL/MariaDB, where it needs an explicit AUTO_INCREMENT - without
+        # it, ItemStore.insert() fails with "Field 'id' doesn't have a
+        # default value" under default strict SQL mode. version 2's CREATE
+        # TABLE only runs for a schema that hasn't recorded it yet (fresh
+        # installs); every existing MySQL/MariaDB install already has v2
+        # applied without AUTO_INCREMENT, so version 8 below retrofits it
+        # via ALTER TABLE - safe on a populated table, MySQL/MariaDB seeds
+        # the auto-increment counter from the existing MAX(id).
+        if self.driver.lower() == 'sqlite3':
+            item_id_column = 'id INTEGER PRIMARY KEY'
+            item_id_retrofit_autoincrement = 'SELECT 1;'  # no-op: already auto-increments
+            name_widen, name_drop_index, name_recreate_index = 'SELECT 1;', 'SELECT 1;', 'SELECT 1;'
+        else:
+            item_id_column = 'id INTEGER PRIMARY KEY AUTO_INCREMENT'
+            item_id_retrofit_autoincrement = 'ALTER TABLE {item} MODIFY id INTEGER NOT NULL AUTO_INCREMENT;'
+            # SQLite enforces no varchar length and has no indexed-column
+            # byte-length limit, so name varchar(255) never actually bounded
+            # anything there - only MySQL/MariaDB truncate/error on longer
+            # item paths under strict mode. Widen to varchar(1024) there;
+            # can't just re-index the full (now longer) column afterwards -
+            # InnoDB's indexed-column byte limit (767 bytes on old row
+            # formats/charsets, 3072 on modern ones) makes a full-column
+            # index on a 1024-char utf8mb4 column version-dependent. A
+            # prefix index of 191 chars stays under the classic 767-byte
+            # limit at any charset/row-format, and doesn't affect equality
+            # lookup correctness (WHERE name = ... still checks the full
+            # value; the prefix index only narrows candidate rows).
+            # Split into three single-statement versions (9/10/11) because
+            # setup() runs one execute() per version, and DB-API drivers
+            # don't reliably support multiple ;-separated statements in one
+            # execute() call.
+            name_widen = 'ALTER TABLE {item} MODIFY name varchar(1024);'
+            name_drop_index = 'DROP INDEX {item}_name ON {item};'
+            name_recreate_index = 'CREATE INDEX {item}_name ON {item} (name(191));'
+        return {
+            '1': [
+                'CREATE TABLE {log} (time BIGINT, item_id INTEGER, duration BIGINT, val_str TEXT, val_num REAL, val_bool BOOLEAN, changed BIGINT);',
+                'DROP TABLE {log};',
+            ],
+            '2': [
+                'CREATE TABLE {item} ('
+                + item_id_column
+                + ', name varchar(255), time BIGINT, val_str TEXT, val_num REAL, val_bool BOOLEAN, changed BIGINT);',
+                'DROP TABLE {item};',
+            ],
+            '3': [
+                'CREATE UNIQUE INDEX {log}_{item}_id_time ON {log} (item_id, time);',
+                'DROP INDEX {log}_{item}_id_time;',
+            ],
+            '4': [
+                'CREATE INDEX {log}_{item}_id_changed ON {log} (item_id, changed);',
+                'DROP INDEX {log}_{item}_id_changed;',
+            ],
+            '5': ['CREATE UNIQUE INDEX {item}_id ON {item} (id);', 'DROP INDEX {item}_id;'],
+            '6': ['CREATE INDEX {item}_name ON {item} (name);', 'DROP INDEX {item}_name;'],
+            '7': [
+                # Add data-quality column to the log table.
+                # 0 (default) = normal valid measurement.
+                # 1 = QUALITY_NO_DATA: data source was unavailable; all val_* columns NULL.
+                # Existing rows implicitly have quality=0 via the DEFAULT clause.
+                'ALTER TABLE {log} ADD COLUMN val_quality TINYINT DEFAULT 0;',
+                '/* val_quality column cannot be removed via ALTER TABLE on SQLite <3.35 */',
+            ],
+            '8': [
+                item_id_retrofit_autoincrement,
+                '/* AUTO_INCREMENT cannot be cleanly reverted without knowing whether it predates this migration */',
+            ],
+            '9': [
+                name_widen,
+                '/* rollback would need the original varchar(255) - not recorded, and sqlite has no length to restore */',
+            ],
+            '10': [name_drop_index, 'CREATE INDEX {item}_name ON {item} (name);'],
+            '11': [name_recreate_index, 'DROP INDEX {item}_name;'],
+        }
 
     # database_maxage_action: value expressions, one scalar per compaction
     # interval. Deliberately mirrors (not DRY-shares) the fragments in
@@ -133,18 +185,18 @@ class Database(SmartPlugin):
 
     # item types each database_maxage_action is valid for. None = any type.
     # Grounded in utils.encode_value(): val_num is populated for 'num' and
-    # 'bool' (bool encodes as float(value)); val_bool is populated for
-    # 'bool' *and* 'str' (string truthiness) - hence 'on' works for str/bool
-    # but avg/sum/min/max/integrate (which read val_num) do not work for str.
-    # first/last just read back whatever encode_value() already stored, so
-    # they work for every type, str included.
+    # 'bool' (bool encodes as float(value)), so avg/sum/min/max/integrate/on
+    # (which read val_num/val_bool) do not work for str - 'on' would
+    # additionally store its float on-fraction back as the item's string
+    # value. first/last just read back whatever encode_value() already
+    # stored, so they work for every type, str included.
     _MAXAGE_ACTION_VALID_TYPES = {
         'avg': ('num', 'bool'),
         'sum': ('num', 'bool'),
         'min': ('num', 'bool'),
         'max': ('num', 'bool'),
         'integrate': ('num', 'bool'),
-        'on': ('bool', 'str'),
+        'on': ('bool',),
         'countall': None,
         'first': None,
         'last': None,
@@ -212,6 +264,10 @@ class Database(SmartPlugin):
         self.lock_remove_older = False
 
         self.orphanlist = []  # list with item names of orphant database entries
+        # True only once build_orphanlist() has actually completed against a
+        # live connection - an empty orphanlist alone doesn't distinguish
+        # "confirmed no orphans" from "couldn't check, DB wasn't connected".
+        self._orphanlist_built = False
         self._orphan_logcount = {}  # dict to store the number of log records for an orphan
         self.remove_orphan = False  # set to True to remove orphans during remove_older
         self.delete_orphan_chunk_size = 20000  # Delete x log entries for orphan items at a time
@@ -238,6 +294,23 @@ class Database(SmartPlugin):
         if not self._db.api_initialized:
             # Error initializeng the database driver (e.g.: Python module for database driver not found)
             self.logger.error('Initialization of database API failed')
+            self._init_complete = False
+            return
+
+        if self.driver.lower() == 'sqlite3' and self._db._params.get('database') in (':memory:', ''):
+            # This plugin always opens two independent connections (self._db
+            # for regular access, self._db_maint below for maintenance) -
+            # each is its own sqlite3.connect() call. A ':memory:' (or
+            # blank, which sqlite3 treats the same way) database is private
+            # to the connection that opened it; there is no shared-cache URI
+            # here, so the two connections would silently become two
+            # separate, disconnected empty databases - the maintenance
+            # connection would never see anything written via self._db.
+            self.logger.critical(
+                "Database: driver 'sqlite3' with an in-memory database (':memory:' or blank) is not "
+                'supported by this plugin - it uses two independent connections, and each in-memory '
+                'SQLite connection is a private database invisible to the other. Configure a file path.'
+            )
             self._init_complete = False
             return
 
@@ -270,7 +343,16 @@ class Database(SmartPlugin):
         Run method for the plugin
         """
         self.logger.debug('Run method called')
-        self._initialize_db()
+        if not self._initialize_db():
+            # Not fatal - _dump()/id()/_query() all self-heal on their own
+            # next call, same as everywhere else in this plugin. Logged
+            # explicitly here (distinct from build_orphanlist()'s own
+            # swallowed error below) so "started degraded, no DB yet" is
+            # visible in the log rather than only inferable from a stray
+            # error line above an otherwise-clean-looking startup.
+            self.logger.warning('Database: not connected at startup - will keep retrying on the scheduled cycle')
+        # Retried from _dump() (self._orphanlist_built) if this attempt
+        # fails - no separate retry loop needed here.
         self.build_orphanlist(True)
         self._start_schedulers()
         self.alive = True
@@ -339,55 +421,67 @@ class Database(SmartPlugin):
             item.db_mark_invalid = functools.partial(self._mark_item_invalid, item)
             item.db_mark_valid = functools.partial(self._mark_item_valid, item)
             if self._db_initialized and self.get_iattr_value(item.conf, 'database').lower() == 'init':
-                if not self._db.lock(5):
+                # transaction() ensures the lock releases even if readItem()
+                # below raises - a bare lock()/cursor() pair without
+                # try/finally would wedge every future operation on this
+                # connection (including shutdown) until process restart.
+                # timeout=5 (not the 60s default) is deliberate - a per-item
+                # read must not stall startup registration.
+                try:
+                    with self._db.transaction(timeout=5) as cur:
+                        cache = self.readItem(str(item.property.path), cur=cur)
+                        if cache is not None:
+                            try:
+                                value = self._item_value_tuple_rev(
+                                    item.type(), cache[COL_ITEM_VAL_STR : COL_ITEM_VAL_BOOL + 1]
+                                )
+                                last_change = self._datetime(cache[COL_ITEM_TIME])
+                                prev_change = self._fetchone(
+                                    'SELECT MAX(time) from {log} WHERE item_id = :id',
+                                    {'id': cache[COL_ITEM_ID]},
+                                    cur=cur,
+                                )
+                                if (value is not None) and (prev_change is not None) and (prev_change[0] is not None):
+                                    # Add item specific debugging here:
+                                    # if item.property.path == 'xyz':
+                                    #    self.logger.debug(f"Parse item: ItemID: {item.property.path}: {value}, {self._datetime(prev_change[0])}, {last_change}")
+                                    self._webdata[item.property.path].update({'last_change': last_change.isoformat()})
+                                    self._webdata[item.property.path].update({'value': value})
+                                    self._webdata[item.property.path].update({'type': item.property.type})
+                                    item.set(
+                                        value,
+                                        'Database',
+                                        source='DBInit',
+                                        prev_change=self._datetime(prev_change[0]),
+                                        last_change=last_change,
+                                    )
+                                else:
+                                    self.logger.warning(
+                                        f'Debug init for item {item.property.path}: {value}, {prev_change}, {prev_change[0]}'
+                                    )
+                                if (
+                                    value is not None
+                                    and self.get_iattr_value(item.conf, 'database_acl') is not None
+                                    and self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro'
+                                ):
+                                    # self.logger.debug(f"DEBUG: Parse item, doing buffer insert for ItemID: {item.property.path}: {value}, databse_acl {self.get_iattr_value(item.conf, 'database_acl').lower()}")
+                                    self._buffer_mgr.push(
+                                        item,
+                                        BufferEntry(
+                                            time=self._timestamp(self.shtime.now()), duration=None, value=value
+                                        ),
+                                    )
+                            except Exception as e:
+                                self.logger.error(
+                                    'Reading cache value from database for {} failed: {}'.format(item.property.path, e)
+                                )
+                        else:
+                            self.logger.notice(f'No cached value available in database for item {item.property.path}')
+                except TimeoutError:
                     self.logger.error(
                         'Can not acquire lock for database to read value for item {}'.format(item.property.path)
                     )
                     return
-                cur = self._db.cursor()
-                cache = self.readItem(str(item.property.path), cur=cur)
-                if cache is not None:
-                    try:
-                        value = self._item_value_tuple_rev(item.type(), cache[COL_ITEM_VAL_STR : COL_ITEM_VAL_BOOL + 1])
-                        last_change = self._datetime(cache[COL_ITEM_TIME])
-                        prev_change = self._fetchone(
-                            'SELECT MAX(time) from {log} WHERE item_id = :id', {'id': cache[COL_ITEM_ID]}, cur=cur
-                        )
-                        if (value is not None) and (prev_change is not None) and (prev_change[0] is not None):
-                            # Add item specific debugging here:
-                            # if item.property.path == 'xyz':
-                            #    self.logger.debug(f"Parse item: ItemID: {item.property.path}: {value}, {self._datetime(prev_change[0])}, {last_change}")
-                            self._webdata[item.property.path].update({'last_change': last_change.isoformat()})
-                            self._webdata[item.property.path].update({'value': value})
-                            self._webdata[item.property.path].update({'type': item.property.type})
-                            item.set(
-                                value,
-                                'Database',
-                                source='DBInit',
-                                prev_change=self._datetime(prev_change[0]),
-                                last_change=last_change,
-                            )
-                        else:
-                            self.logger.warning(
-                                f'Debug init for item {item.property.path}: {value}, {prev_change}, {prev_change[0]}'
-                            )
-                        if (
-                            value is not None
-                            and self.get_iattr_value(item.conf, 'database_acl') is not None
-                            and self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro'
-                        ):
-                            # self.logger.debug(f"DEBUG: Parse item, doing buffer insert for ItemID: {item.property.path}: {value}, databse_acl {self.get_iattr_value(item.conf, 'database_acl').lower()}")
-                            self._buffer_mgr.push(
-                                item, BufferEntry(time=self._timestamp(self.shtime.now()), duration=None, value=value)
-                            )
-                    except Exception as e:
-                        self.logger.error(
-                            'Reading cache value from database for {} failed: {}'.format(item.property.path, e)
-                        )
-                else:
-                    self.logger.notice(f'No cached value available in database for item {item.property.path}')
-                cur.close()
-                self._db.release()
             elif self.get_iattr_value(item.conf, 'database').lower() == 'init':
                 self.logger.warning(
                     'Db not initialized. Cannot read database value for item {}'.format(item.property.path)
@@ -479,13 +573,6 @@ class Database(SmartPlugin):
         # before calling this hook), so pass the item, not the string.
         new_id = self.id(item, create=True)
         if old_id is not None and old_id != new_id:
-            # id(create=True) never commits its own insert (a pre-existing
-            # gap — insertItem() just executes, never commits). Without an
-            # explicit commit here, that uncommitted write on self._db
-            # blocks reassign_orphaned_id()'s very first read, since it
-            # uses the separate self._db_maint connection, and SQLite
-            # allows only one writer's transaction to be open at a time.
-            self._db.commit()
             self.reassign_orphaned_id(old_id, new_id)
 
         return True
@@ -658,7 +745,13 @@ class Database(SmartPlugin):
         if self.count_logentries:
             self.scheduler_add('Count logs', self._count_logentries, cycle=6 * 3600, prio=6)
         self.scheduler_add('Buffer dump', self._dump, cycle=self._dump_cycle, prio=5)
-        if len(self._items_with_maxage) > 0:
+        # default_maxage alone (with no item setting its own database_maxage)
+        # still needs this scheduler - remove_older_than_maxage()'s worklist
+        # fill already handles that case by falling back to _handled_items
+        # (see its len(_maxage_worklist) == 0 branch), but registration here
+        # was gated on _items_with_maxage only, so the scheduler was never
+        # started at all and default_maxage was silently inert.
+        if self._default_maxage > 0 or len(self._items_with_maxage) > 0:
             # self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=91, prio=6)
             self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=self._removeold_cycle, prio=7)
         return
@@ -667,7 +760,7 @@ class Database(SmartPlugin):
         """
         Stop jobs that maintain buffer and database
         """
-        if len(self._items_with_maxage) > 0:
+        if self._default_maxage > 0 or len(self._items_with_maxage) > 0:
             self.scheduler_remove('Remove old')
         self.scheduler_remove('Buffer dump')
         if self.count_logentries:
@@ -726,19 +819,47 @@ class Database(SmartPlugin):
         :return: id of the item within the database
         :rtype: int | None
         """
-
         try:
             item_path = str(item.property.path)
         except AttributeError:
             item_path = item
-        try:
-            id = self.readItem(item_path, cur=cur)
-        except Exception as e:
-            self.logger.warning(f'id(): No id found for item {item_path} - Exception {e}')
-            id = None
 
-        if id is None and create:
-            id = [self.insertItem(item.property.path, cur)]
+        def _find_or_create(c):
+            try:
+                found = self.readItem(item_path, cur=c)
+            except Exception as e:
+                self.logger.warning(f'id(): No id found for item {item_path} - Exception {e}')
+                found = None
+            if found is None and create:
+                found = [self.insertItem(item_path, c)]
+            return found
+
+        if cur is not None:
+            # caller already holds the lock for its own multi-statement
+            # block (e.g. _dump()'s per-item transaction()) - use its
+            # cursor directly, no locking of our own.
+            id = _find_or_create(cur)
+        else:
+            # readItem()-then-insertItem() is a check-then-act sequence:
+            # without holding the lock across both, two concurrent
+            # callers can each see "not found" and both insert, creating
+            # a duplicate row for the same item name. transaction() holds
+            # the lock for the whole sequence and commits/rolls back
+            # automatically - mirrors the same init/verify/lock/timeout
+            # handling as _query().
+            if not self._db_initialized and not self._initialize_db():
+                return None
+            # retry kept low - see Database.verify()'s docstring cost note;
+            # id() already gets re-invoked by its own callers on failure.
+            if self._db.verify(2) == 0:
+                self.logger.error('Database: Connection not recovered')
+                return None
+            try:
+                with self._db.transaction() as tcur:
+                    id = _find_or_create(tcur)
+            except TimeoutError:
+                self.logger.error("Database: Can't query due to fail to acquire lock")
+                return None
 
         if (id is None) or (COL_ITEM_ID >= len(id)) or (id[COL_ITEM_ID] is None):
             return None
@@ -868,8 +989,18 @@ class Database(SmartPlugin):
             'time_date',
             'changed_date',
         ]
-        f = open(dumpfile, 'w')
-        f.write(s.join(h) + '\n')
+        # newline='' + csv.writer: per Python's csv module docs, letting the
+        # file object translate newlines itself (the default) can double up
+        # line endings csv.writer already controls via lineterminator.
+        # csv.writer also replaces the previous hand-rolled '"'-only escaping
+        # (which left an embedded ';' or newline in a val_str value
+        # unescaped, silently corrupting the row - a semicolon shifts every
+        # later column, a newline splits one row into two) with proper
+        # RFC 4180 quoting for any field containing the delimiter, a quote,
+        # or a newline.
+        f = open(dumpfile, 'w', newline='')
+        writer = csv.writer(f, delimiter=s, lineterminator='\n')
+        writer.writerow(h)
         for item in item_ids:
             self.logger.debug('... dumping item {}/{}'.format(item[1], item[0]))
 
@@ -897,11 +1028,15 @@ class Database(SmartPlugin):
                     COL_LOG_CHANGED,
                 ]:
                     cols.append(row[key])
-                for key in [COL_ITEM_ID, COL_LOG_CHANGED]:
+                # time_date/changed_date: both derived from log-row columns
+                # (COL_LOG_TIME, not COL_ITEM_ID - a log row's item_id and
+                # time columns are unrelated values that only happened to
+                # share the same tuple index (0) in both constants, masking
+                # this for as long as nobody reordered either column list).
+                for key in [COL_LOG_TIME, COL_LOG_CHANGED]:
                     cols.append('' if row[key] is None else datetime.datetime.fromtimestamp(row[key] / 1000.0))
-                cols = map(lambda col: '' if col is None else col, cols)
-                cols = map(lambda col: str(col) if '"' not in str(col) else col.replace('"', '\\"'), cols)
-                f.write(s.join(cols) + '\n')
+                cols = ['' if col is None else col for col in cols]
+                writer.writerow(cols)
         f.close()
         self.logger.info('File dump completed ({} items) ...'.format(len(item_ids)))
         return
@@ -914,9 +1049,22 @@ class Database(SmartPlugin):
 
         self.logger.info(f'Starting SQL file dump of the sqlite3 database to {dumpfile} ...')
 
-        with open(dumpfile, 'w') as f:
-            for line in self._db._conn.iterdump():
-                f.write(f'{line}\n')
+        # iterdump() reads directly off the raw sqlite3 connection, bypassing
+        # every other access to self._db in this file (which all go through
+        # self._db.transaction(), taking self._fdb_lock) - without the same
+        # lock here, a concurrent write (e.g. a buffer flush) could
+        # interleave with the dump and produce an inconsistent snapshot.
+        # timeout=300 matches _dump()'s own transaction(timeout=300) for a
+        # similarly long-running maintenance operation.
+        if not self._db.lock(timeout=300):
+            self.logger.error('sqlite_dump: could not acquire database lock within 300s, aborting dump')
+            return False
+        try:
+            with open(dumpfile, 'w') as f:
+                for line in self._db._conn.iterdump():
+                    f.write(f'{line}\n')
+        finally:
+            self._db.release()
 
         self.logger.info('SQL file dump of sqlite3 database completed')
         return True
@@ -1183,12 +1331,18 @@ class Database(SmartPlugin):
         changed_start=None,
         changed_end=None,
         cur=None,
-        with_commit=True,
     ):
         """
         Delete database log records for given item (database ID)
 
         This is a public function of the plugin
+
+        With no cur given, this acquires its own lock and commits via
+        LogStore.delete_range() (see its docstring) - there is no longer
+        a separate with_commit toggle, since a cur=None call that doesn't
+        commit has nothing else guaranteed to flush it, and a passed-in
+        cur being committed unilaterally would end the caller's own
+        transaction early.
 
         :param id: Database ID of item to delete the records for
         :param time: Restrict deletion of records to given time (optional)
@@ -1209,11 +1363,10 @@ class Database(SmartPlugin):
             changed_start=changed_start,
             changed_end=changed_end,
             cur=cur,
-            commit=with_commit,
         )
 
         try:
-            self._item_logcount[id] = self.readLogCount(id)
+            self._item_logcount[id] = self.readLogCount(id, cur=cur)
         except Exception as e:
             self.logger.error('Exception in function deleteLog during readLogCount: {}'.format(e))
 
@@ -1223,22 +1376,32 @@ class Database(SmartPlugin):
         """
         Create a list of database entries which have no corresponding item in the item tree
 
-        called by run() once on start
+        Called once at run() and, if that attempt failed (no DB connection
+        yet), retried once per _dump() cycle until it succeeds - see
+        self._orphanlist_built.
 
-        :return:
+        :return: True if the list was actually (re)built against a live
+                 connection, False if the attempt failed (e.g. DB not
+                 connected) - an empty self.orphanlist alone doesn't tell
+                 the caller which of those happened.
+        :rtype: bool
         """
         if log_activity:
             self.logger.info('build_orphan_list: Started')
         self.orphanitemlist = []
         self.orphanlist = []
+        # cleared up front, not just left at its previous value: a failed
+        # rebuild below wipes the list above regardless, so a stale True
+        # here would let remove_orphan_items() mistake "rebuild just
+        # failed" for "confirmed empty" on this attempt's now-empty list.
+        self._orphanlist_built = False
 
         items = [item.property.path for item in self._buffer_mgr.items()]
+        # transaction() serializes this against self._db_maint's other
+        # users - the scheduler-driven maxage/orphan cleanup also runs on
+        # this same connection.
         try:
-            cur = self._db_maint.cursor()
-        except Exception as e:
-            self.logger.error('Database build_orphan_list failed obtaining cursor: {}'.format(e))
-        else:
-            try:
+            with self._db_maint.transaction() as cur:
                 return_list = self.readItems(cur=cur)
                 if return_list:
                     for item in return_list:
@@ -1247,20 +1410,16 @@ class Database(SmartPlugin):
                                 self.logger.info(f'- Found data for item w/o database attribute: {item[COL_ITEM_NAME]}')
                             self.orphanitemlist.append(item)
                             self.orphanlist.append(item[COL_ITEM_NAME])
-            except Exception as e:
-                self.logger.error('Database build_orphan_list failed: {}'.format(e))
+        except Exception as e:
+            self.logger.error('Database build_orphan_list failed: {}'.format(e))
+            return False
 
-            try:
-                if cur:
-                    cur.close()
-            except Exception as e:
-                self.logger.error('Database build_orphan_list failed closing cursor: {}'.format(e))
-
+        self._orphanlist_built = True
         self._count_orphanlogentries()
         if log_activity:
             self.logger.info('build_orphan_list: Finished')
 
-        return
+        return True
 
     def _count_orphanlogentries(self):
         """
@@ -1293,28 +1452,43 @@ class Database(SmartPlugin):
         """
         log_info = self.logger.info  # warning  # info
         log_debug = self.logger.debug  # error  # debug
+        # transaction() serializes this against self._db_maint's other
+        # users. One transaction per UPDATE chunk, not one around the whole
+        # loop - the LIMIT batching exists to keep individual transactions
+        # bounded, and a partially-reassigned state is safe to resume from
+        # (remaining rows still carry orphan_id). The item row is only
+        # deleted once every log row has moved.
         try:
             log_info(f'reassigning orphaned data from (old) id {orphan_id} to (new) id {to}')
-            cur = self._db_maint.cursor()
-            count = self.readLogCount(orphan_id, cur=cur)
+            with self._db_maint.transaction() as cur:
+                count = self.readLogCount(orphan_id, cur=cur)
             log_debug(f'found {count} entries to reassign, reassigning {self.max_reassign_logentries} at once')
 
             while count > 0:
                 log_debug(f'reassigning {min(count, self.max_reassign_logentries)} log entries')
-                self._execute(
-                    self._prepare(
-                        'UPDATE {log} SET item_id = :newid WHERE rowid IN '
-                        '(SELECT rowid FROM {log} WHERE item_id = :orphanid LIMIT :limit);'
-                    ),
-                    {'newid': to, 'orphanid': orphan_id, 'limit': self.max_reassign_logentries},
-                    cur=cur,
-                )
+                with self._db_maint.transaction() as cur:
+                    # (item_id, time)-matched, double-wrapped subquery, not
+                    # rowid-based - same two reasons as the bulk-delete
+                    # statements' fix (remove_older_than_maxage(),
+                    # _delete_orphan()): {log} has no primary key so
+                    # MySQL/MariaDB exposes no rowid for it, and MariaDB
+                    # separately rejects LIMIT directly inside IN(subquery).
+                    self._execute(
+                        self._prepare(
+                            'UPDATE {log} SET item_id = :newid WHERE item_id = :orphanid AND time IN '
+                            '(SELECT time FROM (SELECT time FROM {log} WHERE item_id = :orphanid '
+                            'LIMIT :limit) AS upd_batch);'
+                        ),
+                        {'newid': to, 'orphanid': orphan_id, 'limit': self.max_reassign_logentries},
+                        cur=cur,
+                    )
                 count -= self.max_reassign_logentries
 
-            self._execute(self._prepare('DELETE FROM {item} WHERE id = :orphanid;'), {'orphanid': orphan_id}, cur=cur)
+            with self._db_maint.transaction() as cur:
+                self._execute(
+                    self._prepare('DELETE FROM {item} WHERE id = :orphanid;'), {'orphanid': orphan_id}, cur=cur
+                )
             log_info(f'reassigned orphaned id {orphan_id} to new id {to}')
-            cur.close()
-            self._db_maint.commit()
             log_debug('rebuilding orphan list')
             self.build_orphanlist()
         except Exception as e:
@@ -1330,35 +1504,41 @@ class Database(SmartPlugin):
 
         :return: True, if item was deleted; False if only logentries were deleted
         """
+        # This method deliberately has no except of its own - a failure
+        # propagates uncaught to remove_orphan_items()'s own try/except,
+        # which logs it and requeues the item for the next cycle. Both
+        # branches below use transaction() to serialize against
+        # self._db_maint's other users while preserving that.
         item_id = self.id(item_path, create=False)
         logcount = self.readLogCount(item_id)
         if logcount == 0:
             self.logger.info(f'_delete_orphan: Item {item_path} has no log entries')
-            cur = self._db_maint.cursor()
-            try:
+            with self._db_maint.transaction() as cur:
                 self._execute(self._prepare('DELETE FROM {item} WHERE id = :id;'), {'id': item_id}, cur=cur)
-            finally:
-                if cur is not None:
-                    cur.close()
             self.logger.info(f'_delete_orphan: Deleted item entry for {item_path}')
-            self._db_maint.commit()
             return True
 
-        cur = self._db_maint.cursor()
-        try:
+        with self._db_maint.transaction() as cur:
+            # Not a bare DELETE...LIMIT (invalid SQLite syntax without a
+            # non-default compile flag) or a rowid-subquery ({log} has no
+            # primary key, and MySQL/MariaDB - unlike SQLite - has no
+            # queryable row id for a table without one). Matches on
+            # (item_id, time) instead, via the UNIQUE KEY
+            # {log}_{item}_id_time already on this table (see _setup).
+            # Double-wrapped, not single-wrap: MariaDB separately rejects
+            # LIMIT directly inside an IN(subquery).
             self._execute(
-                self._prepare('DELETE FROM {log} WHERE item_id = :id LIMIT :maxrecords;'),
+                self._prepare(
+                    'DELETE FROM {log} WHERE item_id = :id AND time IN (SELECT time FROM '
+                    '(SELECT time FROM {log} WHERE item_id = :id LIMIT :maxrecords) AS del_batch);'
+                ),
                 {'id': item_id, 'maxrecords': self.delete_orphan_chunk_size},
                 cur=cur,
             )
-        finally:
-            if cur is not None:
-                cur.close()
         delete_orphan_chunk_size_str = f'{self.delete_orphan_chunk_size:,}'.replace(',', '.')
         self.logger.info(
             f'_delete_orphan: Deleted (up to) {delete_orphan_chunk_size_str} log entries for Item {item_path}'
         )
-        self._db_maint.commit()
 
         return False
 
@@ -1368,6 +1548,19 @@ class Database(SmartPlugin):
         """
         if len(self.orphanlist) == 0:
             self.build_orphanlist()
+
+        if len(self.orphanlist) == 0:
+            if not self._orphanlist_built:
+                # build_orphanlist() just failed (e.g. DB not connected) -
+                # an empty list here doesn't mean "confirmed no orphans".
+                # Leave self.remove_orphan set so the next
+                # remove_older_than_maxage() cycle retries this instead of
+                # silently disabling cleanup over a connectivity hiccup.
+                self.logger.warning('remove_orphan_items: could not check for orphans (DB not connected), will retry')
+                return
+            self.remove_orphan = False
+            self.logger.info('remove_orphan_items: No orphans found, cleanup finished')
+            return
 
         item = self.orphanlist.pop(0)
         try:
@@ -1432,17 +1625,49 @@ class Database(SmartPlugin):
         if sid is None:
             sid = item + '|' + func + '|' + str(start) + '|' + str(end) + '|' + str(count)
         func, expression = self._expression(func)
+        # 'diff'/'differentiate' need LAG(...) OVER (ORDER BY time) computed
+        # per raw row before any GROUP BY - mixing a window function with an
+        # aggregate GROUP BY in one SELECT (the previous approach) errors
+        # outright under MySQL 8/5.7's default ONLY_FULL_GROUP_BY, and
+        # returns an undefined arbitrary-row's LAG value per bucket on
+        # MariaDB's default (permissive) mode - verified against a real
+        # MariaDB target. This subquery computes the per-row diff/time-gap
+        # first; the outer query then buckets by summing across rows in
+        # each bucket, which telescopes correctly across bucket boundaries
+        # (sum of consecutive diffs = last value - first value spanned).
+        diff_window_table = (
+            '(SELECT time, val_num, '
+            '(val_num - LAG(val_num,1) OVER (ORDER BY time)) AS diffval, '
+            '(time - LAG(time,1) OVER (ORDER BY time)) AS timegap '
+            'FROM {log} WHERE ' + self._fetch_log_base_where() + ') w'
+        )
         queries = {
             'avg': self._time_precision_query('MIN(time)')
             + ', '
             + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
             'avg.order': 'ORDER BY time ASC',
             'integrate': self._time_precision_query('MIN(time)') + ', SUM(val_num * duration)',
-            'diff': self._time_precision_query('MIN(time)') + ', (val_num - LAG(val_num,1) OVER (ORDER BY val_num))',
+            # SUM(diffval): total net change during the bucket. Rows with no
+            # predecessor (diffval IS NULL - the very first row in range)
+            # are ignored by SUM, same as they always were as a single
+            # ungrouped row.
+            'diff': self._time_precision_query('MIN(time)') + ', SUM(diffval)',
+            'diff.table': diff_window_table,
             'duration': self._time_precision_query('MIN(time)') + ', duration',
             # differentiate (d/dt) is scaled to match the conversion from d/dt (kWh) = kWh: time is in ms, val_num in kWh, therefore scale by 1000ms and 3600s/h to obtain the result in kW:
+            # total change over the bucket / total time spanned by the
+            # bucket, in hours - the physically correct average rate over
+            # an interval built from irregular samples (not an average of
+            # per-row rates, which would over-weight short gaps). 3600.0
+            # (not 3600): SUM(timegap) is an integer column - on SQLite,
+            # dividing two integers is integer (floor) division, so any
+            # bucket spanning under an hour would floor-divide to 0 and
+            # then divide-by-zero to NULL; the float literal forces real
+            # division. MariaDB/MySQL always do real division for '/'
+            # regardless of operand type, so this was sqlite-only.
             'differentiate': self._time_precision_query('MIN(time)')
-            + ', (val_num - LAG(val_num,1) OVER (ORDER BY val_num)) / ( (time - LAG(time,1) OVER (ORDER BY val_num)) / (3600 * 1000) )',
+            + ', SUM(diffval) / (SUM(timegap) / (3600.0 * 1000))',
+            'differentiate.table': diff_window_table,
             'count': self._time_precision_query('MIN(time)')
             + ', SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'countall': self._time_precision_query('MIN(time)') + ', COUNT(*)',
@@ -1461,8 +1686,16 @@ class Database(SmartPlugin):
             raise NotImplementedError
 
         order = '' if func + '.order' not in queries else queries[func + '.order']
-        group = 'GROUP BY ROUND(time / :step)' if func + '.group' not in queries else queries[func + '.group']
-        logs = self._fetch_log(item, queries[func], start, end, step=step, count=count, group=group, order=order)
+        # (time - (time % :step)), not ROUND(time / :step): sqlite's integer
+        # '/' floors while MariaDB's decimal '/' + ROUND() rounds half-up,
+        # so the same data bucketed differently per backend. The modulo form
+        # is exact integer math on both and keeps sqlite's historical floor
+        # partitioning.
+        group = 'GROUP BY (time - (time % :step))' if func + '.group' not in queries else queries[func + '.group']
+        table = queries.get(func + '.table')
+        logs = self._fetch_log(
+            item, queries[func], start, end, step=step, count=count, group=group, order=order, table=table
+        )
         tuples = logs['tuples']
 
         # Append tuples by addition values (not for func differentiate)
@@ -1539,8 +1772,15 @@ class Database(SmartPlugin):
             return
         order = '' if func + '.order' not in queries else queries[func + '.order']
         logs = self._fetch_log(item, queries[func], start, end, order=order)
-        if logs['tuples'] is None:
-            return
+        # Every func here except 'raw' is an ungrouped SQL aggregate
+        # (MIN/MAX/SUM/...), which always returns exactly one row - a NULL
+        # one if nothing matched, not zero rows. 'raw' has no aggregate and
+        # no GROUP BY (see 'raw.group': ''), so an empty range genuinely
+        # returns zero rows there - _fetchall() then returns [], not None,
+        # so an `is None` check alone let logs['tuples'][0][0] raise
+        # IndexError instead of reporting "no data" like every other func.
+        if not logs['tuples']:
+            return None
         return logs['tuples'][0][0]
 
     def _expression(self, func):
@@ -1576,7 +1816,23 @@ class Database(SmartPlugin):
             return 'ROUND({}, {})'.format(query, self._time_precision - 3)
         return query
 
-    def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order=''):
+    def _fetch_log_base_where(self):
+        """The WHERE clause shared by every _fetch_log() query: item/quality
+        filtering plus the one-row-before-:time_start lookback that lets a
+        row spanning into the requested range still contribute its
+        duration. Factored out so a caller building its own subquery (e.g.
+        _series()'s diff/differentiate window-function subquery) can apply
+        the identical filter instead of duplicating it.
+        """
+        return (
+            'item_id = :id AND '
+            '(val_quality IS NULL OR val_quality = 0) AND '
+            'time >= (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) AND '
+            'time <= :time_end AND '
+            'time + duration_now > (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start)'
+        )
+
+    def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order='', table=None):
         _item = self.items.return_item(item)
 
         istart = self._parse_ts(start)
@@ -1627,21 +1883,37 @@ class Database(SmartPlugin):
         # AVG(duration) while its value silently drops out of the
         # numerator, skewing the result instead of the gap contributing
         # nothing as intended.
-        query = (
-            'SELECT ' + columns + ' FROM {log} WHERE '
-            'item_id = :id AND '
-            '(val_quality IS NULL OR val_quality = 0) AND '
-            'time >= (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) AND '
-            'time <= :time_end AND '
-            'time + duration_now > (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) '
-            '' + group + ' ' + order
-        )
+        base_where = self._fetch_log_base_where()
+        if table is None:
+            # Default shape: aggregate columns select directly off {log}.
+            query = 'SELECT ' + columns + ' FROM {log} WHERE ' + base_where + ' ' + group + ' ' + order
+        else:
+            # table is a caller-built "(SELECT ... FROM {log} WHERE ...) alias"
+            # subquery (e.g. one computing a window function per raw row) -
+            # the caller is responsible for applying base_where itself inside
+            # that subquery; columns/group/order here then operate on the
+            # subquery's already-filtered, already-windowed output rows.
+            query = 'SELECT ' + columns + ' FROM ' + table + ' ' + group + ' ' + order
 
         # Replace duration_now with value from start time til current time to
         # get a duration value referring to the current timestamp - if required.
         query = query.replace('duration_now', duration_now)
 
         logs = self._fetchall(query, params)
+        if logs:
+            # MariaDB/MySQL return Decimal (not float) for SUM()/AVG() over
+            # exact-numeric columns - e.g. 'on''s SUM(val_bool * duration),
+            # both integer-typed columns (val_num's own aggregates stay
+            # DOUBLE/float, since it's an approximate-numeric column;
+            # sqlite never returns Decimal at all). Decimal arithmetic
+            # doesn't mix with float - _finalize()'s 'diff' subtracts
+            # adjacent tuple values directly, and _series() injects plain
+            # float boundary values via float(item()), so a Decimal row
+            # next to a float one would raise TypeError. Coercing here, at
+            # the single choke point both _series() and _single() read
+            # through, avoids the driver-dependent type difference
+            # entirely rather than patching each affected func downstream.
+            logs = [tuple(float(v) if isinstance(v, decimal.Decimal) else v for v in row) for row in logs]
 
         return {'tuples': logs, 'item': _item, 'istart': istart, 'iend': iend, 'step': step, 'count': count}
 
@@ -1740,6 +2012,13 @@ class Database(SmartPlugin):
             self._dump_lock.release()
             return
 
+        if not self._orphanlist_built:
+            # run()'s own attempt failed (DB wasn't connected yet at
+            # startup) - retry here, piggybacked on this already-scheduled
+            # cycle rather than a separate retry loop. Stops retrying the
+            # moment it succeeds once (build_orphanlist() sets the flag).
+            self.build_orphanlist()
+
         if items is None:
             # No item given on method call -> dump content of the buffer
             items = self._buffer_mgr.items()
@@ -1748,15 +2027,91 @@ class Database(SmartPlugin):
             entries = self._buffer_mgr.pop_all(item)
 
             if len(entries) or finalize:
-                # Test connectivity
-                if self._db.verify(5) == 0:
+                # Test connectivity - retry kept low, see Database.verify()'s
+                # docstring cost note; the scheduler re-invokes _dump() on
+                # its own cycle regardless, so a long internal retry here
+                # only delays discovering that without changing the outcome.
+                if self._db.verify(2) == 0:
                     self._buffer_mgr.restore(item, entries)
                     self.logger.error('Connection not recovered, skipping dump')
                     self._dump_lock.release()
                     return
 
-                # Can't lock, restore data
-                if not self._db.lock(300):
+                #                if self.has_iattr(item.conf, 'database_acl'):
+                #                    acl = self.get_iattr_value(item.conf, 'database_acl').lower()
+                #                    self.logger.info("_dump: Dumping item '{}', database_acl = {}".format(item, acl))
+
+                # On a lock timeout specifically, the whole method aborts
+                # (restore the buffer, log, release self._dump_lock,
+                # return) rather than just skipping this one item -
+                # transaction() raises TimeoutError for exactly that case,
+                # caught separately below from any other failure during
+                # the actual dump work (logged, buffer restored, loop
+                # continues to the next item). timeout=300 preserves the
+                # original hardcoded value (still independent of
+                # db_query_timeout - a separate, already-documented issue).
+                try:
+                    with self._db.transaction(timeout=300) as cur:
+                        changed = self._timestamp(self.shtime.now())
+
+                        # Get current values of item
+                        start = self._timestamp(item.last_change())
+                        end = changed
+                        val = item()
+                        try:
+                            self._webdata[item.property.path].update({'value': val})
+                            self._webdata[item.property.path].update({'type': item.property.type})
+                        except Exception as e:
+                            self.logger.warning('Problem webdata value update {}: {}'.format(item.property.path, e))
+
+                        # When finalizing (e.g. plugin shutdown) add current value to item and log
+                        if finalize:
+                            # When plugin is shutdown, by default, every registered item is rewritten into the DB no matter
+                            # if it has been changed or not. This behavior is not wanted for items that are rarely updated
+                            # because these database entries would lead indicate item updates that in reality aren't really there.
+                            # Therefore, if item attribute database_write_on_shutdown is set to False, no double entries are written
+                            # to the database and only the last entry is updated.
+
+                            # self.logger.debug(f"DEBUG _dump: Finalizing item {item} with value {val}")
+                            # default=True here mirrors plugin.yaml's documented
+                            # default for this attribute - item parsing only
+                            # applies plugin-declared item_attribute defaults to
+                            # items that already set the attribute explicitly
+                            # (see lib/item/item.py's per-item conf loop), never
+                            # to items that omit it, so relying on get_iattr_value's
+                            # own default=None here silently inverted the
+                            # documented default to False for every item that
+                            # doesn't set it.
+                            if not self.get_iattr_value(item.conf, 'database_write_on_shutdown', True):
+                                self.logger.debug(
+                                    f'DEBUG _dump: Blocking rewrite to DB for item {item} with value {val}'
+                                )
+
+                                # if item.property.path == 'xyz':
+                                #    self.logger.warning(f"DEBUG _dump: update debug item with start {start}, val {val}, changed {changed}")
+
+                                _update = (start, val, changed)
+
+                            else:
+                                # Perform item update and rewrite current value to database:
+                                _update = (end, val, changed)
+
+                                entries.append(BufferEntry(time=start, duration=end - start, value=val))
+
+                        else:
+                            # only perform DB item update for regular dumps (not at plugin shutdown)
+                            _update = (start, val, changed)
+
+                        id = self.id(item, cur=cur)
+
+                        # Dump entries
+                        self.logger.debug('Dumping {}/{} with {} values'.format(item.property.path, id, len(entries)))
+
+                        for entry in entries:
+                            self._log_store.upsert(id, entry, item.type(), changed, cur=cur)
+
+                        self.updateItem(id, _update[0], None, _update[1], item.type(), _update[2], cur)
+                except TimeoutError:
                     self._buffer_mgr.restore(item, entries)
                     if finalize:
                         self.logger.error(
@@ -1770,78 +2125,9 @@ class Database(SmartPlugin):
                         )
                     self._dump_lock.release()
                     return
-
-                #                if self.has_iattr(item.conf, 'database_acl'):
-                #                    acl = self.get_iattr_value(item.conf, 'database_acl').lower()
-                #                    self.logger.info("_dump: Dumping item '{}', database_acl = {}".format(item, acl))
-
-                cur = None
-                try:
-                    changed = self._timestamp(self.shtime.now())
-
-                    # Get current values of item
-                    start = self._timestamp(item.last_change())
-                    end = changed
-                    val = item()
-                    try:
-                        self._webdata[item.property.path].update({'value': val})
-                        self._webdata[item.property.path].update({'type': item.property.type})
-                    except Exception as e:
-                        self.logger.warning('Problem webdata value update {}: {}'.format(item.property.path, e))
-
-                    # When finalizing (e.g. plugin shutdown) add current value to item and log
-                    if finalize:
-                        # When plugin is shutdown, by default, every registered item is rewritten into the DB no matter
-                        # if it has been changed or not. This behavior is not wanted for items that are rarely updated
-                        # because these database entries would lead indicate item updates that in reality aren't really there.
-                        # Therefore, if item attribute database_write_on_shutdown is set to False, no double entries are written
-                        # to the database and only the last entry is updated.
-
-                        # self.logger.debug(f"DEBUG _dump: Finalizing item {item} with value {val}")
-                        if not self.get_iattr_value(item.conf, 'database_write_on_shutdown'):
-                            self.logger.debug(f'DEBUG _dump: Blocking rewrite to DB for item {item} with value {val}')
-
-                            # if item.property.path == 'xyz':
-                            #    self.logger.warning(f"DEBUG _dump: update debug item with start {start}, val {val}, changed {changed}")
-
-                            _update = (start, val, changed)
-
-                        else:
-                            # Perform item update and rewrite current value to database:
-                            _update = (end, val, changed)
-
-                            entries.append(BufferEntry(time=start, duration=end - start, value=val))
-
-                    else:
-                        # only perform DB item update for regular dumps (not at plugin shutdown)
-                        _update = (start, val, changed)
-
-                    cur = self._db.cursor()
-                    id = self.id(item, cur=cur)
-
-                    # Dump entries
-                    self.logger.debug('Dumping {}/{} with {} values'.format(item.property.path, id, len(entries)))
-
-                    for entry in entries:
-                        self._log_store.upsert(id, entry, item.type(), changed, cur=cur)
-
-                    self.updateItem(id, _update[0], None, _update[1], item.type(), _update[2], cur)
-
-                    cur.close()
-                    cur = None
-
-                    self._db.commit()
                 except Exception as e:
                     self.logger.warning('Problem dumping {}: {}'.format(item.property.path, e), exc_info=True)
                     self._buffer_mgr.restore(item, entries)
-                    try:
-                        self._db.rollback()
-                    except Exception as er:
-                        self.logger.warning('Error rolling back: {}'.format(er))
-                finally:
-                    if cur is not None:
-                        cur.close()
-                self._db.release()
         self.logger.debug('Dump completed')
         self._dump_lock.release()
 
@@ -1939,6 +2225,7 @@ class Database(SmartPlugin):
         item_type = item.type()
 
         intervals_done = 0
+        stalled = False
         while intervals_done < self.max_aggregate_intervals:
             oldest = self._log_store.oldest_time(item_id)
             if oldest is None:
@@ -1949,42 +2236,75 @@ class Database(SmartPlugin):
             if interval_end > cutoff_ms:
                 break  # this interval isn't entirely past the cutoff yet - leave it raw
 
-            if edge_order:
-                # 'first'/'last': keep the actual oldest/newest raw value as-is
-                # (works for str too - encode_value/decode_value round-trip it
-                # via val_str, unlike the val_num-based aggregate expressions).
-                edge = self._log_store.edge_value(
-                    item_id, edge_order, time_start=interval_start - 1, time_end=interval_end
-                )
-                value = self._item_value_tuple_rev(item_type, edge) if edge else None
-            else:
-                value = self._log_store.aggregate(item_id, expr, time_start=interval_start - 1, time_end=interval_end)
+            # transaction() ensures a failure here (e.g. a protocol
+            # desync/dropped connection mid-statement) triggers a rollback
+            # before the lock releases - without it, self._conn's broken
+            # state is left uncleaned for the next caller to inherit.
+            # timeout=300 preserves the original hardcoded value (still
+            # independent of db_query_timeout - a separate, already-
+            # documented issue). The value read (edge/aggregate) happens
+            # inside this same transaction(), not before it - _dump() runs
+            # under a different lock (_dump_lock, not self._db._fdb_lock)
+            # and could otherwise write a new row into this exact interval
+            # between an earlier read and this delete, which would then be
+            # deleted without ever having contributed to the value just
+            # computed.
+            try:
+                with self._db.transaction(timeout=300) as cur:
+                    if edge_order:
+                        # 'first'/'last': keep the actual oldest/newest raw
+                        # value as-is (works for str too - encode_value/
+                        # decode_value round-trip it via val_str, unlike the
+                        # val_num-based aggregate expressions).
+                        edge = self._log_store.edge_value(
+                            item_id, edge_order, time_start=interval_start - 1, time_end=interval_end, cur=cur
+                        )
+                        value = self._item_value_tuple_rev(item_type, edge) if edge else None
+                    else:
+                        value = self._log_store.aggregate(
+                            item_id, expr, time_start=interval_start - 1, time_end=interval_end, cur=cur
+                        )
 
-            if not self._db.lock(300):
+                    if value is None:
+                        # No representable value, but the interval may still
+                        # hold valid rows the aggregate couldn't express -
+                        # e.g. crash-orphaned open rows (duration NULL) under
+                        # a duration-weighted action. Deleting those while
+                        # inserting nothing would silently destroy real data,
+                        # so leave the interval raw. Gap-only intervals have
+                        # nothing to preserve and are still cleaned up.
+                        valid_rows = self._log_store.count(
+                            item_id, time_start=interval_start - 1, time_end=interval_end, exclude_gaps=True, cur=cur
+                        )
+                        if valid_rows:
+                            self.logger.warning(
+                                f'remove_older_: {itempath} interval at {interval_start} has {valid_rows} '
+                                f"valid rows but action '{action}' produced no value (all durations NULL?) - "
+                                f'leaving interval raw'
+                            )
+                            stalled = True
+                            break
+
+                    # delete before insert: interval_start is derived from
+                    # the oldest raw row's own timestamp, so a raw row can
+                    # legally sit at exactly that timestamp - inserting
+                    # the aggregate there first would collide with the
+                    # (item_id, time) unique constraint. Both statements
+                    # still share one transaction, so a crash between them
+                    # can never leave a duplicate aggregate behind on the
+                    # next run's self-healing resume.
+                    self._log_store.delete_range(item_id, time_start=interval_start - 1, time_end=interval_end, cur=cur)
+                    if value is not None:
+                        now_ms = self._timestamp(self.shtime.now())
+                        entry = BufferEntry(
+                            time=interval_start, duration=interval_ms, value=value, quality=QUALITY_VALID
+                        )
+                        self._log_store.insert(item_id, entry, item_type, now_ms, cur=cur)
+            except TimeoutError:
                 self.logger.error(
                     f'remove_older_: {itempath} could not acquire database lock, giving up this compaction cycle'
                 )
                 break
-            cur = self._db.cursor()
-            try:
-                # delete before insert: interval_start is derived from the
-                # oldest raw row's own timestamp, so a raw row can legally
-                # sit at exactly that timestamp - inserting the aggregate
-                # there first would collide with the (item_id, time) unique
-                # constraint. Both statements still share one transaction,
-                # so a crash between them can never leave a duplicate
-                # aggregate behind on the next run's self-healing resume.
-                self._log_store.delete_range(
-                    item_id, time_start=interval_start - 1, time_end=interval_end, cur=cur, commit=False
-                )
-                if value is not None:
-                    now_ms = self._timestamp(self.shtime.now())
-                    entry = BufferEntry(time=interval_start, duration=interval_ms, value=value, quality=QUALITY_VALID)
-                    self._log_store.insert(item_id, entry, item_type, now_ms, cur=cur)
-                self._db.commit()
-            finally:
-                cur.close()
-                self._db.release()
 
             intervals_done += 1
 
@@ -1996,9 +2316,11 @@ class Database(SmartPlugin):
         # more intervals might already be past the cutoff but weren't
         # reached this cycle (max_aggregate_intervals) - requeue like the
         # delete path does. If we stopped because the next interval isn't
-        # past the cutoff yet, this correctly does not requeue.
+        # past the cutoff yet, this correctly does not requeue. A stalled
+        # interval (left raw above) blocks everything behind it - requeuing
+        # would just spin on it within the same cycle.
         oldest = self._log_store.oldest_time(item_id)
-        if oldest is not None and oldest + interval_ms <= cutoff_ms:
+        if not stalled and oldest is not None and oldest + interval_ms <= cutoff_ms:
             self._maxage_worklist.append(item)
 
     def remove_older_than_maxage(self):
@@ -2058,11 +2380,6 @@ class Database(SmartPlugin):
                 self.logger.critical(f'remove_older_: no id for item {itempath}')
             return
 
-        # it might well be that introducing database_maxage to a very old SmartHomeNG installation will try to start
-        # a deletion of thousands of logentries. This might take days with SQLite if so.
-        # so strategies might be
-        # a) delete only records for one day
-        # b) to just delete a limited number of log entries
         time_end = self.get_maxage_ts(item)
         if time_end is None:
             # no usable maxage for this item (e.g. an invalid database_maxage
@@ -2106,7 +2423,13 @@ class Database(SmartPlugin):
             time_end = new_must_keep_time + datetime.timedelta(microseconds=-1)
             timestamp_end = self._timestamp(time_end)
 
-        count_log_records_to_delete = self.readLogCount(item_id, time_end=self._timestamp(time_end))
+        # readLogCount's time_end is inclusive (time <= time_end) but
+        # deleteLog()/delete_range's is exclusive (time < time_end) - the
+        # "- 1" (timestamps are integer ms) makes this count match exactly
+        # what the deletion below will remove; without it, a log entry
+        # landing exactly on timestamp_end would be counted here but left
+        # behind by the actual DELETE.
+        count_log_records_to_delete = self.readLogCount(item_id, time_end=timestamp_end - 1)
         count_log_records_to_delete_str = f'{count_log_records_to_delete:,}'.replace(',', '.')
         max_delete_logentries_str = f'{self.max_delete_logentries:,}'.replace(',', '.')
         time_end_str = time_end.strftime('%d.%m.%Y - %H:%M')
@@ -2114,28 +2437,33 @@ class Database(SmartPlugin):
             f'remove_older_: {itempath} remove older than {time_end_str} - {count_log_records_to_delete_str} records to delete'
         )
 
-        # prevent to many deletions with strategy b)
-        # assumption is made that logentries are evenly distributed over time
-        # there will be actually be some more or less deletions than given in self.max_delete_logentries
-        # since only a linear approximation over time and counts is used, but it should do the trick
-        # to prevent from database lockups after setting database_maxage to old/ancient items
         if count_log_records_to_delete > self.max_delete_logentries:
             time_start_deletion = time.time()
-            if not self._db.lock(300):
+            # transaction() commits this DELETE itself, rather than relying
+            # on some unrelated later commit()
+            # Not a bare DELETE...ORDER BY...LIMIT (invalid SQLite syntax
+            # without a non-default compile flag) or a rowid-subquery (the
+            # {log} table has no primary key, and MySQL/MariaDB - unlike
+            # SQLite - has no queryable row id for a table without one).
+            # Matches on (item_id, time) instead, via the UNIQUE KEY
+            # Double-wrapped, not single-wrap: MariaDB separately rejects
+            # LIMIT directly inside an IN(subquery).
+            try:
+                with self._db.transaction(timeout=300) as cur:
+                    self._execute(
+                        self._prepare(
+                            'DELETE FROM {log} WHERE item_id = :id AND time IN (SELECT time FROM '
+                            '(SELECT time FROM {log} WHERE item_id = :id ORDER BY time ASC LIMIT :maxrecords) '
+                            'AS del_batch);'
+                        ),
+                        {'id': item_id, 'maxrecords': self.max_delete_logentries},
+                        cur=cur,
+                    )
+            except TimeoutError:
                 self.logger.error(
                     f'remove_older_: {itempath} could not acquire database lock for deletion, skipping this cycle'
                 )
                 return
-            cur = self._db.cursor()
-            try:
-                self._execute(
-                    self._prepare('DELETE FROM {log} WHERE item_id = :id ORDER BY time ASC LIMIT :maxrecords;'),
-                    {'id': item_id, 'maxrecords': self.max_delete_logentries},
-                    cur=cur,
-                )
-            finally:
-                cur.close()
-                self._db.release()
             time_used_for_deletion = time.time() - time_start_deletion
             self.logger.info(
                 f'remove_older_: {itempath} deleted {max_delete_logentries_str} of {count_log_records_to_delete_str} log entries - took {time_used_for_deletion:.2f} seconds, averaging {100 * time_used_for_deletion / self.max_delete_logentries:.4f} seconds per 100 entries'
@@ -2146,7 +2474,7 @@ class Database(SmartPlugin):
 
         elif count_log_records_to_delete:
             time_start_deletion = time.time()
-            self.deleteLog(item_id, time_end=timestamp_end, with_commit=False)
+            self.deleteLog(item_id, time_end=timestamp_end)
             time_used_for_deletion = time.time() - time_start_deletion
             time_end_str = time_end.strftime('%d.%m.%Y - %H:%M')
             self.logger.info(
@@ -2220,19 +2548,8 @@ class Database(SmartPlugin):
 
         lib.db.Database.connect() hands the raw connect params straight to
         ``sqlite3.connect()``, which resolves a relative path against
-        ``os.getcwd()`` *at call time* — not once, at startup. The very
-        first connect happens early enough that cwd is still correct, but
-        a later reconnect (_initialize_db(), e.g. triggered by
-        Items.rename_item()'s STOP_ON_ITEM_CHANGE pause/resume cycle
-        calling run() well after startup, the only other place in the
-        codebase that calls plugin.run() again post-startup) re-resolves
-        the same relative string against whatever cwd happens to be at
-        that later moment. A mismatch there is exactly what caused a real
-        incident: SmartHomeNG interpreting the resulting "unable to open
-        database file" as a fatal error and shutting itself down (see
-        _initialize_db()'s sqlite3-specific self._sh.restart() call).
-        Resolving to an absolute path once, here, makes the later
-        reconnect immune to cwd entirely.
+        ``os.getcwd()`` *at call time* — not once, at startup. Changing pwd
+        during shng runtime can throw this off.
 
         Only applies to the sqlite3 driver — for other DB-API drivers
         (e.g. pymysql) the ``database`` key names a schema, not a file.
@@ -2351,35 +2668,36 @@ class Database(SmartPlugin):
             if not self._initialize_db():
                 return None
         owns_cur = cur is None
-        if owns_cur:
-            if self._db.verify(5) == 0:
-                self.logger.error('Database: Connection not recovered')
-                return None
-            if not self._db.lock(300):
-                self.logger.error("Database: Can't query due to fail to acquire lock")
-                return None
-            # explicit cursor once locked: func's own cur=None path now
-            # locks internally too (execute()/fetchone()/fetchall(), see
-            # _cursor_op_with_reconnect in lib/db.py) - self._db.lock() is a
-            # plain non-reentrant Lock, so calling func(..., cur=None) here
-            # while already holding it would deadlock against itself.
-            cur = self._db.cursor()
         prepared = self._prepare(query)  # prepare once
-        tuples = None
-        try:
-            tuples = func(prepared, params, cur=cur)
-        except Exception as e:
+
+        def _log_query_error(e):
             if self.logger.isEnabledFor(logging.DEBUG):
                 query_readable = re.sub(r':([a-z_]+)', r'{\1}', prepared).format(**params)
                 self.logger.error('Database: Error for query {}: {}'.format(query_readable, e))
             else:
                 self.logger.error('Database: Query error: {}'.format(e))
-            raise e
-        finally:
+
+        try:
             if owns_cur:
-                if cur is not None:
-                    cur.close()
-                self._db.release()
+                # On lock timeout: log and return None, not an exception -
+                # callers throughout this file treat a None result as
+                # "query failed", not something to catch.
+                # retry kept low - see Database.verify()'s docstring cost note.
+                if self._db.verify(2) == 0:
+                    self.logger.error('Database: Connection not recovered')
+                    return None
+                try:
+                    with self._db.transaction() as tcur:
+                        tuples = func(prepared, params, cur=tcur)
+                except TimeoutError:
+                    self.logger.error("Database: Can't query due to fail to acquire lock")
+                    return None
+            else:
+                tuples = func(prepared, params, cur=cur)
+        except Exception as e:
+            _log_query_error(e)
+            raise e
+
         if self.logger.isEnabledFor(logging.DEBUG):
             query_readable = re.sub(r':([a-z_]+)', r'{\1}', prepared).format(**params)
             self.logger.debug('Database: Fetch {}: {}'.format(query_readable, tuples))
