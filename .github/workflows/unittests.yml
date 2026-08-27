@@ -47,19 +47,42 @@ jobs:
           echo "base:   ${{ github.base_ref }}"
           echo "head:   ${{ github.head_ref }}"
 
+      # Check if a same-name core branch is present
+      - name: Check if branch '${{ steps.extract_branch.outputs.branch }}' exists on ${{ github.repository_owner }}/smarthome
+        id: shng_own_fork_check
+        run: echo "code=$(git ls-remote --exit-code --heads https://github.com/${{ github.repository_owner }}/smarthome ${{ steps.extract_branch.outputs.branch }} > /dev/null 2>&1; echo $? )" >>$GITHUB_OUTPUT
+
+      # Check if a same-name core branch is at lease on upstream develop state - or stale
+      - name: Check if ${{ github.repository_owner }}/smarthome@${{ steps.extract_branch.outputs.branch }} is caught up with smarthomeNG/smarthome's develop
+        id: shng_own_fork_freshness_check
+        if: github.event_name != 'pull_request' && steps.shng_own_fork_check.outputs.code == '0'
+        run: |
+          git init -q /tmp/shng_freshness_check
+          cd /tmp/shng_freshness_check
+          git fetch -q https://github.com/${{ github.repository_owner }}/smarthome ${{ steps.extract_branch.outputs.branch }}:own_branch
+          git fetch -q https://github.com/smarthomeNG/smarthome develop:upstream_develop
+          echo "code=$(git merge-base --is-ancestor upstream_develop own_branch; echo $?)" >>$GITHUB_OUTPUT
+
       - name: Check if branch '${{ steps.extract_branch.outputs.branch }}' exists in smarthomeNG/smarthome
         id: shng_branch_check
         run: echo "code=$(git ls-remote --exit-code --heads https://github.com/smarthomeNG/smarthome ${{ steps.extract_branch.outputs.branch }} > /dev/null; echo $? )" >>$GITHUB_OUTPUT
 
+      - name: Checkout core from branch '${{ steps.extract_branch.outputs.branch }}' (push, matching branch exists on ${{ github.repository_owner }}/smarthome and is caught up with develop)
+        if: github.event_name != 'pull_request' && steps.shng_own_fork_check.outputs.code == '0' && steps.shng_own_fork_freshness_check.outputs.code == '0'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/smarthome
+          ref: ${{ steps.extract_branch.outputs.branch }}
+
       - name: Checkout core from branch '${{ steps.extract_branch.outputs.branch }}' (push on known smarthomeNG/smarthome branch)
-        if: github.event_name != 'pull_request' && steps.shng_branch_check.outputs.code == '0'
+        if: github.event_name != 'pull_request' && (steps.shng_own_fork_check.outputs.code != '0' || steps.shng_own_fork_freshness_check.outputs.code != '0') && steps.shng_branch_check.outputs.code == '0'
         uses: actions/checkout@v4
         with:
           repository: smarthomeNG/smarthome
           ref: ${{ steps.extract_branch.outputs.branch }}
 
       - name: Checkout core from branch 'develop' (pull request or push on unknown smarthomeNG/smarthome branch)
-        if: github.event_name == 'pull_request' || steps.shng_branch_check.outputs.code == '2'
+        if: github.event_name == 'pull_request' || ((steps.shng_own_fork_check.outputs.code != '0' || steps.shng_own_fork_freshness_check.outputs.code != '0') && steps.shng_branch_check.outputs.code == '2')
         uses: actions/checkout@v4
         with:
           repository: smarthomeNG/smarthome
