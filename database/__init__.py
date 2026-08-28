@@ -2126,7 +2126,11 @@ class Database(SmartPlugin):
                     self._dump_lock.release()
                     return
                 except Exception as e:
-                    self.logger.warning('Problem dumping {}: {}'.format(item.property.path, e), exc_info=True)
+                    if self._db.is_connection_error(e):
+                        # transaction() already logged this - no traceback needed.
+                        self.logger.warning(f'Problem dumping {item.property.path}: {e} - will retry on next dump')
+                    else:
+                        self.logger.warning('Problem dumping {}: {}'.format(item.property.path, e), exc_info=True)
                     self._buffer_mgr.restore(item, entries)
         self.logger.debug('Dump completed')
         self._dump_lock.release()
