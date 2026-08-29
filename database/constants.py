@@ -47,6 +47,7 @@ COL_LOG_VAL_STR = 3
 COL_LOG_VAL_NUM = 4
 COL_LOG_VAL_BOOL = 5
 COL_LOG_CHANGED = 6
+COL_LOG_VAL_QUALITY = 7  # appended after COL_LOG at query-build time, not part of the tuple itself
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Data-quality flags  (stored in the val_quality column added in schema v7)
@@ -59,6 +60,14 @@ QUALITY_NO_DATA = 1
 All val_* columns are NULL for such entries.
 These rows are excluded from time-weighted aggregations (avg, sum, integrate,
 on, min, max) and appear as gaps in raw/visualisation queries."""
+
+QUALITY_INVALID = 2
+"""Value was known but has been manually flagged bad (e.g. via the webif's
+reversible "invalidate" action, replacing what used to be a hard delete).
+Unlike QUALITY_NO_DATA, val_* columns are preserved so the flag can be
+undone. Excluded from time-weighted aggregations exactly like
+QUALITY_NO_DATA - the exclusion filter treats any non-zero val_quality
+the same way."""
 
 
 # ──────────────────────────────────────────────────────────────────────────────

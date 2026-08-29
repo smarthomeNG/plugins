@@ -39,7 +39,10 @@ from ..constants import (
     COL_LOG_TIME,
     COL_LOG_VAL_BOOL,
     COL_LOG_VAL_NUM,
+    COL_LOG_VAL_QUALITY,
     COL_LOG_VAL_STR,
+    QUALITY_INVALID,
+    QUALITY_VALID,
 )
 
 # ------------------------------------------
@@ -111,13 +114,29 @@ class WebInterface(SmartPluginWebIf):
         if item_path is not None:
             item = self.plugin.items.return_item(item_path)
         delete_triggered = False
+        invalidate_triggered = False
+        restore_triggered = False
         if action is not None:
+            # Single-row deletion was replaced with a reversible invalidate/restore
+            # toggle (see markLogInvalid/markLogValid) - hard-deleting one entry
+            # corrupted duration-based aggregations for its neighbors. The bulk
+            # "clear entire item history" action (no time_orig/changed_orig) is
+            # unaffected and still a real delete.
+            if (
+                action == 'invalidate_log'
+                and item_id is not None
+                and time_orig is not None
+                and changed_orig is not None
+            ):
+                self.plugin.markLogInvalid(item_id, time=time_orig, changed=changed_orig)
+                action = 'item_details'
+                invalidate_triggered = True
+            if action == 'restore_log' and item_id is not None and time_orig is not None and changed_orig is not None:
+                self.plugin.markLogValid(item_id, time=time_orig, changed=changed_orig)
+                action = 'item_details'
+                restore_triggered = True
             if action == 'delete_log' and item_id is not None:
-                if time_orig is not None and changed_orig is not None:
-                    self.plugin.deleteLog(item_id, time=time_orig, changed=changed_orig)
-                    action = 'item_details'
-                else:
-                    self.plugin.deleteLog(item_id, time_end=time_end)
+                self.plugin.deleteLog(item_id, time_end=time_end)
                 delete_triggered = True
             if action == 'item_details' and item_id is not None:
                 if day is not None and month is not None and year is not None:
@@ -153,6 +172,7 @@ class WebInterface(SmartPluginWebIf):
                             COL_LOG_VAL_NUM,
                             COL_LOG_VAL_BOOL,
                             COL_LOG_CHANGED,
+                            COL_LOG_VAL_QUALITY,
                         ]:
                             if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
                                 value_dict[key] = row[key]
@@ -182,6 +202,9 @@ class WebInterface(SmartPluginWebIf):
                     month=month,
                     year=year,
                     delete_triggered=delete_triggered,
+                    invalidate_triggered=invalidate_triggered,
+                    restore_triggered=restore_triggered,
+                    quality_invalid=QUALITY_INVALID,
                 )
 
         tmpl = self.tplenv.get_template('index.html')
@@ -273,6 +296,7 @@ class WebInterface(SmartPluginWebIf):
                         COL_LOG_VAL_NUM,
                         COL_LOG_VAL_BOOL,
                         COL_LOG_CHANGED,
+                        COL_LOG_VAL_QUALITY,
                     ]:
                         if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
                             value_dict[key] = row[key]
@@ -335,6 +359,7 @@ class WebInterface(SmartPluginWebIf):
                         COL_LOG_VAL_NUM,
                         COL_LOG_VAL_BOOL,
                         COL_LOG_CHANGED,
+                        COL_LOG_VAL_QUALITY,
                     ]:
                         value_dict[key] = row[key]
                     log_array.append(value_dict)
@@ -343,9 +368,11 @@ class WebInterface(SmartPluginWebIf):
 
             with open(csv_file_path, 'w', encoding='utf-8') as f:
                 writer = csv.writer(f, dialect='excel')
-                writer.writerow(['time', 'item_id', 'duration', 'val_str', 'val_num', 'val_bool', 'changed'])
+                writer.writerow(
+                    ['time', 'item_id', 'duration', 'val_str', 'val_num', 'val_bool', 'changed', 'val_quality']
+                )
                 for data in reversed_arr:
-                    writer.writerow([data[0], data[1], data[2], data[3], data[4], data[5], data[6]])
+                    writer.writerow([data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]])
 
             cherrypy.request.fileName = csv_file_path
             cherrypy.request.hooks.attach('on_end_request', self.download_complete)

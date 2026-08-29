@@ -54,6 +54,24 @@ checkDate();
 		</button>
 	</div>
 {% endif %}
+{% if invalidate_triggered %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Der Wert wurde als ungültig markiert.') }}</strong><br/>
+		{{ _('Er ist ab sofort von Mittelwert-/Summen-/Integral-Berechnungen ausgeschlossen und kann jederzeit wiederhergestellt werden.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+{% if restore_triggered %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Der Wert wurde wiederhergestellt.') }}</strong><br/>
+		{{ _('Er wird wieder in Mittelwert-/Summen-/Integral-Berechnungen berücksichtigt.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
 <div class="mb-2">
 	{{ _('Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item') }}
 	<strong id="item_path">{{ item_path }}</strong> {{ _('am') }} <strong>
@@ -91,15 +109,16 @@ checkDate();
 		</thead>
 		<tbody>
 			{% for data in log_array %}
-			  <tr id="{{ data[0] }}_{{ data[2] }}">
+			  {% set is_invalid = data[7] == quality_invalid %}
+			  <tr id="{{ data[0] }}_{{ data[2] }}" class="{% if is_invalid %}text-muted{% endif %}">
 					<td></td>
 			    <td id="{{ data[0] }}_{{ data[2] }}_id">{{ data[1] }}</td>
 			    <td id="{{ data[0] }}_{{ data[2] }}_time">{% if data[0] %}{% if language == 'en' %}{{ data[0].strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ data[0].strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}{% else %}-{% endif %}</td>
 			    <td id="{{ data[0] }}_{{ data[2] }}_duration">{% if p._seconds(data[2]) == none %}{{ p._seconds(data[2]) }}{% else %}{{ ("%.2f"|format(p._seconds(data[2])|float)).rstrip('0').rstrip('.') }}{% endif %}</td>
-			    {% if item.property.type == 'num' %}<td class="py-1" id="{{ data[0] }}_{{ data[2] }}_value">{{ ("%.2f"|format(data[4]|float)).rstrip('0').rstrip('.') }}</td>{% endif %}
-			    {% if item.property.type == 'bool' %}<td class="py-1" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[5] }}</td>{% endif %}
-			    {% if item.property.type == 'str' %}<td class="py-1" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[3] }}</td>{% endif %}
-			    {% if item.property.type == 'foo' %}<td class="py-1" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[3] }}</td>{% endif %}
+			    {% if item.property.type == 'num' %}<td class="py-1{% if is_invalid %} text-decoration-line-through{% endif %}" id="{{ data[0] }}_{{ data[2] }}_value">{{ ("%.2f"|format(data[4]|float)).rstrip('0').rstrip('.') }}</td>{% endif %}
+			    {% if item.property.type == 'bool' %}<td class="py-1{% if is_invalid %} text-decoration-line-through{% endif %}" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[5] }}</td>{% endif %}
+			    {% if item.property.type == 'str' %}<td class="py-1{% if is_invalid %} text-decoration-line-through{% endif %}" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[3] }}</td>{% endif %}
+			    {% if item.property.type == 'foo' %}<td class="py-1{% if is_invalid %} text-decoration-line-through{% endif %}" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[3] }}</td>{% endif %}
 			    <td id="{{ data[0] }}_{{ data[2] }}_changed">{% if data[6] %}{% if language == 'en' %}{{ data[6].strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ data[6].strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}{% else %}-{% endif %}</td>
 			    <td id="{{ data[0] }}_{{ data[2] }}_buttons">
 			    {% if loop.index < 3 and (day is none or (day+" "+month+" "+year == now.strftime('%d %m %Y'))) %}
@@ -107,10 +126,17 @@ checkDate();
 			    {% else %}
 			      {% set is_disabled = false %}
 			    {% endif %}
+			    {% if is_invalid %}
+			    <button {% if is_disabled %}disabled{% endif %} type="button"
+			    class="btn btn-{% if is_disabled %}secondary{% else %}warning{% endif %} btn-sm"
+			    title="{% if is_disabled %}{{ _('Wiederherstellen für aktuellen Wert nicht verfügbar.') }}{% else %}{{ _('Wert wiederherstellen') }}{% endif %}"
+			    onclick="window.location.href='?action=restore_log&item_id={{ data[1] }}&item_path={{ item_path }}&time_orig={{ data['0_orig'] }}&changed_orig={{ data['6_orig'] }}{% if day and month and year %}&day={{ day }}&month={{ month }}&year={{ year }}{% endif %}'"><i class="fas fa-trash-restore"></i></button></td>
+			    {% else %}
 			    <button {% if is_disabled %}disabled{% endif %} type="button"
 			    class="btn btn-{% if is_disabled %}secondary{% else %}danger{% endif %} btn-sm"
-			    title="{% if is_disabled %}{{ _('Wert löschen für aktuellen Wert nicht verfügbar.') }}{% else %}{{ _('Wert löschen') }}{% endif %}"
-			    onclick="confirmDelete('?action=delete_log&item_id={{ data[1] }}&item_path={{ item_path }}&time_orig={{ data['0_orig'] }}&changed_orig={{ data['6_orig'] }}{% if day and month and year %}&day={{ day }}&month={{ month }}&year={{ year }}{% endif %}','{{ _('Wollen Sie den Datensatz (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-trash-alt"></i></button></td>
+			    title="{% if is_disabled %}{{ _('Wert ungültig markieren für aktuellen Wert nicht verfügbar.') }}{% else %}{{ _('Wert ungültig markieren') }}{% endif %}"
+			    onclick="confirmDelete('?action=invalidate_log&item_id={{ data[1] }}&item_path={{ item_path }}&time_orig={{ data['0_orig'] }}&changed_orig={{ data['6_orig'] }}{% if day and month and year %}&day={{ day }}&month={{ month }}&year={{ year }}{% endif %}','{{ _('Wollen Sie diesen Datensatz als ungültig markieren? Er wird dadurch von Berechnungen ausgeschlossen, kann aber jederzeit wiederhergestellt werden.') }}')"><i class="fas fa-trash-alt"></i></button></td>
+			    {% endif %}
 			  </tr>
 			{% endfor %}
 		</tbody>
@@ -163,6 +189,7 @@ checkDate();
 						is_disabled = true;
 					else
 						is_disabled = false;
+					let is_invalid = objResponse[item][7] == {{ quality_invalid }};
 
 					{% if language == 'en' %}
 						date_time = month+"/"+day+"/"+year+" "+time;
@@ -183,6 +210,7 @@ checkDate();
 					{% if item.property.type == 'bool' %} value = objResponse[item][5];{% endif %}
 					{% if item.property.type == 'str' %} value = objResponse[item][3];{% endif %}
 					{% if item.property.type == 'foo' %} value = objResponse[item][3];{% endif %}
+					if (is_invalid) value = "<span class='text-decoration-line-through'>" + value + "</span>";
 					let changed_date_time;
 					if (objResponse[item][6] != null) {
 						let changed = new Date(Date.parse(objResponse[item][6]));
@@ -203,18 +231,26 @@ checkDate();
 					let buttons = "";
 					let day_month_year = "";
 					if (day && month && year) day_month_year = "&day=" + day + "&month=" + month + "&year=" + year;
-					if (is_disabled)
+					if (is_invalid)
 					{
-					  buttons = "<button disabled type='button' class='btn btn-secondary btn-sm' title='{{ _('Wert löschen für aktuellen Wert nicht verfügbar.') }}'><i class='fas fa-trash-alt'></i></button>";
+						if (is_disabled)
+							buttons = "<button disabled type='button' class='btn btn-secondary btn-sm' title='{{ _('Wiederherstellen für aktuellen Wert nicht verfügbar.') }}'><i class='fas fa-trash-restore'></i></button>";
+						else
+							buttons = "<button type='button' class='btn btn-warning btn-sm' title='{{ _('Wert wiederherstellen') }}' onclick=\"window.location.href='?action=restore_log&item_id=" + item_id + "&item_path=" + item_path + "&time_orig=" + objResponse[item]['0_orig'] + "&changed_orig=" + objResponse[item]['6_orig'] + day_month_year + "'\"><i class='fas fa-trash-restore'></i></button>";
+					}
+					else if (is_disabled)
+					{
+					  buttons = "<button disabled type='button' class='btn btn-secondary btn-sm' title='{{ _('Wert ungültig markieren für aktuellen Wert nicht verfügbar.') }}'><i class='fas fa-trash-alt'></i></button>";
 					}
 
 					else
 					{
-						buttons = "<button type='button' class='btn btn-danger btn-sm' title='{{ _('Wert löschen') }}' onclick=\"confirmDelete('?action=delete_log&item_id=" + item_id + "&item_path=" + item_path + "&time_orig=" + objResponse[item]['0_orig'] + "&changed_orig=" + objResponse[item]['6_orig'] + day_month_year + "','{{ _('Wollen Sie den Datensatz (Tabelle log) dieses Items wirklich löschen?') }}')\"><i class='fas fa-trash-alt'></i></button>";
+						buttons = "<button type='button' class='btn btn-danger btn-sm' title='{{ _('Wert ungültig markieren') }}' onclick=\"confirmDelete('?action=invalidate_log&item_id=" + item_id + "&item_path=" + item_path + "&time_orig=" + objResponse[item]['0_orig'] + "&changed_orig=" + objResponse[item]['6_orig'] + day_month_year + "','{{ _('Wollen Sie diesen Datensatz als ungültig markieren? Er wird dadurch von Berechnungen ausgeschlossen, kann aber jederzeit wiederhergestellt werden.') }}')\"><i class='fas fa-trash-alt'></i></button>";
 					}
 					let entry_id = objResponse[item][0].replace("T", " ");
 					let newRow = item_details_table.row.add( [ null, item_id, date_time, duration, value, changed_date_time, buttons ] ).draw(false).node();
 					newRow.id = entry_id+"_"+orig_duration;
+					if (is_invalid) $(newRow).addClass('text-muted');
 					$('td:eq(1)', newRow).attr('id', entry_id+'_'+orig_duration+'_id');
 					$('td:eq(2)', newRow).attr('id', entry_id+'_'+orig_duration+'_time');
 					$('td:eq(3)', newRow).attr('id', entry_id+'_'+orig_duration+'_duration').addClass('duration');

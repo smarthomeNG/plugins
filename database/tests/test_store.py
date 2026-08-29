@@ -12,7 +12,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 from plugins.database.store import ItemStore, LogStore
-from plugins.database.constants import BufferEntry, QUALITY_VALID, QUALITY_NO_DATA
+from plugins.database.constants import BufferEntry, QUALITY_VALID, QUALITY_NO_DATA, QUALITY_INVALID
 from plugins.database.utils import to_timestamp
 
 
@@ -470,6 +470,43 @@ class TestLogStore(unittest.TestCase):
 
         self.assertEqual(2, self.log_store.aggregate(self.item_id, 'COUNT(*)'))
         self.assertAlmostEqual(30.0, self.log_store.aggregate(self.item_id, 'SUM(val_num)'))
+
+    def test_set_quality_flips_quality_without_touching_value(self):
+        """set_quality() must be a reversible flag flip: duration/val_* stay put."""
+        e = self._entry(4000, 500, 42.0, QUALITY_VALID)
+        self.log_store.insert(self.item_id, e, 'num', changed=4500)
+
+        self.log_store.set_quality(self.item_id, QUALITY_INVALID, time=4000, changed=4500)
+
+        rows = self.db.fetchall(
+            'SELECT val_quality, val_num, duration FROM log WHERE item_id=? AND time=?', (self.item_id, 4000)
+        )
+        self.assertEqual(rows[0][0], QUALITY_INVALID)
+        self.assertAlmostEqual(rows[0][1], 42.0)  # val_num preserved
+        self.assertEqual(rows[0][2], 500)  # duration preserved
+
+    def test_set_quality_is_reversible(self):
+        e = self._entry(5000, 500, 7.5, QUALITY_VALID)
+        self.log_store.insert(self.item_id, e, 'num', changed=5500)
+
+        self.log_store.set_quality(self.item_id, QUALITY_INVALID, time=5000, changed=5500)
+        self.log_store.set_quality(self.item_id, QUALITY_VALID, time=5000, changed=5500)
+
+        rows = self.db.fetchall('SELECT val_quality, val_num FROM log WHERE item_id=? AND time=?', (self.item_id, 5000))
+        self.assertEqual(rows[0][0], QUALITY_VALID)
+        self.assertAlmostEqual(rows[0][1], 7.5)
+
+    def test_set_quality_only_matches_given_criteria(self):
+        """Same time+changed matching as delete_range - other rows untouched."""
+        for t in (100, 200, 300):
+            self.log_store.insert(self.item_id, self._entry(t, 50, float(t), QUALITY_VALID), 'num', changed=t)
+
+        self.log_store.set_quality(self.item_id, QUALITY_INVALID, time=200, changed=200)
+
+        rows = self.db.fetchall('SELECT time, val_quality FROM log WHERE item_id=? ORDER BY time', (self.item_id,))
+        self.assertEqual(
+            [(r[0], r[1]) for r in rows], [(100, QUALITY_VALID), (200, QUALITY_INVALID), (300, QUALITY_VALID)]
+        )
 
 
 if __name__ == '__main__':

@@ -57,6 +57,7 @@ from .constants import (
     COL_LOG_VAL_NUM,
     COL_LOG_VAL_STR,
     BufferEntry,
+    QUALITY_INVALID,
     QUALITY_NO_DATA,
     QUALITY_VALID,
 )
@@ -1404,6 +1405,38 @@ class Database(SmartPlugin):
             level('Exception in function deleteLog during readLogCount: {}'.format(e))
 
         return
+
+    def markLogInvalid(self, id, time=None, changed=None, cur=None, with_commit=True):
+        """
+        Reversibly flag a database log record as invalid, preserving its value
+
+        This is a public function of the plugin. Unlike deleteLog(), the row is
+        kept - only its val_quality is set to QUALITY_INVALID, which excludes it
+        from time-weighted aggregations (avg, sum, integrate, on, min, max) while
+        leaving val_str/val_num/val_bool/duration untouched so the flag can be
+        undone with markLogValid().
+
+        :param id: Database ID of item to flag the record for
+        :param time: Restrict flagging to given time (optional)
+        :param changed: Restrict flagging to given change time (optional)
+        :param cur: A database cursor object if available (optional)
+        :return:
+        """
+        self._log_store.set_quality(id, QUALITY_INVALID, time=time, changed=changed, cur=cur, commit=with_commit)
+
+    def markLogValid(self, id, time=None, changed=None, cur=None, with_commit=True):
+        """
+        Undo markLogInvalid(): restore a database log record's val_quality to valid
+
+        This is a public function of the plugin.
+
+        :param id: Database ID of item to restore the record for
+        :param time: Restrict restoring to given time (optional)
+        :param changed: Restrict restoring to given change time (optional)
+        :param cur: A database cursor object if available (optional)
+        :return:
+        """
+        self._log_store.set_quality(id, QUALITY_VALID, time=time, changed=changed, cur=cur, commit=with_commit)
 
     def build_orphanlist(self, log_activity=False):
         """
