@@ -23,18 +23,8 @@ are otherwise fully independent of the plugin lifecycle.
 """
 
 import logging
-from typing import List, Optional
 
-from .constants import (
-    BufferEntry,
-    COL_ITEM,
-    COL_ITEM_ID,
-    COL_ITEM_NAME,
-    COL_LOG,
-    COL_LOG_TIME,
-    COL_LOG_ITEM_ID,
-    QUALITY_VALID,
-)
+from .constants import BufferEntry
 from .utils import encode_value, apply_table_names, build_where_clause
 
 
@@ -91,15 +81,16 @@ class ItemStore:
         :returns:    The new integer item ID.
         :rtype:      int
         """
-        own_cur = cur is None
-        if own_cur:
-            cur = self._db.cursor()
-        try:
+        if cur is not None:
             self._execute('INSERT INTO {item}(name) VALUES(:name);', {'name': name}, cur=cur)
             return int(cur.lastrowid)
-        finally:
-            if own_cur:
-                cur.close()
+        # No cur passed: acquires its own lock and commits via
+        # transaction() - the class docstring above promises exactly this
+        # ("otherwise the store acquires its own lock"), so this path
+        # must actually do it, not just read from the table.
+        with self._db.transaction() as tcur:
+            self._execute('INSERT INTO {item}(name) VALUES(:name);', {'name': name}, cur=tcur)
+            return int(tcur.lastrowid)
 
     def update(self, item_id: int, time: int, val, item_type: str, changed: int, cur=None) -> None:
         """Update the latest-value row for *item_id*.
@@ -113,21 +104,34 @@ class ItemStore:
         """
         params = {'id': item_id, 'time': time, 'changed': changed}
         params.update(encode_value(item_type, val))
-        self._execute(
+        stmt = (
             'UPDATE {item} SET time=:time, val_str=:val_str, val_num=:val_num,'
-            ' val_bool=:val_bool, changed=:changed WHERE id=:id;',
-            params,
-            cur=cur,
+            ' val_bool=:val_bool, changed=:changed WHERE id=:id;'
         )
+        if cur is not None:
+            self._execute(stmt, params, cur=cur)
+            return
+        with self._db.transaction() as tcur:
+            self._execute(stmt, params, cur=tcur)
 
     def delete(self, item_id: int, cur=None) -> None:
-        """Delete the item row *and* all its log rows.
+        """Delete the item row *and* all its log rows, as one atomic unit.
+
+        With ``cur=None`` this acquires its own lock and commits both
+        deletes via ``self._db.transaction()`` - a crash between them
+        can never leave one done and the other not.
 
         :param item_id: Database item ID.
-        :param cur:     Optional cursor.
+        :param cur:     Optional cursor for transaction batching.
         """
-        LogStore(self._db, self._tn, self.logger).delete_range(item_id, cur=cur)
-        self._execute('DELETE FROM {item} WHERE id=:id;', {'id': item_id}, cur=cur)
+        log_store = LogStore(self._db, self._tn, self.logger)
+        if cur is not None:
+            log_store.delete_range(item_id, cur=cur)
+            self._execute('DELETE FROM {item} WHERE id=:id;', {'id': item_id}, cur=cur)
+            return
+        with self._db.transaction() as tcur:
+            log_store.delete_range(item_id, cur=tcur)
+            self._execute('DELETE FROM {item} WHERE id=:id;', {'id': item_id}, cur=tcur)
 
     # ── read ─────────────────────────────────────────────────────────────────
 
@@ -221,14 +225,17 @@ class LogStore:
             'quality': entry.quality,
         }
         params.update(encode_value(item_type, entry.value))
-        self._execute(
+        stmt = (
             'INSERT INTO {log}(item_id, time, val_str, val_num, val_bool,'
             ' duration, changed, val_quality)'
             ' VALUES(:id, :time, :val_str, :val_num, :val_bool,'
-            '        :duration, :changed, :quality);',
-            params,
-            cur=cur,
+            '        :duration, :changed, :quality);'
         )
+        if cur is not None:
+            self._execute(stmt, params, cur=cur)
+            return
+        with self._db.transaction() as tcur:
+            self._execute(stmt, params, cur=tcur)
 
     def update(self, item_id: int, entry: BufferEntry, item_type: str, changed: int, cur=None) -> None:
         """Update an existing log row matching ``(item_id, time)``.
@@ -247,14 +254,17 @@ class LogStore:
             'quality': entry.quality,
         }
         params.update(encode_value(item_type, entry.value))
-        self._execute(
+        stmt = (
             'UPDATE {log} SET duration=:duration, val_str=:val_str,'
             ' val_num=:val_num, val_bool=:val_bool, changed=:changed,'
             ' val_quality=:quality'
-            ' WHERE item_id=:id AND time=:time;',
-            params,
-            cur=cur,
+            ' WHERE item_id=:id AND time=:time;'
         )
+        if cur is not None:
+            self._execute(stmt, params, cur=cur)
+            return
+        with self._db.transaction() as tcur:
+            self._execute(stmt, params, cur=tcur)
 
     def upsert(self, item_id: int, entry: BufferEntry, item_type: str, changed: int, cur=None) -> None:
         """Insert *or* update a log row depending on whether it already exists.
@@ -268,11 +278,21 @@ class LogStore:
         :param changed:   Write timestamp (milliseconds).
         :param cur:       Optional cursor.
         """
-        existing = self.find(item_id, entry.time, cur=cur)
-        if existing:
-            self.update(item_id, entry, item_type, changed, cur=cur)
-        else:
-            self.insert(item_id, entry, item_type, changed, cur=cur)
+        if cur is not None:
+            existing = self.find(item_id, entry.time, cur=cur)
+            if existing:
+                self.update(item_id, entry, item_type, changed, cur=cur)
+            else:
+                self.insert(item_id, entry, item_type, changed, cur=cur)
+            return
+        # check-then-act: find and the write must share one transaction,
+        # not run as two independently-committing calls.
+        with self._db.transaction() as tcur:
+            existing = self.find(item_id, entry.time, cur=tcur)
+            if existing:
+                self.update(item_id, entry, item_type, changed, cur=tcur)
+            else:
+                self.insert(item_id, entry, item_type, changed, cur=tcur)
 
     def delete_range(
         self,
@@ -285,12 +305,20 @@ class LogStore:
         changed_start=None,
         changed_end=None,
         cur=None,
-        commit=True,
     ) -> None:
         """Delete log rows matching the given criteria.
 
         All criteria are optional; if none are given, *all* rows for
         *item_id* are deleted.
+
+        No ``commit`` parameter: with ``cur=None`` this acquires its own
+        lock and commits via ``self._db.transaction()`` (matching
+        :meth:`ItemStore.insert`) - with an explicit ``cur``, the caller
+        already holds the lock and owns the commit/rollback decision, so
+        this never touches it. A caller-controlled independent commit flag
+        used to let a passed-in ``cur`` be committed unilaterally mid- the
+        caller's own transaction, or a ``cur=None`` call be left
+        uncommitted with nothing else guaranteed to flush it.
 
         :param item_id:       Database item ID.
         :param time:          Exact timestamp to match (optional).
@@ -299,8 +327,7 @@ class LogStore:
         :param changed:       Exact ``changed`` match (optional).
         :param changed_start: Lower bound on ``changed`` (optional).
         :param changed_end:   Upper bound on ``changed`` (optional).
-        :param cur:           Optional cursor.
-        :param commit:        If ``True`` (default) commit after deletion.
+        :param cur:           Optional cursor for transaction batching.
         """
         where, params = build_where_clause(
             item_id,
@@ -311,13 +338,12 @@ class LogStore:
             changed_start=changed_start,
             changed_end=changed_end,
         )
-        try:
-            self._execute('DELETE FROM {log} WHERE ' + where + ';', params, cur=cur)
-            if commit:
-                self._db.commit()
-        except Exception as e:
-            self.logger.error('LogStore.delete_range: {}'.format(e))
-            self._db.rollback()
+        stmt = 'DELETE FROM {log} WHERE ' + where + ';'
+        if cur is not None:
+            self._execute(stmt, params, cur=cur)
+            return
+        with self._db.transaction() as tcur:
+            self._execute(stmt, params, cur=tcur)
 
     def set_quality(
         self,
@@ -418,16 +444,18 @@ class LogStore:
         )
         return self._fetchall('SELECT {log_columns} FROM {log} WHERE ' + where + ';', params, cur=cur)
 
-    def count(self, item_id: int, *, time_start=None, time_end=None, cur=None) -> int:
+    def count(self, item_id: int, *, time_start=None, time_end=None, exclude_gaps=False, cur=None) -> int:
         """Return the number of log rows for *item_id* in the given range.
 
         :param item_id:    Database item ID.
         :param time_start: Lower bound on ``time`` (exclusive, optional).
         :param time_end:   Upper bound on ``time`` (exclusive, optional).
+        :param exclude_gaps: If True, count only valid-quality rows (see
+                           build_where_clause).
         :param cur:        Optional cursor.
         :rtype:            int
         """
-        where, params = build_where_clause(item_id, time_start=time_start, time_end=time_end)
+        where, params = build_where_clause(item_id, time_start=time_start, time_end=time_end, exclude_gaps=exclude_gaps)
         result = self._fetchall('SELECT count(*) FROM {log} WHERE ' + where + ';', params, cur=cur)
         if not result:
             return 0
@@ -492,9 +520,10 @@ class LogStore:
         :param time_end:   Exclusive upper bound on ``time`` (optional).
         :param cur:        Optional cursor.
         :returns:          ``(val_str, val_num, val_bool)`` tuple, or ``None``
-                           if the range is empty.
+                           if the range is empty (or contains only no-data
+                           gap rows - see build_where_clause's exclude_gaps).
         """
-        where, params = build_where_clause(item_id, time_start=time_start, time_end=time_end)
+        where, params = build_where_clause(item_id, time_start=time_start, time_end=time_end, exclude_gaps=True)
         result = self._fetchall(
             'SELECT val_str, val_num, val_bool FROM {log} WHERE ' + where + f' ORDER BY time {order} LIMIT 1;',
             params,
@@ -518,7 +547,7 @@ class LogStore:
         :returns:          The aggregate result, or ``None`` if the range is empty
                            (or the aggregate itself evaluates to NULL).
         """
-        where, params = build_where_clause(item_id, time_start=time_start, time_end=time_end)
+        where, params = build_where_clause(item_id, time_start=time_start, time_end=time_end, exclude_gaps=True)
         result = self._fetchall(f'SELECT {expr} FROM {{log}} WHERE ' + where + ';', params, cur=cur)
         if not result:
             return None

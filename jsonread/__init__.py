@@ -28,27 +28,30 @@ import json
 import requests
 from requests_file import FileAdapter
 import re
+import jmespath
 from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
 from .webif import WebInterface
 
+
 # PATCH: Move jq engine into JSONREAD class without breaking behavior
 # Drop-in replacement for previous global jq_* functions
-
-
 class JSONREAD(SmartPlugin):
-    PLUGIN_VERSION = '2.0.0'
+    PLUGIN_VERSION = '2.1.0'
+
+    # remove_item cleans up all item references, this is simple
+    STOP_ON_ITEM_CHANGE = False
 
     def __init__(self, sh):
         super().__init__()
 
         self._url = self.get_parameter_value('url')
         self._cycle = self.get_parameter_value('cycle')
+        self._jq_syntax = self.get_parameter_value('jq_syntax')
 
         self._session = requests.Session()
         self._session.mount('file://', FileAdapter())
 
-        self._items = {}
         self._compiled_filters = {}
 
         self._lastresult = {}
@@ -381,6 +384,90 @@ class JSONREAD(SmartPlugin):
                 return value[0]
         return value
 
+    def _translate_jq_to_jmespath(self, expr):
+        """
+        Translate the jq-subset dialect used in ``jsonread_filter`` attributes
+        to a valid JMESPath expression string.
+
+        This is the shim that lets existing item configurations keep working
+        unchanged when ``jq_syntax=True`` (default) while the evaluation
+        backend is jmespath. The only things that need translating:
+
+        - Leading ``.`` (root dot) → stripped (JMESPath has no root dot)
+        - ``["N"]`` / ``[N]`` with a numeric index → bare ``[N]``
+        - ``select(cond)`` → ``[?cond]`` with JMESPath backtick literals
+        - ``[]`` flatten and ``|`` pipe → pass through unchanged (both are
+          native JMESPath syntax with identical semantics for these patterns)
+        """
+        expr = expr.strip()
+
+        # Split on top-level pipes (same logic as jq_compile)
+        segments, buf, depth, i = [], '', 0, 0
+        while i < len(expr):
+            ch = expr[i]
+            if ch == '(':
+                depth += 1
+            elif ch == ')':
+                depth -= 1
+            elif ch == '|' and depth == 0:
+                segments.append(buf.strip())
+                buf = ''
+                i += 1
+                continue
+            buf += ch
+            i += 1
+        if buf.strip():
+            segments.append(buf.strip())
+
+        return ' | '.join(self._translate_jq_segment(s) for s in segments)
+
+    def _translate_jq_segment(self, seg):
+        seg = seg.strip()
+
+        if seg.startswith('select(') and seg.endswith(')'):
+            cond = seg[7:-1]
+            return '[?' + self._translate_jq_condition_to_jmespath(cond) + ']'
+
+        # Normal path: strip leading dot, translate bracket indices
+        if seg.startswith('.'):
+            seg = seg[1:]
+
+        def translate_bracket(m):
+            content = m.group(1).strip()
+            if content == '':
+                return '[]'  # flatten — native JMESPath, pass through
+            if content.startswith('"') and content.endswith('"'):
+                inner = content[1:-1]
+            else:
+                inner = content
+            try:
+                return f'[{int(inner)}]'
+            except ValueError:
+                # Non-numeric string key in object — unusual in practice;
+                # JMESPath quoted-identifier syntax would need a different
+                # approach, so log and pass through for now.
+                return m.group(0)
+
+        return re.sub(r'\[([^\[\]]*)\]', translate_bracket, seg)
+
+    def _translate_jq_condition_to_jmespath(self, cond):
+        """Translate a jq ``select()`` condition body to JMESPath filter syntax."""
+        m = re.match(r'\.(.+?)\s*(==|!=|>=|<=|>|<)\s*(.+)', cond)
+        if not m:
+            return cond
+        keypath, op, raw_val = m.groups()
+        raw_val = raw_val.strip()
+        stripped = raw_val.strip('"')
+        if raw_val.lower() in ('true', 'false'):
+            literal = f'`{raw_val.lower()}`'
+        else:
+            try:
+                float(stripped)
+                literal = f'`{stripped}`'
+            except ValueError:
+                literal = f'`"{stripped}"`'
+        return f'{keypath} {op} {literal}'
+
     def evaluate_filter(self, expr, data):
         """
         Resolve a single ``jsonread_filter`` expression against a parsed
@@ -393,19 +480,20 @@ class JSONREAD(SmartPlugin):
         reimplementing this one method; callers and the filter-contract
         tests (tests/test_filter_contract.py) don't change.
         """
+        if not self._jq_syntax:
+            return jmespath.search(expr, data)
+
         compiled = self._compiled_filters.get(expr)
         if compiled is None:
             compiled = self.jq_compile(expr)
             self._compiled_filters[expr] = compiled
         return self.jq_unwrap(self.jq_full(compiled, data))
 
-    # MODIFY parse_item
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'jsonread_filter'):
             expr = self.get_iattr_value(item.conf, 'jsonread_filter')
-            self._items[item] = expr
+            self.add_item(item, config_data_dict={'jsonread_filter': expr})
 
-    # MODIFY poll_device jq call
     def poll_device(self):
         try:
             response = self._session.get(self._url)
@@ -431,7 +519,8 @@ class JSONREAD(SmartPlugin):
         except Exception:
             self._lastresultstr = '<format error>'
 
-        for item, expr in self._items.items():
+        for item in self.get_item_list():
+            expr = self.get_item_config(item)['jsonread_filter']
             try:
                 jqres = self.evaluate_filter(expr, json_obj)
                 self.logger.debug(f'Item {item} resolved to {jqres}')

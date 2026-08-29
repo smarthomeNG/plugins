@@ -113,13 +113,13 @@ checkDate();
 			  <tr id="{{ data[0] }}_{{ data[2] }}" class="{% if is_invalid %}text-muted{% endif %}">
 					<td></td>
 			    <td id="{{ data[0] }}_{{ data[2] }}_id">{{ data[1] }}</td>
-			    <td id="{{ data[0] }}_{{ data[2] }}_time">{% if language == 'en' %}{{ data[0].strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ data[0].strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
+			    <td id="{{ data[0] }}_{{ data[2] }}_time">{% if data[0] %}{% if language == 'en' %}{{ data[0].strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ data[0].strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}{% else %}-{% endif %}</td>
 			    <td id="{{ data[0] }}_{{ data[2] }}_duration">{% if p._seconds(data[2]) == none %}{{ p._seconds(data[2]) }}{% else %}{{ ("%.2f"|format(p._seconds(data[2])|float)).rstrip('0').rstrip('.') }}{% endif %}</td>
 			    {% if item.property.type == 'num' %}<td class="py-1{% if is_invalid %} text-decoration-line-through{% endif %}" id="{{ data[0] }}_{{ data[2] }}_value">{{ ("%.2f"|format(data[4]|float)).rstrip('0').rstrip('.') }}</td>{% endif %}
 			    {% if item.property.type == 'bool' %}<td class="py-1{% if is_invalid %} text-decoration-line-through{% endif %}" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[5] }}</td>{% endif %}
 			    {% if item.property.type == 'str' %}<td class="py-1{% if is_invalid %} text-decoration-line-through{% endif %}" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[3] }}</td>{% endif %}
 			    {% if item.property.type == 'foo' %}<td class="py-1{% if is_invalid %} text-decoration-line-through{% endif %}" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[3] }}</td>{% endif %}
-			    <td id="{{ data[0] }}_{{ data[2] }}_changed">{% if language == 'en' %}{{ data[6].strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ data[6].strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
+			    <td id="{{ data[0] }}_{{ data[2] }}_changed">{% if data[6] %}{% if language == 'en' %}{{ data[6].strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ data[6].strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}{% else %}-{% endif %}</td>
 			    <td id="{{ data[0] }}_{{ data[2] }}_buttons">
 			    {% if loop.index < 3 and (day is none or (day+" "+month+" "+year == now.strftime('%d %m %Y'))) %}
 			      {% set is_disabled = true %}
@@ -211,14 +211,23 @@ checkDate();
 					{% if item.property.type == 'str' %} value = objResponse[item][3];{% endif %}
 					{% if item.property.type == 'foo' %} value = objResponse[item][3];{% endif %}
 					if (is_invalid) value = "<span class='text-decoration-line-through'>" + value + "</span>";
-					let changed = new Date(Date.parse(objResponse[item][6]));
-					let changed_day = String(changed.getDate()).padStart(2, '0');
-					let changed_month = String((changed.getMonth()+1)).padStart(2, '0');
-					let changed_year = String(changed.getFullYear()).padStart(2, '0');
-					let changed_time =  String(changed.getHours()).padStart(2, '0')+
-								":"+String(changed.getMinutes()).padStart(2, '0')+
-								":"+String(changed.getSeconds()).padStart(2, '0');
-		            let changed_date_time;
+					let changed_date_time;
+					if (objResponse[item][6] != null) {
+						let changed = new Date(Date.parse(objResponse[item][6]));
+						let changed_day = String(changed.getDate()).padStart(2, '0');
+						let changed_month = String((changed.getMonth()+1)).padStart(2, '0');
+						let changed_year = String(changed.getFullYear()).padStart(2, '0');
+						let changed_time =  String(changed.getHours()).padStart(2, '0')+
+									":"+String(changed.getMinutes()).padStart(2, '0')+
+									":"+String(changed.getSeconds()).padStart(2, '0');
+						{% if language == 'en' %}
+							changed_date_time = changed_month+"/"+changed_day+"/"+changed_year+" "+changed_time;
+						{% else %}
+							changed_date_time = changed_day + "." + changed_month + "." + changed_year + " " + changed_time;
+						{% endif %}
+					} else {
+						changed_date_time = "-";
+					}
 					let buttons = "";
 					let day_month_year = "";
 					if (day && month && year) day_month_year = "&day=" + day + "&month=" + month + "&year=" + year;
@@ -238,11 +247,6 @@ checkDate();
 					{
 						buttons = "<button type='button' class='btn btn-danger btn-sm' title='{{ _('Wert ungültig markieren') }}' onclick=\"confirmDelete('?action=invalidate_log&item_id=" + item_id + "&item_path=" + item_path + "&time_orig=" + objResponse[item]['0_orig'] + "&changed_orig=" + objResponse[item]['6_orig'] + day_month_year + "','{{ _('Wollen Sie diesen Datensatz als ungültig markieren? Er wird dadurch von Berechnungen ausgeschlossen, kann aber jederzeit wiederhergestellt werden.') }}')\"><i class='fas fa-trash-alt'></i></button>";
 					}
-					{% if language == 'en' %}
-						changed_date_time = changed_month+"/"+changed_day+"/"+changed_year+" "+changed_time;
-					{% else %}
-						changed_date_time = changed_day + "." + changed_month + "." + changed_year + " " + changed_time;
-					{% endif %}
 					let entry_id = objResponse[item][0].replace("T", " ");
 					let newRow = item_details_table.row.add( [ null, item_id, date_time, duration, value, changed_date_time, buttons ] ).draw(false).node();
 					newRow.id = entry_id+"_"+orig_duration;

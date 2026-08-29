@@ -1,3 +1,6 @@
+import decimal
+from unittest import mock
+
 from plugins.database import Database
 from plugins.database.constants import QUALITY_INVALID, QUALITY_NO_DATA
 from plugins.database.tests.base import TestDatabaseBase
@@ -81,6 +84,16 @@ class TestDatabaseSingle(TestDatabaseBase):
         res = plugin._single('avg', start=0, item='main.num')
         self.assertIsNone(res)
 
+    def test_single_raw_no_log_returns_none(self):
+        # Regression: every other func here is an ungrouped SQL aggregate,
+        # which always returns exactly one (NULL) row even with no matching
+        # data - 'raw' has no aggregate and no GROUP BY, so an empty range
+        # genuinely returns zero rows, and logs['tuples'][0][0] raised
+        # IndexError instead of reporting "no data" like every other func.
+        plugin = self.plugin()
+        res = plugin._single('raw', start=0, item='main.num')
+        self.assertIsNone(res)
+
     def test_single_avg(self):
         plugin = self.plugin()
         self.create_log(plugin, 'main.num', [(1, 2, 10), (2, 3, 20)])
@@ -141,6 +154,22 @@ class TestDatabaseSingle(TestDatabaseBase):
         self.create_log(plugin, 'main.num', [(1, 2, 10), (2, 3, 20)])
         res = plugin._single('on', start=0, end='now', item='main.num')
         self.assertSingle(1, res)
+
+    def test_single_coerces_mariadb_decimal_to_float(self):
+        # Regression: MariaDB/MySQL return decimal.Decimal (not float) for
+        # SUM()/AVG() over exact-numeric columns - 'on''s SUM(val_bool *
+        # duration) is exactly this case (val_bool and duration are both
+        # integer-typed columns; sqlite, used by this test fixture, never
+        # returns Decimal at all, so this simulates a real driver's return
+        # value directly). Decimal doesn't mix with the plain floats
+        # _series() injects elsewhere (e.g. float(item()) boundary
+        # values), so an uncoerced Decimal risks a TypeError there, and a
+        # bare Decimal returned to a logic doing arithmetic on it.
+        plugin = self.plugin()
+        with mock.patch.object(plugin, '_fetchall', return_value=[(decimal.Decimal('0.5'),)]):
+            res = plugin._single('on', start=0, end='now', item='main.num')
+        self.assertIsInstance(res, float)
+        self.assertEqual(0.5, res)
 
     def test_single_returns_last_value_outside_range(self):
         """When selecting single value and the database contains one last

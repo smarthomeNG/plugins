@@ -126,6 +126,27 @@ class TestQualityStoreLevel(unittest.TestCase):
             def cursor(self):
                 return self._conn.cursor()
 
+            def transaction(self):
+                """Mirrors lib.db.Database.transaction()'s observable
+                contract - commit on clean exit, rollback + re-raise on
+                any exception."""
+                import contextlib
+
+                @contextlib.contextmanager
+                def _tx():
+                    c = self._conn.cursor()
+                    try:
+                        yield c
+                    except Exception:
+                        c.close()
+                        self._conn.rollback()
+                        raise
+                    else:
+                        c.close()
+                        self._conn.commit()
+
+                return _tx()
+
         tn = {
             'item': 'item',
             'log': 'log',
