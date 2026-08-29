@@ -68,6 +68,15 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
+    def _log_webif_error(self, context, e):
+        """One-line, no-traceback log for a webif request that failed against
+        the database - graded the same way as every other DB call site in
+        this plugin (INFO for a known/self-healing connection failure, ERROR
+        otherwise), never lets the exception itself reach cherrypy's own
+        handler (which would log a full traceback and 500 the request)."""
+        level = self.logger.info if self.plugin._db.is_connection_error(e) else self.logger.error
+        level(f'{context}: {e}')
+
     @cherrypy.expose
     def index(
         self,
@@ -82,6 +91,14 @@ class WebInterface(SmartPluginWebIf):
         time_orig=None,
         changed_orig=None,
     ):
+        """Build index.html for cherrypy - thin wrapper, see _index()."""
+        try:
+            return self._index(reload, action, item_id, item_path, time_end, day, month, year, time_orig, changed_orig)
+        except Exception as e:
+            self._log_webif_error('database webif index', e)
+            return 'Database temporarily unavailable, please try again shortly.'
+
+    def _index(self, reload, action, item_id, item_path, time_end, day, month, year, time_orig, changed_orig):
         """
         Build index.html for cherrypy
 
@@ -204,6 +221,14 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None, params=None):
+        """Return data to update the webpage - thin wrapper, see _get_data_html()."""
+        try:
+            return self._get_data_html(dataSet, params)
+        except Exception as e:
+            self._log_webif_error('database webif get_data_html', e)
+            return '{}'
+
+    def _get_data_html(self, dataSet, params):
         """
         Return data to update the webpage
 
@@ -276,6 +301,14 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     def item_csv(self, item_id):
+        """Returns CSV Output for item log data - thin wrapper, see _item_csv()."""
+        try:
+            return self._item_csv(item_id)
+        except Exception as e:
+            self._log_webif_error(f'database webif item_csv (item_id={item_id!r})', e)
+            return None
+
+    def _item_csv(self, item_id):
         """
         Returns CSV Output for item log data
 
@@ -323,10 +356,14 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     def db_csvdump(self):
-        """
-        returns the smarthomeNG database as download in csv format
-        """
+        """Returns the smarthomeNG database as download in csv format - thin wrapper, see _db_csvdump()."""
+        try:
+            return self._db_csvdump()
+        except Exception as e:
+            self._log_webif_error('database webif db_csvdump', e)
+            return 'Database temporarily unavailable, please try again shortly.'
 
+    def _db_csvdump(self):
         filename = 'smarthomeng'
         extension = '_dump.csv'
         if self.plugin.get_instance_name() == '':
@@ -348,9 +385,14 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     def db_sqldump(self):
-        """
-        returns the smarthomeNG sqlite database as download of a complete sql dump
-        """
+        """Returns the smarthomeNG sqlite database as a sql dump download - thin wrapper, see _db_sqldump()."""
+        try:
+            return self._db_sqldump()
+        except Exception as e:
+            self._log_webif_error('database webif db_sqldump', e)
+            return 'Database temporarily unavailable, please try again shortly.'
+
+    def _db_sqldump(self):
         filename = 'smarthomeng'
         extension = '_dump.sql'
         if self.plugin.get_instance_name() == '':
@@ -373,10 +415,14 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def countall(self, item_path):
-        if item_path is not None:
-            item = self.plugin.items.return_item(item_path)
-            count = item.db('countall', 0)
-            if count is not None:
-                return int(count)
-            else:
-                return 0
+        try:
+            if item_path is not None:
+                item = self.plugin.items.return_item(item_path)
+                count = item.db('countall', 0)
+                if count is not None:
+                    return int(count)
+                else:
+                    return 0
+        except Exception as e:
+            self._log_webif_error(f'database webif countall (item_path={item_path!r})', e)
+            return 0

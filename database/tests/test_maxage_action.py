@@ -384,8 +384,10 @@ class TestMaxageAction(TestDatabaseBase):
         # A mid-transaction failure here must roll back and leave the
         # connection in a clean, usable state for the next caller -
         # without that, a broken connection stays broken indefinitely.
-        # The exception must still propagate unchanged (no caller
-        # currently catches this).
+        # _compact_maxage() catches this itself now (mirrors _dump()'s
+        # per-item isolation: one item's failure must not crash the whole
+        # scheduled cycle) rather than letting it propagate - this is the
+        # documented log-severity/graceful-degradation fix, not a gap.
         plugin = self.plugin()
         item = self.sh.return_item('main.maxage_sum')
         item_id = self.create_item(plugin, 'main.maxage_sum')
@@ -401,10 +403,9 @@ class TestMaxageAction(TestDatabaseBase):
         with mock.patch.object(
             plugin._log_store, 'insert', side_effect=RuntimeError('simulated failure mid-transaction')
         ):
-            with self.assertRaises(RuntimeError):
-                plugin._compact_maxage(item, item_id, 'main.maxage_sum', time_end, action)
+            plugin._compact_maxage(item, item_id, 'main.maxage_sum', time_end, action)
 
-        self.assertTrue(plugin._db.lock(0), '_fdb_lock left held after _compact_maxage() propagated an exception')
+        self.assertTrue(plugin._db.lock(0), '_fdb_lock left held after _compact_maxage() caught its own exception')
         plugin._db.release()
 
         # connection must still be genuinely usable afterward, not left

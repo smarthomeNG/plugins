@@ -828,7 +828,8 @@ class Database(SmartPlugin):
             try:
                 found = self.readItem(item_path, cur=c)
             except Exception as e:
-                self.logger.warning(f'id(): No id found for item {item_path} - Exception {e}')
+                level = self.logger.info if self._db.is_connection_error(e) else self.logger.warning
+                level(f'id(): No id found for item {item_path} - Exception {e}')
                 found = None
             if found is None and create:
                 found = [self.insertItem(item_path, c)]
@@ -852,13 +853,24 @@ class Database(SmartPlugin):
             # retry kept low - see Database.verify()'s docstring cost note;
             # id() already gets re-invoked by its own callers on failure.
             if self._db.verify(2) == 0:
-                self.logger.error('Database: Connection not recovered')
+                # verify() actively probed and failed to reconnect twice -
+                # this *is* the connection-trouble case by construction, no
+                # exception to classify: same INFO level as everywhere else
+                # that condition is confirmed, not a real-bug ERROR.
+                self.logger.info('Database: Connection not recovered')
                 return None
             try:
                 with self._db.transaction() as tcur:
                     id = _find_or_create(tcur)
             except TimeoutError:
                 self.logger.error("Database: Can't query due to fail to acquire lock")
+                return None
+            except Exception as e:
+                # insertItem() (the create=True path) isn't covered by
+                # _find_or_create's own readItem-only try/except - a
+                # connection failure there would otherwise escape uncaught.
+                level = self.logger.info if self._db.is_connection_error(e) else self.logger.error
+                level(f'id(): could not find/create id for item {item_path}: {e}')
                 return None
 
         if (id is None) or (COL_ITEM_ID >= len(id)) or (id[COL_ITEM_ID] is None):
@@ -884,7 +896,8 @@ class Database(SmartPlugin):
         try:
             row = self.readItem(item_path, cur=None)
         except Exception as e:
-            self.logger.warning(f'db_itemtype: No id found for item {item_path} - Exception {e}')
+            level = self.logger.info if self._db.is_connection_error(e) else self.logger.warning
+            level(f'db_itemtype: No id found for item {item_path} - Exception {e}')
             row = None
 
         if (row is None) or (COL_ITEM_ID >= len(row)):
@@ -923,7 +936,8 @@ class Database(SmartPlugin):
         try:
             row = self.readItem(item_path, cur=None)
         except Exception as e:
-            self.logger.warning(f'db_lastchange: No id found for item {item_path} - Exception {e}')
+            level = self.logger.info if self._db.is_connection_error(e) else self.logger.warning
+            level(f'db_lastchange: No id found for item {item_path} - Exception {e}')
             row = None
 
         if (row is None) or (COL_ITEM_ID >= len(row)):
@@ -999,6 +1013,15 @@ class Database(SmartPlugin):
         # RFC 4180 quoting for any field containing the delimiter, a quote,
         # or a newline.
         f = open(dumpfile, 'w', newline='')
+        try:
+            self._dump_rows(f, s, h, item_ids, time, time_start, time_end, changed, changed_start, changed_end, cur)
+        finally:
+            # A failure partway through (e.g. connection loss mid-dump)
+            # must not leak this handle - the exception itself still
+            # propagates to the caller (webif's db_csvdump()) unchanged.
+            f.close()
+
+    def _dump_rows(self, f, s, h, item_ids, time, time_start, time_end, changed, changed_start, changed_end, cur):
         writer = csv.writer(f, delimiter=s, lineterminator='\n')
         writer.writerow(h)
         for item in item_ids:
@@ -1037,9 +1060,7 @@ class Database(SmartPlugin):
                     cols.append('' if row[key] is None else datetime.datetime.fromtimestamp(row[key] / 1000.0))
                 cols = ['' if col is None else col for col in cols]
                 writer.writerow(cols)
-        f.close()
         self.logger.info('File dump completed ({} items) ...'.format(len(item_ids)))
-        return
 
     def sqlite_dump(self, dumpfile):
 
@@ -1354,21 +1375,33 @@ class Database(SmartPlugin):
         :param cur: A database cursor object if available (optional)
         :return:
         """
-        self._log_store.delete_range(
-            id,
-            time=time,
-            time_start=time_start,
-            time_end=time_end,
-            changed=changed,
-            changed_start=changed_start,
-            changed_end=changed_end,
-            cur=cur,
-        )
+        try:
+            self._log_store.delete_range(
+                id,
+                time=time,
+                time_start=time_start,
+                time_end=time_end,
+                changed=changed,
+                changed_start=changed_start,
+                changed_end=changed_end,
+                cur=cur,
+            )
+        except Exception as e:
+            if cur is None and self._db.is_connection_error(e):
+                # We own the transaction end-to-end here (delete_range()
+                # opens/rolls back its own transaction() when cur is None),
+                # so swallowing is safe - same owns_cur contract as _query().
+                # A caller-supplied cur means the caller owns the
+                # transaction and needs to see this to roll back correctly.
+                self.logger.info(f'deleteLog: {e}')
+                return
+            raise
 
         try:
             self._item_logcount[id] = self.readLogCount(id, cur=cur)
         except Exception as e:
-            self.logger.error('Exception in function deleteLog during readLogCount: {}'.format(e))
+            level = self.logger.info if self._db.is_connection_error(e) else self.logger.error
+            level('Exception in function deleteLog during readLogCount: {}'.format(e))
 
         return
 
@@ -1411,7 +1444,8 @@ class Database(SmartPlugin):
                             self.orphanitemlist.append(item)
                             self.orphanlist.append(item[COL_ITEM_NAME])
         except Exception as e:
-            self.logger.error('Database build_orphan_list failed: {}'.format(e))
+            level = self.logger.info if self._db_maint.is_connection_error(e) else self.logger.error
+            level('Database build_orphan_list failed: {}'.format(e))
             return False
 
         self._orphanlist_built = True
@@ -1492,7 +1526,8 @@ class Database(SmartPlugin):
             log_debug('rebuilding orphan list')
             self.build_orphanlist()
         except Exception as e:
-            self.logger.error(f'error on reassigning id {orphan_id} to {to}: {e}')
+            level = self.logger.info if self._db_maint.is_connection_error(e) else self.logger.error
+            level(f'error on reassigning id {orphan_id} to {to}: {e}')
             return e
 
     def _delete_orphan(self, item_path):
@@ -1569,7 +1604,8 @@ class Database(SmartPlugin):
             # e.g. the maintenance connection (_db_maint) went stale independently
             # of the main connection (see smarthomeNG/plugins#1004) - keep the item
             # queued and retry on the next cycle instead of crashing the scheduler task.
-            self.logger.warning(f'remove_orphan_items: Deletion of orphan {item} failed, will retry: {e}')
+            level = self.logger.info if self._db_maint.is_connection_error(e) else self.logger.warning
+            level(f'remove_orphan_items: Deletion of orphan {item} failed, will retry: {e}')
             self.orphanlist.append(item)
             return
 
@@ -2230,8 +2266,23 @@ class Database(SmartPlugin):
 
         intervals_done = 0
         stalled = False
+        connection_failed = False
         while intervals_done < self.max_aggregate_intervals:
-            oldest = self._log_store.oldest_time(item_id)
+            try:
+                oldest = self._log_store.oldest_time(item_id)
+            except Exception as e:
+                # Same self-healing case as the transaction() except-block
+                # below - a connection error reading oldest_time() itself
+                # means nothing this cycle can proceed; requeue below rather
+                # than trusting a follow-up oldest_time() call to succeed.
+                is_conn_err = self._db.is_connection_error(e)
+                level = self.logger.info if is_conn_err else self.logger.error
+                level(
+                    f'remove_older_: {itempath} could not read oldest log time, giving up this cycle: {e}',
+                    exc_info=not is_conn_err,
+                )
+                connection_failed = True
+                break
             if oldest is None:
                 break  # nothing left to compact
 
@@ -2309,6 +2360,22 @@ class Database(SmartPlugin):
                     f'remove_older_: {itempath} could not acquire database lock, giving up this compaction cycle'
                 )
                 break
+            except Exception as e:
+                # transaction() already rolled back and reset connection
+                # state - the interval stays raw, exactly like the
+                # TimeoutError case above, and the next cycle's oldest_time()
+                # picks it back up unchanged. A connection error here is the
+                # same self-healing case _dump() already handles quietly;
+                # anything else is a real bug worth the loud ERROR - same
+                # exc_info=True traceback _dump() already gives that case,
+                # since this runs on every scheduler cycle just as often.
+                is_conn_err = self._db.is_connection_error(e)
+                level = self.logger.info if is_conn_err else self.logger.error
+                level(
+                    f'remove_older_: {itempath} compaction failed, giving up this cycle: {e}', exc_info=not is_conn_err
+                )
+                connection_failed = True
+                break
 
             intervals_done += 1
 
@@ -2323,9 +2390,16 @@ class Database(SmartPlugin):
         # past the cutoff yet, this correctly does not requeue. A stalled
         # interval (left raw above) blocks everything behind it - requeuing
         # would just spin on it within the same cycle.
-        oldest = self._log_store.oldest_time(item_id)
-        if not stalled and oldest is not None and oldest + interval_ms <= cutoff_ms:
+        if connection_failed:
+            # Can't reliably tell if there's more work without querying the
+            # DB again, which is exactly what just failed - requeue
+            # unconditionally so this item is retried next cycle rather
+            # than waiting for the worklist to rotate all the way around.
             self._maxage_worklist.append(item)
+        else:
+            oldest = self._log_store.oldest_time(item_id)
+            if not stalled and oldest is not None and oldest + interval_ms <= cutoff_ms:
+                self._maxage_worklist.append(item)
 
     def remove_older_than_maxage(self):
         """
@@ -2417,7 +2491,21 @@ class Database(SmartPlugin):
 
         if remaining <= 0:
             # no log entries will be there after deletion, need to go back in time for the latest logentry
-            new_must_keep_timestamp = self.readLatestLog(item_id, timestamp_end)
+            try:
+                new_must_keep_timestamp = self.readLatestLog(item_id, timestamp_end)
+            except Exception as e:
+                # Can't safely proceed without this - deleting blind here
+                # risks wiping an item's last remaining value. Requeue and
+                # retry next cycle, same as every other connection-loss path
+                # in this function.
+                is_conn_err = self._db.is_connection_error(e)
+                level = self.logger.info if is_conn_err else self.logger.error
+                level(
+                    f'remove_older_: {itempath} could not read latest log entry, retrying next cycle: {e}',
+                    exc_info=not is_conn_err,
+                )
+                self._maxage_worklist.append(item)
+                return
             if new_must_keep_timestamp is None:
                 return
             new_must_keep_time = self._datetime(new_must_keep_timestamp)
@@ -2467,6 +2555,17 @@ class Database(SmartPlugin):
                 self.logger.error(
                     f'remove_older_: {itempath} could not acquire database lock for deletion, skipping this cycle'
                 )
+                return
+            except Exception as e:
+                # Same self-healing case as _compact_maxage()'s equivalent
+                # except-block - requeue so this item's batch delete is
+                # retried next cycle instead of waiting for the worklist to
+                # rotate all the way around. Same exc_info=True convention
+                # as that block too, for the same reason.
+                is_conn_err = self._db.is_connection_error(e)
+                level = self.logger.info if is_conn_err else self.logger.error
+                level(f'remove_older_: {itempath} deletion failed, retrying next cycle: {e}', exc_info=not is_conn_err)
+                self._maxage_worklist.append(item)
                 return
             time_used_for_deletion = time.time() - time_start_deletion
             self.logger.info(
@@ -2675,32 +2774,48 @@ class Database(SmartPlugin):
         prepared = self._prepare(query)  # prepare once
 
         def _log_query_error(e):
+            level = self.logger.info if self._db.is_connection_error(e) else self.logger.error
             if self.logger.isEnabledFor(logging.DEBUG):
                 query_readable = re.sub(r':([a-z_]+)', r'{\1}', prepared).format(**params)
-                self.logger.error('Database: Error for query {}: {}'.format(query_readable, e))
+                level('Database: Error for query {}: {}'.format(query_readable, e))
             else:
-                self.logger.error('Database: Query error: {}'.format(e))
+                level('Database: Query error: {}'.format(e))
 
-        try:
-            if owns_cur:
-                # On lock timeout: log and return None, not an exception -
-                # callers throughout this file treat a None result as
-                # "query failed", not something to catch.
-                # retry kept low - see Database.verify()'s docstring cost note.
-                if self._db.verify(2) == 0:
-                    self.logger.error('Database: Connection not recovered')
-                    return None
-                try:
-                    with self._db.transaction() as tcur:
-                        tuples = func(prepared, params, cur=tcur)
-                except TimeoutError:
-                    self.logger.error("Database: Can't query due to fail to acquire lock")
-                    return None
-            else:
+        if owns_cur:
+            # On lock timeout: log and return None, not an exception -
+            # callers throughout this file treat a None result as
+            # "query failed", not something to catch.
+            # retry kept low - see Database.verify()'s docstring cost note.
+            if self._db.verify(2) == 0:
+                # Same reasoning as id()'s equivalent check: verify() failing
+                # to reconnect after active probing IS the connection-trouble
+                # case by construction, no exception to classify against.
+                self.logger.info('Database: Connection not recovered')
+                return None
+            try:
+                with self._db.transaction() as tcur:
+                    tuples = func(prepared, params, cur=tcur)
+            except TimeoutError:
+                self.logger.error("Database: Can't query due to fail to acquire lock")
+                return None
+            except Exception as e:
+                # We own this transaction end-to-end - transaction() already
+                # rolled back and reset connection state before this
+                # exception reached us, so returning None here (same as the
+                # TimeoutError case above) is safe: nothing above us needed
+                # this exception to trigger its own cleanup.
+                _log_query_error(e)
+                return None
+        else:
+            # Caller passed their own cur - they own the transaction and
+            # need to see this exception, so THEIR transaction() block
+            # rolls back correctly instead of committing over a dead
+            # connection. Log then re-raise, don't swallow.
+            try:
                 tuples = func(prepared, params, cur=cur)
-        except Exception as e:
-            _log_query_error(e)
-            raise e
+            except Exception as e:
+                _log_query_error(e)
+                raise e
 
         if self.logger.isEnabledFor(logging.DEBUG):
             query_readable = re.sub(r':([a-z_]+)', r'{\1}', prepared).format(**params)
