@@ -352,11 +352,21 @@ class Database(SmartPlugin):
             # visible in the log rather than only inferable from a stray
             # error line above an otherwise-clean-looking startup.
             self.logger.warning('Database: not connected at startup - will keep retrying on the scheduled cycle')
+        # alive=True right after the connection attempt (successful or not -
+        # both self-heal) rather than after build_orphanlist()/
+        # _start_schedulers(): those aren't connectivity checks, they're the
+        # plugin already doing its job, and build_orphanlist() alone can
+        # block for up to db_query_timeout (default 60s) inside
+        # self._db_maint.transaction() if that connection is slow or
+        # contended - "running" is read live from this flag (see
+        # modules/admin/api_plugins.py), so leaving it False for that whole
+        # window means the plugin looks down/unstarted while it has, in
+        # fact, already started.
+        self.alive = True
         # Retried from _dump() (self._orphanlist_built) if this attempt
         # fails - no separate retry loop needed here.
         self.build_orphanlist(True)
         self._start_schedulers()
-        self.alive = True
 
     def stop(self):
         """
