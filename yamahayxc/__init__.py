@@ -2747,8 +2747,13 @@ class YamahaYXC(SmartPlugin):
         pushed/fired on a genuine down->up transition, not on every routine
         successful call while already known reachable - and only a
         transition from a *confirmed* down state triggers the full
-        _update_state() resync, not the very first contact ever (that's
-        discovery, not recovery).
+        _update_features()/_update_state() resync, not the very first
+        contact ever (that's discovery, not recovery). _update_features()
+        runs first, same order as _initialize(), since _update_state()
+        doesn't touch capability lists (input_sources etc.) at all - without
+        this, a device that changed its available inputs while offline (or
+        was offline at plugin startup, when _update_features() is otherwise
+        only ever called) would keep showing a stale or empty list forever.
         """
         was_reachable = self._yamaha_reachable.get(host)
         self._yamaha_fail_count[host] = 0
@@ -2759,6 +2764,7 @@ class YamahaYXC(SmartPlugin):
             self._push_reachable(host)
             if was_reachable is False:
                 self.logger.info(f'{self._host_label(host)} is reachable again')
+                self._update_features(host)
                 self._update_state(host)
 
     def _note_unreachable(self, host):

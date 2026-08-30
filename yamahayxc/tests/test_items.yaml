@@ -1,0 +1,15 @@
+yamaha:
+
+    dev:
+        yamahayxc_host: 127.0.0.1
+
+        reachable:
+            type: bool
+            yamahayxc_cmd: reachable
+
+        main:
+            yamahayxc_zone: main
+
+            input_sources:
+                type: list
+                yamahayxc_cmd: input_sources
