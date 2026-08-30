@@ -480,7 +480,9 @@ class Database(SmartPlugin):
                             self.logger.notice(f'No cached value available in database for item {item.property.path}')
                 except TimeoutError:
                     self.logger.error(
-                        'Can not acquire lock for database to read value for item {}'.format(item.property.path)
+                        'Can not acquire lock for database to read value for item {}{}'.format(
+                            item.property.path, self._db.lock_holder_description()
+                        )
                     )
                     return
             elif self.get_iattr_value(item.conf, 'database').lower() == 'init':
@@ -858,13 +860,15 @@ class Database(SmartPlugin):
                 # this *is* the connection-trouble case by construction, no
                 # exception to classify: same INFO level as everywhere else
                 # that condition is confirmed, not a real-bug ERROR.
-                self.logger.info('Database: Connection not recovered')
+                self.logger.info('Database: Connection not recovered{}'.format(self._db.lock_holder_description()))
                 return None
             try:
                 with self._db.transaction() as tcur:
                     id = _find_or_create(tcur)
             except TimeoutError:
-                self.logger.error("Database: Can't query due to fail to acquire lock")
+                self.logger.error(
+                    "Database: Can't query due to fail to acquire lock{}".format(self._db.lock_holder_description())
+                )
                 return None
             except Exception as e:
                 # insertItem() (the create=True path) isn't covered by
@@ -2102,7 +2106,9 @@ class Database(SmartPlugin):
                 # only delays discovering that without changing the outcome.
                 if self._db.verify(2) == 0:
                     self._buffer_mgr.restore(item, entries)
-                    self.logger.error('Connection not recovered, skipping dump')
+                    self.logger.error(
+                        'Connection not recovered, skipping dump{}'.format(self._db.lock_holder_description())
+                    )
                     self._dump_lock.release()
                     return
 
@@ -2182,14 +2188,17 @@ class Database(SmartPlugin):
                         self.updateItem(id, _update[0], None, _update[1], item.type(), _update[2], cur)
                 except TimeoutError:
                     self._buffer_mgr.restore(item, entries)
+                    holder = self._db.lock_holder_description()
                     if finalize:
                         self.logger.error(
-                            "Can't dump {} items due to fail to acquire lock!".format(len(self._buffer_mgr.items()))
+                            "Can't dump {} items due to fail to acquire lock!{}".format(
+                                len(self._buffer_mgr.items()), holder
+                            )
                         )
                     else:
                         self.logger.error(
-                            "Can't dump {} items due to fail to acquire lock - will try on next dump".format(
-                                len(self._buffer_mgr.items())
+                            "Can't dump {} items due to fail to acquire lock - will try on next dump{}".format(
+                                len(self._buffer_mgr.items()), holder
                             )
                         )
                     self._dump_lock.release()
@@ -2391,6 +2400,7 @@ class Database(SmartPlugin):
             except TimeoutError:
                 self.logger.error(
                     f'remove_older_: {itempath} could not acquire database lock, giving up this compaction cycle'
+                    f'{self._db.lock_holder_description()}'
                 )
                 break
             except Exception as e:
@@ -2587,6 +2597,7 @@ class Database(SmartPlugin):
             except TimeoutError:
                 self.logger.error(
                     f'remove_older_: {itempath} could not acquire database lock for deletion, skipping this cycle'
+                    f'{self._db.lock_holder_description()}'
                 )
                 return
             except Exception as e:
@@ -2823,13 +2834,15 @@ class Database(SmartPlugin):
                 # Same reasoning as id()'s equivalent check: verify() failing
                 # to reconnect after active probing IS the connection-trouble
                 # case by construction, no exception to classify against.
-                self.logger.info('Database: Connection not recovered')
+                self.logger.info('Database: Connection not recovered{}'.format(self._db.lock_holder_description()))
                 return None
             try:
                 with self._db.transaction() as tcur:
                     tuples = func(prepared, params, cur=tcur)
             except TimeoutError:
-                self.logger.error("Database: Can't query due to fail to acquire lock")
+                self.logger.error(
+                    "Database: Can't query due to fail to acquire lock{}".format(self._db.lock_holder_description())
+                )
                 return None
             except Exception as e:
                 # We own this transaction end-to-end - transaction() already
