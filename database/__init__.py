@@ -34,6 +34,7 @@ import time
 import threading
 
 import lib.db
+from lib.db import NO_CURSOR
 
 from lib.shtime import Shtime
 from lib.item import Items
@@ -819,7 +820,7 @@ class Database(SmartPlugin):
         # self.update_config_section(param_dict)
         return
 
-    def id(self, item, create=True, cur=None):
+    def id(self, item, create=True, cur=NO_CURSOR):
         """
         Returns the ID of the given item
 
@@ -848,7 +849,7 @@ class Database(SmartPlugin):
                 found = [self.insertItem(item_path, c)]
             return found
 
-        if cur is not None:
+        if cur is not NO_CURSOR:
             # caller already holds the lock for its own multi-statement
             # block (e.g. _dump()'s per-item transaction()) - use its
             # cursor directly, no locking of our own.
@@ -909,7 +910,7 @@ class Database(SmartPlugin):
         except AttributeError:
             item_path = item
         try:
-            row = self.readItem(item_path, cur=None)
+            row = self.readItem(item_path)
         except Exception as e:
             level = self.logger.info if self._db.is_connection_error(e) else self.logger.warning
             level(f'db_itemtype: No id found for item {item_path} - Exception {e}')
@@ -949,7 +950,7 @@ class Database(SmartPlugin):
         except AttributeError:
             item_path = item
         try:
-            row = self.readItem(item_path, cur=None)
+            row = self.readItem(item_path)
         except Exception as e:
             level = self.logger.info if self._db.is_connection_error(e) else self.logger.warning
             level(f'db_lastchange: No id found for item {item_path} - Exception {e}')
@@ -984,7 +985,7 @@ class Database(SmartPlugin):
         changed=None,
         changed_start=None,
         changed_end=None,
-        cur=None,
+        cur=NO_CURSOR,
     ):
         """
         Creates a database dump for given criterias in csv format
@@ -1105,7 +1106,7 @@ class Database(SmartPlugin):
         self.logger.info('SQL file dump of sqlite3 database completed')
         return True
 
-    def insertItem(self, name, cur=None):
+    def insertItem(self, name, cur=NO_CURSOR):
         """
         Create database item record for given item name.
 
@@ -1126,7 +1127,7 @@ class Database(SmartPlugin):
         """
         return self._item_store.insert(name, cur=cur)
 
-    def updateItem(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
+    def updateItem(self, id, time, duration=0, val=None, it=None, changed=None, cur=NO_CURSOR):
         """
         Update database item record for given database ID
 
@@ -1142,7 +1143,7 @@ class Database(SmartPlugin):
         """
         self._item_store.update(id, time, val, it, changed, cur=cur)
 
-    def readItem(self, id, cur=None):
+    def readItem(self, id, cur=NO_CURSOR):
         """
 
         This is a public function of the plugin
@@ -1154,7 +1155,7 @@ class Database(SmartPlugin):
         """
         return self._item_store.find(id, cur=cur)
 
-    def readItems(self, cur=None):
+    def readItems(self, cur=NO_CURSOR):
         """
         Read database item records
 
@@ -1166,7 +1167,7 @@ class Database(SmartPlugin):
         """
         return self._item_store.find_all(cur=cur)
 
-    def readItemCount(self, cur=None):
+    def readItemCount(self, cur=NO_CURSOR):
         """
         Read database log count for given database ID
 
@@ -1178,7 +1179,7 @@ class Database(SmartPlugin):
         """
         return self._item_store.count(cur=cur)
 
-    def deleteItem(self, id, cur=None):
+    def deleteItem(self, id, cur=NO_CURSOR):
         """
         Delete database item record for given database ID
 
@@ -1189,7 +1190,7 @@ class Database(SmartPlugin):
         """
         self._item_store.delete(id, cur=cur)
 
-    def insertLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=None, quality=QUALITY_VALID):
+    def insertLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=NO_CURSOR, quality=QUALITY_VALID):
         """
         Create database log record for given database ID
 
@@ -1207,7 +1208,7 @@ class Database(SmartPlugin):
         entry = BufferEntry(time=time, duration=duration, value=val, quality=quality)
         self._log_store.insert(id, entry, it, changed, cur=cur)
 
-    def updateLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=None, quality=QUALITY_VALID):
+    def updateLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=NO_CURSOR, quality=QUALITY_VALID):
         """
         Update database log record for given database ID
 
@@ -1225,7 +1226,7 @@ class Database(SmartPlugin):
         entry = BufferEntry(time=time, duration=duration, value=val, quality=quality)
         self._log_store.update(id, entry, it, changed, cur=cur)
 
-    def readLog(self, id, time, cur=None):
+    def readLog(self, id, time, cur=NO_CURSOR):
         """
         Read database log record for given database ID
 
@@ -1248,7 +1249,7 @@ class Database(SmartPlugin):
         changed=None,
         changed_start=None,
         changed_end=None,
-        cur=None,
+        cur=NO_CURSOR,
     ):
         """
         Read database log records for given database ID
@@ -1277,7 +1278,7 @@ class Database(SmartPlugin):
             cur=cur,
         )
 
-    def readOldestLog(self, id, cur=None):
+    def readOldestLog(self, id, cur=NO_CURSOR):
         """
         Read the time of oldest log record for given database ID
 
@@ -1290,7 +1291,7 @@ class Database(SmartPlugin):
         """
         return self._log_store.oldest_time(id, cur=cur)
 
-    def readLatestLog(self, id, time=None, cur=None):
+    def readLatestLog(self, id, time=None, cur=NO_CURSOR):
         """
         Read the time of latest log record for given database ID and if time given up to this time
 
@@ -1304,7 +1305,7 @@ class Database(SmartPlugin):
         """
         return self._log_store.latest_time(id, before=time, cur=cur)
 
-    def readTotalLogCount(self, cur=None):
+    def readTotalLogCount(self, cur=NO_CURSOR):
         """
         Return the total number of log rows across all items.
 
@@ -1319,7 +1320,7 @@ class Database(SmartPlugin):
         """
         return self._log_store.count_all(cur=cur)
 
-    def readLogCount(self, id, time_start=None, time_end=None, cur=None):
+    def readLogCount(self, id, time_start=None, time_end=None, cur=NO_CURSOR):
         """
         Read database log count for given database ID
 
@@ -1366,7 +1367,7 @@ class Database(SmartPlugin):
         changed=None,
         changed_start=None,
         changed_end=None,
-        cur=None,
+        cur=NO_CURSOR,
     ):
         """
         Delete database log records for given item (database ID)
@@ -1375,10 +1376,10 @@ class Database(SmartPlugin):
 
         With no cur given, this acquires its own lock and commits via
         LogStore.delete_range() (see its docstring) - there is no longer
-        a separate with_commit toggle, since a cur=None call that doesn't
-        commit has nothing else guaranteed to flush it, and a passed-in
-        cur being committed unilaterally would end the caller's own
-        transaction early.
+        a separate with_commit toggle, since a call with cur omitted that
+        doesn't commit has nothing else guaranteed to flush it, and a
+        passed-in cur being committed unilaterally would end the caller's
+        own transaction early.
 
         :param id: Database ID of item to delete the records for
         :param time: Restrict deletion of records to given time (optional)
@@ -1402,9 +1403,9 @@ class Database(SmartPlugin):
                 cur=cur,
             )
         except Exception as e:
-            if cur is None and self._db.is_connection_error(e):
+            if cur is NO_CURSOR and self._db.is_connection_error(e):
                 # We own the transaction end-to-end here (delete_range()
-                # opens/rolls back its own transaction() when cur is None),
+                # opens/rolls back its own transaction() when cur is omitted),
                 # so swallowing is safe - same owns_cur contract as _query().
                 # A caller-supplied cur means the caller owns the
                 # transaction and needs to see this to roll back correctly.
@@ -1420,7 +1421,7 @@ class Database(SmartPlugin):
 
         return
 
-    def markLogInvalid(self, id, time=None, changed=None, cur=None, with_commit=True):
+    def markLogInvalid(self, id, time=None, changed=None, cur=NO_CURSOR, with_commit=True):
         """
         Reversibly flag a database log record as invalid, preserving its value
 
@@ -1438,7 +1439,7 @@ class Database(SmartPlugin):
         """
         self._log_store.set_quality(id, QUALITY_INVALID, time=time, changed=changed, cur=cur, commit=with_commit)
 
-    def markLogValid(self, id, time=None, changed=None, cur=None, with_commit=True):
+    def markLogValid(self, id, time=None, changed=None, cur=NO_CURSOR, with_commit=True):
         """
         Undo markLogInvalid(): restore a database log record's val_quality to valid
 
@@ -2797,18 +2798,18 @@ class Database(SmartPlugin):
     def _prepare(self, query):
         return query.format(**self._replace)
 
-    def _execute(self, query, params, cur=None):
+    def _execute(self, query, params, cur=NO_CURSOR):
         return self._query(self._db.execute, query, params, cur)
 
-    def _fetchone(self, query, params=None, cur=None):
+    def _fetchone(self, query, params=None, cur=NO_CURSOR):
         tuples = self._query(self._db.fetchone, query, params or {}, cur)
         return tuples
 
-    def _fetchall(self, query, params=None, cur=None):
+    def _fetchall(self, query, params=None, cur=NO_CURSOR):
         tuples = self._query(self._db.fetchall, query, params or {}, cur)
         return None if tuples is None else list(tuples)
 
-    def _query(self, func, query, params, cur=None):
+    def _query(self, func, query, params, cur=NO_CURSOR):
         """Execute *func* with the prepared *query* and *params*.
 
         Handles connection verification and lock acquisition when no explicit
@@ -2824,7 +2825,7 @@ class Database(SmartPlugin):
         if not self._db_initialized:  # fast-path: avoid full init check on every query
             if not self._initialize_db():
                 return None
-        owns_cur = cur is None
+        owns_cur = cur is NO_CURSOR
         prepared = self._prepare(query)  # prepare once
 
         def _log_query_error(e):

@@ -13,6 +13,7 @@
 import unittest
 from unittest import mock
 
+from lib.db import NO_CURSOR
 from plugins.database.buffer import BufferManager
 from plugins.database.constants import BufferEntry, QUALITY_NO_DATA, QUALITY_VALID
 from plugins.database.store import ItemStore, LogStore
@@ -90,27 +91,27 @@ class TestQualityStoreLevel(unittest.TestCase):
                 )
                 self._conn.commit()
 
-            def execute(self, s, p=(), cur=None):
-                c = cur or self._conn.cursor()
+            def execute(self, s, p=(), cur=NO_CURSOR):
+                c = self._conn.cursor() if cur is NO_CURSOR else cur
                 c.execute(s, p)
-                if cur is None:
+                if cur is NO_CURSOR:
                     self._conn.commit()
                     c.close()
                 return c
 
-            def fetchone(self, s, p=(), cur=None):
-                c = cur or self._conn.cursor()
+            def fetchone(self, s, p=(), cur=NO_CURSOR):
+                c = self._conn.cursor() if cur is NO_CURSOR else cur
                 c.execute(s, p)
                 r = c.fetchone()
-                if cur is None:
+                if cur is NO_CURSOR:
                     c.close()
                 return tuple(r) if r else None
 
-            def fetchall(self, s, p=(), cur=None):
-                c = cur or self._conn.cursor()
+            def fetchall(self, s, p=(), cur=NO_CURSOR):
+                c = self._conn.cursor() if cur is NO_CURSOR else cur
                 c.execute(s, p)
                 rows = c.fetchall()
-                if cur is None:
+                if cur is NO_CURSOR:
                     c.close()
                 return [tuple(r) for r in rows]
 

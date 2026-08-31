@@ -11,6 +11,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
+from lib.db import NO_CURSOR
 from plugins.database.store import ItemStore, LogStore
 from plugins.database.constants import BufferEntry, QUALITY_VALID, QUALITY_NO_DATA, QUALITY_INVALID
 from plugins.database.utils import to_timestamp
@@ -45,27 +46,27 @@ class _MockDB:
         self._conn.commit()
         c.close()
 
-    def execute(self, stmt, params=(), cur=None):
-        c = cur or self._conn.cursor()
+    def execute(self, stmt, params=(), cur=NO_CURSOR):
+        c = self._conn.cursor() if cur is NO_CURSOR else cur
         # sqlite3 accepts both sequences (qmark) and dicts (named params)
         c.execute(stmt, params)
-        if cur is None:
+        if cur is NO_CURSOR:
             self._conn.commit()
             c.close()
 
-    def fetchone(self, stmt, params=(), cur=None):
-        c = cur or self._conn.cursor()
+    def fetchone(self, stmt, params=(), cur=NO_CURSOR):
+        c = self._conn.cursor() if cur is NO_CURSOR else cur
         c.execute(stmt, params)
         row = c.fetchone()
-        if cur is None:
+        if cur is NO_CURSOR:
             c.close()
         return tuple(row) if row else None
 
-    def fetchall(self, stmt, params=(), cur=None):
-        c = cur or self._conn.cursor()
+    def fetchall(self, stmt, params=(), cur=NO_CURSOR):
+        c = self._conn.cursor() if cur is NO_CURSOR else cur
         c.execute(stmt, params)
         rows = c.fetchall()
-        if cur is None:
+        if cur is NO_CURSOR:
             c.close()
         return [tuple(r) for r in rows]
 
@@ -200,9 +201,9 @@ class TestItemStore(unittest.TestCase):
         self.assertEqual(row[2], 1000)  # time
 
     def test_update_own_cur_path_uses_transaction(self):
-        # cur=None means "own lock + commit via transaction()" (see the
+        # cur omitted means "own lock + commit via transaction()" (see the
         # class docstring); update() must follow the same two-branch shape
-        # as insert()/delete() - a raw cur=None execute leaves the UPDATE
+        # as insert()/delete() - a raw explicit-None execute leaves the UPDATE
         # in an open transaction nothing is guaranteed to ever commit.
         item_id = self.store.insert('my.item')
         calls = []
@@ -298,8 +299,8 @@ class TestLogStore(unittest.TestCase):
         return calls
 
     def test_insert_own_cur_path_uses_transaction(self):
-        # Same cur=None contract as ItemStore: own lock + commit via
-        # transaction(). A raw cur=None execute leaves the INSERT pending
+        # Same cur-omitted contract as ItemStore: own lock + commit via
+        # transaction(). A raw explicit-None execute leaves the INSERT pending
         # in an open transaction until some unrelated later call happens
         # to commit the shared connection - or a rollback discards it.
         calls = self._spy_transaction()
@@ -307,14 +308,14 @@ class TestLogStore(unittest.TestCase):
         self.assertEqual(1, len(calls), 'insert() without cur= must go through self._db.transaction()')
 
     def test_update_own_cur_path_uses_transaction(self):
-        self.log_store.insert(self.item_id, self._entry(1000), 'num', 1000, cur=None)
+        self.log_store.insert(self.item_id, self._entry(1000), 'num', 1000)
         calls = self._spy_transaction()
         self.log_store.update(self.item_id, self._entry(1000, d=5, v=2.0), 'num', 2000)
         self.assertEqual(1, len(calls), 'update() without cur= must go through self._db.transaction()')
 
     def test_upsert_own_cur_path_uses_exactly_one_transaction(self):
         # upsert() is a check-then-act (find, then insert or update); with
-        # cur=None both steps must share one transaction - two separate
+        # cur omitted, both steps must share one transaction - two separate
         # self-committing calls would reopen the id()-style race the
         # explicit-cur path avoids.
         calls = self._spy_transaction()

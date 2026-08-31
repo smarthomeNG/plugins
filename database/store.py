@@ -24,6 +24,7 @@ are otherwise fully independent of the plugin lifecycle.
 
 import logging
 
+from lib.db import NO_CURSOR
 from .constants import BufferEntry
 from .utils import encode_value, apply_table_names, build_where_clause
 
@@ -52,19 +53,19 @@ class ItemStore:
     def _sql(self, query: str) -> str:
         return apply_table_names(query, self._tn)
 
-    def _execute(self, query, params, cur=None):
+    def _execute(self, query, params, cur=NO_CURSOR):
         self._db.execute(self._sql(query), params, cur=cur)
 
-    def _fetchone(self, query, params=None, cur=None):
+    def _fetchone(self, query, params=None, cur=NO_CURSOR):
         return self._db.fetchone(self._sql(query), params or {}, cur=cur)
 
-    def _fetchall(self, query, params=None, cur=None):
+    def _fetchall(self, query, params=None, cur=NO_CURSOR):
         result = self._db.fetchall(self._sql(query), params or {}, cur=cur)
         return [] if result is None else list(result)
 
     # ── write ────────────────────────────────────────────────────────────────
 
-    def insert(self, name: str, cur=None) -> int:
+    def insert(self, name: str, cur=NO_CURSOR) -> int:
         """Insert a new item row and return its database ID.
 
         Uses ``INTEGER PRIMARY KEY`` autoincrement behaviour: the INSERT
@@ -81,7 +82,7 @@ class ItemStore:
         :returns:    The new integer item ID.
         :rtype:      int
         """
-        if cur is not None:
+        if cur is not NO_CURSOR:
             self._execute('INSERT INTO {item}(name) VALUES(:name);', {'name': name}, cur=cur)
             return int(cur.lastrowid)
         # No cur passed: acquires its own lock and commits via
@@ -92,7 +93,7 @@ class ItemStore:
             self._execute('INSERT INTO {item}(name) VALUES(:name);', {'name': name}, cur=tcur)
             return int(tcur.lastrowid)
 
-    def update(self, item_id: int, time: int, val, item_type: str, changed: int, cur=None) -> None:
+    def update(self, item_id: int, time: int, val, item_type: str, changed: int, cur=NO_CURSOR) -> None:
         """Update the latest-value row for *item_id*.
 
         :param item_id:   Database item ID.
@@ -108,16 +109,16 @@ class ItemStore:
             'UPDATE {item} SET time=:time, val_str=:val_str, val_num=:val_num,'
             ' val_bool=:val_bool, changed=:changed WHERE id=:id;'
         )
-        if cur is not None:
+        if cur is not NO_CURSOR:
             self._execute(stmt, params, cur=cur)
             return
         with self._db.transaction() as tcur:
             self._execute(stmt, params, cur=tcur)
 
-    def delete(self, item_id: int, cur=None) -> None:
+    def delete(self, item_id: int, cur=NO_CURSOR) -> None:
         """Delete the item row *and* all its log rows, as one atomic unit.
 
-        With ``cur=None`` this acquires its own lock and commits both
+        With ``cur`` omitted this acquires its own lock and commits both
         deletes via ``self._db.transaction()`` - a crash between them
         can never leave one done and the other not.
 
@@ -125,7 +126,7 @@ class ItemStore:
         :param cur:     Optional cursor for transaction batching.
         """
         log_store = LogStore(self._db, self._tn, self.logger)
-        if cur is not None:
+        if cur is not NO_CURSOR:
             log_store.delete_range(item_id, cur=cur)
             self._execute('DELETE FROM {item} WHERE id=:id;', {'id': item_id}, cur=cur)
             return
@@ -135,7 +136,7 @@ class ItemStore:
 
     # ── read ─────────────────────────────────────────────────────────────────
 
-    def find(self, id_or_name, cur=None):
+    def find(self, id_or_name, cur=NO_CURSOR):
         """Return the item row for *id_or_name*, or ``None``.
 
         Accepts either an integer database ID or a string item path.
@@ -149,7 +150,7 @@ class ItemStore:
             return self._fetchone('SELECT {item_columns} FROM {item} WHERE name=:id;', params, cur=cur)
         return self._fetchone('SELECT {item_columns} FROM {item} WHERE id=:id;', params, cur=cur)
 
-    def find_all(self, cur=None) -> list:
+    def find_all(self, cur=NO_CURSOR) -> list:
         """Return all item rows.
 
         :param cur: Optional cursor.
@@ -157,7 +158,7 @@ class ItemStore:
         """
         return self._fetchall('SELECT {item_columns} FROM {item};', cur=cur)
 
-    def count(self, cur=None) -> int:
+    def count(self, cur=NO_CURSOR) -> int:
         """Return the total number of item rows.
 
         :param cur: Optional cursor.
@@ -192,19 +193,19 @@ class LogStore:
     def _sql(self, query: str) -> str:
         return apply_table_names(query, self._tn)
 
-    def _execute(self, query, params, cur=None):
+    def _execute(self, query, params, cur=NO_CURSOR):
         self._db.execute(self._sql(query), params, cur=cur)
 
-    def _fetchone(self, query, params=None, cur=None):
+    def _fetchone(self, query, params=None, cur=NO_CURSOR):
         return self._db.fetchone(self._sql(query), params or {}, cur=cur)
 
-    def _fetchall(self, query, params=None, cur=None):
+    def _fetchall(self, query, params=None, cur=NO_CURSOR):
         result = self._db.fetchall(self._sql(query), params or {}, cur=cur)
         return [] if result is None else list(result)
 
     # ── write ────────────────────────────────────────────────────────────────
 
-    def insert(self, item_id: int, entry: BufferEntry, item_type: str, changed: int, cur=None) -> None:
+    def insert(self, item_id: int, entry: BufferEntry, item_type: str, changed: int, cur=NO_CURSOR) -> None:
         """Insert a new log row from a :class:`~constants.BufferEntry`.
 
         For entries with ``quality=QUALITY_NO_DATA`` all value columns are
@@ -231,13 +232,13 @@ class LogStore:
             ' VALUES(:id, :time, :val_str, :val_num, :val_bool,'
             '        :duration, :changed, :quality);'
         )
-        if cur is not None:
+        if cur is not NO_CURSOR:
             self._execute(stmt, params, cur=cur)
             return
         with self._db.transaction() as tcur:
             self._execute(stmt, params, cur=tcur)
 
-    def update(self, item_id: int, entry: BufferEntry, item_type: str, changed: int, cur=None) -> None:
+    def update(self, item_id: int, entry: BufferEntry, item_type: str, changed: int, cur=NO_CURSOR) -> None:
         """Update an existing log row matching ``(item_id, time)``.
 
         :param item_id:   Database item ID.
@@ -260,13 +261,13 @@ class LogStore:
             ' val_quality=:quality'
             ' WHERE item_id=:id AND time=:time;'
         )
-        if cur is not None:
+        if cur is not NO_CURSOR:
             self._execute(stmt, params, cur=cur)
             return
         with self._db.transaction() as tcur:
             self._execute(stmt, params, cur=tcur)
 
-    def upsert(self, item_id: int, entry: BufferEntry, item_type: str, changed: int, cur=None) -> None:
+    def upsert(self, item_id: int, entry: BufferEntry, item_type: str, changed: int, cur=NO_CURSOR) -> None:
         """Insert *or* update a log row depending on whether it already exists.
 
         Replaces the ``if len(readLog(...)): updateLog else insertLog``
@@ -278,7 +279,7 @@ class LogStore:
         :param changed:   Write timestamp (milliseconds).
         :param cur:       Optional cursor.
         """
-        if cur is not None:
+        if cur is not NO_CURSOR:
             existing = self.find(item_id, entry.time, cur=cur)
             if existing:
                 self.update(item_id, entry, item_type, changed, cur=cur)
@@ -304,20 +305,20 @@ class LogStore:
         changed=None,
         changed_start=None,
         changed_end=None,
-        cur=None,
+        cur=NO_CURSOR,
     ) -> None:
         """Delete log rows matching the given criteria.
 
         All criteria are optional; if none are given, *all* rows for
         *item_id* are deleted.
 
-        No ``commit`` parameter: with ``cur=None`` this acquires its own
+        No ``commit`` parameter: with ``cur`` omitted this acquires its own
         lock and commits via ``self._db.transaction()`` (matching
         :meth:`ItemStore.insert`) - with an explicit ``cur``, the caller
         already holds the lock and owns the commit/rollback decision, so
         this never touches it. A caller-controlled independent commit flag
         used to let a passed-in ``cur`` be committed unilaterally mid- the
-        caller's own transaction, or a ``cur=None`` call be left
+        caller's own transaction, or a call with ``cur`` omitted be left
         uncommitted with nothing else guaranteed to flush it.
 
         :param item_id:       Database item ID.
@@ -339,7 +340,7 @@ class LogStore:
             changed_end=changed_end,
         )
         stmt = 'DELETE FROM {log} WHERE ' + where + ';'
-        if cur is not None:
+        if cur is not NO_CURSOR:
             self._execute(stmt, params, cur=cur)
             return
         with self._db.transaction() as tcur:
@@ -356,7 +357,7 @@ class LogStore:
         changed=None,
         changed_start=None,
         changed_end=None,
-        cur=None,
+        cur=NO_CURSOR,
         commit=True,
     ) -> None:
         """Set ``val_quality`` on matching log rows without touching their values.
@@ -397,7 +398,7 @@ class LogStore:
 
     # ── read ─────────────────────────────────────────────────────────────────
 
-    def find(self, item_id: int, time: int, cur=None) -> list:
+    def find(self, item_id: int, time: int, cur=NO_CURSOR) -> list:
         """Return all log rows for *item_id* at exact timestamp *time*.
 
         :param item_id: Database item ID.
@@ -419,7 +420,7 @@ class LogStore:
         changed=None,
         changed_start=None,
         changed_end=None,
-        cur=None,
+        cur=NO_CURSOR,
     ) -> list:
         """Return log rows matching the given criteria.
 
@@ -444,7 +445,7 @@ class LogStore:
         )
         return self._fetchall('SELECT {log_columns} FROM {log} WHERE ' + where + ';', params, cur=cur)
 
-    def count(self, item_id: int, *, time_start=None, time_end=None, exclude_gaps=False, cur=None) -> int:
+    def count(self, item_id: int, *, time_start=None, time_end=None, exclude_gaps=False, cur=NO_CURSOR) -> int:
         """Return the number of log rows for *item_id* in the given range.
 
         :param item_id:    Database item ID.
@@ -465,7 +466,7 @@ class LogStore:
             self.logger.error('LogStore.count: result={} - {}'.format(result, e))
             return 0
 
-    def count_all(self, cur=None) -> int:
+    def count_all(self, cur=NO_CURSOR) -> int:
         """Return the total number of log rows across all items.
 
         :param cur: Optional cursor.
@@ -474,7 +475,7 @@ class LogStore:
         result = self._fetchall('SELECT count(*) FROM {log};', cur=cur)
         return result[0][0] if result else 0
 
-    def oldest_time(self, item_id: int, cur=None) -> 'int | None':
+    def oldest_time(self, item_id: int, cur=NO_CURSOR) -> 'int | None':
         """Return the earliest ``time`` value for *item_id*, or ``None``.
 
         :param item_id: Database item ID.
@@ -484,7 +485,7 @@ class LogStore:
         rows = self._fetchall('SELECT min(time) FROM {log} WHERE item_id=:id;', {'id': item_id}, cur=cur)
         return rows[0][0] if rows else None
 
-    def latest_time(self, item_id: int, before: 'int | None' = None, cur=None) -> 'int | None':
+    def latest_time(self, item_id: int, before: 'int | None' = None, cur=NO_CURSOR) -> 'int | None':
         """Return the most recent ``time`` value for *item_id*, or ``None``.
 
         :param item_id: Database item ID.
@@ -502,7 +503,7 @@ class LogStore:
             )
         return rows[0][0] if rows else None
 
-    def edge_value(self, item_id: int, order: str, *, time_start=None, time_end=None, cur=None):
+    def edge_value(self, item_id: int, order: str, *, time_start=None, time_end=None, cur=NO_CURSOR):
         """Return the raw ``(val_str, val_num, val_bool)`` tuple of the
         first or last row (by ``time``) for *item_id* in the given range.
 
@@ -531,7 +532,7 @@ class LogStore:
         )
         return result[0] if result else None
 
-    def aggregate(self, item_id: int, expr: str, *, time_start=None, time_end=None, cur=None):
+    def aggregate(self, item_id: int, expr: str, *, time_start=None, time_end=None, cur=NO_CURSOR):
         """Return one aggregate value for *item_id* in the given range.
 
         *expr* must be a caller-controlled SQL aggregate expression (e.g.

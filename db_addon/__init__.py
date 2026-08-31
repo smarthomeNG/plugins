@@ -38,6 +38,7 @@ from typing import Union, List, Dict
 from dataclasses import dataclass, InitVar
 from collections import deque
 
+from lib.db import NO_CURSOR
 from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
 from lib.item.item import Item
@@ -3319,26 +3320,26 @@ class DatabaseAddOn(SmartPlugin):
 
         return True
 
-    def _execute(self, query: str, params: dict = None, cur=None) -> list:
+    def _execute(self, query: str, params: dict = None, cur=NO_CURSOR) -> list:
         if params is None:
             params = {}
 
         return self._query(self._db.execute, query, params, cur)
 
-    def _fetchone(self, query: str, params: dict = None, cur=None) -> list:
+    def _fetchone(self, query: str, params: dict = None, cur=NO_CURSOR) -> list:
         if params is None:
             params = {}
 
         return self._query(self._db.fetchone, query, params, cur)
 
-    def _fetchall(self, query: str, params: dict = None, cur=None) -> list:
+    def _fetchall(self, query: str, params: dict = None, cur=NO_CURSOR) -> list:
         if params is None:
             params = {}
 
         tuples = self._query(self._db.fetchall, query, params, cur)
         return None if tuples is None else list(tuples)
 
-    def _query(self, fetch, query: str, params: dict = None, cur=None) -> Union[None, list]:
+    def _query(self, fetch, query: str, params: dict = None, cur=NO_CURSOR) -> Union[None, list]:
         """query using commit to get latest data from db"""
 
         if params is None:
@@ -3350,21 +3351,21 @@ class DatabaseAddOn(SmartPlugin):
         if not self._initialize_db():
             return None
 
-        if cur is None:
+        if cur is NO_CURSOR:
             verify_conn = self._db.verify(retry=5)
             if verify_conn == 0:
                 self.logger.error('Connection to database NOT recovered.')
                 return None
 
-        locked_here = cur is None and self.lock_db_for_query
+        locked_here = cur is NO_CURSOR and self.lock_db_for_query
         if locked_here:
             if not self._db.lock(300):
                 self.logger.error("Can't query database due to fail to acquire lock.")
                 return None
-            # explicit cursor once locked: fetch's own cur=None path (it's
+            # explicit cursor once locked: fetch's own cur-omitted path (it's
             # always self._db.execute/fetchone/fetchall) now locks
             # internally too - self._db.lock() is a plain non-reentrant
-            # Lock, so calling fetch(..., cur=None) here while already
+            # Lock, so calling fetch(...) with cur omitted here while already
             # holding it would deadlock against itself.
             cur = self._db.cursor()
 
@@ -3382,7 +3383,7 @@ class DatabaseAddOn(SmartPlugin):
             pass
 
         if locked_here:
-            if cur is not None:
+            if cur is not NO_CURSOR:
                 cur.close()
             self._db.release()
 
@@ -3392,7 +3393,7 @@ class DatabaseAddOn(SmartPlugin):
         return tuples
 
     # ToDo: Check if still needed.
-    def _query_with_close(self, fetch, query: str, params: dict = None, cur=None) -> Union[None, list]:
+    def _query_with_close(self, fetch, query: str, params: dict = None, cur=NO_CURSOR) -> Union[None, list]:
         """query open and close connection for each query to get latest data from db"""
 
         if params is None:
@@ -3402,7 +3403,7 @@ class DatabaseAddOn(SmartPlugin):
             self.logger.debug(f'Called with {query=}, {params=}, {cur=}')
 
         # recovery connection to database
-        if cur is None or not self._db.connected:
+        if cur is NO_CURSOR or not self._db.connected:
             verify_conn = self._db.verify(retry=5)
             if verify_conn == 0:
                 self.logger.error('Connection to database NOT recovered.')
@@ -3412,15 +3413,15 @@ class DatabaseAddOn(SmartPlugin):
                     self.logger.debug('Connection to database recovered.')
 
         # lock database if required
-        locked_here = cur is None and self.lock_db_for_query
+        locked_here = cur is NO_CURSOR and self.lock_db_for_query
         if locked_here:
             if not self._db.lock(300):
                 self.logger.error("Can't query database due to fail to acquire lock.")
                 return None
-            # explicit cursor once locked: fetch's own cur=None path (it's
+            # explicit cursor once locked: fetch's own cur-omitted path (it's
             # always self._db.execute/fetchone/fetchall) now locks
             # internally too - self._db.lock() is a plain non-reentrant
-            # Lock, so calling fetch(..., cur=None) here while already
+            # Lock, so calling fetch(...) with cur omitted here while already
             # holding it would deadlock against itself.
             cur = self._db.cursor()
 
@@ -3435,7 +3436,7 @@ class DatabaseAddOn(SmartPlugin):
 
         # release database
         if locked_here:
-            if cur is not None:
+            if cur is not NO_CURSOR:
                 cur.close()
             self._db.release()
 

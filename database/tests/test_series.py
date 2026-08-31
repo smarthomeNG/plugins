@@ -1,5 +1,6 @@
 import pytest
 
+from lib.db import NO_CURSOR
 from plugins.database import Database
 from plugins.database.tests.base import TestDatabaseBase
 
@@ -280,7 +281,7 @@ class TestDatabaseSeries(TestDatabaseBase):
         captured = {}
         orig_fetchall = plugin._fetchall
 
-        def spy(query, params=None, cur=None):
+        def spy(query, params=None, cur=NO_CURSOR):
             captured['query'] = query
             return orig_fetchall(query, params, cur=cur)
 
