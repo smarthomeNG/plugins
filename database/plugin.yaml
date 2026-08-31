@@ -241,6 +241,16 @@ plugin_functions:
                 description:
                     de: "Das Item-Objekt"
                     en: "An item object"
+            create:
+                type: bool
+                description:
+                    de: "Falls True, wird das Item in der Datenbank angelegt, falls es dort noch nicht existiert"
+                    en: "If True, the item is created within the database if it does not exist"
+            cur:
+                type: foo
+                description:
+                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
+                    en: "A database cursor object if available (optional)"
 
     db:
         type: foo
@@ -409,6 +419,11 @@ plugin_functions:
                 description:
                     de: "Datenbank-ID des Items für das der Eintrag gelöscht werden soll"
                     en: "Database ID of item to delete the record for"
+            cur:
+                type: foo
+                description:
+                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
+                    en: "A database cursor object if available (optional)"
 
     insertLog:
         type: void
@@ -451,6 +466,11 @@ plugin_functions:
                 description:
                     de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
                     en: "A database cursor object if available (optional)"
+            quality:
+                type: int
+                description:
+                    de: "Daten-Qualitäts-Flag (Standard: QUALITY_VALID, QUALITY_NO_DATA für eine Lücken-Zeile)"
+                    en: "Data-quality flag (QUALITY_VALID by default, QUALITY_NO_DATA for a gap row)"
 
     updateLog:
         type: void
@@ -493,6 +513,11 @@ plugin_functions:
                 description:
                     de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
                     en: "A database cursor object if available (optional)"
+            quality:
+                type: int
+                description:
+                    de: "Daten-Qualitäts-Flag (Standard: QUALITY_VALID, QUALITY_NO_DATA für eine Lücken-Zeile)"
+                    en: "Data-quality flag (QUALITY_VALID by default, QUALITY_NO_DATA for a gap row)"
 
     readLog:
         type: foo
@@ -510,6 +535,11 @@ plugin_functions:
                 description:
                     de: "Zeitpunkt an dem der Wert aktiv war"
                     en: "Time for the given value"
+            cur:
+                type: foo
+                description:
+                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
+                    en: "A database cursor object if available (optional)"
 
     readLogs:
         type: foo
