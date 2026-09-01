@@ -6,6 +6,8 @@ underlying journal-mode-switching behaviour itself, which isn't retested here).
 
 import os
 import sqlite3
+import types
+from unittest import mock
 
 from plugins.database.tests.base import TestDatabaseBase
 
@@ -28,18 +30,10 @@ class TestWalModeWiring(TestDatabaseBase):
         self.assertEqual('wal', str(mode).lower())
 
     def test_construction_survives_non_sqlite3_driver(self):
-        # Not asserting the warning log itself here - this test environment's
-        # effective logger level sits above stdlib WARNING, so .warning()
-        # calls are filtered before assertLogs ever sees them (same
-        # environment property noted in test_maxage_action.py). The
-        # non-sqlite3 case must still not crash construction, and the flag
-        # itself isn't forced off - _apply_wal_mode_locked() already makes
-        # it a no-op per-connection regardless. Uses pymysql (a real,
-        # importable driver) rather than a bogus name - a driver that fails
-        # to import at all leaves the plugin instance partially constructed
-        # (a separate, pre-existing characteristic unrelated to WAL), which
-        # isn't what this test is after.
-        plugin = self.plugin(sqlite_wal_mode=True, driver='pymysql')
+        # Fake driver, not pymysql - CI has no such package installed.
+        fake_driver = types.SimpleNamespace(paramstyle='pyformat', __name__='fake_driver')
+        with mock.patch('lib.db.importlib.import_module', return_value=fake_driver):
+            plugin = self.plugin(sqlite_wal_mode=True, driver='fake_driver')
         self.assertTrue(plugin._sqlite_wal_mode)
 
 
