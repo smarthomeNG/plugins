@@ -120,6 +120,22 @@ parameters:
             de: "Maximale Anzahl an Kompaktierungs-Intervallen, die pro Durchlauf für ein Item verarbeitet werden, reduziert die Belastung der Datenbank bei alten Datenbeständen"
             en: "Maximum number of compaction intervals processed per item per run, reduces load on database with old datasets"
 
+    invalid_check_cycle:
+        type: int
+        default: 60
+        valid_min: 1
+        description:
+            de: "Bestimmt, wie oft (in Sekunden) auf Items mit database_invalid_after geprüft wird, die seither still geblieben sind. Nur relevant, falls mindestens ein Item database_invalid_after gesetzt hat."
+            en: "How often (in seconds) items with database_invalid_after are checked for having gone silent since. Only relevant if at least one item has database_invalid_after set."
+
+    invalid_check_grace_time:
+        type: int
+        default: 60
+        valid_min: 0
+        description:
+            de: "Zusätzliche Karenzzeit (in Sekunden), die nach dem Start des Plugins zum database_invalid_after-Wert eines Items addiert wird, bevor es als ungültig markiert werden kann - deckt DB-Lesezeit, Startup-Verzögerungen und Scheduler-Streuung ab. Für die meisten Konfigurationen ist der Standardwert ausreichend."
+            en: "Extra grace time (in seconds), added to an item's own database_invalid_after value, before it can be marked invalid following plugin startup - covers db read delays, startup lag, and scheduler scattering. The default is fine for most configurations."
+
     copy_database:
         type: bool
         default: False
@@ -177,6 +193,12 @@ item_attributes:
         description:
             de: "Muss normalerweise nicht konfiguriert werden, dann wird der Standard 'True' genutzt. Das bedeutet, dass das item vor dem Beenden von smarthomeNG nochmal in die DB geschrieben wird (auch wenn keine echte Aenderung statt fand). Wird das Attribut auf 'False' gesetzt, wird das Schreiben beim Beenden unterdrueckt."
             en: "Usually does not need to be configured, in this case the default 'True' is used. This means that the item value is written to the DB once again on smarthomeNG shutdown. (even though the item has not been updated). Setting the attribute to 'False', supresses the rewrite on shutdown."
+
+    database_invalid_after:
+        type: str
+        description:
+            de: "Opt-in, pro Item: Maximale Stillezeit (Format wie 'cycle'/'autotimer', z.B. '5m', '30s'), nach der ein Item ohne Update automatisch als ungültig markiert wird (siehe db_mark_invalid() - Lücke statt gerader Interpolationslinie in Plots). Kein Standardwert und kein Plugin-Fallback - jedes Item muss dies explizit selbst setzen, da die richtige Schwelle von der jeweiligen Datenquelle abhängt. Erfordert das item-Attribut 'enforce_updates', sonst wird eine unveränderte Wiederholung desselben Werts nicht als Lebenszeichen erkannt (nur die periodische Prüfung bleibt dann voll wirksam). Nicht mit database_acl: ro kombinierbar."
+            en: "Opt-in, per item: maximum silence duration (same format as 'cycle'/'autotimer', e.g. '5m', '30s') after which an item with no update is automatically marked invalid (see db_mark_invalid() - a gap instead of a straight interpolated line in plots). No default value and no plugin-level fallback - every item must set this explicitly itself, since the right threshold depends on that specific data source. Requires the item attribute 'enforce_updates', otherwise an unchanged repeat of the same value isn't recognised as a sign of life (only the periodic check stays fully effective). Not compatible with database_acl: ro."
 
 
 item_structs:

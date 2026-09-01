@@ -248,6 +248,8 @@ class Database(SmartPlugin):
         self._default_maxage_action = self.get_parameter_value('default_maxage_action') or 'delete'
         self._default_maxage_interval = self.get_parameter_value('default_maxage_interval') or '24h'
         self.max_aggregate_intervals = self.get_parameter_value('max_aggregate_intervals')
+        self._invalid_check_cycle = self.get_parameter_value('invalid_check_cycle')
+        self._invalid_check_grace_time = self.get_parameter_value('invalid_check_grace_time')
 
         self._copy_database = self.get_parameter_value('copy_database')
         self._copy_database_name = self.get_parameter_value('copy_database_name')
@@ -276,6 +278,8 @@ class Database(SmartPlugin):
         self._handled_items = []  # items that have a 'database' attribute set
         self._items_with_maxage = []  # items that have a 'database_maxage' attribute set
         self._maxage_worklist = []  # work copy of self._items_with_maxage
+        self._items_with_invalid_after = {}  # item -> configured database_invalid_after, in seconds
+        self._plugin_start_ts = None  # set in run() - startup grace gate for _check_invalid_items()
         self._item_logcount = {}  # dict to store the number of log records for an item
         self._items_total_entries = 0  # total number of log entries
         self._items_still_counting = False  # total number of log entries
@@ -345,6 +349,7 @@ class Database(SmartPlugin):
         Run method for the plugin
         """
         self.logger.debug('Run method called')
+        self._plugin_start_ts = self._timestamp(self.shtime.now())
         if not self._initialize_db():
             # Not fatal - _dump()/id()/_query() all self-heal on their own
             # next call, same as everywhere else in this plugin. Logged
@@ -419,6 +424,9 @@ class Database(SmartPlugin):
                         f"Item {item.property.path}: database_maxage_action '{action}' is not valid for "
                         f"item type '{item.type()}' (valid: {', '.join(valid_types)}) - falling back to 'delete'"
                     )
+
+            if self.has_iattr(item.conf, 'database_invalid_after'):
+                self._register_invalid_after(item)
 
             self.logger.debug(item.conf)
             self._buffer_mgr.register(item)
@@ -640,6 +648,32 @@ class Database(SmartPlugin):
                 )
                 end = start  # clamp — negative duration must not be stored
 
+            # ── Reactive database_invalid_after check ───────────────────────
+            # last_update()/prev_update(), not last_change()/prev_change():
+            # the former advance on every raw update regardless of whether
+            # the value changed, the latter only on a genuine change (or
+            # enforce_change) - see _register_invalid_after()'s warning about
+            # enforce_updates. Runs before the gap-detection block below, so
+            # a gap opened here - if this very call is the recovery - gets
+            # picked up and closed by that same existing logic immediately.
+            invalid_after_seconds = self._items_with_invalid_after.get(item)
+            if invalid_after_seconds is not None:
+                last_update_ts = self._timestamp(item.last_update())
+                prev_update_ts = self._timestamp(item.prev_update())
+                threshold_ms = invalid_after_seconds * 1000
+                if last_update_ts - prev_update_ts > threshold_ms:
+                    already_open_gap = self._buffer_mgr.last_entry(item)
+                    already_open_gap = (
+                        already_open_gap is not None
+                        and already_open_gap.duration is None
+                        and already_open_gap.quality == QUALITY_NO_DATA
+                    )
+                    if not already_open_gap:
+                        # Provable, not guessed: confirmed silent from here on,
+                        # so the item cannot still have held its old value past
+                        # this point, regardless of when this update arrived.
+                        self._mark_item_invalid(item, caller='database_invalid_after', at=prev_update_ts + threshold_ms)
+
             # ── Gap detection ────────────────────────────────────────────────
             # If db_mark_invalid() was called previously and the open buffer
             # entry is a no-data gap (quality=QUALITY_NO_DATA), this new valid
@@ -704,7 +738,45 @@ class Database(SmartPlugin):
         else:
             self.logger.debug("Not writing item '{}' value because database_acl = {}".format(item, acl))
 
-    def _mark_item_invalid(self, item, caller=None, source=None):
+    def _register_invalid_after(self, item):
+        """Validate and register *item*'s database_invalid_after attribute.
+
+        No plugin-level default/fallback exists for this value on purpose -
+        unlike database_maxage, there's no value reasonable to apply to an
+        item that didn't explicitly ask for it (see plugin.yaml).
+
+        :param item: item with a database_invalid_after attribute set
+        """
+        interval = self.get_iattr_value(item.conf, 'database_invalid_after')
+        seconds = self.shtime.to_seconds(interval, test=True)
+        if not seconds or seconds <= 0:
+            self.logger.warning(
+                f"Item {item.property.path}: invalid database_invalid_after value '{interval}', ignoring"
+            )
+            return
+
+        if self.has_iattr(item.conf, 'database_acl'):
+            acl = self.get_iattr_value(item.conf, 'database_acl').lower()
+        else:
+            acl = 'rw'
+        if acl != 'rw':
+            self.logger.warning(
+                f'Item {item.property.path}: database_invalid_after is not compatible with '
+                f'database_acl: {acl}, ignoring'
+            )
+            return
+
+        if not item.property.enforce_updates:
+            self.logger.warning(
+                f"Item {item.property.path}: database_invalid_after is set without 'enforce_updates' - "
+                'a recovery to the same value stays undetected until the next periodic check '
+                '(up to invalid_check_cycle + invalid_check_grace_time later); a recovery to a '
+                'different value is still detected immediately.'
+            )
+
+        self._items_with_invalid_after[item] = seconds
+
+    def _mark_item_invalid(self, item, caller=None, source=None, at=None):
         """Open a no-data gap in the database log for *item*.
 
         Call this when a data source loses connectivity.  The item's Python
@@ -719,8 +791,15 @@ class Database(SmartPlugin):
         :param item:   SmartHomeNG item object.
         :param caller: Optional caller identifier (for logging).
         :param source: Optional source identifier (for logging).
+        :param at:     Internal use only, not part of the public
+                        ``db_mark_invalid()`` contract - backdates the gap's
+                        start to a provable boundary (e.g. an item's own
+                        computed staleness deadline) instead of "now". A
+                        caller supplying this must be certain it's still
+                        correct at the moment of the call; there is no
+                        re-validation here.
         """
-        start_ts = self._timestamp(self.shtime.now())
+        start_ts = self._timestamp(self.shtime.now()) if at is None else at
         self.logger.info(
             f"db_mark_invalid: opening no-data gap for '{item.property.path}'"
             + (f' (caller={caller})' if caller else '')
@@ -752,6 +831,43 @@ class Database(SmartPlugin):
         )
         self._buffer_mgr.close_open(item, end_ts)
 
+    def _check_invalid_items(self):
+        """Scheduled check for database_invalid_after items still silent right now.
+
+        Complements the reactive check in :meth:`update_item`, which only
+        fires when a *next* update eventually arrives - this is the only
+        path that can catch an item that's still silent with no resolution
+        in sight. Detection latency is bounded by invalid_check_cycle; the
+        boundary written to the log is not - it's computed from the item's
+        own last_update() plus its configured threshold, never wall-clock
+        "now", so the recorded duration is accurate regardless of how late
+        this check happens to run.
+        """
+        if self._plugin_start_ts is None:
+            return
+        now_ts = self._timestamp(self.shtime.now())
+        grace_ms = self._invalid_check_grace_time * 1000
+        for item, invalid_after_seconds in list(self._items_with_invalid_after.items()):
+            threshold_ms = invalid_after_seconds * 1000
+            if now_ts - self._plugin_start_ts < threshold_ms + grace_ms:
+                # Startup grace: database: init's restore can leave
+                # last_update() pointing at a (possibly very old) pre-restart
+                # timestamp - give this item its own threshold plus
+                # invalid_check_grace_time before ever judging it.
+                continue
+            last_update_ts = self._timestamp(item.last_update())
+            if now_ts - last_update_ts <= threshold_ms:
+                continue
+            already_open_gap = self._buffer_mgr.last_entry(item)
+            already_open_gap = (
+                already_open_gap is not None
+                and already_open_gap.duration is None
+                and already_open_gap.quality == QUALITY_NO_DATA
+            )
+            if already_open_gap:
+                continue
+            self._mark_item_invalid(item, caller='database_invalid_after (scan)', at=last_update_ts + threshold_ms)
+
     def _start_schedulers(self):
         """
         Start jobs that maintain buffer and database
@@ -768,6 +884,10 @@ class Database(SmartPlugin):
         if self._default_maxage > 0 or len(self._items_with_maxage) > 0:
             # self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=91, prio=6)
             self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=self._removeold_cycle, prio=7)
+        if len(self._items_with_invalid_after) > 0:
+            self.scheduler_add(
+                'Check invalid items', self._check_invalid_items, cycle=self._invalid_check_cycle, prio=7
+            )
         return
 
     def _stop_schedulers(self):
@@ -776,6 +896,8 @@ class Database(SmartPlugin):
         """
         if self._default_maxage > 0 or len(self._items_with_maxage) > 0:
             self.scheduler_remove('Remove old')
+        if len(self._items_with_invalid_after) > 0:
+            self.scheduler_remove('Check invalid items')
         self.scheduler_remove('Buffer dump')
         if self.count_logentries:
             self.scheduler_remove('Count logs')

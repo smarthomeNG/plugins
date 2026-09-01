@@ -54,6 +54,30 @@ main:
         database_maxage_action: duty_cycle
         database_maxage_interval: 1h
 
+    invalid_after_num:
+        type: num
+        database: init
+        enforce_updates: true
+        database_invalid_after: 5m
+
+    invalid_after_no_enforce:
+        type: num
+        database: init
+        database_invalid_after: 5m
+
+    invalid_after_ro:
+        type: num
+        database: init
+        database_acl: ro
+        enforce_updates: true
+        database_invalid_after: 5m
+
+    invalid_after_bad_value:
+        type: num
+        database: init
+        enforce_updates: true
+        database_invalid_after: not-a-duration
+
     maxage_invalid_type:
         type: str
         database: init

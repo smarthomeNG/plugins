@@ -47,6 +47,8 @@ class TestDatabaseBase(unittest.TestCase):
             'default_maxage_action': 'delete',
             'default_maxage_interval': '24h',
             'max_aggregate_intervals': 30,
+            'invalid_check_cycle': 60,
+            'invalid_check_grace_time': 60,
             'copy_database': False,
             'copy_database_name': '',
         }
