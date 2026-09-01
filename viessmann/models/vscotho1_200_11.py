@@ -96,8 +96,8 @@ commands = {
             'write': False,
             'opcode': '7700',
             'reply_pattern': '*',
-            'item_type': 'num',
-            'dev_datatype': 'Number',
+            'item_type': 'str',
+            'dev_datatype': 'Hex',
             'params': {'value': 'VAL', 'len': 1},
             'lookup': 'systemschemes',
         },  # Anlagenschema

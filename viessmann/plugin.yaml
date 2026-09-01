@@ -4765,7 +4765,7 @@ item_structs:
                 -   Allgemein
 
             anlagenschema:
-                type: num
+                type: str
                 viess_command@instance: Allgemein.Anlagenschema
                 viess_read@instance: true
                 viess_write@instance: false
