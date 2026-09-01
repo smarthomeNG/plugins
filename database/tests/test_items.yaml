@@ -47,6 +47,13 @@ main:
         database_maxage_action: min
         database_maxage_interval: 1h
 
+    maxage_duty_cycle:
+        type: bool
+        database: init
+        database_maxage: 1
+        database_maxage_action: duty_cycle
+        database_maxage_interval: 1h
+
     maxage_invalid_type:
         type: str
         database: init

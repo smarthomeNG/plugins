@@ -27,6 +27,11 @@ class TestMaxageAction(TestDatabaseBase):
         item = self.sh.return_item('main.maxage_sum')
         self.assertEqual('sum', plugin._maxage_action_for(item))
 
+    def test_maxage_action_duty_cycle_resolves_for_bool_item(self):
+        plugin = self.plugin()
+        item = self.sh.return_item('main.maxage_duty_cycle')
+        self.assertEqual('duty_cycle', plugin._maxage_action_for(item))
+
     def test_maxage_action_falls_back_to_plugin_default_when_unset(self):
         plugin = self.plugin()
         item = self.sh.return_item('main.maxage_no_action')
@@ -35,11 +40,21 @@ class TestMaxageAction(TestDatabaseBase):
         plugin._default_maxage_action = 'avg'
         self.assertEqual('avg', plugin._maxage_action_for(item))
 
-    def test_maxage_action_on_invalid_for_str_falls_back_to_delete(self):
-        # 'on' computes a time-weighted on-fraction (a float) - for a str
-        # item that float would be stored back as the item's string value
-        # ('0.37'), replacing real string history with stringified numbers.
-        # str items use first/last instead.
+    def test_maxage_action_duty_cycle_invalid_for_str_falls_back_to_delete(self):
+        # 'duty_cycle' computes a time-weighted on-fraction (a float) - for a
+        # str item that float would be stored back as the item's string
+        # value ('0.37'), replacing real string history with stringified
+        # numbers. str items use first/last instead.
+        plugin = self.plugin()
+        item = self.sh.return_item('main.maxage_first_str')  # type str
+        with mock.patch.object(plugin, 'get_iattr_value', return_value='duty_cycle'):
+            with mock.patch.object(plugin, 'has_iattr', return_value=True):
+                self.assertEqual('delete', plugin._maxage_action_for(item))
+
+    def test_maxage_action_on_is_legacy_alias_for_duty_cycle(self):
+        # 'on' predates 'duty_cycle' (renamed: unquoted 'on' is parsed as
+        # YAML bool True, breaking the config) - still accepted and must
+        # resolve identically, including the same type check.
         plugin = self.plugin()
         item = self.sh.return_item('main.maxage_first_str')  # type str
         with mock.patch.object(plugin, 'get_iattr_value', return_value='on'):

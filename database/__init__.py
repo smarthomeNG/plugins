@@ -176,7 +176,7 @@ class Database(SmartPlugin):
         'min': 'MIN(val_num)',
         'max': 'MAX(val_num)',
         'integrate': 'SUM(val_num * duration)',
-        'on': 'SUM(val_bool * duration) / SUM(duration)',
+        'duty_cycle': 'SUM(val_bool * duration) / SUM(duration)',
         'countall': 'COUNT(*)',
     }
 
@@ -187,18 +187,18 @@ class Database(SmartPlugin):
 
     # item types each database_maxage_action is valid for. None = any type.
     # Grounded in utils.encode_value(): val_num is populated for 'num' and
-    # 'bool' (bool encodes as float(value)), so avg/sum/min/max/integrate/on
-    # (which read val_num/val_bool) do not work for str - 'on' would
-    # additionally store its float on-fraction back as the item's string
-    # value. first/last just read back whatever encode_value() already
-    # stored, so they work for every type, str included.
+    # 'bool' (bool encodes as float(value)), so avg/sum/min/max/integrate/
+    # duty_cycle (which read val_num/val_bool) do not work for str -
+    # duty_cycle would additionally store its float on-fraction back as the
+    # item's string value. first/last just read back whatever encode_value()
+    # already stored, so they work for every type, str included.
     _MAXAGE_ACTION_VALID_TYPES = {
         'avg': ('num', 'bool'),
         'sum': ('num', 'bool'),
         'min': ('num', 'bool'),
         'max': ('num', 'bool'),
         'integrate': ('num', 'bool'),
-        'on': ('bool',),
+        'duty_cycle': ('bool',),
         'countall': None,
         'first': None,
         'last': None,
@@ -1761,6 +1761,11 @@ class Database(SmartPlugin):
             + ', '
             + self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
             'on.order': 'ORDER BY time ASC',
+            # 'duty_cycle': same query as 'on' under its more descriptive name - both accepted, kept in sync.
+            'duty_cycle': self._time_precision_query('MIN(time)')
+            + ', '
+            + self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
+            'duty_cycle.order': 'ORDER BY time ASC',
             'sum': self._time_precision_query('MIN(time)') + ', SUM(val_num)',
             'raw': self._time_precision_query('time') + ', val_num',
             'raw.order': 'ORDER BY time ASC',
@@ -1846,6 +1851,8 @@ class Database(SmartPlugin):
             'max': 'MAX(val_num)',
             'diff': 'MAX(val_num) - MIN(val_num)',
             'on': self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
+            # 'duty_cycle': same query as 'on' under its more descriptive name - both accepted, kept in sync.
+            'duty_cycle': self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
             'sum': 'SUM(val_num)',
             'raw': 'val_num',
             'raw.order': 'ORDER BY time DESC',
@@ -2250,6 +2257,12 @@ class Database(SmartPlugin):
             action = self.get_iattr_value(item.conf, 'database_maxage_action').lower()
         else:
             action = self._default_maxage_action
+
+        if action == 'on':
+            # Legacy alias for 'duty_cycle' - kept for configs that already
+            # quote it (unquoted 'on' is YAML bool True and never reaches
+            # here as this string in the first place).
+            action = 'duty_cycle'
 
         if action == 'delete':
             return 'delete'

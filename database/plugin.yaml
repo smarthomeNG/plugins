@@ -100,10 +100,10 @@ parameters:
     default_maxage_action:
         type: str
         default: 'delete'
-        valid_list_ci: ['delete', 'avg', 'sum', 'min', 'max', 'integrate', 'on', 'countall', 'first', 'last']
+        valid_list_ci: ['delete', 'avg', 'sum', 'min', 'max', 'integrate', 'duty_cycle', 'on', 'countall', 'first', 'last']
         description:
-            de: "Standard-Aktion für Items mit database_maxage, die kein eigenes database_maxage_action gesetzt haben"
-            en: "Default action for items with database_maxage that don't have their own database_maxage_action set"
+            de: "Standard-Aktion für Items mit database_maxage, die kein eigenes database_maxage_action gesetzt haben. 'on' ist ein veralteter Alias für 'duty_cycle' und wird nur aus Kompatibilitätsgründen noch akzeptiert - unquoted 'on' wird von YAML als bool True interpretiert, daher 'duty_cycle' verwenden."
+            en: "Default action for items with database_maxage that don't have their own database_maxage_action set. 'on' is a legacy alias for 'duty_cycle', accepted for backward compatibility only - unquoted 'on' gets parsed as boolean True by YAML, so use 'duty_cycle' instead."
 
     default_maxage_interval:
         type: str
@@ -152,10 +152,10 @@ item_attributes:
 
     database_maxage_action:
         type: str
-        valid_list_ci: ['delete', 'avg', 'sum', 'min', 'max', 'integrate', 'on', 'countall', 'first', 'last']
+        valid_list_ci: ['delete', 'avg', 'sum', 'min', 'max', 'integrate', 'duty_cycle', 'on', 'countall', 'first', 'last']
         description:
-            de: "Aktion, die beim Erreichen von database_maxage auf ältere Logeinträge angewendet wird. 'delete' (Standardverhalten) löscht die Einträge ersatzlos; jeder andere Wert ersetzt sie durch einen Kompaktierungswert pro database_maxage_interval, statt sie zu löschen. Kein Standardwert hier gesetzt, damit default_maxage_action als Fallback greifen kann, wenn das Attribut nicht gesetzt ist."
-            en: "Action applied to log entries older than database_maxage. 'delete' (today's behaviour) removes them outright; any other value replaces them with one compacted value per database_maxage_interval instead of deleting them. No default set here on purpose, so the default_maxage_action plugin parameter can act as fallback when the attribute is unset."
+            de: "Aktion, die beim Erreichen von database_maxage auf ältere Logeinträge angewendet wird. 'delete' (Standardverhalten) löscht die Einträge ersatzlos; jeder andere Wert ersetzt sie durch einen Kompaktierungswert pro database_maxage_interval, statt sie zu löschen. 'duty_cycle' (nur bool-Items) berechnet den zeitgewichteten Ein-Anteil. 'on' ist ein veralteter Alias für 'duty_cycle', nur aus Kompatibilitätsgründen noch akzeptiert - unquoted 'on' wird von YAML als bool True interpretiert, daher 'duty_cycle' verwenden. Kein Standardwert hier gesetzt, damit default_maxage_action als Fallback greifen kann, wenn das Attribut nicht gesetzt ist."
+            en: "Action applied to log entries older than database_maxage. 'delete' (today's behaviour) removes them outright; any other value replaces them with one compacted value per database_maxage_interval instead of deleting them. 'duty_cycle' (bool items only) computes the time-weighted on-fraction. 'on' is a legacy alias for 'duty_cycle', accepted for backward compatibility only - unquoted 'on' gets parsed as boolean True by YAML, so use 'duty_cycle' instead. No default set here on purpose, so the default_maxage_action plugin parameter can act as fallback when the attribute is unset."
 
     database_maxage_interval:
         type: str

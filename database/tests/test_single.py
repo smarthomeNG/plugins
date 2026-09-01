@@ -155,6 +155,14 @@ class TestDatabaseSingle(TestDatabaseBase):
         res = plugin._single('on', start=0, end='now', item='main.num')
         self.assertSingle(1, res)
 
+    def test_single_duty_cycle_matches_on(self):
+        # 'duty_cycle' is the more descriptive name for the same query as
+        # 'on' - both accepted, must return identical results.
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [(1, 2, 10), (2, 3, 20)])
+        res = plugin._single('duty_cycle', start=0, end='now', item='main.num')
+        self.assertSingle(1, res)
+
     def test_single_coerces_mariadb_decimal_to_float(self):
         # Regression: MariaDB/MySQL return decimal.Decimal (not float) for
         # SUM()/AVG() over exact-numeric columns - 'on''s SUM(val_bool *
