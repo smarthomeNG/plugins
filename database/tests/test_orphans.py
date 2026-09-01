@@ -33,12 +33,11 @@ class TestDatabaseOrphans(TestDatabaseBase):
         self.assertFalse(plugin.remove_orphan)
 
     def test_build_orphanlist_reports_failure_when_db_maint_unavailable(self):
-        # Regression: build_orphanlist() used to always return None and
-        # leave self.orphanlist == [] on a failed attempt (e.g. DB not
-        # connected) - indistinguishable from a successful check that
-        # genuinely found no orphans. It must report the failure so
-        # callers (run(), _dump(), remove_orphan_items()) can tell the
-        # difference.
+        # build_orphanlist() must report a failed attempt (e.g. DB not
+        # connected), not just return None and leave self.orphanlist == []
+        # indistinguishable from a successful check that genuinely found no
+        # orphans - callers (run(), _dump(), remove_orphan_items()) must be
+        # able to tell the difference.
         plugin = self.plugin()
         plugin.insertItem('no.such.item')  # a real orphan the failed attempt must not report
 
@@ -66,11 +65,11 @@ class TestDatabaseOrphans(TestDatabaseBase):
         self.assertFalse(plugin._orphanlist_built)
 
     def test_remove_orphan_items_does_not_disarm_when_list_build_fails(self):
-        # Regression: remove_orphan_items() used to trust an empty
-        # self.orphanlist unconditionally - if build_orphanlist() had just
-        # failed (DB not connected), that empty list got misread as
-        # "confirmed no orphans", disarming remove_orphan and silently
-        # abandoning the cleanup instead of retrying on the next cycle.
+        # remove_orphan_items() must not trust an empty self.orphanlist
+        # unconditionally - if build_orphanlist() just failed (DB not
+        # connected), that empty list must not be misread as "confirmed no
+        # orphans", disarming remove_orphan and abandoning the cleanup
+        # instead of retrying on the next cycle.
         plugin = self.plugin()
         plugin.insertItem('no.such.item')  # a real orphan the failed attempt must not report
         plugin.cleanup()
@@ -98,10 +97,10 @@ class TestDatabaseOrphans(TestDatabaseBase):
             self.assertEqual(1, spy.call_count, '_dump() must stop retrying once the build has succeeded')
 
     def test_run_logs_warning_but_still_starts_when_db_unavailable(self):
-        # Regression: run() discarded _initialize_db()'s return value and
-        # proceeded silently either way - a DB outage at startup produced
-        # no clear signal distinct from a normal clean start. Must not
-        # crash/exit either, matching every other self-healing entry point
+        # run() must not discard _initialize_db()'s return value and
+        # proceed silently either way - a DB outage at startup must produce
+        # a clear signal distinct from a normal clean start, without
+        # crashing/exiting, matching every other self-healing entry point
         # in this plugin (id()/_dump()/_query() all tolerate this the same
         # way).
         plugin = self.plugin()

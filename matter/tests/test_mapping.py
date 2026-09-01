@@ -119,7 +119,7 @@ def test_should_fire_without_false_variant_ignores_falsy_write():
     # value-independent command (toggle): a falsy write is autotimer's own
     # reset, not a real trigger - must not fire again, or a device where
     # toggle really flips state would see two toggles and appear to do
-    # nothing (the exact bug this guards against).
+    # nothing.
     mapping = CommandMapping(node_id=2, endpoint_id=1, cluster_id=6, command_name='toggle')
     assert mapping.should_fire(True) is True
     assert mapping.should_fire(False) is False

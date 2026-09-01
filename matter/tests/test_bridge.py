@@ -103,10 +103,10 @@ class TestParseItem(unittest.TestCase):
 
     def test_name_over_32_chars_logs_error_and_returns_none(self):
         """Regression guard: BridgedDeviceBasicInformation's NodeLabel/ProductName are spec-capped at
-        32 chars, and a longer value doesn't truncate, it fails the whole endpoint's construction
+        32 chars, and a longer value doesn't truncate - it fails the whole endpoint's construction
         inside bridge.js with a matter.js ConstraintError, dropping the accessory silently from
         Python's point of view (add_endpoint_for_item() only logs a generic 'could not add bridge
-        endpoint'). Caught here instead, with a message that actually says why."""
+        endpoint'). Must be caught here instead, with a message that actually says why."""
         plugin = _make_plugin()
         item = _FakeItem('some.item', conf={'matter_expose_type': 'switch', 'matter_expose_name': 'x' * 33})
 
@@ -249,11 +249,10 @@ class TestUpdateItem(unittest.TestCase):
     def test_server_own_write_on_a_passthrough_item_is_NOT_ignored(self):
         """Regression guard: a passthrough item (both server- and
         bridge-configured, see bridge.parse_item()'s own docstring) must
-        still push a device-report-driven write out to the bridge. A
-        shared own-write sentinel between the two roles used to swallow
-        this - server.own_caller(plugin) is a different string from
-        bridge.own_caller(plugin) specifically so this doesn't match the
-        guard above."""
+        still push a device-report-driven write out to the bridge -
+        server.own_caller(plugin) must be a different string from
+        bridge.own_caller(plugin), or a shared own-write sentinel between
+        the two roles would swallow this write."""
         plugin = _make_plugin(bridge_client=_FakeBridgeClient(connected=True))
         item = _FakeItem('some.switch')
         plugin._bridge_endpoint_id['some.switch'] = 1
@@ -392,10 +391,9 @@ class _FakeStatusBridgeClient:
 
 
 class TestBridgeErrorHandling(unittest.TestCase):
-    """Regression tests: a TimeoutError from bridge.js/the WS connection used
-    to surface as a bare uncaught traceback through Item.__update() instead
-    of being logged clearly - same bug class as the server role's
-    update_item(), fixed the same way here."""
+    """Regression tests: a TimeoutError from bridge.js/the WS connection must
+    be logged clearly, not surface as a bare uncaught traceback through
+    Item.__update() - same requirement as the server role's update_item()."""
 
     def test_set_attribute_timeout_is_caught_and_logged_clearly(self):
         plugin = _make_plugin()

@@ -150,7 +150,7 @@ def generate_suggested_item(node: dict[str, Any], device_label: str | None = Non
     item block per covered endpoint - real need, not speculative: the bridge role routinely exposes
     several single-cluster endpoints under one node (e.g. a switch, a contact sensor, and a
     temperature sensor each on their own endpoint), unlike a single real device's several clusters
-    usually sharing one endpoint (the shelly_plug_m_3gen case this function originally targeted).
+    usually sharing one endpoint.
     A single covered endpoint keeps the original bare `matter_node_<id>` key (unchanged, still what
     most real single-purpose devices produce); more than one gets `matter_node_<id>_ep<endpoint_id>`
     per block instead, since YAML mapping keys must be unique.

@@ -62,9 +62,9 @@ _DSP_FUNC_NAMES = {'surround_3d', 'direct', 'pure_direct', 'enhancer', 'tone_con
 # response_code -> description, per spec section "10. Response Code List".
 # Every YXC response carries this field; 0 means success, anything else means
 # the device rejected the request (and returns no other data). Used by
-# _submit_payload() to surface rejections that were previously swallowed
-# silently - a written cmd could fail on the device (e.g. code 5 'Guarded'
-# because the device is mid-operation) with nothing in the log to show it.
+# _submit_payload() to surface rejections - a written cmd could fail on the
+# device (e.g. code 5 'Guarded' because the device is mid-operation) with
+# nothing in the log to show it otherwise.
 _YXC_RESPONSE_CODES = {
     0: 'Successful request',
     1: 'Initializing',
@@ -2050,10 +2050,9 @@ class YamahaYXC(SmartPlugin):
 
         polls getStatus for every zone configured on this host, getPlayInfo
         (netusb, shared across zones) and the alarm clock settings. Each zone
-        is polled and updated independently, so multiple zones on the same
-        host (e.g. main + zone2 on one receiver) don't clobber each other -
-        previously all zones were merged into a single response dict, which
-        only worked correctly for a single zone per host.
+        must be polled and updated independently, so multiple zones on the
+        same host (e.g. main + zone2 on one receiver) don't clobber each
+        other.
         """
         for zone in list(self._yamaha_dev_zone.get(yamaha_host, {}).keys()):
             self._update_zone_state(yamaha_host, zone, update_items)
@@ -2232,9 +2231,7 @@ class YamahaYXC(SmartPlugin):
 
         NOT part of the official YXC spec (like queue.*, doesn't even
         appear as "Reserved") - reverse-engineered from a packet capture of
-        the real MusicCast iOS app. name_list[0] is bank 1 - confirmed by
-        capture (renaming bank 1 via setMcPlaylistName changed
-        name_list[0]).
+        the real MusicCast iOS app; name_list[0] is bank 1.
 
         Not polled on its own schedule (playlist names rarely change) -
         refreshed after browse.playlist_rename, and via the existing
@@ -2628,11 +2625,11 @@ class YamahaYXC(SmartPlugin):
 
         tries to extract value for requested cmd
         returns None if state is None (network error), if cmd is missing
-        from the response, or if value conversion fails - observed on real
-        hardware (not just a theoretical config/coding-error case as
-        originally assumed): some zone fields (surround_3d/pure_direct/
-        tone.balance/equalizer.low/mid/high) can be transiently absent from
-        getStatus right after power-on, before the device has settled.
+        from the response, or if value conversion fails: some zone fields
+        (surround_3d/pure_direct/tone.balance/equalizer.low/mid/high) can be
+        transiently absent from getStatus right after power-on, before the
+        device has settled - observed on real hardware, not just a
+        theoretical config/coding-error case.
         Skipping (like every other "unknown/unsupported" case in this file)
         is correct here - the caller already treats None as "nothing to
         push this round", the same field typically appears on the next poll.

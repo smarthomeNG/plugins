@@ -3,9 +3,8 @@
 """
 Unit tests for MatterBridgeClient._receive_loop()'s ConnectionClosed handling -
 mirrors tests/test_client.py's identical coverage for the server role's
-MatterServerClient (same bug, same fix, in the sibling client class). See that
-file's own TestReceiveLoopConnectionClosedHandling docstring for the full
-reasoning.
+MatterServerClient (sibling client class). See that file's own
+TestReceiveLoopConnectionClosedHandling docstring for the full reasoning.
 """
 
 import asyncio

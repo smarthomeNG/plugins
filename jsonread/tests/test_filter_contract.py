@@ -25,8 +25,7 @@ that migration:
 
 If a translated expression can't be made to produce the same expected
 value, that's a real semantic gap between the two engines worth a
-deliberate decision — not something to discover via a user bug report,
-which is how the bug this branch fixes was originally found.
+deliberate decision — not something to discover via a user bug report.
 """
 
 import json

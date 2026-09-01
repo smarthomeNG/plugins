@@ -150,12 +150,13 @@ class TestItemStore(unittest.TestCase):
         self.assertEqual(0, calls['fetchone'], 'insert() must not issue a follow-up lookup query')
 
     def test_insert_own_cur_path_uses_transaction(self):
-        # Regression: insert() used to open a raw cursor via self._db.cursor()
-        # directly when called without cur=, bypassing transaction()/lock()
-        # entirely despite the class docstring promising otherwise. Confirm
-        # it now genuinely goes through transaction() - a spy proves this
-        # more robustly than just checking the row exists (which a lost/
-        # uncommitted write wouldn't necessarily reveal against :memory:).
+        # insert() must go through self._db.transaction()/lock() when
+        # called without cur=, not open a raw cursor via self._db.cursor()
+        # directly (bypassing transaction()/lock() entirely despite the
+        # class docstring promising otherwise). A spy proves this more
+        # robustly than just checking the row exists (which a
+        # lost/uncommitted write wouldn't necessarily reveal against
+        # :memory:).
         calls = []
         orig_transaction = self.db.transaction
 
@@ -238,10 +239,10 @@ class TestItemStore(unittest.TestCase):
         self.assertEqual(0, log_store.count(item_id), 'delete() must remove the log rows too, not just the item row')
 
     def test_delete_own_cur_path_uses_transaction(self):
-        # Regression: delete() used to call self._db.commit() directly
-        # via LogStore.delete_range()'s own default commit=True, even
-        # when called without cur= - relying on this ad hoc call instead
-        # of the same transaction() primitive insert() already uses.
+        # delete() must go through the same self._db.transaction()
+        # primitive insert() already uses when called without cur=, not
+        # call self._db.commit() directly via LogStore.delete_range()'s
+        # own default commit=True.
         item_id = self.store.insert('gone')
         calls = []
         orig_transaction = self.db.transaction
@@ -255,8 +256,8 @@ class TestItemStore(unittest.TestCase):
         self.assertEqual(1, len(calls), 'delete() without cur= must go through self._db.transaction() exactly once')
 
     def test_delete_with_explicit_cur_never_calls_commit_directly(self):
-        # Regression: delete()/delete_range() used to call self._db.commit()
-        # unconditionally (default commit=True), even when called with an
+        # delete()/delete_range() must not call self._db.commit()
+        # unconditionally (default commit=True) when called with an
         # explicit cur from inside the caller's own open transaction() -
         # that would commit the caller's transaction early, before the
         # caller's own block finished. A caller-supplied cur must mean the
@@ -391,11 +392,11 @@ class TestLogStore(unittest.TestCase):
         )
 
     def test_delete_range_with_explicit_cur_never_calls_commit_directly(self):
-        # Regression: delete_range() used to call self._db.commit()
-        # unconditionally, bypassing the lock, even with an explicit cur
-        # from inside the caller's own open transaction() - see
+        # delete_range() must not call self._db.commit() unconditionally,
+        # bypassing the lock, when called with an explicit cur from inside
+        # the caller's own open transaction() - see
         # test_delete_with_explicit_cur_never_calls_commit_directly above
-        # for the ItemStore twin of this bug.
+        # for the ItemStore twin of this requirement.
         self.log_store.insert(self.item_id, self._entry(100, 50, 1.0), 'num', 100)
         commit_calls = []
         orig_commit = self.db.commit
@@ -440,13 +441,13 @@ class TestLogStore(unittest.TestCase):
         self.assertEqual(rows[0][0], QUALITY_NO_DATA)
 
     def test_edge_value_skips_gap_rows(self):
-        # Regression: edge_value()'s ORDER BY time LIMIT 1 could return an
-        # all-NULL gap row - a non-empty tuple of Nones is truthy in
-        # Python, so a caller decoding it (e.g. _compact_maxage()) would
-        # get value=None back and skip writing an aggregate, while the
-        # matching delete_range() call (which does NOT exclude gaps - it's
-        # a real row to clean up too) had already removed every row in the
-        # interval, including any real ones - silent data loss.
+        # edge_value()'s ORDER BY time LIMIT 1 must skip all-NULL gap rows -
+        # a non-empty tuple of Nones is truthy in Python, so a caller
+        # decoding it (e.g. _compact_maxage()) would get value=None back
+        # and skip writing an aggregate, while the matching delete_range()
+        # call (which does NOT exclude gaps - it's a real row to clean up
+        # too) still removes every row in the interval, including any real
+        # ones: silent data loss.
         self.log_store.insert(self.item_id, self._entry(50, 50, 99.0, QUALITY_VALID), 'num', 50)
         self.log_store.insert(self.item_id, self._entry(100, None, None, QUALITY_NO_DATA), 'num', 100)
 

@@ -5,8 +5,8 @@ Unit tests for MatterServerSidecar: _build_args() (pure list-building logic, no
 process spawned) and supervise()'s backoff escalation (fake process/clock, no
 real subprocess or real wall-clock waiting - mirrors
 tests/test_bridge_sidecar.py's TestSuperviseBackoff, see that class's own
-docstring for the full reasoning - both roles' supervise() shared the identical
-bug and got the identical fix).
+docstring for the full reasoning; both roles' supervise() share the same
+requirement).
 """
 
 import asyncio

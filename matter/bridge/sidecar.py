@@ -111,8 +111,7 @@ class MatterBridgeSidecar:
             # in --key=value form (VariableService.ts's parseArgvStyle only
             # splits on "=", a bare "--storage-path" with the value as a
             # separate argv token is silently parsed as storage-path=true
-            # and the actual path is dropped - a bridge run wrote to a
-            # literal "true/" directory before this was caught).
+            # and the actual path dropped).
             # matter-server's own --storage-path is unrelated - a
             # different program with its own CLI parser, not this mechanism.
             f'--storage-path={self.storage_path}',
@@ -136,10 +135,10 @@ class MatterBridgeSidecar:
                 *self._build_args(),
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,
-                # See server/sidecar.py's identical start_new_session - same fix, same bug
-                # (a terminal Ctrl-C's SIGINT reaching this child directly via inherited
-                # process group, racing shng's own graceful per-instance shutdown, caught
-                # live with multiple plugin instances configured).
+                # See server/sidecar.py's identical start_new_session - same requirement:
+                # a terminal Ctrl-C's SIGINT must not reach this child directly via
+                # inherited process group, racing shng's own graceful per-instance
+                # shutdown.
                 start_new_session=True,
             )
         except FileNotFoundError as ex:

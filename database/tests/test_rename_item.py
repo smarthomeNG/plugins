@@ -77,17 +77,16 @@ class TestDatabaseRenameItem(TestDatabaseBase):
         self.assertEqual(sorted(values), [1.0, 2.0])
 
     def test_reassign_orphaned_id_converges_across_multiple_chunks(self):
-        # Regression: the UPDATE inside reassign_orphaned_id()'s while loop
-        # used to be a rowid-subquery ('WHERE rowid IN (SELECT rowid FROM
-        # {log} WHERE item_id = :orphanid LIMIT :limit)') - broken against
-        # real MariaDB for two reasons: MariaDB rejects LIMIT directly
-        # inside IN(subquery), and {log} has no primary key, so
-        # MySQL/MariaDB exposes no rowid for it under any name. Rewritten
-        # to match on (item_id, time) via the existing UNIQUE KEY instead.
+        # The UPDATE inside reassign_orphaned_id()'s while loop must match
+        # on (item_id, time) via the existing UNIQUE KEY, not a
+        # rowid-subquery ('WHERE rowid IN (SELECT rowid FROM {log} WHERE
+        # item_id = :orphanid LIMIT :limit)') - MariaDB rejects LIMIT
+        # directly inside IN(subquery), and {log} has no primary key, so
+        # MySQL/MariaDB exposes no rowid for it under any name.
         # test_rename_item_reassigns_actual_log_entries_not_just_an_empty_
         # row only has 2 rows (one chunk, default max_reassign_logentries=
-        # 20) - this test forces several loop iterations to confirm the
-        # rewrite converges correctly across chunk boundaries too.
+        # 20) - this test forces several loop iterations to confirm
+        # convergence across chunk boundaries too.
         plugin = self.plugin()
         plugin.max_reassign_logentries = 3
         item = self.sh.return_item('main.num')

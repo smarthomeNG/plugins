@@ -8,17 +8,17 @@ from plugins.uzsu.tests.base import TestUZSUBase
 class TestPlainTimeEntries(TestUZSUBase):
     """Coverage for _get_time() with a plain HH:MM entry.
 
-    These exercise the datetime.now(self._timezone) fix in _get_time(): the
+    These exercise datetime.now(self._timezone) in _get_time(): the
     rrule search seed and the final scheduled time must consistently be in
     shng's configured timezone.
 
-    NOTE: a true red/green regression test (proving the OS-tz vs configured-tz
-    bug specifically) isn't practical here without monkeypatching
-    datetime.datetime.now() itself - the bug only manifests when the OS
-    timezone and configured timezone disagree about *which calendar day it
-    currently is* (i.e. right at local midnight). force_os_tz alone doesn't
-    shift "now" far enough to hit that window. These tests instead confirm
-    the now-fixed code produces correct, consistently-tz-aware results.
+    NOTE: a true red/green test for the OS-tz vs configured-tz case isn't
+    practical here without monkeypatching datetime.datetime.now() itself -
+    that discrepancy only manifests when the OS timezone and configured
+    timezone disagree about *which calendar day it currently is* (i.e.
+    right at local midnight). force_os_tz alone doesn't shift "now" far
+    enough to hit that window. These tests instead confirm the code
+    produces correct, consistently-tz-aware results.
     """
 
     def setUp(self):

@@ -2,9 +2,9 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 """
 Regression tests for server.update_item()'s exception handling: a
-TimeoutError from matter-server/the device not responding used to surface as
-a bare uncaught traceback through Item.__update() instead of being logged
-clearly. Exercises the real update_item() with a fake server_client whose
+TimeoutError from matter-server/the device not responding must be logged
+clearly, not surface as a bare uncaught traceback through Item.__update().
+Exercises the real update_item() with a fake server_client whose
 device_command() actually raises, driven through a real asyncio.run() (not
 a closed-unawaited coroutine) so the try/except inside update_item() is
 genuinely exercised, not just checked for having been called.

@@ -5,11 +5,10 @@ jsonread_filter attribute, poll_device() fetches the configured URL (here
 a file:// URL onto a fixture, exercising the plugin's real FileAdapter
 wiring) and writes the resolved value onto the item itself.
 
-This is the layer the bug fixed in this branch actually broke: jq engine
-unit tests in isolation wouldn't have caught a wiring problem between
-parse_item/poll_device and the item, and the engine tests alone don't
-prove the plugin ever calls item(value) with the right value for a real
-item.conf attribute.
+This layer matters because jq engine unit tests in isolation wouldn't
+catch a wiring problem between parse_item/poll_device and the item, and
+the engine tests alone don't prove the plugin ever calls item(value) with
+the right value for a real item.conf attribute.
 """
 
 import os

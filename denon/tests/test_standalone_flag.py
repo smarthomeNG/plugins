@@ -22,6 +22,7 @@ class TestDenonStandaloneFlagNotClobbered(unittest.TestCase):
     def test_reload_does_not_reset_true_to_false(self):
         import plugins.denon  # noqa: F401  (else branch runs, sets False - expected for normal import)
 
+        self.addCleanup(setattr, builtins, 'SDP_standalone', builtins.SDP_standalone)
         builtins.SDP_standalone = True  # simulate: we are genuinely running standalone
         importlib.reload(plugins.denon)
 

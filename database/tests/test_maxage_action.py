@@ -68,14 +68,14 @@ class TestMaxageAction(TestDatabaseBase):
         item = self.sh.return_item('main.maxage_invalid_type')
         self.assertEqual('delete', plugin._maxage_action_for(item))
 
-    # -- malformed database_maxage (regression: this used to crash item creation) --
+    # -- malformed database_maxage --
 
     def test_parse_item_survives_empty_database_maxage(self):
         # main.maxage_empty has database_maxage: '' - e.g. produced by a
         # struct copy-directive ('..:.') against a parent that doesn't set
-        # database_maxage itself. This used to reach parse_item()'s
-        # float(maxage) unguarded and blow up the whole item's creation
-        # (ValueError: could not convert string to float: '').
+        # database_maxage itself. parse_item() must not reach float(maxage)
+        # unguarded on this (ValueError: could not convert string to
+        # float: '').
         plugin = self.plugin()
         item = self.sh.return_item('main.maxage_empty')
         self.assertIsNotNone(item, 'item creation must not have crashed')
@@ -89,13 +89,13 @@ class TestMaxageAction(TestDatabaseBase):
     # -- scheduler registration -----------------------------------------------
 
     def test_start_schedulers_registers_remove_old_for_default_maxage_alone(self):
-        # Regression: 'Remove old' scheduler registration was gated only on
+        # 'Remove old' scheduler registration must not be gated only on
         # len(_items_with_maxage) > 0 (items with their own database_maxage
         # attribute) - a plugin-level default_maxage with zero such items
-        # never got the scheduler registered at all, even though
+        # must still get the scheduler registered, since
         # remove_older_than_maxage()'s worklist-fill already falls back to
         # _handled_items for exactly this case (see its len(worklist) == 0
-        # branch). default_maxage was therefore silently inert.
+        # branch).
         plugin = self.plugin()
         plugin._items_with_maxage = []
         plugin._default_maxage = 30.0
@@ -244,15 +244,15 @@ class TestMaxageAction(TestDatabaseBase):
         self.assertEqual('error', rows[0][COL_LOG_VAL_STR])
 
     def test_compact_maxage_first_does_not_lose_real_data_behind_a_gap_row(self):
-        # Regression: edge_value()'s ORDER BY time ASC LIMIT 1 used to be
-        # able to return an all-NULL no-data gap row as the "oldest" value
-        # for the interval. A non-empty tuple of Nones is truthy in Python,
-        # so the decoded value came back None, the aggregate insert was
-        # skipped - but delete_range() (which never excludes gaps, a gap
-        # is a real row to clean up too) had already removed every row in
-        # the interval, gap AND the real value sitting right after it.
-        # Silent data loss. Put the gap first (so it's picked as "first")
-        # and a real value right after it, in the same interval.
+        # edge_value()'s ORDER BY time ASC LIMIT 1 must not return an
+        # all-NULL no-data gap row as the "oldest" value for the interval -
+        # a non-empty tuple of Nones is truthy in Python, so the decoded
+        # value would come back None, skipping the aggregate insert, while
+        # delete_range() (which never excludes gaps, a gap is a real row to
+        # clean up too) still removes every row in the interval: gap AND
+        # the real value sitting right after it, silently losing data. Put
+        # the gap first (so it's picked as "first") and a real value right
+        # after it, in the same interval.
         plugin = self.plugin()
         item = self.sh.return_item('main.maxage_first_str')
         item_id = self.create_item(plugin, 'main.maxage_first_str')
@@ -327,9 +327,9 @@ class TestMaxageAction(TestDatabaseBase):
 
     def test_compact_maxage_avg_folds_live_open_row_sharing_interval_with_closed_data(self):
         # Mixed interval: one closed row plus the live open row that
-        # followed it. Regression target - delete_range() has no idea
-        # about "open" rows, so before the re-anchor fix this silently
-        # deleted the still-live row along with the closed one, even
+        # followed it. delete_range() has no idea about "open" rows, so the
+        # still-live row must be re-anchored past the interval before
+        # compaction, not silently deleted along with the closed one - even
         # though its value never contributed to the computed aggregate.
         plugin = self.plugin()
         item = self.sh.return_item('main.maxage_avg')
@@ -486,10 +486,9 @@ class TestMaxageAction(TestDatabaseBase):
         # A mid-transaction failure here must roll back and leave the
         # connection in a clean, usable state for the next caller -
         # without that, a broken connection stays broken indefinitely.
-        # _compact_maxage() catches this itself now (mirrors _dump()'s
+        # _compact_maxage() must catch this itself, mirroring _dump()'s
         # per-item isolation: one item's failure must not crash the whole
-        # scheduled cycle) rather than letting it propagate - this is the
-        # documented log-severity/graceful-degradation fix, not a gap.
+        # scheduled cycle.
         plugin = self.plugin()
         item = self.sh.return_item('main.maxage_sum')
         item_id = self.create_item(plugin, 'main.maxage_sum')
@@ -519,9 +518,8 @@ class TestMaxageAction(TestDatabaseBase):
     # -- remove_older_than_maxage() integration --------------------------------
 
     def test_remove_older_than_maxage_default_delete_behavior_unchanged(self):
-        # regression: an item with database_maxage but no database_maxage_action
-        # must still be plain-deleted through the full scheduler entrypoint,
-        # exactly like before this feature existed.
+        # an item with database_maxage but no database_maxage_action must
+        # still be plain-deleted through the full scheduler entrypoint.
         plugin = self.plugin()
         item = self.sh.return_item('main.maxage')
         item_id = self.create_item(plugin, 'main.maxage')
@@ -545,12 +543,12 @@ class TestMaxageAction(TestDatabaseBase):
         self.assertEqual(100.0, rows[0][COL_LOG_VAL_NUM])
 
     def test_remove_older_than_maxage_bulk_delete_uses_transaction(self):
-        # Regression: the "strategy b" bulk-delete branch (row count over
-        # max_delete_logentries) used to lock()/cursor()/execute() with no
-        # explicit commit anywhere - the DELETE relied entirely on some
-        # unrelated later commit() on self._db (e.g. the next _dump()
-        # cycle) to actually persist. A spy on transaction() proves the
-        # delete now genuinely locks + commits itself.
+        # The "strategy b" bulk-delete branch (row count over
+        # max_delete_logentries) must lock()/commit() its own DELETE via
+        # transaction(), not rely on some unrelated later commit() on
+        # self._db (e.g. the next _dump() cycle) to actually persist it. A
+        # spy on transaction() proves the delete genuinely locks + commits
+        # itself.
         plugin = self.plugin()
         plugin.max_delete_logentries = 1
         item = self.sh.return_item('main.maxage')
@@ -576,18 +574,15 @@ class TestMaxageAction(TestDatabaseBase):
         self.assertTrue(calls, 'bulk-delete branch must go through self._db.transaction()')
 
     def test_remove_older_than_maxage_bulk_delete_removes_oldest_rows_first(self):
-        # Regression: the bulk-delete DELETE statement used to be
-        # 'DELETE FROM {log} WHERE item_id = :id ORDER BY time ASC
-        # LIMIT :maxrecords' - not valid SQLite syntax without the
-        # non-default SQLITE_ENABLE_UPDATE_DELETE_LIMIT compile flag
-        # (confirmed: raises sqlite3.OperationalError: near "ORDER":
-        # syntax error against Python's bundled sqlite3). Rewritten as a
-        # rowid-subquery (same pattern as reassign_orphaned_id()'s UPDATE
-        # a few dozen lines above this method), which SQLite supports
-        # unconditionally. This test exercises the real SQL - not a mock -
-        # and specifically checks that the OLDEST rows (by time) are the
-        # ones removed, since a naive rowid-order rewrite could easily get
-        # this backwards.
+        # The bulk-delete DELETE statement must use a rowid-subquery (same
+        # pattern as reassign_orphaned_id()'s UPDATE a few dozen lines above
+        # this method), not 'DELETE FROM {log} WHERE item_id = :id ORDER BY
+        # time ASC LIMIT :maxrecords' - the latter is not valid SQLite
+        # syntax without the non-default SQLITE_ENABLE_UPDATE_DELETE_LIMIT
+        # compile flag. This test exercises the real SQL - not a mock - and
+        # specifically checks that the OLDEST rows (by time) are the ones
+        # removed, since a naive rowid-order rewrite could easily get this
+        # backwards.
         plugin = self.plugin()
         plugin.max_delete_logentries = 2
         item_id = self.create_item(plugin, 'main.maxage')

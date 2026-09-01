@@ -4,14 +4,12 @@
 Regression tests for server.cleanup()/bridge.cleanup()'s supervisor-task
 cancellation: the sidecar's own crash-recovery loop (sidecar.supervise())
 runs as a free-standing asyncio task, never part of the {stop_task,
-server_task, bridge_task} set Matter._plugin_coro() awaits. Without
-explicitly cancelling it first, supervise() only stops restarting once it
-observes sidecar._stopping, which sidecar.stop() is what sets - a sidecar
-process dying at exactly the wrong moment during shutdown could get
-restarted by the *old* supervise() loop in the window before cleanup() gets
-around to calling stop(), spawning a fresh process cleanup() never accounted
-for (observed once: a shutdown log showed a fresh sidecar pid starting up
-mid-shutdown, moments before the whole process exited).
+server_task, bridge_task} set Matter._plugin_coro() awaits. It must be
+explicitly cancelled - supervise() only stops restarting once it observes
+sidecar._stopping, which sidecar.stop() sets, so a sidecar process dying at
+exactly the wrong moment during shutdown could otherwise get restarted by
+the *old* supervise() loop in the window before cleanup() gets around to
+calling stop(), spawning a fresh process cleanup() never accounted for.
 """
 
 import asyncio

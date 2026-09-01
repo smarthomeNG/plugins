@@ -86,7 +86,7 @@ class MatterServerClient:
         # waiting on - matter-server can still answer it later (a real commission_with_code
         # call was observed taking ~3 minutes end to end; see commission_with_code's own
         # docstring). Without this, that answer arrives with no pending future to resolve
-        # and used to be silently dropped as "unsolicited". Pruned by age, not by count -
+        # and would be silently dropped as "unsolicited". Pruned by age, not by count -
         # this is expected to stay near-empty in normal operation.
         self._timed_out: dict[str, tuple[str, float]] = {}
         self._msg_id_counter = itertools.count(1)

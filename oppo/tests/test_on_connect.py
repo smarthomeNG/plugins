@@ -3,8 +3,9 @@
 """
 Tests that on_connect() does not crash when no item is bound to
 'general.verbose'. get_items_for_mapping() returns [] (never None) when
-unbound, so `[...][0]` raised IndexError on every connection unless a
-user happened to configure an item for that specific mapping.
+unbound, so `[...][0]` must not be indexed unconditionally - that would
+raise IndexError on every connection unless a user happened to configure
+an item for that specific mapping.
 """
 
 import unittest

@@ -14,14 +14,13 @@ from plugins.database.tests.base import TestDatabaseBase
 
 class TestDatabaseBasic(TestDatabaseBase):
     def test_init_fails_cleanly_for_sqlite_memory_database(self):
-        # Regression: the plugin opens two independent connections (self._db,
+        # The plugin opens two independent connections (self._db,
         # self._db_maint), each its own sqlite3.connect() call - a ':memory:'
         # database is private to the connection that opened it (no
-        # shared-cache URI is used here), so the two would silently become
-        # two separate, disconnected empty databases. base.py's plugin()
-        # fixture already works around this exact problem by using a temp
-        # file instead (see its comment) - this asserts the plugin itself
-        # now refuses the configuration outright rather than running broken.
+        # shared-cache URI is used here), so the two would become two
+        # separate, disconnected empty databases. base.py's plugin() fixture
+        # works around this by using a temp file instead (see its comment);
+        # this asserts the plugin itself refuses the configuration outright.
         self.plugin()  # sets up self.sh / registers test items / Database._parameters
         Database._parameters['connect'] = {'database': ':memory:'}
 
@@ -37,10 +36,9 @@ class TestDatabaseBasic(TestDatabaseBase):
     def test_db_itemtype_returns_none_not_crash_when_disconnected(self):
         # db_itemtype()/db_lastchange() both call readItem(cur=None), which
         # hits Database.fetchone()'s never-connected sentinel path. That
-        # sentinel used to be '' - `row is None` wouldn't catch it, and
-        # only the len(row)==0 branch of `COL_ITEM_ID >= len(row)`
-        # happened to still return None. Now the sentinel is None itself,
-        # not relying on that coincidence.
+        # sentinel must be None, not '' - `row is None` must catch it
+        # directly, not rely on the len(row)==0 branch of
+        # `COL_ITEM_ID >= len(row)` happening to still return None.
         plugin = self.plugin()
         item = self.sh.return_item('main.num')
         plugin._db._conn = None  # simulate disconnected, no reconnect attempt
@@ -60,26 +58,26 @@ class TestDatabaseBasic(TestDatabaseBase):
         self.assertEqual(3, plugin.id(self.sh.return_item('main.bool'), True))
 
     def test_id_creating_from_bare_path_string(self):
-        # Regression: id() falls back to using the raw argument as the item
-        # path (via the AttributeError branch) when it's a plain string
-        # rather than an item object - but the create-if-missing branch
-        # called self.insertItem(item.property.path, ...) unconditionally,
-        # which crashed with AttributeError for exactly this bare-string
-        # case instead of using the already-computed item_path fallback.
+        # id() falls back to using the raw argument as the item path (via
+        # the AttributeError branch) when it's a plain string rather than
+        # an item object - the create-if-missing branch must use that
+        # already-computed item_path fallback, not call
+        # self.insertItem(item.property.path, ...) unconditionally
+        # (AttributeError for a bare string, which has no .property).
         plugin = self.plugin()
         self.assertEqual(1, plugin.id('some.new.path', True))
         self.assertEqual(1, plugin.id('some.new.path', False))
 
     def test_setup_item_ddl_uses_auto_increment_for_non_sqlite_driver(self):
         """
-        Regression: CREATE TABLE {item}'s id column was hardcoded as bare
-        'id INTEGER PRIMARY KEY', which only auto-increments on SQLite
-        (aliased to rowid) - on MySQL/MariaDB it needs an explicit
-        AUTO_INCREMENT, or the very first ItemStore.insert() against a
-        fresh install fails outright under default strict SQL mode (see
-        Database._setup's docstring comment). Fixture always uses
-        sqlite3, so this only checks the DDL string the property builds
-        for each driver, not a live MySQL connection.
+        CREATE TABLE {item}'s id column must be AUTO_INCREMENT on
+        MySQL/MariaDB, not bare 'id INTEGER PRIMARY KEY' (which only
+        auto-increments on SQLite, aliased to rowid) - otherwise the very
+        first ItemStore.insert() against a fresh install fails outright
+        under default strict SQL mode (see Database._setup's docstring
+        comment). Fixture always uses sqlite3, so this only checks the DDL
+        string the property builds for each driver, not a live MySQL
+        connection.
         """
         plugin = self.plugin()
         self.assertIn('id INTEGER PRIMARY KEY,', plugin._setup['2'][0])
@@ -279,12 +277,12 @@ class TestDatabaseBasic(TestDatabaseBase):
         self.assertEqual(0, plugin._item_logcount[id])
 
     def test_readLogCount_time_end_boundary_matches_deleteLog(self):
-        # Regression: readLogCount's time_end was inclusive (time <=
-        # time_end) but deleteLog()/delete_range's is exclusive (time <
-        # time_end) - a row landing exactly on time_end used to be counted
-        # by readLogCount() but left behind by deleteLog() with the same
-        # time_end, so a "count then delete" caller (remove_older_than_maxage)
-        # over- reported how many rows it removed.
+        # readLogCount's time_end is inclusive (time <= time_end);
+        # deleteLog()/delete_range's is exclusive (time < time_end). A row
+        # landing exactly on time_end must be counted by readLogCount()
+        # consistently with what deleteLog() actually removes at the same
+        # time_end, or a "count then delete" caller
+        # (remove_older_than_maxage) over-reports how many rows it removed.
         plugin = self.plugin()
         id = self.create_item(plugin, 'main.num')
         plugin.insertLog(id, time=1000, duration=1000, val=1.0, it='num')
@@ -360,10 +358,10 @@ class TestDatabaseBasic(TestDatabaseBase):
         self.assertEqual(0, item())
 
     def test_parse_item_releases_lock_even_if_readitem_raises(self):
-        # Regression: this block used to lock()/cursor() with no
-        # try/finally at all - if readItem() raised, self._db's lock was
-        # never released, wedging every future operation on this
-        # connection (including shutdown) until process restart.
+        # This block must lock()/cursor() inside a try/finally - if
+        # readItem() raises, self._db's lock must still be released, or
+        # every future operation on this connection (including shutdown)
+        # wedges until process restart.
         plugin = self.plugin()
         item = self.sh.return_item('main.num')
 
@@ -378,11 +376,6 @@ class TestDatabaseBasic(TestDatabaseBase):
         plugin._db.release()
 
     def test_parse_item_with_registered_but_never_logged_item(self):
-        # Regression: create_item()/id() inserts an `item` row with only
-        # `name` set - time/val_* stay NULL until the item logs its first
-        # value. parse_item() used to crash decoding that NULL time
-        # (_datetime(None) -> TypeError dividing None by 1000) instead of
-        # treating it the same as "no cached value yet".
         plugin = self.plugin()
         item = self.sh.return_item('main.num')
         self.create_item(plugin, item.id())
@@ -425,13 +418,14 @@ class TestDatabaseBasic(TestDatabaseBase):
         self.assertEqual('1970-01-01T00:00:07.200000+00:00', item.last_change().isoformat())
 
     def test_sqlite_dump_holds_lock_for_the_whole_iterdump(self):
-        # Regression: sqlite_dump() iterated self._db._conn.iterdump()
-        # directly - bypassing self._db.transaction(), which every other
-        # multi-statement access to self._db in this file goes through to
-        # take self._fdb_lock. A concurrent write (e.g. a buffer flush)
-        # could interleave with the dump and produce an inconsistent
-        # snapshot. Spies on lock()/release() to confirm the dump now
-        # acquires the lock before iterdump() and releases it after.
+        # sqlite_dump() must acquire self._fdb_lock (via
+        # self._db.transaction(), which every other multi-statement access
+        # to self._db in this file goes through) before iterating
+        # self._db._conn.iterdump(), not bypass it directly - a concurrent
+        # write (e.g. a buffer flush) could otherwise interleave with the
+        # dump and produce an inconsistent snapshot. Spies on
+        # lock()/release() to confirm the dump acquires the lock before
+        # iterdump() and releases it after.
         plugin = self.plugin()
         id = self.create_item(plugin, 'main.num')
         plugin.insertLog(id, time=0, duration=3600, val=10, it='num')
@@ -479,11 +473,11 @@ class TestDatabaseBasic(TestDatabaseBase):
         )
 
     def test_dump_escapes_semicolon_and_newline_in_val_str(self):
-        # Regression: escaping only handled embedded '"' (via a backslash,
-        # not RFC 4180's doubled-quote convention either) - a val_str
-        # containing the ';' delimiter silently shifted every later column
-        # in that row, and an embedded newline split one logical row into
-        # two lines. csv.writer's default quoting handles both correctly.
+        # dump()'s CSV escaping must handle the ';' delimiter and embedded
+        # newlines in val_str, not just embedded '"' - an unescaped ';'
+        # shifts every later column in that row, and an unescaped newline
+        # splits one logical row into two lines. csv.writer's default
+        # quoting handles both correctly.
         plugin = self.plugin()
         id = self.create_item(plugin, 'main.str')
         tricky_value = 'a;b\nc'
@@ -671,13 +665,12 @@ class TestDatabaseBasic(TestDatabaseBase):
         self.assertEqual(1, plugin.readLogCount(id1))
 
     def test_initialize_db_maint_throttle_logs_correct_delta(self):
-        # Regression: the maintenance-connection reconnect-throttle branch
-        # referenced time_delta_last_connect (the main connection's delta,
-        # only assigned when the main connection itself needed reconnecting)
-        # instead of the just-computed time_delta_last_maint_connect. With
-        # the main connection already up - so that variable is never
-        # assigned in this call at all - this raised NameError instead of
-        # logging the (wrong) number.
+        # The maintenance-connection reconnect-throttle branch must
+        # reference time_delta_last_maint_connect (the just-computed
+        # value), not time_delta_last_connect (the main connection's delta,
+        # only assigned when the main connection itself needs reconnecting)
+        # - with the main connection already up, that variable is never
+        # assigned in this call at all.
         plugin = self.plugin()
         self.assertTrue(plugin._db.connected())
         plugin._db_maint._connected = False
@@ -755,15 +748,15 @@ class TestDatabaseBasic(TestDatabaseBase):
         self.assertEqual('main.num', items[0][1])
 
     def test_delete_orphan_bulk_delete_removes_chunk_of_log_rows(self):
-        # Regression: 'DELETE FROM {log} WHERE item_id = :id LIMIT
-        # :maxrecords' (no ORDER BY, but still a bare LIMIT on a top-level
-        # DELETE) is not valid SQLite syntax without the non-default
+        # 'DELETE FROM {log} WHERE item_id = :id LIMIT :maxrecords' (no
+        # ORDER BY, but still a bare LIMIT on a top-level DELETE) is not
+        # valid SQLite syntax without the non-default
         # SQLITE_ENABLE_UPDATE_DELETE_LIMIT compile flag - same class of
-        # bug as remove_older_than_maxage()'s bulk-delete branch (see
-        # test_maxage_action.py), found alongside it. Rewritten as a
-        # rowid-subquery. Exercises the real SQL - not mocked - and checks
-        # the chunk size is actually respected: some rows deleted, some
-        # left (item stays orphaned, to be finished next cycle).
+        # constraint as remove_older_than_maxage()'s bulk-delete branch
+        # (see test_maxage_action.py). Must use a rowid-subquery instead.
+        # Exercises the real SQL - not mocked - and checks the chunk size
+        # is actually respected: some rows deleted, some left (item stays
+        # orphaned, to be finished next cycle).
         plugin = self.plugin()
         plugin.delete_orphan_chunk_size = 2
         item_id = self.create_item(plugin, 'main.nodb')
@@ -780,16 +773,15 @@ class TestDatabaseBasic(TestDatabaseBase):
         self.assertIn('main.nodb', plugin.orphanlist, 'item must remain orphaned - more log rows still need deleting')
 
     def test_remove_orphan_items_survives_stale_maintenance_connection(self):
-        # Regression for smarthomeNG/plugins#1004: a hiccup on the dedicated
-        # maintenance connection (_db_maint), independent from the main _db
-        # connection (e.g. a brief backup-induced DB outage), currently
-        # crashes orphan cleanup outright. _delete_orphan() drives a raw
-        # cursor from _db_maint straight into _execute(..., cur=cur); passing
-        # an explicit cursor makes _query() skip its verify()/reconnect
-        # branch entirely, and the resulting DBAPI error is re-raised with no
-        # try/except anywhere up the call chain - matching the uncaught
-        # "pymysql.err.InterfaceError: (0, '')" loop reported in the issue.
-        # It must instead be logged and the item requeued for the next cycle.
+        # A hiccup on the dedicated maintenance connection (_db_maint),
+        # independent from the main _db connection (e.g. a brief
+        # backup-induced DB outage), must not crash orphan cleanup
+        # outright. _delete_orphan() drives a raw cursor from _db_maint
+        # straight into _execute(..., cur=cur); passing an explicit cursor
+        # makes _query() skip its verify()/reconnect branch entirely, so a
+        # DBAPI error there must be caught, not left to propagate uncaught
+        # up the call chain. It must instead be logged and the item
+        # requeued for the next cycle.
         plugin = self.plugin()
         self.create_item(plugin, 'main.num')
         self.create_item(plugin, 'main.nodb')

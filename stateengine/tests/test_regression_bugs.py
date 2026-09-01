@@ -1,41 +1,27 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 """
-Regression guard: two bugs found during PR #1041 review.
+Regression guards for two defects in StateEngineAction.py/StateEngineItem.py.
 
-Bug #1 — SeActionBase._delayed_execute() queue arity mismatch
-─────────────────────────────────────────────────────────────
-Location: StateEngineAction.py  SeActionBase._delayed_execute()
-
+SeActionBase._delayed_execute() queue arity
+────────────────────────────────────────────
 run_queue() unpacks a "delayedaction" job as an 11-tuple:
     (_, action, actionname, namevar, repeat_text, value,
      current_condition, previous_condition, previousstate_condition,
      next_condition, state)
 
-_delayed_execute() correctly puts 11 elements when state is truthy:
-    ["delayedaction", self, ..., state]   → 11 items ✓
+_delayed_execute() must always put exactly 11 elements, including when
+state is falsy (None or not provided) - it currently puts only 10 in that
+branch, which makes run_queue() raise ValueError. The relevant test below
+is written for the fixed behaviour and is marked xfail until the arity
+defect is addressed.
 
-But when state is falsy (None or not provided) it only puts 10:
-    ["delayedaction", self, ...]           → 10 items ✗
-
-run_queue() will raise ValueError (not enough values to unpack) for that job.
-
-The tests below are written for the FIXED behaviour (11 elements in both
-branches).  They FAIL against the current buggy code and PASS once fixed,
-acting as a regression guard.
-
-Bug #2 — SeItem.remove_scheduler_entry() safe when name not in list
-────────────────────────────────────────────────────────────────────
-Location: StateEngineItem.py  SeItem.remove_scheduler_entry()
-
-list.remove() raises ValueError if the element is not found.  The method
-must guard against that.  The current code (PR #1041) already has the guard
-    if name in self.__active_schedulers:
-        self.__active_schedulers.remove(name)
-
-The test verifies the guard is present and the method does not raise when
-called with a name that is not in the list.  This ensures the guard is never
-accidentally removed.
+SeItem.remove_scheduler_entry() name-not-in-list safety
+──────────────────────────────────────────────────────
+list.remove() raises ValueError if the element is not found;
+remove_scheduler_entry() must guard against that
+(`if name in self.__active_schedulers: ...remove(name)`). This test
+verifies the guard stays in place.
 """
 
 import logging
@@ -99,9 +85,9 @@ class TestDelayedExecuteQueueArity(unittest.TestCase):
     @unittest.expectedFailure
     def test_with_state_none_puts_11_items(self):
         """
-        state=None → currently puts 10 items (BUG — still present after upstream merge).
-        run_queue() unpacks 11; the else-branch in _delayed_execute omits state.
-        Written for the fixed behaviour; xfail until the bug is addressed.
+        state=None → currently puts 10 items: run_queue() unpacks 11; the
+        else-branch in _delayed_execute omits state. Written for the fixed
+        behaviour; xfail until addressed.
         """
         self.action._delayed_execute(actionname="Action 'test_action'", namevar='test_action', state=None)
         jobs = self._drain_queue()
@@ -153,8 +139,8 @@ class TestRemoveSchedulerEntryGuard(unittest.TestCase):
 
     def test_list_remove_without_guard_raises(self):
         """
-        Demonstrate that a bare list.remove() raises ValueError — the bug
-        that the guard prevents.
+        Demonstrate that a bare list.remove() raises ValueError, which the
+        guard in remove_scheduler_entry() must prevent.
         """
         schedulers = ['job-a', 'job-b']
         with self.assertRaises(ValueError):

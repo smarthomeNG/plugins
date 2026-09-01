@@ -98,13 +98,12 @@ class _FakeProcess:
 
 class TestSuperviseBackoff(unittest.TestCase):
     """
-    Regression tests for a real bug: supervise() used to reset its own
-    `attempt` counter to 0 immediately after every start(), regardless of how
-    long that new process then stayed up before crashing again - so
-    RESTART_BACKOFF_SECONDS's escalation (1, 2, 5, 10, 30, 60) never actually
-    kicked in for a genuine crash loop, every restart attempt saw the
-    shortest (1s) delay (killing a bridge sidecar manually produced no
-    visible restart activity, traced to this exact reset).
+    Regression tests: supervise() must not reset its own `attempt` counter
+    to 0 until a run proves itself stable (>= STABLE_RUN_SECONDS) -
+    resetting immediately after every start() would mean
+    RESTART_BACKOFF_SECONDS's escalation (1, 2, 5, 10, 30, 60) never
+    actually kicks in for a genuine crash loop, with every restart attempt
+    seeing the shortest (1s) delay.
 
     Both time.monotonic() (via _FakeClock/_FakeProcess above) and
     asyncio.sleep() (patched per-test below) are faked, so these tests run in

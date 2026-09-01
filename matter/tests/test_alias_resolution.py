@@ -103,8 +103,8 @@ class _FakeItems:
 
 
 class TestResolveNodeIdAliasParseOrder(unittest.TestCase):
-    """Regression test: an item referencing matter_alias used to fail
-    permanently (never registered for dispatch) if it parsed before its
+    """Regression test: an item referencing matter_alias must not fail
+    permanently (never registered for dispatch) if it parses before its
     alias definition - item tree load order across yaml files isn't
     guaranteed either way."""
 
@@ -137,16 +137,16 @@ class TestResolveNodeIdAliasParseOrder(unittest.TestCase):
 
 
 class TestResolveAddressingMultiInstance(unittest.TestCase):
-    """Regression tests for the real bug a live user hit: resolve_node_id()/
-    resolve_addressing() used to call Item.find_attribute() directly, which
-    has no idea attr@instance exists - matter_node@matter2 on a second-
-    instance item was silently invisible, logged as "not set on this item
-    or any ancestor" even though it plainly was set. Fixed by switching to
-    Item.find_attribute_with_instance() (shng core, tests/test_item_pathresolution.py
-    has the ancestor-walk/attr@instance coverage at that level) - these
-    tests check the matter plugin's own wiring to it, at the level the bug
-    actually surfaced: resolve_node_id()/resolve_addressing(), not the
-    generic lookup mechanism itself."""
+    """Regression tests: resolve_node_id()/resolve_addressing() must call
+    Item.find_attribute_with_instance(), not Item.find_attribute() directly
+    (which has no idea attr@instance exists) - matter_node@matter2 on a
+    second-instance item must resolve, not be silently invisible, logged as
+    "not set on this item or any ancestor" even though it's plainly set
+    (shng core, tests/test_item_pathresolution.py has the
+    ancestor-walk/attr@instance coverage at that level). These tests check
+    the matter plugin's own wiring to it, at the level
+    resolve_node_id()/resolve_addressing() operate, not the generic lookup
+    mechanism itself."""
 
     def test_default_instance_still_resolves_bare_attrs(self):
         plugin = _make_plugin(instance='')
@@ -208,12 +208,12 @@ class TestValidateAliasReferences(unittest.TestCase):
 
 
 class TestStopOnItemChangeDisabled(unittest.TestCase):
-    """Regression guard: STOP_ON_ITEM_CHANGE=True (the SmartPlugin default)
-    combined with server.ensure_alias_base_item()'s edit_item() call on its
-    own base item caused Matter to pause itself mid-run() - edit_item() sees
-    every loaded plugin (item.plugins.return_plugins() is the global
-    registry, not item-filtered), including Matter, already self.alive at
-    that point, calls Matter.stop() before start_asyncio() ever ran, then
+    """Regression guard: STOP_ON_ITEM_CHANGE must stay False - combined with
+    server.ensure_alias_base_item()'s edit_item() call on its own base item,
+    True would make Matter pause itself mid-run(): edit_item() sees every
+    loaded plugin (item.plugins.return_plugins() is the global registry,
+    not item-filtered), including Matter, already self.alive at that
+    point, calls Matter.stop() before start_asyncio() ever ran, then
     resumes via a re-entrant Matter.run() call in its finally block -
     which hits the exact same edit_item() call again, recursing forever."""
 
@@ -223,10 +223,9 @@ class TestStopOnItemChangeDisabled(unittest.TestCase):
 
 class TestEnsureAliasBaseItemRemark(unittest.TestCase):
     """server.ensure_alias_base_item() must only edit_item() the base item
-    ONCE, the first time it has no remark - not on every run(), which is
-    what a remark-detection bug (checking item.conf instead of
-    item.property.remark) previously caused, and what fed the recursion
-    above."""
+    ONCE, the first time it has no remark - not on every run() (checking
+    item.conf instead of item.property.remark would miss an already-set
+    remark on every call, feeding the recursion above)."""
 
     def test_remark_already_set_never_calls_edit_item(self):
         plugin = _make_plugin()

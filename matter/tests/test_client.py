@@ -175,11 +175,12 @@ class _RaisingWebSocket:
 
 class TestReceiveLoopConnectionClosedHandling(unittest.TestCase):
     """
-    Regression tests: a ConnectionClosed from the underlying websocket - the
-    sidecar process died, whether killed deliberately, crashed, or restarted
-    by supervise() (all now routine occurrences) - used to log a full
-    traceback via logger.exception(), identically to any other genuinely
-    unexpected error, drowning real errors in routine-restart noise.
+    Regression tests: a ConnectionClosed from the underlying websocket -
+    the sidecar process died, whether killed deliberately, crashed, or
+    restarted by supervise() (all now routine occurrences) - must log a
+    short warning, not a full traceback via logger.exception() identically
+    to any other genuinely unexpected error, drowning real errors in
+    routine-restart noise.
     """
 
     def test_connection_closed_logs_a_short_warning_not_a_full_exception(self):

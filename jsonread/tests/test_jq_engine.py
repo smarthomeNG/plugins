@@ -52,10 +52,9 @@ class TestTraversePlainKeys(_EngineBase):
 
 class TestTraverseBracketIndices(_EngineBase):
     """
-    Regression coverage for the bug fixed in this branch: .Data["0"] and
-    .Data[0] were being treated as one literal (and always-missing) key
-    name, so every filter using array indexing silently resolved to
-    nothing.
+    Regression coverage: .Data["0"] and .Data[0] must not be treated as one
+    literal (and always-missing) key name, or every filter using array
+    indexing silently resolves to nothing.
     """
 
     def setUp(self):

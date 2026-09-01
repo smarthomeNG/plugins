@@ -316,10 +316,7 @@ class LogStore:
         lock and commits via ``self._db.transaction()`` (matching
         :meth:`ItemStore.insert`) - with an explicit ``cur``, the caller
         already holds the lock and owns the commit/rollback decision, so
-        this never touches it. A caller-controlled independent commit flag
-        used to let a passed-in ``cur`` be committed unilaterally mid- the
-        caller's own transaction, or a call with ``cur`` omitted be left
-        uncommitted with nothing else guaranteed to flush it.
+        this never touches it.
 
         :param item_id:       Database item ID.
         :param time:          Exact timestamp to match (optional).

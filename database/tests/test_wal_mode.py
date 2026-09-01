@@ -39,9 +39,9 @@ class TestWalModeWiring(TestDatabaseBase):
 
 class TestExtractConnectValue(TestDatabaseBase):
     """Regression coverage for copy_databasefile()'s database_name lookup -
-    it used to assume connect was a list of 'key:value' strings only,
-    silently resolving to '' (and then failing) whenever connect was
-    configured as a dict instead - a form lib.db.Database itself accepts."""
+    it must handle connect configured as a dict (a form lib.db.Database
+    itself accepts), not just a list of 'key:value' strings, or it
+    silently resolves to '' and then fails."""
 
     def test_dict_connect(self):
         plugin = self.plugin()

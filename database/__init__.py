@@ -1467,9 +1467,6 @@ class Database(SmartPlugin):
         """
         Return the total number of log rows across all items.
 
-        Previously accepted ``id``, ``time_start``, ``time_end`` parameters
-        that were silently ignored; the signature is corrected here.
-
         This is a public function of the plugin.
 
         :param cur: Optional cursor.
@@ -2922,9 +2919,7 @@ class Database(SmartPlugin):
         Mirrors lib.db.Database.__init__()'s own parsing rather than
         assuming one specific shape - connect may be a list of 'key:value'
         strings, a list of dict/OrderedDict entries (as the YAML loader
-        produces), or a plain dict. Regression: copy_databasefile() used to
-        assume the list-of-strings form only, silently resolving to an
-        empty path (and failing) whenever connect was configured as a dict.
+        produces), or a plain dict.
 
         :param connect: raw 'connect' parameter, in any of the above shapes
         :param key: key to look up (e.g. 'database')

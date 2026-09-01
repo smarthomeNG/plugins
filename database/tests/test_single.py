@@ -85,11 +85,12 @@ class TestDatabaseSingle(TestDatabaseBase):
         self.assertIsNone(res)
 
     def test_single_raw_no_log_returns_none(self):
-        # Regression: every other func here is an ungrouped SQL aggregate,
-        # which always returns exactly one (NULL) row even with no matching
-        # data - 'raw' has no aggregate and no GROUP BY, so an empty range
-        # genuinely returns zero rows, and logs['tuples'][0][0] raised
-        # IndexError instead of reporting "no data" like every other func.
+        # every other func here is an ungrouped SQL aggregate, which always
+        # returns exactly one (NULL) row even with no matching data - 'raw'
+        # has no aggregate and no GROUP BY, so an empty range genuinely
+        # returns zero rows; _single() must report "no data" like every
+        # other func here, not index logs['tuples'][0][0] unconditionally
+        # (IndexError on zero rows).
         plugin = self.plugin()
         res = plugin._single('raw', start=0, item='main.num')
         self.assertIsNone(res)

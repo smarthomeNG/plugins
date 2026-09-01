@@ -79,15 +79,14 @@ class TestDatabaseSeries(TestDatabaseBase):
         self.assertSeries([(1, None), (11, 3600.0), (21, -1800.0), (31, 3600.0)], res)
 
     def test_series_differentiate_aggregates_multiple_rows_per_bucket(self):
-        """Regression: 'diff'/'differentiate' used to mix a window function
-        with an aggregate GROUP BY in one SELECT - errors outright under
-        MySQL 8/5.7's default ONLY_FULL_GROUP_BY, and returns an
+        """Regression: 'diff'/'differentiate' must not mix a window function
+        with an aggregate GROUP BY in one SELECT - that errors outright
+        under MySQL 8/5.7's default ONLY_FULL_GROUP_BY, and returns an
         undefined arbitrary single row's value per bucket under MariaDB's
-        default (permissive) mode, verified against a real MariaDB
-        target. Forces 4 rows into a single bucket (count=1) so a
-        non-aggregated result would only reflect one arbitrary row's
-        diff/rate, not the mathematically correct sum-of-diffs-over-the-
-        bucket's-time-span used here.
+        default (permissive) mode. Forces 4 rows into a single bucket
+        (count=1) so a non-aggregated result would only reflect one
+        arbitrary row's diff/rate, not the mathematically correct
+        sum-of-diffs-over-the-bucket's-time-span used here.
         """
         plugin = self.plugin()
         self.create_log(plugin, 'main.num', [(1, 2, 10), (2, 3, 13), (3, 4, 11), (4, 5, 20)])
