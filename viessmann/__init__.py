@@ -172,8 +172,7 @@ class viessmann(SmartDevicePlugin):
                 'reply_pattern': [addr],
                 'item_type': 'str',
                 'dev_datatype': 'Hex',
-                'params': ['value', 'mult', 'signed', 'len'],
-                'param_values': ['VAL', mult, signed, length],
+                'params': {'value': 'VAL', 'mult': mult, 'signed': signed, 'len': length},
             }
             self.logger.debug(f'Adding temporary command config {cmdconf} for command temp_cmd')
             self._commands._parse_commands({cmd: cmdconf}, [cmd])
