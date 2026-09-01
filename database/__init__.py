@@ -227,6 +227,20 @@ class Database(SmartPlugin):
         self.driver = self.get_parameter_value('driver')
         self._connect = self.get_parameter_value('connect')  # list of connection parameters
         self._connect = self._resolve_sqlite_database_path(self._connect)
+        self._sqlite_wal_mode = bool(self.get_parameter_value('sqlite_wal_mode'))
+        if self._sqlite_wal_mode:
+            if self.driver.lower() == 'sqlite3':
+                self.logger.notice(
+                    'Database: sqlite_wal_mode is enabled - switching the database file to WAL journal '
+                    'mode. This is a one-way decision: WAL, once set, persists in the file itself across '
+                    'restarts and is picked up by any future connection (including other tools) until '
+                    'something explicitly switches it back - turning this parameter back off later does '
+                    'not revert an already-converted file.'
+                )
+            else:
+                self.logger.warning(
+                    f"Database: sqlite_wal_mode is enabled but driver is '{self.driver}', not sqlite3 - ignored"
+                )
         self._prefix = self.get_parameter_value('prefix')
         if self._prefix is None:
             self._prefix = ''
@@ -295,7 +309,10 @@ class Database(SmartPlugin):
 
         # Setup db and test if connection is possible
         self._db = lib.db.Database(
-            ('' if self._prefix == '' else self._prefix.capitalize()) + 'Database', self.driver, self._connect
+            ('' if self._prefix == '' else self._prefix.capitalize()) + 'Database',
+            self.driver,
+            self._connect,
+            wal_mode=self._sqlite_wal_mode,
         )
         if not self._db.api_initialized:
             # Error initializeng the database driver (e.g.: Python module for database driver not found)
@@ -325,7 +342,10 @@ class Database(SmartPlugin):
 
         # Setup db maintenance connection and test if connection is possible
         self._db_maint = lib.db.Database(
-            ('' if self._prefix == '' else self._prefix.capitalize()) + 'Database', self.driver, self._connect
+            ('' if self._prefix == '' else self._prefix.capitalize()) + 'Database',
+            self.driver,
+            self._connect,
+            wal_mode=self._sqlite_wal_mode,
         )
         if not self._db_maint.api_initialized:
             # Error initializeng the database driver (e.g.: Python module for database driver not found)
@@ -922,11 +942,27 @@ class Database(SmartPlugin):
             return
 
         # get source and destination names
-        try:
-            database_name = next((s for s in self._connect if s.startswith('database:')), '')
-            database_name = database_name[9:].strip()
-        except Exception:
-            database_name = ''
+        database_name = self._extract_connect_value(self._connect, 'database')
+
+        # In WAL journal mode, recently committed data can still sit in a
+        # separate -wal sidecar file rather than the main file - a plain
+        # copy of just the main file would silently miss it. TRUNCATE folds
+        # everything back and empties -wal, so the subsequent single-file
+        # copy is complete. Not gated on sqlite_wal_mode: the FILE's actual
+        # on-disk mode is what matters (it may have been set by an earlier
+        # run of this plugin, or another tool), not the current config, and
+        # this is a harmless no-op against a file that isn't in WAL mode.
+        if database_name and os.path.exists(database_name):
+            try:
+                import sqlite3
+
+                checkpoint_conn = sqlite3.connect(database_name)
+                try:
+                    checkpoint_conn.execute('PRAGMA wal_checkpoint(TRUNCATE);')
+                finally:
+                    checkpoint_conn.close()
+            except Exception as e:
+                self.logger.warning(f'Could not checkpoint SQLite3 database file before copying: {e}')
 
         # copy the database file
         self.logger.info(f'Starting to copy SQLite3 database file from {database_name} to {self._copy_database_name}')
@@ -2879,6 +2915,34 @@ class Database(SmartPlugin):
                 entry = f'{key}:{os.path.join(self.get_sh().get_basedir(), value)}'
             resolved.append(entry)
         return resolved
+
+    def _extract_connect_value(self, connect, key):
+        """Look up a single key's value from the 'connect' parameter.
+
+        Mirrors lib.db.Database.__init__()'s own parsing rather than
+        assuming one specific shape - connect may be a list of 'key:value'
+        strings, a list of dict/OrderedDict entries (as the YAML loader
+        produces), or a plain dict. Regression: copy_databasefile() used to
+        assume the list-of-strings form only, silently resolving to an
+        empty path (and failing) whenever connect was configured as a dict.
+
+        :param connect: raw 'connect' parameter, in any of the above shapes
+        :param key: key to look up (e.g. 'database')
+        :return: the value as a string, or '' if not found
+        """
+        if isinstance(connect, dict):
+            return str(connect.get(key, ''))
+        if isinstance(connect, list) and connect:
+            if isinstance(connect[0], dict):
+                for item in connect:
+                    if key in item:
+                        return str(item[key])
+            elif isinstance(connect[0], str):
+                for entry in connect:
+                    k, sep, value = entry.partition(':')
+                    if sep and k.strip() == key:
+                        return value.strip()
+        return ''
 
     def _initialize_db(self):
         # initialize main db connection

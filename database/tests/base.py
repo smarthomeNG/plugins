@@ -14,7 +14,7 @@ from tests.mock.core import MockSmartHome
 class TestDatabaseBase(unittest.TestCase):
     TIME_FACTOR = 1000
 
-    def plugin(self):
+    def plugin(self, **param_overrides):
         self.sh = MockSmartHome()
         self.sh.with_items_from(common.BASE + '/plugins/database/tests/test_items.yaml')
 
@@ -35,6 +35,7 @@ class TestDatabaseBase(unittest.TestCase):
         Database._parameters = {
             'driver': 'sqlite3',
             'connect': {'database': self._db_file.name},
+            'sqlite_wal_mode': False,
             'prefix': '',
             'cycle': 60,
             'removeold_cycle': 91,
@@ -52,6 +53,7 @@ class TestDatabaseBase(unittest.TestCase):
             'copy_database': False,
             'copy_database_name': '',
         }
+        Database._parameters.update(param_overrides)
 
         plugin = Database.__new__(Database)
         # Mirrors lib.plugin.PluginWrapper's real load sequence: _set_sh() is

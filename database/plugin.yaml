@@ -32,6 +32,12 @@ parameters:
         description:
             de: 'Spezifiziert die Verbindungsparameter, welche genutzt werden, um die connect() Funktion des DB API 2 aufzurufen.'
             en: 'specifies the connection parameters which is directly used to invoke the connect() function of the DB API 2 implementation (for SQLite lookup here, other databases depends on implementation). An example connect string for pymysql could be connect = host:127.0.0.1 | user:db_user | passwd:db_password | db:smarthome'
+    sqlite_wal_mode:
+        type: bool
+        default: False
+        description:
+            de: "Nur für SQLite3: Auf True setzen, um die Datenbankdatei in den WAL-Journal-Modus zu versetzen - erlaubt einem Schreibvorgang, parallel zu Lesevorgängen weiterzulaufen, statt sie zu blockieren (relevant, da dieses Plugin zwei unabhängige Verbindungen zur selben Datei offen hält). ACHTUNG: Dies ist praktisch eine Einwegentscheidung - WAL ist eine Eigenschaft der Datenbankdatei selbst, nicht der Verbindung, bleibt über Neustarts hinweg bestehen und wird von jeder künftigen Verbindung (auch von anderen Tools) übernommen, bis es explizit zurückgesetzt wird. Dieses Attribut später wieder auf False zu setzen, macht eine bereits umgestellte Datei nicht rückgängig."
+            en: "SQLite3 only: Set to True to switch the database file to WAL journal mode - lets a write proceed alongside reads instead of blocking them (relevant since this plugin keeps two independent connections open to the same file). WARNING: this is effectively a one-way decision - WAL is a property of the database file itself, not the connection, persists across restarts, and is picked up by any future connection (including other tools) until explicitly switched back. Setting this attribute back to False later does not revert an already-converted file."
     prefix:
         type: str
         default: ''
