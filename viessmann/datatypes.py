@@ -58,6 +58,8 @@ class DT_Serial(DT_Number):
 # T = time
 class DT_Time(DT_Number):
     def get_send_data(self, data, **kwargs):
+        if data is None:
+            return None
         try:
             datestring = dateutil.parser.isoparse(data).strftime('%Y%m%d%w%H%M%S')
             # Viessmann erwartet 2 digits für Wochentag, daher wird hier noch eine 0 eingefügt

@@ -98,7 +98,7 @@ commands = {
             'reply_pattern': '*',
             'item_type': 'num',
             'dev_datatype': 'Number',
-            'params': {'value': 'VAL', 'len': 2},
+            'params': {'value': 'VAL', 'len': 1},
             'lookup': 'systemschemes',
         },  # Anlagenschema
         'CtrlId': {

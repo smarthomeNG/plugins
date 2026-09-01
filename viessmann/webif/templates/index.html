@@ -207,11 +207,12 @@
 				</thead>
 				<tbody>
 				    {% for item in items %}
+				        {% set command = p._plg_item_dict[item.path()]['mapping'] %}
 				        <tr>
 				            <td>{{ item.path() }}</td>
-				            <td>{{ cmds[item.conf['viess_command']]['opcode'] }}</td>
-				            <td>{{ item.conf['viess_command'] }}</td>
-				            <td>{{ cmds[item.conf['viess_command']]['dev_datatype'] }}</td>
+				            <td>{{ cmds[command]['opcode'] }}</td>
+				            <td>{{ command }}</td>
+				            <td>{{ cmds[command]['dev_datatype'] }}</td>
 				            <td>{{ item() }}</td>
 				            <td>{{ item.property.last_update }}</td>
 				        </tr>
