@@ -294,6 +294,93 @@ class TestMaxageAction(TestDatabaseBase):
         rows = plugin.readLogs(item_id)
         self.assertEqual(2, len(rows), 'rows the aggregate could not represent must survive compaction')
 
+    def test_compact_maxage_avg_carries_live_open_row_past_interval_instead_of_stalling(self):
+        # A value that hasn't changed in longer than database_maxage: its
+        # one still-open row (duration=NULL) is confirmed live (matches
+        # item.last_change()), so it must be clipped into this interval's
+        # aggregate instead of stalling, and survive re-anchored to
+        # interval_end - not deleted, not left behind at its old time.
+        plugin = self.plugin()
+        item = self.sh.return_item('main.maxage_avg')
+        item_id = self.create_item(plugin, 'main.maxage_avg')
+
+        interval_ms = 3600 * 1000
+        bucket_start = self._old_bucket_start(interval_ms)
+        plugin.insertLog(item_id, time=bucket_start, duration=None, val=42.0, it='num')
+        plugin._db.commit()
+        item.set(42.0, 'test', last_change=plugin._datetime(bucket_start))
+
+        time_end = plugin.get_maxage_ts(item)
+        action = plugin._maxage_action_for(item)
+        plugin._compact_maxage(item, item_id, 'main.maxage_avg', time_end, action)
+
+        rows = sorted(plugin.readLogs(item_id), key=lambda r: r[COL_LOG_TIME])
+        self.assertEqual(2, len(rows), 'stalled instead of compacting the closed portion')
+        self.assertEqual(bucket_start, rows[0][COL_LOG_TIME])
+        self.assertEqual(interval_ms, rows[0][COL_LOG_DURATION])
+        self.assertAlmostEqual(42.0, rows[0][COL_LOG_VAL_NUM], places=3)
+        self.assertEqual(
+            bucket_start + interval_ms, rows[1][COL_LOG_TIME], 're-anchored open row must move to interval_end'
+        )
+        self.assertIsNone(rows[1][COL_LOG_DURATION], 'carried-forward row must still be open')
+        self.assertAlmostEqual(42.0, rows[1][COL_LOG_VAL_NUM], places=3)
+
+    def test_compact_maxage_avg_folds_live_open_row_sharing_interval_with_closed_data(self):
+        # Mixed interval: one closed row plus the live open row that
+        # followed it. Regression target - delete_range() has no idea
+        # about "open" rows, so before the re-anchor fix this silently
+        # deleted the still-live row along with the closed one, even
+        # though its value never contributed to the computed aggregate.
+        plugin = self.plugin()
+        item = self.sh.return_item('main.maxage_avg')
+        item_id = self.create_item(plugin, 'main.maxage_avg')
+
+        interval_ms = 3600 * 1000
+        bucket_start = self._old_bucket_start(interval_ms)
+        plugin.insertLog(item_id, time=bucket_start, duration=1000, val=10.0, it='num')
+        open_time = bucket_start + 1000
+        plugin.insertLog(item_id, time=open_time, duration=None, val=30.0, it='num')
+        plugin._db.commit()
+        item.set(30.0, 'test', last_change=plugin._datetime(open_time))
+
+        time_end = plugin.get_maxage_ts(item)
+        action = plugin._maxage_action_for(item)
+        plugin._compact_maxage(item, item_id, 'main.maxage_avg', time_end, action)
+
+        rows = sorted(plugin.readLogs(item_id), key=lambda r: r[COL_LOG_TIME])
+        self.assertEqual(2, len(rows))
+        # weighted avg over (10.0, 1000ms) and (30.0, clipped ~3599000ms) - dominated by 30.0
+        expected = (10.0 * 1000 + 30.0 * (interval_ms - 1000)) / interval_ms
+        self.assertAlmostEqual(expected, rows[0][COL_LOG_VAL_NUM], places=2)
+        self.assertEqual(bucket_start + interval_ms, rows[1][COL_LOG_TIME])
+        self.assertIsNone(rows[1][COL_LOG_DURATION])
+        self.assertAlmostEqual(30.0, rows[1][COL_LOG_VAL_NUM], places=3)
+
+    def test_compact_maxage_does_not_carry_forward_a_crash_orphaned_open_row(self):
+        # Same shape as the live-open-row case, but item.last_change()
+        # does NOT match the open row's time (simulating a crash orphan -
+        # indistinguishable from a live row in storage alone). Must fall
+        # through to the existing stall-and-warn behavior, not fabricate
+        # a duration for a row nothing confirms is still current.
+        plugin = self.plugin()
+        item = self.sh.return_item('main.maxage_avg')
+        item_id = self.create_item(plugin, 'main.maxage_avg')
+
+        interval_ms = 3600 * 1000
+        bucket_start = self._old_bucket_start(interval_ms)
+        plugin.insertLog(item_id, time=bucket_start, duration=None, val=42.0, it='num')
+        plugin._db.commit()
+        # last_change deliberately left at the item's default (does not match bucket_start)
+
+        time_end = plugin.get_maxage_ts(item)
+        action = plugin._maxage_action_for(item)
+        plugin._compact_maxage(item, item_id, 'main.maxage_avg', time_end, action)
+
+        rows = plugin.readLogs(item_id)
+        self.assertEqual(1, len(rows), 'orphaned row must survive untouched, not be carried forward or deleted')
+        self.assertEqual(bucket_start, rows[0][COL_LOG_TIME])
+        self.assertIsNone(rows[0][COL_LOG_DURATION])
+
     def test_compact_maxage_still_removes_gap_only_interval(self):
         # Companion to the test above: an interval containing ONLY no-data
         # gap rows has nothing to preserve - value None with zero valid rows

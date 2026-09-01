@@ -2372,6 +2372,12 @@ class Database(SmartPlugin):
             # computed.
             try:
                 with self._db.transaction(timeout=300) as cur:
+                    # Cross-checked against item.last_change(), not the buffer (forgotten once
+                    # flushed) - a crash orphan looks identical in storage but fails this check.
+                    open_time = self._log_store.find_open(item_id, cur=cur)
+                    open_in_interval = open_time is not None and interval_start <= open_time < interval_end
+                    open_is_live = open_in_interval and self._timestamp(item.last_change()) == open_time
+
                     if edge_order:
                         # 'first'/'last': keep the actual oldest/newest raw
                         # value as-is (works for str too - encode_value/
@@ -2381,19 +2387,22 @@ class Database(SmartPlugin):
                             item_id, edge_order, time_start=interval_start - 1, time_end=interval_end, cur=cur
                         )
                         value = self._item_value_tuple_rev(item_type, edge) if edge else None
+                    elif open_is_live and action in ('avg', 'integrate', 'duty_cycle'):
+                        # Clipped to interval_end, not "now" - a provable bound (still open, so
+                        # certainly still this value then), same technique as _series()'s duration_now.
+                        clipped_expr = expr.replace('duration', f'COALESCE(duration, {interval_end} - time)')
+                        value = self._log_store.aggregate(
+                            item_id, clipped_expr, time_start=interval_start - 1, time_end=interval_end, cur=cur
+                        )
                     else:
                         value = self._log_store.aggregate(
                             item_id, expr, time_start=interval_start - 1, time_end=interval_end, cur=cur
                         )
 
                     if value is None:
-                        # No representable value, but the interval may still
-                        # hold valid rows the aggregate couldn't express -
-                        # e.g. crash-orphaned open rows (duration NULL) under
-                        # a duration-weighted action. Deleting those while
-                        # inserting nothing would silently destroy real data,
-                        # so leave the interval raw. Gap-only intervals have
-                        # nothing to preserve and are still cleaned up.
+                        # Valid rows may remain unrepresented (e.g. a crash orphan) - leave the
+                        # interval raw rather than delete without writing anything; gap-only
+                        # intervals are still cleaned up.
                         valid_rows = self._log_store.count(
                             item_id, time_start=interval_start - 1, time_end=interval_end, exclude_gaps=True, cur=cur
                         )
@@ -2405,6 +2414,11 @@ class Database(SmartPlugin):
                             )
                             stalled = True
                             break
+
+                    # Re-anchor before delete: moving to interval_end makes the delete below
+                    # (time < interval_end) naturally skip it - value/quality untouched.
+                    if open_is_live:
+                        self._log_store.reanchor_open(item_id, open_time, interval_end, cur=cur)
 
                     # delete before insert: interval_start is derived from
                     # the oldest raw row's own timestamp, so a raw row can

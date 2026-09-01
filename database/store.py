@@ -25,7 +25,7 @@ are otherwise fully independent of the plugin lifecycle.
 import logging
 
 from lib.db import NO_CURSOR
-from .constants import BufferEntry
+from .constants import BufferEntry, QUALITY_VALID
 from .utils import encode_value, apply_table_names, build_where_clause
 
 
@@ -502,6 +502,48 @@ class LogStore:
                 cur=cur,
             )
         return rows[0][0] if rows else None
+
+    def find_open(self, item_id: int, cur=NO_CURSOR) -> 'int | None':
+        """Return the ``time`` of the still-open (``duration IS NULL``,
+        valid-quality) row for *item_id*, or ``None`` if there is none.
+
+        At most one such row can exist per item by construction - it is
+        the currently active value, not yet closed by a later change. A
+        no-data gap row (``val_quality != 0``) is also duration-NULL but
+        is not "open" in this sense, so it is excluded.
+
+        :param item_id: Database item ID.
+        :param cur:     Optional cursor.
+        :rtype:         int | None
+        """
+        rows = self._fetchall(
+            'SELECT time FROM {log} WHERE item_id=:id AND duration IS NULL AND val_quality=:quality;',
+            {'id': item_id, 'quality': QUALITY_VALID},
+            cur=cur,
+        )
+        return rows[0][0] if rows else None
+
+    def reanchor_open(self, item_id: int, old_time: int, new_time: int, cur=NO_CURSOR) -> None:
+        """Move the still-open row's ``time`` forward to *new_time*.
+
+        Used by maxage compaction to carry a long-open row past an
+        interval it has just been partially aggregated into, without
+        deleting it - the row keeps its value/quality, only its "open
+        since" marker advances. Guarded by ``duration IS NULL`` so this
+        can never touch a closed row even under a stale *old_time*.
+
+        :param item_id:  Database item ID.
+        :param old_time: The row's current ``time``.
+        :param new_time: The ``time`` to move it to.
+        :param cur:      Optional cursor.
+        """
+        stmt = 'UPDATE {log} SET time=:new_time WHERE item_id=:id AND time=:old_time AND duration IS NULL;'
+        params = {'id': item_id, 'old_time': old_time, 'new_time': new_time}
+        if cur is not NO_CURSOR:
+            self._execute(stmt, params, cur=cur)
+            return
+        with self._db.transaction() as tcur:
+            self._execute(stmt, params, cur=tcur)
 
     def edge_value(self, item_id: int, order: str, *, time_start=None, time_end=None, cur=NO_CURSOR):
         """Return the raw ``(val_str, val_num, val_bool)`` tuple of the
