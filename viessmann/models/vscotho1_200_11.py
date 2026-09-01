@@ -631,20 +631,21 @@ commands = {
                     'write': False,
                     'opcode': '2301',
                     'reply_pattern': '*',
-                    'item_type': 'num',
-                    'dev_datatype': 'Number',
+                    'item_type': 'str',
+                    'dev_datatype': 'Hex',
                     'params': {'value': 'VAL', 'len': 1},
                     'lookup': 'operatingmodes',
+                    'item_attrs': {'initial': True, 'lookup_item': True},
                 },  # Aktuelle Betriebsart A1M1
                 'Betriebsart_A1M1': {
                     'read': True,
                     'write': True,
                     'opcode': '2323',
                     'reply_pattern': '*',
-                    'item_type': 'num',
-                    'dev_datatype': 'Number',
+                    'item_type': 'str',
+                    'dev_datatype': 'Hex',
                     'params': {'value': 'VAL', 'len': 1},
-                    'cmd_settings': {'force_min': 0, 'force_max': 4},
+                    'item_attrs': {'initial': True, 'lookup_item': True},
                 },  # Betriebsart A1M1
                 'StatusFrost_A1M1': {
                     'read': True,
