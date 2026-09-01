@@ -47,7 +47,7 @@ else:
         builtins.SDP_standalone = False
     from .protocol import SDPProtocolViessmann
 
-from lib.model.sdp.globals import PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_PROTOCOL
+from lib.model.sdp.globals import PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_PROTOCOL, SDPError
 from lib.model.smartdeviceplugin import SDPResultError, SmartDevicePlugin, Standalone
 
 
@@ -62,6 +62,9 @@ class viessmann(SmartDevicePlugin):
     """
 
     PLUGIN_VERSION = '2.0.0'
+
+    #: human-readable reason for the last failed read_addr/read_temp_addr/write_addr call, for webif display
+    _last_addr_error: str | None = None
 
     def _set_device_defaults(self):
 
@@ -115,18 +118,22 @@ class viessmann(SmartDevicePlugin):
         :return: Value if read is successful, None otherwise
         """
         addr = addr.lower()
+        self._last_addr_error = None
 
         commandname = self._commands.get_commands_from_reply(addr)
         if commandname is None:
+            self._last_addr_error = f'address {addr} not defined in commandset'
             self.logger.debug(f'Address {addr} not defined in commandset, aborting')
             return
 
         commandname = commandname[0]
         self.logger.debug(f'Attempting to read address {addr} for command {commandname}')
         try:
-            return self.send_command(commandname, return_result=True)
+            return self.send_command(commandname, return_result=True, raise_on_error=True)
         except SDPResultError:
-            pass
+            self._last_addr_error = f'device reply for {commandname} could not be decoded'
+        except SDPError as e:
+            self._last_addr_error = str(e)
 
     def read_temp_addr(self, addr, length=1, mult=0, signed=False):
         """
@@ -145,16 +152,20 @@ class viessmann(SmartDevicePlugin):
         # as we have no reference whatever concerning the supplied data, we do a few sanity checks...
 
         addr = addr.lower()
+        self._last_addr_error = None
         if len(addr) != 4:  # addresses are 2 bytes
+            self._last_addr_error = f'address not 4 digits long: {addr}'
             self.logger.warning(f'temp address: address not 4 digits long: {addr}')
             return
 
         for c in addr:  # addresses are hex strings
             if c not in '0123456789abcdef':
+                self._last_addr_error = f'address digit "{c}" is not a hex char'
                 self.logger.warning(f'temp address: address digit "{c}" is not hex char')
                 return
 
         if length < 1 or length > 32:  # empiritistical choice
+            self._last_addr_error = f'length {length} is not > 0 and < 33'
             self.logger.warning(f'temp address: len is not > 0 and < 33: {len}')
             return
 
@@ -181,6 +192,7 @@ class viessmann(SmartDevicePlugin):
             res = self.read_addr(addr)
         except Exception as e:
             self.logger.exception(f'Error on send: {e}')
+            self._last_addr_error = str(e)
             res = None
 
         try:
@@ -200,9 +212,11 @@ class viessmann(SmartDevicePlugin):
         :return: Value if read is successful, None otherwise
         """
         addr = addr.lower()
+        self._last_addr_error = None
 
         results = self._commands.get_commands_from_reply(addr)
         if results is None:
+            self._last_addr_error = f'address {addr} not defined in commandset'
             self.logger.debug(f'Address {addr} not defined in commandset, aborting')
             return
         commandname = results[0]
@@ -210,9 +224,11 @@ class viessmann(SmartDevicePlugin):
         self.logger.debug(f'Attempting to write address {addr} with value {value} for command {commandname}')
 
         try:
-            return self.send_command(commandname, value, return_result=True)
+            return self.send_command(commandname, value, return_result=True, raise_on_error=True)
         except SDPResultError:
-            return
+            self._last_addr_error = f'device reply for {commandname} could not be decoded'
+        except SDPError as e:
+            self._last_addr_error = str(e)
 
     def get_device_type(self, protocol):
 

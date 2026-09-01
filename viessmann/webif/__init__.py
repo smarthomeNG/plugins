@@ -100,26 +100,28 @@ class WebInterface(SmartPluginWebIf):
         """
         if button:
             read_val = self.plugin.read_addr(button)
+            try:
+                read_cmd = self.plugin._commands.get_commands_from_reply(button)[0]
+            except Exception:
+                read_cmd = '(unknown)'
+
             if read_val is None:
-                self.logger.debug(f'Error trying to read addr {button} submitted by WebIf')
-                read_val = 'Fehler beim Lesen'
-            else:
-                try:
-                    read_cmd = self.plugin._commands.get_commands_from_reply(button)[0]
-                except Exception:
-                    read_cmd = '(unknown)'
-                if read_cmd is not None:
-                    self._last_read[button] = {'addr': button, 'cmd': read_cmd, 'val': read_val}
-                    self._last_read['last'] = self._last_read[button]
+                error = self.plugin._last_addr_error or 'unbekannter Fehler'
+                self.logger.debug(f'Error trying to read addr {button} submitted by WebIf: {error}')
+                read_val = f'Fehler: {error}'
+
+            self._last_read[button] = {'addr': button, 'cmd': read_cmd, 'val': read_val}
+            self._last_read['last'] = self._last_read[button]
 
         elif addr is not None and unit is not None and length.isnumeric():
             read_val = self.plugin.read_temp_addr(addr, int(length), unit)
             if read_val is None:
-                self.logger.debug(f'Error trying to read custom addr {button} submitted by WebIf')
-                read_val = 'Fehler beim Lesen'
-            else:
-                self._last_read[addr] = {'addr': addr, 'cmd': f'custom ({addr})', 'val': read_val}
-                self._last_read['last'] = self._last_read[addr]
+                error = self.plugin._last_addr_error or 'unbekannter Fehler'
+                self.logger.debug(f'Error trying to read custom addr {addr} submitted by WebIf: {error}')
+                read_val = f'Fehler: {error}'
+
+            self._last_read[addr] = {'addr': addr, 'cmd': f'custom ({addr})', 'val': read_val}
+            self._last_read['last'] = self._last_read[addr]
 
         elif clear:
             for addr in self._last_read:

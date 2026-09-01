@@ -86,6 +86,10 @@
 							$("#addr"+key).html(data[key].val)
 						}
 					}
+				}).fail(function(jqXHR, textStatus) {
+					$("#last_read_cmd").html("---")
+					$("#last_read_val").html("Fehler: " + textStatus)
+					$("#addrcust").html("Fehler: " + textStatus)
 				});
 				return false ;
 
@@ -112,7 +116,10 @@
 							$("#addr"+key).html(data[key].val)
 						}
 					}
-			    });
+			    }).fail(function(jqXHR, textStatus) {
+					$("#last_read_cmd").html("---")
+					$("#last_read_val").html("Fehler: " + textStatus)
+				});
 	    	    return false ;
 	    	}
 	    });
