@@ -2,10 +2,13 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 
 import lib.model.sdp.datatypes as DT
+from .commands import lookups as _lookups
 
 import re
 import dateutil
 import datetime
+
+_ERRORS = _lookups['ALL']['errors']
 
 
 # V = Viessmann, generic numeric type
@@ -97,6 +100,21 @@ class DT_Control(DT_Number):
     def get_shng_data(self, data, type=None, **kwargs):
         timer = list(decode_timer(data.hex()))
         return [{'An': on_time, 'Aus': off_time} for on_time, off_time in zip(timer[::2], timer[1::2])]
+
+
+# EH = error history entry: 1 byte error code + 8 byte BCD timestamp
+class DT_ErrorHistory(DT.Datatype):
+    def get_send_data(self, data, **kwargs):
+        raise RuntimeError('write of error history not possible')
+
+    def get_shng_data(self, data, type=None, **kwargs):
+        errcode = f'{data[0]:02X}'
+        errtext = _ERRORS.get(errcode, f'unbekannter Fehlercode {errcode}')
+        try:
+            ts = datetime.datetime.strptime(data[1:].hex(), '%Y%m%d%W%H%M%S').isoformat(sep=' ')
+        except ValueError:
+            ts = '?'
+        return f'{errtext} ({ts})'
 
 
 # H = hex
