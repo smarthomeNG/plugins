@@ -470,7 +470,7 @@ class Database(SmartPlugin):
                 try:
                     with self._db.transaction(timeout=5) as cur:
                         cache = self.readItem(str(item.property.path), cur=cur)
-                        if cache is not None:
+                        if cache is not None and cache[COL_ITEM_TIME] is not None:
                             try:
                                 value = self._item_value_tuple_rev(
                                     item.type(), cache[COL_ITEM_VAL_STR : COL_ITEM_VAL_BOOL + 1]

@@ -377,6 +377,22 @@ class TestDatabaseBasic(TestDatabaseBase):
         self.assertTrue(plugin._db.lock(0), '_fdb_lock left held after parse_item() propagated an exception')
         plugin._db.release()
 
+    def test_parse_item_with_registered_but_never_logged_item(self):
+        # Regression: create_item()/id() inserts an `item` row with only
+        # `name` set - time/val_* stay NULL until the item logs its first
+        # value. parse_item() used to crash decoding that NULL time
+        # (_datetime(None) -> TypeError dividing None by 1000) instead of
+        # treating it the same as "no cached value yet".
+        plugin = self.plugin()
+        item = self.sh.return_item('main.num')
+        self.create_item(plugin, item.id())
+
+        with self.assertRaises(AssertionError):
+            with self.assertLogs(plugin.logger, level='ERROR'):
+                plugin.parse_item(item)
+
+        self.assertEqual(0, item())
+
     @pytest.mark.skip(reason='test for pending implementation')
     def test_parse_item_reads_cache(self):
         plugin = self.plugin()
