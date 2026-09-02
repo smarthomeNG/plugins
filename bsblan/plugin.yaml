@@ -29,8 +29,12 @@ parameters:
             de: 'IP Adresse des BSB-Lan Adapters'
             en: 'IP address of the BSB-LAN Adapter'
 
-item_attributes: NONE
-    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+item_attributes:
+    bsb_lan:
+        type: num
+        description:
+            de: 'Parameternummer des BSB-LAN-Adapters, die diesem Item zugeordnet wird. Eine vollständige Liste der unterstützten Parameternummern liefert die Web-Oberfläche des BSB-LAN-Adapters unter http://<ip>/K. Je nach Parameter liest oder schreibt das Plugin darüber den Wert des Items; ein schreibgeschützter Parameter wird bei einem Schreibversuch mit einer Fehlermeldung im Log quittiert.'
+            en: 'BSB-LAN adapter parameter number assigned to this item. A complete list of supported parameter numbers is provided by the BSB-LAN adapter web interface at http://<ip>/K. Depending on the parameter, the plugin reads or writes the item value through it; writing to a read-only parameter is logged as an error.'
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)

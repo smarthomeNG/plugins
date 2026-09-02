@@ -62,7 +62,7 @@ item_attributes:
             - 'current'
             - 'temperature'
             - 'voltage'
-            - 'buttons_clean'
+            - 'charging_state'
             - 'capacity'
             - 'charge'
             - 'angle'
@@ -77,6 +77,7 @@ item_attributes:
             - 'motor_overcurrent_side_brush'
             - 'motor_overcurrent_vacuum'
             - 'motor_overcurrent_main_brush'
+            - 'motor_overcurrent_drive_right'
             - 'motor_overcurrent_drive_left'
             - 'virtual_wall'
             - 'cliff_right'
@@ -88,6 +89,7 @@ item_attributes:
             - 'bumps_wheeldrops_bump_left'
             - 'bumps_wheeldrops_wheeldrop_right'
             - 'bumps_wheeldrops_wheeldrop_left'
+            - 'bumps_wheeldrops_wheeldrop_caster'
         description:
             de: 'Weist einem Item einen Sensor Wert zu'
             en: 'Assigns a sensor value to an item'
@@ -262,7 +264,7 @@ item_structs:
         bumps_wheeldrops_wheeldrop_caster:
             enforce_updates: 'true'
             type: bool
-            roomba_cmd: bumps_wheeldrops_wheeldrop_caster
+            roomba_get: bumps_wheeldrops_wheeldrop_caster
 
     commands:
 
