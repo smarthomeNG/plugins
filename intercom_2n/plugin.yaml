@@ -57,8 +57,77 @@ parameters:
             de: "Passwort, falls auth_type > 0"
             en: "Password, falls auth_type > 0"
 
-item_attributes: NONE
-    # Definition of item attributes defined by this plugin
+item_attributes:
+    event_2n:
+        type: str
+        description:
+            de: 'Name des Ereignistyps, am Item, das als Container für das Ereignis dient. Details siehe Anwenderdokumentation.'
+            en: 'Name of the event type, on the item that acts as a container for the event. See the user documentation for details.'
+        valid_list:
+            - 'AudioLoopTest'
+            - 'CallStateChanged'
+            - 'CardEntered'
+            - 'CardHeld'
+            - 'CodeEntered'
+            - 'DeviceState'
+            - 'DoorOpenTooLong'
+            - 'InputChanged'
+            - 'KeyPressed'
+            - 'KeyReleased'
+            - 'LoginBlocked'
+            - 'MotionDetected'
+            - 'NoiseDetected'
+            - 'OutputChanged'
+            - 'PairingStateChanged'
+            - 'RegistrationStateChanged'
+            - 'SwitchStateChanged'
+            - 'TamperSwitchActivated'
+            - 'UnauthorizedDoorOpen'
+            - 'UserAuthenticated'
+
+    event_data_2n:
+        type: str
+        description:
+            de: 'Name des Datenfelds innerhalb der Ereignis-Nutzdaten, an einem Kind-Item von event_2n. Der Wert dieses Datenfelds wird bei Eintreten des Ereignisses in das Item geschrieben. Details siehe Anwenderdokumentation.'
+            en: 'Name of the data field within the event payload, on a child item of event_2n. This field''s value is written to the item when the event occurs. See the user documentation for details.'
+
+    command_2n:
+        type: str
+        description:
+            de: 'Name des Befehls, am Item, dessen Wert nach Ausführung das Ergebnis des Befehls enthält, oder "execute" an einem Kind-Item, um den Befehl auszulösen. Details siehe Anwenderdokumentation.'
+            en: 'Name of the command, on the item whose value holds the command result after execution, or "execute" on a child item to trigger the command. See the user documentation for details.'
+        valid_list:
+            - 'audio_test'
+            - 'call_answer'
+            - 'call_dial'
+            - 'call_hangup'
+            - 'call_status'
+            - 'camera_caps'
+            - 'camera_snapshot'
+            - 'config_get'
+            - 'config_upload'
+            - 'display_caps'
+            - 'display_delete_image'
+            - 'display_upload_image'
+            - 'email_send'
+            - 'execute'
+            - 'factory_reset'
+            - 'firmware_apply'
+            - 'firmware_upload'
+            - 'io_caps'
+            - 'io_control'
+            - 'io_status'
+            - 'log_caps'
+            - 'pcap'
+            - 'pcap_restart'
+            - 'pcap_stop'
+            - 'phone_status'
+            - 'switch_caps'
+            - 'switch_control'
+            - 'switch_status'
+            - 'system_info'
+            - 'system_restart'
+            - 'system_status'
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin

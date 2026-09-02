@@ -93,8 +93,11 @@ item_attributes:
     hue_group_id:
         type: num
 
-    hue_transitiontime:
+    hue_transitionTime:
         type: num
+        description:
+            de: 'Zeit in Zehntelsekunden, die die Lampe für den Übergang zu einem neu gesetzten Wert benötigt (Interpolation durch die Bridge selbst). Nur schreibbar. Ohne dieses Attribut gilt der Plugin-Parameter default_transitionTime.'
+            en: 'Time in tenths of a second the lamp takes to transition to a newly set value (interpolated by the bridge itself). Write-only. If not set, the default_transitionTime plugin parameter applies.'
 
     hue_dim_max:
         type: num

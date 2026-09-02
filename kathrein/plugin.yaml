@@ -90,6 +90,14 @@ item_attributes:
             - rec
             - stop
 
+    kathreinid:
+        type: int
+        default: 1
+        description:
+            de: 'Ordnet das Item einem bestimmten Kathrein-Receiver zu, falls mehrere Geräte über dieselbe Plugin-Instanz angesprochen werden. Ist das Attribut an einem Item nicht gesetzt, gilt der in der Plugin-Konfiguration hinterlegte Parameter kathreinid.'
+            en: 'Assigns the item to a specific Kathrein receiver, if multiple devices are addressed via the same plugin instance. If not set on the item, the kathreinid parameter configured for the plugin instance applies.'
+            fr: "Attribue l'item à un récepteur Kathrein spécifique, si plusieurs appareils sont adressés via la même instance du plugin. Si l'attribut n'est pas défini sur l'item, le paramètre kathreinid configuré pour l'instance du plugin s'applique."
+
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
 
