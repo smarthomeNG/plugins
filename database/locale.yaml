@@ -3,6 +3,7 @@ plugin_translations:
     'Aktionen':           {'de': '=', 'en': 'Actions'}
     'Verbunden':          {'de': '=', 'en': 'Connected'}
     'Treiber':            {'de': '=', 'en': 'Driver'}
+    'Journal-Modus':      {'de': '=', 'en': 'Journal Mode'}
     'Ja':                 {'de': '=', 'en': 'Yes'}
     'Nein':               {'de': '=', 'en': 'No'}
     'mit':                {'de': '=', 'en': 'with'}

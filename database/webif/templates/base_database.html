@@ -133,6 +133,16 @@
 			<td class="py-1"></td>
 			<td class="py-1"></td>
 		</tr>
+		{% if p.driver == 'sqlite3' %}
+		<tr>
+			<td class="py-1" width="150px"><strong>{{ _('Journal-Modus') }}</strong></td>
+			<td class="py-1">{{ (p._db.current_journal_mode() or '?')|upper }}</td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+		</tr>
+		{% else %}
 		{% set ns = namespace(row_open=false) %}
 		{% for key, value in p._db._params.items() %}
 			{% if loop.index % 4 == 1 %}
@@ -151,6 +161,7 @@
 					{% endif %}
 		{% endfor %}
 		{% if ns.row_open %}</tr>{% endif %}
+		{% endif %}
 	</tbody>
 </table>
 {% endblock headtable %}

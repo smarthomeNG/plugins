@@ -1000,8 +1000,9 @@ class Database(SmartPlugin):
             try:
                 found = self.readItem(item_path, cur=c)
             except Exception as e:
-                level = self.logger.info if self._db.is_connection_error(e) else self.logger.warning
-                level(f'id(): No id found for item {item_path} - Exception {e}')
+                self._log_db_exception(
+                    e, f'id(): No id found for item {item_path} - Exception {e}', fallback=self.logger.warning
+                )
                 found = None
             if found is None and create:
                 found = [self.insertItem(item_path, c)]
@@ -1029,7 +1030,11 @@ class Database(SmartPlugin):
                 # this *is* the connection-trouble case by construction, no
                 # exception to classify: same INFO level as everywhere else
                 # that condition is confirmed, not a real-bug ERROR.
-                self.logger.info('Database: Connection not recovered{}'.format(self._db.lock_holder_description()))
+                self.logger.info(
+                    'Database: Connection not recovered ({}){}'.format(
+                        self._db.last_verify_reason(), self._db.lock_holder_description()
+                    )
+                )
                 return None
             try:
                 with self._db.transaction() as tcur:
@@ -1043,8 +1048,7 @@ class Database(SmartPlugin):
                 # insertItem() (the create=True path) isn't covered by
                 # _find_or_create's own readItem-only try/except - a
                 # connection failure there would otherwise escape uncaught.
-                level = self.logger.info if self._db.is_connection_error(e) else self.logger.error
-                level(f'id(): could not find/create id for item {item_path}: {e}')
+                self._log_db_exception(e, f'id(): could not find/create id for item {item_path}: {e}')
                 return None
 
         if (id is None) or (COL_ITEM_ID >= len(id)) or (id[COL_ITEM_ID] is None):
@@ -1070,8 +1074,9 @@ class Database(SmartPlugin):
         try:
             row = self.readItem(item_path)
         except Exception as e:
-            level = self.logger.info if self._db.is_connection_error(e) else self.logger.warning
-            level(f'db_itemtype: No id found for item {item_path} - Exception {e}')
+            self._log_db_exception(
+                e, f'db_itemtype: No id found for item {item_path} - Exception {e}', fallback=self.logger.warning
+            )
             row = None
 
         if (row is None) or (COL_ITEM_ID >= len(row)):
@@ -1110,8 +1115,9 @@ class Database(SmartPlugin):
         try:
             row = self.readItem(item_path)
         except Exception as e:
-            level = self.logger.info if self._db.is_connection_error(e) else self.logger.warning
-            level(f'db_lastchange: No id found for item {item_path} - Exception {e}')
+            self._log_db_exception(
+                e, f'db_lastchange: No id found for item {item_path} - Exception {e}', fallback=self.logger.warning
+            )
             row = None
 
         if (row is None) or (COL_ITEM_ID >= len(row)):
@@ -1571,8 +1577,7 @@ class Database(SmartPlugin):
         try:
             self._item_logcount[id] = self.readLogCount(id, cur=cur)
         except Exception as e:
-            level = self.logger.info if self._db.is_connection_error(e) else self.logger.error
-            level('Exception in function deleteLog during readLogCount: {}'.format(e))
+            self._log_db_exception(e, 'Exception in function deleteLog during readLogCount: {}'.format(e))
 
         return
 
@@ -1647,8 +1652,7 @@ class Database(SmartPlugin):
                             self.orphanitemlist.append(item)
                             self.orphanlist.append(item[COL_ITEM_NAME])
         except Exception as e:
-            level = self.logger.info if self._db_maint.is_connection_error(e) else self.logger.error
-            level('Database build_orphan_list failed: {}'.format(e))
+            self._log_db_exception(e, 'Database build_orphan_list failed: {}'.format(e), db=self._db_maint)
             return False
 
         self._orphanlist_built = True
@@ -1729,8 +1733,7 @@ class Database(SmartPlugin):
             log_debug('rebuilding orphan list')
             self.build_orphanlist()
         except Exception as e:
-            level = self.logger.info if self._db_maint.is_connection_error(e) else self.logger.error
-            level(f'error on reassigning id {orphan_id} to {to}: {e}')
+            self._log_db_exception(e, f'error on reassigning id {orphan_id} to {to}: {e}', db=self._db_maint)
             return e
 
     def _delete_orphan(self, item_path):
@@ -1807,8 +1810,12 @@ class Database(SmartPlugin):
             # e.g. the maintenance connection (_db_maint) went stale independently
             # of the main connection (see smarthomeNG/plugins#1004) - keep the item
             # queued and retry on the next cycle instead of crashing the scheduler task.
-            level = self.logger.info if self._db_maint.is_connection_error(e) else self.logger.warning
-            level(f'remove_orphan_items: Deletion of orphan {item} failed, will retry: {e}')
+            self._log_db_exception(
+                e,
+                f'remove_orphan_items: Deletion of orphan {item} failed, will retry: {e}',
+                db=self._db_maint,
+                fallback=self.logger.warning,
+            )
             self.orphanlist.append(item)
             return
 
@@ -2279,8 +2286,10 @@ class Database(SmartPlugin):
                 # only delays discovering that without changing the outcome.
                 if self._db.verify(2) == 0:
                     self._buffer_mgr.restore(item, entries)
-                    self.logger.error(
-                        'Connection not recovered, skipping dump{}'.format(self._db.lock_holder_description())
+                    self.logger.notice(
+                        'Connection not recovered ({}){} - dump skipped, data buffered for next cycle'.format(
+                            self._db.last_verify_reason(), self._db.lock_holder_description()
+                        )
                     )
                     self._dump_lock.release()
                     return
@@ -2369,7 +2378,7 @@ class Database(SmartPlugin):
                             )
                         )
                     else:
-                        self.logger.error(
+                        self.logger.warning(
                             "Can't dump {} items due to fail to acquire lock - will try on next dump{}".format(
                                 len(self._buffer_mgr.items()), holder
                             )
@@ -2496,11 +2505,10 @@ class Database(SmartPlugin):
                 # below - a connection error reading oldest_time() itself
                 # means nothing this cycle can proceed; requeue below rather
                 # than trusting a follow-up oldest_time() call to succeed.
-                is_conn_err = self._db.is_connection_error(e)
-                level = self.logger.info if is_conn_err else self.logger.error
-                level(
+                self._log_db_exception(
+                    e,
                     f'remove_older_: {itempath} could not read oldest log time, giving up this cycle: {e}',
-                    exc_info=not is_conn_err,
+                    exc_info=True,
                 )
                 connection_failed = True
                 break
@@ -2591,10 +2599,11 @@ class Database(SmartPlugin):
                         )
                         self._log_store.insert(item_id, entry, item_type, now_ms, cur=cur)
             except TimeoutError:
-                self.logger.error(
+                self.logger.info(
                     f'remove_older_: {itempath} could not acquire database lock, giving up this compaction cycle'
                     f'{self._db.lock_holder_description()}'
                 )
+                connection_failed = True
                 break
             except Exception as e:
                 # transaction() already rolled back and reset connection
@@ -2605,10 +2614,8 @@ class Database(SmartPlugin):
                 # anything else is a real bug worth the loud ERROR - same
                 # exc_info=True traceback _dump() already gives that case,
                 # since this runs on every scheduler cycle just as often.
-                is_conn_err = self._db.is_connection_error(e)
-                level = self.logger.info if is_conn_err else self.logger.error
-                level(
-                    f'remove_older_: {itempath} compaction failed, giving up this cycle: {e}', exc_info=not is_conn_err
+                self._log_db_exception(
+                    e, f'remove_older_: {itempath} compaction failed, giving up this cycle: {e}', exc_info=True
                 )
                 connection_failed = True
                 break
@@ -2734,11 +2741,10 @@ class Database(SmartPlugin):
                 # risks wiping an item's last remaining value. Requeue and
                 # retry next cycle, same as every other connection-loss path
                 # in this function.
-                is_conn_err = self._db.is_connection_error(e)
-                level = self.logger.info if is_conn_err else self.logger.error
-                level(
+                self._log_db_exception(
+                    e,
                     f'remove_older_: {itempath} could not read latest log entry, retrying next cycle: {e}',
-                    exc_info=not is_conn_err,
+                    exc_info=True,
                 )
                 self._maxage_worklist.append(item)
                 return
@@ -2788,10 +2794,11 @@ class Database(SmartPlugin):
                         cur=cur,
                     )
             except TimeoutError:
-                self.logger.error(
-                    f'remove_older_: {itempath} could not acquire database lock for deletion, skipping this cycle'
+                self.logger.info(
+                    f'remove_older_: {itempath} could not acquire database lock for deletion, retrying next cycle'
                     f'{self._db.lock_holder_description()}'
                 )
+                self._maxage_worklist.append(item)
                 return
             except Exception as e:
                 # Same self-healing case as _compact_maxage()'s equivalent
@@ -2799,9 +2806,9 @@ class Database(SmartPlugin):
                 # retried next cycle instead of waiting for the worklist to
                 # rotate all the way around. Same exc_info=True convention
                 # as that block too, for the same reason.
-                is_conn_err = self._db.is_connection_error(e)
-                level = self.logger.info if is_conn_err else self.logger.error
-                level(f'remove_older_: {itempath} deletion failed, retrying next cycle: {e}', exc_info=not is_conn_err)
+                self._log_db_exception(
+                    e, f'remove_older_: {itempath} deletion failed, retrying next cycle: {e}', exc_info=True
+                )
                 self._maxage_worklist.append(item)
                 return
             time_used_for_deletion = time.time() - time_start_deletion
@@ -2939,6 +2946,26 @@ class Database(SmartPlugin):
                         return value.strip()
         return ''
 
+    def _log_db_exception(self, e, msg, db=None, fallback=None, exc_info=False):
+        """Log a caught database exception at a level matching its actual cause.
+
+        A connection error (lost/refused/reset connection) is anticipated -
+        logged at info. Anything else is a real bug, logged via `fallback`
+        (default: error). `exc_info` attaches a traceback, but only for that
+        unclassified case - a connection error's own message already says
+        what happened.
+
+        :param e: The caught exception.
+        :param msg: Message to log.
+        :param db: Database instance to classify against (default: self._db).
+        :param fallback: Logger method for the non-connection-error case (default: self.logger.error).
+        :param exc_info: Whether to attach a traceback for the non-connection-error case.
+        """
+        db = db or self._db
+        is_conn_err = db.is_connection_error(e)
+        level = self.logger.info if is_conn_err else (fallback or self.logger.error)
+        level(msg, exc_info=exc_info and not is_conn_err)
+
     def _initialize_db(self):
         # initialize main db connection
         try:
@@ -3037,12 +3064,12 @@ class Database(SmartPlugin):
         prepared = self._prepare(query)  # prepare once
 
         def _log_query_error(e):
-            level = self.logger.info if self._db.is_connection_error(e) else self.logger.error
             if self.logger.isEnabledFor(logging.DEBUG):
                 query_readable = re.sub(r':([a-z_]+)', r'{\1}', prepared).format(**params)
-                level('Database: Error for query {}: {}'.format(query_readable, e))
+                msg = 'Database: Error for query {}: {}'.format(query_readable, e)
             else:
-                level('Database: Query error: {}'.format(e))
+                msg = 'Database: Query error: {}'.format(e)
+            self._log_db_exception(e, msg)
 
         if owns_cur:
             # On lock timeout: log and return None, not an exception -
@@ -3053,7 +3080,11 @@ class Database(SmartPlugin):
                 # Same reasoning as id()'s equivalent check: verify() failing
                 # to reconnect after active probing IS the connection-trouble
                 # case by construction, no exception to classify against.
-                self.logger.info('Database: Connection not recovered{}'.format(self._db.lock_holder_description()))
+                self.logger.info(
+                    'Database: Connection not recovered ({}){}'.format(
+                        self._db.last_verify_reason(), self._db.lock_holder_description()
+                    )
+                )
                 return None
             try:
                 with self._db.transaction() as tcur:
