@@ -76,7 +76,14 @@ class TestQualityStoreLevel(unittest.TestCase):
         import sqlite3
 
         class _DB:
+            # Matches lib.db.Database's real class attribute - ItemStore.insert()
+            # reads this to decide between lastrowid and INSERT...RETURNING.
+            _psycopg_driver_names = frozenset({'psycopg2', 'psycopg'})
+
             def __init__(self):
+                import types
+
+                self._dbapi = types.SimpleNamespace(__name__='sqlite3')
                 self._conn = sqlite3.connect(':memory:')
                 c = self._conn.cursor()
                 c.execute(

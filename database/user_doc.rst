@@ -12,13 +12,15 @@ database
    :scale: 50 %
    :align: left
 
-Database plugin, mit Unterstützung für SQLite3 und MySQL.
+Database plugin, mit Unterstützung für SQLite3, MySQL/MariaDB und PostgreSQL+TimescaleDB.
 
 Verwenden Sie dieses Plugin, um Itemwerte in einer Datenbank zu speichern. Es unterstützt
 verschiedene Datenbanken, die eine Python DB API 2 <http://www.python.org/dev/peps/pep-0249/>`_ Implementierung
 bereitstellen (z. B. `SQLite <http://docs.python.org/3.2/library/sqlite3.html>`_
 welches bereits mit Python oder MySQL gebundeled ist, und über das
-`Implementierungsmodul <https://wiki.python.org/moin/MySQL>`_ verwendet wird).
+`Implementierungsmodul <https://wiki.python.org/moin/MySQL>`_ verwendet wird, oder PostgreSQL,
+optional mit der `TimescaleDB <https://www.timescale.com/>`_ Extension - siehe
+"PostgreSQL+TimescaleDB Unterstützung" weiter unten).
 
 Konfiguration
 =============
@@ -41,13 +43,338 @@ Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/co
      ``val_quality``) auf MariaDB vor 10.3 lange dauern, da die komplette Log-Tabelle neu
      aufgebaut wird.
    - Die Auswertungsfunktionen ``diff`` und ``differentiate`` benötigen Window-Funktionen:
-     MariaDB ab 10.2, MySQL ab 8.0, SQLite ab 3.25.
+     MariaDB ab 10.2, MySQL ab 8.0, SQLite ab 3.25. PostgreSQL unterstützt Window-Funktionen
+     bereits seit Version 8.4 (2009) - hier ist keine Mindestversion zu beachten.
 
 Standarmäßig schreibt das Plugin vor dem Beenden von SmarthomeNG alle am Plugin registrierten Items nochmal mit aktuellem
 Wert in die Datenbank. Die kann durch Setzen des Item Attributes database_write_on_shutdown: False unterdrückt werden.
 Ein typischer Anwendungsfall sind zum Beispiel monoton steigende Werte wie Zählerstände, die selten geschrieben werden
 und für die doppelte Einträge durch smarthomeNG Neustarts störend in Datenbank und optionalen Plots in einer
 Visualisierung sind.
+
+Treiber-Auswahl
+---------------
+
+.. index:: database; driver
+
+Der Parameter ``driver`` bestimmt, welches DB-API2-Modul verwendet wird. Neben den echten
+Modulnamen (``sqlite3``, ``pymysql``, ``psycopg2``, ``psycopg``) akzeptiert das Plugin auch
+sprechende Datenbank-Namen, die automatisch auf das passende Modul abgebildet werden:
+
+======================================= =========================================================
+Wert                                    Ergebnis
+======================================= =========================================================
+``sqlite3``                             SQLite3 (in Python enthalten)
+``mysql`` / ``mariadb``                 MySQL/MariaDB über ``pymysql``
+``postgres`` / ``postgresql`` /         PostgreSQL über ``psycopg2`` oder ``psycopg`` (v3) - es
+``timescale`` / ``timescaledb``         wird automatisch erkannt, welches der beiden Module
+                                         installiert ist, ``psycopg2`` wird bevorzugt.
+======================================= =========================================================
+
+Beispiel für eine PostgreSQL+TimescaleDB-Instanz:
+
+.. code-block:: yaml
+
+    database_timescale:
+        plugin_name: database
+        driver: timescaledb
+        connect:
+        -   host:127.0.0.1
+        -   port:5432
+        -   user:shng
+        -   password:shng_password
+        -   database:shng
+
+.. note::
+
+   Hinweis für SQLite3:
+
+   - Mit ``sqlite_wal_mode: true`` kann die Datenbankdatei in den WAL-Journal-Modus versetzt
+     werden, was parallele Schreib- und Lesevorgänge erlaubt. Dies ist eine Einwegentscheidung:
+     WAL ist eine Eigenschaft der Datenbankdatei selbst, bleibt über Neustarts hinweg bestehen
+     und wird von jeder künftigen Verbindung (auch von anderen Tools) übernommen. Ein
+     Zurücksetzen des Parameters macht eine bereits umgestellte Datei nicht rückgängig.
+
+
+Kompaktierung statt Löschen (database_maxage_action)
+====================================================
+
+Standardmäßig löscht ``database_maxage`` alte Werte ersatzlos. Über das Item Attribut
+``database_maxage_action`` kann stattdessen festgelegt werden, dass alte Rohwerte zu jeweils **einem**
+Wert pro Kompaktierungsintervall verdichtet werden, statt komplett zu verschwinden. So bleibt zum
+Beispiel der Verlauf eines Werts über Jahre hinweg als Tagesmittelwert erhalten, während die
+minütlichen Rohdaten irgendwann gelöscht werden.
+
+Die Kompaktierung läuft im selben Turnus wie das bisherige Löschen (Parameter ``removeold_cycle``)
+und arbeitet sich - genau wie das Löschen - in begrenzten Schritten durch alte Daten (Parameter
+``max_aggregate_intervals``), um die Datenbank nicht mit einem einzigen großen Durchlauf zu blockieren.
+
+Auf PostgreSQL+TimescaleDB kann diese Kompaktierung alternativ vom Datenbank-Server selbst
+übernommen werden (``timescale_native_aggregation``) - siehe "PostgreSQL+TimescaleDB
+Unterstützung" weiter unten.
+
+
+Item Attribute
+--------------
+
+``database_maxage_action``
+    Legt fest, was mit Werten passiert, die älter als ``database_maxage`` sind. Standardwert ist
+    ``delete`` (bisheriges Verhalten). Jeder andere Wert ersetzt die Rohwerte eines Intervalls durch
+    **einen** berechneten Wert:
+
+    ========= ========================================== ============== ===========================================
+    Wert      Bedeutung                                  Gültig für Typ Anwendung bei täglicher Kompaktierung
+    ========= ========================================== ============== ===========================================
+    delete    Werte löschen (Standard)                   beliebig
+    avg       Zeitgewichteter Mittelwert                 num, bool      Raumtemperatur - Tagesmittelwert
+    sum       Summe der Werte                            num, bool      Energieverbrauch aus Einzelverbrauchswerten
+    min       Minimalwert                                num, bool      Kälteste Außentemperatur
+    max       Maximalwert                                num, bool      Spitzenleistung eines Wechselrichters
+    integrate Diskretes Integral über der Zeit           num, bool      Solarproduktion aus Momentanleistung
+    on        Prozentzahl der Werte > 0 (zeitgewichtet)  bool           Anteilige Arbeitszeit der Heizkreispumpe
+    countall  Anzahl der Rohwerte im Intervall           beliebig       Anzahl Auslösungen Türkontakt
+    first     Ältester Rohwert im Intervall, unverändert beliebig       Erster Statuswert des Tages
+    last      Neuester Rohwert im Intervall, unverändert beliebig       Zählerstand am Tagesende
+    ========= ========================================== ============== ===========================================
+
+    Die Funktionen ``avg``, ``sum``, ``min``, ``max``, ``integrate``, ``on`` und ``countall``
+    entsprechen den gleichnamigen Funktionen aus dem Abschnitt "Datenbankfunktionen für
+    Einzelauswertungen" weiter unten. ``first`` und ``last`` gibt es dort nicht - sie behalten den
+    tatsächlich gespeicherten Wert bei, statt etwas zu berechnen, und sind deshalb die einzigen
+    Funktionen, die auch für Items vom Typ ``str`` sinnvoll funktionieren (z.B. um den letzten
+    Status-Text eines Tages zu behalten, statt nur die Anzahl der Statuswechsel zu zählen).
+
+    Ist ein Wert für den Typ des Items ungültig (z.B. ``sum`` bei einem ``str``-Item, dessen
+    numerische Spalte immer leer ist), wird dies beim Start als Fehler geloggt und für dieses Item
+    automatisch auf ``delete`` zurückgefallen.
+
+``database_maxage_interval``
+    Größe eines Kompaktierungsintervalls, im gleichen Format wie ``cycle``/``autotimer``
+    (z.B. ``24h``, ``30m`` - **kein** ``d``-Suffix für Tage). Nur relevant, wenn
+    ``database_maxage_action`` nicht ``delete`` ist. Ohne Angabe gilt der Plugin-Parameter
+    ``default_maxage_interval``.
+
+Beide Attribute haben bewusst **keinen** Standardwert direkt am Item-Attribut, damit die
+Plugin-Parameter ``default_maxage_action``/``default_maxage_interval`` als Fallback greifen können,
+wenn ein Item nur ``database_maxage`` setzt, aber keine eigene Aktion/Intervall konfiguriert.
+
+
+Beispiel
+--------
+
+.. code-block:: yaml
+
+    solar:
+        leistung:
+            type: num
+            database: true
+            database_maxage: 90
+            database_maxage_action: avg
+            database_maxage_interval: 24h
+
+Werte, die älter als 90 Tage sind, werden zu einem Tagesmittelwert zusammengefasst statt gelöscht zu
+werden.
+
+
+Minimum/Maximum als eigenständige Items (database.min / database.max)
+---------------------------------------------------------------------
+
+``database_maxage_action`` liefert bewusst nur **einen** Wert pro Intervall - wer zusätzlich zum
+Mittelwert auch Minimum und/oder Maximum eines Intervalls dauerhaft speichern möchte, kann dafür die
+mitgelieferten Structs ``database.min`` und ``database.max`` nutzen. Sie legen jeweils ein eigenes
+Kind-Item an (``db_min`` bzw. ``db_max``), das den Wert des übergeordneten Items live mitschreibt und
+unabhängig mit ``database_maxage_action: min`` bzw. ``max`` kompaktiert wird:
+
+.. code-block:: yaml
+
+    solar:
+        leistung:
+            type: num
+            database: true
+            database_maxage: 90
+            database_maxage_action: avg
+            struct:
+              - database.min
+              - database.max
+
+Dadurch entstehen ``solar.leistung.db_min`` und ``solar.leistung.db_max`` als vollwertige,
+eigenständig geloggte Items.
+
+.. note::
+
+   Die Structs kopieren ``database_maxage``/``database_maxage_interval`` **nicht** vom
+   übergeordneten Item - beide Kind-Items nutzen die gleichen Plugin-Parameter
+   (``default_maxage``/``default_maxage_interval``) wie jedes andere Item auch, das diese Attribute
+   nicht selbst setzt. Setzt das übergeordnete Item einen abweichenden, expliziten Wert für
+   ``database_maxage`` (wie im Beispiel oben, ``90``), muss dieser bei Bedarf zusätzlich lokal auf
+   den Kind-Items gesetzt werden:
+
+   .. code-block:: yaml
+
+       solar:
+           leistung:
+               ...
+               struct:
+                 - database.min
+                 - database.max
+
+               db_min:
+                   database_maxage: 90
+               db_max:
+                   database_maxage: 90
+
+
+Fehlende Messwerte (Datenlücken)
+================================
+
+Wenn ein Gerät (z. B. ein Wechselrichter) zeitweise nicht erreichbar ist, behält das Item
+in SmartHomeNG seinen letzten Wert. Ohne weiteres würde diese Zeitspanne fälschlicherweise
+als "Wert unverändert" in der Datenbank gespeichert — mit Auswirkungen auf Mittelwerte und
+Energieberechnungen.
+
+.. note::
+
+   Eine Datenlücke entsteht nicht automatisch, nur weil eine Datenquelle keine neuen Werte
+   mehr liefert. Das jeweilige Quell-Plugin muss dies aktiv erkennen und
+   ``item.db_mark_invalid()`` aufrufen (siehe "Datenqualität und Datenlücken" weiter unten in
+   der Referenz). Unterstützt ein Plugin dies nicht, bleibt der letzte bekannte Wert unverändert
+   in der Datenbank stehen, ohne dass eine Lücke markiert wird.
+
+   Die einzige eingebaute Ausnahme, die ohne Unterstützung durch das Quell-Plugin auskommt, ist
+   das folgende automatische Ungültigmarkieren bei ausbleibenden Änderungen oder Updates.
+
+Es gibt zwei Möglichkeiten, die Anzahl der Datensätze pro Item zu begrenzen: Durch die Angabe des
+Item Attributs ``database_maxage`` wird das maximale Alter der Einträge eines Items begrenzt.
+Standardmäßig werden Werte, deren Zeitstempel älter ist als die angegebene Zeitspanne, regelmäßig aus
+der Datenbank gelöscht. Alternativ können ältere Werte statt gelöscht zu werden auch zu einem Wert pro
+Kompaktierungsintervall verdichtet werden, siehe oben "Kompaktierung statt Löschen".
+
+
+Automatisches Ungültigmarkieren bei ausbleibenden Änderungen oder Updates (database_invalid_after)
+--------------------------------------------------------------------------------------------------
+
+.. index:: database; database_invalid_after
+.. index:: database; invalid_check_cycle
+
+Für Items, deren Datenquelle bei Ausfall einfach keine neuen Werte mehr liefert (statt aktiv
+eine Störung zu melden), kann das Item Attribut ``database_invalid_after`` genutzt werden, um
+automatisch eine Datenlücke zu öffnen, wenn über die angegebene Zeitspanne keine Änderungen
+oder Updates eingehen - ohne dass das Quell-Plugin dafür etwas Besonderes unterstützen muss.
+
+.. code-block:: yaml
+
+    solar:
+        leistung:
+            type: num
+            database: init
+            enforce_updates: true
+            database_invalid_after: 10m
+
+Voraussetzungen und Hinweise:
+
+* Nur sinnvoll bei Items, die für eine regelmäßige Aktualisierung konfiguriert sind (z.B. über
+  ``cycle`` oder ``crontab``). Bei Items, die ohnehin nur unregelmäßig/ereignisgesteuert
+  aktualisiert werden, führt dies sonst zu Fehlalarmen.
+* Das Item Attribut ``enforce_updates`` muss gesetzt sein, sonst wird eine unveränderte
+  Wiederholung desselben Werts nicht als Lebenszeichen erkannt.
+* Nicht kombinierbar mit ``database_acl: ro``.
+* Wie oft geprüft wird, bestimmt der Plugin-Parameter ``invalid_check_cycle`` (Standard 60
+  Sekunden).
+* ``invalid_check_grace_time`` (Standard 60 Sekunden) verlängert die Zeit nach dem Start des
+  Plugins, bevor ein Item das erste Mal als ungültig markiert werden kann - das verhindert
+  Fehlalarme direkt nach einem Neustart, bevor die erste reguläre Aktualisierung eingetroffen
+  ist.
+
+Technisch entspricht dies einem automatischen Aufruf von ``item.db_mark_invalid()`` (siehe
+"Datenqualität und Datenlücken" weiter unten) - die Lücke wird beim nächsten echten Update des
+Items automatisch wieder geschlossen, ohne dass ``item.db_mark_valid()`` explizit aufgerufen
+werden muss.
+
+
+PostgreSQL+TimescaleDB Unterstützung
+====================================
+
+.. index:: database; PostgreSQL
+.. index:: database; TimescaleDB
+
+Neben SQLite3 und MySQL/MariaDB unterstützt das Plugin auch PostgreSQL, optional mit der
+`TimescaleDB <https://www.timescale.com/>`_ Extension. TimescaleDB wandelt die ``log``-Tabelle
+in eine sogenannte Hypertable um und stellt zusätzliche, server-seitige Funktionen für native
+Kompression und Aggregation historischer Daten bereit. Die Treiber-Auswahl ist oben unter
+"Konfiguration" beschrieben.
+
+Hypertable und Zeitpartitionen
+------------------------------
+
+.. index:: database; timescale_hypertable
+.. index:: database; timescale_chunk_interval
+
+Ist die TimescaleDB-Extension auf dem PostgreSQL-Server installiert, wandelt das Plugin die
+``log``-Tabelle standardmäßig (Parameter ``timescale_hypertable``, Standard ``true``) in eine
+Hypertable um. Das beschleunigt zeitbereichsbasierte Abfragen (Graphen, Statistiken) auf großen
+Tabellen erheblich, ohne dass sich am Zugriff auf die Tabelle sonst etwas ändert.
+
+Ist die Extension nicht installiert, wird eine Warnung ausgegeben und das Plugin arbeitet
+unverändert mit einer normalen PostgreSQL-Tabelle weiter.
+
+Die Größe der einzelnen Zeitpartitionen wird über ``timescale_chunk_interval`` festgelegt
+(Standard ``168h``, entspricht 7 Tagen).
+
+Kompression
+-----------
+
+.. index:: database; timescale_compress
+
+Mit ``timescale_compress: true`` aktiviert das Plugin native spaltenbasierte Kompression der
+``log``-Tabelle. Alle Zeitpartitionen außer der aktuellsten werden komprimiert.
+
+TimescaleDBs eigene Dokumentation nennt typische Kompressionsraten von 10-20x (90-95%
+Speicherplatzersparnis) für Zeitreihendaten; im eigenen Test dieses Plugins gegen einen echten
+Datensatz mit rund 22 Millionen Zeilen wurden 17,39x gemessen.
+
+.. warning::
+
+   Einmal aktivierte Kompression lässt sich nicht über das Plugin rückgängig machen. Das
+   Zurücksetzen von ``timescale_compress`` auf ``false`` verhindert nur künftige
+   Aktivierungsversuche.
+
+Native Aggregation und Retention
+--------------------------------
+
+.. index:: database; timescale_native_aggregation
+.. index:: database; timescale_native_retention
+.. index:: database; Continuous Aggregates
+
+Standardmäßig (``timescale_native_aggregation: false``) kompaktiert das Plugin alte Werte wie
+gewohnt selbst in Python (siehe "Kompaktierung statt Löschen" weiter oben) - das funktioniert
+auf allen unterstützten Datenbanken identisch.
+
+Mit ``timescale_native_aggregation: true`` übernimmt stattdessen TimescaleDB die Aggregation
+über sogenannte *Continuous Aggregates* - dieselben Item-Attribute (``database_maxage``,
+``database_maxage_action``, ``database_maxage_interval``) steuern weiterhin, was aggregiert
+wird, nur die Ausführung verlagert sich auf den Datenbank-Server. Die Plugin-seitige
+Kompaktierung läuft in diesem Modus nicht mehr.
+
+.. important::
+
+   Ein Wechsel von ``timescale_native_aggregation: true`` zurück zu ``false`` ist nicht
+   vorgesehen und kann nicht verlustfrei erfolgen.
+
+Zusätzlich kann ``timescale_native_retention: true`` (nur bei aktivem
+``timescale_native_aggregation``) alte Rohdaten-Zeitpartitionen automatisch auf dem
+Datenbank-Server entfernen, statt sie vom Plugin einzeln löschen zu lassen.
+
+.. warning::
+
+   Die Löschung erfolgt partitionsweise für alle Items gemeinsam, nicht garantiert exakt
+   nach Ablauf der pro Item eingestellten Zeit. Es betrifft **alle** Items - auch solche ohne
+   gesetztes ``database_maxage``. Ein unbegrenztes Aufbewahren einzelner Items ist in diesem
+   Modus nicht möglich. Es wird empfohlen, den Plugin-Parameter ``default_maxage`` auf einen
+   Wert größer 0 zu setzen und ``default_maxage_action`` nicht auf ``delete``, damit auch Items
+   ohne eigenes ``database_maxage`` ein Continuous Aggregate erhalten, bevor ihre Rohdaten
+   entfernt werden.
+
+   Einmal entfernte Rohdaten sind unwiderruflich verloren.
 
 
 Web Interface
@@ -229,164 +556,6 @@ Die `log` Tabelle enthält die folgenden Spalten:
   * Column `changed` - Ein UNIX Zeitstempel (in einer Auflösung von Mikrosekunden) der letzen Änderung
   * Column `val_quality` - Datenqualitätsflag: ``0`` = normaler Messwert (Standard), ``1`` = keine Daten verfügbar (Lücke)
 
-Fehlende Messwerte (Datenlücken)
----------------------------------
-
-Wenn ein Gerät (z. B. ein Wechselrichter) zeitweise nicht erreichbar ist, behält das Item
-in SmartHomeNG seinen letzten Wert. Ohne weiteres würde diese Zeitspanne fälschlicherweise
-als "Wert unverändert" in der Datenbank gespeichert — mit Auswirkungen auf Mittelwerte und
-Energieberechnungen.
-
-Ab Schemaversion 7 unterstützt das Plugin explizite Datenlücken über die Methoden
-``item.db_mark_invalid()`` und ``item.db_mark_valid()``, die beim Start des Plugins
-automatisch auf allen registrierten Items verfügbar gemacht werden.
-
-**Verwendung im Plugin:**
-
-.. code-block:: python
-
-    # Verbindung verloren — Lücke öffnen
-    sh.solar.power.db_mark_invalid(caller='solar_plugin', source='connection_lost')
-
-    # Verbindung wiederhergestellt — Lücke schließen, dann neuen Wert setzen
-    sh.solar.power.db_mark_valid(caller='solar_plugin', source='connection_restored')
-    sh.solar.power(new_value, 'solar_plugin')
-
-Lückeneinträge (``val_quality = 1``) werden bei Aggregationsabfragen (``avg``, ``sum``,
-``integrate``, ``on``, ``min``, ``max``) **ausgeschlossen**, sodass Mittelwerte und
-Energieberechnungen nur echte Messwerte berücksichtigen.  In Rohwertabfragen (``raw``)
-erscheinen sie als ``NULL``-Werte, damit Visualisierungen Lücken darstellen können.
-
-Es gibt zwei Möglichkeiten, die Anzahl der Datensätze pro Item zu begrenzen: Durch die Angabe des
-Item Attributs ``database_maxage`` wird das maximale Alter der Einträge eines Items begrenzt.
-Standardmäßig werden Werte, deren Zeitstempel älter ist als die angegebene Zeitspanne, regelmäßig aus
-der Datenbank gelöscht. Alternativ können ältere Werte statt gelöscht zu werden auch zu einem Wert pro
-Kompaktierungsintervall verdichtet werden, siehe unten "Kompaktierung statt Löschen".
-
-
-Kompaktierung statt Löschen (database_maxage_action)
-=====================================================
-
-Standardmäßig löscht ``database_maxage`` alte Werte ersatzlos. Über das Item Attribut
-``database_maxage_action`` kann stattdessen festgelegt werden, dass alte Rohwerte zu jeweils **einem**
-Wert pro Kompaktierungsintervall verdichtet werden, statt komplett zu verschwinden. So bleibt zum
-Beispiel der Verlauf eines Werts über Jahre hinweg als Tagesmittelwert erhalten, während die
-minütlichen Rohdaten irgendwann gelöscht werden.
-
-Die Kompaktierung läuft im selben Turnus wie das bisherige Löschen (Parameter ``removeold_cycle``)
-und arbeitet sich - genau wie das Löschen - in begrenzten Schritten durch alte Daten (Parameter
-``max_aggregate_intervals``), um die Datenbank nicht mit einem einzigen großen Durchlauf zu blockieren.
-
-
-Item Attribute
----------------
-
-``database_maxage_action``
-    Legt fest, was mit Werten passiert, die älter als ``database_maxage`` sind. Standardwert ist
-    ``delete`` (bisheriges Verhalten). Jeder andere Wert ersetzt die Rohwerte eines Intervalls durch
-    **einen** berechneten Wert:
-
-    =============== ========================================================== ===============
-    Wert                    Bedeutung                                            Gültig für Typ
-    =============== ========================================================== ===============
-    delete               Werte löschen (Standard)                              beliebig
-    avg                  Zeitgewichteter Mittelwert                            num, bool
-    sum                  Summe der Werte                                       num, bool
-    min                  Minimalwert                                           num, bool
-    max                  Maximalwert                                           num, bool
-    integrate            Diskretes Integral über der Zeit                      num, bool
-    on                   Prozentzahl der Werte > 0 (zeitgewichtet)             bool
-    countall             Anzahl der Rohwerte im Intervall                      beliebig
-    first                Ältester Rohwert im Intervall, unverändert            beliebig
-    last                 Neuester Rohwert im Intervall, unverändert            beliebig
-    =============== ========================================================== ===============
-
-    Die Funktionen ``avg``, ``sum``, ``min``, ``max``, ``integrate``, ``on`` und ``countall``
-    entsprechen den gleichnamigen Funktionen aus dem Abschnitt "Datenbankfunktionen für
-    Einzelauswertungen" weiter oben. ``first`` und ``last`` gibt es dort nicht - sie behalten den
-    tatsächlich gespeicherten Wert bei, statt etwas zu berechnen, und sind deshalb die einzigen
-    Funktionen, die auch für Items vom Typ ``str`` sinnvoll funktionieren (z.B. um den letzten
-    Status-Text eines Tages zu behalten, statt nur die Anzahl der Statuswechsel zu zählen).
-
-    Ist ein Wert für den Typ des Items ungültig (z.B. ``sum`` bei einem ``str``-Item, dessen
-    numerische Spalte immer leer ist), wird dies beim Start als Fehler geloggt und für dieses Item
-    automatisch auf ``delete`` zurückgefallen.
-
-``database_maxage_interval``
-    Größe eines Kompaktierungsintervalls, im gleichen Format wie ``cycle``/``autotimer``
-    (z.B. ``24h``, ``30m`` - **kein** ``d``-Suffix für Tage). Nur relevant, wenn
-    ``database_maxage_action`` nicht ``delete`` ist. Ohne Angabe gilt der Plugin-Parameter
-    ``default_maxage_interval``.
-
-Beide Attribute haben bewusst **keinen** Standardwert direkt am Item-Attribut, damit die
-Plugin-Parameter ``default_maxage_action``/``default_maxage_interval`` als Fallback greifen können,
-wenn ein Item nur ``database_maxage`` setzt, aber keine eigene Aktion/Intervall konfiguriert.
-
-
-Beispiel
---------
-
-.. code-block:: yaml
-
-    solar:
-        leistung:
-            type: num
-            database: true
-            database_maxage: 90
-            database_maxage_action: avg
-            database_maxage_interval: 24h
-
-Werte, die älter als 90 Tage sind, werden zu einem Tagesmittelwert zusammengefasst statt gelöscht zu
-werden.
-
-
-Minimum/Maximum als eigenständige Items (database.min / database.max)
-------------------------------------------------------------------------
-
-``database_maxage_action`` liefert bewusst nur **einen** Wert pro Intervall - wer zusätzlich zum
-Mittelwert auch Minimum und/oder Maximum eines Intervalls dauerhaft speichern möchte, kann dafür die
-mitgelieferten Structs ``database.min`` und ``database.max`` nutzen. Sie legen jeweils ein eigenes
-Kind-Item an (``db_min`` bzw. ``db_max``), das den Wert des übergeordneten Items live mitschreibt und
-unabhängig mit ``database_maxage_action: min`` bzw. ``max`` kompaktiert wird:
-
-.. code-block:: yaml
-
-    solar:
-        leistung:
-            type: num
-            database: true
-            database_maxage: 90
-            database_maxage_action: avg
-            struct:
-              - database.min
-              - database.max
-
-Dadurch entstehen ``solar.leistung.db_min`` und ``solar.leistung.db_max`` als vollwertige,
-eigenständig geloggte Items.
-
-.. note::
-
-   Die Structs kopieren ``database_maxage``/``database_maxage_interval`` **nicht** vom
-   übergeordneten Item - beide Kind-Items nutzen die gleichen Plugin-Parameter
-   (``default_maxage``/``default_maxage_interval``) wie jedes andere Item auch, das diese Attribute
-   nicht selbst setzt. Setzt das übergeordnete Item einen abweichenden, expliziten Wert für
-   ``database_maxage`` (wie im Beispiel oben, ``90``), muss dieser bei Bedarf zusätzlich lokal auf
-   den Kind-Items gesetzt werden:
-
-   .. code-block:: yaml
-
-       solar:
-           leistung:
-               ...
-               struct:
-                 - database.min
-                 - database.max
-
-               db_min:
-                   database_maxage: 90
-               db_max:
-                   database_maxage: 90
-
 
 Datenbankfunktionen für Datenreihen/Plots
 =========================================
@@ -397,7 +566,7 @@ mit t_start und t_end, ausgeführt und liefern Datenreihen zurück.
 =============== =====================================================================
 Funktion                Bedeutung
 =============== =====================================================================
-avg                  Mittelwert       
+avg                  Mittelwert
 integrate            Diskretes Integral der Werte über der Zeit
 differentiate        Diskretes Differential der Werte über der Zeit
 diff                 Differenz zu dem vorherigen Wert, funktioniert nur bei Monotonie
@@ -411,7 +580,7 @@ sum                  Summe der Werte
 raw                  Rohwerte ohne Berechnung
 =============== =====================================================================
 
-Über das SmartVisu Widget plot.period können die genannten Datenbankfunktionen genutzt werden, um Plots der Werte zu erstellen. 
+Über das SmartVisu Widget plot.period können die genannten Datenbankfunktionen genutzt werden, um Plots der Werte zu erstellen.
 Beispiele finden sich in der SmartVisu Dokumentation unter plot.period.
 
 Datenbankfunktionen für Einzelauswertungen
@@ -453,7 +622,7 @@ Differenz der Datenbank zwischen heute und vor einem Jahr:
 
 
 Datenqualität und Datenlücken
-==============================
+=============================
 
 Wenn eine Datenquelle (z. B. ein Wechselrichter oder ein Cloud-Dienst) zeitweise
 nicht erreichbar ist, behält das Item in SmartHomeNG seinen letzten bekannten Wert.
@@ -478,7 +647,7 @@ Eintrag in der ``log``-Tabelle trägt jetzt eine Spalte ``val_quality``:
 +-------+-----------------------------------------------------------+
 
 item.db_mark_invalid()
------------------------
+----------------------
 
 Öffnet eine Datenlücke in der Datenbank für dieses Item.
 
@@ -500,7 +669,7 @@ ausschließlich auf den Datenbankpuffer.
 :source: Optionale Quellbeschreibung (erscheint im Log).
 
 item.db_mark_valid()
----------------------
+--------------------
 
 Schließt eine offene Datenlücke für dieses Item.
 
@@ -520,7 +689,7 @@ der neue Messwert normal gesetzt werden.
 :source: Optionale Quellbeschreibung.
 
 Auswirkung auf Abfragen
-------------------------
+-----------------------
 
 Einträge mit ``val_quality = 1`` werden bei folgenden Funktionen automatisch
 **ausgeschlossen**:
@@ -531,7 +700,7 @@ Bei Rohwertabfragen (``raw``) erscheinen Lückeneinträge als ``NULL``, damit
 Visualisierungen die Unterbrechung als echte Lücke darstellen können.
 
 Einzelnen Datensatz ungültig markieren (Webinterface)
---------------------------------------------------------
+-----------------------------------------------------
 
 In der Detailansicht eines Items (``log``-Tabelle) lässt sich ein einzelner
 Datensatz über das Papierkorb-Symbol als ungültig markieren, statt ihn zu
@@ -553,7 +722,7 @@ Das vollständige Löschen der Werthistorie eines Items (Papierkorb-Symbol in de
 Löschen.
 
 Implizite Revalidierung
-------------------------
+-----------------------
 
 Trifft ein neuer Messwert über ``update_item()`` ein, während für das Item noch
 eine offene Datenlücke besteht, **schließt das Plugin die Lücke automatisch** —
@@ -565,4 +734,3 @@ Das bedeutet: Wenn ein Gerät nach einem Verbindungsabbruch wieder Werte liefert
 genügt es, den neuen Messwert direkt zu setzen.  ``db_mark_valid()`` ist dann
 optional und muss nur explizit aufgerufen werden, wenn die Lücke geschlossen
 werden soll, *bevor* der erste neue Messwert bekannt ist.
-

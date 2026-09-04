@@ -3,242 +3,248 @@ plugin:
     # Global plugin attributes
     type: system                  # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
-        de: 'Database plugin, mit Unterstützung für SQLite 3 und MySQL'
-        en: 'Database plugin, with support for SQLite 3 and MySQL'
+        de: 'Database plugin, mit Unterstützung für SQLite 3, MySQL/MariaDB und PostgreSQL+TimescaleDB'
+        en: 'Database plugin, with support for SQLite 3, MySQL/MariaDB and PostgreSQL+TimescaleDB'
     maintainer: ohinckel, msinn, onkelandy
     tester: psilo909, brandst, aschwith
     state: ready
     keywords: database
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
-    version: 1.7.0                # Plugin version
+    version: 1.8.0                # Plugin version
     sh_minversion: '1.12.2'         # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: True           # plugin supports multi instance
-    restartable: unknown
+    multi_instance: true           # plugin supports multi instance
+    restartable: true
     startorder: early              # set start priority of plugin (early/normal/late)
     classname: Database            # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
+
+    # --- general (all drivers) ------------------------------------------------
     driver:
         type: str
         default: 'sqlite3'
+        valid_list_ci:
+            - 'sqlite3'
+            - 'pymysql'
+            - 'psycopg2'
+            - 'psycopg'
+            - 'mysql'
+            - 'mariadb'
+            - 'postgres'
+            - 'postgresql'
+            - 'timescale'
+            - 'timescaledb'
         description:
-            de: 'Spezifiziert das DB-API2 Treiber Modul'
-            en: 'specifies the DB-API2 driver module (e.g. Python includes the SQLite driver by importing the module sqlite3, to use it here just set the driver parameter to the module name sqlite3)'
+            de: "Das DB-API2-Treibermodul. Akzeptiert die echten Modulnamen ('sqlite3', 'pymysql', 'psycopg2', 'psycopg') sowie entsprechende Datenbank-Namen: 'mysql'/'mariadb', 'postgres'/'postgresql'/'timescale'/'timescaledb'."
+            en: "The DB-API2 driver module: 'sqlite3', 'pymysql', 'psycopg2'/'psycopg', or a matching database name ('mysql'/'mariadb', 'postgres'/'postgresql'/'timescale'/'timescaledb')."
     connect:
         type: list(str)
+        mandatory: true
         description:
-            de: 'Spezifiziert die Verbindungsparameter, welche genutzt werden, um die connect() Funktion des DB API 2 aufzurufen.'
-            en: 'specifies the connection parameters which is directly used to invoke the connect() function of the DB API 2 implementation (for SQLite lookup here, other databases depends on implementation). An example connect string for pymysql could be connect = host:127.0.0.1 | user:db_user | passwd:db_password | db:smarthome'
-    sqlite_wal_mode:
-        type: bool
-        default: False
-        description:
-            de: "Nur für SQLite3: Auf True setzen, um die Datenbankdatei in den WAL-Journal-Modus zu versetzen - erlaubt einem Schreibvorgang, parallel zu Lesevorgängen weiterzulaufen, statt sie zu blockieren (relevant, da dieses Plugin zwei unabhängige Verbindungen zur selben Datei offen hält). ACHTUNG: Dies ist praktisch eine Einwegentscheidung - WAL ist eine Eigenschaft der Datenbankdatei selbst, nicht der Verbindung, bleibt über Neustarts hinweg bestehen und wird von jeder künftigen Verbindung (auch von anderen Tools) übernommen, bis es explizit zurückgesetzt wird. Dieses Attribut später wieder auf False zu setzen, macht eine bereits umgestellte Datei nicht rückgängig."
-            en: "SQLite3 only: Set to True to switch the database file to WAL journal mode - lets a write proceed alongside reads instead of blocking them (relevant since this plugin keeps two independent connections open to the same file). WARNING: this is effectively a one-way decision - WAL is a property of the database file itself, not the connection, persists across restarts, and is picked up by any future connection (including other tools) until explicitly switched back. Setting this attribute back to False later does not revert an already-converted file."
+            de: "Die Verbindungsparameter für die connect()-Funktion des DB-API2-Treibers. Beispiel für pymysql: connect = host:127.0.0.1 | user:db_user | passwd:db_password | db:smarthome. Beispiel für psycopg2/psycopg: connect = host:127.0.0.1 | port:5432 | user:db_user | password:db_password | database:smarthome."
+            en: "The connection parameters for the DB-API2 driver's connect() function. Example for pymysql: connect = host:127.0.0.1 | user:db_user | passwd:db_password | db:smarthome. Example for psycopg2/psycopg: connect = host:127.0.0.1 | port:5432 | user:db_user | password:db_password | database:smarthome."
     prefix:
         type: str
         default: ''
         description:
-            de: 'Enthält ein Prefix welches vor die Datenbanktabellen des Plugins geschrieben wird'
-            en: "if you want to log into an existing database with other tables you can specify a prefix for the plugins' tables"
+            de: 'Ein Präfix, das vor die Tabellennamen des Plugins gestellt wird - nützlich, um mit anderen Tabellen in derselben Datenbank zu koexistieren.'
+            en: "A prefix placed before the plugin's own table names - useful to coexist with other tables in the same database."
     cycle:
         type: int
         default: 60
         description:
-            de: 'Dump Cycle bestimmt wie oft die Daten auf Platte geschrieben werden (in Sekunden).'
-            en: 'Dump cycle defines how often the database is dumped to disc (in seconds).'
-    removeold_cycle:
-        type: int
-        default: 91
-        description:
-            de: 'Remove old Cycle bestimmt wie oft die Prüfung auf veraltete Daten gestartet werden soll (in Sekunden).'
-            en: 'Remove old cycle defines how often the database will be checked for old data (in seconds).'
+            de: 'Wie oft (in Sekunden) gepufferte Werte in die Datenbank geschrieben werden.'
+            en: 'How often (in seconds) buffered values are written to the database.'
     precision:
         type: int
         default: 2
         description:
-            de: 'Genauigkeit der aus der Datenbank ausgelesenen Werte (Nachkommastellen).'
-            en: 'Precision of values read from database (digits after comma).'
-
+            de: 'Nachkommastellen der aus der Datenbank gelesenen Werte.'
+            en: 'Decimal places of values read from the database.'
     time_precision:
         type: int
         default: 3
         valid_min: 0
         valid_max: 3
         description:
-            de: 'Genauigkeit der aus der Datenbank ausgelesenen Zeitwerte (Nachkommastellen (für Sekunden)).'
-            en: 'Precision of time values read from database (digits after comma (for seconds)).'
-
+            de: 'Nachkommastellen (für Sekunden) der aus der Datenbank gelesenen Zeitwerte.'
+            en: 'Decimal places (for seconds) of time values read from the database.'
     count_logentries:
         type: bool
-        default: False
+        default: false
         description:
-            de: "Auf True setzen, um für das Web Interface die Anzahl der Logeinträge für jedes Item zu zählen und als extra Spalte anzuzeigen"
-            en: "Set to True to count the number of log entries for each item for the web interface and show as extra column"
-
+            de: 'Zeigt im Web-Interface eine zusätzliche Spalte mit der Anzahl der Datenbankeinträge je Item an.'
+            en: 'Shows an extra column with the number of database entries per item in the web interface.'
     max_delete_logentries:
         type: int
         default: 20000
         valid_min: 1000
         description:
-            de: "Maximal auf einmal zu löschende Anzahl an Log Einträgen mit dem database_maxage Attribut, reduziert die Belastung der Datenbank bei alten Datenbeständen"
-            en: "Maximum number of Logentries to delete at once with database_maxage attribute, reduces load on database with old datasets"
-
+            de: 'Maximale Anzahl an Datenbankeinträgen mit database_maxage-Attribut, die in einem Durchlauf gelöscht werden - begrenzt die Last auf der Datenbank bei großen Altbeständen.'
+            en: 'Maximum number of database entries with the database_maxage attribute deleted in one run - limits the load on the database with large amounts of old data.'
     max_reassign_logentries:
         type: int
-        default: 20  # 000
-        valid_min: 10  # 00
+        default: 20000
+        valid_min: 100
         description:
-            de: "Maximal auf einmal neu zuzuweisende Anzahl an Log Einträgen, reduziert die Belastung der Datenbank bei großen Datenbeständen"
-            en: "Maximum number of Logentries to reassign at once, reduces load on database with large datasets"
-
+            de: 'Maximale Anzahl an Datenbankeinträgen, die in einem Durchlauf neu einem Item zugewiesen werden - begrenzt die Last auf der Datenbank bei großen Datenbeständen.'
+            en: 'Maximum number of database entries reassigned to an item in one run - limits the load on the database with large datasets.'
     default_maxage:
         type: int
         default: 0
         valid_min: 0
         description:
-            de: "Falls dieser Parameter einen Wert größer 0 enthält: Standard maxage für Items, die kein maxage gesetzt haben"
-            en: "If this parameter is > 0: maxage for Items that don't have a maxage set."
-
+            de: 'Ist dieser Wert größer 0, gilt er als Standard-database_maxage für Items ohne eigenes database_maxage.'
+            en: 'If this value is greater than 0, it acts as the default database_maxage for items without their own database_maxage.'
     default_maxage_action:
         type: str
         default: 'delete'
         valid_list_ci: ['delete', 'avg', 'sum', 'min', 'max', 'integrate', 'duty_cycle', 'on', 'countall', 'first', 'last']
         description:
-            de: "Standard-Aktion für Items mit database_maxage, die kein eigenes database_maxage_action gesetzt haben. 'on' ist ein veralteter Alias für 'duty_cycle' und wird nur aus Kompatibilitätsgründen noch akzeptiert - unquoted 'on' wird von YAML als bool True interpretiert, daher 'duty_cycle' verwenden."
-            en: "Default action for items with database_maxage that don't have their own database_maxage_action set. 'on' is a legacy alias for 'duty_cycle', accepted for backward compatibility only - unquoted 'on' gets parsed as boolean True by YAML, so use 'duty_cycle' instead."
-
+            de: "Standardaktion für Items mit database_maxage, die kein eigenes database_maxage_action gesetzt haben. 'on' ist ein veralteter Alias für 'duty_cycle'."
+            en: "Default action for items with database_maxage that don't have their own database_maxage_action set. 'on' is a legacy alias for 'duty_cycle'."
     default_maxage_interval:
         type: str
         default: '24h'
         description:
-            de: "Standard-Kompaktierungsintervall für Items, die kein eigenes database_maxage_interval gesetzt haben (nur relevant, falls database_maxage_action nicht 'delete' ist). Format wie bei 'cycle'/'autotimer' (z.B. '24h', '30m'), Tage-Suffix 'd' wird nicht unterstützt."
-            en: "Default compaction interval for items that don't have their own database_maxage_interval set (only relevant if database_maxage_action is not 'delete'). Same format as 'cycle'/'autotimer' (e.g. '24h', '30m'), no 'd' (days) suffix supported."
-
+            de: "Standard-Kompaktierungsintervall für Items, die kein eigenes database_maxage_interval gesetzt haben (nur relevant, wenn database_maxage_action des Items nicht 'delete' ist). Angabe in Sekunden, Minuten (m) oder Stunden (h), auch kombinierbar (z.B. '30m', '2h30m'). Tage müssen in Stunden angegeben werden (z.B. 7 Tage = '168h')."
+            en: "Default compaction interval for items without their own database_maxage_interval set (only relevant when the item's database_maxage_action is not 'delete'). Given in seconds, minutes (m) or hours (h), combinable (e.g. '30m', '2h30m'). Days must be given as hours (e.g. 7 days = '168h')."
     max_aggregate_intervals:
         type: int
         default: 30
         valid_min: 1
         description:
-            de: "Maximale Anzahl an Kompaktierungs-Intervallen, die pro Durchlauf für ein Item verarbeitet werden, reduziert die Belastung der Datenbank bei alten Datenbeständen"
-            en: "Maximum number of compaction intervals processed per item per run, reduces load on database with old datasets"
-
+            de: "Maximale Anzahl an Kompaktierungsintervallen, die pro Durchlauf und Item verarbeitet werden - begrenzt die Last auf der Datenbank bei großen Altbeständen. Gilt nur für die Plugin-seitige Kompaktierung, nicht bei timescale_native_aggregation: true."
+            en: "Maximum number of compaction intervals processed per item per run - limits the load on the database with large amounts of old data. Only applies to plugin-side compaction, not with timescale_native_aggregation: true."
+    removeold_cycle:
+        type: int
+        default: 91
+        description:
+            de: "Wie oft (in Sekunden) auf veraltete Datenbankeinträge (database_maxage) geprüft wird. Ohne Wirkung bei timescale_native_aggregation: true."
+            en: "How often (in seconds) database entries are checked against database_maxage. Has no effect with timescale_native_aggregation: true."
     invalid_check_cycle:
         type: int
         default: 60
         valid_min: 1
         description:
-            de: "Bestimmt, wie oft (in Sekunden) auf Items mit database_invalid_after geprüft wird, die seither still geblieben sind. Nur relevant, falls mindestens ein Item database_invalid_after gesetzt hat."
-            en: "How often (in seconds) items with database_invalid_after are checked for having gone silent since. Only relevant if at least one item has database_invalid_after set."
-
+            de: 'Wie oft (in Sekunden) Items mit database_invalid_after geprüft werden.'
+            en: 'How often (in seconds) items with database_invalid_after are checked.'
     invalid_check_grace_time:
         type: int
         default: 60
         valid_min: 0
         description:
-            de: "Zusätzliche Karenzzeit (in Sekunden), die nach dem Start des Plugins zum database_invalid_after-Wert eines Items addiert wird, bevor es als ungültig markiert werden kann - deckt DB-Lesezeit, Startup-Verzögerungen und Scheduler-Streuung ab. Für die meisten Konfigurationen ist der Standardwert ausreichend."
-            en: "Extra grace time (in seconds), added to an item's own database_invalid_after value, before it can be marked invalid following plugin startup - covers db read delays, startup lag, and scheduler scattering. The default is fine for most configurations."
+            de: 'Zusätzliche Karenzzeit (in Sekunden), die nach dem Start des Plugins gewartet wird, bevor die Prüfung des invalid_check_cycle startet.'
+            en: 'Extra grace time (in seconds) waited after plugin startup before the invalid_check_cycle check starts.'
 
+    # --- SQLite3 only ----------------------------------------------------------
+    sqlite_wal_mode:
+        type: bool
+        default: false
+        description:
+            de: "Nur für SQLite3 (driver: sqlite3): Versetzt die Datenbankdatei in den WAL-Journal-Modus - erlaubt parallele Schreib- und Lesevorgänge. ACHTUNG: Dies ist eine Einwegentscheidung - WAL ist eine Eigenschaft der Datenbankdatei selbst, bleibt über Neustarts hinweg bestehen und wird von jeder künftigen Verbindung (auch von anderen Tools) übernommen. Diesen Parameter später wieder auf False zu setzen, macht eine bereits umgestellte Datei nicht rückgängig."
+            en: "SQLite3 only (driver: sqlite3): Switches the database file to WAL journal mode - allows parallel writes and reads. WARNING: this is a one-way decision - WAL is a property of the database file itself, persists across restarts, and is picked up by any future connection (including other tools). Setting this parameter back to False later does not revert an already-converted file."
     copy_database:
         type: bool
-        default: False
+        default: false
         description:
-            de: "Nur für SQLite3: Auf True setzen, um beim Start von SmartHomeNG eine Kopie der Datenbank Datei zu erzeugen"
-            en: "For SQLite3 only: Set to True to make a copy of the database file on startup of SmartHomeNG"
-
+            de: 'Nur für SQLite3 (driver: sqlite3): Erzeugt beim Start von SmartHomeNG eine Kopie der Datenbankdatei.'
+            en: 'SQLite3 only (driver: sqlite3): Creates a copy of the database file on SmartHomeNG startup.'
     copy_database_name:
         type: str
         description:
-            de: "Nur für SQLite3: Pfad/Name der Datenbank Kopie"
-            en: "For SQLite3 only: Path/Name of the copy of the database file"
+            de: 'Nur für SQLite3 (driver: sqlite3): Pfad/Name der Datenbank-Kopie.'
+            en: 'SQLite3 only (driver: sqlite3): Path/name of the database copy.'
+
+    # --- PostgreSQL+TimescaleDB only (driver: psycopg2/psycopg) ----------------
+    timescale_hypertable:
+        type: bool
+        default: true
+        description:
+            de: "Nur für PostgreSQL: Aktiviert die TimescaleDB-Extension und wandelt die log-Tabelle in eine Hypertable um - beschleunigt zeitbereichsbasierte Abfragen (Graphen, Statistiken) auf großen Tabellen erheblich. Setzt voraus, dass TimescaleDB auf dem PostgreSQL-Server installiert ist; falls nicht, wird eine Warnung ausgegeben und das Feature bleibt inaktiv, der Rest des Plugins funktioniert unverändert."
+            en: "PostgreSQL only (driver: psycopg2/psycopg): Enables the TimescaleDB extension and converts the log table into a hypertable - substantially speeds up time-range queries (graphs, statistics) on large tables. Requires TimescaleDB to be installed on the PostgreSQL server; if it isn't, a warning is logged and the feature stays inactive, the rest of the plugin works unchanged."
+    timescale_chunk_interval:
+        type: str
+        default: '168h'
+        description:
+            de: "Nur für PostgreSQL mit timescale_hypertable aktiv: Größe der Zeitpartitionen, in die die log-Tabelle aufgeteilt wird. Angabe in Sekunden, Minuten (m) oder Stunden (h), auch kombinierbar (z.B. '30m', '2h30m'). Tage müssen in Stunden angegeben werden (z.B. 7 Tage = '168h'). Gilt nur für neu angelegte Partitionen, bestehende werden nicht verändert."
+            en: "PostgreSQL with timescale_hypertable enabled only: size of the time partitions the log table is split into. Given in seconds, minutes (m) or hours (h), combinable (e.g. '30m', '2h30m'). Days must be given as hours (e.g. 7 days = '168h'). Only applies to newly created partitions, existing ones are unaffected."
+    timescale_compress:
+        type: bool
+        default: false
+        description:
+            de: "Nur für PostgreSQL mit timescale_hypertable aktiv: Aktiviert native spaltenbasierte Kompression der log-Tabelle. Die aktuellste Zeitpartition bleibt unkomprimiert. Diesen Parameter auf False zurückzusetzen deaktiviert nur künftige Aktivierungsversuche, hebt bereits aktive Kompression nicht auf."
+            en: "PostgreSQL with timescale_hypertable enabled only: enables native columnar compression on the log table. The most recent time partition stays uncompressed. Setting this back to False only stops future activation, it does not undo compression already active."
+    timescale_native_aggregation:
+        type: bool
+        default: false
+        description:
+            de: "Nur für PostgreSQL mit timescale_hypertable aktiv: False (Standard) nutzt die bestehende Python-seitige Kompaktierung (wie bei sqlite3/MySQL). True nutzt stattdessen TimescaleDB Continuous Aggregates. Ein Wechsel von True zurück zu False ist nicht vorgesehen und kann nicht verlustfrei erfolgen."
+            en: "PostgreSQL with timescale_hypertable enabled only: False (default) uses the existing Python-side compaction (same as sqlite3/MySQL). True uses TimescaleDB Continuous Aggregates instead. Switching from True back to False is not implemented and not possible without data loss."
+    timescale_native_retention:
+        type: bool
+        default: false
+        description:
+            de: "Nur für PostgreSQL mit timescale_native_aggregation aktiv: Entfernt alte Rohdaten-Zeitpartitionen automatisch auf dem Datenbank-Server, statt diese vom Plugin einzeln zu löschen. Die Löschung erfolgt partitionsweise für alle Items, nicht garantiert nach Ablauf der pro Item eingestellten Zeit. ACHTUNG: Es werden ALLE Items gelöscht, nicht nur die mit eingestelltem database_maxage. Ein unbegrenztes Aufbewahren ist in diesem Modus nicht möglich. Es wird empfohlen, default_maxage > 0 und default_maxage_action != 'delete' zu setzen."
+            en: "PostgreSQL with timescale_native_aggregation enabled only: automatically drops old raw-data time partitions on the database server, instead of the plugin deleting them individually. Deletion happens partition-wise for all items, not guaranteed to happen once each item's own configured time has elapsed. CAUTION: ALL items' data is dropped, not only items with database_maxage set. Unlimited retention is not possible in this mode. It is recommended to set default_maxage > 0 and default_maxage_action != 'delete'."
 
 item_attributes:
     # Definition of item attributes defined by this plugin
+
+    # --- core --------------------------------------------------------------
     database:
         type: str
-        valid_list_ci: ['', 'no', 'yes', 'init', 'true', 'false']
-        duplicate_use: True
+        valid_list_ci: ['', 'init', 'true', 'false', 'no', 'yes']
+        duplicate_use: true
         description:
-            de: "Wenn auf 'yes' oder 'true' gesetzt, werden die Werte des Items in die Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert des Items aus der Datenbank gelesen."
-            en: "This attribute enables the database logging when set (just use value 'yes' or 'true'). If value 'init' is used, an item will be initalized from the database after SmartHomeNG is restarted."
-
-    database_maxage:
-        type: num
-        valid_min: 0
-        description:
-            de: "Maximales Alter (in Tagen) der Logeinträge, die für dieses Item gespeichert werden sollen. Falls nicht angegeben, werden die Werte unbegrenzt gespeichert."
-            en: "Maximum age (in days) of the log entries to be saved for this item. If not specified, the values are saved indefinitely."
-
-    database_maxage_action:
-        type: str
-        valid_list_ci: ['delete', 'avg', 'sum', 'min', 'max', 'integrate', 'duty_cycle', 'on', 'countall', 'first', 'last']
-        description:
-            de: "Aktion, die beim Erreichen von database_maxage auf ältere Logeinträge angewendet wird. 'delete' (Standardverhalten) löscht die Einträge ersatzlos; jeder andere Wert ersetzt sie durch einen Kompaktierungswert pro database_maxage_interval, statt sie zu löschen. 'duty_cycle' (nur bool-Items) berechnet den zeitgewichteten Ein-Anteil. 'on' ist ein veralteter Alias für 'duty_cycle', nur aus Kompatibilitätsgründen noch akzeptiert - unquoted 'on' wird von YAML als bool True interpretiert, daher 'duty_cycle' verwenden. Kein Standardwert hier gesetzt, damit default_maxage_action als Fallback greifen kann, wenn das Attribut nicht gesetzt ist."
-            en: "Action applied to log entries older than database_maxage. 'delete' (today's behaviour) removes them outright; any other value replaces them with one compacted value per database_maxage_interval instead of deleting them. 'duty_cycle' (bool items only) computes the time-weighted on-fraction. 'on' is a legacy alias for 'duty_cycle', accepted for backward compatibility only - unquoted 'on' gets parsed as boolean True by YAML, so use 'duty_cycle' instead. No default set here on purpose, so the default_maxage_action plugin parameter can act as fallback when the attribute is unset."
-
-    database_maxage_interval:
-        type: str
-        description:
-            de: "Kompaktierungsintervall im Format von 'cycle'/'autotimer' (z.B. '24h', '30m'; kein 'd'-Suffix), nur relevant falls database_maxage_action nicht 'delete' ist. Kein Standardwert hier gesetzt, damit default_maxage_interval als Fallback greifen kann, wenn das Attribut nicht gesetzt ist."
-            en: "Compaction interval, same format as 'cycle'/'autotimer' (e.g. '24h', '30m'; no 'd' suffix), only relevant if database_maxage_action is not 'delete'. No default set here on purpose, so the default_maxage_interval plugin parameter can act as fallback when the attribute is unset."
-
+            de: "Bei 'yes' oder 'true' werden Wertänderungen des Items in die Datenbank geschrieben. Bei 'init' wird zusätzlich beim Start von SmartHomeNG der letzte Wert des Items aus der Datenbank gelesen."
+            en: "With 'yes' or 'true', the item's value changes are written to the database. With 'init', the item's last value is additionally read back from the database on SmartHomeNG startup."
     database_acl:
         type: str
         valid_list_ci: ['rw', 'ro']
         default: 'rw'
         description:
-            de: "Muss normalerweise nicht konfiguriert werden, dann wird der Standard 'rw' genutzt. Es kann nützlich sein Werte als 'ro' zu deklarieren, falls die Datenbank Daten aus anderen Quellen enthält, die durch SmartNomeNG nicht verändert werden sollen."
-            en: "Usually does not need to be configured, in this case the standard 'rw' is used. It can be useful to declare values as 'ro' if the database contains data from other sources that SmartNomeNG should not change."
-
+            de: "'rw' (Standard) schreibt Wertänderungen normal in die Datenbank. 'ro' unterdrückt das Schreiben für dieses Item - nützlich, wenn die Datenbank für dieses Item bereits Daten aus einer anderen Quelle enthält, die nicht überschrieben werden sollen."
+            en: "'rw' (default) writes value changes to the database normally. 'ro' suppresses writing for this item - useful when the database already holds data for this item from another source that should not be overwritten."
     database_write_on_shutdown:
         type: bool
-        default: True
+        default: true
         description:
-            de: "Muss normalerweise nicht konfiguriert werden, dann wird der Standard 'True' genutzt. Das bedeutet, dass das item vor dem Beenden von smarthomeNG nochmal in die DB geschrieben wird (auch wenn keine echte Aenderung statt fand). Wird das Attribut auf 'False' gesetzt, wird das Schreiben beim Beenden unterdrueckt."
-            en: "Usually does not need to be configured, in this case the default 'True' is used. This means that the item value is written to the DB once again on smarthomeNG shutdown. (even though the item has not been updated). Setting the attribute to 'False', supresses the rewrite on shutdown."
+            de: "Schreibt den Itemwert beim Beenden von SmartHomeNG erneut in die Datenbank, auch ohne echte Änderung (Standard: True). Bei False entfällt dieses abschließende Schreiben."
+            en: "Writes the item value to the database once more on SmartHomeNG shutdown, even without a real change (default: True). With False, this final write is skipped."
 
+    # --- database_maxage (compaction/deletion of old data) -----------------
+    database_maxage:
+        type: num
+        valid_min: 0
+        description:
+            de: 'Maximales Alter (in Tagen) der Datenbankeinträge, die für dieses Item behalten werden. Ohne Angabe werden die Werte unbegrenzt gespeichert.'
+            en: 'Maximum age (in days) of the database entries kept for this item. If not set, values are kept indefinitely.'
+    database_maxage_action:
+        type: str
+        valid_list_ci: ['delete', 'avg', 'sum', 'min', 'max', 'integrate', 'duty_cycle', 'on', 'countall', 'first', 'last']
+        description:
+            de: "Aktion, die beim Erreichen von database_maxage auf ältere Datenbankeinträge angewendet wird. 'delete' (Standard) löscht die Einträge ersatzlos; jeder andere Wert ersetzt sie durch einen Kompaktierungswert pro database_maxage_interval statt sie zu löschen. 'duty_cycle' (nur bool-Items) berechnet den zeitgewichteten Ein-Anteil. 'on' ist ein veralteter Alias für 'duty_cycle', nur aus Kompatibilitätsgründen akzeptiert. Ohne eigenen Wert gilt der Plugin-Parameter default_maxage_action."
+            en: "Action applied to database entries older than database_maxage. 'delete' (default) removes them outright; any other value replaces them with one compacted value per database_maxage_interval instead of deleting them. 'duty_cycle' (bool items only) computes the time-weighted on-fraction. 'on' is a legacy alias for 'duty_cycle', accepted for compatibility only. Without its own value, the default_maxage_action plugin parameter applies."
+    database_maxage_interval:
+        type: str
+        description:
+            de: "Kompaktierungsintervall, nur relevant wenn database_maxage_action nicht 'delete' ist. Angabe in Sekunden, Minuten (m) oder Stunden (h), auch kombinierbar (z.B. '30m', '2h30m'). Tage müssen in Stunden angegeben werden (z.B. 7 Tage = '168h'). Ohne eigenen Wert gilt der Plugin-Parameter default_maxage_interval."
+            en: "Compaction interval, only relevant when database_maxage_action is not 'delete'. Given in seconds, minutes (m) or hours (h), combinable (e.g. '30m', '2h30m'). Days must be given as hours (e.g. 7 days = '168h'). Without its own value, the default_maxage_interval plugin parameter applies."
+
+    # --- database_invalid_after (auto-invalidate on no changes/updates) ----
     database_invalid_after:
         type: str
         description:
-            de: "Opt-in, pro Item: Maximale Stillezeit (Format wie 'cycle'/'autotimer', z.B. '5m', '30s'), nach der ein Item ohne Update automatisch als ungültig markiert wird (siehe db_mark_invalid() - Lücke statt gerader Interpolationslinie in Plots). Kein Standardwert und kein Plugin-Fallback - jedes Item muss dies explizit selbst setzen, da die richtige Schwelle von der jeweiligen Datenquelle abhängt. Erfordert das item-Attribut 'enforce_updates', sonst wird eine unveränderte Wiederholung desselben Werts nicht als Lebenszeichen erkannt (nur die periodische Prüfung bleibt dann voll wirksam). Nicht mit database_acl: ro kombinierbar."
-            en: "Opt-in, per item: maximum silence duration (same format as 'cycle'/'autotimer', e.g. '5m', '30s') after which an item with no update is automatically marked invalid (see db_mark_invalid() - a gap instead of a straight interpolated line in plots). No default value and no plugin-level fallback - every item must set this explicitly itself, since the right threshold depends on that specific data source. Requires the item attribute 'enforce_updates', otherwise an unchanged repeat of the same value isn't recognised as a sign of life (only the periodic check stays fully effective). Not compatible with database_acl: ro."
+            de: "Maximale Zeit ohne Änderungen oder Updates, nach der ein Item automatisch als ungültig markiert wird - sinnvoll nur bei Items mit regelmäßigen Aktualisierungen (z.B. über cycle/crontab). Angabe in Sekunden, Minuten (m) oder Stunden (h), auch kombinierbar (z.B. '30s', '5m'). Erfordert das Item-Attribut 'enforce_updates'. Nicht mit database_acl: ro kombinierbar."
+            en: "Maximum time without changes or updates after which an item is automatically marked invalid - useful only for items with regular updates (e.g. via cycle/crontab). Given in seconds, minutes (m) or hours (h), combinable (e.g. '30s', '5m'). Requires the item attribute 'enforce_updates'. Not compatible with database_acl: ro."
 
 
 item_structs:
-    # Companion items mirroring the parent's own value, each independently
-    # compacted with a different database_maxage_action. Attach via
-    # 'struct: database.min' / 'struct: database.max' on any item that
-    # itself sets database_maxage/database_maxage_action. See
-    # database_maxage_action documentation for why min/max need a separate
-    # item rather than being an option list on the parent's own attribute.
-    #
-    # The struct key is bare 'min'/'max' (already namespaced by the plugin
-    # name at the reference point, struct: database.min), but the child
-    # item it creates is named 'db_min'/'db_max' - once instantiated, a
-    # bare '<item>.min' would be indistinguishable from an unrelated
-    # hand-authored item of the same name (e.g. a configured setpoint);
-    # 'db_min'/'db_max' stays self-explanatory regardless of how it got
-    # there.
-    #
-    # Deliberately NOT copying database_maxage/database_maxage_interval/
-    # enforce_updates from the parent via '..:.' here: that only works if
-    # the parent sets them explicitly, which defeats the point of having
-    # default_maxage/default_maxage_action/default_maxage_interval plugin
-    # parameters in the first place (an item can legitimately set only
-    # database_maxage_action and rely on the plugin-level default for
-    # everything else). Copying an attribute the parent doesn't actually
-    # have produces an empty string, which crashed item creation outright
-    # (database_maxage) or logged a parse warning (enforce_updates) instead
-    # of silently doing nothing. Leaving these unset lets the companion
-    # resolve database_maxage/database_maxage_interval through the exact
-    # same plugin-level fallback the parent itself would use if it also
-    # left them unset - correct in the common case. The one case this
-    # doesn't cover: a parent with an explicit *non-default* database_maxage
-    # or enforce_updates:true - the companion won't automatically mirror
-    # that, and would need a local override alongside the struct reference.
+# helper structs to add min/max histories to items with database_maxage_action: avg/int
     min:
         on_change: .db_min = value
         db_min:
@@ -261,421 +267,417 @@ plugin_functions:
     id:
         type: int
         description:
-            de: 'Liefert für das angegebene Item die Datenbank-ID zurück'
-            en: 'Return the database ID for the given item'
+            de: 'Liefert die Datenbank-ID für das angegebene Item.'
+            en: 'Returns the database ID for the given item.'
         parameters:
             item:
                 type: foo
                 description:
-                    de: "Das Item-Objekt"
-                    en: "An item object"
+                    de: "Das Item-Objekt."
+                    en: "An item object."
             create:
                 type: bool
                 description:
-                    de: "Falls True, wird das Item in der Datenbank angelegt, falls es dort noch nicht existiert"
-                    en: "If True, the item is created within the database if it does not exist"
+                    de: "Falls True, wird das Item in der Datenbank angelegt, falls es dort noch nicht existiert."
+                    en: "If True, the item is created in the database if it does not exist yet."
             cur:
                 type: foo
                 description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
+                    de: "Ein Datenbankcursor-Objekt, falls vorhanden (optional)."
+                    en: "A database cursor object, if available (optional)."
 
     db:
         type: foo
         description:
-            de: 'Liefert das Lowlevel Datenbank-Objekt zurück'
-            en: 'Returns the low-level database object'
+            de: 'Liefert das Low-Level-Datenbankobjekt.'
+            en: 'Returns the low-level database object.'
 
     dump:
         type: void
         description:
-            de: 'Erzeugt einen Datenbank-Dump für angegebene Kriterien'
-            en: 'Creates a database dump for given criterias'
+            de: 'Erzeugt einen Datenbank-Dump anhand der angegebenen Kriterien.'
+            en: 'Creates a database dump for the given criteria.'
         parameters:
             dumpfile:
                 type: str
                 description:
-                    de: "Dateiname in die der Dump geschrieben werden soll"
-                    en: "Filename to write dump to"
+                    de: "Dateiname, in den der Dump geschrieben wird."
+                    en: "Filename to write the dump to."
             id:
                 type: int
                 description:
-                    de: "Dump auf angegebene Item-ID eingeschränken (optional)"
-                    en: "Restrict dump to given item ID (optional)"
+                    de: "Schränkt den Dump auf die angegebene Item-ID ein (optional)."
+                    en: "Restricts the dump to the given item ID (optional)."
             time:
                 type: int
                 description:
-                    de: "Dump auf die angegebene Zeit eingeschränken (optional)"
-                    en: "Restrict dump to given time (optional)"
+                    de: "Schränkt den Dump auf die angegebene Zeit ein (optional)."
+                    en: "Restricts the dump to the given time (optional)."
             time_start:
                 type: int
                 description:
-                    de: "Dump auf die Startzeit eingeschränken (optional)"
-                    en: "Restrict dump to given start time (optional)"
+                    de: "Schränkt den Dump auf die angegebene Startzeit ein (optional)."
+                    en: "Restricts the dump to the given start time (optional)."
             time_end:
                 type: int
                 description:
-                    de: "Dump auf die Endzeit eingeschränken (optional)"
-                    en: "Restrict dump to given end time (optional)"
+                    de: "Schränkt den Dump auf die angegebene Endzeit ein (optional)."
+                    en: "Restricts the dump to the given end time (optional)."
             changed:
                 type: int
                 description:
-                    de: "Dump auf die angegebene Zeit einer Änderung eingeschränken (optional)"
-                    en: "Restrict dump to given time of change (optional)"
+                    de: "Schränkt den Dump auf die angegebene Änderungszeit ein (optional)."
+                    en: "Restricts the dump to the given time of change (optional)."
             changed_start:
                 type: int
                 description:
-                    de: "Dump auf die angegebene Startzeit von Änderungen eingeschränken (optional)"
-                    en: "Restrict dump to given start time of changes (optional)"
+                    de: "Schränkt den Dump auf die angegebene Startzeit von Änderungen ein (optional)."
+                    en: "Restricts the dump to the given start time of changes (optional)."
             changed_end:
                 type: int
                 description:
-                    de: "Dump auf die angegebene Endzeit von Änderungen eingeschränken (optional)"
-                    en: "Restrict dump to given end time of changes (optional)"
+                    de: "Schränkt den Dump auf die angegebene Endzeit von Änderungen ein (optional)."
+                    en: "Restricts the dump to the given end time of changes (optional)."
             cur:
                 type: foo
                 description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
+                    de: "Ein Datenbankcursor-Objekt, falls vorhanden (optional)."
+                    en: "A database cursor object, if available (optional)."
 
     insertItem:
         type: int
         description:
-            de: 'Item-Datenbankeintrag für angegebene Datenbank-ID anlegen'
-            en: 'Create database item record for given database ID'
+            de: 'Legt einen Item-Datenbankeintrag für die angegebene Datenbank-ID an.'
+            en: 'Creates a database item record for the given database ID.'
         parameters:
             name:
                 type: str
                 description:
-                    de: "Name des Items für das ein Eintrag angelegt werden soll"
-                    en: "name of item to create a record for"
+                    de: "Name des Items, für das ein Eintrag angelegt wird."
+                    en: "Name of the item to create a record for."
             cur:
                 type: foo
                 description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
+                    de: "Ein Datenbankcursor-Objekt, falls vorhanden (optional)."
+                    en: "A database cursor object, if available (optional)."
 
     updateItem:
         type: void
         description:
-            de: 'Item-Datenbankeintrag für angegebene Datenbank-ID aktualisieren'
-            en: 'Update database item record for given database ID'
+            de: 'Aktualisiert den Item-Datenbankeintrag für die angegebene Datenbank-ID.'
+            en: 'Updates the database item record for the given database ID.'
         parameters:
             id:
                 type: int
                 description:
-                    de: "Datenbank-ID des Items für das der Eintrag aktualisiert werden soll"
-                    en: "Database ID of item to update the record for"
+                    de: "Datenbank-ID des Items, dessen Eintrag aktualisiert wird."
+                    en: "Database ID of the item whose record is updated."
             time:
                 type: int
                 description:
-                    de: "Zeitpunkt an dem der Wert aktiv war"
-                    en: "Time for the given value"
+                    de: "Zeitpunkt, ab dem der Wert galt."
+                    en: "Time from which the value was in effect."
             duration:
                 type: int
                 description:
-                    de: "Zeitintervall für den der Wert aktiv war"
-                    en: "Time duration for the given value"
+                    de: "Zeitspanne, für die der Wert galt."
+                    en: "Duration for which the value was in effect."
             val:
                 type: str
                 description:
-                    de: "Der Wert der in die Datenbank geschrieben werden soll"
-                    en: "The value to write to the database"
+                    de: "Der Wert, der in die Datenbank geschrieben wird."
+                    en: "The value to write to the database."
             it:
                 type: str
                 description:
-                    de: "Der Item-Typ des Wertes ('str', 'num', 'bool')"
-                    en: "The item type of the value ('str', 'num', 'bool')"
+                    de: "Der Item-Typ des Wertes ('str', 'num', 'bool')."
+                    en: "The item type of the value ('str', 'num', 'bool')."
             changed:
                 type: int
                 description:
-                    de: "Zeitstempel der Änderung"
-                    en: "Time of change"
+                    de: "Zeitstempel der Änderung."
+                    en: "Timestamp of the change."
             cur:
                 type: foo
                 description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
+                    de: "Ein Datenbankcursor-Objekt, falls vorhanden (optional)."
+                    en: "A database cursor object, if available (optional)."
 
     readItem:
         type: foo
         description:
-            de: "Item-Datenbankeintrag für angegebene Datenbank-ID auslesen
+            de: "Liest den Item-Datenbankeintrag für die angegebene Datenbank-ID.
 
-                 Diese Methode liest die Item-Daten einschließlich aller Felder. Wenn der ID Parameter ein String
-                 ist, wird angenommen, dass das Element über den Item Namen ausgewählt werden soll
-                 und nicht die Item-ID.
+                 Diese Methode liest die Item-Daten einschließlich aller Felder. Ist der Parameter id
+                 ein String, wird das Item über seinen Namen ausgewählt statt über seine Datenbank-ID.
                 "
-            en: "Read database item record for given database ID
+            en: "Reads the database item record for the given database ID.
 
-                 This method will read the item data including all fields. If the id
-                 parameter is a string it is assumed that the item should be selected by
-                 the items name and not by the items ID.
+                 This method reads the item data including all fields. If the id parameter is a
+                 string, the item is selected by its name instead of its database ID.
                 "
         parameters:
             id:
                 type: int/str
                 description:
-                    de: "Datenbank-ID des Items für das der Eintrag ausgelesen werden soll"
-                    en: "Database ID of item to read the record for"
+                    de: "Datenbank-ID (oder Name) des Items, dessen Eintrag gelesen wird."
+                    en: "Database ID (or name) of the item whose record is read."
             cur:
                 type: foo
                 description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
+                    de: "Ein Datenbankcursor-Objekt, falls vorhanden (optional)."
+                    en: "A database cursor object, if available (optional)."
 
     readItems:
         type: foo
         description:
-            de: 'Alle Item-Datenbankeinträge incl. aller Felder auslesen'
-            en: 'This method will read all items data including all fields.'
+            de: 'Liest alle Item-Datenbankeinträge einschließlich aller Felder.'
+            en: 'Reads all database item records, including all fields.'
         parameters:
             cur:
                 type: foo
                 description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
+                    de: "Ein Datenbankcursor-Objekt, falls vorhanden (optional)."
+                    en: "A database cursor object, if available (optional)."
 
     deleteItem:
         type: void
         description:
-            de: 'Löschen eines Item-Datenbankeintrags und von dessen Log Daten'
-            en: 'This method will delete the item and its log data'
+            de: 'Löscht einen Item-Datenbankeintrag und die zugehörigen Log-Datenbankeinträge.'
+            en: "Deletes an item's database record and its associated log database records."
         parameters:
             id:
                 type: int
                 description:
-                    de: "Datenbank-ID des Items für das der Eintrag gelöscht werden soll"
-                    en: "Database ID of item to delete the record for"
+                    de: "Datenbank-ID des Items, dessen Eintrag gelöscht wird."
+                    en: "Database ID of the item whose record is deleted."
             cur:
                 type: foo
                 description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
+                    de: "Ein Datenbankcursor-Objekt, falls vorhanden (optional)."
+                    en: "A database cursor object, if available (optional)."
 
     insertLog:
         type: void
         description:
-            de: 'Log-Datenbankeintrag für angegebene Datenbank-ID anlegen'
-            en: 'Create database log record for given database ID'
+            de: 'Legt einen Log-Datenbankeintrag für die angegebene Datenbank-ID an.'
+            en: 'Creates a database log record for the given database ID.'
         parameters:
             id:
                 type: int
                 description:
-                    de: "Datenbank-ID des Items für das ein Eintrag angelegt werden soll"
-                    en: "Database ID of item to create a record for"
+                    de: "Datenbank-ID des Items, für das ein Eintrag angelegt wird."
+                    en: "Database ID of the item to create a record for."
             time:
                 type: int
                 description:
-                    de: "Zeitpunkt an dem der Wert aktiv war"
-                    en: "Time for the given value"
+                    de: "Zeitpunkt, ab dem der Wert galt."
+                    en: "Time from which the value was in effect."
             duration:
                 type: int
                 description:
-                    de: "Zeitintervall für den der Wert aktiv war"
-                    en: "Time duration for the given value"
+                    de: "Zeitspanne, für die der Wert galt."
+                    en: "Duration for which the value was in effect."
             val:
                 type: str
                 description:
-                    de: "Der Wert der in die Datenbank geschrieben werden soll"
-                    en: "The value to write to the database"
+                    de: "Der Wert, der in die Datenbank geschrieben wird."
+                    en: "The value to write to the database."
             it:
                 type: str
                 description:
-                    de: "Der Item-Typ des Wertes ('str', 'num', 'bool')"
-                    en: "The item type of the value ('str', 'num', 'bool')"
+                    de: "Der Item-Typ des Wertes ('str', 'num', 'bool')."
+                    en: "The item type of the value ('str', 'num', 'bool')."
             changed:
                 type: int
                 description:
-                    de: "Zeitstempel der Änderung"
-                    en: "Time of change"
+                    de: "Zeitstempel der Änderung."
+                    en: "Timestamp of the change."
             cur:
                 type: foo
                 description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
+                    de: "Ein Datenbankcursor-Objekt, falls vorhanden (optional)."
+                    en: "A database cursor object, if available (optional)."
             quality:
                 type: int
                 description:
-                    de: "Daten-Qualitäts-Flag (Standard: QUALITY_VALID, QUALITY_NO_DATA für eine Lücken-Zeile)"
-                    en: "Data-quality flag (QUALITY_VALID by default, QUALITY_NO_DATA for a gap row)"
+                    de: "Daten-Qualitäts-Flag (Standard: QUALITY_VALID, QUALITY_NO_DATA für eine Lücken-Zeile)."
+                    en: "Data-quality flag (QUALITY_VALID by default, QUALITY_NO_DATA for a gap row)."
 
     updateLog:
         type: void
         description:
-            de: 'Log-Datenbankeintrag für angegebene Datenbank-ID aktualisieren'
-            en: 'Update database log record for given database ID'
+            de: 'Aktualisiert den Log-Datenbankeintrag für die angegebene Datenbank-ID.'
+            en: 'Updates the database log record for the given database ID.'
         parameters:
             id:
                 type: int
                 description:
-                    de: "Datenbank-ID des Items für das der Eintrag aktualisiert werden soll"
-                    en: "Database ID of item to update the record for"
+                    de: "Datenbank-ID des Items, dessen Eintrag aktualisiert wird."
+                    en: "Database ID of the item whose record is updated."
             time:
                 type: int
                 description:
-                    de: "Zeitpunkt an dem der Wert aktiv war"
-                    en: "Time for the given value"
+                    de: "Zeitpunkt, ab dem der Wert galt."
+                    en: "Time from which the value was in effect."
             duration:
                 type: int
                 description:
-                    de: "Zeitintervall für den der Wert aktiv war"
-                    en: "Time duration for the given value"
+                    de: "Zeitspanne, für die der Wert galt."
+                    en: "Duration for which the value was in effect."
             val:
                 type: str
                 description:
-                    de: "Der Wert der in die Datenbank geschrieben werden soll"
-                    en: "The value to write to the database"
+                    de: "Der Wert, der in die Datenbank geschrieben wird."
+                    en: "The value to write to the database."
             it:
                 type: str
                 description:
-                    de: "Der Item-Typ des Wertes ('str', 'num', 'bool')"
-                    en: "The item type of the value ('str', 'num', 'bool')"
+                    de: "Der Item-Typ des Wertes ('str', 'num', 'bool')."
+                    en: "The item type of the value ('str', 'num', 'bool')."
             changed:
                 type: int
                 description:
-                    de: "Zeitstempel der Änderung"
-                    en: "Time of change"
+                    de: "Zeitstempel der Änderung."
+                    en: "Timestamp of the change."
             cur:
                 type: foo
                 description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
+                    de: "Ein Datenbankcursor-Objekt, falls vorhanden (optional)."
+                    en: "A database cursor object, if available (optional)."
             quality:
                 type: int
                 description:
-                    de: "Daten-Qualitäts-Flag (Standard: QUALITY_VALID, QUALITY_NO_DATA für eine Lücken-Zeile)"
-                    en: "Data-quality flag (QUALITY_VALID by default, QUALITY_NO_DATA for a gap row)"
+                    de: "Daten-Qualitäts-Flag (Standard: QUALITY_VALID, QUALITY_NO_DATA für eine Lücken-Zeile)."
+                    en: "Data-quality flag (QUALITY_VALID by default, QUALITY_NO_DATA for a gap row)."
 
     readLog:
         type: foo
         description:
-            de: 'Log-Datenbankeintrag für angegebene Datenbank-ID auslesen'
-            en: 'Read database log record for given database ID'
+            de: 'Liest den Log-Datenbankeintrag für die angegebene Datenbank-ID.'
+            en: 'Reads the database log record for the given database ID.'
         parameters:
             id:
                 type: int
                 description:
-                    de: "Datenbank-ID des Logs für das der Eintrag gelesen werden soll"
-                    en: "Database ID of log to read the record for"
+                    de: "Datenbank-ID des Logs, dessen Eintrag gelesen wird."
+                    en: "Database ID of the log whose record is read."
             time:
                 type: int
                 description:
-                    de: "Zeitpunkt an dem der Wert aktiv war"
-                    en: "Time for the given value"
+                    de: "Zeitpunkt, ab dem der Wert galt."
+                    en: "Time from which the value was in effect."
             cur:
                 type: foo
                 description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
+                    de: "Ein Datenbankcursor-Objekt, falls vorhanden (optional)."
+                    en: "A database cursor object, if available (optional)."
 
     readLogs:
         type: foo
         description:
-            de: 'Log-Datenbankeinträge für angegebene Datenbank-ID auslesen'
-            en: 'Read database log records for given database ID'
+            de: 'Liest die Log-Datenbankeinträge für die angegebene Datenbank-ID.'
+            en: 'Reads the database log records for the given database ID.'
         parameters:
             id:
                 type: int
                 description:
-                    de: "Datenbank-ID des Logs für das der Eintrag aktualisiert werden soll"
-                    en: "Database ID of log to read the records for"
+                    de: "Datenbank-ID des Logs, dessen Einträge gelesen werden."
+                    en: "Database ID of the log whose records are read."
             time:
                 type: int
                 description:
-                    de: "Auslesen auf angegebene Zeit eingeschränken (optional)"
-                    en: "Restrict reading of records to given time (optional)"
+                    de: "Schränkt das Auslesen auf die angegebene Zeit ein (optional)."
+                    en: "Restricts reading to the given time (optional)."
             time_start:
                 type: int
                 description:
-                    de: "Auslesen auf angegebene Startzeit eingeschränken eingeschränken (optional)"
-                    en: "Restrict reading of records to given start time (optional)"
+                    de: "Schränkt das Auslesen auf die angegebene Startzeit ein (optional)."
+                    en: "Restricts reading to the given start time (optional)."
             time_end:
                 type: int
                 description:
-                    de: "Auslesen auf angegebene Endzeit eingeschränken eingeschränken (optional)"
-                    en: "Restrict reading of records to given end time (optional)"
+                    de: "Schränkt das Auslesen auf die angegebene Endzeit ein (optional)."
+                    en: "Restricts reading to the given end time (optional)."
             changed:
                 type: int
                 description:
-                    de: "Auslesen auf angegebene Änderungszeit eingeschränken (optional)"
-                    en: "Restrict reading of records to given change time (optional)"
+                    de: "Schränkt das Auslesen auf die angegebene Änderungszeit ein (optional)."
+                    en: "Restricts reading to the given change time (optional)."
             changed_start:
                 type: int
                 description:
-                    de: "Auslesen auf angegebene Start der Änderungszeit eingeschränken eingeschränken (optional)"
-                    en: "Restrict reading of records to given start time of changes (optional)"
+                    de: "Schränkt das Auslesen auf die angegebene Startzeit von Änderungen ein (optional)."
+                    en: "Restricts reading to the given start time of changes (optional)."
             changed_end:
                 type: int
                 description:
-                    de: "Auslesen auf angegebene Ende der Änderungszeit eingeschränken eingeschränken (optional)"
-                    en: "Restrict reading of records to given end time of changes (optional)"
+                    de: "Schränkt das Auslesen auf die angegebene Endzeit von Änderungen ein (optional)."
+                    en: "Restricts reading to the given end time of changes (optional)."
             cur:
                 type: foo
                 description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
+                    de: "Ein Datenbankcursor-Objekt, falls vorhanden (optional)."
+                    en: "A database cursor object, if available (optional)."
 
     deleteLog:
         type: void
         description:
-            de: 'Log-Datenbankeinträge für angegebene Datenbank-ID löschen'
-            en: 'Delete database log records for given database ID'
+            de: 'Löscht die Log-Datenbankeinträge für die angegebene Datenbank-ID.'
+            en: 'Deletes the database log records for the given database ID.'
         parameters:
             id:
                 type: int
                 description:
-                    de: "Datenbank-ID für die Einträge gelöscht werden sollen"
-                    en: "Database ID of item to delete the records for"
+                    de: "Datenbank-ID des Items, dessen Einträge gelöscht werden."
+                    en: "Database ID of the item whose records are deleted."
             time:
                 type: int
                 description:
-                    de: "Löschen auf angegebene Zeit eingeschränken (optional)"
-                    en: "Restrict deletion of records to given time (optional)"
+                    de: "Schränkt das Löschen auf die angegebene Zeit ein (optional)."
+                    en: "Restricts deletion to the given time (optional)."
             time_start:
                 type: int
                 description:
-                    de: "Löschen auf angegebene Startzeit eingeschränken eingeschränken (optional)"
-                    en: "Restrict deletion of records to given start time (optional)"
+                    de: "Schränkt das Löschen auf die angegebene Startzeit ein (optional)."
+                    en: "Restricts deletion to the given start time (optional)."
             time_end:
                 type: int
                 description:
-                    de: "Löschen auf angegebene Endzeit eingeschränken eingeschränken (optional)"
-                    en: "Restrict deletion of records to given end time (optional)"
+                    de: "Schränkt das Löschen auf die angegebene Endzeit ein (optional)."
+                    en: "Restricts deletion to the given end time (optional)."
             changed:
                 type: int
                 description:
-                    de: "Löschen auf angegebene Änderungszeit eingeschränken (optional)"
-                    en: "Restrict deletion of records to given change time (optional)"
+                    de: "Schränkt das Löschen auf die angegebene Änderungszeit ein (optional)."
+                    en: "Restricts deletion to the given change time (optional)."
             changed_start:
                 type: int
                 description:
-                    de: "Löschen auf angegebene Start der Änderungszeit eingeschränken eingeschränken (optional)"
-                    en: "Restrict deletion of records to given start time of changes (optional)"
+                    de: "Schränkt das Löschen auf die angegebene Startzeit von Änderungen ein (optional)."
+                    en: "Restricts deletion to the given start time of changes (optional)."
             changed_end:
                 type: int
                 description:
-                    de: "Löschen auf angegebene Ende der Änderungszeit eingeschränken eingeschränken (optional)"
-                    en: "Restrict deletion of records to given end time of changes (optional)"
+                    de: "Schränkt das Löschen auf die angegebene Endzeit von Änderungen ein (optional)."
+                    en: "Restricts deletion to the given end time of changes (optional)."
             cur:
                 type: foo
                 description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
+                    de: "Ein Datenbankcursor-Objekt, falls vorhanden (optional)."
+                    en: "A database cursor object, if available (optional)."
 
     cleanup:
         type: void
         description:
-            de: "Datenbank aufräumen (löscht ungenutzte Item/Log Einträge aus der Datenbank)
+            de: "Räumt die Datenbank auf (löscht Item- und Log-Datenbankeinträge, die zu keinem konfigurierten Item mehr gehören).
 
-                 Diese Methode entfernt alle Elemente und Logs aus der Datenbank der Elemente, welche derzeit nicht
-                 für die Protokollierung in der Datenbank konfiguriert sind. Vorsicht vor dieser Verwendung
-                 in einem Setup mit mehreren Plugin Instanzen, da eine Instanz die Items der anderen Instanz nicht kennt!
+                 Diese Methode entfernt alle Item- und Log-Datenbankeinträge von Items, die aktuell nicht
+                 zur Protokollierung in der Datenbank konfiguriert sind. Vorsicht bei der Verwendung in
+                 einem Setup mit mehreren Plugin-Instanzen.
                 "
-            en: "Cleanup database (deletes unused item/log records in the database)
+            en: "Cleans up the database (deletes item and log database records for items no longer configured).
 
-                 This method will remove all items and logs from database of items which
-                 are currenlty not configured to be logged to database. Beware of this using
-                 in a multi-instance setup, since one instance does not know the item of
-                 the other instance!
-            "
+                 This method removes all item and log database records for items that are currently not
+                 configured for database logging. Use with caution in a multi-instance setup.
+                "

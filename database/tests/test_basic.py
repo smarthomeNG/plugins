@@ -7,6 +7,7 @@ import threading
 import pytest
 from unittest import mock
 
+from lib.db import DatabaseSetupError
 from plugins.database import Database
 from plugins.database.constants import BufferEntry
 from plugins.database.tests.base import TestDatabaseBase
@@ -404,6 +405,39 @@ class TestDatabaseBasic(TestDatabaseBase):
         item(10)
         plugin.update_item(item)
 
+    def test_update_item_noop_when_not_alive(self):
+        # Matches this codebase's own convention (buderus/denon/smarttv/
+        # luxtronic2/... all gate update_item() on self.alive) - the
+        # plugin must not react to item updates at all while stopped or
+        # marked broken (see _mark_db_broken()), not just fail safely
+        # further down the call chain.
+        plugin = self.plugin()
+        item = self.sh.return_item('main.num')
+        plugin.alive = False
+        item(42)
+        plugin.update_item(item)
+        self.assertEqual([], plugin._buffer_mgr.pop_all(item))
+
+    def test_precision_query_casts_before_rounding(self):
+        # Regression: a bare ROUND(expr, precision) has no PostgreSQL
+        # overload for double precision (only ROUND(numeric, integer)),
+        # and AVG()/SUM() over real/bigint columns (avg/on/duty_cycle's
+        # queries) produce double precision there - confirmed live against
+        # a real TimescaleDB instance (2026-09-03), independent of native
+        # mode entirely. DECIMAL, not NUMERIC - MariaDB rejects NUMERIC as
+        # a CAST target, confirmed live against real MariaDB too.
+        plugin = self.plugin()
+        stmt = plugin._precision_query('AVG(val_num * duration) / AVG(duration)')
+        self.assertIn('CAST(AVG(val_num * duration) / AVG(duration) AS DECIMAL(30,10))', stmt)
+        self.assertIn('ROUND(', stmt)
+
+    def test_precision_query_result_is_correct_end_to_end(self):
+        # Not just string-shape - the cast must not change the actual value.
+        plugin = self.plugin()
+        stmt = plugin._precision_query('1.23456 * 2')
+        (result,) = plugin._db.fetchone(f'SELECT {stmt};')
+        self.assertEqual(2.47, float(result))
+
     @pytest.mark.skip(reason='test for pending implementation')
     def test_update_item_with_cache(self):
         plugin = self.plugin()
@@ -683,6 +717,31 @@ class TestDatabaseBasic(TestDatabaseBase):
         self.assertFalse(result)
         [message] = logs.output
         self.assertIn('Delta time: 5.0', message)
+
+    def test_initialize_db_stops_plugin_activity_on_setup_error(self):
+        # DatabaseSetupError is permanent (see its docstring) - the plugin
+        # must stop its own recurring work rather than keep polling a
+        # schema it already knows is broken.
+        plugin = self.plugin()
+        plugin._db_initialized = False
+        with mock.patch.object(plugin._db, 'setup', side_effect=DatabaseSetupError('simulated permanent failure')):
+            with mock.patch.object(plugin, '_stop_schedulers') as stop_schedulers:
+                with self.assertLogs(level='CRITICAL'):
+                    result = plugin._initialize_db()
+
+        self.assertFalse(result)
+        self.assertTrue(plugin._db_broken)
+        self.assertFalse(plugin.alive)
+        stop_schedulers.assert_called_once()
+
+    def test_initialize_db_short_circuits_once_broken_without_touching_setup_again(self):
+        plugin = self.plugin()
+        plugin._db_broken = True
+        with mock.patch.object(plugin._db, 'setup') as setup:
+            result = plugin._initialize_db()
+
+        self.assertFalse(result)
+        setup.assert_not_called()
 
     def test_fetchone_fetchall_do_not_use_mutable_default_params(self):
         plugin = self.plugin()

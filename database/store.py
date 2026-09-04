@@ -69,19 +69,32 @@ class ItemStore:
         """Insert a new item row and return its database ID.
 
         Uses ``INTEGER PRIMARY KEY`` autoincrement behaviour: the INSERT
-        omits ``id`` and lets the database assign it.  The cursor's own
-        ``lastrowid`` is read right after the INSERT rather than a
-        follow-up ``SELECT id WHERE name=`` - the database connection can
-        be shared across threads, and a concurrent caller could interleave
-        between the two statements and cause the lookup to miss, leaving
-        the item permanently id-less. ``lastrowid`` is scoped to this
-        cursor and immune to that race.
+        omits ``id`` and lets the database assign it.  On sqlite3/MySQL, the
+        cursor's own ``lastrowid`` is read right after the INSERT rather
+        than a follow-up ``SELECT id WHERE name=`` - the database connection
+        can be shared across threads, and a concurrent caller could
+        interleave between the two statements and cause the lookup to miss,
+        leaving the item permanently id-less. ``lastrowid`` is scoped to
+        this cursor and immune to that race. psycopg2/psycopg cursors don't
+        populate ``lastrowid`` at all (it's tied to the long-deprecated,
+        often-disabled Postgres OID mechanism, not the SERIAL column) - for
+        those, ``INSERT ... RETURNING id`` gets the same race-free guarantee
+        in the same round-trip instead.
 
         :param name: Full item path (e.g. ``'solar.power'``).
         :param cur:  Optional cursor for transaction batching.
         :returns:    The new integer item ID.
         :rtype:      int
         """
+        if getattr(self._db._dbapi, '__name__', '') in self._db._psycopg_driver_names:
+            if cur is not NO_CURSOR:
+                row = self._fetchone('INSERT INTO {item}(name) VALUES(:name) RETURNING id;', {'name': name}, cur=cur)
+            else:
+                with self._db.transaction() as tcur:
+                    row = self._fetchone(
+                        'INSERT INTO {item}(name) VALUES(:name) RETURNING id;', {'name': name}, cur=tcur
+                    )
+            return int(row[0])
         if cur is not NO_CURSOR:
             self._execute('INSERT INTO {item}(name) VALUES(:name);', {'name': name}, cur=cur)
             return int(cur.lastrowid)
@@ -472,14 +485,26 @@ class LogStore:
         result = self._fetchall('SELECT count(*) FROM {log};', cur=cur)
         return result[0][0] if result else 0
 
-    def oldest_time(self, item_id: int, cur=NO_CURSOR) -> 'int | None':
+    def oldest_time(self, item_id: int, exclude_duration: 'int | None' = None, cur=NO_CURSOR) -> 'int | None':
         """Return the earliest ``time`` value for *item_id*, or ``None``.
 
         :param item_id: Database item ID.
+        :param exclude_duration: If given, ignore rows whose ``duration``
+            equals this value (but never the still-open row, ``duration``
+            ``NULL``) - lets a caller skip rows it recognizes as its own
+            prior output by their exact duration, without a schema change
+            or persisted state. See _compact_maxage()'s own use of this.
         :param cur:     Optional cursor.
         :rtype:         int | None
         """
-        rows = self._fetchall('SELECT min(time) FROM {log} WHERE item_id=:id;', {'id': item_id}, cur=cur)
+        if exclude_duration is None:
+            rows = self._fetchall('SELECT min(time) FROM {log} WHERE item_id=:id;', {'id': item_id}, cur=cur)
+        else:
+            rows = self._fetchall(
+                'SELECT min(time) FROM {log} WHERE item_id=:id AND (duration IS NULL OR duration != :exclude_duration);',
+                {'id': item_id, 'exclude_duration': exclude_duration},
+                cur=cur,
+            )
         return rows[0][0] if rows else None
 
     def latest_time(self, item_id: int, before: 'int | None' = None, cur=NO_CURSOR) -> 'int | None':

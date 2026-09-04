@@ -36,6 +36,8 @@ class TestDatabaseBase(unittest.TestCase):
             'driver': 'sqlite3',
             'connect': {'database': self._db_file.name},
             'sqlite_wal_mode': False,
+            'timescale_hypertable': False,
+            'timescale_chunk_interval': '168h',
             'prefix': '',
             'cycle': 60,
             'removeold_cycle': 91,
@@ -63,6 +65,12 @@ class TestDatabaseBase(unittest.TestCase):
         # Database(self.sh) directly skips that wiring entirely.
         plugin._set_sh(self.sh)
         plugin.__init__(self.sh)
+        # update_item() gates on self.alive (matches this codebase's own
+        # convention - see plugins/database/__init__.py's update_item) -
+        # run() is what sets it in production, but run() also starts real
+        # schedulers/threads that a unit test doesn't want, so tests get
+        # the "plugin is running" flag directly instead.
+        plugin.alive = True
         for item in self.sh.return_items():
             plugin.parse_item(item)
         return plugin

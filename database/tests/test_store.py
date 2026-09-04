@@ -2,6 +2,7 @@
 """Tests for plugins.database.store — ItemStore and LogStore."""
 
 import contextlib
+import types
 import unittest
 import sqlite3
 import time
@@ -26,9 +27,17 @@ from plugins.database.utils import to_timestamp
 class _MockDB:
     """Thin SQLite in-memory wrapper for store tests (no SmartHomeNG needed)."""
 
-    def __init__(self):
+    # Matches lib.db.Database's real class attribute - ItemStore.insert()
+    # reads this to decide between lastrowid and INSERT...RETURNING.
+    _psycopg_driver_names = frozenset({'psycopg2', 'psycopg'})
+
+    def __init__(self, dbapi_name='sqlite3'):
         self._conn = sqlite3.connect(':memory:')
         self._conn.row_factory = sqlite3.Row
+        # sqlite3 (3.35+) supports RETURNING too, so a mock claiming to be
+        # psycopg2 here still exercises the real RETURNING SQL path end to
+        # end, not just a call-count check.
+        self._dbapi = types.SimpleNamespace(__name__=dbapi_name)
         self._setup()
 
     def _setup(self):
@@ -177,6 +186,67 @@ class TestItemStore(unittest.TestCase):
                 raise RuntimeError('simulated failure mid-transaction')
         rows = self.store.find_all()
         self.assertEqual([], rows, 'a rolled-back insert must not be visible afterward')
+
+
+class TestItemStoreInsertOnPsycopg(unittest.TestCase):
+    """insert() on a psycopg2/psycopg driver can't use cursor.lastrowid (it's
+    tied to Postgres OIDs, not the SERIAL column - see store.py's docstring)
+    and must use INSERT...RETURNING id instead. sqlite3 (3.35+) also supports
+    RETURNING, so _MockDB(dbapi_name='psycopg2') exercises the real SQL path,
+    not just which branch got taken."""
+
+    def setUp(self):
+        self.db = _MockDB(dbapi_name='psycopg2')
+        self.store = ItemStore(self.db, TABLE_NAMES)
+
+    def test_insert_returns_sequential_ids(self):
+        id1 = self.store.insert('item.one')
+        id2 = self.store.insert('item.two')
+        self.assertEqual(id1, 1)
+        self.assertEqual(id2, 2)
+
+    def test_insert_does_not_touch_lastrowid(self):
+        # cursor.lastrowid is real (sqlite3-backed) but must not be relied
+        # on for this driver - the cursor transaction() yields is wrapped so
+        # reading .lastrowid raises, proving insert() never touches it.
+        # sqlite3.Connection.cursor is a read-only C slot, so the wrapping
+        # happens at _MockDB.transaction()'s Python level instead.
+        class _NoLastrowid:
+            def __init__(self, cur):
+                self._cur = cur
+
+            def __getattr__(self, name):
+                if name == 'lastrowid':
+                    raise AssertionError('insert() must not read lastrowid for a psycopg driver')
+                return getattr(self._cur, name)
+
+        real_transaction = self.db.transaction
+
+        @contextlib.contextmanager
+        def wrapped_transaction():
+            with real_transaction() as cur:
+                yield _NoLastrowid(cur)
+
+        self.db.transaction = wrapped_transaction
+        new_id = self.store.insert('item.one')
+        self.assertEqual(1, new_id)
+
+    def test_insert_own_cur_path_uses_transaction(self):
+        calls = []
+        orig_transaction = self.db.transaction
+
+        def spy_transaction(*a, **kw):
+            calls.append((a, kw))
+            return orig_transaction(*a, **kw)
+
+        self.db.transaction = spy_transaction
+        self.store.insert('item.one')
+        self.assertEqual(1, len(calls), 'insert() without cur= must go through self._db.transaction()')
+
+    def test_insert_with_explicit_cur_does_not_open_own_transaction(self):
+        with self.db.transaction() as cur:
+            new_id = self.store.insert('item.one', cur=cur)
+        self.assertEqual(1, new_id)
 
     def test_find_by_name(self):
         self.store.insert('my.item')

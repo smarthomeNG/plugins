@@ -127,6 +127,17 @@ class TestMaxageAction(TestDatabaseBase):
         plugin._maxage_worklist = [item]
         plugin.remove_older_than_maxage()  # must not raise
 
+    def test_remove_older_than_maxage_empty_worklist_does_not_crash(self):
+        # Regression: filling the worklist from _handled_items/
+        # _items_with_maxage can legitimately produce zero items (e.g. no
+        # item routed to this instance yet) - the unconditional pop(0)
+        # right after used to raise IndexError in that case.
+        plugin = self.plugin()
+        plugin._maxage_worklist = []
+        plugin._handled_items = []
+        plugin._items_with_maxage = []
+        plugin.remove_older_than_maxage()  # must not raise
+
     # -- _maxage_interval_seconds_for ----------------------------------------
 
     def test_maxage_interval_seconds_for_parses_hours(self):
@@ -189,6 +200,51 @@ class TestMaxageAction(TestDatabaseBase):
         rows = plugin.readLogs(item_id)
         self.assertEqual(1, len(rows))
         self.assertAlmostEqual(20.0, rows[0][COL_LOG_VAL_NUM], places=3)
+
+    def test_compact_maxage_advances_past_already_compacted_intervals_in_one_call(self):
+        # Regression, found live 2026-09-04: oldest_time() can't tell a
+        # just-compacted row from raw data (both are plain (time, duration,
+        # value) rows) - without excluding rows whose duration already
+        # matches interval_ms, the loop re-selects the same first interval
+        # on every iteration and never reaches the later ones, even within
+        # a single call (max_aggregate_intervals gets burned entirely on
+        # interval #1). Four hours of raw data, all past cutoff, must
+        # become four distinct aggregate rows in one call, not one.
+        plugin = self.plugin()
+        item = self.sh.return_item('main.maxage_sum')
+        item_id = self.create_item(plugin, 'main.maxage_sum')
+
+        interval_ms = 3600 * 1000
+        first_bucket = self._old_bucket_start(interval_ms)
+        for hour in range(4):
+            plugin.insertLog(item_id, time=first_bucket + hour * interval_ms, duration=60000, val=float(hour), it='num')
+        plugin._db.commit()
+
+        time_end = plugin.get_maxage_ts(item)
+        action = plugin._maxage_action_for(item)
+        plugin._compact_maxage(item, item_id, 'main.maxage_sum', time_end, action)
+
+        rows = plugin.readLogs(item_id)
+        self.assertEqual(4, len(rows), 'all four hourly intervals must compact in one call, not just the first')
+        self.assertEqual([first_bucket + h * interval_ms for h in range(4)], [r[COL_LOG_TIME] for r in rows])
+
+    def test_compact_maxage_second_call_does_not_retouch_already_compacted_row(self):
+        plugin = self.plugin()
+        item = self.sh.return_item('main.maxage_sum')
+        item_id = self.create_item(plugin, 'main.maxage_sum')
+
+        interval_ms = 3600 * 1000
+        bucket_start = self._old_bucket_start(interval_ms)
+        plugin.insertLog(item_id, time=bucket_start, duration=1000, val=10.0, it='num')
+        plugin._db.commit()
+
+        time_end = plugin.get_maxage_ts(item)
+        action = plugin._maxage_action_for(item)
+        plugin._compact_maxage(item, item_id, 'main.maxage_sum', time_end, action)
+
+        with mock.patch.object(plugin._log_store, 'delete_range', wraps=plugin._log_store.delete_range) as spy:
+            plugin._compact_maxage(item, item_id, 'main.maxage_sum', time_end, action)
+        spy.assert_not_called()
 
     def test_maxage_action_first_last_valid_for_str_type(self):
         # the motivating case: avg/sum/min/max/integrate can't work on str
