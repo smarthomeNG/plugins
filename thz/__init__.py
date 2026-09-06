@@ -149,7 +149,12 @@ class THZ(SmartPlugin):
                         )
                     else:
                         # the value is not discrete, check the minimum period
-                        if self._params[param]['lastUpdate'] + self._min_update_period < now:
+                        if (
+                            self.shtime.add_seconds_naive(
+                                self._params[param]['lastUpdate'], self._min_update_period.total_seconds()
+                            )
+                            < now
+                        ):
                             update = True
                             self.logger.debug(
                                 'minimum period expired {0}: {1} => {2}'.format(
@@ -159,7 +164,12 @@ class THZ(SmartPlugin):
                 else:
                     # no change
                     # check the maximum update period
-                    if self._params[param]['lastUpdate'] + self._max_update_period < now:
+                    if (
+                        self.shtime.add_seconds_naive(
+                            self._params[param]['lastUpdate'], self._max_update_period.total_seconds()
+                        )
+                        < now
+                    ):
                         update = True
                         self.logger.debug(
                             'maximum period expired {0}: {1} => {2}'.format(
@@ -252,9 +262,7 @@ class THZ(SmartPlugin):
                 # update the item status
                 item('processing', source='thzRefresh')
                 try:
-                    self.scheduler_add(
-                        'ThzScan', self._logFullScan, next=shtime.now() + datetime.timedelta(milliseconds=10)
-                    )
+                    self.scheduler_add('ThzScan', self._logFullScan, next=shtime.add_seconds(shtime.now(), 0.01))
                     # self.logger.info('logFullScan requested')
                 except Exception:
                     self.logger.error('thz: scheduling logFullScan failed - {}'.format(sys.exc_info()))
@@ -264,9 +272,7 @@ class THZ(SmartPlugin):
                 # update the item status
                 item('processing', source='thzRefresh')
                 try:
-                    self.scheduler_add(
-                        'ThzRegister', self._logRegister, next=shtime.now() + datetime.timedelta(milliseconds=10)
-                    )
+                    self.scheduler_add('ThzRegister', self._logRegister, next=shtime.add_seconds(shtime.now(), 0.01))
                     # self.logger.info('logRegister requested')
                 except Exception:
                     self.logger.error('thz: scheduling logRegister failed - {}'.format(sys.exc_info()))
@@ -433,7 +439,7 @@ class ThzServer(threading.Thread):
                 # print now
                 purgeList = []
                 for addr, client in self._clients.items():
-                    if client['lastContact'] + datetime.timedelta(seconds=CLIENT_TIMEOUT) < now:
+                    if shtime.add_seconds_naive(client['lastContact'], CLIENT_TIMEOUT) < now:
                         # client connection timed out
                         purgeList.append(addr)
                 for addr in purgeList:

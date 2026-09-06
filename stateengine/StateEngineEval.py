@@ -24,7 +24,6 @@ from . import StateEngineCurrent
 from . import StateEngineDefaults
 from random import randint
 import subprocess
-import datetime
 from lib.shtime import Shtime
 import threading
 
@@ -293,7 +292,7 @@ class SeEval(StateEngineTools.SeItemChild):
                 self._log_debug("Eval-Method 'insert_suspend_time': Suspend time already over.")
                 self._eval_lock.release()
                 return 'Suspend already over.'
-            suspend_until = self._abitem.shtime.now() + datetime.timedelta(seconds=suspend_remaining)
+            suspend_until = self._abitem.shtime.add_seconds(self._abitem.shtime.now(), suspend_remaining)
             self._log_debug('Suspend finished at {0}', suspend_until)
         except Exception as ex:
             self._log_exception(ex)

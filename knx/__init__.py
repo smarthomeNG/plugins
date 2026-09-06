@@ -29,7 +29,6 @@ import struct
 import binascii
 import random
 import time
-from datetime import timedelta
 import pathlib
 
 from lib.network import Tcp_client
@@ -301,7 +300,7 @@ class KNX(SmartPlugin):
             try:
                 ga = kwargs['ga']
                 interval = int(kwargs['interval'])
-                next = self.shtime.now() + timedelta(seconds=interval)
+                next = self.shtime.add_seconds(self.shtime.now(), interval)
                 self.scheduler_add(
                     f'KNX poll {item}',
                     self._poll,

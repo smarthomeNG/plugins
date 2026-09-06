@@ -696,7 +696,7 @@ class RTR(SmartPlugin):
                 if timer:
                     if edt is None:
                         shtime = Shtime.get_instance()
-                        edt = shtime.now() + datetime.timedelta(minutes=self._controller[c]['tempBoostTime'])
+                        edt = shtime.add_seconds(shtime.now(), self._controller[c]['tempBoostTime'] * 60)
 
                     self._deleteTimer('drop_' + c)
                     self._createTimer('boost_' + c, c, edt)
@@ -738,7 +738,7 @@ class RTR(SmartPlugin):
         self.logger.info('run valve protecion')
 
         shtime = Shtime.get_instance()
-        edt = shtime.now() + datetime.timedelta(minutes=5)
+        edt = shtime.add_seconds(shtime.now(), 5 * 60)
 
         if y == 100:
             self.scheduler_add('protectClose', self.valve_protect, value={'y': 0}, next=edt)

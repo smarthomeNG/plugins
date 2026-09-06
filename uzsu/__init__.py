@@ -892,7 +892,7 @@ class UZSU(SmartPlugin):
             elif _caller != 'dry_run':
                 self._lastvalues[item] = _initvalue
                 self._webdata['items'][item.property.path].update({'lastvalue': _initvalue})
-            _timediff = datetime.now(self._timezone) - timedelta(minutes=_initage)
+            _timediff = Shtime.add_seconds(datetime.now(self._timezone), -_initage * 60)
             if not self._items[item]['interpolation'].get('itemtype') == 'bool':
                 try:
                     _value = float(_value)
@@ -928,9 +928,9 @@ class UZSU(SmartPlugin):
             elif _interpolation.lower() in ('cubic', 'linear') and _interval > 0 and self._itpl[item]:
                 try:
                     _oldnext = _next
-                    _nextinterpolation = datetime.now(self._timezone) + timedelta(minutes=_interval)
-                    _interpolated = True if _next > _nextinterpolation else False
-                    _next = _nextinterpolation if _next > _nextinterpolation else _next
+                    _nextinterpolation = Shtime.add_seconds(datetime.now(self._timezone), _interval * 60)
+                    _interpolated = True if _next.timestamp() > _nextinterpolation.timestamp() else False
+                    _next = _nextinterpolation if _next.timestamp() > _nextinterpolation.timestamp() else _next
                     _oldvalue = _value
                     _value = self._interpolate(
                         self._itpl[item], _next.timestamp() * 1000.0, _interpolation.lower() == 'linear'
@@ -1150,7 +1150,7 @@ class UZSU(SmartPlugin):
                             not self._items[item]['interpolation'].get('perday') or cond_istoday
                         ):
                             self._itpl[item][next.timestamp() * 1000.0] = value
-                        if next - timedelta(seconds=1) > datetime.now(self._timezone):
+                        if next.timestamp() - 1 > datetime.now(self._timezone).timestamp():
                             self.logger.debug(f'{item}: Return from rrule {timescan}: {next}, value {value}.')
                             return next, value, None
                         else:
@@ -1161,7 +1161,7 @@ class UZSU(SmartPlugin):
                 next = self._sun(
                     datetime.combine(today, datetime.min.time()).replace(tzinfo=self._timezone), time, timescan
                 )
-                cond_future = next > datetime.now(self._timezone)
+                cond_future = next.timestamp() > datetime.now(self._timezone).timestamp()
                 cond_istoday = next.date() == datetime.now(self._timezone).date()
                 if cond_future:
                     self.logger.debug(f'{item}: Result parsing time today (sun) {time}: {next}')
@@ -1181,7 +1181,7 @@ class UZSU(SmartPlugin):
                     self.logger.debug(f'{item}: Result parsing time tomorrow (sun) {time}: {next}')
             elif 'series' not in time:
                 next = datetime.combine(today, parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
-                cond_future = next > datetime.now(self._timezone)
+                cond_future = next.timestamp() > datetime.now(self._timezone).timestamp()
                 if caller != 'dry_run' and not cond_future:
                     self._itpl[item][next.timestamp() * 1000.0] = value
                     self.logger.debug(f'{item}: Include {timescan} today: {next}, value {value} for interpolation.')
@@ -1204,9 +1204,15 @@ class UZSU(SmartPlugin):
             cond_today = False if next is None else next.date() == today.date()
             cond_yesterday = False if next is None else next.date() - timedelta(days=1) == yesterday.date()
             cond_tomorrow = False if next is None else next.date() == tomorrow.date()
-            cond_next = False if next is None else next > datetime.now(self._timezone)
-            cond_previous_today = False if next is None else next - timedelta(seconds=1) < datetime.now(self._timezone)
-            cond_previous_yesterday = False if next is None else next - timedelta(days=1) < datetime.now(self._timezone)
+            cond_next = False if next is None else next.timestamp() > datetime.now(self._timezone).timestamp()
+            cond_previous_today = (
+                False if next is None else next.timestamp() - 1 < datetime.now(self._timezone).timestamp()
+            )
+            cond_previous_yesterday = (
+                False
+                if next is None
+                else (next - timedelta(days=1)).timestamp() < datetime.now(self._timezone).timestamp()
+            )
             if next and cond_today and cond_next:
                 if caller != 'dry_run':
                     self._itpl[item][next.timestamp() * 1000.0] = value
@@ -1249,22 +1255,22 @@ class UZSU(SmartPlugin):
             return issue
         try:
             mydays = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
-            #loop over all entries in uzsudict.list[] 
+            # loop over all entries in uzsudict.list[]
             for i, mydict in enumerate(self._items[item]['list']):
                 try:
                     del mydict['seriesCalculated']
                 except Exception:
                     pass
-                #evaluate entries with series properties only 
+                # evaluate entries with series properties only
                 if mydict.get('series', None) is None:
                     continue
                 try:
-                    #get series parameters from dict and fill missing values with defaults (also within the dict)
+                    # get series parameters from dict and fill missing values with defaults (also within the dict)
                     seriesstart, seriesend, daycount, mydict = self._fix_empty_values(mydict)
                     seriesinterval = mydict['series'].get('timeSeriesIntervall', None)
                     endtime = None
 
-                    #check if all necessary parameters are available and making sense
+                    # check if all necessary parameters are available and making sense
                     if seriesinterval is None or seriesinterval == '':
                         issue = f'Could not calculate serie for item {item} - because interval is None - {mydict}'
                         self.logger.warning(issue)
@@ -1291,11 +1297,11 @@ class UZSU(SmartPlugin):
                                 f'x SerieCount {org_daycount} is more than 24h'
                             )
 
-                    #now we have valid series definitions and can start evaluating
-                    #seriesstart: string from dict
-                    #seriesend: string from dict
-                    #interval: integer value in minutes
-                    #daycount: adjusted repeat cycles during 24h
+                    # now we have valid series definitions and can start evaluating
+                    # seriesstart: string from dict
+                    # seriesend: string from dict
+                    # interval: integer value in minutes
+                    # daycount: adjusted repeat cycles during 24h
                     #
                     if 'sun' not in seriesstart:
                         starttime = datetime.strptime(seriesstart, '%H:%M')
@@ -1306,7 +1312,7 @@ class UZSU(SmartPlugin):
                         starttime = f'{mytime.hour:02d}:{mytime.minute:02d}'
                         starttime = datetime.strptime(starttime, '%H:%M')
 
-                    #if no time for series end is given calculate it by the Count parameter
+                    # if no time for series end is given calculate it by the Count parameter
                     if seriesend is None:
                         endtime = starttime
                         endtime += timedelta(minutes=interval * int(daycount))
@@ -1342,7 +1348,7 @@ class UZSU(SmartPlugin):
                                 f'x SerieCount {daycount} is not possible between {starttime} and {endtime}'
                             )
                             daycount = new_daycount
-                            
+
                     # at this point we have got starttime and endtime for "today" and an adjusted daycount (number of repeat cycles)
 
                     #####################
@@ -1363,11 +1369,15 @@ class UZSU(SmartPlugin):
 
                         # we have starttime and endtime already but need to adapt to sun times eventually
                         if 'sun' in seriesstart:
-                            mytime = self._sun(day.replace(hour=0, minute=0, second=0, tzinfo=self._timezone), seriesstart, 'next')
+                            mytime = self._sun(
+                                day.replace(hour=0, minute=0, second=0, tzinfo=self._timezone), seriesstart, 'next'
+                            )
                             starttime = f'{mytime.hour:02d}:{mytime.minute:02d}'
                             starttime = datetime.strptime(starttime, '%H:%M')
                         if seriesend is not None and 'sun' in seriesend:
-                            mytime = self._sun(day.replace(hour=0, minute=0, second=0, tzinfo=self._timezone), seriesend, 'next')
+                            mytime = self._sun(
+                                day.replace(hour=0, minute=0, second=0, tzinfo=self._timezone), seriesend, 'next'
+                            )
                             endtime = f'{mytime.hour:02d}:{mytime.minute:02d}'
                             endtime = datetime.strptime(endtime, '%H:%M')
 

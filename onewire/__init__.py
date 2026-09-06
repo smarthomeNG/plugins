@@ -29,7 +29,6 @@ from lib.module import Modules
 from lib.model.smartplugin import SmartPlugin
 
 import threading
-from datetime import timedelta
 
 import logging
 import time
@@ -179,7 +178,7 @@ class OneWire(SmartPlugin):
             prio=5,
             cycle=self._cycle_discovery,
             offset=2,
-            next=self.shtime.now() + timedelta(seconds=5),
+            next=self.shtime.add_seconds(self.shtime.now(), 5),
         )
         self.scheduler_add(
             'sensor_read',
@@ -187,7 +186,7 @@ class OneWire(SmartPlugin):
             cycle=self._cycle,
             prio=5,
             offset=0,
-            next=self.shtime.now() + timedelta(seconds=15),
+            next=self.shtime.add_seconds(self.shtime.now(), 15),
         )
 
     def stop(self):

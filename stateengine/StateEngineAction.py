@@ -775,7 +775,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         else:
             instanteval = None if self.__instanteval is None else self.__instanteval.get()
             overwrite = None if self.__overwrite is None else self.__overwrite.get()
-            next_run = (self.shtime.now() + datetime.timedelta(seconds=delay)).replace(microsecond=0)
+            next_run = self.shtime.add_seconds(self.shtime.now(), delay).replace(microsecond=0)
             self._log_info(
                 "Action '{0}': Add {1} second timer '{2}' for delayed execution.{3} Instant Eval: {4}. Overwrite: {5}. Action will run at ca. {6}",
                 self._name,
@@ -786,7 +786,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 overwrite,
                 next_run,
             )
-            next_run = self.shtime.now() + datetime.timedelta(seconds=delay)
+            next_run = self.shtime.add_seconds(self.shtime.now(), delay)
             if instanteval is True:
                 self._log_increase_indent()
                 self._log_debug("Evaluating value for delayed action '{}'.", namevar)

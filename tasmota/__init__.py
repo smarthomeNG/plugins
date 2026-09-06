@@ -22,7 +22,7 @@
 #########################################################################
 
 from __future__ import annotations
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from lib.model.mqttplugin import MqttPlugin
 from lib.item.item import Item
@@ -153,7 +153,7 @@ class Tasmota(MqttPlugin):
         self.start_subscriptions()
 
         self.logger.debug("Scheduler: 'check_online_status' created")
-        dt = self.shtime.now() + timedelta(seconds=(self.telemetry_period - 3))
+        dt = self.shtime.add_seconds(self.shtime.now(), self.telemetry_period - 3)
         self.scheduler_add('check_online_status', self.check_online_status, cycle=self.telemetry_period, next=dt)
 
         self.logger.debug("Scheduler: 'add_tasmota_subscriptions' created")
@@ -676,9 +676,9 @@ class Tasmota(MqttPlugin):
                 if tasmota_topic not in self.tasmota_devices:
                     self.logger.debug('New online device based on LWT Message discovered.')
                     self._handle_new_discovered_device(tasmota_topic)
-                self.tasmota_devices[tasmota_topic]['online_timeout'] = datetime.now() + timedelta(
-                    seconds=self.telemetry_period + 5
-                )
+                self.tasmota_devices[tasmota_topic]['online_timeout'] = self.shtime.add_seconds(
+                    self.shtime.now(), self.telemetry_period + 5
+                ).replace(tzinfo=None)
 
             if tasmota_topic in self.tasmota_devices:
                 self.tasmota_devices[tasmota_topic]['online'] = payload
@@ -1014,9 +1014,9 @@ class Tasmota(MqttPlugin):
                 self.logger.warning(f"Received Message '{payload}' not handled within plugin.")
 
             # setting new online-timeout
-            self.tasmota_devices[tasmota_topic]['online_timeout'] = datetime.now() + timedelta(
-                seconds=self.telemetry_period + 5
-            )
+            self.tasmota_devices[tasmota_topic]['online_timeout'] = self.shtime.add_seconds(
+                self.shtime.now(), self.telemetry_period + 5
+            ).replace(tzinfo=None)
 
             # setting online_item to True
             self._set_item_value(tasmota_topic, 'online', True, info_topic)

@@ -19,7 +19,6 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
-import datetime
 from collections import OrderedDict, defaultdict
 
 from . import StateEngineTools
@@ -460,7 +459,7 @@ class SeItem:
         _startup_delay_param = self.__startup_delay.get()
         startup_delay = 1 if self.__startup_delay.is_empty() or _startup_delay_param == 0 else _startup_delay_param
         if startup_delay > 0:
-            first_run = self.__shtime.now() + datetime.timedelta(seconds=startup_delay)
+            first_run = self.__shtime.add_seconds(self.__shtime.now(), startup_delay)
             self.__first_run = first_run.strftime('%H:%M:%S, %d.%m.')
             self.__logger.info('Will start stateengine evaluation at {}', self.__first_run)
             scheduler_name = self.__id + '-Startup Delay'
@@ -2467,7 +2466,7 @@ class SeItem:
     def __startup_delay_callback(self, item, caller=None, source=None, dest=None):
         scheduler_name = self.__id + '-Startup Delay'
         if not self.__ab_alive and self.__se_plugin.scheduler_get(scheduler_name):
-            next_run = self.__shtime.now() + datetime.timedelta(seconds=3)
+            next_run = self.__shtime.add_seconds(self.__shtime.now(), 3)
             self.__logger.debug(
                 'Startup Delay over but StateEngine Plugin not running yet. Will try again at {}', next_run
             )

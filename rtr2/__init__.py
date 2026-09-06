@@ -24,7 +24,6 @@
 #
 #########################################################################
 
-import datetime
 import os
 import json
 
@@ -283,7 +282,7 @@ class Rtr2(SmartPlugin):
                 self.logger.info(f'- rtr {r}: Valve protection is disabled')
 
         shtime = Shtime.get_instance()
-        close_time = shtime.now() + datetime.timedelta(minutes=5)
+        close_time = shtime.add_seconds(shtime.now(), 5 * 60)
         # add scheduler to turn protection off after 5 minutes
         self.scheduler_add('valve_protection_close', self.valve_protection_close, next=close_time)
 

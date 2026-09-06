@@ -1294,7 +1294,7 @@ class Telegram(SmartPlugin):
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug('control-item: type:toggle')
             if question != '':
-                nd = (datetime.datetime.now() + datetime.timedelta(seconds=timeout)).replace(tzinfo=self._sh.tzinfo())
+                nd = self.shtime.add_seconds(self.shtime.now(), timeout)
                 self._waitAnswer = dicCtl
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug('control-item: add scheduler for answer-timout')
@@ -1324,7 +1324,7 @@ class Telegram(SmartPlugin):
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug('control-item: type:on')
             if question != '':
-                nd = (datetime.datetime.now() + datetime.timedelta(seconds=timeout)).replace(tzinfo=self._sh.tzinfo())
+                nd = self.shtime.add_seconds(self.shtime.now(), timeout)
                 self._waitAnswer = dicCtl
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug('control-item: add scheduler for answer-timout')
@@ -1347,7 +1347,7 @@ class Telegram(SmartPlugin):
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug('control-item: type:off')
             if question != '':
-                nd = (datetime.datetime.now() + datetime.timedelta(seconds=timeout)).replace(tzinfo=self._sh.tzinfo())
+                nd = self.shtime.add_seconds(self.shtime.now(), timeout)
                 self._waitAnswer = dicCtl
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug('control-item: add scheduler for answer-timout')
@@ -1367,7 +1367,7 @@ class Telegram(SmartPlugin):
                     text = f'{name}: {item()}\n'
                     await context.bot.sendMessage(chat_id=chat_id, text=text)
         if changeType == 'onoff':
-            nd = (datetime.datetime.now() + datetime.timedelta(seconds=timeout)).replace(tzinfo=self._sh.tzinfo())
+            nd = self.shtime.add_seconds(self.shtime.now(), timeout)
             self._waitAnswer = dicCtl
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug('control-item: add scheduler for answer-timout')
@@ -1386,7 +1386,7 @@ class Telegram(SmartPlugin):
             )
         if changeType == 'num':
             text = self.translate('insert a value')
-            nd = (datetime.datetime.now() + datetime.timedelta(seconds=timeout)).replace(tzinfo=self._sh.tzinfo())
+            nd = self.shtime.add_seconds(self.shtime.now(), timeout)
             self._waitAnswer = dicCtl
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug('control-item: add scheduler for answer-timout')

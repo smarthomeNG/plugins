@@ -2082,7 +2082,7 @@ class Database(SmartPlugin):
                 'step': logs['step'],
                 'sid': sid,
             },
-            'update': self.shtime.now() + datetime.timedelta(seconds=int(logs['step'] / 1000)),
+            'update': self.shtime.add_seconds(self.shtime.now(), int(logs['step'] / 1000)),
         }
         self.logger.dbgmed(
             f'_series: {sid=}, {step=}, update={result["update"]}, delta={int(logs["step"] / 1000)}, now={self.shtime.now()}'
