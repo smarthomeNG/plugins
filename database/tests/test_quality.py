@@ -128,6 +128,9 @@ class TestQualityStoreLevel(unittest.TestCase):
             def rollback(self):
                 self._conn.rollback()
 
+            def close(self):
+                self._conn.close()
+
             def connected(self):
                 return True
 
@@ -165,6 +168,9 @@ class TestQualityStoreLevel(unittest.TestCase):
         self.item_store = ItemStore(self.db, tn)
         self.log_store = LogStore(self.db, tn)
         self.item_id = self.item_store.insert('solar.power')
+
+    def tearDown(self):
+        self.db.close()
 
     def test_gap_entry_val_quality_is_one(self):
         gap = BufferEntry(time=5000, duration=600, value=None, quality=QUALITY_NO_DATA)

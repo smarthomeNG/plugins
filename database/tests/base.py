@@ -73,6 +73,16 @@ class TestDatabaseBase(unittest.TestCase):
         plugin.alive = True
         for item in self.sh.return_items():
             plugin.parse_item(item)
+        # lib.db.Database connects lazily on first query, so most tests
+        # leave a real sqlite3 connection open with nothing to close it -
+        # closing here covers both self._db and self._db_maint regardless
+        # of whether a given test ever touched them. Guarded with hasattr:
+        # a driver-module import failure makes Database.__init__() return
+        # early, before one or both attributes are ever assigned.
+        if hasattr(plugin, '_db'):
+            self.addCleanup(plugin._db.close)
+        if hasattr(plugin, '_db_maint'):
+            self.addCleanup(plugin._db_maint.close)
         return plugin
 
     def t(self, s):

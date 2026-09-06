@@ -380,6 +380,14 @@ class Database(SmartPlugin):
         if self._copy_database:
             self.copy_databasefile()
 
+        # Set up front, not after the connection/driver checks below - those
+        # can return early (e.g. driver module not installed), and code
+        # elsewhere (parse_item(), _initialize_db()'s fast path) reads these
+        # attributes assuming they always exist on a constructed instance.
+        self._db_initialized = False
+        self._db_maint_initialized = False
+        self._db_broken = False
+
         # Setup db and test if connection is possible
         self._db = lib.db.Database(
             ('' if self._prefix == '' else self._prefix.capitalize()) + 'Database',
@@ -426,9 +434,6 @@ class Database(SmartPlugin):
             self._init_complete = False
             return
 
-        self._db_initialized = False
-        self._db_maint_initialized = False
-        self._db_broken = False
         if not self._initialize_db():
             # self._init_complete = False
             # return

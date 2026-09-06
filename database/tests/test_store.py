@@ -85,6 +85,9 @@ class _MockDB:
     def rollback(self):
         self._conn.rollback()
 
+    def close(self):
+        self._conn.close()
+
     def connected(self):
         return True
 
@@ -122,6 +125,9 @@ class TestItemStore(unittest.TestCase):
     def setUp(self):
         self.db = _MockDB()
         self.store = ItemStore(self.db, TABLE_NAMES)
+
+    def tearDown(self):
+        self.db.close()
 
     def test_insert_returns_sequential_ids(self):
         id1 = self.store.insert('item.one')
@@ -198,6 +204,9 @@ class TestItemStoreInsertOnPsycopg(unittest.TestCase):
     def setUp(self):
         self.db = _MockDB(dbapi_name='psycopg2')
         self.store = ItemStore(self.db, TABLE_NAMES)
+
+    def tearDown(self):
+        self.db.close()
 
     def test_insert_returns_sequential_ids(self):
         id1 = self.store.insert('item.one')
@@ -354,6 +363,9 @@ class TestLogStore(unittest.TestCase):
         self.item_store = ItemStore(self.db, TABLE_NAMES)
         self.log_store = LogStore(self.db, TABLE_NAMES)
         self.item_id = self.item_store.insert('test.item')
+
+    def tearDown(self):
+        self.db.close()
 
     def _entry(self, t, d=None, v=1.0, q=QUALITY_VALID):
         return BufferEntry(time=t, duration=d, value=v, quality=q)

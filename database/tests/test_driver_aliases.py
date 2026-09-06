@@ -15,15 +15,15 @@ class TestDriverAliases(TestDatabaseBase):
         self.assertEqual('sqlite3', plugin.driver)
 
     def test_mysql_alias_resolves_to_pymysql(self):
-        plugin = self.plugin(driver='mysql', connect={'host': 'h', 'user': 'u', 'passwd': 'p', 'db': 'd'})
+        plugin = self.plugin(driver='mysql', connect={'host': 'h', 'user': 'u', 'password': 'p', 'database': 'd'})
         self.assertEqual('pymysql', plugin.driver)
 
     def test_mariadb_alias_resolves_to_pymysql(self):
-        plugin = self.plugin(driver='mariadb', connect={'host': 'h', 'user': 'u', 'passwd': 'p', 'db': 'd'})
+        plugin = self.plugin(driver='mariadb', connect={'host': 'h', 'user': 'u', 'password': 'p', 'database': 'd'})
         self.assertEqual('pymysql', plugin.driver)
 
     def test_alias_is_case_insensitive(self):
-        plugin = self.plugin(driver='MySQL', connect={'host': 'h', 'user': 'u', 'passwd': 'p', 'db': 'd'})
+        plugin = self.plugin(driver='MySQL', connect={'host': 'h', 'user': 'u', 'password': 'p', 'database': 'd'})
         self.assertEqual('pymysql', plugin.driver)
 
     def test_postgres_alias_prefers_installed_psycopg2(self):
