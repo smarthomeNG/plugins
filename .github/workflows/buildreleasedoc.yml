@@ -50,6 +50,13 @@ jobs:
         run: pip install -r smarthomeng/doc/requirements.txt
       - run: pip install attrs  # install seperatly until requirements in master branch are updated
 
+      - name: Build Requirements for SmartHomeNG
+        run: python3 smarthomeng/tools/build_requirements.py
+
+      - name: Install SmartHomeNG base requirements
+        # base requirements are needed for building of documentation
+        run: pip install -r smarthomeng/requirements/base.txt
+
       - name: List installed packages
         run: pip list
 
