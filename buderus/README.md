@@ -77,7 +77,7 @@ Buderus:
     struct: buderus.hot_water_circuit_01
 ```
 
-See [URLs](URLs.md) for additional km_id's. 
+See {doc}`URLs` for additional km_id's.
 
 # Appendix
 - [ioBroker Modul for KM200](https://github.com/frankjoke/ioBroker.km200)
